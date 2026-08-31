@@ -27,7 +27,6 @@ export {
   geduAssignmentSummaries,
   geduGroupFeed,
   isSessionPhotoErrorCode,
-  sessionImageSummary,
 } from "./gedu-sessions.contracts";
 export type {
   AttendanceStatus,
@@ -36,6 +35,5 @@ export type {
   GeduFeedSession,
   GeduFeedSite,
   GeduGroupFeed,
-  SessionImageSummary,
   SessionPhotoErrorCode,
 } from "./gedu-sessions.contracts";

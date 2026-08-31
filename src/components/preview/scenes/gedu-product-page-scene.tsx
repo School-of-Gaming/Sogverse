@@ -270,7 +270,7 @@ export function GeduProductPageScene({
         pendingTimers.current.delete(timer);
         const id = `${SCENE_STORED_PHOTO_ART[
           scenePhotoIndex.current % SCENE_STORED_PHOTO_ART.length
-        ]}#${scenePhotoIndex.current}`;
+        ]}?n=${scenePhotoIndex.current}`;
         scenePhotoIndex.current += 1;
         setEntries((prev) =>
           prev.map((entry) =>
@@ -538,8 +538,11 @@ const SIMULATED_PHOTO_MS = 1800;
  * The scene has no bucket, so it cannot hand back the picture that was picked —
  * a `blob:` URL is not something the session-image helper can resolve into a
  * stored object. These are the committed demo pictures instead, taking turns,
- * each one carrying a fragment so that adding the same art twice still gives
- * two distinct ids and so two React keys.
+ * each one carrying a counter so that adding the same art twice still gives two
+ * distinct ids and so two React keys. The counter rides as a query string, which
+ * the static file server ignores by definition — a fragment would also have
+ * worked, but only because fetch happens to drop one, which is a detail of the
+ * transport rather than a property of the URL.
  */
 const SCENE_STORED_PHOTO_ART = [
   "/preview-art/session-build.jpg",

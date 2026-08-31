@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { ApiError } from "@/lib/api/api-error";
@@ -8,7 +8,7 @@ import type { SessionPhoto } from "@/components/session-feed";
 
 /**
  * ============================================================================
- * The photo strip is a block that manages itself, and these pin the four rules
+ * The photo strip is a block that manages itself, and these pin the five rules
  * that make it legible as one.
  * ============================================================================
  *
@@ -26,6 +26,11 @@ import type { SessionPhoto } from "@/components/session-feed";
  *     about the batch, and it says which refusal it was in *our* words — never
  *     the thrown error's, whose English is written for a log.
  *   - **The add control stays disabled for the whole batch**, not per file.
+ *   - **A local preview hands over to its stored twin once, and for good.** It
+ *     is drawn until the refetched feed carries the photo it became, and never
+ *     again after that — a removal takes that id back out of the feed, and a
+ *     preview that reappeared there would be a busy tile with no ✕ on it,
+ *     holding a slot the removal had just freed.
  *
  * The normalization pass is mocked throughout: it reaches for
  * `createImageBitmap` and a real canvas, neither of which jsdom has, and none of
@@ -53,11 +58,12 @@ function stored(n: number): SessionPhoto {
   return { id: `/preview-art/session-build.jpg#${n}`, width: 1600, height: 900 };
 }
 
-function renderStrip({
-  photos = [],
-  onAddPhoto = vi.fn().mockResolvedValue("stored-id"),
-  onRemovePhoto = vi.fn().mockResolvedValue(undefined),
-}: {
+/**
+ * The element itself, so a case that needs to hand the strip a *changed* feed —
+ * the refetch is the only way a photo ever arrives or leaves — can re-render it
+ * with new `photos` and the same handlers.
+ */
+interface StripProps {
   photos?: readonly SessionPhoto[];
   onAddPhoto?: (photo: {
     file: Blob;
@@ -65,8 +71,14 @@ function renderStrip({
     height: number;
   }) => Promise<string>;
   onRemovePhoto?: (imageId: string) => Promise<void>;
-} = {}) {
-  return render(
+}
+
+function stripElement({
+  photos = [],
+  onAddPhoto = vi.fn().mockResolvedValue("stored-id"),
+  onRemovePhoto = vi.fn().mockResolvedValue(undefined),
+}: StripProps = {}) {
+  return (
     <NextIntlClientProvider locale="en" messages={messages}>
       <SessionPhotoStrip
         open
@@ -74,8 +86,12 @@ function renderStrip({
         onAddPhoto={onAddPhoto}
         onRemovePhoto={onRemovePhoto}
       />
-    </NextIntlClientProvider>,
+    </NextIntlClientProvider>
   );
+}
+
+function renderStrip(props: StripProps = {}) {
+  return render(stripElement(props));
 }
 
 /** Drive the hidden file input the Add button clicks. */
@@ -214,5 +230,48 @@ describe("the session photo strip", () => {
     // By stored id, and immediately: there is no draft for a removal to wait
     // for.
     expect(onRemovePhoto).toHaveBeenCalledWith(stored(2).id);
+    // The resolved removal tidies the preview it was uploaded from, so let that
+    // land inside the test rather than after it.
+    await act(async () => {});
+  });
+
+  it("leaves no ghost behind when a photo it uploaded is removed again", async () => {
+    // Four stored and one slot left, so the cap is what the ghost would be
+    // measured against: a preview that came back would be both a tile nobody can
+    // remove and a slot nobody can fill.
+    const before = [stored(1), stored(2), stored(3), stored(4)];
+    const landed = stored(5);
+    const onAddPhoto = vi.fn().mockResolvedValue(landed.id);
+    const onRemovePhoto = vi.fn().mockResolvedValue(undefined);
+    const props = { onAddPhoto, onRemovePhoto };
+
+    const { container, rerender, queryByRole, getByRole } = render(
+      stripElement({ ...props, photos: before }),
+    );
+
+    pick(container, 1);
+    await waitFor(() => expect(onAddPhoto).toHaveBeenCalledTimes(1));
+
+    // The refetched feed carries the stored twin: the preview hands over here,
+    // and the row is at the cap, so the add control is gone.
+    rerender(stripElement({ ...props, photos: [...before, landed] }));
+    await waitFor(() =>
+      expect(queryByRole("button", { name: copy.addPhoto })).toBeNull(),
+    );
+
+    fireEvent.click(
+      getByRole("button", { name: copy.removePhoto.replace("{index}", "5") }),
+    );
+    await waitFor(() => expect(onRemovePhoto).toHaveBeenCalledWith(landed.id));
+
+    // And the refetch that follows the removal. The preview's id has now left
+    // the feed, which is the moment a filter asking "is this id stored?" would
+    // change its mind and draw the tile again — permanently busy, with no ✕ on
+    // it, and holding the slot the removal just freed.
+    rerender(stripElement({ ...props, photos: before }));
+    await waitFor(() =>
+      expect(queryByRole("button", { name: copy.addPhoto })).not.toBeNull(),
+    );
+    expect(container.querySelectorAll("[aria-busy]")).toHaveLength(0);
   });
 });

@@ -28,10 +28,11 @@ import {
  *
  * **The row-then-object order, and its compensation.** The insert runs first, on
  * the caller's own client where the guard is the authorization; the object
- * follows on the admin client; and a failed upload deletes the row again. That
- * order is the deliberate inverse of the product catalogue's, because here a row
- * whose object never landed is a broken image on the staff card and in every
- * mail sent afterwards.
+ * follows on the admin client; and a failed upload unwinds both halves in
+ * reverse — sweeping the object, then deleting the row. That order is the
+ * deliberate inverse of the product catalogue's, because here a row whose object
+ * never landed is a broken image on the staff card and in every mail sent
+ * afterwards, and an object no row names is one nothing will ever delete.
  */
 
 // --- Mocks -----------------------------------------------------------------
@@ -42,12 +43,13 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockUpload = vi.fn();
+const mockRemove = vi.fn();
 /** Spied so a case can assert the admin client never touched a table. */
 const mockAdminFrom = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     from: mockAdminFrom,
-    storage: { from: () => ({ upload: mockUpload }) },
+    storage: { from: () => ({ upload: mockUpload, remove: mockRemove }) },
   }),
 }));
 
@@ -135,6 +137,7 @@ describe("POST /api/gedu/sessions/images", () => {
     vi.clearAllMocks();
     mockRpc.mockResolvedValue({ data: IMAGE_ID, error: null });
     mockUpload.mockResolvedValue({ error: null });
+    mockRemove.mockResolvedValue({ error: null });
   });
 
   it("returns 401 when not authenticated", async () => {
@@ -274,6 +277,10 @@ describe("POST /api/gedu/sessions/images", () => {
         cacheControl: "31536000",
       }),
     );
+
+    // The sweep belongs to the failure path alone: a stored photo is removed by
+    // the gedu's own control, never by the route that just wrote it.
+    expect(mockRemove).not.toHaveBeenCalled();
   });
 
   it("stores nothing when the insert is refused", async () => {
@@ -329,7 +336,7 @@ describe("POST /api/gedu/sessions/images", () => {
 
   // --- Compensation --------------------------------------------------------
 
-  it("deletes the row again when the object cannot be stored", async () => {
+  it("unwinds both halves when the object cannot be stored", async () => {
     mockGedu();
     mockUpload.mockResolvedValue({ error: { message: "storage exploded" } });
     mockRpc
@@ -338,8 +345,34 @@ describe("POST /api/gedu/sessions/images", () => {
 
     const response = await POST(createRequest());
 
+    // The object is swept even though the upload reported failure: a timeout or
+    // a 5xx on the tail of a PUT whose bytes already landed leaves one behind
+    // that no row names, and so that nothing in the system would ever delete.
+    expect(mockRemove).toHaveBeenCalledWith([`${IMAGE_ID}.jpg`]);
     // A row whose object never landed would render as a broken image on the
     // staff card and in every mail sent afterwards, so it must not survive.
+    expect(mockRpc).toHaveBeenLastCalledWith("delete_group_session_image", {
+      p_image_id: IMAGE_ID,
+    });
+    expect(await refusal(response)).toEqual({
+      status: 500,
+      code: "uploadFailed",
+    });
+  });
+
+  it("still deletes the row when the object sweep itself fails", async () => {
+    mockGedu();
+    mockUpload.mockResolvedValue({ error: { message: "storage exploded" } });
+    mockRemove.mockResolvedValue({ error: { message: "no such object" } });
+    mockRpc
+      .mockResolvedValueOnce({ data: IMAGE_ID, error: null })
+      .mockResolvedValueOnce({ data: null, error: null });
+
+    const response = await POST(createRequest());
+
+    // The sweep is best effort — on the ordinary failure there was never an
+    // object to remove — so its refusal is logged and carried past. The row is
+    // the half that has to come out.
     expect(mockRpc).toHaveBeenLastCalledWith("delete_group_session_image", {
       p_image_id: IMAGE_ID,
     });

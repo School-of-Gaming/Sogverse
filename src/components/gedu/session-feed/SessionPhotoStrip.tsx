@@ -198,9 +198,12 @@ export function SessionPhotoStrip({
    * shape, whose real cost here would have been a cascading render on every
    * feed refresh, photos or no photos.
    *
-   * A landed entry stays in `pending` until the next pick tidies it (or the
-   * card unmounts), which costs one small object and is why every count below
-   * reads *this* list rather than that one.
+   * A landed entry stays in `pending` until the next pick tidies it — or until
+   * the photo it became is removed, which is the one other moment this filter
+   * would otherwise change its mind about: the predicate asks whether the id is
+   * *currently* stored, so a removal that takes the id back out of `storedIds`
+   * would bring the preview back. It costs one small object in the meantime,
+   * which is why every count below reads *this* list rather than that one.
    */
   const visiblePending = pending.filter(
     (photo) => photo.id === null || !storedIds.has(photo.id),
@@ -301,9 +304,17 @@ export function SessionPhotoStrip({
     setError(null);
     try {
       await onRemovePhoto(imageId);
-      // Left set: the refetch that follows takes the tile off the row, and
-      // clearing first would hand back a live ✕ over a photo that is already
-      // gone.
+      // `removing` is left set: the refetch that follows takes the tile off the
+      // row, and clearing first would hand back a live ✕ over a photo that is
+      // already gone.
+      //
+      // The preview this photo was uploaded from goes here, though, and this is
+      // the last moment it can. It has been invisible since the feed first
+      // carried its stored twin — but only because the filter above asks
+      // whether its id is stored *now*, so leaving the entry behind would let
+      // this removal un-hide it as a permanently-busy tile with no ✕, counting
+      // against the cap for as long as the card stays mounted.
+      dropPreview((photo) => photo.id === imageId);
     } catch (cause) {
       setRemoving(null);
       setError(sessionPhotoErrorCode(cause));

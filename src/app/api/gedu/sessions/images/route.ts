@@ -57,9 +57,13 @@ const JPEG_SOI = [0xff, 0xd8, 0xff];
  * tolerated): there an object is content-addressed and an orphan is harmless,
  * while here a row whose object never landed is a broken image on the staff
  * card and in every mail sent afterwards. So a failed upload is compensated by
- * deleting the row. If the compensation ALSO fails, that is logged loudly and
- * nothing else happens — the surviving row renders as a broken thumbnail and the
- * ordinary remove control is its repair.
+ * unwinding both halves in reverse: the object is swept and then the row is
+ * deleted. **The object is swept even though the upload said it failed**, because
+ * an upload can fail on the tail of a PUT whose bytes already landed (a timeout,
+ * a 5xx after the write) — and an object nobody has a row for is one nothing in
+ * the system will ever delete. If the row compensation ALSO fails, that is logged
+ * loudly and nothing else happens — the surviving row renders as a broken
+ * thumbnail and the ordinary remove control is its repair.
  */
 export const POST = defineRoute({
   posture: "role-gated",
@@ -103,20 +107,32 @@ export const POST = defineRoute({
     // access control — so storage is the admin client's, exactly as it is for
     // the product catalogue. `upsert: false` because a fresh UUID can only
     // collide with itself.
-    const { error: uploadError } = await createAdminClient()
-      .storage.from(SESSION_IMAGES_BUCKET)
-      .upload(sessionImageObjectName(imageId), upload.file, {
-        contentType: "image/jpeg",
-        upsert: false,
-        cacheControl: IMMUTABLE_CACHE_CONTROL,
-      });
+    const bucket = createAdminClient().storage.from(SESSION_IMAGES_BUCKET);
+    const objectName = sessionImageObjectName(imageId);
+    const { error: uploadError } = await bucket.upload(objectName, upload.file, {
+      contentType: "image/jpeg",
+      upsert: false,
+      cacheControl: IMMUTABLE_CACHE_CONTROL,
+    });
 
     if (uploadError) {
       console.error(
         `[${ROUTE_LABEL}] storage upload failed for image ${imageId}:`,
         uploadError,
       );
-      // Compensation, on the same client the insert ran on: the guard that
+      // The object first, and best-effort: on the ordinary failure there is
+      // nothing there to remove, but an upload that failed *after* its bytes
+      // landed would otherwise leave one behind that no row names and so no
+      // remove control can ever reach. Its own failure is logged and carried
+      // past — the row is the half that has to come out.
+      const { error: sweepError } = await bucket.remove([objectName]);
+      if (sweepError) {
+        console.error(
+          `[${ROUTE_LABEL}] post-failure object sweep failed for image ${imageId}:`,
+          sweepError,
+        );
+      }
+      // Then the row, on the same client the insert ran on: the guard that
       // admitted the insert admits this too.
       const { error: rollbackError } = await supabase.rpc(
         "delete_group_session_image",
@@ -176,8 +192,12 @@ async function readSessionImageUpload(
     throw new ApiError("no 'file' field in the form", 400, "uploadFailed");
   }
 
-  // Size before bytes: reading a 40 MB body into memory to look at three of
-  // them is work the cap exists to avoid.
+  // Size before bytes, and not to save memory: `formData()` above has already
+  // buffered the whole body, and what bounds that is the platform's ~4.5 MB
+  // request limit, which refuses anything far larger before this route runs at
+  // all. The order is about the answer — an over-cap file gets the same refusal
+  // whatever its first three bytes say, so sniffing them first would only be
+  // able to replace a true answer with a less useful one.
   if (file.size > SESSION_PHOTO_MAX_BYTES) {
     throw new ApiError(
       `the upload is ${file.size} bytes, over the ${SESSION_PHOTO_MAX_BYTES} cap`,
