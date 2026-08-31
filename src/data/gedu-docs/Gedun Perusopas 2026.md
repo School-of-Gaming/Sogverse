@@ -64,7 +64,7 @@ Navigoi oppaassa vasemmalla olevien välilehtien kautta tai klikkaamalla alla ol
 
 [**Rikosrekisteriote**](#rikosrekisteriote)
 
-[**Gedun Discord-profiili kuluttajakerhoissa**](#gedun-discord-profiili-kuluttajakerhoissa)
+[**Gedun profiili verkossa**](#gedun-profiili-verkossa)
 
 [**Sogverse**](#sogverse)
 
@@ -206,7 +206,7 @@ Kerhoissa on käytettävä kerhojen annettuja materiaaleja ja työkaluja. Esimer
 
 **Mistä löydän kerhomateriaalit?**  
 Kuntakerhot: Ajantasaiset materiaalit löytyy Clanedista ryhmäsi infodocsiin linkitettynä.  
-Kuluttajakerhot: Tehtäväpatchit julkaistaan Discordiin tehtäväkanavalle.
+Kuluttajakerhot: ⚠️ **Täydennettävä (kanslia):** tehtäväpatcheja ei enää julkaista Discordiin, koska gamerit ja kuluttajakerhot eivät ole siellä. Tähän kirjataan, mistä kuluttajakerhojen tehtäväpatchit nyt löytyvät.
 
 **Tehtäväkuvat on tärkeitä**  
 Monissa tehtävissä on ohessa tehtäväkuva. Se on siellä ensisijaisesti kerholaisia varten, sillä kuva auttaa monia sisäistämään tehtävän suullisia ohjeita paremmin. Käytä siis tehtäväkuvia.
@@ -278,6 +278,8 @@ liisa@sog.gg
 # Virtuaalitoimisto Discordissa {#virtuaalitoimisto-discordissa}
 
 School of Gamingilla on oma virtuaalitoimisto Discordissa. Siihen joskus saatetaan viitata “Staff-serverinä” tai “Office-serverinä”. Virtuaalitoimistolla pääset tapaamaan myös muita pelikasvattajia.
+
+**Discord on vain sisäinen työkalumme.** Discordissa ovat vain henkilökunta ja pelikasvattajat. Gamerit ja huoltajat eivät ole Discordissa, eikä kerhoja järjestetä siellä. Discord on jäämässä vähitellen pois käytöstä, mutta virtuaalitoimisto on toistaiseksi normaalisti käytössä.
 
 Pääsy palvelimelle ja sen kanaville on rajattu ja pelikasvattajien kanavat näkyvät sinulle vasta kun olet saanut Game Educator \-roolin puitesopimuksen allekirjoittamisen jälkeen. Jos Discord on sinulle uusi alusta, voi se alkuun tuntua hieman sekavalta. Pääset kuitenkin nopeasti jyvälle\!
 
@@ -394,7 +396,7 @@ the club details and press create. A new lesson appears.
 At the start of the club, do the roll-call and mark the present gamers in the participants list. **If you have gamers missing** in the list, please contact the Staff by opening a ticket.
 
 **How to?**  
-Click the title PARTICIPANTS on the lesson and checkbox the ones present. The gamers are sorted alphabetically by their Discord user name. You may press save and book more participants if some gamers are late. Your previously marked participants will stay marked. The amount of marked participants will be visible inside brackets.
+Click the title PARTICIPANTS on the lesson and checkbox the ones present. The gamers are sorted alphabetically by name. You may press save and book more participants if some gamers are late. Your previously marked participants will stay marked. The amount of marked participants will be visible inside brackets.
 
 ## 3\. Write a lesson report and mark the lesson Done
 
@@ -440,8 +442,10 @@ Sairastumisesta pitää ilmoittaa mahdollisimman pikaisesti. Jos edellisenä pä
 Akuuteissa sairastumisissa tai tapaturmissa ilmoita niin pian kuin kykenet.
 
 **Tuuraustiketin luominen**  
-Avaa Discordissa **tuuraustiketti**, joka vastaa kerhoa jolle etsit tuuraajaa:  
+Avaa **tuuraustiketti**, joka vastaa kerhoa jolle etsit tuuraajaa. Tiketit avataan toistaiseksi virtuaalitoimistossa:  
 **Office Channels ➜ \#substitutions**.
+
+⚠️ **Täydennettävä (kanslia):** Discord on sisäisenä työkaluna jäämässä pois käytöstä. Tähän kirjataan, miten tuuraukset tiketöidään jatkossa.
 
 Kirjoita tuuraustikettiin tarpeellinen info, jotta tuuraajan on helppo hypätä hommiin. Kattava raportointi ja ryhmän projektien backupaaminen kerhon Google Driveen helpottaa tuuraajan työtä eikä aiheuta häiriöitä kerhon kulkuun.
 
@@ -451,10 +455,10 @@ Kuten kerhon vakituinen ohjaaja, olet vastuussa ryhmästä ja kerhon edistymises
 
 **Varmista ennen kerhoa:**
 
-* Tiedät mihin mennä (Zoom, koulu ja luokka, Discord)  
-* Tarvittavat tunnukset toimii (Minecraft, Discord, Webmail, Sogga)  
+* Tiedät mihin mennä (Zoom, koulu ja luokka, Sogverse)  
+* Tarvittavat tunnukset toimii (Minecraft, Sogverse, Webmail, Sogga)  
 * Sinulle on jaettu Drive, Padlet ja ryhmä on lisätty sinulle Soggassa  
-* Kuluttajakerhoissa sinulla on Gedu-rooli Discordissa ja Minecraft-palvelimella
+* Kuluttajakerhoissa sinulla on Gedu-rooli Minecraft-palvelimella
 
 **Kerhon jälkeen**
 
@@ -668,27 +672,25 @@ School of Gaming Galactic Oy
 Työtehtävä:  
 Iltapäiväohjaaja
 
-# 😊 Gedun Discord-profiili
+# 😊 Gedun profiili verkossa
 
-# Gedun Discord-profiili kuluttajakerhoissa {#gedun-discord-profiili-kuluttajakerhoissa}
+# Gedun profiili verkossa {#gedun-profiili-verkossa}
 
-Osa kerhoistamme järjestetään tällä hetkellä Discordissa. Jos sinulla ei ole Discordissa erikseen työtiliä, niin **muista pitää profiilisi pelikasvatustyöhön sopivana kaikki ikäryhmät huomioiden**. Tämä tarkoittaa profiilikuvan lisäksi myös kuvaustasi. Asiakkaat eivät tiedä milloin olet töissä ja milloin et, joten gamerit tai heidän vanhempansa saattavat olla yhteyksissä milloin vain.
+Kerhot pidetään Sogversessa ja Minecraft-palvelimillamme. Gamerit ja huoltajat eivät ole Discordissa. **Muista pitää profiilisi pelikasvatustyöhön sopivana kaikki ikäryhmät huomioiden niissä palveluissa, joissa kohtaat kerholaisia.** Tämä tarkoittaa profiilikuvan lisäksi myös kuvaustasi.
 
-*Saatat törmätä gamereihin Discordissa ja striimatessa myös SOGin ulkopuolella. He näkevät sinut pelikasvattajanaan myös silloin.*
+**Muista nämä palveluissa, joissa ohjaat kerhoa** (esimerkiksi Sogverse, Minecraft ja Zoom)
 
-**Muista nämä, kun teet pelikasvatustyötä Discordissa**
-
-* Laita oma etunimesi näkyviin SOG Suomi \-palvelimella Discordin näyttönimeen. Esimerkiksi: Etunimi (Nimimerkki) / Nimimerkki (Etunimi)  
+* Laita oma etunimesi näkyviin näyttönimeen. Esimerkiksi: Etunimi (Nimimerkki) / Nimimerkki (Etunimi)  
 * Pidä profiilikuvasi sopivana kaikenikäisille. Oma kasvokuva herättää luottamusta.  
-* Onhan profiilisi kuvaus myös pelikasvatustyöhön sopiva eikä sisällä linkkejä palvelimille tai striimikanaville joilla voisi olla ikärajattua sisältöä?  
-* Älä pidä **server tageja** jotka toimivat linkkinä toiselle palvelimelle tai ovat muuten asiattomia.
+* Huolehdi, ettei profiilisi kuvaus sisällä linkkejä palvelimille tai striimikanaville, joilla voi olla ikärajattua sisältöä.
 
-  
-**Erillinen työtili Discordissa**
+**Myös vapaa-ajalla**
 
-* Sinun ei tarvitse muokata henkilökohtaista profiiliasi erikseen pelikasvatustyöhön sopivaksi.  
-* Asiakkaiden viestit eivät pompi ruudulle kun et ole töissä.  
-* Muistathan silti aktiivisesti seurata virtuaalitoimiston ilmoitustaulua.
+*Saatat törmätä gamereihin verkossa myös SOGin ulkopuolella, esimerkiksi striimatessa tai muilla alustoilla. He näkevät sinut pelikasvattajanaan myös silloin.*
+
+**Virtuaalitoimiston Discord**
+
+Virtuaalitoimistossa ovat vain henkilökunta ja pelikasvattajat, joten siellä riittää, että näyttönimestäsi selviää oma etunimesi ja että profiilisi on työkäyttöön asiallinen.
 
 # 🌌 Sogverse
 
@@ -697,6 +699,10 @@ Osa kerhoistamme järjestetään tällä hetkellä Discordissa. Jos sinulla ei o
 Sogverse on tarinoita täynnä oleva maailma. Puhumme tästä yhteisestä tarinallisesta ympäristöstämme nimellä Sogverse. Sogversessa on monenlaisia **kolkkia**, joissa asuu erilaisia hahmoja. Monet gamereistamme kokevat myös itse asuvansa jossakin päin Sogversea.
 
 Sogverse toimii loistavana alustana erilaisille tarinoille. Voit hyödyntää sitä monin tavoin pelikasvatustoiminnassasi, sillä se tarjoaa yhteisen kehyksen seikkailuille, tehtäville ja hahmoille.
+
+## Sogverse on myös alustamme
+
+Tarinamaailman lisäksi Sogverse on School of Gamingin oma verkkoalusta, ja kerhot kokoontuvat siellä. Huoltajat ja gamerit kirjautuvat Sogverseen, ja sieltä löytyvät oman kerhon sivu, kerhokerrat ja kerhon puhekanavat. Gamer kirjautuu aina huoltajan tilin kautta, joten lapsella ei ole omaa erillistä salasanaa. Tarinamaailma ja alusta ovat sama asia: molemmat ovat Sogverse.
 
 ## Saat lisätä itsesi tarinaan
 
@@ -932,6 +938,9 @@ Tehdään yhteistyötä turvallisen verkkopelaamisen puolesta\!
 # ♻️ Update Log
 
 # Update Log {#update-log}
+
+**31.8.2026**  
+Kerhot kokoontuvat Sogversessa: gamerit ja huoltajat eivät ole enää Discordissa. Discord on vain henkilökunnan ja pelikasvattajien sisäinen työkalu, joka on jäämässä vähitellen pois käytöstä. Oppaassa on ⚠️-merkinnällä kohdat, jotka kanslia täydentää.
 
 **27.3.2026**  
 GeduGuru-botti on otettu käyttöön ja sen ohjeistus lisätty tabiin: Minulla on kysymys. Tästä eteenpäin yleisluontoiset kysymykset menee GeduGurun kautta.

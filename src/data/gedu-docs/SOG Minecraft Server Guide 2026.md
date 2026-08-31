@@ -18,6 +18,9 @@ If you have any questions, ideas for improvement, or notice that something on th
 
 **Lobby → \#open-ticket → Minecraft Java Server**
 
+| ❗ | *Discord is School of Gaming's internal staff tool: only staff and Game Educators are there. Gamers and their parents are not on Discord, and no clubs are run there. Discord is legacy tooling that is being wound down, but the ticket and moderation channels are in normal use for now.* |
+| :---- | :---- |
+
 # Content
 
 [**Gedu Role Overview**](#gedu-role-overview)
@@ -66,7 +69,7 @@ If you have any questions, ideas for improvement, or notice that something on th
 
 # Server Overview
 
-The School of Gaming Minecraft server is built around **the Hub**. The Hub acts as a central lobby, allowing players to travel to different parts of the Sogverse. The Hub itself is also an adventure, as exploring it reveals the history of the Sogverse and various hidden secrets.
+The School of Gaming Minecraft server is built around **the Hub**. The Hub acts as a central lobby, allowing players to travel to different parts of Sogverse. The Hub itself is also an adventure, as exploring it reveals the history of Sogverse and various hidden secrets.
 
 Currently, anyone can join the SOG Minecraft server, but some areas are restricted to specific club groups or are only available during events.
 
