@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { z } from "zod";
 import type { Database } from "@/types/database.types";
 import { geduGroupFeed } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
@@ -83,36 +82,6 @@ function dayOffset(offset: number): string {
 const YESTERDAY = dayOffset(-1);
 const TWO_DAYS_AGO = dayOffset(-2);
 
-/**
- * The session entries of the gedu document, naming only 00222's addition.
- *
- * The feature's own contracts schema does not exist yet — the widened gedu
- * schema lands with the service layer — and the EXISTING `geduGroupFeed` schema
- * is tolerant, so it strips `images` rather than surfacing it. Both facts are
- * asserted below; this shape is what lets the photos themselves be inspected in
- * the meantime. `.strict()` on the image object because the uploader must never
- * travel and a loose object would let it arrive unnoticed.
- */
-const geduFeedImages = z
-  .object({
-    sessions: z.array(
-      z
-        .object({
-          session_date: z.string(),
-          images: z.array(
-            z
-              .object({
-                id: z.string(),
-                width: z.number(),
-                height: z.number(),
-              })
-              .strict(),
-          ),
-        })
-        .passthrough(),
-    ),
-  })
-  .passthrough();
 
 describe("session photos", () => {
   let admin: SupabaseClient<Database>;
@@ -629,6 +598,12 @@ describe("session photos", () => {
   // 6. The gedu document
   // -------------------------------------------------------------------------
 
+  // The photos are inspected through the feature's OWN contracts schema, widened
+  // in place — the same parse the service performs on every real read, run here
+  // against real Postgres output so SQL and TypeScript cannot drift apart
+  // quietly. `created_by` staying off the wire is asserted by looking for the
+  // key name in the raw document rather than by a strict nested shape, because
+  // strictness there would contradict the tolerance the next paragraph relies on.
   describe("get_gedu_group_feed", () => {
     it("carries each session's photos, oldest first, and never the uploader", async () => {
       const first = await attach(geduAuth, YESTERDAY, {
@@ -645,7 +620,7 @@ describe("session photos", () => {
       });
       expect(error).toBeNull();
 
-      const session = geduFeedImages
+      const session = geduGroupFeed
         .parse(data)
         .sessions.find((s) => s.session_date === YESTERDAY);
 
@@ -663,8 +638,8 @@ describe("session photos", () => {
       expect(session?.images[1]?.height).toBe(1440);
 
       // `created_by` stays off the wire for the same reason `report_emailed_by`
-      // does: audit that nothing renders. The `.strict()` image object above
-      // would already have failed; this catches a leak anywhere else.
+      // does: audit that nothing renders. Asserted against the raw document, so
+      // it catches a leak anywhere in it and not only inside an image object.
       expect(JSON.stringify(data)).not.toContain("created_by");
     });
 
@@ -676,7 +651,7 @@ describe("session photos", () => {
       });
       expect(error).toBeNull();
 
-      const session = geduFeedImages
+      const session = geduGroupFeed
         .parse(data)
         .sessions.find((s) => s.session_date === YESTERDAY);
       expect(session?.images.map((i) => i.id)).toEqual([id]);
@@ -696,7 +671,7 @@ describe("session photos", () => {
       const { data } = await geduAuth.rpc("get_gedu_group_feed", {
         p_group_id: GROUP_MINE,
       });
-      const session = geduFeedImages
+      const session = geduGroupFeed
         .parse(data)
         .sessions.find((s) => s.session_date === YESTERDAY);
       expect(session?.images).toEqual([]);
@@ -705,9 +680,11 @@ describe("session photos", () => {
     it("still parses through the contract the deployed app carries", async () => {
       // The gedu half of the release-window question. This schema is tolerant of
       // unknown keys — it strips them — which is exactly why the gedu document
-      // could be widened IN PLACE while the family one needed a versioned name.
-      // A parse failure here would mean the widening had changed something other
-      // than adding a key.
+      // could be widened IN PLACE while the family one needed a versioned name:
+      // the app deployed a minute before the migration went on parsing this
+      // document happily, ignoring the key it had never heard of. The whole
+      // document is parsed here, so a failure means the widening changed
+      // something other than adding that key.
       await attach(geduAuth, YESTERDAY);
 
       const { data } = await geduAuth.rpc("get_gedu_group_feed", {

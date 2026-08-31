@@ -1,0 +1,383 @@
+// @vitest-environment node
+//
+// Node environment so Request, FormData and File are all undici/Node natives
+// from one realm: jsdom's FormData is not serializable by undici's Request, and
+// a file parsed back out of a real multipart body would fail the route's
+// `instanceof File` check against jsdom's File.
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextResponse } from "next/server";
+import { POST } from "@/app/api/gedu/sessions/images/route";
+import {
+  isSessionPhotoErrorCode,
+  SESSION_PHOTO_CAP,
+  SESSION_PHOTO_CAP_REACHED_SQLSTATE,
+  SESSION_PHOTO_MAX_BYTES,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
+
+/**
+ * POST /api/gedu/sessions/images — attaching a photo to a session report.
+ *
+ * Two properties are what this file exists to hold still.
+ *
+ * **The bucket's invariant.** This route is the bucket's only writer, so
+ * "everything stored is a conforming JPEG under the cap" is true only for as
+ * long as the verification here is. Every refusal case below asserts that
+ * nothing reached the database *or* storage, because a refusal that still wrote
+ * something is the failure the invariant is about.
+ *
+ * **The row-then-object order, and its compensation.** The insert runs first, on
+ * the caller's own client where the guard is the authorization; the object
+ * follows on the admin client; and a failed upload deletes the row again. That
+ * order is the deliberate inverse of the product catalogue's, because here a row
+ * whose object never landed is a broken image on the staff card and in every
+ * mail sent afterwards.
+ */
+
+// --- Mocks -----------------------------------------------------------------
+
+const mockRequireRole = vi.fn();
+vi.mock("@/lib/auth", () => ({
+  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+}));
+
+const mockUpload = vi.fn();
+/** Spied so a case can assert the admin client never touched a table. */
+const mockAdminFrom = vi.fn();
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({
+    from: mockAdminFrom,
+    storage: { from: () => ({ upload: mockUpload }) },
+  }),
+}));
+
+const mockRpc = vi.fn();
+
+// --- Fixtures --------------------------------------------------------------
+
+const GROUP_ID = "0f0b1d7c-6a2e-4f7b-9d3a-6c1f2b8e4a51";
+const SESSION_DATE = "2026-08-20";
+const IMAGE_ID = "7c9f2a41-3b8d-4e52-9a17-5d2c6b0e8f43";
+
+/** A minimal JFIF head — the three bytes the route actually looks at. */
+const JPEG_BYTES = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+
+/** What an iPhone Files-app pick looks like: an ISO-BMFF `ftypheic` box. */
+const HEIC_BYTES = new Uint8Array([
+  0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63,
+]);
+
+function jpegFile(): File {
+  return new File([JPEG_BYTES], "session-photo.jpg", { type: "image/jpeg" });
+}
+
+function createRequest(
+  options: {
+    file?: File | null;
+    groupId?: string;
+    sessionDate?: string;
+    width?: string;
+    height?: string;
+  } = {},
+): Request {
+  const form = new FormData();
+  const file = "file" in options ? options.file : jpegFile();
+  if (file) form.append("file", file);
+  form.append("groupId", options.groupId ?? GROUP_ID);
+  form.append("sessionDate", options.sessionDate ?? SESSION_DATE);
+  form.append("width", options.width ?? "1920");
+  form.append("height", options.height ?? "1080");
+  return new Request("http://localhost:3000/api/gedu/sessions/images", {
+    method: "POST",
+    body: form,
+  });
+}
+
+function mockGedu(): void {
+  mockRequireRole.mockResolvedValue({
+    user: { id: "gedu-user-id" },
+    profile: { id: "gedu-user-id", role: "gedu", first_name: "Marianne" },
+    supabase: { rpc: mockRpc },
+  });
+}
+
+function mockUnauthenticated(): void {
+  mockRequireRole.mockResolvedValue(
+    NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+  );
+}
+
+function mockForbidden(): void {
+  mockRequireRole.mockResolvedValue(
+    NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+  );
+}
+
+/**
+ * The route's answer, as the service reads it: a status and a stable code.
+ *
+ * Membership of the feature's error vocabulary is asserted here rather than per
+ * case, because it is the same claim every time — a refusal travels as a code
+ * the UI resolves with `t()`, never as a message anything renders.
+ */
+async function refusal(response: Response) {
+  const body: unknown = await response.json();
+  const code =
+    typeof body === "object" && body !== null && "code" in body
+      ? body.code
+      : undefined;
+  expect(isSessionPhotoErrorCode(code)).toBe(true);
+  return { status: response.status, code };
+}
+
+describe("POST /api/gedu/sessions/images", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRpc.mockResolvedValue({ data: IMAGE_ID, error: null });
+    mockUpload.mockResolvedValue({ error: null });
+  });
+
+  it("returns 401 when not authenticated", async () => {
+    mockUnauthenticated();
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(401);
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for a role that may not attach photos", async () => {
+    mockForbidden();
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(403);
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("gates on a gedu or an admin, and nothing else", async () => {
+    mockGedu();
+    await POST(createRequest());
+
+    // The roles are the coarse filter; the RPC's assignment guard is the real
+    // boundary. Recorded here so widening the gate is a visible change.
+    expect(mockRequireRole).toHaveBeenCalledWith(
+      ["gedu", "admin"],
+      expect.anything(),
+    );
+  });
+
+  // --- Verification: nothing non-conforming reaches the bucket -------------
+
+  it("refuses a form with no file", async () => {
+    mockGedu();
+
+    const response = await POST(createRequest({ file: null }));
+
+    expect(response.status).toBe(400);
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it("refuses an upload over the byte cap, before reading its bytes", async () => {
+    mockGedu();
+    const tooBig = new File(
+      [new Uint8Array(SESSION_PHOTO_MAX_BYTES + 1)],
+      "huge.jpg",
+      { type: "image/jpeg" },
+    );
+
+    const response = await POST(createRequest({ file: tooBig }));
+
+    expect(await refusal(response)).toEqual({
+      status: 413,
+      code: "tooLarge",
+    });
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it("refuses raw HEIC by its magic bytes, whatever the form claims", async () => {
+    mockGedu();
+    // The mainline iPhone path never lands here — iOS transcodes a
+    // photo-library pick to JPEG on the way through the accept list — but a
+    // Files-app pick and a macOS drag-drop do, and this refusal is the one whose
+    // copy tells the gedu to convert and try again. The content type is a lie on
+    // purpose: the declared type is the client's claim and is not consulted.
+    const heic = new File([HEIC_BYTES], "IMG_0042.heic", {
+      type: "image/jpeg",
+    });
+
+    const response = await POST(createRequest({ file: heic }));
+
+    expect(await refusal(response)).toEqual({ status: 415, code: "notJpeg" });
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it("refuses a dimension past the table's sanity ceiling", async () => {
+    mockGedu();
+
+    const response = await POST(createRequest({ width: "9000" }));
+
+    expect(await refusal(response)).toEqual({
+      status: 400,
+      code: "badDimensions",
+    });
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("refuses a dimension that is not a positive number", async () => {
+    mockGedu();
+
+    for (const width of ["0", "-4", "not-a-number"]) {
+      vi.clearAllMocks();
+      mockGedu();
+      const response = await POST(createRequest({ width }));
+      expect(await refusal(response), width).toEqual({
+        status: 400,
+        code: "badDimensions",
+      });
+      expect(mockRpc).not.toHaveBeenCalled();
+    }
+  });
+
+  // --- The happy path: row, then object ------------------------------------
+
+  it("inserts the row on the caller's client and then stores the object", async () => {
+    mockGedu();
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ id: IMAGE_ID });
+
+    // The cap travels from the contracts constant. Passing it is what makes
+    // raising it a one-line change with no migration.
+    expect(mockRpc).toHaveBeenCalledWith("add_group_session_image", {
+      p_group_id: GROUP_ID,
+      p_session_date: SESSION_DATE,
+      p_width: 1920,
+      p_height: 1080,
+      p_max_images: SESSION_PHOTO_CAP,
+    });
+
+    // Named by the row's id, one format, never overwritten, cached for a year:
+    // the four properties that make the URL both unguessable and immutable.
+    expect(mockUpload).toHaveBeenCalledWith(
+      `${IMAGE_ID}.jpg`,
+      expect.any(File),
+      expect.objectContaining({
+        contentType: "image/jpeg",
+        upsert: false,
+        cacheControl: "31536000",
+      }),
+    );
+  });
+
+  it("stores nothing when the insert is refused", async () => {
+    mockGedu();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { code: "42501", message: "Forbidden" },
+    });
+
+    const response = await POST(createRequest());
+
+    expect(await refusal(response)).toEqual({
+      status: 403,
+      code: "notAllowed",
+    });
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it("answers the cap refusal with a code of its own", async () => {
+    mockGedu();
+    // Reachable even though the editor hides its add control at the cap: two
+    // tabs racing both see four photos, and the RPC under the session lock is
+    // what actually decides. The gedu's answer is "remove one first".
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: SESSION_PHOTO_CAP_REACHED_SQLSTATE,
+        message: "This session already holds 5 photos, which is the cap",
+      },
+    });
+
+    const response = await POST(createRequest());
+
+    expect(await refusal(response)).toEqual({
+      status: 409,
+      code: "capReached",
+    });
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it("answers a check violation generically, having bounded the dimensions itself", async () => {
+    mockGedu();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { code: "23514", message: "No scheduled session on that date" },
+    });
+
+    expect(await refusal(await POST(createRequest()))).toEqual({
+      status: 400,
+      code: "uploadFailed",
+    });
+  });
+
+  // --- Compensation --------------------------------------------------------
+
+  it("deletes the row again when the object cannot be stored", async () => {
+    mockGedu();
+    mockUpload.mockResolvedValue({ error: { message: "storage exploded" } });
+    mockRpc
+      .mockResolvedValueOnce({ data: IMAGE_ID, error: null })
+      .mockResolvedValueOnce({ data: null, error: null });
+
+    const response = await POST(createRequest());
+
+    // A row whose object never landed would render as a broken image on the
+    // staff card and in every mail sent afterwards, so it must not survive.
+    expect(mockRpc).toHaveBeenLastCalledWith("delete_group_session_image", {
+      p_image_id: IMAGE_ID,
+    });
+    expect(await refusal(response)).toEqual({
+      status: 500,
+      code: "uploadFailed",
+    });
+  });
+
+  it("stops after a failed compensation rather than building machinery for it", async () => {
+    mockGedu();
+    mockUpload.mockResolvedValue({ error: { message: "storage exploded" } });
+    mockRpc
+      .mockResolvedValueOnce({ data: IMAGE_ID, error: null })
+      .mockResolvedValueOnce({
+        data: null,
+        error: { code: "XX000", message: "the delete failed too" },
+      });
+
+    const response = await POST(createRequest());
+
+    // The row survives with no object. That renders as a broken thumbnail on the
+    // staff card, and the ordinary remove control beside it is the repair — the
+    // failure is logged loudly and nothing else happens.
+    expect(mockRpc).toHaveBeenCalledTimes(2);
+    expect(await refusal(response)).toEqual({
+      status: 500,
+      code: "uploadFailed",
+    });
+  });
+
+  it("never reaches a table with the service-role client", async () => {
+    mockGedu();
+
+    await POST(createRequest());
+
+    // The admin client is here for the policy-less bucket and nothing else; who
+    // may attach a photo is decided entirely by the guard on the user client.
+    expect(mockAdminFrom).not.toHaveBeenCalled();
+  });
+});

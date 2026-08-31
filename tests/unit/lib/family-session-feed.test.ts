@@ -59,6 +59,8 @@ function row(
     // calendar math, and every case here is indifferent to who touched the row.
     updated_by: null,
     updated_by_first_name: null,
+    /** No photos by default — this builder is about the calendar math. */
+    images: [],
     attendance: null,
     ...fields,
   };

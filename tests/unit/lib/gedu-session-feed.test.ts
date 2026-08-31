@@ -63,6 +63,10 @@ function row(
     // Never emailed by default. The completeness derivation reads it, so a case
     // about a finished session says so by overriding this.
     report_emailed_at: null,
+    // No photos by default, and photos change nothing here on purpose: they do
+    // not count toward what a session owes, so a session with pictures and no
+    // write-up still owes its report.
+    images: [],
     attendance: {},
     ...fields,
   };

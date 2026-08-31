@@ -1,6 +1,6 @@
 import type { AppSupabaseClient } from "@/types";
 import {
-  familyProductFeed,
+  familyProductFeedV2,
   type FamilyProductFeed,
 } from "./family-product-feed.contracts";
 
@@ -78,8 +78,14 @@ export class FamilyProductFeedService {
   async getProductFeed(
     participationId: string,
   ): Promise<FamilyProductFeedResult> {
+    // **The versioned name, and it stays permanently.** The original could not
+    // be widened with the sessions' photo arrays: the contract above is
+    // `.strict()` at every level, so an app deployed a minute before the
+    // migration would have failed to parse its own read. The compatibility step
+    // was a second function; the original is untouched and a cleanup migration
+    // drops it after the window, at which point this call site does not move.
     const { data, error } = await this.supabase.rpc(
-      "get_my_family_product_feed",
+      "get_my_family_product_feed_v2",
       { p_participation_id: participationId },
     );
 
@@ -97,6 +103,6 @@ export class FamilyProductFeedService {
       throw error;
     }
 
-    return { status: "ok", feed: familyProductFeed.parse(data) };
+    return { status: "ok", feed: familyProductFeedV2.parse(data) };
   }
 }

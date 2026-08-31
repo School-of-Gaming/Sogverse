@@ -138,6 +138,59 @@ export function useRecordAttendance(groupId: string) {
   });
 }
 
+/**
+ * Attach one normalized JPEG to a session's report.
+ *
+ * **Only the feed key, and deliberately not the summaries key.** Photos do not
+ * count toward what a session owes — a session with pictures and no write-up
+ * still owes its report — so the dashboard badge cannot change here, and
+ * invalidating it would be thoroughness dressed up as correctness.
+ *
+ * The family's copy of this session lives in *other users'* caches, in other
+ * browsers, so there is nothing of it to invalidate from the uploader's session.
+ * The admin product page binds its own product-keyed pair against the same
+ * service methods, exactly as it does for a session-note save.
+ */
+export function useAddSessionImage(groupId: string) {
+  const queryClient = useQueryClient();
+  const service = new GeduSessionsService(getClient());
+
+  return useMutation({
+    mutationFn: (vars: {
+      sessionDate: string;
+      width: number;
+      height: number;
+      file: Blob;
+    }) => service.addSessionImage({ groupId, ...vars }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: geduSessionKeys.feed(groupId),
+      });
+    },
+  });
+}
+
+/**
+ * Remove one photo. Takes the group id for the invalidation alone — the request
+ * itself is the photo id, because the RPC resolves the group from the row.
+ *
+ * @see useAddSessionImage for why the summaries key is left alone.
+ */
+export function useDeleteSessionImage(groupId: string) {
+  const queryClient = useQueryClient();
+  const service = new GeduSessionsService(getClient());
+
+  return useMutation({
+    mutationFn: (vars: { imageId: string }) =>
+      service.deleteSessionImage(vars.imageId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: geduSessionKeys.feed(groupId),
+      });
+    },
+  });
+}
+
 export function useSetGroupNotes(groupId: string) {
   const queryClient = useQueryClient();
   const service = new GeduSessionsService(getClient());

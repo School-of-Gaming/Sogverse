@@ -165,6 +165,9 @@ const TESTS = {
   geduRegister: "tests/integration/api/gedu-register.test.ts",
   geduSessionEmailReport:
     "tests/integration/api/gedu-session-email-report.test.ts",
+  geduSessionImageAdd: "tests/integration/api/gedu-session-image-add.test.ts",
+  geduSessionImageRemove:
+    "tests/integration/api/gedu-session-image-remove.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftPasswordReset:
@@ -778,6 +781,39 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "json", schema: "emailSessionReportBody" },
         test: TESTS.geduSessionEmailReport,
+      },
+    },
+  },
+
+  // The two session-photo routes. Both are gated on the same two roles and both
+  // carry their OWN reason for the service-role client rather than borrowing the
+  // email route's above: what that one reaches past a gedu's view is families'
+  // addresses, and what these two reach is a bucket with no policies at all.
+  "src/app/api/gedu/sessions/images/route.ts": {
+    adminClient:
+      "the storage upload alone — the `session-images` bucket carries no policies, deliberately, because the unguessable object name IS the access control. The row is inserted on the caller's own client, where the RPC's assignment guard is the real authorization boundary and this route's role gate is only the coarse filter in front of it; the same user client also runs the compensating delete when the upload fails, so nothing privileged decides who may attach a photo",
+    handlers: {
+      POST: {
+        posture: { kind: "role-gated", roles: ["gedu", "admin"] },
+        body: {
+          kind: "multipart",
+          schema:
+            "addSessionImageFields for the four form fields (group, session date, claimed width and height), read beside one `file` the route verifies by magic bytes and byte cap — no JSON field, and no schema can describe the bytes",
+        },
+        test: TESTS.geduSessionImageAdd,
+      },
+    },
+  },
+
+  "src/app/api/gedu/sessions/images/[id]/route.ts": {
+    adminClient:
+      "the storage object delete alone — the bucket carries no policies, and an object must be removed through the Storage API because a SQL delete of storage.objects orphans the backing file. The row goes first, on the caller's own client, whose RPC resolves the photo's group from its session row: that resolution is the authorization, and this route's role gate is the coarse filter in front of it",
+    handlers: {
+      DELETE: {
+        posture: { kind: "role-gated", roles: ["gedu", "admin"] },
+        // The photo id is the whole request, and it arrives in the path.
+        body: { kind: "none" },
+        test: TESTS.geduSessionImageRemove,
       },
     },
   },

@@ -2,7 +2,10 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/types/database.types";
-import { familyProductFeed } from "@/services/family-product-feed/family-product-feed.contracts";
+import {
+  familyProductFeed,
+  familyProductFeedV2,
+} from "@/services/family-product-feed/family-product-feed.contracts";
 import {
   createAdminTestClient,
   createAnonTestClient,
@@ -69,36 +72,17 @@ const GEDU_NOTE = "PRIVATE-STAFF-NOTE-must-never-reach-a-family";
 const MATERIAL_URL = "https://drive.sog.gg/PRIVATE-lesson-plans";
 
 /**
- * The shape of `get_my_family_product_feed_v2`'s document, naming only what
- * 00222 added and letting everything else through untouched.
+ * The v2 document's shape is the feature's own contracts schema — the same
+ * parse the service performs on every real read, run here against real Postgres
+ * output so the two cannot drift apart quietly.
  *
- * Deliberately NOT the feature's own contracts schema: the widened family schema
- * does not exist yet and lands with the service layer. What can be settled
- * without it is structural — that the versioned document is the original plus
- * exactly one key per session, and that the key holds what the migration says.
- * The image object is `.strict()` on purpose: the uploader is safeguarding audit
- * and must never travel, and a loose object would let it arrive unnoticed.
+ * It is `.strict()` at every level, exactly as the frozen v1 schema beside it
+ * is, and for the same reason: this document is a privacy assertion as much as a
+ * shape. The image object in particular cannot represent `created_by` — the
+ * uploader is safeguarding audit that must never reach a family — so a widening
+ * of the RPC fails the parse rather than arriving unnoticed.
  */
-const v2Document = z
-  .object({
-    sessions: z.array(
-      z
-        .object({
-          session_date: z.string(),
-          images: z.array(
-            z
-              .object({
-                id: z.string(),
-                width: z.number(),
-                height: z.number(),
-              })
-              .strict(),
-          ),
-        })
-        .passthrough(),
-    ),
-  })
-  .passthrough();
+const v2Document = familyProductFeedV2;
 
 /** The v2 document with `images` removed from every session. */
 function withoutImages(document: z.infer<typeof v2Document>) {
