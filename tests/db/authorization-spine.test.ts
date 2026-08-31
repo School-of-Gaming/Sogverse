@@ -228,6 +228,53 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "Positive paths: gedu-session-feed.test.ts for the gedu, " +
       "admin-product-sessions.test.ts for the admin.",
   },
+  // The session-photo pair (00222). The same two-part gate as every writer
+  // above — an admin or a gedu on the first statement, then "and do you teach
+  // this group" — and the widening is the point: ANY gedu assigned to the group
+  // may attach or remove a photo, matching how the report itself is edited.
+  // There is no per-photo ownership, and `created_by` is safeguarding audit that
+  // gates nothing.
+  add_group_session_image: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "for a gedu, the assignment half of the gate refuses a NULL group with a " +
+      "second 42501; an admin passes that half and is then refused by the " +
+      "cap-sanity check, a NULL cap being outside the 1..24 a caller may ask " +
+      "for, which is check_violation rather than 42501 — but the annotation is " +
+      "per function rather than per role, so the positive half is unassertable " +
+      "here either way. Positive paths, for both roles: session-images.test.ts.",
+  },
+  // Keyed on the image id alone, because a per-thumbnail remove control has
+  // nothing else. The group is resolved from the image's own session row, and
+  // that resolution IS the second half of the gate — which is also why a photo
+  // id belonging to another group and one belonging to nothing are refused
+  // identically, so the function cannot be used as an oracle for real ids.
+  delete_group_session_image: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "refused twice over on NULL arguments, for BOTH permitted roles — a NULL " +
+      "image id resolves to no group at all, and the no-such-row arm answers " +
+      "42501 deliberately rather than distinguishing itself from someone " +
+      "else's row. Positive paths, for both roles: session-images.test.ts.",
+  },
+  // The check-only half of removal (00224). It mutates nothing and answers one
+  // question — may this caller remove this photo? — and it exists because the
+  // route deletes the storage OBJECT before the row, on the service-role client:
+  // an admin client must never act for a caller whose authorization has not been
+  // proved, and object-first is what makes a failed removal visible and
+  // retryable. Role-gated like the pair above rather than self-scoping: its
+  // first statement is the same guard primitive, and the group half of the gate
+  // is resolved from the photo's own session row, not from auth.uid() alone.
+  assert_can_delete_session_image: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "byte for byte the delete RPC's gate above, so it is refused the same way " +
+      "on NULL arguments and for BOTH permitted roles — a NULL image id " +
+      "resolves to no group, and the no-such-row arm answers 42501 rather than " +
+      "distinguishing itself from someone else's row, which is what keeps it " +
+      "from being an oracle for real photo ids. Positive paths, for both " +
+      "roles: session-images.test.ts.",
+  },
   set_group_notes: {
     permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:

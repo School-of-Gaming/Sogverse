@@ -975,7 +975,16 @@
       "replyToPlaceholder": "svar@example.com",
       "sendTestEmail": "Skicka testmeddelande",
       "emailSentSuccess": "E-post skickat! Meddelande-ID: {messageId}",
-      "failedToSendRequest": "Kunde inte skicka förfrågan"
+      "failedToSendRequest": "Kunde inte skicka förfrågan",
+      "preview": "Förhandsgranskning",
+      "previewDescription": "Så här återges meddelandet. Det ritas upp här i din webbläsare och skickas inte, och bilderna laddas från den här servern – därför visar en förhandsgranskning även de foton som ett utskick från en utvecklingsmaskin utelämnar.",
+      "refreshPreview": "Uppdatera förhandsgranskningen",
+      "previewError": "Kunde inte rendera mallen: {message}",
+      "previewWidth": {
+        "label": "Förhandsgranskningens bredd",
+        "desktop": "Dator",
+        "mobile": "Mobil"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1420,7 +1429,22 @@
       "reportSentToParents": "Skickad till föräldrarna · {sentAt}",
       "reportSendPartial": "{sent} skickade, {failed} misslyckades",
       "sendReportNoReport": "Det här tillfället har ingen sparad rapport att mejla längre. Ladda om sidan för att se vad som står där nu.",
-      "sendReportFailed": "Rapporten kunde inte mejlas. Ingen familj fick den – försök igen."
+      "sendReportFailed": "Rapporten kunde inte mejlas. Ingen familj fick den – försök igen.",
+      "photosTitle": "Bilder",
+      "photosEmpty": "Lägg till en bild för det här tillfället.",
+      "photosDropHint": "Du kan också släppa bilder här.",
+      "addPhoto": "Lägg till bild",
+      "removePhoto": "Ta bort bild {index}",
+      "photosTrimmed": "En rapport rymmer högst {cap} bilder, så {count, plural, one {bara den första lades till} other {bara de # första lades till}}.",
+      "photoErrorDecodeFailed": "Filen gick inte att öppna. Om den kommer från en iPhone, spara den som JPEG och försök igen.",
+      "photoErrorEncodeFailed": "Bilden kunde inte förberedas på den här enheten. Försök igen eller välj en mindre bild.",
+      "photoErrorNotJpeg": "Filen är varken JPEG, PNG eller WebP. Konvertera den till JPEG och försök igen.",
+      "photoErrorTooLarge": "Bilden är för stor för att laddas upp. Prova en mindre.",
+      "photoErrorBadDimensions": "Bildens mått gick inte att läsa. Prova en annan.",
+      "photoErrorCapReached": "Den här rapporten är redan full. Ta bort en bild för att lägga till en ny.",
+      "photoErrorNotAllowed": "Du kan inte lägga till bilder på det här tillfället.",
+      "photoErrorUploadFailed": "Bilden laddades inte upp. Försök igen.",
+      "photoErrorRemoveFailed": "Bilden kunde inte tas bort. Den finns kvar i rapporten — försök igen."
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -1528,7 +1552,15 @@
     "readMore": "Läs mer",
     "showLess": "Visa mindre",
     "lastEditedBy": "Av {name}",
-    "laterSessions": "{count, plural, one {ytterligare # kommande tillfälle} other {ytterligare # kommande tillfällen}}"
+    "laterSessions": "{count, plural, one {ytterligare # kommande tillfälle} other {ytterligare # kommande tillfällen}}",
+    "photos": {
+      "list": "Bilder från tillfället",
+      "open": "Öppna bild {index} av {count}",
+      "viewer": "Bild {index} av {count}",
+      "previous": "Föregående bild",
+      "next": "Nästa bild",
+      "close": "Stäng bilden"
+    }
   },
   "groups": {
     "materialAction": "Undervisningsmaterial",
@@ -2517,6 +2549,7 @@
       "groupLabel": "Grupp",
       "dateLabel": "Datum",
       "timeLabel": "Tid",
+      "photosHeading": "Bilder från passet",
       "productButton": "Öppna i Min SOG",
       "closing": "Den här rapporten, de tidigare och de kommande passen finns alla på sidan för {productName} i Min SOG.",
       "staffCopyLabel": "Kopia till Gedus och administratörer",

@@ -251,6 +251,12 @@ function toEntry(args: {
       // start instant — so the field is "what has been said so far", which is
       // honestly nothing until the club opens the door.
       attendance: row?.attendance ?? {},
+      // Carried on a future entry for the same reason the marks are: one of
+      // them can be the session in progress, and that is the card a gedu is
+      // looking at while there is something worth photographing in front of
+      // them. An occurrence with no stored row has none, which is the honest
+      // answer rather than a placeholder.
+      images: row?.images ?? [],
       lastEditedBy: toLastEditedBy(row),
     };
   }
@@ -277,6 +283,10 @@ function toEntry(args: {
     staffNote: row?.gedu_note ?? null,
     reportEmailedAt: toReportEmailedAt(row),
     attendance: row?.attendance ?? {},
+    // Straight through in the RPC's own order — `(created_at, id)`, which is
+    // the display order everywhere — because nothing here re-sorts what the
+    // database already ordered.
+    images: row?.images ?? [],
     lastEditedBy: toLastEditedBy(row),
   };
 }

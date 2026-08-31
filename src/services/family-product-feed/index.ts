@@ -8,12 +8,14 @@ export { useFamilyProductFeed } from "./family-product-feed.queries";
 export {
   familyFeedPerson,
   familyFeedSession,
+  familyFeedSessionImage,
   familyFeedSite,
   familyProductFeed,
 } from "./family-product-feed.contracts";
 export type {
   FamilyFeedPerson,
   FamilyFeedSession,
+  FamilyFeedSessionImage,
   FamilyFeedSite,
   FamilyProductFeed,
 } from "./family-product-feed.contracts";

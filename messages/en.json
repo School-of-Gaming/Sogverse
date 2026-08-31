@@ -975,7 +975,16 @@
       "replyToPlaceholder": "reply@example.com",
       "sendTestEmail": "Send Test Email",
       "emailSentSuccess": "Email sent! Message ID: {messageId}",
-      "failedToSendRequest": "Failed to send request"
+      "failedToSendRequest": "Failed to send request",
+      "preview": "Preview",
+      "previewDescription": "How the mail renders. It is drawn here in your browser and not sent, and its images load from this server — so a preview shows the photos a send from a dev machine leaves out.",
+      "refreshPreview": "Refresh preview",
+      "previewError": "Could not render this template: {message}",
+      "previewWidth": {
+        "label": "Preview width",
+        "desktop": "Desktop",
+        "mobile": "Mobile"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1420,7 +1429,22 @@
       "reportSentToParents": "Sent to parents · {sentAt}",
       "reportSendPartial": "{sent} sent, {failed} failed",
       "sendReportNoReport": "This session no longer has a saved report to email. Reload the page to see what it says now.",
-      "sendReportFailed": "The report couldn’t be emailed. No family received it — try again."
+      "sendReportFailed": "The report couldn’t be emailed. No family received it — try again.",
+      "photosTitle": "Photos",
+      "photosEmpty": "Add a photo to this session.",
+      "photosDropHint": "You can also drop photos here.",
+      "addPhoto": "Add photo",
+      "removePhoto": "Remove photo {index}",
+      "photosTrimmed": "A report holds up to {cap} photos, so {count, plural, one {only the first one was} other {only the first # were}} added.",
+      "photoErrorDecodeFailed": "That file couldn’t be opened. If it came from an iPhone, save it as a JPEG and try again.",
+      "photoErrorEncodeFailed": "That photo couldn’t be prepared on this device. Try again, or pick a smaller one.",
+      "photoErrorNotJpeg": "That file isn’t a JPEG, PNG or WebP. Convert it to a JPEG and try again.",
+      "photoErrorTooLarge": "That photo is too large to upload. Try a smaller one.",
+      "photoErrorBadDimensions": "That photo’s size couldn’t be read. Try a different one.",
+      "photoErrorCapReached": "This report is already full. Remove a photo to add another.",
+      "photoErrorNotAllowed": "You can’t add photos to this session.",
+      "photoErrorUploadFailed": "That photo didn’t upload. Try again.",
+      "photoErrorRemoveFailed": "That photo couldn’t be removed. It is still on the report — try again."
     },
     "groupNotes": {
       "heading": "About this group",
@@ -1528,7 +1552,15 @@
     "readMore": "Read more",
     "showLess": "Show less",
     "lastEditedBy": "By {name}",
-    "laterSessions": "{count, plural, one {# more upcoming session} other {# more upcoming sessions}}"
+    "laterSessions": "{count, plural, one {# more upcoming session} other {# more upcoming sessions}}",
+    "photos": {
+      "list": "Session photos",
+      "open": "Open photo {index} of {count}",
+      "viewer": "Photo {index} of {count}",
+      "previous": "Previous photo",
+      "next": "Next photo",
+      "close": "Close photo"
+    }
   },
   "groups": {
     "materialAction": "Teaching materials",
@@ -3203,6 +3235,7 @@
       "groupLabel": "Group",
       "dateLabel": "Date",
       "timeLabel": "Time",
+      "photosHeading": "Photos from this session",
       "productButton": "View in My SOG",
       "closing": "This report, the earlier ones and the upcoming sessions are all on the {productName} page in My SOG.",
       "staffCopyLabel": "Gedu and Admin copy",

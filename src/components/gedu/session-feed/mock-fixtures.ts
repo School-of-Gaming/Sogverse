@@ -1,6 +1,6 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
-import type { AttendanceMark } from "@/components/session-feed";
+import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 import type {
   AttendanceMarks,
   SessionEditor,
@@ -144,6 +144,26 @@ export type SessionFeedCadence = "weekly" | "daily";
 export type SessionSendOutcome = "sent" | "partial" | "fails";
 
 /**
+ * The demo photographs a fixture session can carry.
+ *
+ * They travel as `/preview-art/*.jpg` in the `id` field a stored photo uses,
+ * which the session-image URL helper passes straight through — so the gallery
+ * needs no fixture-only prop and a scene renders the very component the live
+ * page does. The numbers are the files' own pixel sizes, because sizing a box
+ * from the stored dimensions is the whole of the behaviour a reviewer is here
+ * to look at, and the set is deliberately mixed: two 16:9 screenshots, a
+ * squarer one, a square, and a portrait, which is the range real session photos
+ * actually arrive in.
+ */
+export const SESSION_FEED_PHOTO_ART = {
+  build: { id: "/preview-art/session-build.jpg", width: 1600, height: 900 },
+  arena: { id: "/preview-art/session-arena.jpg", width: 1600, height: 900 },
+  parkour: { id: "/preview-art/session-parkour.jpg", width: 1440, height: 810 },
+  badge: { id: "/preview-art/session-badge.jpg", width: 1200, height: 1200 },
+  tower: { id: "/preview-art/session-tower.jpg", width: 900, height: 1600 },
+} as const satisfies Record<string, SessionPhoto>;
+
+/**
  * What each session is, newest first. Index 0 is the furthest-away future
  * session; the leading run of `future` specs is the feed's future horizon, the
  * last of them is the next session, and everything after that is the past.
@@ -189,6 +209,12 @@ export type EntrySpec =
        * ordinary case and produces an empty sheet.
        */
       present?: readonly string[];
+      /**
+       * Photos on the session — meaningful only on the **live** entry, for the
+       * same reason `present` is: the gedu photographing the build is standing
+       * in the room while it is being built.
+       */
+      photos?: readonly SessionPhoto[];
     }
   | {
       kind: "past";
@@ -248,6 +274,13 @@ export type EntrySpec =
        * ignored anywhere else.
        */
       sendOutcome?: SessionSendOutcome;
+      /**
+       * The session's photos, oldest first. Omitted is a session nobody
+       * photographed, which is most of them — the fixture run carries a couple
+       * of photographed weeks rather than every week, because "some sessions
+       * have photos" is the state the feed actually has to look right in.
+       */
+      photos?: readonly SessionPhoto[];
       /**
        * Whether a write-up is **owed** for this session. Defaults to `true`,
        * which is what a session inside the enforcement window is.
@@ -375,10 +408,21 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
 
   // Marked off and reported — the top of the ladder, and the state the green
   // check is for.
+  // ...and photographed to the cap, which is the one state where the strip's
+  // add affordance is absent rather than disabled. It also puts the gallery
+  // last on a signed card — a report, five thumbnails, no gedu note — which is
+  // the arrangement the attribution chip's reserved padding has to clear.
   {
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.oskar],
     report: VILLAGE_SQUARE_REPORT,
+    photos: [
+      SESSION_FEED_PHOTO_ART.build,
+      SESSION_FEED_PHOTO_ART.tower,
+      SESSION_FEED_PHOTO_ART.arena,
+      SESSION_FEED_PHOTO_ART.badge,
+      SESSION_FEED_PHOTO_ART.parkour,
+    ],
     lastEditedBy: SESSION_FEED_EDITORS.sanna,
   },
 
@@ -436,6 +480,16 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     staffNote:
       "Emil and Oskar are better on separate teams next time. It got competitive and there was some sniping in chat before I stepped in.",
     lastEditedBy: SESSION_FEED_EDITORS.sanna,
+  },
+
+  // Photographed on the night and never written up — the state that proves
+  // photos are not the report. The card renders its thumbnails and is *still*
+  // flagged, because what is owed has not moved an inch: a register, a
+  // write-up, and the mail that carries it.
+  {
+    kind: "past",
+    allPresent: true,
+    photos: [SESSION_FEED_PHOTO_ART.badge, SESSION_FEED_PHOTO_ART.arena],
   },
 
   // Nothing at all on this one — the plain gap.
@@ -758,6 +812,7 @@ function toEntry(
         attendance: Object.fromEntries(
           (spec.present ?? []).map((id) => [id, "present" as const]),
         ),
+        images: spec.photos ?? [],
         // Unstamped unless the spec says otherwise, which is what an occurrence
         // with no stored row behind it looks like — and the state the
         // attribution chip renders nothing for.
@@ -774,6 +829,7 @@ function toEntry(
         staffNote: spec.staffNote ?? null,
         reportEmailedAt: emailedAtForSpec(spec, endsAt),
         attendance: marksForSpec(spec),
+        images: spec.photos ?? [],
         lastEditedBy: spec.lastEditedBy ?? null,
       };
     case "no_record":

@@ -1023,7 +1023,16 @@
       "replyToPlaceholder": "reply@example.com",
       "sendTestEmail": "Qu’ nI’moH QIn yIngeH",
       "emailSentSuccess": "QIn ngeHlu’! De’ ID: {messageId}",
-      "failedToSendRequest": "tlhob ngeH Dabe’lu’"
+      "failedToSendRequest": "tlhob ngeH Dabe’lu’",
+      "preview": "QIn bejwI’",
+      "previewDescription": "ngeHbe’lu’ — naDev neH QIn Dalegh. De’wI’vamvo’ mIlloghmey Suqlu’, vaj Hoch mIlloghmey Dalegh; ’ach ngeHlu’chugh, mIlloghmeyvam Hutlh QIn.",
+      "refreshPreview": "QIn yIchu’qa’",
+      "previewError": "De’ tIng chenmoHlaHbe’lu’: {message}",
+      "previewWidth": {
+        "label": "QIn leghmeH Daq",
+        "desktop": "De’wI’ tIn",
+        "mobile": "De’wI’ mach"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1464,7 +1473,22 @@
       "reportSentToParents": "vavpu’ SoSpu’ je lunobta’ · {sentAt}",
       "reportSendPartial": "{sent} lunobta’, {failed} luj",
       "sendReportNoReport": "may’vamvaD ngeHmeH De’ polta’ tu’lu’be’ DaH. Hal yIchIDqa’ ’ej qonta’ yIlegh.",
-      "sendReportFailed": "De’ ngeHlu’laHbe’. pagh qorDu’ Suqta’ — yIboq."
+      "sendReportFailed": "De’ ngeHlu’laHbe’. pagh qorDu’ Suqta’ — yIboq.",
+      "photosTitle": "mIlloghmey",
+      "photosEmpty": "may’vamvaD mIllogh yIchel.",
+      "photosDropHint": "naDev je mIlloghmey yIwoD.",
+      "addPhoto": "mIllogh yIchel",
+      "removePhoto": "mIllogh {index} yIteq",
+      "photosTrimmed": "{cap} mIlloghmey neH ngaSlaH De’ — vaj {count, plural, one {wa’ neH chellu’ta’} other {# neH chellu’ta’}}.",
+      "photoErrorDecodeFailed": "De’vam poSmoHlu’laHbe’. iPhone Do’Ha’! JPEG yIchenmoH ’ej yIboq.",
+      "photoErrorEncodeFailed": "janvam mIllogh vumlaHbe’. yIboq, ghap mIllogh mach yIwIv.",
+      "photoErrorNotJpeg": "JPEG PNG WebP je ghaHbe’ De’vam. JPEG yIchenmoH ’ej yIboq.",
+      "photoErrorTooLarge": "tIn law’ mIlloghvam — ngeHlu’laHbe’. mIllogh mach yInuD.",
+      "photoErrorBadDimensions": "mIllogh juHmey laDlu’laHbe’. latlh yInuD.",
+      "photoErrorCapReached": "buy’ De’vam. wa’ mIllogh yIteq, ’ej latlh yIchel.",
+      "photoErrorNotAllowed": "may’vamvaD mIllogh Dachel net chaw’be’.",
+      "photoErrorUploadFailed": "mIllogh ngeHlu’be’. yIboq.",
+      "photoErrorRemoveFailed": "mIllogh teqlu’be’ — De’vamDaq ratlh. yIboq."
     },
     "groupNotes": {
       "heading": "ghom’a’vam",
@@ -1572,7 +1596,15 @@
     "readMore": "latlh yIlaD",
     "showLess": "puS yIcha’",
     "lastEditedBy": "choHwI’ Qav: {name}",
-    "laterSessions": "{count, plural, one {# may’ veb latlh} other {# may’mey veb latlh}}"
+    "laterSessions": "{count, plural, one {# may’ veb latlh} other {# may’mey veb latlh}}",
+    "photos": {
+      "list": "may’ mIlloghmey",
+      "open": "mIllogh {index}/{count} yIlegh",
+      "viewer": "mIllogh {index}/{count}",
+      "previous": "mIllogh nung yIlegh",
+      "next": "mIllogh veb yIlegh",
+      "close": "mIllogh yImev"
+    }
   },
   "groups": {
     "materialAction": "ghojmeH De’",
@@ -2561,6 +2593,7 @@
       "groupLabel": "ghom",
       "dateLabel": "jaj",
       "timeLabel": "poH",
+      "photosHeading": "poHvam mIlloghmey",
       "productButton": "My SOG-Daq yIlegh",
       "closing": "ja’ghItlhvam, ja’ghItlhmey ngo’ je, poHmey veb je: Hoch {productName} DaqDaq My SOG-Daq.",
       "staffCopyLabel": "Gedupu’vaD che’wI’pu’vaD je ja’ghItlh",

@@ -20,7 +20,21 @@ export { CollapsibleRegion } from "./CollapsibleRegion";
 export { FamilyNoteBlock } from "./FamilyNoteBlock";
 export { SessionFeed } from "./SessionFeed";
 export { SessionFeedAlertBadge } from "./SessionFeedAlertBadge";
+export { SessionPhotoStrip } from "./SessionPhotoStrip";
 export { StaffNoteBlock } from "./StaffNoteBlock";
+export { sessionPhotoErrorCode } from "./photo-failure";
+export {
+  NO_LANDED_PHOTOS,
+  NO_STAGED_PHOTOS,
+  keptPhotos,
+  stagedPhotoCount,
+} from "./staged-photos";
+export type {
+  LandedSessionPhotos,
+  SessionPhotoEditing,
+  StagedSessionPhoto,
+  StagedSessionPhotos,
+} from "./staged-photos";
 export {
   applyDraftToEntry,
   applyPlanDraftToEntry,

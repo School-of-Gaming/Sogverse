@@ -235,6 +235,141 @@ draft into an entry locally carries the existing editor through rather than rewr
 for the same reason: the stamp belongs to the database, and the authoritative answer arrives
 with the refetched row.
 
+## Session photos
+
+**Rule: the gallery and its viewer live here because a family surface cannot import a
+gedu one.** Photos are *content*, like the report beside them, so both feeds draw the
+same row in a card's read state whether an editor is open or not. The staff-only half —
+adding and removing — is a separate block that stays on the gedu side; only the read
+half is shared.
+
+**Rule: every editor a staff card can open carries the block, on both sides of the
+present.** A past session, the one running now, a pre-epoch row and a session still ahead
+all take the same block in the same slot. It was withheld from the future session's plan
+editor on the reasoning that photos document what happened; that is overruled *(owner)* —
+a gedu who may write notes about next Monday has no reason to be refused a picture of it,
+and a rule that let one half of a card's draft cross the present but not the other half
+was a distinction the model does not have. What still separates the two editors is the
+register, which a session that has not started cannot take.
+
+**Rule: the staff block is draft scope, exactly like the register and the two written
+fields.** A picked file is prepared in the browser and *held*; the ✕ on a stored photo
+crosses it out without deleting anything; one Save commits the whole card and Cancel
+throws the whole card away. Photos used to attach the instant they were picked, which made
+them the one thing on an open editor that was already stored and cost a whole idiom to say
+so; the edit is one edit now, and the block greys with everything else while it commits.
+What still happens at pick time is any refusal the *browser* can make — a file the decoder
+will not open — because learning at Save that one of five files was never usable is the
+worst possible moment to be told. What waits for Save is the network, not the verdict on
+the bytes.
+
+**Corollary: a crossed-out photo leaves the strip rather than greying inside it.** That is
+what deleting a paragraph of the write-up looks like, and the two are held to one grammar:
+nothing is stored yet, so nothing needs an undo of its own — Cancel is the undo, for the
+whole card at once. A per-tile restore control would be a second, photo-only notion of
+"unsaved change" inside an editor that already has one.
+
+**Rule: the staged photos belong to whatever awaits the save, not to the block that edits
+them.** A save can half-land — a deletion goes through and an upload is refused — and the
+only honest thing to leave behind is exactly what still needs doing, so each operation
+drops out of the staged set the moment it lands and a second press of Save retries the
+remainder and nothing twice. That state therefore lives with the component that runs and
+awaits the save, and the block is controlled by it; a block holding its own copy would
+have no way to learn which half of a save survived.
+
+**Rule: the save's photo operations are ordered deletions, then uploads, then the written
+record.** Deletions first because swapping a photo at the cap is remove-one-add-one and
+the insert counts stored rows under a lock, so an upload sent before the deletion it is
+making room for is refused for a report the gedu has already made room in. Photos before
+the write-up so the last thing the sequence does is the notes-and-marks save whose own
+partial-failure classification the editor's two error lines are about — a photo refusal in
+the middle of it would leave the card choosing which of two unrelated failures to report.
+
+**Rule: the staff block takes files two ways and treats them as one.** Its whole recessed
+area is a drop target as well as a picker — gedu surfaces are desktop-default, and a
+screenshot is one drag from the folder it landed in — but a dropped file joins the very
+same pipeline: one accept list, one trim to the remaining slots, one normalize-and-stage
+pass, one refusal line. The drop path owns only the two answers a file dialog gives by
+construction, because a drop has neither: the accept list has to be applied by hand, and a
+drop at the cap has to say so in words where the picker simply has no button. A drag over
+the block is always accepted at the event level even when the drop will be refused — an
+unhandled drop makes the browser navigate the tab to the file and takes an open editor
+with it.
+
+**Rule: the cap counts what the report *would* hold** — stored, minus what is crossed out,
+plus what is staged. It is the number on the strip, which is the only one the affordances
+may be derived from, and it is what lets a photo be swapped at the cap without the gedu
+ever meeting a refusal.
+
+**Rule: a refusal during the save keeps the editor open with the draft intact, and says
+what was refused in the photo block's own vocabulary.** A deletion the route would not make
+leaves its photo crossed out rather than restoring the tile — the strip draws the edit as
+the gedu has left it, and one line under it says why that edit has not landed, which is the
+same promise a refused write-up save makes about the text still on screen. Restoring the
+tile would throw away an intention the gedu still holds; a general "nothing saved" line
+would be the wrong words for something only a file-level refusal can explain.
+
+**Rule: the photo type this module renders is declared here, structurally, and is not
+imported from either feed's contracts.** The two documents each carry their own image
+summary with the same three fields (id, width, height), and the ESLint privacy zone
+forbids a family module from reaching for the gedu one — so a locally-declared shape both
+arrays satisfy is what lets one component serve both without an adapter or a hole in the
+zone.
+
+**Rule: every box is arithmetic from the stored dimensions, and nothing measures a
+decoded image.** That is what makes the server's HTML and the browser's first paint agree,
+and it is the only reason a card holding five photos does not reshuffle itself as the
+JPEGs land one after another — the same discipline the report clamp above follows, for the
+same reason. The id is also the only address a renderer needs: the object name is derived
+from it by the shared session-image URL helper, whose leading-slash passthrough is what
+lets fixture art travel in that same field, so the gallery carries no preview-only prop.
+
+**Rule: thumbnails share a height, keep their own widths, sit centred in the row, and
+wrap.** Photos arrive as mixed ratios — mostly 16:9 screenshots, with the odd square or
+portrait — and cropping them to a common box would cut a build in half to make a grid
+tidy. A shared *height* gives the row a baseline and a cap while wrapping absorbs whatever
+width is left, which is what makes one layout work at the 360px floor and on a desktop
+card. Centring is what the wrap costs nothing to buy: a run of natural widths almost never
+fills its last line, and a left-packed remainder reads as a row that failed to finish
+rather than as a set — the wrap points and every box are unchanged, only the slack moves.
+Because a box's ratio comes from data the database only sanity-bounds, the derived width
+is clamped and pictures are drawn contained: a degenerate stored pair letterboxes rather
+than stretching the row off the page.
+
+**Rule: the viewer is built on the shared dialog primitive, at a near-fullscreen size the
+primitive itself expresses.** The primitive already owns the portal, the backdrop, the
+z-layer and an Escape answered by exactly one dialog when several are stacked; a lightbox
+of its own would be a second answer to all four, free to disagree. A photo opened in order
+to be *looked at* wants the screen — dark ground, the picture contained in nearly the whole
+viewport — and that is a width-and-height cap, so it is a size on the dialog rather than a
+fork of it. Anything else wanting the same treatment takes that size, and never a second
+overlay.
+
+**Rule: the viewer holds the whole set and pages through it, wrapping at both ends.**
+Somebody who opened a photo is looking at the report's photos, not at one file, so closing
+the overlay to reach the next thumbnail costs a gesture and puts the reader back on a page
+they deliberately left. Paging is two side arrows plus the left/right arrow keys, and it
+wraps because a short ring keeps both controls able to act at every position — the same
+reasoning that removes them outright for a set of one, where an arrow could never do
+anything at all.
+
+**Corollary: everything in the overlay closes it except the controls, which stop the
+click.** The backdrop, the margins beside a portrait photo and the picture itself all
+close, because touch has neither hover nor an Escape key and the forgiving gesture has to
+be the ordinary one. The arrows and the close button stop propagation, so pressing next is
+never also a request to leave.
+
+**Rule: which photo is open belongs to the gallery, not to the page around it — and it is
+held as a position in the list the gallery drew.** The answer is per-gallery and no surface
+has a use for it, so a feed never threads viewer state through itself; the viewer is
+handed that list and that position and is otherwise controlled, so there is no second copy
+of the set to fall out of step. A position is what "the next one" can be said against,
+which is what paging needs; the viewer reads through it defensively because a list can
+shorten underneath it, and an empty list takes the gallery and its overlay off the page
+outright. Focus returns to the thumbnail that was *pressed*, never to whichever one the
+overlay ended on — the reader's place on the page never moved — and the overlay cannot do
+that itself, because it does not know which thumbnail that was.
+
 ## Contracts the shell holds (and why they are load-bearing)
 
 - **One keyed list, one boundary.** Future entries, month labels, the now-divider and the

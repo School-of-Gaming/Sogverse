@@ -975,7 +975,16 @@
       "replyToPlaceholder": "vastaus@example.com",
       "sendTestEmail": "Lähetä testisähköposti",
       "emailSentSuccess": "Sähköposti lähetetty! Viestin tunnus: {messageId}",
-      "failedToSendRequest": "Pyynnön lähettäminen epäonnistui"
+      "failedToSendRequest": "Pyynnön lähettäminen epäonnistui",
+      "preview": "Esikatselu",
+      "previewDescription": "Näin viesti näkyy. Se piirretään selaimeesi, eikä sitä lähetetä, ja kuvat haetaan tältä palvelimelta – niinpä esikatselussa näkyvät myös ne kuvat, jotka kehityskoneelta lähetetystä viestistä jäävät pois.",
+      "refreshPreview": "Päivitä esikatselu",
+      "previewError": "Mallin hahmontaminen epäonnistui: {message}",
+      "previewWidth": {
+        "label": "Esikatselun leveys",
+        "desktop": "Työpöytä",
+        "mobile": "Mobiili"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1420,7 +1429,22 @@
       "reportSentToParents": "Lähetetty vanhemmille · {sentAt}",
       "reportSendPartial": "{sent} lähetetty, {failed} epäonnistui",
       "sendReportNoReport": "Tällä kerralla ei ole enää tallennettua raporttia lähetettäväksi. Lataa sivu uudelleen nähdäksesi nykyisen sisällön.",
-      "sendReportFailed": "Raportin lähetys ei onnistunut. Yksikään perhe ei saanut sitä – yritä uudelleen."
+      "sendReportFailed": "Raportin lähetys ei onnistunut. Yksikään perhe ei saanut sitä – yritä uudelleen.",
+      "photosTitle": "Kuvat",
+      "photosEmpty": "Lisää kuva tälle kerralle.",
+      "photosDropHint": "Voit myös pudottaa kuvia tähän.",
+      "addPhoto": "Lisää kuva",
+      "removePhoto": "Poista kuva {index}",
+      "photosTrimmed": "Raporttiin mahtuu enintään {cap} kuvaa, joten niistä lisättiin {count, plural, one {vain yksi} other {vain #}}.",
+      "photoErrorDecodeFailed": "Tiedostoa ei voitu avata. Jos kuva on iPhonesta, tallenna se JPEG-muotoon ja yritä uudelleen.",
+      "photoErrorEncodeFailed": "Kuvaa ei voitu käsitellä tällä laitteella. Yritä uudelleen tai valitse pienempi kuva.",
+      "photoErrorNotJpeg": "Tiedosto ei ole JPEG, PNG tai WebP. Muunna se JPEG-muotoon ja yritä uudelleen.",
+      "photoErrorTooLarge": "Kuva on liian suuri ladattavaksi. Kokeile pienempää.",
+      "photoErrorBadDimensions": "Kuvan mittoja ei voitu lukea. Kokeile toista kuvaa.",
+      "photoErrorCapReached": "Tämä raportti on jo täynnä. Poista kuva, jotta voit lisätä uuden.",
+      "photoErrorNotAllowed": "Et voi lisätä kuvia tähän kertaan.",
+      "photoErrorUploadFailed": "Kuvan lataus ei onnistunut. Yritä uudelleen.",
+      "photoErrorRemoveFailed": "Kuvan poistaminen ei onnistunut. Kuva on yhä raportissa — yritä uudelleen."
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
@@ -1528,7 +1552,15 @@
     "readMore": "Lue lisää",
     "showLess": "Näytä vähemmän",
     "lastEditedBy": "Muokannut {name}",
-    "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}"
+    "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}",
+    "photos": {
+      "list": "Tämän kerran kuvat",
+      "open": "Avaa kuva {index}/{count}",
+      "viewer": "Kuva {index}/{count}",
+      "previous": "Edellinen kuva",
+      "next": "Seuraava kuva",
+      "close": "Sulje kuva"
+    }
   },
   "groups": {
     "materialAction": "Opetusmateriaalit",
@@ -2517,6 +2549,7 @@
       "groupLabel": "Ryhmä",
       "dateLabel": "Päivä",
       "timeLabel": "Aika",
+      "photosHeading": "Kuvia tästä kerrasta",
       "productButton": "Avaa Oma SOG",
       "closing": "Tämä raportti, aiemmat raportit ja tulevat kerrat löytyvät kaikki Oma SOG -sivulta kohdasta {productName}.",
       "staffCopyLabel": "Kopio Geduille ja ylläpitäjille",

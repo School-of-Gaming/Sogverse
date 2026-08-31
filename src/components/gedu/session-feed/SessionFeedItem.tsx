@@ -9,9 +9,11 @@ import { Card } from "@/components/ui/card";
 import { Markdown } from "@/components/ui/markdown";
 import {
   SessionAttributionChip,
+  SessionPhotoGallery,
   SessionReport,
   hasReport,
   type SessionLabels,
+  type SessionPhoto,
 } from "@/components/session-feed";
 import { cn } from "@/lib/utils";
 import { AttendanceSummary } from "./AttendanceSummary";
@@ -25,6 +27,8 @@ import {
   type SessionCompleteness,
 } from "./entry-state";
 import type { SessionReportSendResult } from "./send-report";
+import { SessionPhotoStrip } from "./SessionPhotoStrip";
+import type { SessionPhotoEditing } from "./staged-photos";
 import { SessionPlanEditor } from "./SessionPlanEditor";
 import { SessionRecordEditor } from "./SessionRecordEditor";
 import { SessionReportSend } from "./SessionReportSend";
@@ -100,6 +104,15 @@ interface SessionFeedItemProps {
   sendError: string | null;
   /** Email this session's report to the families. */
   onSendReport: () => void;
+  /**
+   * This entry's staged photo edit, and the controls that change it.
+   *
+   * **It belongs to the feed, not to this card**, for the same reason the save
+   * itself does: a Save that half-lands has to leave behind exactly what still
+   * needs doing, and only the component that awaits the save knows what that
+   * is. The card renders it and edits it; it never commits it.
+   */
+  photoEditing: SessionPhotoEditing;
   /**
    * Hand the Edit button up to the feed as it mounts.
    *
@@ -228,6 +241,7 @@ export function SessionFeedItem({
   sendResult,
   sendError,
   onSendReport,
+  photoEditing,
   registerEditButton,
   onToggleEdit,
   onCancelEdit,
@@ -243,6 +257,47 @@ export function SessionFeedItem({
   const plannable = isPlannableEntry(entry, now);
   const editorId = useId();
 
+  /**
+   * This session's photos, or an empty run.
+   *
+   * A pre-epoch gap has no field for them and can have none — a photo needs a
+   * stored row, and a gap is the absence of one — so the two carded kinds
+   * answer and the third answers with nothing.
+   */
+  const photos: readonly SessionPhoto[] =
+    entry.kind === "no_record" ? [] : entry.images;
+
+  /**
+   * The photo block, on **every** editor this card can open — the pre-epoch
+   * row's and the future session's plan editor included.
+   *
+   * Two exclusions used to live here and both have gone, each for its own
+   * reason. The no_record editor's was attach-on-pick: a photo committing the
+   * moment it was picked would have materialized the session and turned the
+   * quiet dashed row into a card mid-edit. Photos are draft scope now — a Save
+   * carries text and photos together — so nothing mutates until the gedu
+   * commits. It mattered in practice: on a group whose past sessions all predate
+   * the record-keeping epoch, the exclusion left no photo affordance anywhere on
+   * the page (owner-found).
+   *
+   * The **plan** editor's exclusion was the plan's own reasoning — photos
+   * document what happened — and the owner has reversed it: a gedu who can write
+   * notes about next Monday has no reason to be refused a picture of it. So one
+   * block, one slot and one set of staged semantics on both sides of the
+   * present; what still separates the two editors is the register, which a
+   * session that has not started cannot take.
+   */
+  const photoStrip = (
+    <SessionPhotoStrip
+      open={editing}
+      photos={photos}
+      // Greyed with everything else while the card commits: what is staged here
+      // is part of what this Save is carrying.
+      disabled={committing}
+      {...photoEditing}
+    />
+  );
+
   const recordEditor = recordable && (
     <CollapsibleRegion open={editing} instant id={editorId}>
       <SessionRecordEditor
@@ -251,6 +306,7 @@ export function SessionFeedItem({
         initialState={editorStateFromEntry(entry, roster)}
         committing={committing}
         error={saveError}
+        photoStrip={photoStrip}
         onCancel={onCancelEdit}
         onSave={onSave}
       />
@@ -342,6 +398,13 @@ export function SessionFeedItem({
         // chip's size does not change with the viewport) leaves ~11px between
         // the content's bottom edge and the top of the chip. Re-derive this if
         // the chip's height or its `-bottom-*` offset ever moves.
+        //
+        // **Re-checked when photos landed, and it did not have to change.** The
+        // gallery can now be the card's last block — a report with photos and no
+        // gedu note ends on a row of thumbnails — but the reservation is derived
+        // from the *chip's* geometry, not from what happens to be underneath it,
+        // and the chip's size does not change. The ~11px it leaves clears a
+        // thumbnail's bottom border exactly as it clears the staff-note box's.
         signedBy !== null && "pb-8 sm:pb-8",
         entry.kind === "future" && prominent && "border-info/50",
       )}
@@ -416,6 +479,7 @@ export function SessionFeedItem({
             initialState={planEditorStateFromEntry(entry)}
             committing={committing}
             error={saveError}
+            photoStrip={photoStrip}
             onCancel={onCancelEdit}
             onSave={onSave}
           />
@@ -577,8 +641,8 @@ function SessionEntryBody({
 }
 
 /**
- * The two written halves of an entry — the family-facing report, then the
- * gedu-only note in its padlocked panel.
+ * What an entry has to show for itself — the family-facing report, the photos
+ * beside it, then the gedu-only note in its padlocked panel.
  *
  * One component for both sides of the present, because they render identically
  * on both: a note written on Sunday about Monday and one written on Tuesday
@@ -587,6 +651,19 @@ function SessionEntryBody({
  * not here, because a past entry says the same thing a different way — the
  * missing report is one of the gaps its header is already alerting on, and a
  * second line in the body restating it would be the same nag twice.
+ *
+ * **The photos sit inside the report's own block, under the write-up and above
+ * the Send.** They are content, like the text — the same shared gallery a family
+ * reads them through — and they go out in the same mail that button sends, so a
+ * gedu about to press it sees the whole of what is going. That also makes the
+ * order identical to the open editor's, where the strip sits in exactly this
+ * slot: the collapsed card and the expanded one say the same things in the same
+ * sequence.
+ *
+ * The block renders for photos *without* a report, which is a state the model
+ * genuinely has — a session photographed on the night and written up later. The
+ * send row is still gated on there being a write-up to send, so nothing offers
+ * to mail a report that does not exist.
  */
 function WrittenFields({
   entry,
@@ -600,9 +677,14 @@ function WrittenFields({
 }) {
   return (
     <>
-      {hasText(entry.report) && (
+      {(hasText(entry.report) || entry.images.length > 0) && (
         <div className="space-y-2">
-          <SessionReport markdown={entry.report} clamped={clampReport} />
+          {hasText(entry.report) && (
+            <SessionReport markdown={entry.report} clamped={clampReport} />
+          )}
+          {/* Draws nothing at all on an empty run, so no space is held open for
+              photos a session may never have. */}
+          <SessionPhotoGallery photos={entry.images} />
           {reportAction}
         </div>
       )}

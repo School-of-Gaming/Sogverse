@@ -100,6 +100,17 @@ JSON the old contracts strip) do so for free; a migration the live app would act
 break under (a drop, a rename, a tightened constraint the old writes violate) needs its
 own compatibility step regardless of staging.
 
+**"Breaks under" is judged by severity, not by the letter of a parse error** (owner
+ruling, 2026-08-31). Transient read-side breakage that heals itself the moment the
+deploy completes — the canonical case: a `.strict()` response schema in the old app
+briefly failing to parse a widened document, so one page fails to load for under a
+minute — is within the accepted window, not the carve-out. Widen the RPC in place;
+do not build a versioned twin plus a cleanup migration for it. The compatibility
+step is reserved for breakage that is *permanent or write-side* (the drop / rename /
+tightened-constraint class, where old writes fail or data is wrong rather than a
+read retrying its way out), or on a surface where even a minute of failure is
+unacceptable — payments and auth, the same list that justifies staging at all.
+
 A plan splits its work into stages that land on `dev` separately only when a constraint
 forces it, and the plan names that constraint. The one that qualifies: a **high-risk or
 high-visibility area** — payments is the standing example — where even a minute of

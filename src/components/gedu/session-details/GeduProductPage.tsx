@@ -11,6 +11,8 @@ import { platformForTopic } from "@/lib/products/topics";
 import { useNow } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
 import {
+  useAddSessionImage,
+  useDeleteSessionImage,
   useEmailSessionReport,
   useGeduGroupFeed,
   useRecordAttendance,
@@ -174,6 +176,12 @@ function Workspace({
   const setSessionNotes = useSetSessionNotes(groupId);
   const emailSessionReport = useEmailSessionReport(groupId);
   const recordAttendance = useRecordAttendance(groupId);
+  // The photo block's two writes, made by the card's Save rather than by the
+  // picker. Both refresh this group's feed, which is the document the card's
+  // photos are drawn from — so a saved photo arrives on the card, and a removed
+  // one leaves it, with nothing here refetching by hand.
+  const addSessionImage = useAddSessionImage(groupId);
+  const deleteSessionImage = useDeleteSessionImage(groupId);
   const setGroupNotes = useSetGroupNotes(groupId);
   const setSiteNotes = useSetSiteNotes(groupId);
   // Both platforms' mutations, unconditionally: a hook cannot be called behind
@@ -358,14 +366,17 @@ function Workspace({
    * page mounts the same feed against a differently-keyed set of mutations and
    * must behave identically down to which failures count as partial.
    */
-  const { saveEntry, sendReport } = createSessionEntrySaves({
-    groupId,
-    entries,
-    roster: feedRoster,
-    setSessionNotes,
-    recordAttendance,
-    emailSessionReport,
-  });
+  const { saveEntry, sendReport, addPhoto, removePhoto } =
+    createSessionEntrySaves({
+      groupId,
+      entries,
+      roster: feedRoster,
+      setSessionNotes,
+      recordAttendance,
+      emailSessionReport,
+      addSessionImage,
+      deleteSessionImage,
+    });
 
   const handleSaveGroupNotes = async (draft: GroupNotesDraft) => {
     await setGroupNotes.mutateAsync({
@@ -444,6 +455,8 @@ function Workspace({
       onEditEntry={handleEditEntry}
       onSaveEntry={saveEntry}
       onSendReport={sendReport}
+      onAddPhoto={addPhoto}
+      onRemovePhoto={removePhoto}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}

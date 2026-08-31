@@ -21,6 +21,12 @@ import {
   type SessionReportEmailOptions,
 } from "./session-report";
 import { SESSION_REPORT_SAMPLES } from "./fixtures/session-report-samples";
+import {
+  SESSION_REPORT_PHOTO_COUNTS,
+  SESSION_REPORT_PHOTO_COUNT_LABELS,
+  sessionReportPhotoFixtures,
+} from "./fixtures/session-report-photos";
+import type { EmailRenderContext } from "./render-context";
 import type { EmailTranslator } from "./translator";
 import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
@@ -90,8 +96,16 @@ export interface TemplateDefinition {
   /**
    * Validate raw params against `schema`, then build the subject line, HTML
    * email content and Reply-To. Throws a ZodError when params are malformed.
+   *
+   * `context` says where the render is going, and defaults to the send — the
+   * destination that has to be safe when a caller has not thought about it.
    */
-  render: (rawParams: unknown, t: EmailTranslator, locale: string) => RenderedTemplate;
+  render: (
+    rawParams: unknown,
+    t: EmailTranslator,
+    locale: string,
+    context?: EmailRenderContext,
+  ) => RenderedTemplate;
   /** Optional: transform UI field values into API params (e.g. a seat select → an `isSelfSeat` boolean). */
   resolveParams?: (params: Record<string, string>) => TemplateParams;
 }
@@ -107,14 +121,22 @@ function defineTemplate<P extends TemplateParams>(entry: {
   label: string;
   fields: TemplateField[];
   schema: z.ZodType<P>;
-  /** Build the HTML email content from validated params. */
-  build: (params: P, t: EmailTranslator, locale: string) => string;
+  /**
+   * Build the HTML email content from validated params. The context is there
+   * for a template whose markup depends on where the render is going — one
+   * does, and it is the fixture photographs, whose URLs are only fetchable
+   * from a dev machine by the browser previewing them. A builder that does not
+   * care simply declares three parameters and takes the fourth for free.
+   */
+  build: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
   /**
    * Generate the email subject line from validated params and translator. The
    * locale is there for a subject that prints a formatted value of its own —
-   * most subjects ignore it.
+   * most subjects ignore it, as most ignore the context, which is passed for
+   * the same reason `build` takes it: a subject derived from the same resolved
+   * options has to resolve them the same way.
    */
-  subject: (params: P, t: EmailTranslator, locale: string) => string;
+  subject: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
   /**
    * Reply-To for this template, defaulting to the support inbox — which is the
    * answer for every mail we send *to* a family. Only a template whose real
@@ -128,11 +150,11 @@ function defineTemplate<P extends TemplateParams>(entry: {
   return {
     ...rest,
     schema,
-    render: (rawParams, t, locale) => {
+    render: (rawParams, t, locale, context = { to: "send" }) => {
       const params = schema.parse(rawParams);
       return {
-        subject: subject(params, t, locale),
-        html: build(params, t, locale),
+        subject: subject(params, t, locale, context),
+        html: build(params, t, locale, context),
         replyTo: replyTo?.(params) ?? SUPPORT_EMAIL,
       };
     },
@@ -245,9 +267,31 @@ const SESSION_REPORT_COPY_OPTIONS = SESSION_REPORT_COPIES.map((value) => ({
   value,
 }));
 
+/**
+ * How many demo photos to hang on the fixture session.
+ *
+ * A count rather than a picker: what is worth looking at here is the grid —
+ * how a pair sits at a desktop width, what an odd one does with the row it has
+ * to itself, and what all of it reserves when a client blocks every image —
+ * and which particular screenshots fill it makes no difference to any of that.
+ * The order the fixtures come in is chosen so a small count is already mixed.
+ */
+const SESSION_REPORT_PHOTO_OPTIONS = SESSION_REPORT_PHOTO_COUNTS.map((value) => ({
+  label: SESSION_REPORT_PHOTO_COUNT_LABELS[value],
+  value,
+}));
+
 function resolveSessionReport(
-  { sample: sampleId, viewerTimezone, reportMarkdown, copy, ...rest }: SessionReportParams,
+  {
+    sample: sampleId,
+    viewerTimezone,
+    reportMarkdown,
+    copy,
+    photoCount,
+    ...rest
+  }: SessionReportParams,
   locale: string,
+  context: EmailRenderContext,
 ): SessionReportEmailOptions {
   const sample =
     SESSION_REPORT_SAMPLES.find((candidate) => candidate.id === sampleId) ??
@@ -265,6 +309,7 @@ function resolveSessionReport(
     }),
     sessionTime: formatTimeRange(sample.startsAt, sample.endsAt, locale, viewerTimezone),
     reportMarkdown: reportMarkdown.trim() === "" ? sample.markdown : reportMarkdown,
+    photos: sessionReportPhotoFixtures(Number(photoCount), context),
   };
 }
 
@@ -398,6 +443,8 @@ const sessionReportParamsSchema = z.object({
    * reaches this schema through the UI can omit it.
    */
   copy: z.enum(SESSION_REPORT_COPIES),
+  /** How many demo photos to attach. Required for the same reason `copy` is. */
+  photoCount: z.enum(SESSION_REPORT_PHOTO_COUNTS),
 });
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
@@ -597,6 +644,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "groupName", label: "Group Name", placeholder: "Usvalaakso: Kettukallio" },
       { key: "copy", label: "Which copy", type: "select", options: SESSION_REPORT_COPY_OPTIONS },
       { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
+      { key: "photoCount", label: "Photos", type: "select", options: SESSION_REPORT_PHOTO_OPTIONS },
       { key: "viewerTimezone", label: "Timezone to format in", type: "select", options: VIEWER_TIMEZONE_OPTIONS },
       {
         key: "reportMarkdown",
@@ -611,7 +659,9 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       },
     ],
     schema: sessionReportParamsSchema,
-    build: (p, t, locale) => buildSessionReportEmail(t, locale, resolveSessionReport(p, locale)),
-    subject: (p, t, locale) => sessionReportSubject(t, resolveSessionReport(p, locale)),
+    build: (p, t, locale, context) =>
+      buildSessionReportEmail(t, locale, resolveSessionReport(p, locale, context)),
+    subject: (p, t, locale, context) =>
+      sessionReportSubject(t, resolveSessionReport(p, locale, context)),
   }),
 };

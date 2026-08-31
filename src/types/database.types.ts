@@ -617,6 +617,55 @@ export type Database = {
           },
         ]
       }
+      group_session_images: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          height: number
+          id: string
+          session_id: string
+          width: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          height: number
+          id?: string
+          session_id: string
+          width: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          height?: number
+          id?: string
+          session_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_session_images_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_session_images_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_session_images_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "group_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_sessions: {
         Row: {
           created_at: string
@@ -2148,6 +2197,16 @@ export type Database = {
         }[]
       }
       accept_gedu_contract: { Args: { p_version: string }; Returns: string }
+      add_group_session_image: {
+        Args: {
+          p_group_id: string
+          p_height: number
+          p_max_images: number
+          p_session_date: string
+          p_width: number
+        }
+        Returns: string
+      }
       admin_enroll_participant: {
         Args: { p_participant_id: string; p_product_id: string }
         Returns: Json
@@ -2176,6 +2235,10 @@ export type Database = {
         Returns: Json
       }
       assert_admin: { Args: never; Returns: undefined }
+      assert_can_delete_session_image: {
+        Args: { p_image_id: string }
+        Returns: string
+      }
       assert_role: {
         Args: { p_role: Database["public"]["Enums"]["user_role"] }
         Returns: undefined
@@ -2264,6 +2327,10 @@ export type Database = {
           p_waitlist_enabled?: boolean
         }
         Returns: string
+      }
+      delete_group_session_image: {
+        Args: { p_image_id: string }
+        Returns: undefined
       }
       demote_to_waitlist: {
         Args: { p_participation_id: string }

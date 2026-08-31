@@ -118,8 +118,16 @@ ban, and the ESLint config says so.
   This does not widen the directory's claim — the panel is still the group workspace's
   component, still staff-only, and still inside the family-privacy import zone; it simply
   has a second staff surface rendering the same site.
-- **`session-entry-saves.ts`** — what a session editor's Save and Send *do* between the
-  draft and the writes, taking the mutations as arguments so both shells run one copy.
+- **`session-entry-saves.ts`** — what a session card's writes *do* between what is on
+  screen and the mutations behind them: the Save's diff and ordering, the Send's failure
+  classification, and the photo attach and remove. All of them take the mutations as
+  arguments so both shells run one copy. The photo pair is the thinnest of the five and is
+  here anyway, because turning an entry id back into the (group, date) pair Postgres keys a
+  session by is the same arithmetic every other write on this page makes. **Both are called
+  by the card's Save, never by the picker** — a photo is held in the browser with the rest
+  of the draft — and the *sequencing* of the three writes is the feed's rather than this
+  module's, because dropping each photo operation from the staged set as it lands is what
+  makes a retry after a half-landed save do only what is left.
 - **`site-details-save.ts`** — the same split for the site panel's details save: which of
   the two routes each field travels on, and what a half-failed save leaves behind, taking
   both mutations as arguments. It has one caller now (the admin site page) and had three;

@@ -6,6 +6,8 @@ import {
   buildSessionReportEmail,
   sessionReportSubject,
 } from "@/lib/email-templates/session-report";
+import type { SessionReportPhoto } from "@/lib/email-templates/session-photos";
+import { sessionImageUrl } from "@/lib/images/session-image-url";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
@@ -61,6 +63,17 @@ interface SessionFacts {
   productType: ProductType;
   productTimezone: string;
   productTranslations: { locale: string; name: string }[];
+  /**
+   * The session's photos as the mail needs them, resolved once for the whole
+   * send: the family mails and the staff copy carry the same pictures, because
+   * the copy is the same mail behind a banner.
+   *
+   * **This is the snapshot.** What is here is what the session had at the
+   * moment the button was pressed; a photo added afterwards retriggers nothing
+   * and a photo removed afterwards simply stops loading, inside a box the
+   * template reserved from the stored dimensions rather than from the picture.
+   */
+  photos: SessionReportPhoto[];
   origin: string;
 }
 
@@ -303,6 +316,25 @@ export const POST = defineRoute({
 
       if (participationsError) throw participationsError;
 
+      // The session's photos, in the order every surface shows them —
+      // `(created_at, id)`, the same ordering the feed RPCs apply, with the id
+      // breaking a sub-tick tie. Read here rather than carried on the claim
+      // because the claim is one guarded UPDATE on the session row and has no
+      // business growing a join.
+      //
+      // A read that fails takes the whole send with it, and that is deliberate:
+      // the mail is a snapshot and there is no second one, so quietly mailing a
+      // photo-less report would lose those pictures for every family
+      // permanently. Throwing releases the claim and hands the button back.
+      const { data: images, error: imagesError } = await adminClient
+        .from("group_session_images")
+        .select("id, width, height")
+        .eq("session_id", claim.id)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true });
+
+      if (imagesError) throw imagesError;
+
       // A seat whose holder is not their own paying customer belongs to
       // somebody's child, and the contact is the parent linked earliest. Read
       // for every seat in one trip rather than per seat — a group is a handful
@@ -373,6 +405,21 @@ export const POST = defineRoute({
         productType: group.product.product_type,
         productTimezone: group.product.timezone,
         productTranslations: group.product.product_translations,
+        // Resolved here rather than in the builder, which by rule composes no
+        // URLs of its own. The bucket is public and the object's unguessable
+        // name is the credential — an email client fetches an image with a bare
+        // GET, so this URL has to work with no session behind it, and it is the
+        // same URL the app renders.
+        //
+        // Its origin is the SUPABASE one, not the request's: unlike the links
+        // below, an image src carries no token and sends the reader nowhere, so
+        // there is nothing for a spoofed Host to steal and nothing to derive
+        // from one.
+        photos: images.map((image) => ({
+          src: sessionImageUrl(image.id),
+          width: image.width,
+          height: image.height,
+        })),
         // The TRUSTED origin, never the raw Host header: these links go to
         // families who have every reason to trust them.
         origin: getOrigin(request),
@@ -523,6 +570,7 @@ async function sendFamilyMail(
       facts.productTimezone,
     ),
     reportMarkdown: facts.reportMarkdown,
+    photos: facts.photos,
     // Keyed by participation, not by product: two siblings in one club have two
     // pages, and this mail is about one of them. Always the `/parent` root —
     // every recipient here is an adult, including one on a seat of their own.
@@ -594,6 +642,9 @@ async function sendStaffCopy({
       facts.productTimezone,
     ),
     reportMarkdown: facts.reportMarkdown,
+    // The same photos the families were sent: the copy is a record of what went
+    // out, and a record with the pictures missing is a different mail.
+    photos: facts.photos,
     productUrl: `${facts.origin}${workspacePath}`,
     staffCopy: true,
   };

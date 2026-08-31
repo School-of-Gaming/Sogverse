@@ -5,18 +5,31 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 /**
- * How wide a dialog is allowed to get.
+ * How much of the viewport a dialog is allowed to take.
  *
  * `default` is the width every dialog in the app had before there was a
  * choice; `wide` is for a dialog whose content is a *layout* rather than a
  * message — a browsing grid beside a reference column, where two thirds of a
  * narrow box is two tiles across and unusable.
+ *
+ * `fullscreen` is the third kind: a dialog whose content *is* the viewport —
+ * a picture the reader opened in order to look at it properly. It drops the
+ * width cap entirely and takes the wrapper's full height, so a caller can
+ * centre something inside the whole screen rather than inside a card. It is a
+ * size on the primitive rather than a lightbox of its own precisely because
+ * the portal, the backdrop, the z-layer and the one-dialog-answers-Escape
+ * register are the parts that are easy to get subtly wrong, and there must go
+ * on being exactly one answer to each.
  */
-export type DialogSize = "default" | "wide";
+export type DialogSize = "default" | "wide" | "fullscreen";
 
 const DIALOG_SIZE_CLASS: Record<DialogSize, string> = {
   default: "max-w-lg",
   wide: "max-w-6xl",
+  // `h-full` is what the width caps do not need: the other two sizes are as
+  // tall as their content, and this one has to hand its child the height to
+  // centre a picture in.
+  fullscreen: "h-full max-w-none",
 };
 
 /**

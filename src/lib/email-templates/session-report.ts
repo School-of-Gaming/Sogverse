@@ -1,7 +1,8 @@
 import { wrapInLayout } from "./layout";
 import { escapeHtml, paragraph, styledName, styledProductName } from "./utils";
-import { calloutPanel, ctaButton } from "./blocks";
+import { calloutPanel, ctaButton, sectionLabel } from "./blocks";
 import { renderMarkdownForEmail } from "./markdown";
+import { sessionPhotoGrid, type SessionReportPhoto } from "./session-photos";
 import { DARK_THEME } from "@/lib/constants/colors";
 import type { EmailTranslator } from "./translator";
 
@@ -22,6 +23,13 @@ import type { EmailTranslator } from "./translator";
  * the first: on a phone the shell's card already spends 32px a side, and a
  * nested card spent another 24px, leaving the gedu's paragraphs a column too
  * narrow to read without wrapping every few words.
+ *
+ * **A session's photos come under the report, and they are the one thing in
+ * any mail this codebase sends that is content rather than decoration.** The
+ * grid and every box in it is `session-photos.ts`'s; what matters here is that
+ * the mail is written to be worth reading with none of them loaded, which is
+ * the render a good share of inboxes give by default and the only render an
+ * already-sent mail has once a photo is deleted.
  *
  * **Names and times arrive formatted, in the parent's locale.** The caller
  * knows which locale the parent reads in; this builder only has a translator
@@ -69,6 +77,18 @@ export interface SessionReportEmailOptions {
   /** App-generated link to the product's page in My SOG, where the reports live. */
   productUrl: string;
   /**
+   * The session's photos, oldest first — the order every surface shows them in.
+   * Absent or empty is the mail this template sent before photos existed, which
+   * is what most reports will go on being.
+   *
+   * **The mail is a snapshot.** These are the photos the session had at the
+   * moment it was sent: one added afterwards does not retrigger anything, and
+   * one removed afterwards simply stops loading — which costs the reader
+   * nothing, because the box it left behind was reserved from the stored
+   * dimensions and was never the picture's to hold open.
+   */
+  photos?: readonly SessionReportPhoto[];
+  /**
    * Render the copy that goes to the sender and the admins rather than the mail
    * that goes to a family: the same report, opened by the banner that says so.
    * Absent means the family mail, which is what every send but one is.
@@ -95,6 +115,7 @@ export function buildSessionReportEmail(
     sessionTime,
     reportMarkdown,
     productUrl,
+    photos = [],
     staffCopy = false,
   }: SessionReportEmailOptions,
 ): string {
@@ -116,6 +137,7 @@ export function buildSessionReportEmail(
     <div style="margin:0 0 24px;">
       ${renderMarkdownForEmail(reportMarkdown)}
     </div>
+    ${photosSection(t, photos)}
     ${rule()}
     ${ctaButton({ href: productUrl, label: t("sessionReport.productButton") })}
     ${paragraph(t("sessionReport.closing", { productName: styledProductName(productName) }))}
@@ -145,6 +167,29 @@ function staffCopyBanner(t: EmailTranslator): string {
     label: t("sessionReport.staffCopyLabel"),
     paragraphs: [t("sessionReport.staffCopyBody"), t("sessionReport.staffCopyPrivacy")],
   });
+}
+
+/**
+ * The photos, under a line saying what they are.
+ *
+ * **They sit below the report and above the rule**, because they are part of
+ * what the gedu wrote rather than a postscript to it: the rule under them is
+ * the one that already separated the report from what the mail asks next, and
+ * the photos belong on the report's side of it. A session with no photos gets
+ * nothing at all — no heading, no empty grid, no space held open for something
+ * that is not coming.
+ *
+ * The lead-in is `sectionLabel` rather than a heading: the report above it
+ * carries the gedu's own headings, and a second-level heading here would
+ * compete with them for the same rank.
+ */
+function photosSection(
+  t: EmailTranslator,
+  photos: readonly SessionReportPhoto[],
+): string {
+  if (photos.length === 0) return "";
+  return `${sectionLabel(t("sessionReport.photosHeading"))}
+    ${sessionPhotoGrid(photos)}`;
 }
 
 /**

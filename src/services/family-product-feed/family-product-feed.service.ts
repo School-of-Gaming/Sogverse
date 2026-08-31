@@ -56,8 +56,8 @@ export class FamilyProductFeedService {
    * Everything one (participant × product) enrollment renders, in a single
    * round trip: whoever holds the seat, the product shell and its schedule, the
    * group and its public note, the site on in-person products, the gedus, and
-   * the group's **full** stored session history with that one participant's
-   * attendance marks.
+   * the group's **full** stored session history — reports, photos, and that one
+   * participant's attendance marks.
    *
    * The whole history comes back at once and that is load-bearing rather than
    * merely convenient. The client projects past occurrences from the schedule
