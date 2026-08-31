@@ -129,17 +129,17 @@ export type FamilySessionEntry =
   | FamilyPastSessionEntry;
 
 /**
- * The venue an in-person product runs at, as a family may read it.
+ * The site an in-person product runs at, as a family may read it.
  *
  * **The public half only.** The site record also carries a staff note (door
  * codes, who locks up, where the key is signed out) and this type has nowhere
  * to put it.
  */
-export interface FamilyProductVenue {
+export interface FamilyProductSite {
   name: string;
-  /** Street address, or `null` when the venue record has none. */
+  /** Street address, or `null` when the site record has none. */
   address: string | null;
-  /** The venue note written for families. `null` = nothing standing to say. */
+  /** The site note written for families. `null` = nothing standing to say. */
   publicNote: string | null;
 }
 

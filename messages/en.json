@@ -463,16 +463,16 @@
       "locationPicker": {
         "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren’t options here.",
         "change": "Change",
-        "noVenueHint": "No physical venue. Parents in this municipality will see the club when they browse.",
+        "noSiteHint": "No physical site. Parents in this municipality will see the club when they browse.",
         "chooseMunicipality": "Choose a municipality",
         "municipalityPickerTitle": "Choose a municipality",
-        "chooseVenue": "Choose a venue",
-        "venuePickerTitle": "Choose a venue",
-        "venuePickerDescription": "Search the venue by name to find it in one step, or browse down to its municipality to see the venues there. If it isn’t there yet, open a new one.",
-        "venuesIn": "Venues in {name}",
-        "venuesInDescription": "Pick one that is already here, or add a new one.",
-        "venuesHereEmpty": "No venues here yet.",
-        "addVenue": "Add a venue",
+        "chooseSite": "Choose a site",
+        "sitePickerTitle": "Choose a site",
+        "sitePickerDescription": "Search the site by name to find it in one step, or browse down to its municipality to see the sites there. If it isn’t there yet, open a new one.",
+        "sitesIn": "Sites in {name}",
+        "sitesInDescription": "Pick one that is already here, or add a new one.",
+        "sitesHereEmpty": "No sites here yet.",
+        "addSite": "Add a site",
         "changeMunicipality": "Choose a different municipality"
       },
       "pricing": {
@@ -845,12 +845,7 @@
       "sessions": {
         "loadFailed": "The session record could not be loaded. Reload the page to try again.",
         "loading": "Loading this product's session record.",
-        "railGroupHeading": "Group",
-        "addressLabel": "Venue address",
-        "addressPlaceholder": "Street, postal code, city",
-        "addAddress": "Add address",
-        "editAddress": "Edit address",
-        "addressSaveFailed": "The address didn’t save. Try again."
+        "railGroupHeading": "Group"
       }
     },
     "users": {
@@ -936,6 +931,24 @@
       "enterName": "Enter name",
       "adding": "Adding...",
       "addType": "Add {type}"
+    },
+    "sites": {
+      "title": "Sites",
+      "subtitle": "Every site on the platform, and the products running at each one.",
+      "addSite": "Add a site",
+      "searchPlaceholder": "Search sites by name…",
+      "searchAriaLabel": "Search sites",
+      "columnSite": "Site",
+      "columnPlace": "Place",
+      "columnProducts": "Products",
+      "searchCapped": "Showing the first {shown} of {total} matches. Keep typing to narrow them down.",
+      "noResults": "Nothing matches “{query}”.",
+      "empty": "No sites yet. Add one to get started.",
+      "backToSites": "Back to sites",
+      "notFound": "There is no site with this id.",
+      "notASite": "This location is not a site, so it has no page here.",
+      "productsHeading": "Products at this site",
+      "noProducts": "Nothing runs here yet."
     },
     "testing": {
       "title": "Testing",
@@ -1296,9 +1309,9 @@
     "forGamer": "for {name}",
     "forSelf": "for you",
     "scheduleLabel": "When",
-    "venueLabel": "Where",
+    "siteLabel": "Where",
     "aboutHeading": "About this group",
-    "venueNoteHeading": "At {site}",
+    "siteNoteHeading": "At {site}",
     "feedHeading": "Sessions",
     "attendancePresent": "Present",
     "attendanceNotPresent": "Not present",
@@ -1425,10 +1438,16 @@
       "saveFailed": "These notes didn’t save. Try again."
     },
     "siteNotes": {
-      "heading": "Site notes",
-      "sharedCaption": "{site} — shared by every product running at this site, so an edit here changes them everywhere.",
+      "heading": "Site",
+      "sharedCaption": "{site} — shared by every product running at this site, so a change to it changes them everywhere.",
+      "nameLabel": "Name",
+      "namePlaceholder": "What this site is called",
+      "nameRequired": "A site needs a name.",
       "addressLabel": "Address",
+      "addressPlaceholder": "Street, postal code, city",
+      "addressEmpty": "Add the street address families need to find the building.",
       "edit": "Edit",
+      "editSite": "Edit site",
       "cancel": "Cancel",
       "save": "Save",
       "publicEmpty": "Add a note for families — which door to use, where to wait, what to bring.",
@@ -1439,7 +1458,7 @@
       "staffLabel": "Gedu note",
       "staffHint": "Only Gedus and admins can see this. Families never do.",
       "staffPlaceholder": "Keys, kit, room quirks — what the next Gedu at this site needs to know.",
-      "saveFailed": "These site notes didn’t save. Try again."
+      "saveFailed": "That didn’t save. Try again."
     },
     "contract": {
       "back": "Back to My SOG",
@@ -1866,6 +1885,7 @@
     "municipalityClubs": "Municipality Clubs",
     "camps": "Camps",
     "events": "Events",
+    "sites": "Sites",
     "uiComponents": "UI Components",
     "uiPreviews": "UI Previews",
     "whatsapp": "WhatsApp",

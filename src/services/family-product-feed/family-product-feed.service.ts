@@ -55,7 +55,7 @@ export class FamilyProductFeedService {
   /**
    * Everything one (participant × product) enrollment renders, in a single
    * round trip: whoever holds the seat, the product shell and its schedule, the
-   * group and its public note, the venue on in-person products, the gedus, and
+   * group and its public note, the site on in-person products, the gedus, and
    * the group's **full** stored session history with that one participant's
    * attendance marks.
    *

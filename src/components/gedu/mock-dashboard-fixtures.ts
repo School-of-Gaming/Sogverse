@@ -36,7 +36,7 @@ import {
  * two scene-backed cards point at the matching product-page *scene*, so clicking
  * through lands on the feed the badge is talking about.
  *
- * **The badge counts and the camp's venue are derived, not authored.** Each
+ * **The badge counts and the camp's site are derived, not authored.** Each
  * scene-backed assignment's needs-attention number is counted out of the very
  * feed its card links to, and its site name is read off the same fixture the
  * product page renders — so a card can never advertise a number or a building
@@ -115,10 +115,10 @@ const EVENT_PRODUCT_ID = "mock-dashboard-lan-event";
 const ENDED_CLUB_PRODUCT_ID = "mock-dashboard-splatoon-club";
 
 /**
- * The venue the one-day event runs at.
+ * The site the one-day event runs at.
  *
  * Authored rather than derived, because this card has no product-page scene
- * behind it to read one off — and an in-person card without a venue would leave
+ * behind it to read one off — and an in-person card without a site would leave
  * the footer zone this redesign exists to fill standing empty, which is the one
  * thing the card must never do.
  */
@@ -333,8 +333,8 @@ export function buildGeduDashboardFixture(
       participantCount: 23,
       groupName: "Builders red",
       groupParticipantCount: 8,
-      // Read off the product-page scene this card opens, so the venue on the
-      // card and the venue in that page's site-notes panel are one string.
+      // Read off the product-page scene this card opens, so the site on the
+      // card and the site in that page's site-notes panel are one string.
       siteName: sceneSiteNames[CAMP_PRODUCT_ID] ?? null,
     }),
     assignmentRow({
@@ -344,7 +344,7 @@ export function buildGeduDashboardFixture(
       productType: "event",
       // In person **and** running right now — the pairing that matters. It
       // wears the Live badge and renders no Join, and its footer holds the
-      // venue instead, so it sits at the same height as the remote card that
+      // site instead, so it sits at the same height as the remote card that
       // does render one without either of them reserving empty space.
       isRemote: false,
       slots: [liveNowSlot(now, 240, SESSION_FEED_TIMEZONE)],
@@ -502,7 +502,7 @@ function assignmentRow(opts: {
   participantCount: number;
   groupName: string;
   groupParticipantCount: number;
-  /** The venue, on in-person products. Remote products have no building. */
+  /** The site, on in-person products. Remote products have no building. */
   siteName?: string | null;
 }): GeduAssignmentRow {
   return {

@@ -182,7 +182,7 @@ describe("POST /api/admin/locations/create", () => {
   // `country_code` is denormalized onto every row so country filtering needs no
   // recursion, which makes the parent's code the only value that can be right.
   // A caller-supplied one is a second source of truth for a field with exactly
-  // one — and country-scoping the venue dialog depends on this holding for
+  // one — and country-scoping the site dialog depends on this holding for
   // every row, not for every well-behaved client.
   it("derives country_code from the parent and discards what the client sent", async () => {
     mockAdmin();

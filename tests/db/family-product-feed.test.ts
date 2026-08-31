@@ -36,7 +36,7 @@ import {
  *
  * Layout. PRODUCT_MINE is remote and runs seven days a week, so any date is a
  * legal session date; GAMER and GAMER_2 are both on GROUP_MINE's roster, both
- * children of CUSTOMER. PRODUCT_SITE is in-person, for the venue block.
+ * children of CUSTOMER. PRODUCT_SITE is in-person, for the site block.
  * PRODUCT_UNPLACED holds a purchased-but-ungrouped participation — the state
  * that has no page. CUSTOMER_2 is a parent of nobody, so they are the
  * different-family case.
@@ -166,7 +166,7 @@ describe("family product feed", () => {
       { group_id: GROUP_SITE, gedu_id: TEST_IDS.GEDU, product_id: PRODUCT_SITE },
     ]);
 
-    // The venue: an admin writes the address, a gedu the two notes. Only the
+    // The site: an admin writes the address, a gedu the two notes. Only the
     // family-facing pair may come back through this RPC.
     await admin.from("site_details").upsert({
       location_id: TEST_IDS.LOCATION_SITE,
@@ -326,7 +326,7 @@ describe("family product feed", () => {
       expect(feed.product.id).toBe(PRODUCT_MINE);
       expect(feed.product.schedule_slots).toHaveLength(7);
       expect(feed.product.translations[0]?.name).toBe("Family feed fixture");
-      // Remote product: no building, so no venue block at all.
+      // Remote product: no building, so no site block at all.
       expect(feed.site).toBeNull();
       expect(feed.gedus.map((g) => g.id)).toEqual([TEST_IDS.GEDU]);
     });
@@ -383,7 +383,7 @@ describe("family product feed", () => {
       expect(error?.code).toBe("42501");
     });
 
-    it("carries the venue on an in-person product", async () => {
+    it("carries the site on an in-person product", async () => {
       const { data } = await customerAuth.rpc("get_my_family_product_feed", {
         p_participation_id: sitePlaced,
       });
@@ -494,7 +494,7 @@ describe("family product feed", () => {
       expect(document).not.toContain("@test.local");
     });
 
-    it("keeps the gedu note on the in-person venue block", async () => {
+    it("keeps the gedu note on the in-person site block", async () => {
       const { data } = await customerAuth.rpc("get_my_family_product_feed", {
         p_participation_id: sitePlaced,
       });

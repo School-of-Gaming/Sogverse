@@ -52,7 +52,7 @@ export interface GeduAssignmentRow extends MyAssignedProductSessionRow {
   /** Active participations in the gedu's own group — not the product total. */
   groupParticipantCount: number;
   /**
-   * The venue an in-person product runs at, or `null` for a remote one. Every
+   * The site an in-person product runs at, or `null` for a remote one. Every
    * in-person product has a location (the schema requires it), so `null` here
    * means "no building involved" rather than "not loaded".
    */
@@ -114,7 +114,7 @@ export interface GeduAssignmentSummary {
   /** Where the Join button navigates. `"#"` keeps it inert. */
   voiceHref: string;
   /**
-   * The venue an in-person assignment runs at, `null` for a remote one.
+   * The site an in-person assignment runs at, `null` for a remote one.
    *
    * It is the **in-person counterpart of the Join button**: the card's one
    * outward-facing line, answering the question the gedu actually has about a

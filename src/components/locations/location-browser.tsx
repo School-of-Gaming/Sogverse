@@ -80,8 +80,8 @@ const NO_PATH: readonly LocationChainSummary[] = [];
  * A row with a null `country_code` is refused, and nothing is hidden by that:
  * every seeded row carries its code, and every `site` now carries its parent's
  * — derived server-side by the create route, backfilled onto the rows written
- * before it did. That is what makes country-scoping the *venue* dialog possible
- * rather than a way to silently hide every admin-created venue.
+ * before it did. That is what makes country-scoping the *site* dialog possible
+ * rather than a way to silently hide every admin-created site.
  */
 function inCountry(
   row: { country_code: string | null },

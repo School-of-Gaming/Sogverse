@@ -14,10 +14,11 @@ import { deriveRosterFlairMaps } from "@/components/group-workspace/derive-roste
 import { createGameUsernameSave } from "@/components/group-workspace/game-username-save";
 import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPanel";
 import { createSessionEntrySaves } from "@/components/group-workspace/session-entry-saves";
-import type { SiteNotesDraft } from "@/components/group-workspace/SiteNotesPanel";
+import type { SiteNotesDraft } from "@/components/group-workspace/SitePanel";
 import type { SessionFeedGamer } from "@/components/gedu/session-feed";
 import { showsNewcomerBadge } from "@/components/member-flair";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
+import { ROUTES } from "@/lib/constants";
 import { useNow } from "@/providers";
 import {
   useAdminEmailSessionReport,
@@ -33,7 +34,10 @@ import { useGeduGroupFeed, type GeduGroupFeed } from "@/services/gedu-sessions";
 import { useProductGroups } from "@/services/groups";
 import { useSetGamerGroupNote } from "@/services/member-flair";
 import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
-import { useProductAdmin, type ProductAdminDetailRow } from "@/services/products";
+import {
+  useProductAdmin,
+  type ProductAdminDetailRow,
+} from "@/services/products";
 import {
   useRobloxRenders,
   useUpdateGroupMemberRoblox,
@@ -45,7 +49,6 @@ import type {
 } from "@/types";
 import { platformForTopic } from "@/lib/products/topics";
 import { PRODUCT_TYPE_CONFIG } from "../product-type-config";
-import { SiteAddressField } from "./site-address-field";
 
 interface AdminGroupDetailsPageProps {
   productType: ProductType;
@@ -72,7 +75,7 @@ interface AdminGroupDetailsPageProps {
  * documents rather than one.**
  *
  * - The **admin product session record** answers the product's schedule, its
- *   timezone, its venue and every group's stored sessions and standing notes.
+ *   timezone, its site and every group's stored sessions and standing notes.
  *   It is the document the admin write hooks below invalidate, which is what
  *   makes a saved report, a ticked register or an edited note repaint the card
  *   it was made on.
@@ -519,12 +522,12 @@ function Workspace({
   };
 
   /**
-   * Persist the venue's shared notes.
+   * Persist the site's shared notes.
    *
-   * The address is **not** sent: it belongs to the location record, the RPC
-   * does not accept one, and it is written by its own control beside these
-   * fields — which is what stops a page loaded before somebody corrected the
-   * address from quietly reverting the correction on the next note save.
+   * The address is **not** sent: it belongs to the location record and the RPC
+   * does not accept one. It travels on its own write beside this — which is
+   * what stops a page loaded before somebody corrected the address from quietly
+   * reverting the correction on the next note save.
    */
   const handleSaveSiteNotes = async (draft: SiteNotesDraft) => {
     if (sessions.site === null) return;
@@ -534,6 +537,24 @@ function Workspace({
       geduNote: draft.staffNote,
     });
   };
+
+  /**
+   * Where this site's record is edited — **not here.**
+   *
+   * The notes above are the building's shared staff content and stay writable on
+   * this page for gedu and admin alike. The name and the address are the site
+   * *record*, shared by every product running in the building, and this page is
+   * scoped to one group of one product: a rename typed here would read as a
+   * change to this group and land on all of them. So the panel offers a link to
+   * `/admin/sites/[id]`, whose scope says what it is, and nothing on this page
+   * writes the record.
+   *
+   * That also restores the plain reading of "an admin sees what the gedu sees":
+   * the two shells now pass the site section exactly the same capability, and
+   * differ only in whether there is a page to send the viewer to.
+   */
+  const siteEditHref =
+    sessions.site === null ? undefined : ROUTES.admin.site(sessions.site.location_id);
 
   /**
    * An admin correcting a child's game username, with the platform's real round
@@ -589,17 +610,10 @@ function Workspace({
       siteNotesEditing={siteNotesEditing}
       onSiteNotesEditingChange={setSiteNotesEditing}
       onSaveSiteNotes={handleSaveSiteNotes}
-      // The one thing this page adds to the site section that a gedu's does not
-      // have: the address is family-facing venue detail owned by the location
-      // record, and an admin is the only person who may write it.
-      siteAddressEditor={
-        sessions.site === null ? undefined : (
-          <SiteAddressField
-            locationId={sessions.site.location_id}
-            address={sessions.site.address}
-          />
-        )
-      }
+      // The one thing this page adds to the site section a gedu sees: a way to
+      // the site's own page, where its record is edited. Not a capability — the
+      // two shells write exactly the same fields here.
+      siteEditHref={siteEditHref}
       editingEntryId={editingEntryId}
       onEditEntry={handleEditEntry}
       onSaveEntry={saveEntry}

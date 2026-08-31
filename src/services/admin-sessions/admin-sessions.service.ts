@@ -12,7 +12,7 @@ import {
  * **The read is new because the question is new.** A gedu asks about one group
  * — theirs — and gets a workspace. An admin asks about one *product* and gets
  * every group on it, to choose between; answering that by calling the group
- * feed once per group would put the product shell and the venue on the wire
+ * feed once per group would put the product shell and the site on the wire
  * once per group as well, and would need a fan-in the page has no reason to
  * own.
  *

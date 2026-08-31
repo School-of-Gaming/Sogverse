@@ -18,7 +18,7 @@
  * The picker browses the `locations` table itself, so every ticked node is
  * already a row with an id. There is no identity to translate, nothing to
  * resolve at save time, and therefore no class of claim the editor can show but
- * not store: a venue, a country row and a commune are all just rows, tickable
+ * not store: a site, a country row and a commune are all just rows, tickable
  * and untickable alike. This file is what is left once that translation layer
  * is gone.
  */

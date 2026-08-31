@@ -63,7 +63,7 @@ import { TEST_IDS } from "./constants";
  *                  once — plus a decoy product 643 with a group 644, which is
  *                  what makes "only this product's groups came back" provable
  *                  rather than merely true. 645 is a `locations` row rather
- *                  than a product: its own venue, because `site_details` is
+ *                  than a product: its own site, because `site_details` is
  *                  keyed by location and shared across products, so writing
  *                  notes on the seeded Test School would race the gedu feed's
  *                  suite in a parallel worker)

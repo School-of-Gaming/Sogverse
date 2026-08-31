@@ -463,16 +463,16 @@
       "locationPicker": {
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
         "change": "Vaihda",
-        "noVenueHint": "Ei fyysistä toimipaikkaa. Tämän kunnan vanhemmat näkevät kerhon selatessaan.",
+        "noSiteHint": "Ei fyysistä toimipistettä. Tämän kunnan vanhemmat näkevät kerhon selatessaan.",
         "chooseMunicipality": "Valitse kunta",
         "municipalityPickerTitle": "Valitse kunta",
-        "chooseVenue": "Valitse toimipiste",
-        "venuePickerTitle": "Valitse toimipiste",
-        "venuePickerDescription": "Hae toimipistettä nimellä, niin löydät sen suoraan, tai selaa sen kuntaan asti ja katso siellä olevat toimipisteet. Jos toimipistettä ei vielä ole, voit avata uuden.",
-        "venuesIn": "Toimipisteet kunnassa {name}",
-        "venuesInDescription": "Valitse jokin olemassa oleva tai lisää uusi.",
-        "venuesHereEmpty": "Täällä ei ole vielä toimipisteitä.",
-        "addVenue": "Lisää toimipiste",
+        "chooseSite": "Valitse toimipiste",
+        "sitePickerTitle": "Valitse toimipiste",
+        "sitePickerDescription": "Hae toimipistettä nimellä, niin löydät sen suoraan, tai selaa sen kuntaan asti ja katso siellä olevat toimipisteet. Jos toimipistettä ei vielä ole, voit avata uuden.",
+        "sitesIn": "Toimipisteet kunnassa {name}",
+        "sitesInDescription": "Valitse jokin olemassa oleva tai lisää uusi.",
+        "sitesHereEmpty": "Täällä ei ole vielä toimipisteitä.",
+        "addSite": "Lisää toimipiste",
         "changeMunicipality": "Valitse toinen kunta"
       },
       "pricing": {
@@ -845,12 +845,7 @@
       "sessions": {
         "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
         "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
-        "railGroupHeading": "Ryhmä",
-        "addressLabel": "Toimipaikan osoite",
-        "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
-        "addAddress": "Lisää osoite",
-        "editAddress": "Muokkaa osoitetta",
-        "addressSaveFailed": "Osoitteen tallennus epäonnistui. Yritä uudelleen."
+        "railGroupHeading": "Ryhmä"
       }
     },
     "users": {
@@ -936,6 +931,24 @@
       "enterName": "Syötä nimi",
       "adding": "Lisätään...",
       "addType": "Lisää {type}"
+    },
+    "sites": {
+      "title": "Toimipisteet",
+      "subtitle": "Kaikki alustan toimipisteet ja kussakin pyörivät tuotteet.",
+      "addSite": "Lisää toimipiste",
+      "searchPlaceholder": "Hae toimipistettä nimellä…",
+      "searchAriaLabel": "Hae toimipisteitä",
+      "columnSite": "Toimipiste",
+      "columnPlace": "Sijainti",
+      "columnProducts": "Tuotteet",
+      "searchCapped": "Näytetään {shown} ensimmäistä osumaa {total} osumasta. Tarkenna hakua kirjoittamalla lisää.",
+      "noResults": "Hakua ”{query}” vastaavaa ei löydy.",
+      "empty": "Ei vielä toimipisteitä. Lisää ensimmäinen.",
+      "backToSites": "Takaisin toimipisteisiin",
+      "notFound": "Tällä tunnuksella ei ole toimipistettä.",
+      "notASite": "Tämä sijainti ei ole toimipiste, joten sillä ei ole omaa sivua.",
+      "productsHeading": "Tämän toimipisteen tuotteet",
+      "noProducts": "Täällä ei vielä pyöri mitään."
     },
     "testing": {
       "title": "Testaus",
@@ -1296,9 +1309,9 @@
     "forGamer": "Osallistuja: {name}",
     "forSelf": "Osallistuja: sinä",
     "scheduleLabel": "Milloin",
-    "venueLabel": "Missä",
+    "siteLabel": "Missä",
     "aboutHeading": "Tietoa ryhmästä",
-    "venueNoteHeading": "Paikassa {site}",
+    "siteNoteHeading": "Paikassa {site}",
     "feedHeading": "Kerrat",
     "attendancePresent": "Paikalla",
     "attendanceNotPresent": "Ei paikalla",
@@ -1425,21 +1438,27 @@
       "saveFailed": "Muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
     },
     "siteNotes": {
-      "heading": "Toimipaikan muistiinpanot",
-      "sharedCaption": "{site} — kaikki tässä toimipaikassa järjestettävät tuotteet näkevät samat muistiinpanot, joten muokkaus näkyy niissä kaikissa.",
+      "heading": "Toimipiste",
+      "sharedCaption": "{site} — kaikki tässä toimipisteessä järjestettävät tuotteet näkevät samat tiedot, joten muokkaus näkyy niissä kaikissa.",
+      "nameLabel": "Nimi",
+      "namePlaceholder": "Toimipisteen nimi",
+      "nameRequired": "Toimipisteellä on oltava nimi.",
       "addressLabel": "Osoite",
+      "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
+      "addressEmpty": "Lisää katuosoite, jotta perheet löytävät toimipisteen.",
       "edit": "Muokkaa",
+      "editSite": "Muokkaa toimipistettä",
       "cancel": "Peruuta",
       "save": "Tallenna",
       "publicEmpty": "Lisää muistiinpano perheille — mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan.",
-      "staffEmpty": "Lisää se, mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta — avaimet, välineet, tilan erityispiirteet.",
+      "staffEmpty": "Lisää se, mitä seuraavan Gedun on hyvä tietää tästä toimipisteestä — avaimet, välineet, tilan erityispiirteet.",
       "publicLabel": "Muistiinpano perheille",
       "publicHint": "Älä koskaan kirjoita tähän yksityisiä tai arkaluonteisia tietoja.",
       "publicPlaceholder": "Mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan…",
       "staffLabel": "Muistiinpano Geduille",
       "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
-      "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta.",
-      "saveFailed": "Toimipaikan muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
+      "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipisteestä.",
+      "saveFailed": "Tallennus ei onnistunut. Yritä uudelleen."
     },
     "contract": {
       "back": "Takaisin Omaan SOGiin",
@@ -1866,6 +1885,7 @@
     "municipalityClubs": "Kuntakerhot",
     "camps": "Leirit",
     "events": "Tapahtumat",
+    "sites": "Toimipisteet",
     "uiComponents": "UI-komponentit",
     "uiPreviews": "UI-esikatselut",
     "whatsapp": "WhatsApp",

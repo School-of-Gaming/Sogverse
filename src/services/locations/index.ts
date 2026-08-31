@@ -1,4 +1,7 @@
-export { LocationsService, LOCATION_BROWSE_PAGE_SIZE } from "./locations.service";
+export {
+  LocationsService,
+  LOCATION_BROWSE_PAGE_SIZE,
+} from "./locations.service";
 export type {
   LocationChainNode,
   LocationWithChain,
@@ -18,6 +21,7 @@ export {
   useLocationChildren,
   useLocationSearch,
   useSitesByParent,
+  useAllSites,
   useLocationsByIds,
   useCreateLocation,
   useUpdateLocation,

@@ -68,7 +68,7 @@ export const adminProductSessions = z.object({
     is_remote: z.boolean(),
     schedule_slots: z.array(scheduleSlotSummary),
   }),
-  /** The venue, on in-person products. `null` on anything remote. */
+  /** The site, on in-person products. `null` on anything remote. */
   site: geduFeedSite.nullable(),
   groups: z.array(adminSessionGroup),
 });

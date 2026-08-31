@@ -190,7 +190,7 @@ export const geduFeedSession = z.object({
   attendance: z.record(z.string(), attendanceStatus),
 });
 
-/** The venue, on in-person products. `null` on anything remote. */
+/** The site, on in-person products. `null` on anything remote. */
 export const geduFeedSite = z.object({
   location_id: z.string(),
   name: z.string(),
@@ -257,7 +257,7 @@ export const geduAssignmentSummary = z.object({
   group_name: z.string(),
   /** Active participations in THIS group, not across the product. */
   group_participant_count: z.number(),
-  /** The venue name on in-person products; `null` when there is no building. */
+  /** The site name on in-person products; `null` when there is no building. */
   site_name: z.string().nullable(),
   attention_count: z.number(),
 });
@@ -299,7 +299,7 @@ export const groupNotesResult = z.object({
  * What `set_site_notes` hands back.
  *
  * `address` is a **read-back, never an input.** The RPC does not accept an
- * address and never writes one — the venue address belongs to the location
+ * address and never writes one — the site address belongs to the location
  * record and is an admin's to edit — so what comes back here is whatever was
  * already stored, echoed so a caller can see the current value without a second
  * round trip. It used to be a parameter, and that let a gedu's note save quietly

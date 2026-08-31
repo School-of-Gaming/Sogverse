@@ -27,7 +27,7 @@ import type { FamilyEnrollmentSummary } from "./enrollment-rollup";
  *
  * Everything is computed from a `now` the caller supplies, so a scene can hold
  * one instant and get a deterministic page out of it. What is authored is only
- * what a schedule cannot derive: the names, the venues, and which enrollment is
+ * what a schedule cannot derive: the names, the sites, and which enrollment is
  * carrying which exceptional state.
  */
 
@@ -52,7 +52,7 @@ export interface EnrollmentFixtureSpec {
   participationId: string;
   productName: string;
   productType: ProductType;
-  /** Remote products have a voice room and no venue; in-person the reverse. */
+  /** Remote products have a voice room and no site; in-person the reverse. */
   isRemote: boolean;
   slots: FixtureSlot[];
   startedDaysAgo: number;
@@ -61,7 +61,7 @@ export interface EnrollmentFixtureSpec {
    * puts the last day in the past, which is what makes a card a finished one.
    */
   endsInDays: number | null;
-  /** The venue, on in-person products. A remote product has no building. */
+  /** The site, on in-person products. A remote product has no building. */
   siteName?: string | null;
   /** 1-based place in line, when this enrollment is a waitlist place. */
   waitlistPosition?: number | null;

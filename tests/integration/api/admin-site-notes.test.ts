@@ -155,7 +155,7 @@ describe("PATCH /api/admin/site-notes", () => {
 
   // -- Absent means "leave it alone", not "set it null" --
   //
-  // The member row carries two fields with two different owners: the venue's
+  // The member row carries two fields with two different owners: the site's
   // address, which only an admin edits from the product page, and the
   // family-facing note, which admins and gedus write through the site-notes
   // RPC. Treating an omitted key as null made those two writers clobber each

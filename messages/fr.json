@@ -463,16 +463,16 @@
       "locationPicker": {
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
         "change": "Changer",
-        "noVenueHint": "Aucun lieu physique. Les parents de cette commune verront le club lorsqu’ils parcourront le catalogue.",
+        "noSiteHint": "Aucun site physique. Les parents de cette commune verront le club lorsqu’ils parcourront le catalogue.",
         "chooseMunicipality": "Choisir une commune",
         "municipalityPickerTitle": "Choisir une commune",
-        "chooseVenue": "Choisir un site",
-        "venuePickerTitle": "Choisir un site",
-        "venuePickerDescription": "Recherchez le site par son nom pour le trouver directement, ou descendez jusqu’à sa commune pour voir les sites qui s’y trouvent. S’il n’existe pas encore, ouvrez-en un nouveau.",
-        "venuesIn": "Sites à {name}",
-        "venuesInDescription": "Choisissez-en un qui existe déjà, ou ajoutez-en un nouveau.",
-        "venuesHereEmpty": "Aucun site ici pour l’instant.",
-        "addVenue": "Ajouter un site",
+        "chooseSite": "Choisir un site",
+        "sitePickerTitle": "Choisir un site",
+        "sitePickerDescription": "Recherchez le site par son nom pour le trouver directement, ou descendez jusqu’à sa commune pour voir les sites qui s’y trouvent. S’il n’existe pas encore, ouvrez-en un nouveau.",
+        "sitesIn": "Sites à {name}",
+        "sitesInDescription": "Choisissez-en un qui existe déjà, ou ajoutez-en un nouveau.",
+        "sitesHereEmpty": "Aucun site ici pour l’instant.",
+        "addSite": "Ajouter un site",
         "changeMunicipality": "Choisir une autre commune"
       },
       "pricing": {
@@ -845,12 +845,7 @@
       "sessions": {
         "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
         "loading": "Chargement du suivi des séances de ce produit.",
-        "railGroupHeading": "Groupe",
-        "addressLabel": "Adresse du lieu",
-        "addressPlaceholder": "Rue, code postal, ville",
-        "addAddress": "Ajouter une adresse",
-        "editAddress": "Modifier l’adresse",
-        "addressSaveFailed": "L’adresse n’a pas été enregistrée. Réessayez."
+        "railGroupHeading": "Groupe"
       }
     },
     "users": {
@@ -936,6 +931,24 @@
       "enterName": "Saisissez un nom",
       "adding": "Ajout...",
       "addType": "Ajouter {type}"
+    },
+    "sites": {
+      "title": "Sites",
+      "subtitle": "Tous les sites de la plateforme et les produits qui s’y déroulent.",
+      "addSite": "Ajouter un site",
+      "searchPlaceholder": "Rechercher un site par son nom…",
+      "searchAriaLabel": "Rechercher des sites",
+      "columnSite": "Site",
+      "columnPlace": "Localisation",
+      "columnProducts": "Produits",
+      "searchCapped": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
+      "noResults": "Aucun résultat pour « {query} ».",
+      "empty": "Aucun site pour l’instant. Ajoutez le premier.",
+      "backToSites": "Retour aux sites",
+      "notFound": "Aucun site ne correspond à cet identifiant.",
+      "notASite": "Cet emplacement n’est pas un site : il n’a donc pas de page ici.",
+      "productsHeading": "Produits sur ce site",
+      "noProducts": "Rien ne s’y déroule pour l’instant."
     },
     "testing": {
       "title": "Tests",
@@ -1296,9 +1309,9 @@
     "forGamer": "pour {name}",
     "forSelf": "pour vous",
     "scheduleLabel": "Quand",
-    "venueLabel": "Où",
+    "siteLabel": "Où",
     "aboutHeading": "À propos du groupe",
-    "venueNoteHeading": "À {site}",
+    "siteNoteHeading": "À {site}",
     "feedHeading": "Séances",
     "attendancePresent": "Présent",
     "attendanceNotPresent": "Pas présent",
@@ -1425,10 +1438,16 @@
       "saveFailed": "Ces notes n’ont pas été enregistrées. Réessayez."
     },
     "siteNotes": {
-      "heading": "Notes sur le lieu",
-      "sharedCaption": "{site} — tous les produits organisés sur ce lieu affichent les mêmes notes : une modification ici les change partout.",
+      "heading": "Site",
+      "sharedCaption": "{site} — tous les produits organisés sur ce site affichent les mêmes informations : une modification les change partout.",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Le nom de ce site",
+      "nameRequired": "Un site doit avoir un nom.",
       "addressLabel": "Adresse",
+      "addressPlaceholder": "Rue, code postal, ville",
+      "addressEmpty": "Ajoutez l’adresse dont les familles ont besoin pour trouver le site.",
       "edit": "Modifier",
+      "editSite": "Modifier le site",
       "cancel": "Annuler",
       "save": "Enregistrer",
       "publicEmpty": "Ajoutez une note pour les familles — par quelle porte entrer, où attendre, quoi apporter.",
@@ -1439,7 +1458,7 @@
       "staffLabel": "Note pour les Gedus",
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
       "staffPlaceholder": "Clés, matériel, particularités de la salle — ce que le prochain Gedu sur place doit savoir.",
-      "saveFailed": "Ces notes sur le lieu n’ont pas été enregistrées. Réessayez."
+      "saveFailed": "L’enregistrement a échoué. Réessayez."
     },
     "contract": {
       "back": "Retour à Mon SOG",
@@ -1866,6 +1885,7 @@
     "municipalityClubs": "Clubs municipaux",
     "camps": "Stages",
     "events": "Événements",
+    "sites": "Sites",
     "uiComponents": "Composants UI",
     "uiPreviews": "Aperçus UI",
     "whatsapp": "WhatsApp",

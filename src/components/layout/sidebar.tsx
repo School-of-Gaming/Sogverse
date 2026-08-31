@@ -16,6 +16,7 @@ import {
   School,
   Tent,
   CalendarDays,
+  MapPin,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
@@ -28,7 +29,8 @@ import type { UserRole } from "@/types";
 type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
-  | "tools" | "consumerClubs" | "municipalityClubs" | "camps" | "events";
+  | "tools" | "consumerClubs" | "municipalityClubs" | "camps" | "events"
+  | "sites";
 
 interface NavItemDef {
   href: string;
@@ -47,6 +49,7 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: <School className="h-5 w-5" /> },
     { href: ROUTES.admin.camps, labelKey: "camps", icon: <Tent className="h-5 w-5" /> },
     { href: ROUTES.admin.events, labelKey: "events", icon: <CalendarDays className="h-5 w-5" /> },
+    { href: ROUTES.admin.sites, labelKey: "sites", icon: <MapPin className="h-5 w-5" /> },
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },

@@ -147,7 +147,7 @@ export const familyFeedSession = z
   .strict();
 
 /**
- * The venue, on in-person products. `null` on anything remote.
+ * The site, on in-person products. `null` on anything remote.
  *
  * A remote municipality club carries a `location_id` too (a municipality, by
  * CHECK), so the RPC gates this on `is_remote = false` rather than on the

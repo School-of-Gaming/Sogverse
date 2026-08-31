@@ -23,13 +23,13 @@ import { localizedLocationName } from "@/lib/locations/localized-name";
 import type { LocationType } from "@/types";
 
 /**
- * Choosing the venue an in-person product runs at — every way of choosing one,
+ * Choosing the site an in-person product runs at — every way of choosing one,
  * in a single dialog.
  *
- * This used to be the "open a new venue" escape hatch behind a flat list of
+ * This used to be the "open a new site" escape hatch behind a flat list of
  * every site that exists. The list is gone: it was Finland-shaped by accident
  * (it looked bounded only because only Finnish sites existed) and it had no
- * answer for a venue in a country whose sites nobody had created yet. What it
+ * answer for a site in a country whose sites nobody had created yet. What it
  * was genuinely good at — finding a building by name without knowing its kunta
  * — the search index does better, across every country, so that is where it
  * now happens.
@@ -42,11 +42,11 @@ import type { LocationType } from "@/types";
  *
  * - **Browsing** walks countries → regions → (districts) → municipalities and
  *   stops there, because a municipality is now terminal. Confirming one is not
- *   the answer, it is the *next question*: this dialog then lists the venues in
+ *   the answer, it is the *next question*: this dialog then lists the sites in
  *   it and offers to name a new one. That is the two-step flow, unchanged —
  *   *where in the world* is answered by the seeded hierarchy, *which building*
  *   by an admin, and there is nothing between them because the confirmed row is
- *   already the venue's parent.
+ *   already the site's parent.
  * - **Searching** reaches sites directly, because search is filtered to the
  *   same two types and a site carries its whole ancestor chain back. An admin
  *   who knows the building's name types it and confirms the hit — one step, no
@@ -54,7 +54,7 @@ import type { LocationType } from "@/types";
  *
  * So a site is confirmable but never *browsable to*, and that asymmetry is the
  * design rather than a gap in it. Browsing exists to answer "where", and the
- * venue list below is the last level of it — a purpose-built one, because it is
+ * site list below is the last level of it — a purpose-built one, because it is
  * the only level that also has to offer creation. Making a site drillable-to in
  * the tree would mean making a municipality non-terminal, which would take the
  * create affordance off the only screen that can carry it.
@@ -62,16 +62,16 @@ import type { LocationType } from "@/types";
  * Nothing above a site is ever created here; the hierarchy is seeded.
  */
 
-interface VenuePickerDialogProps {
+interface SitePickerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** A venue was chosen — searched for, listed, or named just now. */
+  /** A site was chosen — searched for, listed, or named just now. */
   onPick: (siteId: string) => void;
   /**
    * A caller's business rule, when the product itself is bound to one country
    * (a municipality club exists only where a kunta funds it): the tree opens
    * inside that country and offers no other country's rows, browsing and
-   * searching alike. Absent, venues may be picked in any country.
+   * searching alike. Absent, sites may be picked in any country.
    */
   countryCode?: string;
 }
@@ -79,16 +79,16 @@ interface VenuePickerDialogProps {
 /**
  * What a row may be confirmed as, and — because the dialog passes the same list
  * to search — what a search hit may be. A municipality confirms as "show me the
- * venues here"; a site confirms as the venue itself.
+ * sites here"; a site confirms as the pick itself.
  */
-const VENUE_PICKABLE_TYPES: readonly LocationType[] = ["municipality", "site"];
+const SITE_PICKABLE_TYPES: readonly LocationType[] = ["municipality", "site"];
 
-export function VenuePickerDialog({
+export function SitePickerDialog({
   open,
   onOpenChange,
   onPick,
   countryCode,
-}: VenuePickerDialogProps) {
+}: SitePickerDialogProps) {
   const t = useTranslations("admin.products.locationPicker");
   const locale = useLocale();
   const initialPath = useCountryInitialPath(countryCode);
@@ -125,9 +125,9 @@ export function VenuePickerDialog({
         onOpenChange={(next) => {
           if (!next) close();
         }}
-        title={t("venuePickerTitle")}
-        description={t("venuePickerDescription")}
-        pickableTypes={VENUE_PICKABLE_TYPES}
+        title={t("sitePickerTitle")}
+        description={t("sitePickerDescription")}
+        pickableTypes={SITE_PICKABLE_TYPES}
         countryCode={countryCode}
         initialPath={initialPath}
         boundCountryName={boundCountryName}
@@ -149,7 +149,7 @@ export function VenuePickerDialog({
 
   const placeName = localizedLocationName(place, locale);
 
-  // Only one dialog is ever on screen: naming a venue replaces the list rather
+  // Only one dialog is ever on screen: naming a site replaces the list rather
   // than stacking a second overlay over it.
   if (naming) {
     return (
@@ -177,16 +177,16 @@ export function VenuePickerDialog({
     >
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("venuesIn", { name: placeName })}</DialogTitle>
-          <DialogDescription>{t("venuesInDescription")}</DialogDescription>
+          <DialogTitle>{t("sitesIn", { name: placeName })}</DialogTitle>
+          <DialogDescription>{t("sitesInDescription")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           {/* One fixed-height box across loading, empty and loaded, so the
               buttons under it never move. The read behind it is an indexed
-              lookup of one municipality's venues, so the loading state is the
+              lookup of one municipality's sites, so the loading state is the
               empty box — there is nothing long enough to skeleton, and the
-              undefined case is deliberately not the empty one: "no venues
+              undefined case is deliberately not the empty one: "no sites
               here" is a claim, and it must not be made before the answer. */}
           <div className="h-[180px] overflow-y-auto rounded-md border border-input bg-background p-2">
             {sites === undefined ? null : sites.length > 0 ? (
@@ -207,7 +207,7 @@ export function VenuePickerDialog({
               </div>
             ) : (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                {t("venuesHereEmpty")}
+                {t("sitesHereEmpty")}
               </p>
             )}
           </div>
@@ -227,7 +227,7 @@ export function VenuePickerDialog({
               onClick={() => setNaming(true)}
             >
               <Plus className="h-3.5 w-3.5" />
-              {t("addVenue")}
+              {t("addSite")}
             </Button>
           </div>
         </div>

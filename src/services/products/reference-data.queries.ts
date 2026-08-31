@@ -7,6 +7,9 @@ import {
   readErrorMessage,
 } from "@/lib/api/json-response";
 import { adminSessionKeys } from "@/services/admin-sessions";
+// The keys module rather than the package index: that index re-exports the
+// service class, and this file only needs the cache key factory.
+import { siteKeys } from "@/services/sites/sites.queries";
 import { updateSiteNotesResponse } from "./reference-data.contracts";
 import type { CalendarHoliday, HolidayCalendar } from "@/types";
 
@@ -110,13 +113,21 @@ export interface UpdateSiteNotesInput {
 /**
  * Write a site's member-visible address/notes and its staff notes.
  *
- * **The only read that carries any of this into a page is the admin product's
- * session document**, so that is what the write invalidates — the invalidation
- * belongs on the mutation rather than on whichever component happened to fire
- * it. The gedu group feed carries the same site fields, but it is not
- * invalidated here and must not be: this route is admin-only, so a client that
- * can reach this mutation has never held a gedu feed, and invalidating one
- * would be a no-op dressed up as thoroughness.
+ * **Two reads carry these fields into a page, and both are invalidated here** —
+ * the invalidation belongs on the mutation rather than on whichever component
+ * happened to fire it. The admin product's session document carries a site's
+ * address and notes alongside the product running there; the admin site page
+ * reads the same three fields on their own.
+ *
+ * **The gedu group feed carries them too, and is deliberately not invalidated —
+ * but not because no client here holds one.** One does: the admin group details
+ * page mounts the feed alongside the session record. What it takes from the feed
+ * is the roster and the product's own title and material link; the *site* it
+ * renders comes from the session document above. So no surface able to fire this
+ * mutation reads the feed's copy of these fields, and invalidating it would
+ * refetch a value nothing is looking at. What would change that is a surface
+ * rendering `feed.product.site` beside one of these writes — add the key here in
+ * the same change, rather than trusting this paragraph.
  *
  * Keyed at every product rather than one: a site is shared by every product at
  * the building, and this mutation is not told which of them is on screen. Only
@@ -145,8 +156,14 @@ export function useUpdateSiteNotes() {
       return parseJsonResponse(res, updateSiteNotesResponse);
     },
     onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: adminSessionKeys.products(),
-      }),
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: adminSessionKeys.products(),
+        }),
+        // Every site's notes rather than the one just written: only mounted
+        // queries refetch, and exactly one site page is ever mounted — same
+        // arrangement as the product key above.
+        queryClient.invalidateQueries({ queryKey: siteKeys.notes() }),
+      ]),
   });
 }

@@ -463,16 +463,16 @@
       "locationPicker": {
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
         "change": "Ändra",
-        "noVenueHint": "Ingen fysisk lokal. Föräldrar i den här kommunen ser klubben när de bläddrar.",
+        "noSiteHint": "Ingen fysisk lokal. Föräldrar i den här kommunen ser klubben när de bläddrar.",
         "chooseMunicipality": "Välj en kommun",
         "municipalityPickerTitle": "Välj en kommun",
-        "chooseVenue": "Välj en lokal",
-        "venuePickerTitle": "Välj en lokal",
-        "venuePickerDescription": "Sök lokalen på namn så hittar du den direkt, eller bläddra ner till kommunen och se lokalerna där. Finns lokalen inte ännu kan du öppna en ny.",
-        "venuesIn": "Lokaler i {name}",
-        "venuesInDescription": "Välj en som redan finns, eller lägg till en ny.",
-        "venuesHereEmpty": "Inga lokaler här ännu.",
-        "addVenue": "Lägg till en lokal",
+        "chooseSite": "Välj en lokal",
+        "sitePickerTitle": "Välj en lokal",
+        "sitePickerDescription": "Sök lokalen på namn så hittar du den direkt, eller bläddra ner till kommunen och se lokalerna där. Finns lokalen inte ännu kan du öppna en ny.",
+        "sitesIn": "Lokaler i {name}",
+        "sitesInDescription": "Välj en som redan finns, eller lägg till en ny.",
+        "sitesHereEmpty": "Inga lokaler här ännu.",
+        "addSite": "Lägg till en lokal",
         "changeMunicipality": "Välj en annan kommun"
       },
       "pricing": {
@@ -845,12 +845,7 @@
       "sessions": {
         "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
         "loading": "Laddar dokumentationen av produktens tillfällen.",
-        "railGroupHeading": "Grupp",
-        "addressLabel": "Platsens adress",
-        "addressPlaceholder": "Gata, postnummer, stad",
-        "addAddress": "Lägg till adress",
-        "editAddress": "Redigera adress",
-        "addressSaveFailed": "Adressen sparades inte. Försök igen."
+        "railGroupHeading": "Grupp"
       }
     },
     "users": {
@@ -936,6 +931,24 @@
       "enterName": "Ange namn",
       "adding": "Lägger till...",
       "addType": "Lägg till {type}"
+    },
+    "sites": {
+      "title": "Lokaler",
+      "subtitle": "Alla lokaler på plattformen och produkterna som körs i var och en.",
+      "addSite": "Lägg till en lokal",
+      "searchPlaceholder": "Sök lokal på namn…",
+      "searchAriaLabel": "Sök lokaler",
+      "columnSite": "Lokal",
+      "columnPlace": "Plats",
+      "columnProducts": "Produkter",
+      "searchCapped": "Visar de {shown} första av {total} träffar. Fortsätt skriva för att begränsa dem.",
+      "noResults": "Ingenting matchar ”{query}”.",
+      "empty": "Inga lokaler ännu. Lägg till den första.",
+      "backToSites": "Tillbaka till lokaler",
+      "notFound": "Det finns ingen lokal med det här id:t.",
+      "notASite": "Den här platsen är ingen lokal och har därför ingen sida här.",
+      "productsHeading": "Produkter i den här lokalen",
+      "noProducts": "Inget körs här ännu."
     },
     "testing": {
       "title": "Testning",
@@ -1296,9 +1309,9 @@
     "forGamer": "för {name}",
     "forSelf": "för dig",
     "scheduleLabel": "När",
-    "venueLabel": "Var",
+    "siteLabel": "Var",
     "aboutHeading": "Om gruppen",
-    "venueNoteHeading": "På {site}",
+    "siteNoteHeading": "På {site}",
     "feedHeading": "Tillfällen",
     "attendancePresent": "Närvarande",
     "attendanceNotPresent": "Inte närvarande",
@@ -1425,10 +1438,16 @@
       "saveFailed": "Anteckningarna sparades inte. Försök igen."
     },
     "siteNotes": {
-      "heading": "Anteckningar om platsen",
-      "sharedCaption": "{site} — alla produkter som körs på den här platsen visar samma anteckningar, så en ändring här slår igenom överallt.",
+      "heading": "Lokal",
+      "sharedCaption": "{site} — alla produkter som körs i den här lokalen visar samma uppgifter, så en ändring slår igenom överallt.",
+      "nameLabel": "Namn",
+      "namePlaceholder": "Vad lokalen heter",
+      "nameRequired": "Lokalen måste ha ett namn.",
       "addressLabel": "Adress",
+      "addressPlaceholder": "Gata, postnummer, stad",
+      "addressEmpty": "Lägg till gatuadressen familjerna behöver för att hitta till lokalen.",
       "edit": "Redigera",
+      "editSite": "Redigera lokalen",
       "cancel": "Avbryt",
       "save": "Spara",
       "publicEmpty": "Lägg till en anteckning till familjerna — vilken dörr man använder, var man väntar, vad man tar med.",
@@ -1439,7 +1458,7 @@
       "staffLabel": "Anteckning till Gedus",
       "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
       "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta.",
-      "saveFailed": "Anteckningarna om platsen sparades inte. Försök igen."
+      "saveFailed": "Det sparades inte. Försök igen."
     },
     "contract": {
       "back": "Tillbaka till Min SOG",
@@ -1866,6 +1885,7 @@
     "municipalityClubs": "Kommunklubbar",
     "camps": "Läger",
     "events": "Evenemang",
+    "sites": "Lokaler",
     "uiComponents": "UI-komponenter",
     "uiPreviews": "UI-förhandsvisningar",
     "whatsapp": "WhatsApp",

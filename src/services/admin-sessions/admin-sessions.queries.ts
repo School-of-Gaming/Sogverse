@@ -114,7 +114,7 @@ export function useAdminSetGroupNotes(productId: string, groupId: string) {
 }
 
 /**
- * Write the venue's two shared notes.
+ * Write the site's two shared notes.
  *
  * The address is not a parameter and never travels: it belongs to the location
  * record and is edited there. That is a property of the RPC rather than a
@@ -125,6 +125,12 @@ export function useAdminSetGroupNotes(productId: string, groupId: string) {
  * Site notes are shared by every product at the building, so in principle every
  * other product's document is now stale. Only the one being looked at is worth
  * refetching; the rest pick the change up when they are next opened.
+ *
+ * The invalidation is **returned** rather than fired and forgotten, so the
+ * promise the caller awaits does not settle until the refetched notes are in
+ * the cache — an editor holding a `committing` flag across the await keeps its
+ * Save disabled until the page holds what it just wrote, rather than
+ * re-enabling over text it is about to replace.
  */
 export function useAdminSetSiteNotes(productId: string) {
   const queryClient = useQueryClient();
@@ -136,10 +142,9 @@ export function useAdminSetSiteNotes(productId: string) {
       publicNote: string;
       geduNote: string;
     }) => service.setSiteNotes(vars),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
+    onSuccess: () =>
+      queryClient.invalidateQueries({
         queryKey: adminSessionKeys.byProduct(productId),
-      });
-    },
+      }),
   });
 }

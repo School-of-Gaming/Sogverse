@@ -1,7 +1,7 @@
 # The family product page
 
 One enrollment, as the family in it reads it: the product and its schedule, the group's
-standing notes and its gedus, the venue or the Join, and the read-only feed of everything
+standing notes and its gedus, the site or the Join, and the read-only feed of everything
 that has happened. Six URLs render it — `/parent/{clubs,camps,events}/[id]` and the gamer
 triplet — over one page. The type segment is vocabulary families use, not a routing
 decision; the role root fixes the audience, which is the only thing that varies.
@@ -125,7 +125,7 @@ keep.
 
 **Rule: the whole history arrives in one JSONB document; the feed pages nothing.** The
 feed read is a single self-scoping RPC returning **the participant**, the product shell, the
-group, the venue, the gedus, every stored session and that child's marks. The reveal
+group, the site, the gedus, every stored session and that child's marks. The reveal
 mechanism belongs to the shared feed shell — a scroll sentinel over fully-loaded data, no
 button and no spinner — and the arithmetic ruling paging out is documented with it.
 

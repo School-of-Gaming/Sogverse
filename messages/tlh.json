@@ -511,16 +511,16 @@
       "locationPicker": {
         "hintMunicipality": "veng yIwIv — Huch nob veng. Daqmey latlh Sepmey je luwIvlaHbe’.",
         "change": "choH",
-        "noVenueHint": "Daq pagh. veng vavmey neH luleghlu’.",
+        "noSiteHint": "Daq pagh. veng vavmey neH luleghlu’.",
         "chooseMunicipality": "veng yIwIv",
         "municipalityPickerTitle": "veng yIwIv",
-        "chooseVenue": "Daq yIwIv",
-        "venuePickerTitle": "Daq yIwIv",
-        "venuePickerDescription": "Daq pong DaSovchugh yInej, tugh Datu’. DaSovbe’chugh, veng yISam ’ej pa’ Daqmey yIlegh. pagh Daq tu’lu’chugh, Daq chu’ yIchenmoH.",
-        "venuesIn": "{name} DaqmeyDaj",
-        "venuesInDescription": "tu’lu’bogh wa’ yIwIv ghap Daq chu’ yIchel.",
-        "venuesHereEmpty": "naDev Daq tu’lu’be’.",
-        "addVenue": "Daq yIchel",
+        "chooseSite": "Daq yIwIv",
+        "sitePickerTitle": "Daq yIwIv",
+        "sitePickerDescription": "Daq pong DaSovchugh yInej, tugh Datu’. DaSovbe’chugh, veng yISam ’ej pa’ Daqmey yIlegh. pagh Daq tu’lu’chugh, Daq chu’ yIchenmoH.",
+        "sitesIn": "{name} DaqmeyDaj",
+        "sitesInDescription": "tu’lu’bogh wa’ yIwIv ghap Daq chu’ yIchel.",
+        "sitesHereEmpty": "naDev Daq tu’lu’be’.",
+        "addSite": "Daq yIchel",
         "changeMunicipality": "veng pIm yIwIv"
       },
       "pricing": {
@@ -893,12 +893,7 @@
       "sessions": {
         "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
         "loading": "ngIq vamvaD may’mey qonta’ghach laDlu’…",
-        "railGroupHeading": "ghom",
-        "addressLabel": "Daq ngu’wI’",
-        "addressPlaceholder": "He, mI’, veng",
-        "addAddress": "Daq ngu’wI’ yIchel",
-        "editAddress": "Daq ngu’wI’ yIchoH",
-        "addressSaveFailed": "Daq ngu’wI’ pollu’be’. yIboq."
+        "railGroupHeading": "ghom"
       }
     },
     "users": {
@@ -984,6 +979,24 @@
       "enterName": "pong yIchel",
       "adding": "vIchel...",
       "addType": "{type} yIchel"
+    },
+    "sites": {
+      "title": "Daqmey",
+      "subtitle": "Hoch Daqmey, ’ej Daq HochvaD qaStaHbogh wanI’mey.",
+      "addSite": "Daq yIchel",
+      "searchPlaceholder": "Daq pong yIghItlh…",
+      "searchAriaLabel": "Daqmey yInej",
+      "columnSite": "Daq",
+      "columnPlace": "nuqDaq",
+      "columnProducts": "wanI’mey",
+      "searchCapped": "{total} tu’lu’, ’ach {shown} neH wI’ang. yIghItlhtaH ’ej yInej.",
+      "noResults": "pagh! ”{query}” rurbogh Daq tu’lu’be’.",
+      "empty": "Daq pagh. wa’DIch yIchel.",
+      "backToSites": "Daqmeyvo’ yIchegh",
+      "notFound": "ngoqvam ghajbogh Daq tu’lu’be’.",
+      "notASite": "Daq ghaHbe’; naDev pagh ghom.",
+      "productsHeading": "naDev qaStaHbogh wanI’mey",
+      "noProducts": "naDev pagh qaS."
     },
     "testing": {
       "title": "Qu’ nI’moH",
@@ -1344,9 +1357,9 @@
     "forGamer": "{name}vaD",
     "forSelf": "SoHvaD",
     "scheduleLabel": "ghorgh",
-    "venueLabel": "nuqDaq",
+    "siteLabel": "nuqDaq",
     "aboutHeading": "ghom’a’vam De’",
-    "venueNoteHeading": "{site}Daq",
+    "siteNoteHeading": "{site}Daq",
     "feedHeading": "may’mey",
     "attendancePresent": "pawpu’",
     "attendanceNotPresent": "pawbe’",
@@ -1469,10 +1482,16 @@
       "saveFailed": "qonta’ pollu’be’. yIboq."
     },
     "siteNotes": {
-      "heading": "Daq qonta’",
-      "sharedCaption": "{site} — DaqvamDaq Qapbogh Hoch ngoq qonta’ rap lulegh; wa’ DachoHDI’, Hoch DachoH.",
+      "heading": "Daq",
+      "sharedCaption": "{site} — DaqvamDaq Qapbogh Hoch ngoq De’ rap lulegh; wa’ DachoHDI’, Hoch DachoH.",
+      "nameLabel": "pong",
+      "namePlaceholder": "Daq pong",
+      "nameRequired": "pong Hutlhbe’nIS Daq.",
       "addressLabel": "Daq ngoq",
+      "addressPlaceholder": "He, mI’, veng",
+      "addressEmpty": "Daq ngoq yIchel — qach lutu’meH qorDu’.",
       "edit": "yIchoH",
+      "editSite": "Daq yIchoH",
       "cancel": "yIqIl",
       "save": "yIpol",
       "publicEmpty": "qorDu’vaD qonta’ yIchel — nuq lojmIt Dalo’? nuqDaq DaloS? nuq Daqem?",
@@ -1483,7 +1502,7 @@
       "staffLabel": "Gedupu’vaD qonta’",
       "staffHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
       "staffPlaceholder": "ngaQHa’moHwI’mey, jan, pa’ Do’Ha’ghach — Daqvamvo’ Gedu veb SovnIS.",
-      "saveFailed": "Daq qonta’ pollu’be’. yIboq."
+      "saveFailed": "pollu’be’. yInID."
     },
     "contract": {
       "back": "jIH SOGDaq yIchegh",
@@ -1910,6 +1929,7 @@
     "municipalityClubs": "ghomHom veng",
     "camps": "pa’ Qugh",
     "events": "Qu’mey",
+    "sites": "Daqmey",
     "uiComponents": "UI ngoQmey",
     "uiPreviews": "UI cha’ghachmey",
     "whatsapp": "WhatsApp",

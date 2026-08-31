@@ -340,10 +340,10 @@ describe("rollUpGeduAssignments", () => {
 
   /**
    * The footer's two answers to "where is this happening", and the invariant
-   * that keeps a card from claiming both: a venue is carried only by a product
+   * that keeps a card from claiming both: a site is carried only by a product
    * with no room, whatever the row underneath says.
    */
-  it("carries an in-person product's venue through to the card", () => {
+  it("carries an in-person product's site through to the card", () => {
     const summaries = rollUp(
       [
         row({
@@ -359,7 +359,7 @@ describe("rollUpGeduAssignments", () => {
     expect(summaries[0].siteName).toBe("Sello Library, Espoo");
   });
 
-  it("drops a venue from a remote product even when the row supplies one", () => {
+  it("drops a site from a remote product even when the row supplies one", () => {
     // A product with a voice room has no building, and a card showing both
     // would be claiming the group meets in two places at once.
     const summaries = rollUp(
@@ -377,7 +377,7 @@ describe("rollUpGeduAssignments", () => {
     expect(summaries[0].siteName).toBeNull();
   });
 
-  it("leaves a venue null on an in-person product that has none recorded", () => {
+  it("leaves a site null on an in-person product that has none recorded", () => {
     const summaries = rollUp(
       [row({ id: "onsite", name: "Onsite Camp", isRemote: false })],
       now,

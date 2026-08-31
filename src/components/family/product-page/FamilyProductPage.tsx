@@ -26,7 +26,7 @@ import { FamilyProductPageSkeleton } from "./FamilyProductPageSkeleton";
  * **Two reads, and they answer different halves of the page.**
  *
  * The feed RPC answers everything about the club itself: whoever holds the
- * seat, the product shell and its schedule, the group and its note, the venue,
+ * seat, the product shell and its schedule, the group and its note, the site,
  * the gedus, and the group's whole stored history. It is self-scoping, so a
  * participation that is not this caller's and one with no group yet come back
  * as `unavailable` rather than as an error — both render the not-found card.
@@ -220,7 +220,7 @@ export function FamilyProductPage({
           firstName: gedu.first_name,
         }))}
         groupPublicNote={feed.group.public_note}
-        venue={
+        site={
           feed.site === null
             ? null
             : {

@@ -1164,7 +1164,7 @@ function GamerNoteDialogDemo() {
 /*  Family — Enrollment Card                                            */
 /* ------------------------------------------------------------------ */
 
-/** The venue the one in-person fixture is held at. */
+/** The site the one in-person fixture is held at. */
 const ENROLLMENT_DEMO_SITE = "Kirjasto Oodi, Helsinki";
 
 /** The three-way comparison's columns, in the order they are read. */
@@ -2401,16 +2401,16 @@ export default function AdminUIComponentsPage() {
               <DemoCaption>Searching</DemoCaption>
               {/* The caller reads the type to decide what the confirmation
                   meant — a site is the answer, a municipality is the next
-                  question ("show me the venues here", which is also the only
+                  question ("show me the sites here", which is also the only
                   screen that can offer to create one). That is why a site is
                   confirmable but never browsable to: making a municipality
                   terminal is exactly what stops the tree walking past the
                   screen that carries creation. And a prefix match beats an
                   infix one however late in the table it sits. */}
               <p className="text-sm text-muted-foreground">
-                Configured the way the product form&rsquo;s venue dialog
+                Configured the way the product form&rsquo;s site dialog
                 configures it: <code>municipality</code> and <code>site</code>{" "}
-                are both pickable, so the venue &ldquo;Gymnase municipal de
+                are both pickable, so the site &ldquo;Gymnase municipal de
                 Nîmes&rdquo; is confirmable straight from a search. In the real
                 app the ranking, the cap and the match count all come from the
                 database.
@@ -2797,13 +2797,13 @@ function noopSubmit() {}
  *
  * It once had a second, "set" scope — a bounded, pre-fetched collection grouped
  * under the place above each row — but every surface that used one (the flat
- * every-venue list, the Finnish municipality list) now reaches the same rows
+ * every-site list, the Finnish municipality list) now reaches the same rows
  * through this tree, so the panel has one shape and the demos below show its
  * states.
  *
  * Its consumers: gedu coverage, a parent's own location, and the product form's
- * venue and municipality fields — the last two as dialogs, configured by
- * `pickableTypes` (a venue pick stops at `site`, a municipality pick at
+ * site and municipality fields — the last two as dialogs, configured by
+ * `pickableTypes` (a site pick stops at `site`, a municipality pick at
  * `municipality`, seeded at Finland).
  *
  * In the real app a container above the panel owns the browse position, the
@@ -2858,8 +2858,8 @@ const NIMES = fixtureRow("30189", "Nîmes", "municipality");
 
 /**
  * Fixture search hits for the needle "nimes", each with the path a real hit
- * carries. The third is a venue rather than a commune, and it is the whole
- * point of the search demo's configuration: the product form's venue dialog
+ * carries. The third is a site rather than a commune, and it is the whole
+ * point of the search demo's configuration: the product form's site dialog
  * makes `site` pickable alongside `municipality`, so an admin who knows the
  * building's name confirms it here in one step instead of walking down to its
  * commune first. Both types rank against the same needle.
@@ -2916,8 +2916,8 @@ function LocationPickerDemo() {
     return (
       <div className="space-y-3 rounded-md border border-input bg-card p-4">
         <p className="text-sm">
-          Confirmed <span className="font-medium">{confirmed}</span> — the venue
-          flow would now list the venues already in it, with that row as the
+          Confirmed <span className="font-medium">{confirmed}</span> — the site
+          flow would now list the sites already in it, with that row as the
           parent of any new one.
         </p>
         <Button
@@ -3022,9 +3022,9 @@ function LocationSearchDemo() {
           search: { rows: HITS, total: 47, hasMore: false, loading: false },
           selection: {
             mode: "single",
-            // The venue dialog's own configuration: two confirmable types, and
+            // The site dialog's own configuration: two confirmable types, and
             // the caller decides what each one meant — a site is the answer, a
-            // municipality is "show me the venues here".
+            // municipality is "show me the sites here".
             pickableTypes: ["municipality", "site"],
             onConfirm: () => Promise.resolve(),
             onCancel: () => setQuery(""),
@@ -3086,7 +3086,7 @@ function LocationBoundCountryDemo() {
 /**
  * The parent's own place: one optional municipality, on the registration form
  * and in settings. It asks single mode for the municipality level — Finland's
- * kunta, France's commune, the one directly above a venue.
+ * kunta, France's commune, the one directly above a site.
  *
  * The box *is* the picker rather than a display row over a "choose" button —
  * one control, and no button caption that has to guess what the viewer's

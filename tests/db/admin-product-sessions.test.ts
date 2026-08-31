@@ -58,13 +58,13 @@ const DECOY_PRODUCT = "00000000-0000-0000-0000-000000000643";
 const DECOY_GROUP = "00000000-0000-0000-0000-000000000644";
 
 /**
- * This file's OWN venue, created under the seeded municipality rather than
+ * This file's OWN site, created under the seeded municipality rather than
  * reusing the seeded `Test School`.
  *
  * `site_details` and `site_staff_details` are keyed by location and shared by
  * every product at that building, so two db test files writing notes on the
  * seeded site would race — vitest runs files in separate workers, and the gedu
- * feed's suite writes and deletes exactly those rows. A venue nobody else knows
+ * feed's suite writes and deletes exactly those rows. A site nobody else knows
  * about makes the site-notes assertions here independent of what else CI is
  * running.
  */
@@ -247,7 +247,7 @@ describe("admin product sessions", () => {
       ).toBe(false);
     });
 
-    it("carries the venue and its two notes on an in-person product", async () => {
+    it("carries the site and its two notes on an in-person product", async () => {
       await adminAuth.rpc("set_site_notes", {
         p_location_id: SITE,
         p_public_note: "Side door, ring the bell.",

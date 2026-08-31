@@ -43,7 +43,7 @@ export interface ProductTypeConfig {
    * The one country this product type exists in, or null for anywhere. A
    * municipality club is funded by a Finnish kunta and by nothing else, so
    * BOTH of its location shapes are bound to Finland: the funding municipality
-   * it anchors to online, and the venue it runs at in person. The location
+   * it anchors to online, and the site it runs at in person. The location
    * pickers read this to open inside that country and offer no other
    * country's rows.
    */

@@ -61,7 +61,7 @@ const PATH_SEPARATOR = ", ";
 /**
  * The level a parent picks. One entry, not a list: every catalogued country
  * names some level "the municipality", and it is always the one directly above
- * a venue.
+ * a site.
  */
 const PICKABLE_TYPES: readonly LocationType[] = ["municipality"];
 

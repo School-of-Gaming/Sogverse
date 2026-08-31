@@ -26,7 +26,7 @@ import type { SupportedLocale } from "@/lib/constants/locales";
  * `typical` carries everything that can coexist: a club running right now with
  * its Join lit, a second club the gamer is queued for (the waitlist sentence in
  * the child's voice, and no link anywhere on the card), and an in-person camp
- * naming its venue where the Join would be. The dynamic type nouns' *absence*
+ * naming its site where the Join would be. The dynamic type nouns' *absence*
  * (a one-noun page renders one heading, not empty sections) is the same
  * mechanism the gedu dashboard already proves.
  *
