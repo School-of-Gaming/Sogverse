@@ -228,6 +228,35 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "Positive paths: gedu-session-feed.test.ts for the gedu, " +
       "admin-product-sessions.test.ts for the admin.",
   },
+  // The session-photo pair (00222). The same two-part gate as every writer
+  // above — an admin or a gedu on the first statement, then "and do you teach
+  // this group" — and the widening is the point: ANY gedu assigned to the group
+  // may attach or remove a photo, matching how the report itself is edited.
+  // There is no per-photo ownership, and `created_by` is safeguarding audit that
+  // gates nothing.
+  add_group_session_image: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "for a gedu, the assignment half of the gate refuses a NULL group with a " +
+      "second 42501; an admin passes that half and is then refused by the " +
+      "cap-sanity check, a NULL cap being outside the 1..24 a caller may ask " +
+      "for, which is check_violation rather than 42501 — but the annotation is " +
+      "per function rather than per role, so the positive half is unassertable " +
+      "here either way. Positive paths, for both roles: session-images.test.ts.",
+  },
+  // Keyed on the image id alone, because a per-thumbnail remove control has
+  // nothing else. The group is resolved from the image's own session row, and
+  // that resolution IS the second half of the gate — which is also why a photo
+  // id belonging to another group and one belonging to nothing are refused
+  // identically, so the function cannot be used as an oracle for real ids.
+  delete_group_session_image: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "refused twice over on NULL arguments, for BOTH permitted roles — a NULL " +
+      "image id resolves to no group at all, and the no-such-row arm answers " +
+      "42501 deliberately rather than distinguishing itself from someone " +
+      "else's row. Positive paths, for both roles: session-images.test.ts.",
+  },
   set_group_notes: {
     permittedRoles: ["gedu", "admin"],
     permittedAlsoForbiddenOnNullArgs:
@@ -384,6 +413,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   get_my_family_product_feed: {
     scopeTest: "tests/db/family-product-feed.test.ts",
     why: "the family club/camp/event page, keyed on ONE participation. Two roles reach the same document — the participation's participant, and any parent linked to them — so a role guard could only name both and would prove nothing; the real gate is the ownership predicate, which is keyed entirely to auth.uid(). Since 00173 that participant may be an adult holding a seat of their own, in which case the first arm of the same predicate matches directly and the parent-link fallback is never reached. A row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. The scope test is where the interesting half lives: a sibling in the SAME group is refused (the key is the participation, not the group), a parent of another family is refused, a child cannot read their own parent's seat in the group they share, and the document's attendance field carries one answer — the named participant's — rather than a roster map",
+  },
+  get_my_family_product_feed_v2: {
+    scopeTest: "tests/db/family-product-feed.test.ts",
+    why: "the same family club/camp/event page one entry up, plus the per-session photos (00222) — and a separate function only because the family contracts schema is `.strict()` at every level, so widening the original in place would have made the still-deployed app fail to parse its own read during the release window. The versioned name is the compatibility step; a later cleanup migration drops the original and this name then stays permanently. Everything the entry above says about scope is true here verbatim and is not inherited by assumption: the scope test drives BOTH functions through the same refusal cases — a parent of another family, a sibling in the same group, a child reaching for their parent's own seat, an unplaced participation, a nonexistent id answered identically to someone else's, staff, anon, and the service-role client whose JWT carries no uid",
   },
   submit_my_feedback: {
     scopeTest: "tests/db/feedback-submission.test.ts",

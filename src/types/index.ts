@@ -375,6 +375,14 @@ export type GroupSessionUpdate = Database["public"]["Tables"]["group_sessions"][
 export type SessionAttendance = Database["public"]["Tables"]["session_attendance"]["Row"];
 export type SessionAttendanceInsert = Database["public"]["Tables"]["session_attendance"]["Insert"];
 
+// group_session_images — the photos attached to one session's report. Same
+// posture as the two tables above (RLS on, zero policies, nothing granted to
+// `authenticated`), so these aliases likewise serve the service-role side. The
+// row's id is also the object's name in the public `session-images` bucket,
+// which is why there is no path column to alias.
+export type GroupSessionImage = Database["public"]["Tables"]["group_session_images"]["Row"];
+export type GroupSessionImageInsert = Database["public"]["Tables"]["group_session_images"]["Insert"];
+
 // The attendance vocabulary is a text column with a CHECK rather than a
 // Postgres enum (adding 'late'/'excused' is expected), so there is no
 // Constants entry to derive from — the tuple in the contracts file is the

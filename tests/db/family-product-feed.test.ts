@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import type { Database } from "@/types/database.types";
 import { familyProductFeed } from "@/services/family-product-feed/family-product-feed.contracts";
 import {
@@ -66,6 +67,49 @@ const TWO_DAYS_AGO = dayOffset(-2);
 
 const GEDU_NOTE = "PRIVATE-STAFF-NOTE-must-never-reach-a-family";
 const MATERIAL_URL = "https://drive.sog.gg/PRIVATE-lesson-plans";
+
+/**
+ * The shape of `get_my_family_product_feed_v2`'s document, naming only what
+ * 00222 added and letting everything else through untouched.
+ *
+ * Deliberately NOT the feature's own contracts schema: the widened family schema
+ * does not exist yet and lands with the service layer. What can be settled
+ * without it is structural — that the versioned document is the original plus
+ * exactly one key per session, and that the key holds what the migration says.
+ * The image object is `.strict()` on purpose: the uploader is safeguarding audit
+ * and must never travel, and a loose object would let it arrive unnoticed.
+ */
+const v2Document = z
+  .object({
+    sessions: z.array(
+      z
+        .object({
+          session_date: z.string(),
+          images: z.array(
+            z
+              .object({
+                id: z.string(),
+                width: z.number(),
+                height: z.number(),
+              })
+              .strict(),
+          ),
+        })
+        .passthrough(),
+    ),
+  })
+  .passthrough();
+
+/** The v2 document with `images` removed from every session. */
+function withoutImages(document: z.infer<typeof v2Document>) {
+  return {
+    ...document,
+    sessions: document.sessions.map((session) => {
+      const { images: _images, ...rest } = session;
+      return rest;
+    }),
+  };
+}
 
 describe("family product feed", () => {
   let admin: SupabaseClient<Database>;
@@ -784,6 +828,240 @@ describe("family product feed", () => {
         expect(session.updated_by).toBeNull();
         expect(session.updated_by_first_name).toBeNull();
       }
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 6. The versioned document — get_my_family_product_feed_v2
+  // -------------------------------------------------------------------------
+  //
+  // 00222 gave every session a photo array. The family contracts schema is
+  // `.strict()` at every level, so widening this RPC in place would have made
+  // the still-deployed app fail to parse its own read for the minute between the
+  // migration deploying and the release going live. The compatibility step is a
+  // second function under a versioned name, and these are the two halves of what
+  // that buys:
+  //
+  //   * the NEW document is the old one plus exactly one key per session, and
+  //   * the OLD one is untouched, which is what the old app keeps parsing.
+  //
+  // The scope claim is not inherited by assumption either. `get_my_family_
+  // product_feed_v2` carries its own SELF_SCOPING entry in the authorization
+  // spine, and that entry points here — so every refusal the original is held to
+  // is asserted against the versioned name as well, rather than being taken on
+  // trust because the bodies look alike.
+
+  describe("get_my_family_product_feed_v2", () => {
+    /** The two photos seeded on YESTERDAY's session, oldest first. */
+    let firstImage = "";
+    let secondImage = "";
+
+    beforeAll(async () => {
+      const { data: session } = await admin
+        .from("group_sessions")
+        .select("id")
+        .eq("group_id", GROUP_MINE)
+        .eq("session_date", YESTERDAY)
+        .single();
+      expect(session?.id).toBeTruthy();
+
+      // created_at is stamped explicitly rather than left to the column default,
+      // because the ordering assertion below has to be about (created_at, id)
+      // rather than about whatever order two rows of one INSERT happened to get.
+      // Mixed ratios on purpose: a 16:9 screenshot and a portrait photo are what
+      // the gallery's arithmetic is sized from.
+      const { data: rows, error } = await admin
+        .from("group_session_images")
+        .insert([
+          {
+            session_id: session!.id,
+            width: 1920,
+            height: 1080,
+            created_at: `${YESTERDAY}T19:00:00.000Z`,
+            created_by: TEST_IDS.GEDU,
+          },
+          {
+            session_id: session!.id,
+            width: 1080,
+            height: 1440,
+            created_at: `${YESTERDAY}T19:05:00.000Z`,
+            created_by: TEST_IDS.GEDU,
+          },
+        ])
+        .select("id, created_at");
+      expect(error).toBeNull();
+
+      const ordered = [...(rows ?? [])].sort((a, b) =>
+        a.created_at.localeCompare(b.created_at),
+      );
+      firstImage = ordered[0]?.id ?? "";
+      secondImage = ordered[1]?.id ?? "";
+      expect(firstImage).toBeTruthy();
+      expect(secondImage).toBeTruthy();
+    });
+
+    afterAll(async () => {
+      await admin
+        .from("group_session_images")
+        .delete()
+        .in("id", [firstImage, secondImage]);
+    });
+
+    it("carries the session's photos, oldest first, and nothing about who uploaded them", async () => {
+      const { data, error } = await customerAuth.rpc(
+        "get_my_family_product_feed_v2",
+        { p_participation_id: minePlaced },
+      );
+      expect(error).toBeNull();
+
+      const feed = v2Document.parse(data);
+      const session = feed.sessions.find((s) => s.session_date === YESTERDAY);
+
+      // The order is the display order on every surface, and it is what the
+      // clock_timestamp() stamp plus the id tiebreak exist to make stable.
+      expect(session?.images.map((i) => i.id)).toEqual([
+        firstImage,
+        secondImage,
+      ]);
+      // Uncropped mixed ratios are the whole rendering requirement, so the
+      // dimensions have to survive the round trip as numbers.
+      expect(session?.images[0]).toEqual({
+        id: firstImage,
+        width: 1920,
+        height: 1080,
+      });
+      expect(session?.images[1]?.height).toBe(1440);
+
+      // `created_by` is safeguarding audit: it gates nothing, nothing renders
+      // it, and a family surface is the last place for it. The `.strict()` image
+      // object above would already have failed the parse; this asserts the key
+      // name is absent from the whole document, wherever it might have leaked.
+      // (The uploader's *id* is not a usable probe here — the gedus array names
+      // the same person by design, a first name's worth of "who you are with".)
+      expect(JSON.stringify(data)).not.toContain("created_by");
+    });
+
+    it("hands back an empty array for a session with no photos", async () => {
+      const { data } = await customerAuth.rpc("get_my_family_product_feed_v2", {
+        p_participation_id: minePlaced,
+      });
+      const feed = v2Document.parse(data);
+
+      // An empty array rather than a missing key or a null, so the renderer has
+      // one shape to handle and the strict schema one thing to describe.
+      expect(feed.sessions.find((s) => s.session_date === LONG_AGO)?.images).toEqual(
+        [],
+      );
+    });
+
+    it("is the original document plus exactly one key per session", async () => {
+      const original = await customerAuth.rpc("get_my_family_product_feed", {
+        p_participation_id: minePlaced,
+      });
+      const versioned = await customerAuth.rpc(
+        "get_my_family_product_feed_v2",
+        { p_participation_id: minePlaced },
+      );
+      expect(versioned.error).toBeNull();
+
+      // Strip the one added key and the rest must parse through the ORIGINAL
+      // strict schema and equal the original document. Strict is what makes this
+      // sharp: a field quietly renamed, dropped or added while transcribing the
+      // body fails the parse rather than passing as "close enough".
+      const stripped = withoutImages(v2Document.parse(versioned.data));
+      expect(familyProductFeed.parse(stripped)).toEqual(
+        familyProductFeed.parse(original.data),
+      );
+    });
+
+    it("leaves the old RPC's document with no photos at all", async () => {
+      // The deploy-window guarantee, asserted from the side that matters: the
+      // old app parses the old document with a strict schema, so an `images` key
+      // appearing there is not a widening, it is an outage. Non-vacuous by
+      // construction — the beforeAll above attached two photos to this exact
+      // session, and the case above proves the versioned RPC returns them.
+      const { data } = await customerAuth.rpc("get_my_family_product_feed", {
+        p_participation_id: minePlaced,
+      });
+
+      expect(JSON.stringify(data)).not.toContain("images");
+      // And it still parses through the schema the deployed app carries.
+      expect(familyProductFeed.parse(data).sessions.length).toBeGreaterThan(0);
+    });
+
+    it("refuses everyone the original refuses, for the same reasons", async () => {
+      // The spine's SELF_SCOPING entry for the versioned name points at this
+      // file, and this is the case it points at. Each of these has its own
+      // narrated block above for the original; what is being pinned here is that
+      // transcribing a body did not lose one of them.
+      const otherFamily = await customer2Auth.rpc(
+        "get_my_family_product_feed_v2",
+        { p_participation_id: minePlaced },
+      );
+      expect(otherFamily.error?.code).toBe("42501");
+      expect(otherFamily.data).toBeNull();
+
+      // The sibling: same parent, same group, different participation. A gate
+      // written against the group rather than the participation lets this by.
+      const gamer2Auth = await createAuthenticatedClient(
+        TEST_CREDENTIALS.GAMER_2.email,
+        TEST_CREDENTIALS.GAMER_2.password,
+      );
+      const sibling = await gamer2Auth.rpc("get_my_family_product_feed_v2", {
+        p_participation_id: minePlaced,
+      });
+      expect(sibling.error?.code).toBe("42501");
+      const siblingOwn = await gamer2Auth.rpc("get_my_family_product_feed_v2", {
+        p_participation_id: siblingPlaced,
+      });
+      expect(siblingOwn.error).toBeNull();
+
+      // A child reaching for the adult's seat in the group they share.
+      const upward = await gamerAuth.rpc("get_my_family_product_feed_v2", {
+        p_participation_id: selfPlaced,
+      });
+      expect(upward.error?.code).toBe("42501");
+
+      // Owned but unplaced: not-found, and P0002 specifically, because
+      // PostgREST maps it to the 404 the page renders.
+      const noGroup = await customerAuth.rpc("get_my_family_product_feed_v2", {
+        p_participation_id: unplaced,
+      });
+      expect(noGroup.error?.code).toBe("P0002");
+
+      // No oracle: a participation that does not exist answers exactly as one
+      // belonging to another family does.
+      const missing = await customerAuth.rpc("get_my_family_product_feed_v2", {
+        p_participation_id: NO_SUCH_PARTICIPATION,
+      });
+      expect(missing.error?.code).toBe("42501");
+      expect(missing.error?.message).toBe(otherFamily.error?.message);
+
+      // Staff have this group's data by other routes; neither is a party to the
+      // family enrollment, and this RPC answers only to parties.
+      for (const client of [geduAuth, adminAuth]) {
+        const staff = await client.rpc("get_my_family_product_feed_v2", {
+          p_participation_id: minePlaced,
+        });
+        expect(staff.error?.code).toBe("42501");
+      }
+
+      // No grant to `anon` — refused at the privilege layer, before the body.
+      const anonymous = await anon.rpc("get_my_family_product_feed_v2", {
+        p_participation_id: minePlaced,
+      });
+      expect(anonymous.error).not.toBeNull();
+
+      // 00152's regression pin, carried onto the new name: service_role holds
+      // EXECUTE and its JWT carries no `sub`, so auth.uid() is NULL inside the
+      // body. The uid check has to fire on its own rather than disappearing into
+      // the ownership predicate, or an arbitrary participation id yields a full
+      // cross-family read for any server-side caller.
+      const serviceRole = await admin.rpc("get_my_family_product_feed_v2", {
+        p_participation_id: minePlaced,
+      });
+      expect(serviceRole.error?.code).toBe("42501");
+      expect(serviceRole.data).toBeNull();
     });
   });
 });
