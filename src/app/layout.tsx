@@ -29,14 +29,15 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
-// DELIBERATELY UNUSED IN THIS BRANCH — do not remove it as dead weight. Space
-// Mono is a sanctioned brand face; where it is actually placed is decided by the
-// companion design-pass plan, and this load exists so that plan is a styling
-// change rather than a styling change plus a font wiring change. It is loaded,
-// its variable is on <html>, and nothing reads it yet. That is the intended
-// state. `preload: false` follows from that: a preload link for a face no
-// element renders costs every visitor a font download for nothing, so preload
-// turns back on in the same change that first places the face.
+// A sanctioned brand face, placed so far only in design-pass drafts on
+// admin-only surfaces: `--font-brand-mono` in globals.css points at it, and the
+// style guide's type specimens and the gamer-dashboard preview scene are what
+// render it. No live family-facing route does — the gamer greeting still draws
+// in the display face until the owner rules on the draft — so `preload: false`
+// still stands: a preload link buys nothing for a face that only an admin
+// reviewing a draft ever sees, and costs every other visitor a font download.
+// Preload turns back on in the wiring phase that first places the face on a
+// live route.
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin", "latin-ext"],

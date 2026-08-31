@@ -1139,6 +1139,10 @@ function ytyZonePaletteContext(palette: YtyPalette): VoiceRoomContextValue {
  * card is a component that reads the same at any width, and because the
  * comparison has to be *adjacent*: the question is whether a soft glyph still
  * reads on a strong 10% tint, and nobody can answer that from two browser tabs.
+ * The arithmetic half of that question is already answered —
+ * `scripts/yty-contrast.mjs` measures the pairing on both grounds and the worst
+ * of the four is harmony at 6.32:1 over the card — so what is left for the eye
+ * here is whether it *looks* right, not whether it is legible.
  *
  * A room of its own rather than a second copy of the demo above. That one is a
  * moderator's crowded session, and the twenty-five avatars in one of its Yty
@@ -2235,6 +2239,28 @@ const DRAFT_TYPE_TODAY = "text-sm font-medium";
 /** 16px / 600 is the Guidebook's CTA type. */
 const DRAFT_TYPE_GUIDEBOOK = "text-base font-semibold";
 
+/**
+ * The counting rule behind every "call sites" number below, stated because the
+ * figure is the owner's decision input and a wrong one argues for the wrong
+ * decision. A call site is an occurrence of `<Button variant="X">` **plus** an
+ * occurrence of `buttonVariants({ variant: "X" })` — the helper is how a
+ * `<Link>` wears the button's clothes, so those anchors are as much a call site
+ * as a real button — counted across app code (`src/`) and excluding this
+ * style-guide page, whose demos are not usage.
+ *
+ * Both halves matter, and each is a way the number goes wrong on its own: a
+ * bare grep for `variant="outline"` also catches `<Badge variant="outline">`,
+ * which is a different component and inflates the count, while missing the
+ * helper deflates it. Regenerate rather than trust these:
+ *
+ *   grep -rn 'variant="X"' src/            (then discard non-Button hits)
+ *   grep -rn 'buttonVariants(' src/        (then keep the variant: "X" ones)
+ *
+ * Measured 2026-08-31: outline 61 (44 Button + 17 buttonVariants), ghost 24
+ * (all Button), secondary 1 (a single `buttonVariants` anchor, no Button at
+ * all). Secondary's number is the surprising one and it is the point: retiring
+ * that variant touches one line.
+ */
 type DraftButtonRow = {
   /** The row's name in the comparison. */
   name: string;
@@ -2258,14 +2284,14 @@ const DRAFT_ROWS = {
   },
   todayOutline: {
     name: "outline",
-    note: "today · ~51 call sites",
+    note: "today · 61 call sites",
     className:
       "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
     hoverClassName: "bg-accent text-accent-foreground",
   },
   todaySecondary: {
     name: "secondary",
-    note: "today · ~5 call sites",
+    note: "today · 1 call site",
     className:
       "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
     hoverClassName: "bg-secondary/80",
@@ -2284,7 +2310,7 @@ const DRAFT_ROWS = {
   },
   tierGhost: {
     name: "Third tier, option A — ghost as today",
-    note: "today's ghost · ~24 call sites",
+    note: "today's ghost · 24 call sites",
     className: "hover:bg-accent hover:text-accent-foreground",
     hoverClassName: "bg-accent text-accent-foreground",
   },
@@ -2400,82 +2426,98 @@ function ButtonProposalDemo() {
         {/* One grid for all three groups, so a column means the same thing all
             the way down and the comparison is made by looking, not by scrolling
             back. Hover can't be frozen on a real button, so each row carries a
-            static copy of its hover rules beside the interactive one. */}
-        <div className="grid grid-cols-[minmax(14rem,auto)_repeat(4,minmax(8rem,1fr))] items-center gap-x-6 gap-y-3">
-          <div />
-          <DemoCaption>Resting &mdash; hover it</DemoCaption>
-          <DemoCaption>Hover, frozen</DemoCaption>
-          <DemoCaption>Disabled</DemoCaption>
-          <DemoCaption>Loading</DemoCaption>
+            static copy of its hover rules beside the interactive one.
 
-          {BUTTON_PROPOSAL_GROUPS.map((group) => (
-            <Fragment key={group.title}>
-              <div className="col-span-full space-y-0.5 border-t pt-4">
-                <h4 className="text-sm font-semibold">{group.title}</h4>
-                <p className="text-xs text-muted-foreground">{group.caption}</p>
-              </div>
-              {group.rows.map((row) => (
-                <Fragment key={row.name}>
-                  <DraftButtonLabel row={row} />
-                  <div>
-                    <DraftButton
-                      row={row}
-                      typeClass={DRAFT_TYPE_TODAY}
-                      state="resting"
-                    />
-                  </div>
-                  <div>
-                    <DraftButton
-                      row={row}
-                      typeClass={DRAFT_TYPE_TODAY}
-                      state="hover"
-                    />
-                  </div>
-                  <div>
-                    <DraftButton
-                      row={row}
-                      typeClass={DRAFT_TYPE_TODAY}
-                      state="disabled"
-                    />
-                  </div>
-                  <div>
-                    <DraftButton
-                      row={row}
-                      typeClass={DRAFT_TYPE_TODAY}
-                      state="loading"
-                    />
-                  </div>
-                </Fragment>
-              ))}
-            </Fragment>
-          ))}
+            The five columns have a hard floor of roughly 832px, which is wider
+            than a narrow viewport — and a comparison grid is exactly the wide
+            content the layout rules say must scroll inside its own container
+            rather than take the whole admin document sideways with it. Hence
+            the `overflow-x-auto` wrapper: below its floor the grid scrolls, the
+            page does not. */}
+        <div className="overflow-x-auto">
+          <div className="grid grid-cols-[minmax(14rem,auto)_repeat(4,minmax(8rem,1fr))] items-center gap-x-6 gap-y-3">
+            <div />
+            <DemoCaption>Resting &mdash; hover it</DemoCaption>
+            <DemoCaption>Hover, frozen</DemoCaption>
+            <DemoCaption>Disabled</DemoCaption>
+            <DemoCaption>Loading</DemoCaption>
+
+            {BUTTON_PROPOSAL_GROUPS.map((group) => (
+              <Fragment key={group.title}>
+                <div className="col-span-full space-y-0.5 border-t pt-4">
+                  <h4 className="text-sm font-semibold">{group.title}</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {group.caption}
+                  </p>
+                </div>
+                {group.rows.map((row) => (
+                  <Fragment key={row.name}>
+                    <DraftButtonLabel row={row} />
+                    <div>
+                      <DraftButton
+                        row={row}
+                        typeClass={DRAFT_TYPE_TODAY}
+                        state="resting"
+                      />
+                    </div>
+                    <div>
+                      <DraftButton
+                        row={row}
+                        typeClass={DRAFT_TYPE_TODAY}
+                        state="hover"
+                      />
+                    </div>
+                    <div>
+                      <DraftButton
+                        row={row}
+                        typeClass={DRAFT_TYPE_TODAY}
+                        state="disabled"
+                      />
+                    </div>
+                    <div>
+                      <DraftButton
+                        row={row}
+                        typeClass={DRAFT_TYPE_TODAY}
+                        state="loading"
+                      />
+                    </div>
+                  </Fragment>
+                ))}
+              </Fragment>
+            ))}
+          </div>
         </div>
       </SubSection>
 
       <SubSection title="CTA type — today beside Guidebook">
-        <div className="grid grid-cols-[minmax(14rem,auto)_repeat(2,minmax(10rem,1fr))] items-center gap-x-6 gap-y-3">
-          <div />
-          <DemoCaption>Today &mdash; 14px / 500</DemoCaption>
-          <DemoCaption>Guidebook &mdash; 16px / 600</DemoCaption>
-          {BUTTON_PROPOSAL_SET.map((row) => (
-            <Fragment key={row.name}>
-              <DraftButtonLabel row={row} />
-              <div>
-                <DraftButton
-                  row={row}
-                  typeClass={DRAFT_TYPE_TODAY}
-                  state="resting"
-                />
-              </div>
-              <div>
-                <DraftButton
-                  row={row}
-                  typeClass={DRAFT_TYPE_GUIDEBOOK}
-                  state="resting"
-                />
-              </div>
-            </Fragment>
-          ))}
+        {/* Same floor, same wrapper as the grid above — three columns bottom out
+            around 592px, so this one scrolls inside itself too rather than
+            widening the document. */}
+        <div className="overflow-x-auto">
+          <div className="grid grid-cols-[minmax(14rem,auto)_repeat(2,minmax(10rem,1fr))] items-center gap-x-6 gap-y-3">
+            <div />
+            <DemoCaption>Today &mdash; 14px / 500</DemoCaption>
+            <DemoCaption>Guidebook &mdash; 16px / 600</DemoCaption>
+            {BUTTON_PROPOSAL_SET.map((row) => (
+              <Fragment key={row.name}>
+                <DraftButtonLabel row={row} />
+                <div>
+                  <DraftButton
+                    row={row}
+                    typeClass={DRAFT_TYPE_TODAY}
+                    state="resting"
+                  />
+                </div>
+                <div>
+                  <DraftButton
+                    row={row}
+                    typeClass={DRAFT_TYPE_GUIDEBOOK}
+                    state="resting"
+                  />
+                </div>
+              </Fragment>
+            ))}
+          </div>
         </div>
       </SubSection>
     </Fragment>
@@ -2490,7 +2532,8 @@ function ButtonProposalDemo() {
  * The three faces the app has loaded, in one place, at one string.
  *
  * They are unreadable against each other anywhere else: Poppins is everywhere,
- * Press Start 2P is on six scattered surfaces, and Space Mono is on none — so
+ * Press Start 2P is on six scattered surfaces, and Space Mono is on no live
+ * one — it renders here and in the gamer-dashboard preview scene's draft — so
  * "which of these should carry a heading" is a question that has, until now,
  * only been answerable from memory. Dancing Script is deliberately absent: it
  * draws a typed signature and nothing else, so it is not a candidate for any
@@ -2510,7 +2553,7 @@ const TYPE_FACES: readonly {
   },
   {
     name: "Space Mono",
-    note: "--font-brand-mono · loaded, placed nowhere",
+    note: "--font-brand-mono · drafts only, no live route",
     className: "font-brand-mono",
   },
   {
@@ -2538,6 +2581,12 @@ const GREETING_SAMPLE = "Tervetuloa, Aino!";
  * The gamer dashboard's content width at the 360px mobile floor: the shell is
  * `container p-6`, and the container is full-width below `sm`. Every greeting
  * cell is drawn in exactly that box, so the wrap is the real one.
+ *
+ * Which is why the width sits on its own element, with the demo's border and
+ * padding on a wrapper *outside* it. Tailwind sets `box-sizing: border-box`, so
+ * `w-[312px] border p-3` on one element is a 286px content box — the greeting
+ * would wrap earlier than it does on a real phone and the comparison would be
+ * measuring the demo's own chrome.
  */
 const MOBILE_FLOOR_WIDTH = "w-[312px]";
 
@@ -2589,15 +2638,17 @@ function TypeFacesDemo() {
           {GREETING_CELLS.map((cell) => (
             <div key={cell.label} className="space-y-1.5">
               <DemoCaption>{cell.label}</DemoCaption>
-              <div className={cn(MOBILE_FLOOR_WIDTH, "rounded-lg border p-3")}>
-                <p
-                  className={cn(
-                    cell.className,
-                    "text-center font-bold text-primary break-words",
-                  )}
-                >
-                  {GREETING_SAMPLE}
-                </p>
+              <div className="w-fit rounded-lg border p-3">
+                <div className={MOBILE_FLOOR_WIDTH}>
+                  <p
+                    className={cn(
+                      cell.className,
+                      "text-center font-bold text-primary break-words",
+                    )}
+                  >
+                    {GREETING_SAMPLE}
+                  </p>
+                </div>
               </div>
             </div>
           ))}

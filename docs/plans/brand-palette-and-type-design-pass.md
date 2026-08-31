@@ -128,11 +128,16 @@ One branch off `dev` (after the companion plan merges), `feat/brand-palette-desi
 3. **Button restyle in UI Components**: the Guidebook set (specs in Decision 4) rendered
    side by side with the current variants — every state (default/hover/disabled/loading)
    adjacent, one section, so the comparison happens on screen rather than from memory.
-   Scope bound: `destructive` (~17 call sites) and `link` (~5) are functional variants
+   Scope bound: `destructive` (6 call sites) and `link` (3) are functional variants
    outside the Guidebook's set and are untouched. The review decides the mapping for
-   `secondary` (violet fill, ~13 sites), `outline` (~66), and `ghost` (~28) — those counts
+   `secondary` (violet fill, 1 site), `outline` (61), and `ghost` (24) — those counts
    are the branch's blast radius; whether the violet-fill construct survives under another
    name or retires is an owner decision (see escalations).
+   *Deviation, implementation:* every count above was recounted (`<Button variant="X">`
+   plus `buttonVariants({ variant: "X" })`, app code in `src/`, style-guide page excluded)
+   — the plan's estimates counted `<Badge>` variants and missed the `buttonVariants`
+   anchors. The one that changes the decision: `secondary` is **1** call site, not ~13, and
+   it is a `buttonVariants` anchor rather than a Button.
 4. **Display faces in the scenes**: Space Mono placed where the in-platform world voice
    earns it (candidates: the gamer dashboard's display headings, voice-room chrome, badge
    labels — judged, not assumed); each Press Start 2P placement kept, swapped to Space
@@ -143,6 +148,9 @@ One branch off `dev` (after the companion plan merges), `feat/brand-palette-desi
    lockup, and an approval covers the placement as given — a typeface change there alters
    the approved placement's appearance, so it ships only with the owner's explicit go (and
    partner re-approval if the owner judges it needed).
+   *Deviation, implementation:* the home h1's draft decision is **keep Press Start 2P** —
+   it is the flagship rare use, and the scenes propose it unchanged rather than offering a
+   swap. Pending the owner's ruling like the other four sites.
 5. **Owner review gates**: the owner reviews each scene and the button section in the UI;
    iterate in fixtures until signed off. Nothing past this line starts before sign-off.
 

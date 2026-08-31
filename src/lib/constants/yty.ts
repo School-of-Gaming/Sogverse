@@ -86,22 +86,28 @@ export interface YtyElementColor {
  * these classes and deleting this export — not adding a second permanent map.
  *
  * **Which variant feeds which slot is decided by `scripts/yty-contrast.mjs`,
- * not by eye.** Every pairing was measured against `#121212`:
+ * not by eye.** Every pairing is measured against both grounds — the page
+ * (`#121212`) and the card (`#1a1a1a`) these pairings are actually drawn on.
+ * The card is the lighter one, so its numbers are the binding ones and are the
+ * ones quoted here:
  *
  * - **`accent` takes the soft variant, on all four elements.** The accent class
  *   carries body-size text as well as icons — the home section renders the
- *   element's description in it at `text-sm` — so the binding threshold is
- *   4.5:1, not 3:1. Wit-strong (`#3A71DE`) measures 4.10:1: fine for a 24px
- *   icon, short of body copy. Soft clears it on every element (7.70 / 8.83 /
- *   8.81 / 8.10), and using soft uniformly is what keeps the four elements one
- *   family rather than three-plus-an-exception.
+ *   element's description in it at `text-sm`, directly on the card — so the
+ *   binding threshold is 4.5:1, not 3:1. Wit-strong (`#3A71DE`) measures
+ *   3.81:1 on the card: fine for a 24px icon, short of body copy. Soft clears
+ *   it on every element (7.15 / 8.21 / 8.18 / 7.53), and using soft uniformly
+ *   is what keeps the four elements one family rather than
+ *   three-plus-an-exception.
  * - **`bg`, `bgGradient`, `border` and `ring` take the strong variant.** None
  *   of them carries text: the tints are 10% and 5% washes behind an icon, the
  *   border is a 30% card edge, and the ring is a non-text state indicator where
  *   the 3:1 bar applies and even wit-strong clears it. Strong is the truer
  *   brand hue, and at those alphas it is what keeps a wash from washing out.
- *   The app's own foreground over the 10% tint measures 13.6–14.7:1 for every
- *   hue and variant, so that pairing constrains nothing.
+ *   The app's own foreground over the 10% tint measures 12.5–13.5:1 on the
+ *   card, so that pairing constrains nothing — and the tightest pairing of the
+ *   lot, the zone's soft label over its own 10% strong tint, still clears at
+ *   6.32:1 (harmony, the worst of the four).
  *
  * The visible cost, and the thing worth the owner's eye in the scenes: wit's
  * two variants are further apart in hue than the other three pairs are
