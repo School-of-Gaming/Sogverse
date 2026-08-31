@@ -476,6 +476,97 @@ COMMENT ON FUNCTION public.accept_gedu_contract(p_version text) IS 'Record that 
 
 
 --
+-- Name: add_group_session_image(uuid, date, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.add_group_session_image(p_group_id uuid, p_session_date date, p_width integer, p_height integer, p_max_images integer) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_session_id uuid;
+  v_uid        uuid := (SELECT auth.uid());
+  v_count      integer;
+  v_image_id   uuid;
+BEGIN
+  -- An admin, or a gedu. Written as one guard call rather than a branch around
+  -- one so the authorization spine can read it, exactly as every other session
+  -- writer is.
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
+
+  -- The assignment half of the gate, which is what an admin is exempt from.
+  -- Any gedu assigned to the group may attach and remove photos, matching how
+  -- the report itself is edited: there is no per-photo ownership.
+  IF NOT public.is_admin() AND NOT public.gedu_teaches_group(p_group_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- The HARD sanity ceiling on a cap the caller supplies. The product cap lives
+  -- in one constant in the contracts module and is passed in from there; this is
+  -- only here so a buggy caller cannot ask for something absurd.
+  IF p_max_images IS NULL OR p_max_images < 1 OR p_max_images > 24 THEN
+    RAISE EXCEPTION
+      'A photo cap of % is outside the 1..24 a caller may ask for',
+      COALESCE(p_max_images::text, 'NULL')
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- One refusal for every implausible dimension, rather than a 23514 from the
+  -- CHECK for an out-of-range value and a 23502 from the NOT NULL for a missing
+  -- one. The table's constraints still stand behind this and are what make the
+  -- bound a guarantee rather than a convention.
+  IF p_width IS NULL OR p_height IS NULL
+     OR p_width  <= 0 OR p_width  > 4096
+     OR p_height <= 0 OR p_height > 4096 THEN
+    RAISE EXCEPTION
+      'Image dimensions % x % are not a plausible session photo',
+      COALESCE(p_width::text, 'NULL'), COALESCE(p_height::text, 'NULL')
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF NOT public.group_session_date_is_writable(p_group_id, p_session_date) THEN
+    RAISE EXCEPTION 'No scheduled session on % for this group', p_session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  v_session_id := public.ensure_group_session(p_group_id, p_session_date);
+
+  -- Take the session row's lock BEFORE counting, so two tabs uploading at once
+  -- serialize here and the second one sees the first one's row. Without it both
+  -- would count four and both would insert a fifth.
+  PERFORM 1 FROM public.group_sessions WHERE id = v_session_id FOR UPDATE;
+
+  SELECT count(*) INTO v_count
+    FROM public.group_session_images
+   WHERE session_id = v_session_id;
+
+  IF v_count >= p_max_images THEN
+    RAISE EXCEPTION
+      'This session already holds % photos, which is the cap', v_count
+      USING ERRCODE = 'P0023';
+  END IF;
+
+  INSERT INTO public.group_session_images (
+    session_id, width, height, created_by
+  )
+  VALUES (v_session_id, p_width, p_height, v_uid)
+  RETURNING id INTO v_image_id;
+
+  RETURN v_image_id;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION add_group_session_image(p_group_id uuid, p_session_date date, p_width integer, p_height integer, p_max_images integer); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.add_group_session_image(p_group_id uuid, p_session_date date, p_width integer, p_height integer, p_max_images integer) IS 'Attach one photo to a session''s report, materializing the session row if needed, and hand back the id the object will be named by. Open to an ADMIN or to the gedu assigned to the group, guard-first on assert_role with the assignment question as a second 42501 — the same shape set_group_session_notes carries, and the same half an admin is exempt from. Addressed by (group, session date) like every other session write. Takes the CAP as a parameter, because the product cap lives in one constant in the contracts module and raising it must not need a migration; SQL holds only a hard sanity ceiling of 24 so a buggy caller cannot pass something absurd. Counts and inserts while holding the session row''s lock, so concurrent tabs cannot overshoot the cap, and refuses with SQLSTATE P0023 when it is already met — a code of its own because the UI answers it differently from every other refusal ("remove one first", not "that did not work"). Implausible dimensions are refused with check_violation as one class, the table''s own CHECKs standing behind that. Called on the UPLOADER''S OWN client: the guard is the authorization, and the route uploads the object with the admin client afterwards — deleting this row again if that upload fails, because an object-less row is a broken image in the feed and in every mail sent later.';
+
+
+--
 -- Name: admin_enroll_participant(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -898,6 +989,52 @@ BEGIN
   PERFORM public.assert_role('admin');
 END;
 $$;
+
+
+--
+-- Name: assert_can_delete_session_image(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.assert_can_delete_session_image(p_image_id uuid) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_group_id uuid;
+BEGIN
+  -- An admin, or a gedu. Guard-first on the first statement, in the shape the
+  -- authorization spine reads and every other session RPC carries.
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
+
+  SELECT s.group_id
+    INTO v_group_id
+    FROM public.group_session_images i
+    JOIN public.group_sessions s ON s.id = i.session_id
+   WHERE i.id = p_image_id;
+
+  -- No row and somebody else's row answer the same way, exactly as they do in
+  -- delete_group_session_image. The caller has no right to learn which it was.
+  IF v_group_id IS NULL
+     OR (NOT public.is_admin() AND NOT public.gedu_teaches_group(v_group_id))
+  THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- The id it validated, so a caller has a positive answer rather than the
+  -- absence of an error. Returning it discloses nothing: it is the id the caller
+  -- just sent, and it comes back only on the path where they were allowed.
+  RETURN p_image_id;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION assert_can_delete_session_image(p_image_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.assert_can_delete_session_image(p_image_id uuid) IS 'May this caller remove this photo? A CHECK-ONLY function: it mutates nothing, and it exists because the route deletes the storage object BEFORE the row, on the service-role client, and an admin client must never act for a caller whose authorization has not been proved. Object-first is what makes a failed removal visible and retryable — the row is what every surface reads, so deleting it first would take the tile away and leave the object standing in a public bucket with nothing left to retry against. The gate is byte for byte delete_group_session_image''s: guard-first on assert_role for an ADMIN or a gedu, then the group resolved from the image''s own session row, with a photo id belonging to another group and one belonging to nothing refused IDENTICALLY with 42501 — never distinguish them, or this becomes an oracle for real photo ids, which name objects whose unguessable names are the access control. Returns the id it validated. It does not replace the delete RPC''s own guard, which still runs on the actual delete afterwards; the window between the two is cosmetic, because nothing inside it can widen what a caller may do.';
 
 
 --
@@ -1695,6 +1832,47 @@ COMMENT ON FUNCTION public.create_product(p_product_type public.product_type, p_
 
 
 --
+-- Name: delete_group_session_image(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.delete_group_session_image(p_image_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_group_id uuid;
+BEGIN
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
+
+  SELECT s.group_id
+    INTO v_group_id
+    FROM public.group_session_images i
+    JOIN public.group_sessions s ON s.id = i.session_id
+   WHERE i.id = p_image_id;
+
+  -- No row and somebody else's row answer the same way. Deliberate: the caller
+  -- has no right to learn which of the two it was.
+  IF v_group_id IS NULL
+     OR (NOT public.is_admin() AND NOT public.gedu_teaches_group(v_group_id))
+  THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  DELETE FROM public.group_session_images WHERE id = p_image_id;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION delete_group_session_image(p_image_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.delete_group_session_image(p_image_id uuid) IS 'Remove one photo''s ROW from a session''s report. Open to an ADMIN or to ANY gedu assigned to the group — there is no per-photo ownership, matching how the report itself is edited under the last-editor model. Guard-first on assert_role; the group is then resolved from the image''s own session row, and that resolution is the second half of the gate. A photo id that belongs to another group and one that belongs to nothing are refused identically with 42501, so this cannot be used as an oracle for real photo ids. The route calls this LAST: since 00224 it authorizes with assert_can_delete_session_image, removes the OBJECT through the Storage API (never with SQL against storage.objects, which orphans the backing file), and only then deletes the row here — so that a removal which failed to remove the picture leaves the photo on the card, visible and retryable, instead of taking the tile away while the object stands in a public bucket. This function''s own guard is not replaced by that check; it runs again on the actual delete. A row that survives a failed delete after its object is gone renders as a broken thumbnail, and the ordinary remove control is its repair: the storage API answers a delete of an absent object as success, so the retry reaches here and clears the row.';
+
+
+--
 -- Name: demote_to_waitlist(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2470,8 +2648,7 @@ BEGIN
         'gedu_note',   g.gedu_note,
 
         -- Register-shaped and nothing more: who may be marked, and what to call
-        -- them. See this migration's header for why it is not the group feed's
-        -- roster.
+        -- them. See 00200's header for why it is not the group feed's roster.
         'roster', COALESCE((
           SELECT jsonb_agg(jsonb_build_object(
                    'participant_id', part.participant_id,
@@ -2511,6 +2688,27 @@ BEGIN
                        FROM public.profiles pr
                       WHERE pr.id = s.updated_by
                    ),
+                   -- The session's photos (00222, reaching this document in
+                   -- 00223). Byte-for-byte the gedu feed's aggregate, because
+                   -- one card component renders both: {id, width, height} per
+                   -- photo, ordered by (created_at, id) — the stamp is
+                   -- clock_timestamp() taken under the session row's lock and
+                   -- the id breaks a sub-tick tie, so every surface draws the
+                   -- same order — and an empty array rather than a null when
+                   -- there are none. `created_by` is deliberately off the wire,
+                   -- for the same reason `report_emailed_by` above is: it is
+                   -- safeguarding audit, it gates nothing and nothing renders
+                   -- it. The URL is derived from the id by one helper rather
+                   -- than stored.
+                   'images', COALESCE((
+                     SELECT jsonb_agg(jsonb_build_object(
+                              'id',     img.id,
+                              'width',  img.width,
+                              'height', img.height
+                            ) ORDER BY img.created_at, img.id)
+                       FROM public.group_session_images img
+                      WHERE img.session_id = s.id
+                   ), '[]'::jsonb),
                    -- Sparse map keyed by participant id. A roster member absent
                    -- from it is UNMARKED, which is not 'absent'.
                    'attendance', COALESCE((
@@ -2540,7 +2738,7 @@ $$;
 -- Name: FUNCTION get_admin_product_sessions(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) IS 'One round trip behind the admin product page''s Sessions panel: the product''s schedule parameters, its venue and site notes on an in-person product, and every group on it with its standing notes, its register roster and every stored session row with a sparse attendance map. Admin-only, guard-first on assert_admin. Product-keyed rather than group-keyed because the page shows one product and puts a group selector in front of the feed; asking per group would send the product shell and the site over the wire once per group. Contains no schedule expansion — the client owns the calendar math, exactly as it does for the gedu feed. The SESSION shape is get_gedu_group_feed''s verbatim, because one card component renders both and the two must not disagree about what a session is; the ROSTER deliberately is not — it carries participant_id and first_name alone, since the only thing this surface does with it is take the register, and the groups panel on the same page already answers who these people are.';
+COMMENT ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) IS 'One round trip behind the admin product page''s Sessions panel: the product''s schedule parameters, its venue and site notes on an in-person product, and every group on it with its standing notes, its register roster and every stored session row with a sparse attendance map and, since 00223, its photos. Admin-only, guard-first on assert_admin. Product-keyed rather than group-keyed because the page shows one product and puts a group selector in front of the feed; asking per group would send the product shell and the site over the wire once per group. Contains no schedule expansion — the client owns the calendar math, exactly as it does for the gedu feed. The SESSION shape is get_gedu_group_feed''s verbatim, because one card component renders both and the two must not disagree about what a session is — which is why `images` ({id, width, height} per photo, ordered by (created_at, id), never the uploader) arrives here in the same shape and needs no versioned name: this document''s reader shares the gedu session''s tolerant schema, and only the strict family one needed get_my_family_product_feed_v2. The ROSTER deliberately is not the gedu feed''s — it carries participant_id and first_name alone, since the only thing this surface does with it is take the register, and the groups panel on the same page already answers who these people are.';
 
 
 --
@@ -2910,11 +3108,6 @@ BEGIN
 
   -- Every stored row for the group, newest first — including rows the schedule
   -- no longer projects. An orphan is history, not a mistake.
-  --
-  -- Two reserved booleans were emitted here until 00151, purely so the document
-  -- mirrored the table. 00151 dropped the columns; nothing replaces them. Their
-  -- names are deliberately not repeated in this body — the end-state assertion
-  -- at the foot of that migration greps this source for them.
   SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'session_date' DESC), '[]'::jsonb)
     INTO v_sessions
     FROM (
@@ -2940,11 +3133,6 @@ BEGIN
         'report_emailed_at', s.report_emailed_at,
         -- The last editor's first name, for the author chip on the card.
         --
-        -- 00194's field, carried through verbatim — see this migration's
-        -- header. Nothing here reads it; it is the current definition of this
-        -- function on the database this file is pushed to, and recreating a
-        -- function preserves what it is not deliberately changing.
-        --
         -- LEFT-JOIN-shaped on purpose: NULL when nothing has stamped the row
         -- yet, and NULL again if the profile has gone. The FK is ON DELETE SET
         -- NULL, so the second case cannot arise from a deleted profile — it is
@@ -2958,6 +3146,21 @@ BEGIN
             FROM public.profiles pr
            WHERE pr.id = s.updated_by
         ),
+        -- The session's photos (00222). `created_by` is deliberately NOT on the
+        -- wire — it is safeguarding audit, it gates nothing and nothing renders
+        -- it, exactly like report_emailed_by above. Ordered by (created_at, id):
+        -- the stamp is clock_timestamp() taken under the session row's lock and
+        -- the id breaks a sub-tick tie, so every surface draws the same order.
+        -- The URL is derived from the id by one helper rather than stored.
+        'images', COALESCE((
+          SELECT jsonb_agg(jsonb_build_object(
+                   'id',     img.id,
+                   'width',  img.width,
+                   'height', img.height
+                 ) ORDER BY img.created_at, img.id)
+            FROM public.group_session_images img
+           WHERE img.session_id = s.id
+        ), '[]'::jsonb),
         -- Sparse map keyed by participant id. A roster member absent from this
         -- object is UNMARKED, which is a different claim from 'absent'.
         'attendance', COALESCE((
@@ -2985,7 +3188,7 @@ $$;
 -- Name: FUNCTION get_gedu_group_feed(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math. Open since 00204 to an ADMIN as well as to the assigned gedu, guard-first on assert_role with the ownership question as a second 42501 — the same shape set_group_notes uses. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s page body unchanged: one body fed by one document is what keeps the two surfaces one surface, where a second admin-shaped RPC would have started drifting field by field. An admin passes the ownership half outright; a gedu is still shown only their OWN group''s feed, and a customer or a gamer is still refused on the first statement, which is what keeps the material link and the three staff notes off every family surface. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult), carries both game identities since 00195 (minecraft_username/minecraft_uuid and roblox_username/roblox_user_id, independent of each other and drawn according to the product''s topic, which this document does not carry), and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox). Since 00203 each roster row also carries the staff-only flair — group_joined_at (when the seat entered THIS group, as against signed_up_at, which is when it was taken on the product), note and note_updated_by_first_name — in deliberate parity with get_gedu_assigned_product''s roster, which is the parity the page depends on because it renders this copy. Each session row carries report_emailed_at since 00197 — when its report was mailed to the families, NULL until it was — and never report_emailed_by, which is audit and renders nowhere.';
+COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map and, since 00222, its photos. Contains no schedule expansion — the client owns the calendar math. Open since 00204 to an ADMIN as well as to the assigned gedu, guard-first on assert_role with the ownership question as a second 42501 — the same shape set_group_notes uses. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s page body unchanged: one body fed by one document is what keeps the two surfaces one surface, where a second admin-shaped RPC would have started drifting field by field. An admin passes the ownership half outright; a gedu is still shown only their OWN group''s feed, and a customer or a gamer is still refused on the first statement, which is what keeps the material link and the three staff notes off every family surface. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult), carries both game identities since 00195 (minecraft_username/minecraft_uuid and roblox_username/roblox_user_id, independent of each other and drawn according to the product''s topic, which this document does not carry), and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox). Since 00203 each roster row also carries the staff-only flair — group_joined_at (when the seat entered THIS group, as against signed_up_at, which is when it was taken on the product), note and note_updated_by_first_name — in deliberate parity with get_gedu_assigned_product''s roster, which is the parity the page depends on because it renders this copy. Each session row carries report_emailed_at since 00197 — when its report was mailed to the families, NULL until it was — and never report_emailed_by, which is audit and renders nowhere. Since 00222 each session row also carries `images`: {id, width, height} per photo, ordered by (created_at, id), with the uploader deliberately off the wire for the same reason the sender is. Widened IN PLACE rather than under a versioned name because the gedu contracts schema is tolerant of unknown keys — the family feed, whose schema is strict, got get_my_family_product_feed_v2 instead.';
 
 
 --
@@ -3204,8 +3407,7 @@ BEGIN
   -- Whoever holds the seat. The page is participant-scoped and reachable by
   -- URL, so it cannot get the name from a dashboard card it was not opened
   -- from. This is the caller's own child, or the caller themselves — the
-  -- ownership check above is what makes that true, and it is why the key is
-  -- not spelled for a gamer any more.
+  -- ownership check above is what makes that true.
   SELECT jsonb_build_object(
     'id',         pr.id,
     'first_name', pr.first_name
@@ -3298,14 +3500,19 @@ BEGIN
   -- rather than merely unrendered. NULL means unmarked, which is a third state
   -- and not the same claim as 'absent'.
   --
-  -- The two `updated_by*` keys are the ONE widening 00194 makes here, and the
-  -- name travels per session rather than being resolved against `gedus` above
-  -- because the sets genuinely differ: the gedu who wrote up September may not
-  -- teach the group in November, and resolving against the current list would
-  -- leave the oldest reports unsigned. A first name is the same quantum of
-  -- information a family already gets for every assigned gedu. It is the last
-  -- editor of the SESSION, not the report's author — an attendance mark moves
-  -- it — which is a limitation this document states rather than hides.
+  -- The two `updated_by*` keys are 00194's widening, and the name travels per
+  -- session rather than being resolved against `gedus` above because the sets
+  -- genuinely differ: the gedu who wrote up September may not teach the group in
+  -- November, and resolving against the current list would leave the oldest
+  -- reports unsigned. It is the last editor of the SESSION, not the report's
+  -- author — an attendance mark moves it — which is a limitation this document
+  -- states rather than hides.
+  --
+  -- `images` is 00222's, arriving here in place as of this migration. Same shape
+  -- as the gedu and admin documents' — {id, width, height}, ordered by
+  -- (created_at, id) — because one shared gallery component renders them all.
+  -- The uploader does not travel: it is safeguarding audit, and a family surface
+  -- is the last place for it.
   SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'session_date' DESC), '[]'::jsonb)
     INTO v_sessions
     FROM (
@@ -3321,6 +3528,15 @@ BEGIN
             FROM public.profiles pr
            WHERE pr.id = s.updated_by
         ),
+        'images', COALESCE((
+          SELECT jsonb_agg(jsonb_build_object(
+                   'id',     img.id,
+                   'width',  img.width,
+                   'height', img.height
+                 ) ORDER BY img.created_at, img.id)
+            FROM public.group_session_images img
+           WHERE img.session_id = s.id
+        ), '[]'::jsonb),
         'attendance', (
           SELECT a.status
             FROM public.session_attendance a
@@ -3348,7 +3564,7 @@ $$;
 -- Name: FUNCTION get_my_family_product_feed(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person products, the teaching gedus'' first names, the group''s full stored session history with reports, and the named participant''s own attendance marks. Each session also carries updated_by and the last editor''s first name (00194) — last editor of the SESSION, not author of the report: an attendance mark or a staff-note edit moves it. The name travels per session because a past session''s editor may no longer teach the group. Self-scoping — the caller must be the participation''s participant (a child, or a parent holding a seat of their own) or a parent linked to them; an unplaced participation has no page. Carries no gedu note of any scope, no roster, no other participant''s marks, no parent email, no material link and no owed/completeness state.';
+COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person products, the teaching gedus'' first names, the group''s full stored session history with reports and PHOTOS, and the named participant''s own attendance marks. Each session carries updated_by and the last editor''s first name (00194) — last editor of the SESSION, not author of the report: an attendance mark or a staff-note edit moves it. The name travels per session because a past session''s editor may no longer teach the group. Since this migration each session also carries `images`: {id, width, height} per photo, ordered by (created_at, id), the same shape the gedu and admin documents carry because one shared gallery renders all three, and never the uploader, which is safeguarding audit. That key was added by 00222 under a versioned twin, get_my_family_product_feed_v2, on the reading that a `.strict()` response schema in the still-deployed app failing to parse a widened document was breakage the release window could not absorb. The severity paragraph in docs/plans/CLAUDE.md''s "Landing in stages" section now settles that the other way: transient READ-SIDE breakage that heals itself the moment the deploy completes is inside the accepted window, and the compatibility step is reserved for permanent or write-side breakage and for payments and auth. So the widening landed here in place and the twin was dropped. Self-scoping — the caller must be the participation''s participant (a child, or a parent holding a seat of their own) or a parent linked to them; an unplaced participation has no page and answers P0002; a row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. Carries no gedu note of any scope, no roster, no other participant''s marks, no parent email, no material link and no owed/completeness state.';
 
 
 SET default_tablespace = '';
@@ -7407,6 +7623,57 @@ COMMENT ON CONSTRAINT gedu_profiles_criminal_record_check_stamp_matches_flag ON 
 
 
 --
+-- Name: group_session_images; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.group_session_images (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    session_id uuid NOT NULL,
+    width integer NOT NULL,
+    height integer NOT NULL,
+    created_by uuid,
+    created_at timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    CONSTRAINT chk_group_session_images_height CHECK (((height > 0) AND (height <= 4096))),
+    CONSTRAINT chk_group_session_images_width CHECK (((width > 0) AND (width <= 4096)))
+);
+
+
+--
+-- Name: TABLE group_session_images; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.group_session_images IS 'The photos attached to one session''s report — mostly in-game screenshots. One row per upload, and the row''s id is also the object''s name in the public `session-images` bucket (`<id>.jpg`), which is why there is no path column: it would restate the primary key. The name is a random UUID rather than a content hash on purpose — the unguessable name IS the access control (see the migration header''s unlisted-not-private model), and per-upload identity means deleting one report''s photo can never collide with another report that attached identical bytes. Dedup is a non-goal. RLS on with ZERO policies and no grant to `authenticated`: the same posture group_sessions itself carries, so the two RPCs below are the only way in and a grant added by accident still fails closed. A photo lives exactly as long as its report — removed by a gedu or an admin, or CASCADEd away when the session row goes — and there is no timer, no reaper and no scheduled job.';
+
+
+--
+-- Name: COLUMN group_session_images.width; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.group_session_images.width IS 'The stored image''s pixel width, claimed by the uploading client and bounded here. All gallery and email geometry is arithmetic from this and `height` — never measured — which is what lets server HTML and first client paint agree and keeps a mail laying out correctly with every image blocked. The CHECK''s 4096 is a SANITY ceiling, deliberately looser than the client''s ~2048 px edge cap and not derived from it: the uploader is an assigned staff member, the value feeds layout alone, and the worst a wrong one produces is a mis-sized box in that group''s own mail.';
+
+
+--
+-- Name: COLUMN group_session_images.height; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.group_session_images.height IS 'The stored image''s pixel height. See `width` — the same claim, the same sanity ceiling, and the same reason both are trusted after a bound check rather than re-derived by parsing the JPEG server-side.';
+
+
+--
+-- Name: COLUMN group_session_images.created_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.group_session_images.created_by IS 'Who uploaded this photo. AUDIT ONLY, and specifically for safeguarding: these are pictures concerning children and "who put this here" must be answerable. It gates nothing — removal is role-based, matching how the report itself is edited — and it appears on no feed. The exact mirror of group_sessions.report_emailed_by, ON DELETE SET NULL included, so a departed gedu leaves the upload recorded without the name.';
+
+
+--
+-- Name: COLUMN group_session_images.created_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.group_session_images.created_at IS 'When the photo was attached, and the DISPLAY ORDER key: every renderer orders by (created_at, id). Stamped with clock_timestamp() rather than now() because the insert runs under the session row''s lock, where a transaction-start stamp can tie or invert against lock-acquisition order; the id is the sub-tick tiebreaker.';
+
+
+--
 -- Name: group_sessions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -8475,6 +8742,14 @@ ALTER TABLE ONLY public.gedu_profiles
 
 
 --
+-- Name: group_session_images group_session_images_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_session_images
+    ADD CONSTRAINT group_session_images_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: group_sessions group_sessions_group_date_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -8799,6 +9074,13 @@ ALTER TABLE ONLY public.whatsapp_contacts
 
 ALTER TABLE ONLY public.whatsapp_messages
     ADD CONSTRAINT whatsapp_messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: group_session_images_session_order_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX group_session_images_session_order_idx ON public.group_session_images USING btree (session_id, created_at, id);
 
 
 --
@@ -9643,6 +9925,22 @@ ALTER TABLE ONLY public.gedu_profiles
 
 ALTER TABLE ONLY public.gedu_profiles
     ADD CONSTRAINT gedu_profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: group_session_images group_session_images_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_session_images
+    ADD CONSTRAINT group_session_images_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: group_session_images group_session_images_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_session_images
+    ADD CONSTRAINT group_session_images_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.group_sessions(id) ON DELETE CASCADE;
 
 
 --
@@ -10537,6 +10835,12 @@ CREATE POLICY gedus_read_own_gedu_profile ON public.gedu_profiles FOR SELECT TO 
 
 
 --
+-- Name: group_session_images; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.group_session_images ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: group_sessions; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -11045,6 +11349,15 @@ GRANT ALL ON FUNCTION public.accept_gedu_contract(p_version text) TO authenticat
 
 
 --
+-- Name: FUNCTION add_group_session_image(p_group_id uuid, p_session_date date, p_width integer, p_height integer, p_max_images integer); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.add_group_session_image(p_group_id uuid, p_session_date date, p_width integer, p_height integer, p_max_images integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.add_group_session_image(p_group_id uuid, p_session_date date, p_width integer, p_height integer, p_max_images integer) TO authenticated;
+GRANT ALL ON FUNCTION public.add_group_session_image(p_group_id uuid, p_session_date date, p_width integer, p_height integer, p_max_images integer) TO service_role;
+
+
+--
 -- Name: FUNCTION admin_enroll_participant(p_product_id uuid, p_participant_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -11095,6 +11408,15 @@ GRANT ALL ON FUNCTION public.apply_product_image_path() TO service_role;
 REVOKE ALL ON FUNCTION public.assert_admin() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.assert_admin() TO authenticated;
 GRANT ALL ON FUNCTION public.assert_admin() TO service_role;
+
+
+--
+-- Name: FUNCTION assert_can_delete_session_image(p_image_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.assert_can_delete_session_image(p_image_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.assert_can_delete_session_image(p_image_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.assert_can_delete_session_image(p_image_id uuid) TO service_role;
 
 
 --
@@ -11188,6 +11510,15 @@ GRANT ALL ON FUNCTION public.create_participation(p_product_id uuid, p_participa
 REVOKE ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]) TO authenticated;
 GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_spoken_language_code public.spoken_language, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_for_gamers boolean, p_for_parents boolean, p_min_age integer, p_max_age integer, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text, p_tag public.product_tag, p_region_lock_country text, p_required_consent_slugs text[]) TO service_role;
+
+
+--
+-- Name: FUNCTION delete_group_session_image(p_image_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.delete_group_session_image(p_image_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.delete_group_session_image(p_image_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.delete_group_session_image(p_image_id uuid) TO service_role;
 
 
 --
@@ -12031,6 +12362,13 @@ GRANT SELECT,INSERT,DELETE ON TABLE public.gedu_locations TO authenticated;
 GRANT SELECT ON TABLE public.gedu_profiles TO anon;
 GRANT SELECT ON TABLE public.gedu_profiles TO authenticated;
 GRANT ALL ON TABLE public.gedu_profiles TO service_role;
+
+
+--
+-- Name: TABLE group_session_images; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.group_session_images TO service_role;
 
 
 --
