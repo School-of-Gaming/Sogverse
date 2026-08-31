@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { geduGroupFeed } from "@/services/gedu-sessions/gedu-sessions.contracts";
@@ -601,9 +602,11 @@ describe("session photos", () => {
   // The photos are inspected through the feature's OWN contracts schema, widened
   // in place — the same parse the service performs on every real read, run here
   // against real Postgres output so SQL and TypeScript cannot drift apart
-  // quietly. `created_by` staying off the wire is asserted by looking for the
-  // key name in the raw document rather than by a strict nested shape, because
-  // strictness there would contradict the tolerance the next paragraph relies on.
+  // quietly. `created_by` staying off an image's wire shape is asserted by
+  // whole-object equality on the image objects (the schema is tolerant, so a
+  // strict nested shape would contradict the tolerance the next paragraph
+  // relies on) — a raw-document key search cannot work here, because the
+  // session row itself legitimately carries its own `created_by` audit column.
   describe("get_gedu_group_feed", () => {
     it("carries each session's photos, oldest first, and never the uploader", async () => {
       const first = await attach(geduAuth, YESTERDAY, {
@@ -634,13 +637,35 @@ describe("session photos", () => {
       });
       // Mixed ratios travel intact — the gallery's geometry is arithmetic from
       // these and is never measured.
-      expect(session?.images[1]?.width).toBe(1080);
-      expect(session?.images[1]?.height).toBe(1440);
+      expect(session?.images[1]).toEqual({
+        id: second,
+        width: 1080,
+        height: 1440,
+      });
 
-      // `created_by` stays off the wire for the same reason `report_emailed_by`
-      // does: audit that nothing renders. Asserted against the raw document, so
-      // it catches a leak anywhere in it and not only inside an image object.
-      expect(JSON.stringify(data)).not.toContain("created_by");
+      // `created_by` stays off an IMAGE's wire shape for the same reason
+      // `report_emailed_by` stays off the session's: audit that nothing
+      // renders. Whole-object equality on the raw image objects is the check
+      // that binds — the session object legitimately carries its own
+      // `created_by` audit column, so searching the raw document for the key
+      // name would match something real.
+      const rawSession = z
+        .object({
+          sessions: z.array(
+            z
+              .object({
+                session_date: z.string(),
+                images: z.array(z.record(z.string(), z.unknown())),
+              })
+              .passthrough(),
+          ),
+        })
+        .parse(data)
+        .sessions.find((s) => s.session_date === YESTERDAY);
+      expect(rawSession?.images).toHaveLength(2);
+      for (const image of rawSession?.images ?? []) {
+        expect(Object.keys(image).sort()).toEqual(["height", "id", "width"]);
+      }
     });
 
     it("hands an admin the same photos on a group they teach nothing of", async () => {
