@@ -1,6 +1,10 @@
 import { Heart, Sun, Sword, Brain } from "lucide-react";
 
-/** The four Yty elements — the core values of the School of Gaming. */
+/**
+ * The Four Yty-Elements — the core values of School of Gaming. The names and
+ * descriptions here are the canonical English wording; the rendered copy comes
+ * from the `yty.elements.*` messages, which carry the same words per locale.
+ */
 export const YTY_ELEMENTS = [
   {
     id: "harmony",
@@ -31,7 +35,7 @@ export const YTY_ELEMENTS = [
   {
     id: "valor",
     name: "Valor",
-    description: "Your relationship with the world",
+    description: "Your relationship with society",
     icon: Sword,
     color: {
       bg: "bg-yty-valor/10",
@@ -44,7 +48,7 @@ export const YTY_ELEMENTS = [
   {
     id: "wit",
     name: "Wit",
-    description: "Your relationship with media & tech",
+    description: "Your relationship with technology",
     icon: Brain,
     color: {
       bg: "bg-yty-wit/10",

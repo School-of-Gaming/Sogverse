@@ -4,7 +4,12 @@ import { useTranslations } from 'next-intl';
 import sogLogoFullMono from "@/assets/brand/sog-logo-full-mono.svg";
 import sogLogoSimpleMono from "@/assets/brand/sog-logo-simple-mono.svg";
 import { Copyright } from "./copyright";
-import { ROUTES, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import {
+  REGISTERED_TRADEMARK,
+  ROUTES,
+  SENDER_NAME,
+  SUPPORT_EMAIL,
+} from "@/lib/constants";
 
 export function Footer() {
   const t = useTranslations('footer');
@@ -20,7 +25,7 @@ export function Footer() {
               of text. The footer has the vertical room the header does not,
               which is why the two ended up different sizes. Same two-file
               split, same intrinsic dimensions, as the header. */}
-          <div className="flex items-center">
+          <div className="relative flex items-center">
             <Image
               src={sogLogoSimpleMono}
               alt={SENDER_NAME}
@@ -37,6 +42,27 @@ export function Footer() {
               className="hidden h-20 w-auto sm:block"
               unoptimized
             />
+            {/* The registered-trademark symbol, once per page, and only here:
+                the mark is registered and the Brand Guidebook asks for the ®
+                on the website footer, at the mark's most prominent appearance.
+                Once per page is enough, so no other logo placement carries it.
+
+                It hangs off the logo's top-right corner via absolute
+                positioning (`left-full` on the `relative` row) so it adds no
+                width to the row — the footer centres the row's content, and an
+                in-flow glyph beside the logo would shift the mark itself
+                off-centre. `top-0` lands on the badge's own top rather than an
+                arbitrary line above it: the artwork starts ~1.5% into its own
+                box, so the box top is the badge top. Sized per breakpoint
+                against the two logo heights
+                rather than inheriting body size — and deliberately larger than
+                a print lockup's fine-print ratio, because at that ratio it
+                disappeared on the dark ground.
+                Left as real text, not aria-hidden: it is a legal notice on the
+                name, and it belongs in the announcement of it. */}
+            <span className="absolute left-full top-0 ml-0.5 text-xl leading-none sm:ml-1 sm:text-3xl">
+              {REGISTERED_TRADEMARK}
+            </span>
           </div>
           <a
             href={`mailto:${SUPPORT_EMAIL}`}

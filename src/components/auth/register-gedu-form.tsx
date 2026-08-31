@@ -166,6 +166,12 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
     <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="text-2xl text-center">{t("registerGedu.title")}</CardTitle>
+        {/* The brand slogan for the people this page is addressed to, placed
+            once and only here — lower and smaller than the title it sits
+            under, which is the sanctioned shape for a slogan on a page. */}
+        <p className="text-center text-sm font-medium text-primary">
+          {t("registerGedu.slogan")}
+        </p>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">

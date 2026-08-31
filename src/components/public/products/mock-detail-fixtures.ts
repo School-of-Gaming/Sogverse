@@ -202,6 +202,11 @@ const TEN_SEC_MS = 10 * 1000;
 
 const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
   "consumer-club": {
+    // The plain paid club, and the scenario the 30-day money-back guarantee is
+    // read on: the panel keys that copy on the `subscription` pricing option,
+    // which is what a paid consumer club — and nothing else — resolves to. Its
+    // free, municipality, camp and event siblings deliberately show no
+    // guarantee, so this is also the pair to compare against.
     label: "€45/mo — open",
     productType: "consumer_club",
     billingMode: "paid",

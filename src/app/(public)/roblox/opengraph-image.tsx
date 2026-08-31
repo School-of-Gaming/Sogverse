@@ -2,7 +2,7 @@
 import { ImageResponse } from "next/og";
 import { DARK_THEME, BRAND, GRADIENT } from "@/lib/constants/colors";
 import { LynxEducateMark, RobloxWordmark, SogMark } from "@/components/og/marks";
-import { interFonts } from "@/components/og/fonts";
+import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
 import { ROBLOX_OG_TITLE, ROBLOX_TRADEMARK_NOTICE } from "./metadata-copy";
 
 export const alt = ROBLOX_OG_TITLE;
@@ -38,7 +38,7 @@ export const contentType = "image/png";
  * and this card is a new placement.
  */
 export default async function Image() {
-  const fonts = await interFonts();
+  const fonts = await ogFonts();
 
   return new ImageResponse(
     (
@@ -72,7 +72,7 @@ export default async function Image() {
             style={{
               display: "flex",
               gap: "18px",
-              fontFamily: "Inter",
+              fontFamily: OG_FONT_FAMILY,
               fontSize: "72px",
               fontWeight: 600,
               letterSpacing: "-1.5px",
@@ -88,7 +88,7 @@ export default async function Image() {
             style={{
               display: "flex",
               marginTop: "20px",
-              fontFamily: "Inter",
+              fontFamily: OG_FONT_FAMILY,
               fontSize: "32px",
               fontWeight: 400,
               color: DARK_THEME.mutedFg,
@@ -101,7 +101,7 @@ export default async function Image() {
             style={{
               display: "flex",
               marginTop: "58px",
-              fontFamily: "Inter",
+              fontFamily: OG_FONT_FAMILY,
               fontSize: "20px",
               fontWeight: 600,
               letterSpacing: "3px",
@@ -133,7 +133,7 @@ export default async function Image() {
           style={{
             display: "flex",
             width: "1000px",
-            fontFamily: "Inter",
+            fontFamily: OG_FONT_FAMILY,
             fontSize: "15px",
             fontWeight: 400,
             lineHeight: 1.5,

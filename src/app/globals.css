@@ -49,12 +49,19 @@
   --popover: 0 0% 10%;
   --popover-foreground: 0 0% 93%;
 
-  /* Primary - SOG Yellow */
-  --primary: 42 98% 49%;           /* #FAA901 */
+  /* Primary - SOG Yellow.
+     The two brand triples are computed from the brand hexes and round-trip back
+     to them exactly — the fractional parts are the point, not noise to tidy up.
+     Rounding them to whole numbers is how these tokens drifted a full shade off
+     brand once already (42 98% 49% renders #F7AE02, not #FAA901), so any change
+     here is made by converting the hex with a script. The same two hexes are
+     spelled literally in src/lib/constants/colors.ts for the non-CSS contexts
+     (email, canvas) that cannot read a token; both halves move together. */
+  --primary: 40.48 99.20% 49.22%;  /* #FAA901 */
   --primary-foreground: 0 0% 7%;
 
   /* Secondary - SOG Purple */
-  --secondary: 276 100% 44%;      /* #8F00E2 */
+  --secondary: 277.96 100% 44.31%; /* #8F00E2 */
   --secondary-foreground: 0 0% 100%;
 
   /* Muted colors */
@@ -87,7 +94,7 @@
   /* Border colors */
   --border: 0 0% 20%;
   --input: 0 0% 20%;
-  --ring: 42 98% 49%;
+  --ring: 40.48 99.20% 49.22%;     /* #FAA901 — see --primary */
 
   /* Product-type categorical palette — the four admin product types, as a
      colour each. The reasoning that placed them, and the rule that a surface
@@ -110,7 +117,7 @@
   /* Sidebar */
   --sidebar-background: 0 0% 9%;
   --sidebar-foreground: 0 0% 93%;
-  --sidebar-primary: 42 98% 49%;
+  --sidebar-primary: 40.48 99.20% 49.22%; /* #FAA901 — see --primary */
   --sidebar-primary-foreground: 0 0% 7%;
   --sidebar-accent: 0 0% 15%;
   --sidebar-accent-foreground: 0 0% 93%;
@@ -189,12 +196,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  /* Body text deliberately renders in Tailwind's default system-UI stack —
-     the app's typography has always been tuned against it. (An Inter import
-     existed here once but never actually applied: its variable lived on <body>
-     while this block resolves at :root, so the indirection failed and the
-     system stack is what every page has ever rendered. The OG image fetches
-     Inter independently and still uses it.) */
+  /* The app face. Poppins is the brand's workhorse typeface, so it is what body
+     copy and every heading not claimed by --font-display renders in; the
+     fallbacks are the UA's own sans, never a second webfont. This block emits
+     at :root, so the face variable it points at has to be defined at :root too —
+     see the note beside the <html> className in src/app/layout.tsx for why that
+     is load-bearing and not a stylistic preference. The Open Graph cards are
+     drawn by satori, which cannot read CSS at all and fetches its own copy of
+     Poppins (src/components/og/fonts.ts). */
+  --font-sans: var(--font-poppins);
   --font-display: var(--font-press-start-2p);
   /* Handwriting, for a signature and nothing else — a name typed into a
      signing field, rendered the way it would be signed. Not a body or display

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "description": "Kun ruutuajasta tulee laatuaikaa – Minecraft-kerhoja ammattitaitoisten pelikasvattajien johdolla.",
+    "description": "Ruutuajasta laatuaikaa. Kerhoja, leirejä ja tapahtumia Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä, ammattitaitoisten pelikasvattajien johdolla.",
     "pages": {
       "signIn": "Kirjaudu sisään",
       "createAccount": "Luo tili",
@@ -106,30 +106,30 @@
   },
   "about": {
     "hero": {
-      "title": "Tietoa <primary>School of Gaming</primary> -kerhosta",
-      "subtitle": "Minecraft-kerhoissamme ruutuajasta tulee laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelin, jota lapset jo rakastavat — luoden leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa."
+      "title": "Tämä on <primary>School of Gaming</primary>",
+      "subtitle": "Ruutuajasta laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelit, joita lapset jo rakastavat — Minecraft, Roblox, Fortnite ja moni muu — ja luomme leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat oikeita taitoja ja pitävät hauskaa."
     },
     "quote": {
       "text": "”Se mikä on totta nyt, oli kerran vain mielikuvitustasi.”",
-      "attribution": "— School of Gaming -rehtorin sanat"
+      "attribution": "— The Princi-Pal"
     },
     "mission": {
       "heading": "Missiomme",
       "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa."
     },
     "values": {
-      "heading": "Asiat joista välitämme",
+      "heading": "Asiat, joista välitämme",
       "playIsEssential": {
         "title": "Leikki on lapselle välttämätöntä",
         "description": "Leikki on lapsen työtä. Se on ratkaisevan tärkeää heidän hyvinvoinnilleen ja kehitykselleen. Kerhomme on suunniteltu edistämään vapaata leikkiä, joka ruokkii mielikuvitusta, uteliaisuutta ja luovuutta — voimakkaita työkaluja minkä tahansa tulevaisuuden kohtaamiseen."
       },
       "friendsCarry": {
         "title": "Ystävät kantavat esteiden yli",
-        "description": "Ketään ei pidä jättää ilman ystävää. Leikin ja ystävyyden hetket kantavat lapsia minkä tahansa esteen yli elämässä. Kerhoissamme lapset luovat aitoja yhteyksiä jaettujen seikkailujen kautta."
+        "description": "Ketään ei pidä jättää ilman ystävää. Leikin ja ystävyyden hetket kantavat lasta minkä tahansa esteen yli elämässä. Kerhoissamme lapset luovat aitoja yhteyksiä jaettujen seikkailujen kautta."
       },
       "keepChildrenSafe": {
         "title": "Pidetään lapset turvassa verkossa",
-        "description": "Vaalimme osallistavia, ystävällisiä ja turvallisia verkkoyhteisöjä. Kasvatamme välittäviä ja kohteliaita digitaalisia kansalaisia, jotka pitävät huolta kanssapelaajistaan. Nollatoleranssi kiusaamiselle ja toksisuudelle."
+        "description": "Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Jokainen pelaajatili on liitetty vanhemman tiliin, ja lapsi kirjautuu sisään sen kautta eikä omalla salasanallaan. Nollatoleranssi kiusaamiselle ja toksisuudelle."
       },
       "familyInTheLoop": {
         "title": "Perhe mukana",
@@ -141,7 +141,7 @@
       "paragraph1": "Joka viikko pelaajamme kirjautuvat sisään ja heitä tervehtii oma pelikasvattajansa — Gedu. Gedu ohjaa heidät päivän aiheen läpi antaen lapsille tilaa ja vapautta tehdä seikkailuista omiaan.",
       "paragraph2": "Gedumme ovat itsekin pelaajia. He ymmärtävät omakohtaisesti, että lapsina ja nuorina identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Tämä ymmärrys muokkaa jokaista heidän vetämäänsä kertaa.",
       "paragraph3": "Kaikki kerhomme on rakennettu tarinoiden ympärille, jotka antavat pelaajille tilaa tutkia, luoda ja kuvitella. Viikoittaisten kertojen välillä pelaajat saavat hauskoja haasteita tehtäväksi verkossa ja sen ulkopuolella. Lomien aikana järjestämme leirejä, ja joka viikko on yhteisötapahtumia, turnauksia ja kilpailuja.",
-      "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai todellinen maailma. Samat arvot pätevät kaikkialla."
+      "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai arki. Samat arvot pätevät kaikkialla."
     },
     "forParents": {
       "heading": "Vanhemmille",
@@ -1060,6 +1060,7 @@
     },
     "registerGedu": {
       "title": "Luo School of Gaming -pelikasvattajatilisi",
+      "slogan": "Verkkoajan partiolaiset",
       "certificationAlertTitle": "Tilisi on hyväksyttävä",
       "certificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on hyväksyttävä tilisi, ennen kuin sinut voidaan liittää kerhoon tai leirille.",
       "coverageHeading": "Missä voit työskennellä?",
@@ -1073,11 +1074,11 @@
     "create": {
       "enterTitle": "Luo vanhemman PIN",
       "confirmTitle": "Vahvista PIN",
-      "description": "Vanhemman PIN pitää perheesi turvassa. Vain sinä – et koskaan lapsesi – voit hyväksyä ostoksia tai hallita sitä, kenen kanssa he pelaavat. Lasten turvallisuus on kaiken tekemisemme ytimessä School of Gamingissa."
+      "description": "Jokainen ostos, jokainen ilmoittautuminen ja jokainen muutos siihen, kenen kanssa lapsesi pelaavat, kysyy ensin tätä PIN-koodia. Vain sinä tiedät sen, joten tällä tilillä ei osteta eikä muuteta mitään ilman sinua."
     },
     "unlock": {
       "title": "Syötä vanhemman PIN",
-      "description": "PIN pitää lapsesi turvassa – vain sinä voit tehdä ostoksia tai hallita heidän tilejään. Lasten turvallisuus on kaiken tekemisemme ytimessä School of Gamingissa.",
+      "description": "Ostokset ja muutokset lastesi tileihin on suojattu tällä PIN-koodilla, joten vain sinä voit tehdä ne.",
       "forgot": "Unohditko PIN-koodin?"
     },
     "mismatch": "PIN-koodit eivät täsmänneet. Yritetään uudelleen.",
@@ -1615,7 +1616,7 @@
       "items": {
         "whatIsSogverse": {
           "q": "Mikä Sogverse on?",
-          "a": "Sogverse on School of Gamingin alusta Minecraft-kerhoille, joita vetävät ammattitaitoiset pelikasvattajat, jotta ruutuajasta tulisi laatuaikaa."
+          "a": "Sogverse on School of Gamingin alusta kerhoille, leireille ja tapahtumille, joita vetävät ammattitaitoiset pelikasvattajat Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ruutuajasta laatuaikaa."
         },
         "productTypes": {
           "q": "Mikä on kerhojen, leirien ja tapahtumien ero?",
@@ -1627,11 +1628,11 @@
         },
         "safety": {
           "q": "Onko se turvallista lapselleni?",
-          "a": "Jokaisessa tapaamisessa on pelikasvattaja paikalla, yhteisömme ovat moderoituja, eikä kiusaamista suvaita."
+          "a": "Se on rakennettu turvalliseksi. Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Pelien sisäinen chat on eri asia, ja siitä vastaavat pelit itse – omalla Minecraft-palvelimellamme Geduillamme on siihen moderointityökalut, kuten mykistys ja raportointi. Pelaajatilillä on Sogversen sisäinen osoite lapsesi oikean sähköpostiosoitteen sijaan, tili on liitetty vanhemman tiliisi, ja lapsesi kirjautuu sisään sen kautta eikä omalla salasanallaan. Ostokset ja ilmoittautumiset kysyvät vanhemman PIN-koodia. Kiusaamista emme suvaitse lainkaan."
         },
         "howToStart": {
           "q": "Miten pääsen alkuun?",
-          "a": "Luo vanhemman tili, selaa tarjontaa ja ilmoita lapsesi mukaan. Hän kirjautuu omalla tunnuksellaan tapaamisiin."
+          "a": "Luo vanhemman tili, selaa tarjontaa ja ilmoita lapsesi mukaan. Tapaamisiin hän tulee sinun tilisi kautta: vaihdat hänen profiiliinsa, eikä hän tarvitse omaa salasanaa."
         }
       }
     }
@@ -1759,7 +1760,7 @@
           "linkLabel": "Mistä sen saa"
         },
         "minecraft_education": {
-          "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii. Minecraft Education on luokkahuoneeseen tehty versio: samaa mukavaa ja avointa rakentamista, mutta mukana on lisätyökaluja opettajille, ja se on suunniteltu ohjaajan johtamaan toimintaan eikä yksin pelaamiseen.",
+          "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii. Minecraft Education on luokkahuoneeseen tehty versio: samaa mukavaa ja avointa rakentamista, mutta mukana on lisätyökaluja tapaamista vetävälle aikuiselle, ja se on suunniteltu ohjattuun toimintaan eikä yksin pelaamiseen.",
           "note": "Mitään ei tarvitse ostaa eikä koulun tiliä järjestää – School of Gaming tarjoaa Minecraft Education -tilit, joita osallistujat käyttävät kerhossa. Etäkerhoissa lapsesi tarvitsee lisäksi itse pelin, jonka voi ladata maksutta Microsoft Storesta tai Minecraft Educationin omilta sivuilta.",
           "linkLabel": "Tietoa Minecraft Educationista"
         },
@@ -1896,7 +1897,12 @@
       "upfrontHint": "Kertamaksu.",
       "notAvailable": "Hinta ei vielä saatavilla valuutassa {currency}.",
       "cadenceMonth": "/ kk",
-      "firstChargeOn": "Ensimmäinen maksu: {date} — tänään ei veloiteta mitään."
+      "firstChargeOn": "Ensimmäinen maksu: {date} — tänään ei veloiteta mitään.",
+      "guarantee": {
+        "title": "30 päivän rahat takaisin -takuu",
+        "body": "Jos kerho ei ole oikea lapsellesi, palautamme rahat – kiusallista keskustelua ei tarvita. 30 päivää alkaa lapsesi ensimmäisestä kerhokerrasta.",
+        "contact": "Lähetä vain viesti osoitteeseen <link>{email}</link>, niin oikea ihminen hoitaa asian."
+      }
     },
     "countdown": {
       "days": "pv",
@@ -1930,17 +1936,17 @@
   "home": {
     "hero": {
       "title": "<primary>Ruutuajasta</primary><br></br><secondary>Laatuaikaa</secondary>",
-      "subtitle": "Ammattilaisten suunnittelemat Minecraft-kerhomme edistävät tervettä pelaamista harrastuksena. Maailmanluokan pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
+      "subtitle": "Taidolla suunnitellut kerhomme edistävät tervettä pelaamista harrastuksena Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ammattitaitoiset pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",
       "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa.",
       "minecraftClubs": {
-        "title": "Ohjatut Minecraft-kerhot",
-        "description": "Pelikasvattajamme eli gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
+        "title": "Jokaisessa tapaamisessa on Gedu",
+        "description": "Pelikasvattajamme eli Gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
       },
       "screenTime": {
-        "title": "Ruutuajasta laatuaikaa",
+        "title": "Suunniteltu kartuttamaan oikeita taitoja",
         "description": "Ammattilaisten suunnittelemat kerhot muuttavat pelaamisen leikilliseksi oppimiskokemukseksi, jossa lapset kehittyvät monipuolisesti ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
       },
       "newFriends": {
@@ -1953,8 +1959,8 @@
       }
     },
     "howItWorks": {
-      "heading": "Näin se toimii",
-      "subheading": "Liity Minecraft-kerhoon kolmella helpolla askeleella.",
+      "heading": "Oppimista pelaamalla.",
+      "subheading": "Näin se toimii: liity kerhoon, leirille tai tapahtumaan kolmella helpolla askeleella.",
       "step1": {
         "title": "Luo tilisi",
         "description": "Rekisteröidy vanhempana ja luo pelaajatilit lapsillesi."
@@ -1965,7 +1971,7 @@
       },
       "step3": {
         "title": "Liity seikkailuun",
-        "description": "Pelaajasi kirjautuvat joka viikko, tapaavat pelikasvattajansa ja sukeltavat Minecraft-seikkailuihin uusien ystävien kanssa."
+        "description": "Pelaajasi kirjautuvat joka viikko, tapaavat pelikasvattajansa ja sukeltavat seikkailuun uusien ystävien kanssa."
       }
     },
     "cta": {
@@ -2382,16 +2388,16 @@
   "yty": {
     "hero": {
       "title": "Mikä on <primary>Yty</primary>?",
-      "subtitle": "Yty on maaginen voima, joka ylläpitää Sogversen maailmojen herkkää tasapainoa. Tekemällä hyviä asioita — oppimalla uusia taitoja, saamalla ystäviä, käyttäytymällä hyvin ja osallistumalla yhteisöön — pelaajat ansaitsevat Yty-pisteitä itselleen ja kaikille."
+      "subtitle": "Yty on voima, joka pitää Sogversen tasapainossa. Tekemällä hyviä asioita — oppimalla uusia taitoja, saamalla ystäviä, käyttäytymällä hyvin ja osallistumalla yhteisöön — pelaajat ansaitsevat Ytyä itselleen ja kaikille."
     },
     "overview": {
       "heading": "Miten Yty toimii",
-      "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta osallistumiskerrasta, suoritetusta haasteesta ja ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Nämä pisteet kertyvät neljän elementin alle, joista jokainen heijastaa eri osa-aluetta hyvästä kasvusta.",
-      "paragraph2": "Kun pelaajat keräävät Yty-pisteitä itselleen, he kasvattavat myös koko Sogversen Yty-tasoa — muokaten tarinaa ja avaten uusia mahdollisuuksia koko yhteisölle."
+      "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta tapaamisesta, jokaisesta suoritetusta tehtävästä ja jokaisesta ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Pisteet kertyvät neljään Yty-elementtiin, joista jokainen kuvastaa eri puolta hyvästä kasvusta.",
+      "paragraph2": "Kun pelaajat keräävät Ytyä itselleen, he kasvattavat samalla koko Sogversen Ytyä — muokaten tarinaa ja avaten uusia mahdollisuuksia koko yhteisölle."
     },
     "elements": {
-      "heading": "Yty:n neljä elementtiä",
-      "subheading": "Jokainen elementti kuvastaa pelaajan suhdetta eri osa-alueeseen maailmastaan",
+      "heading": "Neljä Yty-elementtiä",
+      "subheading": "Jokainen Yty-elementti on yksi suhde, jota pelaaja kasvattaa: suhde itseensä, muihin, yhteiskuntaan ja teknologiaan",
       "harmony": {
         "name": "Harmonia",
         "description": "Suhteesi itseesi",
@@ -2404,20 +2410,20 @@
       },
       "valor": {
         "name": "Kantti",
-        "description": "Suhteesi maailmaan",
-        "detail": "Miten voin tehdä vaikutuksen? Kantti on oman paikkansa löytämistä maailmassa ja rohkeutta osallistua. Se tarkoittaa tiimityötä, omien ideoiden ilmaisemista, mielikuvituksen käyttöä ja työskentelyä paremman tulevaisuuden puolesta — paikallisesti ja maailmanlaajuisesti."
+        "description": "Suhteesi yhteiskuntaan",
+        "detail": "Miten minä voin vaikuttaa? Kantti on oman paikkansa löytämistä yhteiskunnassa ja rohkeutta osallistua siihen. Se tarkoittaa tiimityötä, omien ideoiden ilmaisemista, mielikuvituksen käyttöä ja työskentelyä paremman tulevaisuuden puolesta — paikallisesti ja maailmanlaajuisesti."
       },
       "wit": {
         "name": "Arkijärki",
-        "description": "Suhteesi mediaan ja teknologiaan",
-        "detail": "Miten navigoin digitaalisessa maailmassa? Arkijärki on terve ja kriittinen suhde peleihin, mediaan ja teknologiaan. Se tarkoittaa verkkokäyttäytymisen ymmärtämistä, kriittistä ajattelua tiedosta ja ruutuajan tasapainottamista muun elämän kanssa."
+        "description": "Suhteesi teknologiaan",
+        "detail": "Miten käytän teknologiaa hyvin? Arkijärki on terve ja kriittinen suhde peleihin, mediaan ja niiden ympärillä oleviin välineisiin. Se tarkoittaa verkkokäyttäytymisen ymmärtämistä, tiedon kriittistä arviointia ja ruutuajan tasapainottamista muun elämän kanssa."
       }
     },
     "earning": {
-      "heading": "Miten pelaajat ansaitsevat Yty-pisteitä",
-      "paragraph1": "Yty-pisteitä ansaitaan osallistumalla. Viikoittaiset kerhokerrat, tehtävien ja haasteiden suorittaminen, ystävällisyys kanssapelaajia kohtaan, yhteisötapahtumat ja leirit — kaikki nämä kartuttavat pelaajan Yty-pisteitä.",
-      "paragraph2": "Kun pisteitä kertyy tiettyjen saavutusmerkkien alle, pelaajat etenevät tasoissa — pronssista hopeaan, kultaan, platinaan ja timanttiin. Jokainen piste syöttää myös pelaajan yleistä Yty-tasoa ja elementtiä, johon se kuuluu.",
-      "paragraph3": "Eikä kyse ole vain pelaajista. Gedut, vanhemmat ja koko yhteisö voivat osallistua Sogversen Yty:n rakentamiseen tapahtumien ja yhteisten aktiviteettien kautta."
+      "heading": "Miten pelaajat ansaitsevat Ytyä",
+      "paragraph1": "Yty-pisteitä ansaitaan osallistumalla. Viikoittaiset kerhokerrat, suoritetut tehtävät, ystävällisyys kanssapelaajia kohtaan, yhteisötapahtumat ja leirit — kaikki nämä kartuttavat pelaajan Ytyä.",
+      "paragraph2": "Kun pisteitä kertyy tiettyjen saavutusmerkkien alle, pelaajat nostavat niiden tasoa — pronssista hopeaan, kultaan, platinaan ja timanttiin. Jokainen piste kasvattaa myös pelaajan yleistä Yty-tasoa ja sitä Yty-elementtiä, johon se kuuluu.",
+      "paragraph3": "Eikä kyse ole vain pelaajista. Gedut, vanhemmat ja koko yhteisö voivat osallistua Sogversen Ytyn rakentamiseen tapahtumien ja yhteisten aktiviteettien kautta."
     }
   },
   "email": {
@@ -2605,7 +2611,7 @@
     "intro": {
       "heading": "Lyhyesti",
       "paragraphs": [
-        "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Perheesi yksityisyyden – ja ennen kaikkea lapsesi yksityisyyden – suojaaminen on meille tärkeää, joten kirjoitimme tämän selkeällä kielellä ilman juridista jargonia.",
+        "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Tällä sivulla kerromme tärkeimmät tiedot, joita lapsestasi säilytämme, ja miksi – selkeällä kielellä ilman juridista jargonia, jotta voit tarkistaa asian itse. Pelaajatilillä on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ja tili on olemassa vain oman tilisi sisällä.",
         "Lyhyesti: keräämme vain ne tiedot, joita tarvitsemme kerhojen, leirien ja tapahtumien järjestämiseen. Emme koskaan myy sinun emmekä lapsesi tietoja. Vain vanhempi voi luoda lapselle käyttäjätilin, emmekä koskaan mainosta lapsille. Voit milloin tahansa pyytää meitä näyttämään, korjaamaan tai poistamaan tietosi lähettämällä viestin osoitteeseen {supportEmail}."
       ]
     },
@@ -2632,8 +2638,9 @@
           "Kieli- ja valuuttavalintasi – jotta sivusto näkyy sinulle odottamallasi tavalla.",
           "Salasanasi, jonka tallennamme vain salatussa (tiivistetyssä) muodossa – emme voi koskaan nähdä sitä.",
           "Maksutiedot käsitellään suoraan Stripessä. Emme koskaan näe emmekä tallenna koko korttinumeroasi.",
-          "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein.",
-          "Halutessasi lapsesi Minecraft-käyttäjätunnuksen – jotta hän voi yhdistää Minecraft-palvelimellemme tapaamisten aikana.",
+          "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan.",
+          "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet pelissä ja jotta hän voi liittyä Minecraft-palvelimellemme tapaamisten aikana.",
+          "Pelikasvattajiemme kirjoittamat merkinnät tapaamisista – läsnäolot, tapaamisraportit ja lyhyet muistiinpanot, jotka auttavat meitä tukemaan lastasi ryhmässä.",
           "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet ja analytiikka\" jäljempänä).",
           "Lyhyen koodin, joka kertoo, minkä koulun, kerhon tai kumppanin jakaman linkin kautta tulit sivustollemme – jotta tiedämme, mikä viestintä tavoittaa perheitä, ja voimme kertoa kumppaneillemme, toimiko heidän linkkinsä."
         ]
@@ -2643,7 +2650,7 @@
         "paragraphs": [
           "Suurin osa Sogversen käyttäjistä on lapsia, joten heidän turvallisuutensa ja yksityisyytensä on meille tärkeintä.",
           "Lapsi ei voi koskaan luoda omaa tiliään itse. Vain vanhempi tai huoltaja luo lapsen tilin, päättää mitä tietoja jaetaan ja antaa luvan lapsen puolesta. Näin täytämme lapsia koskevat velvollisuutemme tietosuojalainsäädännön mukaan.",
-          "Pidämme lasten tiedot vähäisinä, emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisissa lapset ovat aina koulutetun pelikasvattajan (kutsumme heitä Geduiksi) seurassa.",
+          "Kerromme edellä kohdassa \"Mitä tietoja keräämme\", mitä lapsesta säilytämme. Emme kerää lapsesta muuta kuin sen, mitä kerhojen, leirien ja tapahtumien järjestäminen vaatii. Emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
           "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen {supportEmail}, niin hoidamme asian."
         ]
       },
@@ -2685,7 +2692,9 @@
           "Brevo – lähettää sähköpostimme, kuten kuitit ja muistutukset.",
           "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset.",
           "Vercel – ylläpitää sivustoa ja tarjoaa nimettömät, evästeettömät käyttötilastot.",
-          "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia."
+          "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia.",
+          "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin ja näyttää hänen hahmokuvansa.",
+          "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin."
         ]
       },
       "cookies": {
@@ -2699,7 +2708,7 @@
       "voice": {
         "heading": "Ääni- ja videotapaamiset",
         "paragraphs": [
-          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Jokaista tapaamista johtaa ja valvoo yksi koulutetuista pelikasvattajistamme, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui."
+          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Koulutetut pelikasvattajamme ohjaavat tapaamiset livenä, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui."
         ]
       },
       "retention": {
@@ -2755,7 +2764,7 @@
       "heading": "Lyhyesti",
       "paragraphs": [
         "Nämä ovat Sogversen käyttöehdot ja ehdot, joilla ilmoitat lapsesi kerhoihin, leireille ja tapahtumiin. Olemme kirjoittaneet ne selkeällä kielellä, koska haluamme sinun ymmärtävän, mihin sitoudut – emme halua piilottaa asioita lakitekstin taakse.",
-        "Lyhyesti: kerhomme toimivat verkossa, ja koulutettu pelikasvattaja valvoo lastasi aina. Voit perua kuukausittaisen kerhon milloin tahansa, ja lapsesi ensimmäiseen kertaan liittyy rahat takaisin -takuu. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen {supportEmail}, niin oikea ihminen auttaa."
+        "Lyhyesti: kerhomme toimivat verkossa, ja niitä ohjaavat koulutetut pelikasvattajamme. Voit perua kuukausittaisen kerhon milloin tahansa, ja jokaisessa kerhossa on 30 päivän rahat takaisin -takuu: jos kerho ei ole oikea lapsellesi, kerro meille 30 päivän kuluessa hänen ensimmäisestä kerhokerrastaan, niin palautamme koko maksun. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen {supportEmail}, niin oikea ihminen auttaa."
       ]
     },
     "sections": {
@@ -2787,7 +2796,7 @@
       "online": {
         "heading": "Turvallisesti verkossa",
         "paragraphs": [
-          "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta, ja koulutettu pelikasvattajamme (kutsumme heitä geduiksi) valvoo jokaista istuntoa. Lapset eivät ole koskaan verkossa kanssamme ilman valvontaa."
+          "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta. Koulutetut pelikasvattajamme (kutsumme heitä Geduiksi) ohjaavat istunnot livenä."
         ]
       },
       "pricing": {
@@ -2800,7 +2809,7 @@
         "heading": "Kuukausittaisen kerhon peruminen",
         "paragraphs": [
           "Kerhomme toimivat kuukausitilauksena, ja voit perua sen milloin tahansa – mitään määräaikaista sitoutumista ei ole. Voit tehdä sen itse omalta tililtäsi, ja lapsesi säilyttää paikkansa sen kuukauden loppuun, jonka olet jo maksanut.",
-          "Haluamme myös, että voit kokeilla meitä huoletta. Jos lapsesi osallistuu ensimmäiseen kertaan eikä se tunnu sopivalta, kerro meille kahden päivän kuluessa tästä ensimmäisestä kerrasta, niin palautamme koko maksun."
+          "Haluamme myös, että voit kokeilla meitä huoletta, joten jokaisessa kerhossa on 30 päivän rahat takaisin -takuu. Jos kerho ei osoittaudu lapsellesi sopivaksi, lähetä viesti osoitteeseen {supportEmail} 30 päivän kuluessa hänen ensimmäisestä kerhokerrastaan, niin palautamme kaiken, mitä olet kyseisestä kerhosta maksanut. Lomaketta ei tarvitse täyttää eikä syytä tarvitse kertoa."
         ]
       },
       "campsCancellation": {
@@ -2825,7 +2834,7 @@
       "privacy": {
         "heading": "Perheesi yksityisyys",
         "paragraphs": [
-          "Suhtaudumme perheesi – ja erityisesti lapsesi – yksityisyyteen erittäin vakavasti, ja käsittelemme tietojasi Suomen ja EU:n tietosuojalainsäädännön mukaisesti. <linkPrivacy>Tietosuojaselosteemme</linkPrivacy> kertoo tarkalleen, mitä keräämme ja miksi."
+          "Käsittelemme perheesi tietoja Suomen ja EU:n tietosuojalainsäädännön mukaisesti, ja säilytämme lapsestasi niin vähän tietoa kuin pystymme: pelaajatilin luot sinä, sillä on Sogversen sisäinen osoite lapsesi oman sähköpostiosoitteen sijaan, eikä sitä käytetä koskaan mainontaan lapselle. <linkPrivacy>Tietosuojaselosteemme</linkPrivacy> kertoo tarkalleen, mitä keräämme ja miksi."
         ]
       },
       "changes": {
@@ -2848,13 +2857,13 @@
     "intro": {
       "heading": "Lyhyesti",
       "paragraphs": [
-        "Jokaisen lapsen tulee tuntea olonsa turvalliseksi, arvostetuksi ja tervetulleeksi kerhoissamme. Kiusaamiselle ja ilkeydelle ei ole täällä sijaa, ja suhtaudumme niihin vakavasti.",
+        "Jokaisen lapsen tulee tuntea olonsa turvalliseksi, arvostetuksi ja tervetulleeksi kerhoissamme. Kiusaamiselle ja ilkeydelle ei ole täällä sijaa – eikä Sogverse-alustalla voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta.",
         "Kun jokin menee pieleen, emme pelkästään rankaise – me autamme. Käytämme rauhallista, askel askeleelta etenevää tapaa, joka keskittyy auttamaan lasta ymmärtämään tapahtunutta, korjaamaan tilanteen ja toimimaan paremmin seuraavalla kerralla. Siirrymme tiukempaan vaiheeseen vain, jos käytös jatkuu, ja pidämme sinut ajan tasalla koko ajan."
       ]
     },
     "sections": {
       "commitment": {
-        "heading": "Lupauksemme lapsellesi",
+        "heading": "Lapset ensin. Aina.",
         "paragraphs": [
           "Kerhomme ovat paikka oppia, saada kavereita ja pitää hauskaa – ja se onnistuu vain, jos jokainen tuntee olonsa turvalliseksi. Olemme sitoutuneet yhteisöön, jossa ei ole kiusaamista, häirintää eikä ilkeyttä ja jossa sekä pelikasvattajat että lapset kohtelevat toisiaan kunnioittavasti."
         ]
@@ -2862,7 +2871,7 @@
       "approach": {
         "heading": "Miten käsittelemme ongelmia",
         "paragraphs": [
-          "Kun lapsi käyttäytyy tavalla, joka satuttaa tai häiritsee muita, pelikasvattajamme (kutsumme heitä geduiksi) reagoivat rauhallisesti, ystävällisesti ja lapsen ikään sopivalla tavalla. Tavoitteena on aina auttaa lasta ymmärtämään tekonsa vaikutus ja korjaamaan tilanne – ei pelkkä rankaiseminen.",
+          "Kun lapsi käyttäytyy tavalla, joka satuttaa tai häiritsee muita, pelikasvattajamme (kutsumme heitä Geduiksi) reagoivat rauhallisesti, ystävällisesti ja lapsen ikään sopivalla tavalla. Tavoitteena on aina auttaa lasta ymmärtämään tekonsa vaikutus ja korjaamaan tilanne – ei pelkkä rankaiseminen.",
           "Hoidamme useimmat tilanteet hellävaraisesti, juttelemalla kahden kesken. Jos käytös jatkuu, otamme tiukempia askelia yksi kerrallaan. Alla olevat vaiheet ovat portaikko, jota seuraamme, ja pidämme sinut mukana koko matkan."
         ]
       },
@@ -2875,25 +2884,25 @@
       "step2": {
         "heading": "Vaihe 2 – Kahdenkeskinen juttelu",
         "paragraphs": [
-          "Jos tilanne toistuu, gedu juttelee lapsesi kanssa kahden kesken ja pohtii yhdessä hänen kanssaan tekoa ja sen vaikutusta muihin. Kerromme myös kotiin, että olemme keskustelleet lapsesi kanssa hänen käytöksestään kerhossa."
+          "Jos tilanne toistuu, Gedu juttelee lapsesi kanssa kahden kesken ja pohtii yhdessä hänen kanssaan tekoa ja sen vaikutusta muihin. Kerromme myös kotiin, että olemme keskustelleet lapsesi kanssa hänen käytöksestään kerhossa."
         ]
       },
       "step3": {
         "heading": "Vaihe 3 – Puuttuminen istunnon aikana",
         "paragraphs": [
-          "Jos häiritsevä käytös jatkuu, gedu puuttuu siihen istunnon aikana – esimerkiksi mykistämällä lapsen hetkeksi tai rajoittamalla sitä, mitä hän voi pelissä tehdä. Gedu juttelee lapsesi kanssa kahden kesken, ja me viestimme kotiin."
+          "Jos häiritsevä käytös jatkuu, Gedu puuttuu siihen istunnon aikana – esimerkiksi mykistämällä lapsen hetkeksi tai rajoittamalla sitä, mitä hän voi pelissä tehdä. Gedu juttelee lapsesi kanssa kahden kesken, ja me viestimme kotiin."
         ]
       },
       "step4": {
         "heading": "Vaihe 4 – Jäähy istunnosta",
         "paragraphs": [
-          "Jos tilanne ei vieläkään rauhoitu, gedu voi pyytää lasta jäämään pois istunnon loppuosasta. Jos tarvitaan pidempi tauko, kerromme siitä etukäteen. Gedu juttelee asian läpi kahden kesken lapsesi kanssa, me viestimme kotiin, ja kanslia ({supportEmail}) liittyy mukaan keskusteluun."
+          "Jos tilanne ei vieläkään rauhoitu, Gedu voi pyytää lasta jäämään pois istunnon loppuosasta. Jos tarvitaan pidempi tauko, kerromme siitä etukäteen. Gedu juttelee asian läpi kahden kesken lapsesi kanssa, me viestimme kotiin, ja kanslia ({supportEmail}) liittyy mukaan keskusteluun."
         ]
       },
       "step5": {
         "heading": "Vaihe 5 – Tauko yhteisöstä",
         "paragraphs": [
-          "Jos käytös jatkuu kaikesta edellä kuvatusta huolimatta, lapsi voidaan poistaa SOG-yhteisöstä joksikin aikaa – tämä tarkoittaa hänen kerhojaan, Minecraft-palvelintamme ja Discordiamme. Kanslia ottaa sinuun yhteyttä ja kertoo päätöksestä, ja juttelemme tilanteesta myös lapsesi kanssa."
+          "Jos käytös jatkuu kaikesta edellä kuvatusta huolimatta, lapsi voidaan poistaa School of Gamingin yhteisöstä joksikin aikaa – tämä tarkoittaa hänen kerhojaan ja itse Sogversea, mukaan lukien pelipalvelimemme. Kanslia ottaa sinuun yhteyttä ja kertoo päätöksestä, ja juttelemme tilanteesta myös lapsesi kanssa."
         ]
       },
       "step6": {
@@ -2936,10 +2945,10 @@
     },
     "why": {
       "eyebrow": "Miksi mukaan",
-      "heading": "Enemmän kuin koodauskurssi",
+      "heading": "Enemmän kuin koodaamisen opettelua",
       "skills": {
-        "title": "Taitoja tulevaisuuteen",
-        "description": "Roblox Studio, tekoälyn avustama suunnittelu ja koodauslogiikan perusteet."
+        "title": "Ihmistaidot",
+        "description": "Roblox Studio, tekoälyn avustama suunnittelu ja koodauslogiikan perusteet – opitaan yhdessä muiden kanssa, ei yksin."
       },
       "people": {
         "title": "Löydä oma porukkasi",
@@ -3115,7 +3124,7 @@
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming ylläpitää Sogversea, hallinnoi ilmoittautumis- ja oppimisympäristöä, tuottaa opetussisällöt ja pelikasvattajat, ohjaa oppimistapaamiset ja huolehtii lasten turvallisuuden valvonnasta.",
+          "School of Gaming ylläpitää Sogversea, hallinnoi ilmoittautumis- ja oppimisympäristöä, tuottaa tapaamisten sisällöt ja pelikasvattajat, ohjaa oppimistapaamiset ja huolehtii lasten turvallisuuden valvonnasta.",
           "School of Gaming Galactic Oy",
           "Y-tunnus: 3110461-1",
           "Isokatu 56",
@@ -3161,10 +3170,10 @@
         "blocks": [
           "Toiminnasta riippuen voimme kerätä seuraavat tiedot:",
           [
-            "Näyttönimi ja, jos se on aidosti tarpeen, etunimi.",
+            "Lapsen etunimi ja sen rinnalla vanhemman tililtä tallennettu perheen sukunimi. Pelikasvattajat ja muut osallistujat eivät koskaan näe sukunimeä – lapsi osallistuu etunimellään.",
             "Ikä, ikäryhmä tai syntymäkuukausi ja -vuosi täydellisen syntymäajan sijaan.",
             "Roblox-käyttäjätunnus ja Roblox-käyttäjätunniste.",
-            "Kurssi, kerho, leiri, tapahtuma tai ryhmä, johon lapsi osallistuu.",
+            "Kerho, leiri, tapahtuma tai ryhmä, johon lapsi osallistuu.",
             "Läsnäolo, osallistuminen, oppimisen eteneminen ja suorittaminen.",
             "Tieto siitä, julkaiseeko lapsi ensimmäisen Roblox-pelinsä, -kokemuksensa tai -digitaalisen esineensä.",
             "Julkaistun kokemuksen nimi tai linkki, kun se on tarpeen Ohjelman tuloksen todentamiseksi.",
@@ -3340,7 +3349,7 @@
           "Ohjelma toteutetaan yksityisessä ja moderoidussa oppimisympäristössä.",
           [
             "Jokaisen lapsen profiili on liitetty vanhemman tai huoltajan tiliin.",
-            "Lapset käyttävät näyttönimeä eivätkä julkaise yhteystietojaan.",
+            "Lapset osallistuvat pelkällä etunimellään – eivät koskaan yhteystiedoillaan.",
             "Mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut pelikasvattajat.",
             "Viestintä tapahtuu ryhmässä ja valvotusti.",
             "Lasten välillä ei ole yksityisiä suoraviestejä.",
@@ -3466,7 +3475,7 @@
     "intro": {
       "heading": "Sitoumuksemme",
       "blocks": [
-        "Jokaisella Ohjelmaan osallistuvalla lapsella on oikeus tuntea olonsa turvalliseksi, tulla kunnioitetuksi ja saada suojelua – osallistuipa hän verkossa tai lähitapahtumassa. Sekä Lynx Educate että School of Gaming suhtautuvat tähän vastuuseen vakavasti."
+        "Jokaisella Ohjelmaan osallistuvalla lapsella on oikeus tuntea olonsa turvalliseksi, tulla kunnioitetuksi ja saada suojelua – osallistuipa hän verkossa tai lähitapahtumassa. Tämä näkyy siinä, miten Ohjelma on rakennettu: jokaisen lapsen tili on liitetty vanhemman tiliin, viestintä tapahtuu ryhmässä eikä lasten välillä ole yksityisviestejä, ja mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut pelikasvattajat."
       ]
     },
     "sections": {

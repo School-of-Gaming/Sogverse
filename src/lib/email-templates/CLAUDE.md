@@ -56,6 +56,20 @@ its own Checkout Session had already bought.
 
 **Rule: Colors come from the shared constants, not Tailwind/hex literals.** Email HTML can't use semantic Tailwind classes, so import `BRAND` / `DARK_THEME` / `GRADIENT` / `STATUS` / `STATUS_TINT` from `@/lib/constants/colors` and interpolate them into inline styles. This is the email-context equivalent of the repo-wide "no hardcoded colors" rule.
 
+## When a mail carries bad news
+
+A hard moment is a mail about money gone wrong, a mistake of ours, or anything else the reader opens already unhappy. It has its own register, and these four rules are it.
+
+**Rule: the admission leads.** The first sentence says what happened and whose fault it was, in the plainest words available — "we charged you twice. That was our error." Not a greeting, not thanks for the reader's patience, not a paragraph of context for the admission to hide behind. A reader who has to hunt for what went wrong has learned that we would rather they did not find it, and they read the rest of the mail in that light.
+
+**Rule: one remedy, one deadline, one escalation path — exactly one of each.** What we are doing about it, when it will be done, and how to reach a human if it is not. Two remedies make the reader do the deciding; no deadline leaves "we are looking into it" as the whole message; no escalation path hands them a mail they cannot answer. Three sentences normally carry all three.
+
+**Rule: no apology inflation.** "We sincerely regret any inconvenience" never ships from this directory. One apology, in ordinary words, attached to the specific thing that happened — inflation is what turns an apology into a form letter, and a reader who has just been charged twice can tell the difference at a glance. "Any inconvenience" is the tell: it hedges about whether there even was one.
+
+**Rule: Level 0 carries no lore.** Money and mistakes are written in the brand's plainest register — no Yty, no Princi-Pal, no world vocabulary, no jokes. The world is what we offer a child; a parent looking at an unexpected charge is not in it, and a flourish there reads as a company enjoying itself at the reader's expense.
+
+**This register governs hard-moment mail written from now on; it does not retrofit existing copy.** In particular the duplicate-payment confirmation stays minimal (owner ruling): under our Stripe integration a duplicate payment is very nearly impossible, so elaborating that state — in a mail or in page copy — advertises a fault the integration does not have and sets a lower expectation than the truth. The two are not in tension: one is the register for a mail somebody writes tomorrow, the other is a ruling about one string that exists today.
+
 ## An email is the web app's style, in someone's inbox
 
 **Rule: a mail is not styled, it *inherits*. Every value it uses is the app's value, and where a value has a name in `globals.css` the email uses a constant that mirrors that name — never a literal that happens to match today.** A parent meets us on the site and then in their inbox, and the mail has to read as the same product rather than as something built by someone with the brand guidelines open. `colors.ts` is the mirror, and its header says so; the discipline is to keep it complete, because the failure mode is silent. Two values that agree by coincidence look exactly like two values that agree by design, right up until one of them moves.
