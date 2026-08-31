@@ -152,10 +152,21 @@ export function ProductBrowseResults({
       {/* Sticks below the site header (--header-height, the same variable the
           header itself is sized from) and scrolls internally once the chip
           groups outgrow the viewport. `self-start` is what lets it stick at
-          all — a stretched grid item is already as tall as its row. The
-          explicit 16rem width plus `justify-self-end` keep the rail its own
-          size and against the cards while its track grows past it. */}
-      <div className="mb-3 lg:mb-0 lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:w-64 lg:justify-self-end lg:self-start lg:overflow-y-auto">
+          all — a stretched grid item is already as tall as its row.
+
+          Width: the rail fills its track up to a 20rem cap, pinned to the
+          track's right edge so it always sits against the cards. Below
+          ~1630px the track is at its own 16rem floor (both gutters only start
+          growing once the cards track has capped — see the width budget
+          above), so the rail is 16rem there, exactly as it always was; from
+          ~1710px up it is the full 20rem, which is what a 1080p desktop gets.
+          A plain `w-80` would instead overflow the track leftward across the
+          whole 1024–1630px range. The cap is what stops the rail tracking a
+          gutter that reaches 400px at 1920 and 720px at 2560 — chip rows that
+          wide stop reading as a rail — and widening it costs the cards
+          nothing: track 1's min is a fixed 16rem, so the rail's own width
+          never feeds back into track sizing. */}
+      <div className="mb-3 lg:mb-0 lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:w-full lg:max-w-[20rem] lg:justify-self-end lg:self-start lg:overflow-y-auto">
         <ProductBrowseFilters showTypeFilter={showTypeFilter} />
       </div>
 
