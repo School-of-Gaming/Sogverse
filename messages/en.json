@@ -2173,7 +2173,7 @@
         "blocks": [
           "Depending on the activity, we may collect:",
           [
-            "A display name and, where genuinely needed, a first name.",
+            "The child’s first name, stored alongside the family surname from the parent’s account. Game Educators and other participants never see the surname — the child takes part under their first name.",
             "Age, age bracket, or birth month and year rather than a full date of birth.",
             "Roblox username and Roblox User ID.",
             "The club, camp, event or group attended.",
@@ -2352,7 +2352,7 @@
           "The Programme uses a private and moderated learning environment.",
           [
             "Every child’s profile is linked to a parent or guardian account.",
-            "Children use a display name rather than publishing their contact details.",
+            "Children take part under their first name only — never their contact details.",
             "Only registered participants and vetted Game Educators may join.",
             "Communication is group-based and supervised.",
             "There is no private direct messaging between children.",
@@ -3244,7 +3244,7 @@
     "intro": {
       "heading": "The short version",
       "paragraphs": [
-        "School of Gaming exists to give children a safe, fun place to learn through gaming. We hold as little about your child as we can: a gamer account carries an internal Sogverse address rather than a real email, and it exists only inside your own account. This page is written in plain language instead of legal jargon, so you can check that for yourself.",
+        "School of Gaming exists to give children a safe, fun place to learn through gaming. This page lists everything we hold about your child, and why — in plain language instead of legal jargon, so you can check it for yourself. A gamer account carries an internal Sogverse address rather than a real email, and it exists only inside your own account.",
         "In short: we only collect what we need to run our clubs, camps, and events. We never sell your information or your child’s. Only a parent can create a child’s account, and we never advertise to children. You can ask us to show, correct, or delete your information at any time by emailing {supportEmail}."
       ]
     },
@@ -3271,8 +3271,9 @@
           "Your language and currency preferences — so the site shows up the way you expect.",
           "Your password, which we store only in a scrambled (hashed) form — we can never see it.",
           "Payment details are handled directly in Stripe. We never see or store your full card number.",
-          "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly.",
-          "Optionally, your child’s Minecraft username — so they can connect to our Minecraft server during sessions.",
+          "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly. We store your family surname on their account too, because your child is part of your account; Gedus and other gamers never see it. Their account itself uses an internal Sogverse address rather than a real email.",
+          "Optionally, your child’s username in the games their clubs use — today that’s Minecraft and Roblox — and the account id that game gives them, so they can connect to our servers during sessions.",
+          "Session records our Game Educators write — attendance, session reports, and short notes that help us support your child in the group.",
           "Basic, anonymous information about how the site is used (see \"Cookies and analytics\" below).",
           "If you came to us through a link shared by a school, club or partner organisation, a short code telling us which one — so we know which outreach actually reaches families, and can tell our partners whether theirs worked."
         ]
@@ -3282,7 +3283,7 @@
         "paragraphs": [
           "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
           "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
-          "We keep children’s information to a minimum, we never show children advertising, and we never sell or share their data for marketing. Live sessions are run by our trained Game Educators (we call them Gedus).",
+          "Everything we hold about a child is listed above under \"The information we collect\" — nothing more is collected. We never show children advertising, and we never sell or share their data for marketing. Live sessions are run by our trained Game Educators (we call them Gedus).",
           "If you ever want to see, change, or delete your child’s information, just email {supportEmail} and we’ll take care of it."
         ]
       },
@@ -3426,7 +3427,7 @@
       "online": {
         "heading": "Staying safe online",
         "paragraphs": [
-          "The tools we use for live sessions have their own minimum-age rules, set by the companies that make them and by local law. To keep things safe and above board, children under 13 take part using their parent’s account, and every session is supervised by one of our trained Game Educators (we call them Gedus). Children are never online with us unsupervised."
+          "The tools we use for live sessions have their own minimum-age rules, set by the companies that make them and by local law. To keep things safe and above board, children under 13 take part using their parent’s account. Sessions are run live by our trained Game Educators (we call them Gedus)."
         ]
       },
       "pricing": {

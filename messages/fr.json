@@ -2558,7 +2558,7 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Nous conservons le moins d’informations possible sur votre enfant : un compte joueur porte une adresse interne Sogverse plutôt qu’un véritable e-mail, et il n’existe qu’à l’intérieur de votre propre compte. Cette page est rédigée en langage clair plutôt qu’en jargon juridique, pour que vous puissiez le vérifier vous-même.",
+        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Cette page liste tout ce que nous conservons sur votre enfant, et pourquoi — en langage clair plutôt qu’en jargon juridique, pour que vous puissiez le vérifier vous-même. Un compte joueur porte une adresse interne Sogverse plutôt qu’un véritable e-mail, et il n’existe qu’à l’intérieur de votre propre compte.",
         "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d’un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à {supportEmail}."
       ]
     },
@@ -2585,8 +2585,9 @@
           "Vos préférences de langue et de devise — pour que le site s’affiche comme vous l’attendez.",
           "Votre mot de passe, que nous ne conservons que sous forme chiffrée (hachée) — nous ne pouvons jamais le voir.",
           "Les informations de paiement sont traitées directement dans Stripe. Nous ne voyons ni ne conservons jamais votre numéro de carte complet.",
-          "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement.",
-          "Facultativement, le nom d’utilisateur Minecraft de votre enfant — pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
+          "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement. Nous enregistrons aussi votre nom de famille sur son compte, parce que votre enfant fait partie de votre compte ; les Gedus et les autres joueurs ne le voient jamais. Le compte lui-même porte une adresse interne Sogverse plutôt qu’un véritable e-mail.",
+          "Facultativement, le nom d’utilisateur de votre enfant dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant de compte que le jeu lui attribue, pour qu’il puisse se connecter à nos serveurs pendant les sessions.",
+          "Ce que nos animateurs notent au fil des sessions — présences, comptes rendus de session et courtes notes qui nous aident à accompagner votre enfant dans le groupe.",
           "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies et statistiques » ci-dessous).",
           "Si vous êtes arrivé par un lien partagé par une école, un club ou une organisation partenaire, un code court indiquant lequel — pour que nous sachions quelles actions touchent réellement les familles, et que nous puissions dire à nos partenaires si la leur a fonctionné."
         ]
@@ -2596,7 +2597,7 @@
         "paragraphs": [
           "La plupart des personnes qui utilisent Sogverse sont des enfants : leur sécurité et leur vie privée sont donc notre priorité absolue.",
           "Un enfant ne peut jamais créer son propre compte. Seul un parent ou un tuteur crée le compte d’un enfant, choisit ce qui est partagé et donne son autorisation en son nom. C’est ainsi que nous respectons nos obligations vis-à-vis des enfants au regard du droit de la protection des données.",
-          "Nous réduisons au minimum les informations concernant les enfants, nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Les sessions en direct sont animées par nos animateurs formés (nous les appelons les Gedus).",
+          "Tout ce que nous conservons au sujet d’un enfant est listé ci-dessus sous « Les informations que nous collectons » — nous ne collectons rien de plus. Nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Les sessions en direct sont animées par nos animateurs formés (nous les appelons les Gedus).",
           "Si vous souhaitez consulter, modifier ou supprimer les informations de votre enfant, écrivez simplement à {supportEmail} et nous nous en occuperons."
         ]
       },
@@ -2740,7 +2741,7 @@
       "online": {
         "heading": "La sécurité en ligne",
         "paragraphs": [
-          "Les outils que nous utilisons pour les sessions en direct ont leurs propres règles d’âge minimum, fixées par les entreprises qui les éditent et par la loi locale. Pour rester sûrs et dans les règles, les enfants de moins de 13 ans participent via le compte de leur parent, et chaque session est supervisée par l’un de nos animateurs formés (nous les appelons les Gedus). Les enfants ne sont jamais en ligne avec nous sans surveillance."
+          "Les outils que nous utilisons pour les sessions en direct ont leurs propres règles d’âge minimum, fixées par les entreprises qui les éditent et par la loi locale. Pour rester sûrs et dans les règles, les enfants de moins de 13 ans participent via le compte de leur parent. Les sessions sont animées en direct par nos animateurs formés (nous les appelons les Gedus)."
         ]
       },
       "pricing": {
@@ -3114,7 +3115,7 @@
         "blocks": [
           "Selon l’activité, nous pouvons collecter :",
           [
-            "Un nom d’affichage et, lorsque cela est réellement nécessaire, un prénom.",
+            "Le prénom de l’enfant, conservé aux côtés du nom de famille repris du compte du parent. Les animateurs et les autres participants ne voient jamais ce nom de famille — l’enfant participe sous son prénom.",
             "L’âge, une tranche d’âge, ou le mois et l’année de naissance plutôt qu’une date de naissance complète.",
             "Le nom d’utilisateur Roblox et l’identifiant Roblox.",
             "Le club, le stage, l’événement ou le groupe fréquenté.",
@@ -3293,7 +3294,7 @@
           "Le Programme se déroule dans un environnement d’apprentissage privé et modéré.",
           [
             "Le profil de chaque enfant est rattaché à un compte parent ou représentant légal.",
-            "Les enfants utilisent un nom d’affichage plutôt que de publier leurs coordonnées.",
+            "Les enfants participent sous leur seul prénom — jamais avec leurs coordonnées.",
             "Seuls les participants inscrits et les animateurs vérifiés peuvent rejoindre les sessions.",
             "Les échanges se font en groupe et sous supervision.",
             "Il n’existe pas de messagerie privée directe entre enfants.",

@@ -2558,7 +2558,7 @@
     "intro": {
       "heading": "Kort sammanfattning",
       "paragraphs": [
-        "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Vi lagrar så lite som möjligt om ditt barn: ett spelarkonto har en intern Sogverse-adress i stället för en riktig e-postadress, och det finns bara inuti ditt eget konto. Den här sidan är skriven på ett tydligt språk utan juridisk jargong, så att du själv kan kontrollera det.",
+        "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Den här sidan listar allt vi lagrar om ditt barn, och varför – på ett tydligt språk utan juridisk jargong, så att du själv kan kontrollera det. Ett spelarkonto har en intern Sogverse-adress i stället för en riktig e-postadress, och det finns bara inuti ditt eget konto.",
         "Kort sagt: vi samlar bara in det vi behöver för att driva våra klubbar, läger och evenemang. Vi säljer aldrig dina eller ditt barns uppgifter. Endast en förälder kan skapa ett konto åt ett barn, och vi gör aldrig reklam riktad till barn. Du kan när som helst be oss visa, rätta eller radera dina uppgifter genom att mejla {supportEmail}."
       ]
     },
@@ -2585,8 +2585,9 @@
           "Dina språk- och valutainställningar – så att webbplatsen visas som du förväntar dig.",
           "Ditt lösenord, som vi endast lagrar i krypterad (hashad) form – vi kan aldrig se det.",
           "Betaluppgifter hanteras direkt i Stripe. Vi ser eller lagrar aldrig hela ditt kortnummer.",
-          "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt.",
-          "Eventuellt barnets Minecraft-användarnamn – så att barnet kan ansluta till vår Minecraft-server under träffarna.",
+          "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt. Vi lagrar också ditt efternamn på barnets konto, eftersom barnet hör till ditt konto. Gedus och andra spelare ser det aldrig. Själva kontot har en intern Sogverse-adress i stället för en riktig e-postadress.",
+          "Eventuellt barnets användarnamn i de spel som barnets klubbar använder – i dag Minecraft och Roblox – och det konto-id som spelet ger barnet, så att barnet kan ansluta till våra servrar under träffarna.",
+          "Anteckningar från träffarna som våra spelfostrare skriver – närvaro, träffrapporter och korta noteringar som hjälper oss att stötta ditt barn i gruppen.",
           "Allmän, anonym information om hur webbplatsen används (se \"Cookies och analys\" nedan).",
           "En kort kod som visar vilken skola, klubb eller samarbetspartner som delade länken du kom hit via – så att vi vet vilken information som faktiskt når familjer, och kan berätta för våra partner om deras länk fungerade."
         ]
@@ -2596,7 +2597,7 @@
         "paragraphs": [
           "De flesta som använder Sogverse är barn, så deras trygghet och integritet är vår högsta prioritet.",
           "Ett barn kan aldrig skapa ett eget konto. Endast en förälder eller vårdnadshavare skapar barnets konto, väljer vad som delas och ger tillstånd å barnets vägnar. Så uppfyller vi våra skyldigheter enligt dataskyddslagstiftningen när det gäller barn.",
-          "Vi håller barnens uppgifter till ett minimum, vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Gedus).",
+          "Allt vi lagrar om ett barn står uppräknat ovan under \"Vilka uppgifter vi samlar in\" – mer än så samlar vi inte in. Vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Gedus).",
           "Om du när som helst vill se, ändra eller radera ditt barns uppgifter är det bara att mejla {supportEmail}, så ordnar vi det."
         ]
       },
@@ -2740,7 +2741,7 @@
       "online": {
         "heading": "Trygghet online",
         "paragraphs": [
-          "Verktygen vi använder för livesessioner har egna åldersgränser, som sätts av företagen bakom dem och av lokal lag. För att allt ska vara tryggt och korrekt deltar barn under 13 år via förälderns konto, och varje session övervakas av en av våra utbildade spelfostrare (vi kallar dem geduer). Barn är aldrig online hos oss utan uppsikt."
+          "Verktygen vi använder för livesessioner har egna åldersgränser, som sätts av företagen bakom dem och av lokal lag. För att allt ska vara tryggt och korrekt deltar barn under 13 år via förälderns konto. Sessionerna leds live av våra utbildade spelfostrare (vi kallar dem geduer)."
         ]
       },
       "pricing": {
@@ -3114,7 +3115,7 @@
         "blocks": [
           "Beroende på aktivitet kan vi samla in:",
           [
-            "Ett visningsnamn och, när det verkligen behövs, ett förnamn.",
+            "Barnets förnamn, med familjens efternamn från förälderns konto lagrat bredvid. Spelfostrare och andra deltagare ser aldrig efternamnet – barnet deltar under sitt förnamn.",
             "Ålder, åldersgrupp eller födelsemånad och födelseår i stället för fullständigt födelsedatum.",
             "Roblox-användarnamn och Roblox-ID.",
             "Klubben, lägret, evenemanget eller gruppen som barnet deltar i.",
@@ -3293,7 +3294,7 @@
           "Programmet genomförs i en privat och modererad lärmiljö.",
           [
             "Varje barns profil är kopplad till ett konto för en förälder eller vårdnadshavare.",
-            "Barnen använder ett visningsnamn i stället för att publicera sina kontaktuppgifter.",
+            "Barnen deltar bara under sitt förnamn – aldrig med sina kontaktuppgifter.",
             "Endast anmälda deltagare och kontrollerade spelfostrare får delta.",
             "Kommunikationen sker i grupp och under uppsikt.",
             "Det finns inga privata direktmeddelanden mellan barn.",

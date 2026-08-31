@@ -2558,7 +2558,7 @@
     "intro": {
       "heading": "Lyhyesti",
       "paragraphs": [
-        "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Säilytämme lapsestasi niin vähän tietoa kuin pystymme: pelaajatilillä on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ja tili on olemassa vain oman tilisi sisällä. Tämä sivu on kirjoitettu selkeällä kielellä ilman juridista jargonia, jotta voit tarkistaa sen itse.",
+        "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Tällä sivulla kerromme kaiken, mitä lapsestasi säilytämme, ja miksi – selkeällä kielellä ilman juridista jargonia, jotta voit tarkistaa asian itse. Pelaajatilillä on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ja tili on olemassa vain oman tilisi sisällä.",
         "Lyhyesti: keräämme vain ne tiedot, joita tarvitsemme kerhojen, leirien ja tapahtumien järjestämiseen. Emme koskaan myy sinun emmekä lapsesi tietoja. Vain vanhempi voi luoda lapselle käyttäjätilin, emmekä koskaan mainosta lapsille. Voit milloin tahansa pyytää meitä näyttämään, korjaamaan tai poistamaan tietosi lähettämällä viestin osoitteeseen {supportEmail}."
       ]
     },
@@ -2585,8 +2585,9 @@
           "Kieli- ja valuuttavalintasi – jotta sivusto näkyy sinulle odottamallasi tavalla.",
           "Salasanasi, jonka tallennamme vain salatussa (tiivistetyssä) muodossa – emme voi koskaan nähdä sitä.",
           "Maksutiedot käsitellään suoraan Stripessä. Emme koskaan näe emmekä tallenna koko korttinumeroasi.",
-          "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein.",
-          "Halutessasi lapsesi Minecraft-käyttäjätunnuksen – jotta hän voi yhdistää Minecraft-palvelimellemme tapaamisten aikana.",
+          "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan.",
+          "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta hän voi yhdistää palvelimillemme tapaamisten aikana.",
+          "Pelikasvattajiemme kirjoittamat merkinnät tapaamisista – läsnäolot, tapaamisraportit ja lyhyet muistiinpanot, jotka auttavat meitä tukemaan lastasi ryhmässä.",
           "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet ja analytiikka\" jäljempänä).",
           "Lyhyen koodin, joka kertoo, minkä koulun, kerhon tai kumppanin jakaman linkin kautta tulit sivustollemme – jotta tiedämme, mikä viestintä tavoittaa perheitä, ja voimme kertoa kumppaneillemme, toimiko heidän linkkinsä."
         ]
@@ -2596,7 +2597,7 @@
         "paragraphs": [
           "Suurin osa Sogversen käyttäjistä on lapsia, joten heidän turvallisuutensa ja yksityisyytensä on meille tärkeintä.",
           "Lapsi ei voi koskaan luoda omaa tiliään itse. Vain vanhempi tai huoltaja luo lapsen tilin, päättää mitä tietoja jaetaan ja antaa luvan lapsen puolesta. Näin täytämme lapsia koskevat velvollisuutemme tietosuojalainsäädännön mukaan.",
-          "Pidämme lasten tiedot vähäisinä, emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
+          "Kaikki, mitä lapsesta säilytämme, on lueteltu edellä kohdassa \"Mitä tietoja keräämme\" – muuta emme kerää. Emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
           "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen {supportEmail}, niin hoidamme asian."
         ]
       },
@@ -2740,7 +2741,7 @@
       "online": {
         "heading": "Turvallisesti verkossa",
         "paragraphs": [
-          "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta, ja koulutettu pelikasvattajamme (kutsumme heitä geduiksi) valvoo jokaista istuntoa. Lapset eivät ole koskaan verkossa kanssamme ilman valvontaa."
+          "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta. Koulutetut pelikasvattajamme (kutsumme heitä geduiksi) ohjaavat istunnot livenä."
         ]
       },
       "pricing": {
@@ -3114,7 +3115,7 @@
         "blocks": [
           "Toiminnasta riippuen voimme kerätä seuraavat tiedot:",
           [
-            "Näyttönimi ja, jos se on aidosti tarpeen, etunimi.",
+            "Lapsen etunimi ja sen rinnalla vanhemman tililtä tallennettu perheen sukunimi. Pelikasvattajat ja muut osallistujat eivät näe sukunimeä koskaan – lapsi osallistuu etunimellään.",
             "Ikä, ikäryhmä tai syntymäkuukausi ja -vuosi täydellisen syntymäajan sijaan.",
             "Roblox-käyttäjätunnus ja Roblox-käyttäjätunniste.",
             "Kerho, leiri, tapahtuma tai ryhmä, johon lapsi osallistuu.",
@@ -3293,7 +3294,7 @@
           "Ohjelma toteutetaan yksityisessä ja moderoidussa oppimisympäristössä.",
           [
             "Jokaisen lapsen profiili on liitetty vanhemman tai huoltajan tiliin.",
-            "Lapset käyttävät näyttönimeä eivätkä julkaise yhteystietojaan.",
+            "Lapset osallistuvat pelkällä etunimellään – eivät koskaan yhteystiedoillaan.",
             "Mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut pelikasvattajat.",
             "Viestintä tapahtuu ryhmässä ja valvotusti.",
             "Lasten välillä ei ole yksityisiä suoraviestejä.",
