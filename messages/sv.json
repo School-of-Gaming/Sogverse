@@ -3675,85 +3675,85 @@
     }
   },
   "chat": {
-    "title": "Chat",
-    "log": "Chat messages",
-    "empty": "Nothing said yet.",
-    "unread": "{count, plural, one {# new message} other {# new messages}}",
-    "jumpToLatest": "Jump to the newest message",
+    "title": "Chatt",
+    "log": "Chattmeddelanden",
+    "empty": "Inget sagt än.",
+    "unread": "{count, plural, one {# nytt meddelande} other {# nya meddelanden}}",
+    "jumpToLatest": "Hoppa till det senaste meddelandet",
     "composer": {
-      "label": "Write a message",
-      "placeholder": "Write a message",
-      "send": "Send",
-      "addImage": "Add an image",
-      "staged": "Images ready to send",
-      "removeImage": "Remove {name}",
-      "imagesRefused": "You can send {count} images at a time, so the rest were left out.",
-      "lockNotice": "Chat is locked for you right now. You can still read everything here.",
-      "mentionList": "Mention someone",
-      "mentionOpen": "Mention someone"
+      "label": "Skriv ett meddelande",
+      "placeholder": "Skriv ett meddelande",
+      "send": "Skicka",
+      "addImage": "Lägg till en bild",
+      "staged": "Bilder redo att skickas",
+      "removeImage": "Ta bort {name}",
+      "imagesRefused": "Du kan skicka {count} bilder åt gången, så resten togs inte med.",
+      "lockNotice": "Chatten är låst för dig just nu. Du kan fortfarande läsa allt här.",
+      "mentionList": "Nämn någon",
+      "mentionOpen": "Nämn någon"
     },
     "editor": {
-      "label": "Edit your message",
-      "save": "Save",
-      "cancel": "Cancel"
+      "label": "Redigera ditt meddelande",
+      "save": "Spara",
+      "cancel": "Avbryt"
     },
     "reply": {
-      "action": "Reply",
-      "banner": "Replying to {name}",
-      "cancel": "Stop replying",
-      "jump": "Show the message from {name}",
-      "image": "an image",
-      "removed": "a removed message"
+      "action": "Svara",
+      "banner": "Svarar {name}",
+      "cancel": "Sluta svara",
+      "jump": "Visa meddelandet från {name}",
+      "image": "en bild",
+      "removed": "ett borttaget meddelande"
     },
     "message": {
-      "actions": "More actions",
-      "edited": "edited",
-      "edit": "Edit",
-      "delete": "Delete",
-      "hide": "Remove for everyone",
-      "restore": "Put it back",
-      "sending": "Sending",
-      "failed": "Not sent",
-      "retry": "Try again",
-      "mentionsYou": "Mentions you"
+      "actions": "Fler åtgärder",
+      "edited": "redigerat",
+      "edit": "Redigera",
+      "delete": "Radera",
+      "hide": "Ta bort för alla",
+      "restore": "Lägg tillbaka",
+      "sending": "Skickar",
+      "failed": "Inte skickat",
+      "retry": "Försök igen",
+      "mentionsYou": "Nämner dig"
     },
     "tombstone": {
-      "text": "This message was removed.",
-      "staffOnly": "Staff can still read it."
+      "text": "Det här meddelandet togs bort.",
+      "staffOnly": "Personalen kan fortfarande läsa det."
     },
     "reactions": {
-      "add": "Add a reaction",
+      "add": "Lägg till en reaktion",
       "toggle": "{name}, {count}",
-      "thumbs_up": "Thumbs up",
-      "heart": "Heart",
-      "laugh": "Laughing",
-      "surprised": "Surprised",
-      "celebrate": "Celebrating",
-      "thinking": "Thinking"
+      "thumbs_up": "Tummen upp",
+      "heart": "Hjärta",
+      "laugh": "Skratt",
+      "surprised": "Överraskad",
+      "celebrate": "Firande",
+      "thinking": "Fundersam"
     },
     "moderation": {
-      "lock": "Lock {name} out of chat",
-      "unlock": "Let {name} chat again",
-      "lockedTag": "Locked out of chat",
-      "deleteTitle": "Delete this message?",
-      "deleteBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
-      "deleteConfirm": "Delete",
-      "hideTitle": "Remove this message for everyone?",
-      "hideBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
-      "hideConfirm": "Remove"
+      "lock": "Lås chatten för {name}",
+      "unlock": "Lås upp chatten för {name}",
+      "lockedTag": "Chatten låst",
+      "deleteTitle": "Radera det här meddelandet?",
+      "deleteBody": "Alla ser att ett meddelande togs bort, och personalen behåller en kopia av det.",
+      "deleteConfirm": "Radera",
+      "hideTitle": "Ta bort det här meddelandet för alla?",
+      "hideBody": "Alla ser att ett meddelande togs bort, och personalen behåller en kopia av det.",
+      "hideConfirm": "Ta bort"
     },
     "typing": {
-      "one": "{name} is writing",
-      "two": "{first} and {second} are writing",
-      "many": "Several people are writing"
+      "one": "{name} skriver",
+      "two": "{first} och {second} skriver",
+      "many": "Flera personer skriver"
     },
     "images": {
-      "row": "Images",
-      "open": "Open image {index} of {count}",
-      "viewer": "Image {index} of {count}",
-      "previous": "Previous image",
-      "next": "Next image",
-      "close": "Close"
+      "row": "Bilder",
+      "open": "Öppna bild {index} av {count}",
+      "viewer": "Bild {index} av {count}",
+      "previous": "Föregående bild",
+      "next": "Nästa bild",
+      "close": "Stäng"
     }
   }
 }

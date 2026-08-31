@@ -3676,84 +3676,84 @@
   },
   "chat": {
     "title": "Chat",
-    "log": "Chat messages",
-    "empty": "Nothing said yet.",
-    "unread": "{count, plural, one {# new message} other {# new messages}}",
-    "jumpToLatest": "Jump to the newest message",
+    "log": "Messages du chat",
+    "empty": "Rien n’a encore été dit.",
+    "unread": "{count, plural, one {# nouveau message} other {# nouveaux messages}}",
+    "jumpToLatest": "Aller au message le plus récent",
     "composer": {
-      "label": "Write a message",
-      "placeholder": "Write a message",
-      "send": "Send",
-      "addImage": "Add an image",
-      "staged": "Images ready to send",
-      "removeImage": "Remove {name}",
-      "imagesRefused": "You can send {count} images at a time, so the rest were left out.",
-      "lockNotice": "Chat is locked for you right now. You can still read everything here.",
-      "mentionList": "Mention someone",
-      "mentionOpen": "Mention someone"
+      "label": "Écrire un message",
+      "placeholder": "Écrivez un message",
+      "send": "Envoyer",
+      "addImage": "Ajouter une image",
+      "staged": "Images prêtes à être envoyées",
+      "removeImage": "Retirer {name}",
+      "imagesRefused": "Vous pouvez envoyer {count} images à la fois : les autres n’ont pas été retenues.",
+      "lockNotice": "Le chat est verrouillé pour vous en ce moment. Vous pouvez toujours tout lire ici.",
+      "mentionList": "Mentionner quelqu’un",
+      "mentionOpen": "Mentionner quelqu’un"
     },
     "editor": {
-      "label": "Edit your message",
-      "save": "Save",
-      "cancel": "Cancel"
+      "label": "Modifier votre message",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
     },
     "reply": {
-      "action": "Reply",
-      "banner": "Replying to {name}",
-      "cancel": "Stop replying",
-      "jump": "Show the message from {name}",
-      "image": "an image",
-      "removed": "a removed message"
+      "action": "Répondre",
+      "banner": "Réponse à {name}",
+      "cancel": "Annuler la réponse",
+      "jump": "Afficher le message de {name}",
+      "image": "une image",
+      "removed": "un message supprimé"
     },
     "message": {
-      "actions": "More actions",
-      "edited": "edited",
-      "edit": "Edit",
-      "delete": "Delete",
-      "hide": "Remove for everyone",
-      "restore": "Put it back",
-      "sending": "Sending",
-      "failed": "Not sent",
-      "retry": "Try again",
-      "mentionsYou": "Mentions you"
+      "actions": "Plus d’actions",
+      "edited": "modifié",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "hide": "Retirer pour tout le monde",
+      "restore": "Remettre",
+      "sending": "Envoi",
+      "failed": "Non envoyé",
+      "retry": "Réessayer",
+      "mentionsYou": "Vous mentionne"
     },
     "tombstone": {
-      "text": "This message was removed.",
-      "staffOnly": "Staff can still read it."
+      "text": "Ce message a été retiré.",
+      "staffOnly": "L’équipe peut encore le lire."
     },
     "reactions": {
-      "add": "Add a reaction",
+      "add": "Ajouter une réaction",
       "toggle": "{name}, {count}",
-      "thumbs_up": "Thumbs up",
-      "heart": "Heart",
-      "laugh": "Laughing",
-      "surprised": "Surprised",
-      "celebrate": "Celebrating",
-      "thinking": "Thinking"
+      "thumbs_up": "Pouce levé",
+      "heart": "Cœur",
+      "laugh": "Rire",
+      "surprised": "Surprise",
+      "celebrate": "Fête",
+      "thinking": "Réflexion"
     },
     "moderation": {
-      "lock": "Lock {name} out of chat",
-      "unlock": "Let {name} chat again",
-      "lockedTag": "Locked out of chat",
-      "deleteTitle": "Delete this message?",
-      "deleteBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
-      "deleteConfirm": "Delete",
-      "hideTitle": "Remove this message for everyone?",
-      "hideBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
-      "hideConfirm": "Remove"
+      "lock": "Verrouiller le chat pour {name}",
+      "unlock": "Déverrouiller le chat pour {name}",
+      "lockedTag": "Chat verrouillé",
+      "deleteTitle": "Supprimer ce message ?",
+      "deleteBody": "Tout le monde verra qu’un message a été retiré, et l’équipe en conserve une copie.",
+      "deleteConfirm": "Supprimer",
+      "hideTitle": "Retirer ce message pour tout le monde ?",
+      "hideBody": "Tout le monde verra qu’un message a été retiré, et l’équipe en conserve une copie.",
+      "hideConfirm": "Retirer"
     },
     "typing": {
-      "one": "{name} is writing",
-      "two": "{first} and {second} are writing",
-      "many": "Several people are writing"
+      "one": "{name} écrit",
+      "two": "{first} et {second} écrivent",
+      "many": "Plusieurs personnes écrivent"
     },
     "images": {
       "row": "Images",
-      "open": "Open image {index} of {count}",
-      "viewer": "Image {index} of {count}",
-      "previous": "Previous image",
-      "next": "Next image",
-      "close": "Close"
+      "open": "Ouvrir l’image {index} sur {count}",
+      "viewer": "Image {index} sur {count}",
+      "previous": "Image précédente",
+      "next": "Image suivante",
+      "close": "Fermer"
     }
   }
 }

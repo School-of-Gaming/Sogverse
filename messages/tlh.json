@@ -2829,85 +2829,85 @@
     }
   },
   "chat": {
-    "title": "Chat",
-    "log": "Chat messages",
-    "empty": "Nothing said yet.",
-    "unread": "{count, plural, one {# new message} other {# new messages}}",
-    "jumpToLatest": "Jump to the newest message",
+    "title": "ja’chuq",
+    "log": "ja’chuq QInmey",
+    "empty": "not jatlhlu’.",
+    "unread": "{count, plural, one {# QIn chu’} other {# QInmey chu’}}",
+    "jumpToLatest": "QIn Qav yIghoS",
     "composer": {
-      "label": "Write a message",
-      "placeholder": "Write a message",
-      "send": "Send",
-      "addImage": "Add an image",
-      "staged": "Images ready to send",
-      "removeImage": "Remove {name}",
-      "imagesRefused": "You can send {count} images at a time, so the rest were left out.",
-      "lockNotice": "Chat is locked for you right now. You can still read everything here.",
-      "mentionList": "Mention someone",
-      "mentionOpen": "Mention someone"
+      "label": "QIn yIghItlh",
+      "placeholder": "QIn yIghItlh",
+      "send": "yIngeH",
+      "addImage": "mIllogh yIchel",
+      "staged": "ngeHmeH mIlloghmey",
+      "removeImage": "{name} yIteq",
+      "imagesRefused": "wa’logh {count} mIlloghmey neH DangeHlaH. latlhpu’ lujpu’.",
+      "lockNotice": "DaH SoH ja’chuq jonlu’. ’ach Hoch DalaDlaH.",
+      "mentionList": "vay’ yIpong",
+      "mentionOpen": "vay’ yIpong"
     },
     "editor": {
-      "label": "Edit your message",
-      "save": "Save",
-      "cancel": "Cancel"
+      "label": "QInlIj yIchoH",
+      "save": "yIpol",
+      "cancel": "yImev"
     },
     "reply": {
-      "action": "Reply",
-      "banner": "Replying to {name}",
-      "cancel": "Stop replying",
-      "jump": "Show the message from {name}",
-      "image": "an image",
-      "removed": "a removed message"
+      "action": "yIjang",
+      "banner": "{name} Dajang",
+      "cancel": "jang yImev",
+      "jump": "{name} QIn yI’ang",
+      "image": "mIllogh",
+      "removed": "QIn teqlu’bogh"
     },
     "message": {
-      "actions": "More actions",
-      "edited": "edited",
-      "edit": "Edit",
-      "delete": "Delete",
-      "hide": "Remove for everyone",
-      "restore": "Put it back",
-      "sending": "Sending",
-      "failed": "Not sent",
-      "retry": "Try again",
-      "mentionsYou": "Mentions you"
+      "actions": "latlh Qu’mey",
+      "edited": "choHlu’pu’",
+      "edit": "yIchoH",
+      "delete": "yIteq",
+      "hide": "Hochvo’ yIteq",
+      "restore": "yIcheghmoH",
+      "sending": "vIngeHtaH",
+      "failed": "ngeHlu’be’",
+      "retry": "yInIDqa’",
+      "mentionsYou": "SoH ponglu’"
     },
     "tombstone": {
-      "text": "This message was removed.",
-      "staffOnly": "Staff can still read it."
+      "text": "QInvam teqlu’pu’.",
+      "staffOnly": "laDlaHtaH vumwI’pu’."
     },
     "reactions": {
-      "add": "Add a reaction",
+      "add": "jangHom yIchel",
       "toggle": "{name}, {count}",
-      "thumbs_up": "Thumbs up",
-      "heart": "Heart",
-      "laugh": "Laughing",
-      "surprised": "Surprised",
-      "celebrate": "Celebrating",
-      "thinking": "Thinking"
+      "thumbs_up": "maj",
+      "heart": "tIq",
+      "laugh": "Hagh",
+      "surprised": "yay’",
+      "celebrate": "Qapla’",
+      "thinking": "qech"
     },
     "moderation": {
-      "lock": "Lock {name} out of chat",
-      "unlock": "Let {name} chat again",
-      "lockedTag": "Locked out of chat",
-      "deleteTitle": "Delete this message?",
-      "deleteBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
-      "deleteConfirm": "Delete",
-      "hideTitle": "Remove this message for everyone?",
-      "hideBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
-      "hideConfirm": "Remove"
+      "lock": "ja’chuqvo’ {name} yIjon",
+      "unlock": "ja’chuqDaq {name} yInoD",
+      "lockedTag": "ja’chuqvo’ jonlu’",
+      "deleteTitle": "QInvam yIteq’a’?",
+      "deleteBody": "QIn teqlu’pu’ ’e’ legh Hoch; velqa’ lupol vumwI’pu’.",
+      "deleteConfirm": "yIteq",
+      "hideTitle": "Hochvo’ QInvam yIteq’a’?",
+      "hideBody": "QIn teqlu’pu’ ’e’ legh Hoch; velqa’ lupol vumwI’pu’.",
+      "hideConfirm": "Hochvo’ yIteq"
     },
     "typing": {
-      "one": "{name} is writing",
-      "two": "{first} and {second} are writing",
-      "many": "Several people are writing"
+      "one": "ghItlh {name}",
+      "two": "ghItlh {first} {second} je",
+      "many": "ghItlh nuvpu’ law’"
     },
     "images": {
-      "row": "Images",
-      "open": "Open image {index} of {count}",
-      "viewer": "Image {index} of {count}",
-      "previous": "Previous image",
-      "next": "Next image",
-      "close": "Close"
+      "row": "mIlloghmey",
+      "open": "mIllogh {index}/{count} yIlegh",
+      "viewer": "mIllogh {index}/{count}",
+      "previous": "mIllogh nung yIlegh",
+      "next": "mIllogh veb yIlegh",
+      "close": "yISoQmoH"
     }
   }
 }

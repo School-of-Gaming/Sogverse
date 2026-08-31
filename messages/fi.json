@@ -3675,85 +3675,85 @@
     }
   },
   "chat": {
-    "title": "Chat",
-    "log": "Chat messages",
-    "empty": "Nothing said yet.",
-    "unread": "{count, plural, one {# new message} other {# new messages}}",
-    "jumpToLatest": "Jump to the newest message",
+    "title": "Keskustelu",
+    "log": "Keskusteluviestit",
+    "empty": "Täällä ei ole vielä sanottu mitään.",
+    "unread": "{count, plural, one {# uusi viesti} other {# uutta viestiä}}",
+    "jumpToLatest": "Siirry uusimpaan viestiin",
     "composer": {
-      "label": "Write a message",
-      "placeholder": "Write a message",
-      "send": "Send",
-      "addImage": "Add an image",
-      "staged": "Images ready to send",
-      "removeImage": "Remove {name}",
-      "imagesRefused": "You can send {count} images at a time, so the rest were left out.",
-      "lockNotice": "Chat is locked for you right now. You can still read everything here.",
-      "mentionList": "Mention someone",
-      "mentionOpen": "Mention someone"
+      "label": "Kirjoita viesti",
+      "placeholder": "Kirjoita viesti",
+      "send": "Lähetä",
+      "addImage": "Lisää kuva",
+      "staged": "Lähetystä odottavat kuvat",
+      "removeImage": "Poista {name}",
+      "imagesRefused": "Voit lähettää {count} kuvaa kerrallaan, joten loput jäivät pois.",
+      "lockNotice": "Keskustelu on nyt lukittu sinulta. Voit silti lukea kaiken täällä.",
+      "mentionList": "Mainitse joku",
+      "mentionOpen": "Mainitse joku"
     },
     "editor": {
-      "label": "Edit your message",
-      "save": "Save",
-      "cancel": "Cancel"
+      "label": "Muokkaa viestiäsi",
+      "save": "Tallenna",
+      "cancel": "Peruuta"
     },
     "reply": {
-      "action": "Reply",
-      "banner": "Replying to {name}",
-      "cancel": "Stop replying",
-      "jump": "Show the message from {name}",
-      "image": "an image",
-      "removed": "a removed message"
+      "action": "Vastaa",
+      "banner": "Vastaat: {name}",
+      "cancel": "Lopeta vastaaminen",
+      "jump": "Näytä viesti, jonka lähetti {name}",
+      "image": "kuva",
+      "removed": "poistettu viesti"
     },
     "message": {
-      "actions": "More actions",
-      "edited": "edited",
-      "edit": "Edit",
-      "delete": "Delete",
-      "hide": "Remove for everyone",
-      "restore": "Put it back",
-      "sending": "Sending",
-      "failed": "Not sent",
-      "retry": "Try again",
-      "mentionsYou": "Mentions you"
+      "actions": "Muut toiminnot",
+      "edited": "muokattu",
+      "edit": "Muokkaa",
+      "delete": "Poista",
+      "hide": "Poista kaikilta",
+      "restore": "Palauta",
+      "sending": "Lähetetään",
+      "failed": "Ei lähetetty",
+      "retry": "Yritä uudelleen",
+      "mentionsYou": "Mainitsee sinut"
     },
     "tombstone": {
-      "text": "This message was removed.",
-      "staffOnly": "Staff can still read it."
+      "text": "Tämä viesti on poistettu.",
+      "staffOnly": "Henkilökunta voi yhä lukea sen."
     },
     "reactions": {
-      "add": "Add a reaction",
+      "add": "Lisää reaktio",
       "toggle": "{name}, {count}",
-      "thumbs_up": "Thumbs up",
-      "heart": "Heart",
-      "laugh": "Laughing",
-      "surprised": "Surprised",
-      "celebrate": "Celebrating",
-      "thinking": "Thinking"
+      "thumbs_up": "Peukku ylös",
+      "heart": "Sydän",
+      "laugh": "Nauru",
+      "surprised": "Yllätys",
+      "celebrate": "Juhlinta",
+      "thinking": "Pohdinta"
     },
     "moderation": {
-      "lock": "Lock {name} out of chat",
-      "unlock": "Let {name} chat again",
-      "lockedTag": "Locked out of chat",
-      "deleteTitle": "Delete this message?",
-      "deleteBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
-      "deleteConfirm": "Delete",
-      "hideTitle": "Remove this message for everyone?",
-      "hideBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
-      "hideConfirm": "Remove"
+      "lock": "Lukitse {name} pois keskustelusta",
+      "unlock": "Päästä {name} takaisin keskusteluun",
+      "lockedTag": "Lukittu pois keskustelusta",
+      "deleteTitle": "Poistetaanko tämä viesti?",
+      "deleteBody": "Kaikki näkevät, että viesti on poistettu, ja henkilökunnalle jää siitä kopio.",
+      "deleteConfirm": "Poista",
+      "hideTitle": "Poistetaanko tämä viesti kaikilta?",
+      "hideBody": "Kaikki näkevät, että viesti on poistettu, ja henkilökunnalle jää siitä kopio.",
+      "hideConfirm": "Poista kaikilta"
     },
     "typing": {
-      "one": "{name} is writing",
-      "two": "{first} and {second} are writing",
-      "many": "Several people are writing"
+      "one": "{name} kirjoittaa",
+      "two": "{first} ja {second} kirjoittavat",
+      "many": "Useat kirjoittavat"
     },
     "images": {
-      "row": "Images",
-      "open": "Open image {index} of {count}",
-      "viewer": "Image {index} of {count}",
-      "previous": "Previous image",
-      "next": "Next image",
-      "close": "Close"
+      "row": "Kuvat",
+      "open": "Avaa kuva {index}/{count}",
+      "viewer": "Kuva {index}/{count}",
+      "previous": "Edellinen kuva",
+      "next": "Seuraava kuva",
+      "close": "Sulje"
     }
   }
 }
