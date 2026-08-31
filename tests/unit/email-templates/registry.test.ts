@@ -317,16 +317,14 @@ describe("templateRegistry sessionReport", () => {
   });
 
   /**
-   * A dev machine still gets its grid, which is the one place this fixture
-   * parts company with the shell's brand mark. The mark drops itself on a
-   * loopback origin because a failed fetch looks worse than no picture and the
-   * lockup already says what it said; a photos section that suppresses itself
-   * leaves whoever opened the testing tool nothing to look at — not the pairs,
-   * not the stacking, and not the reserved wells the design turns on. So the
-   * URLs are emitted, they point at the dev server, and a browser on that
-   * machine resolves them.
+   * A send from a dev machine carries no photos, on exactly the terms the
+   * shell's brand mark takes: a `localhost` src is unreachable by construction
+   * for the inbox the mail is about to land in, and a *failed* fetch is worse
+   * than an absent one — Gmail's proxy paints its broken-image glyph in every
+   * well the design reserved. The rule is that an `<img>` which will
+   * predictably fail is never emitted, and a fixture is not exempt from it.
    */
-  it("keeps the photos on a loopback origin, pointed at the dev server", () => {
+  it("sends no photos when the origin is one only a dev machine can reach", () => {
     for (const origin of ["http://localhost:3000", "http://127.0.0.1:3000"]) {
       vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
       try {
@@ -334,11 +332,11 @@ describe("templateRegistry sessionReport", () => {
           { ...params, photoCount: "5" },
           t,
           "en",
+          { to: "send" },
         );
-        expect(html).toContain("Photos from this session");
-        const sources = html.match(/<img src="[^"]+"/g) ?? [];
-        expect(sources.filter((tag) => tag.startsWith(`<img src="${origin}/preview-art/`)))
-          .toHaveLength(5);
+        expect(html, `origin ${origin} produced photos`)
+          .not.toContain("Photos from this session");
+        expect(html).not.toContain("/preview-art/");
       } finally {
         vi.unstubAllEnvs();
       }
@@ -346,11 +344,69 @@ describe("templateRegistry sessionReport", () => {
   });
 
   /**
-   * No origin is the other case, and it is an impossibility rather than a
-   * judgment: there is no absolute URL to put in a `src`, and a half-built one
-   * is what this directory never emits.
+   * The preview is the other destination, and the reason the context exists:
+   * the mail drawn in `/admin/testing` is fetched by the browser looking at
+   * it, so the loopback origin that is useless in an inbox is the right one
+   * here. Suppressing the grid there would leave the one surface built to show
+   * it with nothing to show — no pairs, no spanning odd one, no wells.
    */
-  it("sends no photos at all when no site origin can be built", () => {
+  it("keeps the photos in a preview, resolved against the previewing browser", () => {
+    // Not the env: a preview names the origin its own browser will fetch from,
+    // which is the dev server actually serving the art whatever port it is on.
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+    try {
+      const { html } = templateRegistry.sessionReport.render(
+        { ...params, photoCount: "5" },
+        t,
+        "en",
+        { to: "preview", origin: "http://localhost:3010" },
+      );
+      expect(html).toContain("Photos from this session");
+      const sources = html.match(/<img src="[^"]+"/g) ?? [];
+      expect(
+        sources.filter((tag) => tag.startsWith('<img src="http://localhost:3010/preview-art/')),
+      ).toHaveLength(5);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  /**
+   * A real origin is a real origin in both destinations — the distinction is
+   * about reachability, not about the tool, so a staging or production send is
+   * unchanged by any of it.
+   */
+  it("carries the photos from a public origin whichever way it is rendered", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    try {
+      const contexts = [
+        { to: "send" },
+        { to: "preview", origin: "https://sogverse.sog.gg" },
+      ] as const;
+      for (const context of contexts) {
+        const { html } = templateRegistry.sessionReport.render(
+          { ...params, photoCount: "3" },
+          t,
+          "en",
+          context,
+        );
+        expect(html, `context ${context.to} dropped the photos`)
+          .toContain("Photos from this session");
+        expect(html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
+          .toHaveLength(3);
+      }
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  /**
+   * No origin is the third case, and it is an impossibility rather than a
+   * judgment: there is no absolute URL to put in a `src`, and a half-built one
+   * is what this directory never emits. The default context is the send, which
+   * is what a caller who has not thought about it should get.
+   */
+  it("renders no photos at all when no site origin can be built", () => {
     for (const origin of ["", "not-a-url"]) {
       vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
       try {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Mail } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Mail, MonitorPlay, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +19,12 @@ import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { findOption } from "@/lib/utils";
-import { templateRegistry, type TemplateField } from "@/lib/email-templates/registry";
+import {
+  templateRegistry,
+  type TemplateDefinition,
+  type TemplateField,
+} from "@/lib/email-templates/registry";
+import { getEmailTranslator } from "@/lib/email-templates/translator";
 
 const EMAIL_PROVIDERS = ["brevo", "klaviyo"] as const;
 type EmailProvider = (typeof EMAIL_PROVIDERS)[number];
@@ -50,6 +55,41 @@ function fieldValue(field: TemplateField, typed: string | undefined): string {
   }
 }
 
+/**
+ * The form's values as the template takes them — every field resolved to what
+ * an untouched one posts, then run through the entry's own resolver.
+ *
+ * Shared by the send and the preview on purpose: a preview built from a
+ * different param bag than the send is a picture of a mail nobody receives,
+ * which is the one thing a preview must never be.
+ */
+function templateApiParams(
+  definition: TemplateDefinition,
+  typed: Record<string, string>,
+): Record<string, string | boolean | null> {
+  const raw = Object.fromEntries(
+    definition.fields.map((field) => [field.key, fieldValue(field, typed[field.key])]),
+  );
+  return definition.resolveParams ? definition.resolveParams(raw) : raw;
+}
+
+/**
+ * What the preview is currently showing — a snapshot of the form, not a live
+ * view of it.
+ *
+ * The distinction is the whole design of the panel below. Re-rendering on every
+ * keystroke would reload the iframe and throw away wherever the reader had
+ * scrolled to in the mail, which is exactly what someone editing the report
+ * markdown is watching. So the snapshot is replaced on the two choices that
+ * change *which* mail is on screen — the template and the locale — and on the
+ * refresh button for everything else.
+ */
+interface PreviewRequest {
+  template: string;
+  locale: SupportedLocale;
+  params: Record<string, string>;
+}
+
 // --- Page ---
 
 export default function TestingPage() {
@@ -75,7 +115,59 @@ export default function TestingPage() {
   const [templateParams, setTemplateParams] = useState<Record<string, string>>({});
   const [templateLocale, setTemplateLocale] = useState<SupportedLocale>(DEFAULT_LOCALE);
 
+  // Preview state
+  const [previewRequest, setPreviewRequest] = useState<PreviewRequest>(() => ({
+    template: templateKeys[0],
+    locale: DEFAULT_LOCALE,
+    params: {},
+  }));
+  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+
   const selectedTemplate = templateRegistry[templateName];
+
+  /**
+   * Render the snapshot with the same registry call the send route makes —
+   * but in the preview context, so a fixture whose art lives on this dev
+   * server is resolved against *this browser's* origin instead of being
+   * dropped as unreachable. The mail a recipient would get is the send's job;
+   * the mail as it was designed is this one's.
+   *
+   * The translator is an awaited dynamic import of one locale's messages, so
+   * this is a chunk fetch rather than a round trip: nothing is drawn while it
+   * is in flight, inside a box that is already its final size.
+   */
+  useEffect(() => {
+    // A cancellation token rather than a boolean the cleanup closes over: two
+    // requests can be in flight across a locale change, and the one that
+    // resolves second must not be the one that paints.
+    const superseded = new AbortController();
+    void (async () => {
+      try {
+        const t = await getEmailTranslator(previewRequest.locale);
+        if (superseded.signal.aborted) return;
+        const definition = templateRegistry[previewRequest.template];
+        const rendered = definition.render(
+          templateApiParams(definition, previewRequest.params),
+          t,
+          previewRequest.locale,
+          { to: "preview", origin: window.location.origin },
+        );
+        setPreview({ subject: rendered.subject, html: rendered.html });
+        setPreviewError(null);
+      } catch (error) {
+        if (superseded.signal.aborted) return;
+        setPreview(null);
+        // The raw message, like the send result banner beside it: a zod path is
+        // what tells the admin which field they mistyped, and this page is
+        // developer-facing tooling.
+        setPreviewError(error instanceof Error ? error.message : String(error));
+      }
+    })();
+    return () => {
+      superseded.abort();
+    };
+  }, [previewRequest]);
 
   function handleModeChange(newMode: EmailMode) {
     setMode(newMode);
@@ -86,6 +178,19 @@ export default function TestingPage() {
     setTemplateName(name);
     setTemplateParams({});
     setResult(null);
+    // A different template is a different mail, so the snapshot follows it
+    // rather than sitting there describing the previous one. Its params are
+    // cleared above, so the preview shows what an untouched form would send.
+    setPreviewRequest({ template: name, locale: templateLocale, params: {} });
+  }
+
+  function handleTemplateLocaleChange(locale: SupportedLocale) {
+    setTemplateLocale(locale);
+    setPreviewRequest({ template: templateName, locale, params: templateParams });
+  }
+
+  function refreshPreview() {
+    setPreviewRequest({ template: templateName, locale: templateLocale, params: templateParams });
   }
 
   function updateParam(key: string, value: string) {
@@ -122,12 +227,7 @@ export default function TestingPage() {
             template: templateName,
             toEmail,
             locale: templateLocale,
-            params: (() => {
-              const raw = Object.fromEntries(
-                selectedTemplate.fields.map((f) => [f.key, fieldValue(f, templateParams[f.key])]),
-              );
-              return selectedTemplate.resolveParams ? selectedTemplate.resolveParams(raw) : raw;
-            })(),
+            params: templateApiParams(selectedTemplate, templateParams),
           }),
         });
       }
@@ -239,7 +339,9 @@ export default function TestingPage() {
                       id="templateLocale"
                       value={templateLocale}
                       onChange={(e) => {
-                        if (isSupportedLocale(e.target.value)) setTemplateLocale(e.target.value);
+                        if (isSupportedLocale(e.target.value)) {
+                          handleTemplateLocaleChange(e.target.value);
+                        }
                       }}
                       className={selectClass}
                     >
@@ -375,6 +477,64 @@ export default function TestingPage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* The preview, for template mode only: free-form mode's body is the
+          typed text with its line breaks, which the textarea above already
+          shows. A registered template is the case where what you asked for and
+          what arrives are two different documents. */}
+      {mode === "template" && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <MonitorPlay className="h-5 w-5" />
+                  <CardTitle>{t('preview')}</CardTitle>
+                </div>
+                <CardDescription>{t('previewDescription')}</CardDescription>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={refreshPreview}>
+                <RefreshCw />
+                {t('refreshPreview')}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* The subject is half of what a template produces and the only
+                half a rendered body cannot show. Its label is always on
+                screen and the line under it holds a line's height whether or
+                not it has words in it, so the panel below never moves. */}
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {t('subject')}
+              </p>
+              <p className="min-h-5 text-sm">{preview?.subject ?? ""}</p>
+            </div>
+            {/* Sandboxed, and `allow-same-origin` is load-bearing rather than a
+                relaxation: scripts stay off (the mail has none, and without
+                `allow-scripts` nothing in here can run), while the origin is
+                what the inherited CSP's `img-src 'self'` is matched against —
+                an opaque origin would block the very photographs this panel
+                exists to show. The box carries its final height before
+                anything is drawn in it, so neither the first render nor a
+                refusal moves the page. */}
+            <div className="h-[720px] overflow-hidden rounded-md border border-border bg-background">
+              {previewError ? (
+                <p className="p-4 text-sm text-destructive">
+                  {t('previewError', { message: previewError })}
+                </p>
+              ) : preview ? (
+                <iframe
+                  title={t('preview')}
+                  srcDoc={preview.html}
+                  sandbox="allow-same-origin"
+                  className="h-full w-full border-0"
+                />
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

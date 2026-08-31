@@ -1,3 +1,4 @@
+import { sendableImageOrigin, type EmailRenderContext } from "../render-context";
 import type { SessionReportPhoto } from "../session-photos";
 
 /**
@@ -33,36 +34,40 @@ const PHOTO_ART: readonly { path: string; width: number; height: number }[] = [
 ];
 
 /**
- * The first `count` demo photos, resolved against the canonical site origin.
+ * The first `count` demo photos, resolved against whichever origin the render's
+ * own destination can actually reach.
  *
- * **A loopback origin keeps its photos, and that is where this parts company
- * with the shell's brand mark.** The mark drops itself on a `localhost` origin
- * because a *failed* fetch is worse than no fetch — Gmail's proxy paints a
- * broken-image glyph where the badge would be — and dropping it costs nothing,
- * since the lockup underneath already says everything the picture said.
- * Neither half of that reasoning holds here. These photos never reach a mail
- * anyone receives for real: they exist only behind `/admin/testing`, sent to
- * whoever typed their own address into it, and the *grid* is the thing being
- * looked at. Suppressing the section leaves that person nothing to look at at
- * all — no pairs, no spanning odd one, no stacking, and above all none of the
- * reserved wells the whole design turns on. So the section is emitted whatever
- * the origin: deployed, the pictures load; from a dev machine, the mail arrives
- * as the wells-only render this mail is built to survive, which is the render
- * worth checking anyway, and a browser pointed at that same dev server resolves
- * them for real.
+ * **A send takes the mark's rule exactly**, and there is no fixture exemption
+ * from it: a test mail composed on a dev machine carries no photos section at
+ * all, because a `localhost` src is unreachable by construction for the inbox it
+ * is about to land in, and Gmail's proxy paints a broken-image glyph in every
+ * well rather than leaving the wells the design turns on. An `<img>` that will
+ * predictably fail is not emitted, whoever the recipient is. Deployed, where the
+ * origin is real, a test send carries the pictures like any other.
  *
- * **No origin at all is still no photos**, and that is a different case rather
- * than a milder one: an unset or malformed `NEXT_PUBLIC_SITE_URL` yields no
- * absolute URL to put in a `src`, and a half-built one is the thing this
- * directory never emits.
+ * **A preview is the other half, and it is why the distinction exists at all.**
+ * The mail drawn in `/admin/testing` is fetched by the browser looking at it, on
+ * the machine serving the art, so the loopback origin that is useless in an
+ * inbox is the correct one here — and the grid is the thing that page exists to
+ * show. Suppressing it there would leave nothing to look at: no pairs, no
+ * spanning odd one, no stacking, none of the reserved wells. So the two
+ * destinations differ in exactly one way, and it is the way they genuinely
+ * differ.
+ *
+ * **No origin at all is still no photos**, in either destination, and that is an
+ * impossibility rather than a judgment: there is no absolute URL to put in a
+ * `src`, and a half-built one is the thing this directory never emits.
  */
-export function sessionReportPhotoFixtures(count: number): SessionReportPhoto[] {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!siteUrl) return [];
+export function sessionReportPhotoFixtures(
+  count: number,
+  context: EmailRenderContext,
+): SessionReportPhoto[] {
+  const origin = context.to === "preview" ? context.origin : sendableImageOrigin();
+  if (!origin) return [];
   return PHOTO_ART.slice(0, count).flatMap((art) => {
     try {
       return [
-        { src: new URL(art.path, siteUrl).toString(), width: art.width, height: art.height },
+        { src: new URL(art.path, origin).toString(), width: art.width, height: art.height },
       ];
     } catch {
       return [];

@@ -962,7 +962,11 @@
       "replyToPlaceholder": "svar@example.com",
       "sendTestEmail": "Skicka testmeddelande",
       "emailSentSuccess": "E-post skickat! Meddelande-ID: {messageId}",
-      "failedToSendRequest": "Kunde inte skicka förfrågan"
+      "failedToSendRequest": "Kunde inte skicka förfrågan",
+      "preview": "Förhandsgranskning",
+      "previewDescription": "Så här återges meddelandet. Det ritas upp här i din webbläsare och skickas inte, och bilderna laddas från den här servern – därför visar en förhandsgranskning även de foton som ett utskick från en utvecklingsmaskin utelämnar.",
+      "refreshPreview": "Uppdatera förhandsgranskningen",
+      "previewError": "Kunde inte rendera mallen: {message}"
     },
     "whatsapp": {
       "title": "WhatsApp",

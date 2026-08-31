@@ -569,6 +569,19 @@ migration genuinely additive for the still-deployed app; nothing else forces sta
   The tile is *not* restored: the strip draws the edit as the gedu left it, exactly as a
   refused write-up save leaves the typed text on screen.
 
+- **A mail never carries an `<img>` that will predictably fail** *(owner)*: a send
+  composed against a loopback origin omits the photos section entirely (brand-mark
+  parity — compose-time omission is the graceful fallback), and `/admin/testing`
+  gained an in-browser preview iframe rendering the same template client-side, where
+  localhost art resolves — that is the surface for judging the photo layout locally.
+- **The expand-contract family-feed RPC was unwound** *(owner)*: the canonical RPC is
+  widened in place and the versioned twin dropped — a strict schema briefly failing
+  to parse inside the sub-minute deploy window is accepted (the severity paragraph in
+  docs/plans/CLAUDE.md's "Landing in stages" records the general ruling).
+- **A failed photo delete is visible and retryable** *(owner)*: the DELETE path is
+  object-first behind a check-only guard RPC, so a storage failure leaves the row —
+  and the tile — in place with translated copy, and remove works again.
+
 ## Follow-ups (live and die with this plan; owner names any keepers at completion)
 
 - The cleanup migration dropping the old family-feed RPC — the one follow-up that is

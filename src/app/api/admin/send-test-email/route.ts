@@ -102,7 +102,11 @@ export const POST = defineRoute({
       const locale = resolveLocale(body.locale);
       const t = await getEmailTranslator(locale);
 
-      const rendered = tmpl.render(paramsParsed.data, t, locale);
+      // The context is stated rather than left to the default, because this
+      // route is the send: what leaves here is fetched by a recipient's mail
+      // client, so a fixture whose art only a dev machine can reach drops it.
+      // The admin page's in-browser preview is the other half of that pair.
+      const rendered = tmpl.render(paramsParsed.data, t, locale, { to: "send" });
       subject = rendered.subject;
       htmlContent = rendered.html;
       // The template's own reply-to, so a test send lands the same way the live

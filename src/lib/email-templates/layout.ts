@@ -1,6 +1,7 @@
 import { BRAND, DARK_THEME, GRADIENT } from "@/lib/constants/colors";
 import { BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
 import { RADIUS } from "@/lib/constants/radius";
+import { sendableImageOrigin } from "./render-context";
 import { pinnedFill } from "./utils";
 import {
   PHOTO_CELL_CLASS,
@@ -89,19 +90,18 @@ export const BRAND_MARK = {
  * design exists to avoid, and it was observed doing so in a real inbox. An
  * unreachable-by-construction src is morally a malformed one, so it takes the
  * same branch.
+ *
+ * Both halves of that are `sendableImageOrigin()`, shared with the testing
+ * tool's demo photographs — the only other images this directory emits, and the
+ * only other place the same question is asked. The shell never renders in the
+ * preview context, so the mark keeps one shape here: a mail previewed from a dev
+ * machine shows the header the same send would arrive with, which is the honest
+ * render and costs nothing, because the lockup underneath already says
+ * everything the badge said.
  */
 function brandMarkSrc(): string | null {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!siteUrl) return null;
-  try {
-    const url = new URL(BRAND_MARK.path, siteUrl);
-    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
-      return null;
-    }
-    return url.toString();
-  } catch {
-    return null;
-  }
+  const origin = sendableImageOrigin();
+  return origin ? new URL(BRAND_MARK.path, origin).toString() : null;
 }
 
 /**

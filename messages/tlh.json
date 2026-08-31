@@ -1010,7 +1010,11 @@
       "replyToPlaceholder": "reply@example.com",
       "sendTestEmail": "Qu’ nI’moH QIn yIngeH",
       "emailSentSuccess": "QIn ngeHlu’! De’ ID: {messageId}",
-      "failedToSendRequest": "tlhob ngeH Dabe’lu’"
+      "failedToSendRequest": "tlhob ngeH Dabe’lu’",
+      "preview": "QIn bejwI’",
+      "previewDescription": "ngeHbe’lu’ — naDev neH QIn Dalegh. De’wI’vamvo’ mIlloghmey Suqlu’, vaj Hoch mIlloghmey Dalegh; ’ach ngeHlu’chugh, mIlloghmeyvam Hutlh QIn.",
+      "refreshPreview": "QIn yIchu’qa’",
+      "previewError": "De’ tIng chenmoHlaHbe’lu’: {message}"
     },
     "whatsapp": {
       "title": "WhatsApp",
