@@ -268,21 +268,22 @@ export function SessionFeedItem({
     entry.kind === "no_record" ? [] : entry.images;
 
   /**
-   * The photo block, on the record editor and nowhere else.
+   * The photo block, on every RECORD editor — the pre-epoch row's included.
    *
-   * **Only a card gets one.** The pre-epoch dashed line is a 2rem row that
-   * deliberately does not compete with the sessions around it, and hanging a
-   * photo block off it would do two wrong things at once: crowd a row whose
-   * whole design is quietness, and turn that row into a card the moment a save
-   * materialized its session — the row would come back as something else
-   * entirely. A gedu who wants photos on a pre-epoch session writes a line on it
-   * first, at which point it is an ordinary past entry with the block.
+   * The no_record editor used to be excluded, and the reason was attach-on-pick:
+   * a photo committing the moment it was picked would have materialized the
+   * session and turned the quiet dashed row into a card mid-edit. Photos are
+   * draft scope now — a Save carries text and photos together — so nothing
+   * mutates until the gedu commits, and the exclusion's rationale is gone. It
+   * mattered in practice: on a group whose past sessions all predate the
+   * record-keeping epoch, the exclusion left no photo affordance anywhere on
+   * the page (owner-found).
    *
-   * The **plan** editor never sees this either, and that is the plan's own
+   * The **plan** editor still never sees this, and that is the plan's own
    * decision rather than an oversight: photos document what happened, and a
    * session that has not started has nothing to document.
    */
-  const photoStrip = entry.kind === "no_record" ? undefined : (
+  const photoStrip = (
     <SessionPhotoStrip
       open={editing}
       photos={photos}

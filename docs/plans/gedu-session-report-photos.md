@@ -508,9 +508,12 @@ migration genuinely additive for the still-deployed app; nothing else forces sta
   cannot decode it, so the refusal surfaces as the decode-failure code with the
   actionable "convert to JPEG" copy; the server magic-byte check stands behind it as
   defense-in-depth rather than the mainline HEIC path.
-- **The photo strip is withheld from pre-epoch `no_record` rows** — a strip would crowd
-  a deliberately quiet row and mutate it into a card mid-edit on first upload; writing a
-  line first makes it an ordinary past entry with the strip.
+- **Every record editor carries the strip, the pre-epoch `no_record` row's included.**
+  An earlier deviation withheld it there because attach-on-pick would have mutated the
+  quiet row into a card mid-edit; staged-until-Save removed that mechanism, and the
+  exclusion turned out to bite in practice — on a group whose past sessions all predate
+  the epoch it left no photo affordance anywhere on the page *(owner-found)*. The plan
+  editor still gets no strip.
 - **Photos are staged until Save — *(owner, reversing the plan)*.** "Stage-photos-until-
   Save" under *Rejected alternatives* is overruled, and with it the "Gedu editor UI"
   section's attach-on-pick idiom and the accepted consequence that a family could briefly

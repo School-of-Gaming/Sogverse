@@ -264,17 +264,18 @@ describe("photos on a gedu session card", () => {
     expect(queryByText(copy.photosTitle)).not.toBeNull();
   });
 
-  it("keeps the manage block off the plan editor and off a pre-epoch gap", () => {
+  it("keeps the manage block off the plan editor", () => {
     // A session that has not started documents nothing yet.
     const plan = renderFeed({ entries: [futureEntry], editing: FUTURE_ID });
     expect(plan.queryByText(copy.photosTitle)).toBeNull();
-    cleanup();
+  });
 
-    // And a gap is a quiet dashed row with no stored session behind it — it
-    // opens the record editor like any past occurrence, but with nothing to
-    // attach a photo to.
+  it("gives a pre-epoch gap's record editor the manage block too", () => {
+    // Photos are draft scope, so nothing materializes the session until Save —
+    // and on a group whose whole history predates the epoch, this editor is
+    // the only place a photo could enter at all (owner-found).
     const gap = renderFeed({ entries: [gapEntry], editing: GAP_ID });
-    expect(gap.queryByText(copy.photosTitle)).toBeNull();
+    expect(gap.queryByText(copy.photosTitle)).not.toBeNull();
   });
 });
 
