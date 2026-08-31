@@ -893,12 +893,7 @@
       "sessions": {
         "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
         "loading": "ngIq vamvaD may’mey qonta’ghach laDlu’…",
-        "railGroupHeading": "ghom",
-        "addressLabel": "Daq ngu’wI’",
-        "addressPlaceholder": "He, mI’, veng",
-        "addAddress": "Daq ngu’wI’ yIchel",
-        "editAddress": "Daq ngu’wI’ yIchoH",
-        "addressSaveFailed": "Daq ngu’wI’ pollu’be’. yIboq."
+        "railGroupHeading": "ghom"
       }
     },
     "users": {
@@ -1000,12 +995,6 @@
       "backToSites": "Daqmeyvo’ yIchegh",
       "notFound": "ngoqvam ghajbogh Daq tu’lu’be’.",
       "notASite": "Daq ghaHbe’; naDev pagh ghom.",
-      "detailsHeading": "Daq De’",
-      "nameLabel": "pong",
-      "namePlaceholder": "Daq pong",
-      "addressLabel": "Daq ngu’wI’",
-      "addressPlaceholder": "He, mI’, veng",
-      "saveFailed": "polbe’lu’. yInID.",
       "productsHeading": "naDev qaStaHbogh wanI’mey",
       "noProducts": "naDev pagh qaS."
     },
@@ -1493,9 +1482,13 @@
       "saveFailed": "qonta’ pollu’be’. yIboq."
     },
     "siteNotes": {
-      "heading": "Daq qonta’",
-      "sharedCaption": "{site} — DaqvamDaq Qapbogh Hoch ngoq qonta’ rap lulegh; wa’ DachoHDI’, Hoch DachoH.",
+      "heading": "Daq",
+      "sharedCaption": "{site} — DaqvamDaq Qapbogh Hoch ngoq De’ rap lulegh; wa’ DachoHDI’, Hoch DachoH.",
+      "nameLabel": "pong",
+      "namePlaceholder": "Daq pong",
+      "nameRequired": "pong Hutlhbe’nIS Daq.",
       "addressLabel": "Daq ngoq",
+      "addressPlaceholder": "He, mI’, veng",
       "edit": "yIchoH",
       "cancel": "yIqIl",
       "save": "yIpol",
@@ -1507,7 +1500,7 @@
       "staffLabel": "Gedupu’vaD qonta’",
       "staffHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
       "staffPlaceholder": "ngaQHa’moHwI’mey, jan, pa’ Do’Ha’ghach — Daqvamvo’ Gedu veb SovnIS.",
-      "saveFailed": "Daq qonta’ pollu’be’. yIboq."
+      "saveFailed": "pollu’be’. yInID."
     },
     "contract": {
       "back": "jIH SOGDaq yIchegh",

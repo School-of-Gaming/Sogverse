@@ -7,6 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { adminSessionKeys } from "@/services/admin-sessions";
 import { LocationsService } from "./locations.service";
 import {
   LOCATION_SEARCH_LIMIT,
@@ -299,6 +300,14 @@ export function useUpdateLocation() {
         queryClient.invalidateQueries({ queryKey: locationKeys.keyed() }),
         // A rename changes what search matches, so every cached needle is stale.
         queryClient.invalidateQueries({ queryKey: locationKeys.search() }),
+        // The admin product session document names the site its product runs
+        // at, and that name is now the old one — the same reason the site-notes
+        // mutation invalidates this key, and the same arrangement: every
+        // product rather than one, because only mounted queries refetch and
+        // exactly one product document is ever mounted. The gedu group feed
+        // carries the name too and is deliberately not invalidated: this write
+        // is admin-only, so a client that can reach it has never held one.
+        queryClient.invalidateQueries({ queryKey: adminSessionKeys.products() }),
       ]);
     },
   });

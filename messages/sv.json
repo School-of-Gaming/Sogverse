@@ -845,12 +845,7 @@
       "sessions": {
         "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
         "loading": "Laddar dokumentationen av produktens tillfällen.",
-        "railGroupHeading": "Grupp",
-        "addressLabel": "Lokalens adress",
-        "addressPlaceholder": "Gata, postnummer, stad",
-        "addAddress": "Lägg till adress",
-        "editAddress": "Redigera adress",
-        "addressSaveFailed": "Adressen sparades inte. Försök igen."
+        "railGroupHeading": "Grupp"
       }
     },
     "users": {
@@ -952,12 +947,6 @@
       "backToSites": "Tillbaka till lokaler",
       "notFound": "Det finns ingen lokal med det här id:t.",
       "notASite": "Den här platsen är ingen lokal och har därför ingen sida här.",
-      "detailsHeading": "Lokaluppgifter",
-      "nameLabel": "Namn",
-      "namePlaceholder": "Vad lokalen heter",
-      "addressLabel": "Adress",
-      "addressPlaceholder": "Gata, postnummer, stad",
-      "saveFailed": "Det sparades inte. Försök igen.",
       "productsHeading": "Produkter i den här lokalen",
       "noProducts": "Inget körs här ännu."
     },
@@ -1449,9 +1438,13 @@
       "saveFailed": "Anteckningarna sparades inte. Försök igen."
     },
     "siteNotes": {
-      "heading": "Anteckningar om platsen",
-      "sharedCaption": "{site} — alla produkter som körs på den här platsen visar samma anteckningar, så en ändring här slår igenom överallt.",
+      "heading": "Lokal",
+      "sharedCaption": "{site} — alla produkter som körs i den här lokalen visar samma uppgifter, så en ändring här slår igenom överallt.",
+      "nameLabel": "Namn",
+      "namePlaceholder": "Vad lokalen heter",
+      "nameRequired": "Lokalen måste ha ett namn.",
       "addressLabel": "Adress",
+      "addressPlaceholder": "Gata, postnummer, stad",
       "edit": "Redigera",
       "cancel": "Avbryt",
       "save": "Spara",
@@ -1463,7 +1456,7 @@
       "staffLabel": "Anteckning till Gedus",
       "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
       "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta.",
-      "saveFailed": "Anteckningarna om platsen sparades inte. Försök igen."
+      "saveFailed": "Det sparades inte. Försök igen."
     },
     "contract": {
       "back": "Tillbaka till Min SOG",

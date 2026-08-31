@@ -35,7 +35,7 @@ import {
 } from "@/components/group-workspace/GroupWorkspace";
 import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPanel";
 import { createSessionEntrySaves } from "@/components/group-workspace/session-entry-saves";
-import type { SiteNotesDraft } from "@/components/group-workspace/SiteNotesPanel";
+import type { SiteNotesDraft } from "@/components/group-workspace/SitePanel";
 import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
 
 /**
@@ -377,12 +377,13 @@ function Workspace({
   /**
    * Persist the site's shared notes.
    *
-   * The address is **not** sent, and there is no way from here to send one. It
-   * is read-only on this surface because it is family-facing site detail owned
-   * by the location record — and it used to be echoed back on every save, which
-   * meant a page loaded before an admin corrected the address quietly reverted
-   * that correction the next time a gedu touched a note. The RPC no longer takes
-   * one; it preserves whatever is stored.
+   * The name and the address are **not** sent, and there is no way from here to
+   * send either: this shell supplies no details save, so the panel renders both
+   * read-only. They belong to the location record and are an admin's alone. The
+   * address used to be echoed back on every note save, which meant a page
+   * loaded before an admin corrected it quietly reverted that correction the
+   * next time a gedu touched a note. The RPC no longer takes one; it preserves
+   * whatever is stored.
    */
   const handleSaveSiteNotes = async (draft: SiteNotesDraft) => {
     if (feed.site === null) return;

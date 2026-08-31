@@ -845,12 +845,7 @@
       "sessions": {
         "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
         "loading": "Chargement du suivi des séances de ce produit.",
-        "railGroupHeading": "Groupe",
-        "addressLabel": "Adresse du site",
-        "addressPlaceholder": "Rue, code postal, ville",
-        "addAddress": "Ajouter une adresse",
-        "editAddress": "Modifier l’adresse",
-        "addressSaveFailed": "L’adresse n’a pas été enregistrée. Réessayez."
+        "railGroupHeading": "Groupe"
       }
     },
     "users": {
@@ -952,12 +947,6 @@
       "backToSites": "Retour aux sites",
       "notFound": "Aucun site ne correspond à cet identifiant.",
       "notASite": "Cet emplacement n’est pas un site : il n’a donc pas de page ici.",
-      "detailsHeading": "Détails du site",
-      "nameLabel": "Nom",
-      "namePlaceholder": "Le nom de ce site",
-      "addressLabel": "Adresse",
-      "addressPlaceholder": "Rue, code postal, ville",
-      "saveFailed": "L’enregistrement a échoué. Réessayez.",
       "productsHeading": "Produits sur ce site",
       "noProducts": "Rien ne s’y déroule pour l’instant."
     },
@@ -1449,9 +1438,13 @@
       "saveFailed": "Ces notes n’ont pas été enregistrées. Réessayez."
     },
     "siteNotes": {
-      "heading": "Notes sur le lieu",
-      "sharedCaption": "{site} — tous les produits organisés sur ce lieu affichent les mêmes notes : une modification ici les change partout.",
+      "heading": "Site",
+      "sharedCaption": "{site} — tous les produits organisés sur ce site affichent les mêmes informations : une modification ici les change partout.",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Le nom de ce site",
+      "nameRequired": "Un site doit avoir un nom.",
       "addressLabel": "Adresse",
+      "addressPlaceholder": "Rue, code postal, ville",
       "edit": "Modifier",
       "cancel": "Annuler",
       "save": "Enregistrer",
@@ -1463,7 +1456,7 @@
       "staffLabel": "Note pour les Gedus",
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
       "staffPlaceholder": "Clés, matériel, particularités de la salle — ce que le prochain Gedu sur place doit savoir.",
-      "saveFailed": "Ces notes sur le lieu n’ont pas été enregistrées. Réessayez."
+      "saveFailed": "L’enregistrement a échoué. Réessayez."
     },
     "contract": {
       "back": "Retour à Mon SOG",

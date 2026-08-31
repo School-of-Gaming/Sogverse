@@ -845,12 +845,7 @@
       "sessions": {
         "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
         "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
-        "railGroupHeading": "Ryhmä",
-        "addressLabel": "Toimipisteen osoite",
-        "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
-        "addAddress": "Lisää osoite",
-        "editAddress": "Muokkaa osoitetta",
-        "addressSaveFailed": "Osoitteen tallennus epäonnistui. Yritä uudelleen."
+        "railGroupHeading": "Ryhmä"
       }
     },
     "users": {
@@ -952,12 +947,6 @@
       "backToSites": "Takaisin toimipisteisiin",
       "notFound": "Tällä tunnuksella ei ole toimipistettä.",
       "notASite": "Tämä sijainti ei ole toimipiste, joten sillä ei ole omaa sivua.",
-      "detailsHeading": "Toimipisteen tiedot",
-      "nameLabel": "Nimi",
-      "namePlaceholder": "Toimipisteen nimi",
-      "addressLabel": "Osoite",
-      "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
-      "saveFailed": "Tallennus ei onnistunut. Yritä uudelleen.",
       "productsHeading": "Tämän toimipisteen tuotteet",
       "noProducts": "Täällä ei vielä pyöri mitään."
     },
@@ -1449,21 +1438,25 @@
       "saveFailed": "Muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
     },
     "siteNotes": {
-      "heading": "Toimipaikan muistiinpanot",
-      "sharedCaption": "{site} — kaikki tässä toimipaikassa järjestettävät tuotteet näkevät samat muistiinpanot, joten muokkaus näkyy niissä kaikissa.",
+      "heading": "Toimipiste",
+      "sharedCaption": "{site} — kaikki tässä toimipisteessä järjestettävät tuotteet näkevät samat tiedot, joten muokkaus näkyy niissä kaikissa.",
+      "nameLabel": "Nimi",
+      "namePlaceholder": "Toimipisteen nimi",
+      "nameRequired": "Toimipisteellä on oltava nimi.",
       "addressLabel": "Osoite",
+      "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
       "edit": "Muokkaa",
       "cancel": "Peruuta",
       "save": "Tallenna",
       "publicEmpty": "Lisää muistiinpano perheille — mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan.",
-      "staffEmpty": "Lisää se, mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta — avaimet, välineet, tilan erityispiirteet.",
+      "staffEmpty": "Lisää se, mitä seuraavan Gedun on hyvä tietää tästä toimipisteestä — avaimet, välineet, tilan erityispiirteet.",
       "publicLabel": "Muistiinpano perheille",
       "publicHint": "Älä koskaan kirjoita tähän yksityisiä tai arkaluonteisia tietoja.",
       "publicPlaceholder": "Mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan…",
       "staffLabel": "Muistiinpano Geduille",
       "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
-      "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta.",
-      "saveFailed": "Toimipaikan muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
+      "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipisteestä.",
+      "saveFailed": "Tallennus ei onnistunut. Yritä uudelleen."
     },
     "contract": {
       "back": "Takaisin Omaan SOGiin",

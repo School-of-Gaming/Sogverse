@@ -42,8 +42,10 @@ import type { ProductGroupsSnapshot, ProductType } from "@/types";
  *  4. **The note write is the shared mutation**, once, with the trimmed text —
  *     the same one the gedu page and the voice room call, which is what makes
  *     an edit here show up there.
- *  5. **The site section carries the admin-only address control**, which is the
- *     whole of what this surface adds to a section a gedu already edits.
+ *  5. **The site section is handed the admin-only details save**, which is the
+ *     whole of what this surface adds to a section a gedu already edits: the
+ *     shared panel is what turns that one callback into an editable name and
+ *     address, so what this file checks is that the callback was supplied.
  *
  * Every read and every mutation is stubbed at its hook: what is under test is
  * what the shell did with an answer, never how it asked.
@@ -91,8 +93,13 @@ const noopMutation = vi.hoisted(() => () => ({
 
 vi.mock("@/services/products", () => ({
   useProductAdmin: () => ({ data: reads.product, isPending: false }),
-  // Read by the admin-only address control inside the site section.
+  // The address half of the admin-only details save inside the site section.
   useUpdateSiteNotes: noopMutation,
+}));
+
+vi.mock("@/services/locations", () => ({
+  // The name half of the same save.
+  useUpdateLocation: noopMutation,
 }));
 
 vi.mock("@/services/admin-sessions", () => ({
@@ -245,8 +252,8 @@ function adminSessions(): AdminProductSessions {
       timezone: "Europe/Helsinki",
       start_date: "2025-09-01",
       end_date: null,
-      // In person, so the site's section — and the address control on it —
-      // renders.
+      // In person, so the site's section — and the details fields on it —
+      // render.
       is_remote: false,
       schedule_slots: [],
     },
@@ -370,6 +377,20 @@ function isLit(button: HTMLElement): boolean {
   return button.querySelector("svg")?.classList.contains("text-info") === true;
 }
 
+/**
+ * The site panel, as its own query scope — the standing-notes card holds the
+ * group's panel beside it, with an identically-named Edit button and Save.
+ * Scoped from the panel's own heading, since neither panel carries a landmark.
+ */
+function sitePanel() {
+  const heading = screen.getByRole("heading", { name: "Site" });
+  const panel = heading.parentElement?.parentElement;
+  if (panel === null || panel === undefined) {
+    throw new Error("The site panel's root element was not found.");
+  }
+  return within(panel);
+}
+
 /** Matches the note dialog's own title, whichever member it was opened for. */
 const NOTE_DIALOG_TITLE = /^Note about /;
 
@@ -443,17 +464,32 @@ describe("admin group details — the page an admin gets is the gedu's page", ()
     expect(isLit(noteButton("Siiri"))).toBe(true);
   });
 
-  it("offers the admin-only address control inside the site's section", () => {
+  it("makes the site's name and address editable inside the shared panel", () => {
     renderPage("consumer_club");
 
-    // The address itself is read-only on both surfaces and shown by the shared
-    // panel; what this page adds is the one control that may write it.
-    expect(
-      screen.getByText("Viides linja 11, 00530 Helsinki"),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Edit address" }),
-    ).toBeTruthy();
+    // Read-only until the panel's one pencil is used — the same display a gedu
+    // gets, on the same component.
+    expect(screen.getByText("Viides linja 11, 00530 Helsinki")).toBeTruthy();
+
+    // The editor stays mounted and `inert` while shut, so what says it is open
+    // is the pencil's own state rather than the fields' absence.
+    const panel = sitePanel();
+    const pencil = panel.getByRole("button", { name: "Edit" });
+    expect(pencil.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(pencil);
+    expect(pencil.getAttribute("aria-expanded")).toBe("true");
+
+    // What this shell adds is one save callback; the panel turns it into these
+    // two fields, beside the two notes, behind the one Save it already had.
+    expect(panel.getByLabelText("Name")).toHaveProperty(
+      "value",
+      "Kallion kirjasto",
+    );
+    expect(panel.getByLabelText("Address")).toHaveProperty(
+      "value",
+      "Viides linja 11, 00530 Helsinki",
+    );
+    expect(panel.getAllByRole("button", { name: "Save" })).toHaveLength(1);
   });
 });
 

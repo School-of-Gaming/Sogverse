@@ -47,25 +47,38 @@ ban, and the ESLint config says so.
 - **`GroupWorkspace.tsx`** — the body, and the props every shell fills.
 - **`ParticipantRosterRow.tsx`** — one seat on the rail's roster: identity, age, contact,
   game account editor, and the staff flair (newcomer badge, note button).
-- **`GroupNotesPanel.tsx` / `SiteNotesPanel.tsx` / `TwoAudienceNotesPanel.tsx`** — the
-  standing notes. The two named panels are the same two-audience editor with different
-  copy and a different owner (the group; the site).
+- **`GroupNotesPanel.tsx` / `SitePanel.tsx` / `TwoAudienceNotesPanel.tsx`** — the standing
+  notes, and the site. Both named panels are built on the same two-audience editor with
+  different copy and a different owner (the group; the site); the site's puts two more
+  fields behind the same Save.
 
-  **`SiteNotesPanel` has one consumer outside this workspace, and that is the point of it
-  rather than a leak: the admin site page (`/admin/sites/[id]`).** Its notes belong to the
-  *building*, not to any product running in it, so the gedu prepping a session there and
-  the admin editing the site record are looking at one pair of paragraphs — and a second
-  editor with its own copy and its own layout would be a second way to say the same thing,
-  free to drift the moment either changed. That page passes **no** `addressEditor`, and the
-  contrast is what the slot is for: the address is edited there in the card that owns the
-  site record, beside the name, so the panel renders it exactly as a gedu meets it. The
-  slot exists for a surface whose only reach into that record *is* this section — the admin
-  product page, where the site is a fact about the group being worked on. This does not
-  widen the directory's claim — the panel is still the group workspace's component, still
-  staff-only, and still inside the family-privacy import zone; it simply has a second staff
-  surface rendering the same two notes.
+  **`SitePanel` is the one component rendering a site anywhere staff meet one** — its
+  name, its address, the note families read and the note only staff do, under one pencil
+  and one Save. It has one consumer outside this workspace, and that is the point of it
+  rather than a leak: the admin site page (`/admin/sites/[id]`), which *is* the site
+  record. A site belongs to the *building*, not to any product running in it, so the gedu
+  prepping a session there and the admin editing the record are looking at one set of
+  fields — and a second editor with its own copy and its own layout would be a second way
+  to say the same thing, free to drift the moment either changed. It replaced exactly that:
+  an address that was editable in one card on the site page and printed again a card below,
+  edited through a different affordance on each surface.
+
+  **Edit access is which saves the caller supplies, never a role flag.** Every consumer
+  supplies the notes save; a consumer whose viewer owns the site record also supplies
+  `onSaveDetails`, and the panel turns that one callback into an editable name and address
+  inside the editor it already had. Omitted, both are read-only — and omitted is the
+  default because it is the gedu answer, the same rule the back link, the way back and the
+  roster heading follow. The shells that supply it are the two admin ones (the site page
+  and the group details page); the gedu shell and the preview scene supply nothing.
+
+  This does not widen the directory's claim — the panel is still the group workspace's
+  component, still staff-only, and still inside the family-privacy import zone; it simply
+  has a second staff surface rendering the same site.
 - **`session-entry-saves.ts`** — what a session editor's Save and Send *do* between the
   draft and the writes, taking the mutations as arguments so both shells run one copy.
+- **`site-details-save.ts`** — the same split for the site panel's details save: which of
+  the two routes each field travels on, and what a half-failed save leaves behind, taking
+  both mutations as arguments so the two admin shells run one copy.
 - **`game-username-save.ts`** — the same split for the roster's username editor: the
   platform dispatch and the checking/verified/unverified machine, taking both platforms'
   mutations and the shell's status setter as arguments.

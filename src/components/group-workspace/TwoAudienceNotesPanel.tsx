@@ -71,6 +71,30 @@ interface TwoAudienceNotesPanelProps {
   caption?: ReactNode;
   /** Always-visible read-only detail under the caption, e.g. a street address. */
   intro?: ReactNode;
+  /**
+   * Fields at the **head of the editor**, for a scope whose caller can write
+   * more than the two notes.
+   *
+   * A function rather than a node, because the one thing these fields cannot
+   * own is whether they are usable: the round trip belongs to this panel, so it
+   * hands `disabled` down and every control in here honours it, exactly as the
+   * two textareas do. Everything else about them — their labels, their drafts,
+   * what a Save does with them — is the caller's, and a caller with nothing
+   * extra to offer passes nothing and gets the editor it always had.
+   *
+   * They render **inside** the editor's collapsing region, so they exist only
+   * while it is open and there is still one Save for whatever it holds.
+   */
+  editorFields?: (state: { disabled: boolean }) => ReactNode;
+  /**
+   * Why this draft cannot be saved yet, or `null` when it can.
+   *
+   * Non-null disables Save **and says so in words** in the line above it. A
+   * greyed button with no explanation is the failure mode this exists to avoid:
+   * the one thing worse than refusing a save is refusing it silently, which is
+   * what closing the editor over a discarded field would do.
+   */
+  saveBlockedReason?: string | null;
   publicNote: string | null;
   staffNote: string | null;
   editing: boolean;
@@ -149,14 +173,24 @@ interface TwoAudienceNotesPanelProps {
  * paragraphs somebody had just finished is a good way to get them typed
  * shorter the second time.
  *
+ * **A scope may put more than two notes behind that one Save.** The site scope
+ * does: a site's name and address are fields of the same record the notes hang
+ * off, so a caller that may write them hands them in through `editorFields`,
+ * and they open, grey out and close *with* the notes rather than beside them.
+ * What the panel keeps either way is the grammar — one pencil, one open editor,
+ * one Save, one line when it refuses — and a scope with nothing extra to offer
+ * never learns the option exists.
+ *
  * It owns the text being typed, whether a save is in the air, and nothing else.
- * Which scope it is describing, what the strings say, and where a save goes are
- * all the caller's.
+ * Which scope it is describing, what the strings say, what else rides along in
+ * the editor, and where a save goes are all the caller's.
  */
 export function TwoAudienceNotesPanel({
   copy,
   caption,
   intro,
+  editorFields,
+  saveBlockedReason = null,
   publicNote,
   staffNote,
   editing,
@@ -263,6 +297,8 @@ export function TwoAudienceNotesPanel({
         {/* `pb-1` gives the Save row's focus ring room: a collapsible region
             has to clip its overflow for the open/close animation to work. */}
         <div className="space-y-4 pb-1 pt-3">
+          {editorFields?.({ disabled: committing })}
+
           <FamilyNoteBlock>
             <Field
               label={copy.publicLabel}
@@ -309,11 +345,21 @@ export function TwoAudienceNotesPanel({
 
           {/* The failure line sits above the buttons, where the eye already is
               after a click, rather than under a row that may be the last thing
-              inside a collapsible region. */}
-          {error !== null && (
-            <p role="alert" className="text-right text-xs text-destructive">
-              {error}
+              inside a collapsible region. A live reason why Save is refused
+              takes the same slot and wins it: it describes the draft as it
+              stands now, where the error describes an attempt already made. It
+              is not an alert — it appears as somebody types rather than in
+              answer to a click, and announcing every keystroke is noise. */}
+          {saveBlockedReason !== null ? (
+            <p className="text-right text-xs text-muted-foreground">
+              {saveBlockedReason}
             </p>
+          ) : (
+            error !== null && (
+              <p role="alert" className="text-right text-xs text-destructive">
+                {error}
+              </p>
+            )
           )}
 
           <div className="flex justify-end gap-2">
@@ -329,7 +375,7 @@ export function TwoAudienceNotesPanel({
             <Button
               type="button"
               size="sm"
-              disabled={committing}
+              disabled={committing || saveBlockedReason !== null}
               onClick={() => void handleSave()}
               className="gap-1.5"
             >

@@ -37,7 +37,11 @@ import { SessionDetailsBackLink } from "./BackLink";
 import { ParticipantRosterRow } from "./ParticipantRosterRow";
 import { rosterContactEmail } from "./types";
 import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
-import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
+import {
+  SitePanel,
+  type SiteDetailsDraft,
+  type SiteNotesDraft,
+} from "./SitePanel";
 
 /**
  * One group of one product, as the people running it work it: the group's
@@ -92,13 +96,15 @@ import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
  *   than being capped at the timeline's reading width: capped, they sat in the
  *   left third of a wide workspace with the rest of the row blank, which read as
  *   a rendering fault rather than as a choice.
- * - **An in-person product also carries its site's notes**, beside the group's
- *   own on the same row and inside the same card — a bordered column, not a
+ * - **An in-person product also carries its site**, beside the group's own
+ *   notes on the same row and inside the same card — a bordered column, not a
  *   second card, because a card inside a card says "different kind of thing"
- *   when these are two instances of one kind. Site notes belong to the *building*
- *   and every product running there reads the same two paragraphs, so the panel
- *   names the site and says so; a remote product has no building and the row
- *   collapses back to one column.
+ *   when these are two instances of one kind. A site's name, address and two
+ *   notes belong to the *building* and every product running there reads the
+ *   same four fields, so the panel names the site and says so; a remote product
+ *   has no building and the row collapses back to one column. Whether those
+ *   fields can be *written* here is the shell's answer, and it arrives as a
+ *   save callback rather than as a claim about who is looking.
  * - **The rail holds the two things that are true between sessions**, this
  *   group first: its co-teachers and roster (the reference a gedu actually
  *   reaches for mid-session), then the other groups on the product — the
@@ -121,12 +127,6 @@ import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
  *   in; a chip naming a number the reader then has to go hunting for was one
  *   more thing to read on the way to the same place. The dashboard badge stays
  *   the cross-product signal.
- */
-/**
- * The site an in-person product runs at, with the two notes that hang off it.
- *
- * Both notes are **site-scoped**: they are shared by every product running
- * there, which is why the panel that renders them says so by name.
  */
 /**
  * The staff-only overlay on the group's roster: who is new to the group, who
@@ -164,6 +164,13 @@ export interface RosterMemberFlair {
   onSaveNote: (participantId: string, text: string) => void | Promise<void>;
 }
 
+/**
+ * The site an in-person product runs at: what it is called, where it is, and
+ * the two notes that hang off it.
+ *
+ * All four are **site-scoped** — shared by every product running there, which
+ * is why the panel that renders them says so by name.
+ */
 export interface ProductSite {
   name: string;
   /** Street address, family-facing. `null` when the site record has none. */
@@ -231,16 +238,18 @@ interface GroupWorkspaceProps {
   /** Persist the site's shared notes. Awaited by the panel. */
   onSaveSiteNotes: (draft: SiteNotesDraft) => void | Promise<void>;
   /**
-   * A control that writes the site's **address**, for a shell whose viewer owns
-   * that field. Omitted — which is what the gedu shell does, and what a scene
-   * does — the site section is exactly what it has always been.
+   * Persist the site's **name and address**, for a shell whose viewer owns the
+   * site record. Omitted — which is what the gedu shell does, and what a scene
+   * does — those two fields are read-only and the site section is exactly what
+   * it has always been.
    *
-   * It is a whole capability or none of it: either the caller can offer this
-   * and passes a control, or it cannot and passes nothing. The body only
-   * decides *where* it goes; every string, every mutation and every failure line
-   * inside it belong to whoever built it.
+   * It is a whole capability or none of it, and it is a *save* rather than a
+   * slot: the panel renders one editor with one Save whatever it is given, so
+   * handing it somebody else's controls would put a second Save inside it. The
+   * body only passes this through; where the fields sit and how they fail is
+   * the panel's, and what the writes are is the shell's.
    */
-  siteAddressEditor?: ReactNode;
+  onSaveSiteDetails?: (draft: SiteDetailsDraft) => void | Promise<void>;
   editingEntryId: string | null;
   onEditEntry: (entryId: string | null) => void;
   /**
@@ -363,7 +372,7 @@ export function GroupWorkspace({
   siteNotesEditing,
   onSiteNotesEditingChange,
   onSaveSiteNotes,
-  siteAddressEditor,
+  onSaveSiteDetails,
   editingEntryId,
   onEditEntry,
   onSaveEntry,
@@ -540,15 +549,15 @@ export function GroupWorkspace({
                 />
                 {site !== null && (
                   <div className="border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-                    <SiteNotesPanel
+                    <SitePanel
                       siteName={site.name}
                       address={site.address}
                       publicNote={site.publicNote}
                       staffNote={site.staffNote}
                       editing={siteNotesEditing}
                       onEditingChange={onSiteNotesEditingChange}
-                      onSave={onSaveSiteNotes}
-                      addressEditor={siteAddressEditor}
+                      onSaveNotes={onSaveSiteNotes}
+                      onSaveDetails={onSaveSiteDetails}
                     />
                   </div>
                 )}
