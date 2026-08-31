@@ -4,10 +4,11 @@ import type { SiteDetailsDraft } from "./SitePanel";
  * What writing a site's **name and address** does between the panel and the
  * two routes behind them — held once, for every shell that may offer it.
  *
- * Two shells bind this: the admin site page, which is the site record, and the
- * admin group details page, where the site is a fact about the group being
- * worked on. They reach it from different pages, but what happens between one
- * Save and those writes is not a per-surface decision — it is the rules below,
+ * Three admin surfaces bind this: the site page, which is the site record; the
+ * group details page, where the site is a fact about the group being worked on;
+ * and the product form's site field, where it is the building the product being
+ * edited runs in. They reach it from different pages, but what happens between
+ * one Save and those writes is not a per-surface decision — it is the rules below,
  * and a second copy of them is a second place for a half-failed save to behave
  * differently depending on which page you were on. Same split
  * `session-entry-saves.ts` and `game-username-save.ts` make, for the same

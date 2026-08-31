@@ -19,6 +19,14 @@ import {
   shouldDropStoredRow,
   type AcceptedLocation,
 } from "@/lib/locations/stored-pick";
+import {
+  SitePanel,
+  type SiteNotesDraft,
+} from "@/components/group-workspace/SitePanel";
+import { createSiteDetailsSave } from "@/components/group-workspace/site-details-save";
+import { useUpdateLocation } from "@/services/locations";
+import { useUpdateSiteNotes } from "@/services/products";
+import { useSiteNotes } from "@/services/sites";
 import { MUNI_CLUB_COUNTRY_CODE } from "./product-type-config";
 import { SitePickerDialog } from "./site-picker-dialog";
 
@@ -92,10 +100,14 @@ interface LocationPickerProps {
  * bounded, are reached faster by typing three letters than by scrolling a
  * grouped list of all of them.
  *
- * What lives here and nowhere else: the card a chosen place collapses to (with
- * its site notes, when the pick is a site), and the guard that drops a stored
- * `location_id`
- * the current mode would no longer accept.
+ * What lives here and nowhere else: the card a chosen place collapses to, and
+ * the guard that drops a stored `location_id` the current mode would no longer
+ * accept.
+ *
+ * `ChosenSitePanel` also lives in this file and is deliberately **not** part of
+ * this component — the section renders it as the field's sibling, so the field's
+ * hint stays against the control it describes. It is here because it asks the
+ * same guard the same question about the same read.
  */
 export function LocationPicker({ value, onChange, pickable, countryCode }: LocationPickerProps) {
   return pickable === "site" ? (
@@ -139,10 +151,7 @@ function SitePicker({
   // What this field accepts: a site, anywhere — or a site in the product
   // type's one country, when the type is bound to one (an in-person
   // municipality club runs at a Finnish site, full stop).
-  const accepts = useMemo<AcceptedLocation>(
-    () => (countryCode ? { types: SITE_ACCEPTS.types, countryCode } : SITE_ACCEPTS),
-    [countryCode],
-  );
+  const accepts = useSiteAccepts(countryCode);
 
   // Clear a pick this field would not accept: a site that was deleted, or —
   // the everyday one — a municipality club toggled from online to in-person,
@@ -175,6 +184,168 @@ function SitePicker({
         }}
       />
     </>
+  );
+}
+
+/**
+ * What the site field will accept back, as one memoized value both the field
+ * and the panel below it read — so "is this pick still good?" is asked in one
+ * shape whoever is asking.
+ */
+function useSiteAccepts(countryCode: string | undefined): AcceptedLocation {
+  return useMemo<AcceptedLocation>(
+    () => (countryCode ? { types: SITE_ACCEPTS.types, countryCode } : SITE_ACCEPTS),
+    [countryCode],
+  );
+}
+
+/**
+ * The site panel for whatever the site field currently holds, or nothing.
+ *
+ * **It is deliberately a sibling of the field rather than a child of it.** The
+ * field is a labelled control with a hint under it saying what a site *is*, and
+ * a hint belongs against the control it describes — a whole editable record
+ * wedged between the two would orphan it. So the "Where" section renders this
+ * directly beneath, and the two share their answer rather than their box: the
+ * keyed read here is the same React Query entry the field's own guard reads, on
+ * the same key, so asking twice costs nothing and cannot disagree.
+ *
+ * The gate is the field's own verdict — a pick the guard has condemned has no
+ * site to show — plus the row's own type, because only a `site` row has a
+ * record on the other side of the notes read.
+ */
+export function ChosenSitePanel({
+  value,
+  countryCode,
+}: {
+  value: string | null;
+  countryCode?: string;
+}) {
+  const row = useStoredRow(value);
+  const accepts = useSiteAccepts(countryCode);
+
+  if (shouldDropStoredRow(value, row, accepts)) return null;
+  if (row === null || row === undefined || row.type !== "site") return null;
+
+  return <PickedSitePanel siteId={row.id} siteName={row.name} />;
+}
+
+/**
+ * The chosen site's own record — its name, its address and its two standing
+ * notes — editable from the product form, in the one panel every staff surface
+ * showing a site renders.
+ *
+ * **Why it is here at all.** An admin naming a new building in the picker's
+ * create dialog has, at that moment, everything they know about it: the door
+ * code, the room, the caretaker. Sending them to `/admin/sites/[id]` and back to
+ * write it down is how it does not get written down. The site row exists the
+ * instant it is picked or created, so this works identically on the add form —
+ * a fresh site shows the panel with an empty address and two ghost notes, ready
+ * to fill in, over a product that does not exist yet.
+ *
+ * **It is not part of the product form's save.** Every field here belongs to the
+ * *building*, shared by every product running in it, and each writes on its own
+ * route the moment its Save is pressed — exactly as it does on the group page
+ * and the site page. The product form's own submit, its validation and its
+ * committing flag never see any of it, and the panel's controls are all
+ * `type="button"` so none of them can reach the surrounding `<form>`. The one
+ * thing that could is Enter inside the name or address input, which a browser
+ * turns into an implicit submit of the form those inputs happen to sit in — so
+ * the wrapper below refuses that key rather than letting a half-filled product
+ * be saved by somebody finishing an address.
+ *
+ * **Both saves are supplied, because an admin owns the site record.** That is
+ * the whole of what makes the name and the address editable; the panel never
+ * asks who is looking. Same pair, and the same shared implementation of what a
+ * half-failed save leaves behind, as the admin site page and the admin group
+ * page.
+ *
+ * **Nothing is rendered until the notes read lands, and a failed read renders
+ * nothing at all** — the same refusal the admin site page makes, for the same
+ * reason: the panel saves what its editor holds, so offering an editor over
+ * fields this component invented empty invites a Save that blanks an address
+ * and two paragraphs somebody wrote.
+ *
+ * The cost of that is one settle on an edit form's first paint: the id is known
+ * synchronously but the row and the notes are two round trips, so the panel
+ * appears a frame or two in and the sections under Where move down by its
+ * height. It is the same settle the notes had when they last lived under the
+ * chosen-place card, and it is accepted for the same reason — the alternative is
+ * holding a
+ * variable-height slot open on every in-person product form for a panel that is
+ * often two short ghost lines, which is the dead space the layout rule names as
+ * the other way to get this wrong. Reserving cannot be made honest here: the
+ * height is a paragraph somebody typed.
+ *
+ * `retry` is left at React Query's default, deliberately: nothing on this page
+ * is blank while the read flies — the form is complete and usable without the
+ * panel — so this is not one of the call sites that has to buy a shorter
+ * failure.
+ */
+function PickedSitePanel({
+  siteId,
+  siteName,
+}: {
+  siteId: string;
+  /**
+   * The canonical, native-language `locations.name` — not the localized display
+   * name — because that is the value the rename writes. A site carries no
+   * `name_i18n`, so on this row the two are the same string; using the stored
+   * one keeps that a fact about the data rather than a coincidence.
+   */
+  siteName: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const { data: notes } = useSiteNotes(siteId);
+  const updateNotes = useUpdateSiteNotes();
+  const rename = useUpdateLocation();
+
+  const handleSaveNotes = async (draft: SiteNotesDraft) => {
+    await updateNotes.mutateAsync({
+      location_id: siteId,
+      member: { notes: draft.publicNote },
+      staff: { notes: draft.staffNote },
+    });
+  };
+
+  /**
+   * **The same implementation the admin site and group pages run**, imported
+   * rather than reproduced: which route each field travels on, and what a
+   * half-failed save leaves behind, are rules about the record rather than
+   * about which page you reached it from.
+   */
+  const handleSaveDetails = createSiteDetailsSave({
+    locationId: siteId,
+    rename,
+    updateAddress: updateNotes,
+  });
+
+  if (notes === undefined) return null;
+
+  return (
+    <div
+      className="rounded-md border border-input bg-card p-4"
+      // Enter in a text input is a browser's implicit submit of the form the
+      // input sits in — which here is the product form. The panel's own Save is
+      // a button and reaches its routes directly, so the key has nothing to do
+      // in these fields and everything to break outside them.
+      onKeyDown={(event) => {
+        if (event.key === "Enter" && event.target instanceof HTMLInputElement) {
+          event.preventDefault();
+        }
+      }}
+    >
+      <SitePanel
+        siteName={siteName}
+        address={notes.address}
+        publicNote={notes.memberNote}
+        staffNote={notes.staffNote}
+        editing={editing}
+        onEditingChange={setEditing}
+        onSaveNotes={handleSaveNotes}
+        onSaveDetails={handleSaveDetails}
+      />
+    </div>
   );
 }
 
@@ -384,13 +555,16 @@ interface SelectedLocationCardProps {
  * or does not depend on it at all (the municipality note, which is a fact about
  * the mode).
  *
- * **The two site notes used to hang under it and no longer do.** They
- * are not a property of this product — every product at that building reads and
- * writes the same two paragraphs — and they saved out of band, so a form field
- * that committed the moment you pressed its own little Save button sat inside a
- * form nothing else committed until the bottom of the page. They live on the
- * product's details page now, beside the group's standing notes, in the panel
- * that reads the rest of the session record.
+ * **The site's own record sits under this field again, and it is a different
+ * thing from what used to.** What was here before was this file's own pair of
+ * note fields, each committing out of band the moment its own little Save was
+ * pressed, inside a form nothing else committed until the bottom of the page.
+ * What is there now is the shared site panel — the same component the admin site
+ * page and both group pages render, rendered by the section as this field's
+ * sibling — so there is one arrangement of a building's four fields wherever
+ * staff meet one, and the out-of-band save is the *point* rather than the wart:
+ * those fields belong to the building and to every other product running in it,
+ * so they cannot wait on this product's save. See `ChosenSitePanel`.
  */
 function SelectedLocationCard({
   location,

@@ -54,22 +54,35 @@ ban, and the ESLint config says so.
 
   **`SitePanel` is the one component rendering a site anywhere staff meet one** — its
   name, its address, the note families read and the note only staff do, under one pencil
-  and one Save. It has one consumer outside this workspace, and that is the point of it
+  and one Save. It has two consumers outside this workspace, and that is the point of it
   rather than a leak: the admin site page (`/admin/sites/[id]`), which *is* the site
-  record. A site belongs to the *building*, not to any product running in it, so the gedu
-  prepping a session there and the admin editing the record are looking at one set of
-  fields — and a second editor with its own copy and its own layout would be a second way
+  record, and the admin product add/edit form's site field, which mounts it under the
+  chosen-place card as soon as that field holds a resolved `site` row — including one
+  named a moment earlier in the picker's own create dialog, which is what makes "write
+  down the door code while you still remember it" a thing an admin can do without
+  leaving the form. A site belongs to the *building*, not to any product running in it, so
+  the gedu prepping a session there and the admin editing the record are looking at one set
+  of fields — and a second editor with its own copy and its own layout would be a second way
   to say the same thing, free to drift the moment either changed. It replaced exactly that:
   an address that was editable in one card on the site page and printed again a card below,
-  edited through a different affordance on each surface.
+  edited through a different affordance on each surface, plus the product form's own
+  pair of note fields, which committed out of band inside a form nothing else committed
+  until its foot.
 
   **Edit access is which saves the caller supplies, never a role flag.** Every consumer
   supplies the notes save; a consumer whose viewer owns the site record also supplies
   `onSaveDetails`, and the panel turns that one callback into an editable name and address
   inside the editor it already had. Omitted, both are read-only — and omitted is the
   default because it is the gedu answer, the same rule the back link, the way back and the
-  roster heading follow. The shells that supply it are the two admin ones (the site page
-  and the group details page); the gedu shell and the preview scene supply nothing.
+  roster heading follow. The surfaces that supply it are the three admin ones (the site
+  page, the group details page and the product form's site field); the gedu shell and the
+  preview scene supply nothing.
+
+  **A consumer that mounts it inside a `<form>` owes it one thing**: Enter in a text input
+  is a browser's implicit submit of whichever form the input sits in, and this panel's
+  fields belong to the building rather than to that form. The product form's site field
+  refuses the key at the panel's wrapper; every other control here is already a
+  `type="button"` and reaches its own route directly.
 
   This does not widen the directory's claim — the panel is still the group workspace's
   component, still staff-only, and still inside the family-privacy import zone; it simply

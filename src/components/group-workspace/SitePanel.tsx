@@ -78,13 +78,22 @@ interface SitePanelProps {
  * surfaced here rather than being retyped into each group's notes and going
  * stale in four places at once.
  *
- * **There is exactly one component rendering these four fields**, and the two
- * staff surfaces that show a site both render it: the group workspace's site
- * section, and the admin site page (`/admin/sites/[id]`), which *is* the site
- * record and has nothing else on it. The alternative — which this replaced —
+ * **There is exactly one component rendering these four fields**, and every
+ * staff surface that shows a site renders it: the group workspace's site
+ * section, the admin site page (`/admin/sites/[id]`), which *is* the site
+ * record and has nothing else on it, and the admin product form's site field,
+ * where it hangs under the chosen-place card. The alternative — which this
+ * replaced —
  * was an address that appeared twice on the site page and was edited through a
  * different affordance on each surface, so two admins editing one building met
  * two different arrangements of the same four fields.
+ *
+ * **A surface may mount this inside a `<form>` of its own, and the product form
+ * does.** Every control here is a `type="button"` and every save reaches its own
+ * route directly, so nothing in this panel can commit a surrounding form. The
+ * one thing that can is Enter inside a text input — a browser's implicit submit
+ * of whichever form the input sits in — which is therefore the mounting
+ * surface's to refuse.
  *
  * **What differs between those surfaces is edit access, and it enters as a
  * callback** — see {@link SitePanelProps.onSaveDetails}. The panel never asks
