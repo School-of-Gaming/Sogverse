@@ -3800,6 +3800,8 @@
     "moderation": {
       "lock": "Verrouiller le chat pour {name}",
       "unlock": "Déverrouiller le chat pour {name}",
+      "lockChat": "Verrouiller le chat",
+      "unlockChat": "Déverrouiller le chat",
       "lockedTag": "Chat verrouillé",
       "deleteTitle": "Supprimer ce message ?",
       "deleteBody": "Tout le monde verra qu’un message a été retiré, et les Gedus et les admins en conservent une copie.",

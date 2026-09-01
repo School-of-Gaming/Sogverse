@@ -3800,6 +3800,8 @@
     "moderation": {
       "lock": "Lukitse {name} pois keskustelusta",
       "unlock": "Päästä {name} takaisin keskusteluun",
+      "lockChat": "Lukitse keskustelu",
+      "unlockChat": "Vapauta keskustelu",
       "lockedTag": "Lukittu pois keskustelusta",
       "deleteTitle": "Poistetaanko tämä viesti?",
       "deleteBody": "Kaikki näkevät, että viesti on poistettu, ja kopio siitä jää Geduille ja ylläpitäjille.",

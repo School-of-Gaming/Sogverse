@@ -11,6 +11,7 @@ import { ZoneList } from "./ZoneList";
 import { ScreenShareDisplay } from "./ScreenShareDisplay";
 import { Card, CardContent } from "@/components/ui/card";
 import { ParticipantList } from "./ParticipantList";
+import type { ParticipantChatControls } from "./ParticipantRow";
 
 /**
  * The fixed height the room grants the whole chat surface — log, reply strip
@@ -48,6 +49,23 @@ interface VoiceRoomProps {
    */
   chat?: (heightClassName: string) => ReactNode;
   /**
+   * The chat lock offered against each person in the room, from whoever
+   * supplied the `chat` slot above.
+   *
+   * **The second half of the same seam, and it goes to the rail rather than to
+   * the panel.** A moderator watching a room should be able to lift a lock
+   * beside somebody's name, without first finding a message that person wrote —
+   * but the lock state and the intention behind it belong to the chat surface,
+   * not to this room. So the room threads what it is handed down to the
+   * participant list and derives nothing: chat state never enters the voice
+   * room's *context*, and this prop is what makes it unnecessary for it to.
+   *
+   * Omitted by an instant room, which has no chat, and by any caller whose
+   * viewer is offered no moderation — in both cases the rail's menus render
+   * exactly as they did before chat existed.
+   */
+  participantChatControls?: ParticipantChatControls;
+  /**
    * Optional control rendered at the right-hand end of the title row. Instant
    * rooms put the room-link chip here, so a moderator can hand the link out
    * mid-call; scheduled group rooms pass nothing (their room isn't shareable
@@ -77,6 +95,7 @@ export function VoiceRoom({
   title,
   titleAccessory,
   chat,
+  participantChatControls,
   onLeave,
   leaveLabel,
 }: VoiceRoomProps) {
@@ -200,8 +219,9 @@ export function VoiceRoom({
         </Card>
       )}
 
-      {/* Participant list (always visible below the voice room card) */}
-      <ParticipantList />
+      {/* Participant list (always visible below the voice room card), carrying
+          whatever chat moderation the room's chat handed it. */}
+      <ParticipantList participantChatControls={participantChatControls} />
 
       {/* Fixed control dock — pinned to the bottom of the viewport (position:
           fixed: the same overlapping-fixed idea as the home-page section pill,

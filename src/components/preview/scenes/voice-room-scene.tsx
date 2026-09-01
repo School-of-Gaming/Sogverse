@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { GamerNoteDialog } from "@/components/member-flair";
-import { ChatView } from "@/components/chat";
+import { ChatView, deriveChatLockControl } from "@/components/chat";
 import {
   CHAT_ACCOUNT_IDS,
   CHAT_SCENE_ACCOUNTS,
@@ -11,6 +11,7 @@ import { FIXTURE_TIMEZONE } from "@/components/family/mock-enrollment-fixtures";
 import { VoiceRoom } from "@/components/voice/VoiceRoom";
 import { VoiceRoomContext } from "@/components/voice/VoiceRoomProvider";
 import { VoiceMemberFlairProvider } from "@/components/voice/VoiceMemberFlairProvider";
+import type { ParticipantChatControls } from "@/components/voice/ParticipantRow";
 import {
   buildFlairFixture,
   buildParticipants,
@@ -78,6 +79,35 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
   const chatViewer =
     CHAT_SCENE_ACCOUNTS.find((account) => account.id === chat.viewerId) ??
     CHAT_SCENE_ACCOUNTS[0];
+
+  /**
+   * The chat lock the rail offers, over the same fixtures — **derived by the
+   * production function, not decided here.** The scene feeds
+   * `deriveChatLockControl` real fixture state and gets real answers back, which
+   * is what makes this scene worth looking at: the Gedu scenario shows the
+   * control on Aino, Siiri and Marja, points it at *unlock* for Väinö (whom the
+   * fixtures have locked), and offers nothing against Sanna herself. The gamer
+   * scenario is handed the identical function and gets `null` everywhere,
+   * because Aino is not a moderator — the same code path that keeps a child from
+   * seeing it live.
+   *
+   * The five members of the room who are not on the *chat* roster — Elias,
+   * Linnéa, Oskar, Emil and Hilda — get no control either, which is the
+   * voice-only case the rail has to keep refusing: being in the call is not
+   * being in the channel.
+   */
+  const participantChatControls: ParticipantChatControls = (userId) => {
+    const direction = deriveChatLockControl(
+      chatViewer,
+      CHAT_SCENE_ACCOUNTS.find((account) => account.id === userId) ?? null,
+      chat.lockedIds.has(userId),
+    );
+    if (direction === null) return null;
+    return {
+      direction,
+      onSetLock: (locked) => chat.setLock(userId, locked),
+    };
+  };
 
   const zones = composeZones(VOICE_ROOM_CUSTOM_ZONES, "preview-group");
   const participantsByZone = new Map<string, VoiceParticipant[]>();
@@ -162,6 +192,7 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
         <VoiceMemberFlairProvider value={flair}>
           <VoiceRoom
             onLeave={asyncNoop}
+            participantChatControls={participantChatControls}
             chat={(heightClassName) => (
               <ChatView
                 messages={chat.messages}

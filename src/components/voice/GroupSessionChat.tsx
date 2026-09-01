@@ -7,7 +7,13 @@ import type {
 } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { ChatView, type ChatAccount, type ChatMessage, type ChatViewHandlers } from "@/components/chat";
+import {
+  ChatView,
+  deriveChatLockControl,
+  type ChatAccount,
+  type ChatMessage,
+  type ChatViewHandlers,
+} from "@/components/chat";
 import { getClient } from "@/lib/supabase/client";
 import { useRequiredAuth } from "@/providers/auth-provider";
 import type {
@@ -40,6 +46,7 @@ import {
   toChatMessages,
   toLockedAccountIds,
 } from "./group-session-chat-model";
+import type { ParticipantChatControls } from "./ParticipantRow";
 
 /**
  * The transport half of chat in a scheduled voice room.
@@ -58,6 +65,7 @@ import {
 export function GroupSessionChat({
   groupId,
   heightClassName,
+  onChatControlsChange,
 }: {
   groupId: string;
   /**
@@ -66,8 +74,34 @@ export function GroupSessionChat({
    * resolves has to occupy exactly the box the chat will.
    */
   heightClassName: string;
+  /**
+   * Publishes the per-participant chat moderation this viewer is offered, so
+   * the room's participant rail can carry the lock beside a name.
+   *
+   * **Upward rather than through the room**, because this is the only place the
+   * answer exists: the lock rows arrive on the history read and are patched by
+   * the subscription held here, and a second reader of that query elsewhere in
+   * the tree would fire the history fetch before the subscription's ack — the
+   * one ordering this component exists to keep. So the container publishes what
+   * it already knows and the page threads it into the room as a prop; nothing
+   * chat-shaped enters the voice context, and the rail derives nothing.
+   *
+   * Called with `null` while there is no channel to moderate in. The value is
+   * memoised on the roster, the standing locks and the viewer, so ordinary chat
+   * traffic — a message, a reaction, somebody typing — republishes nothing and
+   * the room around it does not re-render.
+   */
+  onChatControlsChange?: (controls: ParticipantChatControls | null) => void;
 }) {
   const channel = useChatChannel(groupId);
+
+  // A room whose chat never opened offers no chat moderation, and says so once
+  // rather than leaving the rail holding a control for a channel that is not
+  // there. Keyed on the id so a channel arriving late clears it exactly once.
+  const channelId = channel.data?.id ?? null;
+  useEffect(() => {
+    if (channelId === null) onChatControlsChange?.(null);
+  }, [channelId, onChatControlsChange]);
 
   // Both refusals the ensure RPC can answer with are answers rather than
   // faults: a non-member (42501), and no session window open right now (P0002,
@@ -93,6 +127,7 @@ export function GroupSessionChat({
     <GroupSessionChatRoom
       channelId={channel.data.id}
       heightClassName={heightClassName}
+      onChatControlsChange={onChatControlsChange}
     />
   );
 }
@@ -134,9 +169,11 @@ const TYPING_EVENT = "typing";
 function GroupSessionChatRoom({
   channelId,
   heightClassName,
+  onChatControlsChange,
 }: {
   channelId: string;
   heightClassName: string;
+  onChatControlsChange?: (controls: ParticipantChatControls | null) => void;
 }) {
   const supabase = getClient();
   const queryClient = useQueryClient();
@@ -628,12 +665,54 @@ function GroupSessionChatRoom({
     [roster.data, viewer],
   );
 
+  // Keyed on the lock rows rather than on the whole history: the patchers
+  // replace one array each, so this survives every message and every reaction
+  // and changes exactly when somebody's lock does. That stability is what the
+  // published controls below are built on.
+  const locks = history.data?.locks;
   const lockedAccountIds = useMemo(
-    () => (history.data === undefined ? new Set<string>() : toLockedAccountIds(history.data)),
-    [history.data],
+    () => (locks === undefined ? new Set<string>() : toLockedAccountIds(locks)),
+    [locks],
   );
 
   const typingAccountIds = useMemo(() => Object.keys(typists), [typists]);
+
+  /**
+   * The chat lock this viewer is offered against each person in the room, for
+   * the participant rail beside this panel.
+   *
+   * **Derived here and nowhere else.** Whether a lock is offered at all is
+   * chat's question — a moderator, against somebody who is not one, who is on
+   * this channel's roster — and the message menu asks the same function with the
+   * same arguments. A rail that re-derived it from a role would be a second
+   * answer waiting to disagree with the first; one that skipped the roster check
+   * would offer a lock against a voice-only guest the channel has never heard
+   * of, and the RPC would refuse it after the press.
+   *
+   * `setLock.mutate` is React Query's stable binding, and the roster and the
+   * locks are memoised on their own arrays, so this identity changes when the
+   * offer changes and not when the conversation moves.
+   */
+  const setLockMutate = setLock.mutate;
+  const participantChatControls = useMemo<ParticipantChatControls>(() => {
+    const byId = new Map(accounts.map((account) => [account.id, account]));
+    return (userId: string) => {
+      const direction = deriveChatLockControl(
+        viewer,
+        byId.get(userId) ?? null,
+        lockedAccountIds.has(userId),
+      );
+      if (direction === null) return null;
+      return {
+        direction,
+        onSetLock: (locked: boolean) => setLockMutate({ userId, locked }),
+      };
+    };
+  }, [accounts, lockedAccountIds, setLockMutate, viewer]);
+
+  useEffect(() => {
+    onChatControlsChange?.(participantChatControls);
+  }, [onChatControlsChange, participantChatControls]);
 
   const handlers: ChatViewHandlers = {
     onSend: (drafts) => {

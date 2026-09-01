@@ -72,6 +72,18 @@ front of children they are both responsible for. So `canHide` carries no mod-vs-
 and `lockControl` does, and both halves are pinned by tests so neither reads as an
 accident later.
 
+**Because a lock is about the person, it is derived per person and a message menu is only
+one of the places that asks.** The voice room's participant rail offers the same control
+beside a name — a moderator lifting a lock should not have to hunt the log for something
+that child wrote — so the derivation takes a viewer, a target and whether the target is
+locked, with no message in it, and the message menu calls it with the message's sender.
+The rail is handed the conclusion as a prop and derives nothing itself (the seam is
+described in `src/components/voice/CLAUDE.md`). Two rules the person-shaped version adds
+to the message-shaped one: **a target the roster cannot name is offered nothing** — a
+voice-only guest in the room is not a member of the channel, and locking somebody whose
+name the control cannot print is a moderation act aimed at a blank — and the same
+mod-vs-mod and not-yourself exclusions hold, because they were always about the person.
+
 ## Layout rules this surface leans on hardest
 
 **The hard rule, from which most of the rest of this section follows: the chat surface
@@ -124,6 +136,19 @@ The rest of the section is the log's own behaviour under that budget:
   gallery's function at this module's own thumbnail height. Nothing measures a decoded
   image — in a scrolling log that is not a nicety, since a row that grew after paint would
   move whatever the reader was on.
+- **A pending row and the settled row it becomes are the same height, to the pixel.** An
+  optimistic echo reconciles on the *server's* schedule and the body survives the change,
+  so the rule binds outright: what a pending row is allowed to change is its *appearance*
+  (it wears `opacity-60`) and never its geometry. So the delivery note draws nothing in
+  flow for `pending` — the announcement is `sr-only`, which is the same out-of-flow trick
+  the indicator uses — and reserving the line in both states was rejected as the other way
+  to get it wrong: a strip held open under every bubble in the log for a state almost no
+  message is ever in. It is also what the loading-affordance rule asks for, a guarded RPC
+  on an indexed write being a near-instant call that earns no affordance at all. **The
+  `failed` row is the deliberate exception** and takes its line: it is not the ordinary
+  path, and the retry has to be readable and reachable. Pinned by a test that compares
+  the two renders' in-flow elements, because jsdom cannot measure and the class list is
+  what decides the height.
 - **Everything that appears on hover or on somebody else's schedule is absolutely
   positioned**: the message action bar, the unread pill, and the typing indicator. None
   of them can move a row. The indicator's spot took three tries to land (its doc

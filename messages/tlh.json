@@ -2954,6 +2954,8 @@
     "moderation": {
       "lock": "ja’chuqvo’ {name} yIjon",
       "unlock": "ja’chuqDaq {name} yInoD",
+      "lockChat": "ja’chuq yIjon",
+      "unlockChat": "ja’chuq yInoD",
       "lockedTag": "ja’chuqvo’ jonlu’",
       "deleteTitle": "QInvam yIteq’a’?",
       "deleteBody": "QIn teqlu’pu’ ’e’ legh Hoch; velqa’ lupol Gedupu’ che’wI’pu’ je.",

@@ -181,6 +181,10 @@ export function ChatMessageRow({
         )}
       </div>
 
+      {/* The round trip, and it costs this row nothing until a send actually
+          fails: a pending echo's note is out of flow, so the row is the same
+          height before and after the acknowledgement that turns it into the
+          settled message. Nothing below it moves when the log reconciles. */}
       <ChatDeliveryNote
         delivery={message.delivery}
         onRetry={handlers.onRetry}

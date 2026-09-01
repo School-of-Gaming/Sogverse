@@ -3800,6 +3800,8 @@
     "moderation": {
       "lock": "Lock {name} out of chat",
       "unlock": "Let {name} chat again",
+      "lockChat": "Lock chat",
+      "unlockChat": "Unlock chat",
       "lockedTag": "Locked out of chat",
       "deleteTitle": "Delete this message?",
       "deleteBody": "Everyone will see that a message was removed, and Gedus & Admins keep a copy of it.",

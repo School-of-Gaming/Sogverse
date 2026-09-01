@@ -141,11 +141,18 @@ export function toChatMessages(
  * needs, since the only lock a non-moderator has to act on is their own.
  * Unlocking clears the stamp rather than deleting the row, so the standing
  * locks are the rows with a stamp on them.
+ *
+ * **It takes the lock rows rather than the whole history, so a caller can
+ * memoise on them.** The three streams patch one cached object, and each patch
+ * replaces only its own array — so `locks` holds its identity through every
+ * message and every reaction, and a derivation keyed to it re-runs when a lock
+ * actually moves rather than whenever anybody speaks. Handing this the history
+ * would have made that impossible to express.
  */
-export function toLockedAccountIds(history: ChatHistory): Set<string> {
+export function toLockedAccountIds(
+  locks: ChatHistory["locks"],
+): Set<string> {
   return new Set(
-    history.locks
-      .filter((lock) => lock.locked_at !== null)
-      .map((lock) => lock.user_id),
+    locks.filter((lock) => lock.locked_at !== null).map((lock) => lock.user_id),
   );
 }
