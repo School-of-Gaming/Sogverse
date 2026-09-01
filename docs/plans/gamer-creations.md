@@ -426,6 +426,39 @@ messages — glyphs are lucide icons in components).
    inside the family-privacy import zone.*
 8. **Family card**: the Creations card in the family product page body,
    non-empty-only, parse-or-degrade, all three audiences.
+
+   *Placement, heading and icon — the three the plan leaves free. The card sits
+   **between the standing-notes card and the feed**, which is where the page's
+   own reading order puts it (when and where → what is always true → what this
+   child has made → what happened week by week); below the feed it would sit
+   behind an unbounded history, and above the notes it would displace the
+   standing context every page has with a card most pages do not have. The
+   heading is the bare noun **"Creations"** — the same word the gedu who typed
+   the list sees, and audience-neutral on all three copies, following the gedus
+   label's own precedent verbatim: the masthead has already said whose page this
+   is, and a possessive built around a name has to inflect that name in half the
+   locales we ship. **No heading icon**: every other section heading on this page
+   is an iconless micro-heading, and giving one to the rarest card would make it
+   shout. The only icon is `ExternalLink` on entries that are links, paired with
+   a screen-reader "(opens in a new tab)" so the fact is not carried by a glyph
+   alone (the attributions page's shape).*
+
+   *The parse-or-degrade predicate landed as a **shared helper**,
+   `resolveWebUrl` in `src/lib/navigation/web-url.ts`, beside
+   `resolveInternalPath` — the outward-facing half of the same question. The
+   admin product form had carried its own private copy of exactly this check
+   (parse, then an http(s) allow-list) for the material and game URLs it refuses
+   on the way *in*; that copy now delegates, so "may this string become an href"
+   has one home and cannot drift into two answers. The helper returns the
+   parser's own serialization rather than the input, because what a caller hands
+   an anchor has to be the exact string the scheme test ran against.*
+
+   *The card's prop type is a locally-declared `FamilyCreation` in the page's
+   types module, not the contracts' entry type. That is this module's existing
+   convention — its props are structural so a fixture and the live query satisfy
+   them alike — and the compiler checks the wire shape against it where the data
+   shell hands the array over. The *rules* of a creation stay single-sourced on
+   the service side; a component needs two strings.*
 9. **Fixtures & demos**: the note dialog's style-guide demo, the two
    preview scenes that mount it, the voice/workspace fixtures, and the
    family product page scene's kitchen-sink scenario — all gain creations
@@ -439,6 +472,16 @@ messages — glyphs are lucide icons in components).
    that the marker is not a note marker. One fixture URL is deliberately not a
    URL, which is what the no-validation decision actually produces and what the
    family card's degrade-to-text path exists for.*
+
+   *Family half done. The family product page scene's kitchen-sink scenario
+   (`active-club`) carries **the same two creations the workspace club fixture
+   puts in Aino's dialog**, written the same way on purpose: that scene shows
+   what a gedu typed, this one shows what the family gets for it, and the pair
+   read side by side is the only way to see the accepted gap — the URL that is
+   not a URL renders as its plain title here, with nothing on the gedu's side
+   having warned them it would. Every other scenario keeps an empty list, which
+   is not a gap either: no card and no reserved space is the state most real
+   pages are in, and it is worth being able to look at.*
 
    *One state has **no preview**: the owed marker. It needs a flagged product
    whose run has already finished, and none of the four workspace scenarios is

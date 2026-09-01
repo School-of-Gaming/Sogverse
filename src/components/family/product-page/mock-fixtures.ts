@@ -6,6 +6,7 @@ import type {
   FamilyProductSchedule,
 } from "./FamilyProductPageBody";
 import type {
+  FamilyCreation,
   FamilyProductGedu,
   FamilyProductSite,
   FamilySessionEntry,
@@ -91,6 +92,8 @@ export interface FamilyProductPageFixture {
   cancellation: FamilyProductCancellation | null;
   gedus: readonly FamilyProductGedu[];
   groupPublicNote: string | null;
+  /** What this participant made in the group. Empty on all but one scenario. */
+  creations: readonly FamilyCreation[];
   site: FamilyProductSite | null;
   voiceHref: string;
   entries: FamilySessionEntry[];
@@ -667,6 +670,15 @@ interface ScenarioConfig {
   groupName: string;
   gedus: readonly FamilyProductGedu[];
   groupPublicNote: string | null;
+  /**
+   * What the group's gedu has recorded that this participant made.
+   *
+   * **Only the kitchen sink carries any**, and that is the honest ratio rather
+   * than a gap: almost every enrollment has none, so every other scenario is
+   * also the state where the card is absent and holds no space — which is the
+   * half of this feature most pages actually show.
+   */
+  creations?: readonly FamilyCreation[];
   site: FamilyProductSite | null;
   /**
    * The parent-only billing states, both of which the gamer's copy of this page
@@ -712,6 +724,29 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     groupPublicNote:
       "Builders A is our redstone-heavy group. The shared world carries across every session, so anything Aino builds stays there for next week — scroll back through the sessions below to see what the group has made since it started.",
     site: null,
+    /**
+     * **Two creations, one of which is not a link** — the same pair the gedu
+     * workspace's club fixture puts in Aino's dialog, written the same way on
+     * purpose. That scene shows what a gedu typed; this one shows what a family
+     * gets for it, and reading the two side by side is the only way to see the
+     * accepted gap: the URL that is not a URL renders here as its plain title,
+     * with nothing on the gedu's side having warned them it would.
+     *
+     * Two rather than one because a list and a single line are different
+     * shapes to look at, and because a mixed list is the only arrangement where
+     * a linked entry and a degraded one can be compared without opening a
+     * second page.
+     */
+    creations: [
+      {
+        title: "Lohikäärmeen linna — the castle world",
+        url: "https://www.planetminecraft.com/project/lohikaarmeen-linna/",
+      },
+      {
+        title: "Clock tower, first build",
+        url: "shared world: /warp aino-tower",
+      },
+    ],
     // The membership winding down, on the club rather than the camp: a camp is
     // bought outright and has no subscription to not-renew, so a "won't renew"
     // line there would be describing something that cannot happen. The parent's
@@ -909,6 +944,7 @@ export function buildFamilyProductPageFixture(
           },
     gedus: config.gedus,
     groupPublicNote: config.groupPublicNote,
+    creations: config.creations ?? [],
     site: config.site,
     voiceHref: `/voice/group/${GROUP_ID}`,
     entries,

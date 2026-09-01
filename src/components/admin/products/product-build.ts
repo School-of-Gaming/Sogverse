@@ -25,6 +25,7 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
+import { resolveWebUrl } from "@/lib/navigation/web-url";
 import { decimalToCents } from "@/lib/utils";
 import type {
   CreateProductInput,
@@ -97,27 +98,18 @@ function err(
 
 /**
  * Whether a string is a link we are willing to store and later render as an
- * `href` — parseable **and** on the web.
+ * `href` — parseable **and** on the web. Both fields it guards end up as the
+ * `href` of an anchor an admin or a gedu clicks, and nothing legitimate is
+ * lost: a lesson-plan drive link is `https://`.
  *
- * The scheme check is the part doing the security work. `new URL()` alone
- * accepts `javascript:alert(1)`, `data:text/html,…` and `vbscript:…` as
- * perfectly valid URLs, and both fields it guards end up as the `href` of an
- * anchor an admin or a gedu clicks — so parseability on its own is a stored-XSS
- * hole with an extra step. Nothing legitimate is lost: a lesson-plan drive link
- * is `https://`.
- *
- * An allow-list, deliberately, rather than a block-list of the schemes we happen
- * to know are dangerous — the browser knows more schemes than we do, and the
- * next one is not going to announce itself.
+ * The predicate itself is the shared navigation helper, which is where the
+ * reasoning for the scheme allow-list lives. One copy, because "may this string
+ * become an href" is one question however many surfaces ask it — this form
+ * refuses a value on the way *in*, and the family product page runs the same
+ * test on the way *out* over a field deliberately stored without validation.
  */
 function isWebUrl(value: string): boolean {
-  let parsed: URL;
-  try {
-    parsed = new URL(value.trim());
-  } catch {
-    return false;
-  }
-  return parsed.protocol === "http:" || parsed.protocol === "https:";
+  return resolveWebUrl(value) !== null;
 }
 
 /**

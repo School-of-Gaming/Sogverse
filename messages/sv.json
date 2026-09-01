@@ -1324,6 +1324,8 @@
     "siteLabel": "Var",
     "aboutHeading": "Om gruppen",
     "siteNoteHeading": "På {site}",
+    "creationsHeading": "Skapelser",
+    "creationOpensInNewTab": "(öppnas i en ny flik)",
     "feedHeading": "Tillfällen",
     "attendancePresent": "Närvarande",
     "attendanceNotPresent": "Inte närvarande",

@@ -1324,6 +1324,8 @@
     "siteLabel": "Où",
     "aboutHeading": "À propos du groupe",
     "siteNoteHeading": "À {site}",
+    "creationsHeading": "Créations",
+    "creationOpensInNewTab": "(s’ouvre dans un nouvel onglet)",
     "feedHeading": "Séances",
     "attendancePresent": "Présent",
     "attendanceNotPresent": "Pas présent",

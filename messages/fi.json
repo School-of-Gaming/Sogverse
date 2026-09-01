@@ -1324,6 +1324,8 @@
     "siteLabel": "Missä",
     "aboutHeading": "Tietoa ryhmästä",
     "siteNoteHeading": "Paikassa {site}",
+    "creationsHeading": "Teokset",
+    "creationOpensInNewTab": "(avautuu uuteen välilehteen)",
     "feedHeading": "Kerrat",
     "attendancePresent": "Paikalla",
     "attendanceNotPresent": "Ei paikalla",
