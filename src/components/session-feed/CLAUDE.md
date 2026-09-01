@@ -450,7 +450,9 @@ that itself, because it does not know which thumbnail that was.
   test on both sides of the stack: the dashboard's SQL twin uses `btrim` with an explicit
   whitespace list so a report of one newline is "no report" to badge and feed alike.
 - **Attendance tones are tokens, not glyphs.** Present is a small success-toned positive,
-  absent is muted neutral (never destructive — the data cannot yet distinguish a planned
-  absence from a no-show). Each surface picks its own glyphs: the gedu's three-state set
+  absent is warning-toned (owner ruling, 2026-08-25: muted left absent and unmarked one
+  shade of grey apart and unreadable at a glance) — but never destructive, because the
+  data cannot yet distinguish a planned absence from a no-show, and an absence is a fact
+  to notice rather than a fault to punish. Each surface picks its own glyphs: the gedu's three-state set
   spends the dash on "unmarked", the family's two-state set uses it for "absent". When a
   `planned_absent` enum value lands, the tone decision extends here, once.
