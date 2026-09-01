@@ -191,7 +191,7 @@ export function ChatMessageList({
         onScroll={handleScroll}
         aria-label={t("log")}
         role="log"
-        className="relative h-72 overflow-y-auto pr-1 sm:h-80"
+        className="relative h-80 overflow-y-auto pr-1 sm:h-96"
       >
         {messages.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">

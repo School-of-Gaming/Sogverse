@@ -60,8 +60,12 @@ plausibly still wants.
   image — in a scrolling log that is not a nicety, since a row that grew after paint would
   move whatever the reader was on.
 - **Everything that appears on hover or on somebody else's schedule is absolutely
-  positioned**: the message action bar, the typing indicator, the unread pill. None of
-  them can move a row.
+  positioned**: the message action bar and the unread pill. None of them can move a row.
+  The typing indicator is the one exception, and it reserves instead: a one-line strip
+  between log and composer, rendered empty when nobody is writing. Overlaying it on the
+  log's last line was tried first and made exactly the line a reader is mid-way through
+  unreadable, so this surface pays the reserved line — the arrival still moves nothing,
+  and now covers nothing either.
 - **Menus and pickers portal out** (`ChatPopover`), because the log clips its own
   children. It measures the trigger at open time — a user gesture, the one moment
   measuring is free — and closes on a scroll rather than following one.

@@ -50,14 +50,16 @@ export function ChatReactionRow({
           aria-pressed={tally.mine}
           aria-label={t("toggle", { name: t(tally.code), count: tally.count })}
           className={cn(
-            "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs leading-none transition-colors",
+            "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs leading-none transition-colors",
             "disabled:cursor-default disabled:opacity-60",
             tally.mine
               ? "border-primary/60 bg-primary/15 text-primary"
               : "border-border bg-muted text-muted-foreground hover:border-border hover:bg-accent",
           )}
         >
-          <span aria-hidden>{CHAT_REACTION_GLYPHS[tally.code]}</span>
+          <span aria-hidden className="text-base leading-none">
+            {CHAT_REACTION_GLYPHS[tally.code]}
+          </span>
           <span className="tabular-nums">{tally.count}</span>
         </button>
       ))}
@@ -95,7 +97,7 @@ export function ChatReactionPicker({
           onClick={() => onPick(code)}
           aria-label={t(code)}
           title={t(code)}
-          className="rounded-full px-1.5 py-0.5 text-base leading-none transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-full px-2 py-1 text-xl leading-none transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span aria-hidden>{CHAT_REACTION_GLYPHS[code]}</span>
         </button>

@@ -87,19 +87,17 @@ export function ChatView({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="relative">
-        <ChatMessageList
-          messages={messages}
-          accounts={byId}
-          viewer={viewer}
-          viewerLocked={viewerLocked}
-          lockedAccountIds={lockedAccountIds}
-          timeZone={timeZone}
-          handlers={logHandlers}
-          outboundToken={outboundToken}
-        />
-        <ChatTypingIndicator names={typingNames} />
-      </div>
+      <ChatMessageList
+        messages={messages}
+        accounts={byId}
+        viewer={viewer}
+        viewerLocked={viewerLocked}
+        lockedAccountIds={lockedAccountIds}
+        timeZone={timeZone}
+        handlers={logHandlers}
+        outboundToken={outboundToken}
+      />
+      <ChatTypingIndicator names={typingNames} />
 
       <ChatComposer
         capabilities={deriveChatComposerCapabilities({
@@ -123,27 +121,33 @@ export function ChatView({
 }
 
 /**
- * Who is writing, over the foot of the log.
+ * Who is writing, in a strip of its own between the log and the composer.
  *
- * **Absolutely positioned, so it holds no space.** A typing indicator arrives
- * and leaves on somebody else's schedule — the one kind of change the layout
- * rule forbids outright — so it must not be able to move the composer under a
- * reader's thumb. Sitting over the log's last line, on the log's own ground,
- * costs a line of history for the second or two it is up and moves nothing.
+ * **The strip is reserved: one line tall, rendered whether or not anybody is
+ * typing.** An indicator arrives and leaves on somebody else's schedule — the
+ * one kind of change the layout rule forbids outright — so it may neither move
+ * the composer under a reader's thumb (which rules out rendering in flow only
+ * while up) nor sit over the log's last line (the first cut overlaid it there,
+ * and made exactly the line a reader is most likely mid-way through
+ * unreadable — owner ruling 2026-09-01). A permanently empty line is the cheap
+ * end of that trade, and it is the same shape every standard chat settles on.
  */
 function ChatTypingIndicator({ names }: { names: readonly string[] }) {
   const t = useTranslations("chat.typing");
-  if (names.length === 0) return null;
-
   const label =
-    names.length === 1
-      ? t("one", { name: names[0] })
-      : names.length === 2
-        ? t("two", { first: names[0], second: names[1] })
-        : t("many");
+    names.length === 0
+      ? null
+      : names.length === 1
+        ? t("one", { name: names[0] })
+        : names.length === 2
+          ? t("two", { first: names[0], second: names[1] })
+          : t("many");
 
   return (
-    <p className="pointer-events-none absolute bottom-1 left-2 rounded bg-card/90 px-1.5 py-0.5 text-xs italic text-muted-foreground">
+    <p
+      aria-live="polite"
+      className="h-5 truncate px-1 text-xs italic leading-5 text-muted-foreground"
+    >
       {label}
     </p>
   );
