@@ -32,7 +32,13 @@ type SectionId = (typeof SECTIONS)[number];
  * the last section and, with every answer collapsed, is short enough that no
  * reasonable observer band ever contains it — the highlight would stick on Yty
  * however far the reader scrolled. Taking the last section whose top has passed
- * a reference line just below the bar has no such blind spot.
+ * a reference line just below the bar *moves* that blind spot rather than
+ * removing it: on a tall viewport the collapsed FAQ plus the footer beneath it
+ * can be shorter than the screen, so the document runs out of scroll before the
+ * FAQ's top ever crosses the line, and its chip could never light — clicking it
+ * would visibly do nothing. The bottom-of-document fallback below is what
+ * closes it: at maximum scroll the last section is the one being looked at, by
+ * definition, whatever the position scan says.
  */
 export function SectionPill() {
   const t = useTranslations("header.nav");
@@ -49,6 +55,20 @@ export function SectionPill() {
       // the bar sticks the line sits lower, which costs nothing: the first
       // section is the fallback anyway.
       const line = navRef.current?.getBoundingClientRect().bottom ?? 0;
+
+      // Bottom of the document: the last section wins outright. It is the one
+      // the reader has arrived at — there is nothing below it but the footer —
+      // and the scan cannot say so, because a short last section above a
+      // footer never gets its top past the line on a tall viewport. The 1px of
+      // slack absorbs the fractional scroll heights a zoomed or
+      // fractionally-scaled viewport reports.
+      if (
+        window.scrollY + window.innerHeight >=
+        document.documentElement.scrollHeight - 1
+      ) {
+        setActiveSection(SECTIONS[SECTIONS.length - 1]);
+        return;
+      }
 
       let activeId: SectionId = SECTIONS[0];
       for (const id of SECTIONS) {
@@ -89,6 +109,17 @@ export function SectionPill() {
       aria-label={a("sectionNav")}
       // Sticks one rem below the header, read from the variable rather than
       // spelled as `top-20` so a resized header takes the bar with it.
+      //
+      // **Anchor landings clear this bar on the sections' own padding, and
+      // nothing else.** A section's `scroll-mt-[var(--header-height)]` lands
+      // its box top under the header only — the bar is not in that offset — so
+      // what keeps a heading from landing behind the bar is the `py-16` (64px)
+      // the sections carry: the bar ends roughly 52px below the header (1rem of
+      // offset plus its own ~36px height at the mobile type scale), leaving
+      // about 12px of clearance. That is a real dependency between three
+      // components and it is thin: changing this bar's offset, padding or type
+      // scale, or a section's vertical padding, means re-checking where an
+      // anchor click actually lands.
       // `max-w-full` plus the row's own horizontal scroll are the overflow
       // floor at 360px: three labels in the widest locale must never widen the
       // document.

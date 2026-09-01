@@ -25,10 +25,15 @@ import type { SupportedLocale } from "@/lib/constants/locales";
  *
  * `typical` carries everything that can coexist: a club running right now with
  * its Join lit, a second club the gamer is queued for (the waitlist sentence in
- * the child's voice, and no link anywhere on the card), and an in-person camp
- * naming its site where the Join would be. The dynamic type nouns' *absence*
- * (a one-noun page renders one heading, not empty sections) is the same
- * mechanism the gedu dashboard already proves.
+ * the child's voice, and no link anywhere on the card), an in-person camp naming
+ * its site where the Join would be, and a one-afternoon event. The dynamic type
+ * nouns' *absence* (a one-noun page renders one heading, not empty sections) is
+ * the same mechanism the gedu dashboard already proves.
+ *
+ * **All three activity nouns on purpose**, which is what makes this the page the
+ * pill is judged on: Clubs · Camps · Events · Help is the widest the bar ever
+ * gets, and the 360px budget is the reason nothing may be added beside Help. A
+ * scenario holding two nouns would show a bar that fits and prove nothing.
  *
  * `empty` is the child with nothing booked yet: the greeting, one "Clubs"
  * heading over the quiet empty card — the same convention the gedu's empty
@@ -53,6 +58,8 @@ export function isGamerDashboardScenario(
 }
 
 const CAMP_SITE_NAME = "Kirjasto Oodi, Helsinki";
+/** A second building, so the two in-person cards do not read as one booking. */
+const EVENT_SITE_NAME = "Kaapelitehdas, Helsinki";
 
 export function buildGamerDashboardFixture(
   now: Date,
@@ -117,6 +124,22 @@ export function buildGamerDashboardFixture(
       startedDaysAgo: 2,
       endsInDays: 5,
       siteName: CAMP_SITE_NAME,
+    },
+    {
+      // The third noun, and the reason it is here: with clubs and a camp only,
+      // the pill draws three chips and the four-chip budget is never tested.
+      // A single afternoon rather than a run — one slot, still to come, at its
+      // own building — which is what an event is and what separates its card
+      // from the camp's above it.
+      participationId: "mock-gamer-winter-lan-event",
+      productName: "Winter LAN Afternoon",
+      productType: "event",
+      isRemote: false,
+      slots: [futureSlot(now, 5, "13:00", 240, FIXTURE_TIMEZONE)],
+      // Starts and ends on the same future day: an event has no run behind it.
+      startedDaysAgo: -5,
+      endsInDays: 5,
+      siteName: EVENT_SITE_NAME,
     },
   ];
 

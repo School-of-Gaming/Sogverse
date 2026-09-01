@@ -81,8 +81,11 @@ describe("a gamer with every kind of thing booked", () => {
     );
   });
 
-  it("stays inside the four-chip budget the 360px bar allows", () => {
-    expect(chipCount(html)).toBeLessThanOrEqual(4);
+  it("draws exactly the four chips the 360px bar allows", () => {
+    // Exact, not a ceiling: the `typical` fixture holds all three activity
+    // nouns precisely so this renders the widest bar the page can produce, and
+    // a ceiling would pass just as happily on a fixture that lost one of them.
+    expect(chipCount(html)).toBe(4);
   });
 
   it("has no Yty section — that explanation lives on /about now", () => {

@@ -29,6 +29,10 @@ export function AboutSection({ id }: AboutSectionProps) {
   }));
 
   return (
+    // The `py-16` is load-bearing beyond spacing: it is the only thing keeping
+    // an anchor landing clear of the /about section pill, which the scroll
+    // offset above does not account for. See `section-pill.tsx` for the
+    // arithmetic and the ~12px it leaves.
     <section id={id} className="container mx-auto scroll-mt-[var(--header-height)] px-4 py-16 sm:py-24">
       {/* Hero */}
       <div className="mx-auto max-w-3xl text-center">

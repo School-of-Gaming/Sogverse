@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -66,11 +67,13 @@ export interface HelpFeedbackCardViewProps {
  * emails every admin — and it is why the three dashboards are looking at one
  * component rather than at three copies of one.
  *
- * The result appears below the form only once a submit has answered, and no
- * space is held open for it before that: it is the direct result of a button
- * the reader just pressed, so the card growing under it is the change they
- * asked for, while a reserved slot would be a permanent hole in a card nobody
- * has used yet.
+ * The result appears **below the submit button** once a submit has answered, and
+ * no space is held open for it before that. Below is the only place it can go:
+ * everything above it — the lead text, the textarea, the button the reader's
+ * cursor is still on — survives the change, so a banner inserted over the form
+ * would push all of it down. Appended at the end of the card, its arrival moves
+ * nothing, and no slot is reserved for it either, since a reserved one would be
+ * a permanent hole in a card nobody has used yet.
  *
  * The committing-boolean pattern is deliberately not wanted here. It exists for
  * actions whose success path navigates or swaps the panel out, where the
@@ -90,6 +93,10 @@ export function HelpFeedbackCardView({
 }: HelpFeedbackCardViewProps) {
   const t = useTranslations("helpSection.form");
   const c = useTranslations("common");
+  // Generated, never a literal: the style guide renders six of these cards on
+  // one page, and a hardcoded id would give six labels and six textareas the
+  // same one — so every label would point at the first card's field.
+  const fieldId = useId();
 
   const tooShort = message.length < HELP_MESSAGE_MIN_LENGTH;
   const canSubmit = !tooShort && message.length <= HELP_MESSAGE_MAX_LENGTH;
@@ -116,6 +123,42 @@ export function HelpFeedbackCardView({
           </div>
         </div>
 
+        <Field label={t("messageLabel")} htmlFor={fieldId}>
+          <Textarea
+            id={fieldId}
+            value={message}
+            onChange={(event) => onMessageChange(event.target.value)}
+            placeholder={t(`${audience}.placeholder`)}
+            rows={6}
+            maxLength={HELP_MESSAGE_MAX_LENGTH}
+            className="resize-y"
+          />
+          {/* Both counters sit on one row that is always present, so neither
+              the remaining-characters hint appearing nor the length counter
+              growing moves the button beneath it. The hint's absence renders
+              nothing at all: the row is `justify-between` with the length
+              counter unconditionally on the right, so the row keeps its height
+              without a placeholder space holding the left half open. */}
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>
+              {tooShort && message.length > 0
+                ? t("charactersNeeded", {
+                    count: HELP_MESSAGE_MIN_LENGTH - message.length,
+                  })
+                : null}
+            </span>
+            <span>
+              {message.length}/{HELP_MESSAGE_MAX_LENGTH}
+            </span>
+          </div>
+        </Field>
+
+        <Button onClick={onSubmit} disabled={submitting || !canSubmit}>
+          {submitting ? c("sending") : t("submit")}
+        </Button>
+
+        {/* The answer, last in the card — see the component docblock for why it
+            can only go here. */}
         {succeeded && (
           <p className="rounded-md bg-success/10 p-3 text-sm text-success">
             {t(`${audience}.thankYou`)}
@@ -129,37 +172,6 @@ export function HelpFeedbackCardView({
               : t(`${audience}.failed`)}
           </p>
         )}
-
-        <Field label={t("messageLabel")} htmlFor="help-feedback-message">
-          <Textarea
-            id="help-feedback-message"
-            value={message}
-            onChange={(event) => onMessageChange(event.target.value)}
-            placeholder={t(`${audience}.placeholder`)}
-            rows={6}
-            maxLength={HELP_MESSAGE_MAX_LENGTH}
-            className="resize-y"
-          />
-          {/* Both counters sit on one row that is always present, so neither
-              the remaining-characters hint appearing nor the length counter
-              growing moves the button beneath it. */}
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>
-              {tooShort && message.length > 0
-                ? t("charactersNeeded", {
-                    count: HELP_MESSAGE_MIN_LENGTH - message.length,
-                  })
-                : " "}
-            </span>
-            <span>
-              {message.length}/{HELP_MESSAGE_MAX_LENGTH}
-            </span>
-          </div>
-        </Field>
-
-        <Button onClick={onSubmit} disabled={submitting || !canSubmit}>
-          {submitting ? c("sending") : t("submit")}
-        </Button>
       </CardContent>
     </Card>
   );
