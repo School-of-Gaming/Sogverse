@@ -41,6 +41,15 @@ work. Pick these up on resume:
 - **The media sections assume two consent boxes.** If the single combined box is approved,
   `robloxPrivacy.sections.mediaSponsor` and `.mediaPublic` merge, and two strings that
   count the boxes move with them — see the registration checkboxes item for the exact keys.
+- **The landing page overflows a 360px viewport in `fi` (by 1px) and `fr` (by 46px).**
+  Found 2026-09-01 by a headless 360×740 sweep of the public pages; `en`, `sv` and `tlh`
+  fit. The overflowing element is a snap-carousel card (`shrink-0 snap-start w-[85%]` and
+  its descendants reaching ~598px), so the card's content is widening it past its scroll
+  container in the wider locales — locale-copy-driven, and a violation of the 360px
+  design-floor rule (no horizontal document scroll). Pre-existing on `dev`; unrelated to
+  the shared FAQ-accordion adoption, whose diff left the page's rendered DOM byte-identical
+  apart from a spacing wrapper. Layout, not copy, so it does not wait on the lawyer —
+  but the surface is unpublished, so it is not urgent either.
 
 ---
 
