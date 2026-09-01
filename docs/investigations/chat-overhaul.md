@@ -1,10 +1,15 @@
 # Chat overhaul — persisted messaging, starting in the voice room
 
-**Status: direction and behavior decided; the build starts scene-first via
-`docs/plans/chat-preview-scene.md`, then wires straight into the voice rooms. Do not
-build the wire-up from this file yet** — its remaining open decisions (see the final
-section) are wire-up-time, and the wire-up plan will be written from this file once
-the scene design is signed off. Researched August 2026 (images-only round early August;
+**Status: direction and behavior decided; phase 1 (the design, whole, in the preview
+scene) is built and signed off by the owner (2026-09-01)** after interactive iteration
+in the scene — the components live in `src/components/chat/` and the scene renders
+at `/preview/chat/session`. **The wire-up plan is written from this file plus
+`src/components/chat/CLAUDE.md`** — the components are production components whose
+contract the wire-up keeps, swapping fixtures for transport; that file owns the
+UI-side rules (geometry, capabilities, mentions, object-URL lifecycle) and this one
+owns the backend design and the sign-off rulings with server-side consequences (the
+section below). The remaining open decisions (final section) are wire-up-time.
+Researched August 2026 (images-only round early August;
 widened 2026-08-31 after the owner set a new direction and answered the behavior
 interview). Supersedes the earlier `voice-chat-images.md` investigation, whose durable
 findings are folded in below.
@@ -49,8 +54,9 @@ These are decided, and they invalidate the previous investigation's framing:
   role-preview and a live backend test at once, and the backend's job — enforcing the
   restrictions — is exactly what the preview half had to bypass. Each purpose now
   lives where the repo already puts it: **design** iterates in a fully client-side
-  interactive preview scene with mock accounts (`docs/plans/chat-preview-scene.md` —
-  honest there because there is no backend to bypass); **transport truth** is shaken
+  interactive preview scene with mock accounts (built — `/preview/chat/session`, whose
+  contract is `src/components/chat/CLAUDE.md`; honest there because there is no backend
+  to bypass); **transport truth** is shaken
   down in a staging test group's real voice room during the wire-up; **security** is
   proven by the CI authorization spine. A mock is ~95% honest about look and in-hand
   behavior and 0% about the wire, and the split follows that line. The retired
@@ -84,6 +90,46 @@ phase:
   A message is therefore text XOR one image — no captions, no attachment child table
   — and sender-grouping renders the burst as one visual unit (consecutive images can
   sit in a wrapping thumbnail row like the session gallery).
+
+## Design sign-off rulings with wire-up consequences (owner, 2026-09-01)
+
+The scene iteration settled more than looks. Each of these is already encoded and
+tested on the UI side (see `src/components/chat/CLAUDE.md`); they are restated here
+because each puts an obligation on the wire-up that the code alone would not surface:
+
+- **The surface has one granted height and never grows** — log, reply strip and
+  composer share a fixed column and every interaction (a reply strip, the growing
+  composer, the floating mention list) is paid for out of the log's space. The
+  **voice-room integration therefore owes the surface two things**: a fixed height
+  class for the panel slot, and at least one text line of bottom padding beneath it
+  (the typing indicator overlays that padding by contract).
+- **Moderation symmetry**: per-person moderation acts are symmetric — removing a
+  message reaches fellow moderators and admins — while the chat lock excludes fellow
+  moderators. The UI derives both from the capability module; **the send/hide/lock RPC
+  guards must encode the same two halves**, or the menus will offer what the server
+  refuses.
+- **The mention seam**: the composer and the in-place editor show plain `@Name`; the
+  stored body carries `@[Name](id)` tokens substituted once, at send. The 500-character
+  cap is a promise about the *composed* text — **the send and edit RPCs must measure
+  the display length (tokens reduced to names) or cap the stored column higher; a
+  500-check on the stored string would refuse exactly the messages that name the most
+  people.**
+- **A failed optimistic echo is dropped, not tombstoned, and without confirmation** —
+  no row ever existed, so this stays purely client-side; the wire-up keeps the
+  distinction between deleting a never-sent echo (local drop) and deleting a sent
+  message (soft delete).
+- **A hidden message renders no reactions, for any viewer** — a render rule; the
+  reaction rows persist for staff review like the body does.
+- **Chat moderation copy says "Gedus & Admins", never "staff"**, per-locale forms
+  following the session-note strings' precedent.
+- **The fullscreen image viewer is shared platform machinery now** (`components/ui/`),
+  serving the session feed and chat with per-surface collections (a report pages its
+  whole set; chat pages one send's burst). The images phase composes it rather than
+  building one — and the `unoptimized` decision moves to whatever resolves the image
+  URL once a real bucket exists.
+- **One state is deliberately not designed yet**: the composer's rate-limit refusal
+  ("slow down") state. The send RPC's per-sender limit will need it; design it in the
+  scene as part of the wire-up phase that adds the limit.
 
 ## What already exists to build on (verified in-repo, 2026-08-31)
 
@@ -254,8 +300,9 @@ room is ~a dozen people; consistency with the codebase wins. The typing indicato
 decided feature, above) is the one piece that rides plain realtime **broadcast** — it
 is ephemeral by nature and must not touch the DB.
 
-**Images**: any channel participant may send. The normalize pipeline and gallery/viewer
-are reused, a new `chat-images` bucket sits on the unlisted-public precedent, and
+**Images**: any channel participant may send. The normalize pipeline is reused and the
+fullscreen viewer is already shared (see the sign-off rulings above); a new
+`chat-images` bucket sits on the unlisted-public precedent, and
 intrinsic dimensions are stored so the log never reflows as bytes land. The upload
 route's posture widens from the photo route's gedu/admin gate to "any authenticated
 participant of this channel" — the guarded RPC's channel-membership check is the real
@@ -342,9 +389,11 @@ channels after — renders the same components.
 
 **Phasing** (scene-first, then wired straight into the voice rooms):
 1. **The design, whole, in the preview scene** — every feature interactive against
-   fixtures, mock accounts, simulated latency and activity. Planned in
-   `docs/plans/chat-preview-scene.md`. The scene designs all phases at once; the
-   wire-up lands them incrementally.
+   fixtures, mock accounts, simulated latency and activity. **Built and signed off
+   (2026-09-01)**: the components
+   and the client-side capability derivation are in `src/components/chat/`, the scene is
+   at `/preview/chat/session`, and the scene designs all phases at once; the wire-up
+   lands them incrementally.
 2. **Wire-up: the text core into the voice rooms** — schema, membership-scoped RPCs,
    realtime, late-joiner history, text moderation (lock chat + soft delete),
    edit/delete-own, removal of chat from instant rooms, the `voice/CLAUDE.md`

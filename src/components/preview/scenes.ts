@@ -308,6 +308,14 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "chat",
+    title: "Chat",
+    description:
+      "The chat surface over fixtures, at the geometry the voice room gives it.",
+    chrome: "dashboard",
+    scenarios: [{ slug: "session", label: "Session chat" }],
+  },
+  {
     surface: "parent-club",
     title: "Family product page — parent",
     description:

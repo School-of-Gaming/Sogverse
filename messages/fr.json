@@ -3673,5 +3673,85 @@
     "bundles": {
       "robloxProgramme": "Documents du Programme Roblox"
     }
+  },
+  "chat": {
+    "log": "Messages du chat",
+    "empty": "Rien n’a encore été dit.",
+    "unread": "{count, plural, one {# nouveau message} other {# nouveaux messages}}",
+    "jumpToLatest": "Aller au message le plus récent",
+    "composer": {
+      "label": "Écrire un message",
+      "placeholder": "Écrivez un message",
+      "send": "Envoyer",
+      "addImage": "Ajouter une image",
+      "staged": "Images prêtes à être envoyées",
+      "removeImage": "Retirer {name}",
+      "imagesRefused": "Vous pouvez envoyer {count} images à la fois : les autres n’ont pas été retenues.",
+      "lockNotice": "Le chat est verrouillé pour vous en ce moment. Vous pouvez toujours tout lire ici.",
+      "mentionList": "Mentionner quelqu’un"
+    },
+    "editor": {
+      "label": "Modifier votre message",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "reply": {
+      "action": "Répondre",
+      "banner": "Réponse à {name}",
+      "cancel": "Annuler la réponse",
+      "jump": "Afficher le message de {name}",
+      "image": "une image",
+      "removed": "un message supprimé"
+    },
+    "message": {
+      "actions": "Plus d’actions",
+      "edited": "modifié",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "hide": "Retirer pour tout le monde",
+      "restore": "Remettre",
+      "sending": "Envoi",
+      "failed": "Non envoyé",
+      "retry": "Réessayer",
+      "mentionsYou": "Vous mentionne"
+    },
+    "tombstone": {
+      "text": "Ce message a été retiré.",
+      "staffOnly": "Les Gedus et les admins peuvent encore le lire."
+    },
+    "reactions": {
+      "add": "Ajouter une réaction",
+      "toggle": "{name}, {count}",
+      "thumbs_up": "Pouce levé",
+      "heart": "Cœur",
+      "laugh": "Rire",
+      "surprised": "Surprise",
+      "celebrate": "Fête",
+      "thinking": "Réflexion"
+    },
+    "moderation": {
+      "lock": "Verrouiller le chat pour {name}",
+      "unlock": "Déverrouiller le chat pour {name}",
+      "lockedTag": "Chat verrouillé",
+      "deleteTitle": "Supprimer ce message ?",
+      "deleteBody": "Tout le monde verra qu’un message a été retiré, et les Gedus et les admins en conservent une copie.",
+      "deleteConfirm": "Supprimer",
+      "hideTitle": "Retirer ce message pour tout le monde ?",
+      "hideBody": "Tout le monde verra qu’un message a été retiré, et les Gedus et les admins en conservent une copie.",
+      "hideConfirm": "Retirer"
+    },
+    "typing": {
+      "one": "{name} écrit",
+      "two": "{first} et {second} écrivent",
+      "many": "Plusieurs personnes écrivent"
+    },
+    "images": {
+      "row": "Images",
+      "open": "Ouvrir l’image {index} sur {count}",
+      "viewer": "Image {index} sur {count}",
+      "previous": "Image précédente",
+      "next": "Image suivante",
+      "close": "Fermer"
+    }
   }
 }

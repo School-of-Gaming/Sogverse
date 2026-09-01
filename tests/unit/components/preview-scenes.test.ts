@@ -29,6 +29,14 @@ import {
 } from "@/components/seat-offer/mock-seat-offer-fixtures";
 import { SESSION_FEED_ROSTER } from "@/components/gedu/session-feed/mock-fixtures";
 import {
+  CHAT_SCENE_ACCOUNTS,
+  CHAT_SCENE_INCOMING,
+  CHAT_SCENE_LOCKED_IDS,
+  CHAT_SCENE_SCENARIOS,
+  buildChatSceneMessages,
+} from "@/components/chat/mock-chat-fixtures";
+import { groupChatMessages } from "@/components/chat/chat-grouping";
+import {
   attendanceTally,
   countEntriesNeedingAttention,
   entryCompleteness,
@@ -231,6 +239,10 @@ describe("registry scenarios match their fixtures", () => {
 
   it("seat-offer landing page", () => {
     expect(slugsFor("seat-offer")).toEqual([...SEAT_OFFER_SCENARIOS]);
+  });
+
+  it("chat", () => {
+    expect(slugsFor("chat")).toEqual([...CHAT_SCENE_SCENARIOS]);
   });
 
 });
@@ -730,7 +742,82 @@ describe("the parent dashboard scenarios", () => {
   });
 });
 
+/**
+ * The chat scene is a one-scenario scene on purpose: the account switcher is
+ * what a second scenario would have been, so every viewer variant compares
+ * itself against the others in one render. That only holds while the roster
+ * actually carries the viewers whose *capabilities differ* — a fixture edit
+ * that dropped the parent or the admin would leave a whole branch of the
+ * derivation unreviewable without failing anything else.
+ *
+ * The seeded conversation is checked the same way, for the states that are
+ * fragile because they are absences or arrangements rather than components: a
+ * removed message, a fanned-out burst that grouped back into one row, and a
+ * locked member the switcher can be pointed at.
+ */
+describe("the chat scene shows every state on one page", () => {
+  const now = new Date("2026-06-15T17:00:00Z");
+
+  it("puts every role whose capabilities differ in the room", () => {
+    const roles = new Set(CHAT_SCENE_ACCOUNTS.map((account) => account.role));
+    expect(roles).toEqual(new Set(["gamer", "customer", "gedu", "admin"]));
+  });
+
+  it("seeds a member locked out of chat, who is in the room", () => {
+    // The locked composer is otherwise only reachable by first performing a
+    // moderation, which is a worse first impression of the state.
+    expect(CHAT_SCENE_LOCKED_IDS.length).toBeGreaterThan(0);
+    for (const id of CHAT_SCENE_LOCKED_IDS) {
+      expect(CHAT_SCENE_ACCOUNTS.some((account) => account.id === id)).toBe(true);
+    }
+  });
+
+  it("seeds a removed message, an edit, a mention and a quote-reply", () => {
+    const messages = buildChatSceneMessages(now);
+    expect(messages.some((m) => m.hiddenAt !== null)).toBe(true);
+    expect(messages.some((m) => m.editedAt !== null)).toBe(true);
+    expect(messages.some((m) => m.replyToId !== null)).toBe(true);
+    expect(messages.some((m) => (m.body ?? "").includes("@["))).toBe(true);
+  });
+
+  it("seeds a burst that the grouping folds into one wrapping row", () => {
+    // A fan-out is several messages wearing one visual unit, and a fixture
+    // whose burst stopped grouping would quietly review a different design.
+    const groups = groupChatMessages(buildChatSceneMessages(now));
+    const runs = groups.flatMap((group) =>
+      group.items.filter((item) => item.kind === "images"),
+    );
+    expect(runs.some((run) => run.messages.length >= 3)).toBe(true);
+    // And a lone picture too, since one image is not a row of them.
+    expect(runs.some((run) => run.messages.length === 1)).toBe(true);
+  });
+
+  it("seeds reactions in both the one-person and several-people shapes", () => {
+    const messages = buildChatSceneMessages(now);
+    const counts = messages.map((m) => m.reactions.length);
+    expect(counts.some((count) => count === 1)).toBe(true);
+    expect(counts.some((count) => count > 2)).toBe(true);
+  });
+
+  it("scripts arrivals from more than one person", () => {
+    // Arrivals are how auto-stick, the scrolled-up counter and grouping are
+    // felt; a run all from one sender would exercise only the last of the three.
+    const senders = new Set(CHAT_SCENE_INCOMING.map((line) => line.senderId));
+    expect(senders.size).toBeGreaterThan(1);
+    for (const id of senders) {
+      expect(CHAT_SCENE_ACCOUNTS.some((account) => account.id === id)).toBe(true);
+    }
+  });
+});
+
 describe("identicon fixture ids are real UUIDs", () => {
+  it("everybody in the chat room", () => {
+    expect(CHAT_SCENE_ACCOUNTS.length).toBeGreaterThan(0);
+    for (const account of CHAT_SCENE_ACCOUNTS) {
+      expect(account.id, account.name).toMatch(UUID_V4);
+    }
+  });
+
   it("every child on the feed roster", () => {
     expect(SESSION_FEED_ROSTER.length).toBeGreaterThan(0);
     for (const gamer of SESSION_FEED_ROSTER) {

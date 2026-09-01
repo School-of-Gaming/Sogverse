@@ -3673,5 +3673,85 @@
     "bundles": {
       "robloxProgramme": "Roblox-ohjelman asiakirjat"
     }
+  },
+  "chat": {
+    "log": "Keskusteluviestit",
+    "empty": "Täällä ei ole vielä sanottu mitään.",
+    "unread": "{count, plural, one {# uusi viesti} other {# uutta viestiä}}",
+    "jumpToLatest": "Siirry uusimpaan viestiin",
+    "composer": {
+      "label": "Kirjoita viesti",
+      "placeholder": "Kirjoita viesti",
+      "send": "Lähetä",
+      "addImage": "Lisää kuva",
+      "staged": "Lähetystä odottavat kuvat",
+      "removeImage": "Poista {name}",
+      "imagesRefused": "Voit lähettää {count} kuvaa kerrallaan, joten loput jäivät pois.",
+      "lockNotice": "Keskustelu on nyt lukittu sinulta. Voit silti lukea kaiken täällä.",
+      "mentionList": "Mainitse joku"
+    },
+    "editor": {
+      "label": "Muokkaa viestiäsi",
+      "save": "Tallenna",
+      "cancel": "Peruuta"
+    },
+    "reply": {
+      "action": "Vastaa",
+      "banner": "Vastaat: {name}",
+      "cancel": "Lopeta vastaaminen",
+      "jump": "Näytä viesti, jonka lähetti {name}",
+      "image": "kuva",
+      "removed": "poistettu viesti"
+    },
+    "message": {
+      "actions": "Muut toiminnot",
+      "edited": "muokattu",
+      "edit": "Muokkaa",
+      "delete": "Poista",
+      "hide": "Poista kaikilta",
+      "restore": "Palauta",
+      "sending": "Lähetetään",
+      "failed": "Ei lähetetty",
+      "retry": "Yritä uudelleen",
+      "mentionsYou": "Mainitsee sinut"
+    },
+    "tombstone": {
+      "text": "Tämä viesti on poistettu.",
+      "staffOnly": "Gedut ja ylläpitäjät voivat yhä lukea sen."
+    },
+    "reactions": {
+      "add": "Lisää reaktio",
+      "toggle": "{name}, {count}",
+      "thumbs_up": "Peukku ylös",
+      "heart": "Sydän",
+      "laugh": "Nauru",
+      "surprised": "Yllätys",
+      "celebrate": "Juhlinta",
+      "thinking": "Pohdinta"
+    },
+    "moderation": {
+      "lock": "Lukitse {name} pois keskustelusta",
+      "unlock": "Päästä {name} takaisin keskusteluun",
+      "lockedTag": "Lukittu pois keskustelusta",
+      "deleteTitle": "Poistetaanko tämä viesti?",
+      "deleteBody": "Kaikki näkevät, että viesti on poistettu, ja kopio siitä jää Geduille ja ylläpitäjille.",
+      "deleteConfirm": "Poista",
+      "hideTitle": "Poistetaanko tämä viesti kaikilta?",
+      "hideBody": "Kaikki näkevät, että viesti on poistettu, ja kopio siitä jää Geduille ja ylläpitäjille.",
+      "hideConfirm": "Poista kaikilta"
+    },
+    "typing": {
+      "one": "{name} kirjoittaa",
+      "two": "{first} ja {second} kirjoittavat",
+      "many": "Useat kirjoittavat"
+    },
+    "images": {
+      "row": "Kuvat",
+      "open": "Avaa kuva {index}/{count}",
+      "viewer": "Kuva {index}/{count}",
+      "previous": "Edellinen kuva",
+      "next": "Seuraava kuva",
+      "close": "Sulje"
+    }
   }
 }

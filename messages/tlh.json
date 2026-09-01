@@ -2827,5 +2827,85 @@
       "title": "Qapbe’ Hevam",
       "body": "QIn lo’wI’ pe’pu’ Hevam, pagh ’ay’ neH DachenmoH. QInvo’ yIpoSqa’ pagh {supportEmail}-Daq maHvaD yIghItlh."
     }
+  },
+  "chat": {
+    "log": "ja’chuq QInmey",
+    "empty": "not jatlhlu’.",
+    "unread": "{count, plural, one {# QIn chu’} other {# QInmey chu’}}",
+    "jumpToLatest": "QIn Qav yIghoS",
+    "composer": {
+      "label": "QIn yIghItlh",
+      "placeholder": "QIn yIghItlh",
+      "send": "yIngeH",
+      "addImage": "mIllogh yIchel",
+      "staged": "ngeHmeH mIlloghmey",
+      "removeImage": "{name} yIteq",
+      "imagesRefused": "wa’logh {count} mIlloghmey neH DangeHlaH. latlhpu’ lujpu’.",
+      "lockNotice": "DaH SoH ja’chuq jonlu’. ’ach Hoch DalaDlaH.",
+      "mentionList": "vay’ yIpong"
+    },
+    "editor": {
+      "label": "QInlIj yIchoH",
+      "save": "yIpol",
+      "cancel": "yImev"
+    },
+    "reply": {
+      "action": "yIjang",
+      "banner": "{name} Dajang",
+      "cancel": "jang yImev",
+      "jump": "{name} QIn yI’ang",
+      "image": "mIllogh",
+      "removed": "QIn teqlu’bogh"
+    },
+    "message": {
+      "actions": "latlh Qu’mey",
+      "edited": "choHlu’pu’",
+      "edit": "yIchoH",
+      "delete": "yIteq",
+      "hide": "Hochvo’ yIteq",
+      "restore": "yIcheghmoH",
+      "sending": "vIngeHtaH",
+      "failed": "ngeHlu’be’",
+      "retry": "yInIDqa’",
+      "mentionsYou": "SoH ponglu’"
+    },
+    "tombstone": {
+      "text": "QInvam teqlu’pu’.",
+      "staffOnly": "laDlaHtaH Gedupu’ che’wI’pu’ je."
+    },
+    "reactions": {
+      "add": "jangHom yIchel",
+      "toggle": "{name}, {count}",
+      "thumbs_up": "maj",
+      "heart": "tIq",
+      "laugh": "Hagh",
+      "surprised": "yay’",
+      "celebrate": "Qapla’",
+      "thinking": "qech"
+    },
+    "moderation": {
+      "lock": "ja’chuqvo’ {name} yIjon",
+      "unlock": "ja’chuqDaq {name} yInoD",
+      "lockedTag": "ja’chuqvo’ jonlu’",
+      "deleteTitle": "QInvam yIteq’a’?",
+      "deleteBody": "QIn teqlu’pu’ ’e’ legh Hoch; velqa’ lupol Gedupu’ che’wI’pu’ je.",
+      "deleteConfirm": "yIteq",
+      "hideTitle": "Hochvo’ QInvam yIteq’a’?",
+      "hideBody": "QIn teqlu’pu’ ’e’ legh Hoch; velqa’ lupol Gedupu’ che’wI’pu’ je.",
+      "hideConfirm": "Hochvo’ yIteq"
+    },
+    "typing": {
+      "one": "ghItlh {name}",
+      "two": "ghItlh {first} {second} je",
+      "many": "ghItlh nuvpu’ law’"
+    },
+    "images": {
+      "row": "mIlloghmey",
+      "open": "mIllogh {index}/{count} yIlegh",
+      "viewer": "mIllogh {index}/{count}",
+      "previous": "mIllogh nung yIlegh",
+      "next": "mIllogh veb yIlegh",
+      "close": "yISoQmoH"
+    }
   }
 }
