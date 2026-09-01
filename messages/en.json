@@ -1345,9 +1345,9 @@
     "loadingPage": "Loading this group’s sessions.",
     "notFoundTitle": "Nothing to show here",
     "notFoundBody": "We couldn’t open this one. My SOG has everything you’re signed up for.",
-    "creationsIntro": "{count, plural, one {Something {name} made in this group — worth celebrating, and worth sharing.} other {Things {name} has made in this group — worth celebrating, and worth sharing.}}",
-    "creationsIntroSelf": "{count, plural, one {Something you made in this group — worth celebrating, and worth sharing.} other {Things you have made in this group — worth celebrating, and worth sharing.}}",
-    "creationsIntroGamer": "{count, plural, one {Something you made in this group — worth celebrating, and worth sharing.} other {Things you have made in this group — worth celebrating, and worth sharing.}}"
+    "creationsIntro": "{count, plural, one {When {name} finishes building something in this group — a game, a world, a project — their Gedu links it here, so you can see what all that playing has made. Open it together and let {name} show you around.} other {When {name} finishes building something in this group — a game, a world, a project — their Gedu links it here, so you can see what all that playing has made. Open them together and let {name} show you around.}}",
+    "creationsIntroSelf": "{count, plural, one {When you finish building something in this group, your Gedu links it here — finished work, worth coming back to and worth sharing.} other {When you finish building something in this group, your Gedu links it here — finished work, worth coming back to and worth sharing.}}",
+    "creationsIntroGamer": "{count, plural, one {When you finish building something in this group, your Gedu links it here — so you can come back to it, and show it off. You made this.} other {When you finish building something in this group, your Gedu links it here — so you can come back to them, and show them off. You made these.}}"
   },
   "selectProfile": {
     "title": "Who is entering Sogverse?"

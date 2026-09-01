@@ -1345,9 +1345,9 @@
     "loadingPage": "Laddar gruppens tillfällen.",
     "notFoundTitle": "Inget att visa här",
     "notFoundBody": "Vi kunde inte öppna den här sidan. På Min SOG finns allt du är anmäld till.",
-    "creationsIntro": "{count, plural, one {Det här har {name} gjort i gruppen – något att fira och dela.} other {De här har {name} gjort i gruppen – något att fira och dela.}}",
-    "creationsIntroSelf": "{count, plural, one {Det här har du gjort i gruppen – något att fira och dela.} other {De här har du gjort i gruppen – något att fira och dela.}}",
-    "creationsIntroGamer": "{count, plural, one {Det här har du gjort i gruppen – något att fira och dela.} other {De här har du gjort i gruppen – något att fira och dela.}}"
+    "creationsIntro": "{count, plural, one {När {name} bygger klart något i den här gruppen – ett spel, en värld, ett projekt – lägger Gedun länken här, så att du får se vad allt spelande har blivit till. Öppna den tillsammans och låt {name} visa dig runt.} other {När {name} bygger klart något i den här gruppen – ett spel, en värld, ett projekt – lägger Gedun länken här, så att du får se vad allt spelande har blivit till. Öppna dem tillsammans och låt {name} visa dig runt.}}",
+    "creationsIntroSelf": "{count, plural, one {När du bygger klart något i den här gruppen lägger Gedun länken här – färdigt arbete, värt att återvända till och värt att dela.} other {När du bygger klart något i den här gruppen lägger Gedun länken här – färdigt arbete, värt att återvända till och värt att dela.}}",
+    "creationsIntroGamer": "{count, plural, one {När du bygger klart något i den här gruppen lägger Gedun länken här – så kan du komma tillbaka till det och visa upp det. Det här har du gjort.} other {När du bygger klart något i den här gruppen lägger Gedun länken här – så kan du komma tillbaka till dem och visa upp dem. Allt det här har du gjort.}}"
   },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"

@@ -163,16 +163,28 @@ would be the one place those two words came apart. A gamer coming back to their 
 is the point of the card, not a side effect of sharing a body.
 
 **Rule: the line under that heading is the one piece of copy on this card keyed to who is
-reading, and it says what a heading cannot.** A bare noun over a link is a filing label;
-what the card holds is a child's work, so one warm sentence names the maker and says it is
-worth celebrating and worth sharing. A parent is told what their child made, by name; the
-child, and a parent in a seat of their own, are told the same thing in the **second
-person** — a page that says "something Sanna made" to Sanna reads as a page about a
-stranger who shares her name, which is the rule the masthead's attribution already
-follows. Three variants rather than two, because French addresses a child and an adult
-differently and one second-person string cannot serve both. **The name is only ever a
-nominative subject**, like every name-carrying string on this page: nothing is possessed,
-declined or suffixed, so no locale has to inflect a name it has never seen.
+reading, and its job is to decode the card for a parent meeting it cold.** A bare noun
+over a link is a filing label, and the question a parent actually arrives with is what
+this thing is and why it is on their child's page — so the line answers that rather than
+admiring the contents. It carries four things in order: **who put the link here** (their
+gedu, when the child finished something), **what it is** (a game, a world, a project —
+several kinds and no single title, because naming one would teach a family that the club
+*is* that one game), **why it matters** (this is what all that playing has made) and
+**what to do with it** (open it together and be shown around). Anything that drops one of
+the four is back to being a caption.
+
+A parent is told this about their child, by name; the child, and a parent in a seat of
+their own, are told it in the **second person** — a page that says "something Sanna made"
+to Sanna reads as a page about a stranger who shares her name, which is the rule the
+masthead's attribution already follows. The gamer's variant ends on the sentence the card
+exists to let them read about themselves; the adult in their own seat gets no
+come-and-look invitation, because there is nobody to be shown around by. Three variants
+rather than two, because French addresses a child and an adult differently and one
+second-person string cannot serve both. **The name is only ever a nominative subject**,
+like every name-carrying string on this page: nothing is possessed, declined or suffixed,
+so no locale has to inflect a name it has never seen — which is why the locales that
+cannot put a name in an object slot without a case ending restructure the sentence around
+it instead of translating it clause for clause.
 
 ## Membership grants the group's history
 

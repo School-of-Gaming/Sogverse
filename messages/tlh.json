@@ -1393,9 +1393,9 @@
     "loadingPage": "ghom’a’vam may’mey laDlu’…",
     "notFoundTitle": "naDev pagh tu’lu’",
     "notFoundBody": "poSlu’laHbe’. My SOG-Daq Hoch DaleghlaH.",
-    "creationsIntro": "{count, plural, one {ghomvamDaq chenmoHta’ {name}. yIQuch ’ej latlhpu’vaD yI’ang!} other {ghomvamDaq chenmoHta’mey chenmoHpu’ {name}. yIQuch ’ej latlhpu’vaD yI’ang!}}",
-    "creationsIntroSelf": "{count, plural, one {ghomvamDaq bIchenmoHta’. yIQuch ’ej latlhpu’vaD yI’ang!} other {ghomvamDaq chenmoHta’mey DachenmoHpu’. yIQuch ’ej latlhpu’vaD yI’ang!}}",
-    "creationsIntroGamer": "{count, plural, one {ghomvamDaq bIchenmoHta’. yIQuch ’ej latlhpu’vaD yI’ang!} other {ghomvamDaq chenmoHta’mey DachenmoHpu’. yIQuch ’ej latlhpu’vaD yI’ang!}}"
+    "creationsIntro": "{count, plural, one {ghomvamDaq vay’ rInmoHDI’ {name} – Quj, qo’, Qu’ – naDev ’oH ’ang Gedu. vaj Qujmo’ chenpu’bogh Dalegh. tugh yIpoSmoH ’ej {name} yIQoy!} other {ghomvamDaq vay’ rInmoHDI’ {name} – Quj, qo’, Qu’ – naDev ’oH ’ang Gedu. vaj Qujmo’ chenpu’bogh Dalegh. tugh tIpoSmoH ’ej {name} yIQoy!}}",
+    "creationsIntroSelf": "{count, plural, one {ghomvamDaq vay’ DarInmoHDI’, naDev ’oH ’ang Gedu – Qu’ rInpu’bogh: yIqaw ’ej yI’ang.} other {ghomvamDaq vay’ DarInmoHDI’, naDev chaH ’ang Gedu – Qu’mey rInpu’bogh: tIqaw ’ej tI’ang.}}",
+    "creationsIntroGamer": "{count, plural, one {ghomvamDaq vay’ DarInmoHDI’, naDev ’oH ’ang Gedu – DaghoS ’ej latlhpu’vaD Da’anglaH. bIchenmoHta’ SoH!} other {ghomvamDaq vay’ DarInmoHDI’, naDev chaH ’ang Gedu – tIghoS ’ej latlhpu’vaD tI’anglaH. Hoch DachenmoHta’ SoH!}}"
   },
   "selectProfile": {
     "title": "Sogverse ’el ’Iv?"

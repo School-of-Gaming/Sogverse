@@ -1345,9 +1345,9 @@
     "loadingPage": "Ladataan tämän ryhmän kertoja.",
     "notFoundTitle": "Täällä ei ole näytettävää",
     "notFoundBody": "Tätä sivua ei voitu avata. Omasta SOGista löydät kaiken, mihin olet ilmoittautunut.",
-    "creationsIntro": "{count, plural, one {Tämän {name} on tehnyt ryhmässä – sitä saa juhlia ja jakaa.} other {Nämä {name} on tehnyt ryhmässä – niitä saa juhlia ja jakaa.}}",
-    "creationsIntroSelf": "{count, plural, one {Tämän olet tehnyt ryhmässä – sitä saa juhlia ja jakaa.} other {Nämä olet tehnyt ryhmässä – niitä saa juhlia ja jakaa.}}",
-    "creationsIntroGamer": "{count, plural, one {Tämän olet tehnyt ryhmässä – sitä saa juhlia ja jakaa.} other {Nämä olet tehnyt ryhmässä – niitä saa juhlia ja jakaa.}}"
+    "creationsIntro": "{count, plural, one {Kun {name} saa tässä ryhmässä valmiiksi pelin, maailman tai muun projektin, Gedu linkittää sen tänne, niin näet, mitä pelaamisesta on syntynyt. Avatkaa se yhdessä: {name} kertoo siitä mielellään lisää.} other {Kun {name} saa tässä ryhmässä valmiiksi pelin, maailman tai muun projektin, Gedu linkittää sen tänne, niin näet, mitä pelaamisesta on syntynyt. Avatkaa ne yhdessä: {name} kertoo niistä mielellään lisää.}}",
+    "creationsIntroSelf": "{count, plural, one {Kun saat tässä ryhmässä jotain valmiiksi, Gedu linkittää sen tänne – valmista työtä, johon kannattaa palata ja jota kannattaa jakaa.} other {Kun saat tässä ryhmässä jotain valmiiksi, Gedu linkittää sen tänne – valmista työtä, johon kannattaa palata ja jota kannattaa jakaa.}}",
+    "creationsIntroGamer": "{count, plural, one {Kun saat tässä ryhmässä jotain valmiiksi, Gedu linkittää sen tänne, niin voit palata siihen ja näyttää sen muille. Sinä teit tämän.} other {Kun saat tässä ryhmässä jotain valmiiksi, Gedu linkittää sen tänne, niin voit palata niihin ja näyttää ne muille. Sinä teit nämä.}}"
   },
   "selectProfile": {
     "title": "Kuka astuu Sogverseen?"

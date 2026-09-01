@@ -1345,9 +1345,9 @@
     "loadingPage": "Chargement des séances de ce groupe.",
     "notFoundTitle": "Rien à afficher ici",
     "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Mon SOG rassemble toutes vos inscriptions.",
-    "creationsIntro": "{count, plural, one {Voici ce que {name} a créé dans ce groupe — à célébrer, et à partager.} other {Voici ce que {name} a créé dans ce groupe — à célébrer, et à partager.}}",
-    "creationsIntroSelf": "{count, plural, one {Voici ce que vous avez créé dans ce groupe — à célébrer, et à partager.} other {Voici ce que vous avez créé dans ce groupe — à célébrer, et à partager.}}",
-    "creationsIntroGamer": "{count, plural, one {Voici ce que tu as créé dans ce groupe — à célébrer, et à partager.} other {Voici ce que tu as créé dans ce groupe — à célébrer, et à partager.}}"
+    "creationsIntro": "{count, plural, one {Quand {name} termine quelque chose dans ce groupe — un jeu, un monde, un projet — son Gedu en met le lien ici, pour que vous voyiez ce que tout ce temps de jeu a produit. Ouvrez-le ensemble et laissez {name} vous faire visiter.} other {Quand {name} termine quelque chose dans ce groupe — un jeu, un monde, un projet — son Gedu en met le lien ici, pour que vous voyiez ce que tout ce temps de jeu a produit. Ouvrez-les ensemble et laissez {name} vous faire visiter.}}",
+    "creationsIntroSelf": "{count, plural, one {Quand vous terminez quelque chose dans ce groupe, votre Gedu en met le lien ici — du travail achevé, qui mérite qu’on y revienne et qu’on le partage.} other {Quand vous terminez quelque chose dans ce groupe, votre Gedu en met le lien ici — du travail achevé, qui mérite qu’on y revienne et qu’on le partage.}}",
+    "creationsIntroGamer": "{count, plural, one {Quand tu termines quelque chose dans ce groupe, ton Gedu en met le lien ici — pour que tu puisses y revenir et le montrer. C’est toi qui as fait ça.} other {Quand tu termines quelque chose dans ce groupe, ton Gedu en met le lien ici — pour que tu puisses y revenir et les montrer. C’est toi qui as fait tout ça.}}"
   },
   "selectProfile": {
     "title": "Qui entre dans Sogverse ?"

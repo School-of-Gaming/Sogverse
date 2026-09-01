@@ -33,9 +33,11 @@ import { TimezoneProvider } from "@/providers/timezone-provider";
  *     nowhere to go — a blank `href` resolves to the current page.
  *
  * A third rule joined them, and it is the only thing on this card keyed to who
- * is reading: **the line under the heading names the maker, and never names the
- * reader at themselves.** A parent is told what their child made; the child and
- * a parent in a seat of their own are told the same thing in the second person.
+ * is reading: **the line under the heading decodes the card, and never names
+ * the reader at themselves.** It says who put the link there, what the thing
+ * is, why it matters and what to do with it — a parent is told all four about
+ * their child, by name; the child and a parent in a seat of their own are told
+ * it in the second person.
  */
 
 const NEW_TAB = messages.familyProduct.creationOpensInNewTab;
@@ -129,19 +131,53 @@ describe("the heading", () => {
  * The line under the heading, in the three forms it has. Spelled out rather
  * than formatted through the ICU machinery, so a copy edit fails loudly instead
  * of quietly matching nothing.
+ *
+ * It is not a caption on the contents — it decodes the card for a parent
+ * meeting it cold, and each form has to carry all four of the things that
+ * decoding takes: who put the link here, what the thing is, why it matters, and
+ * what to do with it. The gamer's ends on the sentence the card exists to let
+ * them read about themselves; the adult in their own seat gets no
+ * come-and-look invitation, because there is nobody to be shown around by.
  */
 const INTRO_PARENT =
-  "Something Aino made in this group — worth celebrating, and worth sharing.";
-const INTRO_SECOND_PERSON =
-  "Something you made in this group — worth celebrating, and worth sharing.";
+  "When Aino finishes building something in this group — a game, a world, a project — their Gedu links it here, so you can see what all that playing has made. Open it together and let Aino show you around.";
+const INTRO_PARENT_MANY =
+  "When Aino finishes building something in this group — a game, a world, a project — their Gedu links it here, so you can see what all that playing has made. Open them together and let Aino show you around.";
+const INTRO_SELF =
+  "When you finish building something in this group, your Gedu links it here — finished work, worth coming back to and worth sharing.";
+const INTRO_GAMER =
+  "When you finish building something in this group, your Gedu links it here — so you can come back to it, and show it off. You made this.";
+const INTRO_GAMER_MANY =
+  "When you finish building something in this group, your Gedu links it here — so you can come back to them, and show them off. You made these.";
+
+/** What each audience reads over a single creation. */
+const INTRO_BY_AUDIENCE: Record<FamilyProductPageAudience, string> = {
+  customer: INTRO_PARENT,
+  self: INTRO_SELF,
+  gamer: INTRO_GAMER,
+};
+
+const ONE_CREATION: readonly FamilyCreation[] = [
+  { title: "The castle gate", url: "https://example.com/castle" },
+];
+const TWO_CREATIONS: readonly FamilyCreation[] = [
+  { title: "One", url: "https://example.com/one" },
+  { title: "Two", url: "https://example.com/two" },
+];
 
 describe("the line under the heading", () => {
   it("tells a parent what their child made, by name", () => {
-    const { queryByText } = renderCard(
-      [{ title: "The castle gate", url: "https://example.com/castle" }],
-      "customer",
-    );
+    const { queryByText } = renderCard(ONE_CREATION, "customer");
     expect(queryByText(INTRO_PARENT)).not.toBeNull();
+  });
+
+  it("names the child as a bare subject and never possesses or suffixes it", () => {
+    // Every locale restructures rather than inflecting, so the English line has
+    // to stay the shape they are restructuring *to*: the name twice, both times
+    // a plain nominative subject with nothing hung off it.
+    const { queryByText } = renderCard(ONE_CREATION, "customer");
+    expect(queryByText(INTRO_PARENT)).not.toBeNull();
+    expect(INTRO_PARENT).not.toContain("Aino's");
   });
 
   for (const audience of ["self", "gamer"] as const) {
@@ -149,14 +185,54 @@ describe("the line under the heading", () => {
       // A page that says "something Aino made" to Aino reads as a page about
       // somebody else who shares her name — the same rule the masthead's
       // attribution follows.
-      const { container, queryByText } = renderCard(
-        [{ title: "The castle gate", url: "https://example.com/castle" }],
-        audience,
-      );
-      expect(queryByText(INTRO_SECOND_PERSON)).not.toBeNull();
+      const { container, queryByText } = renderCard(ONE_CREATION, audience);
+      expect(queryByText(INTRO_BY_AUDIENCE[audience])).not.toBeNull();
       expect(container.textContent).not.toContain("Aino");
     });
   }
+
+  it("tells the gamer, and only the gamer, that they made it", () => {
+    // The one sentence on this card written for the person who built the thing.
+    // A parent's copy hands it to them instead; an adult in their own seat is
+    // not told about their own work in that register.
+    const gamer = renderCard(ONE_CREATION, "gamer");
+    expect(gamer.container.textContent).toContain("You made this.");
+    cleanup();
+    for (const audience of ["customer", "self"] as const) {
+      const { container } = renderCard(ONE_CREATION, audience);
+      expect(container.textContent).not.toContain("You made this.");
+      cleanup();
+    }
+  });
+
+  it("names several kinds of thing and no single game", () => {
+    // Games are dimensions of the platform, never the definition of the offer:
+    // a line reading "a Minecraft world" would teach a family in one sentence
+    // that the club is that one game.
+    const { container } = renderCard(ONE_CREATION, "customer");
+    expect(container.textContent).toContain("a game, a world, a project");
+  });
+
+  it("says who put the link there, in the word the page already uses", () => {
+    // The gedus label sits three rows above this card and spells it the same
+    // way; a lowercase or expanded form here would be the one place the page
+    // called the same person two things.
+    for (const audience of ["customer", "self", "gamer"] as const) {
+      const { container } = renderCard(ONE_CREATION, audience);
+      expect(container.textContent).toContain("Gedu links it here");
+      cleanup();
+    }
+  });
+
+  it("moves to its plural branch when there is more than one", () => {
+    const parent = renderCard(TWO_CREATIONS, "customer");
+    expect(parent.queryByText(INTRO_PARENT_MANY)).not.toBeNull();
+    expect(parent.queryByText(INTRO_PARENT)).toBeNull();
+    cleanup();
+    const gamer = renderCard(TWO_CREATIONS, "gamer");
+    expect(gamer.queryByText(INTRO_GAMER_MANY)).not.toBeNull();
+    expect(gamer.queryByText(INTRO_GAMER)).toBeNull();
+  });
 
   it("carries no line at all when there is no card", () => {
     const { queryByText } = renderCard([], "customer");

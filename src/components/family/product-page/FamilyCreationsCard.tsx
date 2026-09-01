@@ -38,17 +38,26 @@ import type { FamilyCreation } from "./types";
  * came apart.
  *
  * **What the heading could not do is say why the card is here** *(owner)*. A
- * bare noun over a link is a filing label; what a parent is being handed is
- * their child's work, and the card now says so in one warm line under the
- * heading. That line is the one thing on this card keyed to who is reading:
- * a parent is told what their child made, and the child is told the same thing
- * in the second person — the register the rest of a gamer's copy on this page
- * already uses. A parent holding a seat of their own gets the second person
- * too, because a page that says "something Sanna made" to Sanna reads as a page
+ * bare noun over a link is a filing label, and the parent meeting this card for
+ * the first time is asking what the thing even is and who put it there — so the
+ * line under the heading answers that rather than admiring the contents. It
+ * carries four things in order: **who put the link here** (their gedu, when the
+ * child finished something), **what it is** (a game, a world, a project —
+ * several kinds and no single title, because naming one would tell a family the
+ * club is that one game), **why it matters** (this is what all that playing has
+ * made) and **what to do with it** (open it together and be shown around).
+ *
+ * That line is the one thing on this card keyed to who is reading: a parent is
+ * told what their child made, and the child is told the same thing in the
+ * second person — the register the rest of a gamer's copy on this page already
+ * uses, ending on the sentence the card exists to let them read about
+ * themselves. A parent holding a seat of their own gets the second person too,
+ * because a page that says "something Sanna made" to Sanna reads as a page
  * about somebody else who shares her name — the same rule the masthead's
- * attribution follows. It is the *name* that makes three variants necessary and
- * not two: French addresses a child and an adult differently, so one
- * second-person string could not serve both.
+ * attribution follows; their variant drops the come-and-look invitation, since
+ * there is nobody to be shown around by. It is the *name* that makes three
+ * variants necessary and not two: French addresses a child and an adult
+ * differently, so one second-person string could not serve both.
  *
  * **The name is only ever a nominative subject**, exactly as every other
  * name-carrying string on this page is built: nothing is possessed, declined or
@@ -90,8 +99,14 @@ export function FamilyCreationsCard({
         </h2>
         {/* Under the heading rather than over it: the heading is what a reader
             scanning the page for this card finds, and the sentence is what they
-            read once they have. */}
-        <p className="mt-1.5 text-sm text-muted-foreground">
+            read once they have.
+
+            `leading-relaxed` because it is two sentences rather than one and
+            wraps to four or five lines at the 360px floor: at the default
+            leading a muted block that size reads as a wall. The list below it
+            takes the wider gap for the same reason — against a multi-line
+            paragraph, `mt-2` let the first link read as its last line. */}
+        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
           {t(INTRO_KEY[audience], { count: creations.length, name })}
         </p>
         {/* A list, so a reader on a screen reader is told how many there are
@@ -99,7 +114,7 @@ export function FamilyCreationsCard({
             reorder: array order *is* the order staff arranged them in, there is
             no affordance to change it, and the whole list is replaced at once
             when it is edited. */}
-        <ul className="mt-2 space-y-2">
+        <ul className="mt-3 space-y-2">
           {creations.map((creation, index) => (
             <li key={index} className="text-sm leading-relaxed">
               <CreationEntry
