@@ -81,6 +81,25 @@ export const MAX_CHAT_MESSAGE_LENGTH = 500;
 export const MAX_STAGED_CHAT_IMAGES = 6;
 
 /**
+ * The image limits, borrowed rather than chosen: **one set of image limits
+ * platform-wide.**
+ *
+ * A chat picture and a session-report photo are the same kind of artifact
+ * meeting the same pipeline — the browser decodes, downscales and re-encodes,
+ * the route verifies the bytes and re-encodes them again server-side — so a
+ * second set of numbers here could only ever drift into disagreeing with the
+ * first about what an image is allowed to be. The session-photo constants carry
+ * the reasoning for each figure in their own headers; these names exist so a
+ * chat file imports them from the module every chat file already imports,
+ * rather than reaching into another feature's contracts at each call site.
+ */
+export {
+  SESSION_PHOTO_JPEG_QUALITY as CHAT_IMAGE_JPEG_QUALITY,
+  SESSION_PHOTO_MAX_BYTES as CHAT_IMAGE_MAX_BYTES,
+  SESSION_PHOTO_MAX_EDGE as CHAT_IMAGE_MAX_EDGE,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
+
+/**
  * How long a sender may pause before their next message starts a new group.
  *
  * Grouping is what makes a chat log readable — one name header per run rather

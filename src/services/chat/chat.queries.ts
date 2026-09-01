@@ -1,6 +1,11 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import type { ChatReactionCode } from "@/lib/constants/chat";
 import { getClient } from "@/lib/supabase/client";
@@ -9,6 +14,7 @@ import type {
   ChatMessageRow,
   ChatReactionRow,
 } from "@/types";
+import { CHAT_IMAGE_SIGNED_URL_TTL_SECONDS } from "./chat.contracts";
 import { ChatService, type ChatHistory } from "./chat.service";
 
 /**
@@ -34,6 +40,13 @@ export const chatKeys = {
     [...chatKeys.channel(channelId), "history"] as const,
   roster: (channelId: string) =>
     [...chatKeys.channel(channelId), "roster"] as const,
+  /**
+   * The signed URLs for one exact set of image messages. The ids are part of
+   * the key on purpose: a batch is minted per set, so a log that gains a
+   * picture asks a new question rather than invalidating an answer.
+   */
+  imageUrls: (channelId: string, messageIds: readonly string[]) =>
+    [...chatKeys.channel(channelId), "imageUrls", messageIds.join(",")] as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -85,6 +98,36 @@ export function useChatRoster(channelId: string) {
   return useQuery({
     queryKey: chatKeys.roster(channelId),
     queryFn: () => service.getRoster(channelId),
+  });
+}
+
+/**
+ * A signed URL for every stored image in the log, minted in ONE call.
+ *
+ * **Keyed by the ids themselves, which is what makes this once per history
+ * load.** The key changes only when the set of image messages does, so a
+ * refetch of the log that brings nothing new re-uses the batch it already
+ * minted, and `keepPreviousData` holds the old map in place while a batch that
+ * *has* changed is in flight — a thumbnail already on screen must not blank
+ * because somebody else posted a picture.
+ *
+ * `staleTime` is half the URLs' own lifetime: short enough that a tab left open
+ * overnight re-mints on its next focus rather than showing expired links, long
+ * enough that ordinary focus refetches do not hand every image a new URL — a
+ * changed `src` is a fresh download of a picture the reader is already looking
+ * at. That pair *is* the whole recovery story for expiry; there is no refresh
+ * timer anywhere.
+ */
+export function useChatImageUrls(
+  channelId: string,
+  messageIds: readonly string[],
+) {
+  const service = new ChatService(getClient());
+  return useQuery({
+    queryKey: chatKeys.imageUrls(channelId, messageIds),
+    queryFn: () => service.signImageUrls(messageIds),
+    placeholderData: keepPreviousData,
+    staleTime: (CHAT_IMAGE_SIGNED_URL_TTL_SECONDS / 2) * 1000,
   });
 }
 
@@ -150,6 +193,73 @@ export function useSendChatMessage(channelId: string) {
                   hidden_by: null,
                   image_width: null,
                   image_height: null,
+                  reply_to_message_id: variables.replyToMessageId,
+                }),
+              },
+      );
+    },
+  });
+}
+
+/** What one optimistic image send needs the server to settle. */
+export interface ChatImageSendVariables {
+  /** The client-generated id the echo — and the object — are named by. */
+  id: string;
+  replyToMessageId: string | null;
+  /** The composer's own normalized JPEG. */
+  file: Blob;
+  /** The caller's own account id, for the local reconciliation only. */
+  senderId: string;
+}
+
+/**
+ * Sends one picture through the upload route and writes the settled row into
+ * the history cache.
+ *
+ * **The same non-invalidating shape the text send uses, and for a sharper
+ * reason**: a send fans a burst out into one message per picture, so six
+ * invalidations would be six refetches of a two-hundred-row log to learn six
+ * rows the route already answered with. The response carries everything the
+ * echo could not know — the server stamp and the dimensions the re-encode
+ * measured — so the cache goes to server truth exactly.
+ *
+ * The row lands here before its object does anywhere: a subscriber other than
+ * the sender briefly holds an image message whose bytes are still arriving, and
+ * no second event corrects it. That is what the renderer's bounded retry is
+ * for. The sender is the one viewer who never sees it, because their own blob
+ * is what draws their copy.
+ */
+export function useSendChatImage(channelId: string) {
+  const service = new ChatService(getClient());
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (variables: ChatImageSendVariables) =>
+      service.uploadImageMessage({
+        id: variables.id,
+        channelId,
+        replyToMessageId: variables.replyToMessageId,
+        file: variables.file,
+      }),
+    onSuccess: (stored, variables) => {
+      queryClient.setQueryData<ChatHistory>(
+        chatKeys.history(channelId),
+        (current) =>
+          current === undefined
+            ? current
+            : {
+                ...current,
+                messages: upsertMessage(current.messages, {
+                  id: stored.id,
+                  channel_id: channelId,
+                  sender_id: variables.senderId,
+                  body: null,
+                  created_at: stored.createdAt,
+                  edited_at: null,
+                  hidden_at: null,
+                  hidden_by: null,
+                  image_width: stored.width,
+                  image_height: stored.height,
                   reply_to_message_id: variables.replyToMessageId,
                 }),
               },

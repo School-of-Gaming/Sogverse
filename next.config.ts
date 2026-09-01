@@ -48,6 +48,12 @@ function bucketPattern(bucket: string) {
 }
 
 const nextConfig: NextConfig = {
+  // `sharp` is a native module: it loads a platform-specific binary at require
+  // time, which a bundler cannot trace and must not try to inline. Naming it
+  // here leaves it as a plain runtime `require` in the two upload routes that
+  // import it — the only places in the app that do — so its ~20 MB lands on
+  // those functions and nowhere else.
+  serverExternalPackages: ["sharp"],
   images: {
     remotePatterns: [
       bucketPattern("product-images"),

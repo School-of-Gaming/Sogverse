@@ -203,10 +203,12 @@ export class GeduSessionsService {
    *
    * **The blob is the browser's output, not the gedu's file.** The pick has been
    * decoded, downscaled under the edge cap and re-encoded as JPEG before it gets
-   * here — that pass is what strips EXIF/GPS and makes every stored image one
-   * format — and the dimensions travelling beside it are the *encoded* ones,
-   * which is what the row stores and what all gallery and email geometry is
-   * arithmetic from.
+   * here — that pass keeps the body small and makes every stored image one
+   * format. It also strips EXIF/GPS, but only on the honest path: the route
+   * re-encodes again server-side, which is what makes the strip a mechanism and
+   * what measures the dimensions the row stores. The pair travelling beside the
+   * blob is therefore a plausibility claim the route refuses early on, not the
+   * numbers anything is drawn from.
    *
    * A route rather than an RPC, because the object needs the service-role client
    * the browser must never hold. The route's own first act is still the guarded

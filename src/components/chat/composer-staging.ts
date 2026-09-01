@@ -27,12 +27,23 @@ export interface StagedChatImage {
   /** A URL the browser can already draw: an object URL, or fixture art. */
   src: string;
   /**
-   * Intrinsic dimensions, read once when the picture was staged.
+   * The normalized JPEG — the bytes the send uploads, and the bytes `src` is an
+   * object URL of.
    *
-   * Measuring here is the pipeline doing its job — the same pass that will
-   * normalize and re-encode the bytes learns the size, and the size is then
-   * *stored*. What is forbidden is measuring at render time; every box from
-   * this point on is arithmetic off these two numbers.
+   * Held rather than re-derived from the file at send time, because they are
+   * the same artifact the thumbnail is already drawing: encoding twice would
+   * give the sender a preview of one picture and the room another.
+   */
+  file: Blob;
+  /**
+   * The ENCODED dimensions, read once when the picture was staged.
+   *
+   * Measuring here is the pipeline doing its job — the pass that normalizes and
+   * re-encodes the bytes learns the size on the way — and every box from this
+   * point on is arithmetic off these two numbers. What is forbidden is
+   * measuring at render time. (What the *row* eventually stores is the server's
+   * own measurement of the same bytes; these are what the composer and the
+   * optimistic echo draw with until it answers.)
    */
   width: number;
   height: number;

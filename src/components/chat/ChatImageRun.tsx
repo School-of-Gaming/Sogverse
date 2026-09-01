@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { FullscreenImageViewer } from "@/components/ui/fullscreen-image-viewer";
@@ -10,6 +10,81 @@ import {
   chatThumbnailWidth,
 } from "./chat-image-geometry";
 import type { ChatDelivery, ChatImageRef } from "./types";
+
+/**
+ * How long to wait before each re-attempt at a picture that would not load.
+ *
+ * **A row lands before its bytes.** The upload route writes the message row
+ * first — that is what keeps the send guard in front of the storage write — and
+ * the row reaches every other subscriber over realtime the instant it exists,
+ * which can be before the object has finished landing. No second event
+ * corrects it: there is nothing to fire when an upload completes. So the
+ * renderer retries a handful of times over a couple of seconds, which is the
+ * whole width of the window that can be open, and then stops.
+ *
+ * Three attempts totalling ~2.4 s, and bounded on purpose: past that the
+ * picture is not late, it is missing (a hidden message's mint refused, an
+ * upload that failed and left a tombstone), and a renderer hammering a URL that
+ * will never answer is worse than a blank box. The box is arithmetic from the
+ * stored dimensions either way, so none of this can move the log.
+ */
+const IMAGE_RETRY_DELAYS_MS = [300, 700, 1400];
+
+/**
+ * One thumbnail, at its arithmetic size, with that bounded retry.
+ *
+ * The retried URL carries a `retry` parameter it did not have before. That is
+ * cache-busting rather than addressing — a browser that has just cached a 404
+ * would otherwise answer every re-attempt itself — and it is added only to a
+ * real http(s) URL: a blob URL cannot take a query string, and it also cannot
+ * 404, so neither half of this applies to one.
+ */
+function ChatThumbnail({ image }: { image: ChatImageRef }) {
+  // The attempt count is held *with* the URL it belongs to, and reset during
+  // render when they disagree — the same shape the open-index guard below uses.
+  // A different `src` is a different question (a re-minted URL, a picture that
+  // finally resolved), so it starts over rather than carrying the previous
+  // URL's failures into it; an effect that reset it afterwards would be a
+  // render's worth of retrying the wrong thing.
+  const [retry, setRetry] = useState({ src: image.src, attempt: 0 });
+  const timerRef = useRef<number | null>(null);
+
+  if (retry.src !== image.src) {
+    setRetry({ src: image.src, attempt: 0 });
+  }
+
+  useEffect(
+    () => () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    },
+    [],
+  );
+
+  const attempt = retry.src === image.src ? retry.attempt : 0;
+  const retryable = image.src.startsWith("http");
+  const src =
+    attempt === 0 || !retryable
+      ? image.src
+      : `${image.src}${image.src.includes("?") ? "&" : "?"}retry=${attempt}`;
+
+  return (
+    <Image
+      src={src}
+      alt=""
+      width={chatThumbnailWidth(image.width, image.height)}
+      height={CHAT_IMAGE_THUMB_HEIGHT}
+      unoptimized
+      onError={() => {
+        if (!retryable || attempt >= IMAGE_RETRY_DELAYS_MS.length) return;
+        timerRef.current = window.setTimeout(() => {
+          setRetry((current) => ({ ...current, attempt: current.attempt + 1 }));
+        }, IMAGE_RETRY_DELAYS_MS[attempt]);
+      }}
+      style={{ height: CHAT_IMAGE_THUMB_HEIGHT }}
+      className="w-auto max-w-full rounded-md border border-border bg-muted object-contain"
+    />
+  );
+}
 
 /**
  * A burst of images, as one wrapping row.
@@ -101,15 +176,7 @@ export function ChatImageRun({
                 deliveries?.[index] === "pending" && "opacity-60",
               )}
             >
-              <Image
-                src={image.src}
-                alt=""
-                width={chatThumbnailWidth(image.width, image.height)}
-                height={CHAT_IMAGE_THUMB_HEIGHT}
-                unoptimized
-                style={{ height: CHAT_IMAGE_THUMB_HEIGHT }}
-                className="w-auto max-w-full rounded-md border border-border bg-muted object-contain"
-              />
+              <ChatThumbnail image={image} />
             </button>
             {overlay?.(index)}
             {footer?.(index)}
@@ -120,8 +187,17 @@ export function ChatImageRun({
       {/* The overlay is the shared one, handed this burst and this surface's
           own words. A chat image already carries a servable `src` — the
           container resolved it — so there is nothing to adapt between the run
-          and the viewer, and `unoptimized` is set here because this is the half
-          that knows a blob URL when it holds one. */}
+          and the viewer.
+
+          `unoptimized` is set here and on every thumbnail above, and the
+          wire-up settled why rather than inheriting it: a stored chat image is
+          read through a SIGNED URL, which is minted per viewer and rotates, so
+          the optimizer would cache nothing it could ever serve twice — and
+          bypassing it is also what keeps the private `chat-images` bucket out
+          of `images.remotePatterns`, where a pattern would be an optimizer
+          permission on a bucket whose whole read boundary is a storage policy.
+          The other two kinds of `src` this component meets, a blob URL and
+          fixture art, the optimizer cannot fetch at all. */}
       <FullscreenImageViewer
         images={images}
         index={openIndex}

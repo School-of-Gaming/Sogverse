@@ -142,6 +142,82 @@ export const chatRosterEntry = z.object({
 export const chatChannelRoster = z.array(chatRosterEntry);
 
 // ---------------------------------------------------------------------------
+// Images
+// ---------------------------------------------------------------------------
+
+/**
+ * The private bucket a chat image's bytes live in.
+ *
+ * **The object's name is the message row's id**, with no extension — the
+ * session-images "the primary key IS the object name" pattern, minus the
+ * suffix, because a private object is fetched through a signed URL that carries
+ * its own content type and nothing reads the name for one. So there is no path
+ * column and no name helper: the id a caller already holds is the object.
+ *
+ * Private, and read only through signed URLs the viewer mints for themselves —
+ * minting requires SELECT under storage RLS, which is what makes the bucket's
+ * one policy (00231) the whole read boundary for the bytes: membership, the
+ * family time bound and the hidden state all ride on it.
+ */
+export const CHAT_IMAGES_BUCKET = "chat-images";
+
+/**
+ * How long a minted image URL stays good — half a day.
+ *
+ * **A flat, generous constant rather than anything derived.** The point is that
+ * URLs never churn mid-room: they are minted in one batch per history load, and
+ * an expiry comfortably past any session means nothing a reader is looking at
+ * goes stale under them. If a tab somehow outlives it, the next refetch re-mints
+ * the batch — that is the whole recovery story, and it is why this number does
+ * not have to be tuned against a session's real length.
+ */
+export const CHAT_IMAGE_SIGNED_URL_TTL_SECONDS = 12 * 60 * 60;
+
+/**
+ * The non-file half of `POST /api/chat/images`'s multipart form.
+ *
+ * **The message id travels from the client**, exactly as it does for a text
+ * send: the optimistic echo is already on screen under that id, and the row has
+ * to reconcile to it by identity. The route hands it straight to the send RPC,
+ * where the primary key is what refuses a collision.
+ *
+ * **The dimensions do not travel at all**, and their absence is the point: the
+ * route measures them from its own re-encode, so a client-claimed pair never
+ * reaches the columns. There is no field here for one to arrive in.
+ *
+ * `replyToMessageId` is load-bearing rather than symmetric — a burst with no
+ * text puts the reply on the FIRST picture, so an image send genuinely can be a
+ * reply. A form carries no nulls, so its absence is how "no reply" is spelled.
+ */
+export const chatImageUploadFields = z.object({
+  id: z.string().uuid(),
+  channelId: z.string().uuid(),
+  replyToMessageId: z.string().uuid().optional(),
+});
+
+export type ChatImageUploadFields = z.infer<typeof chatImageUploadFields>;
+
+/**
+ * What the upload answers: the id it stored under, the server's own
+ * `created_at`, and the dimensions it measured.
+ *
+ * The stamp is there for the reason the text send's is — it is the one field
+ * the echo could not know, so the cache can be brought to server truth exactly
+ * rather than by refetching two hundred rows to learn one. The **dimensions**
+ * are here for the same reason one step further out: they are the numbers the
+ * row actually holds, and a burst of six pictures that had to invalidate the
+ * history to learn them would be six refetches of the whole log.
+ */
+export const chatImageUploadResponse = z.object({
+  id: z.string().uuid(),
+  createdAt: z.string(),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+});
+
+export type ChatImageUploadResponse = z.infer<typeof chatImageUploadResponse>;
+
+// ---------------------------------------------------------------------------
 // Compile-time shapes
 // ---------------------------------------------------------------------------
 

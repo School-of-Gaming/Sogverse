@@ -25,10 +25,12 @@ import {
   isChatLockedError,
   useChatChannel,
   useChatHistory,
+  useChatImageUrls,
   useChatRoster,
   useEditChatMessage,
   useHideChatMessage,
   useRestoreChatMessage,
+  useSendChatImage,
   useSendChatMessage,
   useSetChatLock,
   useToggleChatReaction,
@@ -136,7 +138,45 @@ function GroupSessionChatRoom({
   const history = useChatHistory(channelId);
   const roster = useChatRoster(channelId);
 
+  /**
+   * Every image message in the log, and one batch of signed URLs for them.
+   *
+   * The ids are the query's key, so a log that gains a picture asks a new
+   * question and one that merely refetched re-uses the batch it already had —
+   * which is what "minted once per history load" means in practice. Expiry is a
+   * flat half-day and the re-mint on refetch is the whole recovery story.
+   */
+  const imageIds = useMemo(
+    () =>
+      (history.data?.messages ?? [])
+        .filter((row) => row.image_width !== null && row.image_height !== null)
+        .map((row) => row.id),
+    [history.data],
+  );
+  const imageUrls = useChatImageUrls(channelId, imageIds);
+
+  /**
+   * The pictures this viewer sent, by message id: the blob the log is drawing
+   * and the bytes a retry would re-send.
+   *
+   * **The sender never waits for a signed URL for their own picture.** Their
+   * copy is drawn from the object URL the composer already minted, from the
+   * optimistic echo through to the settled row — which also means they are the
+   * one viewer who cannot see the window in which a row exists and its object
+   * does not.
+   *
+   * Nothing is ever removed. A staged picture's object URL belongs to the
+   * message it became (the chat components' contract), so revoking one would
+   * blank a thumbnail the sender is still looking at; the page going is its
+   * lifetime — a handful of blobs for one session, which is the honest cost of
+   * never blanking a picture somebody just posted.
+   */
+  const [ownImages, setOwnImages] = useState<
+    ReadonlyMap<string, { file: Blob; src: string }>
+  >(() => new Map());
+
   const sendMessage = useSendChatMessage(channelId);
+  const sendImage = useSendChatImage(channelId);
   const editMessage = useEditChatMessage(channelId);
   const hideMessage = useHideChatMessage(channelId);
   const restoreMessage = useRestoreChatMessage(channelId);
@@ -360,18 +400,69 @@ function GroupSessionChatRoom({
     [send],
   );
 
+  const sendPicture = sendImage.mutate;
+
+  /**
+   * The same round trip for a picture: the echo is already on screen, the route
+   * writes the row and stores the object, and the settled row goes straight
+   * into the cache.
+   *
+   * A lock is dropped rather than retried for exactly the reason a text send's
+   * is — the composer is already disabled by the lock's own arrival, so a retry
+   * button could never work.
+   */
+  const dispatchImage = useCallback(
+    (message: ChatMessage, file: Blob) => {
+      sendPicture(
+        {
+          id: message.id,
+          replyToMessageId: message.replyToId,
+          file,
+          senderId: message.senderId,
+        },
+        {
+          onError: (error) => {
+            if (isChatLockedError(error)) {
+              setPending((current) =>
+                current.filter((row) => row.id !== message.id),
+              );
+              return;
+            }
+            setPending((current) =>
+              current.map((row) =>
+                row.id === message.id
+                  ? { ...row, delivery: "failed" as const }
+                  : row,
+              ),
+            );
+          },
+        },
+      );
+    },
+    [sendPicture],
+  );
+
   const settledIds = useMemo(
     () => new Set(history.data?.messages.map((row) => row.id) ?? []),
     [history.data],
   );
 
   const messages = useMemo(() => {
-    const settled = history.data === undefined ? [] : toChatMessages(history.data);
+    const settled =
+      history.data === undefined
+        ? []
+        : toChatMessages(
+            history.data,
+            // The signed URL if one has been minted, this viewer's own blob if
+            // the picture is theirs, and neither until the next batch lands.
+            (messageId) =>
+              imageUrls.data?.[messageId] ?? ownImages.get(messageId)?.src,
+          );
     return [
       ...settled,
       ...pending.filter((row) => !settledIds.has(row.id)),
     ];
-  }, [history.data, pending, settledIds]);
+  }, [history.data, imageUrls.data, ownImages, pending, settledIds]);
 
   const accounts = useMemo(
     () => toChatAccounts(roster.data ?? [], viewer),
@@ -387,18 +478,32 @@ function GroupSessionChatRoom({
 
   const handlers: ChatViewHandlers = {
     onSend: (drafts) => {
+      // **One press of Send, already fanned out by the composer**: one draft
+      // per staged picture, then the words. Each becomes its own message, in
+      // that order, and the reply target rides on whichever draft the fan-out
+      // put it on — the words when there are any, the FIRST picture when there
+      // are none, so an image-only reply is still a reply to something. Nothing
+      // here re-derives any of that; it dispatches what it was handed.
       for (const draft of drafts) {
-        // Images are the wire-up's own next step: the composer still stages and
-        // fans them out, and until the bucket, the upload route and the
-        // server-side re-encode exist there is nowhere for the bytes to go.
-        // Dropping the draft is the inert half — no row, no half-sent picture.
-        if (draft.image !== null || draft.body === null) continue;
+        const id = crypto.randomUUID();
+        const staged = draft.image;
         const message: ChatMessage = {
-          id: crypto.randomUUID(),
+          id,
           senderId: viewer.id,
           createdAt: new Date().toISOString(),
           body: draft.body,
-          image: null,
+          image:
+            staged === null
+              ? null
+              : {
+                  // The message id names the picture too: it is the object's
+                  // name in the bucket, so the echo and the settled row draw
+                  // under one identity and the log never sees them as two.
+                  id,
+                  src: staged.src,
+                  width: staged.width,
+                  height: staged.height,
+                },
           replyToId: draft.replyToId,
           editedAt: null,
           hiddenAt: null,
@@ -406,6 +511,11 @@ function GroupSessionChatRoom({
           reactions: [],
           delivery: "pending",
         };
+        if (staged !== null) {
+          setOwnImages((current) =>
+            new Map(current).set(id, { file: staged.file, src: staged.src }),
+          );
+        }
         // The settled ones are swept here rather than in an effect watching
         // the log: an echo stops being *drawn* the instant its row lands (the
         // merge below filters on exactly this set), so all a sweep has to do is
@@ -415,7 +525,8 @@ function GroupSessionChatRoom({
           ...current.filter((row) => !settledIds.has(row.id)),
           message,
         ]);
-        dispatch(message);
+        if (staged === null) dispatch(message);
+        else dispatchImage(message, staged.file);
       }
     },
     onRetry: (messageId) => {
@@ -425,7 +536,12 @@ function GroupSessionChatRoom({
       setPending((current) =>
         current.map((row) => (row.id === messageId ? retried : row)),
       );
-      dispatch(retried);
+      // A picture is re-sent from the bytes the composer handed over, which is
+      // why they are kept beside the URL: the staged entry is long gone and the
+      // blob behind an object URL cannot be read back out of it.
+      const picture = ownImages.get(messageId);
+      if (picture === undefined) dispatch(retried);
+      else dispatchImage(retried, picture.file);
     },
     onDelete: (messageId) => {
       // A message that never reached the server has no row to tombstone and

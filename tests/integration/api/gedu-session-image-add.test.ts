@@ -5,7 +5,7 @@
 // a file parsed back out of a real multipart body would fail the route's
 // `instanceof File` check against jsdom's File.
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/gedu/sessions/images/route";
 import {
@@ -14,17 +14,35 @@ import {
   SESSION_PHOTO_CAP_REACHED_SQLSTATE,
   SESSION_PHOTO_MAX_BYTES,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import {
+  carriesExif,
+  containsText,
+  exifBearingJpeg,
+  EXIF_FIXTURE_COPYRIGHT,
+  EXIF_FIXTURE_ENCODED_HEIGHT,
+  EXIF_FIXTURE_ENCODED_WIDTH,
+  EXIF_FIXTURE_GPS_DATE_STAMP,
+  plainJpeg,
+} from "../../mocks/exif-jpeg";
 
 /**
  * POST /api/gedu/sessions/images — attaching a photo to a session report.
  *
- * Two properties are what this file exists to hold still.
+ * Three properties are what this file exists to hold still.
  *
  * **The bucket's invariant.** This route is the bucket's only writer, so
  * "everything stored is a conforming JPEG under the cap" is true only for as
  * long as the verification here is. Every refusal case below asserts that
  * nothing reached the database *or* storage, because a refusal that still wrote
  * something is the failure the invariant is about.
+ *
+ * **The EXIF/GPS strip, and with it the measurement.** The route re-encodes
+ * every accepted photo through the shared `sharp` pass before storing it, which
+ * is what makes the strip a mechanism rather than a browser habit a modified
+ * client can skip — the same guarantee the chat upload route carries, proved
+ * here with the same fixture. Its second effect is that the stored dimensions
+ * are the ones the re-encode measured, so the form's claimed pair is an early
+ * plausibility refusal and reaches no column.
  *
  * **The row-then-object order, and its compensation.** The insert runs first, on
  * the caller's own client where the guard is the authorization; the object
@@ -61,16 +79,46 @@ const GROUP_ID = "0f0b1d7c-6a2e-4f7b-9d3a-6c1f2b8e4a51";
 const SESSION_DATE = "2026-08-20";
 const IMAGE_ID = "7c9f2a41-3b8d-4e52-9a17-5d2c6b0e8f43";
 
-/** A minimal JFIF head — the three bytes the route actually looks at. */
-const JPEG_BYTES = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
-
 /** What an iPhone Files-app pick looks like: an ISO-BMFF `ftypheic` box. */
 const HEIC_BYTES = new Uint8Array([
   0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63,
 ]);
 
+/**
+ * Real JPEGs, built once.
+ *
+ * They have to be real now: the route decodes and re-encodes what it accepts,
+ * so the three-byte stub this file used to post would be refused as a JPEG that
+ * will not decode — which is itself one of the cases below.
+ */
+let cleanJpeg: Buffer;
+let exifJpeg: Buffer;
+
+/** The dimensions `cleanJpeg` decodes to, and so what the row must store. */
+const CLEAN_WIDTH = 24;
+const CLEAN_HEIGHT = 16;
+
+beforeAll(async () => {
+  cleanJpeg = await plainJpeg(CLEAN_WIDTH, CLEAN_HEIGHT);
+  exifJpeg = await exifBearingJpeg();
+});
+
 function jpegFile(): File {
-  return new File([JPEG_BYTES], "session-photo.jpg", { type: "image/jpeg" });
+  return new File([new Uint8Array(cleanJpeg)], "session-photo.jpg", {
+    type: "image/jpeg",
+  });
+}
+
+/** The bytes the route handed to storage. */
+function uploadedBytes(): Buffer {
+  const body: unknown = mockUpload.mock.calls[0][1];
+  // Narrowed rather than asserted: the cases that call this are about what is
+  // inside those bytes, so "the route stored something that is not a buffer"
+  // has to fail loudly here rather than as a puzzling metadata assertion below.
+  if (!Buffer.isBuffer(body)) {
+    throw new Error("the route stored something that was not a buffer");
+  }
+  return body;
 }
 
 function createRequest(
@@ -264,19 +312,25 @@ describe("POST /api/gedu/sessions/images", () => {
 
     // The cap travels from the contracts constant. Passing it is what makes
     // raising it a one-line change with no migration.
+    //
+    // The dimensions are the re-encode's own, NOT the 1920 x 1080 the form
+    // claimed: what a client says about its picture is an early plausibility
+    // refusal and never reaches a column.
     expect(mockRpc).toHaveBeenCalledWith("add_group_session_image", {
       p_group_id: GROUP_ID,
       p_session_date: SESSION_DATE,
-      p_width: 1920,
-      p_height: 1080,
+      p_width: CLEAN_WIDTH,
+      p_height: CLEAN_HEIGHT,
       p_max_images: SESSION_PHOTO_CAP,
     });
 
     // Named by the row's id, one format, never overwritten, cached for a year:
     // the four properties that make the URL both unguessable and immutable.
+    // The body is the re-encoded buffer rather than the file that arrived —
+    // what is stored has to be the artifact whose dimensions the row holds.
     expect(mockUpload).toHaveBeenCalledWith(
       `${IMAGE_ID}.jpg`,
-      expect.any(File),
+      expect.anything(),
       expect.objectContaining({
         contentType: "image/jpeg",
         upsert: false,
@@ -287,6 +341,72 @@ describe("POST /api/gedu/sessions/images", () => {
     // The sweep belongs to the failure path alone: a stored photo is removed by
     // the gedu's own control, never by the route that just wrote it.
     expect(mockRemove).not.toHaveBeenCalled();
+  });
+
+  // --- The strip, and the measurement -------------------------------------
+
+  it("refuses bytes that claim to be a JPEG and will not decode", async () => {
+    mockGedu();
+    // Past the magic-byte sniff and nowhere near a decodable picture. Same
+    // answer as a raw HEIC: the gedu's move is to convert it and try again.
+    const truncated = new File(
+      [new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x00])],
+      "broken.jpg",
+      { type: "image/jpeg" },
+    );
+
+    const response = await POST(createRequest({ file: truncated }));
+
+    expect(await refusal(response)).toEqual({ status: 415, code: "notJpeg" });
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it("strips EXIF and GPS from the bytes it stores", async () => {
+    mockGedu();
+    // A photo of a session carries coordinates and a capture time, and a report
+    // about a child is the last place to forward them. The browser already
+    // strips both on the honest path; this is the half that holds when the
+    // client did not run it.
+    const gps = new File([new Uint8Array(exifJpeg)], "IMG_0042.jpg", {
+      type: "image/jpeg",
+    });
+
+    // The fixture really does carry what it claims to — a test asserting the
+    // absence of something that was never there would pass forever.
+    expect(carriesExif(exifJpeg)).toBe(true);
+    expect(containsText(exifJpeg, EXIF_FIXTURE_GPS_DATE_STAMP)).toBe(true);
+    expect(containsText(exifJpeg, EXIF_FIXTURE_COPYRIGHT)).toBe(true);
+
+    const response = await POST(createRequest({ file: gps }));
+    expect(response.status).toBe(200);
+
+    const stored = uploadedBytes();
+    expect(carriesExif(stored)).toBe(false);
+    expect(containsText(stored, EXIF_FIXTURE_GPS_DATE_STAMP)).toBe(false);
+    expect(containsText(stored, EXIF_FIXTURE_COPYRIGHT)).toBe(false);
+  });
+
+  it("stores the dimensions of the oriented pixels", async () => {
+    mockGedu();
+    // The fixture is encoded 40 x 10 with an orientation tag that rotates it,
+    // so the true picture is 10 x 40. A route that trusted the file's own
+    // header — or the form's claim — would store it the other way round, and
+    // every gallery box and every mail's image box is arithmetic from these two
+    // numbers.
+    const gps = new File([new Uint8Array(exifJpeg)], "IMG_0042.jpg", {
+      type: "image/jpeg",
+    });
+
+    await POST(createRequest({ file: gps }));
+
+    expect(mockRpc).toHaveBeenCalledWith(
+      "add_group_session_image",
+      expect.objectContaining({
+        p_width: EXIF_FIXTURE_ENCODED_HEIGHT,
+        p_height: EXIF_FIXTURE_ENCODED_WIDTH,
+      }),
+    );
   });
 
   it("stores nothing when the insert is refused", async () => {

@@ -48,6 +48,27 @@ export function toChatAccounts(
 }
 
 /**
+ * What an image message draws while nothing servable has been resolved for it.
+ *
+ * A 1×1 transparent GIF, which over the thumbnail's own muted ground is exactly
+ * the empty box the geometry already reserves — and the box is arithmetic from
+ * the stored dimensions, so it is the right shape before anything loads and the
+ * same shape afterwards. **The point is that it is a real, always-loadable
+ * URL**: an empty `src` is not something an image element can be handed, and
+ * the fullscreen viewer pages through this same list, so one unresolvable
+ * picture in a burst must not be able to break the overlay somebody opened on
+ * its neighbour.
+ *
+ * Two different situations resolve to it and neither is worth telling apart
+ * here: an object still landing (the row is written first, so every subscriber
+ * but the sender can see the row before the bytes), and a mint the bucket
+ * policy refused — which is what a moderator hiding a picture looks like from
+ * the outside.
+ */
+export const UNRESOLVED_CHAT_IMAGE_SRC =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+/**
  * The log, oldest first, with each message carrying its own reactions.
  *
  * The history read hands back three flat lists because that is how three
@@ -58,8 +79,17 @@ export function toChatAccounts(
  * set is a CHECK constraint mirroring an app constant, so the two can differ for
  * exactly as long as it takes a deploy to follow a migration — and a reaction
  * with no glyph is better left out than rendered as a hole.
+ *
+ * **`imageSrc` is where the container's contract with the renderer is kept:**
+ * the components take a URL somebody else produced, and this is that somebody.
+ * It answers with the signed URL minted for that message, the sender's own blob
+ * for a picture they just sent, or nothing — and nothing becomes the placeholder
+ * above rather than an empty string.
  */
-export function toChatMessages(history: ChatHistory): ChatMessage[] {
+export function toChatMessages(
+  history: ChatHistory,
+  imageSrc: (messageId: string) => string | undefined,
+): ChatMessage[] {
   const reactionsByMessage = new Map<string, ChatReactionEntry[]>();
   for (const reaction of history.reactions) {
     if (!isChatReactionCode(reaction.code)) continue;
@@ -76,12 +106,11 @@ export function toChatMessages(history: ChatHistory): ChatMessage[] {
     image:
       row.image_width !== null && row.image_height !== null
         ? {
+            // The message id, which is also the object's name in the bucket
+            // and the key the signed URLs come back under — one identity for
+            // the row, the bytes and the React key.
             id: row.id,
-            // Resolved by whoever holds the bucket — which nothing does yet.
-            // The image step mints a signed URL per image here; until then no
-            // path in the product can produce an image row, because the
-            // composer's image drafts are dropped before they reach a send.
-            src: "",
+            src: imageSrc(row.id) ?? UNRESOLVED_CHAT_IMAGE_SRC,
             width: row.image_width,
             height: row.image_height,
           }
