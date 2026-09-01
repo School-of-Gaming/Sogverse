@@ -44,6 +44,22 @@ CREATE TYPE public.billing_mode AS ENUM (
 
 
 --
+-- Name: chat_channel_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.chat_channel_type AS ENUM (
+    'group_session'
+);
+
+
+--
+-- Name: TYPE chat_channel_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.chat_channel_type IS 'What a chat channel IS, and therefore which membership rule answers "who can read it". `group_session` is the chat of one scheduled voice-room session window. The seam a later direct-message or staff channel extends: add a value here and a branch to is_chat_channel_member / is_chat_channel_moderator, and every table, policy and RPC below is unchanged.';
+
+
+--
 -- Name: effective_product_status; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -292,6 +308,44 @@ CREATE FUNCTION public._list_function_authorization_surface() RETURNS TABLE(func
     -- RPC-access view this replaces used.
     AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype;
 $$;
+
+
+--
+-- Name: _list_replicated_tables(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public._list_replicated_tables() RETURNS TABLE(table_name text, replica_identity text)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT
+    pt.tablename::text,
+    -- A two-arm-plus CASE with NO else, deliberately, exactly as `_list_views`
+    -- reports a relation kind: an unrecognised replica-identity code arrives as
+    -- NULL and fails the caller's parse instead of being quietly read as one of
+    -- the four we know about.
+    CASE c.relreplident
+      WHEN 'd' THEN 'default'
+      WHEN 'n' THEN 'nothing'
+      WHEN 'f' THEN 'full'
+      WHEN 'i' THEN 'index'
+    END
+    FROM pg_catalog.pg_publication_tables pt
+    JOIN pg_catalog.pg_namespace n ON n.nspname = pt.schemaname
+    JOIN pg_catalog.pg_class c
+      ON c.relname = pt.tablename
+     AND c.relnamespace = n.oid
+   WHERE pt.pubname = 'supabase_realtime'
+     AND pt.schemaname = 'public'
+   ORDER BY 1;
+$$;
+
+
+--
+-- Name: FUNCTION _list_replicated_tables(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public._list_replicated_tables() IS 'Every public table in the `supabase_realtime` publication, with its replica identity. Test-only catalog reader, `service_role` alone, and it exists because publication membership and replica identity are invisible to every other check we have: neither appears in schema.sql, and a table left out of the publication fails silently — every client still sees its own optimistic echo and nothing anybody else sends ever arrives. The identity half matters for the same reason one step in: a DELETE replicates its OLD row only, so a filtered subscription needs FULL wherever a delete is a real event.';
 
 
 --
@@ -1173,6 +1227,94 @@ $$;
 
 
 --
+-- Name: chat_body_mentions_are_roster(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.chat_body_mentions_are_roster(p_channel_id uuid, p_body text) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT NOT EXISTS (
+    SELECT 1
+      FROM regexp_matches(
+             COALESCE(p_body, ''),
+             '@\[[^][]{1,64}\]\(([0-9a-fA-F-]{36})\)',
+             'g'
+           ) AS token(captures)
+     WHERE lower(token.captures[1]) NOT IN (
+       SELECT lower(roster.account_id::text)
+         FROM public.chat_channel_roster_ids(p_channel_id) AS roster(account_id)
+     )
+  );
+$$;
+
+
+--
+-- Name: FUNCTION chat_body_mentions_are_roster(p_channel_id uuid, p_body text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.chat_body_mentions_are_roster(p_channel_id uuid, p_body text) IS 'Internal: whether every `@[Name](id)` token in a body names an account on this channel''s roster. The send and edit RPCs refuse a body that fails it — an unvalidated token would render attacker-chosen text as a trusted-looking mention chip in a room of children. A body with no tokens passes trivially, which is what makes a plain sentence free.';
+
+
+--
+-- Name: chat_caller_is_locked(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.chat_caller_is_locked(p_channel_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.chat_channel_locks l
+     WHERE l.channel_id = p_channel_id
+       AND l.user_id    = (SELECT auth.uid())
+       AND l.locked_at IS NOT NULL
+  );
+$$;
+
+
+--
+-- Name: FUNCTION chat_caller_is_locked(p_channel_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.chat_caller_is_locked(p_channel_id uuid) IS 'Internal: whether a moderator has silenced the CALLER in this channel. Asked by the send, edit and reaction RPCs, which refuse with P0024; deliberately NOT asked by hide_chat_message, because taking back your own message is the one write a lock leaves. Keyed on locked_at rather than on the row''s existence, since unlocking is an update to NULL.';
+
+
+--
+-- Name: chat_channel_roster_ids(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.chat_channel_roster_ids(p_channel_id uuid) RETURNS SETOF uuid
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT part.participant_id
+    FROM public.chat_channels c
+    JOIN public.participations part ON part.group_id = c.group_id
+   WHERE c.id = p_channel_id
+     AND part.status = 'active'::public.participation_status
+  UNION
+  SELECT ga.gedu_id
+    FROM public.chat_channels c
+    JOIN public.product_groups g ON g.id = c.group_id
+    JOIN public.gedu_group_assignments ga ON ga.product_id = g.product_id
+   WHERE c.id = p_channel_id
+  UNION
+  SELECT m.sender_id
+    FROM public.chat_messages m
+   WHERE m.channel_id = p_channel_id;
+$$;
+
+
+--
+-- Name: FUNCTION chat_channel_roster_ids(p_channel_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.chat_channel_roster_ids(p_channel_id uuid) IS 'Internal: the account ids a channel''s roster names — the group''s active seat-holders, the product''s assigned gedus, and everyone who has a message in the channel. The single definition behind both get_chat_channel_roster and the send/edit mention validation, so the picker can never offer a name the send would refuse. Not exposed to `authenticated`: it is called from inside the SECURITY DEFINER chat RPCs.';
+
+
+--
 -- Name: claim_expired_seat_offer_notifications(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2030,6 +2172,68 @@ COMMENT ON FUNCTION public.derive_group_session_window(p_group_id uuid, p_sessio
 
 
 --
+-- Name: edit_chat_message(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.edit_chat_message(p_id uuid, p_body text) RETURNS timestamp with time zone
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid        uuid := (SELECT auth.uid());
+  v_channel_id uuid;
+  v_sender_id  uuid;
+  v_hidden_at  timestamptz;
+  v_has_body   boolean;
+  v_edited_at  timestamptz;
+BEGIN
+  SELECT m.channel_id, m.sender_id, m.hidden_at, m.body IS NOT NULL
+    INTO v_channel_id, v_sender_id, v_hidden_at, v_has_body
+    FROM public.chat_messages m
+   WHERE m.id = p_id;
+
+  -- A message that does not exist, one somebody else sent, and one in a channel
+  -- the caller may no longer read all answer IDENTICALLY. The caller has no
+  -- right to learn which of the three it was.
+  IF v_channel_id IS NULL
+     OR v_sender_id IS DISTINCT FROM v_uid
+     OR NOT public.is_chat_channel_member(v_channel_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF public.chat_caller_is_locked(v_channel_id) THEN
+    RAISE EXCEPTION 'You cannot edit messages in this chat'
+      USING ERRCODE = 'P0024';
+  END IF;
+
+  IF v_hidden_at IS NOT NULL OR NOT v_has_body THEN
+    RAISE EXCEPTION 'That message cannot be edited'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF NOT public.chat_body_mentions_are_roster(v_channel_id, p_body) THEN
+    RAISE EXCEPTION 'This message mentions somebody who is not in this chat'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  UPDATE public.chat_messages
+     SET body = p_body, edited_at = now()
+   WHERE id = p_id
+  RETURNING chat_messages.edited_at INTO v_edited_at;
+
+  RETURN v_edited_at;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION edit_chat_message(p_id uuid, p_body text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.edit_chat_message(p_id uuid, p_body text) IS 'Rewrite the caller''s OWN standing text message in place, stamping edited_at. Refuses a removed message, an image message (there is nothing to edit) and any message under a lock — capabilities.ts is the spec and a lock takes edits away, so that refusal carries P0024. A message that does not exist, one somebody else sent and one in a channel the caller may no longer read are all refused identically with 42501. Mentions are validated against the channel roster exactly as on a send: an edit is a body write, and a name typed for the first time during one becomes a mention. The character cap stays the column''s.';
+
+
+--
 -- Name: effective_status(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2095,6 +2299,154 @@ BEGIN
   RETURN CASE WHEN v_end_passed THEN 'expired' ELSE 'pending' END;
 END;
 $$;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: chat_channels; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.chat_channels (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    type public.chat_channel_type NOT NULL,
+    group_id uuid NOT NULL,
+    session_opens_at timestamp with time zone NOT NULL,
+    session_ends_at timestamp with time zone NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_chat_channels_window_order CHECK ((session_ends_at > session_opens_at))
+);
+
+
+--
+-- Name: TABLE chat_channels; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.chat_channels IS 'One chat log''s identity. For a `group_session` channel that is one product group''s one session window, keyed by (group_id, session_opens_at) — the same key voice_private_zone_occupants carries, and the same instant the voice token route hands a joiner as `sessionOpensAt`, so a room and its chat agree on which window they are. Materialized idempotently by ensure_chat_channel and by nothing else. Deliberately NOT related to group_sessions by a foreign key: that table''s ensure function is unguarded behind staff-only callers, and a participant-callable RPC reaching it would manufacture phantom session rows in staff feeds.';
+
+
+--
+-- Name: COLUMN chat_channels.session_opens_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.chat_channels.session_opens_at IS 'When the room opens — the session start MINUS the voice join margin, i.e. exactly the voice token route''s `windowOpensAt`. SERVER-DERIVED, never accepted from a caller, and snapshotted rather than re-derived: a schedule edit moves future windows and leaves this log where it happened. Half of the row''s natural key.';
+
+
+--
+-- Name: COLUMN chat_channels.session_ends_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.chat_channels.session_ends_at IS 'When the room closes — session end PLUS the voice leave margin, i.e. the token route''s `windowClosesAt`. Server-derived and snapshotted like its partner. This is the instant the FAMILY read bound is measured from (see is_chat_channel_member); staff have no time bound, because after-the-fact review is the point of keeping the rows.';
+
+
+--
+-- Name: ensure_chat_channel(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.ensure_chat_channel(p_group_id uuid) RETURNS SETOF public.chat_channels
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  -- The voice join margins, as SQL literals and named as such. They mirror
+  -- VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES / _AFTER_MINUTES, which SQL
+  -- cannot see; the db test that pins these windows against the TypeScript
+  -- fixtures is what keeps the two honest.
+  c_open_margin  constant interval := interval '5 minutes';
+  c_close_margin constant interval := interval '5 minutes';
+
+  v_zone       text;
+  v_product_id uuid;
+  v_opens      timestamptz;
+  v_ends       timestamptz;
+  v_id         uuid;
+BEGIN
+  -- Guard first. A NULL group is refused outright rather than allowed to fall
+  -- through the predicate — an admin passes is_voice_group_member(NULL), and a
+  -- refusal is the only correct answer to "which group?" with no group named.
+  IF p_group_id IS NULL OR NOT public.is_voice_group_member(p_group_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT p.id, p.timezone
+    INTO v_product_id, v_zone
+    FROM public.product_groups g
+    JOIN public.products p ON p.id = g.product_id
+   WHERE g.id = p_group_id;
+
+  IF v_zone IS NOT NULL THEN
+    SELECT o.opens_at, o.closes_at
+      INTO v_opens, v_ends
+      FROM (
+        SELECT
+          -- `timestamp AT TIME ZONE zone` resolves a wall clock in that zone to
+          -- the right instant, so nothing here does arithmetic of its own on a
+          -- local day.
+          ((cd.session_date + s.start_time) AT TIME ZONE v_zone) - c_open_margin
+            AS opens_at,
+          -- The duration is added to the INSTANT, not to the wall clock, so a
+          -- session straddling a transition keeps its real length.
+          ((cd.session_date + s.start_time) AT TIME ZONE v_zone)
+            + make_interval(mins => s.duration_minutes) + c_close_margin
+            AS closes_at
+          FROM (
+            -- Yesterday, today and tomorrow AS CALENDAR DATES in the product's
+            -- zone. Stepping a date is exact on any runtime; stepping an
+            -- instant by 24 hours is what breaks twice a year.
+            SELECT ((now() AT TIME ZONE v_zone)::date + probe.offset_days)
+                     AS session_date
+              FROM generate_series(-1, 1) AS probe(offset_days)
+          ) cd
+          JOIN public.schedule_slots s ON s.product_id = v_product_id
+           -- schedule_slots.weekday is 0 = Monday; ISODOW is 1 = Monday.
+           WHERE s.weekday = (EXTRACT(ISODOW FROM cd.session_date)::integer - 1)
+      ) o
+     WHERE now() >= o.opens_at
+       AND now() <  o.closes_at
+     -- Two slots' windows can overlap. The TypeScript path takes whichever slot
+     -- PostgREST happened to return first; this takes the earliest-opening one,
+     -- deterministically, so two callers a millisecond apart cannot materialize
+     -- two different channels for one room.
+     ORDER BY o.opens_at, o.closes_at
+     LIMIT 1;
+  END IF;
+
+  IF v_opens IS NULL THEN
+    RAISE EXCEPTION 'No session window is open for this group'
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  -- Insert-or-reselect, the established idempotent shape. Two joiners racing on
+  -- mount is the normal case, not the exception.
+  INSERT INTO public.chat_channels (
+    type, group_id, session_opens_at, session_ends_at
+  )
+  VALUES (
+    'group_session'::public.chat_channel_type, p_group_id, v_opens, v_ends
+  )
+  ON CONFLICT (group_id, session_opens_at) DO NOTHING
+  RETURNING chat_channels.id INTO v_id;
+
+  IF v_id IS NULL THEN
+    SELECT c.id INTO v_id
+      FROM public.chat_channels c
+     WHERE c.group_id = p_group_id
+       AND c.session_opens_at = v_opens;
+  END IF;
+
+  RETURN QUERY
+  SELECT c.* FROM public.chat_channels c WHERE c.id = v_id;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION ensure_chat_channel(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.ensure_chat_channel(p_group_id uuid) IS 'The current session window''s chat channel for a group, materialized if it does not exist yet. Guarded on is_voice_group_member, so exactly the people who may join the room may open its chat. Both window instants are derived HERE, from the product''s schedule, and are never accepted from the caller: they feed the family read bound, so a client-supplied value would let a member mint an arbitrary read window over the group''s history. The window search is this function''s own PL/pgSQL port of the voice token route''s TypeScript search — join margins as SQL literals, holiday-blind to match the voice path, and DST-safe by stepping CALENDAR dates in the product''s zone and probing the adjacent days, never by 24-hour arithmetic. Deliberately never calls ensure_group_session and never touches group_sessions: that function is unguarded behind staff-only callers, and a participant reaching it would manufacture phantom session rows in the staff feeds. Raises P0002 when no window is open, which the container renders as its one quiet "chat unavailable" line.';
 
 
 --
@@ -2743,6 +3095,38 @@ $$;
 --
 
 COMMENT ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) IS 'One round trip behind the admin product page''s Sessions panel: the product''s schedule parameters, its venue and site notes on an in-person product, and every group on it with its standing notes, its register roster and every stored session row with a sparse attendance map and, since 00223, its photos. Admin-only, guard-first on assert_admin. Product-keyed rather than group-keyed because the page shows one product and puts a group selector in front of the feed; asking per group would send the product shell and the site over the wire once per group. Contains no schedule expansion — the client owns the calendar math, exactly as it does for the gedu feed. The SESSION shape is get_gedu_group_feed''s verbatim, because one card component renders both and the two must not disagree about what a session is — which is why `images` ({id, width, height} per photo, ordered by (created_at, id), never the uploader) arrives here in the same shape and needs no versioned name: this document''s reader shares the gedu session''s tolerant schema, and only the strict family one needed get_my_family_product_feed_v2. The ROSTER deliberately is not the gedu feed''s — it carries participant_id and first_name alone, since the only thing this surface does with it is take the register, and the groups panel on the same page already answers who these people are.';
+
+
+--
+-- Name: get_chat_channel_roster(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_chat_channel_roster(p_channel_id uuid) RETURNS TABLE(id uuid, first_name text, role public.user_role)
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  IF NOT public.is_chat_channel_member(p_channel_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  RETURN QUERY
+  SELECT pr.id, pr.first_name, pr.role
+    FROM public.profiles pr
+   WHERE pr.id IN (
+     SELECT roster.account_id
+       FROM public.chat_channel_roster_ids(p_channel_id) AS roster(account_id)
+   )
+   ORDER BY pr.id;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION get_chat_channel_roster(p_channel_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_chat_channel_roster(p_channel_id uuid) IS 'The accounts a channel can name: the group''s active seat-holders, the product''s assigned gedus, and everyone who has a message in the channel — that last clause is what keeps a departed member''s name on the words they left behind, and how a covering gedu or an admin becomes mentionable the moment they send. First name and role only; nothing else about anybody. Membership-scoped on is_chat_channel_member. Exists because `profiles` RLS correctly refuses cross-participant reads and persisted history cannot resolve names from a live call the way the old ephemeral chat did. ORDERED BY PROFILE ID and that is a contract: mention resolution settles two accounts sharing a name by list position, and the composer and the in-place editor must be handed the same array in the same order or one typed name would mean two different people.';
 
 
 --
@@ -3621,10 +4005,6 @@ $$;
 
 COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person products, the teaching gedus'' first names, the group''s full stored session history with reports and PHOTOS, the named participant''s own attendance marks, and — since 00227 — that participant''s own creations. Each session carries updated_by and the last editor''s first name (00194) — last editor of the SESSION, not author of the report: an attendance mark or a staff-note edit moves it. The name travels per session because a past session''s editor may no longer teach the group. Since 00222 each session also carries `images`: {id, width, height} per photo, ordered by (created_at, id), the same shape the gedu and admin documents carry because one shared gallery renders all three, and never the uploader, which is safeguarding audit; that key was added under a versioned twin and the twin was later dropped when the severity paragraph in docs/plans/CLAUDE.md settled that transient read-side breakage inside a release window is accepted. `creations` (00227) is a TOP-LEVEL array of {title, url} — this participant''s own, in this group, and structurally incapable of holding anybody else''s because it is not a map keyed by participant. It is the one staff-authored family-facing field that carries links, an owner-approved exception to the link-free rule session reports follow, and the render side parses each URL and degrades to the title as plain text when it is not http(s). Empty array when there is nothing, so the card renders on emptiness and never on null. Self-scoping — the caller must be the participation''s participant (a child, or a parent holding a seat of their own) or a parent linked to them; an unplaced participation has no page and answers P0002; a row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. Carries no gedu note of any scope, no roster, no other participant''s marks or creations, no parent email, no material link, no requires_gamer_creations flag and no owed/completeness state.';
 
-
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
 
 --
 -- Name: profiles; Type: TABLE; Schema: public; Owner: -
@@ -4529,6 +4909,59 @@ $$;
 
 
 --
+-- Name: hide_chat_message(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.hide_chat_message(p_id uuid) RETURNS timestamp with time zone
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid        uuid := (SELECT auth.uid());
+  v_channel_id uuid;
+  v_sender_id  uuid;
+  v_hidden_at  timestamptz;
+BEGIN
+  SELECT m.channel_id, m.sender_id, m.hidden_at
+    INTO v_channel_id, v_sender_id, v_hidden_at
+    FROM public.chat_messages m
+   WHERE m.id = p_id;
+
+  IF v_channel_id IS NULL
+     OR NOT public.is_chat_channel_member(v_channel_id)
+     OR NOT (
+       v_sender_id IS NOT DISTINCT FROM v_uid
+       OR public.is_chat_channel_moderator(v_channel_id)
+     ) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- capabilities.ts offers neither delete nor hide on an already-removed
+  -- message, so this cannot arrive from the UI; refusing keeps the two halves
+  -- in step rather than silently re-stamping who removed it.
+  IF v_hidden_at IS NOT NULL THEN
+    RAISE EXCEPTION 'That message has already been removed'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  UPDATE public.chat_messages
+     SET hidden_at = now(), hidden_by = v_uid
+   WHERE id = p_id
+  RETURNING chat_messages.hidden_at INTO v_hidden_at;
+
+  RETURN v_hidden_at;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION hide_chat_message(p_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.hide_chat_message(p_id uuid) IS 'Remove one message, leaving the tombstone — the SOFT delete the whole surface is built on: the row and the bytes survive, the row keeps its place in the log so nothing a reader is looking at moves, and moderators keep reading the original. Open to the SENDER (any sender, a locked one included — taking back a regretted message is the one write a lock leaves) and to any MODERATOR of the channel, symmetrically: a moderator may remove anyone''s message, a fellow gedu''s and an admin''s included, and the absence of a mod-vs-mod test here is a decision, not an oversight. Self delete and moderator removal leave the identical mark, so nothing on screen tells a room which happened; hidden_by answers that for the psql review path alone. This is also the delete control for an IMAGE: no storage action is taken, because the bucket policy reads hidden_at live.';
+
+
+--
 -- Name: immutable_unaccent(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4559,6 +4992,67 @@ BEGIN
   RETURN get_user_role() = 'admin';
 END;
 $$;
+
+
+--
+-- Name: is_chat_channel_member(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_chat_channel_member(p_channel_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT COALESCE((
+    SELECT
+      CASE c.type
+        WHEN 'group_session'::public.chat_channel_type THEN
+          public.is_voice_group_member(c.group_id)
+          AND (
+            -- Staff read without a time bound: after-the-fact review is the
+            -- whole point of keeping the rows.
+            public.is_voice_group_moderator(c.group_id)
+            -- A family participant reads around this channel's own window.
+            OR now() < c.session_ends_at + interval '1 hour'
+          )
+      END
+      FROM public.chat_channels c
+     WHERE c.id = p_channel_id
+  ), false);
+$$;
+
+
+--
+-- Name: FUNCTION is_chat_channel_member(p_channel_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.is_chat_channel_member(p_channel_id uuid) IS 'Who may READ this channel — the predicate every chat RLS policy and every chat RPC guard composes from, and the seam a later channel type extends by adding a branch. For a group_session channel: the voice room''s own membership predicate, plus a time bound that applies to FAMILY participants only. The bound is not belt-and-braces — postgres_changes respects RLS, so the subscriber reads these tables directly and any member''s own account can query PostgREST for them; without it that path returns every past session''s log, including chat from before that member joined the group. The one hour is chat''s own number, duplicated on purpose rather than derived from the TypeScript voice margins SQL cannot see. Total boolean: an unknown id is false, never NULL.';
+
+
+--
+-- Name: is_chat_channel_moderator(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_chat_channel_moderator(p_channel_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT COALESCE((
+    SELECT
+      CASE c.type
+        WHEN 'group_session'::public.chat_channel_type THEN
+          public.is_voice_group_moderator(c.group_id)
+      END
+      FROM public.chat_channels c
+     WHERE c.id = p_channel_id
+  ), false);
+$$;
+
+
+--
+-- Name: FUNCTION is_chat_channel_moderator(p_channel_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.is_chat_channel_moderator(p_channel_id uuid) IS 'Whether the caller moderates this channel — a POSITIVE allow-list (admin, or a gedu assigned to the product), never an exclusion. The voice room learned that the expensive way: a "not a gamer" test would have handed moderation to parents the day parent seats shipped, and a parent in a chat is a participant with no moderator powers, exactly like a child. Consumed by the lock-row read policy and by the hide/restore/lock RPC guards. Total boolean.';
 
 
 --
@@ -4940,6 +5434,56 @@ $$;
 --
 
 COMMENT ON FUNCTION public.location_search_separator() IS 'The term delimiter inside locations.search_blob: U+001F UNIT SEPARATOR. A term-prefix match is "contains separator || needle"; an exact term match is "contains separator || needle || separator".';
+
+
+--
+-- Name: mark_chat_image_stored(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.mark_chat_image_stored(p_id uuid) RETURNS timestamp with time zone
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid       uuid := (SELECT auth.uid());
+  v_sender_id uuid;
+  v_is_image  boolean;
+  v_stored_at timestamptz;
+BEGIN
+  SELECT m.sender_id, m.image_width IS NOT NULL
+    INTO v_sender_id, v_is_image
+    FROM public.chat_messages m
+   WHERE m.id = p_id;
+
+  -- A message that does not exist and one somebody else sent answer
+  -- IDENTICALLY, exactly as edit_chat_message refuses: the caller has no
+  -- right to learn which it was, so this cannot be an oracle for message ids.
+  IF v_sender_id IS NULL OR v_sender_id IS DISTINCT FROM v_uid THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF NOT v_is_image THEN
+    RAISE EXCEPTION 'That message has no image to mark as stored'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Idempotent by COALESCE: the first call stamps, any repeat returns the
+  -- standing stamp untouched — the write side of the column's monotonicity.
+  UPDATE public.chat_messages
+     SET image_stored_at = COALESCE(image_stored_at, now())
+   WHERE id = p_id
+  RETURNING chat_messages.image_stored_at INTO v_stored_at;
+
+  RETURN v_stored_at;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION mark_chat_image_stored(p_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.mark_chat_image_stored(p_id uuid) IS 'Record that the caller''s OWN image message''s object has landed, stamping image_stored_at (idempotently — a standing stamp is returned, never moved). Called by the upload route on the uploader''s own client the moment the storage write returns; the resulting realtime UPDATE is the event that tells every subscriber the picture is fetchable. Ownership is the whole guard: no membership, lock or hidden check, because this completes a send that send_chat_image_message already authorized, and none of those landing mid-upload may strand a legitimate picture as permanently blank. A missing row and somebody else''s row are refused identically with 42501; a text message with check_violation. Returns image_stored_at.';
 
 
 --
@@ -5728,6 +6272,50 @@ COMMENT ON FUNCTION public.respond_seat_offer(p_participation_id uuid, p_offer_s
 
 
 --
+-- Name: restore_chat_message(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.restore_chat_message(p_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_channel_id uuid;
+  v_hidden_at  timestamptz;
+BEGIN
+  SELECT m.channel_id, m.hidden_at
+    INTO v_channel_id, v_hidden_at
+    FROM public.chat_messages m
+   WHERE m.id = p_id;
+
+  IF v_channel_id IS NULL
+     OR NOT public.is_chat_channel_moderator(v_channel_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF v_hidden_at IS NULL THEN
+    RAISE EXCEPTION 'That message has not been removed'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- hidden_by is cleared with hidden_at: after a restore nothing was removed,
+  -- and a stamp naming somebody for an act that no longer stands would read as
+  -- an accusation in the psql review path it exists to serve.
+  UPDATE public.chat_messages
+     SET hidden_at = NULL, hidden_by = NULL
+   WHERE id = p_id;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION restore_chat_message(p_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.restore_chat_message(p_id uuid) IS 'Put a removed message back. MODERATORS ONLY — the one control a tombstone carries — and only on a message that is actually removed. Clears hidden_by along with hidden_at. A message that does not exist and one in a channel the caller does not moderate are refused identically with 42501.';
+
+
+--
 -- Name: search_locations(text, public.location_type[], integer, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5895,6 +6483,127 @@ COMMENT ON FUNCTION public.search_locations(p_query text, p_types public.locatio
 
 
 --
+-- Name: send_chat_image_message(uuid, uuid, integer, integer, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.send_chat_image_message(p_id uuid, p_channel_id uuid, p_width integer, p_height integer, p_reply_to_message_id uuid DEFAULT NULL::uuid) RETURNS timestamp with time zone
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid        uuid := (SELECT auth.uid());
+  v_created_at timestamptz;
+BEGIN
+  IF NOT public.is_chat_channel_member(p_channel_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF public.chat_caller_is_locked(p_channel_id) THEN
+    RAISE EXCEPTION 'You cannot send messages in this chat'
+      USING ERRCODE = 'P0024';
+  END IF;
+
+  -- One refusal for every implausible dimension, rather than a 23514 from the
+  -- CHECK for an out-of-range value and a 23502 from NOT NULL for a missing
+  -- one. The table's constraints still stand behind this and are what make the
+  -- bound a guarantee rather than a convention.
+  IF p_width IS NULL OR p_height IS NULL
+     OR p_width  <= 0 OR p_width  > 4096
+     OR p_height <= 0 OR p_height > 4096 THEN
+    RAISE EXCEPTION 'Image dimensions % x % are not a plausible chat image',
+      COALESCE(p_width::text, 'NULL'), COALESCE(p_height::text, 'NULL')
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF p_reply_to_message_id IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM public.chat_messages m
+        WHERE m.id = p_reply_to_message_id
+          AND m.channel_id = p_channel_id
+          AND m.hidden_at IS NULL
+     ) THEN
+    RAISE EXCEPTION 'That message cannot be replied to'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  INSERT INTO public.chat_messages (
+    id, channel_id, sender_id, image_width, image_height, reply_to_message_id
+  )
+  VALUES (p_id, p_channel_id, v_uid, p_width, p_height, p_reply_to_message_id)
+  RETURNING chat_messages.created_at INTO v_created_at;
+
+  RETURN v_created_at;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION send_chat_image_message(p_id uuid, p_channel_id uuid, p_width integer, p_height integer, p_reply_to_message_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.send_chat_image_message(p_id uuid, p_channel_id uuid, p_width integer, p_height integer, p_reply_to_message_id uuid) IS 'Create the ROW for one chat image, ahead of its object. Called by the upload route on the UPLOADER''S OWN client — this guard is the authorization, and the admin client is used for the storage write alone — with the dimensions the route''s sharp re-encode measured, never the ones a client claimed. Same membership, lock and reply-target guards as the text send; the reply parameter matters because a burst with no text puts the reply on the first image. Implausible dimensions are refused with check_violation as one class, the column CHECKs standing behind it. Returns created_at.';
+
+
+--
+-- Name: send_chat_message(uuid, uuid, text, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.send_chat_message(p_id uuid, p_channel_id uuid, p_body text, p_reply_to_message_id uuid DEFAULT NULL::uuid) RETURNS timestamp with time zone
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid        uuid := (SELECT auth.uid());
+  v_created_at timestamptz;
+BEGIN
+  IF NOT public.is_chat_channel_member(p_channel_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF public.chat_caller_is_locked(p_channel_id) THEN
+    RAISE EXCEPTION 'You cannot send messages in this chat'
+      USING ERRCODE = 'P0024';
+  END IF;
+
+  -- capabilities.ts offers reply only on a NON-HIDDEN message, and a reply
+  -- across channels is not a thing the UI can express at all. A target that
+  -- does not exist, one in another channel and one that has been removed are
+  -- refused identically, so this cannot be used as an oracle for message ids.
+  IF p_reply_to_message_id IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM public.chat_messages m
+        WHERE m.id = p_reply_to_message_id
+          AND m.channel_id = p_channel_id
+          AND m.hidden_at IS NULL
+     ) THEN
+    RAISE EXCEPTION 'That message cannot be replied to'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF NOT public.chat_body_mentions_are_roster(p_channel_id, p_body) THEN
+    RAISE EXCEPTION 'This message mentions somebody who is not in this chat'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  INSERT INTO public.chat_messages (
+    id, channel_id, sender_id, body, reply_to_message_id
+  )
+  VALUES (p_id, p_channel_id, v_uid, p_body, p_reply_to_message_id)
+  RETURNING chat_messages.created_at INTO v_created_at;
+
+  RETURN v_created_at;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION send_chat_message(p_id uuid, p_channel_id uuid, p_body text, p_reply_to_message_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.send_chat_message(p_id uuid, p_channel_id uuid, p_body text, p_reply_to_message_id uuid) IS 'Post one text message, under the caller''s own id so the optimistic echo reconciles by identity. Guards, in order: channel membership (42501), not locked (P0024 — the one named refusal, because the client must not offer a retry for it), a reply target that is a NON-HIDDEN message of the same channel, and every mention token naming somebody on the channel roster. The character cap is the COLUMN''S, measured on the display form with mention tokens flattened; this function deliberately does not re-measure, so there is no second number to drift. Returns created_at.';
+
+
+--
 -- Name: send_seat_offer(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -6021,6 +6730,77 @@ $$;
 --
 
 COMMENT ON FUNCTION public.send_seat_offer(p_participation_id uuid) IS 'Offer an open seat to one waitlisted family, under the product gate lock. Refuses anything but a no-charge product (free or external_contract) and anything but exactly one group — accepting has to place the child, and the family is never asked to choose. Stamps seat_offer_sent_at with now() truncated to MILLISECONDS, which is load-bearing: the emailed token is signed over that exact instant and compared back through a JavaScript Date, which cannot hold microseconds. Returns the stored stamp (never the caller''s idea of it) plus idempotent — false only on the call that wrote a stamp, true when a LIVE offer was already standing. The mail keys on idempotent = false, the same signal join_waitlist returns for the same reason; a replay deliberately does not refresh the deadline, because a family reading a date in their inbox must not have it moved. An EXPIRED offer is re-offerable and clears the old expiry-notification stamp with it. No EXECUTE grant to authenticated: the admin route calls it through the service-role client, having established the admin''s identity itself.';
+
+
+--
+-- Name: set_chat_lock(uuid, uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_chat_lock(p_channel_id uuid, p_user_id uuid, p_locked boolean) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid         uuid := (SELECT auth.uid());
+  v_target_role public.user_role;
+BEGIN
+  IF NOT public.is_chat_channel_moderator(p_channel_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_user_id IS NULL OR p_locked IS NULL THEN
+    RAISE EXCEPTION 'A lock needs a person and a direction'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  SELECT pr.role INTO v_target_role
+    FROM public.profiles pr WHERE pr.id = p_user_id;
+
+  -- A moderator target is refused, which also covers the caller themselves:
+  -- every moderator holds a moderating role, so "you cannot lock yourself"
+  -- needs no separate clause.
+  IF v_target_role IS NULL
+     OR v_target_role IN ('admin'::public.user_role, 'gedu'::public.user_role)
+  THEN
+    RAISE EXCEPTION 'That person cannot be locked'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+      FROM public.chat_channel_roster_ids(p_channel_id) AS roster(account_id)
+     WHERE roster.account_id = p_user_id
+  ) THEN
+    RAISE EXCEPTION 'That person is not in this chat'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- UNLOCK IS AN UPDATE TO NULL, NEVER A DELETE, so both directions of the
+  -- switch replicate to every subscriber without this table needing REPLICA
+  -- IDENTITY FULL.
+  INSERT INTO public.chat_channel_locks (
+    channel_id, user_id, locked_at, locked_by, updated_at
+  )
+  VALUES (
+    p_channel_id,
+    p_user_id,
+    CASE WHEN p_locked THEN now() END,
+    v_uid,
+    now()
+  )
+  ON CONFLICT (channel_id, user_id) DO UPDATE
+    SET locked_at  = EXCLUDED.locked_at,
+        locked_by  = EXCLUDED.locked_by,
+        updated_at = now();
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_chat_lock(p_channel_id uuid, p_user_id uuid, p_locked boolean); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_chat_lock(p_channel_id uuid, p_user_id uuid, p_locked boolean) IS 'Silence one person in one channel, or lift it. MODERATORS ONLY, and the target must not be one: a lock is a judgement about a person rather than about a message, so it is the asymmetric half of the moderation principle and a moderator cannot lock a colleague. The target test reads their ROLE, mirroring capabilities.ts exactly, and refusing a moderator target also covers locking yourself. The target must additionally be on the channel roster — that is the target half of the authorization. Unlocking sets locked_at back to NULL and NEVER deletes the row, so a lock landing mid-conversation and a lock being lifted both arrive live rather than on refetch.';
 
 
 --
@@ -6943,6 +7723,66 @@ COMMENT ON FUNCTION public.submit_my_feedback(p_message text) IS 'Self-scoping f
 
 
 --
+-- Name: toggle_chat_reaction(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.toggle_chat_reaction(p_message_id uuid, p_code text) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid        uuid := (SELECT auth.uid());
+  v_channel_id uuid;
+  v_hidden_at  timestamptz;
+BEGIN
+  SELECT m.channel_id, m.hidden_at
+    INTO v_channel_id, v_hidden_at
+    FROM public.chat_messages m
+   WHERE m.id = p_message_id;
+
+  IF v_channel_id IS NULL
+     OR NOT public.is_chat_channel_member(v_channel_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF public.chat_caller_is_locked(v_channel_id) THEN
+    RAISE EXCEPTION 'You cannot react in this chat' USING ERRCODE = 'P0024';
+  END IF;
+
+  IF v_hidden_at IS NOT NULL THEN
+    RAISE EXCEPTION 'That message cannot be reacted to'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  DELETE FROM public.chat_reactions r
+   WHERE r.message_id = p_message_id
+     AND r.sender_id  = v_uid
+     AND r.code       = p_code;
+
+  IF FOUND THEN
+    RETURN false;
+  END IF;
+
+  -- channel_id is stamped from the MESSAGE row, never from the caller: that is
+  -- what stops a reaction being filed under a channel its message is not in,
+  -- and the column exists so a postgres_changes subscription can filter on one
+  -- column.
+  INSERT INTO public.chat_reactions (message_id, sender_id, code, channel_id)
+  VALUES (p_message_id, v_uid, p_code, v_channel_id);
+
+  RETURN true;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION toggle_chat_reaction(p_message_id uuid, p_code text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.toggle_chat_reaction(p_message_id uuid, p_code text) IS 'Add or take back the caller''s reaction on one message, returning whether it now stands. Guards: channel membership, not locked (P0024 — a reaction is a message with fewer characters, so a lock takes it away), and a target that has not been removed. The channel_id on the new row is stamped from the MESSAGE, never from the caller. The approved code set is not restated here: the delete runs first and the insert meets the column''s own CHECK, so there is one list in SQL and it is the one mirroring CHAT_REACTION_CODES.';
+
+
+--
 -- Name: trg_refresh_product_seat_counts(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -7452,6 +8292,137 @@ CREATE TABLE public.calendar_holidays (
 
 
 --
+-- Name: chat_channel_locks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.chat_channel_locks (
+    channel_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    locked_at timestamp with time zone,
+    locked_by uuid,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE chat_channel_locks; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.chat_channel_locks IS 'Who a moderator has silenced in a channel, and by whom. A lock takes away everything that writes — sending, editing, replying and reacting — and leaves exactly one thing: deleting your own message, because taking back something you regret is what a locked member most plausibly still wants and refusing it would make the lock a punishment rather than a control. A locked member keeps READING. Unlock sets locked_at back to NULL and never deletes the row, so the switch replicates in both directions. Read policy is the one exception on these four tables: own row plus moderators, because a channel-wide read would broadcast live to every child that a gedu had silenced a particular child.';
+
+
+--
+-- Name: COLUMN chat_channel_locks.locked_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.chat_channel_locks.locked_by IS 'The moderator who last set this row''s state, lock or unlock alike. Audit only — nothing renders it. ON DELETE SET NULL, so a departed gedu leaves the act recorded without the name.';
+
+
+--
+-- Name: chat_messages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.chat_messages (
+    id uuid NOT NULL,
+    channel_id uuid NOT NULL,
+    sender_id uuid NOT NULL,
+    body text,
+    image_width integer,
+    image_height integer,
+    reply_to_message_id uuid,
+    created_at timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    edited_at timestamp with time zone,
+    hidden_at timestamp with time zone,
+    hidden_by uuid,
+    image_stored_at timestamp with time zone,
+    CONSTRAINT chk_chat_messages_display_length CHECK (((body IS NULL) OR (char_length(regexp_replace(body, '@\[([^][]{1,64})\]\(([0-9a-fA-F-]{36})\)'::text, '@\1'::text, 'g'::text)) <= 500))),
+    CONSTRAINT chk_chat_messages_image_height CHECK (((image_height IS NULL) OR ((image_height > 0) AND (image_height <= 4096)))),
+    CONSTRAINT chk_chat_messages_image_width CHECK (((image_width IS NULL) OR ((image_width > 0) AND (image_width <= 4096)))),
+    CONSTRAINT chk_chat_messages_stored_implies_image CHECK (((image_stored_at IS NULL) OR (image_width IS NOT NULL))),
+    CONSTRAINT chk_chat_messages_text_xor_image CHECK ((((body IS NOT NULL) AND (btrim(body) <> ''::text) AND (image_width IS NULL) AND (image_height IS NULL)) OR ((body IS NULL) AND (image_width IS NOT NULL) AND (image_height IS NOT NULL))))
+);
+
+
+--
+-- Name: TABLE chat_messages; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.chat_messages IS 'One message. Text XOR one image, never both — the composer fans a burst out into one image-only row per picture plus one text row. Removal is a SOFT delete (hidden_at/hidden_by) and nothing else: the row and the bytes survive, the reader''s place is kept by a tombstone that holds the row''s spot, and a moderator keeps reading the original, which is the moment the record matters most. Rows are never physically deleted — v1 has no retention mechanism, by decision — except by CASCADE when the channel, its group or the sender''s own account goes. Written only by send_chat_message, send_chat_image_message, edit_chat_message, hide_chat_message and restore_chat_message; `authenticated` holds SELECT and nothing more.';
+
+
+--
+-- Name: COLUMN chat_messages.id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.chat_messages.id IS 'Client-supplied, so the optimistic echo reconciles by identity. A hostile caller can therefore choose the id of their own message and nothing else — the primary key refuses a collision and every other column is stamped by the RPC.';
+
+
+--
+-- Name: COLUMN chat_messages.body; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.chat_messages.body IS 'The message text, or NULL on an image row. Mentions ride INSIDE it as `@[Name](id)` rather than in a join table: the name so a body read anywhere at all still says who was meant, the id so the highlight keys on an account rather than on a string anybody could type. The send and edit RPCs validate every token''s id against the channel roster, and the display-length CHECK measures the flattened form.';
+
+
+--
+-- Name: COLUMN chat_messages.image_width; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.chat_messages.image_width IS 'The stored image''s pixel width on an image row, NULL on a text row. SERVER-MEASURED by the upload route''s re-encode — a client-claimed number never reaches this column — and the sole input to the thumbnail''s box geometry, because nothing measures a decoded image in a scrolling log.';
+
+
+--
+-- Name: COLUMN chat_messages.image_height; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.chat_messages.image_height IS 'The stored image''s pixel height. See `image_width` — same provenance, same sanity bound, and both are NULL or both are set by the XOR constraint.';
+
+
+--
+-- Name: COLUMN chat_messages.hidden_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.chat_messages.hidden_by IS 'Who removed this message — the sender themselves, or a moderator. AUDIT ONLY: nothing in the UI reads it and the tombstone is identical either way, so a room is never told which of the two happened. It exists for the psql review path (docs/runbooks/remote-supabase-psql.md), where "who removed this" has to be answerable. Cleared again by restore_chat_message, because after a restore nothing was removed. ON DELETE SET NULL, so a departed moderator leaves the removal recorded without the name.';
+
+
+--
+-- Name: COLUMN chat_messages.image_stored_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.chat_messages.image_stored_at IS 'When this image message''s object finished landing in the chat-images bucket — NULL while the bytes are still in flight (or were lost: an upload failure hides the row and never sets this). Written once, by mark_chat_image_stored, after the storage write returns; MONOTONE — nothing ever clears it, because the object is upsert:false and never deleted. The flag''s realtime UPDATE is what tells every subscriber the picture is fetchable, so clients render and fetch an image only when this is set — which is what closes the row-before-bytes race by construction. NULL on a text message, enforced by chk_chat_messages_stored_implies_image.';
+
+
+--
+-- Name: chat_reactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.chat_reactions (
+    message_id uuid NOT NULL,
+    sender_id uuid NOT NULL,
+    code text NOT NULL,
+    channel_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_chat_reactions_code CHECK ((code = ANY (ARRAY['thumbs_up'::text, 'heart'::text, 'laugh'::text, 'surprised'::text, 'celebrate'::text, 'thinking'::text])))
+);
+
+ALTER TABLE ONLY public.chat_reactions REPLICA IDENTITY FULL;
+
+
+--
+-- Name: TABLE chat_reactions; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.chat_reactions IS 'One person''s one reaction to one message, unique on (message, sender, code) and toggled by toggle_chat_reaction. Carries REPLICA IDENTITY FULL because un-reacting is a DELETE and a channel_id-filtered postgres_changes subscription can only receive a DELETE whose OLD row carries the filter column — the messages and locks tables are never deleted (soft delete and unlock are UPDATEs) and keep the default identity.';
+
+
+--
+-- Name: COLUMN chat_reactions.channel_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.chat_reactions.channel_id IS 'The channel of this reaction''s message. Denormalized so a realtime subscription can filter on one column and so the RLS policy is a direct membership question rather than a join. Stamped from the message row inside toggle_chat_reaction and never taken from the caller, which is what stops a reaction being filed under a channel its message is not in.';
+
+
+--
 -- Name: consent_acceptances; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -7925,14 +8896,14 @@ COMMENT ON TABLE public.group_session_images IS 'The photos attached to one sess
 -- Name: COLUMN group_session_images.width; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.group_session_images.width IS 'The stored image''s pixel width, claimed by the uploading client and bounded here. All gallery and email geometry is arithmetic from this and `height` — never measured — which is what lets server HTML and first client paint agree and keeps a mail laying out correctly with every image blocked. The CHECK''s 4096 is a SANITY ceiling, deliberately looser than the client''s ~2048 px edge cap and not derived from it: the uploader is an assigned staff member, the value feeds layout alone, and the worst a wrong one produces is a mis-sized box in that group''s own mail.';
+COMMENT ON COLUMN public.group_session_images.width IS 'The stored image''s pixel width, MEASURED SERVER-SIDE by the upload route''s re-encode. All gallery and email geometry is arithmetic from this and `height` — never measured at render — which is what lets server HTML and first client paint agree and keeps a mail laying out correctly with every image blocked. The form still carries a claimed pair, but only as an early plausibility refusal that gives the gedu dimension copy rather than a generic failure; it never reaches this column. The CHECK''s 4096 is a SANITY ceiling, deliberately looser than the client''s ~2048 px edge cap and not derived from it — the route refuses a decode past it before the insert, and this is what stands behind that.';
 
 
 --
 -- Name: COLUMN group_session_images.height; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.group_session_images.height IS 'The stored image''s pixel height. See `width` — the same claim, the same sanity ceiling, and the same reason both are trusted after a bound check rather than re-derived by parsing the JPEG server-side.';
+COMMENT ON COLUMN public.group_session_images.height IS 'The stored image''s pixel height. See `width` — the same server-side measurement, the same sanity ceiling, and both are written by the route from what its re-encode saw rather than from anything a client sent.';
 
 
 --
@@ -8898,6 +9869,46 @@ ALTER TABLE ONLY public.calendar_holidays
 
 
 --
+-- Name: chat_channel_locks chat_channel_locks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_channel_locks
+    ADD CONSTRAINT chat_channel_locks_pkey PRIMARY KEY (channel_id, user_id);
+
+
+--
+-- Name: chat_channels chat_channels_group_window_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_channels
+    ADD CONSTRAINT chat_channels_group_window_key UNIQUE (group_id, session_opens_at);
+
+
+--
+-- Name: chat_channels chat_channels_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_channels
+    ADD CONSTRAINT chat_channels_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: chat_messages chat_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_messages
+    ADD CONSTRAINT chat_messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: chat_reactions chat_reactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_reactions
+    ADD CONSTRAINT chat_reactions_pkey PRIMARY KEY (message_id, sender_id, code);
+
+
+--
 -- Name: consent_acceptances consent_acceptances_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9366,6 +10377,34 @@ ALTER TABLE ONLY public.whatsapp_contacts
 
 ALTER TABLE ONLY public.whatsapp_messages
     ADD CONSTRAINT whatsapp_messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: chat_channels_group_window_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX chat_channels_group_window_idx ON public.chat_channels USING btree (group_id, session_opens_at DESC);
+
+
+--
+-- Name: chat_messages_channel_order_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX chat_messages_channel_order_idx ON public.chat_messages USING btree (channel_id, created_at, id);
+
+
+--
+-- Name: chat_messages_channel_sender_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX chat_messages_channel_sender_idx ON public.chat_messages USING btree (channel_id, sender_id);
+
+
+--
+-- Name: chat_reactions_channel_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX chat_reactions_channel_idx ON public.chat_reactions USING btree (channel_id);
 
 
 --
@@ -10032,6 +11071,94 @@ CREATE TRIGGER voice_zones_updated_at BEFORE UPDATE ON public.voice_zones FOR EA
 
 ALTER TABLE ONLY public.calendar_holidays
     ADD CONSTRAINT calendar_holidays_calendar_id_fkey FOREIGN KEY (calendar_id) REFERENCES public.holiday_calendars(id) ON DELETE CASCADE;
+
+
+--
+-- Name: chat_channel_locks chat_channel_locks_channel_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_channel_locks
+    ADD CONSTRAINT chat_channel_locks_channel_id_fkey FOREIGN KEY (channel_id) REFERENCES public.chat_channels(id) ON DELETE CASCADE;
+
+
+--
+-- Name: chat_channel_locks chat_channel_locks_locked_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_channel_locks
+    ADD CONSTRAINT chat_channel_locks_locked_by_fkey FOREIGN KEY (locked_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: chat_channel_locks chat_channel_locks_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_channel_locks
+    ADD CONSTRAINT chat_channel_locks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: chat_channels chat_channels_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_channels
+    ADD CONSTRAINT chat_channels_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.product_groups(id) ON DELETE CASCADE;
+
+
+--
+-- Name: chat_messages chat_messages_channel_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_messages
+    ADD CONSTRAINT chat_messages_channel_id_fkey FOREIGN KEY (channel_id) REFERENCES public.chat_channels(id) ON DELETE CASCADE;
+
+
+--
+-- Name: chat_messages chat_messages_hidden_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_messages
+    ADD CONSTRAINT chat_messages_hidden_by_fkey FOREIGN KEY (hidden_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: chat_messages chat_messages_reply_to_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_messages
+    ADD CONSTRAINT chat_messages_reply_to_message_id_fkey FOREIGN KEY (reply_to_message_id) REFERENCES public.chat_messages(id) ON DELETE CASCADE;
+
+
+--
+-- Name: chat_messages chat_messages_sender_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_messages
+    ADD CONSTRAINT chat_messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: chat_reactions chat_reactions_channel_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_reactions
+    ADD CONSTRAINT chat_reactions_channel_id_fkey FOREIGN KEY (channel_id) REFERENCES public.chat_channels(id) ON DELETE CASCADE;
+
+
+--
+-- Name: chat_reactions chat_reactions_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_reactions
+    ADD CONSTRAINT chat_reactions_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.chat_messages(id) ON DELETE CASCADE;
+
+
+--
+-- Name: chat_reactions chat_reactions_sender_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_reactions
+    ADD CONSTRAINT chat_reactions_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
 
 --
@@ -10917,6 +12044,58 @@ CREATE POLICY authenticated_read_locations ON public.locations FOR SELECT TO aut
 ALTER TABLE public.calendar_holidays ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: chat_channel_locks; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.chat_channel_locks ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: chat_channel_locks chat_channel_locks_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY chat_channel_locks_select ON public.chat_channel_locks FOR SELECT TO authenticated USING ((( SELECT public.is_chat_channel_member(chat_channel_locks.channel_id) AS is_chat_channel_member) AND ((user_id = ( SELECT auth.uid() AS uid)) OR ( SELECT public.is_chat_channel_moderator(chat_channel_locks.channel_id) AS is_chat_channel_moderator))));
+
+
+--
+-- Name: chat_channels; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.chat_channels ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: chat_channels chat_channels_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY chat_channels_select ON public.chat_channels FOR SELECT TO authenticated USING (( SELECT public.is_chat_channel_member(chat_channels.id) AS is_chat_channel_member));
+
+
+--
+-- Name: chat_messages; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: chat_messages chat_messages_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY chat_messages_select ON public.chat_messages FOR SELECT TO authenticated USING (( SELECT public.is_chat_channel_member(chat_messages.channel_id) AS is_chat_channel_member));
+
+
+--
+-- Name: chat_reactions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.chat_reactions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: chat_reactions chat_reactions_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY chat_reactions_select ON public.chat_reactions FOR SELECT TO authenticated USING (( SELECT public.is_chat_channel_member(chat_reactions.channel_id) AS is_chat_channel_member));
+
+
+--
 -- Name: consent_acceptances; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -11638,6 +12817,14 @@ GRANT ALL ON FUNCTION public._list_function_authorization_surface() TO service_r
 
 
 --
+-- Name: FUNCTION _list_replicated_tables(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public._list_replicated_tables() FROM PUBLIC;
+GRANT ALL ON FUNCTION public._list_replicated_tables() TO service_role;
+
+
+--
 -- Name: FUNCTION _list_security_definer_without_search_path(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -11784,6 +12971,30 @@ GRANT ALL ON FUNCTION public.cancel_participation(p_participation_id uuid, p_rea
 
 
 --
+-- Name: FUNCTION chat_body_mentions_are_roster(p_channel_id uuid, p_body text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.chat_body_mentions_are_roster(p_channel_id uuid, p_body text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.chat_body_mentions_are_roster(p_channel_id uuid, p_body text) TO service_role;
+
+
+--
+-- Name: FUNCTION chat_caller_is_locked(p_channel_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.chat_caller_is_locked(p_channel_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.chat_caller_is_locked(p_channel_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION chat_channel_roster_ids(p_channel_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.chat_channel_roster_ids(p_channel_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.chat_channel_roster_ids(p_channel_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION claim_expired_seat_offer_notifications(p_participation_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -11868,11 +13079,37 @@ GRANT ALL ON FUNCTION public.derive_group_session_window(p_group_id uuid, p_sess
 
 
 --
+-- Name: FUNCTION edit_chat_message(p_id uuid, p_body text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.edit_chat_message(p_id uuid, p_body text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.edit_chat_message(p_id uuid, p_body text) TO authenticated;
+GRANT ALL ON FUNCTION public.edit_chat_message(p_id uuid, p_body text) TO service_role;
+
+
+--
 -- Name: FUNCTION effective_status(p_product_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.effective_status(p_product_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.effective_status(p_product_id uuid) TO service_role;
+
+
+--
+-- Name: TABLE chat_channels; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.chat_channels TO authenticated;
+GRANT ALL ON TABLE public.chat_channels TO service_role;
+
+
+--
+-- Name: FUNCTION ensure_chat_channel(p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.ensure_chat_channel(p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.ensure_chat_channel(p_group_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.ensure_chat_channel(p_group_id uuid) TO service_role;
 
 
 --
@@ -11923,6 +13160,15 @@ GRANT ALL ON FUNCTION public.get_admin_dashboard() TO service_role;
 REVOKE ALL ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION get_chat_channel_roster(p_channel_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_chat_channel_roster(p_channel_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_chat_channel_roster(p_channel_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.get_chat_channel_roster(p_channel_id uuid) TO service_role;
 
 
 --
@@ -12137,6 +13383,15 @@ GRANT ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uu
 
 
 --
+-- Name: FUNCTION hide_chat_message(p_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.hide_chat_message(p_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.hide_chat_message(p_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.hide_chat_message(p_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION immutable_unaccent(p_value text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -12153,6 +13408,24 @@ GRANT ALL ON FUNCTION public.immutable_unaccent(p_value text) TO service_role;
 REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_admin() TO authenticated;
 GRANT ALL ON FUNCTION public.is_admin() TO service_role;
+
+
+--
+-- Name: FUNCTION is_chat_channel_member(p_channel_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.is_chat_channel_member(p_channel_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.is_chat_channel_member(p_channel_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.is_chat_channel_member(p_channel_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION is_chat_channel_moderator(p_channel_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.is_chat_channel_moderator(p_channel_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.is_chat_channel_moderator(p_channel_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.is_chat_channel_moderator(p_channel_id uuid) TO service_role;
 
 
 --
@@ -12229,6 +13502,15 @@ REVOKE ALL ON FUNCTION public.location_search_separator() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.location_search_separator() TO anon;
 GRANT ALL ON FUNCTION public.location_search_separator() TO authenticated;
 GRANT ALL ON FUNCTION public.location_search_separator() TO service_role;
+
+
+--
+-- Name: FUNCTION mark_chat_image_stored(p_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.mark_chat_image_stored(p_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.mark_chat_image_stored(p_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.mark_chat_image_stored(p_id uuid) TO service_role;
 
 
 --
@@ -12329,6 +13611,15 @@ GRANT ALL ON FUNCTION public.respond_seat_offer(p_participation_id uuid, p_offer
 
 
 --
+-- Name: FUNCTION restore_chat_message(p_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.restore_chat_message(p_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.restore_chat_message(p_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.restore_chat_message(p_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -12339,11 +13630,38 @@ GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.locat
 
 
 --
+-- Name: FUNCTION send_chat_image_message(p_id uuid, p_channel_id uuid, p_width integer, p_height integer, p_reply_to_message_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.send_chat_image_message(p_id uuid, p_channel_id uuid, p_width integer, p_height integer, p_reply_to_message_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.send_chat_image_message(p_id uuid, p_channel_id uuid, p_width integer, p_height integer, p_reply_to_message_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.send_chat_image_message(p_id uuid, p_channel_id uuid, p_width integer, p_height integer, p_reply_to_message_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION send_chat_message(p_id uuid, p_channel_id uuid, p_body text, p_reply_to_message_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.send_chat_message(p_id uuid, p_channel_id uuid, p_body text, p_reply_to_message_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.send_chat_message(p_id uuid, p_channel_id uuid, p_body text, p_reply_to_message_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.send_chat_message(p_id uuid, p_channel_id uuid, p_body text, p_reply_to_message_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION send_seat_offer(p_participation_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.send_seat_offer(p_participation_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.send_seat_offer(p_participation_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION set_chat_lock(p_channel_id uuid, p_user_id uuid, p_locked boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_chat_lock(p_channel_id uuid, p_user_id uuid, p_locked boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_chat_lock(p_channel_id uuid, p_user_id uuid, p_locked boolean) TO authenticated;
+GRANT ALL ON FUNCTION public.set_chat_lock(p_channel_id uuid, p_user_id uuid, p_locked boolean) TO service_role;
 
 
 --
@@ -12489,6 +13807,15 @@ GRANT ALL ON FUNCTION public.submit_my_feedback(p_message text) TO service_role;
 
 
 --
+-- Name: FUNCTION toggle_chat_reaction(p_message_id uuid, p_code text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.toggle_chat_reaction(p_message_id uuid, p_code text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.toggle_chat_reaction(p_message_id uuid, p_code text) TO authenticated;
+GRANT ALL ON FUNCTION public.toggle_chat_reaction(p_message_id uuid, p_code text) TO service_role;
+
+
+--
 -- Name: FUNCTION trg_refresh_product_seat_counts(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -12587,6 +13914,30 @@ GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO service_role;
 GRANT SELECT ON TABLE public.calendar_holidays TO anon;
 GRANT ALL ON TABLE public.calendar_holidays TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.calendar_holidays TO authenticated;
+
+
+--
+-- Name: TABLE chat_channel_locks; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.chat_channel_locks TO authenticated;
+GRANT ALL ON TABLE public.chat_channel_locks TO service_role;
+
+
+--
+-- Name: TABLE chat_messages; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.chat_messages TO authenticated;
+GRANT ALL ON TABLE public.chat_messages TO service_role;
+
+
+--
+-- Name: TABLE chat_reactions; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.chat_reactions TO authenticated;
+GRANT ALL ON TABLE public.chat_reactions TO service_role;
 
 
 --
