@@ -247,6 +247,31 @@ Owner direction (2026-08-31), added during implementation:
       rule for the face is deleted in the same wiring change.
     - **OG images verified already clean**: the OG font pipeline fetches Poppins 400/600
       only, so "including OG images" is satisfied with no change.
+24. **Home-deck notes and the highlight ruling** (owner, 2026-09-01):
+    - **A brand colour exists in exactly its two authored variants — darkening it into a
+      surface makes it a non-brand colour.** Strong and soft are the palette; a surface
+      manufactured by darkening the hue further (which is what a low-alpha wash over the
+      near-black ground composites to) distorts the colour, and what it shows is no
+      longer the brand. Owner's words: "if we further darken the color as a surface it
+      distorts that color, it is no longer a brand color." Standing principle for the
+      whole pass. **Open reach question, flagged rather than silently applied**: the
+      current home drafts carry exactly this construct as section surfaces (the lively
+      how-it-works band at harmony/10, both CTA-card washes, the accented hero's 16%
+      radial), and the colour grammar's tint step (badge and chip grounds at low alpha)
+      is the same construct at chip scale — whether the principle bans only
+      surface-scale washes or every tint is the owner's next call, raised in the
+      session report beside the pending dose ruling.
+    - **The highlight is ruled out entirely** ("it doesn't look good"): the glow-green
+      marker stroke behind the hero's payoff words leaves the lively dose and its
+      close-up slide leaves the deck; the payoff words keep glow as soft *ink* instead
+      (8.83:1 on the page ground). No highlight/marker treatment anywhere in the pass.
+    - **Audience note, recorded for the whole pass**: Home and /roblox are where a
+      family *first* experiences the product — after sign-in, Home is effectively gone
+      (the header mark routes every signed-in role to its own dashboard). Signed-in
+      families live in About, the Shop, My SOG and the family product page, reading
+      reports and reviewing sessions. Design attention and colour budget weigh
+      accordingly: the first-contact pair is tuned for recognition and recruitment;
+      the signed-in four are where the grammar earns its keep day to day.
 
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written

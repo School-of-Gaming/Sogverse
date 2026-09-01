@@ -64,7 +64,6 @@ const SLIDES = [
   { id: "features", title: "Feature cards" },
   { id: "how-it-works", title: "How it works" },
   { id: "cta", title: "The closing CTA" },
-  { id: "marker", title: "The marker stroke" },
   { id: "recap", title: "Recap" },
 ] as const;
 
@@ -113,8 +112,7 @@ const DUSK_HERO_EXHIBIT: HomeDraftClasses = {
     "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),radial-gradient(75%_60%_at_74%_6%,_color-mix(in_oklab,_var(--color-yty-harmony-strong)_22%,_transparent)_0%,_transparent_72%),radial-gradient(70%_62%_at_16%_34%,_color-mix(in_oklab,_var(--color-yty-wit-strong)_18%,_transparent)_0%,_transparent_72%)] pt-[var(--header-height)]",
   heroTitle: "font-sans text-3xl font-semibold leading-[1.1] md:text-[56px]",
   heroPrimary: "text-foreground",
-  heroSecondary:
-    "box-decoration-clone rounded-lg bg-yty-glow-strong px-3 text-background",
+  heroSecondary: "text-yty-glow-soft",
   sectionHeading:
     "text-3xl font-semibold leading-[1.2] tracking-tight sm:text-4xl",
   ctaHeading: "text-2xl font-semibold leading-[1.2] sm:text-3xl",
@@ -166,14 +164,6 @@ function Ruling({ children }: { children: React.ReactNode }) {
         Ruling
       </span>
       <span className="text-sm text-foreground">{children}</span>
-    </div>
-  );
-}
-
-function Marker({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-      {children}
     </div>
   );
 }
@@ -251,40 +241,10 @@ function SampleRun({ children }: { children: React.ReactNode }) {
 const PAGE_SURFACE = "bg-background";
 const HERO_SURFACE = "bg-background pt-[var(--header-height)]";
 
-/* ------------------------------------------------------------------ */
-/*  Slide 5 — the marker stroke, close up                              */
-/* ------------------------------------------------------------------ */
-
-/**
- * The headline's own beats, decomposed from `home.hero.title`: the `<br>` chunks
- * are the four lines, `<primary>` is "Screen Time" and `<secondary>` is "Quality
- * Time" — the payoff words the lively dose strokes.
- *
- * Written at a literal 56px rather than the component's `md:text-[56px]`,
- * because a breakpoint inside a narrow box on a wide screen would quietly show
- * the wide size and call it the phone. This is the desktop size, stated as one.
- * Both settings are otherwise the lively dose's own classes, so the only
- * difference on screen is the stroke.
- */
-function MarkerHeadline({ payoff }: { payoff: string }) {
-  return (
-    <div className="overflow-x-auto rounded-lg border bg-background p-6">
-      <p className="w-max font-sans text-[56px] font-semibold leading-[1.1] text-foreground">
-        Where
-        <br />
-        Screen Time
-        <br />
-        Becomes
-        <br />
-        <span className={payoff}>Quality Time</span>
-      </p>
-    </div>
-  );
-}
-
-const PAYOFF_STROKED =
-  "box-decoration-clone rounded-lg bg-yty-glow-strong px-3 text-background";
-const PAYOFF_PLAIN = "text-foreground";
+/* The marker-stroke close-up slide that sat here is gone: the highlight
+   treatment — a glow-green fill behind the headline's payoff words — was ruled
+   out entirely (owner, 2026-09-01), so the lively dose's payoff words now carry
+   glow as soft ink instead, which the hero slide already shows. */
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
@@ -443,40 +403,12 @@ export default function DesignPassHomePage() {
       </Slide>
 
       {/* ----------------------------------------------------------- 5 */}
-      <Slide id="marker">
-        <div className="space-y-3">
-          <Marker>The lively hero&rsquo;s headline — stroked</Marker>
-          <MarkerHeadline payoff={PAYOFF_STROKED} />
-        </div>
-        <div className="space-y-3">
-          <Marker>The same headline, plain</Marker>
-          <MarkerHeadline payoff={PAYOFF_PLAIN} />
-        </div>
-        <Caption>
-          The stroke is the lively dose&rsquo;s only mark on the vision
-          statement, and it exists nowhere else in the page.
-        </Caption>
-
-        <Ruling>
-          The marker stroke — keep or drop. (recommended: it rides with the hero
-          — keep only if the hero goes lively)
-        </Ruling>
-
-        <Links>
-          <DeckLink href="/preview/home/brand-lively">
-            The stroke at the page&rsquo;s own width, where it wraps
-          </DeckLink>
-        </Links>
-      </Slide>
-
-      {/* ----------------------------------------------------------- 6 */}
       <Slide id="recap">
         <ol className="max-w-prose list-decimal space-y-1.5 pl-5 text-sm text-foreground">
           <li>The hero — today, accented, lively, or the dusk sky.</li>
           <li>Feature cards — today, accented, or lively.</li>
           <li>How it works — today, accented, or lively.</li>
           <li>The closing CTA — today, accented, or lively.</li>
-          <li>The marker stroke — keep or drop.</li>
         </ol>
       </Slide>
     </div>

@@ -264,9 +264,9 @@ const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
 
   /**
    * The marketing site's dose, read off the brand's own social imagery: white
-   * headlines, harmony pink as the workhorse, glow green kept for a marker
-   * stroke behind the words that matter, and amber spent only on the identity
-   * mark and the CTA — no ambient amber at all.
+   * headlines, harmony pink as the workhorse, glow green as the ink of the
+   * payoff words, and amber spent only on the identity mark and the CTA — no
+   * ambient amber at all.
    *
    * **Flat, like the accented dose, and this is where the flat default costs
    * something.** An earlier draft of this dose drew a dusk sky — two radial
@@ -285,20 +285,12 @@ const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
    * plain page ground at 7.70:1 rather than on the dusk composite's 4.78:1, and
    * the CTA card's muted copy reads 6.39:1 against the three-stop card's 5.86:1.
    * The band is harmony at 10% over the page (muted foreground 6.87:1, full
-   * foreground 14.29:1); the marker stroke's ink on glow-strong is 6.63:1; the
-   * section rule and the hero edge carry no text at all.
+   * foreground 14.29:1); the payoff words' glow-soft ink on the page ground is
+   * 8.83:1; the section rule and the hero edge carry no text at all.
    */
   "brand-lively": {
     hero:
       "relative -mt-[var(--header-height)] overflow-hidden border-b-4 border-yty-harmony-strong bg-background pt-[var(--header-height)]",
-    /**
-     * The Guidebook's 1.1, which is tighter than the loose line-height this
-     * dose used to need. The marker stroke below is an inline background, so
-     * two *stacked* stroked lines would touch at 1.1 — no locale stacks them:
-     * `<secondary>` is one chunk on one line in every message, and the line
-     * above it is plain text. Adding a second stroked chunk to the headline
-     * would break that and is what this note exists to warn.
-     */
     heroTitle: HERO_TITLE_TYPE,
     /**
      * White, not amber — the ambient amber is what this dose gives up. Both
@@ -307,13 +299,12 @@ const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
      */
     heroPrimary: "text-foreground",
     /**
-     * The marker stroke: a full glow-green fill behind the headline's payoff
-     * words, ink on top at 6.63:1. `box-decoration-clone` is what keeps it a
-     * stroke rather than one long box when the phrase wraps at 360 px, which it
-     * does in every locale.
+     * Glow as ink, not as a marker stroke behind the words. The stroke — a
+     * full glow-green fill under the payoff words — was ruled out entirely
+     * (owner, 2026-09-01: "it doesn't look good"), so green keeps its claim on
+     * the payoff as text in the soft variant, 8.83:1 on the page ground.
      */
-    heroSecondary:
-      "box-decoration-clone rounded-lg bg-yty-glow-strong px-3 text-background",
+    heroSecondary: "text-yty-glow-soft",
     sectionHeading: SECTION_HEADING_TYPE,
     ctaHeading: CTA_HEADING_TYPE,
     ctaType: CTA_TYPE,
