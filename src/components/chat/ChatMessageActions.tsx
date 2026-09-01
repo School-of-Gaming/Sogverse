@@ -88,7 +88,13 @@ export function ChatMessageActions({
     <>
       <div
         className={cn(
-          "absolute right-0 top-0 flex items-center gap-0.5 rounded-md border border-border bg-popover p-0.5 shadow-sm",
+          // Pinned to the row's right edge, straddling its top boundary. The
+          // fixed edge is deliberate — a bar that followed the end of the text
+          // would be somewhere different on every message, and a predictable
+          // position is what lets the hand learn it. Straddling the boundary
+          // is what visually attaches the bar to *this* row at full width,
+          // and keeps it off the row's own first line on narrow screens.
+          "absolute -top-3 right-0 flex items-center gap-0.5 rounded-md border border-border bg-popover p-0.5 shadow-sm",
           // Present for a pointer on hover, for a keyboard on focus, and
           // whenever one of its own overlays is up — otherwise opening the menu
           // would hide the button that opened it.

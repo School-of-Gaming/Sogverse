@@ -171,6 +171,21 @@ export function ChatMessageList({
     if (el !== null) el.scrollTop = el.scrollHeight;
   }, []);
 
+  // Every other way a row can change height — a reaction row appearing or
+  // leaving, an edit growing a message, a tombstone replacing a picture —
+  // keeps a reader at the bottom glued to the bottom, so the newest messages
+  // never slide out of view under them. Deliberately dependency-free: height
+  // on this surface only ever changes through a render (image boxes are
+  // pre-sized), so "after every commit" is exactly the set of moments the
+  // bottom edge can move, and the write is a no-op when nothing did. A reader
+  // scrolled up is the browser's job instead — native scroll anchoring keeps
+  // what they are looking at stable while content above them changes.
+  useLayoutEffect(() => {
+    const el = logRef.current;
+    if (el === null || !atBottomRef.current) return;
+    el.scrollTop = el.scrollHeight;
+  });
+
   useEffect(() => {
     if (flashId === null) return;
     const timer = window.setTimeout(() => setFlashId(null), FLASH_MS);

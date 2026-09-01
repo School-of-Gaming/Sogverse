@@ -50,7 +50,7 @@ export function ChatScene({
   const [now] = useState(() => new Date());
   const store = useChatSceneStore(now);
   const [width, setWidth] = useState<PanelWidth>(PANEL_WIDTHS[2]);
-  const [height, setHeight] = useState<LogHeight>(LOG_HEIGHTS[1]);
+  const [height, setHeight] = useState<LogHeight>(LOG_HEIGHTS[2]);
 
   const viewer =
     CHAT_SCENE_ACCOUNTS.find((account) => account.id === store.viewerId) ??

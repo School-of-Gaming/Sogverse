@@ -94,7 +94,7 @@ export function ChatView({
   };
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("relative space-y-2", className)}>
       <ChatMessageList
         messages={messages}
         accounts={byId}
@@ -130,19 +130,23 @@ export function ChatView({
 }
 
 /**
- * Who is writing, in a reserved strip *below* the composer — the Slack/Discord
- * placement, and the third cut of this component.
+ * Who is writing — overlaid on the embedding container's own bottom padding,
+ * below the composer. The fourth cut of this component, and the stable one.
  *
- * **The strip is reserved: one line tall, rendered whether or not anybody is
- * typing.** An indicator arrives and leaves on somebody else's schedule — the
- * one kind of change the layout rule forbids outright — so it may neither move
- * anything (which rules out rendering in flow only while up) nor sit over the
- * log's last line (the first cut overlaid it there and made exactly the line a
- * reader is mid-way through unreadable). The second cut reserved the line
- * *between* log and composer, where it read as a gap splitting two things that
- * belong together; under the composer the same empty line reads as bottom
- * padding, which is why the multi-user chats shaped like this one all put it
- * there (owner ruling 2026-09-01).
+ * An indicator arrives and leaves on somebody else's schedule — the one kind
+ * of change the layout rule forbids outright — so it cannot take space in
+ * flow. The cuts before this one each traded that away differently: over the
+ * log's last line it made exactly the line a reader was mid-way through
+ * unreadable; as a reserved in-flow line (between log and composer, then
+ * below the composer) the line read as a padding mistake whenever nobody was
+ * typing. Absolutely positioned just past the surface's bottom edge, it lands
+ * in the container's bottom padding: space that already exists, holds no
+ * content to cover, and is not read as a slot when empty (owner rulings,
+ * 2026-09-01).
+ *
+ * **The contract this buys: whatever embeds the chat must leave at least one
+ * text line of bottom padding under it.** A `CardContent` does; a future
+ * flush-to-the-edge embedding would clip the label and needs its own padding.
  */
 function ChatTypingIndicator({ names }: { names: readonly string[] }) {
   const t = useTranslations("chat.typing");
@@ -158,7 +162,7 @@ function ChatTypingIndicator({ names }: { names: readonly string[] }) {
   return (
     <p
       aria-live="polite"
-      className="h-5 truncate px-1 text-xs italic leading-5 text-muted-foreground"
+      className="pointer-events-none absolute inset-x-1 top-full mt-1 truncate text-xs italic leading-4 text-muted-foreground"
     >
       {label}
     </p>
