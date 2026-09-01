@@ -406,6 +406,37 @@ component homes (moved sections to an about directory, accordion to the shared
 UI kit, card + form to a help directory retiring the feedback one); `/about`
 metadata description and sitemap entry details.
 
+## Implementation notes (steps 6–10, as built)
+
+Judgment calls taken while building, recorded so review expects them:
+
+- **The form's internal heading is stripped**, as the plan's judgment note
+  allowed: every section already heads it, and the card leads with its
+  description instead. The icon-plus-lead-text row matches the contact card's
+  grammar so the two read as a pair.
+- **The 429 is worded in the reader's language.** The form previously displayed
+  the route's own English error sentence; it now maps `429` to a translated
+  "you have sent several already" line and every other failure to a translated
+  generic one. The request/response plumbing is untouched — only which string
+  is painted — and the alternative was shipping an untranslated English
+  sentence to three dashboards in five locales.
+- **`helpSection.form` splits into shared keys plus an `adult`/`gamer` pair**
+  rather than two sibling namespaces, so the audience composes into the key
+  path (`t(\`${audience}.placeholder\`)`) and stays compiler-checked.
+- **The role FAQ key arrays are `as const` and their composed keys carry an
+  `as const` too.** That assertion is load-bearing precisely while an array is
+  empty: without it the template literal widens to `string`, which the
+  translator's key parameter rejects once there are no entries to narrow it.
+- **The gedu skeleton gained a third ghost section** so the loading page is the
+  length of the loaded one; a real Help section there would outlive the swap
+  and be pushed down by the sections landing above it.
+- **The help/feedback card earns one style-guide section**, since three
+  surfaces render it and its submitting/succeeded/refused states are reachable
+  from no preview scene.
+- **Two unit tests were added**: the gedu Help section surviving the
+  certification gate, and the gamer page's Yty removal plus its four-chip pill
+  budget.
+
 ## Follow-ups
 
 Cut from this plan on purpose; they live and die with this file unless the owner

@@ -20,7 +20,6 @@
       "gamerDashboard": "jIH SOG",
       "gamerDashboardDescription": "Sogverse-Daq ghom’a’meylIj, raghmeylIj, Qu’meylIj je",
       "voiceSession": "jatlh poH",
-      "help": "boQ",
       "shop": "ngevwI’",
       "schools": "veng ghomHommey",
       "unlockPin": "PIN yIghItlh",
@@ -1319,20 +1318,6 @@
       }
     }
   },
-  "feedback": {
-    "title": "QIn",
-    "subtitle": "Qol yIngeH maHvaH",
-    "sendFeedback": "QIn yIngeH",
-    "feedbackDescription": "Qol, ngoQ, qoj Qagh yIngeH — wImuSHa’.",
-    "gamerReplyNote": "Gedu’ pIq poHDaq jang.",
-    "message": "QIn",
-    "placeholder": "Qol, ngoQ, qoj Qagh yIchel...",
-    "charactersNeeded": "{count} mu’mey Daj nIS",
-    "submitFeedback": "QIn yIngeH",
-    "thankYou": "QaH! Qol ngeHpu’. Qapla’!",
-    "failedToSubmit": "QIn ngeH Dabe’lu’.",
-    "failedToSubmitRetry": "QIn ngeH Dabe’lu’. yIboq."
-  },
   "dashboardSections": {
     "pageTitle": "jIH SOG",
     "myGamers": "jIH toy’wI’pu’",
@@ -1343,9 +1328,38 @@
     "myGroupsEmptyStateGedu": "ghom’a’Daq Dalanlu’DI’, may’ veb tlhej naDev leghlu’.",
     "billing": "Huch DIl",
     "help": "boQ",
-    "yty": "Yty",
     "tools": "janmey",
     "loadingAssignments": "ghom’a’meyraj raghmeyraj Qu’meyraj je laDlu’…"
+  },
+  "helpSection": {
+    "heading": "boQ QIn je",
+    "gamerHeading": "boQ DaneH’a’?",
+    "faqHeading": "qaSchuq SeghHommey",
+    "contact": {
+      "heading": "boQ DaneH’a’?",
+      "body": "Hoch poH ghoSlu’taHvIS, ghochmey wIqaw’be’ — ghom’a’ wInIS chu’ bIqlIj ’ej noH Quj yejHaD mIw qaSchugh, maHvaD bIjatlh.",
+      "emailLabel": "naDev SeH wIje’"
+    },
+    "form": {
+      "messageLabel": "QIn",
+      "charactersNeeded": "{count} mu’mey Daj nIS",
+      "submit": "QIn yIngeH",
+      "adult": {
+        "description": "boQ yItlhob, pagh ngoQ qoj Qagh yIngeH — Hoch QIn Suq noH Quj yejHaD ghom.",
+        "placeholder": "nuq DaneH’a’?",
+        "thankYou": "QaH! QInlIj wISuqpu’. De’wI’ QInDaq majang.",
+        "failed": "QIn ngeH Dabe’lu’. yIboq.",
+        "tooManyRequests": "law’ QInmey DangeHpu’. yIloS ’ej yIboq."
+      },
+      "gamer": {
+        "description": "bIQamchoH’a’? ngoQ Daghaj’a’? naDev yIqon — wIlaD.",
+        "replyNote": "Gedu’ pIq poHDaq jang.",
+        "placeholder": "nuq DaneH’a’?",
+        "thankYou": "QaH! QInlIj wISuqpu’.",
+        "failed": "QIn ngeH Dabe’lu’. yIboq.",
+        "tooManyRequests": "puS QInmey DangeHpu’. yIloS ’ej yIboq."
+      }
+    }
   },
   "family": {
     "addGamer": "QujwI’ chel",
@@ -1664,9 +1678,7 @@
   },
   "header": {
     "nav": {
-      "home": "juH",
       "shop": "ngevwI’",
-      "help": "boQ",
       "yty": "Yty",
       "about": "maH",
       "faq": "ghelmeH"
@@ -1674,40 +1686,6 @@
     "accountMenu": "qa’ De’wI’ – {name}",
     "continueToAccount": "qa’lIj yIghoS",
     "switchTo": "pong yIchoH"
-  },
-  "help": {
-    "title": "boQ",
-    "intro": "noH Quj yejHaD SeghHommey jatlhlu’.",
-    "contact": {
-      "heading": "boQ DaneH’a’?",
-      "body": "Hoch poH ghoSlu’taHvIS, ghochmey wIqaw’be’ — ghom’a’ wInIS chu’ bIqlIj ’ej noH Quj yejHaD mIw qaSchugh, maHvaD bIjatlh.",
-      "emailLabel": "naDev SeH wIje’"
-    },
-    "faq": {
-      "heading": "qaSchuq SeghHommey",
-      "items": {
-        "whatIsSogverse": {
-          "q": "Sogverse ’oH nuq?",
-          "a": "noH Quj yejHaD pat ’oH Sogverse’e’: ghom’a’mey, raghmey, wanI’mey je — Gedu’pu’ Dun DevtaH — Minecraft, Roblox, Fortnite latlh je. naDev Quj yay’ moj."
-        },
-        "productTypes": {
-          "q": "ghom’a’mey, raghmey, wanI’mey: chay’ juHHa’chuq?",
-          "a": "ghom’a’mey rurchuq qaSchuq. raghmey, ghojmoHwI’ poH qaSchuq. wanI’mey wa’logh neH qaSchuq."
-        },
-        "whoLeads": {
-          "q": "’Iv DevtaH qep?",
-          "a": "Hoch qep DevtaH Gedu — Quj ghojmoHwI’, Quj toy’wI’ je ghaH, ’ej puqpu’ boQ."
-        },
-        "safety": {
-          "q": "puqwI’ QaQ’a’?",
-          "a": "vaj chenmoHlu’. Sogverse pat: pegh QInmey ngeHmeH mIw tu’lu’be’. ghom DaqmeyDaq jatlh toy’wI’pu’, ’ej ja’chuqtaHvIS Hoch pa’ QInmey lulegh ’ej polbe’lu’. Qujmey QInmey pIm — ’ach Minecraft SepmajDaq chaH SeH Gedu’pu’maj: tamchoHmoHlaH ’ej ja’laH. Sogverse pong pegh ghaj toy’wI’ account — puqlI’ QIn Daq teH lo’be’ — ’ej vav account tlhej boqlu’; vav accountDaq ’el puqlI’, pegh mu’mey Daj Hutlh. je’ghach muvghach je poQ vav PIN. ’ej qIp: not wIchaw’."
-        },
-        "howToStart": {
-          "q": "chay’ jIQaplaH?",
-          "a": "vav Account yIchel, yIQong, je puqlIj yIqar. qep’a’meyDaq vav accountlIj lo’ puqlI’: puqlI’ Daq DawIv, ’ej pegh mu’mey Daj Hutlh."
-        }
-      }
-    }
   },
   "schools": {
     "hero": {
@@ -2120,39 +2098,6 @@
         "confirmBodySelf": "loS tetlhDaq DaqlIj DachIl, ’ej latlh qorDu’vaD wInob.",
         "confirmCta": "HISlaH, jISovchu’",
         "error": "Qagh! polbe’lu’ jangwI’lIj. yInIDqa’ pagh {supportEmail}-Daq maHvaD yIghItlh."
-      }
-    },
-    "help": {
-      "contact": {
-        "heading": "boQ DaneH’a’?",
-        "body": "ragh muvHa’meH boQ je Sogverse mIw qaSchugh, naDev SeH wIje’. jaj wa’ wIjang.",
-        "emailLabel": "naDev SeH wIje’"
-      },
-      "minecraft": {
-        "heading": "Minecraft Java raghvaD yIghuH",
-        "intro": "SOG Minecraft Java Server lo’ raghmey ghom’a’mey je. ragh qaSpa’, puqlIj DachaH mIwvam — vaj ’eb DamuvchoH.",
-        "steps": {
-          "install": {
-            "title": "Minecraft Java Edition yIcher",
-            "body": "minecraft.net Daq Minecraft Java Edition yIje’ ’ej yIcher. Bedrock pagh Pocket Edition QaQbe’ Server’majDaq."
-          },
-          "signIn": {
-            "title": "Microsoft account yIlo’",
-            "body": "Quj wa’logh yIcherchoH ’ej yI’el. pong yIwIv — Gedu pong jatlh puqlIj, vaj chel."
-          },
-          "addServer": {
-            "title": "SOG Server yIchel",
-            "body": "Multiplayer → Add Server yIwIv ’ej raghlIjvaD ngoq yIchel. yIpol — ragh qaSDI’, SoQbe’:"
-          },
-          "joinAtCampTime": {
-            "title": "ragh qaSDI’ yI’el",
-            "body": "tetlhDaq SOG Server yIngIp ’ej Join yIqIp. Gedu DevtaH. boQ DaneH’a’? naDev SeH wIje’."
-          }
-        },
-        "servers": {
-          "fi": "Suomi-Hol raghmey:",
-          "en": "DIvI’ Hol raghmey:"
-        }
       }
     },
     "billing": {

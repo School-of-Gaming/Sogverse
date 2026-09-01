@@ -32,7 +32,7 @@ import type { SupportedLocale } from "@/lib/constants/locales";
  *
  * `empty` is the child with nothing booked yet: the greeting, one "Clubs"
  * heading over the quiet empty card — the same convention the gedu's empty
- * dashboard uses — and the Yty grid, which is theirs regardless.
+ * dashboard uses — and the Help section, which is theirs regardless.
  */
 export const GAMER_DASHBOARD_SCENARIOS = ["typical", "empty"] as const;
 

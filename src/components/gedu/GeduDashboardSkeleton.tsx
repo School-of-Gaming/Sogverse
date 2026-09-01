@@ -80,6 +80,17 @@ export function GeduDashboardSkeleton({
           <div className="h-9 w-56 animate-pulse rounded-md bg-muted" />
           <div className="h-40 animate-pulse rounded-lg border border-border bg-muted/40" />
         </section>
+
+        {/* Help & feedback: two cards under a heading. Ghosted like the rest
+            rather than rendered for real, even though nothing in it waits on a
+            network call — a real section here would outlive the swap and then
+            be pushed down the page by the sections landing above it, which is
+            the one shift the layout rules forbid. */}
+        <section className="mx-auto max-w-5xl space-y-6">
+          <div className="h-9 w-48 animate-pulse rounded-md bg-muted" />
+          <div className="h-28 animate-pulse rounded-lg border border-border bg-muted/40" />
+          <div className="h-64 animate-pulse rounded-lg border border-border bg-muted/40" />
+        </section>
       </div>
     </>
   );

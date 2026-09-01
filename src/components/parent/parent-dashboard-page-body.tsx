@@ -13,9 +13,10 @@ import type {
   FamilyEnrollmentSummary,
   FamilyParticipantEnrollments,
 } from "@/components/family/enrollment-rollup";
+import { HelpContactCard } from "@/components/help/help-contact-card";
+import { ParentHelpFaq } from "@/components/help/help-faq";
 import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
 import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
-import { ParentHelpSection } from "./ParentHelpSection";
 
 /**
  * One person's section, with everything they are signed up for. Enrollments
@@ -199,6 +200,7 @@ export function ParentDashboardPageBody({
   gamers,
   self = null,
   billingCard,
+  helpForm,
   onAddGamer,
   onOpenPortal,
   onJoinClick,
@@ -221,6 +223,14 @@ export function ParentDashboardPageBody({
   self?: ParentDashboardParticipant | null;
   /** The Stripe portal card. A node, so the shell owns its actions. */
   billingCard: React.ReactNode;
+  /**
+   * The ask-for-help-or-send-feedback form. A node for the same reason the
+   * billing card is one: it is a self-contained panel with a backend action
+   * behind it, and nothing about this page's shape depends on it. Handing it in
+   * is what lets the preview scene render the real form with its submit inert —
+   * a scene must never gain a live submit that emails every admin.
+   */
+  helpForm: React.ReactNode;
   /**
    * Open the add-gamer flow. The body owns *where* the two add affordances sit
    * — the quiet tile after the last child, and the full-strength button on the
@@ -287,6 +297,7 @@ export function ParentDashboardPageBody({
 }) {
   const t = useTranslations("dashboardSections");
   const f = useTranslations("family");
+  const h = useTranslations("helpSection");
 
   // One cap over both kinds of named chip: the parent's own chip takes a slot
   // from the children rather than getting one of its own. See
@@ -595,7 +606,17 @@ export function ParentDashboardPageBody({
           </div>
         </section>
 
-        {/* Last section gets viewport-height min so clicking its pill can
+        {/* Help & feedback — the same three pieces every role's section is made
+            of, in the same order: the support address, the message form, and
+            the role's own FAQ. The FAQ is empty today and renders nothing at
+            all, so the section is a card and a form until the first parent
+            question is answered.
+
+            The heading says "Help & feedback" while the pill chip above says
+            just "Help": a chip is width-constrained and shares a bar with up to
+            three children's names, a heading has a line of its own.
+
+            Last section gets viewport-height min so clicking its pill can
             actually scroll it to the top — without this the page bottoms out
             mid-scroll and the heading stays in the middle of the viewport. */}
         <section
@@ -605,9 +626,11 @@ export function ParentDashboardPageBody({
         >
           <div className="mx-auto max-w-3xl space-y-6">
             <h2 id="help-heading" className="text-3xl font-bold">
-              {t("help")}
+              {h("heading")}
             </h2>
-            <ParentHelpSection />
+            <HelpContactCard />
+            {helpForm}
+            <ParentHelpFaq />
           </div>
         </section>
       </div>

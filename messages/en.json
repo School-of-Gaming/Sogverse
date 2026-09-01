@@ -20,7 +20,6 @@
       "gamerDashboard": "My SOG",
       "gamerDashboardDescription": "Your clubs, camps and events in Sogverse",
       "voiceSession": "Voice Session",
-      "help": "Help",
       "shop": "Shop",
       "schools": "Municipality Clubs",
       "unlockPin": "Enter PIN",
@@ -1271,20 +1270,6 @@
       }
     }
   },
-  "feedback": {
-    "title": "Feedback",
-    "subtitle": "Share your thoughts with us",
-    "sendFeedback": "Send Feedback",
-    "feedbackDescription": "We’d love to hear your feedback, suggestions, or bug reports.",
-    "gamerReplyNote": "Your Gedu may follow up with you during your next session.",
-    "message": "Message",
-    "placeholder": "Share your thoughts, suggestions, or report a bug...",
-    "charactersNeeded": "{count} more characters needed",
-    "submitFeedback": "Submit Feedback",
-    "thankYou": "Thank you for your feedback! We appreciate you taking the time to share your thoughts.",
-    "failedToSubmit": "Failed to submit feedback.",
-    "failedToSubmitRetry": "Failed to submit feedback. Please try again."
-  },
   "dashboardSections": {
     "pageTitle": "My SOG",
     "myGamers": "My Gamers",
@@ -1295,9 +1280,38 @@
     "myGroupsEmptyStateGedu": "When you’re assigned to a group, it will appear here with its next session.",
     "billing": "Billing",
     "help": "Help",
-    "yty": "Yty",
     "tools": "Tools",
     "loadingAssignments": "Loading your clubs, camps and events."
+  },
+  "helpSection": {
+    "heading": "Help & feedback",
+    "gamerHeading": "Need help?",
+    "faqHeading": "Frequently asked questions",
+    "contact": {
+      "heading": "Need a hand?",
+      "body": "Reach out anytime — we’re happy to help with anything from picking the right club to questions about how School of Gaming works.",
+      "emailLabel": "Email us at"
+    },
+    "form": {
+      "messageLabel": "Message",
+      "charactersNeeded": "{count} more characters needed",
+      "submit": "Send message",
+      "adult": {
+        "description": "Ask us for help, or send a suggestion or a bug report — every message reaches the School of Gaming team.",
+        "placeholder": "What can we help with?",
+        "thankYou": "Thank you — your message is with us, and we will reply by email.",
+        "failed": "We could not send your message. Please try again.",
+        "tooManyRequests": "You have sent us several messages already. Please try again a little later."
+      },
+      "gamer": {
+        "description": "Stuck on something, or got an idea for us? Write it here and we will read it.",
+        "replyNote": "Your Gedu may follow up with you during your next session.",
+        "placeholder": "What do you need help with?",
+        "thankYou": "Thank you — we got your message.",
+        "failed": "We could not send your message. Try again.",
+        "tooManyRequests": "You have sent a few messages already. Try again a little later."
+      }
+    }
   },
   "family": {
     "addGamer": "Add Gamer",
@@ -1620,9 +1634,7 @@
   },
   "header": {
     "nav": {
-      "home": "Home",
       "shop": "Shop",
-      "help": "Help",
       "yty": "Yty",
       "about": "About",
       "faq": "FAQ"
@@ -1630,40 +1642,6 @@
     "accountMenu": "Account menu – {name}",
     "continueToAccount": "Continue to your account",
     "switchTo": "Switch to"
-  },
-  "help": {
-    "title": "Help",
-    "intro": "Answers to common questions about School of Gaming.",
-    "contact": {
-      "heading": "Need a hand?",
-      "body": "Reach out anytime — we’re happy to help with anything from picking the right club to questions about how School of Gaming works.",
-      "emailLabel": "Email us at"
-    },
-    "faq": {
-      "heading": "Frequently asked questions",
-      "items": {
-        "whatIsSogverse": {
-          "q": "What is Sogverse?",
-          "a": "Sogverse is School of Gaming’s platform for clubs, camps and events led by professional Game Educators, in Minecraft, Roblox, Fortnite and more. Where Screen Time Becomes Quality Time."
-        },
-        "productTypes": {
-          "q": "What’s the difference between clubs, camps, and events?",
-          "a": "Clubs meet on a recurring schedule. Camps run across multiple days during school breaks. Events are one-off get-togethers."
-        },
-        "whoLeads": {
-          "q": "Who leads the sessions?",
-          "a": "Every session is hosted by a Gedu — a Game Educator who’s also a gamer and knows how to support children in-game and out."
-        },
-        "safety": {
-          "q": "Is it safe for my child?",
-          "a": "It is built to be. The Sogverse platform has no direct-message feature: conversation happens in shared group spaces, and chat during a call goes to the whole room and is never stored. In-game chat is a separate thing, run by the games themselves — on our own Minecraft server our Gedus have moderation tools for it, including muting and reporting. A gamer account carries an internal Sogverse address rather than your child’s real email, it is linked to your parent account, and your child signs in through that account rather than with a password of their own. Purchases and enrolments ask for your parent PIN. And we have zero tolerance for bullying."
-        },
-        "howToStart": {
-          "q": "How do I get started?",
-          "a": "Create a parent account, browse what’s on offer, and enrol your child. For sessions they join through your account — you switch to their profile, so they never need a password of their own."
-        }
-      }
-    }
   },
   "schools": {
     "hero": {
@@ -2762,39 +2740,6 @@
         "confirmBodySelf": "You will lose your place in line, and we will offer it to the next family.",
         "confirmCta": "Yes, I am sure",
         "error": "Something went wrong and your answer was not saved. Please try again, or write to us at {supportEmail}."
-      }
-    },
-    "help": {
-      "contact": {
-        "heading": "Need a hand?",
-        "body": "We’re here to help with anything from joining your camp to questions about the platform. Email us anytime — we usually reply within a day.",
-        "emailLabel": "Email us at"
-      },
-      "minecraft": {
-        "heading": "Get ready for Minecraft Java",
-        "intro": "Camps and clubs run on the SOG Minecraft Java server. Walk through these steps with your child before camp starts so they can join right away.",
-        "steps": {
-          "install": {
-            "title": "Install Minecraft Java Edition",
-            "body": "Buy and install Minecraft Java Edition from minecraft.net. Bedrock and Pocket Edition won’t work with our server."
-          },
-          "signIn": {
-            "title": "Sign in with a Microsoft account",
-            "body": "Launch the game once and sign in. Pick a username — your child will tell their Gedu what it is so they can be added."
-          },
-          "addServer": {
-            "title": "Add the SOG server",
-            "body": "From Multiplayer → Add Server, paste the address that matches your camp and save it so it’s ready when camp starts:"
-          },
-          "joinAtCampTime": {
-            "title": "Join when camp starts",
-            "body": "Click the SOG server in the list, then Join. The Gedu will guide everyone from there. Need help? Email us above."
-          }
-        },
-        "servers": {
-          "fi": "Finnish camps:",
-          "en": "English camps:"
-        }
       }
     },
     "billing": {

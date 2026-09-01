@@ -20,7 +20,6 @@
       "gamerDashboard": "Min SOG",
       "gamerDashboardDescription": "Dina klubbar, läger och evenemang i Sogverse",
       "voiceSession": "Röstsession",
-      "help": "Hjälp",
       "shop": "Butik",
       "schools": "Kommunklubbar",
       "unlockPin": "Ange PIN",
@@ -1271,20 +1270,6 @@
       }
     }
   },
-  "feedback": {
-    "title": "Feedback",
-    "subtitle": "Dela dina tankar med oss",
-    "sendFeedback": "Skicka feedback",
-    "feedbackDescription": "Vi vill gärna höra din feedback, dina förslag eller felrapporter.",
-    "gamerReplyNote": "Din Gedu kan följa upp med dig under nästa session.",
-    "message": "Meddelande",
-    "placeholder": "Dela dina tankar, förslag eller rapportera ett fel...",
-    "charactersNeeded": "{count} tecken till behövs",
-    "submitFeedback": "Skicka feedback",
-    "thankYou": "Tack för din feedback! Vi uppskattar att du tog dig tid att dela dina tankar.",
-    "failedToSubmit": "Kunde inte skicka feedback.",
-    "failedToSubmitRetry": "Kunde inte skicka feedback. Försök igen."
-  },
   "dashboardSections": {
     "pageTitle": "Min SOG",
     "myGamers": "Mina spelare",
@@ -1295,9 +1280,38 @@
     "myGroupsEmptyStateGedu": "När du tilldelas en grupp visas den här tillsammans med sitt nästa tillfälle.",
     "billing": "Fakturering",
     "help": "Hjälp",
-    "yty": "Yty",
     "tools": "Verktyg",
     "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
+  },
+  "helpSection": {
+    "heading": "Hjälp och feedback",
+    "gamerHeading": "Behöver du hjälp?",
+    "faqHeading": "Vanliga frågor",
+    "contact": {
+      "heading": "Behöver du hjälp?",
+      "body": "Hör av dig när som helst — vi hjälper dig gärna med allt från att välja rätt klubb till frågor om hur School of Gaming fungerar.",
+      "emailLabel": "Mejla oss på"
+    },
+    "form": {
+      "messageLabel": "Meddelande",
+      "charactersNeeded": "{count} tecken till behövs",
+      "submit": "Skicka meddelande",
+      "adult": {
+        "description": "Be oss om hjälp, eller skicka ett förslag eller en felrapport — varje meddelande når School of Gamings team.",
+        "placeholder": "Vad kan vi hjälpa till med?",
+        "thankYou": "Tack — vi har ditt meddelande och svarar via mejl.",
+        "failed": "Vi kunde inte skicka ditt meddelande. Försök igen.",
+        "tooManyRequests": "Du har redan skickat flera meddelanden. Försök igen om en stund."
+      },
+      "gamer": {
+        "description": "Har du fastnat på något, eller fått en idé till oss? Skriv den här så läser vi den.",
+        "replyNote": "Din Gedu kan följa upp med dig under nästa session.",
+        "placeholder": "Vad behöver du hjälp med?",
+        "thankYou": "Tack — vi har fått ditt meddelande.",
+        "failed": "Vi kunde inte skicka ditt meddelande. Försök igen.",
+        "tooManyRequests": "Du har redan skickat några meddelanden. Försök igen om en stund."
+      }
+    }
   },
   "family": {
     "addGamer": "Lägg till gamer",
@@ -1620,9 +1634,7 @@
   },
   "header": {
     "nav": {
-      "home": "Hem",
       "shop": "Butik",
-      "help": "Hjälp",
       "yty": "Yty",
       "about": "Om oss",
       "faq": "FAQ"
@@ -1630,40 +1642,6 @@
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",
     "switchTo": "Byt profil"
-  },
-  "help": {
-    "title": "Hjälp",
-    "intro": "Svar på vanliga frågor om School of Gaming.",
-    "contact": {
-      "heading": "Behöver du hjälp?",
-      "body": "Hör av dig när som helst — vi hjälper dig gärna med allt från att välja rätt klubb till frågor om hur School of Gaming fungerar.",
-      "emailLabel": "Mejla oss på"
-    },
-    "faq": {
-      "heading": "Vanliga frågor",
-      "items": {
-        "whatIsSogverse": {
-          "q": "Vad är Sogverse?",
-          "a": "Sogverse är School of Gamings plattform för klubbar, läger och evenemang ledda av professionella spelfostrare — i Minecraft, Roblox, Fortnite och mer. Där skärmtid blir kvalitetstid."
-        },
-        "productTypes": {
-          "q": "Vad är skillnaden mellan klubbar, läger och evenemang?",
-          "a": "Klubbar träffas regelbundet. Läger pågår under flera dagar under skolloven. Evenemang är enstaka tillfällen."
-        },
-        "whoLeads": {
-          "q": "Vem leder träffarna?",
-          "a": "Varje träff leds av en Gedu — en spelfostrare som själv är gamer och vet hur man stöttar barn i spelet och utanför."
-        },
-        "safety": {
-          "q": "Är det säkert för mitt barn?",
-          "a": "Det är byggt för att vara det. Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Chatten inne i spelen är en annan sak och sköts av spelen själva – på vår egen Minecraft-server har våra Geduer moderationsverktyg för den, bland annat att tysta och rapportera. Ett spelarkonto har en intern Sogverse-adress i stället för ditt barns riktiga e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn loggar in via det kontot i stället för med ett eget lösenord. Köp och anmälningar kräver din föräldra-PIN. Och vi har nolltolerans mot mobbning."
-        },
-        "howToStart": {
-          "q": "Hur kommer jag igång?",
-          "a": "Skapa ett föräldrakonto, bläddra bland utbudet och anmäl ditt barn. Till träffarna går hen in via ditt konto: du växlar till barnets profil, så hen behöver inget eget lösenord."
-        }
-      }
-    }
   },
   "schools": {
     "hero": {
@@ -2076,39 +2054,6 @@
         "confirmBodySelf": "Du förlorar din plats i kön, och vi erbjuder den till nästa familj.",
         "confirmCta": "Ja, jag är säker",
         "error": "Något gick fel och ditt svar sparades inte. Försök igen eller skriv till oss på {supportEmail}."
-      }
-    },
-    "help": {
-      "contact": {
-        "heading": "Behöver du hjälp?",
-        "body": "Vi hjälper dig gärna med allt från att komma in på lägret till frågor om plattformen. Mejla oss när som helst — vi svarar oftast inom en dag.",
-        "emailLabel": "Mejla oss på"
-      },
-      "minecraft": {
-        "heading": "Förbered Minecraft Java",
-        "intro": "Läger och klubbar körs på SOG:s Minecraft Java-server. Gå igenom de här stegen med ditt barn innan lägret börjar så att hen kan ansluta direkt.",
-        "steps": {
-          "install": {
-            "title": "Installera Minecraft Java Edition",
-            "body": "Köp och installera Minecraft Java Edition från minecraft.net. Bedrock och Pocket Edition fungerar inte på vår server."
-          },
-          "signIn": {
-            "title": "Logga in med ett Microsoft-konto",
-            "body": "Starta spelet en gång och logga in. Välj ett användarnamn — ditt barn berättar det för Gedun så att hen kan läggas till."
-          },
-          "addServer": {
-            "title": "Lägg till SOG-servern",
-            "body": "Välj Multiplayer → Add Server och klistra in adressen som matchar lägret. Spara den så att den är redo när lägret börjar:"
-          },
-          "joinAtCampTime": {
-            "title": "Anslut när lägret börjar",
-            "body": "Klicka på SOG-servern i listan och tryck Join. Gedun guidar er vidare därifrån. Behöver du hjälp? Mejla oss ovan."
-          }
-        },
-        "servers": {
-          "fi": "Finskspråkiga läger:",
-          "en": "Engelskspråkiga läger:"
-        }
       }
     },
     "billing": {

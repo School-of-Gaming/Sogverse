@@ -200,7 +200,7 @@ export const PREVIEW_SCENES = [
     surface: "gamer-dashboard",
     title: "Gamer dashboard",
     description:
-      "The body /gamer renders, over fixtures: the same enrollment cards, self-scoped and grouped by type noun. No money anywhere, and no way to leave a queue.",
+      "The body /gamer renders, over fixtures: the same enrollment cards, self-scoped and grouped by type noun, then the child-facing Help section. No money anywhere, and no way to leave a queue.",
     chrome: "dashboard",
     scenarios: [
       { slug: "typical", label: "Everything booked" },
@@ -211,7 +211,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-dashboard",
     title: "Gedu dashboard",
     description:
-      "The body /gedu renders, over fixtures: the next-step band, one roll-up card per group grouped by type noun, and the Tools section beneath. Badge counts are counted out of the feed each card links to.",
+      "The body /gedu renders, over fixtures: the next-step band, one roll-up card per group grouped by type noun, the Tools section beneath, and Help & feedback last. Badge counts are counted out of the feed each card links to.",
     chrome: "dashboard",
     scenarios: [
       {

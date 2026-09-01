@@ -20,7 +20,6 @@
       "gamerDashboard": "Mon SOG",
       "gamerDashboardDescription": "Vos clubs, stages et événements dans Sogverse",
       "voiceSession": "Session vocale",
-      "help": "Aide",
       "shop": "Boutique",
       "schools": "Clubs municipaux",
       "unlockPin": "Saisir le code PIN",
@@ -1271,20 +1270,6 @@
       }
     }
   },
-  "feedback": {
-    "title": "Retours",
-    "subtitle": "Partagez votre avis avec nous",
-    "sendFeedback": "Envoyer un retour",
-    "feedbackDescription": "Nous serions ravis de recevoir vos retours, suggestions ou signalements de bugs.",
-    "gamerReplyNote": "Ton Gedu pourra en reparler avec toi lors de ta prochaine session.",
-    "message": "Message",
-    "placeholder": "Partagez votre avis, vos suggestions, ou signalez un bug...",
-    "charactersNeeded": "Encore {count} caractères requis",
-    "submitFeedback": "Envoyer le retour",
-    "thankYou": "Merci pour votre retour ! Nous vous sommes reconnaissants d’avoir pris le temps de partager votre avis.",
-    "failedToSubmit": "Échec de l’envoi du retour.",
-    "failedToSubmitRetry": "Échec de l’envoi du retour. Veuillez réessayer."
-  },
   "dashboardSections": {
     "pageTitle": "Mon SOG",
     "myGamers": "Mes joueurs",
@@ -1295,9 +1280,38 @@
     "myGroupsEmptyStateGedu": "Dès qu’un groupe vous est attribué, il apparaîtra ici avec sa prochaine séance.",
     "billing": "Facturation",
     "help": "Aide",
-    "yty": "Yty",
     "tools": "Outils",
     "loadingAssignments": "Chargement de vos clubs, stages et événements."
+  },
+  "helpSection": {
+    "heading": "Aide et retours",
+    "gamerHeading": "Besoin d’aide ?",
+    "faqHeading": "Questions fréquentes",
+    "contact": {
+      "heading": "Besoin d’un coup de main ?",
+      "body": "Écrivez-nous quand vous voulez — nous sommes ravis de vous aider, du choix du bon club aux questions sur le fonctionnement de School of Gaming.",
+      "emailLabel": "Écrivez-nous à"
+    },
+    "form": {
+      "messageLabel": "Message",
+      "charactersNeeded": "Encore {count} caractères requis",
+      "submit": "Envoyer le message",
+      "adult": {
+        "description": "Demandez-nous de l’aide, ou envoyez une suggestion ou un signalement de bug — chaque message parvient à l’équipe School of Gaming.",
+        "placeholder": "Comment pouvons-nous vous aider ?",
+        "thankYou": "Merci — nous avons bien votre message et nous vous répondrons par e-mail.",
+        "failed": "Nous n’avons pas pu envoyer votre message. Veuillez réessayer.",
+        "tooManyRequests": "Vous nous avez déjà envoyé plusieurs messages. Veuillez réessayer un peu plus tard."
+      },
+      "gamer": {
+        "description": "Tu bloques sur quelque chose, ou tu as une idée pour nous ? Écris-la ici, on la lira.",
+        "replyNote": "Ton Gedu pourra en reparler avec toi lors de ta prochaine session.",
+        "placeholder": "Sur quoi as-tu besoin d’aide ?",
+        "thankYou": "Merci — on a bien reçu ton message.",
+        "failed": "Nous n’avons pas pu envoyer ton message. Réessaie.",
+        "tooManyRequests": "Tu nous as déjà envoyé plusieurs messages. Réessaie un peu plus tard."
+      }
+    }
   },
   "family": {
     "addGamer": "Ajouter un joueur",
@@ -1620,9 +1634,7 @@
   },
   "header": {
     "nav": {
-      "home": "Accueil",
       "shop": "Boutique",
-      "help": "Aide",
       "yty": "Yty",
       "about": "À propos",
       "faq": "FAQ"
@@ -1630,40 +1642,6 @@
     "accountMenu": "Menu du compte – {name}",
     "continueToAccount": "Continuer vers votre compte",
     "switchTo": "Changer de profil"
-  },
-  "help": {
-    "title": "Aide",
-    "intro": "Réponses aux questions fréquentes sur School of Gaming.",
-    "contact": {
-      "heading": "Besoin d’un coup de main ?",
-      "body": "Écrivez-nous quand vous voulez — nous sommes ravis de vous aider, du choix du bon club aux questions sur le fonctionnement de School of Gaming.",
-      "emailLabel": "Écrivez-nous à"
-    },
-    "faq": {
-      "heading": "Questions fréquentes",
-      "items": {
-        "whatIsSogverse": {
-          "q": "Qu’est-ce que Sogverse ?",
-          "a": "Sogverse est la plateforme de School of Gaming dédiée aux clubs, stages et événements encadrés par des animateurs professionnels, sur Minecraft, Roblox, Fortnite et bien d’autres. Du temps d’écran au temps qui fait grandir."
-        },
-        "productTypes": {
-          "q": "Quelle est la différence entre les clubs, les stages et les événements ?",
-          "a": "Les clubs se retrouvent selon un rythme régulier. Les stages se déroulent sur plusieurs jours pendant les vacances scolaires. Les événements sont des rendez-vous ponctuels."
-        },
-        "whoLeads": {
-          "q": "Qui anime les sessions ?",
-          "a": "Chaque session est animée par un Gedu — un animateur de jeu qui est lui-même joueur et sait accompagner les enfants dans le jeu comme en dehors."
-        },
-        "safety": {
-          "q": "Est-ce sans danger pour mon enfant ?",
-          "a": "C’est ainsi qu’il a été conçu. La plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés. Le chat dans les jeux est une autre affaire, géré par les jeux eux-mêmes — sur notre propre serveur Minecraft, nos Gedus disposent d’outils de modération, dont la mise en sourdine et le signalement. Un compte joueur porte une adresse interne Sogverse plutôt que le véritable e-mail de votre enfant, il est rattaché à votre compte parent, et votre enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Les achats et les inscriptions demandent votre code PIN parent. Et nous appliquons une tolérance zéro face au harcèlement."
-        },
-        "howToStart": {
-          "q": "Comment commencer ?",
-          "a": "Créez un compte parent, parcourez notre offre et inscrivez votre enfant. Pour les sessions, il se connecte via votre compte : vous basculez sur son profil, il n’a donc jamais besoin d’un mot de passe à lui."
-        }
-      }
-    }
   },
   "schools": {
     "hero": {
@@ -2076,39 +2054,6 @@
         "confirmBodySelf": "Vous perdrez votre place dans la file, et nous la proposerons à la famille suivante.",
         "confirmCta": "Oui, j’en suis sûr",
         "error": "Une erreur est survenue et votre réponse n’a pas été enregistrée. Réessayez ou écrivez-nous à {supportEmail}."
-      }
-    },
-    "help": {
-      "contact": {
-        "heading": "Besoin d’un coup de main ?",
-        "body": "Nous sommes là pour vous aider, de l’arrivée à votre stage aux questions sur la plateforme. Écrivez-nous quand vous voulez — nous répondons généralement sous 24 heures.",
-        "emailLabel": "Écrivez-nous à"
-      },
-      "minecraft": {
-        "heading": "Préparez-vous pour Minecraft Java",
-        "intro": "Les stages et les clubs se déroulent sur le serveur Minecraft Java de SOG. Parcourez ces étapes avec votre enfant avant le début du stage pour qu’il puisse se connecter tout de suite.",
-        "steps": {
-          "install": {
-            "title": "Installez Minecraft Java Edition",
-            "body": "Achetez et installez Minecraft Java Edition sur minecraft.net. Les versions Bedrock et Pocket Edition ne fonctionnent pas avec notre serveur."
-          },
-          "signIn": {
-            "title": "Connectez-vous avec un compte Microsoft",
-            "body": "Lancez le jeu une première fois et connectez-vous. Choisissez un nom d’utilisateur — votre enfant l’indiquera à son Gedu afin d’être ajouté."
-          },
-          "addServer": {
-            "title": "Ajoutez le serveur SOG",
-            "body": "Dans Multijoueur → Ajouter un serveur, collez l’adresse correspondant à votre stage et enregistrez-la pour qu’elle soit prête le jour J :"
-          },
-          "joinAtCampTime": {
-            "title": "Connectez-vous au début du stage",
-            "body": "Cliquez sur le serveur SOG dans la liste, puis sur Rejoindre. Le Gedu guidera tout le monde ensuite. Besoin d’aide ? Écrivez-nous à l’adresse ci-dessus."
-          }
-        },
-        "servers": {
-          "fi": "Stages en finnois :",
-          "en": "Stages en anglais :"
-        }
       }
     },
     "billing": {

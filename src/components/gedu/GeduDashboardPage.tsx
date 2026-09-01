@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
+import { HelpFeedbackCard } from "@/components/help/help-feedback-card";
 import { MinecraftPasswordResetCard } from "@/components/tools/minecraft-password-reset-card";
 import { CreateInstantRoomCard } from "@/components/voice/instant/CreateInstantRoomCard";
 import {
@@ -119,6 +120,9 @@ export function GeduDashboardPage({
       criminalRecordCheckPassed={criminalRecordCheckPassed}
       toolsCard={<MinecraftPasswordResetCard />}
       instantRoomCard={<CreateInstantRoomCard />}
+      // The adult wording — a gedu is written to in the same register a parent
+      // is; only a child's copy forks.
+      helpForm={<HelpFeedbackCard audience="adult" />}
     />
   );
 }

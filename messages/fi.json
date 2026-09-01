@@ -17,7 +17,6 @@
       "geduSessionDetails": "Session tiedot",
       "familyProduct": "Kerrat ja koosteet",
       "familyProductDescription": "Tämän ryhmän aikataulu ja jokaisen kerran kooste.",
-      "help": "Apu",
       "shop": "Kauppa",
       "schools": "Kuntakerhot",
       "gamerDashboard": "Oma SOG",
@@ -1271,20 +1270,6 @@
       }
     }
   },
-  "feedback": {
-    "title": "Palaute",
-    "subtitle": "Jaa ajatuksesi kanssamme",
-    "sendFeedback": "Lähetä palaute",
-    "feedbackDescription": "Kuulemme mielellämme palautettasi, ehdotuksiasi tai virheilmoituksiasi.",
-    "gamerReplyNote": "Gedusi saattaa palata asiaasi seuraavan kerran aikana.",
-    "message": "Viesti",
-    "placeholder": "Jaa ajatuksesi, ehdotuksesi tai ilmoita virheestä...",
-    "charactersNeeded": "{count} merkkiä vielä tarvitaan",
-    "submitFeedback": "Lähetä palaute",
-    "thankYou": "Kiitos palautteestasi! Arvostamme, että käytit aikaa ajatustesi jakamiseen.",
-    "failedToSubmit": "Palautteen lähettäminen epäonnistui.",
-    "failedToSubmitRetry": "Palautteen lähettäminen epäonnistui. Yritä uudelleen."
-  },
   "dashboardSections": {
     "pageTitle": "Oma SOG",
     "myGamers": "Pelaajani",
@@ -1295,9 +1280,38 @@
     "myGroupsEmptyStateGedu": "Kun sinut on liitetty ryhmään, se näkyy täällä seuraavan kerran kanssa.",
     "billing": "Laskutus",
     "help": "Apu",
-    "yty": "Yty",
     "tools": "Työkalut",
     "loadingAssignments": "Ladataan kerhojasi, leirejäsi ja tapahtumiasi."
+  },
+  "helpSection": {
+    "heading": "Apu ja palaute",
+    "gamerHeading": "Tarvitsetko apua?",
+    "faqHeading": "Usein kysytyt kysymykset",
+    "contact": {
+      "heading": "Tarvitsetko apua?",
+      "body": "Ota rohkeasti yhteyttä — autamme mielellämme niin sopivan kerhon valinnassa kuin School of Gamingin toimintaan liittyvissä kysymyksissä.",
+      "emailLabel": "Sähköpostimme"
+    },
+    "form": {
+      "messageLabel": "Viesti",
+      "charactersNeeded": "{count} merkkiä vielä tarvitaan",
+      "submit": "Lähetä viesti",
+      "adult": {
+        "description": "Kysy meiltä apua tai lähetä ehdotus tai virheilmoitus — jokainen viesti tulee School of Gamingin tiimille.",
+        "placeholder": "Missä voimme auttaa?",
+        "thankYou": "Kiitos — viestisi on meillä, ja vastaamme sähköpostitse.",
+        "failed": "Viestin lähettäminen epäonnistui. Yritä uudelleen.",
+        "tooManyRequests": "Olet lähettänyt jo useita viestejä. Yritä hetken kuluttua uudelleen."
+      },
+      "gamer": {
+        "description": "Jäitkö jumiin tai keksitkö meille idean? Kirjoita se tähän, niin luemme sen.",
+        "replyNote": "Gedusi saattaa palata asiaasi seuraavan kerran aikana.",
+        "placeholder": "Missä tarvitset apua?",
+        "thankYou": "Kiitos — saimme viestisi.",
+        "failed": "Viestin lähettäminen epäonnistui. Yritä uudelleen.",
+        "tooManyRequests": "Olet lähettänyt jo muutaman viestin. Yritä hetken kuluttua uudelleen."
+      }
+    }
   },
   "family": {
     "addGamer": "Lisää pelaaja",
@@ -1620,9 +1634,7 @@
   },
   "header": {
     "nav": {
-      "home": "Etusivu",
       "shop": "Kauppa",
-      "help": "Apu",
       "yty": "Yty",
       "about": "Tietoa",
       "faq": "UKK"
@@ -1630,40 +1642,6 @@
     "accountMenu": "Tilivalikko – {name}",
     "continueToAccount": "Jatka tilillesi",
     "switchTo": "Vaihda profiiliin"
-  },
-  "help": {
-    "title": "Apu",
-    "intro": "Vastauksia yleisimpiin School of Gamingia koskeviin kysymyksiin.",
-    "contact": {
-      "heading": "Tarvitsetko apua?",
-      "body": "Ota rohkeasti yhteyttä — autamme mielellämme niin sopivan kerhon valinnassa kuin School of Gamingin toimintaan liittyvissä kysymyksissä.",
-      "emailLabel": "Sähköpostimme"
-    },
-    "faq": {
-      "heading": "Usein kysytyt kysymykset",
-      "items": {
-        "whatIsSogverse": {
-          "q": "Mikä Sogverse on?",
-          "a": "Sogverse on School of Gamingin alusta kerhoille, leireille ja tapahtumille, joita vetävät ammattitaitoiset pelikasvattajat Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ruutuajasta laatuaikaa."
-        },
-        "productTypes": {
-          "q": "Mikä on kerhojen, leirien ja tapahtumien ero?",
-          "a": "Kerhot kokoontuvat säännöllisesti. Leirit järjestetään useamman päivän ajan koulujen lomilla. Tapahtumat ovat kertaluonteisia kokoontumisia."
-        },
-        "whoLeads": {
-          "q": "Kuka vetää tapaamiset?",
-          "a": "Jokaista tapaamista vetää Gedu — pelikasvattaja, joka pelaa itsekin ja osaa tukea lapsia pelissä ja sen ulkopuolella."
-        },
-        "safety": {
-          "q": "Onko se turvallista lapselleni?",
-          "a": "Se on rakennettu turvalliseksi. Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Pelien sisäinen chat on eri asia, ja siitä vastaavat pelit itse – omalla Minecraft-palvelimellamme Geduillamme on siihen moderointityökalut, kuten mykistys ja raportointi. Pelaajatilillä on Sogversen sisäinen osoite lapsesi oikean sähköpostiosoitteen sijaan, tili on liitetty vanhemman tiliisi, ja lapsesi kirjautuu sisään sen kautta eikä omalla salasanallaan. Ostokset ja ilmoittautumiset kysyvät vanhemman PIN-koodia. Kiusaamista emme suvaitse lainkaan."
-        },
-        "howToStart": {
-          "q": "Miten pääsen alkuun?",
-          "a": "Luo vanhemman tili, selaa tarjontaa ja ilmoita lapsesi mukaan. Tapaamisiin hän tulee sinun tilisi kautta: vaihdat hänen profiiliinsa, eikä hän tarvitse omaa salasanaa."
-        }
-      }
-    }
   },
   "schools": {
     "hero": {
@@ -2076,39 +2054,6 @@
         "confirmBodySelf": "Menetät paikkasi jonossa, ja tarjoamme paikkaa seuraavalle perheelle.",
         "confirmCta": "Kyllä, olen varma",
         "error": "Jokin meni pieleen, eikä vastaustasi tallennettu. Yritä uudelleen tai kirjoita meille osoitteeseen {supportEmail}."
-      }
-    },
-    "help": {
-      "contact": {
-        "heading": "Tarvitsetko apua?",
-        "body": "Autamme mielellämme niin leirille liittymisessä kuin palveluun liittyvissä kysymyksissä. Lähetä viesti milloin vain — vastaamme yleensä päivän sisällä.",
-        "emailLabel": "Sähköpostimme"
-      },
-      "minecraft": {
-        "heading": "Valmistaudu Minecraft Java -leirille",
-        "intro": "Leireillä ja kerhoissa käytämme Minecraft Javaa ja School of Gamingin omia pelipalvelimia. Käy nämä vaiheet läpi ennen leiriä tai kerhoa niin siihen liittyminen sujuu sutjakkaammin.",
-        "steps": {
-          "install": {
-            "title": "Asenna Minecraft Java Edition",
-            "body": "Osta ja asenna Minecraft Java Edition osoitteesta minecraft.net. Bedrock- tai Pocket Edition ei toimi palvelimellamme."
-          },
-          "signIn": {
-            "title": "Kirjaudu Microsoft-tilillä",
-            "body": "Käynnistä peli kerran ja kirjaudu sisään. Valitkaa käyttäjänimi — lapsi kertoo sen Gedulle, jotta hänet voidaan lisätä."
-          },
-          "addServer": {
-            "title": "Lisää SOG-palvelin",
-            "body": "Valitse Multiplayer → Add Server ja syötä leiriisi sopiva osoite. Tallenna se, niin se on valmiina leirin alkaessa:"
-          },
-          "joinAtCampTime": {
-            "title": "Liity leirin alkaessa",
-            "body": "Napsauta SOG-palvelinta listasta ja paina Join. Gedu opastaa siitä eteenpäin. Apua tarvittaessa lähetä meille sähköpostia yltä."
-          }
-        },
-        "servers": {
-          "fi": "Suomenkieliset leirit:",
-          "en": "Englanninkieliset leirit:"
-        }
       }
     },
     "billing": {
