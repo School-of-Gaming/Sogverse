@@ -190,7 +190,7 @@ export function AddGamerTile({
         <div className="absolute inset-0 flex items-center justify-center">
           <Plus
             className={cn(
-              "text-muted-foreground transition group-hover:text-primary",
+              "text-muted-foreground transition group-hover:text-foreground",
               ADD_ICON_SIZE[size],
             )}
             strokeWidth={1.5}

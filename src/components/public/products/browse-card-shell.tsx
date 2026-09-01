@@ -187,8 +187,10 @@ export function useBrowseCardShell(
         // utilities used to paint was authored blind — an unlayered
         // `border-color` rule meant no border colour in the app ever rendered
         // — and colour spent only behind a cursor never reaches the families
-        // who meet the shop on a phone anyway.
-        "hover:shadow-lg",
+        // who meet the shop on a phone anyway. `active:` keeps the tap
+        // acknowledgement a phone gets between the press and the next page's
+        // paint — the one feedback a touch user ever had here.
+        "hover:shadow-lg active:shadow-lg",
         // `focus-within` so keyboard focus on the stretched link lights the
         // whole card, not just the invisible anchor.
         "focus-within:shadow-lg",

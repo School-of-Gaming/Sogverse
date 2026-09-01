@@ -17,10 +17,18 @@ export const ROLE_LABEL_KEYS = {
 
 export type RoleLabelKey = (typeof ROLE_LABEL_KEYS)[UserRole];
 
+/**
+ * The ruled role families (design pass, 2026-09-01): the gamer keeps amber and
+ * the admin keeps ink; the parent takes harmony and the gedu takes wit's soft
+ * variant — which retires the amber-to-violet gradient the fourth role was
+ * given when there was no hue left for it. Inks are the script-checked pairs
+ * from the button grammar fills (dark ink on both: harmony-strong 6.11:1,
+ * wit-soft 8.10:1).
+ */
 export const ROLE_BADGE_STYLES: Record<UserRole, string> = {
   gamer: "bg-primary text-primary-foreground",
-  customer: "bg-secondary text-secondary-foreground",
-  gedu: "bg-gradient-to-r from-primary to-secondary text-secondary-foreground",
+  customer: "bg-yty-harmony-strong text-background",
+  gedu: "bg-yty-wit-soft text-background",
   admin: "bg-foreground text-background",
 };
 
