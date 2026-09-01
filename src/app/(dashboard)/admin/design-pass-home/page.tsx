@@ -37,6 +37,13 @@ import { cn } from "@/lib/utils";
  * the page it shows — it *is* the page's code. Nothing is screenshotted and
  * nothing is iframed.
  *
+ * **The drafts carry the settled typography; the Today rows carry today's.**
+ * Type is ruled — Press Start 2P is out of the product, every heading is
+ * Poppins SemiBold at the Guidebook's scale, and the CTA row is 16px / 600 — so
+ * a draft dose here is drawn on the type it will actually live with, and the
+ * pair of doses differ from each other in colour alone. The Today rows keep the
+ * pixel face and the 14px / 500 button, because that is what they document.
+ *
  * **Honesty caveat, stated once rather than on every slide.** Tailwind
  * breakpoints read the *viewport*, so every sample below is showing desktop
  * styling however narrow its box is, and a section sample is the deck column's
@@ -89,12 +96,12 @@ const HOME_DOSES: readonly {
  * rather than mixing two hues for want of a third — and a case cannot be judged
  * against a description.
  *
- * The class strings are the ones the lively dose carried before the flat default
- * landed, recovered verbatim from the walkthrough deck's gradient slide and
- * frozen here. Every slot but the hero's own is the *current* lively dose,
- * because nothing else in this exhibit is under question: the hero section reads
- * only `hero`, `heroTitle`, `heroPrimary` and `heroSecondary`, and the rest are
- * here to satisfy the shape.
+ * The background is the one the lively dose carried before the flat default
+ * landed, recovered from the walkthrough deck's gradient slide and frozen here.
+ * Everything else is the *current* lively dose — the settled type included, so
+ * the only thing this slide asks about is the sky behind it. The hero section
+ * reads only `hero`, `heroTitle`, `heroPrimary` and `heroSecondary`; the rest
+ * are here to satisfy the shape.
  *
  * **Exhibit-only. Do not copy these into a dose.** If the ruling keeps the dusk
  * sky it goes back into the lively dose as a sanctioned exception and this
@@ -104,11 +111,14 @@ const HOME_DOSES: readonly {
 const DUSK_HERO_EXHIBIT: HomeDraftClasses = {
   hero:
     "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),radial-gradient(75%_60%_at_74%_6%,_color-mix(in_oklab,_var(--color-yty-harmony-strong)_22%,_transparent)_0%,_transparent_72%),radial-gradient(70%_62%_at_16%_34%,_color-mix(in_oklab,_var(--color-yty-wit-strong)_18%,_transparent)_0%,_transparent_72%)] pt-[var(--header-height)]",
-  heroTitle:
-    "font-display text-2xl font-bold leading-tight tracking-tight md:text-6xl",
+  heroTitle: "font-sans text-3xl font-semibold leading-[1.1] md:text-[56px]",
   heroPrimary: "text-foreground",
   heroSecondary:
     "box-decoration-clone rounded-lg bg-yty-glow-strong px-3 text-background",
+  sectionHeading:
+    "text-3xl font-semibold leading-[1.2] tracking-tight sm:text-4xl",
+  ctaHeading: "text-2xl font-semibold leading-[1.2] sm:text-3xl",
+  ctaType: "text-base font-semibold",
   howItWorksSection: "bg-yty-harmony-strong/10 py-24",
   stepCircles: [
     "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-harmony-strong text-2xl font-bold text-background ring-4 ring-yty-harmony-strong/25",
@@ -250,7 +260,7 @@ const HERO_SURFACE = "bg-background pt-[var(--header-height)]";
  * are the four lines, `<primary>` is "Screen Time" and `<secondary>` is "Quality
  * Time" — the payoff words the lively dose strokes.
  *
- * Written at a literal `text-6xl` rather than the component's `md:text-6xl`,
+ * Written at a literal 56px rather than the component's `md:text-[56px]`,
  * because a breakpoint inside a narrow box on a wide screen would quietly show
  * the wide size and call it the phone. This is the desktop size, stated as one.
  * Both settings are otherwise the lively dose's own classes, so the only
@@ -259,7 +269,7 @@ const HERO_SURFACE = "bg-background pt-[var(--header-height)]";
 function MarkerHeadline({ payoff }: { payoff: string }) {
   return (
     <div className="overflow-x-auto rounded-lg border bg-background p-6">
-      <p className="w-max font-display text-6xl font-bold leading-tight tracking-tight text-foreground">
+      <p className="w-max font-sans text-[56px] font-semibold leading-[1.1] text-foreground">
         Where
         <br />
         Screen Time

@@ -11,26 +11,36 @@ import type { YtyPalette } from "@/lib/constants/yty";
 import type { DisplayFace } from "@/components/preview/palette-scenarios";
 
 /**
- * The greeting's face and its size, as one choice per face — literal class
+ * The greeting's face, size and weight, as one choice per face — literal class
  * strings, because Tailwind scans source text and a size picked by template
- * emits a class with no rule behind it.
+ * emits a class with no rule behind it. The weight travels with the face here
+ * rather than sitting on the element, so the draft's SemiBold 600 does not have
+ * to out-argue a `font-bold` written beside it.
+ *
+ * **The draft is Poppins, not Space Mono.** The earlier draft set this line in
+ * the world's own face; the ruling that retires Press Start 2P from the product
+ * re-sets every one of its sites in Poppins at the Guidebook's scale, and the
+ * greeting goes with them — it is the app welcoming a child by name, which is
+ * the trust register Poppins carries, not the platform naming one of its own
+ * places.
  *
  * **The size is not shared, because the two faces are not the same width.**
- * Press Start 2P advances a full em per character; Space Mono advances ~0.6em
- * at the same cap height, so keeping the numbers would shrink the greeting by
- * two fifths. The draft's numbers are the arithmetic at the 360px floor, in the
+ * Press Start 2P advances a full em per character; Poppins SemiBold averages a
+ * little over half of one, so the same numbers would set a greeting barely half
+ * the width. The draft's numbers are the arithmetic at the 360px floor in the
  * widest locale: the dashboard shell is `container p-6`, which is 312px of
  * content there, and Finnish sets the longest first word ("Tervetuloa," — 11
- * characters, against French's "Bienvenue,"). At 24px Space Mono that whole
- * greeting is ~245px for a typical first name and stays on one line; today's
+ * characters, against French's "Bienvenue,"). At 30px Poppins that whole
+ * greeting is ~280px for a typical first name and stays on one line; today's
  * 20px Press Start 2P is ~340px and wraps. A long name (Aleksanteri) wraps
- * under either, at the space, which `break-words` already handles.
+ * under either, at the space, which `break-words` already handles. The 36px
+ * step from `md:` up is the Guidebook's own H2.
  *
  * Retires with the draft: promotion picks one row and deletes the map.
  */
 const GREETING_FACE: Record<DisplayFace, string> = {
-  display: "font-display text-xl md:text-3xl",
-  mono: "font-brand-mono text-2xl md:text-4xl",
+  display: "font-display text-xl font-bold md:text-3xl",
+  sans: "font-sans text-3xl font-semibold leading-[1.2] md:text-4xl",
 };
 
 /**
@@ -95,8 +105,9 @@ export function GamerDashboardPageBody({
   palette?: YtyPalette;
   /**
    * Which face the greeting is set in — same shape and same default rule as
-   * `palette`: today's Press Start 2P unless the draft scenario asks otherwise.
-   * See `GREETING_FACE` above for why each face carries its own size.
+   * `palette`: today's Press Start 2P unless the draft scenario asks for the
+   * settled Poppins. See `GREETING_FACE` above for why each face carries its
+   * own size.
    */
   greetingFace?: DisplayFace;
 }) {
@@ -140,14 +151,13 @@ export function GamerDashboardPageBody({
             would be the first thing a child met on their own home page. The pill
             still sticks the moment it reaches the top of the viewport. */}
         <div className="text-center">
-          {/* Two-size pattern matching the public Home heading: the face is
-              monospaced either way, so a long Finnish word like "Tervetuloa,"
-              overflows mobile at the next size up. break-words is a safety net
-              for longer translations — and for the name too, which is the
-              longest thing that can land in this line and the one part of it no
-              translator controls. */}
+          {/* Two-size pattern matching the public Home heading: a long Finnish
+              word like "Tervetuloa," overflows mobile at the next size up under
+              either face. break-words is a safety net for longer translations —
+              and for the name too, which is the longest thing that can land in
+              this line and the one part of it no translator controls. */}
           <h2
-            className={`${GREETING_FACE[greetingFace]} font-bold text-primary break-words`}
+            className={`${GREETING_FACE[greetingFace]} text-primary break-words`}
           >
             {t("welcomeNamed", { name: firstName })}
           </h2>

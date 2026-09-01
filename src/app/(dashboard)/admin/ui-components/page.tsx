@@ -2222,9 +2222,12 @@ function SessionPhotosDemo() {
  * is the one that works here, and is what the proposed secondary is built from.
  * The third tier is ours to design, and the options below are the ask.
  *
- * Both halves of the change are drawn separately on purpose: the colour set at
- * today's CTA type, then the same set at today's type beside the Guidebook's
- * 16px/600, so a verdict on the type is not a verdict on the palette.
+ * **The type half is no longer a question.** The Guidebook's CTA row — Poppins
+ * 16px / SemiBold 600 — is ruled, and one line in the shared recipe carries it
+ * to every button in the product. So the colour set is drawn *on* that type,
+ * which is what the candidates will ship in; the second table keeps today's
+ * 14px / 500 beside it as the record of what the ruling moves, and says which
+ * of the two is the ruled one.
  */
 
 /**
@@ -2236,8 +2239,8 @@ const DRAFT_BUTTON_BASE =
 
 /** 14px / 500 is what every button in the app wears today. */
 const DRAFT_TYPE_TODAY = "text-sm font-medium";
-/** 16px / 600 is the Guidebook's CTA type. */
-const DRAFT_TYPE_GUIDEBOOK = "text-base font-semibold";
+/** 16px / 600 is the Guidebook's CTA type, and the ruled one. */
+const DRAFT_TYPE_RULED = "text-base font-semibold";
 
 /**
  * The counting rule behind every "call sites" number below, stated because the
@@ -2420,8 +2423,9 @@ function ButtonProposalDemo() {
     <Fragment>
       <SubSection title="Guidebook proposal — today beside proposed">
         <p className="text-sm text-muted-foreground">
-          Draft classes local to this page. The live Button is untouched, and
-          destructive and link stay as functional variants outside this set.
+          Draft classes local to this page, drawn on the ruled CTA type &mdash;
+          Poppins 16px / 600. The live Button is untouched, and destructive and
+          link stay as functional variants outside this set.
         </p>
         {/* One grid for all three groups, so a column means the same thing all
             the way down and the comparison is made by looking, not by scrolling
@@ -2456,28 +2460,28 @@ function ButtonProposalDemo() {
                     <div>
                       <DraftButton
                         row={row}
-                        typeClass={DRAFT_TYPE_TODAY}
+                        typeClass={DRAFT_TYPE_RULED}
                         state="resting"
                       />
                     </div>
                     <div>
                       <DraftButton
                         row={row}
-                        typeClass={DRAFT_TYPE_TODAY}
+                        typeClass={DRAFT_TYPE_RULED}
                         state="hover"
                       />
                     </div>
                     <div>
                       <DraftButton
                         row={row}
-                        typeClass={DRAFT_TYPE_TODAY}
+                        typeClass={DRAFT_TYPE_RULED}
                         state="disabled"
                       />
                     </div>
                     <div>
                       <DraftButton
                         row={row}
-                        typeClass={DRAFT_TYPE_TODAY}
+                        typeClass={DRAFT_TYPE_RULED}
                         state="loading"
                       />
                     </div>
@@ -2497,7 +2501,7 @@ function ButtonProposalDemo() {
           <div className="grid grid-cols-[minmax(14rem,auto)_repeat(2,minmax(10rem,1fr))] items-center gap-x-6 gap-y-3">
             <div />
             <DemoCaption>Today &mdash; 14px / 500</DemoCaption>
-            <DemoCaption>Guidebook &mdash; 16px / 600</DemoCaption>
+            <DemoCaption>Ruled &mdash; Poppins 16px / 600</DemoCaption>
             {BUTTON_PROPOSAL_SET.map((row) => (
               <Fragment key={row.name}>
                 <DraftButtonLabel row={row} />
@@ -2511,7 +2515,7 @@ function ButtonProposalDemo() {
                 <div>
                   <DraftButton
                     row={row}
-                    typeClass={DRAFT_TYPE_GUIDEBOOK}
+                    typeClass={DRAFT_TYPE_RULED}
                     state="resting"
                   />
                 </div>

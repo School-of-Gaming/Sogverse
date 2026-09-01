@@ -61,6 +61,15 @@ import { cn } from "@/lib/utils";
  * reports, in `docs/plans/brand-palette-and-type-design-pass.md`, and in these
  * code comments. A slide carrying more words than the UI it shows is a bug.
  *
+ * **Every draft is drawn on the settled type.** The typography rulings landed
+ * first: Press Start 2P is out of the product and every site it held is re-set
+ * in Poppins at the Guidebook's scale, headings are SemiBold 600, the CTA row is
+ * 16px / 600, and Space Mono keeps one job — the platform naming its own places,
+ * which is the voice-zone labels. So a draft exhibit here wears the type it will
+ * ship on, and colour is judged against it rather than against type that is
+ * already gone. A row labelled *Today* keeps today's type, because that is what
+ * it documents.
+ *
  * **Every comparison renders the real components inline** — never a screenshot
  * and never an iframed page. Where a map is importable from a server component
  * it is read here directly (the zone presentations, the Yty colours, the
@@ -590,7 +599,15 @@ const VIOLET_MEANINGS: readonly { chip: string; meaning: string }[] = [
  * family drawn here because it is the one the ensemble rule says we hear least.
  */
 const STRENGTH_SHAPE =
-  "inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium";
+  "inline-flex h-9 items-center justify-center rounded-md px-4";
+
+/**
+ * The type each half of this slide wears. The draft steps are set in the ruled
+ * CTA type (Poppins 16px / 600); the amber-jobs row below them keeps 14px / 500,
+ * because it is quoting what the app ships today.
+ */
+const STRENGTH_TYPE_RULED = "text-base font-semibold";
+const STRENGTH_TYPE_TODAY = "text-sm font-medium";
 
 const STRENGTH_STEPS: readonly {
   word: string;
@@ -946,8 +963,14 @@ const USER_ROW_PEOPLE = [
  * grammar's families are all committed to meanings, so an emphasis tier that
  * needs no meaning should not borrow one.
  */
+/**
+ * The base of the real variant recipe at its default size, set in the ruled CTA
+ * type — Poppins 16px / 600. One line in the shared recipe carries that type to
+ * every button in the product, so a candidate drawn at anything else would be a
+ * picture of a button that will not exist.
+ */
 const BUTTON_SHAPE =
-  "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors";
+  "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-base font-semibold transition-colors";
 
 const EMPHASIS_TREATMENTS: readonly { name: string; className: string }[] = [
   {
@@ -1148,8 +1171,8 @@ const ATTENDANCE_GRAMMAR: Record<keyof typeof ATTENDANCE_TONE, string> = {
 
 /**
  * The button samples wear `BUTTON_SHAPE` — the base of the real variant recipe
- * at its default size, at today's CTA type. (The *type* question moved to the
- * typography deck; this slide is colour and shape.)
+ * at its default size, at the ruled CTA type. (The *type* was decided on the
+ * typography deck; this slide is colour and shape, drawn on it.)
  *
  * **Written out rather than called for.** Using the button primitive here would
  * add call sites to the very counts this slide asks a decision about, so the
@@ -1259,16 +1282,19 @@ function StrengthCell({
   word,
   sample,
   className,
+  typeClass,
   note,
 }: {
   word: string;
   sample: string;
   className: string;
+  /** The CTA type this cell is set in — ruled for a draft, today's for a quote. */
+  typeClass: string;
   note?: string;
 }) {
   return (
     <div className="w-48 space-y-2">
-      <span className={cn(STRENGTH_SHAPE, className)}>{sample}</span>
+      <span className={cn(STRENGTH_SHAPE, typeClass, className)}>{sample}</span>
       <div className="text-sm font-semibold text-foreground">{word}</div>
       {note ? (
         <div className="text-[11px] text-muted-foreground">{note}</div>
@@ -1583,10 +1609,14 @@ function PaletteElementCard({
  * A strip of the four Yty voice zones, straight out of the presentation maps
  * the voice room composes its zone list from — so the tile wash, the glyph
  * colour and the ring are the real ones.
+ *
+ * The draft strip also carries the ruled face: a zone name is the platform
+ * naming one of its own places, which is the one job Space Mono keeps once
+ * everything else in the app is Poppins.
  */
 function ZoneTileStrip({ palette }: { palette: YtyPalette }) {
-  const presentations =
-    palette === "current" ? YTY_PRESENTATIONS : YTY_PRESENTATIONS_DRAFT;
+  const draft = palette !== "current";
+  const presentations = draft ? YTY_PRESENTATIONS_DRAFT : YTY_PRESENTATIONS;
 
   return (
     <div className="flex flex-wrap gap-3 p-4">
@@ -1602,7 +1632,13 @@ function ZoneTileStrip({ palette }: { palette: YtyPalette }) {
             )}
           >
             <Icon className={cn("h-6 w-6", zone.color.glyph)} aria-hidden />
-            <span className={cn("text-sm font-semibold", zone.color.glyph)}>
+            <span
+              className={cn(
+                "text-sm font-semibold",
+                draft && "font-brand-mono",
+                zone.color.glyph,
+              )}
+            >
               {YTY_ELEMENTS[index].name}
             </span>
           </div>
@@ -1634,7 +1670,7 @@ export default function DesignPassWalkthroughPage() {
           Can Sogverse be as fun, colourful, bright and lively as the sog.gg
           marketing site while keeping the dark ground — all while adhering to
           the Guidebook? Slides 4–14 rule on the system once; the rest apply it.
-          Type is the other deck, at{" "}
+          Type is already ruled, on the other deck at{" "}
           <DeckLink href="/admin/design-pass-typography">
             /admin/design-pass-typography
           </DeckLink>
@@ -1780,7 +1816,11 @@ export default function DesignPassWalkthroughPage() {
           <Marker>One family, three strengths</Marker>
           <div className="flex flex-wrap gap-6">
             {STRENGTH_STEPS.map((step) => (
-              <StrengthCell key={step.word} {...step} />
+              <StrengthCell
+                key={step.word}
+                {...step}
+                typeClass={STRENGTH_TYPE_RULED}
+              />
             ))}
           </div>
         </div>
@@ -1795,6 +1835,7 @@ export default function DesignPassWalkthroughPage() {
                 sample={job.sample}
                 note={job.where}
                 className={job.className}
+                typeClass={STRENGTH_TYPE_TODAY}
               />
             ))}
           </div>
@@ -2119,7 +2160,12 @@ export default function DesignPassWalkthroughPage() {
           </div>
           <div className="rounded-lg border bg-card">
             <div className="flex flex-row flex-wrap items-center justify-between gap-x-6 gap-y-3 p-6">
-              <span className="font-display text-sm leading-relaxed tracking-normal text-primary sm:text-base">
+              {/* Poppins, not the pixel face: the all-clear is one of the six
+                  Press Start 2P sites the type ruling converts, and it now sits
+                  at the same size and weight as the "Needs attention" title
+                  above — which is the point of the exhibit, since the two are
+                  the same slot in two states and both are amber. */}
+              <span className="text-xl font-semibold text-primary">
                 All clear
               </span>
               <span className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
@@ -2236,8 +2282,8 @@ export default function DesignPassWalkthroughPage() {
         <Ruling>
           <p>
             Sign off the gamer dashboard&rsquo;s colour at the floor — the
-            enrollment cards as one page — or name what to tune. The
-            greeting&rsquo;s face is the typography deck.
+            enrollment cards as one page — or name what to tune. The greeting
+            above them is already the ruled Poppins.
           </p>
         </Ruling>
       </Slide>

@@ -69,16 +69,20 @@ export function ytyPaletteFor(scenario: string): YtyPalette {
  * Which face a surface's own display heading is set in.
  *
  * `"display"` is Press Start 2P — `--font-display`, what every such heading
- * wears today — and `"mono"` is Space Mono, the Guidebook's in-platform voice.
- * The two are not interchangeable at one size: Press Start 2P advances a full
- * em per character and Space Mono about 0.6, so a surface that takes this prop
- * carries a size per face rather than a face alone.
+ * wears today — and `"sans"` is Poppins at the Guidebook's own scale, which is
+ * what every one of those headings becomes: the face retires from the product
+ * entirely, and the greeting's Space Mono draft was superseded with it. The two
+ * are not interchangeable at one size, because Press Start 2P advances a full em
+ * per character where Poppins advances a little over half of one — so a surface
+ * that takes this prop carries a size per face rather than a face alone.
+ *
+ * Retires with the draft: once the face is unloaded there is one answer.
  */
-export type DisplayFace = "display" | "mono";
+export type DisplayFace = "display" | "sans";
 
 /** Which display face a scenario slug asks for; anything else is today's. */
 export function displayFaceFor(scenario: string): DisplayFace {
-  return scenario === BRAND_PALETTE_SCENARIO.slug ? "mono" : "display";
+  return scenario === BRAND_PALETTE_SCENARIO.slug ? "sans" : "display";
 }
 
 /**

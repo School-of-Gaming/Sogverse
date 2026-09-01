@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { HomeCtaLink } from "@/components/home/cta-link";
 import { ROUTES } from "@/lib/constants";
 import type { YtyPalette } from "@/lib/constants/yty";
+import { cn } from "@/lib/utils";
 
 const featureIcons = [Gamepad2, Sparkles, Users, Shield];
 const featureKeys = ["minecraftClubs", "screenTime", "newFriends", "parents"] as const;
@@ -59,6 +60,11 @@ type HomeDraftPalette = Exclude<YtyPalette, "current">;
  *
  * **Amber stays the identity mark and the CTA colour in both.** It is the
  * ambient wash that the lively dose gives up, not the button.
+ *
+ * **Both doses carry the settled type, so colour is judged on the type it will
+ * live with.** The type is identical in the two of them — see
+ * `HERO_TITLE_TYPE` below — so nothing about the dose comparison is a type
+ * comparison.
  *
  * **Every pairing here is script-measured, not eyeballed** (`node
  * scripts/yty-contrast.mjs` for the palette's own numbers; the draft-specific
@@ -154,12 +160,22 @@ const FEATURE_DRAFT_ACCENTS: Record<
 export interface HomeDraftClasses {
   /** The hero `<section>`, whose background is the page's one big gradient. */
   hero: string;
-  /** The hero `<h1>`. */
+  /** The hero `<h1>`, at the Guidebook's H1: Poppins 56px / 600 / 1.1. */
   heroTitle: string;
   /** The `<primary>` chunk of the hero headline. */
   heroPrimary: string;
   /** The `<secondary>` chunk of the hero headline. */
   heroSecondary: string;
+  /** The features and how-it-works `<h2>`s, at the Guidebook's H2. */
+  sectionHeading: string;
+  /** The closing card's `<h2>`, one step down from the section headings. */
+  ctaHeading: string;
+  /**
+   * The type every button on the page wears: Poppins 16px / 600, the
+   * Guidebook's CTA row. Merged over the shared recipe's own `text-sm
+   * font-medium` rather than replacing it, so only the type moves.
+   */
+  ctaType: string;
   /** The how-it-works band. */
   howItWorksSection: string;
   /** The three numbered circles, in order. */
@@ -169,6 +185,27 @@ export interface HomeDraftClasses {
   /** A palette rule under a section heading, or `null` where the dose has none. */
   sectionRule: string | null;
 }
+
+/**
+ * The settled type, one copy for both doses.
+ *
+ * Press Start 2P is gone from the whole product and every site it held is
+ * re-set in Poppins at the Guidebook's own scale (A.3: H1 48–56px / 600 / 1.1,
+ * H2 ~36px / 600 / 1.2), headings are SemiBold 600 rather than the habitual
+ * 700, and the CTA row is 16px / 600. The doses differ in colour and in nothing
+ * else, so the type lives here rather than being written twice.
+ *
+ * **The mobile step is 30px, not the Guidebook's own H1.** 48–56px is a desktop
+ * figure and the floor is 360px, which leaves 328px of hero. The widest line
+ * any locale sets is French's "Du temps d'écran" — 16 characters, ~0.55em of
+ * Poppins SemiBold advance apiece — so 30px sets it in ~264px on one line and
+ * 36px would already be inside a character of the edge.
+ */
+const HERO_TITLE_TYPE = "font-sans text-3xl font-semibold leading-[1.1] md:text-[56px]";
+const SECTION_HEADING_TYPE =
+  "text-3xl font-semibold leading-[1.2] tracking-tight sm:text-4xl";
+const CTA_HEADING_TYPE = "text-2xl font-semibold leading-[1.2] sm:text-3xl";
+const CTA_TYPE = "text-base font-semibold";
 
 const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
   /**
@@ -190,9 +227,12 @@ const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
   brand: {
     hero:
       "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),radial-gradient(70%_60%_at_78%_16%,_color-mix(in_oklab,_var(--color-yty-harmony-strong)_16%,_transparent)_0%,_transparent_70%)] pt-[var(--header-height)]",
-    heroTitle: "font-display text-2xl font-bold tracking-tight md:text-6xl",
+    heroTitle: HERO_TITLE_TYPE,
     heroPrimary: "text-primary",
     heroSecondary: "text-secondary",
+    sectionHeading: SECTION_HEADING_TYPE,
+    ctaHeading: CTA_HEADING_TYPE,
+    ctaType: CTA_TYPE,
     howItWorksSection: "bg-muted/30 py-24",
     /**
      * Ink on the fill, uniformly, so three sibling circles carry one ink
@@ -252,15 +292,18 @@ const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
     hero:
       "relative -mt-[var(--header-height)] overflow-hidden border-b-4 border-yty-harmony-strong bg-background pt-[var(--header-height)]",
     /**
-     * `leading-tight` is the marker stroke's doing: the wash below is an inline
-     * background, and at the default line-height of 1 for `text-6xl` two
-     * stacked lines of it would touch.
+     * The Guidebook's 1.1, which is tighter than the loose line-height this
+     * dose used to need. The marker stroke below is an inline background, so
+     * two *stacked* stroked lines would touch at 1.1 — no locale stacks them:
+     * `<secondary>` is one chunk on one line in every message, and the line
+     * above it is plain text. Adding a second stroked chunk to the headline
+     * would break that and is what this note exists to warn.
      */
-    heroTitle: "font-display text-2xl font-bold leading-tight tracking-tight md:text-6xl",
+    heroTitle: HERO_TITLE_TYPE,
     /**
-     * White, not amber — the ambient amber is what this dose gives up. The face
-     * stays Press Start 2P in both drafts, so the comparison between them stays
-     * about colour; the face itself is ruled on its own slide.
+     * White, not amber — the ambient amber is what this dose gives up. Both
+     * doses are set in the same Poppins, so the comparison between them stays
+     * about colour and nothing else.
      */
     heroPrimary: "text-foreground",
     /**
@@ -271,6 +314,9 @@ const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
      */
     heroSecondary:
       "box-decoration-clone rounded-lg bg-yty-glow-strong px-3 text-background",
+    sectionHeading: SECTION_HEADING_TYPE,
+    ctaHeading: CTA_HEADING_TYPE,
+    ctaType: CTA_TYPE,
     /** One hue, where the blended draft ran harmony into wit: harmony at 10%. */
     howItWorksSection: "bg-yty-harmony-strong/10 py-24",
     stepCircles: [
@@ -308,6 +354,17 @@ interface HomeSectionProps {
 /** `null` on the live path — which is what keeps every literal reachable. */
 function draftClassesFor(palette: YtyPalette): HomeDraftClasses | null {
   return palette === "current" ? null : HOME_DRAFT_CLASSES[palette];
+}
+
+/**
+ * The shared button recipe, plus the draft's CTA type where a draft is in play.
+ *
+ * The recipe carries `text-sm font-medium` in its own base, so the settled 16px
+ * / 600 has to be merged over it rather than appended — `cn`'s twMerge is what
+ * resolves the pair. On the live path the recipe is returned untouched.
+ */
+function ctaClass(recipe: string, draft: HomeDraftClasses | null) {
+  return draft ? cn(recipe, draft.ctaType) : recipe;
 }
 
 /* ------------------------------------------------------------------ */
@@ -366,14 +423,20 @@ export function HomeHeroSection({
           <div className="mt-10 flex flex-col-reverse items-center justify-center gap-4 sm:flex-row">
             <Link
               href={ROUTES.about}
-              className={buttonVariants({ variant: "outline", size: "lg" })}
+              className={ctaClass(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                draft,
+              )}
             >
               {t('hero.aboutCta')}
             </Link>
             <HomeCtaLink
               signedOutHref={ROUTES.register}
               signedOutLabel={c('getStarted')}
-              className={buttonVariants({ size: "lg", className: "gap-2" })}
+              className={ctaClass(
+                buttonVariants({ size: "lg", className: "gap-2" }),
+                draft,
+              )}
             >
               <ArrowRight className="h-4 w-4" />
             </HomeCtaLink>
@@ -399,7 +462,7 @@ export function HomeFeaturesSection({ palette = "current" }: HomeSectionProps) {
   return (
     <section className="container mx-auto px-4 py-24">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <h2 className={draft ? draft.sectionHeading : "text-3xl font-bold tracking-tight sm:text-4xl"}>
           {t('features.heading')}
         </h2>
         <p className="mt-4 text-muted-foreground">
@@ -438,7 +501,7 @@ export function HomeHowItWorksSection({ palette = "current" }: HomeSectionProps)
     <section className={draft ? draft.howItWorksSection : "bg-muted/30 py-24"}>
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h2 className={draft ? draft.sectionHeading : "text-3xl font-bold tracking-tight sm:text-4xl"}>
             {t('howItWorks.heading')}
           </h2>
           <p className="mt-4 text-muted-foreground">
@@ -489,7 +552,7 @@ export function HomeCtaSection({ palette = "current" }: HomeSectionProps) {
     <section className="container mx-auto px-4 py-24">
       <Card className={draft ? draft.ctaCard : "mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10"}>
         <CardContent className="flex flex-col items-center py-12 text-center">
-          <h2 className="text-2xl font-bold sm:text-3xl">
+          <h2 className={draft ? draft.ctaHeading : "text-2xl font-bold sm:text-3xl"}>
             {t('cta.heading')}
           </h2>
           <p className="mt-4 text-muted-foreground">
@@ -503,14 +566,17 @@ export function HomeCtaSection({ palette = "current" }: HomeSectionProps) {
           <div className="mt-8 flex flex-col-reverse gap-4 sm:flex-row">
             <Link
               href={ROUTES.shop}
-              className={buttonVariants({ variant: "outline", size: "lg" })}
+              className={ctaClass(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                draft,
+              )}
             >
               {c('exploreClubs')}
             </Link>
             <HomeCtaLink
               signedOutHref={ROUTES.register}
               signedOutLabel={t('cta.createFreeAccount')}
-              className={buttonVariants({ size: "lg" })}
+              className={ctaClass(buttonVariants({ size: "lg" }), draft)}
             />
           </div>
         </CardContent>
