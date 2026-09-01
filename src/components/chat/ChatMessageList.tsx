@@ -247,7 +247,11 @@ export function ChatMessageList({
         onScroll={handleScroll}
         aria-label={t("log")}
         role="log"
-        className={cn("relative overflow-y-auto pr-1", heightClassName)}
+        // The vertical padding is load-bearing, not rhythm: the mention and
+        // flash rings draw 1px *outside* their row's box, and the first and
+        // last rows sit flush against this element's clip edges — without the
+        // breathing room, the newest message's ring is cut off.
+        className={cn("relative overflow-y-auto py-0.5 pr-1", heightClassName)}
       >
         {messages.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
