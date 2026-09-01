@@ -4,7 +4,7 @@ import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import type { UserRole } from "@/types";
 import { wrapInLayout } from "./layout";
 import { factTable } from "./blocks";
-import { defuseAutolinks, escapeHtml, heading, pinnedFill } from "./utils";
+import { defuseAutolinks, escapeHtml, heading, paragraph, pinnedFill } from "./utils";
 import type { EmailTranslator } from "./translator";
 
 interface FeedbackEmailOptions {
@@ -18,7 +18,16 @@ interface FeedbackEmailOptions {
 }
 
 /**
- * Builds the HTML email body for a feedback submission.
+ * Builds the HTML email body for a help-or-feedback submission.
+ *
+ * One form now carries both — a family or a gedu asking for help, and anyone
+ * telling us something — so the mail says so rather than calling every message
+ * feedback. An admin opening it has to be able to tell which it is from the
+ * message itself, which is why the copy names both and claims neither.
+ *
+ * The `email.feedback.*` namespace and the route keep their names: renaming
+ * either ripples into the route posture registry and its tests for no reader's
+ * benefit, and it is the mail's content that was wrong.
  */
 export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: FeedbackEmailOptions): string {
   const escapedMessage = escapeHtml(opts.message).replace(/\n/g, "<br/>");
@@ -29,6 +38,12 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
   // replying is how you answer the person — a second, differently-styled route
   // to the same place is a question about which one is the real one. The
   // defusing is what stops the client inventing that link on our behalf.
+  //
+  // The row is labelled "Reply to" rather than "Email" because that is what the
+  // value actually is: the route resolves the reply-to first and passes it in
+  // here, so on a gamer's submission this is their linked parent's address, not
+  // the gamer's synthetic handle. Labelling it "Email" was the one line in the
+  // mail that could be read as false.
   const escapedEmail = defuseAutolinks(escapeHtml(opts.userEmail));
 
   const gamerNote = opts.isGamer && opts.parentEmail
@@ -55,7 +70,7 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
     [
       [t("feedback.from"), escapedName],
       [t("feedback.role"), escapedRole],
-      [t("feedback.emailLabel"), escapedEmail],
+      [t("feedback.replyToLabel"), escapedEmail],
       [t("feedback.sent"), escapeHtml(opts.sentAt)],
     ],
     { labelWidth: "100px" },
@@ -65,6 +80,9 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td>${heading(t("feedback.heading"))}</td>
+      </tr>
+      <tr>
+        <td>${paragraph(t("feedback.intro"))}</td>
       </tr>
       <tr>
         <td>${facts}</td>

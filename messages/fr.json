@@ -2522,14 +2522,15 @@
       "button": "Réinitialiser le code PIN"
     },
     "feedback": {
-      "subject": "Retour de {displayName} ({role})",
-      "heading": "Nouveau retour reçu",
+      "subject": "Aide ou retour de {displayName} ({role})",
+      "heading": "Nouveau message d’aide ou de retour",
+      "intro": "Quelqu’un a demandé de l’aide ou envoyé un retour. Répondez à cet e-mail pour lui écrire — votre réponse ira à l’adresse ci-dessous.",
       "from": "De",
       "role": "Rôle",
-      "emailLabel": "E-mail",
+      "replyToLabel": "Répondre à",
       "sent": "Envoyé",
       "message": "Message",
-      "gamerNote": "Ce retour provient d’un compte joueur. Les réponses seront adressées à son parent ({parentEmail})."
+      "gamerNote": "Ce message provient d’un compte joueur. Les réponses seront adressées à son parent ({parentEmail})."
     },
     "welcomeParent": {
       "subject": "Bienvenue chez School of Gaming",

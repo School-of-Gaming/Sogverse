@@ -2522,14 +2522,15 @@
       "button": "Återställ PIN-kod"
     },
     "feedback": {
-      "subject": "Feedback från {displayName} ({role})",
-      "heading": "Ny feedback mottagen",
+      "subject": "Hjälp eller feedback från {displayName} ({role})",
+      "heading": "Nytt meddelande om hjälp eller feedback",
+      "intro": "Någon har bett om hjälp eller skickat feedback. Svara på det här mejlet för att svara personen – ditt svar går till adressen nedan.",
       "from": "Från",
       "role": "Roll",
-      "emailLabel": "E-post",
+      "replyToLabel": "Svarsadress",
       "sent": "Skickat",
       "message": "Meddelande",
-      "gamerNote": "Denna feedback kommer från ett spelarkonto. Svar skickas till deras förälder ({parentEmail})."
+      "gamerNote": "Det här meddelandet kommer från ett spelarkonto. Svar går till deras förälder ({parentEmail})."
     },
     "welcomeParent": {
       "subject": "Välkommen till School of Gaming",

@@ -2522,14 +2522,15 @@
       "button": "Nollaa PIN-koodi"
     },
     "feedback": {
-      "subject": "Palaute käyttäjältä {displayName} ({role})",
-      "heading": "Uusi palaute vastaanotettu",
+      "subject": "Apua tai palautetta käyttäjältä {displayName} ({role})",
+      "heading": "Uusi apu- tai palauteviesti",
+      "intro": "Joku on pyytänyt apua tai lähettänyt palautetta. Vastaa tähän viestiin, niin vastaus menee alla olevaan osoitteeseen.",
       "from": "Lähettäjä",
       "role": "Rooli",
-      "emailLabel": "Sähköposti",
+      "replyToLabel": "Vastausosoite",
       "sent": "Lähetetty",
       "message": "Viesti",
-      "gamerNote": "Tämä palaute on pelaajatililtä. Vastaukset ohjataan hänen vanhemmalleen ({parentEmail})."
+      "gamerNote": "Tämä viesti on pelaajatililtä. Vastaukset ohjautuvat hänen vanhemmalleen ({parentEmail})."
     },
     "welcomeParent": {
       "subject": "Tervetuloa School of Gamingiin",

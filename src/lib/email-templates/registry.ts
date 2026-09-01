@@ -480,8 +480,11 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     build: (p, t, locale) => buildPasswordResetEmail(t, p.resetLink, locale),
     subject: (_p, t) => t("passwordReset.subject"),
   }),
+  // The registry key stays `feedback` — it is the API's template identifier and
+  // renaming it would break every caller for a word only we read. The label is
+  // what an admin picks from, so that is where the form's real name goes.
   feedback: defineTemplate({
-    label: "Feedback",
+    label: "Help & Feedback",
     fields: [
       { key: "userName", label: "User Name", placeholder: "Marja Virtanen" },
       {
@@ -496,7 +499,10 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         ],
       },
       { key: "userEmail", label: "User Email", placeholder: "marja@example.com" },
-      { key: "message", label: "Message", placeholder: "Great product!" },
+      // An untouched text input posts its placeholder, so this is what a test
+      // send actually carries — a help request rather than a compliment, since
+      // that is the half of the form the mail's copy was rewritten for.
+      { key: "message", label: "Message", placeholder: "How do I move my child to a different club?" },
     ],
     schema: feedbackParamsSchema,
     build: (p, t, locale) => buildFeedbackEmail(t, locale, {

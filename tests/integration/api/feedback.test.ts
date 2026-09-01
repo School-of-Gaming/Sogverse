@@ -277,7 +277,7 @@ describe("POST /api/feedback", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: expect.stringContaining("Palaute käyttäjältä"),
+        subject: expect.stringContaining("Apua tai palautetta käyttäjältä"),
       })
     );
   });
@@ -294,7 +294,7 @@ describe("POST /api/feedback", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: expect.stringContaining("Feedback from"),
+        subject: expect.stringContaining("Help & feedback from"),
       })
     );
   });
@@ -310,7 +310,7 @@ describe("POST /api/feedback", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: expect.stringContaining("Palaute käyttäjältä"),
+        subject: expect.stringContaining("Apua tai palautetta käyttäjältä"),
       })
     );
   });

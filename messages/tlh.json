@@ -2566,11 +2566,12 @@
       "button": "PIN yIchoH"
     },
     "feedback": {
-      "subject": "QIn {displayName} ({role}) vo’",
-      "heading": "QIn chu’ Suqlu’",
+      "subject": "QaH poQ pagh QIn Do’ ngeH {displayName} ({role})",
+      "heading": "QaH poQ pagh QIn Do’ chu’",
+      "intro": "QaH poQ vay’, pagh QIn Do’ ngeHta’. QIn’vam yIjang — bIngDaq QIn ghoS jangmeylIj.",
       "from": "vo’",
       "role": "Qu’",
-      "emailLabel": "QIn",
+      "replyToLabel": "jangmeH QIn",
       "sent": "ngeHlu’",
       "message": "QIn",
       "gamerNote": "QIn’vam toy’wI’ account vo’. jangmey vav/SoS naDev ({parentEmail}) ghoS."

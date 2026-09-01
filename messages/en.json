@@ -3208,14 +3208,15 @@
       "button": "Reset PIN"
     },
     "feedback": {
-      "subject": "Feedback from {displayName} ({role})",
-      "heading": "New Feedback Received",
+      "subject": "Help & feedback from {displayName} ({role})",
+      "heading": "New help & feedback message",
+      "intro": "Someone has asked for help or sent us feedback. Reply to this email to answer them — your reply goes to the address below.",
       "from": "From",
       "role": "Role",
-      "emailLabel": "Email",
+      "replyToLabel": "Reply to",
       "sent": "Sent",
       "message": "Message",
-      "gamerNote": "This feedback is from a gamer account. Replies will go to their parent ({parentEmail})."
+      "gamerNote": "This message is from a gamer account. Replies go to their parent ({parentEmail})."
     },
     "welcomeParent": {
       "subject": "Welcome to School of Gaming",
