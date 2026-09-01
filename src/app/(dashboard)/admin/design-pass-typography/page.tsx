@@ -140,8 +140,13 @@ function Caption({ children }: { children: React.ReactNode }) {
 
 /** The ask, in one line, with the recommendation folded in rather than argued. */
 function Ruling({ children }: { children: React.ReactNode }) {
+  // Full-value edge on a neutral card, matching the colour deck's ruling card:
+  // the shading ruling bound tint grounds at card scale and shaded brand edges
+  // alike, so a deck that kept either would be shipping the violation it
+  // recorded. Whether a *non*-ruling edge stays amber or goes neutral is the
+  // open question the owner is reviewing in the app.
   return (
-    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg border border-primary/40 bg-primary/5 px-4 py-3">
+    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg border border-primary bg-card px-4 py-3">
       <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">
         Ruling
       </span>

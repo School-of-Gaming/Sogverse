@@ -70,7 +70,7 @@ export function WeekRows({
             className={cn(
               "flex flex-col gap-2 rounded-lg border p-2 sm:flex-row sm:gap-3",
               row.isToday
-                ? "border-primary/60 bg-primary/5"
+                ? "border-primary bg-primary/5"
                 : "border-border bg-card",
             )}
           >

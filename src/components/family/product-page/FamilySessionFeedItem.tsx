@@ -13,7 +13,9 @@ import {
   type AttendanceMark,
   type SessionLabels,
 } from "@/components/session-feed";
+import type { YtyPalette } from "@/lib/constants/yty";
 import { cn } from "@/lib/utils";
+import { FAMILY_PRODUCT_TONES } from "./product-page-tones";
 import type { FamilySessionEntry } from "./types";
 
 interface FamilySessionFeedItemProps {
@@ -45,6 +47,8 @@ interface FamilySessionFeedItemProps {
    * what differs, so this is a rendering decision rather than a data one.
    */
   showAttendance: boolean;
+  /** **Design-pass draft** — see the page body's prop. Retires with the draft. */
+  palette?: YtyPalette;
 }
 
 /**
@@ -85,7 +89,9 @@ export function FamilySessionFeedItem({
   prominent,
   live,
   showAttendance,
+  palette = "current",
 }: FamilySessionFeedItemProps) {
+  const tones = FAMILY_PRODUCT_TONES[palette];
   const t = useTranslations("familyProduct");
   const b = useTranslations("sessionBadge");
 
@@ -144,7 +150,9 @@ export function FamilySessionFeedItem({
         // the chip's height or its `-bottom-*` offset ever moves. The gedu row
         // reserves the same space from the same numbers.
         editor !== null && "pb-8 sm:pb-8",
-        entry.kind === "future" && prominent && "border-info/50",
+        // The next session's edge — a state mark rather than furniture, so
+        // under the draft it carries the time family at full value.
+        entry.kind === "future" && prominent && tones.nextCard,
       )}
     >
       {/* The header row is date on the left and one status on the right, and
@@ -177,9 +185,11 @@ export function FamilySessionFeedItem({
             variant="outline"
             className={cn(
               "shrink-0 text-[10px] uppercase tracking-wide",
-              live
-                ? "border-info bg-info/10 text-info"
-                : "border-info/50 text-info",
+              // Liveness is glow and time is wit, so under the draft a session
+              // running right now swaps family rather than merely brightening
+              // — and the lit chip is the one the enrollment card lights, so a
+              // family meets one Live mark whichever page they are on.
+              live ? tones.liveTag : tones.futureTag,
             )}
           >
             {live

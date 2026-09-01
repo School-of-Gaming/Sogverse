@@ -25,11 +25,13 @@ import { displayFaceFor, ytyPaletteFor } from "../palette-scenarios";
  * `parent-dashboard-scene.tsx`.
  *
  * One scenario differs from `typical` in nothing but the brand draft: the
- * enrollment cards under the draft colour grammar, and the greeting's face
- * swapped to Space Mono. Both are judged here rather than on a card in the style
- * guide, because this is a mobile-first surface — the greeting is the one
- * heading in the app whose face has to survive the widest locale at 360px, and
- * the cards are what a child scrolls past under it.
+ * enrollment cards under the ruled colour grammar, and the greeting re-set from
+ * Press Start 2P into Poppins at the Guidebook's scale — the face retires from
+ * the product entirely, and the greeting's Space Mono draft was superseded with
+ * it. Both are judged here rather than on a card in the style guide, because
+ * this is a mobile-first surface — the greeting is the one heading in the app
+ * whose face has to survive the widest locale at 360px, and the cards are what
+ * a child scrolls past under it.
  */
 export function GamerDashboardScene({
   scenario,

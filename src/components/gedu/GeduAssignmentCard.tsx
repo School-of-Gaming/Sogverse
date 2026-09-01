@@ -244,9 +244,9 @@ export function GeduAssignmentCard({
           // stretches every one of them to the tallest rather than leaving the
           // short ones floating.
           "group relative h-full cursor-pointer overflow-hidden transition-[border-color,box-shadow,transform]",
-          "hover:border-primary/40 hover:shadow-lg focus-within:border-primary/40 focus-within:shadow-lg",
+          "hover:border-primary hover:shadow-lg focus-within:border-primary focus-within:shadow-lg",
           live &&
-            "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
+            "border-primary bg-gradient-to-r from-primary/5 to-transparent",
         )}
       >
         <CardContent className="flex h-full flex-col gap-4 p-5">

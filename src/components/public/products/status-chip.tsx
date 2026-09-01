@@ -17,7 +17,7 @@ export type ChipSize = "sm" | "md";
 
 // Semantic tone per chip. Keeps the colour decision in one place.
 const TONE_OUTLINE: Record<ChipTone, string> = {
-  primary: "border-primary/40 text-primary",
+  primary: "border-primary text-primary",
   warning: "border-warning/50 text-warning",
   info: "border-info/40 text-info",
   muted: "border-border text-muted-foreground",

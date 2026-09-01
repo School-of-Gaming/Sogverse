@@ -53,7 +53,7 @@ export function ChatReactionRow({
             "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs leading-none transition-colors",
             "disabled:cursor-default disabled:opacity-60",
             tally.mine
-              ? "border-primary/60 bg-primary/15 text-primary"
+              ? "border-primary bg-primary/15 text-primary"
               : "border-border bg-muted text-muted-foreground hover:border-border hover:bg-accent",
           )}
         >

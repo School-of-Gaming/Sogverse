@@ -18,12 +18,14 @@ import {
   formatProductSchedule,
   renderScheduleLinesForDetail,
 } from "@/components/public/products/format-product-schedule";
+import type { YtyPalette } from "@/lib/constants/yty";
 import { cn, formatDate } from "@/lib/utils";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { FamilyProductBackLink } from "./BackLink";
 import { FamilySessionFeed } from "./FamilySessionFeed";
+import { FAMILY_PRODUCT_TONES } from "./product-page-tones";
 import type {
   FamilyProductGedu,
   FamilyProductSite,
@@ -184,6 +186,14 @@ export interface FamilyProductPageBodyProps {
   entries: readonly FamilySessionEntry[];
   /** The zone the schedule was authored in; the feed renders in the viewer's. */
   sourceTimeZone: string;
+  /**
+   * **Design-pass draft.** Which palette the page's time, liveness and
+   * community marks are drawn in. Defaults to the live one, so every real
+   * family page renders byte-for-byte what it rendered before; only a preview
+   * scene's brand scenario passes anything else. The class strings live in
+   * `product-page-tones.ts`. Retires with the draft.
+   */
+  palette?: YtyPalette;
 }
 
 /**
@@ -265,7 +275,9 @@ export function FamilyProductPageBody({
   onJoinClick,
   entries,
   sourceTimeZone,
+  palette = "current",
 }: FamilyProductPageBodyProps) {
+  const tones = FAMILY_PRODUCT_TONES[palette];
   const t = useTranslations("familyProduct");
   const p = useTranslations("productType");
   const g = useTranslations("common");
@@ -363,10 +375,10 @@ export function FamilyProductPageBody({
             360px viewport a "When" label above two schedule lines costs a line
             of its own to say what the lines already say. */}
         <div className="mt-3 flex items-start gap-2 text-sm">
-          <CalendarDays
-            className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
-            aria-hidden
-          />
+          {/* The one glyph on the masthead that carries a family: the row is
+              about *when*, and time is wit. The site row below it stays muted —
+              a place is not a time, and the grammar has no word for it. */}
+          <CalendarDays className={tones.scheduleGlyph} aria-hidden />
           <div className="min-w-0 space-y-0.5">
             <span className="sr-only">{t("scheduleLabel")}: </span>
             {scheduleLines.map((line) => (
@@ -465,9 +477,11 @@ export function FamilyProductPageBody({
           translation trap for no gain at all. */}
       {gedus.length > 0 && (
         <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            {g("gedus")}
-          </span>
+          {/* Harmony, because this label is a community fact — who has my
+              child — and people are harmony. The chips keep their neutral
+              ground: they carry faces and names, so the colour belongs on the
+              word that says what they are. */}
+          <span className={tones.gedusLabel}>{g("gedus")}</span>
           <PersonChipList
             people={gedus.map((g) => ({ id: g.id, name: g.firstName }))}
           />
@@ -503,6 +517,7 @@ export function FamilyProductPageBody({
           sourceTimeZone={sourceTimeZone}
           showAttendance={isParent}
           audience={routeAudience(audience)}
+          palette={palette}
         />
       </section>
     </div>

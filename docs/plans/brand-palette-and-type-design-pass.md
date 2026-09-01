@@ -667,6 +667,39 @@ Owner direction (2026-08-31), added during implementation:
     - The in-app border review continues on the branch; keep-or-neutral rulings
       per family/construct land as they are made.
 
+33. **The border colour review is ORDERED as its own deck** (owner, 2026-09-01):
+    "in general a colorful border could enhance that vibrant look of the app I
+    am going for… I think I need a border color review. Because I agree, some
+    place it just be neutral and some places it should be colored. It depends
+    on context." A new review page, `/admin/design-pass-borders`, built from
+    the direction-32 census grouped by *construct context* (not by colour):
+    the settled coloured borders as reference (selection edge, zone
+    own-colour border, live chip, ignition ring, picker rings); form
+    validation and functional-status borders (dead until the fix — users have
+    never seen a red error edge); outline chips and badges; the Yty
+    tile/accent edges (valor already disliked; the approved-look-neutral
+    recommendation from direction 32 renders here); card edges at rest; hover
+    lifts (the `border-foreground/30` gray lifts are effectively the neutral
+    idiom and not brand-bound); and rings (always rendered — a change there is
+    visible, posed honestly). Each section: the real construct, candidates
+    side by side (as-authored-now-visible, full value, neutral — no tinted
+    candidate survives the tint ban), source files and counts annotated, a
+    recommendation, one Ruling per context. The owner's lean — vibrancy —
+    means full-value candidates are drawn as real contenders, not strawmen.
+    Rulings land per section like every other deck; the deck deletes at
+    wiring like the others.
+    **Hover-colour principle, owner (2026-09-01), binding the review's hover
+    section and general doctrine:** "a border that is only colored on hover
+    means it is only enhancing a desktop layout and has no impact on mobile…
+    considering how parents tend to use mobile more than desktop, we could be
+    putting work into an effect that won't be appreciated by one of our main
+    audiences." So: vibrancy spent only behind hover never reaches the
+    mobile-first family audience — where a border deserves colour for the
+    vibrant look, it earns it *at rest* (visible on touch); hover stays
+    functional feedback in the neutral idiom. Weighs against
+    coloured-on-hover-only candidates on parent/gamer surfaces; desktop-first
+    admin/gedu surfaces may still use hover colour where it earns its keep.
+
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
 around, so the map in **Problem** and step 6's consumer list both shrink:

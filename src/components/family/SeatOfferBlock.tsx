@@ -43,14 +43,29 @@ interface SeatOfferBlockProps {
   palette?: YtyPalette;
 }
 
+/** The ruled draft, shared by both draft slugs — see the map below. */
+const BRAND_SEAT_OFFER_TONE = {
+  container:
+    "w-full space-y-3 border-t border-yty-wit-strong pt-4 text-left",
+  glyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
+  title: "text-yty-wit-soft",
+};
+
 /**
  * **Design-pass draft.** The block's three blue slots per palette.
  *
- * All three are the same decision — `--info` converging onto the wit family —
- * so they move together or not at all. The title is body-size text, so it takes
- * wit's *soft* variant (7.57:1 on the card, against a 4.5:1 bar); the container's
- * top rule and the glyph carry no text and could take either, and take soft too
- * so the block reads as one hue rather than as two blues stacked.
+ * All three are the same decision — `--info` converging onto the wit family
+ * (ruled) — so they move together or not at all. What splits the draft's three
+ * slots is the strong/soft mechanism the element cards were signed off on:
+ * **soft on the glyph and every word, strong on the edge.** The title is
+ * body-size text and takes soft at 7.57:1 on the card, against a 4.5:1 bar;
+ * wit-strong cannot carry body text on this ground, which is exactly why it is
+ * reserved for the rule, where no text sits.
+ *
+ * **The rule is drawn at full value**, not at the `/25` it was drafted with:
+ * the shading rule binds a shaded brand colour wherever it appears, and an edge
+ * mixed down toward the card is one. Full value is an authored brand value, so
+ * nothing is mixed.
  *
  * The container's *whole* class string lives here rather than only its border,
  * so the live path's `className` is the exact string it was before this map
@@ -66,19 +81,9 @@ const SEAT_OFFER_TONES: Record<
     glyph: "mt-0.5 h-4 w-4 shrink-0 text-info",
     title: "text-info",
   },
-  brand: {
-    container:
-      "w-full space-y-3 border-t border-yty-wit-soft/25 pt-4 text-left",
-    glyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
-    title: "text-yty-wit-soft",
-  },
+  brand: BRAND_SEAT_OFFER_TONE,
   /** Dose is a home-page question; a dashboard card takes the one draft. */
-  "brand-lively": {
-    container:
-      "w-full space-y-3 border-t border-yty-wit-soft/25 pt-4 text-left",
-    glyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
-    title: "text-yty-wit-soft",
-  },
+  "brand-lively": BRAND_SEAT_OFFER_TONE,
 };
 
 /**

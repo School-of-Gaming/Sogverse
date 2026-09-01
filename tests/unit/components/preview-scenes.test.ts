@@ -7,6 +7,7 @@ import {
   previewSceneHref,
   sceneHasScenario,
 } from "@/components/preview/scenes";
+import { BRAND_PALETTE_SCENARIO } from "@/components/preview/palette-scenarios";
 import {
   GEDU_DASHBOARD_SCENARIOS,
   buildGeduDashboardFixture,
@@ -1603,6 +1604,18 @@ describe("the family club page's billing states", () => {
     fixture: buildFamilyProductPageFixture(now, scenario),
   }));
 
+  /**
+   * The counts below are over the page's **shapes**, which is what they were
+   * always about. The design pass's draft-palette scenario is `active-club`'s
+   * page again under the colour grammar — the same fixture by construction, so
+   * it carries the same notices — and counting it would report two
+   * cancellations where there is one page showing one. It retires with the
+   * draft, and this filter with it.
+   */
+  const shapes = fixtures.filter(
+    (f) => f.scenario !== BRAND_PALETTE_SCENARIO.slug,
+  );
+
   it("shows each of them somewhere, and never together", () => {
     // paymentProblem appears on exactly two pages — worded in the third person
     // about a child and in the second person on the parent's own seat — because
@@ -1612,10 +1625,8 @@ describe("the family club page's billing states", () => {
     // by accident. What must also stay exact is that no single page claims
     // both — Stripe cannot be `past_due` and `canceling` at once, so a page
     // showing both would be inventing a state.
-    expect(fixtures.filter((f) => f.fixture.paymentProblem).length).toBe(2);
-    expect(
-      fixtures.filter((f) => f.fixture.cancellation !== null).length,
-    ).toBe(1);
+    expect(shapes.filter((f) => f.fixture.paymentProblem).length).toBe(2);
+    expect(shapes.filter((f) => f.fixture.cancellation !== null).length).toBe(1);
     for (const { scenario, fixture } of fixtures) {
       expect(
         fixture.paymentProblem && fixture.cancellation !== null,
@@ -1632,7 +1643,7 @@ describe("the family club page's billing states", () => {
    * losing scenarios to it.
    */
   it("carries exactly one self seat, and it carries a billing notice", () => {
-    const selfSeats = fixtures.filter((f) => f.fixture.isSelfSeat);
+    const selfSeats = shapes.filter((f) => f.fixture.isSelfSeat);
     expect(selfSeats).toHaveLength(1);
     expect(
       selfSeats[0].fixture.paymentProblem ||

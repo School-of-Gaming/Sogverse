@@ -1,5 +1,6 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
+import { BRAND_PALETTE_SCENARIO } from "@/components/preview/palette-scenarios";
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 import type {
   FamilyProductCancellation,
@@ -53,6 +54,12 @@ const TIMEZONE = "Europe/Helsinki";
  * `in-person-club` does — that notice is the longest of the three self-worded
  * strings and the one most likely to read wrong — which is why the two never
  * share a page.
+ *
+ * `brand-palette` is `active-club`'s data under the design pass's ruled colour
+ * grammar. It is not a sixth shape of the page — a palette cannot coexist with
+ * another palette in one render — and it borrows the live club because liveness
+ * is the grammar's glow and a page with nothing running could not show it. It
+ * retires with the draft.
  */
 export const FAMILY_PRODUCT_SCENARIOS = [
   "active-club",
@@ -60,6 +67,7 @@ export const FAMILY_PRODUCT_SCENARIOS = [
   "camp",
   "locked-join",
   "my-own-club",
+  BRAND_PALETTE_SCENARIO.slug,
 ] as const;
 
 export type FamilyProductScenario = (typeof FAMILY_PRODUCT_SCENARIOS)[number];
@@ -687,39 +695,56 @@ interface ScenarioConfig {
   startsWithFeed?: boolean;
 }
 
+/**
+ * **The kitchen sink**, and the only scenario with a live room: a remote weekly
+ * club four months into its run, with a session in progress, seven more ahead
+ * of it and seventeen behind.
+ *
+ * The club is named for what it builds rather than for a weekday, and that is
+ * load-bearing: the run is anchored to *today* so the room can be open while
+ * somebody is looking at the page, which means the sessions land on whatever
+ * weekday the scene is opened on. A "Monday club" would then be a club whose
+ * own name disagreed with every date under it.
+ *
+ * Hoisted out of the record because two scenarios share it — the draft palette
+ * renders this same page — and two copies of a config are two things to keep in
+ * step.
+ */
+const ACTIVE_CLUB: ScenarioConfig = {
+  productName: "Minecraft Builders Club",
+  productType: "consumer_club",
+  cadence: "weekly",
+  anchor: { kind: "live" },
+  specs: ACTIVE_CLUB_SPECS,
+  durationMinutes: 90,
+  isRemote: true,
+  groupName: "Builders A",
+  gedus: [SANNA, PETRA],
+  groupPublicNote:
+    "Builders A is our redstone-heavy group. The shared world carries across every session, so anything Aino builds stays there for next week — scroll back through the sessions below to see what the group has made since it started.",
+  site: null,
+  // The membership winding down, on the club rather than the camp: a camp is
+  // bought outright and has no subscription to not-renew, so a "won't renew"
+  // line there would be describing something that cannot happen. The parent's
+  // copy of this page shows the neutral notice; the gamer's copy renders the
+  // same scenario and must show nothing, which is what makes this the right
+  // scenario to hang it on.
+  cancelledAccessInDays: 24,
+};
+
 const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
+  "active-club": ACTIVE_CLUB,
+
   /**
-   * **The kitchen sink**, and the only scenario with a live room: a remote
-   * weekly club four months into its run, with a session in progress, seven
-   * more ahead of it and seventeen behind.
-   *
-   * The club is named for what it builds rather than for a weekday, and that is
-   * load-bearing: the run is anchored to *today* so the room can be open while
-   * somebody is looking at the page, which means the sessions land on whatever
-   * weekday the scene is opened on. A "Monday club" would then be a club whose
-   * own name disagreed with every date under it.
+   * **The same club, under the ruled colour grammar.** Not a sixth shape of the
+   * page: a palette cannot coexist with another palette in one render, which is
+   * the test a second scenario has to pass, and the comparison is made by
+   * switching between two identical pages. `active-club` is the one it borrows
+   * because it is the only scenario with a live room — liveness is the grammar's
+   * glow, and a page with nothing running could not show it. Retires with the
+   * draft.
    */
-  "active-club": {
-    productName: "Minecraft Builders Club",
-    productType: "consumer_club",
-    cadence: "weekly",
-    anchor: { kind: "live" },
-    specs: ACTIVE_CLUB_SPECS,
-    durationMinutes: 90,
-    isRemote: true,
-    groupName: "Builders A",
-    gedus: [SANNA, PETRA],
-    groupPublicNote:
-      "Builders A is our redstone-heavy group. The shared world carries across every session, so anything Aino builds stays there for next week — scroll back through the sessions below to see what the group has made since it started.",
-    site: null,
-    // The membership winding down, on the club rather than the camp: a camp is
-    // bought outright and has no subscription to not-renew, so a "won't renew"
-    // line there would be describing something that cannot happen. The parent's
-    // copy of this page shows the neutral notice; the gamer's copy renders the
-    // same scenario and must show nothing, which is what makes this the right
-    // scenario to hang it on.
-    cancelledAccessInDays: 24,
-  },
+  [BRAND_PALETTE_SCENARIO.slug]: ACTIVE_CLUB,
 
   /**
    * **The site shape.** In person, so there is no room and therefore no Join

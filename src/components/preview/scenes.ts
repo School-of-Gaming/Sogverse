@@ -219,7 +219,7 @@ export const PREVIEW_SCENES = [
         slug: BRAND_PALETTE_SCENARIO.slug,
         label: BRAND_PALETTE_SCENARIO.label,
         description:
-          "The busy family again under the draft colour grammar: the Live badge in the glow family, awaiting placement and the seat offer in the wit family, the live card's amber edge unchanged because amber is the act colour.",
+          "The busy family again under the ruled colour grammar: a live card ignites a glow gradient ring, its Live badge sits on a neutral ground under glow ink, and awaiting placement and the seat offer take the wit family at full value.",
       },
     ],
   },
@@ -236,7 +236,7 @@ export const PREVIEW_SCENES = [
         slug: BRAND_PALETTE_SCENARIO.slug,
         label: BRAND_PALETTE_SCENARIO.label,
         description:
-          "The booked page again under the whole brand draft: the enrollment cards in the draft colour grammar, and the greeting swapped from Press Start 2P to Space Mono.",
+          "The booked page again under the whole brand draft: the enrollment cards in the ruled colour grammar, and the greeting re-set from Press Start 2P into Poppins at the Guidebook's scale.",
       },
     ],
   },
@@ -380,6 +380,12 @@ export const PREVIEW_SCENES = [
         label: "Club — the parent's own seat",
         description:
           "The seat the reader holds themselves, worded in the second person.",
+      },
+      {
+        slug: BRAND_PALETTE_SCENARIO.slug,
+        label: BRAND_PALETTE_SCENARIO.label,
+        description:
+          "The live club again under the ruled colour grammar: the schedule row and the sessions ahead in wit, the session running right now in glow, the gedus label in harmony.",
       },
     ],
   },

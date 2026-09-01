@@ -134,7 +134,7 @@ import {
  * anchor.
  *
  * **A finished run is quiet history, not a fault.** Its identity and schedule
- * drop a tone, its gradient can never light, and the footer names the day it
+ * drop a tone, its live tone can never light, and the footer names the day it
  * ended — while the card keeps its hover, its focus ring and its link at full
  * strength, because the record behind it is the whole reason it is still here.
  */
@@ -461,15 +461,14 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
         aria-busy={leaving}
         className={cn(
           "group relative overflow-hidden transition-[border-color,box-shadow,opacity]",
-          opensAPage &&
-            "hover:border-primary/40 hover:shadow-lg focus-within:border-primary/40 focus-within:shadow-lg",
+          opensAPage && tones.openable,
           live && tones.live,
-          // The awaiting tone: the same lit-card treatment in `info` rather than
-          // `primary`, because this *is* a card with something happening on it
-          // — a purchase has landed and placement is under way — and it must
-          // read as that rather than as a fault or as a waitlist place. Blue is
-          // already this product's colour for "we are telling you something",
-          // and the two gradients are mutually exclusive by `running`.
+          // The awaiting tone: the same lit-card treatment in the "we are
+          // telling you something" colour rather than the act one, because this
+          // *is* a card with something happening on it — a purchase has landed
+          // and placement is under way — and it must read as that rather than
+          // as a fault or as a waitlist place. Mutually exclusive with the live
+          // tone by `running`.
           awaiting && tones.awaiting,
           // Dimmed in place while the leave is in flight, so the card that is
           // about to disappear says so without moving. Matches the treatment
@@ -477,7 +476,34 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
           leaving && "opacity-50",
         )}
       >
-        <CardContent className="flex flex-col gap-4 p-5">
+        {/* **The ignition ring — painted, never laid out.** A gradient span
+            filling the card with a `bg-card` cover 2px inside it, both under
+            the content, so a live card wears a 2px glow edge without a single
+            box changing size. It is what lets a session opening — data arriving
+            on its own schedule — repaint the card while a parent is mid-reach
+            for the Join, with nothing beneath their cursor moving. The card's
+            own 1px border class survives ignition and only swaps colour, for
+            the same reason: with border-box sizing, dropping it would move the
+            content box a pixel. Absent entirely on the live palette, so today's
+            DOM is unchanged rather than gaining an empty span. */}
+        {live && tones.liveRing !== null && (
+          <span aria-hidden className="pointer-events-none absolute inset-0">
+            <span className={cn("absolute inset-0", tones.liveRing)} />
+            <span className="absolute inset-[2px] rounded-md bg-card" />
+          </span>
+        )}
+
+        <CardContent
+          className={cn(
+            "flex flex-col gap-4 p-5",
+            // Present on the whole of any palette that paints a ring, lit or
+            // not, so the class does not churn at ignition. An absolutely-
+            // positioned overlay paints above static in-flow content in the
+            // same stacking context, so the content has to be positioned too or
+            // the ring covers it.
+            tones.liveRing !== null && "relative",
+          )}
+        >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
               <p

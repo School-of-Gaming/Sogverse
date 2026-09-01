@@ -409,7 +409,7 @@ function Chip({
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
         active
           ? "border-primary bg-primary text-primary-foreground shadow-sm"
-          : "border-input bg-background text-foreground/80 hover:border-primary/40 hover:bg-accent",
+          : "border-input bg-background text-foreground/80 hover:border-primary hover:bg-accent",
         className,
       )}
     >
