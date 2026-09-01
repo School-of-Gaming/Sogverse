@@ -376,11 +376,34 @@ messages — glyphs are lucide icons in components).
    use). `committing` is flipped synchronously before the first write and left
    set on the close.*
 
-   *A half-filled creation row **refuses the save without flipping `committing`**
-   — the refusal is a validation answer rather than an action in flight, so the
-   button never greys for it. The creations list scrolls inside itself past
-   `40vh`, because twenty rows in a centred dialog with no scroll of its own
-   would push the footer off the screen.*
+   *One creation field filled without the other **refuses the save without
+   flipping `committing`** — the refusal is a validation answer rather than an
+   action in flight, so the button never greys for it.*
+
+   ***Owner deviation: the creations editor is a single title+URL pair, not a
+   list.*** *The plan's "list of title+URL row pairs with add and remove" was
+   overturned after the first review of the built dialog. The **database keeps
+   the list shape** — the table, the CHECK, the RPC, all four widened documents
+   and every contract are unchanged, and the caps still say twenty — and only
+   the editor is single: essentially every member has zero or one, and the list
+   editor priced in add and remove controls, per-row numbering, an at-cap line
+   and a half-filled-row rule for a second entry nobody writes. Saving with both
+   fields blank clears the creation (the service sends `[]`); otherwise it sends
+   exactly one entry. Wanting several back later is an editor, not a migration.
+   Retired with it: the `creationAdd`, `creationRemove` and `creationsAtCap`
+   keys, and the `{number}` argument on the two field labels. The family card
+   keeps its list markup — it renders whatever the array holds — but its heading
+   is now pluralized against the count, so the word a family reads and the word
+   the Gedu typed agree on the one-entry page that is now the only one the
+   editor can produce.*
+
+   ***Owner deviation: the family-visible creation sits ABOVE the staff-only
+   note.*** *The plan says "private note on top, creations list below"; the owner
+   overrode that line. Public-first is the order `TwoAudienceNotesPanel` already
+   reads in, and two surfaces asking a Gedu the same two-audience question in
+   opposite orders is how somebody types into the wrong one. The autofocus
+   follows the order rather than the field, so nothing opens with the caret below
+   a block the reader has not passed.*
 7. **Owed signal**: the fourth completeness condition in the client-side
    entry-completeness derivation (final session of a flagged product +
    creations tally over the current roster), with creations arriving as a
@@ -464,33 +487,48 @@ messages — glyphs are lucide icons in components).
    family product page scene's kitchen-sink scenario — all gain creations
    states (no new scenario; the card coexists with existing states).
 
-   *Staff half done. The style-guide demo now seeds a two-entry list beside the
-   note, so the two-audience split can be judged in one screenshot; both the
-   workspace club fixture and the voice-room fixture put creations on **different
-   members from the notes**, so all three ways a row's button can be lit — note
-   alone, creation alone, both — sit side by side, which is the only way to see
-   that the marker is not a note marker. One fixture URL is deliberately not a
-   URL, which is what the no-validation decision actually produces and what the
-   family card's degrade-to-text path exists for.*
+   *Staff half done. The style-guide demo seeds one creation beside the note, so
+   the two-audience split can be judged in one screenshot; both the workspace
+   club fixture and the voice-room fixture put creations on **different members
+   from the notes**, so all three ways a row's button can be lit — note alone,
+   creation alone, both — sit side by side, which is the only way to see that the
+   marker is not a note marker. Every fixture carries **one entry per member**:
+   the wire shape still holds a list, but a fixture showing two would be showing
+   a state no Gedu can now produce.*
 
    *Family half done. The family product page scene's kitchen-sink scenario
-   (`active-club`) carries **the same two creations the workspace club fixture
-   puts in Aino's dialog**, written the same way on purpose: that scene shows
-   what a gedu typed, this one shows what the family gets for it, and the pair
-   read side by side is the only way to see the accepted gap — the URL that is
-   not a URL renders as its plain title here, with nothing on the gedu's side
-   having warned them it would. Every other scenario keeps an empty list, which
-   is not a gap either: no card and no reserved space is the state most real
-   pages are in, and it is worth being able to look at.*
+   (`active-club`) carries **the same creation the workspace club fixture puts in
+   Aino's dialog**, written the same way on purpose: that scene shows what a gedu
+   typed, this one shows what the family gets for it. The **degraded** rendering
+   — a stored value that is not a URL, showing as its plain title, which is the
+   accepted gap the no-validation decision produces — sits on the `camp`
+   scenario, whose finished in-house build is the natural way to end up with
+   something to name and nothing to link. The other three scenarios keep an empty
+   list, which is not a gap either: no card and no reserved space is the state
+   most real pages are in, and it is worth being able to look at.*
 
-   *One state has **no preview**: the owed marker. It needs a flagged product
-   whose run has already finished, and none of the four workspace scenarios is
-   that shape — giving one of them an ended run would cost it the thing it exists
-   to show (the camp's live session and long future, the club's year of backlog),
-   and a fifth scenario is exactly what "no new scenario" forbids. It is covered
-   end to end by unit tests instead, in the gedu shell's wiring suite: the flag,
-   the schedule's last occurrence, the roster's creations, the tone, the renamed
-   control, and the click that lands in the same dialog.*
+   ***Owner deviation: the owed marker gets a preview scenario of its own***,
+   superseding this step's earlier "no new scenario" note. `gedu-product/owed` is
+   a flagged product whose five-week run has finished with every ordinary
+   obligation discharged, so the last card's amber has exactly one cause; seven
+   of the nine members have a creation and two do not — one of them the adult
+   seat-holder, because the rule has no special case for her. The whole signal is
+   on that one page: the needs-attention line, the timeline marker's warning
+   tone, and the two owing rows' buttons, which open the same dialog every other
+   row's does. No other scenario can be that shape without losing what it exists
+   to show, which is what earns it the fifth slot; the scenario ceiling in the
+   preview registry test moved from four to five with its reasoning. The unit
+   coverage stays — it asserts the chain a screenshot cannot show — and a new
+   data-level fixture test pins the alignment the scenario depends on (the flag,
+   the end date, the schedule's weekday and the newest entry's date all naming
+   one day), because a preview that stops producing its state fails silently.*
+
+   *One thing landed under that scenario and is worth naming on its own: the
+   workspace fixture now keys its feed entries the way the live page does —
+   `(group, product-local date)` rather than an index — because the workspace
+   *derives* those ids to find its final session and to address its writes. The
+   index keys were unreachable by either, which is why the owed state could not
+   be previewed at all.*
 10. **i18n**: all five locales.
 11. **Verify**: lint, type-check, unit/integration locally; push for DB
     tests (CI-only).

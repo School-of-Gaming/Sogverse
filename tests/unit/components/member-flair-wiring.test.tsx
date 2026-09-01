@@ -289,7 +289,7 @@ function renderPage(productType: ProductType) {
 /** The per-gamer dialog's button on one member's row, by its accessible name. */
 function flairButton(firstName: string): HTMLElement {
   return screen.getByRole("button", {
-    name: `Notes and creations about ${firstName}`,
+    name: `Note and creation about ${firstName}`,
   });
 }
 
@@ -299,7 +299,7 @@ function flairButton(firstName: string): HTMLElement {
  */
 function owedButton(firstName: string): HTMLElement | null {
   return screen.queryByRole("button", {
-    name: `Notes and creations about ${firstName} — a creation is still needed`,
+    name: `Note and creation about ${firstName} — a creation is still needed`,
   });
 }
 
@@ -518,59 +518,69 @@ describe("gedu product page — writing a note", () => {
   });
 });
 
-describe("gedu product page — writing creations", () => {
-  it("opens seeded with what is stored, one row per entry", () => {
+/** The creation editor's two fields, which are one pair and not a list. */
+function creationTitleBox() {
+  return flairDialog().getByRole("textbox", { name: "Creation title" });
+}
+
+function creationUrlBox() {
+  return flairDialog().getByRole("textbox", { name: "Creation link" });
+}
+
+describe("gedu product page — writing the creation", () => {
+  it("opens seeded with what is stored", () => {
     renderPage("consumer_club");
     fireEvent.click(flairButton("Oskar"));
 
-    const dialog = flairDialog();
-    expect(
-      dialog.getByRole("textbox", { name: "Creation 1 title" }),
-    ).toHaveProperty("value", STORED_CREATION.title);
-    expect(
-      dialog.getByRole("textbox", { name: "Creation 1 link" }),
-    ).toHaveProperty("value", STORED_CREATION.url);
+    expect(creationTitleBox()).toHaveProperty("value", STORED_CREATION.title);
+    expect(creationUrlBox()).toHaveProperty("value", STORED_CREATION.url);
   });
 
-  it("saves the whole list through its own mutation, trimmed", async () => {
+  it("offers one pair of fields and no way to add a second", () => {
+    // The wire shape is a list and the editor deliberately is not: essentially
+    // every member has zero or one, and a list editor priced in add and remove
+    // controls, per-row numbering and a cap message for an entry nobody writes.
+    // Asserted rather than assumed, because "the editor authors one" is what
+    // every fixture and every piece of copy around it now says.
     renderPage("consumer_club");
     fireEvent.click(flairButton("Oskar"));
 
     const dialog = flairDialog();
-    fireEvent.click(dialog.getByRole("button", { name: "Add a creation" }));
-    fireEvent.change(dialog.getByRole("textbox", { name: "Creation 2 title" }), {
+    expect(dialog.getAllByRole("textbox")).toHaveLength(3);
+    expect(dialog.queryByRole("button", { name: /creation/i })).toBeNull();
+  });
+
+  it("writes the creation through its own mutation, trimmed", async () => {
+    renderPage("consumer_club");
+    fireEvent.click(flairButton("Emil"));
+
+    fireEvent.change(creationTitleBox(), {
       target: { value: "  Clock tower  " },
     });
-    fireEvent.change(dialog.getByRole("textbox", { name: "Creation 2 link" }), {
+    fireEvent.change(creationUrlBox(), {
       target: { value: " https://example.com/tower " },
     });
-    fireEvent.click(dialog.getByRole("button", { name: "Save" }));
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(setCreations).toHaveBeenCalledTimes(1));
-    // Replace-the-list: the stored entry travels back out with the new one,
-    // in the order staff arranged them.
+    // Replace-the-list, with a list of one: the RPC's shape is unchanged and
+    // only what the editor can put in it is.
     expect(setCreations).toHaveBeenCalledWith({
-      participantId: IDS.oskar,
-      creations: [
-        STORED_CREATION,
-        { title: "Clock tower", url: "https://example.com/tower" },
-      ],
+      participantId: IDS.emil,
+      creations: [{ title: "Clock tower", url: "https://example.com/tower" }],
     });
     // The note beside it was untouched, so no second write goes out.
     expect(setNote).not.toHaveBeenCalled();
   });
 
-  it("drops a row nobody filled in, and writes nothing when that is all there was", async () => {
+  it("writes nothing when both fields are left blank", async () => {
     renderPage("consumer_club");
     fireEvent.click(flairButton("Emil"));
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
 
-    const dialog = flairDialog();
-    fireEvent.click(dialog.getByRole("button", { name: "Add a creation" }));
-    fireEvent.click(dialog.getByRole("button", { name: "Save" }));
-
-    // A Gedu who pressed Add and changed their mind has asked for nothing —
-    // the same rule a trimmed-empty note follows, and the reason the database's
-    // CHECK never sees a blank element.
+    // A Gedu who opened the dialog and changed their mind has asked for
+    // nothing — the same rule a trimmed-empty note follows, and the reason the
+    // database's CHECK never sees a blank element.
     await waitFor(() =>
       expect(
         screen.queryByRole("heading", { name: FLAIR_DIALOG_TITLE }),
@@ -579,36 +589,39 @@ describe("gedu product page — writing creations", () => {
     expect(setCreations).not.toHaveBeenCalled();
   });
 
-  it("refuses a half-filled row and says why, without writing anything", async () => {
+  it("refuses one field without the other and says why, without writing", () => {
     renderPage("consumer_club");
     fireEvent.click(flairButton("Emil"));
 
-    const dialog = flairDialog();
-    fireEvent.click(dialog.getByRole("button", { name: "Add a creation" }));
-    fireEvent.change(dialog.getByRole("textbox", { name: "Creation 1 title" }), {
+    fireEvent.change(creationTitleBox(), {
       target: { value: "A tower with no link" },
     });
-    fireEvent.click(dialog.getByRole("button", { name: "Save" }));
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
 
     // The schema's CHECK stays a loud backstop rather than a routine error
     // path: the refusal happens in the browser, and the dialog stays open on
-    // the row that caused it.
+    // the fields that caused it.
     expect(
-      flairDialog().getByText("Every creation needs both a title and a link."),
+      flairDialog().getByText("A creation needs both a title and a link."),
     ).toBeTruthy();
     expect(setCreations).not.toHaveBeenCalled();
     expect(
       screen.getByRole("heading", { name: FLAIR_DIALOG_TITLE }),
     ).toBeTruthy();
+    // A validation answer is not an action in flight, so the button never
+    // greys for it.
+    expect(
+      flairDialog().getByRole("button", { name: "Save" }),
+    ).toHaveProperty("disabled", false);
   });
 
-  it("clearing the last creation is a real write, and puts the marker out", async () => {
+  it("emptying both fields is a real write, and puts the marker out", async () => {
     renderPage("consumer_club");
     fireEvent.click(flairButton("Oskar"));
 
-    const dialog = flairDialog();
-    fireEvent.click(dialog.getByRole("button", { name: "Remove creation 1" }));
-    fireEvent.click(dialog.getByRole("button", { name: "Save" }));
+    fireEvent.change(creationTitleBox(), { target: { value: "" } });
+    fireEvent.change(creationUrlBox(), { target: { value: "" } });
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
 
     // An empty list deletes the row, which is how "no creations" is spelled
     // everywhere — it is not a no-op, exactly as clearing a note is not.
@@ -623,12 +636,11 @@ describe("gedu product page — writing creations", () => {
     renderPage("consumer_club");
     fireEvent.click(flairButton("Oskar"));
 
-    const dialog = flairDialog();
     fireEvent.change(noteBox(), { target: { value: "Needs stretching." } });
-    fireEvent.change(dialog.getByRole("textbox", { name: "Creation 1 title" }), {
+    fireEvent.change(creationTitleBox(), {
       target: { value: "Underwater dome, finished" },
     });
-    fireEvent.click(dialog.getByRole("button", { name: "Save" }));
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(setCreations).toHaveBeenCalledTimes(1));
     expect(setNote).toHaveBeenCalledTimes(1);
@@ -644,6 +656,23 @@ describe("gedu product page — writing creations", () => {
     });
   });
 
+  it("writes nothing at all when a dialog is opened and saved untouched", async () => {
+    // Both rows carry their own `updated_by`/`updated_at`, so a save that
+    // re-sent an unedited half would put a name on a "last edited by" line
+    // that never wrote a word. Nothing changed, so nothing is sent.
+    renderPage("consumer_club");
+    fireEvent.click(flairButton("Oskar"));
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: FLAIR_DIALOG_TITLE }),
+      ).toBeNull(),
+    );
+    expect(setNote).not.toHaveBeenCalled();
+    expect(setCreations).not.toHaveBeenCalled();
+  });
+
   it("retries only the half that did not land", async () => {
     // A save can half-land, and the only honest thing to leave behind is what
     // still needs doing. Both writes are idempotent replaces, so a retry that
@@ -654,12 +683,11 @@ describe("gedu product page — writing creations", () => {
     renderPage("consumer_club");
     fireEvent.click(flairButton("Oskar"));
 
-    const dialog = flairDialog();
     fireEvent.change(noteBox(), { target: { value: "Needs stretching." } });
-    fireEvent.change(dialog.getByRole("textbox", { name: "Creation 1 title" }), {
+    fireEvent.change(creationTitleBox(), {
       target: { value: "Underwater dome, finished" },
     });
-    fireEvent.click(dialog.getByRole("button", { name: "Save" }));
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
 
     await waitFor(() =>
       expect(
@@ -674,6 +702,44 @@ describe("gedu product page — writing creations", () => {
     // The note landed the first time and is not sent again.
     expect(setNote).toHaveBeenCalledTimes(1);
   });
+
+  it("sends an edit to the half that already landed, rather than dropping it", async () => {
+    // The regression this pins: remembering *that* a half landed, rather than
+    // *what* landed, goes on suppressing that half after the Gedu edits it
+    // again — so a note corrected after a partial failure is silently
+    // discarded, the dialog closes, and nothing errors. Comparing against the
+    // value that actually landed cannot make that mistake.
+    setCreations.mockRejectedValueOnce(new Error(""));
+
+    renderPage("consumer_club");
+    fireEvent.click(flairButton("Oskar"));
+
+    fireEvent.change(noteBox(), { target: { value: "First attempt." } });
+    fireEvent.change(creationTitleBox(), {
+      target: { value: "Underwater dome, finished" },
+    });
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(
+        flairDialog().getByText("An unexpected error occurred"),
+      ).toBeTruthy(),
+    );
+    expect(setNote).toHaveBeenCalledTimes(1);
+
+    // The note landed; now it is rewritten, and the second Save has to carry
+    // the correction.
+    fireEvent.change(noteBox(), { target: { value: "Corrected after all." } });
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(setNote).toHaveBeenCalledTimes(2));
+    expect(setNote).toHaveBeenLastCalledWith({
+      participantId: IDS.oskar,
+      note: "Corrected after all.",
+    });
+    // And the half that never landed still goes out on the retry.
+    expect(setCreations).toHaveBeenCalledTimes(2);
+  });
 });
 
 /**
@@ -681,12 +747,12 @@ describe("gedu product page — writing creations", () => {
  * The owed marker, end to end through the shell.
  * ============================================================================
  *
- * This is the one part of the feature with **no preview scenario** — the state
- * needs a flagged product whose run has already finished, and giving one of the
- * four workspace scenarios an ended run would cost it the thing it exists to
- * show — so the whole chain is asserted here instead: the product's flag, the
- * schedule's last occurrence, the roster's creations, and the tone and the name
- * the button ends up wearing.
+ * The preview scene has a scenario of its own for this — a flagged product whose
+ * run is over — and that is where the signal is *looked at*. What is asserted
+ * here is the chain behind it, which a screenshot cannot show: the product's
+ * flag, the schedule's last occurrence, the roster's creations, and the tone and
+ * the name the button ends up wearing, including the two gates that must produce
+ * nothing at all.
  *
  * The run below ends on Monday 2026-03-09, a week before this file's `NOW`, on
  * a Monday schedule — so the final session is 2026-03-09 and the feed entry the

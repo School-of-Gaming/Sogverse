@@ -331,6 +331,10 @@
           "free": "Gratis",
           "external_contract": "Externt avtal (kommun)"
         },
+        "requiresGamerCreations": {
+          "required": "Krävs",
+          "notRequired": "Krävs inte"
+        },
         "fields": {
           "publicUrl": "Publik länk",
           "topic": "Ämne",
@@ -351,6 +355,7 @@
           "tag": "Utformad för",
           "regionLock": "Landsbegränsning",
           "requiredConsents": "Obligatoriska samtycken",
+          "requiresGamerCreations": "Spelarnas skapelser",
           "visibility": "Synlighet"
         },
         "copyLink": "Kopiera den publika länken",
@@ -1324,7 +1329,7 @@
     "siteLabel": "Var",
     "aboutHeading": "Om gruppen",
     "siteNoteHeading": "På {site}",
-    "creationsHeading": "Skapelser",
+    "creationsHeading": "{count, plural, one {Skapelse} other {Skapelser}}",
     "creationOpensInNewTab": "(öppnas i en ny flik)",
     "feedHeading": "Tillfällen",
     "attendancePresent": "Närvarande",
@@ -1574,25 +1579,22 @@
   "memberFlair": {
     "newcomer": "Ny",
     "newcomerTooltip": "Ny i den här gruppen — gick med {days, plural, =0 {i dag} one {för # dag sedan} other {för # dagar sedan}}",
-    "openMember": "Anteckningar och skapelser om {name}",
-    "openMemberCreationOwed": "Anteckningar och skapelser om {name} — en skapelse saknas fortfarande",
+    "openMember": "Anteckning och skapelse om {name}",
+    "openMemberCreationOwed": "Anteckning och skapelse om {name} — en skapelse saknas fortfarande",
     "memberTitle": "Om {name}",
     "noteAudience": "Geduer och administratörer",
     "noteLabel": "Privat anteckning",
     "noteHint": "Bara Geduer och administratörer ser det här. Det stannar i den här gruppen, från gång till gång.",
     "notePlaceholder": "Anteckningar om {name} i den här gruppen.",
     "noteLastEdited": "Senast redigerad av {name}",
-    "creationsAudience": "Familjer ser det här",
-    "creationsLabel": "Skapelser",
-    "creationsHint": "Sådant som {name} har gjort i den här gruppen. Familjen ser dem på sin egen sida.",
-    "creationTitleLabel": "Titel för skapelse {number}",
+    "creationAudience": "Familjer ser det här",
+    "creationLabel": "Skapelse",
+    "creationHint": "Något som {name} har gjort i den här gruppen. Familjen ser det på sin egen sida.",
+    "creationTitleLabel": "Titel för skapelsen",
     "creationTitlePlaceholder": "Vad de gjorde",
-    "creationUrlLabel": "Länk för skapelse {number}",
+    "creationUrlLabel": "Länk till skapelsen",
     "creationUrlPlaceholder": "Länk till den",
-    "creationAdd": "Lägg till en skapelse",
-    "creationRemove": "Ta bort skapelse {number}",
-    "creationsAtCap": "Det är så många skapelser en spelare kan ha här ({count}).",
-    "creationIncomplete": "Varje skapelse behöver både en titel och en länk."
+    "creationIncomplete": "En skapelse behöver både en titel och en länk."
   },
   "richText": {
     "bold": "Fet stil",

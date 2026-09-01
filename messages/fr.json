@@ -331,6 +331,10 @@
           "free": "Gratuit",
           "external_contract": "Contrat externe (commune)"
         },
+        "requiresGamerCreations": {
+          "required": "Obligatoire",
+          "notRequired": "Non obligatoire"
+        },
         "fields": {
           "publicUrl": "Lien public",
           "topic": "Thème",
@@ -351,6 +355,7 @@
           "tag": "Conçu pour",
           "regionLock": "Restriction par pays",
           "requiredConsents": "Consentements obligatoires",
+          "requiresGamerCreations": "Créations des joueurs",
           "visibility": "Visibilité"
         },
         "copyLink": "Copier le lien public",
@@ -1324,7 +1329,7 @@
     "siteLabel": "Où",
     "aboutHeading": "À propos du groupe",
     "siteNoteHeading": "À {site}",
-    "creationsHeading": "Créations",
+    "creationsHeading": "{count, plural, one {Création} other {Créations}}",
     "creationOpensInNewTab": "(s’ouvre dans un nouvel onglet)",
     "feedHeading": "Séances",
     "attendancePresent": "Présent",
@@ -1574,25 +1579,22 @@
   "memberFlair": {
     "newcomer": "Nouveau",
     "newcomerTooltip": "Nouveau dans ce groupe — {days, plural, =0 {aujourd’hui} one {il y a # jour} other {il y a # jours}}",
-    "openMember": "Notes et créations au sujet de {name}",
-    "openMemberCreationOwed": "Notes et créations au sujet de {name} — une création manque encore",
+    "openMember": "Note et création au sujet de {name}",
+    "openMemberCreationOwed": "Note et création au sujet de {name} — une création manque encore",
     "memberTitle": "À propos de {name}",
     "noteAudience": "Gedus et admins",
     "noteLabel": "Note privée",
     "noteHint": "Visible uniquement par les Gedus et les admins. Elle reste attachée à ce groupe, d’une séance à l’autre.",
     "notePlaceholder": "Notes au sujet de {name} dans ce groupe.",
     "noteLastEdited": "Dernière modification par {name}",
-    "creationsAudience": "Visible par les familles",
-    "creationsLabel": "Créations",
-    "creationsHint": "Ce que {name} a réalisé dans ce groupe. Sa famille le voit sur sa propre page.",
-    "creationTitleLabel": "Titre de la création {number}",
+    "creationAudience": "Visible par les familles",
+    "creationLabel": "Création",
+    "creationHint": "Quelque chose que {name} a réalisé dans ce groupe. Sa famille le voit sur sa propre page.",
+    "creationTitleLabel": "Titre de la création",
     "creationTitlePlaceholder": "Ce qui a été réalisé",
-    "creationUrlLabel": "Lien de la création {number}",
+    "creationUrlLabel": "Lien de la création",
     "creationUrlPlaceholder": "Lien vers la création",
-    "creationAdd": "Ajouter une création",
-    "creationRemove": "Supprimer la création {number}",
-    "creationsAtCap": "C’est le nombre maximal de créations par joueur ici ({count}).",
-    "creationIncomplete": "Chaque création a besoin d’un titre et d’un lien."
+    "creationIncomplete": "Une création a besoin d’un titre et d’un lien."
   },
   "richText": {
     "bold": "Gras",

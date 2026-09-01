@@ -33,7 +33,19 @@ import { TimezoneProvider } from "@/providers/timezone-provider";
  */
 
 const NEW_TAB = messages.familyProduct.creationOpensInNewTab;
-const HEADING = messages.familyProduct.creationsHeading;
+
+/**
+ * The card's heading, in both of the forms it has.
+ *
+ * It is a plural expression rather than a fixed noun, because the staff editor
+ * authors **one** creation: a page reading "Creations" over a single entry
+ * would be the one place the family's word and the gedu's came apart. Spelled
+ * out here rather than formatted through the ICU machinery — with the message
+ * itself asserted below to still carry both forms — so a copy change fails
+ * loudly instead of quietly matching nothing.
+ */
+const HEADING_ONE = "Creation";
+const HEADING_MANY = "Creations";
 
 /**
  * The accessible name of a linked entry: its title plus the new-tab warning.
@@ -58,8 +70,8 @@ afterEach(cleanup);
 
 describe("suppression", () => {
   it("renders nothing at all for a participant with no creations", () => {
-    const { container, queryByText } = renderCard([]);
-    expect(queryByText(HEADING)).toBeNull();
+    const { container, queryByRole } = renderCard([]);
+    expect(queryByRole("heading")).toBeNull();
     // Not an empty card, not a heading over nothing: no DOM at all, which is
     // what "reserves no space" has to mean.
     expect(container.firstChild).toBeNull();
@@ -69,7 +81,34 @@ describe("suppression", () => {
     const { queryByText } = renderCard([
       { title: "The castle gate", url: "https://example.com/castle" },
     ]);
-    expect(queryByText(HEADING)).not.toBeNull();
+    expect(queryByText(HEADING_ONE)).not.toBeNull();
+  });
+});
+
+describe("the heading", () => {
+  it("is singular over the one entry the editor can author", () => {
+    const { queryByText } = renderCard([
+      { title: "The castle gate", url: "https://example.com/castle" },
+    ]);
+    expect(queryByText(HEADING_ONE)).not.toBeNull();
+    expect(queryByText(HEADING_MANY)).toBeNull();
+  });
+
+  it("is plural over a list the wire shape still allows", () => {
+    // The column, the RPC and every document that carries this field hold an
+    // array; only the editor is single. So the plural form is reachable by
+    // data even though no Gedu can type it, and it has to be right.
+    const { queryByText } = renderCard([
+      { title: "One", url: "https://example.com/one" },
+      { title: "Two", url: "https://example.com/two" },
+    ]);
+    expect(queryByText(HEADING_MANY)).not.toBeNull();
+  });
+
+  it("still spells both forms in the message it is drawn from", () => {
+    const heading = messages.familyProduct.creationsHeading;
+    expect(heading).toContain(`one {${HEADING_ONE}}`);
+    expect(heading).toContain(`other {${HEADING_MANY}}`);
   });
 });
 
@@ -217,7 +256,7 @@ describe("on the family product page", () => {
       // The gamer revisiting their own work is a design goal, not a leftover:
       // one card, one heading, no copy keyed to who is reading.
       const { getByRole, queryByText } = renderPage(audience, CREATIONS);
-      expect(queryByText(HEADING)).not.toBeNull();
+      expect(queryByText(HEADING_ONE)).not.toBeNull();
       expect(
         getByRole("link", { name: linkName("The castle world") }),
       ).not.toBeNull();
@@ -225,7 +264,8 @@ describe("on the family product page", () => {
 
     it(`holds no space for it on a ${audience} page with none`, () => {
       const { queryByText } = renderPage(audience, []);
-      expect(queryByText(HEADING)).toBeNull();
+      expect(queryByText(HEADING_ONE)).toBeNull();
+      expect(queryByText(HEADING_MANY)).toBeNull();
     });
   }
 
@@ -234,8 +274,8 @@ describe("on the family product page", () => {
     const text = container.textContent;
     // Above the feed, because below it the card is behind a history nobody
     // scrolls to the end of. The order is load-bearing, so it is asserted.
-    expect(text.indexOf(HEADING)).toBeGreaterThan(-1);
-    expect(text.indexOf(HEADING)).toBeLessThan(
+    expect(text.indexOf(HEADING_ONE)).toBeGreaterThan(-1);
+    expect(text.indexOf(HEADING_ONE)).toBeLessThan(
       text.indexOf(messages.familyProduct.feedHeading),
     );
   });

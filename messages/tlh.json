@@ -379,6 +379,10 @@
           "free": "HuchHa’",
           "external_contract": "DIvI’ qaSpu’qa’ (veng)"
         },
+        "requiresGamerCreations": {
+          "required": "poQlu’",
+          "notRequired": "poQbe’lu’"
+        },
         "fields": {
           "publicUrl": "Hoch He",
           "topic": "Doch",
@@ -399,6 +403,7 @@
           "tag": "’Iv chenmoHlu’pu’",
           "regionLock": "Sep ngaQmoH",
           "requiredConsents": "poQlu’bogh chaw’mey",
+          "requiresGamerCreations": "toy’wI’ chenmoHtaHbogh Doch",
           "visibility": "leghlu"
         },
         "copyLink": "Hoch He yIghItlhqa'",
@@ -1372,7 +1377,7 @@
     "siteLabel": "nuqDaq",
     "aboutHeading": "ghom’a’vam De’",
     "siteNoteHeading": "{site}Daq",
-    "creationsHeading": "chenmoHta’mey",
+    "creationsHeading": "{count, plural, one {chenmoHta’} other {chenmoHta’mey}}",
     "creationOpensInNewTab": "(Daq chu’Daq poSlu’)",
     "feedHeading": "may’mey",
     "attendancePresent": "pawpu’",
@@ -1618,25 +1623,22 @@
   "memberFlair": {
     "newcomer": "SuvwI’ chu’",
     "newcomerTooltip": "ghomvamDaq SuvwI’ chu’ — {days, plural, =0 {DaHjaj muvpu’} one {# jaj ret muvpu’} other {# jaj ret muvpu’}}",
-    "openMember": "{name} qonta’mey chenmoHta’mey je",
-    "openMemberCreationOwed": "{name} qonta’mey chenmoHta’mey je — chenmoHta’ poQlu’taH",
+    "openMember": "{name} qonta’ chenmoHta’ je",
+    "openMemberCreationOwed": "{name} qonta’ chenmoHta’ je — chenmoHta’ poQlu’taH",
     "memberTitle": "{name} De’",
     "noteAudience": "Gedupu’ che’wI’pu’ je",
     "noteLabel": "pegh qonta’",
     "noteHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. ghomvamDaq reH ratlh.",
     "notePlaceholder": "ghomvamDaq {name} qonta’.",
     "noteLastEdited": "Qav choHwI’: {name}",
-    "creationsAudience": "qorDu’pu’ lulaD",
-    "creationsLabel": "chenmoHta’mey",
-    "creationsHint": "ghomvamDaq chenmoHta’ {name}. qorDu’Daj lulegh.",
-    "creationTitleLabel": "chenmoHta’ {number} pong",
+    "creationAudience": "qorDu’pu’ lulaD",
+    "creationLabel": "chenmoHta’",
+    "creationHint": "ghomvamDaq wa’ chenmoHta’ {name}. qorDu’Daj legh.",
+    "creationTitleLabel": "chenmoHta’ pong",
     "creationTitlePlaceholder": "nuq chenmoHta’",
-    "creationUrlLabel": "chenmoHta’ {number} ghItlhHom",
+    "creationUrlLabel": "chenmoHta’ ghItlhHom",
     "creationUrlPlaceholder": "ghItlhHom",
-    "creationAdd": "chenmoHta’ chel",
-    "creationRemove": "chenmoHta’ {number} teq",
-    "creationsAtCap": "chenmoHta’ {count} neH DaSuqlaH.",
-    "creationIncomplete": "Hoch chenmoHta’ pong ghItlhHom je poQ."
+    "creationIncomplete": "chenmoHta’ pong ghItlhHom je poQ."
   },
   "richText": {
     "bold": "ngutlh tIn",

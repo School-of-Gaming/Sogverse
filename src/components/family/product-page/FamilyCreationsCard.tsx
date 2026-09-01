@@ -30,8 +30,10 @@ import type { FamilyCreation } from "./types";
  * decision the gedus label above it takes, and for the same two reasons: the
  * masthead has already said whose page this is, and a possessive built around a
  * name has to inflect that name in half the locales we ship. It is also the
- * word the gedu who typed the list sees, so a family and their gedu use one
- * word for one thing.
+ * word the gedu who typed it sees, so a family and their gedu use one word for
+ * one thing — **which is why the noun is pluralized against the count.** The
+ * editor authors one creation, so a page saying "Creations" over a single entry
+ * would be the one place those two words came apart.
  *
  * **A title is a link only when its stored URL parses as http(s); otherwise it
  * is text.** The field is stored raw and unvalidated by design, so this is the
@@ -55,7 +57,7 @@ export function FamilyCreationsCard({
     <Card className="mt-5">
       <CardContent className="p-4 sm:p-5">
         <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          {t("creationsHeading")}
+          {t("creationsHeading", { count: creations.length })}
         </h2>
         {/* A list, so a reader on a screen reader is told how many there are
             before walking them. Index keys are safe here and nowhere near a

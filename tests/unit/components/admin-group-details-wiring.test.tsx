@@ -384,7 +384,7 @@ function renderPage(productType: ProductType) {
 /** The per-gamer dialog's button on one member's row, by its accessible name. */
 function flairButton(firstName: string): HTMLElement {
   return screen.getByRole("button", {
-    name: `Notes and creations about ${firstName}`,
+    name: `Note and creation about ${firstName}`,
   });
 }
 
@@ -580,10 +580,10 @@ describe("admin group details — writing a note and creations", () => {
 
     const dialog = flairDialog();
     expect(
-      dialog.getByRole("textbox", { name: "Creation 1 title" }),
+      dialog.getByRole("textbox", { name: "Creation title" }),
     ).toHaveProperty("value", STORED_CREATION.title);
 
-    fireEvent.change(dialog.getByRole("textbox", { name: "Creation 1 title" }), {
+    fireEvent.change(dialog.getByRole("textbox", { name: "Creation title" }), {
       target: { value: "Underwater dome, finished" },
     });
     fireEvent.click(dialog.getByRole("button", { name: "Save" }));

@@ -331,6 +331,10 @@
           "free": "Free",
           "external_contract": "External contract (municipality)"
         },
+        "requiresGamerCreations": {
+          "required": "Required",
+          "notRequired": "Not required"
+        },
         "fields": {
           "publicUrl": "Public link",
           "topic": "Topic",
@@ -351,6 +355,7 @@
           "tag": "Designed for",
           "regionLock": "Region lock",
           "requiredConsents": "Required consents",
+          "requiresGamerCreations": "Gamer creations",
           "visibility": "Visibility"
         },
         "copyLink": "Copy public link",
@@ -1324,7 +1329,7 @@
     "siteLabel": "Where",
     "aboutHeading": "About this group",
     "siteNoteHeading": "At {site}",
-    "creationsHeading": "Creations",
+    "creationsHeading": "{count, plural, one {Creation} other {Creations}}",
     "creationOpensInNewTab": "(opens in a new tab)",
     "feedHeading": "Sessions",
     "attendancePresent": "Present",
@@ -1574,25 +1579,22 @@
   "memberFlair": {
     "newcomer": "New",
     "newcomerTooltip": "New to this group — joined {days, plural, =0 {today} one {# day ago} other {# days ago}}",
-    "openMember": "Notes and creations about {name}",
-    "openMemberCreationOwed": "Notes and creations about {name} — a creation is still needed",
+    "openMember": "Note and creation about {name}",
+    "openMemberCreationOwed": "Note and creation about {name} — a creation is still needed",
     "memberTitle": "About {name}",
     "noteAudience": "Gedus and admins",
     "noteLabel": "Private note",
     "noteHint": "Only Gedus and admins see this. It stays with this group, session to session.",
     "notePlaceholder": "Anything to note about {name} in this group.",
     "noteLastEdited": "Last edited by {name}",
-    "creationsAudience": "Families see this",
-    "creationsLabel": "Creations",
-    "creationsHint": "Things {name} has made in this group. Their own family sees these on their page.",
-    "creationTitleLabel": "Creation {number} title",
+    "creationAudience": "Families see this",
+    "creationLabel": "Creation",
+    "creationHint": "Something {name} has made in this group. Their own family sees it on their page.",
+    "creationTitleLabel": "Creation title",
     "creationTitlePlaceholder": "What they made",
-    "creationUrlLabel": "Creation {number} link",
+    "creationUrlLabel": "Creation link",
     "creationUrlPlaceholder": "Link to it",
-    "creationAdd": "Add a creation",
-    "creationRemove": "Remove creation {number}",
-    "creationsAtCap": "That is the most creations one gamer can have here ({count}).",
-    "creationIncomplete": "Every creation needs both a title and a link."
+    "creationIncomplete": "A creation needs both a title and a link."
   },
   "richText": {
     "bold": "Bold",

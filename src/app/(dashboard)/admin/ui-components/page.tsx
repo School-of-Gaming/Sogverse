@@ -1138,32 +1138,32 @@ const NEWCOMER_BADGE_STOPS = [0, 8, 16, 24];
  * opens above whatever summoned it and the page behind it contributes nothing to
  * how it reads.
  *
- * **What has to be judged here is the two-audience split.** The private note on
- * top is staff working memory; the creations below it are read by the member's
- * own family. Getting those the wrong way round is the only real risk the dialog
- * carries, so the padlocked block and the bordered one have to read as opposites
+ * **What has to be judged here is the two-audience split.** The creation on top
+ * is read by the member's own family; the private note under it is staff working
+ * memory. Getting those the wrong way round is the only real risk the dialog
+ * carries, so the bordered block and the padlocked one have to read as opposites
  * at a glance, with the audience stated in words in each — and one page is where
  * they are compared, because a reviewer sees both halves in one screenshot.
  *
  * Both halves are live against local state, including the two behaviours worth
  * checking here: saving an empty note is a real action that retires it rather
- * than a no-op, and a **half-filled** creation row refuses the save with a line
- * under it, which is what keeps the database's CHECK a backstop rather than a
- * routine error path. The seeded list carries two entries and one of them is not
- * a URL at all — the no-validation decision, and the value the family card's
- * degrade-to-text path exists for.
+ * than a no-op, and **one creation field filled without the other** refuses the
+ * save with a line under it, which is what keeps the database's CHECK a backstop
+ * rather than a routine error path. Emptying both fields is the third, and is
+ * how a creation is cleared.
  */
 function GamerFlairDialogDemo() {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(
     "Quiet in big groups — pair her rather than letting her pick a partner. Has warmed up a lot since autumn.",
   );
+  // One entry, because one is what the editor authors — the wire shape is still
+  // an array, and a demo seeding two would be showing a state no Gedu can reach.
   const [creations, setCreations] = useState<readonly GamerCreation[]>([
     {
       title: "Underwater dome with the working airlock",
       url: "https://www.planetminecraft.com/project/siiri-dome/",
     },
-    { title: "Clock tower, first build", url: "shared world: /warp siiri-tower" },
   ]);
 
   return (

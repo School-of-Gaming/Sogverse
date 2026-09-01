@@ -1,13 +1,12 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Eye, Lock, Plus, X } from "lucide-react";
+import { Eye, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +15,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  GAMER_CREATION_MAX_ENTRIES,
   GAMER_CREATION_TITLE_MAX_LENGTH,
   GAMER_CREATION_URL_MAX_LENGTH,
 } from "@/services/member-flair/member-flair.contracts";
@@ -28,17 +26,6 @@ import type { GamerCreation } from "@/types";
  */
 export const GAMER_NOTE_MAX_LENGTH = 2000;
 
-/**
- * How tall the creations list may grow before it scrolls inside itself.
- *
- * The cap is twenty entries and the dialog is centred in the viewport with no
- * scroll of its own, so a member with a long list would push the footer — and
- * the Save the Gedu is reaching for — off the bottom of the screen. Almost
- * every member has zero or one, so this bites essentially never; it is here so
- * that the one member who has fifteen does not cost the dialog its buttons.
- */
-const CREATION_LIST_MAX_HEIGHT = "max-h-[40vh]";
-
 interface GamerFlairDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -49,43 +36,45 @@ interface GamerFlairDialogProps {
   /** Who last wrote the stored note, when that is known. */
   lastEditedBy?: string | null;
   /**
-   * The stored creations, in the order staff arranged them. An empty array is
-   * how "none" is spelled, and it is the common case.
+   * The stored creations. An empty array is how "none" is spelled, and it is
+   * the common case.
+   *
+   * **A list on the wire, one entry in this editor.** The table, the RPC and
+   * every document that carries this field hold an array, because a member
+   * having several is a shape we may want back later without a migration. What
+   * a Gedu can *author* is one — see the editor's own note below — so this
+   * dialog reads the first entry and writes at most one back.
    */
   creations: readonly GamerCreation[];
   /** Receives the trimmed note; an empty string means "clear the note". */
   onSaveNote: (text: string) => void | Promise<void>;
   /**
-   * Receives the whole list, replacing whatever is stored. An empty array
-   * deletes the row — the write is a replace, so it is retry-safe.
+   * Receives the whole list, replacing whatever is stored: one entry, or none.
+   * An empty array deletes the row — the write is a replace, so it is retry-safe.
    */
   onSaveCreations: (creations: readonly GamerCreation[]) => void | Promise<void>;
 }
 
-/** One row of the creations editor, with a key that survives a removal. */
-interface CreationRow {
-  key: number;
+/** The one creation being edited, as two raw field values. */
+interface CreationDraft {
   title: string;
   url: string;
 }
 
-/** The rows being edited, plus the counter that keys the next one added. */
-interface CreationDraft {
-  rows: readonly CreationRow[];
-  nextKey: number;
-}
+const BLANK_CREATION: CreationDraft = { title: "", url: "" };
 
-function seedCreationDraft(
-  creations: readonly GamerCreation[],
-): CreationDraft {
-  return {
-    rows: creations.map((creation, index) => ({
-      key: index,
-      title: creation.title,
-      url: creation.url,
-    })),
-    nextKey: creations.length,
-  };
+/**
+ * The stored list as this editor's one pair of fields.
+ *
+ * A list holding more than one is not a state the editor can produce, so the
+ * first entry is what it shows; saving then replaces the whole list with what
+ * is in the fields, which is the normalisation and not a silent loss of a state
+ * anything here could have created.
+ */
+function seedCreationDraft(creations: readonly GamerCreation[]): CreationDraft {
+  if (creations.length === 0) return BLANK_CREATION;
+  const stored = creations[0];
+  return { title: stored.title, url: stored.url };
 }
 
 /**
@@ -93,16 +82,32 @@ function seedCreationDraft(
  * group, in one place, identical in every mount — the gedu product page, the
  * admin group details page, and the voice room.
  *
- * **Two halves, two audiences, and the split is the whole design.** The private
- * note on top is staff working memory about a child — per-(gamer, group),
- * because what a Gedu needs to remember is about how the sessions in *this*
- * group are going, and never shown to a family. The creations below it are the
- * opposite: staff write them and the gamer's **own family reads them** on their
- * product page. Getting those two the wrong way round is the only real risk
- * this dialog carries, so each half states its audience in words above the
+ * **Two halves, two audiences, and the split is the whole design.** The
+ * creation on top is written by staff and read by the gamer's **own family** on
+ * their product page. The private note below it is the opposite: staff working
+ * memory about a child — per-(gamer, group), because what a Gedu needs to
+ * remember is about how the sessions in *this* group are going — and never
+ * shown to a family. Getting those two the wrong way round is the only real
+ * risk this dialog carries, so each half states its audience in words above the
  * fields, in the two-audience grammar the standing-notes panel already
- * established — a padlocked recessed block for the staff half, a solid-bordered
- * block for the family-facing one, opposites rather than merely different.
+ * established — a solid-bordered block for the family-facing half, a padlocked
+ * recessed block for the staff one, opposites rather than merely different.
+ *
+ * **Public half first, private half second**, which is the order the
+ * standing-notes panel already reads in and therefore the one a Gedu who has
+ * met that panel expects. Two surfaces asking a Gedu the same two-audience
+ * question in opposite orders is how somebody types into the wrong one. The
+ * autofocus follows the order rather than the field — it is on whatever is
+ * first, so nothing opens with the caret below a field the reader has not
+ * passed yet.
+ *
+ * **One creation, not a list.** The wire shape is an array everywhere — the
+ * table, the RPC and all four documents that carry it — and the editor
+ * deliberately is not: essentially every member has zero or one, and a list
+ * editor priced in add and remove controls, per-row numbering, a cap message
+ * and a half-filled-row rule for a second entry nobody writes. So this is one
+ * title and one link. Blanking both clears the creation; the array shape stays
+ * on the wire, so wanting several back later is an editor, not a migration.
  *
  * **The blocks are drawn here rather than imported.** The gedu tree owns a pair
  * of components saying exactly this, and this dialog may not reach for them:
@@ -127,17 +132,18 @@ function seedCreationDraft(
  * never re-seeded while it is open — so cancelling genuinely discards, and a
  * refetch landing mid-edit cannot overwrite what is being typed. Saving an
  * empty note is a real action: it clears the note, which is how a Gedu retires
- * guidance that no longer applies, and the same is true of removing the last
- * creation.
+ * guidance that no longer applies, and the same is true of emptying both
+ * creation fields.
  *
  * **One Save, committing only the halves that changed.** The dialog asks one
  * question, so it has one affirmative button — and it must not write the half
  * nobody touched, because both rows carry their own `updated_by`/`updated_at`:
  * re-sending an unchanged note when somebody adds a creation would restamp the
  * note with the wrong editor and the wrong time, and the "Last edited by" line
- * a colleague reads would be a lie. Both writes are idempotent replaces, and a
- * half that has landed is remembered for the life of the open dialog, so a
- * retry after a partial failure sends only what is still outstanding.
+ * a colleague reads would be a lie. Both writes are idempotent replaces, so a
+ * retry after a partial failure sends only what is still outstanding — see
+ * `committed` for what "outstanding" is measured against, which is the half of
+ * this that is easy to get wrong.
  */
 export function GamerFlairDialog({
   open,
@@ -159,17 +165,32 @@ export function GamerFlairDialog({
   );
   const [committing, setCommitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** Whether a row is half-filled — set by a refused Save, cleared by editing. */
+  /**
+   * Whether exactly one of the two creation fields is filled — set by a refused
+   * Save, cleared by editing either of them.
+   */
   const [incomplete, setIncomplete] = useState(false);
   /**
-   * Which halves this dialog has already written since it opened.
+   * What this dialog believes is stored, updated as each half lands.
    *
    * A save can half-land — the note goes through and the creations write is
    * refused — and the only honest thing to leave behind is exactly what still
-   * needs doing. The same shape the session card's photo saves use, and for the
-   * same reason: a second press of Save retries the remainder and nothing twice.
+   * needs doing, so a second press of Save retries the remainder and nothing
+   * twice. The same shape the session card's photo saves use.
+   *
+   * **It holds the landed *values*, not a pair of booleans**, and that is the
+   * whole point of it. A flag says "this half is done" and goes on saying it
+   * after the Gedu edits that half again — so a note written, refused alongside
+   * a failing creations write, then corrected and saved a second time would be
+   * silently dropped, which is the worst outcome available: the dialog closes,
+   * nothing errors, and the correction is gone. Comparing against the value
+   * that actually landed cannot make that mistake, and it needs no separate
+   * clearing from every field's change handler.
+   *
+   * Seeded from the props on open, so before anything has landed "what is
+   * stored" is simply what the dialog was handed.
    */
-  const [landed, setLanded] = useState({ note: false, creations: false });
+  const [committed, setCommitted] = useState({ note, creations });
 
   // Seeding during render on the closed→open edge, rather than in an effect:
   // an effect would paint one frame of the previous draft before correcting
@@ -185,86 +206,89 @@ export function GamerFlairDialog({
       setCommitting(false);
       setError(null);
       setIncomplete(false);
-      setLanded({ note: false, creations: false });
+      setCommitted({ note, creations });
     }
   }
 
-  const rows = creationDraft.rows;
-
-  const editRow = (key: number, patch: Partial<Omit<CreationRow, "key">>) => {
+  const editCreation = (patch: Partial<CreationDraft>) => {
     setIncomplete(false);
-    setCreationDraft((current) => ({
-      ...current,
-      rows: current.rows.map((row) =>
-        row.key === key ? { ...row, ...patch } : row,
-      ),
-    }));
-  };
-
-  const addRow = () => {
-    setCreationDraft((current) => ({
-      rows: [...current.rows, { key: current.nextKey, title: "", url: "" }],
-      nextKey: current.nextKey + 1,
-    }));
-  };
-
-  const removeRow = (key: number) => {
-    setIncomplete(false);
-    setCreationDraft((current) => ({
-      ...current,
-      rows: current.rows.filter((row) => row.key !== key),
-    }));
+    setCreationDraft((current) => ({ ...current, ...patch }));
   };
 
   const handleSave = async () => {
     if (committing) return;
 
     /**
-     * A **fully blank row is dropped**, exactly as a trimmed-empty note means
-     * "no note": a Gedu who pressed Add and changed their mind has not asked
-     * for anything. A **half-filled** row is the opposite — somebody typed one
-     * of the two and stopped — so it blocks the save and says so, which is what
-     * keeps the table's CHECK a loud backstop rather than a routine error path.
+     * **Both fields blank clears the creation**, exactly as a trimmed-empty
+     * note means "no note": a Gedu who opened the dialog and changed their mind
+     * has not asked for anything, and one who emptied a filled pair is retiring
+     * a creation the same way they retire guidance. **One field filled** is the
+     * opposite — somebody typed one of the two and stopped — so it blocks the
+     * save and says so, which is what keeps the table's CHECK a loud backstop
+     * rather than a routine error path.
      */
-    const kept = rows
-      .map((row) => ({ title: row.title.trim(), url: row.url.trim() }))
-      .filter((row) => row.title.length > 0 || row.url.length > 0);
-    if (kept.some((row) => row.title.length === 0 || row.url.length === 0)) {
+    const nextTitle = creationDraft.title.trim();
+    const nextUrl = creationDraft.url.trim();
+    const cleared = nextTitle.length === 0 && nextUrl.length === 0;
+    if (!cleared && (nextTitle.length === 0 || nextUrl.length === 0)) {
       setIncomplete(true);
       return;
     }
+    const nextCreations: readonly GamerCreation[] = cleared
+      ? []
+      : [{ title: nextTitle, url: nextUrl }];
 
     const nextNote = draft.trim();
-    const noteChanged = nextNote !== note;
+    const noteChanged = nextNote !== committed.note;
+
+    /**
+     * **The draft is compared raw, against the raw stored value.** What would
+     * be *sent* is trimmed, so comparing the trimmed value would call a stored
+     * entry that carries padding "changed" every single time the dialog is
+     * opened — and a Gedu who opened it, read it and pressed Save would restamp
+     * somebody else's provenance without having typed a character. Only a
+     * caller outside this editor can store padding (the RPC writes verbatim),
+     * which is precisely why the comparison must not assume nobody has.
+     *
+     * A stored list longer than one is the same kind of thing: unreachable from
+     * here, so the length test alone marks it changed and the save normalises
+     * it to what the fields hold.
+     */
+    const stored = committed.creations.length === 1 ? committed.creations[0] : null;
     const creationsChanged =
-      kept.length !== creations.length ||
-      kept.some(
-        (row, index) =>
-          row.title !== creations[index].title ||
-          row.url !== creations[index].url,
-      );
+      nextCreations.length !== committed.creations.length ||
+      (stored !== null &&
+        (creationDraft.title !== stored.title ||
+          creationDraft.url !== stored.url));
 
     setCommitting(true);
     setError(null);
 
     // A local copy rather than the state directly: two awaits happen before any
-    // re-render, so reading `landed` back between them would read the value the
-    // dialog opened with.
-    const done = { ...landed };
+    // re-render, so reading `committed` back between them would read the value
+    // the dialog opened with.
+    const done = { ...committed };
     try {
-      if (!done.note && noteChanged) {
+      if (noteChanged) {
         await onSaveNote(nextNote);
-        done.note = true;
+        done.note = nextNote;
       }
-      if (!done.creations && creationsChanged) {
-        await onSaveCreations(kept);
-        done.creations = true;
+      if (creationsChanged) {
+        await onSaveCreations(nextCreations);
+        done.creations = nextCreations;
+        // The fields now hold exactly what was written. Only this half needs
+        // it: the note is compared trimmed and so already agrees with what it
+        // sent, where the creation is compared raw and would otherwise read as
+        // changed on a retry over nothing but a trailing space. It is invisible
+        // — it removes whitespace the Gedu cannot see — and it touches only the
+        // half that landed, never the one still to be sent.
+        setCreationDraft(seedCreationDraft(nextCreations));
       }
       // `committing` left set: the dialog unmounts its content on close, so
       // there is no frame in which the button could re-enable under the cursor.
       onOpenChange(false);
     } catch (err) {
-      setLanded(done);
+      setCommitted(done);
       // A message is shown only when there is one to show. Both flair writes map
       // a database refusal — a `42501` reading `Forbidden`, a CHECK violation
       // reading a constraint name — to an error carrying no message at all,
@@ -285,6 +309,53 @@ export function GamerFlairDialog({
         </DialogHeader>
 
         <div className="mt-4 space-y-4">
+          <FamilyVisibleBlock label={t("creationAudience")}>
+            <Field label={t("creationLabel")} hint={t("creationHint", { name })}>
+              {({ hintId, labelId }) => (
+                // A group rather than one control, because the pair of fields is
+                // one thing: the label and the hint belong to both of them, and
+                // neither field alone is a creation. This is the composite case
+                // the field's own `labelId` descriptor exists for.
+                <div
+                  role="group"
+                  aria-labelledby={labelId}
+                  aria-describedby={hintId}
+                  className="space-y-1.5"
+                >
+                  {/* Named for assistive technology rather than labelled on
+                      screen: the group above says what these are, and two more
+                      visible labels over two inputs inside a bordered block
+                      already carrying a label and a hint would be more chrome
+                      than content. The same treatment the roster's inline
+                      username editor makes, for the same reason. */}
+                  <Input
+                    autoFocus
+                    value={creationDraft.title}
+                    maxLength={GAMER_CREATION_TITLE_MAX_LENGTH}
+                    placeholder={t("creationTitlePlaceholder")}
+                    aria-label={t("creationTitleLabel")}
+                    disabled={committing}
+                    onChange={(e) => editCreation({ title: e.target.value })}
+                  />
+                  <Input
+                    value={creationDraft.url}
+                    maxLength={GAMER_CREATION_URL_MAX_LENGTH}
+                    placeholder={t("creationUrlPlaceholder")}
+                    aria-label={t("creationUrlLabel")}
+                    disabled={committing}
+                    onChange={(e) => editCreation({ url: e.target.value })}
+                  />
+
+                  {incomplete && (
+                    <p role="alert" className="pt-0.5 text-xs text-destructive">
+                      {t("creationIncomplete")}
+                    </p>
+                  )}
+                </div>
+              )}
+            </Field>
+          </FamilyVisibleBlock>
+
           <StaffOnlyBlock label={t("noteAudience")}>
             <Field
               label={t("noteLabel")}
@@ -294,7 +365,6 @@ export function GamerFlairDialog({
               {({ hintId }) => (
                 <Textarea
                   id={`${fieldId}-note`}
-                  autoFocus
                   rows={5}
                   value={draft}
                   maxLength={GAMER_NOTE_MAX_LENGTH}
@@ -311,112 +381,6 @@ export function GamerFlairDialog({
               </p>
             )}
           </StaffOnlyBlock>
-
-          <FamilyVisibleBlock label={t("creationsAudience")}>
-            <Field label={t("creationsLabel")} hint={t("creationsHint", { name })}>
-              {({ hintId, labelId }) => (
-                // A group rather than one control, so the label and the hint
-                // reach every row inside it — the composite case the field's
-                // own `labelId` descriptor exists for.
-                <div
-                  role="group"
-                  aria-labelledby={labelId}
-                  aria-describedby={hintId}
-                >
-                  {rows.length > 0 && (
-                    // Scrolls inside itself rather than growing the dialog past
-                    // the viewport — see CREATION_LIST_MAX_HEIGHT.
-                    <ul
-                      className={cn(
-                        "space-y-3 overflow-y-auto",
-                        CREATION_LIST_MAX_HEIGHT,
-                      )}
-                    >
-                      {rows.map((row, index) => (
-                        <li key={row.key} className="flex items-start gap-2">
-                          <div className="min-w-0 flex-1 space-y-1.5">
-                            {/* Named for assistive technology rather than
-                                labelled on screen: the group above says what
-                                these are, and twenty rows each carrying two
-                                visible field labels would be a wall of chrome
-                                over two inputs. The same treatment the roster's
-                                inline username editor makes, for the same
-                                reason. */}
-                            <Input
-                              value={row.title}
-                              maxLength={GAMER_CREATION_TITLE_MAX_LENGTH}
-                              placeholder={t("creationTitlePlaceholder")}
-                              aria-label={t("creationTitleLabel", {
-                                number: index + 1,
-                              })}
-                              disabled={committing}
-                              onChange={(e) =>
-                                editRow(row.key, { title: e.target.value })
-                              }
-                            />
-                            <Input
-                              value={row.url}
-                              maxLength={GAMER_CREATION_URL_MAX_LENGTH}
-                              placeholder={t("creationUrlPlaceholder")}
-                              aria-label={t("creationUrlLabel", {
-                                number: index + 1,
-                              })}
-                              disabled={committing}
-                              onChange={(e) =>
-                                editRow(row.key, { url: e.target.value })
-                              }
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9 shrink-0"
-                            disabled={committing}
-                            aria-label={t("creationRemove", {
-                              number: index + 1,
-                            })}
-                            onClick={() => removeRow(row.key)}
-                          >
-                            <X className="h-4 w-4" aria-hidden />
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {rows.length < GAMER_CREATION_MAX_ENTRIES ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="mt-3 gap-1.5"
-                      disabled={committing}
-                      onClick={addRow}
-                    >
-                      <Plus className="h-3.5 w-3.5" aria-hidden />
-                      {t("creationAdd")}
-                    </Button>
-                  ) : (
-                    // The cap is reached by adding rows, so this line replaces
-                    // the button in answer to the Gedu's own click rather than
-                    // arriving on data's schedule.
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      {t("creationsAtCap", {
-                        count: GAMER_CREATION_MAX_ENTRIES,
-                      })}
-                    </p>
-                  )}
-
-                  {incomplete && (
-                    <p role="alert" className="mt-2 text-xs text-destructive">
-                      {t("creationIncomplete")}
-                    </p>
-                  )}
-                </div>
-              )}
-            </Field>
-          </FamilyVisibleBlock>
 
           {error !== null && <p className="text-sm text-destructive">{error}</p>}
         </div>

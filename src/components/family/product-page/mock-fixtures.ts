@@ -671,12 +671,14 @@ interface ScenarioConfig {
   gedus: readonly FamilyProductGedu[];
   groupPublicNote: string | null;
   /**
-   * What the group's gedu has recorded that this participant made.
+   * What the group's gedu has recorded that this participant made — one entry
+   * where there is one, because one is what the editor can author.
    *
-   * **Only the kitchen sink carries any**, and that is the honest ratio rather
-   * than a gap: almost every enrollment has none, so every other scenario is
-   * also the state where the card is absent and holds no space — which is the
-   * half of this feature most pages actually show.
+   * **Two scenarios carry one each and the other three carry none**, which is
+   * the honest ratio rather than a gap: almost every enrollment has none, so
+   * most pages here are also the state where the card is absent and holds no
+   * space. The two that have one are the two renderings — `active-club` a real
+   * link, `camp` a stored value that is not one and degrades to its title.
    */
   creations?: readonly FamilyCreation[];
   site: FamilyProductSite | null;
@@ -725,26 +727,22 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
       "Builders A is our redstone-heavy group. The shared world carries across every session, so anything Aino builds stays there for next week — scroll back through the sessions below to see what the group has made since it started.",
     site: null,
     /**
-     * **Two creations, one of which is not a link** — the same pair the gedu
-     * workspace's club fixture puts in Aino's dialog, written the same way on
-     * purpose. That scene shows what a gedu typed; this one shows what a family
-     * gets for it, and reading the two side by side is the only way to see the
-     * accepted gap: the URL that is not a URL renders here as its plain title,
-     * with nothing on the gedu's side having warned them it would.
+     * **One creation, and it is a link** — the same one the gedu workspace's
+     * club fixture puts in Aino's dialog, written the same way on purpose. That
+     * scene shows what a gedu typed; this one shows what a family gets for it,
+     * and the pair read side by side is the whole round trip.
      *
-     * Two rather than one because a list and a single line are different
-     * shapes to look at, and because a mixed list is the only arrangement where
-     * a linked entry and a degraded one can be compared without opening a
-     * second page.
+     * One rather than two because one is what the editor can now author: the
+     * dialog holds a single title and link, so a two-entry page here would be
+     * showing a state no Gedu can produce. The *degraded* case — a stored value
+     * that is not a URL, rendering as its plain title — is on the `camp`
+     * scenario instead, where a finished in-house build is the natural way to
+     * end up with something to name and nothing to link.
      */
     creations: [
       {
         title: "Lohikäärmeen linna — the castle world",
         url: "https://www.planetminecraft.com/project/lohikaarmeen-linna/",
-      },
-      {
-        title: "Clock tower, first build",
-        url: "shared world: /warp aino-tower",
       },
     ],
     // The membership winding down, on the club rather than the camp: a camp is
@@ -813,6 +811,27 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     groupPublicNote:
       "Builders red worked towards one shared obstacle course by Friday. Everything each team built got snapped into it at the end of the week.",
     site: null,
+    /**
+     * **The creation whose URL is not a URL**, which is what the card's
+     * degrade-to-text path exists for and the direct product of storing the
+     * field raw: staff are trusted to paste whatever they have, and what they
+     * have here is not a link at all. It renders as its title in plain text,
+     * with nothing on the gedu's side having warned them it would — the
+     * accepted gap, on show.
+     *
+     * A finished camp is the honest place for it. The thing a child built lives
+     * in the group's own place on the room's machines, so there was never a
+     * public URL to give, and the gedu wrote down where it is instead. The
+     * `active-club` scenario carries the linked half; between them the two
+     * renderings are a page apart rather than a scroll apart, which is the cost
+     * of the editor authoring one creation.
+     */
+    creations: [
+      {
+        title: "The lava-jump section of the obstacle course",
+        url: "in the Builders red shared place — not published",
+      },
+    ],
   },
 
   /**

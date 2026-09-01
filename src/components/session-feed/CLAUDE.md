@@ -199,7 +199,12 @@ floored at the start date, and take the greatest whose weekday a slot names;
 seven is enough because slots are weekly. The creations condition sits inside
 the epoch-floored half on both sides, exactly as the emailed test does, so a
 pre-epoch final session keeps its check rather than losing it to a term that
-finished before the platform asked.
+finished before the platform asked. There is a **fourth** thing they must agree
+on and it is easy to miss because neither side states it as a rule: the floor an
+undated run's occurrence walk starts from — a constant in the TypeScript, a
+`COALESCE` on the start date in the SQL — and the two numbers have to be the
+same number, because a product with no start date otherwise has a different
+history on the card than in the count.
 
 ## The attribution chip
 

@@ -14,6 +14,7 @@ import {
 } from "@/components/gedu/session-feed/mock-fixtures";
 import type { SessionFeedEntry, SessionFeedGamer } from "@/components/gedu/session-feed";
 import { platformForTopic } from "@/lib/products/topics";
+import { sessionEntryId } from "@/lib/session-occurrence";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type {
   GamerCreation,
@@ -41,11 +42,11 @@ import type {
  */
 
 /**
- * **Four scenarios, and each one is a shape the others structurally cannot
+ * **Five scenarios, and each one is a shape the others structurally cannot
  * make.**
  *
- * There were five once, and four of them differed from the kitchen sink by one
- * state each — a heavier backlog, a shorter history, no peer groups. States
+ * There were more once, and several of them differed from the kitchen sink by
+ * one state each — a heavier backlog, a shorter history, no peer groups. States
  * that can coexist belong in the same scenario, because a reviewer who has to
  * open five pages to see five things will see three of them.
  *
@@ -63,12 +64,22 @@ import type {
  * makes. They are deliberately thin on everything else (a short run, one peer
  * group) because the only question they are open to answer is what the rail's
  * roster looks like.
+ *
+ * `owed` is the fifth and it earns its own page on the same test: it needs a
+ * product **flagged** as requiring creations whose run has already **ended**,
+ * and no other scenario can be that without losing the thing it exists to show
+ * — the camp's session in progress and long future, the club's year of backlog,
+ * the two identity scenarios' live rosters. Every part of the owed signal is on
+ * that one page at once (the final card's needs-attention line, its timeline
+ * marker, and the rows of the members it is waiting on), so there is one page
+ * to open rather than four.
  */
 export const GROUP_WORKSPACE_SCENARIOS = [
   "club",
   "camp",
   "roblox",
   "no-platform",
+  "owed",
 ] as const;
 
 export type GroupWorkspaceScenario = (typeof GROUP_WORKSPACE_SCENARIOS)[number];
@@ -190,8 +201,28 @@ interface ScenarioConfig {
   slots: GeduAssignedProduct["product"]["schedule_slots"];
   /** How far back the product started, in days before `now`. */
   startedDaysAgo: number;
-  /** Days after `now` the product ends, or `null` for an ongoing club. */
-  endsInDays: number | null;
+  /**
+   * Days after `now` the product ends, `null` for an ongoing club, or
+   * `"last-session"` for a run that is already over.
+   *
+   * The third form exists because a finished run's end date is not an offset
+   * from anything — it is **the day of its own last session**, and it has to be
+   * exactly that or the derivation of "the final session" finds a different day
+   * or no day at all. So it is read off the feed the fixture just built rather
+   * than guessed at with a negative offset that would have to be kept in step
+   * with the spec list's length, the cadence and the weekday by hand.
+   */
+  endsInDays: number | null | "last-session";
+  /**
+   * Whether this product's contract requires a creation from every member —
+   * the admin flag, and the only thing that turns the owed signal on.
+   *
+   * False on every scenario but `owed`. Creations themselves are on show
+   * without it (the club's rail has rows lit by one); what the flag adds is the
+   * *owed* state, which also needs a run that has finished, so the two travel
+   * together on one scenario.
+   */
+  requiresGamerCreations: boolean;
   /**
    * Remote products have a voice room; in-person ones have a building. The two
    * are exclusive, and the flag drives both — an in-person page renders **no
@@ -831,33 +862,30 @@ function clubMemberFlair(now: Date): MemberFlairFixture {
       [SESSION_FEED_GAMER_IDS.emil]: "Petra",
     },
     /**
-     * **Two members with creations, and deliberately not the two with notes.**
+     * **Two members with a creation, and deliberately not the two with notes.**
      *
      * The button at the end of a row is lit by either, so a roster where the
      * same people carry both would never show that — the club's rail now has a
-     * row lit by a note alone (Siiri, who also has one), a row lit by a creation
-     * alone (Aino), and rows lit by nothing, which is most of them.
+     * row lit by a note alone (Emil), a row lit by a creation alone (Aino), a
+     * row lit by both (Siiri), and rows lit by nothing, which is most of them.
      *
-     * Aino carries **two**, because one and many are different shapes in the
-     * dialog: a single row with a remove control beside it, and a list the
-     * reader has to scan. Almost every real member has zero or one, so the
-     * second entry is the only place the plural case can be looked at.
+     * **One each, because one is what the dialog can author.** The list shape
+     * survives on the wire, so a fixture *could* hold two — and would then be
+     * showing a state no Gedu can produce, which is the one thing a fixture must
+     * never do.
      *
-     * One URL is deliberately not a URL at all. It is what the no-validation
-     * decision actually produces — staff paste what they have — and it is the
-     * value the family card's parse-or-degrade path exists for, so a reviewer
-     * can see what a Gedu sees when they type one: nothing, which is the
-     * accepted gap.
+     * Aino's is the entry the family product page's `active-club` scenario
+     * carries, written the same way on purpose: this scene shows what a Gedu
+     * typed, that one shows what the family gets for it. The value that is not a
+     * URL lives on that page's `camp` scenario now, because the degrade is only
+     * visible where it renders — here it is two words in a text field either
+     * way, which is itself the accepted gap.
      */
     creations: {
       [SESSION_FEED_GAMER_IDS.aino]: [
         {
           title: "Lohikäärmeen linna — the castle world",
           url: "https://www.planetminecraft.com/project/lohikaarmeen-linna/",
-        },
-        {
-          title: "Clock tower, first build",
-          url: "shared world: /warp aino-tower",
         },
       ],
       [SESSION_FEED_GAMER_IDS.siiri]: [
@@ -931,6 +959,133 @@ function quietMemberFlair(): MemberFlairFixture {
   return { newcomers: {}, notes: {}, noteEditors: {}, creations: {} };
 }
 
+/**
+ * **A finished run's roster, two members short of done** — the overlay the owed
+ * signal is read against.
+ *
+ * Seven of the nine have a creation and two do not, which is deliberately the
+ * ratio a Gedu actually meets on the last day: the work is nearly in, and what
+ * the marker has to do is pick the stragglers out of a roster where almost
+ * every other row is already lit. A fixture where half the group owed would
+ * make the warning tone the roster's *default* and prove nothing about whether
+ * it stands out.
+ *
+ * **One of the two who owe is Marja, the adult holding a seat of her own.** The
+ * rule is one rule — every current member of the group owes, and an adult seat
+ * is a member — so the only way to see that there is no special case is to put
+ * an adult on the owing side of it. Emil is the other, and he is the newest
+ * arrival: somebody who joined near the end still owes, because the tally runs
+ * over the roster as it stands rather than over who was here in week one.
+ *
+ * Emil carries a newcomer stamp to match, which is the one extra thing on this
+ * page and earns its place: it is the only fixture anywhere where the warning
+ * tone and a badge land on the *same* row, and the question that arrangement
+ * raises — whether the row still reads as one person — cannot be answered from
+ * two rows each wearing one mark.
+ */
+function owedMemberFlair(now: Date): MemberFlairFixture {
+  const creation = (title: string, url: string) => [{ title, url }];
+
+  return {
+    newcomers: {
+      // A fortnight, which is both inside the badge's month-long window and
+      // what his note says.
+      [SESSION_FEED_GAMER_IDS.emil]: new Date(
+        now.getTime() - 14 * 86_400_000,
+      ).toISOString(),
+    },
+    notes: {
+      [SESSION_FEED_GAMER_IDS.emil]:
+        "Joined for the last fortnight only. His course is built but nothing is published yet — sit with him before the parents' showcase and get it up.",
+    },
+    noteEditors: {
+      [SESSION_FEED_GAMER_IDS.emil]: "Sanna",
+    },
+    creations: {
+      [SESSION_FEED_GAMER_IDS.aino]: creation(
+        "Kellotorni — the clock tower obby",
+        "https://www.roblox.com/games/9481120344/kellotorni",
+      ),
+      [SESSION_FEED_GAMER_IDS.vaino]: creation(
+        "Lava run, four checkpoints",
+        "https://www.roblox.com/games/9481207713/lava-run",
+      ),
+      [SESSION_FEED_GAMER_IDS.elias]: creation(
+        "The trapdoor maze",
+        "https://www.roblox.com/games/9481318802/trapdoor-maze",
+      ),
+      [SESSION_FEED_GAMER_IDS.linnea]: creation(
+        "Spinning bridges",
+        "https://www.roblox.com/games/9481422956/spinning-bridges",
+      ),
+      [SESSION_FEED_GAMER_IDS.oskar]: creation(
+        "Ice slide with the shortcut nobody found",
+        "https://www.roblox.com/games/9481533107/ice-slide",
+      ),
+      [SESSION_FEED_GAMER_IDS.siiri]: creation(
+        "Underwater section with the working airlock",
+        "https://www.roblox.com/games/9481644218/airlock",
+      ),
+      [SESSION_FEED_GAMER_IDS.hilda]: creation(
+        "The finish line and the scoreboard",
+        "https://www.roblox.com/games/9481755329/finish-line",
+      ),
+    },
+  };
+}
+
+/**
+ * **A finished five-week run, every session complete except for what the
+ * contract asks of the last one.**
+ *
+ * Written this way so the final card's needs-attention line has exactly one
+ * cause. Every entry here is marked off, written up and emailed — the three
+ * ordinary obligations, all discharged — so the amber on the newest card can
+ * only be the fourth condition, and a reviewer is not left guessing which of
+ * four things it is complaining about. The four cards beneath it carry green
+ * checks for the same reason: the contrast is the point.
+ *
+ * No future entries at all, which is what dates the whole list behind `now` and
+ * makes the run genuinely over.
+ */
+const OWED_SPECS: readonly EntrySpec[] = [
+  {
+    kind: "past",
+    allPresent: true,
+    report:
+      "# Showcase week\n\nEvery team demoed their finished course and we played the whole thing end to end, twice. The clock tower is still the one nobody can beat.\n\nThank you all — it has been a good five weeks.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
+  },
+  {
+    kind: "past",
+    absent: [SESSION_FEED_GAMER_IDS.oskar],
+    report:
+      "# Publishing week\n\nEverybody put their course up so the group could play each other's. Two are still private and will go up next week.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
+  },
+  {
+    kind: "past",
+    allPresent: true,
+    report:
+      "# Playtesting\n\nEvery team handed their course to another team and watched them fail at it, which remains the most useful hour of the whole thing.",
+    lastEditedBy: SESSION_FEED_EDITORS.petra,
+  },
+  {
+    kind: "past",
+    allPresent: true,
+    report:
+      "# Checkpoints and traps\n\nCheckpoints so nobody starts from the beginning again, and one trap each. The traps took the whole session and were worth it.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
+  },
+  {
+    kind: "past",
+    allPresent: true,
+    report:
+      "# Getting started\n\nNames, ground rules, and one baseplate each. A quiet start on purpose.",
+    lastEditedBy: SESSION_FEED_EDITORS.sanna,
+  },
+];
+
 /* ------------------------------------------------------------------ */
 
 const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
@@ -960,6 +1115,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     // over a New Year, which is what makes the month dividers earn their place.
     startedDaysAgo: 55 * 7,
     endsInDays: null,
+    requiresGamerCreations: false,
     isRemote: true,
     // Remote: no building, so no site-notes panel on the page.
     site: null,
@@ -1054,6 +1210,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     // the eight-occurrence cap off the horizon and lets the future block be
     // seventeen entries long.
     endsInDays: 28,
+    requiresGamerCreations: false,
     isRemote: false,
     // The site pair is deliberately half-written: the family note is there and
     // the staff note is not, so the partial-fill ghost is reviewable on a real
@@ -1122,6 +1279,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     slots: [{ weekday: 3, start_time: "17:00", duration_minutes: 90 }],
     startedDaysAgo: 4 * 7,
     endsInDays: null,
+    requiresGamerCreations: false,
     isRemote: true,
     site: null,
     materialUrl: "https://drive.sog.gg/roblox-studio-thursday/lesson-plans",
@@ -1171,6 +1329,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     slots: [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }],
     startedDaysAgo: 4 * 7,
     endsInDays: null,
+    requiresGamerCreations: false,
     isRemote: true,
     site: null,
     materialUrl: null,
@@ -1195,6 +1354,81 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
       },
     ],
   },
+
+  /**
+   * **The owed signal, which needs a product shape none of the four above can
+   * be**: flagged as requiring a creation from every member, with a run that
+   * has already finished.
+   *
+   * Both halves are load-bearing and neither is optional. The flag is what
+   * creates the obligation at all; the *finished* run is what makes it due,
+   * because the condition attaches to the final session and flips at that
+   * session's end instant like every other thing a session owes. Flagging the
+   * club would produce nothing — an open-ended run has no final session — and
+   * ending the camp's run would cost it the live session and the long future
+   * block it exists for.
+   *
+   * **Everything the signal does is on this one page.** The newest card carries
+   * the amber needs-attention line, its marker on the timeline takes the warning
+   * tone, and the two members still owing carry the warning tone on their roster
+   * buttons — which open the same dialog every other row's button opens, because
+   * there is one authoring surface and the signal is a route to it rather than a
+   * second way in. The four cards below the last one are green, so the amber has
+   * something to be amber against.
+   *
+   * It is deliberately thin on everything else — a five-week run, one peer
+   * group, no site, no backlog of any other kind — for the same reason the two
+   * identity scenarios are: the only question it is open to answer is what owed
+   * creations look like, and every unrelated state on the page is one more thing
+   * a reviewer has to look past.
+   *
+   * A Roblox product, because the contract that produced this requirement is the
+   * Roblox one — and a scenario whose creations are Roblox game links reads as
+   * the thing it stands in for rather than as a flag switched on at random.
+   */
+  owed: {
+    productName: "Roblox Programme, autumn",
+    // A club rather than a camp, because that is what a weekly five-week term
+    // is — and it is the type that lets the newcomer badge render at all, since
+    // that badge is clubs-only. A camp meeting once a week would be a fixture
+    // shaped like nothing the catalogue sells.
+    productType: "consumer_club",
+    topic: "roblox_studio",
+    cadence: "weekly",
+    specs: OWED_SPECS,
+    startTime: "16:00",
+    durationMinutes: 90,
+    slots: [{ weekday: 0, start_time: "16:00", duration_minutes: 90 }],
+    // Five weekly sessions, so the run opened four weeks before its last one.
+    // A day or two of slack either side of that would be fine — the start date
+    // only has to sit at or below the final session for the derivation to find
+    // it — but the honest number is the one the feed actually produces.
+    startedDaysAgo: 4 * 7,
+    // Read off the feed rather than offset from `now`: the end date of a
+    // finished run *is* its last session's day, and it has to be exactly that
+    // or the final-session derivation lands on a different day, or on none.
+    endsInDays: "last-session",
+    requiresGamerCreations: true,
+    isRemote: true,
+    site: null,
+    materialUrl: "https://drive.sog.gg/roblox-programme/autumn",
+    groupName: "Autumn A",
+    groupNotes: {
+      publicNote:
+        "Autumn A built one obstacle course each over five weeks, and everybody published theirs at the end so the group could play them all.",
+      staffNote:
+        "Contract group — every gamer needs a published game link before this closes. Emil joined for the last fortnight and Marja is taking part alongside her son.",
+    },
+    memberFlair: owedMemberFlair,
+    peers: [
+      {
+        id: "mock-group-autumn-b",
+        name: "Autumn B",
+        participantCount: 7,
+        gedus: [PETRA],
+      },
+    ],
+  },
 };
 
 export function buildGroupWorkspaceFixture(
@@ -1211,8 +1445,51 @@ export function buildGroupWorkspaceFixture(
     durationMinutes: config.durationMinutes,
   });
 
+  const groupId = "mock-group-a";
+
+  /**
+   * The feed fixture's index-keyed ids, rewritten to the ids the live page has.
+   *
+   * A session's identity on this page is a `(group, product-local date)` pair —
+   * the row's unique key in Postgres — and the workspace *derives* ids from it:
+   * the final-session obligation looks its entry up by building one, and the
+   * card's writes turn one back into the pair they have to address. Against
+   * `mock-session-3` both of those silently find nothing, so a scenario whose
+   * whole subject is the final session could not have one at all.
+   *
+   * It is done here rather than in the feed fixture because the group is this
+   * fixture's to know: the feed builds a run of sessions and has no group.
+   */
+  const dateOf = (startsAt: Date) =>
+    formatInTimeZone(startsAt, feed.timeZone, "yyyy-MM-dd");
+  const entries = feed.entries.map((entry) => ({
+    ...entry,
+    id: sessionEntryId(groupId, dateOf(entry.startsAt)),
+  }));
+  const sendOutcomes = new Map(
+    feed.entries.flatMap((entry, index) => {
+      const outcome = feed.sendOutcomes.get(entry.id);
+      return outcome === undefined
+        ? []
+        : [[entries[index].id, outcome] as const];
+    }),
+  );
+
+  /**
+   * The run's end date: an offset from `now`, nothing at all, or — for a run
+   * that is already over — **the day of its own newest session**, read off the
+   * feed above. `entries[0]` is that session: the feed is strictly descending
+   * and a spec list with no future entries is dated entirely behind `now`.
+   */
+  const endDate =
+    config.endsInDays === null
+      ? null
+      : config.endsInDays === "last-session"
+        ? dateOf(entries[0].startsAt)
+        : calendarDate(now, config.endsInDays);
+
   const assignedGroup: GeduAssignedProductGroup = {
-    id: "mock-group-a",
+    id: groupId,
     name: config.groupName,
     created_at: calendarDate(now, -config.startedDaysAgo),
     is_my_group: true,
@@ -1248,18 +1525,15 @@ export function buildGroupWorkspaceFixture(
         topic: config.topic,
         timezone: SESSION_FEED_TIMEZONE,
         start_date: calendarDate(now, -config.startedDaysAgo),
-        end_date:
-          config.endsInDays === null ? null : calendarDate(now, config.endsInDays),
+        end_date: endDate,
         is_remote: config.isRemote,
-        // **Unflagged on every scenario, deliberately.** Creations themselves
-        // are on show — the club's rail has rows lit by one — but the *owed*
-        // signal cannot be: it needs a flagged product whose run has already
-        // finished, and none of the four product shapes here is that. Making one
-        // of them so would cost the scenario the thing it exists to show (the
-        // camp's live session and long future, the club's year of backlog), so
-        // the owed marker is covered by unit tests rather than by a fifth
-        // scenario nobody asked for.
-        requires_gamer_creations: false,
+        // Flagged on `owed` alone. Creations themselves are on show without it —
+        // the club's rail has rows lit by one — and what the flag adds is the
+        // *owed* state, which additionally needs a run that has already
+        // finished; the two travel together, on the one scenario that is that
+        // shape, because giving an existing scenario an ended run would cost it
+        // the thing it exists to show.
+        requires_gamer_creations: config.requiresGamerCreations,
         translations: [
           {
             locale: "en",
@@ -1272,9 +1546,9 @@ export function buildGroupWorkspaceFixture(
       my_group_id: assignedGroup.id,
       groups: [assignedGroup, ...peerGroups],
     },
-    entries: feed.entries,
+    entries,
     feedRoster: feed.roster,
-    sendOutcomes: feed.sendOutcomes,
+    sendOutcomes,
     sourceTimeZone: feed.timeZone,
     groupNotes: config.groupNotes,
     site: config.site,

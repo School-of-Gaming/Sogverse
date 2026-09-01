@@ -156,9 +156,11 @@ for exactly this reason: it is what the degrade path has to say.
 page, on a parent's own seat and on the child's own — the same decision the gedus label
 takes, and for the same two reasons: the masthead has already said whose page this is, and
 a possessive built around a name has to inflect that name in half the locales we ship. It
-is also the word the gedu who typed the list sees, so a family and their gedu have one
-word for one thing. A gamer coming back to their own work is the point of the card, not a
-side effect of sharing a body.
+is also the word the gedu who typed it sees, so a family and their gedu have one word for
+one thing — which is why the noun is pluralized against the count rather than fixed
+plural: the staff editor authors one creation, so a fixed "Creations" over a single entry
+would be the one place those two words came apart. A gamer coming back to their own work
+is the point of the card, not a side effect of sharing a body.
 
 ## Membership grants the group's history
 

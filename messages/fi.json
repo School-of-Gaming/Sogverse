@@ -331,6 +331,10 @@
           "free": "Maksuton",
           "external_contract": "Ulkoinen sopimus (kunta)"
         },
+        "requiresGamerCreations": {
+          "required": "Vaaditaan",
+          "notRequired": "Ei vaadita"
+        },
         "fields": {
           "publicUrl": "Julkinen linkki",
           "topic": "Aihe",
@@ -351,6 +355,7 @@
           "tag": "Kenelle suunniteltu",
           "regionLock": "Maakohtainen rajaus",
           "requiredConsents": "Vaaditut suostumukset",
+          "requiresGamerCreations": "Pelaajien teokset",
           "visibility": "Näkyvyys"
         },
         "copyLink": "Kopioi julkinen linkki",
@@ -1324,7 +1329,7 @@
     "siteLabel": "Missä",
     "aboutHeading": "Tietoa ryhmästä",
     "siteNoteHeading": "Paikassa {site}",
-    "creationsHeading": "Teokset",
+    "creationsHeading": "{count, plural, one {Teos} other {Teokset}}",
     "creationOpensInNewTab": "(avautuu uuteen välilehteen)",
     "feedHeading": "Kerrat",
     "attendancePresent": "Paikalla",
@@ -1574,25 +1579,22 @@
   "memberFlair": {
     "newcomer": "Uusi",
     "newcomerTooltip": "Uusi tässä ryhmässä — liittyi {days, plural, =0 {tänään} one {# päivä sitten} other {# päivää sitten}}",
-    "openMember": "Muistiinpanot ja teokset pelaajasta {name}",
-    "openMemberCreationOwed": "Muistiinpanot ja teokset pelaajasta {name} — teos puuttuu vielä",
+    "openMember": "Muistiinpano ja teos pelaajasta {name}",
+    "openMemberCreationOwed": "Muistiinpano ja teos pelaajasta {name} — teos puuttuu vielä",
     "memberTitle": "Tietoja pelaajasta {name}",
     "noteAudience": "Gedut ja ylläpitäjät",
     "noteLabel": "Yksityinen muistiinpano",
     "noteHint": "Vain Gedut ja ylläpitäjät näkevät tämän. Se pysyy tässä ryhmässä kerrasta toiseen.",
     "notePlaceholder": "Muistiinpanoja pelaajasta {name} tässä ryhmässä.",
     "noteLastEdited": "Viimeksi muokannut {name}",
-    "creationsAudience": "Perheet näkevät tämän",
-    "creationsLabel": "Teokset",
-    "creationsHint": "Asiat, joita {name} on tehnyt tässä ryhmässä. Hänen oma perheensä näkee ne omalla sivullaan.",
-    "creationTitleLabel": "Teoksen {number} nimi",
+    "creationAudience": "Perheet näkevät tämän",
+    "creationLabel": "Teos",
+    "creationHint": "Jokin, jonka {name} on tehnyt tässä ryhmässä. Hänen oma perheensä näkee sen omalla sivullaan.",
+    "creationTitleLabel": "Teoksen nimi",
     "creationTitlePlaceholder": "Mitä hän teki",
-    "creationUrlLabel": "Teoksen {number} linkki",
+    "creationUrlLabel": "Teoksen linkki",
     "creationUrlPlaceholder": "Linkki teokseen",
-    "creationAdd": "Lisää teos",
-    "creationRemove": "Poista teos {number}",
-    "creationsAtCap": "Tähän mahtuu enintään {count} teosta yhtä pelaajaa kohden.",
-    "creationIncomplete": "Jokainen teos tarvitsee sekä nimen että linkin."
+    "creationIncomplete": "Teos tarvitsee sekä nimen että linkin."
   },
   "richText": {
     "bold": "Lihavointi",

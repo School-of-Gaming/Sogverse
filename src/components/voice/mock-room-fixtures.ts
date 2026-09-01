@@ -210,11 +210,11 @@ export const SEATED_MEMBER_IDS: ReadonlySet<string> = new Set([
  * the common action.
  *
  * **The creations are on deliberately different people from the notes**, because
- * the button says only that *something* is recorded: Aino has creations and no
+ * the button says only that *something* is recorded: Aino has a creation and no
  * note, Siiri has both, and Elias has a note alone — so the rail carries all
  * three ways a row can be lit, side by side, which is the only way to see that
- * the mark is not a note marker. Aino carries two, since one entry and a list
- * are different shapes in the dialog and almost every real member has one.
+ * the mark is not a note marker. One each, because the dialog authors one: a
+ * fixture holding two would be showing a state no Gedu can produce.
  */
 export function buildFlairFixture(now: Date): {
   newcomers: Record<string, string>;
@@ -247,10 +247,6 @@ export function buildFlairFixture(now: Date): {
         {
           title: "Lohikäärmeen linna — the castle world",
           url: "https://www.planetminecraft.com/project/lohikaarmeen-linna/",
-        },
-        {
-          title: "Clock tower, first build",
-          url: "shared world: /warp aino-tower",
         },
       ],
       [SESSION_FEED_GAMER_IDS.siiri]: [

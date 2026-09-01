@@ -51,10 +51,15 @@ import type {
  * with nothing lit, which is the quiet roster most real groups are, and their
  * dialogs still write.
  *
- * **What no scenario here shows is the owed marker.** It needs a flagged product
- * whose run has finished, and none of the four product shapes is that; giving
- * one of them an ended run would cost it the thing it exists to show. That state
- * is held by unit tests instead.
+ * **The owed marker has a scenario of its own**, because it needs a product
+ * flagged as requiring creations whose run has already finished, and no other
+ * shape here is that — giving one of them an ended run would cost it the thing
+ * it exists to show. On that page the last card reads needs-attention with every
+ * ordinary obligation discharged, its timeline marker takes the warning tone,
+ * and the two members still owing wear it on their roster buttons. Those buttons
+ * open the same dialog every other row's does, which is the point: supplying the
+ * creation from there clears the row, and clearing the last one turns the card
+ * green while you watch.
  *
  * **The camp is where the two marks come apart**: notes on its rows and no badge
  * on any of them, which is the clubs-only badge rule beside a note that has no

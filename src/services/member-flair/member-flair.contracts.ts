@@ -61,7 +61,11 @@ export const GAMER_CREATION_URL_MAX_LENGTH = 2000;
  * code units and the CHECK's `like_regex` counts characters, so a title of 200
  * astral-plane characters passes here and is refused there. Accepted — the
  * caps are sanity bounds, the CHECK is the authority, and the disagreement is
- * unreachable through the editor.
+ * unreachable through the editor. Blankness diverges the other way and is
+ * therefore harmless: JS `trim()` strips every Unicode space separator, a
+ * non-breaking space included, where the CHECK's POSIX `[[:space:]]` need not
+ * — so a title of one NBSP is refused here and would be accepted there. The
+ * strict end is the client, and the client is the only writer.
  */
 function cappedNonBlank(max: number, field: string) {
   return z
