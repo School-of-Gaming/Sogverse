@@ -132,6 +132,13 @@ Owner direction (2026-08-31), added during implementation:
     = wit, event = harmony; the deck names the trade against the deliberately-separate
     categorical palette and leaves the ruling with the owner. Buttons keep amber
     everywhere, because amber is the act colour.
+14. **Typography is reviewed on its own page** (owner direction, 2026-09-01): the type half
+    is separable — no face ruling waits on a colour decision — so it moved out of the
+    walkthrough deck into `/admin/design-pass-typography` (one slide per Press Start 2P
+    site, the greeting's face and size, CTA type, Space Mono's reach), and its ten rulings
+    are tracked there. The colour deck keeps fourteen slides and eighteen rulings, and each
+    comparison now has exactly one home. **Both pages are deleted before this branch
+    merges.**
 
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written

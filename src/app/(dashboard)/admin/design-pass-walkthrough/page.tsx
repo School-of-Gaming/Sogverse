@@ -53,9 +53,15 @@ import { cn } from "@/lib/utils";
  * colour is judged against the ground the page actually has.
  *
  * Buttons and links in the samples are hand-written literal classes rather than
- * `buttonVariants` calls, on purpose: slide 11 quotes the recounted blast
+ * `buttonVariants` calls, on purpose: slide 10 quotes the recounted blast
  * radius of the `outline` variant, and a review aid that inflates the number it
  * asks a decision about would be arguing for the wrong decision.
+ *
+ * **Typography is not here.** The type half of the pass has its own deck at
+ * `/admin/design-pass-typography` — the face specimens, all six Press Start 2P
+ * sites, the gamer greeting's face and size, and CTA type. None of those rulings
+ * waits on a colour decision, so each comparison has exactly one home and this
+ * one is colour. That page is deleted before merge alongside this one.
  */
 
 /* ------------------------------------------------------------------ */
@@ -71,10 +77,8 @@ const SLIDES = [
   { id: "home-yty", title: "The home page, and the Yty element cards" },
   { id: "gradients", title: "Gradients are retired — one candidate left" },
   { id: "gamer-floor", title: "The gamer dashboard at the 360 floor" },
-  { id: "greeting-face", title: "The greeting face" },
   { id: "wit", title: "Wit, up close" },
   { id: "buttons", title: "Buttons" },
-  { id: "faces", title: "Type faces, and every Press Start 2P site" },
   { id: "zones", title: "Voice-zone Yty tiles" },
   { id: "reach", title: "How far the palette reaches" },
   { id: "status-colours", title: "Status colours meet the brand palette" },
@@ -481,7 +485,7 @@ const GRAMMAR_CHIPS: readonly {
     swatch: "bg-yty-glow-strong",
     wordClass: "text-yty-glow-soft",
     examples: ["Progress", "Achievements", "Yty-Points"],
-    note: "The success token converges into it — slide 15.",
+    note: "The success token converges into it — slide 13.",
   },
   {
     family: "Wit blue",
@@ -489,7 +493,7 @@ const GRAMMAR_CHIPS: readonly {
     swatch: "bg-yty-wit-strong",
     wordClass: "text-yty-wit-soft",
     examples: ["Information", "Learning", "Tips"],
-    note: "The info token converges into it — slide 15.",
+    note: "The info token converges into it — slide 13.",
   },
   {
     family: "Valor orange",
@@ -629,7 +633,7 @@ const MULTI_STATE_SURFACES: readonly {
     surface: "Session-feed rail dots",
     states: "4",
     today: "Info, warning, success, muted",
-    grammar: "Knowledge and growth by construction, once slide 15 converges",
+    grammar: "Knowledge and growth by construction, once slide 13 converges",
   },
   {
     surface: "Game-account verification",
@@ -953,124 +957,6 @@ const BUTTON_COUNTS: readonly {
     variant: "secondary — today's violet fill",
     count: "1",
     note: "a single link anchor, and no real button anywhere",
-  },
-];
-
-/**
- * The gamer greeting, in both candidate faces at both of their sizes.
- *
- * Sizes are written out one per row rather than left to a `md:` breakpoint on
- * purpose: a breakpoint reads the browser window, so inside a 360 px box on a
- * wide screen it would quietly show the wide size and call it the phone.
- */
-const GREETING_SPECIMENS: readonly {
-  label: string;
-  text: string;
-  className: string;
-  boxClass: string;
-}[] = [
-  {
-    label: "Today — Press Start 2P at the 360 floor (text-xl)",
-    text: "Welcome, Aino!",
-    className: "font-display text-xl",
-    boxClass: "w-[360px]",
-  },
-  {
-    label: "Today — Press Start 2P at the 360 floor, in Finnish",
-    text: "Tervetuloa, Aino!",
-    className: "font-display text-xl",
-    boxClass: "w-[360px]",
-  },
-  {
-    label: "Draft — Space Mono at the 360 floor (text-2xl)",
-    text: "Welcome, Aino!",
-    className: "font-brand-mono text-2xl",
-    boxClass: "w-[360px]",
-  },
-  {
-    label: "Draft — Space Mono at the 360 floor, in Finnish",
-    text: "Tervetuloa, Aino!",
-    className: "font-brand-mono text-2xl",
-    boxClass: "w-[360px]",
-  },
-  {
-    label: "Today — Press Start 2P on a wide screen (text-3xl)",
-    text: "Welcome, Aino!",
-    className: "font-display text-3xl",
-    boxClass: "w-full",
-  },
-  {
-    label: "Draft — Space Mono on a wide screen, as drafted (text-4xl)",
-    text: "Welcome, Aino!",
-    className: "font-brand-mono text-4xl",
-    boxClass: "w-full",
-  },
-  {
-    label:
-      "Draft — Space Mono on a wide screen, the larger option (text-5xl), roughly today's footprint",
-    text: "Welcome, Aino!",
-    className: "font-brand-mono text-5xl",
-    boxClass: "w-full",
-  },
-];
-
-/** The three loaded faces, one line each at the size each is used at. */
-const FACE_SPECIMENS: readonly {
-  name: string;
-  role: string;
-  className: string;
-}[] = [
-  {
-    name: "Poppins",
-    role: "the app face: body copy and every heading",
-    className: "font-sans text-2xl font-semibold",
-  },
-  {
-    name: "Space Mono",
-    role: "sanctioned, in-platform display, placed nowhere yet",
-    className: "font-brand-mono text-2xl font-bold",
-  },
-  {
-    name: "Press Start 2P",
-    role: "the rare-use display face",
-    className: "font-display text-lg font-bold",
-  },
-];
-
-const PS2P_SITES: readonly {
-  site: string;
-  decision: string;
-  why: string;
-}[] = [
-  {
-    site: "Home page hero heading",
-    decision: "Keep",
-    why: "The flagship arcade moment, and the placement the rare-use ruling exists to protect. A stranger meets it once, at full size, on the page that has to have personality.",
-  },
-  {
-    site: "Gamer dashboard greeting",
-    decision: "Swap to Space Mono",
-    why: "Slide 9. The same child reads this line on every visit, which is the opposite of rare; and in-platform UI is the Guidebook's first named use for Space Mono.",
-  },
-  {
-    site: "Roblox programme hero",
-    decision: "Keep — and explicitly your call",
-    why: "It sits directly above the approved three-way Roblox lockup, so changing its face changes the appearance of the placement Roblox signed off, and would go back to them. Its size arithmetic also derives from the pixel face advancing exactly one em per character.",
-  },
-  {
-    site: "Profile-select header wordmark",
-    decision: "Keep",
-    why: "It draws the letters SOG. That is a wordmark, not a heading, and the rare-use ruling is about headings reaching for a display face.",
-  },
-  {
-    site: "Instant call — the ended screen",
-    decision: "Keep",
-    why: "It quotes the home hero's tagline, so it is quoting the home hero's face along with it. Changing one without the other breaks the quotation.",
-  },
-  {
-    site: "Admin needs-attention, the all-clear",
-    decision: "Keep, or cut with its trophy",
-    why: "The pixel face and the pixel trophy beside it are two halves of one joke, and neither half works alone. Admin-only either way, so nothing outside the building sees it.",
   },
 ];
 
@@ -1479,16 +1365,35 @@ export default function DesignPassWalkthroughPage() {
         </div>
         <p className="max-w-prose text-sm text-foreground">
           Temporary review aid for the brand design pass — this page is deleted
-          before merge. It is in no sidebar and no index; it exists so the whole
-          pass can be ruled on in one sitting.
+          before merge. It is in no sidebar and no index; it exists so the colour
+          half of the pass can be ruled on in one sitting.
         </p>
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Brand design pass — walkthrough</h1>
+        <h1 className="text-3xl font-bold">Brand design pass — colour</h1>
         <p className="max-w-prose text-muted-foreground">
-          Sixteen slides. Each one shows today beside the draft, says why the
+          Fourteen slides. Each one shows today beside the draft, says why the
           draft is what it is, and names the ruling it wants from you.
+        </p>
+      </div>
+
+      <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
+        <Marker>Typography is a separate page</Marker>
+        <p className="max-w-prose text-sm text-muted-foreground">
+          The type half of this pass now has its own deck at{" "}
+          <a
+            href="/admin/design-pass-typography"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            /admin/design-pass-typography
+          </a>{" "}
+          — the three faces, all six Press Start 2P sites one slide each, the
+          gamer greeting&rsquo;s face and its size, and CTA type. None of those
+          rulings waits on a colour decision, so they are answerable on their own
+          and this deck is colour only. Both pages are deleted before merge.
         </p>
       </div>
 
@@ -1534,8 +1439,9 @@ export default function DesignPassWalkthroughPage() {
       <Slide id="context">
         <Prose>
           This branch is the visual half of the Guidebook alignment: the
-          Guidebook&rsquo;s Yty-Element colours, its button set and its display
-          faces, interpreted on Sogverse&rsquo;s dark ground. Nothing live has
+          Guidebook&rsquo;s Yty-Element colours and its button set, interpreted on
+          Sogverse&rsquo;s dark ground — its display faces are the typography
+          deck&rsquo;s half of the same alignment. Nothing live has
           moved. Every real route still renders exactly what it rendered before
           — the drafts live in preview scenes and in the UI Components style
           guide, which is what this deck walks you through.
@@ -2082,8 +1988,7 @@ export default function DesignPassWalkthroughPage() {
               done-or-owed vocabulary at all. Complete and needs-attention are
               the <em>gedu</em> feed&rsquo;s markers, on a surface family code
               cannot even import, and they inherit growth green and warning amber
-              from the status ruling on the last slide rather than from anything
-              here.
+              from the status ruling on slide 13 rather than from anything here.
             </Prose>
           </div>
 
@@ -2304,7 +2209,7 @@ export default function DesignPassWalkthroughPage() {
           <Prose>
             The element cards are identical under both drafts — the dose question
             is about the pages around them — so there is one draft row here
-            rather than two. Slide 10 looks at the wit card in that row up close.
+            rather than two. Slide 9 looks at the wit card in that row up close.
             The link above opens the live About page, which draws the{" "}
             <em>current</em> palette: the draft is the second row here, and there
             is no About scenario to open, because these two rows are the whole of
@@ -2436,25 +2341,43 @@ export default function DesignPassWalkthroughPage() {
         <Prose>
           The gamer dashboard is a mobile-first surface, so it is judged at the
           360 px floor — the Android baseline, and the archetypal family phone
-          in our markets. What the draft changes on it is two things: the
-          enrollment cards take the colour grammar, the same way a
-          parent&rsquo;s do, and the greeting swaps from Press Start 2P to Space
-          Mono. Nothing else on the page moves — the Help section that ends it
-          is untouched.
+          in our markets. What this deck rules on here is the colour: the
+          enrollment cards take the grammar, the same way a parent&rsquo;s do.
+          Nothing else on the page moves for colour&rsquo;s sake — the Help
+          section that ends it is untouched.
+        </Prose>
+        <Prose>
+          <strong className="font-semibold text-foreground">
+            The greeting above those cards also changes, and it is not this
+            deck&rsquo;s to rule on.
+          </strong>{" "}
+          Its face swaps from Press Start 2P to Space Mono, which is a typography
+          decision and lives on{" "}
+          <a
+            href="/admin/design-pass-typography#site-greeting"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            the typography deck
+          </a>{" "}
+          together with the size question the swap forces. The links below show
+          both changes at once, because the draft scenario is the whole proposal
+          rather than one axis of it — so when you open them, the greeting is the
+          other page&rsquo;s question and the cards are this one&rsquo;s.
         </Prose>
         <Prose>
           <strong className="font-semibold text-foreground">
             This is the one slide with no sample of its own, on purpose.
           </strong>{" "}
-          Both halves are already drawn elsewhere in this deck — the card states
-          on slide 5, the greeting line at 360 px on slide 9 — and neither can be
-          judged <em>here</em> for the reason the whole page exists to warn about:
-          a breakpoint reads the browser window, not the box a sample sits in, so
-          a 360 px box on this screen would still be showing you the desktop
+          The card states are already drawn on slide 5, and they cannot be judged{" "}
+          <em>here</em> for the reason the whole page exists to warn about: a
+          breakpoint reads the browser window, not the box a sample sits in, so a
+          360 px box on this screen would still be showing you the desktop
           layout. The two links below are the honest answer, and they are worth
           opening in a phone-sized window: the same page, once as it ships and
-          once under the whole draft, with the cards, the greeting and the scroll
-          between them all at the width a child actually meets.
+          once under the whole draft, with the cards and the scroll between them
+          at the width a child actually meets.
         </Prose>
         <Prose>
           A note on what is <em>not</em> here any more: this slide used to draw a
@@ -2485,89 +2408,14 @@ export default function DesignPassWalkthroughPage() {
 
         <Ruling>
           <p>
-            Sign off the gamer dashboard at the floor — the cards and the
-            greeting together, as one page — or name what to tune.
+            Sign off the gamer dashboard&rsquo;s colour at the floor — the
+            enrollment cards as one page — or name what to tune. The
+            greeting&rsquo;s face and size are answered on the typography deck.
           </p>
         </Ruling>
       </Slide>
 
       {/* ----------------------------------------------------------- 9 */}
-      <Slide id="greeting-face">
-        <Prose>
-          Press Start 2P lives under your own ruling that it is for rare,
-          specialized uses. The gamer greeting is the site that fails that test
-          hardest: the same child reads this exact line on every single visit,
-          which is what a house face is, not what a special effect is. Space
-          Mono is loaded, sanctioned by the Guidebook, placed nowhere yet — and
-          the Guidebook names in-platform UI as its first use. This platform is
-          that.
-        </Prose>
-        <Prose>
-          The two faces are not interchangeable at one size. Press Start 2P
-          advances a full em per character and Space Mono about 0.6, so the
-          draft raises the number rather than keeping it: today is text-xl
-          rising to text-3xl on wide screens, the draft is text-2xl rising to
-          text-4xl. At 360 px the draft sets one line in Finnish and French
-          where today&rsquo;s pixel face wraps. If you want more hero out of it,
-          text-5xl on wide screens is roughly today&rsquo;s line footprint.
-        </Prose>
-
-        <div className="space-y-3">
-          <Marker>The greeting line, in each face at each size</Marker>
-          <div className="space-y-4">
-            {GREETING_SPECIMENS.map((row) => (
-              <div key={row.label} className="space-y-1">
-                <div className="text-[11px] text-muted-foreground">
-                  {row.label}
-                </div>
-                <div
-                  className={cn(
-                    "rounded-lg border bg-background p-3",
-                    row.boxClass,
-                  )}
-                >
-                  <p
-                    className={cn(
-                      "font-bold text-primary break-words",
-                      row.className,
-                    )}
-                  >
-                    {row.text}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <Prose>
-            The box is 360 px wide, which is what makes the wrapping honest here
-            — but the <em>sizes</em> are written out one per row rather than left
-            to a breakpoint, because a breakpoint would read this browser window
-            and show the wide size in a narrow box. Finnish is set beside English
-            because it is the longest of the five and the one that wraps first.
-            For the whole page around it, use the link.
-          </Prose>
-          <p className="text-xs">
-            <a
-              href="/admin/ui-components#type-faces-the-gamer-greeting-at-the-360px-floor"
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
-            >
-              Open the full comparison in the style guide
-            </a>
-          </p>
-        </div>
-
-        <Ruling>
-          <p>Approve the swap from Press Start 2P to Space Mono.</p>
-          <p>
-            Pick the wide-screen size: text-4xl as drafted, or text-5xl to keep
-            today&rsquo;s footprint.
-          </p>
-        </Ruling>
-      </Slide>
-
-      {/* ---------------------------------------------------------- 10 */}
       <Slide id="wit">
         <Prose>
           One element shows a seam, and it is worth your eye before you sign the
@@ -2605,7 +2453,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 11 */}
+      {/* ---------------------------------------------------------- 10 */}
       <Slide id="buttons">
         <Prose>
           The Guidebook&rsquo;s button set mapped onto our dark ground. Its
@@ -2678,6 +2526,26 @@ export default function DesignPassWalkthroughPage() {
           variants and stay exactly as they are.
         </Prose>
 
+        <Prose>
+          <strong className="font-semibold text-foreground">
+            The button&rsquo;s type is not decided here.
+          </strong>{" "}
+          Whether a CTA wears today&rsquo;s 14 px at weight 500 or the
+          Guidebook&rsquo;s 16 px at 600 is a typography question that this slide
+          was carrying as a passenger, and it lives on the typography deck&rsquo;s
+          CTA-type slide instead — drawn on this same proposed set, so a verdict
+          on the type is not a verdict on the palette.{" "}
+          <a
+            href="/admin/design-pass-typography#cta-type"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            Open it there
+          </a>
+          .
+        </Prose>
+
         <Ruling>
           <p>
             The violet fill: does it retire into the new Secondary-on-dark, or
@@ -2688,90 +2556,10 @@ export default function DesignPassWalkthroughPage() {
             borderless ghost; B, a quiet 1 px border that reads as bounded but
             recessive; or C, label only, with no border and no fill ever.
           </p>
-          <p>
-            CTA type: today&rsquo;s 14 px at weight 500, or the
-            Guidebook&rsquo;s 16 px at 600.
-          </p>
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 12 */}
-      <Slide id="faces">
-        <Prose>
-          Three faces are loaded: Poppins does body and every heading, Space
-          Mono is sanctioned and placed nowhere, Press Start 2P is the rare-use
-          display face. The specimens put one string through all three at three
-          sizes, which is the comparison that has until now only been possible
-          from memory.
-        </Prose>
-
-        <div className="space-y-3">
-          <Marker>One string, three faces</Marker>
-          <div className="space-y-4">
-            {FACE_SPECIMENS.map((face) => (
-              <div key={face.name} className="space-y-1">
-                <div className="text-[11px] text-muted-foreground">
-                  {face.name} — {face.role}
-                </div>
-                <p className={cn("break-words", face.className)}>
-                  Where screen time becomes quality time
-                </p>
-              </div>
-            ))}
-          </div>
-          <Prose>
-            One line each, at the size the face is actually used at, so the
-            widths are comparable rather than nominal — Press Start 2P advances a
-            full em per character and Space Mono about 0.6, which is why the same
-            sentence is a different length in each.
-          </Prose>
-          <p className="text-xs">
-            <a
-              href="/admin/ui-components#type-faces-specimens"
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
-            >
-              Open the full specimens in the style guide
-            </a>
-          </p>
-        </div>
-
-        <Prose>
-          And every Press Start 2P site in the product, with the draft decision
-          for each. Six sites; the draft moves one.
-        </Prose>
-
-        <DeckTable head={["Site", "Draft decision", "Why"]}>
-          {PS2P_SITES.map((row) => (
-            <tr key={row.site}>
-              <Cell>{row.site}</Cell>
-              <Cell>{row.decision}</Cell>
-              <Cell muted>{row.why}</Cell>
-            </tr>
-          ))}
-        </DeckTable>
-
-        <Prose>
-          Net effect: five Press Start 2P sites and one Space Mono site. Two
-          rows are worth a second look — the Roblox hero, because its face sits
-          inside an approved partner placement, and the admin all-clear, whose
-          face and trophy are one joke in two parts.
-        </Prose>
-        <Prose>
-          One naming note, since it will show up in the wiring: Space Mono is
-          reached as font-brand-mono rather than font-mono. Tailwind&rsquo;s
-          font-mono is already spent on machine text — ids, tokens, code — and a
-          brand display face answering to that name would get applied by anyone
-          who just wanted a monospace.
-        </Prose>
-
-        <Ruling>
-          <p>Ratify the table, or amend rows.</p>
-        </Ruling>
-      </Slide>
-
-      {/* ---------------------------------------------------------- 13 */}
+      {/* ---------------------------------------------------------- 11 */}
       <Slide id="zones">
         <Prose>
           The Yty-named voice zones are the other surface the palette feeds —
@@ -2817,7 +2605,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 14 */}
+      {/* ---------------------------------------------------------- 12 */}
       <Slide id="reach">
         <Prose>
           The Guidebook rations colour by surface, and its rule restated so this
@@ -2866,7 +2654,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 15 */}
+      {/* ---------------------------------------------------------- 13 */}
       <Slide id="status-colours">
         <Prose>
           The app has four functional status colours — info, success, warning,
@@ -2972,13 +2760,29 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 16 */}
+      {/* ---------------------------------------------------------- 14 */}
       <Slide id="recap">
         <Prose>
-          Twenty-two rulings, in the order they were asked. Any of them can
-          come back as tune this rather than yes. The cover&rsquo;s question is
-          the one they add up to: whether this app can be as bright and lively as
-          the marketing site on a dark ground, inside the Guidebook.
+          Eighteen rulings, colour only, in the order they were asked. Any of
+          them can come back as tune this rather than yes. The cover&rsquo;s
+          question is the one they add up to: whether this app can be as bright
+          and lively as the marketing site on a dark ground, inside the
+          Guidebook.
+        </Prose>
+        <Prose>
+          Four more used to be on this list and are not any more — the gamer
+          greeting&rsquo;s face, its wide-screen size, the Press Start 2P site
+          table and CTA type. They are typography, none of them waits on a colour
+          decision, and they now sit with six others on{" "}
+          <a
+            href="/admin/design-pass-typography#recap"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            the typography deck&rsquo;s own recap
+          </a>
+          , which asks ten.
         </Prose>
 
         <ol className="max-w-prose list-decimal space-y-2 pl-5 text-sm text-foreground">
@@ -3027,38 +2831,27 @@ export default function DesignPassWalkthroughPage() {
           </li>
           <li>
             Slide 8 — the gamer dashboard at the 360 floor: the enrollment cards
-            and the greeting together, as one page.
-          </li>
-          <li>Slide 9 — the greeting swaps from Press Start 2P to Space Mono.</li>
-          <li>
-            Slide 9 — the greeting&rsquo;s wide-screen size: text-4xl as
-            drafted, or text-5xl.
+            as one page.
           </li>
           <li>
-            Slide 10 — wit&rsquo;s strong and soft pair: accept the seam, or
+            Slide 9 — wit&rsquo;s strong and soft pair: accept the seam, or
             escalate a tuned dark wit to the Guidebook&rsquo;s author.
           </li>
           <li>
-            Slide 11 — the violet fill: retire into Secondary-on-dark, or
+            Slide 10 — the violet fill: retire into Secondary-on-dark, or
             survive under another name.
           </li>
           <li>
-            Slide 11 — the third button tier: A ghost as today, B a quiet 1 px
+            Slide 10 — the third button tier: A ghost as today, B a quiet 1 px
             border, or C label only.
           </li>
+          <li>Slide 11 — the voice-zone Yty tiles.</li>
           <li>
-            Slide 11 — CTA type: today&rsquo;s 14 px at 500, or 16 px at 600.
-          </li>
-          <li>
-            Slide 12 — ratify the Press Start 2P table, or amend rows.
-          </li>
-          <li>Slide 13 — the voice-zone Yty tiles.</li>
-          <li>
-            Slide 14 — the calm ring: confirm the Guidebook&rsquo;s amber-only
+            Slide 12 — the calm ring: confirm the Guidebook&rsquo;s amber-only
             treatment of billing, safeguarding and legal, or adjust it.
           </li>
           <li>
-            Slide 15 — the status colours: converge info onto wit and success
+            Slide 13 — the status colours: converge info onto wit and success
             onto glow, keep both sets, or defer to the categorical-labelling
             follow-up.
           </li>
@@ -3071,11 +2864,10 @@ export default function DesignPassWalkthroughPage() {
               The wiring phase lands the tokens app-wide, including the hex
               palette the emails and canvas draw from, so nothing is left
               documenting the old colours. The button variants swap with their
-              call sites fixed. The face decisions are applied to the live
-              surfaces. The palette rules you settle here are written into the
+              call sites fixed. The palette rules you settle here are written into the
               root CLAUDE.md and the deviations log — the colour grammar of
               slide 4 among them, which is what makes it binding on a surface
-              nobody has built yet. If slide 15 says converge, the two status
+              nobody has built yet. If slide 13 says converge, the two status
               tokens move in the same commit as the Yty ones — they are tokens,
               so it is a value change and no call site is touched. The two
               rulings with real call-site cost are the grammar&rsquo;s state
@@ -3084,7 +2876,7 @@ export default function DesignPassWalkthroughPage() {
             </p>
             <p>
               Then the scaffolding goes: the draft scenarios, the draft colour
-              map, and this page.
+              map, and this page — along with the typography deck beside it.
             </p>
           </div>
         </div>
