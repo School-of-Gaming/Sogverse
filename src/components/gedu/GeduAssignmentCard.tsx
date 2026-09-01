@@ -269,7 +269,7 @@ export function GeduAssignmentCard({
         {live && (
           <span aria-hidden className="pointer-events-none absolute inset-0">
             <span className="absolute inset-0 bg-gradient-to-r from-yty-glow-strong to-yty-glow-soft" />
-            <span className="absolute inset-[2px] rounded-md bg-card" />
+            <span className="absolute inset-[2px] rounded-[5px] bg-card" />
           </span>
         )}
 

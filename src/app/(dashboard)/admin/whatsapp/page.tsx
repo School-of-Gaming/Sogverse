@@ -266,7 +266,7 @@ function ChatThread({
 
       {/* Error banner */}
       {sendError && (
-        <div className="mx-4 mb-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="mx-4 mb-2 rounded-md border border-destructive bg-muted p-3 text-sm text-destructive">
           {sendError}
         </div>
       )}

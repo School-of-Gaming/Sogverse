@@ -475,8 +475,8 @@ export function SessionFeedItem({
               className={cn(
                 "text-[10px] uppercase tracking-wide",
                 live
-                  ? "border-info bg-muted text-info"
-                  : "border-info text-info",
+                  ? "border-info bg-muted text-yty-wit-soft"
+                  : "border-info text-yty-wit-soft",
               )}
             >
               {live ? b("live") : prominent ? b("nextSession") : b("upcoming")}

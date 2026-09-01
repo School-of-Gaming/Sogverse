@@ -102,7 +102,7 @@ export function SwitchProfileDialog({
             scale is what makes it visible at a glance; the text explains it. */}
         <Alert variant="info">
           <Info className="h-5 w-5 shrink-0" />
-          <AlertDescription className="text-info">{oneWayWarning}</AlertDescription>
+          <AlertDescription className="text-yty-wit-soft">{oneWayWarning}</AlertDescription>
         </Alert>
 
         {/* The tile is the CTA — clicking it commits the switch. */}

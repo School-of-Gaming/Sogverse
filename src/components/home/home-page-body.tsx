@@ -347,7 +347,6 @@ export function HomePageBody() {
       <HomeHeroSection />
       <HomeFeaturesSection />
       <HomeHowItWorksSection />
-
       <HomeCtaSection />
     </>
   );

@@ -160,7 +160,7 @@ export function ImageActionConfirmDialog({
           )}
 
           {error && (
-            <p className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <p className="mt-4 rounded-md border border-destructive bg-muted p-3 text-sm text-destructive">
               {error}
             </p>
           )}

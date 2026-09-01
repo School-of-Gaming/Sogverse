@@ -680,7 +680,7 @@ function WrongCountryOverlay({
   const t = useTranslations("productDetail.signupPanel");
   return (
     <div className="flex items-start gap-3 rounded-md border border-info bg-muted p-4">
-      <Globe className="mt-0.5 h-5 w-5 shrink-0 text-info" />
+      <Globe className="mt-0.5 h-5 w-5 shrink-0 text-yty-wit-soft" />
       <p className="text-sm text-foreground">
         {t.rich("regionLock.wrongCountry", {
           country: countryDisplayName(requiredCountry, locale),
@@ -731,7 +731,7 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
   return (
     <div className="rounded-md border border-info p-4">
       <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-        <MapPin className="h-4 w-4 shrink-0 text-info" />
+        <MapPin className="h-4 w-4 shrink-0 text-yty-wit-soft" />
         {t("regionLock.heading")}
       </h3>
       {/* Indented to the heading's text, not its glyph: gap-2 (0.5rem) plus a
@@ -808,7 +808,7 @@ function RegionEligibleSection({
   return (
     <div className="rounded-md border border-info p-4">
       <p className="flex items-start gap-2 text-sm text-foreground">
-        <MapPinCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" />
+        <MapPinCheck className="mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft" />
         <span>
           {t("regionLock.eligible", {
             country: countryDisplayName(requiredCountry, locale),

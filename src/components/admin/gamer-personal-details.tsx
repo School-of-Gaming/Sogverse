@@ -340,7 +340,7 @@ function GamerPersonalDetailsForm({
           {failed && (
             <div
               role="alert"
-              className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+              className="rounded-md border border-destructive bg-muted p-3 text-sm text-destructive"
             >
               {t("saveError")}
             </div>

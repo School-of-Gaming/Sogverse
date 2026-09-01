@@ -5,9 +5,12 @@ button set, and display faces on Sogverse's dark ground — **UI first, then wir
 ruling): every change is designed and signed off in fixture-driven preview scenes and the
 UI Components style guide before any live surface changes.
 
-Companion to `docs/plans/brand-guidebook-alignment.md` (copy + mechanical fixes). **This
-plan's branch is cut from `dev` only after that plan merges** — both touch `globals.css`
-and the root `CLAUDE.md`. That plan also loads the fonts this one places.
+The copy-and-mechanical-fixes half of the same alignment ran as a companion plan and
+merged first — both halves touch `globals.css` and the root `CLAUDE.md`, and that half
+loaded the fonts this one places, so this plan's branch was cut from a `dev` that already
+carried it. That plan file was deleted at its completion, as plans are; its outcomes live
+in `docs/brand-guidebook-deviations.md` and the root `CLAUDE.md`, and later references
+below to "the companion plan" mean that landed work.
 
 ## Problem
 
@@ -274,6 +277,42 @@ Files: root `CLAUDE.md`, `src/components/voice/CLAUDE.md`,
   `MEMORY.md` line) deletes once everything it holds is codified — **note: its Gedu
   ™/® placement ruling has no repo home yet, so that one needs a destination before
   the file goes.**
+
+### Post-review corrections (2026-09-02)
+
+The branch review found nine mechanical gaps between the packages above and what
+landed. All are executions of rulings already made — 25 (wit's ink), 27 (tinted
+label chips), 36 (the border and status-banner idiom) — not new design:
+
+- **The info-ink mechanism** (ruling 25). `--info` *is* wit-strong, which fails
+  4.5:1 as body copy on all three grounds, so every body-size `text-info` ink site
+  converted to `text-yty-wit-soft` — 15 sites, including the `Alert` info variant,
+  the status chip, the now-divider, the mention chip and the small glyphs. Edges
+  (`border-info`), fills (`bg-info`) and the style guide's own token swatch stand.
+  The mechanism is now stated in the root `CLAUDE.md` strength-axis rule.
+- **The contrast script gained `--muted` as a third ground.** The tint ban made it
+  the app's universal alert/chip/banner ground and it is the lightest of the three,
+  so it is the binding one. No colour was retuned: the only failures are wit-strong
+  as ink, which is exactly what the mechanism above handles.
+- **The tint guard widened to the rule's own scope.** It matched four families
+  while the rule names six; it now also covers `yty-(harmony|glow|valor|wit)-
+  (strong|soft)` in both the utility and arbitrary-value spellings. `warning` and
+  `destructive` are deliberately out — functional status tokens, not brand
+  families. The widened census found no new violations: the only yty tints are the
+  ruled icon-accent tile grounds, allowlisted with their why.
+- **The error-block idiom unified** (ruling 36). The 15 surviving hand-rolled
+  `bg-destructive/10` blocks took the landed shape (`border border-destructive
+  bg-muted`), and the two tinted warning constructs took theirs — `bg-muted` under
+  the count chip's ink, a full-value edge on the product-form banner.
+- **One axis, one vocabulary.** The gedu feed's future-marker pair spelled its
+  prominent arm `bg-info` and its quiet arm `bg-yty-wit-soft`; both are now wit's
+  own two values, as the family feed's rail already was.
+- **Three smaller ones:** the ignition ring's cover radius went concentric
+  (`rounded-[5px]` inside a 7px clip at a 2px inset) on both cards; the
+  `VoiceAvatar` JSDoc now describes the neutral ring it actually draws (the ring's
+  visibility is escalated separately); and the root `CLAUDE.md` hardcoded-colours
+  rule gained the artwork carve-out the shading rule's art exemption already
+  implied, so the two rules no longer contradict.
 
 **Sequencing:** P1 first (tokens feed everything). P2/P3/P6 are file-disjoint and
 parallel. P4 and P5 overlap files with each other and with P7 — run P4+P5 together

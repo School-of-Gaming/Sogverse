@@ -141,7 +141,7 @@ export function FamilyProfileSelector({
 
   if (error) {
     return (
-      <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+      <div className="rounded-md border border-destructive bg-muted p-3 text-sm text-destructive">
         {error.message || t("loadFailed")}
       </div>
     );
@@ -203,7 +203,7 @@ export function FamilyProfileSelector({
   return (
     <div className="space-y-4">
       {switchError && (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-md border border-destructive bg-muted p-3 text-sm text-destructive">
           {switchError}
         </div>
       )}

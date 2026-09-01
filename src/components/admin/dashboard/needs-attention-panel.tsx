@@ -45,7 +45,7 @@ export function NeedsAttentionPanel({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-xl">{t("title")}</CardTitle>
-        <span className="rounded-full bg-warning/15 px-3 py-1 text-sm font-semibold text-warning">
+        <span className="rounded-full bg-muted px-3 py-1 text-sm font-semibold text-warning">
           {products.length}
         </span>
       </CardHeader>

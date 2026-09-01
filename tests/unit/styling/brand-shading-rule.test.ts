@@ -35,19 +35,41 @@ const CODE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 const STYLE_EXTENSIONS = [".css"];
 
 /**
+ * The families the rule governs, as a regex fragment: the six brand families —
+ * amber, violet, and the four Yty elements in both their authored variants —
+ * plus the two status tokens that converged onto a family's hue and therefore
+ * draw a brand colour under another name.
+ *
+ * **`warning` and `destructive` are deliberately absent.** They are functional
+ * status tokens rather than brand families, and the rule this guard enforces is
+ * about brand colours — a colour whose whole job is to be recognised as ours,
+ * which is what makes a mixed-down version of it a different colour rather than
+ * a quieter one. Adding them here would be widening the rule, not the guard.
+ */
+const BRAND_FAMILIES =
+  "primary|secondary|info|success|yty-(?:harmony|glow|valor|wit)-(?:strong|soft)";
+
+/**
  * The census pattern, pinned: any brand family painted at an alpha step, in
  * any state prefix, on any property that carries colour.
  */
-const UTILITY_TINT =
-  /(?:hover:|focus:|focus-visible:|focus-within:|group-hover:|active:)?(?:text|bg|border|from|to|via|ring)-(?:primary|secondary|info|success)\/\d+/g;
+const UTILITY_TINT = new RegExp(
+  `(?:hover:|focus:|focus-visible:|focus-within:|group-hover:|active:)?(?:text|bg|border|from|to|via|ring)-(?:${BRAND_FAMILIES})\\/\\d+`,
+  "g",
+);
 
 /**
  * The same violation spelled as an arbitrary value — `hsl(var(--primary)/0.2)`
  * inside a `bg-[…]`. The utility pattern cannot see it (the token name is
  * followed by a paren, not a slash), and a tint written this way would
- * otherwise be invisible to the guard while rendering identically.
+ * otherwise be invisible to the guard while rendering identically. The Yty
+ * tokens are spelled `--color-yty-…` in the stylesheet, so both prefixes are
+ * matched.
  */
-const ARBITRARY_TINT = /var\(--(?:primary|secondary|info|success)\)\s*\/\s*[\d.]+/g;
+const ARBITRARY_TINT = new RegExp(
+  `var\\(--(?:color-)?(?:${BRAND_FAMILIES})\\)\\s*\\/\\s*[\\d.]+`,
+  "g",
+);
 
 /**
  * The closed exemption list — file plus exact class, never line number, because
@@ -79,6 +101,26 @@ const EXEMPT: readonly { file: string; classes: readonly string[]; why: string }
     file: "src/components/roblox/roblox-hero.tsx",
     classes: ["var(--primary)/0.2", "var(--secondary)/0.1"],
     why: "The hero band again, byte-identical to home's — /roblox is the other first-contact page and wears the same sanctioned identity band.",
+  },
+  {
+    file: "src/lib/constants/yty.ts",
+    classes: [
+      "bg-yty-harmony-strong/10",
+      "bg-yty-glow-strong/10",
+      "bg-yty-valor-strong/10",
+      "bg-yty-wit-strong/10",
+    ],
+    why: "The Yty accent tile, ruled in full: a tint ground under a full-value family edge and a soft glyph. It is the chip-scale icon-accent exemption in its canonical form — the tint lights one glyph, and the card carrying the tile stays neutral.",
+  },
+  {
+    file: "src/components/home/home-page-body.tsx",
+    classes: [
+      "bg-yty-harmony-strong/10",
+      "bg-yty-glow-strong/10",
+      "bg-yty-valor-strong/10",
+      "bg-yty-wit-strong/10",
+    ],
+    why: "The home feature accents draw the same ruled tile recipe as the Yty map — icon-sized tint, full-value family edge, soft glyph — on a neutral card. Same exemption, a second consumer of the one recipe.",
   },
 ];
 

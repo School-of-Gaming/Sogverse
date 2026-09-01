@@ -535,7 +535,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
         {live && (
           <span aria-hidden className="pointer-events-none absolute inset-0">
             <span className={cn("absolute inset-0", TONES.liveRing)} />
-            <span className="absolute inset-[2px] rounded-md bg-card" />
+            <span className="absolute inset-[2px] rounded-[5px] bg-card" />
           </span>
         )}
 

@@ -212,13 +212,13 @@ export function ProductFormShell({
       <VisibilitySection state={state} setState={setState} />
 
       {error && (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-md border border-destructive bg-muted p-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
       {warning && (
-        <div className="rounded-md bg-warning/10 p-3 text-sm text-warning">
+        <div className="rounded-md border border-warning bg-muted p-3 text-sm text-warning">
           <p className="flex items-start gap-2">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <span>{warning.message}</span>

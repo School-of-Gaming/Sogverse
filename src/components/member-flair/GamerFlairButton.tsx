@@ -82,7 +82,7 @@ export function GamerFlairButton({
           owesCreation
             ? "text-warning"
             : hasContent
-              ? "text-info"
+              ? "text-yty-wit-soft"
               : "text-muted-foreground opacity-50"
         }
       />

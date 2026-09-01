@@ -8,19 +8,22 @@
  *
  * Run: `node scripts/yty-contrast.mjs`
  *
- * **Every number here is read out of `globals.css`** — the two grounds, the app
- * foreground, and all eight Yty hexes. Nothing is restated in this file, so a
- * token tuned in the stylesheet cannot keep reporting a verified value it no
+ * **Every number here is read out of `globals.css`** — the three grounds, the
+ * app foreground, and all eight Yty hexes. Nothing is restated in this file, so
+ * a token tuned in the stylesheet cannot keep reporting a verified value it no
  * longer carries.
  *
- * **Two grounds, because the palette does not sit on one.** The app background
- * is `--background`; but the shipped Yty pairings sit inside Cards, whose ground
- * is `--card` — the About page's element descriptions sit directly on the card,
- * and the icons sit on a 10% strong tint over it. The card is the lighter
- * of the two, so it is the stricter ground for every hue in this palette, and
- * measuring only against the page would report a pass the product never gets.
- * Both are printed for every pairing; the summary at the end passes a variant
- * only when it clears its threshold on both.
+ * **Three grounds, because the palette does not sit on one.** The app
+ * background is `--background`; the shipped Yty pairings sit inside Cards,
+ * whose ground is `--card` — the About page's element descriptions sit directly
+ * on the card, and the icons sit on a 10% strong tint over it; and `--muted` is
+ * the app's universal alert, banner and label-chip ground, which is where a
+ * family-coloured *label* is most often read since the tint ban left every
+ * status construct on it. Muted is the lightest of the three and therefore the
+ * binding one for every hue in this palette — measuring only against the page,
+ * or only against the card, would report a pass the product never gets. All
+ * three are printed for every pairing; the summary at the end passes a variant
+ * only when it clears its threshold on all of them.
  *
  * The five pairings are the five ways a Yty colour meets text or a ground in
  * this product:
@@ -146,8 +149,9 @@ const css = readFileSync(GLOBALS_CSS, "utf8");
 const FOREGROUND = readHslToken(css, "foreground");
 
 /**
- * The two grounds a Yty colour is drawn on. Order matters only for the printed
- * output; the summary treats them as a set and requires a pass on both.
+ * The three grounds a Yty colour is drawn on, darkest first. Order matters only
+ * for the printed output; the summary treats them as a set and requires a pass
+ * on every one.
  */
 const GROUNDS = [
   {
@@ -163,6 +167,13 @@ const GROUNDS = [
     rgb: readHslToken(css, "card"),
     token: "--card",
     note: "where every shipped Yty pairing actually sits",
+  },
+  {
+    key: "muted",
+    label: "muted",
+    rgb: readHslToken(css, "muted"),
+    token: "--muted",
+    note: "the alert, banner and label-chip ground — the lightest, so the binding one",
   },
 ];
 
@@ -339,8 +350,8 @@ printSoftOnStrongTable(brandPairs);
 console.log("\nPer-element summary — which variant is text-safe on dark");
 console.log("=======================================================");
 console.log(
-  "A variant is listed only when it clears the threshold on BOTH grounds; the\n" +
-    "card is the lighter one and therefore the binding one for every hue here.",
+  "A variant is listed only when it clears the threshold on EVERY ground; muted\n" +
+    "is the lightest of the three and therefore the binding one for every hue here.",
 );
 
 const escalations = [];
@@ -397,6 +408,6 @@ if (escalations.length > 0) {
   console.log("!".repeat(72));
 } else {
   console.log(
-    "\nNo escalation: every element has at least one variant clearing 3:1 as an\naccent on both grounds.",
+    "\nNo escalation: every element has at least one variant clearing 3:1 as an\naccent on every ground.",
   );
 }

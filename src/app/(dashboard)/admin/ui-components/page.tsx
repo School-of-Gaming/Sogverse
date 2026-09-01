@@ -1932,7 +1932,7 @@ function ProductTypePaletteDemo() {
               All clear
             </span>
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Info className="h-3.5 w-3.5 shrink-0 text-info" aria-hidden />
+              <Info className="h-3.5 w-3.5 shrink-0 text-yty-wit-soft" aria-hidden />
               Information
             </span>
           </div>
@@ -2691,6 +2691,10 @@ export default function AdminUIComponentsPage() {
               Destructive
             </span>
             <span className="text-sm font-medium text-success">Success</span>
+            {/* The token's own value, which is what a swatch row is for — not a
+                class to copy for ink. `--info` is wit-strong, and wit's text
+                always takes soft, so an info-toned *label* spells
+                `text-yty-wit-soft`. */}
             <span className="text-sm font-medium text-info">Info</span>
             <span className="text-sm font-medium text-warning">Warning</span>
           </div>

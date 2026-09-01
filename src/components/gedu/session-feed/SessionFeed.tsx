@@ -830,10 +830,12 @@ function markerTone(
 ): string {
   switch (entry.kind) {
     case "future":
-      // Strong → soft, never full → dimmed: `--info` is wit-strong, and a dot
-      // at 40% alpha is that hue mixed toward the page rather than a quieter
-      // version of it. The family feed's rail steps the same pair.
-      return prominent ? "bg-info" : "bg-yty-wit-soft";
+      // Strong → soft, never full → dimmed: a dot at 40% alpha is that hue
+      // mixed toward the page rather than a quieter version of it. Both ends
+      // are spelled in wit's own two values — `--info` resolves to the same
+      // hue, but one axis reads as one axis only when it is written in one
+      // vocabulary. The family feed's rail steps the identical pair.
+      return prominent ? "bg-yty-wit-strong" : "bg-yty-wit-soft";
     case "past":
       switch (completeness) {
         case "needs_attention":

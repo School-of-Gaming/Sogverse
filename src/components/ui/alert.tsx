@@ -16,7 +16,7 @@ const alertVariants = cva(
         default: "border-border bg-muted/50 text-foreground",
         destructive: "border-destructive bg-muted text-destructive",
         success: "border-success bg-muted text-success",
-        info: "border-info bg-muted text-info",
+        info: "border-info bg-muted text-yty-wit-soft",
         warning: "border-warning bg-muted text-warning",
       },
       align: {

@@ -24,7 +24,7 @@ export type ChipSize = "sm" | "md";
 const TONE_OUTLINE: Record<ChipTone, string> = {
   primary: "border-primary text-primary",
   warning: "border-warning text-warning",
-  info: "border-info text-info",
+  info: "border-info text-yty-wit-soft",
   muted: "border-border text-muted-foreground",
 };
 

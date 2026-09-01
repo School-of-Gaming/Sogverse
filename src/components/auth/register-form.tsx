@@ -218,7 +218,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
             </div>
           </Alert>
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-md border border-destructive bg-muted p-3 text-sm text-destructive">
               {error}
             </div>
           )}

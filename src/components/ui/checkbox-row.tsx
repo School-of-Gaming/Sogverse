@@ -233,7 +233,7 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
                 // Quiet info: coloured text, no fill and no border. The row is
                 // already bordered, so a second edge here would read as a box
                 // inside a box rather than as a note.
-                hintTone === "info" ? "text-info" : "text-muted-foreground",
+                hintTone === "info" ? "text-yty-wit-soft" : "text-muted-foreground",
               )}
             >
               {hint}

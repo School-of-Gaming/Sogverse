@@ -163,7 +163,7 @@ export function WaitlistCard({
           // Info tone, not muted: this line explains why the Invite control the
           // admin may be looking for is absent, and the fix it names is on this
           // very page — the owner wants that legible as guidance, not footnote.
-          <p className="mt-3 flex items-start gap-1.5 text-xs text-info">
+          <p className="mt-3 flex items-start gap-1.5 text-xs text-yty-wit-soft">
             <MailQuestion className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
             <span>
               {t("waitlist.seatOffer.needsOneGroup", {
@@ -231,7 +231,7 @@ function SeatOfferControl({
         // remaining time is what an admin scanning a queue actually reads, and
         // the exact instant is one hover away when they need it.
         title={t("liveTitle", { deadline: deadlineLabel ?? "" })}
-        className="ml-auto flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-medium text-info"
+        className="ml-auto flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-medium text-yty-wit-soft"
       >
         <CalendarClock className="h-3.5 w-3.5 shrink-0" aria-hidden />
         {left.unit === "lastHour"

@@ -136,10 +136,15 @@ const infoBlocks = (c: HTMLElement) => [
  * Position, not presence. An anchor marks the block, so it is a direct child of
  * the block itself (the refusal, whose glyph and sentence are siblings) or of
  * the block's first row (the question's heading, the confirmation's statement
- * line). A `text-info` icon anywhere deeper is something else — and that
+ * line). An info-coloured icon anywhere deeper is something else — and that
  * distinction is the whole point of this helper: a plain subtree count passed on
  * the question while the question had no anchor at all, because it was counting
  * the set-location button's pin.
+ *
+ * The ink is `text-yty-wit-soft` rather than `text-info`, and that asymmetry
+ * with the block's `border-info` edge is the mechanism, not a slip: `--info` is
+ * wit-strong, which carries an edge but misses 4.5:1 as ink, so wit's text and
+ * glyphs always take soft.
  */
 const anchorGlyphs = (block: HTMLElement) => {
   const rows: Element[] = [block];
@@ -148,7 +153,7 @@ const anchorGlyphs = (block: HTMLElement) => {
     [...row.children].filter(
       (el) =>
         el.tagName === "svg" &&
-        (el.getAttribute("class") ?? "").includes("text-info"),
+        (el.getAttribute("class") ?? "").includes("text-yty-wit-soft"),
     ),
   );
 };
@@ -453,8 +458,9 @@ describe("the info family", () => {
       },
       says: "regionLock.note",
       // The quiet tier: a section inside a working form carries the family's
-      // hue on its border alone (the EnrollmentCard "awaiting" opacity), so
-      // the form stays the loudest thing on its own panel.
+      // hue on its border alone — the same shape as the enrollment card's
+      // "awaiting" edge, a full-value family border over no ground — so the
+      // form stays the loudest thing on its own panel.
       filled: false,
     },
     {

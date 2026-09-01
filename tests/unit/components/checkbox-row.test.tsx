@@ -120,9 +120,11 @@ describe("CheckboxRow", () => {
     // Info: the quiet tier of the app's info family — coloured text, no fill
     // and no border, because the row already has an edge of its own. The size
     // does not move with the tone; a marker that changed scale would read as a
-    // different kind of thing rather than the same note said in colour.
+    // different kind of thing rather than the same note said in colour. The
+    // ink is wit's soft variant: `--info` is wit-strong, which misses 4.5:1 as
+    // body copy, so the family's text and glyphs always take soft.
     const hint = screen.getByText(optionality);
-    expect(hint.className).toContain("text-info");
+    expect(hint.className).toContain("text-yty-wit-soft");
     expect(hint.className).not.toContain("text-muted-foreground");
     expect(hint.className).toContain("text-xs");
   });

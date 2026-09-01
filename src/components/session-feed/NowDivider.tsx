@@ -81,7 +81,7 @@ export function NowDivider({
         // filled ground, because the edge is most of a pill's area and does the
         // work. Hover is the app's neutral lift; colour spent only behind a
         // cursor never reaches a family on a phone.
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-info px-3 py-1 text-xs font-semibold uppercase tracking-wider text-info transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-info px-3 py-1 text-xs font-semibold uppercase tracking-wider text-yty-wit-soft transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <ChevronUp
           aria-hidden

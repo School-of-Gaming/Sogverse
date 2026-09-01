@@ -391,10 +391,14 @@ function flairButton(firstName: string): HTMLElement {
 /**
  * Whether that button is **lit** — the whole of the "something is recorded about
  * this member" marker. The button itself is on every row, because opening an
- * empty dialog is the add flow; what carries the mark is the icon's own colour.
+ * empty dialog is the add flow; what carries the mark is the icon's own colour —
+ * the info family's, spelled `text-yty-wit-soft` because `--info` is wit-strong
+ * and wit's text and glyphs always take soft.
  */
 function isLit(button: HTMLElement): boolean {
-  return button.querySelector("svg")?.classList.contains("text-info") === true;
+  return (
+    button.querySelector("svg")?.classList.contains("text-yty-wit-soft") === true
+  );
 }
 
 /**

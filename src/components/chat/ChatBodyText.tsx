@@ -47,7 +47,7 @@ export function ChatBodyText({
             // colour.
             // The chip's ground is neutral and the colour is all in the ink:
             // a brand hue darkened into a ground is no longer that hue.
-            className="rounded bg-muted px-1 font-medium text-info"
+            className="rounded bg-muted px-1 font-medium text-yty-wit-soft"
           >
             {`@${accounts.get(segment.id)?.name ?? segment.name}`}
           </span>

@@ -183,7 +183,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
             </div>
           </Alert>
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+            <div className="rounded-md border border-destructive bg-muted p-3 text-sm text-destructive">{error}</div>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={c("firstName")} htmlFor="firstName">

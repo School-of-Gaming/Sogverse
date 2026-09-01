@@ -17,7 +17,7 @@ interface VoiceAvatarProps {
   /** When true, `children` (the participant's `<video>`) renders in place of the
    *  identicon. */
   videoOn?: boolean;
-  /** Marks the local participant with a subtle primary ring. */
+  /** Marks the local participant with a 1px neutral ring. */
   isLocal?: boolean;
   /** Inline glow style. The live room drives the speaking glow imperatively
    *  through the forwarded ref; the style-guide demo passes a computed style. */
