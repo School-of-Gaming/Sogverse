@@ -2400,6 +2400,13 @@ export type Database = {
           is_strict: boolean
         }[]
       }
+      _list_replicated_tables: {
+        Args: never
+        Returns: {
+          replica_identity: string
+          table_name: string
+        }[]
+      }
       _list_security_definer_without_search_path: {
         Args: never
         Returns: {
