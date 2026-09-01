@@ -175,8 +175,11 @@ function Caption({ children }: { children: React.ReactNode }) {
 
 /** The ask, one line per ruling, recommendation folded in rather than argued. */
 function Ruling({ children }: { children: React.ReactNode }) {
+  // No wash: bg-primary/5 was this card's ground until the shading ruling
+  // bound tint grounds at card scale — the deck compiles with its own rule.
+  // The /40 edge stays pending the still-open edge scope call.
   return (
-    <div className="space-y-1.5 rounded-lg border border-primary/40 bg-primary/5 px-4 py-3">
+    <div className="space-y-1.5 rounded-lg border border-primary/40 bg-card px-4 py-3">
       <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
         Ruling
       </div>
@@ -816,18 +819,33 @@ const AMBER_JOBS: readonly {
  * a tint, an edge or a hover, and each of those is a separate question the
  * owner rules rather than one this deck answers.
  *
- * The three open classes and why each is genuinely arguable:
+ * **Scope ruling one (owner, 2026-09-01, on seeing the checkbox row's checked
+ * state): tint grounds at card/row/surface scale are bound.** "As the
+ * background of a card it's wrong… bg-primary/5 itself is an ugly yellowish
+ * brown highlight." Selection grounds, washed row/banner grounds and gradient
+ * washes are therefore violations to correct at wiring — with two carve-outs
+ * already ruled elsewhere: the chip-scale icon-accent tile
+ * (`border-yty-<family>-strong/30 bg-yty-<family>-strong/10` under a
+ * full-value glyph) stays, and so do the home hero band and closing-CTA wash,
+ * the two sanctioned keeps.
  *
+ * The classes still open and why each is genuinely arguable:
+ *
+ *   - **Tinted label chips** are neither an icon accent nor a card — a
+ *     text-bearing chip ground sits between the exempt construct and the bound
+ *     one.
  *   - **Hover darkening** is transient feedback the reader never holds still
  *     long enough to compare against the brand value, and it is one line in the
  *     button recipe rather than a decision anybody makes per surface.
- *   - **Tint grounds under full-value ink** are the approved home-tile
- *     precedent exactly: `border-yty-<family>-strong/30 bg-yty-<family>-strong/10`
- *     with the glyph at full value. Nothing on that tile is a shaded brand
- *     colour being read *as* the colour; the wash is a ground.
  *   - **Low-alpha edges** are the strength axis's own third tier. Ruling
  *     against them retires the edge-and-wash selection tier the slide before
  *     this one proposes.
+ *
+ * The wiring intersection this slide's census cannot show: `--info` and
+ * `--success` carry 50 alpha uses of their own today, and the status
+ * convergence turns every one of them into a shaded *brand* colour — so the
+ * convergence change resolves them under this rule rather than merely
+ * swapping hex values.
  *
  * Class strings are literal because Tailwind scans source text.
  */
@@ -842,8 +860,14 @@ const SHADING_ROWS: readonly {
   shipped: string;
   /** The same construct with nothing mixed into the brand value. */
   corrected: string;
-  /** Whether the rule reaches it on its own, or waits on the scope call. */
-  scope: "Bound" | "Open — hover" | "Open — tint ground" | "Open — edges";
+  /** Whether the rule reaches it (ruled or on its own), or waits on a scope call. */
+  scope:
+    | "Bound"
+    | "Bound — accents exempt"
+    | "Bound — sanctioned keeps stay"
+    | "Open — hover"
+    | "Open — chips"
+    | "Open — edges";
 }[] = [
   {
     name: "Dimmed brand ink",
@@ -867,7 +891,7 @@ const SHADING_ROWS: readonly {
     shape: "chip",
     shipped: "bg-primary/20 text-primary",
     corrected: "bg-muted text-primary",
-    scope: "Open — tint ground",
+    scope: "Open — chips",
   },
   {
     name: "Washed grounds under full-value ink",
@@ -875,7 +899,7 @@ const SHADING_ROWS: readonly {
     shape: "tile",
     shipped: "bg-primary/10",
     corrected: "bg-muted",
-    scope: "Open — tint ground",
+    scope: "Bound — accents exempt",
   },
   {
     name: "Selection grounds",
@@ -883,7 +907,7 @@ const SHADING_ROWS: readonly {
     shape: "row",
     shipped: "border-primary bg-primary/5",
     corrected: "border-primary bg-transparent",
-    scope: "Open — tint ground",
+    scope: "Bound",
   },
   {
     name: "Gradient washes",
@@ -891,7 +915,7 @@ const SHADING_ROWS: readonly {
     shape: "row",
     shipped: "border-primary bg-gradient-to-r from-primary/5 to-transparent",
     corrected: "border-primary bg-transparent",
-    scope: "Open — tint ground",
+    scope: "Bound — sanctioned keeps stay",
   },
   {
     name: "Low-alpha edges and rings",
@@ -2383,7 +2407,7 @@ export default function DesignPassWalkthroughPage() {
                   <span
                     className={cn(
                       "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                      row.scope === "Bound"
+                      row.scope.startsWith("Bound")
                         ? "bg-foreground text-background"
                         : "border border-border text-muted-foreground",
                     )}
@@ -2402,16 +2426,17 @@ export default function DesignPassWalkthroughPage() {
 
         <Ruling>
           <p>
-            Codify the rule — a brand colour darkened or shaded past strong or
-            soft is no longer a brand colour. (recommended: adopt)
+            Ruled: the rule is codified, and tint grounds at card/row scale are
+            bound — the icon-accent tile and the two sanctioned home keeps stay
+            exempt.
           </p>
           <p>
-            Then its scope, which is three separate calls: does it bind hover
-            darkening, tint grounds under full-value ink, and low-alpha edges?
+            Still open, three separate calls: tinted label chips (neither an
+            accent nor a card), low-alpha edges, and hover darkening/lifts.
           </p>
           <p>
-            Ruling against tint grounds retires the approved home tile; ruling
-            against edges retires the strength axis&rsquo;s own third tier.
+            Ruling against edges retires the strength axis&rsquo;s own third
+            tier.
           </p>
         </Ruling>
       </Slide>

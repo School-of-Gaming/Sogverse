@@ -332,6 +332,23 @@ Owner direction (2026-08-31), added during implementation:
       hover-state darkening (`hover:bg-primary/90`), tint grounds under full-value
       ink (`bg-primary/20 text-primary` chips — the approved icon-tile precedent
       sits on this line), and low-alpha edges (the strength axis's third tier).
+      **Scope ruling one, same day (owner, on seeing the checkbox row's checked
+      state): tint grounds at card/row/surface scale are BOUND.** "When using it
+      as the background tint to provide an accent to an icon it's fine, but as
+      the background of a card it's wrong. Not only that but bg-primary/5 itself
+      is an ugly yellowish brown highlight." So: selection grounds (22), washed
+      row/banner grounds, and gradient washes are violations to correct at
+      wiring (the two sanctioned home keeps — hero band, closing-CTA wash —
+      stay, as already ruled); the chip-scale icon-accent tile stays exempt,
+      consistent with the home tile ruling. Still open: tinted label chips
+      (neither an icon accent nor a card), low-alpha edges, hover
+      darkening/lifts. **Full-palette census** (2026-09-01, same regeneration
+      command per family): primary 70, secondary 9 (mostly the sanctioned home
+      gradients' tails plus `hover:bg-secondary/80`), yty families 52 (20 of
+      which are the approved icon-accent recipe), and — the wiring intersection
+      — **info+success carry 50 alpha uses that become shaded brand colour the
+      moment those tokens converge onto wit/glow**, so the convergence change
+      must resolve them under this rule, not merely swap hex values.
     - **`--warning` vs `--primary` is to be *settled in this pass*** — the owner has
       "never liked how close" they are and did not accept mere glyph-discipline as
       the answer ("I don't know how to get around this... this design pass is the
