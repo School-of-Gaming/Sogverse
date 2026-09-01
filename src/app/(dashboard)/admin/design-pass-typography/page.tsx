@@ -7,7 +7,10 @@ import sogLogoSimple from "@/assets/brand/sog-logo-simple.svg";
 import { SogWordmark } from "@/components/brand/sog-wordmark";
 import { NeedsAttentionPanel } from "@/components/admin/dashboard/needs-attention-panel";
 import { ROLE_BADGE_STYLES } from "@/lib/constants/roles";
-import { YTY_PRESENTATIONS } from "@/lib/constants/voice-zones";
+import {
+  LOBBY_PRESENTATION,
+  YTY_PRESENTATIONS,
+} from "@/lib/constants/voice-zones";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +47,15 @@ import { cn } from "@/lib/utils";
  * the Guidebook is explicit that Poppins is what carries parent trust and that
  * the mono belongs inside the world — and an in-platform surface a child meets is
  * where the world-voice argument is live.
+ *
+ * **The repo-wide typography sweep is folded in, and only where it asks a
+ * question.** Three of its findings are slides, because each is a decision about
+ * voice: the world-voice census (which live strings are Sogverse-the-place
+ * speaking), the heading-weight count, and Crimson Pro's one real case. Two are
+ * deliberately *not* here — the machine-text gaps and the stray italics — because
+ * the sweep settled them as plain consistency defects with no voice question in
+ * them; they go to the wiring phase, and putting them on a review deck would
+ * spend the owner's attention on decisions that have already made themselves.
  *
  * **Every specimen is the real string in the real classes.** Each site slide
  * draws the heading that site actually renders — the English message, decomposed
@@ -89,6 +101,8 @@ const SLIDES = [
   { id: "tracking", title: "Tracking on the pixel face" },
   { id: "greeting-size", title: "The greeting at 360" },
   { id: "cta-type", title: "CTA type" },
+  { id: "heading-weight", title: "Heading weight" },
+  { id: "world-voice", title: "Where the world actually speaks" },
   { id: "mono-reach", title: "Space Mono’s reach" },
   { id: "recap", title: "Recap" },
 ] as const;
@@ -445,6 +459,42 @@ function SignatureExhibit() {
   );
 }
 
+/**
+ * The case Crimson Pro is waiting for, and the sweep found exactly one of it:
+ * /about's pull quote, the product's only `<blockquote>` and its only
+ * Princi-Pal string — two of the three jobs the Guidebook gives the serif, on
+ * one surface that already exists. It is set in italic Poppins today, which is
+ * the app reaching for a serif's job with the tools it has.
+ *
+ * The Crimson row is upright rather than italic (the Guidebook reserves italics
+ * for titles) and a step larger, because a serif at the same nominal size reads
+ * smaller than the sans beside it.
+ */
+const QUOTE_TEXT = "“What is true now, was once just your imagination.”";
+const QUOTE_ATTRIBUTION = "— The Princi-Pal";
+
+function QuoteExhibit({
+  label,
+  className,
+}: {
+  label: string;
+  className: string;
+}) {
+  return (
+    <div className="min-w-0 flex-1 space-y-1">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="rounded-lg border bg-background p-4 text-center">
+        <blockquote className={cn("text-muted-foreground", className)}>
+          {QUOTE_TEXT}
+        </blockquote>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {QUOTE_ATTRIBUTION}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 const FACE_SIZES: readonly { label: string; className: string }[] = [
   { label: "30px / 700", className: "text-3xl font-bold" },
   { label: "18px / 600", className: "text-lg font-semibold" },
@@ -614,16 +664,107 @@ const CTA_ROWS: readonly { name: string; className: string }[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Slide 11 — Space Mono's reach                                      */
+/*  Slide 11 — heading weight                                          */
 /* ------------------------------------------------------------------ */
 
 /**
- * The candidates the plan named for Space Mono beyond the greeting, drawn in the
- * shape each one actually has rather than argued in a table. Nothing here is
- * drafted — no scenario renders any of it — so each is the *live* element with
- * its label reset in the mono face beside it.
+ * One real heading — /about's values section — at the two weights, everything
+ * else held equal. The Guidebook's scale is SemiBold 600 at every heading level;
+ * the app reaches for `font-bold` (700) by habit, and the sweep counted 71 of
+ * 111 headings doing it. The two places that already draw 600 are the ones with
+ * a written spec behind them: the OG image renderer and the markdown renderer.
  *
- * A fourth candidate, Yty-Points and Yty-Level figures, is a note rather than an
+ * Drawn at 36px, the size /about's own `h2` takes above `sm`, written out
+ * literally per the breakpoint caveat in the module comment.
+ */
+const HEADING_WEIGHT_SETTINGS = [
+  {
+    label: "Today — Poppins Bold 700",
+    className: "font-sans text-4xl font-bold tracking-tight",
+  },
+  {
+    label: "Poppins SemiBold 600 — the Guidebook’s scale",
+    className: "font-sans text-4xl font-semibold tracking-tight",
+  },
+] as const;
+
+const HEADING_SAMPLE = ["Things we care about"] as const;
+
+/* ------------------------------------------------------------------ */
+/*  Slide 12 — where the world speaks                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The world-voice census, from the repo-wide sweep: every live string whose
+ * subject is Sogverse-the-place rather than the company. It is five lines long —
+ * the zone list's Clubhouse plus the four Yty zones, and the question
+ * /select-profile asks — with the gamer greeting (its own slide) and the admin
+ * all-clear making up the rest.
+ *
+ * The lore on the public pages is deliberately *not* on this list. It is set on
+ * marketing surfaces a stranger meets, and the Guidebook fences the mono out of
+ * exactly that copy, so it stays Poppins whatever is ruled here.
+ *
+ * The zone rows are drawn at the shape `ZoneList` gives them — tinted glyph tile,
+ * then the label in `text-sm font-medium` — with the lobby row first, because the
+ * lobby is the row a child lands in.
+ */
+const WORLD_ZONES: readonly {
+  presentation: (typeof YTY_PRESENTATIONS)[number];
+  label: string;
+}[] = [
+  { presentation: LOBBY_PRESENTATION, label: "Clubhouse" },
+  ...YTY_PRESENTATIONS.map((presentation, index) => ({
+    presentation,
+    label: YTY_ELEMENTS[index].name,
+  })),
+];
+
+const SELECT_PROFILE_TITLE = "Who is entering Sogverse?";
+
+/** A zone row at the shape `ZoneList` draws it: tinted glyph tile, then label. */
+function ZoneRow({ faceClass }: { faceClass: string }) {
+  return (
+    <div className="w-64 space-y-2 rounded-lg border p-3">
+      {WORLD_ZONES.map(({ presentation, label }) => {
+        const Icon = presentation.icon;
+        return (
+          <div key={presentation.id} className="flex items-center gap-2">
+            <span
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-lg",
+                presentation.color.tile,
+              )}
+            >
+              <Icon
+                className={cn("h-5 w-5", presentation.color.glyph)}
+                aria-hidden
+              />
+            </span>
+            <span
+              className={cn("flex-1 truncate text-sm font-medium", faceClass)}
+            >
+              {label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Slide 13 — Space Mono's reach                                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * What is left once the census above is answered: candidates the plan named for
+ * Space Mono that are *not* the world speaking, drawn in the shape each one
+ * actually has rather than argued in a table. Nothing here is drafted — no
+ * scenario renders any of it — so each is the live element with its label reset
+ * in the mono face beside it.
+ *
+ * A third candidate, Yty-Points and Yty-Level figures, is a note rather than an
  * exhibit: no surface draws them, so there is no honest thing to render, and that
  * absence is itself the argument for parking it.
  */
@@ -636,35 +777,13 @@ const ROLE_BADGES: readonly { label: string; className: string }[] = [
 
 const SECTION_HEADINGS = ["Clubs", "Camps", "Events", "Help"] as const;
 
-/** A zone row at the shape `ZoneList` draws it: tinted glyph tile, then label. */
-function ZoneRow({ faceClass }: { faceClass: string }) {
-  return (
-    <div className="w-64 space-y-2 rounded-lg border p-3">
-      {YTY_PRESENTATIONS.map((zone, index) => {
-        const Icon = zone.icon;
-        return (
-          <div key={zone.id} className="flex items-center gap-2">
-            <span
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-lg",
-                zone.color.tile,
-              )}
-            >
-              <Icon className={cn("h-5 w-5", zone.color.glyph)} aria-hidden />
-            </span>
-            <span
-              className={cn("flex-1 truncate text-sm font-medium", faceClass)}
-            >
-              {YTY_ELEMENTS[index].name}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/** A candidate exhibit: the live shape, then the same shape in Space Mono. */
+/**
+ * A candidate exhibit: the live shape, then the same shape in Space Mono.
+ *
+ * `note` is optional because the census slide's exhibits are self-labelling —
+ * one caption covers all of them — while the reach slide's each carry the
+ * tension that makes them a question rather than an answer.
+ */
 function Candidate({
   title,
   note,
@@ -672,7 +791,7 @@ function Candidate({
   mono,
 }: {
   title: string;
-  note: string;
+  note?: string;
   today: React.ReactNode;
   mono: React.ReactNode;
 }) {
@@ -689,7 +808,9 @@ function Candidate({
           {mono}
         </div>
       </div>
-      <p className="max-w-prose text-xs text-muted-foreground">{note}</p>
+      {note === undefined ? null : (
+        <p className="max-w-prose text-xs text-muted-foreground">{note}</p>
+      )}
     </div>
   );
 }
@@ -814,9 +935,27 @@ export default function DesignPassTypographyPage() {
           the signature treatment. (recommended: log it)
         </Ruling>
 
+        <div className="space-y-2">
+          <Marker>
+            Crimson Pro&rsquo;s case — /about&rsquo;s pull quote, the
+            product&rsquo;s only one
+          </Marker>
+          <div className="flex flex-wrap gap-4">
+            <QuoteExhibit
+              label="Today — Poppins italic, 20px"
+              className="text-xl italic"
+            />
+            <QuoteExhibit
+              label="Crimson Pro, 24px"
+              className={cn(crimsonPro.className, "text-2xl")}
+            />
+          </div>
+        </div>
+
         <Ruling>
-          Crimson Pro — place it on an editorial surface, or park it until one
-          exists. (recommended: park)
+          Crimson Pro — place it for editorial moments, starting with this
+          blockquote, or keep it parked. (recommended: place — the surface exists
+          and is already faking the serif)
         </Ruling>
 
         <Links>
@@ -945,13 +1084,13 @@ export default function DesignPassTypographyPage() {
       <Slide id="site-call-ended">
         <Stack settings={CALL_ENDED_SETTINGS} lines={HOME_HERO_LINES} />
         <Caption>
-          It reads <code>home.hero.title</code> but is met inside a call, not on
-          the marketing page — and it has no standalone URL.
+          It sets <code>home.hero.title</code> verbatim — the marketing tagline,
+          wherever it is met — and it has no standalone URL.
         </Caption>
 
         <Ruling>
-          Call-ended screen — Poppins, as the marketing line it quotes, or Space
-          Mono, as the world it is met in. (recommended: open)
+          Call-ended screen — Poppins, or Space Mono. (recommended: Poppins — the
+          string is marketing copy, which the Guidebook fences the mono out of)
         </Ruling>
       </Slide>
 
@@ -1082,6 +1221,10 @@ export default function DesignPassTypographyPage() {
           </div>
         </div>
 
+        <Caption>
+          One line in <code>button.tsx</code> moves every CTA in the product.
+        </Caption>
+
         <Ruling>
           CTA type — today&rsquo;s 14px / 500, or the Guidebook&rsquo;s 16px /
           600. (recommended: 16px / 600)
@@ -1095,14 +1238,67 @@ export default function DesignPassTypographyPage() {
       </Slide>
 
       {/* ---------------------------------------------------------- 11 */}
-      <Slide id="mono-reach">
+      <Slide id="heading-weight">
+        <Pair settings={HEADING_WEIGHT_SETTINGS} lines={HEADING_SAMPLE} />
+        <Caption>
+          71 of the app&rsquo;s 111 headings are 700 today; the two renderers
+          with a written spec — the OG images and markdown — already draw 600.
+        </Caption>
+
+        <Ruling>
+          Headings — standardise on the Guidebook&rsquo;s SemiBold 600, or keep
+          today&rsquo;s Bold 700. (recommended: 600)
+        </Ruling>
+      </Slide>
+
+      {/* ---------------------------------------------------------- 12 */}
+      <Slide id="world-voice">
         <Candidate
           title="Voice-room zone list"
-          note="The most in-world surface there is — but a zone name is a moderator-authored string of up to 40 characters, and mono is the widest face to hand an unbounded label."
           today={<ZoneRow faceClass="font-sans" />}
           mono={<ZoneRow faceClass="font-brand-mono" />}
         />
 
+        <Candidate
+          title="/select-profile — the question it asks"
+          today={
+            <div className="rounded-lg border p-3">
+              <p className="text-balance text-center text-4xl font-bold">
+                {SELECT_PROFILE_TITLE}
+              </p>
+            </div>
+          }
+          mono={
+            <div className="rounded-lg border p-3">
+              <p className="text-balance text-center font-brand-mono text-4xl font-bold">
+                {SELECT_PROFILE_TITLE}
+              </p>
+            </div>
+          }
+        />
+
+        <Caption>
+          These two, the gamer greeting and the all-clear line are the
+          world&rsquo;s entire current reach — the lore on the public pages stays
+          Poppins, being marketing copy.
+        </Caption>
+
+        <Ruling>
+          Zone names — Space Mono, or keep Poppins. (recommended: Space Mono)
+        </Ruling>
+
+        <Ruling>
+          &ldquo;{SELECT_PROFILE_TITLE}&rdquo; — Space Mono, or keep Poppins.
+          (recommended: Space Mono)
+        </Ruling>
+
+        <Links>
+          <DeckLink href="/select-profile">The question in place</DeckLink>
+        </Links>
+      </Slide>
+
+      {/* ---------------------------------------------------------- 13 */}
+      <Slide id="mono-reach">
         <Candidate
           title="Badge labels"
           note="Short fixed strings are what mono flatters — but these are the app’s most repeated element, and the colour grammar is already moving them."
@@ -1162,7 +1358,7 @@ export default function DesignPassTypographyPage() {
         />
 
         <Caption>
-          A fourth candidate — Yty-Points and Yty-Level figures — has no surface
+          A third candidate — Yty-Points and Yty-Level figures — has no surface
           drawing it yet, so there is nothing honest to show.
         </Caption>
 
@@ -1172,11 +1368,14 @@ export default function DesignPassTypographyPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 12 */}
+      {/* ---------------------------------------------------------- 14 */}
       <Slide id="recap">
         <ol className="max-w-prose list-decimal space-y-1.5 pl-5 text-sm text-foreground">
           <li>Dancing Script — log the signature exception, or replace it.</li>
-          <li>Crimson Pro — place it on an editorial surface, or park it.</li>
+          <li>
+            Crimson Pro — place it, starting with /about&rsquo;s pull quote, or
+            keep it parked.
+          </li>
           <li>Home hero — Poppins at the Guidebook&rsquo;s H1, or name another.</li>
           <li>Gamer greeting — Space Mono as drafted, or Poppins.</li>
           <li>/roblox hero — Poppins, gated on the partner review.</li>
@@ -1192,6 +1391,11 @@ export default function DesignPassTypographyPage() {
           </li>
           <li>Greeting&rsquo;s wide size — 36px, or 48px.</li>
           <li>CTA type — 14px / 500, or 16px / 600.</li>
+          <li>Headings — SemiBold 600, or today&rsquo;s Bold 700.</li>
+          <li>Zone names — Space Mono, or Poppins.</li>
+          <li>
+            &ldquo;{SELECT_PROFILE_TITLE}&rdquo; — Space Mono, or Poppins.
+          </li>
           <li>Space Mono&rsquo;s reach — park the candidates, or name which to draft.</li>
         </ol>
       </Slide>
