@@ -47,11 +47,18 @@ import {
 
 const mockGetClaims = vi.fn();
 const mockRpc = vi.fn();
+/** The policy-scoped channel read the route puts in front of the re-encode. */
+const mockChannelRead = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
   createClient: () =>
     Promise.resolve({
       auth: { getClaims: () => mockGetClaims() },
       rpc: (...args: unknown[]) => mockRpc(...args),
+      from: (table: string) => ({
+        select: () => ({
+          eq: () => ({ maybeSingle: () => mockChannelRead(table) }),
+        }),
+      }),
     }),
 }));
 
@@ -143,6 +150,10 @@ describe("POST /api/chat/images", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthenticated();
+    mockChannelRead.mockResolvedValue({
+      data: { id: CHANNEL_ID },
+      error: null,
+    });
     mockRpc.mockResolvedValue({ data: CREATED_AT, error: null });
     mockUpload.mockResolvedValue({ error: null });
     mockRemove.mockResolvedValue({ error: null });
@@ -172,6 +183,28 @@ describe("POST /api/chat/images", () => {
 
     expect(response.status).toBe(403);
     expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it("refuses a channel the caller's own policies do not admit, before decoding", async () => {
+    // The cost gate, and it is a cost gate rather than a second boundary: the
+    // re-encode is the expensive step and nothing should spend it for somebody
+    // who is not in the channel. RLS answers with no row — a non-member, or a
+    // family member past their channel's read window — and the route stops
+    // there, so an unbounded decode is never reachable pre-authorization.
+    mockChannelRead.mockResolvedValue({ data: null, error: null });
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(403);
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it("reads that channel on the caller's own client, never the admin one", async () => {
+    await POST(createRequest());
+
+    expect(mockChannelRead).toHaveBeenCalledWith("chat_channels");
+    expect(mockAdminFrom).not.toHaveBeenCalled();
   });
 
   it("answers a lock with the code the client drops its echo on", async () => {

@@ -53,11 +53,21 @@ function ChatThumbnail({ image }: { image: ChatImageRef }) {
     setRetry({ src: image.src, attempt: 0 });
   }
 
+  // **A pending re-attempt belongs to the URL that failed, and dies with it.**
+  // The cleanup runs on a changed `src` as well as on unmount, because a timer
+  // left running would fire against the NEW URL, bump the attempt count and
+  // hand a working picture a cache-busted one — a fresh download of something
+  // the reader is already looking at. The callback below re-checks the src it
+  // was scheduled for as well, which is what covers the window between the
+  // render that changed it and this cleanup.
   useEffect(
     () => () => {
-      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
     },
-    [],
+    [image.src],
   );
 
   const attempt = retry.src === image.src ? retry.attempt : 0;
@@ -76,8 +86,18 @@ function ChatThumbnail({ image }: { image: ChatImageRef }) {
       unoptimized
       onError={() => {
         if (!retryable || attempt >= IMAGE_RETRY_DELAYS_MS.length) return;
+        // One timer at a time: overwriting the handle without clearing it would
+        // strand a timeout nothing can cancel afterwards.
+        if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+        const failed = image.src;
         timerRef.current = window.setTimeout(() => {
-          setRetry((current) => ({ ...current, attempt: current.attempt + 1 }));
+          setRetry((current) =>
+            // The URL this was scheduled for, or nothing: a picture that has
+            // since resolved to a different one is not the question that failed.
+            current.src === failed
+              ? { ...current, attempt: current.attempt + 1 }
+              : current,
+          );
         }, IMAGE_RETRY_DELAYS_MS[attempt]);
       }}
       style={{ height: CHAT_IMAGE_THUMB_HEIGHT }}

@@ -45,6 +45,25 @@ import sharp from "sharp";
  */
 const JPEG_QUALITY = 80;
 
+/**
+ * The largest picture this pass will decode at all, in pixels.
+ *
+ * **The byte cap does not bound the decoded size — compression ratio is the
+ * attack.** A JPEG's decoded surface is what costs memory (roughly four bytes a
+ * pixel plus sharp's working buffers), and a flat, highly-compressible image
+ * carries an enormous one behind a tiny file: a 3 MB upload inside the routes'
+ * own cap can decode to something on the order of a gigabyte of resident
+ * memory. sharp's default ceiling is ~268 MP, which is no bound at all for a
+ * serverless function, and on the chat route the decode happens *before* the
+ * membership RPC — so an unbounded one is reachable pre-authorization.
+ *
+ * 4096 × 4096 is the platform's own maximum edge, the bound the image row's
+ * dimension CHECK already refuses past. Honest clients normalize to 2048 before
+ * uploading, so nothing a real composer produces comes near this; a picture
+ * that does is refused here rather than decoded and then refused by the RPC.
+ */
+const MAX_INPUT_PIXELS = 4096 * 4096;
+
 /** One re-encoded image: the bytes to store, and their measured size. */
 export interface ReencodedJpeg {
   /** The re-encoded JPEG. No EXIF, no GPS, no colour profile, no comment. */
@@ -61,10 +80,11 @@ export interface ReencodedJpeg {
  * Throws whatever sharp throws when the bytes will not decode. A caller has
  * already checked the JPEG start-of-image marker by the time it gets here, so a
  * failure means the file is truncated or corrupt past its first three bytes —
- * which is a refusal, and each route words it in its own vocabulary.
+ * or that it decodes past `MAX_INPUT_PIXELS`, which is the same refusal to the
+ * caller and each route words it in its own vocabulary.
  */
 export async function reencodeJpeg(input: Buffer): Promise<ReencodedJpeg> {
-  const { data, info } = await sharp(input)
+  const { data, info } = await sharp(input, { limitInputPixels: MAX_INPUT_PIXELS })
     // No argument: apply the orientation the EXIF tag claims, then forget it.
     .rotate()
     .jpeg({ quality: JPEG_QUALITY })

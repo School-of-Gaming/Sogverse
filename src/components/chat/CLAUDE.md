@@ -324,9 +324,12 @@ survives, until it expires.
 **Rule: the typing indicator rides a Realtime broadcast that is not RLS-gated, so its
 payload is an account id and nothing else.** Realtime authorization policies are machinery
 this repo has never used, so anyone authenticated who learns a channel id could listen —
-and what makes that tolerable is the payload's shape: the name a bubble draws is resolved
-from the roster, so nobody on that channel can put words, or a name of their choosing, in
-front of a room of children. It is a repeating ping with a short expiry rather than a
+and send. What the payload's shape buys is narrower than "nothing", and the line is worth
+stating exactly: the name a bubble draws is resolved from the roster, so **no
+attacker-chosen text can reach the screen**, which is the exposure that would matter in a
+room of children. What a crafted ping *can* do is carry a real roster member's id, and the
+room is then told that person is writing when they are not — a false signal about a real
+person, expiring in seconds, accepted at that size. It is a repeating ping with a short expiry rather than a
 start/stop pair, so there is no "stopped writing" message to lose and a client that closes
 mid-sentence heals itself. Nothing it carries touches the database. The viewer's own
 writing is detected by an input-capture listener wrapped *around* this surface — these
@@ -339,11 +342,17 @@ signed URL requires SELECT on the object — so membership, the family time boun
 participant can read a channel only around its own session window; staff have none,
 because after-the-fact review is the point of keeping the rows) and the hidden state are
 all enforced by one predicate, on a path nobody has to remember to call.
-The container mints in one batch per history load, keyed by the set of image ids in the
-log; a URL lasts half a day and is treated as stale at half of that, so a refetch re-mints
-well before one expires and nothing churns mid-session. A picture the policy refuses is
-simply absent from the batch — the same absence as one whose object has not landed yet,
-and the renderer draws the same empty box for both.
+The container **accumulates** the URLs rather than re-asking: it holds a map and mints, in
+one batched call, only the ids it has no live URL for — so a picture arriving asks about
+that picture, and a burst of six does not have every client in the room re-mint the whole
+log six times. A URL lasts half a day and is treated as stale at half of that; a timer
+wakes on the oldest one the log is drawing and puts it in the next batch, with the old URL
+still drawing until the fresh one lands, so no thumbnail blanks and none outlives its own
+expiry. A picture the policy refuses is simply absent from the batch — the same absence as
+one whose object has not landed yet, the renderer draws the same empty box for both, and
+the next change to the log asks again. An id whose *re-mint* is refused loses its entry
+outright: that is a moderator hiding the picture, which is exactly the retraction the
+policy exists for.
 
 **A row lands before its bytes, and the renderer's bounded retry is what covers it.** The
 upload writes the message row first, which is what keeps the send guard in front of the

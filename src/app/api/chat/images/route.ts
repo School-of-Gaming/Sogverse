@@ -48,6 +48,11 @@ const JPEG_SOI = [0xff, 0xd8, 0xff];
  * EXIF strip below is server-enforced, and persistence makes everything
  * reviewable), and the membership question is answered where it lives.
  *
+ * A policy-scoped read of the channel row sits in front of the re-encode, and it
+ * is a **cost gate rather than a second boundary**: the decode is the expensive
+ * step and nothing should spend it for a caller who is not in the channel. It
+ * decides nothing the RPC does not decide again.
+ *
  * **Verify, then re-encode.** The magic-byte sniff and the byte cap are what
  * make "the bucket holds a conforming JPEG under the cap" a property rather
  * than a hope, since this route is the bucket's only writer. The re-encode is
@@ -77,7 +82,35 @@ export const POST = defineRoute({
   handler: async ({ request, supabase }) => {
     const upload = await readChatImageUpload(request);
 
-    // --- 1. The re-encode ----------------------------------------------------
+    // --- 1. The cost gate ----------------------------------------------------
+    //
+    // **A cheap read that stands in front of an expensive one.** The re-encode
+    // below is the costly step — a decode plus an encode, bounded but not free —
+    // and without this it runs for anybody signed in, on any channel id they
+    // care to type. So the channel row is read first on the CALLER'S OWN client:
+    // the SELECT policy answers through `is_chat_channel_member`, so a
+    // non-member — or a family member past their channel's read window — gets
+    // zero rows and is refused before a pixel is decoded.
+    //
+    // **This is not the authorization and must not be mistaken for one.** The
+    // guarded `send_chat_image_message` RPC below is the boundary: it asks the
+    // same membership question *and* whether a moderator has locked the caller,
+    // and it is what the row's existence depends on. This only decides whether
+    // the work is worth doing.
+    const { data: channel, error: channelError } = await supabase
+      .from("chat_channels")
+      .select("id")
+      .eq("id", upload.fields.channelId)
+      .maybeSingle();
+    if (channelError) throw channelError;
+    if (channel === null) {
+      throw new ApiError(
+        `no readable chat channel ${upload.fields.channelId} for this caller`,
+        403,
+      );
+    }
+
+    // --- 2. The re-encode ----------------------------------------------------
     //
     // Before the row, because the row stores what this measures. Orientation is
     // baked into the pixels and every scrap of metadata — EXIF, GPS, the
@@ -93,7 +126,7 @@ export const POST = defineRoute({
       );
     }
 
-    // --- 2. The row, on the caller's own client ------------------------------
+    // --- 3. The row, on the caller's own client ------------------------------
     const { data: createdAt, error } = await supabase.rpc(
       "send_chat_image_message",
       {
@@ -125,7 +158,7 @@ export const POST = defineRoute({
       throw new ApiError("send_chat_image_message returned no stamp", 500);
     }
 
-    // --- 3. The object, on the service-role client ---------------------------
+    // --- 4. The object, on the service-role client ---------------------------
     //
     // The bucket is private and its one policy grants SELECT alone, so a write
     // has to bypass RLS — which is the whole of what the admin client is doing

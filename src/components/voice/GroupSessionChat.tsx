@@ -9,7 +9,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ChatView, type ChatAccount, type ChatMessage, type ChatViewHandlers } from "@/components/chat";
 import { getClient } from "@/lib/supabase/client";
-import { cn } from "@/lib/utils";
 import { useRequiredAuth } from "@/providers/auth-provider";
 import type {
   ChatChannelLockRow,
@@ -79,7 +78,9 @@ export function GroupSessionChat({
   // Keyed on having no channel at all rather than on the error flag, so a
   // failure on some later refetch cannot take a working chat off the screen
   // while the room is still up.
-  if (channel.isError && channel.data === undefined) return <ChatUnavailable />;
+  if (channel.isError && channel.data === undefined) {
+    return <ChatUnavailable heightClassName={heightClassName} />;
+  }
 
   if (channel.data === undefined) {
     // One indexed round trip: render nothing, in a box that already has its
@@ -96,10 +97,22 @@ export function GroupSessionChat({
   );
 }
 
-/** The one quiet line a channel we cannot open gets. */
-function ChatUnavailable() {
+/**
+ * The one quiet line a channel we cannot open gets.
+ *
+ * **In the same box the placeholder occupies, not a bare line.** Which of the
+ * two a viewer ends up with is decided by a query resolving — the room's own
+ * schedule, not anything they did — so a line that took less height than the
+ * placeholder would yank the participant list up under whoever was reading it
+ * the moment the answer landed.
+ */
+function ChatUnavailable({ heightClassName }: { heightClassName: string }) {
   const t = useTranslations("chat");
-  return <p className="text-sm text-muted-foreground">{t("unavailable")}</p>;
+  return (
+    <div className={heightClassName}>
+      <p className="text-sm text-muted-foreground">{t("unavailable")}</p>
+    </div>
+  );
 }
 
 /** How often one client will say it is writing, at most. */
@@ -139,12 +152,12 @@ function GroupSessionChatRoom({
   const roster = useChatRoster(channelId);
 
   /**
-   * Every image message in the log, and one batch of signed URLs for them.
+   * Every image message in the log, and the signed URLs minted for them.
    *
-   * The ids are the query's key, so a log that gains a picture asks a new
-   * question and one that merely refetched re-uses the batch it already had —
-   * which is what "minted once per history load" means in practice. Expiry is a
-   * flat half-day and the re-mint on refetch is the whole recovery story.
+   * The hook accumulates: a log that gains a picture asks about that picture,
+   * not about the whole log again, and one that merely refetched asks nothing.
+   * Expiry is a flat half-day, and a URL past half of it joins the next batch
+   * while the old one keeps drawing.
    */
   const imageIds = useMemo(
     () =>
@@ -276,10 +289,16 @@ function GroupSessionChatRoom({
       // **Broadcast is not RLS-gated**, and that is accepted rather than
       // overlooked: Realtime authorization policies are machinery this repo has
       // never used, so anybody authenticated who learns a channel id could join
-      // this and hear who is writing. What travels is an account id and nothing
-      // else — the name a bubble draws comes from the roster, so a stranger on
-      // the wire cannot put words or a chosen name in front of a room of
-      // children. Nothing here touches the database.
+      // this, hear who is writing, and send pings of their own.
+      //
+      // What the payload's shape buys is narrower than "nothing": it carries an
+      // account id and nothing else, and the name a bubble draws is resolved
+      // from the roster — so **no attacker-chosen text can reach the screen**,
+      // which is the exposure that would matter in a room of children. What a
+      // ping CAN do is name a real roster member: send one carrying somebody
+      // else's id and the room is told that person is writing when they are
+      // not. That is a false signal about a real person, it expires in seconds,
+      // and it is accepted at that size. Nothing here touches the database.
       .on("broadcast", { event: TYPING_EVENT }, (message) => {
         // Anything anybody chose to send, so it is read as `unknown` and
         // narrowed rather than trusted: this channel is not RLS-gated, so a
@@ -363,6 +382,11 @@ function GroupSessionChatRoom({
 
   const send = sendMessage.mutate;
 
+  /** Take one message off the pending list, whatever became of it. */
+  const sweepPending = useCallback((messageId: string) => {
+    setPending((current) => current.filter((row) => row.id !== messageId));
+  }, []);
+
   const dispatch = useCallback(
     (message: ChatMessage) => {
       send(
@@ -373,6 +397,14 @@ function GroupSessionChatRoom({
           senderId: message.senderId,
         },
         {
+          // **A settled message leaves the pending list at once.** The mutation
+          // has already written the server's row into the history cache by the
+          // time this runs, so the echo has stopped being drawn either way —
+          // what the sweep buys is that `pending` means what its consumers
+          // assume it means: the messages that are still only this client's.
+          // Deleting one of those is a local drop; deleting anything else is a
+          // soft delete, and the two are told apart by this list.
+          onSuccess: () => sweepPending(message.id),
           onError: (error) => {
             // **A lock's refusal offers no retry**, because there is nothing a
             // retry could achieve: the lock's own realtime arrival disables the
@@ -397,7 +429,7 @@ function GroupSessionChatRoom({
         },
       );
     },
-    [send],
+    [send, sweepPending],
   );
 
   const sendPicture = sendImage.mutate;
@@ -421,6 +453,7 @@ function GroupSessionChatRoom({
           senderId: message.senderId,
         },
         {
+          onSuccess: () => sweepPending(message.id),
           onError: (error) => {
             if (isChatLockedError(error)) {
               setPending((current) =>
@@ -439,7 +472,7 @@ function GroupSessionChatRoom({
         },
       );
     },
-    [sendPicture],
+    [sendPicture, sweepPending],
   );
 
   const settledIds = useMemo(
@@ -456,13 +489,13 @@ function GroupSessionChatRoom({
             // The signed URL if one has been minted, this viewer's own blob if
             // the picture is theirs, and neither until the next batch lands.
             (messageId) =>
-              imageUrls.data?.[messageId] ?? ownImages.get(messageId)?.src,
+              imageUrls[messageId] ?? ownImages.get(messageId)?.src,
           );
     return [
       ...settled,
       ...pending.filter((row) => !settledIds.has(row.id)),
     ];
-  }, [history.data, imageUrls.data, ownImages, pending, settledIds]);
+  }, [history.data, imageUrls, ownImages, pending, settledIds]);
 
   const accounts = useMemo(
     () => toChatAccounts(roster.data ?? [], viewer),
@@ -532,22 +565,64 @@ function GroupSessionChatRoom({
     onRetry: (messageId) => {
       const message = pending.find((row) => row.id === messageId);
       if (message === undefined) return;
-      const retried = { ...message, delivery: "pending" as const };
-      setPending((current) =>
-        current.map((row) => (row.id === messageId ? retried : row)),
-      );
+
       // A picture is re-sent from the bytes the composer handed over, which is
       // why they are kept beside the URL: the staged entry is long gone and the
       // blob behind an object URL cannot be read back out of it.
       const picture = ownImages.get(messageId);
-      if (picture === undefined) dispatch(retried);
-      else dispatchImage(retried, picture.file);
+
+      // **A retried picture goes out under a FRESH id; a retried message keeps
+      // its own.** The asymmetry is in what the first attempt left behind. A
+      // text send that failed left nothing — the RPC either wrote the row or it
+      // did not — so the same id is still free and re-using it is what keeps
+      // one message one message. A picture's route writes the row FIRST and
+      // then stores the object, so a failure there leaves the row: hidden by
+      // the route's own compensation, but present, and its primary key is the
+      // message id, which is also the object's name. Re-sending under it would
+      // collide with that row forever, and no retry could ever succeed. Nothing
+      // references the old id — no object ever landed, and the row is a
+      // tombstone every viewer already draws as one — so the re-send is a new
+      // message rather than a second attempt at the old one.
+      if (picture === undefined) {
+        const retried = { ...message, delivery: "pending" as const };
+        setPending((current) =>
+          current.map((row) => (row.id === messageId ? retried : row)),
+        );
+        dispatch(retried);
+        return;
+      }
+
+      const id = crypto.randomUUID();
+      const retried: ChatMessage = {
+        ...message,
+        id,
+        // The id names the object too, so the image's own id moves with it.
+        image: message.image === null ? null : { ...message.image, id },
+        delivery: "pending" as const,
+      };
+      // Under the new id as well, so a second failure has bytes to retry from.
+      // The old entry stays — both name the same object URL, and the log may
+      // still be drawing the tombstone the first attempt left.
+      setOwnImages((current) => new Map(current).set(id, picture));
+      setPending((current) =>
+        current.map((row) => (row.id === messageId ? retried : row)),
+      );
+      dispatchImage(retried, picture.file);
     },
     onDelete: (messageId) => {
       // A message that never reached the server has no row to tombstone and
       // nobody to tell: it is the echo being dropped. Anything else is the same
       // soft delete a moderator's removal is.
-      if (pending.some((row) => row.id === messageId)) {
+      //
+      // **The settled ids are asked first**, because the pending list is swept
+      // on the way past rather than the instant a row lands: an echo whose send
+      // succeeded is no longer drawn, but the sweep is what removes it, and
+      // reading "still in pending" as "never reached the server" would drop a
+      // real message locally and leave it standing for everybody else.
+      if (
+        !settledIds.has(messageId) &&
+        pending.some((row) => row.id === messageId)
+      ) {
         setPending((current) => current.filter((row) => row.id !== messageId));
         return;
       }
@@ -561,8 +636,10 @@ function GroupSessionChatRoom({
     onSetLock: (accountId, locked) => setLock.mutate({ userId: accountId, locked }),
   };
 
-  if (history.isError && history.data === undefined) return <ChatUnavailable />;
-  if (history.data === undefined) return <div className={cn(heightClassName)} />;
+  if (history.isError && history.data === undefined) {
+    return <ChatUnavailable heightClassName={heightClassName} />;
+  }
+  if (history.data === undefined) return <div className={heightClassName} />;
 
   return (
     <div onInputCapture={noteWriting}>

@@ -130,6 +130,16 @@ import { TEST_IDS } from "./constants";
  *                  window search has nothing to find and the refusal is about
  *                  the search rather than about membership. One product cannot
  *                  hold both answers)
+ *   7e3            chat-image-storage.test.ts (one club, shaped like 7e1 — a
+ *                  schedule slot placed so its window is open while the file
+ *                  runs — with its own product rather than 7e1's because that
+ *                  file's cases hide and restore messages in the channel this
+ *                  one's objects hang off, and a storage read refused by
+ *                  somebody else's tombstone would look exactly like the policy
+ *                  working. 7e9 is its must-NOT-exist object name, backing the
+ *                  case that an object no message row names is readable by
+ *                  nobody: allocate it to a real fixture and that case quietly
+ *                  starts pointing at a row that exists)
  *   7ee, 7ef       chat-rpcs.test.ts's must-NOT-exist message and channel ids,
  *                  backing the cases that an unknown message is refused exactly
  *                  as somebody else's is, and that the membership predicate
