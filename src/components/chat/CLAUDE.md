@@ -1,11 +1,10 @@
 # Chat components
 
-The chat surface, built from scratch for the persisted-chat overhaul. These are
-**production** components: the preview scene drives them from fixtures today, the voice
-room will drive them from a live subscription, and the wire-up swaps the data and keeps
-the UI. The old voice `ChatPanel` (`src/components/voice/ChatPanel.tsx`) is a *reference*
-for the two conventions it already had right — sender grouping and an auto-sticking
-fixed-height log — and is otherwise untouched by this module.
+The chat surface: persisted messaging in the scheduled voice rooms. Two things drive these
+components, and they drive the same tree — the preview scene at `/preview/chat/session`
+from fixtures, and a container beside the voice room
+(`src/components/voice/GroupSessionChat.tsx`) from a live query, one realtime subscription
+and the guarded write RPCs behind `src/services/chat/`. Nothing in here can tell which.
 
 ## The contract: transport-free, props in, intentions out
 
@@ -21,10 +20,14 @@ state about looking at a chat, no page has a use for it, and threading it outwar
 only give a second copy the chance to disagree.
 
 **Rule: the image URL is resolved by the container, not by the renderer.** A stored image
-arrives as `{ id, src, width, height }` with `src` already servable. Session photos derive
-their object name from a row id through a shared helper; chat has no bucket yet, so a URL
-somebody else produced is the honest contract. When the bucket lands, the container fills
-`src` from that helper and nothing here changes.
+arrives as `{ id, src, width, height }` with `src` already servable, and nothing here asks
+where one came from. That is the permanent shape rather than a stand-in for a helper: the
+bucket is private, so a stored picture is read through a signed URL that has to be *minted*
+for a viewer and expires — it cannot be derived from an id the way a public object's URL
+can. The three kinds of `src` these components meet (a signed URL, the sender's own staged
+blob, fixture art) are only distinguishable by whoever produced them, which is exactly why
+producing them is not this module's job. See "The wire behind the props" for what the
+container does.
 
 ## The capability module
 
@@ -33,9 +36,12 @@ role and the channel's locks. It is the one piece of chat permission logic that 
 genuinely client-side, and it is deliberately a production module rather than a preview
 one: the scene feeds it real fixture state and switching account re-runs it for real.
 
-**Rule: no component tests a role itself — every offer comes from this module.** Three
-places would otherwise answer the same question and drift: the composer, the message
-action bar, and (later) the guards the wire-up writes. Moderation is a **positive
+**Rule: no component tests a role itself — every offer comes from this module, and the
+write RPCs' guards mirror it.** Three places would otherwise answer the same question and
+drift: the composer, the message action bar, and the server. A UI offering what the server
+refuses — or refusing what it would allow — is what that pairing prevents, so a change to
+what is offered here is unfinished until the matching guard moves with it. Moderation is a
+**positive
 allow-list** of roles (`admin`, `gedu`), never an exclusion — the voice room learned that
 the expensive way, where a "not a gamer" test would have handed moderation to parents the
 day parent seats shipped. A parent in a chat is a participant with no moderator powers,
@@ -178,9 +184,10 @@ and the cap therefore bites *before* resolution, never after.** The send takes t
 text and resolves it itself, in that one order, so there is no call spelling for "already
 resolved, do not cap": a cap applied to the token form would cut a draft that is at the
 limit and names somebody, possibly mid-token, leaving `@[Väinö](789a4f…` in the log as
-literal text. Pinned by a test at exactly the cap. The wire-side half is in the constant's
-own header: the send RPC either measures the display length or caps the column high
-enough, and must not apply the composer's number to the stored string.
+literal text. Pinned by a test at exactly the cap. **The server measures the same thing**:
+the column's own CHECK flattens the stored mention tokens back to `@Name` before counting,
+so one number governs both ends and there is no second backstop to drift from it. A flat
+cap on the stored string would refuse precisely the messages that name the most people.
 
 ## The reaction set is a constants edit
 
@@ -188,9 +195,11 @@ enough, and must not apply the composer's number to the stored string.
 Glyphs live in code because `messages/` may not hold emoji; a reaction's *name* is a
 translated string keyed by its code. Changing the set is that tuple plus the matching
 `chat.reactions.*` labels in every locale — which is what makes the owner's final pick a
-code edit inside this surface rather than a follow-up feature. When the wire-up lands, the
-DB stores the code and CHECK-constrains it against this same list, so no raw emoji ever
-reaches a column.
+code edit inside this surface rather than a follow-up feature — plus, now that reactions
+are stored, one migration widening the CHECK that constrains the column against this same
+list (there is no database enum; the code is what is stored, so no raw emoji ever reaches
+a column). **A code a build does not recognise is dropped rather than drawn**, which is
+what lets a deploy trail its migration without leaving a hole in somebody's tally.
 
 **Rule: the tally row is drawn in the approved set's order, never in arrival order.** A
 row that reshuffled whenever somebody was first to press a different face would move a
@@ -212,17 +221,30 @@ wrapping thumbnail row, so the same gesture reads as one set — but the picture
 **several messages**, which is why the row takes a per-thumbnail overlay: a moderator
 removes one picture, not the set.
 
-Decoding a picked file happens once, at staging, and its numbers are then treated as
-stored. Measuring at *ingest* is the pipeline doing its job; measuring at *render* is what
-the layout rule forbids.
+**Staging is the normalize pass, not a preview of one.** A picked file is decoded,
+downscaled under the edge cap and re-encoded as JPEG once, at pick time, and the composer
+keeps that output — so the thumbnail on screen and the bytes that get sent are one
+artifact, and a file the browser cannot open is refused while the person is still choosing
+rather than at Send. Its numbers are then treated as stored, which is what every box on
+this surface is arithmetic from: measuring at *ingest* is the pipeline doing its job,
+measuring at *render* is what the layout rule forbids.
+
+**What the row stores is the server's own measurement of those bytes**, because a modified
+client can simply skip everything above — the upload route re-encodes again, which is also
+where the EXIF/GPS strip becomes a mechanism rather than a habit. The client-side pass is
+the honest path's pre-shrink; it makes the upload small and the preview truthful, and it
+guarantees nothing.
 
 **Rule: a staged picture's object URL is released by whoever last holds it, and a *sent*
 one is deliberately never released here.** Staging mints an object URL per file, and there
 are exactly three ends for one: the ✕ revokes it, the over-cap refusal revokes the tail it
 turned away, and a send hands ownership to the message it became — the log is drawing that
 blob, so revoking it at the composer would blank the thumbnail the sender just posted. The
-message's URL is freed when the page goes, which is the honest lifetime until a bucket
-exists to re-point `src` at.
+message's URL is freed when the page goes, and that lifetime is deliberate rather than
+provisional: the container keeps a sender's own staged blob for as long as the page lives
+and prefers it over any signed URL, so a sender never waits for a mint, never watches
+their own picture reload, and is the one viewer who cannot see the window in which a row
+exists and its object does not.
 
 **Rule: the fullscreen overlay is not this module's — it is the shared
 `FullscreenImageViewer` in `components/ui`** *(owner ruling: the two forks are combined)*.
@@ -235,12 +257,16 @@ to the overlay as labels, which is what lets a chat say "image" where a session 
 its images straight through; nothing adapts them, which is why chat has no viewer file at
 all where the session feed keeps a thin one to resolve ids into URLs.
 
-**Rule: every chat image renders `unoptimized`, and the wire-up has to revisit that.** It
-is right today because every `src` this surface meets is a blob URL or fixture art, neither
-of which Next's optimizer can fetch — but the renderer takes a URL somebody else produced
-and cannot tell one kind from another, so it cannot make the decision per image. When real
-stored images land, the choice belongs wherever the container resolves `src`, and leaving
-the flag on unexamined would ship an unoptimized image pipeline to every family.
+**Rule: every chat image renders `unoptimized`, and that holds for stored pictures too.**
+A stored chat image is read through a signed URL minted per viewer and rotating on every
+mint, so the optimizer could never serve one of its cached renditions twice — and
+bypassing it is also what keeps the private `chat-images` bucket out of
+`images.remotePatterns`, where a pattern would be a standing optimizer permission on a
+bucket whose entire read boundary is one storage policy. The other two kinds of `src` this
+surface meets, a staged blob and fixture art, the optimizer cannot fetch at all. So the
+flag is right for every picture this renderer can be handed, which is what keeps it a
+property of the component rather than a decision per image — the renderer still cannot
+tell one kind of URL from another, and now it does not have to.
 
 ## One home: the preview scene, not the style guide
 
@@ -265,13 +291,73 @@ the page, so they compare themselves rather than being compared from memory.
 its scenario guard on the server to decide whether a slug is a 404. Its roster ids are real
 literal UUIDv4s, and most of them are *borrowed* from the session-feed and voice-room
 fixtures: an identicon is hashed from the id, so a reviewer comparing the chat panel with
-the room it will live in is comparing the same faces rather than two unrelated crowds.
+the room it lives in is comparing the same faces rather than two unrelated crowds.
 
-## Not here yet
+## The wire behind the props
 
-No schema, no API route, no realtime — those are the wire-up's, planned from
-`docs/investigations/chat-overhaul.md`. Two shapes this module already assumes and the
-wire-up has to keep: the optimistic echo (a sender's own message is on screen as
-`pending` before anything acknowledges it, and a refusal offers a retry), and the soft
-delete (the row and the bytes survive a removal, and a moderator keeps reading it, because
-a moderator deleting something is the moment the record matters most).
+These components are transport-free and stay that way; what follows are the properties of
+the thing on the other side of the props — the ones a reader of this module cannot see
+from here and has to know anyway. The transport itself is the voice-room container and
+`src/services/chat/`.
+
+**The two shapes this module assumes are kept.** The optimistic echo: a sender's own
+message is on screen as `pending` before anything acknowledges it, under an id the client
+generated, reconciled by that identity. It is held outside the query cache and always
+appended *after* every settled row, so a device with a skewed clock cannot insert itself
+into the middle of a log everyone else agrees about, and a reconciling row never travels
+upward past anything already painted. And the soft delete: a removal is an update, so the
+row and the image bytes survive and a moderator keeps reading what was said. **The one
+refusal that offers no retry is a lock** — the composer is already disabled by the lock's
+own arrival, so the echo is dropped rather than left under a button that cannot work, and
+the composer's lock notice is what explains where the message went.
+
+**Rule: a hidden message's body still travels to every subscriber, and safety copy must
+never claim otherwise.** Rows are scoped by channel membership and nothing else, so the
+tombstone-for-participants / dimmed-original-for-moderators split is drawn here, on the
+client. That exposure is accepted rather than overlooked: everyone in the room received
+the body before it was hidden, and redacting it on the wire would protect only a late
+joiner reading removed text out of network traffic with devtools. **Hidden pictures are
+stricter for free** — the storage policy refuses a fresh signed URL for a hidden message
+to anyone but a moderator, so hiding retracts the image; only an already-minted URL
+survives, until it expires.
+
+**Rule: the typing indicator rides a Realtime broadcast that is not RLS-gated, so its
+payload is an account id and nothing else.** Realtime authorization policies are machinery
+this repo has never used, so anyone authenticated who learns a channel id could listen —
+and what makes that tolerable is the payload's shape: the name a bubble draws is resolved
+from the roster, so nobody on that channel can put words, or a name of their choosing, in
+front of a room of children. It is a repeating ping with a short expiry rather than a
+start/stop pair, so there is no "stopped writing" message to lose and a client that closes
+mid-sentence heals itself. Nothing it carries touches the database. The viewer's own
+writing is detected by an input-capture listener wrapped *around* this surface — these
+components take no typing handler, and giving them one would be the first crack in the
+transport-free contract.
+
+**Rule: a stored picture is read through one storage policy, and that policy is the whole
+boundary.** The bucket is private, an object's name is its message row's id, and minting a
+signed URL requires SELECT on the object — so membership, the family time bound (a
+participant can read a channel only around its own session window; staff have none,
+because after-the-fact review is the point of keeping the rows) and the hidden state are
+all enforced by one predicate, on a path nobody has to remember to call.
+The container mints in one batch per history load, keyed by the set of image ids in the
+log; a URL lasts half a day and is treated as stale at half of that, so a refetch re-mints
+well before one expires and nothing churns mid-session. A picture the policy refuses is
+simply absent from the batch — the same absence as one whose object has not landed yet,
+and the renderer draws the same empty box for both.
+
+**A row lands before its bytes, and the renderer's bounded retry is what covers it.** The
+upload writes the message row first, which is what keeps the send guard in front of the
+stored bytes, and that row reaches every other subscriber the instant it exists with no
+second event to announce the object. So a thumbnail that will not load re-attempts a few
+times over a couple of seconds and then stops: past that the picture is not late, it is
+missing, and a renderer hammering a URL that will never answer is worse than a blank box.
+Every box is arithmetic from the stored dimensions throughout, so none of this moves the
+log.
+
+**Rule: reviewing a past session's chat is a psql session, not a screen.** Messages and
+image bytes are kept indefinitely and nothing deletes them, but the app reads only the
+latest 200 messages of the channel a room is currently in and never shows a past session's
+log at all — so an incident reported that evening is answered through
+`docs/runbooks/remote-supabase-psql.md`. That path is also why the row records who removed
+a message: nothing on this surface draws it, and "who took this down" still has to be
+answerable.
