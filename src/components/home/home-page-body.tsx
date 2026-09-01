@@ -35,12 +35,13 @@ type HomeDraftPalette = Exclude<YtyPalette, "current">;
  * fence them into: the elements are explained on `/about`.) Two doses, drawn as
  * two scenarios, because a page cannot be seen at two doses at once:
  *
- * - **`brand`** — accents. One element family per feature card, the palette on
- *   the three how-it-works circles, and a solid amber edge on the closing CTA
- *   card. Nothing else moves.
- * - **`brand-lively`** — the marketing site's own energy: a family edge on
- *   each feature card and a palette rule under each section heading; the one
- *   ambient amber is the hero's own settled band.
+ * - **`brand`** — accents, and the ruled dose for the whole page
+ *   (2026-09-01): one element family per feature card as a tinted tile, and
+ *   the palette on the three how-it-works circles. Nothing else moves.
+ * - **`brand-lively`** — retired. Every construct it proposed was ruled out;
+ *   its key mirrors `brand` so any straggler link renders the ruling, and its
+ *   scenario row is gone from the scene registry. Promotion deletes both keys
+ *   with the map.
  *
  * **The hero is settled and identical in every scenario** (owner ruling,
  * 2026-09-01): today's amber→violet band and today's amber/violet headline
@@ -60,16 +61,17 @@ type HomeDraftPalette = Exclude<YtyPalette, "current">;
  * **And no surface is a washed brand colour** (owner ruling, 2026-09-01). A
  * brand hue at low alpha over the near-black ground composites into a darker
  * colour that is no longer the brand's — muted, dim, washed out — so every
- * *surface* here is neutral (`background`, `card`, `muted`) and the brand
- * arrives at authored strength: solid fills, solid edges, ink. Retired under
- * this rule: the 16% harmony radial an accented draft briefly tried, the
- * lively how-it-works band, and both CTA-card washes. A brand colour
- * *accenting an icon* is a different construct from a colour painted as a
- * card's ground (owner, 2026-09-01 — the voice-zone tiles' effect) and stays;
- * which accent (tinted tile or neutral-with-soft-glyph) is the home deck's
- * open face-off, solid ruled out. Card lift is ruled: edge + inner glow,
- * reusing the voice zones' `.zone-glow` code — colour as light on a neutral
- * ground — pending the owner's final look beside the bare solid edge.
+ * *new* surface here is neutral (`background`, `card`, `muted`) and the brand
+ * arrives at authored strength: solid fills, ink. Retired under this rule:
+ * the 16% harmony radial an accented draft briefly tried, the lively
+ * how-it-works band, and both drafts' CTA-card washes. The two sanctioned
+ * keeps — the hero band and the closing CTA card, both today's live washes —
+ * are pre-existing identity moments the owner kept, not licences for new
+ * ones. A brand colour *accenting an icon* is a different construct (owner:
+ * the voice-zone tiles' effect) and is ruled **tinted**, with the owner's
+ * constraint that the tinted colours never escape into card surfaces. The
+ * glow card-lift idea was tried on the deck and **dropped** — feature cards
+ * carry no family edge and no glow.
  *
  * **Amber stays the identity mark and the CTA colour in both.** It is the
  * ambient atmosphere the drafts give up, not the button.
@@ -102,67 +104,48 @@ interface FeatureAccent {
  * harmony pink, glow green, valor orange, wit blue — so the four cards echo the
  * Four Yty-Elements without a word of copy saying so.
  *
- * **The tile treatment is under review, and these are the as-drafted values.**
- * The watered-surface ruling (owner, 2026-09-01) retired every *surface-scale*
- * wash on this page — the hero radial, the how-it-works band, the CTA card
- * grounds — because a brand hue at low alpha over the near-black ground
- * composites into a colour that is no longer the brand's. Whether the ruling
- * reaches this 48 px tile is asked on the home deck as a rendered comparison
- * (tinted as here, solid strong with ink glyph, neutral with soft glyph): a
- * briefly-tried solid re-cut read "off" to the owner, and here the colour a
- * reader sees is mostly the *soft glyph's ink*, which is an authored value at
- * full strength. Measured on the composited card ground (`bg-card/50` over the
- * page is `#161616`): the soft glyph reads 6.60–7.49 over the accented tint
- * and 5.64–6.36 over the lively one, against a 3:1 bar for a 24 px icon.
+ * **This set is final** (owner rulings, 2026-09-01). The dose is accented —
+ * the lively variant (a /25 family card edge, tiles tinted twice as strong) is
+ * dead, so both scenario keys share this one ruled set. The tile face-off went
+ * to **tinted**, with the owner's constraint that the tinted colours never
+ * escape into card *surfaces* — the tint is a 48 px icon accent, the
+ * voice-zone tiles' own effect, and the card ground stays neutral. And the
+ * glow card-lift was **dropped** ("let's drop the glow effect"), so the card
+ * carries no family edge and no glow: neutral ground, tinted tile, soft glyph.
+ *
+ * Measured on the composited card ground (`bg-card/50` over the page is
+ * `#161616`): the soft glyph reads 6.60–7.49 over its tint, against a 3:1 bar
+ * for a 24 px icon.
  */
+const FEATURE_ACCENTS_RULED: Record<FeatureKey, FeatureAccent> = {
+  minecraftClubs: {
+    card: "bg-card/50",
+    tile: "border-yty-harmony-strong/30 bg-yty-harmony-strong/10",
+    glyph: "text-yty-harmony-soft",
+  },
+  screenTime: {
+    card: "bg-card/50",
+    tile: "border-yty-glow-strong/30 bg-yty-glow-strong/10",
+    glyph: "text-yty-glow-soft",
+  },
+  newFriends: {
+    card: "bg-card/50",
+    tile: "border-yty-valor-strong/30 bg-yty-valor-strong/10",
+    glyph: "text-yty-valor-soft",
+  },
+  parents: {
+    card: "bg-card/50",
+    tile: "border-yty-wit-strong/30 bg-yty-wit-strong/10",
+    glyph: "text-yty-wit-soft",
+  },
+};
+
 const FEATURE_DRAFT_ACCENTS: Record<
   HomeDraftPalette,
   Record<FeatureKey, FeatureAccent>
 > = {
-  brand: {
-    minecraftClubs: {
-      card: "bg-card/50",
-      tile: "border-yty-harmony-strong/30 bg-yty-harmony-strong/10",
-      glyph: "text-yty-harmony-soft",
-    },
-    screenTime: {
-      card: "bg-card/50",
-      tile: "border-yty-glow-strong/30 bg-yty-glow-strong/10",
-      glyph: "text-yty-glow-soft",
-    },
-    newFriends: {
-      card: "bg-card/50",
-      tile: "border-yty-valor-strong/30 bg-yty-valor-strong/10",
-      glyph: "text-yty-valor-soft",
-    },
-    parents: {
-      card: "bg-card/50",
-      tile: "border-yty-wit-strong/30 bg-yty-wit-strong/10",
-      glyph: "text-yty-wit-soft",
-    },
-  },
-  "brand-lively": {
-    minecraftClubs: {
-      card: "border-yty-harmony-strong/25 bg-card/50",
-      tile: "border-yty-harmony-strong/40 bg-yty-harmony-strong/20",
-      glyph: "text-yty-harmony-soft",
-    },
-    screenTime: {
-      card: "border-yty-glow-strong/25 bg-card/50",
-      tile: "border-yty-glow-strong/40 bg-yty-glow-strong/20",
-      glyph: "text-yty-glow-soft",
-    },
-    newFriends: {
-      card: "border-yty-valor-strong/25 bg-card/50",
-      tile: "border-yty-valor-strong/40 bg-yty-valor-strong/20",
-      glyph: "text-yty-valor-soft",
-    },
-    parents: {
-      card: "border-yty-wit-strong/25 bg-card/50",
-      tile: "border-yty-wit-strong/40 bg-yty-wit-strong/20",
-      glyph: "text-yty-wit-soft",
-    },
-  },
+  brand: FEATURE_ACCENTS_RULED,
+  "brand-lively": FEATURE_ACCENTS_RULED,
 };
 
 /**
@@ -262,13 +245,12 @@ const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
       "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-wit-soft text-2xl font-bold text-background",
     ],
     /**
-     * A neutral card with a solid amber edge, where today's live card runs
-     * amber into violet. The first flat draft washed the ground amber at 10%,
-     * which the watered-surface ruling retires — the ground goes neutral and
-     * the brand arrives at full strength on the edge, beside the amber button
-     * that is this card's whole job.
+     * Settled: today's card, exactly (owner ruling, 2026-09-01 — "for the
+     * closing CTA, let's keep what we have today"). The amber→violet wash is
+     * the second sanctioned keep after the hero band: a pre-existing identity
+     * moment, not a licence for new washes. Only the settled type differs.
      */
-    ctaCard: "mx-auto max-w-3xl border-primary bg-card",
+    ctaCard: "mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10",
     sectionRule: null,
   },
 
@@ -319,18 +301,16 @@ const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
       "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-glow-strong text-2xl font-bold text-background",
       "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-wit-soft text-2xl font-bold text-background",
     ],
+    /** Settled: today's card — same ruling and same value as the dose above. */
+    ctaCard: "mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10",
     /**
-     * A neutral card with a solid harmony edge — the dose's workhorse hue at
-     * full strength, where the washed draft dimmed it to 15%.
+     * The rule was the lively dose's last surviving construct, and it died
+     * when the how-it-works section was ruled accented (owner, 2026-09-01) —
+     * this key now renders identically to `brand`, and exists only because the
+     * shared `YtyPalette` type still carries the value until promotion deletes
+     * the whole map.
      */
-    ctaCard: "mx-auto max-w-3xl border-yty-harmony-strong bg-card",
-    /**
-     * Solid harmony, where the blended draft ran pink through blue into green.
-     * Flattening a multi-hue rule forces a hue to be chosen, and that is the
-     * standing cost of the flat default — pink is taken because it is the
-     * dose's workhorse everywhere else.
-     */
-    sectionRule: "mx-auto mt-6 h-1 w-24 rounded-full bg-yty-harmony-strong",
+    sectionRule: null,
   },
 };
 
@@ -449,7 +429,10 @@ export function HomeFeaturesSection({ palette = "current" }: HomeSectionProps) {
         <p className="mt-4 text-muted-foreground">
           {t('features.subheading')}
         </p>
-        {draft?.sectionRule ? <div className={draft.sectionRule} aria-hidden /> : null}
+        {/* No palette rule under this heading in any dose — the features
+            section is ruled accented (owner, 2026-09-01), and the rule was the
+            lively dose's construct. `sectionRule` stays a slot only for the
+            how-it-works section, whose dose is still open. */}
       </div>
       <div className="mx-auto mt-16 grid max-w-5xl gap-8 sm:grid-cols-2">
         {features.map((feature) => (

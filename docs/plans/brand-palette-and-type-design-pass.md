@@ -260,23 +260,38 @@ Owner direction (2026-08-31), added during implementation:
       accented hero's 16% radial, the lively how-it-works band, and both CTA-card
       washes are retired — grounds go neutral (`background`/`card`/`muted`) and the
       brand arrives at authored strength (solid fills, solid edges, ink; the CTA cards
-      take a solid brand edge on a neutral card). **Chip scale is a different
-      construct and stays** (owner, 2026-09-01): a brand colour *accenting an icon* —
-      the voice-zone tiles' effect, which the owner likes — is not a colour painted as
-      a card's ground. Within it, **solid tiles are ruled out** (a solid re-cut read
-      "off"); the open face-off, rendered on the home deck in tile rows and in card
-      context, is **tinted vs neutral** (muted tile, all colour in the soft glyph —
-      the owner's current favourite, held for a side-by-side before ruling). The
-      colour grammar's tint step (badge grounds at low alpha) gets re-examined on the
-      walkthrough deck with the same principle in hand.
-    - **Card lift is ruled: edge + inner glow, reusing the voice zones' code** (owner,
-      2026-09-01: the same treatment as the active voice zone, "we should reuse the
-      same code" — the `.zone-glow` inset geometry with the family hue bound into
-      `--glow-color`; one class, no renamed copy). It squares with the watered-surface
-      principle because the ground stays neutral and the hue stays authored: colour as
-      light spilling in from the edge, not a paint the surface claims to be. The home
-      deck renders it beside the bare solid edge for the owner's final look; the
-      outer-shadow and glow-alone candidates are dropped.
+      take a solid brand edge on a neutral card — later superseded for the closing
+      CTA, see below). **Chip scale is a different construct and is ruled: tinted**
+      (owner, 2026-09-01): a brand colour *accenting an icon* — the voice-zone tiles'
+      effect, which the owner likes — is not a colour painted as a card's ground.
+      Solid tiles were ruled out first (a solid re-cut read "off"), then tinted won
+      over neutral, with the owner's constraint stated as the boundary: tinted
+      colours must never "escape into card surfaces". The colour grammar's tint step
+      (badge grounds at low alpha) gets re-examined on the walkthrough deck with the
+      same principle in hand — the tile ruling is its precedent.
+    - **The glow card-lift is dropped** (owner, 2026-09-01: "let's drop the glow
+      effect", superseding the same-day edge+inner-glow lean). Feature cards carry
+      no family edge and no glow: neutral `card` ground, tinted tile, soft glyph.
+      `.zone-glow` stays a voice-zone treatment and nothing else.
+    - **The feature-card dose is ruled: accented** (owner, 2026-09-01). The lively
+      variant (family card edges at /25, tiles tinted twice as strong, a rule under
+      the features heading) is dead; both scenarios render the ruled set, the
+      features section draws no palette rule in any dose, and `sectionRule` remains
+      a slot only for the still-open how-it-works section.
+    - **The closing CTA is ruled: today's card, exactly** (owner, 2026-09-01). Its
+      amber→violet wash is the second sanctioned keep after the hero band; the
+      solid-edge draft dies, and only the settled type differs from live.
+    - **How-it-works is ruled accented, which completes the home pass** (owner,
+      2026-09-01: "with the design-pass-home settled" — accented was both his page
+      ruling and the recommendation; the lively dose's last construct, the harmony
+      rule under the heading, dies with it). The home page's final shape: today's
+      hero and closing CTA exactly, accented feature cards (tinted tiles, soft
+      glyphs, neutral card grounds, no glow, no family edges), palette how-it-works
+      circles on a neutral band, all on the settled typography. The lively scenario
+      is retired from the scene registry (its slug still resolves, rendering the
+      ruled dose), the home deck page is **deleted** — every slide settled — and the
+      home scene's two remaining scenarios are today vs the ruled dose, kept for the
+      wiring phase's before/after.
     - **The hero is settled: today's, exactly** (owner, 2026-09-01: "let's keep the
       current yellow and purple gradient"). The live amber→violet band and the live
       amber/violet headline chunks stay, drawn with the settled Poppins type; the band

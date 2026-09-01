@@ -6,7 +6,6 @@ import {
 import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
 import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
 import {
-  BRAND_LIVELY_SCENARIO,
   BRAND_PALETTE_SCENARIO,
   CURRENT_PALETTE_SCENARIO,
 } from "./palette-scenarios";
@@ -128,7 +127,7 @@ export const PREVIEW_SCENES = [
     surface: "home",
     title: "Home page",
     description:
-      "The public front page exactly as it ships — it has no data, so nothing here stands in for anything. The scenarios differ only in the brand palette and how much of the page spends it; both drafts lay that colour down flat, with no two-hue blend anywhere.",
+      "The public front page exactly as it ships — it has no data, so nothing here stands in for anything. The draft scenario is the ruled accented dose (2026-09-01): tinted feature tiles, palette how-it-works circles, today's hero and closing CTA kept exactly.",
     chrome: "public",
     scenarios: [
       {
@@ -138,10 +137,6 @@ export const PREVIEW_SCENES = [
       {
         slug: BRAND_PALETTE_SCENARIO.slug,
         label: BRAND_PALETTE_SCENARIO.label,
-      },
-      {
-        slug: BRAND_LIVELY_SCENARIO.slug,
-        label: BRAND_LIVELY_SCENARIO.label,
       },
     ],
   },

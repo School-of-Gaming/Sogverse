@@ -16,17 +16,11 @@ import type { YtyPalette } from "@/lib/constants/yty";
  * drawn as inline samples on the walkthrough deck instead, from the same colour
  * maps the About page reads, and this scene is the *dose* question only.
  *
- * The three scenarios exist to be switched between: the brand hues have to be
- * judged against the ones they replace, and the fastest honest comparison is the
- * same page at the same scroll position under each. `brand-palette` spends the
- * palette as accents; `brand-lively` spends it the way the brand's own marketing
- * does — whole tinted fields, and amber kept for the CTA alone.
- *
- * **Both drafts are flat.** Brand-hue gradients are a Sogverse invention rather
- * than a Guidebook construct and are retired by owner direction, so there is no
- * fourth scenario drawing the flat comparison — flat is what the drafts *are*.
- * The one blend still arguing its case, the dusk hero, lives as an exhibit on
- * the walkthrough deck's gradient slide rather than as a page here.
+ * Two scenarios remain (2026-09-01): today's page, and the **ruled** accented
+ * dose — tinted feature tiles, palette how-it-works circles, today's hero and
+ * closing CTA kept exactly. The lively scenario is retired from the registry;
+ * every construct it proposed was ruled out, and its slug now renders the same
+ * ruled dose if an old link reaches it.
  *
  * **The hero's h1 stays in Press Start 2P under the draft, deliberately.** The
  * design pass reviews every Press Start 2P placement against the owner's
