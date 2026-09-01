@@ -1,5 +1,6 @@
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
+import { reencodeJpeg } from "@/lib/images/reencode-jpeg.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   SESSION_IMAGES_BUCKET,
@@ -11,6 +12,7 @@ import {
   SESSION_PHOTO_CAP,
   SESSION_PHOTO_CAP_REACHED_SQLSTATE,
   SESSION_PHOTO_MAX_BYTES,
+  SESSION_PHOTO_MAX_DIMENSION,
   type AddSessionImageFields,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 
@@ -36,14 +38,25 @@ const JPEG_SOI = [0xff, 0xd8, 0xff];
  * everywhere, and keeps the body far under the platform's ~4.5 MB function
  * limit.
  *
- * **This route verifies; it never rescues.** A magic-byte sniff and a byte cap,
- * and anything non-conforming is refused with a stable code the UI translates —
- * that is what makes "the bucket can only contain a conforming JPEG" a property
- * of the system rather than a hope, because this route is the bucket's only
- * writer. There is no server-side re-encode and no SOF parser: the first is more
- * expensive than the refusal and could not decode HEIC anyway, and the second
- * would defend a mis-sized layout box against an already-assigned staff member
- * with hand-rolled binary parsing.
+ * **This route verifies, then re-encodes; it never rescues.** A magic-byte
+ * sniff and a byte cap refuse anything non-conforming with a stable code the UI
+ * translates — that is what makes "the bucket can only contain a conforming
+ * JPEG" a property of the system rather than a hope, because this route is the
+ * bucket's only writer. What conforming bytes then go through is the shared
+ * `sharp` pass, which bakes the EXIF orientation into the pixels and drops
+ * every scrap of metadata with them.
+ *
+ * That pass arrived with chat images and was extended here on purpose *(owner
+ * request)*: the browser's own normalization already strips EXIF/GPS on the
+ * honest path, but a modified client can simply not run it, and the safeguarding
+ * rule allows only *verified* mechanisms to carry safeguarding weight. One
+ * server-side strip covering both upload routes is what makes "a photo of a
+ * child never leaves here carrying coordinates" a sentence we may write. Its
+ * second effect is that the stored dimensions are now MEASURED rather than
+ * claimed — the form's numbers are an early plausibility refusal and nothing
+ * more (see the fields schema), and what reaches the row is what the re-encode
+ * saw. There is still no rescue: an image that decodes to implausible
+ * dimensions is refused rather than resized.
  *
  * **The RPC's assignment guard is the real authorization boundary; the role gate
  * below is the coarse filter in front of it.** The insert runs on the CALLER'S
@@ -80,7 +93,42 @@ export const POST = defineRoute({
   handler: async ({ request, supabase }) => {
     const upload = await readSessionImageUpload(request);
 
-    // --- 1. The row, on the caller's own client ----------------------------
+    // --- 1. The re-encode --------------------------------------------------
+    //
+    // Before the row, because the row stores what this measures. The strip is
+    // the point (see the docblock); the measurement is what it buys along the
+    // way, and it is why the claimed numbers below are never passed on.
+    let stored;
+    try {
+      stored = await reencodeJpeg(upload.bytes);
+    } catch (cause) {
+      // The magic bytes said JPEG, so a decode failure means the file is
+      // truncated or corrupt past its first three bytes. Same answer as a
+      // non-JPEG: the gedu's move is to convert it and try again.
+      throw new ApiError(
+        `the upload would not decode past its JPEG marker: ${String(cause)}`,
+        415,
+        "notJpeg",
+      );
+    }
+
+    if (
+      stored.width > SESSION_PHOTO_MAX_DIMENSION ||
+      stored.height > SESSION_PHOTO_MAX_DIMENSION
+    ) {
+      // Unreachable from the honest client, which downscales to ~2048 px before
+      // uploading, and reachable only by one that skipped that pass and claimed
+      // plausible numbers for an implausible picture. The RPC's own bound stands
+      // behind this; refusing here is what gives the gedu the dimension copy
+      // rather than the generic one.
+      throw new ApiError(
+        `the image decodes to ${stored.width} x ${stored.height}, past the ${SESSION_PHOTO_MAX_DIMENSION} bound`,
+        400,
+        "badDimensions",
+      );
+    }
+
+    // --- 2. The row, on the caller's own client ----------------------------
     //
     // The guard inside it is the authorization. It also materializes the
     // session row if this is the first thing ever recorded against that date,
@@ -91,8 +139,9 @@ export const POST = defineRoute({
       {
         p_group_id: upload.fields.groupId,
         p_session_date: upload.fields.sessionDate,
-        p_width: upload.fields.width,
-        p_height: upload.fields.height,
+        // What the re-encode measured, never what the form claimed.
+        p_width: stored.width,
+        p_height: stored.height,
         // The cap travels from the contracts constant rather than living in
         // SQL, which is what makes raising it a one-line change.
         p_max_images: SESSION_PHOTO_CAP,
@@ -108,7 +157,7 @@ export const POST = defineRoute({
       );
     }
 
-    // --- 2. The object, on the service-role client -------------------------
+    // --- 3. The object, on the service-role client -------------------------
     //
     // The bucket carries no policies at all — the unguessable name IS the
     // access control — so storage is the admin client's, exactly as it is for
@@ -116,11 +165,18 @@ export const POST = defineRoute({
     // collide with itself.
     const bucket = createAdminClient().storage.from(SESSION_IMAGES_BUCKET);
     const objectName = sessionImageObjectName(imageId);
-    const { error: uploadError } = await bucket.upload(objectName, upload.file, {
-      contentType: "image/jpeg",
-      upsert: false,
-      cacheControl: IMMUTABLE_CACHE_CONTROL,
-    });
+    const { error: uploadError } = await bucket.upload(
+      objectName,
+      // The re-encoded bytes, not the ones that arrived: what is stored has to
+      // be the artifact whose dimensions the row above holds and whose metadata
+      // is gone.
+      stored.bytes,
+      {
+        contentType: "image/jpeg",
+        upsert: false,
+        cacheControl: IMMUTABLE_CACHE_CONTROL,
+      },
+    );
 
     if (uploadError) {
       console.error(
@@ -168,7 +224,8 @@ export const POST = defineRoute({
 
 /** What one verified upload carries: the bytes, and the fields beside them. */
 interface SessionImageUpload {
-  file: File;
+  /** The bytes as they arrived. The re-encode is what turns them into what is stored. */
+  bytes: Buffer;
   fields: AddSessionImageFields;
 }
 
@@ -213,12 +270,15 @@ async function readSessionImageUpload(
     );
   }
 
+  const bytes = Buffer.from(await file.arrayBuffer());
+
   // The magic-byte sniff, and the whole of what "this is a JPEG" means here.
   // The declared content type is the client's claim about its own file and is
   // not consulted; the raw-HEIC side doors (a Files-app pick, a macOS
-  // drag-drop) land exactly here.
-  const head = new Uint8Array(await file.slice(0, JPEG_SOI.length).arrayBuffer());
-  if (!JPEG_SOI.every((byte, index) => head[index] === byte)) {
+  // drag-drop) land exactly here. It runs before the re-encode rather than
+  // being left to it: sharp would happily decode a PNG or a WebP, and one
+  // format in the bucket is what lets the report email render everywhere.
+  if (!JPEG_SOI.every((byte, index) => bytes[index] === byte)) {
     throw new ApiError(
       "the upload does not begin with a JPEG start-of-image marker",
       415,
@@ -249,7 +309,7 @@ async function readSessionImageUpload(
     );
   }
 
-  return { file, fields: parsed.data };
+  return { bytes, fields: parsed.data };
 }
 
 /**

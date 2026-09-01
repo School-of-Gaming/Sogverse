@@ -444,6 +444,75 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
     why: "boolean about the caller's own moderator standing in a voice group",
   },
+
+  // --- chat (00228 / 00229 / 00233) ----------------------------------------
+  //
+  // Twelve entries, and every one of them is self-scoping for the same reason:
+  // **chat authorization is a MEMBERSHIP question, not a role question.** A
+  // gamer, a parent, a gedu and an admin are all legitimate callers of the same
+  // RPC and which one you are decides nothing on its own — a seat-holder and an
+  // assigned gedu are both admitted by `is_voice_group_member`, and the split
+  // that matters (may I moderate?) is a second, narrower question the body asks
+  // itself. So there is no role to annotate and no guard primitive that could
+  // express one; every guard is keyed to `auth.uid()` through the two chat
+  // predicates below, which is precisely what §3.4 admits as self-scoping.
+  //
+  // Two of these predicates additionally carry a TIME BOUND, and that is the
+  // sharpest scope property on the surface: a family participant reads a
+  // channel only around its own session window, while an admin and the
+  // product's assigned gedus have no bound at all. It is not belt-and-braces —
+  // postgres_changes respects RLS, so a subscriber reads these tables directly
+  // and any member's own account can point PostgREST at them; without the bound
+  // that path returns every past session's log, including chat from before that
+  // member joined the group. The scope test pins both halves of it.
+  is_chat_channel_member: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "boolean about the CALLER's own standing in one channel, and the predicate every chat policy and every chat RPC guard composes from. For a group_session channel it is the voice room's own membership predicate plus a time bound that applies to family participants alone. Total boolean — an unknown channel id is false, never NULL, so a consumer that is not a USING clause cannot be handed a three-valued answer",
+  },
+  is_chat_channel_moderator: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "boolean about the CALLER's own moderator standing in one channel — a positive allow-list (admin, or a gedu assigned to the product), never an exclusion, because a negative test would have handed moderation to parents the day parent seats shipped. Consumed by the lock-row read policy and by the hide/restore/lock guards",
+  },
+  ensure_chat_channel: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "materializes the current session window's channel for a group the CALLER may join, guarded on is_voice_group_member. The interesting scope property is what it does NOT take: both window instants are derived here from the product's schedule and never accepted from the caller, because they feed the family read bound — a client-supplied value would let a member mint an arbitrary read window over the group's whole history. It also deliberately never calls ensure_group_session, so no chat action can manufacture a session row in the staff feeds",
+  },
+  get_chat_channel_roster: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "the accounts one channel can name — its group's active seat-holders, the product's assigned gedus, and anyone who has a message in it — scoped on is_chat_channel_member. A deliberate hole in the `profiles` RLS that refuses cross-participant reads, and kept to the smallest shape that serves it: first name and role, nothing else about anybody. Deterministically ordered by profile id, which is a contract rather than tidiness — mention resolution settles two accounts sharing a name by list position",
+  },
+  send_chat_message: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "writes one message AS the caller: sender_id comes from auth.uid() and no argument names a sender. Guards in order — channel membership, not locked (the one named refusal, P0024), a reply target that is a non-hidden message of the same channel, and every mention token naming somebody on that channel's roster. The character cap is the column's, measured on the display form, so this body deliberately does not re-measure it",
+  },
+  send_chat_image_message: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "the image row's creator, same guards and same auth.uid() sender as the text send. Called by the upload route on the uploader's own client — that guard IS the authorization, and the admin client is used for the storage write alone — with the dimensions the route's re-encode measured rather than any a client claimed",
+  },
+  mark_chat_image_stored: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "stamps image_stored_at on the caller's OWN image message once its object has landed — ownership is the whole guard (a missing row and somebody else's row refuse identically; a text message is refused as a class), and deliberately no membership, lock or hidden check: this completes a send send_chat_image_message already authorized, and none of those landing mid-upload may strand a legitimate picture as permanently blank. Idempotent and monotone — a standing stamp is returned, never moved. Directly callable harm is self-harm: marking your own never-uploaded image stored only blanks your own message",
+  },
+  edit_chat_message: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "rewrites the caller's OWN standing text message; a message somebody else sent, one that does not exist and one in a channel the caller may no longer read are refused identically, so it cannot be used as an oracle for message ids. Refuses under a lock with P0024, mirroring capabilities.ts, and revalidates mentions because an edit is a body write",
+  },
+  hide_chat_message: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "the soft delete. Scoped two ways at once and both are keyed to auth.uid(): the SENDER's own message (any sender, a locked one included — taking back a regretted message is the one write a lock leaves), or any message in a channel the caller MODERATES. Deliberately carries no mod-vs-mod test: per-person moderation acts are symmetric, so a moderator may remove a fellow gedu's or an admin's message, and the scope test pins that as a decision rather than an omission",
+  },
+  restore_chat_message: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "puts a removed message back, and only for a caller who moderates its channel — the one control a tombstone carries. A message that does not exist and one in a channel the caller does not moderate are refused identically",
+  },
+  toggle_chat_reaction: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "adds or takes back the CALLER's own reaction — the row's sender_id is auth.uid() and no argument names one, so nobody can react or un-react on somebody else's behalf. The denormalized channel_id is stamped from the MESSAGE row rather than the caller, which is what stops a reaction being filed under a channel its message is not in. Refuses under a lock: a reaction is a message with fewer characters",
+  },
+  set_chat_lock: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "the asymmetric half of the moderation principle, and the one entry here whose scope has two halves worth naming. The ACTOR half is keyed to auth.uid() through is_chat_channel_moderator; the TARGET half refuses anybody whose role moderates — between colleagues a lock is not moderation but one member of staff silencing another in front of children they are both responsible for — and refuses anybody not on the channel's roster, so a moderator may lock people in this room rather than write lock rows about arbitrary accounts",
+  },
   get_my_participation_subscription_states: {
     scopeTest: "tests/db/get-my-participation-subscription-states.test.ts",
     why: "billing-state signals for participations the caller is party to",

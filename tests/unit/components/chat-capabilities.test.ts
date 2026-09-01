@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   deriveChatComposerCapabilities,
+  deriveChatLockControl,
   deriveChatMessageCapabilities,
   isChatModerator,
 } from "@/components/chat/capabilities";
@@ -309,6 +310,18 @@ describe("deriveChatMessageCapabilities", () => {
     expect(free.lockControl).toBe("lock");
   });
 
+  it("offers no lock against a sender the roster cannot name", () => {
+    // The rail's case, met through a message: a moderation act aimed at
+    // somebody the control cannot even print the name of is aimed at a blank.
+    const caps = deriveChatMessageCapabilities(
+      { viewer: SANNA, locked: false },
+      message({ senderId: "somebody-not-on-the-roster" }),
+      null,
+      false,
+    );
+    expect(caps.lockControl).toBeNull();
+  });
+
   it("offers no lock against another moderator, or against yourself", () => {
     const againstStaff = deriveChatMessageCapabilities(
       { viewer: PETRA, locked: false },
@@ -325,5 +338,50 @@ describe("deriveChatMessageCapabilities", () => {
       false,
     );
     expect(againstSelf.lockControl).toBeNull();
+  });
+});
+
+/**
+ * ============================================================================
+ * The lock, asked about a person rather than about a message
+ * ============================================================================
+ *
+ * A lock is a judgement about somebody, so the question has no message in it —
+ * and the voice room's participant rail asks it that way, beside a name, with
+ * no message in hand. The cases below are the rail's, and they are the same
+ * function the message menu goes through: a lock offered in one place and
+ * refused in the other would be two answers to one question, and the RPC's
+ * guard mirrors exactly one of them.
+ */
+describe("deriveChatLockControl", () => {
+  it("offers a moderator the lock against a participant", () => {
+    for (const moderator of [SANNA, PETRA]) {
+      expect(deriveChatLockControl(moderator, AINO, false), moderator.role).toBe(
+        "lock",
+      );
+    }
+  });
+
+  it("points at unlock for somebody already locked", () => {
+    expect(deriveChatLockControl(SANNA, VAINO, true)).toBe("unlock");
+  });
+
+  it("offers a parent nothing — moderation is a positive allow-list", () => {
+    expect(deriveChatLockControl(MARJA, AINO, false)).toBeNull();
+    expect(deriveChatLockControl(AINO, VAINO, false)).toBeNull();
+  });
+
+  it("offers nothing against a colleague or against yourself", () => {
+    expect(deriveChatLockControl(SANNA, PETRA, false)).toBeNull();
+    expect(deriveChatLockControl(PETRA, SANNA, false)).toBeNull();
+    expect(deriveChatLockControl(SANNA, SANNA, false)).toBeNull();
+  });
+
+  it("offers nothing against somebody who is not on the roster", () => {
+    // The rail's own case: a room is not a channel. Anybody in the call whom
+    // the chat roster does not carry — a voice-only guest, somebody whose
+    // roster entry has not landed — is not a target, and the control must not
+    // appear on their row for the write to be refused after the press.
+    expect(deriveChatLockControl(SANNA, null, false)).toBeNull();
   });
 });

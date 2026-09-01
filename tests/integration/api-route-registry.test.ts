@@ -153,6 +153,8 @@ const TESTS = {
   adminSiteNotes: "tests/integration/api/admin-site-notes.test.ts",
   billingPortal: "tests/integration/api/billing-portal.test.ts",
   callback: "tests/integration/auth/callback.test.ts",
+  chatImageRead: "tests/integration/api/chat-image-read.test.ts",
+  chatImageUpload: "tests/integration/api/chat-image-upload.test.ts",
   checkout: "tests/integration/api/checkout-products-create.test.ts",
   discordInteractions: "tests/integration/api/discord-interactions.test.ts",
   familyList: "tests/integration/api/family-list.test.ts",
@@ -603,6 +605,42 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: { kind: "role-gated", roles: ["customer"] },
         body: { kind: "json", schema: "billingPortalBody" },
         test: TESTS.billingPortal,
+      },
+    },
+  },
+
+  // --- Chat ----------------------------------------------------------------
+
+  "src/app/api/chat/images/route.ts": {
+    adminClient:
+      "the storage write alone — the private `chat-images` bucket grants SELECT to `authenticated` and nothing else, deliberately, because its one policy is the whole READ boundary (it joins the object's name back to the message row and asks the channel-membership predicate) and no client role may write there at all. The row is created first by send_chat_image_message on the caller's own client, where the membership and lock guards are the real authorization; the same user client also flips image_stored_at through mark_chat_image_stored once the object lands (the realtime event every other viewer's fetch waits for — a 200 means row, object and flag all committed) and runs the compensating hide when either late step fails, so nothing privileged decides who may send a picture or into which channel",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "any-authenticated",
+          reason:
+            "any member of the channel may send a picture, and 'member of this channel' is a question about a row rather than about a role — the guarded send RPC on the caller's own client answers it, along with whether a moderator has locked them. A role gate would be the wrong shape twice over: a gamer, a parent, a gedu and an admin are all equally entitled, and none of them is entitled in a channel they are not in. So the session is what this gate checks and the RPC is the boundary — the same posture the session-photo route would carry if its uploaders were not a fixed staff set",
+        },
+        body: {
+          kind: "multipart",
+          schema:
+            "chatImageUploadFields for the three form fields (the client-generated message id, the channel, an optional reply target), read beside one `file` the route verifies by magic bytes and byte cap and then re-encodes. There is deliberately no dimensions field: the route measures them from its own re-encode, so a client-claimed pair has nowhere to arrive",
+        },
+        test: TESTS.chatImageUpload,
+      },
+    },
+  },
+
+  "src/app/api/chat/images/[id]/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "any-authenticated",
+          reason:
+            "any member of the channel may read its pictures — the same row-not-role shape as the upload route. The real boundary is the chat-images bucket's one storage SELECT policy, which the handler exercises by calling storage.download on the CALLER'S OWN client: membership, the family time bound and the hidden retraction are decided there, per fetch, and this gate only establishes there is a session to ask as. No admin client on the read path, no signed URL minted anywhere — an <img> cannot carry an auth header, so this route is the translation from session cookies to policy answer, and a refusal and an absent object answer identically with 404 so nothing here is an oracle for message ids or hidden state",
+        },
+        body: { kind: "none" },
+        test: TESTS.chatImageRead,
       },
     },
   },

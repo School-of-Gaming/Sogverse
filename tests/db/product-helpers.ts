@@ -137,6 +137,36 @@ import { TEST_IDS } from "./constants";
  *                  same reason 6ff is: allocate it to a real fixture and that
  *                  case quietly starts pointing at a row that exists, which is
  *                  the one thing it must never do
+ *   7e1-7e2        chat-rpcs.test.ts (7e1 is the club whose schedule slot is
+ *                  placed so its session window is OPEN while the file runs —
+ *                  which is what lets ensure_chat_channel find one — and 7e2 is
+ *                  its opposite: a club with NO schedule slot at all, so the
+ *                  window search has nothing to find and the refusal is about
+ *                  the search rather than about membership. One product cannot
+ *                  hold both answers)
+ *   7e3            chat-image-storage.test.ts (one club, shaped like 7e1 — a
+ *                  schedule slot placed so its window is open while the file
+ *                  runs — with its own product rather than 7e1's because that
+ *                  file's cases hide and restore messages in the channel this
+ *                  one's objects hang off, and a storage read refused by
+ *                  somebody else's tombstone would look exactly like the policy
+ *                  working. 7e9 is its must-NOT-exist object name, backing the
+ *                  case that an object no message row names is readable by
+ *                  nobody: allocate it to a real fixture and that case quietly
+ *                  starts pointing at a row that exists)
+ *   7ee, 7ef       chat-rpcs.test.ts's must-NOT-exist message and channel ids,
+ *                  backing the cases that an unknown message is refused exactly
+ *                  as somebody else's is, and that the membership predicate
+ *                  answers a total `false` rather than NULL for a channel that
+ *                  is not there. Declared here for the reason 6ff and 6ee are:
+ *                  allocate either to a real fixture and those cases quietly
+ *                  start pointing at rows that exist
+ *   7f1-7f4        chat-session-window.test.ts (four products because the thing
+ *                  under test is the TIMEZONE and no single product can hold
+ *                  four: UTC, a northern DST zone, a southern one — one of the
+ *                  two is always on summer time — and a fixed-offset zone in
+ *                  which it is just after local midnight, which is what
+ *                  exercises the SQL window search's adjacent-day probe)
  *   637           write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather

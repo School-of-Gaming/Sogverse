@@ -1,0 +1,863 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type {
+  RealtimeChannel,
+  RealtimePostgresChangesPayload,
+} from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import {
+  ChatView,
+  deriveChatLockControl,
+  type ChatAccount,
+  type ChatMessage,
+  type ChatViewHandlers,
+} from "@/components/chat";
+import { getClient } from "@/lib/supabase/client";
+import { useRequiredAuth } from "@/providers/auth-provider";
+import type {
+  ChatChannelLockRow,
+  ChatMessageRow,
+  ChatReactionRow,
+} from "@/types";
+import { useTimezone } from "@/providers/timezone-provider";
+import {
+  applyChatLockChange,
+  applyChatMessageChange,
+  applyChatReactionChange,
+  chatImagePath,
+  chatKeys,
+  isChatLockedError,
+  useChatChannel,
+  useChatHistory,
+  useChatRoster,
+  useEditChatMessage,
+  useHideChatMessage,
+  useRestoreChatMessage,
+  useSendChatImage,
+  useSendChatMessage,
+  useSetChatLock,
+  useToggleChatReaction,
+  type ChatHistory,
+} from "@/services/chat";
+import {
+  toChatAccounts,
+  toChatMessages,
+  toLockedAccountIds,
+} from "./group-session-chat-model";
+import type { ParticipantChatControls } from "./ParticipantRow";
+
+/**
+ * The transport half of chat in a scheduled voice room.
+ *
+ * **Everything the components refuse to know lives here**: the channel, the
+ * query, the subscription and the service. `src/components/chat/` takes
+ * messages, accounts, who is locked and who is writing, and hands back
+ * intentions — that contract is what lets the preview scene drive the same tree
+ * from fixtures, so this file exists precisely so that none of it leaks in
+ * there.
+ *
+ * The room grants the panel its height and the padding under it; this component
+ * passes the height straight through to `ChatView`, which owns the surface's
+ * whole budget from there.
+ */
+export function GroupSessionChat({
+  groupId,
+  heightClassName,
+  onChatControlsChange,
+}: {
+  groupId: string;
+  /**
+   * The fixed height the room grants the whole surface — required rather than
+   * optional, because the placeholder this component renders while the channel
+   * resolves has to occupy exactly the box the chat will.
+   */
+  heightClassName: string;
+  /**
+   * Publishes the per-participant chat moderation this viewer is offered, so
+   * the room's participant rail can carry the lock beside a name.
+   *
+   * **Upward rather than through the room**, because this is the only place the
+   * answer exists: the lock rows arrive on the history read and are patched by
+   * the subscription held here, and a second reader of that query elsewhere in
+   * the tree would fire the history fetch before the subscription's ack — the
+   * one ordering this component exists to keep. So the container publishes what
+   * it already knows and the page threads it into the room as a prop; nothing
+   * chat-shaped enters the voice context, and the rail derives nothing.
+   *
+   * Called with `null` while there is no channel to moderate in. The value is
+   * memoised on the roster, the standing locks and the viewer, so ordinary chat
+   * traffic — a message, a reaction, somebody typing — republishes nothing and
+   * the room around it does not re-render.
+   */
+  onChatControlsChange?: (controls: ParticipantChatControls | null) => void;
+}) {
+  const channel = useChatChannel(groupId);
+
+  // A room whose chat never opened offers no chat moderation, and says so once
+  // rather than leaving the rail holding a control for a channel that is not
+  // there. Keyed on the id so a channel arriving late clears it exactly once.
+  const channelId = channel.data?.id ?? null;
+  useEffect(() => {
+    if (channelId === null) onChatControlsChange?.(null);
+  }, [channelId, onChatControlsChange]);
+
+  // Both refusals the ensure RPC can answer with are answers rather than
+  // faults: a non-member (42501), and no session window open right now (P0002,
+  // which the voice token's own 60-second grace can outlive). Neither is worth
+  // a distinct surface — the room is what the person came for, and chat quietly
+  // not being there is the honest thing to say about all of it.
+  //
+  // Keyed on having no channel at all rather than on the error flag, so a
+  // failure on some later refetch cannot take a working chat off the screen
+  // while the room is still up.
+  if (channel.isError && channel.data === undefined) {
+    return <ChatUnavailable heightClassName={heightClassName} />;
+  }
+
+  if (channel.data === undefined) {
+    // One indexed round trip: render nothing, in a box that already has its
+    // final size. A skeleton here would be a flash on a call that lands in a
+    // frame or two.
+    return <div className={heightClassName} />;
+  }
+
+  return (
+    <GroupSessionChatRoom
+      channelId={channel.data.id}
+      heightClassName={heightClassName}
+      onChatControlsChange={onChatControlsChange}
+    />
+  );
+}
+
+/**
+ * The one quiet line a channel we cannot open gets.
+ *
+ * **In the same box the placeholder occupies, not a bare line.** Which of the
+ * two a viewer ends up with is decided by a query resolving — the room's own
+ * schedule, not anything they did — so a line that took less height than the
+ * placeholder would yank the participant list up under whoever was reading it
+ * the moment the answer landed.
+ */
+function ChatUnavailable({ heightClassName }: { heightClassName: string }) {
+  const t = useTranslations("chat");
+  return (
+    <div className={heightClassName}>
+      <p className="text-sm text-muted-foreground">{t("unavailable")}</p>
+    </div>
+  );
+}
+
+/** How often one client will say it is writing, at most. */
+const TYPING_PING_MS = 2000;
+
+/**
+ * How long one ping keeps somebody on the writing list.
+ *
+ * Comfortably longer than the ping interval, so a steady writer never flickers
+ * off — and short enough that somebody who closes their laptop mid-sentence
+ * stops being announced. Expiry is why there is no "stopped writing" message to
+ * lose: the indicator heals itself whether a client says goodbye or not.
+ */
+const TYPING_TTL_MS = 5000;
+
+/** The broadcast event the typing indicator rides. */
+const TYPING_EVENT = "typing";
+
+function GroupSessionChatRoom({
+  channelId,
+  heightClassName,
+  onChatControlsChange,
+}: {
+  channelId: string;
+  heightClassName: string;
+  onChatControlsChange?: (controls: ParticipantChatControls | null) => void;
+}) {
+  const supabase = getClient();
+  const queryClient = useQueryClient();
+  const timeZone = useTimezone();
+  const { profile } = useRequiredAuth();
+
+  const viewer: ChatAccount = useMemo(
+    () => ({ id: profile.id, name: profile.first_name, role: profile.role }),
+    [profile.id, profile.first_name, profile.role],
+  );
+
+  /**
+   * The channel whose history fetch has been released, or `null` for none yet.
+   *
+   * **Subscribe, then snapshot.** The history fetch is held until the
+   * subscription's SUBSCRIBED ack so that every commit is either ≤ the fetch's
+   * snapshot (in the answer) or ≥ the ack (delivered as a payload) — with the
+   * two racing, a commit landing between the snapshot and the ack is in
+   * neither, and for a row that never moves again (an image's
+   * `image_stored_at` flip is often the last event its row ever emits) that
+   * gap is a permanent blank rather than a delay. The cost is one channel-join
+   * round trip on an already-open socket before the log's first paint, inside
+   * a box that already renders empty at its final size.
+   *
+   * **A subscription that never comes up releases the gate anyway, and the
+   * surface degrades to a read-only log.** A channel can answer
+   * `CHANNEL_ERROR`, `TIMED_OUT` or `CLOSED` instead of an ack, and waiting
+   * for an ack that is not coming would leave an empty box on screen forever
+   * with nothing saying why. So any terminal status opens the gate: the
+   * snapshot renders, sends still work (they are RPCs, not socket traffic),
+   * and the only thing that moves the log afterwards is React Query's
+   * refetch-on-focus — the same gap filler a payload silently dropped on a
+   * live socket relies on. Nothing about live delivery is claimed in that
+   * state, and if the socket does come up later the ack invalidates the
+   * snapshot (see the subscribe callback) and the room is live again.
+   */
+  const [historyGate, setHistoryGate] = useState<string | null>(null);
+
+  const history = useChatHistory(channelId, {
+    enabled: historyGate === channelId,
+  });
+  const roster = useChatRoster(channelId);
+
+  /**
+   * Payloads that arrived before the history snapshot resolved.
+   *
+   * The subscription is live before the fetch starts (see above), so a payload
+   * can land while the cache still holds nothing to patch — and dropping it
+   * would reopen the very gap the ordering closed. Buffered here and applied
+   * through the same pure patchers the moment there is a log to apply them to:
+   * either by the next live payload (which drains the queue first, keeping
+   * arrival order) or by the flush effect below when no further payload comes.
+   * The patchers are idempotent upserts, so a buffered row the snapshot
+   * already carries lands harmlessly on itself. Cleared on channel teardown —
+   * a payload for a channel we left is moot, and the next mount starts from
+   * its own snapshot.
+   *
+   * **Bounded by the snapshot still being on its way.** "No log to patch" and
+   * "a log is coming" are two different states, and only the second is worth
+   * holding for: an errored history query has no answer in flight, so a buffer
+   * filled against one grows for as long as the failure lasts and then lands
+   * as a single commit if some later focus refetch succeeds. So the buffer is
+   * emptied when the query errors and nothing is added while it is errored —
+   * the refetch's own answer is the log at that point.
+   */
+  const bufferedPatchesRef = useRef<((current: ChatHistory) => ChatHistory)[]>(
+    [],
+  );
+
+  /**
+   * Whether the history query still has an answer coming, readable from inside
+   * a subscription callback.
+   *
+   * A ref rather than a dependency for the same reason the roster's ids are
+   * one: making the subscription depend on the query's status would tear the
+   * channel down and rejoin it on every transition.
+   */
+  const historyStatusRef = useRef(history.status);
+  useEffect(() => {
+    historyStatusRef.current = history.status;
+    if (history.status === "error") bufferedPatchesRef.current = [];
+  }, [history.status]);
+
+  /**
+   * The pictures this viewer sent, by message id: the blob the log is drawing
+   * and the bytes a retry would re-send.
+   *
+   * **The sender never waits for their own picture.** Their copy is drawn from
+   * the object URL the composer already minted, from the optimistic echo
+   * through to the settled row — preferred over the read route's path so the
+   * picture they are looking at is never re-downloaded — which also means they
+   * are the one viewer who cannot see the window in which a row exists and its
+   * object does not.
+   *
+   * Nothing is ever removed. A staged picture's object URL belongs to the
+   * message it became (the chat components' contract), so revoking one would
+   * blank a thumbnail the sender is still looking at; the page going is its
+   * lifetime — a handful of blobs for one session, which is the honest cost of
+   * never blanking a picture somebody just posted.
+   */
+  const [ownImages, setOwnImages] = useState<
+    ReadonlyMap<string, { file: Blob; src: string }>
+  >(() => new Map());
+
+  const sendMessage = useSendChatMessage(channelId);
+  const sendImage = useSendChatImage(channelId);
+  const editMessage = useEditChatMessage(channelId);
+  const hideMessage = useHideChatMessage(channelId);
+  const restoreMessage = useRestoreChatMessage(channelId);
+  const toggleReaction = useToggleChatReaction(channelId);
+  const setLock = useSetChatLock(channelId);
+
+  /**
+   * The sender's own messages, on screen before anything has acknowledged them.
+   *
+   * **Held here rather than in the query cache**, because they are not server
+   * rows: a refetch would wipe them, and a reconnect invalidate is exactly the
+   * moment they most need to survive. They are always appended *after* every
+   * settled row, so a device with a skewed clock cannot insert its own message
+   * into the middle of a log everybody else already agrees about — and a row
+   * that reconciles therefore never travels upward past anything painted.
+   */
+  const [pending, setPending] = useState<ChatMessage[]>([]);
+
+  /** Who is writing, by account id, each with the instant their ping expires. */
+  const [typists, setTypists] = useState<Record<string, number>>({});
+
+  // The subscribed channel, for sending typing pings. A ref rather than state:
+  // it is written by an effect and read by an event handler, and nothing
+  // renders differently because of it.
+  const liveChannelRef = useRef<RealtimeChannel | null>(null);
+  const lastTypingPingRef = useRef(0);
+
+  // Who the roster currently names, readable from inside a subscription
+  // callback without making the subscription depend on the roster (which would
+  // tear the channel down and rejoin it every time somebody new spoke).
+  const rosterIdsRef = useRef<ReadonlySet<string>>(new Set());
+  useEffect(() => {
+    rosterIdsRef.current = new Set(roster.data?.map((entry) => entry.id) ?? []);
+  }, [roster.data]);
+
+  // ---------------------------------------------------------------------
+  // One channel, three tables, and the typing pings
+  // ---------------------------------------------------------------------
+  useEffect(() => {
+    const historyKey = chatKeys.history(channelId);
+    const patch = (change: (current: ChatHistory) => ChatHistory) => {
+      // No snapshot yet: hold the payload for the flush (see the buffer's
+      // comment), but only while one is still coming — an errored query has
+      // nothing on its way for these to be applied to. With a snapshot, drain
+      // anything held first so application order is arrival order, then apply.
+      if (queryClient.getQueryData<ChatHistory>(historyKey) === undefined) {
+        if (historyStatusRef.current !== "error") {
+          bufferedPatchesRef.current.push(change);
+        }
+        return;
+      }
+      const queued = bufferedPatchesRef.current;
+      bufferedPatchesRef.current = [];
+      queryClient.setQueryData<ChatHistory>(historyKey, (current) =>
+        current === undefined
+          ? current
+          : [...queued, change].reduce((log, apply) => apply(log), current),
+      );
+    };
+
+    // Whether the history fetch has already been released for this channel —
+    // by an ack, or by the degradation below. It is what tells a *re*-subscribe
+    // apart from the first one, and it is deliberately not "have we been
+    // subscribed before": a gate opened by a failure has a snapshot taken with
+    // no live socket behind it, so the ack that eventually follows has just as
+    // much to reconcile as a reconnect does.
+    let gateOpened = false;
+    // A status can arrive after this effect's cleanup — `removeChannel` itself
+    // provokes a CLOSED — and it belongs to a channel we have already left.
+    let disposed = false;
+
+    const live = supabase
+      .channel(`chat-${channelId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "chat_messages",
+          filter: `channel_id=eq.${channelId}`,
+        },
+        (payload: RealtimePostgresChangesPayload<ChatMessageRow>) => {
+          patch((current) => applyChatMessageChange(current, payload));
+          // The one signal that somebody the roster does not name has become
+          // visible in the log — a staff drop-in, or a membership change. An
+          // invalidation is allowed here; a Supabase query would not be (the
+          // standing deadlock rule), and this is the difference.
+          if (
+            payload.eventType === "INSERT" &&
+            !rosterIdsRef.current.has(payload.new.sender_id)
+          ) {
+            void queryClient.invalidateQueries({
+              queryKey: chatKeys.roster(channelId),
+            });
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "chat_reactions",
+          filter: `channel_id=eq.${channelId}`,
+        },
+        (payload: RealtimePostgresChangesPayload<ChatReactionRow>) =>
+          patch((current) => applyChatReactionChange(current, payload)),
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "chat_channel_locks",
+          filter: `channel_id=eq.${channelId}`,
+        },
+        (payload: RealtimePostgresChangesPayload<ChatChannelLockRow>) =>
+          patch((current) => applyChatLockChange(current, payload)),
+      )
+      // **Broadcast is not RLS-gated**, and that is accepted rather than
+      // overlooked: Realtime authorization policies are machinery this repo has
+      // never used, so anybody authenticated who learns a channel id could join
+      // this, hear who is writing, and send pings of their own.
+      //
+      // What the payload's shape buys is narrower than "nothing": it carries an
+      // account id and nothing else, and the name a bubble draws is resolved
+      // from the roster — so **no attacker-chosen text can reach the screen**,
+      // which is the exposure that would matter in a room of children. What a
+      // ping CAN do is name a real roster member: send one carrying somebody
+      // else's id and the room is told that person is writing when they are
+      // not. That is a false signal about a real person, it expires in seconds,
+      // and it is accepted at that size. Nothing here touches the database.
+      .on("broadcast", { event: TYPING_EVENT }, (message) => {
+        // Anything anybody chose to send, so it is read as `unknown` and
+        // narrowed rather than trusted: this channel is not RLS-gated, so a
+        // payload is a claim, not a fact.
+        const payload: unknown = message.payload;
+        if (typeof payload !== "object" || payload === null) return;
+        if (!("id" in payload)) return;
+        const id: unknown = payload.id;
+        if (typeof id !== "string") return;
+        setTypists((current) => ({
+          ...current,
+          [id]: Date.now() + TYPING_TTL_MS,
+        }));
+      })
+      .subscribe((status) => {
+        // A status for a channel we have already torn down would release the
+        // gate under the *previous* channel id, which the current channel's
+        // fetch is keyed against — so it would hold that fetch closed until a
+        // second ack arrived.
+        if (disposed) return;
+
+        if (status === "SUBSCRIBED") {
+          // The gate the history fetch is waiting behind — from here on, every
+          // commit the snapshot misses arrives as a payload.
+          setHistoryGate(channelId);
+          // **The only reconnect signal Realtime offers.** A re-subscribe means
+          // the socket went away and came back, so anything that happened while
+          // it was down was never delivered and a stranded pending echo has no
+          // acknowledgement coming — one invalidation reconciles both. The same
+          // invalidation is what repairs a snapshot taken during the degraded
+          // state below, where nothing was ever delivered in the first place.
+          //
+          // It says nothing about a payload dropped on a socket that *stayed*
+          // up: that arrives as silence, and the gap filler is React Query's
+          // default refetch-on-focus, deliberately left on.
+          if (gateOpened) {
+            void queryClient.invalidateQueries({ queryKey: historyKey });
+          }
+          gateOpened = true;
+          return;
+        }
+
+        // **Everything else is the socket declining to come up**, and the gate
+        // opens on it rather than waiting for an ack that may never arrive: a
+        // held-shut gate is an empty box with no explanation and no recovery.
+        // What the viewer gets instead is the log as it stands, refreshed on
+        // focus — honestly less than a live room, and visibly a room rather
+        // than a blank.
+        console.warn(
+          `[chat] channel ${channelId} answered ${status}; the log is read-only until it resubscribes`,
+        );
+        setHistoryGate(channelId);
+        gateOpened = true;
+      });
+
+    liveChannelRef.current = live;
+    const buffer = bufferedPatchesRef;
+    return () => {
+      disposed = true;
+      liveChannelRef.current = null;
+      buffer.current = [];
+      void supabase.removeChannel(live);
+    };
+  }, [channelId, queryClient, supabase]);
+
+  // The flush half of the buffer: the snapshot has landed and no later payload
+  // has drained the queue yet. Idempotent against the drain in `patch` — both
+  // clear before applying, so a patch is applied exactly once.
+  useEffect(() => {
+    if (history.data === undefined) return;
+    if (bufferedPatchesRef.current.length === 0) return;
+    const queued = bufferedPatchesRef.current;
+    bufferedPatchesRef.current = [];
+    queryClient.setQueryData<ChatHistory>(
+      chatKeys.history(channelId),
+      (current) =>
+        current === undefined
+          ? current
+          : queued.reduce((log, apply) => apply(log), current),
+    );
+  }, [history.data, channelId, queryClient]);
+
+  // Expire the writing list. The timer exists only while somebody is on it, so
+  // a quiet room costs nothing.
+  useEffect(() => {
+    if (Object.keys(typists).length === 0) return;
+    const timer = window.setInterval(() => {
+      const now = Date.now();
+      setTypists((current) => {
+        const live = Object.fromEntries(
+          Object.entries(current).filter(([, expiry]) => expiry > now),
+        );
+        return Object.keys(live).length === Object.keys(current).length
+          ? current
+          : live;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [typists]);
+
+  /**
+   * Say that this viewer is writing, at most once every couple of seconds.
+   *
+   * **Driven by a capture listener on the wrapper below, not by a prop.** The
+   * chat components take no typing handler and must not grow one — they are
+   * transport-free by contract, and a composer that had to be told about a
+   * socket would be the first crack in it. An `input` event inside the surface
+   * is the same fact from outside, and it covers the in-place editor for free.
+   */
+  const noteWriting = useCallback(() => {
+    const live = liveChannelRef.current;
+    if (live === null) return;
+    const now = Date.now();
+    if (now - lastTypingPingRef.current < TYPING_PING_MS) return;
+    lastTypingPingRef.current = now;
+    void live.send({
+      type: "broadcast",
+      event: TYPING_EVENT,
+      payload: { id: viewer.id },
+    });
+  }, [viewer.id]);
+
+  // ---------------------------------------------------------------------
+  // The optimistic echo
+  // ---------------------------------------------------------------------
+
+  const send = sendMessage.mutate;
+
+  /** Take one message off the pending list, whatever became of it. */
+  const sweepPending = useCallback((messageId: string) => {
+    setPending((current) => current.filter((row) => row.id !== messageId));
+  }, []);
+
+  const dispatch = useCallback(
+    (message: ChatMessage) => {
+      send(
+        {
+          id: message.id,
+          body: message.body ?? "",
+          replyToMessageId: message.replyToId,
+          senderId: message.senderId,
+        },
+        {
+          // **A settled message leaves the pending list at once.** The mutation
+          // has already written the server's row into the history cache by the
+          // time this runs, so the echo has stopped being drawn either way —
+          // what the sweep buys is that `pending` means what its consumers
+          // assume it means: the messages that are still only this client's.
+          // Deleting one of those is a local drop; deleting anything else is a
+          // soft delete, and the two are told apart by this list.
+          onSuccess: () => sweepPending(message.id),
+          onError: (error) => {
+            // **A lock's refusal offers no retry**, because there is nothing a
+            // retry could achieve: the lock's own realtime arrival disables the
+            // composer and the refusal simply raced it. So the echo is dropped
+            // rather than left as a failed bubble with a button that cannot
+            // work — nobody else ever saw the message, and the composer's lock
+            // notice is what explains where it went.
+            if (isChatLockedError(error)) {
+              setPending((current) =>
+                current.filter((row) => row.id !== message.id),
+              );
+              return;
+            }
+            setPending((current) =>
+              current.map((row) =>
+                row.id === message.id
+                  ? { ...row, delivery: "failed" as const }
+                  : row,
+              ),
+            );
+          },
+        },
+      );
+    },
+    [send, sweepPending],
+  );
+
+  const sendPicture = sendImage.mutate;
+
+  /**
+   * The same round trip for a picture: the echo is already on screen, the route
+   * writes the row, stores the object and flips `image_stored_at`, and the
+   * settled row goes straight into the cache.
+   *
+   * A lock is dropped rather than retried for exactly the reason a text send's
+   * is — the composer is already disabled by the lock's own arrival, so a retry
+   * button could never work.
+   */
+  const dispatchImage = useCallback(
+    (message: ChatMessage, file: Blob) => {
+      sendPicture(
+        {
+          id: message.id,
+          replyToMessageId: message.replyToId,
+          file,
+          senderId: message.senderId,
+        },
+        {
+          onSuccess: () => sweepPending(message.id),
+          onError: (error) => {
+            if (isChatLockedError(error)) {
+              setPending((current) =>
+                current.filter((row) => row.id !== message.id),
+              );
+              return;
+            }
+            setPending((current) =>
+              current.map((row) =>
+                row.id === message.id
+                  ? { ...row, delivery: "failed" as const }
+                  : row,
+              ),
+            );
+          },
+        },
+      );
+    },
+    [sendPicture, sweepPending],
+  );
+
+  const settledIds = useMemo(
+    () => new Set(history.data?.messages.map((row) => row.id) ?? []),
+    [history.data],
+  );
+
+  const messages = useMemo(() => {
+    const settled =
+      history.data === undefined
+        ? []
+        : toChatMessages(
+            history.data,
+            // A pure function of the row: this viewer's own blob if the
+            // picture is theirs (never re-downloaded, never waited for), the
+            // read route's stable path once the row's flag says the bytes
+            // landed, and nothing — the renderer's quiet box — until it does.
+            // The flag's realtime UPDATE is what flips it, and by then the
+            // object provably exists, so no fetch can ever be early.
+            (row) =>
+              ownImages.get(row.id)?.src ??
+              (row.image_stored_at !== null ? chatImagePath(row.id) : undefined),
+          );
+    return [
+      ...settled,
+      ...pending.filter((row) => !settledIds.has(row.id)),
+    ];
+  }, [history.data, ownImages, pending, settledIds]);
+
+  const accounts = useMemo(
+    () => toChatAccounts(roster.data ?? [], viewer),
+    [roster.data, viewer],
+  );
+
+  // Keyed on the lock rows rather than on the whole history: the patchers
+  // replace one array each, so this survives every message and every reaction
+  // and changes exactly when somebody's lock does. That stability is what the
+  // published controls below are built on.
+  const locks = history.data?.locks;
+  const lockedAccountIds = useMemo(
+    () => (locks === undefined ? new Set<string>() : toLockedAccountIds(locks)),
+    [locks],
+  );
+
+  const typingAccountIds = useMemo(() => Object.keys(typists), [typists]);
+
+  /**
+   * The chat lock this viewer is offered against each person in the room, for
+   * the participant rail beside this panel.
+   *
+   * **Derived here and nowhere else.** Whether a lock is offered at all is
+   * chat's question — a moderator, against somebody who is not one, who is on
+   * this channel's roster — and the message menu asks the same function with the
+   * same arguments. A rail that re-derived it from a role would be a second
+   * answer waiting to disagree with the first; one that skipped the roster check
+   * would offer a lock against a voice-only guest the channel has never heard
+   * of, and the RPC would refuse it after the press.
+   *
+   * `setLock.mutate` is React Query's stable binding, and the roster and the
+   * locks are memoised on their own arrays, so this identity changes when the
+   * offer changes and not when the conversation moves.
+   */
+  const setLockMutate = setLock.mutate;
+  const participantChatControls = useMemo<ParticipantChatControls>(() => {
+    const byId = new Map(accounts.map((account) => [account.id, account]));
+    return (userId: string) => {
+      const direction = deriveChatLockControl(
+        viewer,
+        byId.get(userId) ?? null,
+        lockedAccountIds.has(userId),
+      );
+      if (direction === null) return null;
+      return {
+        direction,
+        onSetLock: (locked: boolean) => setLockMutate({ userId, locked }),
+      };
+    };
+  }, [accounts, lockedAccountIds, setLockMutate, viewer]);
+
+  useEffect(() => {
+    onChatControlsChange?.(participantChatControls);
+  }, [onChatControlsChange, participantChatControls]);
+
+  const handlers: ChatViewHandlers = {
+    onSend: (drafts) => {
+      // **One press of Send, already fanned out by the composer**: one draft
+      // per staged picture, then the words. Each becomes its own message, in
+      // that order, and the reply target rides on whichever draft the fan-out
+      // put it on — the words when there are any, the FIRST picture when there
+      // are none, so an image-only reply is still a reply to something. Nothing
+      // here re-derives any of that; it dispatches what it was handed.
+      for (const draft of drafts) {
+        const id = crypto.randomUUID();
+        const staged = draft.image;
+        const message: ChatMessage = {
+          id,
+          senderId: viewer.id,
+          createdAt: new Date().toISOString(),
+          body: draft.body,
+          image:
+            staged === null
+              ? null
+              : {
+                  // The message id names the picture too: it is the object's
+                  // name in the bucket, so the echo and the settled row draw
+                  // under one identity and the log never sees them as two.
+                  id,
+                  src: staged.src,
+                  width: staged.width,
+                  height: staged.height,
+                },
+          replyToId: draft.replyToId,
+          editedAt: null,
+          hiddenAt: null,
+          hiddenBy: null,
+          reactions: [],
+          delivery: "pending",
+        };
+        if (staged !== null) {
+          setOwnImages((current) =>
+            new Map(current).set(id, { file: staged.file, src: staged.src }),
+          );
+        }
+        // The settled ones are swept here rather than in an effect watching
+        // the log: an echo stops being *drawn* the instant its row lands (the
+        // merge below filters on exactly this set), so all a sweep has to do is
+        // keep the list from accumulating — and a send is the only thing that
+        // ever grows it.
+        setPending((current) => [
+          ...current.filter((row) => !settledIds.has(row.id)),
+          message,
+        ]);
+        if (staged === null) dispatch(message);
+        else dispatchImage(message, staged.file);
+      }
+    },
+    onRetry: (messageId) => {
+      const message = pending.find((row) => row.id === messageId);
+      if (message === undefined) return;
+
+      // A picture is re-sent from the bytes the composer handed over, which is
+      // why they are kept beside the URL: the staged entry is long gone and the
+      // blob behind an object URL cannot be read back out of it.
+      const picture = ownImages.get(messageId);
+
+      // **A retried picture goes out under a FRESH id; a retried message keeps
+      // its own.** The asymmetry is in what the first attempt left behind. A
+      // text send that failed left nothing — the RPC either wrote the row or it
+      // did not — so the same id is still free and re-using it is what keeps
+      // one message one message. A picture's route writes the row FIRST and
+      // then stores the object, so a failure there leaves the row: hidden by
+      // the route's own compensation, but present, and its primary key is the
+      // message id, which is also the object's name. Re-sending under it would
+      // collide with that row forever, and no retry could ever succeed. Nothing
+      // references the old id — no object ever landed, and the row is a
+      // tombstone every viewer already draws as one — so the re-send is a new
+      // message rather than a second attempt at the old one.
+      if (picture === undefined) {
+        const retried = { ...message, delivery: "pending" as const };
+        setPending((current) =>
+          current.map((row) => (row.id === messageId ? retried : row)),
+        );
+        dispatch(retried);
+        return;
+      }
+
+      const id = crypto.randomUUID();
+      const retried: ChatMessage = {
+        ...message,
+        id,
+        // The id names the object too, so the image's own id moves with it.
+        image: message.image === null ? null : { ...message.image, id },
+        delivery: "pending" as const,
+      };
+      // Under the new id as well, so a second failure has bytes to retry from.
+      // The old entry stays — both name the same object URL, and the log may
+      // still be drawing the tombstone the first attempt left.
+      setOwnImages((current) => new Map(current).set(id, picture));
+      setPending((current) =>
+        current.map((row) => (row.id === messageId ? retried : row)),
+      );
+      dispatchImage(retried, picture.file);
+    },
+    onDelete: (messageId) => {
+      // A message that never reached the server has no row to tombstone and
+      // nobody to tell: it is the echo being dropped. Anything else is the same
+      // soft delete a moderator's removal is.
+      //
+      // **The settled ids are asked first**, because the pending list is swept
+      // on the way past rather than the instant a row lands: an echo whose send
+      // succeeded is no longer drawn, but the sweep is what removes it, and
+      // reading "still in pending" as "never reached the server" would drop a
+      // real message locally and leave it standing for everybody else.
+      if (
+        !settledIds.has(messageId) &&
+        pending.some((row) => row.id === messageId)
+      ) {
+        setPending((current) => current.filter((row) => row.id !== messageId));
+        return;
+      }
+      hideMessage.mutate(messageId);
+    },
+    onHide: (messageId) => hideMessage.mutate(messageId),
+    onRestore: (messageId) => restoreMessage.mutate(messageId),
+    onEdit: (messageId, body) => editMessage.mutate({ id: messageId, body }),
+    onToggleReaction: (messageId, code) =>
+      toggleReaction.mutate({ messageId, code }),
+    onSetLock: (accountId, locked) => setLock.mutate({ userId: accountId, locked }),
+  };
+
+  if (history.isError && history.data === undefined) {
+    return <ChatUnavailable heightClassName={heightClassName} />;
+  }
+  if (history.data === undefined) return <div className={heightClassName} />;
+
+  return (
+    <div onInputCapture={noteWriting}>
+      <ChatView
+        messages={messages}
+        accounts={accounts}
+        viewer={viewer}
+        lockedAccountIds={lockedAccountIds}
+        typingAccountIds={typingAccountIds}
+        heightClassName={heightClassName}
+        timeZone={timeZone}
+        handlers={handlers}
+      />
+    </div>
+  );
+}

@@ -530,17 +530,17 @@ export const SESSION_PHOTO_MAX_EDGE = 2048;
 export const SESSION_PHOTO_JPEG_QUALITY = 0.8;
 
 /**
- * The plausibility bound on the dimensions a client claims, and the code-side
- * twin of the table's CHECK.
+ * The plausibility bound on an image's dimensions, and the code-side twin of
+ * the table's CHECK.
  *
  * **Deliberately looser than the edge cap above, and not derived from it.** The
- * client normalizes to ~2048 px; this is a sanity bound on a *claimed* number,
- * not a restatement of a *derived* one. What it defends is layout arithmetic —
- * the stored dimensions are what the gallery and the email size their boxes
- * from — and the uploader is an assigned staff member, so the worst an
- * implausible value produces is a mis-sized box in that group's own mail. The
- * route checks it so the refusal is a stable code rather than a raw 23514, and
- * the CHECK still stands behind that.
+ * client normalizes to ~2048 px; this is a sanity bound, not a restatement of a
+ * derived value. What it defends is layout arithmetic — the stored dimensions
+ * are what the gallery and the email size their boxes from. The route applies
+ * it twice: once to the claimed pair on the way in, so an obviously wrong form
+ * is refused before any decode work, and once to what its re-encode actually
+ * measured, which is the number that reaches the row. Both refusals carry a
+ * stable code rather than a raw 23514, and the CHECK still stands behind them.
  */
 export const SESSION_PHOTO_MAX_DIMENSION = 4096;
 
@@ -635,10 +635,13 @@ export function isSessionPhotoErrorCode(
  * caller reliably holds, while the pair is the row's real identity.
  *
  * The dimensions are the CLIENT'S claim about the JPEG it just encoded, and
- * they are **trusted after this bound check**. There is no server-side SOF
- * parser: it would defend a cosmetic outcome against an already-assigned staff
- * member with ~30 lines of hand-rolled binary parsing and no precedent in this
- * repo.
+ * they are **an early plausibility refusal and nothing else** — what the row
+ * stores is what the route's own `sharp` re-encode measured. They are still
+ * sent, and still bounded here, because refusing an implausible claim before
+ * any decode work happens is what gives the gedu the dimension copy rather than
+ * a generic failure; a claim that passes this check and then decodes to
+ * something else is refused just the same, by the route, against the measured
+ * numbers.
  */
 export const addSessionImageFields = z.object({
   groupId: z.string().uuid(),

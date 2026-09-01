@@ -65,11 +65,21 @@ export interface ChatSceneStore {
   setLock: (accountId: string, locked: boolean) => void;
 }
 
-export function useChatSceneStore(now: Date): ChatSceneStore {
+export function useChatSceneStore(
+  now: Date,
+  /**
+   * Who is looking, to begin with.
+   *
+   * The chat scene leaves this alone and offers the switcher instead; the voice
+   * scene has already decided — its whole scenario *is* a viewer — so it says
+   * so once at mount rather than performing a switch the reader would see.
+   */
+  initialViewerId: string = CHAT_ACCOUNT_IDS.sanna,
+): ChatSceneStore {
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
     buildChatSceneMessages(now),
   );
-  const [viewerId, setViewerId] = useState<string>(CHAT_ACCOUNT_IDS.sanna);
+  const [viewerId, setViewerId] = useState<string>(initialViewerId);
   const [lockedIds, setLockedIds] = useState<ReadonlySet<string>>(
     () => new Set(CHAT_SCENE_LOCKED_IDS),
   );

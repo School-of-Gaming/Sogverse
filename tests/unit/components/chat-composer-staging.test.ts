@@ -26,6 +26,11 @@ function image(name: string): StagedChatImage {
   return {
     key: `key-${name}`,
     src: `blob:${name}`,
+    // The normalized JPEG staging produced. Neither function under test reads
+    // it — they queue and fan out, and the bytes travel as cargo — but it is
+    // what the send eventually uploads, so a stand-in belongs in the fixture
+    // rather than a hole.
+    file: new Blob([name], { type: "image/jpeg" }),
     width: 1600,
     height: 900,
     name,

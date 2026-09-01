@@ -41,11 +41,10 @@ import { useReceivePermissions } from "./hooks/use-receive-permissions";
 import { useMicDevices } from "./hooks/use-mic-devices";
 import { useScreenShare } from "./hooks/use-screen-share";
 import { useModeratorControls } from "./hooks/use-moderator-controls";
-import { useChat } from "./hooks/use-chat";
 import { useWakeLock } from "./hooks/use-wake-lock";
 
 // Re-export types so existing imports from VoiceRoomProvider still work
-export type { VoiceParticipant, LockState, ChatMessage } from "./hooks/types";
+export type { VoiceParticipant, LockState } from "./hooks/types";
 
 // Exported so the /admin/ui-components style guide can render the voice UI with
 // a hand-built mock context value (no live Daily call). The components are pure
@@ -177,8 +176,6 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     setCameraOn,
   });
 
-  const chat = useChat({ callObjectRef });
-
   const micDevices = useMicDevices({ callObjectRef, joined });
 
   // Live custom zones + private-zone occupancy from the DB (group rooms only).
@@ -268,13 +265,6 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       return;
     }
 
-    // Chat: append to the ephemeral in-memory log. Sender name is resolved
-    // from Daily's verified fromId inside the hook, not the payload.
-    if (msg.type === "chatMessage") {
-      chat.onChatMessage(msg, fromId, co);
-      return;
-    }
-
     // Moderator asking us to move zones — verified-owner-gated inside the hook.
     if (msg.type === "moveUser") {
       membership.onAppMessage(msg, fromId, co);
@@ -283,7 +273,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
 
     // Moderator messages: moderatorMute, moderatorLock
     moderator.onAppMessage(msg, fromId, co);
-  }, [membership, moderator, chat]);
+  }, [membership, moderator]);
 
   // --- Deafen (moderator-only): silences all remotes locally ---
 
@@ -319,8 +309,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     moderator.reset();
     screenShare.reset();
     audio.reset();
-    chat.reset();
-  }, [membership, moderator, screenShare, audio, chat]);
+  }, [membership, moderator, screenShare, audio]);
 
   // --- Join / Leave ---
 
@@ -782,8 +771,6 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     muteParticipant: moderator.muteParticipant,
     lockParticipant: moderator.lockParticipant,
     getAnalyser: audio.getAnalyser,
-    messages: chat.messages,
-    sendChatMessage: chat.sendChatMessage,
     join,
     leave,
   };

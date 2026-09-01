@@ -55,6 +55,39 @@ export interface ParticipantRowData {
   isOwner: boolean;
 }
 
+/**
+ * The chat lock this viewer is offered against one person, handed to the row
+ * ready to render.
+ *
+ * **The row is told, never asked to work it out.** Who may lock whom is chat's
+ * own question — a positive allow-list of moderator roles, no lock against a
+ * colleague or yourself, and nobody who is not on the channel's roster — and it
+ * is answered in one place (`deriveChatLockControl` in `components/chat`) so
+ * that a message's menu and this rail cannot come to two different conclusions
+ * about the same person. What crosses into this directory is the conclusion:
+ * which way the switch points, and what to call when it is pressed.
+ *
+ * The literal union rather than chat's own type, deliberately: a row that
+ * imported a chat type would be a voice component that knows there is a chat.
+ * It knows there is a lock with two directions, which is all it draws.
+ */
+export interface ParticipantChatControl {
+  /** Which way the switch points — what pressing it would do. */
+  direction: "lock" | "unlock";
+  onSetLock: (locked: boolean) => void;
+}
+
+/**
+ * The room's per-participant chat controls, as one function of a user id.
+ *
+ * `null` for anybody the viewer is offered nothing against, which is the resting
+ * state: a room with no chat at all (an instant room) passes no function, and a
+ * viewer who does not moderate gets `null` for everyone.
+ */
+export type ParticipantChatControls = (
+  userId: string,
+) => ParticipantChatControl | null;
+
 export interface ParticipantRowProps {
   participant: ParticipantRowData;
   lockState: { audio: boolean; video: boolean };
@@ -63,6 +96,16 @@ export interface ParticipantRowProps {
   avatarRef?: Ref<HTMLDivElement>;
   onMute?: (track: "audio" | "video") => void;
   onLock?: (track: "audio" | "video", locked: boolean) => void;
+  /**
+   * The chat lock offered against this person, or `null`/omitted for none.
+   *
+   * It sits beside the mic and camera locks in the moderation menu because a
+   * moderator watching a room should not have to hunt the log for something a
+   * child wrote in order to lift a lock they placed. Absent by default: an
+   * instant room has no chat, and a viewer who does not moderate is offered
+   * nothing.
+   */
+  chatControl?: ParticipantChatControl | null;
 
   /* ---- Staff-only overlay ------------------------------------------------
      The member flair below is *not* participant identity, which is why it sits
@@ -116,6 +159,7 @@ export function ParticipantRow({
   avatarRef,
   onMute,
   onLock,
+  chatControl,
   newcomerJoinedAt,
   flairNow,
   hasContent,
@@ -323,6 +367,7 @@ export function ParticipantRow({
             lockState={lockState}
             onMute={onMute}
             onLock={onLock}
+            chatControl={chatControl}
           />
         )}
       </div>
@@ -331,11 +376,26 @@ export function ParticipantRow({
 }
 
 /**
- * Moderator actions for one participant behind a kebab menu. Collapsing the four
- * controls (mute mic, turn off camera, lock/unlock mic, lock/unlock camera) into
- * a single trigger keeps every participant row the same compact shape on mobile.
- * Hand-rolled popover (no primitive in the kit) — same shape as MicSettingsPopover:
- * click-outside / Escape to close.
+ * Moderator actions for one participant behind a kebab menu. Collapsing the
+ * controls (mute mic, turn off camera, lock/unlock mic, lock/unlock camera, and
+ * — where the room has a chat — lock/unlock chat) into a single trigger keeps
+ * every participant row the same compact shape on mobile. Hand-rolled popover
+ * (no primitive in the kit) — same shape as MicSettingsPopover: click-outside /
+ * Escape to close.
+ *
+ * **The lock group is one group, and the chat lock is the last of it.** Mic,
+ * camera and chat are the three things that can be taken away from a person
+ * here, so they read as a set under one divider — and the chat lock goes last
+ * because it is the only one of the three that can be absent, so its presence
+ * or absence never reorders the two above it.
+ *
+ * **The menu grows upward from the trigger, so nothing may be added to it while
+ * it is open**: a fourth item appearing would push the three already on screen
+ * up, under a hand that is reaching for one of them. Nothing does — a menu
+ * opening is a user action, and what it holds at that moment is settled long
+ * before, because the chat panel above the rail resolved its history when the
+ * room did. Anything added here later has to keep that true rather than rely on
+ * where in the list it sits.
  */
 function ParticipantModMenu({
   className,
@@ -345,6 +405,7 @@ function ParticipantModMenu({
   lockState,
   onMute,
   onLock,
+  chatControl,
 }: {
   /** Where the menu sits in the row's wrapping order. */
   className?: string;
@@ -354,8 +415,16 @@ function ParticipantModMenu({
   lockState: { audio: boolean; video: boolean };
   onMute?: (track: "audio" | "video") => void;
   onLock?: (track: "audio" | "video", locked: boolean) => void;
+  /** The chat lock, already decided by the chat surface. See the row's props. */
+  chatControl?: ParticipantChatControl | null;
 }) {
   const t = useTranslations("voice");
+  // Chat's own namespace for chat's own act, rather than a copy under `voice.*`
+  // — one place owns the vocabulary a lock is described in. The label is the
+  // short, name-less form: this menu already carries the person's name at its
+  // head and every sibling item is a bare imperative, where a message's menu has
+  // no header and so names the person in the sentence.
+  const m = useTranslations("chat.moderation");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -447,6 +516,30 @@ function ParticipantModMenu({
             active={lockState.video}
             onClick={() => run(() => onLock?.("video", !lockState.video))}
           />
+          {chatControl != null && (
+            <MenuItem
+              icon={
+                chatControl.direction === "unlock" ? (
+                  <LockOpen className="h-4 w-4" />
+                ) : (
+                  <Lock className="h-4 w-4" />
+                )
+              }
+              label={
+                chatControl.direction === "unlock"
+                  ? m("unlockChat")
+                  : m("lockChat")
+              }
+              // Tinted while the lock stands, exactly as the mic and camera
+              // locks are: "unlock" is offered only to somebody who is locked.
+              active={chatControl.direction === "unlock"}
+              onClick={() =>
+                run(() =>
+                  chatControl.onSetLock(chatControl.direction === "lock"),
+                )
+              }
+            />
+          )}
         </div>
       )}
     </div>

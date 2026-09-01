@@ -168,6 +168,7 @@ function renderEditor(body: string) {
           mentionable: [VAINO],
           repliedTo: null,
           flashing: false,
+          actionsRevealed: false,
           capabilities: deriveChatMessageCapabilities(
             { viewer: AINO, locked: false },
             message,
@@ -185,6 +186,7 @@ function renderEditor(body: string) {
           onRestore: noop,
           onSetLock: noop,
           onRetry: noop,
+          onToggleActions: noop,
         }}
       />
     </NextIntlClientProvider>,

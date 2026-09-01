@@ -9,7 +9,37 @@ import {
   CHAT_IMAGE_THUMB_HEIGHT,
   chatThumbnailWidth,
 } from "./chat-image-geometry";
+import { isTouchGesture } from "./touch-gesture";
 import type { ChatDelivery, ChatImageRef } from "./types";
+
+/**
+ * One thumbnail, at its arithmetic size.
+ *
+ * **No retry machinery, deliberately — a `src` this component is handed is
+ * never early.** The container resolves a stored picture's URL only once the
+ * row itself says the bytes have landed (`image_stored_at`, whose realtime
+ * arrival is the announcement), so by the time an address reaches this element
+ * the object provably exists; until then the run draws the container's
+ * always-loadable placeholder inside the same arithmetic box. A load failure
+ * here is therefore the ordinary kind every image on the platform can meet —
+ * a network blip, a session that expired under the tab — and it degrades to
+ * the quiet empty box rather than to a re-attempt loop. A bounded retry used
+ * to live here to paper over the row-before-bytes window; the window is closed
+ * where it was opened, and the renderer stays dumb.
+ */
+function ChatThumbnail({ image }: { image: ChatImageRef }) {
+  return (
+    <Image
+      src={image.src}
+      alt=""
+      width={chatThumbnailWidth(image.width, image.height)}
+      height={CHAT_IMAGE_THUMB_HEIGHT}
+      unoptimized
+      style={{ height: CHAT_IMAGE_THUMB_HEIGHT }}
+      className="w-auto max-w-full rounded-md border border-border bg-muted object-contain"
+    />
+  );
+}
 
 /**
  * A burst of images, as one wrapping row.
@@ -32,6 +62,8 @@ export function ChatImageRun({
   deliveries,
   overlay,
   footer,
+  revealedIndex = null,
+  onRevealIndex,
   className,
 }: {
   images: readonly ChatImageRef[];
@@ -65,6 +97,14 @@ export function ChatImageRun({
    * moves nothing already drawn to the left of it.
    */
   footer?: (index: number) => React.ReactNode;
+  /**
+   * Which thumbnail's affordances a tap is holding open, and how to change it —
+   * the touch path's half of the precedence below. Omitted where a caller has
+   * nothing to reveal, and a tap then opens the picture on the first press
+   * exactly as a click does.
+   */
+  revealedIndex?: number | null;
+  onRevealIndex?: (index: number) => void;
   className?: string;
 }) {
   const t = useTranslations("chat.images");
@@ -92,6 +132,30 @@ export function ChatImageRun({
               aria-label={t("open", { index: index + 1, count: images.length })}
               onClick={(event) => {
                 triggerRef.current = event.currentTarget;
+                // **A finger's first tap reveals, its second opens; a cursor
+                // and a keyboard open on the first press, as they always
+                // have.** A thumbnail fills its whole cell, so there is no
+                // margin beside the picture a tap could mean something else in
+                // — the only two candidates were this and putting the reveal
+                // on the picture and the opening somewhere else entirely.
+                //
+                // Which way round is the whole question, and it is settled by
+                // what a *mouse* already gets for free: hovering a thumbnail
+                // has shown the bar before the click lands, so a click that is
+                // also a reveal would take away the one-press open for nothing.
+                // A finger has been shown nothing, so its first tap is the one
+                // that has to say what is here. The cost is the second tap on a
+                // picture, paid only by touch and only once per picture — and
+                // it buys back reply, react and remove on a photograph, which
+                // on a phone were previously unreachable altogether.
+                if (
+                  onRevealIndex !== undefined &&
+                  revealedIndex !== index &&
+                  isTouchGesture(event)
+                ) {
+                  onRevealIndex(index);
+                  return;
+                }
                 setOpenIndex(index);
               }}
               className={cn(
@@ -101,15 +165,7 @@ export function ChatImageRun({
                 deliveries?.[index] === "pending" && "opacity-60",
               )}
             >
-              <Image
-                src={image.src}
-                alt=""
-                width={chatThumbnailWidth(image.width, image.height)}
-                height={CHAT_IMAGE_THUMB_HEIGHT}
-                unoptimized
-                style={{ height: CHAT_IMAGE_THUMB_HEIGHT }}
-                className="w-auto max-w-full rounded-md border border-border bg-muted object-contain"
-              />
+              <ChatThumbnail image={image} />
             </button>
             {overlay?.(index)}
             {footer?.(index)}
@@ -120,8 +176,18 @@ export function ChatImageRun({
       {/* The overlay is the shared one, handed this burst and this surface's
           own words. A chat image already carries a servable `src` — the
           container resolved it — so there is nothing to adapt between the run
-          and the viewer, and `unoptimized` is set here because this is the half
-          that knows a blob URL when it holds one. */}
+          and the viewer.
+
+          `unoptimized` is set here and on every thumbnail above, and the
+          wire-up settled why rather than inheriting it: a stored chat image is
+          served by an authenticated app route that answers on the viewer's own
+          session COOKIES, which the optimizer's server-side fetch does not
+          carry — so an optimized request could only ever 404 — and bypassing
+          it is also what keeps the private chat-images surface out of
+          `images.remotePatterns`, where a pattern would be an optimizer
+          permission on a boundary that is one storage policy. The other two
+          kinds of `src` this component meets, a blob URL and fixture art, the
+          optimizer cannot fetch at all. */}
       <FullscreenImageViewer
         images={images}
         index={openIndex}

@@ -1,0 +1,158 @@
+import { isChatReactionCode } from "@/lib/constants/chat";
+import type {
+  ChatAccount,
+  ChatMessage,
+  ChatReactionEntry,
+} from "@/components/chat";
+import type { ChatChannelRoster, ChatHistory } from "@/services/chat";
+import type { ChatMessageRow } from "@/types";
+
+/**
+ * The turn from stored rows to the shapes the chat components draw.
+ *
+ * **Pure, and beside the container rather than inside it.** The components are
+ * transport-free by contract — they take messages and accounts and know nothing
+ * about where either came from — so *something* has to do this mapping, and
+ * keeping it out of the subscriber leaves that file about the socket. Every
+ * function here is a function of its arguments alone, which is also what makes
+ * it readable without a React tree in mind.
+ */
+
+/**
+ * Who the log can name, with the viewer guaranteed to be in it.
+ *
+ * The roster RPC returns the group's seat-holders, the product's assigned gedus
+ * and everyone who has spoken — which is everything enumerable, but not
+ * everything admitted: an admin dropping into a room is a member the moment
+ * they hold a session, and appears in the roster only once they have sent
+ * something. So the viewer is appended when the list does not already carry
+ * them.
+ *
+ * **Appending is safe for mentions and inserting would not be.** Mention
+ * resolution settles two accounts sharing a name by list position, and the
+ * roster's order is the server's; the viewer is filtered out of the mentionable
+ * list before any of that happens, so adding them at the end cannot change what
+ * anybody's `@Name` resolves to.
+ */
+export function toChatAccounts(
+  roster: ChatChannelRoster,
+  viewer: ChatAccount,
+): ChatAccount[] {
+  const accounts = roster.map((entry) => ({
+    id: entry.id,
+    name: entry.first_name,
+    role: entry.role,
+  }));
+  return accounts.some((account) => account.id === viewer.id)
+    ? accounts
+    : [...accounts, viewer];
+}
+
+/**
+ * What an image message draws while nothing servable has been resolved for it.
+ *
+ * A 1×1 transparent GIF, which over the thumbnail's own muted ground is exactly
+ * the empty box the geometry already reserves — and the box is arithmetic from
+ * the stored dimensions, so it is the right shape before anything loads and the
+ * same shape afterwards. **The point is that it is a real, always-loadable
+ * URL**: an empty `src` is not something an image element can be handed, and
+ * the fullscreen viewer pages through this same list, so one unresolvable
+ * picture in a burst must not be able to break the overlay somebody opened on
+ * its neighbour.
+ *
+ * One situation resolves to it: a row whose `image_stored_at` is still NULL —
+ * bytes in flight (seconds, ended by the flag's own realtime arrival), or lost
+ * for good (an upload failure whose compensation did not land, a send the
+ * server died in the middle of). The two are indistinguishable without a
+ * clock, and this surface deliberately runs no clocks: the honest rendering
+ * for both is the same quiet box, and a moderator's remove control is the
+ * repair for the permanent one.
+ */
+export const UNRESOLVED_CHAT_IMAGE_SRC =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+/**
+ * The log, oldest first, with each message carrying its own reactions.
+ *
+ * The history read hands back three flat lists because that is how three
+ * realtime streams patch them; the nesting a bubble wants is derived here, once
+ * per render of the panel rather than once per reaction anybody presses.
+ *
+ * **A code the build does not know is dropped rather than drawn.** The approved
+ * set is a CHECK constraint mirroring an app constant, so the two can differ for
+ * exactly as long as it takes a deploy to follow a migration — and a reaction
+ * with no glyph is better left out than rendered as a hole.
+ *
+ * **`imageSrc` is where the container's contract with the renderer is kept:**
+ * the components take a URL somebody else produced, and this is that somebody.
+ * It is handed the whole row because the answer is a pure function of row
+ * state — the sender's own blob for a picture they just sent, the read route's
+ * stable path once `image_stored_at` says the bytes landed, and nothing for a
+ * row still waiting on its flag — and nothing becomes the placeholder above
+ * rather than an empty string. No async step, no cache, no clock: the flag's
+ * realtime UPDATE re-renders the log, and the src flips inside a box that
+ * never changes shape.
+ */
+export function toChatMessages(
+  history: ChatHistory,
+  imageSrc: (row: ChatMessageRow) => string | undefined,
+): ChatMessage[] {
+  const reactionsByMessage = new Map<string, ChatReactionEntry[]>();
+  for (const reaction of history.reactions) {
+    if (!isChatReactionCode(reaction.code)) continue;
+    const entries = reactionsByMessage.get(reaction.message_id) ?? [];
+    entries.push({ code: reaction.code, senderId: reaction.sender_id });
+    reactionsByMessage.set(reaction.message_id, entries);
+  }
+
+  return history.messages.map((row) => ({
+    id: row.id,
+    senderId: row.sender_id,
+    createdAt: row.created_at,
+    body: row.body,
+    image:
+      row.image_width !== null && row.image_height !== null
+        ? {
+            // The message id, which is also the object's name in the bucket
+            // and the id the read route serves it by — one identity for the
+            // row, the bytes and the React key.
+            id: row.id,
+            src: imageSrc(row) ?? UNRESOLVED_CHAT_IMAGE_SRC,
+            width: row.image_width,
+            height: row.image_height,
+          }
+        : null,
+    replyToId: row.reply_to_message_id,
+    editedAt: row.edited_at,
+    hiddenAt: row.hidden_at,
+    hiddenBy: row.hidden_by,
+    reactions: reactionsByMessage.get(row.id) ?? [],
+    // Everything that came back from the server is, by definition, settled.
+    // The pending and failed rows are the container's own and never live here.
+    delivery: "sent" as const,
+  }));
+}
+
+/**
+ * Who is currently locked, as far as this viewer is allowed to know.
+ *
+ * A participant may read only their own lock row, so an empty set means "nobody
+ * I am permitted to see" rather than "nobody" — which is exactly what the UI
+ * needs, since the only lock a non-moderator has to act on is their own.
+ * Unlocking clears the stamp rather than deleting the row, so the standing
+ * locks are the rows with a stamp on them.
+ *
+ * **It takes the lock rows rather than the whole history, so a caller can
+ * memoise on them.** The three streams patch one cached object, and each patch
+ * replaces only its own array — so `locks` holds its identity through every
+ * message and every reaction, and a derivation keyed to it re-runs when a lock
+ * actually moves rather than whenever anybody speaks. Handing this the history
+ * would have made that impossible to express.
+ */
+export function toLockedAccountIds(
+  locks: ChatHistory["locks"],
+): Set<string> {
+  return new Set(
+    locks.filter((lock) => lock.locked_at !== null).map((lock) => lock.user_id),
+  );
+}

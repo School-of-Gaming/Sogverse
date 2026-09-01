@@ -2,9 +2,16 @@
 
 import { useState } from "react";
 import { GamerFlairDialog } from "@/components/member-flair";
+import { ChatView, deriveChatLockControl } from "@/components/chat";
+import {
+  CHAT_ACCOUNT_IDS,
+  CHAT_SCENE_ACCOUNTS,
+} from "@/components/chat/mock-chat-fixtures";
+import { FIXTURE_TIMEZONE } from "@/components/family/mock-enrollment-fixtures";
 import { VoiceRoom } from "@/components/voice/VoiceRoom";
 import { VoiceRoomContext } from "@/components/voice/VoiceRoomProvider";
 import { VoiceMemberFlairProvider } from "@/components/voice/VoiceMemberFlairProvider";
+import type { ParticipantChatControls } from "@/components/voice/ParticipantRow";
 import {
   buildFlairFixture,
   buildParticipants,
@@ -18,6 +25,7 @@ import type {
 } from "@/components/voice/hooks/types";
 import { composeZones } from "@/lib/voice/zone-composition";
 import type { GamerCreation } from "@/types";
+import { useChatSceneStore } from "./chat-scene-store";
 
 /**
  * The scheduled group voice room, over fixtures, as staff and as a child.
@@ -65,6 +73,54 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
     id: string;
     name: string;
   } | null>(null);
+
+  /**
+   * The chat panel, over the same fixtures and the same local store the chat
+   * scene runs on.
+   *
+   * **The slot cannot simply be left empty here.** A scene mocks the whole page
+   * as the role meets it, and chat is a section of this page — so the room shows
+   * the composition in place, at the width and height the room actually grants
+   * it, while `/preview/chat/session` stays the design's one home for the states
+   * themselves. Sharing the store is what keeps the two from forking: this scene
+   * adds no fixture of its own, it just picks who is looking.
+   */
+  const chat = useChatSceneStore(
+    now,
+    isStaff ? CHAT_ACCOUNT_IDS.sanna : CHAT_ACCOUNT_IDS.aino,
+  );
+  const chatViewer =
+    CHAT_SCENE_ACCOUNTS.find((account) => account.id === chat.viewerId) ??
+    CHAT_SCENE_ACCOUNTS[0];
+
+  /**
+   * The chat lock the rail offers, over the same fixtures — **derived by the
+   * production function, not decided here.** The scene feeds
+   * `deriveChatLockControl` real fixture state and gets real answers back, which
+   * is what makes this scene worth looking at: the Gedu scenario shows the
+   * control on Aino, Siiri and Marja, points it at *unlock* for Väinö (whom the
+   * fixtures have locked), and offers nothing against Sanna herself. The gamer
+   * scenario is handed the identical function and gets `null` everywhere,
+   * because Aino is not a moderator — the same code path that keeps a child from
+   * seeing it live.
+   *
+   * The five members of the room who are not on the *chat* roster — Elias,
+   * Linnéa, Oskar, Emil and Hilda — get no control either, which is the
+   * voice-only case the rail has to keep refusing: being in the call is not
+   * being in the channel.
+   */
+  const participantChatControls: ParticipantChatControls = (userId) => {
+    const direction = deriveChatLockControl(
+      chatViewer,
+      CHAT_SCENE_ACCOUNTS.find((account) => account.id === userId) ?? null,
+      chat.lockedIds.has(userId),
+    );
+    if (direction === null) return null;
+    return {
+      direction,
+      onSetLock: (locked) => chat.setLock(userId, locked),
+    };
+  };
 
   const zones = composeZones(VOICE_ROOM_CUSTOM_ZONES, "preview-group");
   const participantsByZone = new Map<string, VoiceParticipant[]>();
@@ -116,8 +172,6 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
     muteParticipant: noop,
     lockParticipant: noop,
     getAnalyser: () => null,
-    messages: [],
-    sendChatMessage: noop,
     join: asyncNoop,
     leave: asyncNoop,
   };
@@ -150,7 +204,31 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
             into the dashboard layout's container, and a scene that added a
             width would be judging the room at a width it never has. */}
         <VoiceMemberFlairProvider value={flair}>
-          <VoiceRoom onLeave={asyncNoop} />
+          <VoiceRoom
+            onLeave={asyncNoop}
+            participantChatControls={participantChatControls}
+            chat={(heightClassName) => (
+              <ChatView
+                messages={chat.messages}
+                accounts={CHAT_SCENE_ACCOUNTS}
+                viewer={chatViewer}
+                lockedAccountIds={chat.lockedIds}
+                typingAccountIds={chat.typingIds}
+                heightClassName={heightClassName}
+                timeZone={FIXTURE_TIMEZONE}
+                handlers={{
+                  onSend: chat.send,
+                  onToggleReaction: chat.toggleReaction,
+                  onEdit: chat.edit,
+                  onDelete: chat.remove,
+                  onHide: chat.remove,
+                  onRestore: chat.restore,
+                  onSetLock: chat.setLock,
+                  onRetry: chat.retry,
+                }}
+              />
+            )}
+          />
         </VoiceMemberFlairProvider>
       </VoiceRoomContext.Provider>
 

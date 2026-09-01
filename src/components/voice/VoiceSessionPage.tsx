@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { GamerFlairDialog } from "@/components/member-flair";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
 import { VoiceRoom } from "@/components/voice/VoiceRoom";
+import { GroupSessionChat } from "@/components/voice/GroupSessionChat";
+import type { ParticipantChatControls } from "@/components/voice/ParticipantRow";
 import { VoiceMemberFlairProvider } from "@/components/voice/VoiceMemberFlairProvider";
 import { deriveVoiceMemberFlair } from "@/components/voice/derive-voice-member-flair";
 import {
@@ -41,6 +43,32 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
   // connecting spinner with no way out.
   const [wasJoined, setWasJoined] = useState(false);
   const hasAttemptedJoin = useRef(false);
+
+  /**
+   * The chat lock offered against each person in the room, published by the
+   * chat container and handed to the participant rail.
+   *
+   * **The page is the seam here for the same reason it is for the staff
+   * overlay.** The rail and the panel are siblings inside the room, the room is
+   * a pure consumer of its context, and chat state deliberately never enters
+   * that context — so the one place that can see both is out here. What travels
+   * is a function of a user id, not the chat's state: the container keeps
+   * ownership of the lock rows and of the write, and the rail is handed a
+   * conclusion it renders.
+   *
+   * The published value is memoised on the roster and the standing locks, so
+   * this state settles once and then moves only when a lock actually does.
+   */
+  const [chatControls, setChatControls] = useState<ParticipantChatControls | null>(
+    null,
+  );
+  // Wrapped, because a state setter handed a *function* would run it as an
+  // updater — and the value here is a function. Stable by construction, which
+  // is what keeps the publishing effect from firing on every render.
+  const publishChatControls = useCallback(
+    (controls: ParticipantChatControls | null) => setChatControls(() => controls),
+    [],
+  );
 
   // Auto-join on mount (and reconnect on refresh). No client-side
   // session-end polling — Daily's token `exp` boundary is the hard
@@ -191,7 +219,26 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
   return (
     <>
       <VoiceMemberFlairProvider value={flair}>
-        <VoiceRoom onLeave={handleLeave} leaveLabel={t('leave')} />
+        <VoiceRoom
+          onLeave={handleLeave}
+          leaveLabel={t('leave')}
+          // The live chat, in the height the room grants it. This page is the
+          // seam for chat exactly as it is for the staff overlay: the room and
+          // everything in it are pure consumers, so the channel, the history
+          // read and the subscription belong out here beside the token.
+          chat={(heightClassName) => (
+            <GroupSessionChat
+              groupId={groupId}
+              heightClassName={heightClassName}
+              onChatControlsChange={publishChatControls}
+            />
+          )}
+          // ...and what that container knows about who may be locked, handed
+          // back to the rail on the other side of the room. Null until the
+          // channel opens, which is the same thing "this room has no chat"
+          // looks like from here.
+          participantChatControls={chatControls ?? undefined}
+        />
       </VoiceMemberFlairProvider>
 
       {/* Outside the provider's subtree and mounted by the page, exactly as the

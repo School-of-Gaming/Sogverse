@@ -1001,8 +1001,6 @@ function VoiceZonesDemo() {
     muteParticipant: noop,
     lockParticipant: noop,
     getAnalyser: () => null,
-    messages: [],
-    sendChatMessage: noop,
     join: asyncNoop,
     leave: asyncNoop,
   };
