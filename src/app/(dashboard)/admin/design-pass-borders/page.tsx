@@ -751,7 +751,9 @@ function AdminStripRow({
         hovered && "bg-accent",
       )}
     >
-      <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full">
+      {/* `relative` is load-bearing: the Identicon is an `absolute inset-0`
+          SVG and without a positioned wrapper it fills the page. */}
+      <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full">
         <Identicon id="e067379f-6728-4677-a067-6a2560da213a" size={32} />
       </div>
       <div className="min-w-0 flex-1">
