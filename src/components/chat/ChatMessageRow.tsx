@@ -92,7 +92,14 @@ export function ChatMessageRow({
           // A ring and a tint, never a border: both leave the box exactly the
           // size it was, so a message that becomes highlighted — because a
           // reply jumped to it, or because it names the reader — moves nothing.
-          mentionsViewer && "bg-primary/10 ring-1 ring-primary/40",
+          //
+          // The two highlights are deliberately different colours, because they
+          // are different sentences. **Info is the mention colour** — the same
+          // token the chip inside the body wears, so "this one is about you"
+          // reads the same wherever it appears. The flash stays **primary**: it
+          // is not a mention, it is the log pointing at where a jump landed,
+          // and it fades after a second.
+          mentionsViewer && "bg-info/10 ring-1 ring-info/40",
           flashing && "bg-primary/20 ring-1 ring-primary",
           message.delivery === "pending" && "opacity-60",
         )}
@@ -155,18 +162,30 @@ export function ChatMessageRow({
         className="px-1.5"
       />
 
-      <ChatReactionRow
-        reactions={message.reactions}
-        viewerId={viewer.id}
-        canReact={capabilities.canReact}
-        onToggle={handlers.onToggleReaction}
-        className="mt-1 px-1.5"
-      />
+      {/* A removed message shows no reactions, to anybody. The tally is a
+          record of what people thought of words that are no longer on screen —
+          six laughing faces under a tombstone tell a reader what kind of
+          message it was, which is exactly what removing it took away. The
+          reactions themselves are untouched in the data; this is only whether
+          they are drawn. (A moderator still reads the dimmed original above:
+          that is the soft delete doing its job, and it is deliberate that the
+          people who can see the body are the only ones the reactions would
+          have told anything new.) */}
+      {!hidden && (
+        <ChatReactionRow
+          reactions={message.reactions}
+          viewerId={viewer.id}
+          canReact={capabilities.canReact}
+          onToggle={handlers.onToggleReaction}
+          className="mt-1 px-1.5"
+        />
+      )}
 
       {!editing && (
         <ChatMessageActions
           sender={sender}
           capabilities={capabilities}
+          unsent={message.delivery !== "sent"}
           onReply={handlers.onReply}
           onToggleReaction={handlers.onToggleReaction}
           onStartEdit={() => setDraft(message.body ?? "")}

@@ -14,7 +14,6 @@ export { ChatQuotedMessage, ChatReplyStrip } from "./ChatReply";
 export { ChatDeliveryNote } from "./ChatDeliveryNote";
 export { ChatReactionRow, ChatReactionPicker } from "./ChatReactionRow";
 export { ChatImageRun } from "./ChatImageRun";
-export { ChatImageViewer } from "./ChatImageViewer";
 export { ChatBodyText } from "./ChatBodyText";
 
 export {
@@ -31,6 +30,7 @@ export {
   chatMentionIds,
   chatMentionToken,
   parseChatBody,
+  resolveChatMentions,
   type ChatBodySegment,
 } from "./chat-body";
 export {

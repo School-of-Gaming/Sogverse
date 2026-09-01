@@ -336,6 +336,18 @@ Because a box's ratio comes from data the database only sanity-bounds, the deriv
 is clamped and pictures are drawn contained: a degenerate stored pair letterboxes rather
 than stretching the row off the page.
 
+**Rule: the fullscreen overlay is one shared component (`components/ui`), and what stays
+here is the *collection*.** Opening, paging with wrap-around, the counter, closing and
+where focus lands are one set of expectations wherever a picture is opened to be looked
+at, and the chat log has exactly the same ones — so there is one overlay and it takes a
+list of `{ src, width, height }` plus a position. What differs between the two surfaces is
+what a set *is* and where its pictures live, and that is what the thin viewer in this
+module still owns: a session photo is addressed by its **id** through the shared
+session-image URL helper, and the words are the feed's own (photos, not images), handed to
+the overlay as labels rather than pulled from a namespace of its own. Chat needs no
+equivalent adapter because its images already carry a servable `src`. The gallery, the
+strip and everything about what belongs in one set are untouched by that split.
+
 **Rule: the viewer is built on the shared dialog primitive, at a near-fullscreen size the
 primitive itself expresses.** The primitive already owns the portal, the backdrop, the
 z-layer and an Escape answered by exactly one dialog when several are stacked; a lightbox

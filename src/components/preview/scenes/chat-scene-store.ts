@@ -227,11 +227,26 @@ export function useChatSceneStore(now: Date): ChatSceneStore {
     // Self-delete and a moderator's removal are the same write, which is what
     // makes them the same tombstone: only `hiddenBy` differs, and nothing on
     // screen reads it.
+    //
+    // **Except on a message the server never took.** A `failed` row is an
+    // optimistic echo nobody else has ever seen, so there is nothing to
+    // tombstone and nobody to tell — deleting it drops it. Leaving a "this
+    // message was removed" marker behind would be announcing a message that
+    // never existed, and it is the sender's own log it would sit in.
     remove: (messageId) =>
-      patch(messageId, {
-        hiddenAt: new Date().toISOString(),
-        hiddenBy: viewerId,
-      }),
+      setMessages((current) =>
+        current.flatMap((message) => {
+          if (message.id !== messageId) return [message];
+          if (message.delivery !== "sent") return [];
+          return [
+            {
+              ...message,
+              hiddenAt: new Date().toISOString(),
+              hiddenBy: viewerId,
+            },
+          ];
+        }),
+      ),
     restore: (messageId) => patch(messageId, { hiddenAt: null, hiddenBy: null }),
     toggleReaction: (messageId, code) =>
       setMessages((current) =>

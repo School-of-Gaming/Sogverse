@@ -45,7 +45,25 @@ The rules the module encodes, each with its reason, are in its own header. The o
 knowing from outside: **a lock takes away everything that writes — replies and reactions
 included — except deleting your own message.** A reaction is a message with fewer
 characters; taking back something you regret is the one thing a locked member most
-plausibly still wants.
+plausibly still wants. **A message that *failed* to send can be deleted too** — the
+refusal leaves a bubble in the sender's own log with nothing but a retry on it, and
+"it did not go and I want it gone" has to have an answer. Nothing is asked of the server
+(there is no row yet), so it drops rather than leaving a tombstone, and it is not
+confirmed: the confirmation warns about what other people will see, and nobody has seen
+it. A *pending* one still has an outcome coming and stays excluded.
+
+**Rule: per-person moderation acts are symmetric — any moderator may apply them to
+anyone, fellow moderators and admins included. Lock-class acts are not.** A
+platform-wide principle *(owner ruling, 2026-09-01)*, stated in full in the module's own
+header and applying wherever there are moderator controls, the voice room included.
+Removing a message acts on one thing that was said, in front of the people who saw it: it
+is reversible, recorded, and takes nothing away from the person it lands on — and a rule
+exempting staff would make the one message nobody could take down the one a moderator is
+standing next to. A **lock** is a judgement about the person rather than the message, and
+between colleagues it is not moderation but one member of staff silencing another in
+front of children they are both responsible for. So `canHide` carries no mod-vs-mod test
+and `lockControl` does, and both halves are pinned by tests so neither reads as an
+accident later.
 
 ## Layout rules this surface leans on hardest
 
@@ -66,6 +84,12 @@ plausibly still wants.
   reuse shape. The fixed height covers the log *plus the reply strip*: starting a
   reply hands the strip its height out of the log's, so no composer state can resize
   the surface or move anything below it.
+- **The mention suggestion list floats above the composer, overlaying the log.** In flow
+  it grew the composer with every keystroke after an `@`, which changed the height of the
+  whole surface — the same defect the fixed log and the reply strip's borrowed height
+  exist to prevent, arriving from the other end *(owner ruling)*. It is anchored to the
+  top of the composer's box and layered above the log's own absolutely-positioned
+  children by z-index rather than by DOM order.
 - **Everything that appears on hover or on somebody else's schedule is absolutely
   positioned**: the message action bar, the unread pill, and the typing indicator. None
   of them can move a row. The indicator's spot took three tries to land (its doc
@@ -89,8 +113,36 @@ A mention rides *inside* the body as `@[Name](id)` — not a join table. A v1 me
 chip plus emphasis for the person named: no badge, no sound, no out-of-room notification.
 The name is a snapshot so the sentence reads wherever the body travels; the **id** is the
 truth, so a renderer that has the account draws its current name and the highlight keys on
-an account rather than on a string anybody could type. A bare `@name` somebody typed by
-hand stays plain text, because it is a mention of nobody.
+an account rather than on a string anybody could type.
+
+**Rule: the composer never shows that token.** Picking a name inserts `@Name` — the form
+the sentence reads in — and the substitution happens once, at send, over the whole draft
+(`resolveChatMentions`). A writer watching brackets and a UUID appear inside their own
+half-finished sentence is watching the plumbing *(owner ruling)*, and the character cap
+would be counting characters they cannot see. The stored format is unchanged; what
+changed is that nobody has to look at it.
+
+Two consequences follow, and they pull in opposite directions if you read them quickly:
+
+- **Hand-typing `@Name` of a real account now becomes a mention at send.** Resolution is
+  case-insensitive, tries the longest name first so a name that prefixes another does not
+  strand the rest of it, requires a letter or digit *not* to follow (`@Ainoa` is not
+  Aino), and leaves anything matching no account exactly as typed. Two accounts sharing a
+  name resolve to whichever the caller listed first — an accepted v1 tolerance, stated in
+  the function's own header with what fixing it would cost.
+- **A bare `@name` inside an already-stored body still renders as plain text.** That rule
+  governs *rendering* and is untouched: a body reaching a renderer has already been
+  through resolution, so an unresolved `@` in one is a mention of nobody.
+
+**Rule: mentions are the `info` token, everywhere they show** *(owner ruling)* — the chip
+inside the body and the tint-and-ring on a row that names the reader are one colour,
+because they are one concept. Primary stays the surface's own emphasis (a sender's name,
+a quote bar) and, specifically, the **jump flash**: that is the log pointing at where a
+reply landed, not a mention, and it fades.
+
+**Rule: the character cap counts the *composed* text, so the stored body can run longer.**
+See the constant's own header: the send RPC either measures the display length or caps the
+column high enough, and must not apply the composer's number to the stored string.
 
 ## The reaction set is a constants edit
 
@@ -105,6 +157,13 @@ reaches a column.
 **Rule: the tally row is drawn in the approved set's order, never in arrival order.** A
 row that reshuffled whenever somebody was first to press a different face would move a
 button under a reader's cursor.
+
+**Rule: a removed message draws no reactions, for any viewer** *(owner ruling)*. Six
+laughing faces standing under a tombstone tell a reader what kind of message it was,
+which is exactly what removing it took away — so the tally goes with the words. This is a
+rendering decision and nothing else: the reactions are untouched in the data, and a
+moderator still reads the dimmed original above, because the people who can see the body
+are the only ones the tally could have told anything new.
 
 ## Text XOR one image
 
@@ -127,6 +186,17 @@ blob, so revoking it at the composer would blank the thumbnail the sender just p
 message's URL is freed when the page goes, which is the honest lifetime until a bucket
 exists to re-point `src` at.
 
+**Rule: the fullscreen overlay is not this module's — it is the shared
+`FullscreenImageViewer` in `components/ui`** *(owner ruling: the two forks are combined)*.
+Opening, paging with wrap-around, the counter, closing and where focus lands are one set
+of expectations wherever a picture is opened to be looked at, and the session feed has
+exactly the same ones. What stays here is the *collection*: a chat set is one send's
+burst, its images already carry a servable `src`, and the words are chat's own — handed
+to the overlay as labels, which is what lets a chat say "image" where a session card says
+"photo" without a shared namespace forcing one vocabulary on both. `ChatImageRun` passes
+its images straight through; nothing adapts them, which is why chat has no viewer file at
+all where the session feed keeps a thin one to resolve ids into URLs.
+
 **Rule: every chat image renders `unoptimized`, and the wire-up has to revisit that.** It
 is right today because every `src` this surface meets is a blob URL or fixture art, neither
 of which Next's optimizer can fetch — but the renderer takes a URL somebody else produced
@@ -141,6 +211,11 @@ judged by how a run of messages sits against the run above it, at the width the 
 actually gets, inside a log that scrolls — none of which a demo card can show. The scene
 at `/preview/chat/session` is where every state lives side by side, and two homes for one
 thing is worse than either alone, because it is the style guide's copy that goes stale.
+
+The shared fullscreen viewer is not an exception to that: it is a `components/ui`
+overlay two surfaces render, it opens above whatever summoned it and so can be judged
+alone, and the style guide demos it there. What has no demo and must not gain one is
+chat's *composition* of it — a burst of thumbnails in a scrolling log.
 
 The scene is one scenario because the account switcher is what a second scenario would
 have been: child, locked child, parent, Gedu and admin are all reachable without leaving

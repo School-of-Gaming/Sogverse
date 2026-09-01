@@ -50,11 +50,24 @@ export function isChatReactionCode(value: string): value is ChatReactionCode {
 }
 
 /**
- * The character cap on one message's body.
+ * The character cap on one message's **composed** text — what the writer sees
+ * and typed, mentions included as the `@Name` they read.
  *
  * Inherited from the app-message chat this replaces: 500 characters is a
- * paragraph, and a chat log is not where anybody writes an essay. The composer
- * enforces it and the send RPC will enforce it again.
+ * paragraph, and a chat log is not where anybody writes an essay. Counting the
+ * composed form is the only honest place to count it: a cap has to be a
+ * promise about the sentence somebody is writing, and a writer cannot be asked
+ * to budget for markup the composer never shows them.
+ *
+ * **The stored body can therefore be longer than this.** A mention leaves the
+ * composer as `@Name` and reaches the wire as `@[Name](uuid)` — about forty
+ * characters more, each — so a 500-character draft naming three people stores
+ * roughly 620. The send RPC has to account for that, and there are only two
+ * honest ways: count the *display* length server-side (flatten the tokens back
+ * and measure that), or cap the stored column high enough that no legal draft
+ * can exceed it. What it must not do is apply this number to the stored string,
+ * which would refuse sentences the composer said were fine — with the cap
+ * biting hardest on exactly the messages that name the most people.
  */
 export const MAX_CHAT_MESSAGE_LENGTH = 500;
 

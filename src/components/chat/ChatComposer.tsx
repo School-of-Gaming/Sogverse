@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { ChatComposerCapabilities } from "./capabilities";
-import { chatMentionToken } from "./chat-body";
+import { resolveChatMentions } from "./chat-body";
 import {
   CHAT_IMAGE_THUMB_HEIGHT,
   chatThumbnailWidth,
@@ -49,6 +49,12 @@ const MENTION_PATTERN = /@([^\s@]{0,32})$/;
  * when one of them arrives. (The reply strip is not here for the same reason:
  * it lives at the bottom of the log's fixed column, borrowing its height from
  * the log, so starting a reply cannot resize the surface either.)
+ *
+ * **The mention list is the one thing that does not grow the box at all**: it
+ * floats above it, overlaying the bottom of the log. In flow it resized the
+ * whole chat surface on every keystroke after an `@` — and a surface that
+ * changes height while somebody types is the same defect as one that changes
+ * height while somebody reads, arriving from the other end.
  */
 export function ChatComposer({
   capabilities,
@@ -127,7 +133,11 @@ export function ChatComposer({
   };
 
   const submit = () => {
-    const drafts = fanOutChatSend(text, staged, replyingTo?.id ?? null);
+    // The one place the display form becomes the stored one. Everything above
+    // this line — the field, the cap, the suggestion list, the caret — works in
+    // `@Name`; everything below it works in `@[Name](id)`.
+    const body = resolveChatMentions(text, accounts);
+    const drafts = fanOutChatSend(body, staged, replyingTo?.id ?? null);
     if (drafts.length === 0) return;
     onSend(drafts);
     setText("");
@@ -144,11 +154,20 @@ export function ChatComposer({
     setMentionIndex(0);
   };
 
+  /**
+   * Picking a name writes `@Name ` — what the sentence reads as, never the
+   * stored token *(owner ruling)*. A writer watching `@[Aino](3f2b…)` appear in
+   * their own half-finished sentence is watching the plumbing, and the cap
+   * counts characters they cannot see. The token is put back at send, over the
+   * whole draft, so a name typed by hand and a name picked from this list end
+   * up identical — which is also why the trailing space matters: it ends the
+   * name, closes the suggestion list, and is where the sentence carries on.
+   */
   const insertMention = (account: ChatAccount) => {
     const field = fieldRef.current;
     const caret = field?.selectionStart ?? text.length;
     const before = text.slice(0, caret).replace(MENTION_PATTERN, "");
-    const token = `${chatMentionToken(account)} `;
+    const token = `@${account.name} `;
     setText(`${before}${token}${text.slice(caret)}`);
     setMentionQuery(null);
     setMentionIndex(0);
@@ -191,7 +210,10 @@ export function ChatComposer({
   return (
     <div
       className={cn(
-        "rounded-md border border-border bg-background transition-colors",
+        // `relative` is what the mention list hangs off: it floats above this
+        // box rather than sitting inside it, so the composer's own height
+        // never depends on whether somebody is halfway through a name.
+        "relative rounded-md border border-border bg-background transition-colors",
         dragging && "border-primary bg-primary/5",
         className,
       )}
@@ -247,10 +269,20 @@ export function ChatComposer({
         </ul>
       )}
 
+      {/* **Floated over the log, never in flow.** An in-flow list grew the
+          composer as somebody typed `@`, which pushed nothing below it (there
+          is nothing below it) but changed the height of the whole surface —
+          the same thing the fixed-height log and the reply strip's borrowed
+          height exist to prevent, arriving from the other end. Anchored to the
+          top of this box it overlays the log's last line or two: content a
+          reader is not looking at, because they are typing, and it is gone the
+          moment the name is picked. Above the log's own absolutely-positioned
+          children (the unread pill) by z-index rather than by DOM order, so
+          neither can be reordered into covering the other. */}
       {suggestions.length > 0 && (
         <ul
           aria-label={t("mentionList")}
-          className="m-2 mb-0 overflow-hidden rounded border border-border bg-popover"
+          className="absolute inset-x-0 bottom-full z-20 mb-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-lg"
         >
           {suggestions.map((account, index) => (
             <li key={account.id}>

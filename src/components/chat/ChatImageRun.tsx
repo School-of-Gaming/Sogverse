@@ -3,12 +3,12 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { FullscreenImageViewer } from "@/components/ui/fullscreen-image-viewer";
 import { cn } from "@/lib/utils";
 import {
   CHAT_IMAGE_THUMB_HEIGHT,
   chatThumbnailWidth,
 } from "./chat-image-geometry";
-import { ChatImageViewer } from "./ChatImageViewer";
 import type { ChatDelivery, ChatImageRef } from "./types";
 
 /**
@@ -117,10 +117,22 @@ export function ChatImageRun({
         ))}
       </ul>
 
-      <ChatImageViewer
+      {/* The overlay is the shared one, handed this burst and this surface's
+          own words. A chat image already carries a servable `src` — the
+          container resolved it — so there is nothing to adapt between the run
+          and the viewer, and `unoptimized` is set here because this is the half
+          that knows a blob URL when it holds one. */}
+      <FullscreenImageViewer
         images={images}
         index={openIndex}
         onIndexChange={setOpenIndex}
+        unoptimized
+        labels={{
+          viewer: (position, count) => t("viewer", { index: position, count }),
+          previous: t("previous"),
+          next: t("next"),
+          close: t("close"),
+        }}
         onClose={() => {
           setOpenIndex(null);
           // Back to the thumbnail that was pressed, never to whichever one the

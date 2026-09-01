@@ -15,8 +15,9 @@ import type { ChatAccount, ChatMessage } from "@/components/chat/types";
  *
  * The cases below are written per rule rather than per role, because the rules
  * are what a future reader has to not break: a lock takes away everything that
- * writes, a removed message offers only putting it back, and moderation comes
- * from an allow-list of roles rather than from excluding one.
+ * writes, a removed message offers only putting it back, moderation comes from
+ * an allow-list of roles rather than from excluding one, and per-person
+ * moderation is symmetric while a lock is not.
  */
 
 const AINO: ChatAccount = { id: "aino", name: "Aino", role: "gamer" };
@@ -211,6 +212,83 @@ describe("deriveChatMessageCapabilities", () => {
       expect(caps.canReply, delivery).toBe(false);
       expect(caps.canHide, delivery).toBe(false);
     }
+  });
+
+  it("lets a sender delete their own message that failed to send", () => {
+    // The refusal leaves a bubble in the sender's own log with nothing but a
+    // retry on it, and "it did not go and I want it gone" has to have an
+    // answer. Nothing is asked of the server — there is no row yet.
+    const caps = deriveChatMessageCapabilities(
+      { viewer: AINO, locked: false },
+      message({ delivery: "failed" }),
+      AINO,
+      unlocked,
+    );
+    expect(caps.canDelete).toBe(true);
+    // And it is still nothing else: a failed message is not a thing anybody
+    // can answer, quote or moderate.
+    expect(caps.canEdit).toBe(false);
+    expect(caps.canReply).toBe(false);
+    expect(caps.canReact).toBe(false);
+  });
+
+  it("does not offer to delete a message still in flight", () => {
+    // A pending send has an outcome coming; deleting it would race the
+    // acknowledgement. Waiting the moment out loses nothing, because it can be
+    // deleted either way it lands.
+    const caps = deriveChatMessageCapabilities(
+      { viewer: AINO, locked: false },
+      message({ delivery: "pending" }),
+      AINO,
+      unlocked,
+    );
+    expect(caps.canDelete).toBe(false);
+  });
+
+  it("does not offer somebody else's failed message to a moderator", () => {
+    // Deleting a failed message is a sender taking back their own echo, not a
+    // moderation act — there is nothing for anybody else to remove.
+    const caps = deriveChatMessageCapabilities(
+      { viewer: SANNA, locked: false },
+      message({ delivery: "failed" }),
+      AINO,
+      unlocked,
+    );
+    expect(caps.canDelete).toBe(false);
+    expect(caps.canHide).toBe(false);
+  });
+
+  /**
+   * ==========================================================================
+   * The moderation symmetry principle (owner ruling, 2026-09-01)
+   * ==========================================================================
+   *
+   * Per-person acts — removing a message, muting a mic — are symmetric: any
+   * moderator may apply them to anyone, colleagues included. Lock-class acts
+   * are not. Both halves are pinned here so neither reads as an accident of
+   * how two functions happen to be written.
+   */
+  it("lets a gedu remove an admin's message — moderation is symmetric", () => {
+    const caps = deriveChatMessageCapabilities(
+      { viewer: SANNA, locked: false },
+      message({ senderId: PETRA.id }),
+      PETRA,
+      unlocked,
+    );
+    expect(caps.canHide).toBe(true);
+  });
+
+  it("does not let a gedu lock an admin — a lock is not symmetric", () => {
+    // A removal acts on one thing that was said and takes nothing away; a lock
+    // silences a colleague in front of the children they are both responsible
+    // for, which is a staff problem handled by people, not by this menu.
+    const caps = deriveChatMessageCapabilities(
+      { viewer: SANNA, locked: false },
+      message({ senderId: PETRA.id }),
+      PETRA,
+      unlocked,
+    );
+    expect(caps.lockControl).toBeNull();
   });
 
   it("points the lock switch at whichever way the sender currently is", () => {

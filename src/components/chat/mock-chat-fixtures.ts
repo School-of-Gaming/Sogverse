@@ -103,7 +103,11 @@ const FIXTURE_IMAGES = {
   },
 } as const satisfies Record<string, ChatImageRef>;
 
-/** A mention token, spelled the way the composer spells one. */
+/**
+ * A mention token — the *stored* form, which is what a seeded message is: a row
+ * that has already been sent. What the composer shows while somebody writes one
+ * is `@Name`; the substitution happens at send.
+ */
 function mention(id: string, name: string): string {
   return `@[${name}](${id})`;
 }

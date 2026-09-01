@@ -473,6 +473,7 @@ function ChatImageRunItem({
           <ChatMessageActions
             sender={accounts.get(messages[index].senderId) ?? null}
             capabilities={capabilities[index]}
+            unsent={messages[index].delivery !== "sent"}
             onReply={() => handlers.onReply(messages[index].id)}
             onToggleReaction={(code) =>
               handlers.onToggleReaction(messages[index].id, code)

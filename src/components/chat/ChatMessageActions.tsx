@@ -39,6 +39,7 @@ import type { ChatAccount } from "./types";
 export function ChatMessageActions({
   sender,
   capabilities,
+  unsent = false,
   onReply,
   onToggleReaction,
   onStartEdit,
@@ -50,6 +51,18 @@ export function ChatMessageActions({
 }: {
   sender: ChatAccount | null;
   capabilities: ChatMessageCapabilities;
+  /**
+   * Whether the server never took this message — the `failed` echo a sender is
+   * allowed to take back.
+   *
+   * It changes what deleting *means*, so it changes whether deleting is
+   * confirmed. A sent message leaves a tombstone other people read, which is
+   * what the confirmation warns about; an unsent one leaves nothing, because
+   * nobody but the sender has ever seen it. Confirming that would ask somebody
+   * to think about a consequence that does not exist, in words ("everyone will
+   * see that a message was removed") that would not be true.
+   */
+  unsent?: boolean;
   onReply: () => void;
   onToggleReaction: (code: ChatReactionCode) => void;
   onStartEdit: () => void;
@@ -163,7 +176,10 @@ export function ChatMessageActions({
                 destructive
                 onClick={() => {
                   setMenuAnchor(null);
-                  setConfirming("delete");
+                  // Nothing to warn about on a message that never went, so it
+                  // goes straight through — see `unsent` above.
+                  if (unsent) onDelete();
+                  else setConfirming("delete");
                 }}
               />
             )}

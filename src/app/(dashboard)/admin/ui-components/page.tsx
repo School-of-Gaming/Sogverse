@@ -1999,7 +1999,10 @@ function SessionPhotosDemo() {
           one gets no arrows at all. Escape, the backdrop, the margins beside
           the picture, the picture itself and the corner button all close it;
           the three controls do not, which is why pressing next is never also a
-          request to leave.
+          request to leave. The overlay itself is the shared{" "}
+          <strong>FullscreenImageViewer</strong> &mdash; the chat log opens the
+          same one over a send&rsquo;s burst of images, in its own words &mdash;
+          and what is drawn here is the session feed&rsquo;s set going into it.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button
