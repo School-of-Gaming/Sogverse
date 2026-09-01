@@ -155,6 +155,14 @@ Owner direction (2026-08-31), added during implementation:
     and a six-territory read-only census swept every surface against the draft doctrine
     (rings: calm / family story / full palette; function → grammar → decoration). Census
     findings and the doctrine's open seams are triaged with the owner before any wiring.
+18. **The ensemble rule** (owner, 2026-09-01): amber and violet stay the brand leads; the
+    four tertiaries (pink, green, blue, orange) should read as **equally represented**
+    across the app in general, so grammar frequency must not skew the showcase. Two
+    halves: semantics are trimmed where they would flood (mechanical acknowledgements —
+    copied/saved/sent — stop converging into glow green; glow is reserved for domain
+    facts: progress, achievement, presence, liveness), and free colour (decoration,
+    identity, marketing) is spent preferentially on the under-represented families —
+    when colour is free, pick the family the surface hears least.
 
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
