@@ -136,9 +136,9 @@ Owner direction (2026-08-31), added during implementation:
     is separable — no face ruling waits on a colour decision — so it moved out of the
     walkthrough deck into `/admin/design-pass-typography` (one slide per Press Start 2P
     site, the greeting's face and size, CTA type, Space Mono's reach), and its ten rulings
-    are tracked there. The colour deck keeps fourteen slides and eighteen rulings, and each
-    comparison now has exactly one home. **Both pages are deleted before this branch
-    merges.**
+    are tracked there. Each comparison has exactly one home across the decks (slide and
+    ruling counts live on the decks themselves, not here — they move too fast for prose).
+    **All review pages are deleted before this branch merges.**
 15. **Three colour rulings** (owner, 2026-09-01): role-colour grammar is only established
     if it appears outside admin UIs — the sweep names the family-facing homes; the
     product-type palette converges onto the brand families but the type↔colour pairing
