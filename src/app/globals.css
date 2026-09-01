@@ -79,16 +79,24 @@
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  /* Success colors */
-  --success: 160 60% 45%;
+  /* Success colors — converged onto glow-strong, so the palette carries one
+     green with one meaning rather than a status green sitting a step away from
+     an element green nobody can tell it from. Every triplet in this block was
+     converted from its hex by script and round-trips back to it exactly; none
+     of them was hand-rounded, which is how the drift being fixed here started. */
+  --success: 148.4 74.3% 39.6%;    /* #1AB061 — see --color-yty-glow-strong */
   --success-foreground: 0 0% 100%;
 
-  /* Info colors */
-  --info: 210 80% 55%;
+  /* Info colors — converged onto wit-strong, the same one-hue-one-meaning move
+     as success above. */
+  --info: 219.9 71.3% 54.9%;       /* #3A71DE — see --color-yty-wit-strong */
   --info-foreground: 0 0% 100%;
 
-  /* Warning colors */
-  --warning: 45 93% 47%;
+  /* Warning colors — shifted off amber and into orange, because the amber it
+     replaced sat close enough to the brand primary to be read as it. The owner
+     accepted the resulting nearness to valor. A warning mark always carries a
+     glyph regardless: hue alone is not the signal. */
+  --warning: 27.4 78.7% 49.6%;     /* #E2761B */
   --warning-foreground: 0 0% 7%;
 
   /* Border colors */

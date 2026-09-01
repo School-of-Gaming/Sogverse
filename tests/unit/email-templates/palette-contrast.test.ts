@@ -78,9 +78,9 @@ describe("every colour pair a mail may emit is legible", () => {
  * survives the reasoning.
  */
 describe("the pairs we rejected are still worth rejecting", () => {
-  // `atLeast` pins a pair whose *nearness* to the floor is load-bearing for the
-  // prose around it: the number lives where the build fails when it stops being
-  // true, instead of rotting in a comment.
+  // `atLeast` pins a pair whose *distance* from the floor is load-bearing for
+  // the prose around it: the number lives where the build fails when it stops
+  // being true, instead of rotting in a comment.
   const FORBIDDEN: {
     name: string;
     fg: string;
@@ -107,25 +107,20 @@ describe("the pairs we rejected are still worth rejecting", () => {
       why: "the same mistake in the other direction",
     },
     {
-      name: "white on the info fill",
-      fg: STATUS.infoForeground,
-      bg: STATUS.info,
-      // 3.48:1. The pair globals.css names (--info / --info-foreground) and the
-      // reason `info` is never a fill under a label in a mail: it is mirrored so
-      // the fill and its foreground stay one decision, not so a caller can use
-      // them together at body size.
-      why: "the info colour is an accent here, never a surface with text on it",
-    },
-    {
       name: "the info colour as the callout's own label",
       fg: STATUS.info,
       bg: STATUS_TINT.infoSurface,
-      // 4.46:1 — a hair under the floor, which is the interesting part. The
-      // app's Alert colours its title with the accent and the mail cannot copy
-      // that: at 12px bold there is no large-text exemption to reach for, so the
-      // label is `foreground` and the accent stays in the border and the wash.
+      // 3.45:1. The app's Alert colours its title with the accent and the mail
+      // cannot copy that: at 12px bold there is no large-text exemption to reach
+      // for, so the label is `foreground` and the accent stays in the border and
+      // the wash. This used to sit at 4.46:1 — a hair under the floor, and the
+      // prose here made much of how close the call was. Converging `--info` onto
+      // wit-strong ended that: the fill got lighter, its 10% wash got lighter
+      // with it, and the accent-on-its-own-wash pairing moved a full point
+      // further from the floor rather than nearer. The pin is kept because the
+      // distance is now the load-bearing fact, in place of the nearness.
       why: "the one thing the mail's callout does not inherit from the app's Alert",
-      atLeast: 4.4,
+      atLeast: 3.4,
     },
   ];
 
@@ -135,8 +130,49 @@ describe("the pairs we rejected are still worth rejecting", () => {
     if (atLeast !== undefined) {
       expect(
         ratio,
-        `the "hair under the floor" claim beside this pair assumes at least ${atLeast}:1`,
+        `the prose beside this pair assumes at least ${atLeast}:1`,
       ).toBeGreaterThan(atLeast);
     }
+  });
+});
+
+/**
+ * The pair that is rejected on *policy*, pinned at the number that no longer
+ * rejects it.
+ *
+ * White on the info fill lived in `FORBIDDEN` above for as long as contrast did
+ * the excluding: at 3.48:1 it simply failed, and nothing else had to be said.
+ * The design pass converged `--info` onto wit-strong, and the same pair now
+ * measures 4.57:1 — over the floor, by a hair. That removes the argument, not
+ * the exclusion.
+ *
+ * The exclusion stands for the reason `colors.ts` states beside `STATUS`: the
+ * palette carries the pairs mails actually emit, and no mail puts a label on an
+ * info fill. `info` is an accent here — a border and a wash — and mirroring the
+ * fill beside its foreground keeps the two one decision, not an invitation to
+ * use them together. A pair admitted to `PAIRS` on the strength of clearing AA,
+ * with no template asking for it, is exactly the unmeasured-value-in-reach this
+ * file exists to prevent.
+ *
+ * So it is pinned rather than asserted against a floor. The number is the whole
+ * assertion: if a future token tune moves this blue, the build stops here and
+ * whoever moved it re-reads the paragraph above instead of inheriting a silent
+ * rule. `toBeCloseTo`'s two digits is the tolerance — tight enough that any real
+ * change to `--info` trips it, loose enough to survive nothing at all.
+ */
+describe("the pair we reject on policy is pinned where it stands", () => {
+  it("white on the info fill clears AA and is still not a pair a mail may emit", () => {
+    const ratio = contrast(STATUS.infoForeground, STATUS.info);
+    expect(
+      ratio,
+      "white on --info measured 4.57:1 when this was written; a different " +
+        "number means --info moved, and the policy note above needs re-reading " +
+        "rather than this pin being nudged to match.",
+    ).toBeCloseTo(4.57, 2);
+    expect(
+      ratio,
+      "the point of this pin is that contrast is no longer what excludes the " +
+        "pair — if it drops back below the floor, it belongs in FORBIDDEN again.",
+    ).toBeGreaterThanOrEqual(AA_BODY);
   });
 });
