@@ -6,7 +6,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SUPPORT_EMAIL } from "@/lib/constants";
-import type { YtyPalette } from "@/lib/constants/yty";
 import { cn, formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { SeatOfferState } from "@/lib/seat-offer-state";
@@ -33,58 +32,34 @@ interface SeatOfferBlockProps {
    * thing, so a button here would only ever produce a refusal.
    */
   onRespond?: (accept: boolean) => Promise<Outcome>;
-  /**
-   * **Design-pass draft.** Which palette the block's three blue slots are drawn
-   * in. `--info` today; the wit family under the proposed grammar, where blue
-   * means knowledge and this block's whole job is telling the parent something.
-   * Defaults to the live one, so every real dashboard is byte-for-byte what it
-   * was. Retires with the draft.
-   */
-  palette?: YtyPalette;
 }
 
-/** The ruled draft, shared by both draft slugs — see the map below. */
-const BRAND_SEAT_OFFER_TONE = {
-  container:
-    "w-full space-y-3 border-t border-yty-wit-strong pt-4 text-left",
-  glyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
-  title: "text-yty-wit-soft",
-};
-
 /**
- * **Design-pass draft.** The block's three blue slots per palette.
+ * The block's three blue slots, under the ruled colour grammar.
  *
- * All three are the same decision — `--info` converging onto the wit family
- * (ruled) — so they move together or not at all. What splits the draft's three
- * slots is the strong/soft mechanism the element cards were signed off on:
- * **soft on the glyph and every word, strong on the edge.** The title is
- * body-size text and takes soft at 7.57:1 on the card, against a 4.5:1 bar;
- * wit-strong cannot carry body text on this ground, which is exactly why it is
- * reserved for the rule, where no text sits.
+ * All three are the same decision — `--info` converging onto the wit family,
+ * where blue means knowledge and this block's whole job is telling the parent
+ * something — so they move together or not at all. What splits them is the
+ * strong/soft mechanism the element cards were signed off on: **soft on the
+ * glyph and every word, strong on the edge.** The title is body-size text and
+ * takes soft at 7.57:1 on the card, against a 4.5:1 bar; wit-strong cannot
+ * carry body text on this ground, which is exactly why it is reserved for the
+ * rule, where no text sits.
  *
- * **The rule is drawn at full value**, not at the `/25` it was drafted with:
- * the shading rule binds a shaded brand colour wherever it appears, and an edge
+ * **The rule is drawn at full value**, not at the `/25` it once carried: the
+ * shading rule binds a shaded brand colour wherever it appears, and an edge
  * mixed down toward the card is one. Full value is an authored brand value, so
  * nothing is mixed.
  *
  * The container's *whole* class string lives here rather than only its border,
- * so a caller cannot reassemble it half-drafted. Classes are literal strings
+ * so a caller cannot reassemble it half-drawn. Classes are literal strings
  * because Tailwind scans source text.
  */
-const SEAT_OFFER_TONES: Record<
-  YtyPalette,
-  { container: string; glyph: string; title: string }
-> = {
-  /**
-   * The ruled form is now the only form: the `/25` rule `current` held was a
-   * shaded brand value the moment `--info` converged onto wit, and there is no
-   * compliant "today" left to compare it against.
-   */
-  current: BRAND_SEAT_OFFER_TONE,
-  brand: BRAND_SEAT_OFFER_TONE,
-  /** Dose is a home-page question; a dashboard card takes the one draft. */
-  "brand-lively": BRAND_SEAT_OFFER_TONE,
-};
+const TONE = {
+  container: "w-full space-y-3 border-t border-yty-wit-strong pt-4 text-left",
+  glyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
+  title: "text-yty-wit-soft",
+} as const;
 
 /**
  * The offer, on the family's own card in My SOG.
@@ -139,9 +114,7 @@ export function SeatOfferBlock({
   offer,
   gamerFirstName,
   onRespond,
-  palette = "current",
 }: SeatOfferBlockProps) {
-  const tone = SEAT_OFFER_TONES[palette];
   const t = useTranslations("parent.waitlist.seatOffer");
   const locale = useLocale();
   const timeZone = useTimezone();
@@ -242,14 +215,14 @@ export function SeatOfferBlock({
     //
     // The Accept button below keeps the default (primary) variant: the block is
     // the notice, the button is the action, and they are not the same claim.
-    <div className={tone.container}>
+    <div className={TONE.container}>
       <div className="flex items-start gap-2">
-        <CalendarClock className={tone.glyph} aria-hidden />
+        <CalendarClock className={TONE.glyph} aria-hidden />
         <div className="min-w-0 space-y-1">
           {/* The heading takes the tone the border box used to carry. With no
               fill behind it, the icon alone is a small mark to hang a section
               on; the icon and the title together are the section's marker. */}
-          <p className={cn("text-sm font-semibold leading-snug", tone.title)}>
+          <p className={cn("text-sm font-semibold leading-snug", TONE.title)}>
             {t("title")}
           </p>
           <p className="text-sm leading-snug text-muted-foreground">

@@ -20,7 +20,6 @@ import {
   findRegionLockScenario,
 } from "@/components/public/products/region-lock/region-lock-scenarios";
 import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
-import { isHomeScenario, ytyPaletteFor } from "./palette-scenarios";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { ChatScene } from "./scenes/chat-scene";
@@ -55,11 +54,13 @@ const SCENE_RENDERERS: Record<
   (scenario: string) => React.ReactNode
 > = {
   home: (scenario) => {
-    // The home page has no fixtures, so the slug carries only which palette to
-    // draw — checked here so a slug the registry does not declare 404s rather
-    // than silently falling back to the live palette.
-    if (!isHomeScenario(scenario)) notFound();
-    return <HomeScene palette={ytyPaletteFor(scenario)} />;
+    // Checked and not handed on, like the shop grid below: the page has no
+    // fixtures and one scenario, so there is nothing to narrow. The check is
+    // still what makes a slug the registry does not declare 404 rather than
+    // render the page under a made-up name — including the retired palette
+    // slugs, which links may still point at.
+    if (scenario !== "default") notFound();
+    return <HomeScene />;
   },
   shop: (scenario) => {
     // Checked and not handed on: there is one storefront grid, so the scene

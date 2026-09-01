@@ -1,31 +1,10 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Heart, Shield, Sparkles, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { YtyPalette } from "@/lib/constants/yty";
 
 interface AboutSectionProps {
   /** Optional anchor id for scrollspy navigation. */
   id?: string;
-  /**
-   * Which draft palette the section's one tinted card draws in. Defaults to the
-   * live one, so the public route renders exactly what it rendered before; both
-   * brand doses flatten the card, because a draft whose whole claim is that no
-   * blended gradient survives anywhere on the page cannot leave one here.
-   * Retires with the draft.
-   */
-  palette?: YtyPalette;
-}
-
-/**
- * The mission card's ground. The amber→violet blend it used to carry was a
- * card-scale wash of two brand hues, which the shading rule bans: a brand colour
- * darkened into a surface is no longer that brand colour, and this card is not
- * one of the two sanctioned home keeps. So the live path's ground is neutral;
- * every brand dose replaces it with a single-hue wash of the drafts' workhorse
- * pink, at the alpha that lands it at roughly the card's own brightness.
- */
-function missionCardClass(palette: YtyPalette): string {
-  return palette === "current" ? "bg-muted" : "bg-yty-harmony-strong/10";
 }
 
 const valueIcons = [Sparkles, Heart, Shield, Users];
@@ -38,7 +17,7 @@ const easterEggRows = [
   "privacy", "terms", "honor",
 ] as const;
 
-export function AboutSection({ id, palette = "current" }: AboutSectionProps) {
+export function AboutSection({ id }: AboutSectionProps) {
   const t = useTranslations("about");
   const locale = useLocale();
 
@@ -77,9 +56,14 @@ export function AboutSection({ id, palette = "current" }: AboutSectionProps) {
         </p>
       </div>
 
-      {/* Mission */}
+      {/* Mission. The ground is neutral: the amber→violet blend it used to
+          carry was a card-scale wash of two brand hues, and a brand colour
+          darkened into a surface is no longer that brand colour (owner,
+          2026-09-01). A single-hue wash at card scale is the same construct and
+          is no better — the ruled exemption is chip scale, an icon medallion,
+          not a card's ground. */}
       <div className="mx-auto mt-16 max-w-4xl">
-        <Card className={missionCardClass(palette)}>
+        <Card className="bg-muted">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">{t("mission.heading")}</CardTitle>
           </CardHeader>

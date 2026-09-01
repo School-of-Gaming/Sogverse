@@ -125,8 +125,6 @@
   /* Sidebar */
   --sidebar-background: 0 0% 9%;
   --sidebar-foreground: 0 0% 93%;
-  --sidebar-primary: 40.48 99.20% 49.22%; /* #FAA901 — see --primary */
-  --sidebar-primary-foreground: 0 0% 7%;
   --sidebar-accent: 0 0% 15%;
   --sidebar-accent-foreground: 0 0% 93%;
   --sidebar-border: 0 0% 20%;
@@ -165,40 +163,29 @@
   --color-product-event: hsl(var(--product-event));
   --color-sidebar-background: hsl(var(--sidebar-background));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
   --color-sidebar-accent: hsl(var(--sidebar-accent));
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
-  /* YTY Element colors */
-  --color-yty-harmony: #34d399;
-  --color-yty-glow: #fbbf24;
-  --color-yty-valor: #fb7185;
-  --color-yty-wit: #a78bfa;
-  /* YTY Element colors — the brand's exact hues, as strong/soft pairs, ruled
-     and live. The shared button recipe (src/components/ui/button.tsx) is what
-     renders them today: its four grammar-fill variants take valor, harmony and
-     glow in strong and wit in soft, and that last one is the contrast result
-     below picking the fill strength, not a stylistic preference. Every other
-     consumer — the Yty element tiles, the voice zones, the enrollment and
-     product-page tone maps, the /about washes — still reads these only on a
-     `brand` draft path beside the live literal it will replace (see
-     YTY_ELEMENT_DRAFT_COLORS in src/lib/constants/yty.ts), and promotes with
-     the rest of the design pass. The four single tokens above are the
-     stand-ins those live literals are still drawn from, which is why they stay
-     until that promotion lands.
+  /* YTY Element colors — the brand's exact hues, as strong/soft pairs. These
+     are the only Yty tokens: the four single stand-ins that used to sit above
+     them were raw Tailwind defaults, wrong on every element (the brand fixes
+     Harmony pink, Glow green, Valor orange, Wit blue, and two of the stand-ins
+     were effectively swapped), and they went when their last consumers did.
 
-     The four above are raw Tailwind defaults and are wrong on every element —
-     the brand fixes Harmony pink, Glow green, Valor orange, Wit blue, and two
-     of the stand-ins are effectively swapped. Contrast on this ground is
-     script-verified rather than eyeballed: `node scripts/yty-contrast.mjs`
-     prints every pairing against both grounds — the page (#121212) and the
-     card (#1a1a1a), which is where these pairings actually sit and, being the
-     lighter of the two, is the binding one. The one result that constrains the
-     presentation: wit-strong is 3.81:1 on the card (4.10:1 on the page), which
-     clears 3:1 for an icon or large text and misses 4.5:1 for body copy — so
-     soft is what carries text on dark, for every element, and strong is for
-     fills, borders and rings. */
+     Every Yty surface reads these: the element tiles on /about, the four voice
+     zones, the enrollment card's state colours, the family product page's time
+     and liveness marks, the home page's feature tiles and how-it-works circles,
+     and the button recipe's four grammar fills.
+
+     **Strong fills, borders, rings and glows; soft carries text and glyphs.**
+     That split is a contrast result, not a preference, and it is script-
+     verified rather than eyeballed: `node scripts/yty-contrast.mjs` prints
+     every pairing against both grounds — the page (#121212) and the card
+     (#1a1a1a), which is where these pairings actually sit and, being the
+     lighter of the two, is the binding one. The result that constrains it:
+     wit-strong is 3.81:1 on the card (4.10:1 on the page), which clears 3:1
+     for an icon or large text and misses 4.5:1 for body copy. It is also why
+     the recipe's `wit` button fills soft while the other three fill strong. */
   --color-yty-harmony-strong: #F55B9A;
   --color-yty-harmony-soft: #FA7FA3;
   --color-yty-glow-strong: #1AB061;

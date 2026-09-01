@@ -16,7 +16,6 @@ import type {
 import { ParentHelpFaq } from "@/components/help/help-faq";
 import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
 import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
-import type { YtyPalette } from "@/lib/constants/yty";
 
 /**
  * One person's section, with everything they are signed up for. Enrollments
@@ -207,7 +206,6 @@ export function ParentDashboardPageBody({
   onLeaveWaitlist,
   leavingParticipationIds,
   onRespondToSeatOffer,
-  palette = "current",
 }: {
   /** The parent's children, in the order their sections appear. */
   gamers: readonly ParentDashboardParticipant[];
@@ -295,14 +293,6 @@ export function ParentDashboardPageBody({
     action: ParentEnrollmentAction,
     accept: boolean,
   ) => Promise<SeatOfferRespondResponse["outcome"]>;
-  /**
-   * **Design-pass draft.** Which palette the enrollment cards' state colours are
-   * drawn in — handed straight down and read nowhere else on this page. Defaults
-   * to the live one, so `/parent` renders byte-for-byte what it rendered before;
-   * only the preview scene's brand scenario passes anything else. Retires with
-   * the draft.
-   */
-  palette?: YtyPalette;
 }) {
   const t = useTranslations("dashboardSections");
   const f = useTranslations("family");
@@ -471,7 +461,6 @@ export function ParentDashboardPageBody({
                         <EnrollmentCard
                           key={enrollment.participationId}
                           enrollment={enrollment}
-                          palette={palette}
                           audience="customer"
                           // Only inside the leave dialog, never on the card
                           // face: the heading two rows up already says whose
@@ -581,7 +570,6 @@ export function ParentDashboardPageBody({
                   <EnrollmentCard
                     key={enrollment.participationId}
                     enrollment={enrollment}
-                    palette={palette}
                     audience="self"
                     onOpenPortal={onOpenPortal}
                     // No `onJoinClick`, and the omission is the feature: the

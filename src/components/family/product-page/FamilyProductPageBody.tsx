@@ -18,7 +18,6 @@ import {
   formatProductSchedule,
   renderScheduleLinesForDetail,
 } from "@/components/public/products/format-product-schedule";
-import type { YtyPalette } from "@/lib/constants/yty";
 import { cn, formatDate } from "@/lib/utils";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
@@ -201,14 +200,6 @@ export interface FamilyProductPageBodyProps {
   entries: readonly FamilySessionEntry[];
   /** The zone the schedule was authored in; the feed renders in the viewer's. */
   sourceTimeZone: string;
-  /**
-   * **Design-pass draft.** Which palette the page's time, liveness and
-   * community marks are drawn in. Defaults to the live one, so every real
-   * family page renders byte-for-byte what it rendered before; only a preview
-   * scene's brand scenario passes anything else. The class strings live in
-   * `product-page-tones.ts`. Retires with the draft.
-   */
-  palette?: YtyPalette;
 }
 
 /**
@@ -291,9 +282,8 @@ export function FamilyProductPageBody({
   onJoinClick,
   entries,
   sourceTimeZone,
-  palette = "current",
 }: FamilyProductPageBodyProps) {
-  const tones = FAMILY_PRODUCT_TONES[palette];
+  const tones = FAMILY_PRODUCT_TONES;
   const t = useTranslations("familyProduct");
   const p = useTranslations("productType");
   const g = useTranslations("common");
@@ -546,7 +536,6 @@ export function FamilyProductPageBody({
           sourceTimeZone={sourceTimeZone}
           showAttendance={isParent}
           audience={routeAudience(audience)}
-          palette={palette}
         />
       </section>
     </div>

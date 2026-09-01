@@ -13,7 +13,6 @@ import {
   type AttendanceMark,
   type SessionLabels,
 } from "@/components/session-feed";
-import type { YtyPalette } from "@/lib/constants/yty";
 import { cn } from "@/lib/utils";
 import { FAMILY_PRODUCT_TONES } from "./product-page-tones";
 import type { FamilySessionEntry } from "./types";
@@ -47,8 +46,6 @@ interface FamilySessionFeedItemProps {
    * what differs, so this is a rendering decision rather than a data one.
    */
   showAttendance: boolean;
-  /** **Design-pass draft** — see the page body's prop. Retires with the draft. */
-  palette?: YtyPalette;
 }
 
 /**
@@ -89,9 +86,8 @@ export function FamilySessionFeedItem({
   prominent,
   live,
   showAttendance,
-  palette = "current",
 }: FamilySessionFeedItemProps) {
-  const tones = FAMILY_PRODUCT_TONES[palette];
+  const tones = FAMILY_PRODUCT_TONES;
   const t = useTranslations("familyProduct");
   const b = useTranslations("sessionBadge");
 

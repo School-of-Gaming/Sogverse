@@ -1,13 +1,10 @@
-import type { YtyPalette } from "@/lib/constants/yty";
-
 /**
- * **Design-pass draft — the family product page under the ruled colour
- * grammar.**
+ * **The family product page's colour, under the ruled grammar.**
  *
  * The owner's own brief for this page (2026-09-01) was that colour should
  * arrive from *families doing real jobs*, never from eligibility or decoration:
  * time rows in wit, liveness in glow, community facts in harmony. That is
- * exactly the set below, and each entry is a ruled form rather than a proposal:
+ * exactly the set below:
  *
  * - **Time is wit.** The masthead's schedule row, the tag on a session still
  *   ahead, that session's card edge and its marker on the rail are all one
@@ -34,13 +31,13 @@ import type { YtyPalette } from "@/lib/constants/yty";
  * shape the doctrine was written for; this page has no booking action, because
  * the family already holds the seat.
  *
- * There is no `current` form left: every class it held was a shaded status tint
- * that the token convergence turned into a shaded *brand* value, so it converts
- * rather than surviving as a comparison. Classes are literal strings because
- * Tailwind scans source text. Retires with the draft, along with every `palette`
- * prop that reads it.
+ * It lives in a module of its own rather than beside a component because three
+ * of them read it — the page body, the feed and the feed's rows — and one home
+ * for the class strings is what keeps a marker and the tag beside it from
+ * drifting apart. Classes are literal strings because Tailwind scans source
+ * text.
  */
-export interface FamilyProductDraftTones {
+export interface FamilyProductTones {
   /** The masthead's schedule glyph. */
   scheduleGlyph: string;
   /** The micro-label over the gedu chips. */
@@ -57,8 +54,7 @@ export interface FamilyProductDraftTones {
   futureMarker: string;
 }
 
-/** The ruled draft, shared by both draft slugs — dose is a home-page question. */
-const BRAND_TONES: FamilyProductDraftTones = {
+export const FAMILY_PRODUCT_TONES: FamilyProductTones = {
   scheduleGlyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
   gedusLabel:
     "text-[11px] font-medium uppercase tracking-wider text-yty-harmony-soft",
@@ -68,17 +64,3 @@ const BRAND_TONES: FamilyProductDraftTones = {
   nextMarker: "bg-yty-wit-strong",
   futureMarker: "bg-yty-wit-soft",
 };
-
-export const FAMILY_PRODUCT_TONES: Record<YtyPalette, FamilyProductDraftTones> =
-  {
-    /**
-     * The ruled form is now the only form. What `current` held — an `info/50`
-     * card edge, an `info/10` tag ground and an `info/40` rail marker — became
-     * three shaded brand values the moment `--info` converged onto wit, and the
-     * shading rule bans all three; the page itself is signed off as drafted, so
-     * there is nothing left for a "today" entry to compare against.
-     */
-    current: BRAND_TONES,
-    brand: BRAND_TONES,
-    "brand-lively": BRAND_TONES,
-  };

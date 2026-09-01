@@ -7,7 +7,6 @@ import {
   previewSceneHref,
   sceneHasScenario,
 } from "@/components/preview/scenes";
-import { BRAND_PALETTE_SCENARIO } from "@/components/preview/palette-scenarios";
 import {
   GEDU_DASHBOARD_SCENARIOS,
   buildGeduDashboardFixture,
@@ -239,6 +238,16 @@ describe("registry scenarios match their fixtures", () => {
 
   it("shop browse", () => {
     expect(slugsFor("shop")).toEqual([...SHOP_BROWSE_SCENARIOS]);
+  });
+
+  /**
+   * The home page has no fixtures and therefore no fixture module to compare
+   * against — the slug is written in the registry and again in the renderer's
+   * own guard, which is the pair this pins. It is one scenario because the page
+   * has no data and no states: there is nothing for a second one to hold.
+   */
+  it("home", () => {
+    expect(slugsFor("home")).toEqual(["default"]);
   });
 
   it("seat-offer landing page", () => {
@@ -1608,17 +1617,11 @@ describe("the family club page's billing states", () => {
   }));
 
   /**
-   * The counts below are over the page's **shapes**, which is what they were
-   * always about. The design pass's draft-palette scenario is `active-club`'s
-   * page again under the colour grammar — the same fixture by construction, so
-   * it carries the same notices — and counting it would report two
-   * cancellations where there is one page showing one. It retires with the
-   * draft, and this filter with it.
+   * Every scenario is a distinct shape of the page, so the counts below are
+   * over the whole set. A scenario that re-rendered another one's fixture
+   * under a different name would have to be excluded here rather than
+   * double-counted — there was one, and it went with the palette drafts.
    */
-  const shapes = fixtures.filter(
-    (f) => f.scenario !== BRAND_PALETTE_SCENARIO.slug,
-  );
-
   it("shows each of them somewhere, and never together", () => {
     // paymentProblem appears on exactly two pages — worded in the third person
     // about a child and in the second person on the parent's own seat — because
@@ -1628,8 +1631,8 @@ describe("the family club page's billing states", () => {
     // by accident. What must also stay exact is that no single page claims
     // both — Stripe cannot be `past_due` and `canceling` at once, so a page
     // showing both would be inventing a state.
-    expect(shapes.filter((f) => f.fixture.paymentProblem).length).toBe(2);
-    expect(shapes.filter((f) => f.fixture.cancellation !== null).length).toBe(1);
+    expect(fixtures.filter((f) => f.fixture.paymentProblem).length).toBe(2);
+    expect(fixtures.filter((f) => f.fixture.cancellation !== null).length).toBe(1);
     for (const { scenario, fixture } of fixtures) {
       expect(
         fixture.paymentProblem && fixture.cancellation !== null,
@@ -1646,7 +1649,7 @@ describe("the family club page's billing states", () => {
    * losing scenarios to it.
    */
   it("carries exactly one self seat, and it carries a billing notice", () => {
-    const selfSeats = shapes.filter((f) => f.fixture.isSelfSeat);
+    const selfSeats = fixtures.filter((f) => f.fixture.isSelfSeat);
     expect(selfSeats).toHaveLength(1);
     expect(
       selfSeats[0].fixture.paymentProblem ||

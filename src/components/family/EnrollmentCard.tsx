@@ -22,8 +22,6 @@ import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
 import { PaymentProblemBadge } from "@/components/parent/PaymentProblemBadge";
 import { seatOfferState, type SeatOfferState } from "@/lib/seat-offer-state";
-import type { YtyPalette } from "@/lib/constants/yty";
-import { ENROLLMENT_TONES } from "./enrollment-tones";
 import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
 import { SeatOfferBlock } from "./SeatOfferBlock";
 import {
@@ -31,6 +29,65 @@ import {
   enrollmentLiveness,
   type FamilyEnrollmentSummary,
 } from "./enrollment-rollup";
+
+/**
+ * The card's state colours, under the ruled colour grammar.
+ *
+ * The grammar assigns one meaning per family: amber = act, harmony = people,
+ * glow = growth, wit = knowledge, valor = adventure.
+ *
+ * - **The live card ignites a glow ring.** Liveness is glow, and the ring is
+ *   the approved gradient border: strong → soft, so every pixel of it is an
+ *   authored brand value or a point on the straight line between two of them.
+ *   The `primary/5` wash it replaced was the violation — amber mixed down
+ *   toward the card, and a brand colour darkened past its authored pair is no
+ *   longer a brand colour. The amber edge went with it: the Join inside the
+ *   card is still the act and still amber, which is where the act colour
+ *   belongs.
+ * - **The Live badge takes the glow family, on a neutral ground.** It carried
+ *   `--success` and a `/10` tint; the status convergence makes success glow,
+ *   and the tinted-label-chip ruling makes the ground `bg-muted` under
+ *   full-value family ink.
+ * - **Awaiting placement takes the wit family, at full value and with no
+ *   wash.** Knowledge is "we are telling you something", which is exactly what
+ *   that state's sentence does. Strong on the edge, soft on the glyph — the
+ *   split the element cards were signed off on, because wit-strong cannot carry
+ *   body text on this ground.
+ * - **Hover and focus stay neutral.** The amber hover border was authored blind
+ *   — the pre-fix layer bug meant it never rendered — and the moment it became
+ *   visible it collided with the live card's green state edge: two meanings
+ *   fighting for one border. Hover is functional feedback and stays in the
+ *   app's own gray lift; a border that carries *state* is never repainted by a
+ *   hover, and colour spent only behind hover never reaches this card's
+ *   mobile-first family audience anyway.
+ *
+ * The queue place is deliberately uncoloured. Warning amber is reserved for it
+ * in the grammar, but nothing is wrong with a place in line, and the card has
+ * said so in muted body text since it was designed — colouring it now would
+ * make the grammar louder than the meaning.
+ *
+ * Contrast, on the card ground: glow-soft over `bg-muted` is 7.35:1 and
+ * wit-soft on the card is 7.57:1, both against the 4.5:1 body bar. Every glyph
+ * clears the 3:1 bar by a wide margin.
+ *
+ * Classes are literal strings because Tailwind scans source text.
+ */
+const TONES = {
+  /** The openable card's hover and focus feedback. */
+  openable:
+    "hover:border-foreground/30 hover:shadow-lg focus-within:border-foreground/30 focus-within:shadow-lg",
+  /** The live card's edge — transparent, because the ignition ring paints it. */
+  live: "border-transparent",
+  /** The ignition ring's gradient. */
+  liveRing: "bg-gradient-to-r from-yty-glow-strong to-yty-glow-soft",
+  /** The awaiting-placement card's edge. */
+  awaiting: "border-yty-wit-strong",
+  /** The Live badge's border, ground and label. */
+  liveBadge:
+    "gap-1 border-yty-glow-strong bg-muted px-2 py-0 text-[10px] uppercase tracking-wide text-yty-glow-soft",
+  /** The awaiting-placement glyph in the footer. */
+  awaitingGlyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
+} as const;
 
 /**
  * One card per **enrollment** on the family dashboards — the parent's, under the
@@ -140,15 +197,6 @@ import {
  */
 interface EnrollmentCardCommonProps {
   enrollment: FamilyEnrollmentSummary;
-  /**
-   * **Design-pass draft.** Which palette the card's state colours are drawn in.
-   * Defaults to the live one, so every real dashboard renders byte-for-byte what
-   * it rendered before; only a preview scene's brand scenario passes anything
-   * else. The class strings themselves live in `enrollment-tones.ts` — a module
-   * of their own, because the walkthrough deck is a server component and cannot
-   * read an export out of this `"use client"` file. Retires with the draft.
-   */
-  palette?: YtyPalette;
 }
 
 /**
@@ -311,8 +359,7 @@ const WAITLIST_FOOTER_KEY = {
 } as const;
 
 export function EnrollmentCard(props: EnrollmentCardProps) {
-  const { enrollment, palette = "current" } = props;
-  const tones = ENROLLMENT_TONES[palette];
+  const { enrollment } = props;
   // Narrowed once, so every adult-only branch below reads as one question ("is
   // there somebody paying behind this card?") rather than repeating the
   // audience check beside each of the props it guards. Both parent arms answer
@@ -461,15 +508,15 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
         aria-busy={leaving}
         className={cn(
           "group relative overflow-hidden transition-[border-color,box-shadow,opacity]",
-          opensAPage && tones.openable,
-          live && tones.live,
+          opensAPage && TONES.openable,
+          live && TONES.live,
           // The awaiting tone: the same lit-card treatment in the "we are
           // telling you something" colour rather than the act one, because this
           // *is* a card with something happening on it — a purchase has landed
           // and placement is under way — and it must read as that rather than
           // as a fault or as a waitlist place. Mutually exclusive with the live
           // tone by `running`.
-          awaiting && tones.awaiting,
+          awaiting && TONES.awaiting,
           // Dimmed in place while the leave is in flight, so the card that is
           // about to disappear says so without moving. Matches the treatment
           // the badge-era waitlist card used, for continuity.
@@ -484,25 +531,20 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
             for the Join, with nothing beneath their cursor moving. The card's
             own 1px border class survives ignition and only swaps colour, for
             the same reason: with border-box sizing, dropping it would move the
-            content box a pixel. Absent entirely on the live palette, so today's
-            DOM is unchanged rather than gaining an empty span. */}
-        {live && tones.liveRing !== null && (
+            content box a pixel. */}
+        {live && (
           <span aria-hidden className="pointer-events-none absolute inset-0">
-            <span className={cn("absolute inset-0", tones.liveRing)} />
+            <span className={cn("absolute inset-0", TONES.liveRing)} />
             <span className="absolute inset-[2px] rounded-md bg-card" />
           </span>
         )}
 
         <CardContent
-          className={cn(
-            "flex flex-col gap-4 p-5",
-            // Present on the whole of any palette that paints a ring, lit or
-            // not, so the class does not churn at ignition. An absolutely-
-            // positioned overlay paints above static in-flow content in the
-            // same stacking context, so the content has to be positioned too or
-            // the ring covers it.
-            tones.liveRing !== null && "relative",
-          )}
+          // `relative` on every card, lit or not, so the class does not churn
+          // at ignition. An absolutely-positioned overlay paints above static
+          // in-flow content in the same stacking context, so the content has to
+          // be positioned too or the ring covers it.
+          className="relative flex flex-col gap-4 p-5"
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
@@ -546,7 +588,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               {canGoLive && (
                 <Badge
                   variant="outline"
-                  className={cn(tones.liveBadge, !live && "invisible")}
+                  className={cn(TONES.liveBadge, !live && "invisible")}
                 >
                   <Radio className="h-3 w-3" aria-hidden />
                   {b("live")}
@@ -709,7 +751,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   // loading cue would promise seconds.
                   <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
                     <UserRoundSearch
-                      className={tones.awaitingGlyph}
+                      className={TONES.awaitingGlyph}
                       aria-hidden
                     />
                     <span className="min-w-0">{f(AWAITING_KEY[audience])}</span>
@@ -805,7 +847,6 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
           {seatOffer !== null && (
             <SeatOfferBlock
               offer={seatOffer}
-              palette={palette}
               gamerFirstName={childSeat?.gamerFirstName ?? null}
               // A child sees that a seat has opened and that a parent has been
               // asked; only the parent may answer. The route and the database

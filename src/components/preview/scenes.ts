@@ -5,10 +5,6 @@ import {
 } from "@/components/public/products/mock-detail-fixtures";
 import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
 import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
-import {
-  BRAND_PALETTE_SCENARIO,
-  CURRENT_PALETTE_SCENARIO,
-} from "./palette-scenarios";
 
 /**
  * The **full-page preview scene registry**.
@@ -127,18 +123,9 @@ export const PREVIEW_SCENES = [
     surface: "home",
     title: "Home page",
     description:
-      "The public front page exactly as it ships — it has no data, so nothing here stands in for anything. The draft scenario is the ruled accented dose (2026-09-01): tinted feature tiles, palette how-it-works circles, today's hero and closing CTA kept exactly.",
+      "The public front page exactly as it ships — it has no data, so nothing here stands in for anything.",
     chrome: "public",
-    scenarios: [
-      {
-        slug: CURRENT_PALETTE_SCENARIO.slug,
-        label: CURRENT_PALETTE_SCENARIO.label,
-      },
-      {
-        slug: BRAND_PALETTE_SCENARIO.slug,
-        label: BRAND_PALETTE_SCENARIO.label,
-      },
-    ],
+    scenarios: [{ slug: "default", label: "The page" }],
   },
   {
     surface: "shop",
@@ -215,12 +202,6 @@ export const PREVIEW_SCENES = [
         label: "Nothing booked",
         description: "Children linked, nothing booked.",
       },
-      {
-        slug: BRAND_PALETTE_SCENARIO.slug,
-        label: BRAND_PALETTE_SCENARIO.label,
-        description:
-          "The busy family again under the ruled colour grammar: a live card ignites a glow gradient ring, its Live badge sits on a neutral ground under glow ink, and awaiting placement and the seat offer take the wit family at full value.",
-      },
     ],
   },
   {
@@ -232,12 +213,6 @@ export const PREVIEW_SCENES = [
     scenarios: [
       { slug: "typical", label: "Everything booked" },
       { slug: "empty", label: "Nothing booked yet" },
-      {
-        slug: BRAND_PALETTE_SCENARIO.slug,
-        label: BRAND_PALETTE_SCENARIO.label,
-        description:
-          "The booked page again under the whole brand draft: the enrollment cards in the ruled colour grammar, under the settled Poppins greeting.",
-      },
     ],
   },
   {
@@ -386,12 +361,6 @@ export const PREVIEW_SCENES = [
         label: "Club — the parent's own seat",
         description:
           "The seat the reader holds themselves, worded in the second person.",
-      },
-      {
-        slug: BRAND_PALETTE_SCENARIO.slug,
-        label: BRAND_PALETTE_SCENARIO.label,
-        description:
-          "The live club again under the ruled colour grammar: the schedule row and the sessions ahead in wit, the session running right now in glow, the gedus label in harmony.",
       },
     ],
   },

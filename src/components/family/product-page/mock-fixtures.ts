@@ -1,6 +1,5 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
-import { BRAND_PALETTE_SCENARIO } from "@/components/preview/palette-scenarios";
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 import type {
   FamilyProductCancellation,
@@ -55,12 +54,6 @@ const TIMEZONE = "Europe/Helsinki";
  * `in-person-club` does — that notice is the longest of the three self-worded
  * strings and the one most likely to read wrong — which is why the two never
  * share a page.
- *
- * `brand-palette` is `active-club`'s data under the design pass's ruled colour
- * grammar. It is not a sixth shape of the page — a palette cannot coexist with
- * another palette in one render — and it borrows the live club because liveness
- * is the grammar's glow and a page with nothing running could not show it. It
- * retires with the draft.
  */
 export const FAMILY_PRODUCT_SCENARIOS = [
   "active-club",
@@ -68,7 +61,6 @@ export const FAMILY_PRODUCT_SCENARIOS = [
   "camp",
   "locked-join",
   "my-own-club",
-  BRAND_PALETTE_SCENARIO.slug,
 ] as const;
 
 export type FamilyProductScenario = (typeof FAMILY_PRODUCT_SCENARIOS)[number];
@@ -719,10 +711,6 @@ interface ScenarioConfig {
  * somebody is looking at the page, which means the sessions land on whatever
  * weekday the scene is opened on. A "Monday club" would then be a club whose
  * own name disagreed with every date under it.
- *
- * Hoisted out of the record because two scenarios share it — the draft palette
- * renders this same page — and two copies of a config are two things to keep in
- * step.
  */
 const ACTIVE_CLUB: ScenarioConfig = {
   productName: "Minecraft Builders Club",
@@ -767,17 +755,6 @@ const ACTIVE_CLUB: ScenarioConfig = {
 
 const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
   "active-club": ACTIVE_CLUB,
-
-  /**
-   * **The same club, under the ruled colour grammar.** Not a sixth shape of the
-   * page: a palette cannot coexist with another palette in one render, which is
-   * the test a second scenario has to pass, and the comparison is made by
-   * switching between two identical pages. `active-club` is the one it borrows
-   * because it is the only scenario with a live room — liveness is the grammar's
-   * glow, and a page with nothing running could not show it. Retires with the
-   * draft.
-   */
-  [BRAND_PALETTE_SCENARIO.slug]: ACTIVE_CLUB,
 
   /**
    * **The site shape.** In person, so there is no room and therefore no Join

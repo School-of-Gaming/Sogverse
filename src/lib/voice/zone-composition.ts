@@ -3,12 +3,10 @@ import type { VoiceZone } from "@/types";
 import {
   LOBBY_PRESENTATION,
   YTY_PRESENTATIONS,
-  YTY_PRESENTATIONS_DRAFT,
   zoneIconFor,
   zoneColorFor,
   type ZoneColorClasses,
 } from "@/lib/constants/voice-zones";
-import type { YtyPalette } from "@/lib/constants/yty";
 
 /**
  * A zone as the UI consumes it (see src/components/voice/CLAUDE.md). Composed
@@ -68,21 +66,14 @@ function customView(zone: VoiceZone): VoiceZoneView {
  * Instant rooms have no group (`groupId === null`) → lobby + Yty only; any
  * custom rows passed in are ignored. This mirrors the provider gating
  * custom/locked features on `groupId !== null`.
- *
- * `ytyPalette` is a design-pass argument and defaults to the live one, so every
- * caller that omits it composes exactly what it composed before. Only the style
- * guide's zone comparison passes the draft; it retires with the draft palette.
  */
 export function composeZones(
   customZones: VoiceZone[] | null | undefined,
   groupId: string | null,
-  ytyPalette: YtyPalette = "current",
 ): VoiceZoneView[] {
-  const yty =
-    ytyPalette === "brand" ? YTY_PRESENTATIONS_DRAFT : YTY_PRESENTATIONS;
   const base: VoiceZoneView[] = [
     virtualView(LOBBY_PRESENTATION, "lobby"),
-    ...yty.map((p) => virtualView(p, "yty")),
+    ...YTY_PRESENTATIONS.map((p) => virtualView(p, "yty")),
   ];
 
   if (groupId === null || !customZones?.length) return base;

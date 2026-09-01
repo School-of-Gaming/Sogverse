@@ -7,7 +7,6 @@ import {
   hasReport,
   type SessionFeedRowContext,
 } from "@/components/session-feed";
-import type { YtyPalette } from "@/lib/constants/yty";
 import { cn } from "@/lib/utils";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
@@ -33,8 +32,6 @@ interface FamilySessionFeedProps {
   showAttendance: boolean;
   /** Which of the two empty-state voices to speak in when there is no past. */
   audience: SessionAudience;
-  /** **Design-pass draft** — see the page body's prop. Retires with the draft. */
-  palette?: YtyPalette;
   className?: string;
 }
 
@@ -71,10 +68,9 @@ export function FamilySessionFeed({
   sourceTimeZone,
   showAttendance,
   audience,
-  palette = "current",
   className,
 }: FamilySessionFeedProps) {
-  const tones = FAMILY_PRODUCT_TONES[palette];
+  const tones = FAMILY_PRODUCT_TONES;
   const t = useTranslations("familyProduct");
   const locale = useLocale();
   const timeZone = useTimezone();
@@ -100,12 +96,11 @@ export function FamilySessionFeed({
     const quiet = isQuiet(entry, showAttendance);
     return cn(
       quiet ? "top-3.5" : "top-5",
-      // Ahead of now is the wit family under the draft — time is wit — and its
-      // two steps are strong then soft rather than full then dimmed: a dot at
-      // 40% alpha is a brand colour mixed down toward the page, and wit's two
-      // authored variants read far enough apart to carry the step on their own.
-      // Behind now stays neutral on every palette; the rail's job there is to
-      // be a rail.
+      // Ahead of now is the wit family — time is wit — and its two steps are
+      // strong then soft rather than full then dimmed: a dot at 40% alpha is a
+      // brand colour mixed down toward the page, and wit's two authored
+      // variants read far enough apart to carry the step on their own. Behind
+      // now stays neutral; the rail's job there is to be a rail.
       entry.kind === "future"
         ? prominent
           ? tones.nextMarker
@@ -124,7 +119,6 @@ export function FamilySessionFeed({
       renderItem={(entry, { prominent }) => (
         <FamilySessionFeedItem
           entry={entry}
-          palette={palette}
           prominent={prominent}
           live={
             entry.kind === "future" &&

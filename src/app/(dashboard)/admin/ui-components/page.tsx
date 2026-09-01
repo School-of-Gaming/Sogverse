@@ -91,7 +91,6 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { YtyPalette } from "@/lib/constants/yty";
 import type {
   GamerCreation,
   GeduContractAcceptance,
@@ -1043,140 +1042,6 @@ function buildDemoVoiceContext(room: DemoRoom): VoiceRoomContextValue {
     join: asyncNoop,
     leave: asyncNoop,
   };
-}
-
-/* ------------------------------------------------------------------ */
-/*  Yty zone tiles — today's palette beside the design-pass draft      */
-/* ------------------------------------------------------------------ */
-
-/** One person per zone, so every tile under review carries a roster. */
-const ZONE_PALETTE_DEMO_PEOPLE: readonly {
-  userId: string;
-  userName: string;
-  zoneId: string;
-  isLocal: boolean;
-  isSpeaking: boolean;
-}[] = [
-  // Real generated UUIDs, hardcoded: the tile's avatar is an identicon hashed
-  // out of the id, so a readable stand-in draws a degenerate face.
-  {
-    userId: "0b3f4b6a-4a24-4a54-9a5a-6c1d0f5d3f21",
-    userName: "You",
-    zoneId: "yty-valor",
-    isLocal: true,
-    isSpeaking: false,
-  },
-  {
-    userId: "6c2a0e58-3f0b-4b8a-9d6f-8f1a2c4b7e90",
-    userName: "Aino",
-    zoneId: "yty-harmony",
-    isLocal: false,
-    isSpeaking: false,
-  },
-  {
-    userId: "b71c9d34-5e2f-4c1a-8a3d-2f6b9c0e4d17",
-    userName: "Eero",
-    zoneId: "yty-glow",
-    isLocal: false,
-    isSpeaking: false,
-  },
-  {
-    userId: "3d84f0a2-9c17-4b6e-a1f5-7e2c8d5b0a63",
-    userName: "Väinö",
-    zoneId: "yty-wit",
-    isLocal: false,
-    isSpeaking: true,
-  },
-  {
-    userId: "e5910c7b-2d48-4f3a-b0c6-1a7d9e4f2b85",
-    userName: "Helmi",
-    zoneId: "lobby",
-    isLocal: false,
-    isSpeaking: false,
-  },
-];
-
-function ytyZonePaletteContext(palette: YtyPalette): VoiceRoomContextValue {
-  const zones = composeZones(null, null, palette);
-  const participants: VoiceParticipant[] = ZONE_PALETTE_DEMO_PEOPLE.map(
-    (person) => ({
-      sessionId: person.userId,
-      userId: person.userId,
-      userName: person.userName,
-      zoneId: person.zoneId,
-      role: "gamer",
-      audioOn: true,
-      videoOn: false,
-      screenShareOn: false,
-      isLocal: person.isLocal,
-      isOwner: false,
-      isSpeaking: person.isSpeaking,
-      isBroadcasting: false,
-    }),
-  );
-
-  const participantsByZone = new Map<string, VoiceParticipant[]>();
-  for (const zone of zones) participantsByZone.set(zone.id, []);
-  for (const p of participants) participantsByZone.get(p.zoneId)?.push(p);
-
-  return buildDemoVoiceContext({
-    zones,
-    customZones: [],
-    participants,
-    participantsByZone,
-    // A Yty zone, so the active-zone treatment — the high-contrast border with
-    // the element's colour spilling in from it — is one of the four under
-    // review rather than the lobby's neutral white.
-    currentZoneId: "yty-valor",
-    localSessionId: ZONE_PALETTE_DEMO_PEOPLE[0].userId,
-    localRole: "gamer",
-    isModerator: false,
-    groupId: null,
-  });
-}
-
-/**
- * The four Yty zones are the third surface the palette feeds — the home
- * section and the gamer grid are the other two, and both are judged full-page
- * in their preview scenes. This one lives in the style guide because a zone
- * card is a component that reads the same at any width, and because the
- * comparison has to be *adjacent*: the question is whether a soft glyph still
- * reads on a strong 10% tint, and nobody can answer that from two browser tabs.
- * The arithmetic half of that question is already answered —
- * `scripts/yty-contrast.mjs` measures the pairing on both grounds and the worst
- * of the four is harmony at 6.32:1 over the card — so what is left for the eye
- * here is whether it *looks* right, not whether it is legible.
- *
- * A room of its own rather than a second copy of the demo above. That one is a
- * moderator's crowded session, and the twenty-five avatars in one of its Yty
- * cards would push the two runs a scroll apart — so this is the instant-room
- * shape (`groupId: null` → lobby plus the four Yty zones, no custom zones and
- * no create button), the smallest honest room containing every tile under
- * review. Both columns render the real `ZoneList`, so nothing here restates a
- * class the zone card owns; the only thing that differs is which presentation
- * `composeZones` was asked for.
- */
-function YtyZonePaletteDemo() {
-  return (
-    <div className="grid gap-6 sm:grid-cols-2">
-      <div className="space-y-2">
-        <DemoCaption>Today</DemoCaption>
-        <VoiceRoomContext.Provider value={ytyZonePaletteContext("current")}>
-          <div className="max-w-sm">
-            <ZoneList />
-          </div>
-        </VoiceRoomContext.Provider>
-      </div>
-      <div className="space-y-2">
-        <DemoCaption>Brand draft</DemoCaption>
-        <VoiceRoomContext.Provider value={ytyZonePaletteContext("brand")}>
-          <div className="max-w-sm">
-            <ZoneList />
-          </div>
-        </VoiceRoomContext.Provider>
-      </div>
-    </div>
-  );
 }
 
 const DAY_MS = 86_400_000;
@@ -2568,15 +2433,18 @@ function ThirdTierProposalDemo() {
 /* ------------------------------------------------------------------ */
 
 /**
- * The three faces the app has loaded, in one place, at one string.
+ * The faces the app loads, in one place, at one string.
  *
- * They are unreadable against each other anywhere else: Poppins is everywhere,
- * Press Start 2P is on six scattered surfaces, and Space Mono is on no live
- * one — it renders here and in the gamer-dashboard preview scene's draft — so
- * "which of these should carry a heading" is a question that has, until now,
- * only been answerable from memory. Dancing Script is deliberately absent: it
- * draws a typed signature and nothing else, so it is not a candidate for any
- * heading and putting it in a comparison would imply it is.
+ * Two of the three are text faces and are the ones worth comparing: Poppins is
+ * the app face — body copy and every heading — and Space Mono is the platform's
+ * own voice, spent on exactly two live surfaces. Dancing Script is the third and
+ * is deliberately out of the grid below: it draws a typed signature and nothing
+ * else, so it is not a candidate for any heading and putting it in a comparison
+ * would imply it is. It gets its own row instead, doing its one job.
+ *
+ * Three faces is the whole list. There was a fourth — a pixel arcade face on
+ * six scattered surfaces — and it is retired from the product: every site it
+ * held is re-set in Poppins at the Guidebook's own scale.
  */
 const TYPE_SPECIMEN_SAMPLE = "Clubs, camps and events";
 
@@ -2592,13 +2460,8 @@ const TYPE_FACES: readonly {
   },
   {
     name: "Space Mono",
-    note: "--font-brand-mono · drafts only, no live route",
+    note: "--font-brand-mono · the platform naming its own places",
     className: "font-brand-mono",
-  },
-  {
-    name: "Press Start 2P",
-    note: "--font-display · rare use, by ruling",
-    className: "font-display",
   },
 ];
 
@@ -2609,42 +2472,86 @@ const TYPE_SPECIMEN_SIZES: readonly { label: string; className: string }[] = [
 ];
 
 /**
- * The greeting on the gamer dashboard, which is the one Press Start 2P site the
- * design pass proposes moving. Finnish because it sets the longest first word
- * of the five locales ("Tervetuloa," against French's "Bienvenue,"), and a real
- * fixture name because the name is the part of the line no translator controls.
+ * The Guidebook's heading scale (A.3), as the app actually writes it: SemiBold
+ * 600 throughout, and each step carrying its own line height. The H1 row is the
+ * home hero's own class string, mobile step included.
+ */
+const POPPINS_SCALE: readonly { label: string; className: string }[] = [
+  {
+    label: "H1 — 30px mobile / 56px from md, 600, 1.1",
+    className: "font-sans text-3xl font-semibold leading-[1.1] md:text-[56px]",
+  },
+  {
+    label: "H2 — 30px / 36px from sm, 600, 1.2",
+    className: "text-3xl font-semibold leading-[1.2] tracking-tight sm:text-4xl",
+  },
+  {
+    label: "H3 — 24px, 600, 1.3",
+    className: "text-2xl font-semibold leading-[1.3]",
+  },
+  {
+    label: "CTA — 16px, 600 (in the button recipe)",
+    className: "text-base font-semibold",
+  },
+];
+
+/**
+ * Space Mono's two live placements, drawn as they ship. Both are the platform
+ * naming one of its own places — a voice zone, and the door into Sogverse — and
+ * that is the whole of the face's remit: never marketing copy, never user
+ * content, never a badge or a section heading.
+ */
+const BRAND_MONO_PLACEMENTS: readonly {
+  where: string;
+  sample: string;
+  className: string;
+}[] = [
+  {
+    where: "Voice room — a zone name",
+    sample: "Harmony",
+    className: "font-brand-mono text-sm font-normal",
+  },
+  {
+    where: "/select-profile — the door",
+    sample: "Who is entering Sogverse?",
+    className: "font-brand-mono text-2xl font-bold sm:text-3xl",
+  },
+];
+
+/**
+ * The gamer dashboard's greeting, which is the one heading in the app that has
+ * to survive the widest locale at the 360px floor. Finnish because it sets the
+ * longest first word of the five ("Tervetuloa," against French's "Bienvenue,"),
+ * and a real fixture name because the name is the part of the line no
+ * translator controls.
  */
 const GREETING_SAMPLE = "Tervetuloa, Aino!";
 
 /**
  * The gamer dashboard's content width at the 360px mobile floor: the shell is
- * `container p-6`, and the container is full-width below `sm`. Every greeting
- * cell is drawn in exactly that box, so the wrap is the real one.
+ * `container p-6`, and the container is full-width below `sm`. The greeting is
+ * drawn in exactly that box, so the wrap is the real one.
  *
  * Which is why the width sits on its own element, with the demo's border and
  * padding on a wrapper *outside* it. Tailwind sets `box-sizing: border-box`, so
  * `w-[312px] border p-3` on one element is a 286px content box — the greeting
- * would wrap earlier than it does on a real phone and the comparison would be
- * measuring the demo's own chrome.
+ * would wrap earlier than it does on a real phone and the demo would be
+ * measuring its own chrome.
  */
 const MOBILE_FLOOR_WIDTH = "w-[312px]";
 
-const GREETING_CELLS: readonly { label: string; className: string }[] = [
-  { label: "Press Start 2P · text-xl", className: "font-display text-xl" },
-  { label: "Space Mono · text-xl", className: "font-brand-mono text-xl" },
-  { label: "Space Mono · text-2xl", className: "font-brand-mono text-2xl" },
-];
+/** A Finnish name, because that is what the signing field is given to draw. */
+const SIGNATURE_SAMPLE = "Sanna Mäkinen";
 
 function TypeFacesDemo() {
   return (
     <Section title="Type faces">
       <SubSection title="Specimens">
         <p className="text-sm text-muted-foreground">
-          One string, three faces, three sizes. Press Start 2P ships a single
-          weight, so its bold and semibold are synthesised by the browser;
-          Poppins and Space Mono draw theirs.
+          One string, two text faces, three sizes. Both draw their own weights,
+          so nothing here is synthesised by the browser.
         </p>
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           {TYPE_FACES.map((face) => (
             <div key={face.name} className="min-w-0 space-y-4 rounded-lg border p-4">
               <div>
@@ -2666,31 +2573,68 @@ function TypeFacesDemo() {
         </div>
       </SubSection>
 
-      <SubSection title="The gamer greeting, at the 360px floor">
+      <SubSection title="The Poppins scale">
         <p className="text-sm text-muted-foreground">
-          Press Start 2P advances a full em per character and Space Mono about
-          0.6, so the draft raises the size rather than keeping the number: the
-          middle cell is the swap at today&rsquo;s size, the right one is what
-          the draft ships.
+          Every heading in the product is one of these, at SemiBold 600 — the
+          Guidebook&rsquo;s own figures, with a mobile step on the H1 because
+          48&ndash;56px is a desktop number and the floor is 360px.
+        </p>
+        <div className="space-y-4">
+          {POPPINS_SCALE.map((step) => (
+            <div key={step.label} className="space-y-1">
+              <DemoCaption>{step.label}</DemoCaption>
+              <p className={cn(step.className, "break-words")}>
+                {TYPE_SPECIMEN_SAMPLE}
+              </p>
+            </div>
+          ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="Space Mono, where it lives">
+        <p className="text-sm text-muted-foreground">
+          Two live placements and no others. Both are the platform naming one of
+          its own places; everything else on both of those pages is Poppins.
         </p>
         <div className="flex flex-wrap gap-6">
-          {GREETING_CELLS.map((cell) => (
-            <div key={cell.label} className="space-y-1.5">
-              <DemoCaption>{cell.label}</DemoCaption>
+          {BRAND_MONO_PLACEMENTS.map((placement) => (
+            <div key={placement.where} className="space-y-1.5">
+              <DemoCaption>{placement.where}</DemoCaption>
               <div className="w-fit rounded-lg border p-3">
-                <div className={MOBILE_FLOOR_WIDTH}>
-                  <p
-                    className={cn(
-                      cell.className,
-                      "text-center font-bold text-primary break-words",
-                    )}
-                  >
-                    {GREETING_SAMPLE}
-                  </p>
-                </div>
+                <p className={cn(placement.className, "break-words")}>
+                  {placement.sample}
+                </p>
               </div>
             </div>
           ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="The gamer greeting, at the 360px floor">
+        <p className="text-sm text-muted-foreground">
+          Poppins at 30px, which is the arithmetic rather than a preference:
+          312px of content, and Finnish sets the longest first word of the five
+          locales. The 36px step from <code>md</code> up is the
+          Guidebook&rsquo;s own H2.
+        </p>
+        <div className="w-fit rounded-lg border p-3">
+          <div className={MOBILE_FLOOR_WIDTH}>
+            <p className="text-center font-sans text-3xl font-semibold leading-[1.2] text-primary break-words md:text-4xl">
+              {GREETING_SAMPLE}
+            </p>
+          </div>
+        </div>
+      </SubSection>
+
+      <SubSection title="The signature">
+        <p className="text-sm text-muted-foreground">
+          Dancing Script draws a name typed into a signing field and nothing
+          else &mdash; a gedu&rsquo;s contract, and the admin&rsquo;s record of
+          it. It is not a display face: anything longer than a name set in it is
+          unreadable, which is why it is absent from the comparison above.
+        </p>
+        <div className="w-fit rounded-lg border px-4 pb-2 pt-3">
+          <p className="font-cursive text-4xl leading-none">{SIGNATURE_SAMPLE}</p>
         </div>
       </SubSection>
     </Section>
@@ -2752,19 +2696,13 @@ export default function AdminUIComponentsPage() {
           </div>
         </SubSection>
 
-        {/* The four Yty-Elements. Today's tokens are raw Tailwind defaults with
-            two of the four in the wrong family; the incoming pairs are the
-            brand's own hues, strong beside soft, so the swap can be judged as
-            eight decisions rather than described as one. */}
+        {/* The four Yty-Elements, each an authored strong/soft pair. Strong
+            fills, borders, rings and glows; soft carries text and glyphs on
+            this ground — wit-strong is 3.81:1 on a card, which clears 3:1 for
+            an icon and misses 4.5:1 for body copy, and using soft for ink
+            uniformly is what keeps the four one family. */}
         <SubSection title="Yty elements">
-          <DemoCaption>Today</DemoCaption>
-          <div className="flex flex-wrap gap-4">
-            <Swatch label="Harmony" className="bg-yty-harmony" />
-            <Swatch label="Glow" className="bg-yty-glow" />
-            <Swatch label="Valor" className="bg-yty-valor" />
-            <Swatch label="Wit" className="bg-yty-wit" />
-          </div>
-          <DemoCaption>Incoming &mdash; strong beside soft</DemoCaption>
+          <DemoCaption>Strong beside soft</DemoCaption>
           <div className="flex flex-wrap gap-4">
             <Swatch label="Harmony strong" className="bg-yty-harmony-strong" />
             <Swatch label="Harmony soft" className="bg-yty-harmony-soft" />
@@ -3246,16 +3184,6 @@ export default function AdminUIComponentsPage() {
             controls — renders from the fixture.
           </p>
           <VoiceZonesDemo />
-        </SubSection>
-
-        <SubSection title="Yty zones — today beside the brand draft">
-          <p className="text-sm text-muted-foreground">
-            The same four zones under each palette: a strong 10% tint behind a
-            soft glyph, and the active card&rsquo;s colour spilling in from its
-            border. An instant room&rsquo;s zone set, so the tiles under review
-            are the whole list.
-          </p>
-          <YtyZonePaletteDemo />
         </SubSection>
 
         <SubSection title="Avatar (speaking glow)">

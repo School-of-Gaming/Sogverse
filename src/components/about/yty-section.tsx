@@ -1,38 +1,13 @@
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  YTY_ELEMENTS,
-  ytyElementColor,
-  type YtyPalette,
-} from "@/lib/constants/yty";
+import { YTY_ELEMENTS } from "@/lib/constants/yty";
 
 interface YtySectionProps {
   /** Optional anchor id for scrollspy navigation. */
   id?: string;
-  /**
-   * Which Yty palette the element cards draw in. Defaults to the live one, and
-   * nothing passes anything else today — there is no About scene, and the draft
-   * is judged from the walkthrough deck's inline samples, which read the same
-   * colour maps this section does. The prop is what makes promotion a value
-   * change rather than a rewrite, and retires with the draft palette.
-   */
-  palette?: YtyPalette;
 }
 
-/**
- * The overview card's ground. The amber→violet blend it used to carry was a
- * card-scale wash of two brand hues, which the shading rule bans outright: a
- * brand colour darkened into a surface is no longer that brand colour, and this
- * card is not one of the two sanctioned home keeps. So the live path's ground is
- * neutral; every brand dose replaces it with a single-hue wash. The element
- * cards below are identical under every dose, which is deliberate and
- * unaffected — their fade is same-hue, so it is a wash rather than a blend.
- */
-function overviewCardClass(palette: YtyPalette): string {
-  return palette === "current" ? "bg-muted" : "bg-yty-harmony-strong/10";
-}
-
-export function YtySection({ id, palette = "current" }: YtySectionProps) {
+export function YtySection({ id }: YtySectionProps) {
   const t = useTranslations("yty");
 
   return (
@@ -51,9 +26,12 @@ export function YtySection({ id, palette = "current" }: YtySectionProps) {
         </p>
       </div>
 
-      {/* Overview */}
+      {/* Overview. Neutral ground, for the reason the About page's mission card
+          is neutral: a brand hue washed across a whole card composites into a
+          darker colour that is no longer the brand's. The element cards below
+          are the ruled exemption — chip-scale tiles accenting an icon. */}
       <div className="mx-auto mt-16 max-w-4xl">
-        <Card className={overviewCardClass(palette)}>
+        <Card className="bg-muted">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">{t("overview.heading")}</CardTitle>
           </CardHeader>
@@ -69,29 +47,26 @@ export function YtySection({ id, palette = "current" }: YtySectionProps) {
         <h3 className="text-center text-2xl font-semibold">{t("elements.heading")}</h3>
         <p className="mt-2 text-center text-muted-foreground">{t("elements.subheading")}</p>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
-          {YTY_ELEMENTS.map((el) => {
-            const color = ytyElementColor(el, palette);
-            return (
-              <Card key={el.id} className={`border-2 ${color.border}`}>
-                <CardHeader>
-                  <div className="flex items-center gap-4">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${color.bg}`}>
-                      <el.icon className={`h-6 w-6 ${color.accent}`} />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{t(`elements.${el.id}.name`)}</CardTitle>
-                      <p className={`text-sm ${color.accent}`}>{t(`elements.${el.id}.description`)}</p>
-                    </div>
+          {YTY_ELEMENTS.map((el) => (
+            <Card key={el.id} className={`border-2 ${el.color.border}`}>
+              <CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${el.color.bg}`}>
+                    <el.icon className={`h-6 w-6 ${el.color.accent}`} />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">
-                    {t(`elements.${el.id}.detail`)}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  <div>
+                    <CardTitle className="text-lg">{t(`elements.${el.id}.name`)}</CardTitle>
+                    <p className={`text-sm ${el.color.accent}`}>{t(`elements.${el.id}.description`)}</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-base">
+                  {t(`elements.${el.id}.detail`)}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
 

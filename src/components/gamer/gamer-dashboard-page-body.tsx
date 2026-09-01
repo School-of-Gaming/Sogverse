@@ -7,8 +7,6 @@ import { EnrollmentCard } from "@/components/family/EnrollmentCard";
 import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
 import { GamerHelpFaq } from "@/components/help/help-faq";
 import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type";
-import type { YtyPalette } from "@/lib/constants/yty";
-import type { DisplayFace } from "@/components/preview/palette-scenarios";
 
 /**
  * The greeting's face, size and weight — a literal class string, because
@@ -31,18 +29,8 @@ import type { DisplayFace } from "@/components/preview/palette-scenarios";
  * typical first name and stays on one line. A long name (Aleksanteri) wraps at
  * the space, which `break-words` already handles. The 36px step from `md:` up
  * is the Guidebook's own H2.
- *
- * **Both keys are the same string, and that is the settled answer rather than
- * an oversight** — the face question closed when the pixel face retired, so
- * the draft scenario and the live route render one greeting. The map retires
- * with the draft: promotion drops the prop and keeps the string.
  */
 const GREETING_TYPE = "font-sans text-3xl font-semibold leading-[1.2] md:text-4xl";
-
-const GREETING_FACE: Record<DisplayFace, string> = {
-  display: GREETING_TYPE,
-  sans: GREETING_TYPE,
-};
 
 /**
  * The gamer dashboard's page body — everything below the route's data shell.
@@ -85,8 +73,6 @@ export function GamerDashboardPageBody({
   firstName,
   enrollments,
   helpForm,
-  palette = "current",
-  greetingFace = "display",
 }: {
   /** The child's own first name, for the greeting. */
   firstName: string;
@@ -98,18 +84,6 @@ export function GamerDashboardPageBody({
    * inert one — a scene must never gain a live submit that emails every admin.
    */
   helpForm: React.ReactNode;
-  /**
-   * Which Yty palette the draft doses draw in. Defaults to the live one, so
-   * `/gamer` is untouched; the preview scene's `brand-palette` scenario passes
-   * `"brand"` to show the design-pass draft. Retires when the draft promotes.
-   */
-  palette?: YtyPalette;
-  /**
-   * Which face the greeting is set in. Both answers are now the same Poppins
-   * line — see `GREETING_FACE` above — so this prop is inert draft plumbing
-   * that retires with the scenario axis it belongs to.
-   */
-  greetingFace?: DisplayFace;
 }) {
   const t = useTranslations("gamer");
   const s = useTranslations("dashboardSections");
@@ -156,9 +130,7 @@ export function GamerDashboardPageBody({
               break-words is a safety net for longer translations —
               and for the name too, which is the longest thing that can land in
               this line and the one part of it no translator controls. */}
-          <h2
-            className={`${GREETING_FACE[greetingFace]} text-primary break-words`}
-          >
+          <h2 className={`${GREETING_TYPE} text-primary break-words`}>
             {t("welcomeNamed", { name: firstName })}
           </h2>
           <p className="text-muted-foreground">{t("subtitle")}</p>
@@ -209,14 +181,9 @@ export function GamerDashboardPageBody({
                 ) : (
                   <div className="space-y-3">
                     {group.items.map((enrollment) => (
-                      // The draft scenario is the whole proposal rather than
-                      // one axis of it, so the cards take the palette here just
-                      // as they do on the parent's page — a child's My SOG and
-                      // a parent's have to agree about what a Live badge is.
                       <EnrollmentCard
                         key={enrollment.participationId}
                         enrollment={enrollment}
-                        palette={palette}
                         audience="gamer"
                       />
                     ))}

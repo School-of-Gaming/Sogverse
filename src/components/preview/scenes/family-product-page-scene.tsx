@@ -8,7 +8,6 @@ import {
 } from "@/components/family/product-page/mock-fixtures";
 import { useNow } from "@/providers";
 import type { SessionAudience } from "@/types";
-import { ytyPaletteFor } from "../palette-scenarios";
 
 /**
  * The family product page over fixtures — the same presentational body for
@@ -19,11 +18,6 @@ import { ytyPaletteFor } from "../palette-scenarios";
  * term in chunks. Everything that would touch a backend is inert — the Join
  * renders its real live or locked state and does nothing when clicked, because a
  * preview must not put anybody into a voice room.
- *
- * One scenario differs from `active-club` in nothing but the draft palette: the
- * page's time marks in wit, its liveness in glow, its community label in
- * harmony. It borrows the live club because that is the only scenario with a
- * room open, and liveness is the half of the grammar a quiet page cannot show.
  *
  * The fixture is built once from the first `useNow()` value and then held in
  * state. Rebuilding it on the 30-second tick would re-derive every session start
@@ -88,10 +82,6 @@ export function FamilyProductPageScene({
       onJoinClick={noop}
       entries={fixture.entries}
       sourceTimeZone={fixture.sourceTimeZone}
-      // The one scenario that is a palette rather than a shape of the page.
-      // Every other scenario passes `"current"` and renders exactly what the
-      // live route does.
-      palette={ytyPaletteFor(scenario)}
     />
   );
 }

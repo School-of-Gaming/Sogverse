@@ -9,14 +9,14 @@
  * Run: `node scripts/yty-contrast.mjs`
  *
  * **Every number here is read out of `globals.css`** — the two grounds, the app
- * foreground, and all twelve Yty hexes. Nothing is restated in this file, so a
+ * foreground, and all eight Yty hexes. Nothing is restated in this file, so a
  * token tuned in the stylesheet cannot keep reporting a verified value it no
  * longer carries.
  *
  * **Two grounds, because the palette does not sit on one.** The app background
  * is `--background`; but the shipped Yty pairings sit inside Cards, whose ground
- * is `--card` — the home section's accent description text sits directly on the
- * card, and the icons sit on a 10% strong tint over it. The card is the lighter
+ * is `--card` — the About page's element descriptions sit directly on the card,
+ * and the icons sit on a 10% strong tint over it. The card is the lighter
  * of the two, so it is the stricter ground for every hue in this palette, and
  * measuring only against the page would report a pass the product never gets.
  * Both are printed for every pairing; the summary at the end passes a variant
@@ -35,11 +35,11 @@
  *   4. ground on fill     — ink text on a full fill of the hue (button/badge
  *                           shaped usage). 4.5:1.
  *   5. soft on strong tint— the element's soft text over a 10% wash of its own
- *                           strong composited on the ground. This is the zone
- *                           pairing the style guide's comment calls the
- *                           question, and it is printed as its own table
- *                           because it is the only one that needs both
- *                           variants of an element at once. 4.5:1.
+ *                           strong composited on the ground. This is what a
+ *                           voice zone's tile draws — a coloured label on its
+ *                           own tint — and it is the tightest of the five. It
+ *                           is printed as its own table because it is the only
+ *                           one that needs both variants at once. 4.5:1.
  *
  * WCAG contrast is symmetric, so row 4's ratio is by construction identical to
  * rows 1–2 — what differs is the threshold that applies and the usage being
@@ -131,9 +131,9 @@ function readHslToken(css, name) {
 
 /**
  * The same, for the tokens written as literal hex — which is what every Yty
- * colour is. The colon in the pattern is load-bearing: without it
- * `--color-yty-harmony` would match `--color-yty-harmony-strong` and certify
- * the wrong hue.
+ * colour is. The colon in the pattern is load-bearing: one token name can be a
+ * prefix of another, and without the colon a lookup would match the longer name
+ * and certify the wrong hue.
  */
 function readHexToken(css, name) {
   const re = new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})\\s*;`);
@@ -174,13 +174,6 @@ const ELEMENTS = ["harmony", "glow", "valor", "wit"];
 const BRAND = ELEMENTS.flatMap((element) => [
   [element, "strong", readHexToken(css, `color-yty-${element}-strong`)],
   [element, "soft", readHexToken(css, `color-yty-${element}-soft`)],
-]);
-
-/** What the four single tokens carry today — raw Tailwind defaults. */
-const CURRENT = ELEMENTS.map((element) => [
-  element,
-  "current",
-  readHexToken(css, `color-yty-${element}`),
 ]);
 
 /** The alpha the Yty card tints are drawn at — the `/10` slash-alpha classes. */
@@ -334,20 +327,12 @@ console.log(
 );
 
 const brandRows = rowsFor(BRAND);
-const currentRows = rowsFor(CURRENT);
 const brandPairs = pairsFor(brandRows);
 
 for (const ground of GROUNDS) {
   printTable("Brand palette (strong / soft)", brandRows, ground);
 }
 printSoftOnStrongTable(brandPairs);
-for (const ground of GROUNDS) {
-  printTable(
-    "Current tokens (raw Tailwind defaults), for comparison",
-    currentRows,
-    ground,
-  );
-}
 
 // ------------------------------------------------------------------ summary
 

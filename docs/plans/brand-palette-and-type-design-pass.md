@@ -1035,6 +1035,22 @@ Files: `enrollment-tones.ts`, `product-page-tones.ts`, `home-page-body.tsx`,
 - Verify: `rg "YtyPalette|BRAND_PALETTE_SCENARIO|palette-scenarios"` → zero;
   preview-scenes test green at its new counts.
 
+  *Decisions taken at promotion (implementer's, per the open calls above):*
+  **(a) The `bgGradient` slot is dropped** — the five-slot shape becomes four.
+  Its only renderer was the deleted gamer Yty grid, gradients are retired by
+  default, and a slot nothing draws is a construct the next reader has to work
+  out the absence of. **(b) The `/about` mission and overview cards stay
+  neutral (`bg-muted`)**, which is the *live* class rather than the draft's
+  `bg-yty-harmony-strong/10`. The draft washed a whole card in a brand hue at
+  10%, which is exactly the surface-scale construct direction 24 bans; the
+  ruled exemption is chip scale (an icon medallion), and `/about` was never a
+  signed-off scene, so the ban governs rather than the draft. The element cards
+  on that page do take the promoted map. **(c) The four home sections are no
+  longer exported** — the walkthrough deck was their only importer.
+  **(d) `scripts/yty-contrast.mjs` loses its "current tokens" comparison
+  table**, which read the four deleted single-slot tokens and would otherwise
+  throw.
+
 ### P8 — Law, guards, story (what outlives the plan)
 Files: root `CLAUDE.md`, `src/components/voice/CLAUDE.md`,
 `docs/brand-guidebook-deviations.md`, `docs/records/` (new),
