@@ -149,7 +149,7 @@ function GroupSessionChatRoom({
   );
 
   /**
-   * Which channel's realtime subscription is live, or `null` for none yet.
+   * The channel whose history fetch has been released, or `null` for none yet.
    *
    * **Subscribe, then snapshot.** The history fetch is held until the
    * subscription's SUBSCRIBED ack so that every commit is either ≤ the fetch's
@@ -160,13 +160,23 @@ function GroupSessionChatRoom({
    * gap is a permanent blank rather than a delay. The cost is one channel-join
    * round trip on an already-open socket before the log's first paint, inside
    * a box that already renders empty at its final size.
+   *
+   * **A subscription that never comes up releases the gate anyway, and the
+   * surface degrades to a read-only log.** A channel can answer
+   * `CHANNEL_ERROR`, `TIMED_OUT` or `CLOSED` instead of an ack, and waiting
+   * for an ack that is not coming would leave an empty box on screen forever
+   * with nothing saying why. So any terminal status opens the gate: the
+   * snapshot renders, sends still work (they are RPCs, not socket traffic),
+   * and the only thing that moves the log afterwards is React Query's
+   * refetch-on-focus — the same gap filler a payload silently dropped on a
+   * live socket relies on. Nothing about live delivery is claimed in that
+   * state, and if the socket does come up later the ack invalidates the
+   * snapshot (see the subscribe callback) and the room is live again.
    */
-  const [subscribedChannel, setSubscribedChannel] = useState<string | null>(
-    null,
-  );
+  const [historyGate, setHistoryGate] = useState<string | null>(null);
 
   const history = useChatHistory(channelId, {
-    enabled: subscribedChannel === channelId,
+    enabled: historyGate === channelId,
   });
   const roster = useChatRoster(channelId);
 
@@ -183,10 +193,32 @@ function GroupSessionChatRoom({
    * already carries lands harmlessly on itself. Cleared on channel teardown —
    * a payload for a channel we left is moot, and the next mount starts from
    * its own snapshot.
+   *
+   * **Bounded by the snapshot still being on its way.** "No log to patch" and
+   * "a log is coming" are two different states, and only the second is worth
+   * holding for: an errored history query has no answer in flight, so a buffer
+   * filled against one grows for as long as the failure lasts and then lands
+   * as a single commit if some later focus refetch succeeds. So the buffer is
+   * emptied when the query errors and nothing is added while it is errored —
+   * the refetch's own answer is the log at that point.
    */
   const bufferedPatchesRef = useRef<((current: ChatHistory) => ChatHistory)[]>(
     [],
   );
+
+  /**
+   * Whether the history query still has an answer coming, readable from inside
+   * a subscription callback.
+   *
+   * A ref rather than a dependency for the same reason the roster's ids are
+   * one: making the subscription depend on the query's status would tear the
+   * channel down and rejoin it on every transition.
+   */
+  const historyStatusRef = useRef(history.status);
+  useEffect(() => {
+    historyStatusRef.current = history.status;
+    if (history.status === "error") bufferedPatchesRef.current = [];
+  }, [history.status]);
 
   /**
    * The pictures this viewer sent, by message id: the blob the log is drawing
@@ -253,10 +285,13 @@ function GroupSessionChatRoom({
     const historyKey = chatKeys.history(channelId);
     const patch = (change: (current: ChatHistory) => ChatHistory) => {
       // No snapshot yet: hold the payload for the flush (see the buffer's
-      // comment). With one, drain anything held first so application order is
-      // arrival order, then apply.
+      // comment), but only while one is still coming — an errored query has
+      // nothing on its way for these to be applied to. With a snapshot, drain
+      // anything held first so application order is arrival order, then apply.
       if (queryClient.getQueryData<ChatHistory>(historyKey) === undefined) {
-        bufferedPatchesRef.current.push(change);
+        if (historyStatusRef.current !== "error") {
+          bufferedPatchesRef.current.push(change);
+        }
         return;
       }
       const queued = bufferedPatchesRef.current;
@@ -268,7 +303,16 @@ function GroupSessionChatRoom({
       );
     };
 
-    let subscribedBefore = false;
+    // Whether the history fetch has already been released for this channel —
+    // by an ack, or by the degradation below. It is what tells a *re*-subscribe
+    // apart from the first one, and it is deliberately not "have we been
+    // subscribed before": a gate opened by a failure has a snapshot taken with
+    // no live socket behind it, so the ack that eventually follows has just as
+    // much to reconcile as a reconnect does.
+    let gateOpened = false;
+    // A status can arrive after this effect's cleanup — `removeChannel` itself
+    // provokes a CLOSED — and it belongs to a channel we have already left.
+    let disposed = false;
 
     const live = supabase
       .channel(`chat-${channelId}`)
@@ -346,27 +390,50 @@ function GroupSessionChatRoom({
         }));
       })
       .subscribe((status) => {
-        if (status !== "SUBSCRIBED") return;
-        // The gate the history fetch is waiting behind — from here on, every
-        // commit the snapshot misses arrives as a payload.
-        setSubscribedChannel(channelId);
-        // **The only reconnect signal Realtime offers.** A re-subscribe means
-        // the socket went away and came back, so anything that happened while
-        // it was down was never delivered and a stranded pending echo has no
-        // acknowledgement coming — one invalidation reconciles both.
-        //
-        // It says nothing about a payload dropped on a socket that *stayed* up:
-        // that arrives as silence, and the gap filler is React Query's default
-        // refetch-on-focus, deliberately left on.
-        if (subscribedBefore) {
-          void queryClient.invalidateQueries({ queryKey: historyKey });
+        // A status for a channel we have already torn down would release the
+        // gate under the *previous* channel id, which the current channel's
+        // fetch is keyed against — so it would hold that fetch closed until a
+        // second ack arrived.
+        if (disposed) return;
+
+        if (status === "SUBSCRIBED") {
+          // The gate the history fetch is waiting behind — from here on, every
+          // commit the snapshot misses arrives as a payload.
+          setHistoryGate(channelId);
+          // **The only reconnect signal Realtime offers.** A re-subscribe means
+          // the socket went away and came back, so anything that happened while
+          // it was down was never delivered and a stranded pending echo has no
+          // acknowledgement coming — one invalidation reconciles both. The same
+          // invalidation is what repairs a snapshot taken during the degraded
+          // state below, where nothing was ever delivered in the first place.
+          //
+          // It says nothing about a payload dropped on a socket that *stayed*
+          // up: that arrives as silence, and the gap filler is React Query's
+          // default refetch-on-focus, deliberately left on.
+          if (gateOpened) {
+            void queryClient.invalidateQueries({ queryKey: historyKey });
+          }
+          gateOpened = true;
+          return;
         }
-        subscribedBefore = true;
+
+        // **Everything else is the socket declining to come up**, and the gate
+        // opens on it rather than waiting for an ack that may never arrive: a
+        // held-shut gate is an empty box with no explanation and no recovery.
+        // What the viewer gets instead is the log as it stands, refreshed on
+        // focus — honestly less than a live room, and visibly a room rather
+        // than a blank.
+        console.warn(
+          `[chat] channel ${channelId} answered ${status}; the log is read-only until it resubscribes`,
+        );
+        setHistoryGate(channelId);
+        gateOpened = true;
       });
 
     liveChannelRef.current = live;
     const buffer = bufferedPatchesRef;
     return () => {
+      disposed = true;
       liveChannelRef.current = null;
       buffer.current = [];
       void supabase.removeChannel(live);

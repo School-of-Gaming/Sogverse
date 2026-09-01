@@ -186,13 +186,14 @@ jobs:
       #   (enable_confirmations = false in supabase/config.toml), so GoTrue never
       #   contacts SMTP on any path a test exercises. imgproxy stays out with
       #   storage-api in: it serves image *transformations*, which nothing here
-      #   asks for — an object is uploaded and a URL is signed, and neither
-      #   touches it.
+      #   asks for — an object is uploaded and downloaded, and neither touches
+      #   it.
       # - storage-api is kept because the `chat-images` policy is a
-      #   `storage.objects` RLS rule and minting a signed URL is the only call
-      #   that evaluates it. Without the container that boundary — membership,
-      #   the family time bound, and a hidden picture's retraction, all on
-      #   pictures of children — has no automated coverage at all.
+      #   `storage.objects` RLS rule, and downloading the object is what
+      #   evaluates it — the same call the read route makes on the viewer's own
+      #   client. Without the container that boundary — membership, the family
+      #   time bound, and a hidden picture's retraction, all on pictures of
+      #   children — has no automated coverage at all.
       #
       # Together the exclusions cut boot well below the ~5 min full stack; the
       # baseline and per-container drift move around with runner weather, so treat

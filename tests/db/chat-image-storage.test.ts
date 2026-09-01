@@ -23,12 +23,11 @@ import { getStringRecord } from "../helpers/json";
  * bound, and a hidden message's picture being refused to everyone but a
  * moderator. Nothing in the app has to remember to check any of that — which
  * is exactly why nothing in the app would notice if the policy stopped doing
- * it. In production the policy is exercised by the read route's
- * `storage.download` on the viewer's own client (no signed URL is minted
- * anywhere since 00233); every case below goes through `createSignedUrl` on a
- * real caller's own client instead, because the two are gated by the same
- * SELECT predicate and the mint is the one storage read a db test can make
- * without standing up the app in front of it.
+ * it. Every case below downloads the object on a real caller's own client,
+ * which is the production read path itself: the read route calls
+ * `storage.download` on the viewer's session and serves what comes back (no
+ * signed URL is minted anywhere since 00233), so what these cases exercise is
+ * the same call the app makes, one HTTP hop earlier.
  *
  * The object is written with the service-role client, as the upload route
  * writes it: the bucket grants SELECT alone, so there is no client-side write
@@ -38,10 +37,10 @@ import { getStringRecord } from "../helpers/json";
  * assertion here can pass because the fixture was empty or the bucket
  * unreachable. The pairs are the policy's three clauses, one each:
  *
- *   - membership — the seat-holder mints, the stranger does not;
+ *   - membership — the seat-holder reads, the stranger does not;
  *   - the family time bound — the seat-holder is refused a channel whose
  *     window has closed, while the assigned gedu, who has no bound, still
- *     mints it (staff review after the fact is the point of keeping the bytes);
+ *     reads it (staff review after the fact is the point of keeping the bytes);
  *   - the hidden state — hiding retracts the picture from participants and from
  *     nobody else.
  *
@@ -68,9 +67,6 @@ const PRODUCT_LIVE = "00000000-0000-0000-0000-0000000007e3";
  */
 const ORPHAN_OBJECT_NAME = "00000000-0000-0000-0000-0000000007e9";
 
-/** How long a minted URL would live. Irrelevant here — the minting is the test. */
-const SIGN_SECONDS = 60;
-
 /** Bytes that stand in for a picture. The policy never looks inside one. */
 const IMAGE_BYTES = Buffer.from([0xff, 0xd8, 0xff, 0xdb, 0x00, 0x01]);
 
@@ -93,19 +89,20 @@ describe("chat image storage policy", () => {
   /** The picture in the channel whose window closed a month ago. */
   let expiredImageId: string;
 
-  /** Mint a URL for one object as one caller, and say only whether it worked. */
-  async function canSign(
+  /** Download one object as one caller, and say only whether it worked. */
+  async function canRead(
     client: SupabaseClient<Database>,
     objectName: string,
   ): Promise<boolean> {
     const { data, error } = await client.storage
       .from(CHAT_IMAGES_BUCKET)
-      .createSignedUrl(objectName, SIGN_SECONDS);
+      .download(objectName);
     // A refusal and a missing object are one answer here, by design: the
     // policy's whole job is to make an object the caller may not read
-    // indistinguishable from one that is not there.
+    // indistinguishable from one that is not there — which is also why the
+    // read route answers both with the same 404.
     if (error !== null) return false;
-    return data.signedUrl.length > 0;
+    return data.size > 0;
   }
 
   beforeAll(async () => {
@@ -254,20 +251,20 @@ describe("chat image storage policy", () => {
   // Membership
   // -------------------------------------------------------------------------
 
-  it("mints for an active seat-holder and refuses an unrelated account", async () => {
+  it("serves an active seat-holder and refuses an unrelated account", async () => {
     // The pair is the policy's membership clause, and neither half means
     // anything alone: a lone success could be a policy that admits everyone,
     // and a lone refusal could be a bucket nobody can read at all.
-    expect(await canSign(gamerAuth, liveImageId)).toBe(true);
-    expect(await canSign(strangerAuth, liveImageId)).toBe(false);
+    expect(await canRead(gamerAuth, liveImageId)).toBe(true);
+    expect(await canRead(strangerAuth, liveImageId)).toBe(false);
   });
 
   it("refuses an object no message row names, moderators included", async () => {
     // The join is the whole policy: an object is readable because a message row
     // named by it says which channel it is in. An orphan has nothing to ask
     // about, so it is refused for the caller who is refused least.
-    expect(await canSign(adminAuth, ORPHAN_OBJECT_NAME)).toBe(false);
-    expect(await canSign(geduAuth, ORPHAN_OBJECT_NAME)).toBe(false);
+    expect(await canRead(adminAuth, ORPHAN_OBJECT_NAME)).toBe(false);
+    expect(await canRead(geduAuth, ORPHAN_OBJECT_NAME)).toBe(false);
   });
 
   // -------------------------------------------------------------------------
@@ -278,9 +275,9 @@ describe("chat image storage policy", () => {
     // The bytes outlive the window on purpose — after-the-fact review is the
     // point of keeping them — so the bound is what separates the family from
     // the staff, on the image bytes exactly as it does on the rows.
-    expect(await canSign(gamerAuth, expiredImageId)).toBe(false);
-    expect(await canSign(geduAuth, expiredImageId)).toBe(true);
-    expect(await canSign(adminAuth, expiredImageId)).toBe(true);
+    expect(await canRead(gamerAuth, expiredImageId)).toBe(false);
+    expect(await canRead(geduAuth, expiredImageId)).toBe(true);
+    expect(await canRead(adminAuth, expiredImageId)).toBe(true);
   });
 
   // -------------------------------------------------------------------------
@@ -289,17 +286,19 @@ describe("chat image storage policy", () => {
 
   it("retracts a hidden picture from participants and from nobody else", async () => {
     // Hiding performs no storage action at all: the policy reads `hidden_at`
-    // live, so a moderator's remove control stops fresh mints by itself. An
-    // already-minted URL survives until it expires, which is the accepted edge
-    // the hidden-body wire exposure records for text.
+    // live, so a moderator's remove control retracts the picture from the next
+    // fetch onward, by itself. What survives a hide is only what a viewer's
+    // browser profile already cached — bounded by the read route's one-hour
+    // freshness — which is the accepted edge the hidden-body wire exposure
+    // records for text.
     const hidden = await geduAuth.rpc("hide_chat_message", {
       p_id: liveImageId,
     });
     expect(hidden.error).toBeNull();
 
-    expect(await canSign(gamerAuth, liveImageId)).toBe(false);
-    expect(await canSign(geduAuth, liveImageId)).toBe(true);
-    expect(await canSign(adminAuth, liveImageId)).toBe(true);
+    expect(await canRead(gamerAuth, liveImageId)).toBe(false);
+    expect(await canRead(geduAuth, liveImageId)).toBe(true);
+    expect(await canRead(adminAuth, liveImageId)).toBe(true);
 
     // And back: a restore returns the picture to the room, which is what makes
     // the refusal above a property of `hidden_at` rather than of anything the
@@ -308,6 +307,6 @@ describe("chat image storage policy", () => {
       p_id: liveImageId,
     });
     expect(restored.error).toBeNull();
-    expect(await canSign(gamerAuth, liveImageId)).toBe(true);
+    expect(await canRead(gamerAuth, liveImageId)).toBe(true);
   });
 });

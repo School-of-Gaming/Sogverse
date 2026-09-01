@@ -129,17 +129,23 @@ export function useChatHistory(
  * payload would revert the row and — the row never moving again — leave the
  * picture blank until the next focus refetch.
  *
- * The other flavours of the same race — an UPDATE (an edit, a hide) that a
- * stale snapshot reverts — are deliberately not treated here. They self-heal on
- * the next focus refetch or realtime payload, and untangling them would need
- * per-row versions this surface does not have; the stored flag earns its merge
- * by being the one UPDATE that is both monotone and final.
+ * The other flavours of the same race are deliberately not treated here, and
+ * there are two of them: an UPDATE (an edit, a hide) that a stale snapshot
+ * reverts, and a reaction or a lock the subscription patched in mid-flight,
+ * which the fetched answer replaces wholesale — only `messages` is unioned,
+ * because only a lost message would be both visible and permanent. Both
+ * self-heal on the next focus refetch or realtime payload, and untangling them
+ * would need per-row versions this surface does not have; the stored flag earns
+ * its merge by being the one UPDATE that is both monotone and final.
  *
  * An empty answer is taken at face value rather than unioned: the only ways to
  * read nothing are an empty channel and a read window that has closed, and in
  * both the cached rows are what should go.
+ *
+ * Exported for its own unit test: it is a pure function of two logs, and every
+ * clause above is a claim a test can hold still.
  */
-function withNewerCachedMessages(
+export function withNewerCachedMessages(
   held: ChatHistory | undefined,
   fetched: ChatHistory,
 ): ChatHistory {
@@ -340,11 +346,14 @@ export function useSendChatImage(channelId: string) {
  * whose loss would be visible and permanent — and preserves a cached
  * `image_stored_at` over a fetched NULL, the one UPDATE whose loss would also
  * be permanent (its row may never move again) and whose monotonicity makes the
- * merge exact. It does *not* reconcile any other UPDATE the snapshot predates:
- * an edit or a tombstone that lands mid-flight can be momentarily reverted by
- * the answer, and heals on the next payload or focus refetch. That is the
- * accepted half, alongside the one the container's own comments record (a
- * payload dropped on a socket that stays up arrives as silence).
+ * merge exact. Everything else the snapshot predates is momentarily reverted by
+ * the answer and heals on the next payload or focus refetch — an edit or a
+ * tombstone that lands mid-flight, and equally a reaction or a lock that does:
+ * the reaction and lock lists are replaced wholesale rather than unioned, so an
+ * INSERT the subscription patched into either one while the request was out is
+ * dropped by the answer exactly as a reverted UPDATE is. Same accepted class,
+ * same healing, and both sit alongside the loss the container's own comments
+ * record (a payload dropped on a socket that stays up arrives as silence).
  */
 function useChatWrite<TVariables, TResult>(
   channelId: string,

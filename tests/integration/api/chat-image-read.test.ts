@@ -21,11 +21,14 @@ import { GET } from "@/app/api/chat/images/[id]/route";
  * as the same 404 an absent object gets, so nothing here is an oracle for
  * message ids or hidden state.
  *
- * **The bytes are served cacheable-per-user, forever.** The object is
- * immutable — `upsert: false` under a primary key that cannot recur — so
- * `private, immutable` at this stable URL is what lets a browser draw a
- * re-render, remount or reload from its own cache instead of re-fetching a
- * child's picture through the fleet.
+ * **The bytes are served privately cacheable, for one hour.** The object never
+ * changes, but a browser cache is keyed to the browser profile rather than to
+ * the principal — and a family shares one profile across an account switch —
+ * so the bound is what stops one principal's fetch being replayed to the next,
+ * past a hide and past the family read window. An hour still makes a
+ * re-render, a remount or a reload free. The exact header is pinned below,
+ * because loosening it back to a year is a one-word edit with a consequence
+ * nothing else would catch.
  */
 
 const mockGetClaims = vi.fn();
@@ -84,29 +87,43 @@ describe("GET /api/chat/images/[id]", () => {
     expect(mockDownload).not.toHaveBeenCalled();
   });
 
-  it("answers every refusal and absence with one identical 404", async () => {
+  it("answers every refusal and absence with one identical 404, body and all", async () => {
     // A non-member, a family member past their read window, a hidden
     // message's object for a non-moderator, and an object that never landed
-    // all arrive here as the policy-scoped download failing — and all leave as
-    // the same 404, so the route cannot be used to probe which it was.
-    mockDownload.mockResolvedValue({
-      data: null,
-      error: { message: "Object not found" },
-    });
+    // all arrive here as the policy-scoped download failing — and all must
+    // leave as the same response, so the route cannot be used to probe which
+    // it was. **The status alone is not enough to hold that still**: a body
+    // carrying the storage message would say "Object not found" for one and
+    // something permission-shaped for another, and a future
+    // `discloseErrorMessages` on this route would turn it into an oracle
+    // without moving a status code. So two differently-shaped failures are
+    // driven through and compared whole.
+    const answers: { status: number; body: unknown }[] = [];
+    for (const message of [
+      "Object not found",
+      `Unauthorized: permission denied for object ${MESSAGE_ID}`,
+    ]) {
+      mockDownload.mockResolvedValue({ data: null, error: { message } });
+      const response = await GET(...createRequest(MESSAGE_ID));
+      answers.push({ status: response.status, body: await response.json() });
+    }
 
-    const response = await GET(...createRequest(MESSAGE_ID));
-
-    expect(response.status).toBe(404);
+    // `defineRoute`'s generic message for a 404, pinned literally — the shape
+    // a caller gets when a route has NOT opted into disclosure.
+    expect(answers[0]).toEqual({ status: 404, body: { error: "Not found" } });
+    // And the permission-shaped failure is that same answer, whole.
+    expect(answers[1]).toEqual(answers[0]);
   });
 
-  it("serves the bytes the policy admitted, immutably cacheable per user", async () => {
+  it("serves the bytes the policy admitted, privately cacheable for an hour", async () => {
     const response = await GET(...createRequest(MESSAGE_ID));
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("image/jpeg");
-    expect(response.headers.get("Cache-Control")).toBe(
-      "private, immutable, max-age=31536000",
-    );
+    // No `immutable`, and not a year: the cache is keyed to the browser
+    // profile a family shares across an account switch, so the entry's life is
+    // what bounds serving one principal's picture to the next.
+    expect(response.headers.get("Cache-Control")).toBe("private, max-age=3600");
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(JPEG_BYTES);
 
     // The object's name IS the message id — no extension, no path column —

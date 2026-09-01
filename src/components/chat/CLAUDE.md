@@ -320,8 +320,11 @@ the body before it was hidden, and redacting it on the wire would protect only a
 joiner reading removed text out of network traffic with devtools. **Hidden pictures are
 stricter for free** — the storage policy admits a hidden message's object only to
 moderators, and every read re-answers it at fetch time through the read route, so hiding
-retracts the image from the next fetch onward; what survives is only what a member's own
-browser already cached, the same already-received exposure as the text.
+retracts the image from the next fetch onward; what survives is what the **browser
+profile** already cached, for at most an hour. Not "that member's cache" — a family shares
+one browser profile across an account switch, and an HTTP cache is keyed to the profile
+rather than to whoever is signed in — which is why the read route caches for an hour
+instead of forever. Same already-received exposure as the text, bounded in time.
 
 **Rule: the typing indicator rides a Realtime broadcast that is not RLS-gated, so its
 payload is an account id and nothing else.** Realtime authorization policies are machinery
@@ -350,17 +353,25 @@ recorded in migration 00233)*: a signed URL is a bearer token any viewer could c
 of devtools and share for its whole lifetime, and the read route deletes that exposure
 along with the entire client-side machinery the expiring tokens demanded — the
 accumulated URL map, the staleness timer, the batch-mint economy. The route's path is a
-pure function of the message id, immutable bytes behind it, so the browser caches each
-picture privately, forever, and a re-render or reload costs nothing.
+pure function of the message id, with immutable bytes behind it, so a re-render, a remount
+or a reload costs nothing — but the cache is **private and one hour**, not forever: what a
+browser can cache is keyed to the browser profile, which a family shares across an account
+switch, so an unbounded entry would serve one principal's fetch to the next and outlive
+both a hide and the family read window. The route's own header carries the full reasoning,
+including why `Vary: Cookie` cannot replace the bound.
 
 **A row lands before its bytes, and the row itself says when they have landed —
 `image_stored_at`, written by the upload route the moment the storage write returns.**
 Row first keeps the send guard in front of the stored bytes; the flag closes the window
 that ordering opens. Its realtime UPDATE reaches every subscriber on the same stream the
 row did, and the container resolves a stored picture's `src` only for a flagged row — so
-by the time any client fetches, the object provably exists (the flag commits strictly
+by the time any client fetches, the object provably *landed* (the flag commits strictly
 after it, in the same database the route reads), and "asked too early" is unreachable
-rather than retried. Until the flag lands the renderer draws the placeholder in the same
+rather than retried. **What the flag does not promise is that the object is still there**:
+one interleaving — the mark commits, its response is lost, and the route's compensation
+then sweeps the object and hides the row — leaves a flagged, hidden, objectless message.
+Participants draw the ordinary tombstone and a moderator meets the broken-image box, which
+is the accepted outcome recorded in the upload route's compensation comment. Until the flag lands the renderer draws the placeholder in the same
 arithmetic box; when it lands, the `src` flips inside a box that never changes shape.
 The flag is **monotone** — never cleared — which is what lets the history read merge it
 across refetch races exactly (`cached ?? fetched`), and the container subscribes before

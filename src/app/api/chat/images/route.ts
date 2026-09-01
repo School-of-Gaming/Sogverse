@@ -193,6 +193,22 @@ export const POST = defineRoute({
      * same client the insert ran on — hiding one's own message is the one
      * write a lock leaves, so this compensation cannot itself be refused by a
      * lock that landed mid-upload.
+     *
+     * **One interleaving leaves a row that is flagged AND swept, and it is
+     * worth stating here because 00233's header does not admit it.** That
+     * header says the compensation runs only when the flag was never set,
+     * which holds for every outcome this route can *observe* — but not for the
+     * one where `mark_chat_image_stored` commits and its response never comes
+     * back (a dropped connection, a timeout, a function killed mid-flight).
+     * The route sees a failure, sweeps the object and hides the row, and what
+     * stands is a flagged, hidden, objectless message. Every participant draws
+     * the ordinary tombstone; a moderator opening the dimmed original fetches
+     * an object that is gone and meets the broken-image state their renderer
+     * already handles. Accepted, and the same shape 00233's own backfill note
+     * already accepts for a swept tombstone marked stored — the flag stays
+     * monotone either way, so nothing downstream of it is put wrong. It is
+     * recorded in this comment rather than in the migration because a pushed
+     * migration is immutable.
      */
     const failSend = async (failure: string): Promise<never> => {
       const { error: sweepError } = await bucket.remove([upload.fields.id]);
