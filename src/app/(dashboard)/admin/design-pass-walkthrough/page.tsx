@@ -11,7 +11,6 @@ import {
   Tent,
   Users,
 } from "lucide-react";
-import { ENROLLMENT_TONES } from "@/components/family/enrollment-tones";
 import { cn } from "@/lib/utils";
 
 /**
@@ -57,8 +56,8 @@ import { cn } from "@/lib/utils";
  * class of violation reads as an invention; the app's own row, chip or card with
  * its own copy reads as the defect it is. Every surviving exhibit is drawn on
  * the construct it governs: the browse card and its price chip for the edge,
- * the live enrollment card for the gradient, the admin sidebar and the header
- * strip for the active mark.
+ * the live enrollment card for the gradient's ignition pair, the admin
+ * sidebar for the active mark.
  *
  * **Every draft is drawn on the settled type.** The typography rulings landed
  * first: Press Start 2P is out of the product and every site it held is re-set
@@ -79,10 +78,10 @@ import { cn } from "@/lib/utils";
  * sample names the file they came from, so a reader can tell a quotation from a
  * live read.
  *
- * **One home per comparison.** "You are here" now carries both of its
- * strengths — the sidebar's fill and the header's text — because they are one
- * question asked twice, and the shading slide keeps the edge and the gradient,
- * which are both questions about how a brand value may be mixed.
+ * **One home per comparison.** "You are here" is down to the sidebar's fill —
+ * the header's text half is ruled (amber stays) — and the shading slide keeps
+ * the edge and the gradient, which are both questions about how a brand value
+ * may be mixed.
  *
  * **The home page is not in this deck** (owner ruling, 2026-09-01): it is parked
  * into its own dedicated pass. Product-type colours are out of scope and the
@@ -547,42 +546,49 @@ const EDGE_HOVER: readonly {
  * glow** (already ruled). Strong to soft is the pair, so the ramp runs
  * `#1AB061 → #6AC66B`.
  *
- * Both candidates keep the **ruled** `bg-muted` Live chip — the chip ruling
- * landed, so a tinted brand ground is no longer available to it — and both are
- * built on the same faithful live enrollment card as the reference, so the only
- * thing differing across the three is where the brand is spent.
+ * **The gradient border is conditionally accepted** (owner, 2026-09-01): "so
+ * long as it doesn't shift the card's size or the layout of its content.
+ * Remember these cards update in real time when the session opens." That is
+ * the Layout & Scrolling rule stated for this card — a session opening is data
+ * arriving on its own schedule, so ignition may not move a pixel — and the
+ * exhibit below is the proof, not the proposal: the pair renders the card at
+ * rest and the same card open, at identical geometry.
  *
- * The shipped gradient is read live from `family/enrollment-tones.ts` rather
- * than restated, and is kept as the reference labelled with the objection it
- * drew.
+ * What makes the geometry identical by construction rather than by care:
+ *
+ *   - The ring is an **overlay**, absolutely positioned inside the card's own
+ *     bounds — two stacked spans, the gradient at `inset-0` and a `bg-card`
+ *     cover at `inset-[2px]`, under the content — so it is painted, never laid
+ *     out, and nothing can be displaced by it. (The shipped tone map already
+ *     works this way: ignition swaps border/wash *classes* inside constant
+ *     geometry; this keeps that contract and changes only what is painted.)
+ *   - The card keeps its 1px `border` class in **both** states — rest paints
+ *     it `border-border`, open paints it `border-transparent` — because with
+ *     `border-box` sizing, dropping the class would grow the content box by
+ *     1px, which is exactly the shift being forbidden.
+ *   - The Live chip also arrives at ignition, and it lands at the start of the
+ *     **right-packed trailing group** (chip, then chevron): the group grows
+ *     leftward into the title's `min-w-0` slack, the chevron holds its
+ *     position to the pixel. That is the layout rule's own late-arrival
+ *     pattern, and the order is load-bearing.
+ *
+ * The chip keeps its **ruled** `bg-muted` form. At wiring, the swap can fade
+ * the ring in through opacity — paint transitions are the permitted kind.
  */
-const LIVE_CARD_CANDIDATES: readonly {
+const IGNITION_STATES: readonly {
   label: string;
-  frame: string | null;
-  shell: string;
-  strip: string | null;
+  lit: boolean;
   note: string;
 }[] = [
   {
-    label: "As shipped — the wash the owner objected to",
-    frame: null,
-    shell: ENROLLMENT_TONES.current.live,
-    strip: null,
-    note: `${ENROLLMENT_TONES.current.live} · amber mixed down to /5, then to transparent`,
+    label: "At rest — before the session opens",
+    lit: false,
+    note: "border-border · today's quiet card, unchanged",
   },
   {
-    label: "Gradient border — glow strong to soft",
-    frame: "bg-gradient-to-r from-yty-glow-strong to-yty-glow-soft p-[2px]",
-    shell: "border-transparent",
-    strip: null,
-    note: "#1AB061 → #6AC66B · a 2px frame, neutral card ground inside it",
-  },
-  {
-    label: "Leading strip — glow strong to soft",
-    frame: null,
-    shell: "border-border",
-    strip: "bg-gradient-to-b from-yty-glow-strong to-yty-glow-soft",
-    note: "#1AB061 → #6AC66B · a 4px edge down the card, neutral ground",
+    label: "Session open — the ring ignites",
+    lit: true,
+    note: "#1AB061 → #6AC66B · a painted overlay; same box, same content position",
   },
 ];
 
@@ -616,17 +622,19 @@ const LIVE_CARD_CANDIDATES: readonly {
  * replacement — the app's own ink at fill weight — so choosing it here spends no
  * new vocabulary.
  *
- * **Where else this treatment shows** (the owner's fact-check, now answered and
- * drawn). The amber *fill* exists on exactly one surface: the admin sidebar.
+ * **Where else this treatment shows** (the owner's fact-check, answered): the
+ * amber *fill* exists on exactly one surface — the admin sidebar.
  * `navItemsByRole` in `layout/sidebar.tsx` is keyed by role and only `admin`
- * has entries, so no other role renders a sidebar nav at all. But the same
- * question is asked one strength quieter on every page in the product,
- * signed in or out — the header's nav marks the active link in amber *text*
- * against muted, which is the label tier rather than the fill tier of the same
- * "you are here" idea. So it gets the second exhibit below, and its own line in
- * the ruling: the sidebar's answer does not automatically bind it.
+ * has entries, so no other role renders a sidebar nav at all. The header's nav
+ * asked the same question one strength quieter, and it is **ruled: the amber
+ * active text stays** (owner, 2026-09-01, on seeing the pair: the neutral
+ * alternative's grey-vs-white "are not enough contrast to see where a user
+ * currently is — parents will get lost"). No rule forbids it: the you-are-here
+ * argument was aimed at the *fill* tier, and the ruled grammar lists links
+ * among amber's jobs — a header nav item is a link. The header exhibit is
+ * dropped; only the sidebar's fill remains open on this slide.
  *
- * Classes restated from the sidebar and the header, which are client modules.
+ * Classes restated from the sidebar, which is a client module.
  */
 const SIDEBAR_ITEMS: readonly { label: string; icon: React.ReactNode }[] = [
   { label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -656,56 +664,13 @@ const NAV_TREATMENTS: readonly {
   },
 ];
 
-/**
- * The header's own nav strip — the same "you are here" question at label
- * strength. Two links, which is the whole nav: the storefront is a single Shop
- * entry and the row is deliberately capped at two, because a measured third
- * link overflowed the 360px floor in every locale but English.
- *
- * `HEADER_NAV_SHAPE` restates `NAV_LINK_CLASS` from `layout/header.tsx` with
- * two deliberate edits, so the sample is a quotation a reader can check rather
- * than one they have to trust:
- *
- *   - the **weight is lifted out**, because the alternative changes it. A
- *     neutral mark at label strength has only two dimensions to work with and
- *     `text-foreground` alone against `text-muted-foreground` is a thinner
- *     signal than amber was; the honest way to show that is to let the
- *     candidate spend weight and say so, not to hold weight constant and let
- *     the neutral lose a comparison it was never given the tools for. Each
- *     treatment therefore supplies both halves of both states.
- *   - `hover:text-primary` is **dropped**, because nothing here is hovered and
- *     a hover rule in a static sample is a class that can never fire. It is
- *     unaffected either way: the hover is feedback, and feedback keeps the
- *     brand under the edge recommendation one slide up.
+/*
+ * Dropped — the header's nav pair. Ruled 2026-09-01: the amber active text
+ * stays. The neutral-emphatic alternative failed on sight ("not enough
+ * contrast to see where a user currently is — parents will get lost"), and no
+ * rule required the change: the you-are-here argument binds the fill tier,
+ * and the grammar lists links among amber's jobs.
  */
-const HEADER_NAV_SHAPE =
-  "inline-flex min-h-11 items-center whitespace-nowrap rounded-md px-2 text-sm transition-colors";
-
-/** The header's two links, in order, at the `en` labels. */
-const HEADER_NAV_LINKS = ["About", "Shop"] as const;
-
-/** The link the sample marks as current. */
-const HEADER_NAV_ACTIVE_LABEL = "About";
-
-const HEADER_NAV_TREATMENTS: readonly {
-  label: string;
-  active: string;
-  inactive: string;
-  note: string;
-}[] = [
-  {
-    label: "Today — amber text",
-    active: "font-medium text-primary",
-    inactive: "font-medium text-muted-foreground",
-    note: "text-primary vs text-muted-foreground · the act colour, on a link you cannot take",
-  },
-  {
-    label: "Neutral-emphatic text",
-    active: "font-semibold text-foreground",
-    inactive: "font-medium text-muted-foreground",
-    note: "text-foreground font-semibold vs text-muted-foreground font-medium · colour and weight, no brand spent",
-  },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Dropped — lifecycles are one hue, stepped                          */
@@ -1031,45 +996,28 @@ function BrowseCard({ className }: { className: string }) {
  * in exactly the thing under decision: where the brand is spent on the card
  * itself.
  *
- * Three parts vary, and each is one candidate's whole answer:
- *
- *   - **`shell`** — the card's own edge. The reference passes the shipped wash
- *     here, which is a `bg-gradient` class and therefore also its ground.
- *   - **`frame`** — the gradient-border wrapper. The classic technique: a
- *     padded element carrying the gradient as its *background*, with the opaque
- *     card sitting inside it, so the only gradient pixels visible are the ring
- *     of padding around the card. The wrapper owns the width and the radius;
- *     the card takes `rounded-[inherit]` so the inner corner follows the outer
- *     one, and `border-transparent` so its own border does not paint over the
- *     frame.
- *   - **`strip`** — a 4px full-value bar down the left edge, absolutely
- *     positioned inside the card's own `overflow-hidden` box so it takes the
- *     card's corner radius rather than sticking out square.
+ * One boolean varies — `lit` — because that is the whole point now: the two
+ * states must differ in paint alone. The ring overlay renders under the
+ * content (gradient span at `inset-0`, `bg-card` cover at `inset-[2px]`),
+ * the 1px border class is present in both states with only its colour
+ * swapped, and the Live chip mounts at the start of the right-packed trailing
+ * group so its arrival grows the group leftward into the title's slack.
  */
-function LiveEnrollmentCard({
-  frame,
-  shell,
-  strip,
-}: {
-  frame: string | null;
-  shell: string;
-  strip: string | null;
-}) {
-  const card = (
+function LiveEnrollmentCard({ lit }: { lit: boolean }) {
+  return (
     <div
       className={cn(
-        "relative overflow-hidden border bg-card",
-        frame === null ? "w-72 rounded-lg" : "rounded-[inherit]",
-        shell,
+        "relative w-72 overflow-hidden rounded-lg border bg-card",
+        lit ? "border-transparent" : "border-border",
       )}
     >
-      {strip === null ? null : (
-        <span
-          className={cn("absolute inset-y-0 left-0 w-1", strip)}
-          aria-hidden
-        />
+      {lit && (
+        <span aria-hidden className="pointer-events-none absolute inset-0">
+          <span className="absolute inset-0 bg-gradient-to-r from-yty-glow-strong to-yty-glow-soft" />
+          <span className="absolute inset-[2px] rounded-md bg-card" />
+        </span>
       )}
-      <div className="flex flex-col gap-4 p-5">
+      <div className="relative flex flex-col gap-4 p-5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 space-y-1">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -1080,10 +1028,15 @@ function LiveEnrollmentCard({
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full border border-yty-glow-strong bg-muted px-2 py-0 text-[10px] font-semibold uppercase tracking-wide text-yty-glow-soft">
-              <Radio className="h-3 w-3" aria-hidden />
-              Live
-            </span>
+            {/* Mounts at ignition, first in the right-packed group — the
+                order is load-bearing: arriving here grows the group leftward
+                into the title's slack and the chevron never moves. */}
+            {lit && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-yty-glow-strong bg-muted px-2 py-0 text-[10px] font-semibold uppercase tracking-wide text-yty-glow-soft">
+                <Radio className="h-3 w-3" aria-hidden />
+                Live
+              </span>
+            )}
             <ChevronRight
               className="h-5 w-5 text-muted-foreground"
               aria-hidden
@@ -1111,10 +1064,6 @@ function LiveEnrollmentCard({
       </div>
     </div>
   );
-
-  if (frame === null) return card;
-
-  return <div className={cn("w-72 rounded-lg", frame)}>{card}</div>;
 }
 
 /**
@@ -1138,37 +1087,6 @@ function SidebarSample({ active }: { active: string }) {
           <span className="overflow-hidden text-ellipsis">{item.label}</span>
         </div>
       ))}
-    </div>
-  );
-}
-
-/**
- * The header's nav strip — the two links in their real order and shape, on the
- * header's own sticky ground, with the account chrome to their right left out
- * because none of it is under decision.
- */
-function HeaderNavSample({
-  active,
-  inactive,
-}: {
-  active: string;
-  inactive: string;
-}) {
-  return (
-    <div className="flex h-16 w-72 items-center justify-end border-b bg-background px-4">
-      <div className="-ml-2 flex items-center gap-2">
-        {HEADER_NAV_LINKS.map((label) => (
-          <span
-            key={label}
-            className={cn(
-              HEADER_NAV_SHAPE,
-              label === HEADER_NAV_ACTIVE_LABEL ? active : inactive,
-            )}
-          >
-            {label}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }
@@ -1311,23 +1229,21 @@ export default function DesignPassWalkthroughPage() {
         </div>
 
         <div className="space-y-3">
-          <Marker>The live card — the gradient, at full value</Marker>
+          <Marker>The live card — ignition is a paint swap, never a layout one</Marker>
           <div className="flex flex-wrap gap-8">
-            {LIVE_CARD_CANDIDATES.map((candidate) => (
-              <div key={candidate.label} className="w-72 space-y-3">
-                <Marker>{candidate.label}</Marker>
-                <LiveEnrollmentCard
-                  frame={candidate.frame}
-                  shell={candidate.shell}
-                  strip={candidate.strip}
-                />
-                <Annotation>{candidate.note}</Annotation>
+            {IGNITION_STATES.map((state) => (
+              <div key={state.label} className="w-72 space-y-3">
+                <Marker>{state.label}</Marker>
+                <LiveEnrollmentCard lit={state.lit} />
+                <Annotation>{state.note}</Annotation>
               </div>
             ))}
           </div>
           <Caption>
-            A gradient that travels only between authored values never leaves
-            the palette.
+            The ring is a painted overlay inside the card&rsquo;s own bounds and
+            the border class survives both states, so the box and every line of
+            content hold position to the pixel; the Live chip lands at the start
+            of the right-packed group and grows it into the title&rsquo;s slack.
           </Caption>
         </div>
 
@@ -1345,8 +1261,8 @@ export default function DesignPassWalkthroughPage() {
             full-value at hover, or name a different split.
           </p>
           <p>
-            The live card — keep the wash as a sanctioned class, or the gradient
-            border, or the leading strip.
+            The live card — confirm the gradient border with this paint-only
+            ignition; the wash and the leading strip are dead if it holds.
           </p>
         </Ruling>
       </Slide>
@@ -1366,36 +1282,19 @@ export default function DesignPassWalkthroughPage() {
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Marker>The header — every role, and every public page</Marker>
-          <div className="flex flex-wrap gap-8">
-            {HEADER_NAV_TREATMENTS.map((treatment) => (
-              <div key={treatment.label} className="space-y-2">
-                <Marker>{treatment.label}</Marker>
-                <HeaderNavSample
-                  active={treatment.active}
-                  inactive={treatment.inactive}
-                />
-                <Annotation>{treatment.note}</Annotation>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* The header's nav pair is dropped — ruled, the amber active text
+            stays (the neutral alternative lacked the contrast; the grammar
+            lists links among amber's jobs). Only the fill remains open. */}
 
         <Caption>
-          The amber fill exists only on the admin sidebar; the header marks the
-          active link in amber text at label strength on every role and every
-          public page — the same question, one strength quieter.
+          The amber fill exists only on the admin sidebar — the header&rsquo;s
+          active link is ruled and keeps its amber text.
         </Caption>
 
         <Ruling>
           <p>
             Confirm the inverted fill for the sidebar, or keep today&rsquo;s
             amber. (recommended: the inverted fill)
-          </p>
-          <p>
-            Say whether the header&rsquo;s active text follows it — neutral and
-            emphatic — or keeps its amber.
           </p>
         </Ruling>
       </Slide>
@@ -1512,12 +1411,12 @@ export default function DesignPassWalkthroughPage() {
             a different split.
           </li>
           <li>
-            The gradient — the wash kept as a sanctioned class, the gradient
-            border, or the leading strip.
+            The gradient border — confirm it with the paint-only ignition the
+            exhibit proves.
           </li>
           <li>
             &ldquo;You are here&rdquo; — confirm the inverted fill for the
-            sidebar, and say whether the header&rsquo;s active text follows.
+            admin sidebar (the header&rsquo;s amber text is ruled and stays).
           </li>
           <li>
             The pages, from their scenes — My SOG, the family product page, the

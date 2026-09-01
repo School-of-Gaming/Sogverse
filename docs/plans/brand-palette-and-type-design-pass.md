@@ -531,6 +531,31 @@ Owner direction (2026-08-31), added during implementation:
       one strength quieter, flagged for the owner to say whether the ruling
       follows there or the text treatment stays.
 
+29. **Walkthrough rulings, fifth batch** (owner, 2026-09-01):
+    - **The gradient border is conditionally accepted, and the condition is the
+      layout rule:** "so long as it doesn't shift the card's size or the layout
+      of its content. Remember these cards update in real time when the session
+      opens… if a parent or gamer is about to click join and as soon as the
+      club opens up things shift, that would look bad." The mechanism that
+      satisfies it by construction, drawn on the deck as an ignition pair and
+      binding at wiring: the ring is a **painted overlay** inside the card's
+      own bounds (gradient span at `inset-0`, `bg-card` cover at `inset-[2px]`,
+      under the content), the card's 1px border class survives both states with
+      only its colour swapped (`border-border` → `border-transparent` — with
+      border-box sizing, dropping the class would shift the content box 1px),
+      and the Live chip mounts first in the right-packed trailing group so its
+      arrival grows the group leftward into the title's slack. Ignition is a
+      paint swap and may fade in via opacity. The wash and the leading strip
+      are dead once the owner confirms the pair; the enrollment tone map's
+      `live` entry converts to this at wiring.
+    - **The header's active nav link is RULED: the amber text stays.** On
+      seeing the pair: the neutral alternative's grey-vs-white is "not enough
+      contrast to see where a user currently is — parents will get lost", and
+      the owner asked whether amber there violates anything. It does not: the
+      you-are-here argument binds the *fill* tier, and the ruled grammar lists
+      links among amber's jobs — a header nav item is a link. Only the admin
+      sidebar's fill remains open on the active-mark question.
+
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
 around, so the map in **Problem** and step 6's consumer list both shrink:
