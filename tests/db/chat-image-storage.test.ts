@@ -288,7 +288,7 @@ describe("chat image storage policy", () => {
     // Hiding performs no storage action at all: the policy reads `hidden_at`
     // live, so a moderator's remove control retracts the picture from the next
     // fetch onward, by itself. What survives a hide is only what a viewer's
-    // browser profile already cached — bounded by the read route's one-hour
+    // browser profile already cached — bounded by the read route's six-hour
     // freshness — which is the accepted edge the hidden-body wire exposure
     // records for text.
     const hidden = await geduAuth.rpc("hide_chat_message", {

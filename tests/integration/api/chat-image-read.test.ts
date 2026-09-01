@@ -21,14 +21,14 @@ import { GET } from "@/app/api/chat/images/[id]/route";
  * as the same 404 an absent object gets, so nothing here is an oracle for
  * message ids or hidden state.
  *
- * **The bytes are served privately cacheable, for one hour.** The object never
+ * **The bytes are served privately cacheable, for six hours.** The object never
  * changes, but a browser cache is keyed to the browser profile rather than to
  * the principal — and a family shares one profile across an account switch —
  * so the bound is what stops one principal's fetch being replayed to the next,
- * past a hide and past the family read window. An hour still makes a
- * re-render, a remount or a reload free. The exact header is pinned below,
- * because loosening it back to a year is a one-word edit with a consequence
- * nothing else would catch.
+ * past a hide and past the family read window. Six hours is the session-day
+ * bound: a full camp day of re-renders, remounts and reloads is free, and the
+ * reuse ends there. The exact header is pinned below, because widening it to a
+ * year is a one-word edit with a consequence nothing else would catch.
  */
 
 const mockGetClaims = vi.fn();
@@ -115,15 +115,16 @@ describe("GET /api/chat/images/[id]", () => {
     expect(answers[1]).toEqual(answers[0]);
   });
 
-  it("serves the bytes the policy admitted, privately cacheable for an hour", async () => {
+  it("serves the bytes the policy admitted, privately cacheable for six hours", async () => {
     const response = await GET(...createRequest(MESSAGE_ID));
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("image/jpeg");
     // No `immutable`, and not a year: the cache is keyed to the browser
     // profile a family shares across an account switch, so the entry's life is
-    // what bounds serving one principal's picture to the next.
-    expect(response.headers.get("Cache-Control")).toBe("private, max-age=3600");
+    // what bounds serving one principal's picture to the next. Six hours —
+    // a session day.
+    expect(response.headers.get("Cache-Control")).toBe("private, max-age=21600");
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(JPEG_BYTES);
 
     // The object's name IS the message id — no extension, no path column —

@@ -21,14 +21,14 @@ only give a second copy the chance to disagree.
 
 **Rule: the image URL is resolved by the container, not by the renderer.** A stored image
 arrives as `{ id, src, width, height }` with `src` already servable, and nothing here asks
-where one came from. The address itself is now derivable — a stored picture is served by
-the authenticated read route at a stable path built from the message id — but the
-*decision* is not: which of the three kinds of `src` a picture gets (the read route's
-path, the sender's own staged blob, fixture art), and whether it gets one at all rather
-than the placeholder (a row whose bytes have not landed yet draws nothing servable), is a
-function of row state and viewer that only the container holds. Producing the answer is
-therefore still not this module's job. See "The wire behind the props" for what the
-container does.
+where one came from. The address is derivable — a stored picture is served by the
+authenticated read route at a stable path built from the message id — but the *decision*
+is not: which of the three kinds of `src` a picture gets (the read route's path, the
+sender's own staged blob, fixture art), and whether it gets one at all rather than the
+placeholder (a row whose bytes have not landed yet draws nothing servable), is a function
+of row state and viewer that only the container holds. That is what puts producing the
+answer on the container's side of the seam rather than this module's. See "The wire behind
+the props" for what the container does.
 
 ## The capability module
 
@@ -174,11 +174,10 @@ The rest of the section is the log's own behaviour under that budget:
 
 ## Reaching the actions without a hover
 
-The action bar was revealed by `group-hover` and nothing else, which on a phone left
-reply, react, edit and every moderation act unreachable — on the surface a family is
-most likely to meet the product on. **A tap on a message now reveals the same bar a
-cursor reveals**, in the same place, at the same size, so the touch path costs the
-layout nothing.
+**A tap on a message reveals the same bar a cursor reveals**, in the same place, at the
+same size, so the touch path costs the layout nothing. Hover alone would leave reply,
+react, edit and every moderation act unreachable on a phone — the surface a family is
+most likely to meet the product on.
 
 **The two halves are one bar and one state class, never two components.** Hover is
 still CSS; the tap is a `revealed` prop the log holds, because the rule that makes the
@@ -189,18 +188,19 @@ to dismiss what offered it, and a press anywhere outside the revealed row closes
 **A finger is told apart from a cursor per gesture, by `pointerType`, never by asking
 what kind of device this is** (`touch-gesture.ts` carries the reasoning). A media query
 describes the device's *primary* input, so a finger on a touchscreen laptop would be
-told it is a mouse. A browser that reports nothing is treated as a mouse, which is
-exactly the behaviour that shipped before the touch path existed.
+told it is a mouse. A browser that reports nothing is treated as a mouse — the guess
+that leaves the hover path in place, rather than routing an unidentified device down
+the touch one.
 
 **The precedence on a picture: a finger's first tap reveals, its second opens; a cursor
-and a keyboard open on the first press as they always have.** A thumbnail fills its
-whole cell, so there is no margin beside the picture for a tap to mean something else
-in — the choice was only ever which of the two gestures comes first. What settles it is
-what a mouse already has for free: hovering a thumbnail has shown the bar *before* the
-click lands, so making that click a reveal would take away a one-press open and buy
-nothing. A finger has been shown nothing, so its first tap is the one that has to say
-what is there. The cost is one extra tap per picture, paid only by touch, and it buys
-back reply, react and remove on a photograph.
+and a keyboard open on the first press.** A thumbnail fills its whole cell, so there is
+no margin beside the picture for a tap to mean something else in — the only question is
+which of the two gestures comes first. What settles it is what a mouse has for free:
+hovering a thumbnail shows the bar *before* the click lands, so making that click a
+reveal would take away a one-press open and buy nothing. A finger has been shown
+nothing, so its first tap is the one that has to say what is there. The cost is one
+extra tap per picture, paid only by touch, and it buys back reply, react and remove on
+a photograph.
 
 **Hidden means untouchable, not merely invisible.** The bar straddles its row's top
 edge, so an `opacity-0` bar that still hit-tests is a strip of invisible buttons over
@@ -278,7 +278,7 @@ cap on the stored string would refuse precisely the messages that name the most 
 Glyphs live in code because `messages/` may not hold emoji; a reaction's *name* is a
 translated string keyed by its code. Changing the set is that tuple plus the matching
 `chat.reactions.*` labels in every locale — which is what makes the owner's final pick a
-code edit inside this surface rather than a follow-up feature — plus, now that reactions
+code edit inside this surface rather than a follow-up feature — plus, because reactions
 are stored, one migration widening the CHECK that constrains the column against this same
 list (there is no database enum; the code is what is stored, so no raw emoji ever reaches
 a column). **A code a build does not recognise is dropped rather than drawn**, which is
@@ -323,11 +323,11 @@ one is deliberately never released here.** Staging mints an object URL per file,
 are exactly three ends for one: the ✕ revokes it, the over-cap refusal revokes the tail it
 turned away, and a send hands ownership to the message it became — the log is drawing that
 blob, so revoking it at the composer would blank the thumbnail the sender just posted. The
-message's URL is freed when the page goes, and that lifetime is deliberate rather than
-provisional: the container keeps a sender's own staged blob for as long as the page lives
-and prefers it over the read route's path, so a sender never waits for a fetch, never
-watches their own picture re-download, and is the one viewer who cannot see the window in
-which a row exists and its object does not.
+message's URL is freed when the page goes, and that lifetime is the deliberate one: the
+container keeps a sender's own staged blob for as long as the page lives and prefers it
+over the read route's path, so a sender never waits for a fetch, never watches their own
+picture re-download, and is the one viewer who cannot see the window in which a row
+exists and its object does not.
 
 **Rule: the fullscreen overlay is not this module's — it is the shared
 `FullscreenImageViewer` in `components/ui`** *(owner ruling: the two forks are combined)*.
@@ -348,8 +348,8 @@ keeps the private chat-image surface out of `images.remotePatterns`, where a pat
 would be a standing optimizer permission on a boundary that is one storage policy. The
 other two kinds of `src` this surface meets, a staged blob and fixture art, the optimizer
 cannot fetch at all. So the flag is right for every picture this renderer can be handed,
-which is what keeps it a property of the component rather than a decision per image — the
-renderer still cannot tell one kind of URL from another, and now it does not have to.
+which is what keeps it a property of the component rather than a decision per image: the
+renderer cannot tell one kind of URL from another, and does not have to.
 
 ## One home: the preview scene, not the style guide
 
@@ -383,10 +383,10 @@ the thing on the other side of the props — the ones a reader of this module ca
 from here and has to know anyway. The transport itself is the voice-room container and
 `src/services/chat/`.
 
-**The two shapes this module assumes are kept.** The optimistic echo: a sender's own
-message is on screen as `pending` before anything acknowledges it, under an id the client
-generated, reconciled by that identity. It is held outside the query cache and always
-appended *after* every settled row, so a device with a skewed clock cannot insert itself
+**Two shapes this module assumes are properties of the wire.** The optimistic echo: a
+sender's own message is on screen as `pending` before anything acknowledges it, under an
+id the client generated, reconciled by that identity. It is held outside the query cache
+and always appended *after* every settled row, so a device with a skewed clock cannot insert itself
 into the middle of a log everyone else agrees about, and a reconciling row never travels
 upward past anything already painted. And the soft delete: a removal is an update, so the
 row and the image bytes survive and a moderator keeps reading what was said. **The one
@@ -403,10 +403,11 @@ joiner reading removed text out of network traffic with devtools. **Hidden pictu
 stricter for free** — the storage policy admits a hidden message's object only to
 moderators, and every read re-answers it at fetch time through the read route, so hiding
 retracts the image from the next fetch onward; what survives is what the **browser
-profile** already cached, for at most an hour. Not "that member's cache" — a family shares
-one browser profile across an account switch, and an HTTP cache is keyed to the profile
-rather than to whoever is signed in — which is why the read route caches for an hour
-instead of forever. Same already-received exposure as the text, bounded in time.
+profile** already cached, for at most six hours. Not "that member's cache" — a family
+shares one browser profile across an account switch, and an HTTP cache is keyed to the
+profile rather than to whoever is signed in — which is why the read route bounds the
+cache to a session day rather than caching forever. Same already-received exposure as the
+text, bounded in time.
 
 **Rule: the typing indicator rides a Realtime broadcast that is not RLS-gated, so its
 payload is an account id and nothing else.** Realtime authorization policies are machinery
@@ -439,17 +440,17 @@ downloads the object ON THE VIEWER'S OWN session — so membership, the family t
 (a participant can read a channel only around its own session window; staff have none,
 because after-the-fact review is the point of keeping the rows) and the hidden state are
 all enforced by one predicate, re-answered on every fetch, on a path nobody has to
-remember to call. **No signed URLs are minted anywhere** *(owner decision, 2026-09-01,
-recorded in migration 00233)*: a signed URL is a bearer token any viewer could copy out
-of devtools and share for its whole lifetime, and the read route deletes that exposure
-along with the entire client-side machinery the expiring tokens demanded — the
-accumulated URL map, the staleness timer, the batch-mint economy. The route's path is a
-pure function of the message id, with immutable bytes behind it, so a re-render, a remount
-or a reload costs nothing — but the cache is **private and one hour**, not forever: what a
-browser can cache is keyed to the browser profile, which a family shares across an account
-switch, so an unbounded entry would serve one principal's fetch to the next and outlive
-both a hide and the family read window. The route's own header carries the full reasoning,
-including why `Vary: Cookie` cannot replace the bound.
+remember to call. **No signed URLs exist on this surface** *(owner decision, 2026-09-01,
+recorded in migration 00233)*: a signed URL is a bearer token any viewer could copy out of
+devtools and share for its whole lifetime, which is why the bytes are read through the
+authenticated route instead. The route's path is a pure function of the message id, with
+immutable bytes behind it, so a re-render, a remount or a reload costs nothing — but the
+cache is **private and six hours**, not forever: what a browser can cache is keyed to the
+browser profile, which a family shares across an account switch, so an unbounded entry
+would serve one principal's fetch to the next and outlive both a hide and the family read
+window. Six hours is a session day — a full camp day of re-renders free, and the reuse
+ends there. The route's own header carries the full reasoning, including why `Vary:
+Cookie` cannot replace the bound.
 
 **A row lands before its bytes, and the row itself says when they have landed —
 `image_stored_at`, written by the upload route the moment the storage write returns.**

@@ -18,7 +18,7 @@ The page runs under the **standard app header with no footer** — that is the w
 
 **Rule: Do not add a DB table to track instant rooms.** If you need room state, read it from Daily. Adding a table reintroduces a sync problem the design deliberately avoids.
 
-**Rule: an instant room carries no chat** — it passes nothing to the room layout's chat slot, and no chat card is drawn. There is one chat system, it is persisted, and everything in it is authorized by knowing who someone is (`../../chat/CLAUDE.md`); a signed-out guest is deliberately nobody the database can authorize — no session, no profile, no credential a policy could read — and a 4-character code Daily recycles is not an identity to key history on either. So an instant room is voice only, and the rule above stays true rather than being argued about.
+**Rule: an instant room carries no chat** — it passes nothing to the room layout's chat slot, and no chat card is drawn. There is one chat system, it is persisted, and everything in it is authorized by knowing who someone is (`../../chat/CLAUDE.md`); a signed-out guest is deliberately nobody the database can authorize — no session, no profile, no credential a policy could read — and a 4-character code Daily recycles is not an identity to key history on either. So an instant room is voice only, and the no-table rule above needs no exception carved for chat.
 
 ## Code format & collisions
 
