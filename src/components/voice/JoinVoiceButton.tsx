@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AudioLines, Lock, UserRoundSearch } from "lucide-react";
+import { AudioLines, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
@@ -26,15 +26,6 @@ interface JoinVoiceButtonProps {
    */
   onJoinClick?: () => void;
   /**
-   * The gamer is purchased but not yet placed in a group. When the window is
-   * open, there's still no room to join — so instead of the active Join CTA
-   * the button renders a disabled "matching with a Gedu" state, while the
-   * card around it keeps its live styling. A not-yet-open awaiting session
-   * falls through to the normal locked "Opens …" button (which reads fine).
-   * Defaults to `false`; only the parent/gamer session cards pass it.
-   */
-  awaiting?: boolean;
-  /**
    * Where leaving the voice room should land, overriding "the page this button
    * was on".
    *
@@ -56,10 +47,10 @@ interface JoinVoiceButtonProps {
  * dashboard's prominent group card, and every group card on the gedu
  * session-details page. An enabled `Link` to `/voice/group/[id]` when the window is open
  * (or a `<button>` firing `onJoinClick` when one is passed), a disabled
- * button with a lock icon + "Opens {date} at {time}" otherwise. The one
- * exception is `awaiting`: an unplaced gamer whose window is open can't join
- * yet, so the open state is replaced by a disabled "matching with a Gedu"
- * button (the surrounding card still renders its live state).
+ * button with a lock icon + "Opens {date} at {time}" otherwise. That is the
+ * whole of it: a seat with no group yet renders no button at all — the
+ * enrollment card says so in its footer instead — so this component never
+ * has to speak for an unplaced gamer.
  *
  * Copy is centralized in the `voiceButton.*` translation namespace so
  * every caller speaks the same words — adjusting the label means one edit
@@ -87,30 +78,11 @@ export function JoinVoiceButton({
   opensDate,
   opensTime,
   onJoinClick,
-  awaiting = false,
   backHref,
   size = "sm",
 }: JoinVoiceButtonProps) {
   const t = useTranslations("voiceButton");
   const pathname = usePathname();
-
-  // Window's open but the gamer isn't placed yet: the card keeps its live
-  // styling, but there's no room to join until an admin matches them with a
-  // Gedu, so the button states *why* instead of inviting a join that would
-  // go nowhere. (A not-yet-open awaiting session has `voiceIsOpen === false`
-  // and falls through to the normal locked "Opens …" button below.)
-  if (voiceIsOpen && awaiting) {
-    return (
-      <button
-        type="button"
-        disabled
-        className={cn(buttonVariants({ size }), "gap-1.5")}
-      >
-        <UserRoundSearch className="h-4 w-4" />
-        {t("awaitingMatch")}
-      </button>
-    );
-  }
 
   if (voiceIsOpen) {
     if (onJoinClick) {

@@ -140,14 +140,15 @@ export function HelpFeedbackCardView({
             ) : (
               <>
                 <p>{t("gamer.description")}</p>
-                {/* A gamer's reply goes to their linked parent's mailbox, so
-                    the one thing a child needs told is who will actually reach
-                    them. Its own line rather than appended to the sentence
-                    above: it is a different fact, and one the child's parent
-                    may be reading over their shoulder. The child-facing copy
-                    names no address at all — a gamer account has no mailbox of
-                    its own, so handing a child one would be an answer they
-                    cannot use. */}
+                {/* Nothing routes this submission to the child's Gedu, and a
+                    gamer account has no mailbox of its own — so the note
+                    promises no reply channel and names no address, because
+                    either would be an answer the child cannot use. What it
+                    does is set the expectation: an answer, if one comes,
+                    comes in person at the next session. Its own line rather
+                    than appended to the sentence above: it is a different
+                    fact, and one the child's parent may be reading over their
+                    shoulder. */}
                 <p>{t("gamer.replyNote")}</p>
               </>
             )}
