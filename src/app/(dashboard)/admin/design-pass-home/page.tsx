@@ -1,11 +1,17 @@
 /* eslint-disable i18next/no-literal-string -- temporary admin-only review deck for the brand design pass; every string here is owner-facing walkthrough narration about drafts, never product copy that ships in any locale, and the whole page is deleted before the wiring phase merges */
 
+import { Gamepad2, Shield, Sparkles, Users } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   HomeCtaSection,
   HomeFeaturesSection,
-  HomeHeroSection,
   HomeHowItWorksSection,
-  type HomeDraftClasses,
 } from "@/components/home/home-page-body";
 import type { YtyPalette } from "@/lib/constants/yty";
 import { cn } from "@/lib/utils";
@@ -13,10 +19,10 @@ import { cn } from "@/lib/utils";
 /**
  * **Temporary.** The home page's own pass, split out of the colour deck.
  *
- * The owner parked the home page into a dedicated review (ruling, 2026-09-01):
- * he is comfortable with today's amber/violet hero and is not sure the page
- * needs changing at all, so no home draft rides with the main colour review.
- * This page is where the home slides that were cut from
+ * The owner parked the home page into a dedicated review (ruling, 2026-09-01),
+ * and the hero is now settled outright: today's amber→violet band stays, with
+ * the settled Poppins type — so the hero slide is gone and every dose draws
+ * the same hero. This page is where the home slides that were cut from
  * `/admin/design-pass-walkthrough` now live, and it is deleted from this branch
  * before the wiring phase lands, together with the other two decks.
  *
@@ -60,7 +66,6 @@ import { cn } from "@/lib/utils";
 /* ------------------------------------------------------------------ */
 
 const SLIDES = [
-  { id: "hero", title: "The hero, four ways" },
   { id: "features", title: "Feature cards" },
   { id: "how-it-works", title: "How it works" },
   { id: "cta", title: "The closing CTA" },
@@ -84,48 +89,6 @@ const HOME_DOSES: readonly {
   { slug: "brand-palette", label: "Accented", palette: "brand" },
   { slug: "brand-lively", label: "Lively", palette: "brand-lively" },
 ];
-
-/**
- * **The retired dusk hero, kept as an exhibit and nothing else.**
- *
- * Flat is the drafts' default (owner direction: gradients smear colours this
- * palette no longer needs smeared), so no scenario draws this and no page
- * anywhere renders it. It survives because it is the one brand-hue blend with a
- * case to make — it imitates the dusk sky of the brand's own social imagery
- * rather than mixing two hues for want of a third — and a case cannot be judged
- * against a description.
- *
- * The background is the one the lively dose carried before the flat default
- * landed, recovered from the walkthrough deck's gradient slide and frozen here.
- * Everything else is the *current* lively dose — the settled type included, so
- * the only thing this slide asks about is the sky behind it. The hero section
- * reads only `hero`, `heroTitle`, `heroPrimary` and `heroSecondary`; the rest
- * are here to satisfy the shape.
- *
- * **Exhibit-only. Do not copy these into a dose.** If the ruling keeps the dusk
- * sky it goes back into the lively dose as a sanctioned exception and this
- * constant is deleted; if the ruling kills it, this constant is deleted. Either
- * way it has no future outside this slide.
- */
-const DUSK_HERO_EXHIBIT: HomeDraftClasses = {
-  hero:
-    "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),radial-gradient(75%_60%_at_74%_6%,_color-mix(in_oklab,_var(--color-yty-harmony-strong)_22%,_transparent)_0%,_transparent_72%),radial-gradient(70%_62%_at_16%_34%,_color-mix(in_oklab,_var(--color-yty-wit-strong)_18%,_transparent)_0%,_transparent_72%)] pt-[var(--header-height)]",
-  heroTitle: "font-sans text-3xl font-semibold leading-[1.1] md:text-[56px]",
-  heroPrimary: "text-foreground",
-  heroSecondary: "text-yty-glow-soft",
-  sectionHeading:
-    "text-3xl font-semibold leading-[1.2] tracking-tight sm:text-4xl",
-  ctaHeading: "text-2xl font-semibold leading-[1.2] sm:text-3xl",
-  ctaType: "text-base font-semibold",
-  howItWorksSection: "bg-yty-harmony-strong/10 py-24",
-  stepCircles: [
-    "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-harmony-strong text-2xl font-bold text-background ring-4 ring-yty-harmony-strong/25",
-    "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-glow-strong text-2xl font-bold text-background ring-4 ring-yty-glow-strong/25",
-    "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-wit-soft text-2xl font-bold text-background ring-4 ring-yty-wit-soft/25",
-  ],
-  ctaCard: "mx-auto max-w-3xl bg-yty-harmony-strong/15",
-  sectionRule: "mx-auto mt-6 h-1 w-24 rounded-full bg-yty-harmony-strong",
-};
 
 /* ------------------------------------------------------------------ */
 /*  Slide furniture                                                    */
@@ -164,6 +127,14 @@ function Ruling({ children }: { children: React.ReactNode }) {
         Ruling
       </span>
       <span className="text-sm text-foreground">{children}</span>
+    </div>
+  );
+}
+
+function Marker({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      {children}
     </div>
   );
 }
@@ -237,14 +208,163 @@ function SampleRun({ children }: { children: React.ReactNode }) {
   return <div className="space-y-5">{children}</div>;
 }
 
-/** The page ground, plus the room the hero's negative top margin eats. */
+/** The page ground every section sample sits on. */
 const PAGE_SURFACE = "bg-background";
-const HERO_SURFACE = "bg-background pt-[var(--header-height)]";
 
 /* The marker-stroke close-up slide that sat here is gone: the highlight
    treatment — a glow-green fill behind the headline's payoff words — was ruled
    out entirely (owner, 2026-09-01), so the lively dose's payoff words now carry
    glow as soft ink instead, which the hero slide already shows. */
+
+/* ------------------------------------------------------------------ */
+/*  Feature-slide exhibits — the tile treatment, and the glow lift     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The icon tile face-off, all four families per row so the ensemble is
+ * visible. Two candidates only: **solid is ruled out** (owner, 2026-09-01).
+ * The tile-as-accent principle is approved — a brand colour accenting an icon
+ * is a different construct from a colour painted as a card's ground, the same
+ * effect the voice-zone icon tiles use — so what remains is which accent:
+ * "tinted" (the strong hue at 10% under the soft glyph's ink, as drafted) or
+ * "neutral" (a muted tile, every bit of colour in the glyph), which the owner
+ * currently likes best and wants beside the tinted look before ruling. The
+ * wrapper carries the section's own `border` exactly as the live card does.
+ */
+const TILE_TREATMENTS: readonly {
+  label: string;
+  tiles: readonly { tile: string; glyph: string }[];
+}[] = [
+  {
+    label: "Tinted — as drafted: strong at 10%, soft glyph",
+    tiles: [
+      { tile: "border-yty-harmony-strong/30 bg-yty-harmony-strong/10", glyph: "text-yty-harmony-soft" },
+      { tile: "border-yty-glow-strong/30 bg-yty-glow-strong/10", glyph: "text-yty-glow-soft" },
+      { tile: "border-yty-valor-strong/30 bg-yty-valor-strong/10", glyph: "text-yty-valor-soft" },
+      { tile: "border-yty-wit-strong/30 bg-yty-wit-strong/10", glyph: "text-yty-wit-soft" },
+    ],
+  },
+  {
+    label: "Neutral — muted tile, the soft glyph carries the colour",
+    tiles: [
+      { tile: "bg-muted", glyph: "text-yty-harmony-soft" },
+      { tile: "bg-muted", glyph: "text-yty-glow-soft" },
+      { tile: "bg-muted", glyph: "text-yty-valor-soft" },
+      { tile: "bg-muted", glyph: "text-yty-wit-soft" },
+    ],
+  },
+];
+
+const TILE_ICONS = [Gamepad2, Sparkles, Users, Shield] as const;
+
+function TileRow({
+  tiles,
+}: {
+  tiles: readonly { tile: string; glyph: string }[];
+}) {
+  return (
+    <div className="flex flex-wrap gap-4 rounded-lg border bg-background p-4">
+      {tiles.map((t, i) => {
+        const Icon = TILE_ICONS[i];
+        return (
+          <div
+            key={t.tile + t.glyph}
+            className={cn(
+              "flex h-12 w-12 items-center justify-center rounded-lg border",
+              t.tile,
+            )}
+          >
+            <Icon className={cn("h-6 w-6", t.glyph)} aria-hidden />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * The card lift (owner ruling, 2026-09-01): **edge + inner glow — the voice
+ * zones' active-zone treatment, reusing the same code**, drawn beside the
+ * solid edge for the final look. The glow is `.zone-glow` verbatim — the
+ * inset-shadow geometry from globals.css with the family hue bound into
+ * `--glow-color` — and reuse is the point: one glow, one class, no renamed
+ * copy. It squares with the watered-surface principle because the ground
+ * stays neutral and the hue stays authored — the colour is light spilling in
+ * from the edge, not a paint the card's surface claims to be.
+ */
+const TINTED_TILE = {
+  tile: "border-yty-harmony-strong/30 bg-yty-harmony-strong/10",
+  glyph: "text-yty-harmony-soft",
+} as const;
+const NEUTRAL_TILE = {
+  tile: "bg-muted",
+  glyph: "text-yty-harmony-soft",
+} as const;
+const EDGE_CARD = "border-yty-harmony-strong bg-card/50";
+const GLOW_CARD =
+  "border-yty-harmony-strong bg-card/50 zone-glow [--glow-color:var(--color-yty-harmony-strong)]";
+
+/** The lift face-off: one variable, the glow. Both cards wear the drafted tile. */
+const LIFT_FACE_OFF: readonly {
+  label: string;
+  card: string;
+  tile: string;
+  glyph: string;
+}[] = [
+  { label: "Solid edge", card: EDGE_CARD, ...TINTED_TILE },
+  {
+    label: "Edge + inner glow — the voice-zone treatment",
+    card: GLOW_CARD,
+    ...TINTED_TILE,
+  },
+];
+
+/** The tile face-off in card context: one variable, the tile. Both cards wear
+ *  the chosen lift, so the tile is judged where it will actually live. */
+const TILE_FACE_OFF: readonly {
+  label: string;
+  card: string;
+  tile: string;
+  glyph: string;
+}[] = [
+  { label: "Tinted tile", card: GLOW_CARD, ...TINTED_TILE },
+  { label: "Neutral tile", card: GLOW_CARD, ...NEUTRAL_TILE },
+];
+
+/** A feature card in the section's own shape, one per candidate. */
+function LiftCard({
+  card,
+  tile,
+  glyph,
+}: {
+  card: string;
+  tile: string;
+  glyph: string;
+}) {
+  return (
+    <Card className={cn("w-72", card)}>
+      <CardHeader>
+        <div className="flex items-center gap-4">
+          <div
+            className={cn(
+              "flex h-12 w-12 items-center justify-center rounded-lg border",
+              tile,
+            )}
+          >
+            <Gamepad2 className={cn("h-6 w-6", glyph)} aria-hidden />
+          </div>
+          <CardTitle>Clubs, camps and events</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <CardDescription>
+          Weekly sessions inside the games children already love, led by a
+          trained Gedu.
+        </CardDescription>
+      </CardContent>
+    </Card>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
@@ -304,41 +424,14 @@ export default function DesignPassHomePage() {
         </ol>
       </nav>
 
+      {/* The hero slide that opened this deck is gone: settled (owner ruling,
+          2026-09-01) — the hero keeps today's amber→violet band, as the one
+          sanctioned exception to the flat default, drawn with the settled
+          Poppins type. Both dose scenarios now render that hero, so the
+          full-page preview links show the ruling rather than a rejected
+          draft; the dusk-sky exhibit died with the question. */}
+
       {/* ----------------------------------------------------------- 1 */}
-      <Slide id="hero">
-        <SampleRun>
-          {HOME_DOSES.map((dose) => (
-            <Sample
-              key={dose.slug}
-              label={dose.label}
-              href={`/preview/home/${dose.slug}`}
-              surface={HERO_SURFACE}
-            >
-              <HomeHeroSection palette={dose.palette} />
-            </Sample>
-          ))}
-          <Sample
-            label="Dusk gradient — retired, exhibit only"
-            href="/preview/home/brand-lively"
-            linkLabel="Open the flat page it would replace"
-            surface={HERO_SURFACE}
-          >
-            <HomeHeroSection exhibitClasses={DUSK_HERO_EXHIBIT} />
-          </Sample>
-        </SampleRun>
-        <Caption>
-          The hero&rsquo;s button knows who is reading it and you are signed in,
-          so it says My SOG where a stranger is asked to get started.
-        </Caption>
-
-        <Ruling>
-          The hero — today&rsquo;s amber-violet band, the accented wash, the
-          lively flat, or the dusk sky. (recommended: yours — you are comfortable
-          with today&rsquo;s)
-        </Ruling>
-      </Slide>
-
-      {/* ----------------------------------------------------------- 2 */}
       <Slide id="features">
         <SampleRun>
           {HOME_DOSES.map((dose) => (
@@ -356,9 +449,67 @@ export default function DesignPassHomePage() {
         <Ruling>
           Feature cards — today, accented, or lively. (recommended: accented)
         </Ruling>
+
+        <div className="space-y-3">
+          <Marker>The icon tile face-off — solid is ruled out</Marker>
+          {TILE_TREATMENTS.map((treatment) => (
+            <div key={treatment.label} className="space-y-1">
+              <div className="text-[11px] text-muted-foreground">
+                {treatment.label}
+              </div>
+              <TileRow tiles={treatment.tiles} />
+            </div>
+          ))}
+          <div className="flex flex-wrap gap-4">
+            {TILE_FACE_OFF.map((candidate) => (
+              <div key={candidate.label} className="space-y-1">
+                <div className="text-[11px] text-muted-foreground">
+                  {candidate.label}
+                </div>
+                <LiftCard
+                  card={candidate.card}
+                  tile={candidate.tile}
+                  glyph={candidate.glyph}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Ruling>
+          The tile — tinted as drafted, or neutral with the soft glyph carrying
+          the colour.
+        </Ruling>
+
+        <div className="space-y-3">
+          <Marker>Card lift — ruled: the voice zones&rsquo; glow, same code</Marker>
+          <div className="flex flex-wrap gap-4">
+            {LIFT_FACE_OFF.map((candidate) => (
+              <div key={candidate.label} className="space-y-1">
+                <div className="text-[11px] text-muted-foreground">
+                  {candidate.label}
+                </div>
+                <LiftCard
+                  card={candidate.card}
+                  tile={candidate.tile}
+                  glyph={candidate.glyph}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        <Caption>
+          The inner glow is <code>.zone-glow</code> reused verbatim — the
+          active-voice-zone treatment with the family hue bound in.
+        </Caption>
+
+        <Ruling>
+          Card lift — edge + inner glow is chosen; confirm it against the bare
+          solid edge beside it.
+        </Ruling>
       </Slide>
 
-      {/* ----------------------------------------------------------- 3 */}
+      {/* ----------------------------------------------------------- 2 */}
       <Slide id="how-it-works">
         <SampleRun>
           {HOME_DOSES.map((dose) => (
@@ -382,7 +533,7 @@ export default function DesignPassHomePage() {
         </Ruling>
       </Slide>
 
-      {/* ----------------------------------------------------------- 4 */}
+      {/* ----------------------------------------------------------- 3 */}
       <Slide id="cta">
         <SampleRun>
           {HOME_DOSES.map((dose) => (
@@ -402,11 +553,12 @@ export default function DesignPassHomePage() {
         </Ruling>
       </Slide>
 
-      {/* ----------------------------------------------------------- 5 */}
+      {/* ----------------------------------------------------------- 4 */}
       <Slide id="recap">
         <ol className="max-w-prose list-decimal space-y-1.5 pl-5 text-sm text-foreground">
-          <li>The hero — today, accented, lively, or the dusk sky.</li>
           <li>Feature cards — today, accented, or lively.</li>
+          <li>The icon tile — tinted, or neutral.</li>
+          <li>Card lift — confirm edge + inner glow against the solid edge.</li>
           <li>How it works — today, accented, or lively.</li>
           <li>The closing CTA — today, accented, or lively.</li>
         </ol>

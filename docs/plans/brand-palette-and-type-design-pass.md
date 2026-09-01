@@ -254,13 +254,37 @@ Owner direction (2026-08-31), added during implementation:
       near-black ground composites to) distorts the colour, and what it shows is no
       longer the brand. Owner's words: "if we further darken the color as a surface it
       distorts that color, it is no longer a brand color." Standing principle for the
-      whole pass. **Open reach question, flagged rather than silently applied**: the
-      current home drafts carry exactly this construct as section surfaces (the lively
-      how-it-works band at harmony/10, both CTA-card washes, the accented hero's 16%
-      radial), and the colour grammar's tint step (badge and chip grounds at low alpha)
-      is the same construct at chip scale — whether the principle bans only
-      surface-scale washes or every tint is the owner's next call, raised in the
-      session report beside the pending dose ruling.
+      whole pass, **confirmed against the live previews** (owner, 2026-09-01, second
+      message: the tinted card grounds "warp our bright, vibrant colors into a muted
+      dim washed out version"). Applied at surface scale in the home drafts: the
+      accented hero's 16% radial, the lively how-it-works band, and both CTA-card
+      washes are retired — grounds go neutral (`background`/`card`/`muted`) and the
+      brand arrives at authored strength (solid fills, solid edges, ink; the CTA cards
+      take a solid brand edge on a neutral card). **Chip scale is a different
+      construct and stays** (owner, 2026-09-01): a brand colour *accenting an icon* —
+      the voice-zone tiles' effect, which the owner likes — is not a colour painted as
+      a card's ground. Within it, **solid tiles are ruled out** (a solid re-cut read
+      "off"); the open face-off, rendered on the home deck in tile rows and in card
+      context, is **tinted vs neutral** (muted tile, all colour in the soft glyph —
+      the owner's current favourite, held for a side-by-side before ruling). The
+      colour grammar's tint step (badge grounds at low alpha) gets re-examined on the
+      walkthrough deck with the same principle in hand.
+    - **Card lift is ruled: edge + inner glow, reusing the voice zones' code** (owner,
+      2026-09-01: the same treatment as the active voice zone, "we should reuse the
+      same code" — the `.zone-glow` inset geometry with the family hue bound into
+      `--glow-color`; one class, no renamed copy). It squares with the watered-surface
+      principle because the ground stays neutral and the hue stays authored: colour as
+      light spilling in from the edge, not a paint the surface claims to be. The home
+      deck renders it beside the bare solid edge for the owner's final look; the
+      outer-shadow and glow-alone candidates are dropped.
+    - **The hero is settled: today's, exactly** (owner, 2026-09-01: "let's keep the
+      current yellow and purple gradient"). The live amber→violet band and the live
+      amber/violet headline chunks stay, drawn with the settled Poppins type; the band
+      is the one sanctioned exception to the flat-gradient default and the
+      watered-surface principle — a pre-existing identity moment the owner keeps, not
+      a licence for new washes. The dusk-sky exhibit and the two draft heroes are
+      dead; the deck's hero slide is dropped as settled, and both dose scenarios
+      render today's hero so the full-page previews match the ruling.
     - **The highlight is ruled out entirely** ("it doesn't look good"): the glow-green
       marker stroke behind the hero's payoff words leaves the lively dose and its
       close-up slide leaves the deck; the payoff words keep glow as soft *ink* instead

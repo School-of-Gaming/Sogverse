@@ -36,30 +36,43 @@ type HomeDraftPalette = Exclude<YtyPalette, "current">;
  * two scenarios, because a page cannot be seen at two doses at once:
  *
  * - **`brand`** — accents. One element family per feature card, the palette on
- *   the three how-it-works circles, a single pink wash in the hero, and a
- *   one-hue amber wash on the closing CTA card. Nothing else moves.
- * - **`brand-lively`** — the marketing site's own energy: **no ambient amber**,
- *   so the one amber on the screen is the CTA button; a glow-green marker
- *   stroke behind the headline's payoff words, fuller card washes, a tinted
- *   how-it-works band, and a palette rule under each section heading.
+ *   the three how-it-works circles, and a solid amber edge on the closing CTA
+ *   card. Nothing else moves.
+ * - **`brand-lively`** — the marketing site's own energy: a family edge on
+ *   each feature card and a palette rule under each section heading; the one
+ *   ambient amber is the hero's own settled band.
+ *
+ * **The hero is settled and identical in every scenario** (owner ruling,
+ * 2026-09-01): today's amber→violet band and today's amber/violet headline
+ * chunks stay, with the settled Poppins type. The band is the one sanctioned
+ * exception to both rules below — a pre-existing identity moment the owner
+ * keeps, not a new construct these drafts may imitate.
  *
  * **Both doses are flat, and that is the default rather than a variant.**
  * Brand-hue gradients are a Sogverse invention rather than a Guidebook construct
  * — a crutch from the two-colour era, when amber and violet were the only hues
  * there were and a third thing to label had to be given a mix of them — and the
  * owner's direction is that a blend smears colours this palette no longer needs
- * smeared. So every slot below lays colour down as a flat field or a single-hue
- * wash, and a gradient now needs a case made for it site by site. (The one
- * candidate still making a case is the dusk hero, which imitates the brand's own
- * social imagery rather than mixing two brand hues for want of a third; the
- * walkthrough's gradient slide holds it as an exhibit, not as a scenario.)
+ * smeared. A gradient now needs a case made for it site by site; the hero's
+ * band made its case and won, and the dusk-sky candidate died with the hero
+ * ruling.
  *
- * **A single-hue fade is a wash, not a smear.** One hue fading to transparent
- * introduces no second colour and invents nothing — the accented hero's harmony
- * radial is that shape — so it sits outside the retirement and is unchanged.
+ * **And no surface is a washed brand colour** (owner ruling, 2026-09-01). A
+ * brand hue at low alpha over the near-black ground composites into a darker
+ * colour that is no longer the brand's — muted, dim, washed out — so every
+ * *surface* here is neutral (`background`, `card`, `muted`) and the brand
+ * arrives at authored strength: solid fills, solid edges, ink. Retired under
+ * this rule: the 16% harmony radial an accented draft briefly tried, the
+ * lively how-it-works band, and both CTA-card washes. A brand colour
+ * *accenting an icon* is a different construct from a colour painted as a
+ * card's ground (owner, 2026-09-01 — the voice-zone tiles' effect) and stays;
+ * which accent (tinted tile or neutral-with-soft-glyph) is the home deck's
+ * open face-off, solid ruled out. Card lift is ruled: edge + inner glow,
+ * reusing the voice zones' `.zone-glow` code — colour as light on a neutral
+ * ground — pending the owner's final look beside the bare solid edge.
  *
  * **Amber stays the identity mark and the CTA colour in both.** It is the
- * ambient wash that the lively dose gives up, not the button.
+ * ambient atmosphere the drafts give up, not the button.
  *
  * **Both doses carry the settled type, so colour is judged on the type it will
  * live with.** The type is identical in the two of them — see
@@ -89,14 +102,18 @@ interface FeatureAccent {
  * harmony pink, glow green, valor orange, wit blue — so the four cards echo the
  * Four Yty-Elements without a word of copy saying so.
  *
- * Measured on the composited card ground (`bg-card/50` over the page is
- * `#161616`): the soft glyph over its own strong tint reads 6.60–7.49 at the
- * accented dose and 5.64–6.36 at the lively one, against a 3:1 bar for a 24 px
- * icon. Nothing in the card carries text over a tint, so no other pairing here
- * moves at all.
- *
- * The flat default cost these cards nothing: a solid tint, a solid edge and a
- * soft glyph were already flat, so there was never a blend here to retire.
+ * **The tile treatment is under review, and these are the as-drafted values.**
+ * The watered-surface ruling (owner, 2026-09-01) retired every *surface-scale*
+ * wash on this page — the hero radial, the how-it-works band, the CTA card
+ * grounds — because a brand hue at low alpha over the near-black ground
+ * composites into a colour that is no longer the brand's. Whether the ruling
+ * reaches this 48 px tile is asked on the home deck as a rendered comparison
+ * (tinted as here, solid strong with ink glyph, neutral with soft glyph): a
+ * briefly-tried solid re-cut read "off" to the owner, and here the colour a
+ * reader sees is mostly the *soft glyph's ink*, which is an authored value at
+ * full strength. Measured on the composited card ground (`bg-card/50` over the
+ * page is `#161616`): the soft glyph reads 6.60–7.49 over the accented tint
+ * and 5.64–6.36 over the lively one, against a 3:1 bar for a 24 px icon.
  */
 const FEATURE_DRAFT_ACCENTS: Record<
   HomeDraftPalette,
@@ -149,15 +166,11 @@ const FEATURE_DRAFT_ACCENTS: Record<
 };
 
 /**
- * Every non-feature slot the draft repaints, per dose.
- *
- * Exported because the walkthrough deck's gradient slide holds the retired dusk
- * hero as an **exhibit**: it hands `HomeHeroSection` a hand-written set of these
- * classes so the candidate gradient is drawn by the page's own component rather
- * than by a copy of its markup. Nothing in `src/` outside that deck constructs
- * one, and both retire together.
+ * Every non-feature slot the draft repaints, per dose. Internal to this file:
+ * the dusk-hero exhibit that used to construct one from the deck died with the
+ * hero ruling (today's band stays), so nothing outside builds these any more.
  */
-export interface HomeDraftClasses {
+interface HomeDraftClasses {
   /** The hero `<section>`, whose background is the page's one big gradient. */
   hero: string;
   /** The hero `<h1>`, at the Guidebook's H1: Poppins 56px / 600 / 1.1. */
@@ -209,24 +222,20 @@ const CTA_TYPE = "text-base font-semibold";
 
 const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
   /**
-   * Accents. One restrained pink wash in the hero at 16%; the headline, the
-   * section grounds and the page's rhythm are untouched. The three circles take
-   * harmony, glow and wit — valor is deliberately *not* among them, because an
-   * orange circle next to the amber CTA is the same collision the whole pass
-   * exists to remove.
+   * Accents. The section grounds and the page's rhythm are untouched, and the
+   * three circles take harmony, glow and wit — valor is deliberately *not*
+   * among them, because an orange circle next to the amber CTA is the same
+   * collision the whole pass exists to remove.
    *
-   * **The hero's amber→violet band is gone, and the harmony radial stays.** The
-   * band was today's live wash, and it is a two-hue blend of exactly the kind
-   * the flat default retires — amber on the left, violet on the right, a mix
-   * standing in for a colour the two-colour era did not have. The radial is a
-   * different construct and survives the same rule: one hue fading to
-   * transparent adds no second colour and invents nothing, so it is a wash, not
-   * a smear. The subtitle over it measures 6.28:1 before the fade-to-background
-   * layer above it, which only darkens.
+   * **The hero is settled: today's, exactly** (owner ruling, 2026-09-01 —
+   * "let's keep the current yellow and purple gradient"). Both doses draw the
+   * live amber→violet band and the live amber/violet headline chunks, with
+   * only the settled Poppins type swapped in — so the hero is identical
+   * across every scenario and the doses differ from the hero down.
    */
   brand: {
     hero:
-      "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),radial-gradient(70%_60%_at_78%_16%,_color-mix(in_oklab,_var(--color-yty-harmony-strong)_16%,_transparent)_0%,_transparent_70%)] pt-[var(--header-height)]",
+      "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]",
     heroTitle: HERO_TITLE_TYPE,
     heroPrimary: "text-primary",
     heroSecondary: "text-secondary",
@@ -253,12 +262,13 @@ const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
       "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-wit-soft text-2xl font-bold text-background",
     ],
     /**
-     * One hue, where today's live card runs amber into violet and the first
-     * draft of this dose ran amber into pink. Amber is the act colour and this
-     * card's whole job is its button, so amber is the hue the flattening keeps.
-     * Muted copy over it measures 6.52:1 on the page ground.
+     * A neutral card with a solid amber edge, where today's live card runs
+     * amber into violet. The first flat draft washed the ground amber at 10%,
+     * which the watered-surface ruling retires — the ground goes neutral and
+     * the brand arrives at full strength on the edge, beside the amber button
+     * that is this card's whole job.
      */
-    ctaCard: "mx-auto max-w-3xl bg-primary/10",
+    ctaCard: "mx-auto max-w-3xl border-primary bg-card",
     sectionRule: null,
   },
 
@@ -289,40 +299,31 @@ const HOME_DRAFT_CLASSES: Record<HomeDraftPalette, HomeDraftClasses> = {
    * 8.83:1; the section rule and the hero edge carry no text at all.
    */
   "brand-lively": {
+    /** Today's hero, settled — same slot values as the accented dose above. */
     hero:
-      "relative -mt-[var(--header-height)] overflow-hidden border-b-4 border-yty-harmony-strong bg-background pt-[var(--header-height)]",
+      "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]",
     heroTitle: HERO_TITLE_TYPE,
-    /**
-     * White, not amber — the ambient amber is what this dose gives up. Both
-     * doses are set in the same Poppins, so the comparison between them stays
-     * about colour and nothing else.
-     */
-    heroPrimary: "text-foreground",
-    /**
-     * Glow as ink, not as a marker stroke behind the words. The stroke — a
-     * full glow-green fill under the payoff words — was ruled out entirely
-     * (owner, 2026-09-01: "it doesn't look good"), so green keeps its claim on
-     * the payoff as text in the soft variant, 8.83:1 on the page ground.
-     */
-    heroSecondary: "text-yty-glow-soft",
+    heroPrimary: "text-primary",
+    heroSecondary: "text-secondary",
     sectionHeading: SECTION_HEADING_TYPE,
     ctaHeading: CTA_HEADING_TYPE,
     ctaType: CTA_TYPE,
-    /** One hue, where the blended draft ran harmony into wit: harmony at 10%. */
-    howItWorksSection: "bg-yty-harmony-strong/10 py-24",
+    /**
+     * A neutral band — the harmony-at-10% wash it used to carry is the exact
+     * construct the watered-surface ruling names, so the band's colour now
+     * lives entirely in the three solid circles it holds.
+     */
+    howItWorksSection: "bg-muted/30 py-24",
     stepCircles: [
-      "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-harmony-strong text-2xl font-bold text-background ring-4 ring-yty-harmony-strong/25",
-      "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-glow-strong text-2xl font-bold text-background ring-4 ring-yty-glow-strong/25",
-      "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-wit-soft text-2xl font-bold text-background ring-4 ring-yty-wit-soft/25",
+      "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-harmony-strong text-2xl font-bold text-background",
+      "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-glow-strong text-2xl font-bold text-background",
+      "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yty-wit-soft text-2xl font-bold text-background",
     ],
     /**
-     * One hue, where the blended draft ran three stops. A flat wash is a
-     * background *colour*, so it replaces the card's own ground rather than
-     * layering on it — which is why this reads slightly lighter than the same
-     * alpha does under a gradient, and why its measured number is the better
-     * one.
+     * A neutral card with a solid harmony edge — the dose's workhorse hue at
+     * full strength, where the washed draft dimmed it to 15%.
      */
-    ctaCard: "mx-auto max-w-3xl bg-yty-harmony-strong/15",
+    ctaCard: "mx-auto max-w-3xl border-yty-harmony-strong bg-card",
     /**
      * Solid harmony, where the blended draft ran pink through blue into green.
      * Flattening a multi-hue rule forces a hue to be chosen, and that is the
@@ -375,21 +376,10 @@ function ctaClass(recipe: string, draft: HomeDraftClasses | null) {
  * them would put the draft class map at arm's length from the markup it
  * describes.
  */
-export function HomeHeroSection({
-  palette = "current",
-  exhibitClasses,
-}: HomeSectionProps & {
-  /**
-   * **Deck exhibit only.** A hand-written class set that wins over the palette
-   * lookup, so the walkthrough's gradient slide can draw the retired dusk hero
-   * with this component instead of a copy of its markup. No scene and no route
-   * passes it; omitted, the hero is exactly what the palette says it is.
-   */
-  exhibitClasses?: HomeDraftClasses;
-}) {
+export function HomeHeroSection({ palette = "current" }: HomeSectionProps) {
   const t = useTranslations('home');
   const c = useTranslations('common');
-  const draft = exhibitClasses ?? draftClassesFor(palette);
+  const draft = draftClassesFor(palette);
 
   return (
     <section className={draft ? draft.hero : "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]"}>
