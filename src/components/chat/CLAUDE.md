@@ -61,9 +61,11 @@ plausibly still wants.
   move whatever the reader was on.
 - **The log is a fixed-height scroll region, and the height is the container's to
   choose.** The surface takes a height class from whatever embeds it — a voice-room
-  panel, a future full-page chat — with a default beside the log itself. Any value is
-  fine; growing with content is what is forbidden. The preview scene's geometry
-  controls exist to judge the design at each reuse shape.
+  panel, a future full-page chat. Any value is fine; growing with content is what is
+  forbidden. The preview scene's geometry controls exist to judge the design at each
+  reuse shape. The fixed height covers the log *plus the reply strip*: starting a
+  reply hands the strip its height out of the log's, so no composer state can resize
+  the surface or move anything below it.
 - **Everything that appears on hover or on somebody else's schedule is absolutely
   positioned**: the message action bar, the unread pill, and the typing indicator. None
   of them can move a row. The indicator's spot took three tries to land (its doc

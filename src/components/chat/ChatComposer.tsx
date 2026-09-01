@@ -24,7 +24,6 @@ import {
   type ChatSendDraft,
   type StagedChatImage,
 } from "./composer-staging";
-import { ChatReplyStrip } from "./ChatReply";
 import { readStagedChatImages } from "./stage-files";
 import type { ChatAccount, ChatMessage } from "./types";
 
@@ -44,26 +43,25 @@ const MENTION_PATTERN = /@([^\s@]{0,32})$/;
  * out of chat keeps reading — that is the whole design of the control — so the
  * composer says so in place of the keyboard and the log above is untouched.
  *
- * **Everything that grows here grows downward from a fixed log.** The reply
- * strip, the thumbnail row and the refusal line all appear inside this box, and
- * the box sits under a log whose height never changes, so nothing a reader is
- * reading moves when one of them arrives.
+ * **Everything that grows here grows downward from a fixed log.** The
+ * thumbnail row and the refusal line appear inside this box, and the box sits
+ * under a log whose height never changes, so nothing a reader is reading moves
+ * when one of them arrives. (The reply strip is not here for the same reason:
+ * it lives at the bottom of the log's fixed column, borrowing its height from
+ * the log, so starting a reply cannot resize the surface either.)
  */
 export function ChatComposer({
   capabilities,
   accounts,
   replyingTo,
-  replyingToSender,
-  onCancelReply,
   onSend,
   className,
 }: {
   capabilities: ChatComposerCapabilities;
   /** Everyone mentionable, in the order the suggestion list offers them. */
   accounts: readonly ChatAccount[];
+  /** The message being answered — the strip itself is the view's to draw. */
   replyingTo: ChatMessage | null;
-  replyingToSender: ChatAccount | null;
-  onCancelReply: () => void;
   onSend: (drafts: ChatSendDraft[]) => void;
   className?: string;
 }) {
@@ -217,14 +215,6 @@ export function ChatComposer({
         void stage([...event.dataTransfer.files]);
       }}
     >
-      {replyingTo !== null && (
-        <ChatReplyStrip
-          message={replyingTo}
-          sender={replyingToSender}
-          onCancel={onCancelReply}
-        />
-      )}
-
       {staged.length > 0 && (
         <ul aria-label={t("staged")} className="flex flex-wrap gap-1.5 p-2 pb-0">
           {staged.map((image) => (

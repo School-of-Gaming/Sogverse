@@ -70,12 +70,13 @@ export function ChatQuotedMessage({
 }
 
 /**
- * The strip above the composer while a reply is being written.
+ * The strip shown while a reply is being written.
  *
- * It sits *inside* the composer's own box rather than above it, so appearing
- * and disappearing grows and shrinks the composer rather than shoving the log —
- * and the log is anchored to its bottom, so what moves is the boundary between
- * them, not the message anybody is reading.
+ * It renders at the *bottom of the log's fixed-height column* (the view places
+ * it), so its height comes out of the log rather than being added to the
+ * surface: starting or cancelling a reply never resizes the chat, and the
+ * bottom-glued log means what a reader at the bottom sees is the messages
+ * sliding up by one strip.
  */
 export function ChatReplyStrip({
   message,
@@ -92,7 +93,7 @@ export function ChatReplyStrip({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-t-md border-b border-border bg-muted/60 px-2 py-1.5 text-xs",
+        "flex items-center gap-2 rounded-md bg-muted/60 px-2 py-1.5 text-xs",
         className,
       )}
     >

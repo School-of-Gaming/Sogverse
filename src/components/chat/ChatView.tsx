@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { deriveChatComposerCapabilities } from "./capabilities";
 import { ChatComposer } from "./ChatComposer";
 import { ChatMessageList, type ChatLogHandlers } from "./ChatMessageList";
+import { ChatReplyStrip } from "./ChatReply";
 import type { ChatSendDraft } from "./composer-staging";
 import type { ChatAccount, ChatMessage } from "./types";
 
@@ -59,10 +60,11 @@ export function ChatView({
   /** Who is typing right now. The viewer is ignored if they appear. */
   typingAccountIds: readonly string[];
   /**
-   * The log's fixed height, as a class the container chooses. Geometry belongs
-   * to whatever embeds the chat — a voice-room panel and a future full-page
-   * surface want different boxes around the same behaviour — so the height is
-   * an input, with the default living beside the log itself.
+   * The fixed height of the log area, as a class the container chooses.
+   * Geometry belongs to whatever embeds the chat — a voice-room panel and a
+   * future full-page surface want different boxes around the same behaviour.
+   * The height covers the log *plus* the reply strip while one is up: a reply
+   * borrows its space from the log, so the surface never changes size.
    */
   logHeightClassName?: string;
   /** The viewer's own IANA zone — every clock face renders in it. */
@@ -95,17 +97,34 @@ export function ChatView({
 
   return (
     <div className={cn("relative space-y-2", className)}>
-      <ChatMessageList
-        messages={messages}
-        accounts={byId}
-        viewer={viewer}
-        viewerLocked={viewerLocked}
-        lockedAccountIds={lockedAccountIds}
-        timeZone={timeZone}
-        handlers={logHandlers}
-        outboundToken={outboundToken}
-        heightClassName={logHeightClassName}
-      />
+      {/* One fixed-height column for the log *and* the reply strip: starting a
+          reply hands the strip its height out of the log's, so the composer
+          and everything below the chat hold their position through every
+          composer state. The log is glued to its bottom, so what a reader at
+          the bottom sees is the messages sliding up by one strip, not the
+          page changing shape. */}
+      <div className={cn("flex flex-col", logHeightClassName ?? "h-80 sm:h-96")}>
+        <ChatMessageList
+          messages={messages}
+          accounts={byId}
+          viewer={viewer}
+          viewerLocked={viewerLocked}
+          lockedAccountIds={lockedAccountIds}
+          timeZone={timeZone}
+          handlers={logHandlers}
+          outboundToken={outboundToken}
+          heightClassName="h-full"
+          className="min-h-0 flex-1"
+        />
+        {replyingTo !== null && (
+          <ChatReplyStrip
+            message={replyingTo}
+            sender={byId.get(replyingTo.senderId) ?? null}
+            onCancel={() => setReplyToId(null)}
+            className="mt-1 shrink-0"
+          />
+        )}
+      </div>
 
       <ChatComposer
         capabilities={deriveChatComposerCapabilities({
@@ -114,10 +133,6 @@ export function ChatView({
         })}
         accounts={accounts.filter((account) => account.id !== viewer.id)}
         replyingTo={replyingTo}
-        replyingToSender={
-          replyingTo === null ? null : (byId.get(replyingTo.senderId) ?? null)
-        }
-        onCancelReply={() => setReplyToId(null)}
         onSend={(drafts) => {
           handlers.onSend(drafts);
           setReplyToId(null);
