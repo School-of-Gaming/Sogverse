@@ -67,43 +67,65 @@ accident later.
 
 ## Layout rules this surface leans on hardest
 
-- **The log is a fixed-height scroll region, and the height is the container's to
-  choose.** A log that grew with its content would push the composer down the page on
-  every arrival, which is a change on data's own schedule. The surface takes a height
-  class from whatever embeds it — a voice-room panel, a future full-page chat — and any
-  value is fine; growing with content is what is forbidden. The default lives in
-  `ChatView` and nowhere else, which is why the list's own height class is required
-  rather than defaulted. The preview scene's geometry controls exist to judge the design
-  at each reuse shape. The fixed height covers the log *plus the reply strip*: starting a
-  reply hands the strip its height out of the log's, so no composer state can resize the
-  surface or move anything below it.
+**The hard rule, from which most of the rest of this section follows: the chat surface
+has exactly one height, granted by its container, and it never grows** *(owner ruling)*.
+A chat is placed somewhere with only that space allotted to it — a panel beside a video
+grid, a column in a dashboard — so whatever a person does inside it has to happen inside
+it. Nothing on the page below a chat may be moved by anything that happens in the chat.
+
+The mechanism is one flex column carrying the whole surface (`ChatView`), in which **the
+log is the only flexible child** and everything else is `shrink-0`. So the log is the
+budget: every interaction that needs room is paid for out of it, and the reader at the
+bottom sees the conversation slide up to make room rather than the page change shape.
+Three instances of the one rule, none of them a separate story:
+
+- **A reply strip borrows its height from the log.** It appears between the log and the
+  composer, inside the column, so starting a reply cannot resize the surface.
+- **The composer grows *upward*, to five lines, then scrolls internally** *(owner
+  ruling)*. Adding a line takes the line out of the log; five is where growth stops,
+  because growth paid for out of the log has to stop before the log is gone. The field
+  sizes itself in a layout effect — measured on the user's own keystroke, on the field
+  their hands are in, which is a user-caused change and not the kind the layout rule
+  forbids. The staged-thumbnail row and the refusal line are the same bargain a step
+  simpler: they live in the composer's box and so come out of the same budget.
+- **The mention suggestion list takes no space at all.** It floats above the composer,
+  overlaying the bottom of the log, anchored to the top of the composer's box (so it
+  follows a growing field) and layered above the log's own absolutely-positioned children
+  by z-index rather than by DOM order. In flow it grew the box on every keystroke after an
+  `@`, which is a different thing from the field fitting the words: one is the box
+  reacting to a list of names, the other is the box fitting what was typed into it.
+
+The height class is the *whole surface's*, and its default lives in `ChatView` and
+nowhere else — which is why the message list's own height class is required rather than
+defaulted. The preview scene's geometry controls exist to judge the design at each reuse
+shape, and the shortest one is where a five-line draft has the least log to take from.
+
+The rest of the section is the log's own behaviour under that budget:
+
 - **It sticks to the bottom only for a reader already there.** Somebody who scrolled up
   keeps their exact position and gets a count plus one press to come back.
+- **A reader at the bottom stays glued to the bottom through *any* change of size** —
+  a reaction row appearing, an edit growing a message, and equally the log's own *box*
+  shrinking when the composer takes a line. The content half is a dependency-free layout
+  effect that re-pins after every commit; the box half is a `ResizeObserver` on the log,
+  deliberately not a prop somebody above has to remember to bump, so it holds for any
+  future control that takes a slice of the column. A reader scrolled up is the browser's
+  job: native scroll anchoring holds their place while content above them changes.
 - **A removal leaves a tombstone, never a hole.** The row keeps its place, so a message
   deleted three screens above a reader does not pull what they are reading upward.
 - **Every image box is arithmetic from the stored dimensions**, sharing the session
   gallery's function at this module's own thumbnail height. Nothing measures a decoded
   image — in a scrolling log that is not a nicety, since a row that grew after paint would
   move whatever the reader was on.
-- **The mention suggestion list floats above the composer, overlaying the log.** In flow
-  it grew the composer with every keystroke after an `@`, which changed the height of the
-  whole surface — the same defect the fixed log and the reply strip's borrowed height
-  exist to prevent, arriving from the other end *(owner ruling)*. It is anchored to the
-  top of the composer's box and layered above the log's own absolutely-positioned
-  children by z-index rather than by DOM order.
 - **Everything that appears on hover or on somebody else's schedule is absolutely
   positioned**: the message action bar, the unread pill, and the typing indicator. None
   of them can move a row. The indicator's spot took three tries to land (its doc
   comment tells the story): it overlays the *embedding container's bottom padding*,
   just past the surface's own bottom edge — space that already exists, holds nothing
-  it could cover, and is not read as an empty slot while nobody is writing. The
+  it could cover, and is not read as an empty slot while nobody is writing. It is also
+  the one thing drawn outside the fixed column, and it takes no space there either. The
   contract that buys it: whatever embeds the chat leaves at least one text line of
   bottom padding under it.
-- **A reader at the bottom stays glued to the bottom through *any* row-height change**
-  — a reaction row appearing, an edit growing a message — not just arrivals; a
-  dependency-free layout effect re-pins the bottom edge after every commit. A reader
-  scrolled up is the browser's job: native scroll anchoring holds their place while
-  content above them changes.
 - **Menus and pickers portal out** (`ChatPopover`), because the log clips its own
   children. It measures the trigger at open time — a user gesture, the one moment
   measuring is free — and closes on a scroll rather than following one.

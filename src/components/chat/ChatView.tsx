@@ -39,6 +39,13 @@ export type ChatViewHandlers = Omit<ChatLogHandlers, "onReply"> & {
  * which message is being replied to. Nothing outside a chat surface has a use
  * for that, and threading it through a page would only give a second copy the
  * chance to disagree.
+ *
+ * **It also owns the surface's budget.** The height its container grants is the
+ * height of the *whole* thing — log, reply strip and composer in one column —
+ * and nothing inside may take more. A chat is placed somewhere with only that
+ * space to spend *(owner ruling)*, so every interaction is paid for out of the
+ * log: a reply strip appearing, a composer growing to five lines. What is below
+ * the chat on the page belongs to somebody else and never moves.
  */
 export function ChatView({
   messages,
@@ -46,7 +53,7 @@ export function ChatView({
   viewer,
   lockedAccountIds,
   typingAccountIds,
-  logHeightClassName,
+  heightClassName,
   timeZone,
   handlers,
   className,
@@ -60,13 +67,18 @@ export function ChatView({
   /** Who is typing right now. The viewer is ignored if they appear. */
   typingAccountIds: readonly string[];
   /**
-   * The fixed height of the log area, as a class the container chooses.
-   * Geometry belongs to whatever embeds the chat — a voice-room panel and a
-   * future full-page surface want different boxes around the same behaviour.
-   * The height covers the log *plus* the reply strip while one is up: a reply
-   * borrows its space from the log, so the surface never changes size.
+   * The fixed height of the **whole surface**, as a class the container
+   * chooses: the log, the reply strip while one is up, and the composer at
+   * whatever size the draft in it has reached. Geometry belongs to whatever
+   * embeds the chat — a voice-room panel and a future full-page surface want
+   * different boxes around the same behaviour — and whatever it grants is all
+   * the chat ever occupies. Everything inside is paid for out of the log.
+   *
+   * (The typing indicator is the one thing drawn outside this box, and it takes
+   * no space of its own: it is absolutely positioned into the *embedding
+   * container's* bottom padding. See the indicator's own header.)
    */
-  logHeightClassName?: string;
+  heightClassName?: string;
   /** The viewer's own IANA zone — every clock face renders in it. */
   timeZone: string;
   handlers: ChatViewHandlers;
@@ -102,14 +114,21 @@ export function ChatView({
   };
 
   return (
-    <div className={cn("relative space-y-2", className)}>
-      {/* One fixed-height column for the log *and* the reply strip: starting a
-          reply hands the strip its height out of the log's, so the composer
-          and everything below the chat hold their position through every
-          composer state. The log is glued to its bottom, so what a reader at
-          the bottom sees is the messages sliding up by one strip, not the
-          page changing shape. */}
-      <div className={cn("flex flex-col", logHeightClassName ?? "h-80 sm:h-96")}>
+    <div className={cn("relative", className)}>
+      {/* **One fixed-height column for the entire surface.** The log is the
+          only flexible child (`flex-1 min-h-0`); the reply strip and the
+          composer are `shrink-0` and sit at the bottom of it. So everything
+          that appears or grows takes its space *from the log* and the outer box
+          never changes size: starting a reply, adding a fifth line to a draft,
+          staging a row of thumbnails. A chat is placed somewhere with only this
+          much space granted, and whatever happens inside it happens in there
+          *(owner ruling)* — so nothing below the chat on the page can be moved
+          by anything a person does in it.
+
+          The log is glued to its own bottom, so what a reader at the bottom
+          sees is the conversation sliding up to make room, never the page
+          changing shape. */}
+      <div className={cn("flex flex-col", heightClassName ?? "h-80 sm:h-96")}>
         <ChatMessageList
           messages={messages}
           accounts={byId}
@@ -131,21 +150,23 @@ export function ChatView({
             className="mt-1 shrink-0"
           />
         )}
+
+        <ChatComposer
+          capabilities={deriveChatComposerCapabilities({
+            viewer,
+            locked: viewerLocked,
+          })}
+          accounts={mentionable}
+          replyingTo={replyingTo}
+          onSend={(drafts) => {
+            handlers.onSend(drafts);
+            setReplyToId(null);
+            setOutboundToken((token) => token + 1);
+          }}
+          className="mt-2 shrink-0"
+        />
       </div>
 
-      <ChatComposer
-        capabilities={deriveChatComposerCapabilities({
-          viewer,
-          locked: viewerLocked,
-        })}
-        accounts={mentionable}
-        replyingTo={replyingTo}
-        onSend={(drafts) => {
-          handlers.onSend(drafts);
-          setReplyToId(null);
-          setOutboundToken((token) => token + 1);
-        }}
-      />
       <ChatTypingIndicator names={typingNames} />
     </div>
   );

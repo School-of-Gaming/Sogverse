@@ -197,6 +197,29 @@ export function ChatMessageList({
     el.scrollTop = el.scrollHeight;
   });
 
+  // The other half of the same guarantee: the log's own **box** can shrink
+  // without its content changing at all. The surface's height is fixed and this
+  // is the flexible child of it, so a reply strip appearing or a composer
+  // growing to a second line is taken out of here — and a scroll container whose
+  // viewport shrinks while `scrollTop` stays put drifts off its own bottom edge
+  // by exactly that much.
+  //
+  // A ResizeObserver rather than a prop the composer bumps, because the whole
+  // point is that this does not depend on *why* the box changed: no component
+  // above has to remember to tell the log it got smaller, and a future control
+  // that takes a slice of the column is handled the day it is added. It fires
+  // after layout and before paint, so the correction is never seen.
+  useEffect(() => {
+    const el = logRef.current;
+    if (el === null || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      if (!atBottomRef.current) return;
+      el.scrollTop = el.scrollHeight;
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (flashId === null) return;
     const timer = window.setTimeout(() => setFlashId(null), FLASH_MS);

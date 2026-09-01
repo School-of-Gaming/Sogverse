@@ -43,7 +43,7 @@ export function ChatScene() {
   const [now] = useState(() => new Date());
   const store = useChatSceneStore(now);
   const [width, setWidth] = useState<PanelWidth>(PANEL_WIDTHS[2]);
-  const [height, setHeight] = useState<LogHeight>(LOG_HEIGHTS[2]);
+  const [height, setHeight] = useState<ChatHeight>(CHAT_HEIGHTS[2]);
 
   const viewer =
     CHAT_SCENE_ACCOUNTS.find((account) => account.id === store.viewerId) ??
@@ -74,7 +74,7 @@ export function ChatScene() {
               viewer={viewer}
               lockedAccountIds={store.lockedIds}
               typingAccountIds={store.typingIds}
-              logHeightClassName={height.className}
+              heightClassName={height.className}
               timeZone={FIXTURE_TIMEZONE}
               handlers={{
                 onSend: store.send,
@@ -105,6 +105,10 @@ const LATENCY_MODES: readonly { value: ChatSceneLatency; label: string }[] = [
  * height being a prop. The chat is meant to be reused (a voice-room panel
  * today, other embeddings later), so the scene lets the design be judged at
  * each shape rather than only at the one the card happens to give.
+ *
+ * The height is the **whole surface's**, log and composer together, which is
+ * what makes the shortest one worth having: it is where a draft grown to five
+ * lines has the least log left to take its space out of.
  */
 const PANEL_WIDTHS = [
   { value: "phone", label: "Phone (360px)", className: "max-w-[360px]" },
@@ -112,14 +116,14 @@ const PANEL_WIDTHS = [
   { value: "full", label: "Full width", className: "" },
 ] as const;
 
-const LOG_HEIGHTS = [
+const CHAT_HEIGHTS = [
   { value: "short", label: "Short", className: "h-56 sm:h-64" },
   { value: "default", label: "Default", className: "h-80 sm:h-96" },
   { value: "tall", label: "Tall", className: "h-96 sm:h-[32rem]" },
 ] as const;
 
 type PanelWidth = (typeof PANEL_WIDTHS)[number];
-type LogHeight = (typeof LOG_HEIGHTS)[number];
+type ChatHeight = (typeof CHAT_HEIGHTS)[number];
 
 /**
  * The simulation controls.
@@ -137,8 +141,8 @@ function SceneControls({
   store: ReturnType<typeof useChatSceneStore>;
   width: PanelWidth;
   setWidth: (width: PanelWidth) => void;
-  height: LogHeight;
-  setHeight: (height: LogHeight) => void;
+  height: ChatHeight;
+  setHeight: (height: ChatHeight) => void;
 }) {
   return (
     <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/30 p-3 text-sm">
@@ -214,8 +218,8 @@ function SceneControls({
         ))}
       </ControlRow>
 
-      <ControlRow label="Log height">
-        {LOG_HEIGHTS.map((option) => (
+      <ControlRow label="Chat height">
+        {CHAT_HEIGHTS.map((option) => (
           <Button
             key={option.value}
             type="button"

@@ -40,6 +40,16 @@ import type { ChatAccount, ChatMessage } from "./types";
 const MENTION_PATTERN = /(^|[^\p{L}\p{N}_@])@([^\s@]{0,32})$/u;
 
 /**
+ * How many lines the field grows to before it scrolls instead of growing.
+ *
+ * Five *(owner ruling)*. The number has to exist at all because the surface's
+ * height is fixed and the growth is taken out of the log: a field free to grow
+ * without limit would eventually be the whole chat, and somebody writing a long
+ * message would have deleted the conversation they were answering.
+ */
+const MAX_COMPOSER_LINES = 5;
+
+/**
  * The composer: one box holding the reply being answered, the pictures waiting
  * to go, and the words.
  *
@@ -52,18 +62,24 @@ const MENTION_PATTERN = /(^|[^\p{L}\p{N}_@])@([^\s@]{0,32})$/u;
  * out of chat keeps reading — that is the whole design of the control — so the
  * composer says so in place of the keyboard and the log above is untouched.
  *
- * **Everything that grows here grows downward from a fixed log.** The
- * thumbnail row and the refusal line appear inside this box, and the box sits
- * under a log whose height never changes, so nothing a reader is reading moves
- * when one of them arrives. (The reply strip is not here for the same reason:
- * it lives at the bottom of the log's fixed column, borrowing its height from
- * the log, so starting a reply cannot resize the surface either.)
+ * **Everything that grows here grows *upward*, into the log, and never past the
+ * surface's own edge.** The chat is granted one fixed height by whatever embeds
+ * it and never takes more, so this box, the reply strip and the log share it:
+ * the composer sits at the bottom of that column and the log is what yields.
+ * Adding a line therefore lifts the conversation rather than pushing anything
+ * below the chat down the page — which is the whole point, because what is
+ * below the chat belongs to somebody else.
  *
- * **The mention list is the one thing that does not grow the box at all**: it
- * floats above it, overlaying the bottom of the log. In flow it resized the
- * whole chat surface on every keystroke after an `@` — and a surface that
- * changes height while somebody types is the same defect as one that changes
- * height while somebody reads, arriving from the other end.
+ * **The field grows to five lines and then scrolls**, because growth that is
+ * paid for out of the log has to stop before the log is gone. The thumbnail row
+ * and the refusal line are the same bargain, one step simpler: they appear
+ * inside this box, so they too come out of the log's share.
+ *
+ * **The mention list does not grow the box at all**: it floats above it,
+ * overlaying the bottom of the log. In flow it resized the field on every
+ * keystroke after an `@`, which is a different thing from the field sizing
+ * itself to the words — one is the box reacting to a list of names, the other
+ * is the box fitting what has been typed into it.
  */
 export function ChatComposer({
   capabilities,
@@ -101,9 +117,55 @@ export function ChatComposer({
     setStaged(next);
   };
 
+  // **The field is exactly as tall as what has been typed, to five lines, then
+  // it scrolls.** The height it takes comes out of the log above it — the
+  // surface's total is fixed — so a new line lifts the conversation instead of
+  // pushing the page around the chat down.
+  //
+  // Measuring here is allowed *because the person typing caused it*: this runs
+  // on their own keystroke, in the commit that keystroke produced, on the field
+  // their hands are already in. What the layout rule forbids is a change on
+  // data's own schedule — an arriving row, a resolving query — not a box fitting
+  // itself to the words somebody is putting in it.
+  //
+  // Deliberately dependency-free rather than keyed on the text, because the text
+  // is not the only thing that decides how many lines it takes: the field's
+  // *width* does too, and the width changes with the panel around it (the
+  // preview scene switches between three). Every commit of this component is a
+  // keystroke or a reshape, and the write is a no-op when the number has not
+  // moved.
+  useLayoutEffect(() => {
+    const field = fieldRef.current;
+    if (field === null) return;
+    const style = window.getComputedStyle(field);
+    const lineHeight = Number.parseFloat(style.lineHeight);
+    // A computed `normal` gives no number to build a cap out of, and a guessed
+    // one would size the box wrong in a way nobody would trace back to here.
+    // Leaving the field at its markup height is the honest fallback.
+    if (!Number.isFinite(lineHeight)) return;
+    // `box-sizing: border-box` is the app-wide default, so a height set here has
+    // to carry the borders that `scrollHeight` leaves out of its own number.
+    const borders =
+      Number.parseFloat(style.borderTopWidth) +
+      Number.parseFloat(style.borderBottomWidth);
+    const cap =
+      lineHeight * MAX_COMPOSER_LINES +
+      Number.parseFloat(style.paddingTop) +
+      Number.parseFloat(style.paddingBottom) +
+      borders;
+    // `auto` first, because `scrollHeight` never reports less than the height
+    // already set: a field shrinking back down after a delete cannot be measured
+    // without letting it collapse first. Restored on the very next line, inside
+    // the same layout effect, so it is never left that way and never painted
+    // that way.
+    field.style.height = "auto";
+    field.style.height = `${Math.min(field.scrollHeight + borders, cap)}px`;
+  });
+
   // Where the caret has to be once React has committed a value this component
   // rewrote — after a mention is inserted, that is just past the token, not
-  // wherever a controlled re-render would leave it.
+  // wherever a controlled re-render would leave it. Declared after the sizing
+  // effect so the field is its final height before focus lands in it.
   const caretRef = useRef<number | null>(null);
   useLayoutEffect(() => {
     const caret = caretRef.current;
@@ -410,7 +472,14 @@ export function ChatComposer({
           // `text-base` is inherited deliberately: a sub-16px field makes iOS
           // Safari auto-zoom the page on focus. The density the row wants comes
           // out of the padding and the line box instead.
-          className="min-h-9 resize-none py-1.5 leading-6"
+          //
+          // `rows={1}` above is the height before the sizing effect has run
+          // (and the height it keeps if the effect can find no line-height to
+          // work from); `overflow-y-auto` is what the sixth line does instead
+          // of growing. The manual resize handle is off because the height is
+          // this component's to decide — a field dragged taller than the log
+          // would be the one interaction able to break the surface's budget.
+          className="min-h-9 resize-none overflow-y-auto py-1.5 leading-6"
         />
 
         <Button
