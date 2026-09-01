@@ -11,6 +11,8 @@ import { platformForTopic } from "@/lib/products/topics";
 import { useNow } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
 import {
+  useAddSessionImage,
+  useDeleteSessionImage,
   useEmailSessionReport,
   useGeduGroupFeed,
   useRecordAttendance,
@@ -35,7 +37,7 @@ import {
 } from "@/components/group-workspace/GroupWorkspace";
 import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPanel";
 import { createSessionEntrySaves } from "@/components/group-workspace/session-entry-saves";
-import type { SiteNotesDraft } from "@/components/group-workspace/SiteNotesPanel";
+import type { SiteNotesDraft } from "@/components/group-workspace/SitePanel";
 import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
 
 /**
@@ -174,6 +176,12 @@ function Workspace({
   const setSessionNotes = useSetSessionNotes(groupId);
   const emailSessionReport = useEmailSessionReport(groupId);
   const recordAttendance = useRecordAttendance(groupId);
+  // The photo block's two writes, made by the card's Save rather than by the
+  // picker. Both refresh this group's feed, which is the document the card's
+  // photos are drawn from — so a saved photo arrives on the card, and a removed
+  // one leaves it, with nothing here refetching by hand.
+  const addSessionImage = useAddSessionImage(groupId);
+  const deleteSessionImage = useDeleteSessionImage(groupId);
   const setGroupNotes = useSetGroupNotes(groupId);
   const setSiteNotes = useSetSiteNotes(groupId);
   // Both platforms' mutations, unconditionally: a hook cannot be called behind
@@ -358,14 +366,17 @@ function Workspace({
    * page mounts the same feed against a differently-keyed set of mutations and
    * must behave identically down to which failures count as partial.
    */
-  const { saveEntry, sendReport } = createSessionEntrySaves({
-    groupId,
-    entries,
-    roster: feedRoster,
-    setSessionNotes,
-    recordAttendance,
-    emailSessionReport,
-  });
+  const { saveEntry, sendReport, addPhoto, removePhoto } =
+    createSessionEntrySaves({
+      groupId,
+      entries,
+      roster: feedRoster,
+      setSessionNotes,
+      recordAttendance,
+      emailSessionReport,
+      addSessionImage,
+      deleteSessionImage,
+    });
 
   const handleSaveGroupNotes = async (draft: GroupNotesDraft) => {
     await setGroupNotes.mutateAsync({
@@ -375,14 +386,15 @@ function Workspace({
   };
 
   /**
-   * Persist the venue's shared notes.
+   * Persist the site's shared notes.
    *
-   * The address is **not** sent, and there is no way from here to send one. It
-   * is read-only on this surface because it is family-facing venue detail owned
-   * by the location record — and it used to be echoed back on every save, which
-   * meant a page loaded before an admin corrected the address quietly reverted
-   * that correction the next time a gedu touched a note. The RPC no longer takes
-   * one; it preserves whatever is stored.
+   * The name and the address are **not** sent, and there is no way from here to
+   * send either: this shell supplies no details save, so the panel renders both
+   * read-only. They belong to the location record and are an admin's alone. The
+   * address used to be echoed back on every note save, which meant a page
+   * loaded before an admin corrected it quietly reverted that correction the
+   * next time a gedu touched a note. The RPC no longer takes one; it preserves
+   * whatever is stored.
    */
   const handleSaveSiteNotes = async (draft: SiteNotesDraft) => {
     if (feed.site === null) return;
@@ -443,6 +455,8 @@ function Workspace({
       onEditEntry={handleEditEntry}
       onSaveEntry={saveEntry}
       onSendReport={sendReport}
+      onAddPhoto={addPhoto}
+      onRemovePhoto={removePhoto}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}

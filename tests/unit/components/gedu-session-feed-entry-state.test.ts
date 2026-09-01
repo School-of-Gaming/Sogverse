@@ -88,6 +88,9 @@ function past(
     report: null,
     staffNote: null,
     attendance: {},
+    // No photos by default, and none of the cases below adds any: photos are
+    // deliberately no part of what a session owes.
+    images: [],
     owed: true,
     // Never emailed by default: a session that has not been written up cannot
     // have been sent, and a case about the check says so itself.
@@ -146,6 +149,7 @@ function future(
     report: null,
     staffNote: null,
     attendance: {},
+    images: [],
     lastEditedBy: null,
     ...fields,
   };
@@ -709,6 +713,9 @@ describe("applyPlanDraftToEntry", () => {
       // A future entry carries a sheet now, because one of them can be the
       // session in progress. Planning notes never touch it.
       attendance: {},
+      // Nor its photos, for the same reason — and because they were never draft
+      // state to begin with.
+      images: [],
       // Carried through rather than rewritten: the stamp is the database's, and
       // folding a draft in locally must not invent a name the next read could
       // contradict.
@@ -980,6 +987,12 @@ describe("applyDraftToEntry", () => {
       // An emptied note collapses to null so its block stops rendering.
       staffNote: null,
       attendance: ALL_MARKED,
+      // Carried through untouched too, and never taken from the draft. Photos
+      // are draft scope, but they are committed by their own two writes before
+      // this draft is folded in — so the entry already carries whatever those
+      // writes made of it, and reading them off the draft could only overwrite
+      // that with an older list.
+      images: [],
       // Carried through rather than rewritten: the stamp is the database's, so
       // a session saved locally stays unsigned until the row comes back.
       lastEditedBy: null,

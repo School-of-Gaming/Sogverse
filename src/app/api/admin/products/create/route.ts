@@ -34,6 +34,25 @@ function imageLinkWarning(err: { code?: string; message: string }): string {
 }
 
 /**
+ * The same soft warning for the other write that happens after the RPC: the
+ * product's marketing ask set.
+ *
+ * It is a second statement for a structural reason rather than a stylistic one
+ * — the set is keyed on a product id that `create_product` is what produces, so
+ * there is nothing to key it on until the RPC has returned. That makes it the
+ * image link's twin: the product exists and is editable, so a failure here is a
+ * warning on a 200, never an error that would report a good save as a bad one.
+ *
+ * It carries no code-specific copy because it has no interesting code to name.
+ * The writer's own RAISEs (an unknown product, a NULL in the array) are already
+ * sentences, and neither is reachable from this route with a body the contract
+ * schema accepted.
+ */
+function marketingConsentsWarning(err: { message: string }): string {
+  return `Product created but its marketing consents were not applied: ${err.message}. Retry from the edit page.`;
+}
+
+/**
  * POST /api/admin/products/create — plain JSON, validated on the primitive
  * against the same contract schema the calling service builds its body from.
  *
@@ -101,6 +120,12 @@ export const POST = defineRoute({
       p_schedule_slots: body.schedule_slots,
       p_prices: body.prices,
       p_holiday_calendar_ids: body.holiday_calendar_ids,
+      // The enrolment conditions, unconditionally and as an array — never
+      // `?? undefined`. An empty array is the ordinary "requires nothing", the
+      // RPC reads it exactly as it reads NULL, and passing it through keeps this
+      // line identical to the update route's, where an omission would drop a
+      // product's requirement set instead of clearing it deliberately.
+      p_required_consent_slugs: body.required_consent_slugs,
       p_primary_gedu_fee_cents: body.primary_gedu_fee_cents ?? undefined,
       p_assistant_gedu_fee_cents: body.assistant_gedu_fee_cents ?? undefined,
       p_municipality_fee_cents: body.municipality_fee_cents ?? undefined,
@@ -124,6 +149,29 @@ export const POST = defineRoute({
       throw new ApiError("Failed to create product", 500);
     }
 
+    // Everything after the RPC is a write the product can survive failing, so
+    // each one contributes a sentence rather than an error. They are collected
+    // instead of returned early because they are independent: a product whose
+    // picture and whose marketing asks both failed to land should say so twice.
+    const warnings: string[] = [];
+
+    // The marketing ask set, unconditionally and as an array — never
+    // `?? undefined`, exactly as the enrolment conditions are passed to the RPC
+    // above. An empty array is the ordinary "asks nothing", the writer reads it
+    // as it reads NULL, and passing it keeps this line identical to the update
+    // route's, where an omission would leave a stale set behind.
+    const { error: marketingError } = await supabase.rpc(
+      "admin_set_product_marketing_consents",
+      {
+        p_product_id: productId,
+        p_consent_types: body.marketing_consent_types,
+      },
+    );
+
+    if (marketingError) {
+      warnings.push(marketingConsentsWarning(marketingError));
+    }
+
     // Image-last: the product exists and is editable, so a failure to link its
     // picture is a warning on a 200 rather than an error that hides a good
     // save. Written unconditionally — `null` is the ordinary "no picture"
@@ -140,18 +188,17 @@ export const POST = defineRoute({
       .select("id");
 
     if (linkError) {
-      return {
-        product_id: productId,
-        warning: imageLinkWarning(linkError),
-      };
-    }
-    if (linked.length === 0) {
-      return {
-        product_id: productId,
-        warning: imageLinkWarning({
+      warnings.push(imageLinkWarning(linkError));
+    } else if (linked.length === 0) {
+      warnings.push(
+        imageLinkWarning({
           message: "the product could not be found when the image was applied",
         }),
-      };
+      );
+    }
+
+    if (warnings.length > 0) {
+      return { product_id: productId, warning: warnings.join(" ") };
     }
 
     return { product_id: productId };

@@ -29,14 +29,14 @@ import {
  *      the other's page. The key is the participation, not the group.
  *   2. **The privacy line.** A family surface may never carry a gedu note of any
  *      scope, another child's name or marks, a parent email, the lesson-material
- *      link, or any completeness/owed state. The fixtures below deliberately
- *      populate every one of those on the staff side, so the assertions that
- *      they are absent from the family document cannot pass vacuously — which
- *      is the whole difficulty with testing an omission.
+ *      link, a photo's uploader, or any completeness/owed state. The fixtures
+ *      below deliberately populate every one of those on the staff side, so the
+ *      assertions that they are absent from the family document cannot pass
+ *      vacuously — which is the whole difficulty with testing an omission.
  *
  * Layout. PRODUCT_MINE is remote and runs seven days a week, so any date is a
  * legal session date; GAMER and GAMER_2 are both on GROUP_MINE's roster, both
- * children of CUSTOMER. PRODUCT_SITE is in-person, for the venue block.
+ * children of CUSTOMER. PRODUCT_SITE is in-person, for the site block.
  * PRODUCT_UNPLACED holds a purchased-but-ungrouped participation — the state
  * that has no page. CUSTOMER_2 is a parent of nobody, so they are the
  * different-family case.
@@ -166,7 +166,7 @@ describe("family product feed", () => {
       { group_id: GROUP_SITE, gedu_id: TEST_IDS.GEDU, product_id: PRODUCT_SITE },
     ]);
 
-    // The venue: an admin writes the address, a gedu the two notes. Only the
+    // The site: an admin writes the address, a gedu the two notes. Only the
     // family-facing pair may come back through this RPC.
     await admin.from("site_details").upsert({
       location_id: TEST_IDS.LOCATION_SITE,
@@ -326,7 +326,7 @@ describe("family product feed", () => {
       expect(feed.product.id).toBe(PRODUCT_MINE);
       expect(feed.product.schedule_slots).toHaveLength(7);
       expect(feed.product.translations[0]?.name).toBe("Family feed fixture");
-      // Remote product: no building, so no venue block at all.
+      // Remote product: no building, so no site block at all.
       expect(feed.site).toBeNull();
       expect(feed.gedus.map((g) => g.id)).toEqual([TEST_IDS.GEDU]);
     });
@@ -383,7 +383,7 @@ describe("family product feed", () => {
       expect(error?.code).toBe("42501");
     });
 
-    it("carries the venue on an in-person product", async () => {
+    it("carries the site on an in-person product", async () => {
       const { data } = await customerAuth.rpc("get_my_family_product_feed", {
         p_participation_id: sitePlaced,
       });
@@ -494,7 +494,7 @@ describe("family product feed", () => {
       expect(document).not.toContain("@test.local");
     });
 
-    it("keeps the gedu note on the in-person venue block", async () => {
+    it("keeps the gedu note on the in-person site block", async () => {
       const { data } = await customerAuth.rpc("get_my_family_product_feed", {
         p_participation_id: sitePlaced,
       });
@@ -784,6 +784,123 @@ describe("family product feed", () => {
         expect(session.updated_by).toBeNull();
         expect(session.updated_by_first_name).toBeNull();
       }
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 6. The session's photos
+  // -------------------------------------------------------------------------
+  //
+  // Every session grew an `images` array with the session-report photos feature.
+  // The strict contract schema above is what carries the privacy half of it: the
+  // image object cannot represent `created_by`, so a widening of the RPC that
+  // let the uploader through fails the parse rather than arriving unnoticed.
+  //
+  // Seeded LAST, in this block's own beforeAll, so every assertion above about
+  // the three GROUP_MINE sessions runs against a history with no photos in it
+  // and this block's ordering claims are about rows it stamped itself.
+
+  describe("the session's photos", () => {
+    /** The two photos seeded on YESTERDAY's session, oldest first. */
+    let firstImage = "";
+    let secondImage = "";
+
+    beforeAll(async () => {
+      const { data: session } = await admin
+        .from("group_sessions")
+        .select("id")
+        .eq("group_id", GROUP_MINE)
+        .eq("session_date", YESTERDAY)
+        .single();
+      expect(session?.id).toBeTruthy();
+
+      // created_at is stamped explicitly rather than left to the column default,
+      // because the ordering assertion below has to be about (created_at, id)
+      // rather than about whatever order two rows of one INSERT happened to get.
+      // Mixed ratios on purpose: a 16:9 screenshot and a portrait photo are what
+      // the gallery's arithmetic is sized from.
+      const { data: rows, error } = await admin
+        .from("group_session_images")
+        .insert([
+          {
+            session_id: session!.id,
+            width: 1920,
+            height: 1080,
+            created_at: `${YESTERDAY}T19:00:00.000Z`,
+            created_by: TEST_IDS.GEDU,
+          },
+          {
+            session_id: session!.id,
+            width: 1080,
+            height: 1440,
+            created_at: `${YESTERDAY}T19:05:00.000Z`,
+            created_by: TEST_IDS.GEDU,
+          },
+        ])
+        .select("id, created_at");
+      expect(error).toBeNull();
+
+      const ordered = [...(rows ?? [])].sort((a, b) =>
+        a.created_at.localeCompare(b.created_at),
+      );
+      firstImage = ordered[0]?.id ?? "";
+      secondImage = ordered[1]?.id ?? "";
+      expect(firstImage).toBeTruthy();
+      expect(secondImage).toBeTruthy();
+    });
+
+    afterAll(async () => {
+      await admin
+        .from("group_session_images")
+        .delete()
+        .in("id", [firstImage, secondImage]);
+    });
+
+    it("carries the session's photos, oldest first, and nothing about who uploaded them", async () => {
+      const { data, error } = await customerAuth.rpc(
+        "get_my_family_product_feed",
+        { p_participation_id: minePlaced },
+      );
+      expect(error).toBeNull();
+
+      const feed = familyProductFeed.parse(data);
+      const session = feed.sessions.find((s) => s.session_date === YESTERDAY);
+
+      // The order is the display order on every surface, and it is what the
+      // clock_timestamp() stamp plus the id tiebreak exist to make stable.
+      expect(session?.images.map((i) => i.id)).toEqual([
+        firstImage,
+        secondImage,
+      ]);
+      // Uncropped mixed ratios are the whole rendering requirement, so the
+      // dimensions have to survive the round trip as numbers.
+      expect(session?.images[0]).toEqual({
+        id: firstImage,
+        width: 1920,
+        height: 1080,
+      });
+      expect(session?.images[1]?.height).toBe(1440);
+
+      // `created_by` is safeguarding audit: it gates nothing, nothing renders
+      // it, and a family surface is the last place for it. The `.strict()` image
+      // object above would already have failed the parse; this asserts the key
+      // name is absent from the whole document, wherever it might have leaked.
+      // (The uploader's *id* is not a usable probe here — the gedus array names
+      // the same person by design, a first name's worth of "who you are with".)
+      expect(JSON.stringify(data)).not.toContain("created_by");
+    });
+
+    it("hands back an empty array for a session with no photos", async () => {
+      const { data } = await customerAuth.rpc("get_my_family_product_feed", {
+        p_participation_id: minePlaced,
+      });
+      const feed = familyProductFeed.parse(data);
+
+      // An empty array rather than a missing key or a null, so the renderer has
+      // one shape to handle and the strict schema one thing to describe.
+      expect(
+        feed.sessions.find((s) => s.session_date === LONG_AGO)?.images,
+      ).toEqual([]);
     });
   });
 });

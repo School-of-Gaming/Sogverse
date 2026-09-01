@@ -187,7 +187,11 @@ export class GroupsService {
    * participation is an enrollment-lifecycle action (its domain siblings are
    * create_participation / cancel_participation), distinct from mutating group
    * structure. On success the caller should invalidate
-   * `groupsKeys.byProduct(productId)` so the new chip appears in Unassigned.
+   * `groupsKeys.byProduct(productId)` so the new chip appears — in the product's
+   * only group when the product charges nothing and has exactly one, and in
+   * Unassigned in every other case. Which of the two is the database's decision,
+   * taken inside the enrollment RPC under the product lock; nothing here picks a
+   * group or can predict one.
    */
   async addParticipantToProduct(
     productId: string,
@@ -210,6 +214,44 @@ export class GroupsService {
       );
     }
     return parseJsonResponse(response, addParticipationResponse);
+  }
+
+  /**
+   * Offers a waitlisted family the seat that opened — the panel's Invite
+   * control. Calls the same PATCH waitlist-transition route as promote and
+   * demote, with the third action, which runs `send_seat_offer` and mails the
+   * family.
+   *
+   * **It grants nothing.** The row stays waitlisted and only the offer stamp
+   * changes, so there is no optimistic placement to make and nothing moves on
+   * the board; what the settle refetch brings back is the stamp, and the
+   * waitlist row redraws with the offer's standing on it.
+   *
+   * A second press while an offer is live is refused inside the RPC rather than
+   * here (it answers `idempotent` and sends no second mail), but the panel does
+   * not offer the control at all in that state — a live offer replaces the
+   * button, which is the double-send guard a reader can actually see.
+   */
+  async sendSeatOffer(
+    productId: string,
+    participationId: string,
+  ): Promise<void> {
+    const response = await fetch(
+      `/api/admin/products/${productId}/participations/${participationId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "invite" }),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(
+          response,
+          `Failed to offer the seat (${response.status})`,
+        ),
+      );
+    }
   }
 
   /**

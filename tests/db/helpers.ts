@@ -106,8 +106,72 @@ export async function callRpcRaw(
 }
 
 /**
+ * Calls an RPC as `service_role` with an arbitrary argument object, and hands
+ * back the JSON it returned.
+ *
+ * Same reason `callRpcRaw` exists one function up — the generated argument
+ * types cannot express a NULL that a SQL parameter genuinely accepts, and
+ * casting around them is the suppression the code-style rule warns about — but
+ * for the service-role RPCs, where the RESULT is the thing under test rather
+ * than the SQLSTATE of a refusal. A raise still throws, because a test asking
+ * what a function answered has nothing to say about a call that never ran.
+ */
+export async function callServiceRoleRpcRaw(
+  functionName: string,
+  args: Record<string, unknown>
+): Promise<unknown> {
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(args),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `${functionName} failed: ${response.status} ${await response.text()}`
+    );
+  }
+  return response.json();
+}
+
+/**
+ * Calls an RPC as `service_role` with an arbitrary argument object and hands
+ * back what PostgREST said, refusal included.
+ *
+ * The third member of the family above, and it exists for the one shape neither
+ * of the others covers: a service-role-only RPC whose REFUSAL is the thing under
+ * test. `callRpcRaw` needs a user's access token, which a service-role-only
+ * function has no caller for; `callServiceRoleRpcRaw` throws on an error, which
+ * is exactly the answer being asserted here. The argument that forces a raw call
+ * is the same one both of them name — a NULL *inside* an array is a value the
+ * generated types cannot express and casting around them would be the
+ * suppression the code-style rule warns about — and a NULL element is precisely
+ * what the consent gate has to refuse.
+ */
+export async function callServiceRoleRpcResult(
+  functionName: string,
+  args: Record<string, unknown>
+): Promise<RawRestResult> {
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(args),
+  });
+
+  return readRestResult(response);
+}
+
+/**
  * PATCHes rows over PostgREST with an arbitrary body, for the same reason
- * `callRpcRaw` exists one function up: some values a test has to send are ones
+ * `callRpcRaw` exists two functions up: some values a test has to send are ones
  * the generated types forbid, and that prohibition is frequently the very
  * guarantee under test.
  *

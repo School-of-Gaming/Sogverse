@@ -220,7 +220,7 @@ describe("search_locations", () => {
     });
 
     it("offers no postal hit when the requested levels exclude municipalities", async () => {
-      // A postal row reaches a municipality, so a venue-only search must not see
+      // A postal row reaches a municipality, so a site-only search must not see
       // one. The filter is applied to the joined row's real type rather than
       // assumed from what the seed happens to have produced.
       expect(await search(anon, { p_query: "00100", p_types: ["site"] })).toEqual(
@@ -544,7 +544,7 @@ describe("search_locations", () => {
   });
 
   describe("the search blob the index is built on", () => {
-    it("is maintained for every row, including hand-created venues", async () => {
+    it("is maintained for every row, including hand-created sites", async () => {
       const { count, error } = await admin
         .from("locations")
         .select("id", { count: "exact", head: true })
@@ -554,7 +554,7 @@ describe("search_locations", () => {
       expect(count).toBe(0);
     });
 
-    it("finds a venue by name, so a site is searchable like anything else", async () => {
+    it("finds a site by name, so a building is searchable like anything else", async () => {
       const result = await search(anon, {
         p_query: "Test School",
         p_types: ["site"],

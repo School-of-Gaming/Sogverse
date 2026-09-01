@@ -9,7 +9,7 @@ import type { AuthenticatedUser, Profile, UserRole } from "@/types";
 /**
  * `defineRoute` — the HTTP route boundary primitive.
  *
- * See docs/route-boundary-architecture.md. It composes the existing boundary
+ * See docs/architecture/route-boundary.md. It composes the existing boundary
  * primitives (the role gate, the contract-schema body parse, the ApiError
  * carrier) into one declaration so the conforming route is the shortest route
  * to write: declare the posture and the schemas, receive an already-narrowed

@@ -43,7 +43,7 @@ export function useAudioPipeline({
    *  entirely (it always reads 1) — `muted` is the one control honored on every
    *  platform. The separate analyser pipeline (speaking glow) and video are
    *  untouched, so cross-zone peers stay visible. See audio-routing.ts and
-   *  docs/chrome-webrtc-volume-bug.md. */
+   *  docs/records/chrome-webrtc-volume-bug.md. */
   const updateAudioRouting = useCallback(() => {
     const co = callObjectRef.current;
     if (!co) return;
@@ -77,7 +77,7 @@ export function useAudioPipeline({
    *  Chrome doesn't reliably route MediaStream-backed element audio through
    *  the Web Audio graph, so the AnalyserNode gets silence. Using an
    *  independent createMediaStreamSource from the same track avoids this.
-   *  See docs/chrome-webrtc-volume-bug.md. */
+   *  See docs/records/chrome-webrtc-volume-bug.md. */
   const manageAudioNodes = useCallback(async (co: DailyCall) => {
     const ctx = audioContextRef.current;
     if (!ctx) return;

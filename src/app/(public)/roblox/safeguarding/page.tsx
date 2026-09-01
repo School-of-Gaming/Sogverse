@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 // review cycle, so this is a review date rather than an edit date. A date-only
 // value, rendered through the locale-aware, UTC-pinned `formatDateOnly` helper
 // rather than hardcoded per language (a plain calendar date carries no zone).
-const LAST_UPDATED = "2026-07-31";
+const LAST_UPDATED = "2026-08-31";
 
 // Section order is owned here, not in the message files, so the same structure
 // renders for every locale. Each key maps to a flat

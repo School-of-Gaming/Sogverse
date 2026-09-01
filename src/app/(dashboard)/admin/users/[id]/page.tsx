@@ -13,6 +13,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
+import { UserMarketingConsentsCard } from "@/components/admin/user-marketing-consents-card";
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { cn, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -23,7 +24,10 @@ import { MinecraftService } from "@/services/minecraft";
 import { RobloxService } from "@/services/roblox";
 import { ParticipationsService } from "@/services/participations";
 import type { AdminGamerParticipationRow } from "@/services/participations";
-import { GeduProfilesService, type GeduCertification } from "@/services/gedu/gedu-profiles.service";
+import {
+  GeduProfilesService,
+  type GeduCertificationDetail,
+} from "@/services/gedu/gedu-profiles.service";
 // Imported from the service module rather than the package index because that
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
@@ -168,7 +172,7 @@ export default async function AdminUserDetailPage({
       : Promise.resolve(null),
     isGedu
       ? new GeduProfilesService(supabase).getOne(userId).catch(() => null)
-      : Promise.resolve<GeduCertification | null>(null),
+      : Promise.resolve<GeduCertificationDetail | null>(null),
     // Every contract version this educator has accepted, newest first — a
     // bounded set (at most one row per version ever published) read by
     // primary-key prefix, so it costs this page nothing to fetch alongside the
@@ -431,6 +435,22 @@ export default async function AdminUserDetailPage({
         </Card>
       )}
 
+      {/* Gedu certification (with the contract standing and the criminal record
+          check inside it) — above the game accounts deliberately. It is the
+          highest-impact thing on an educator's page: whether they may be
+          assigned to a group at all, and the two facts that decide it. A game
+          username is a detail beside that, so it does not get the position an
+          admin's eye lands on first. Gamer pages are unaffected — they carry no
+          certification card, so the accounts card is still their first card
+          here. */}
+      {isGedu && (
+        <GeduCertificationCard
+          geduId={userId}
+          initial={geduCertification}
+          initialAcceptances={geduAcceptances}
+        />
+      )}
+
       {/* Both game identities, editable. Admins have always had the database
           permission to fix these (a `FOR ALL` policy over `is_admin()` on both
           tables); this is the surface that finally uses it. */}
@@ -443,15 +463,17 @@ export default async function AdminUserDetailPage({
         />
       )}
 
-      {/* Gedu certification + coverage areas (substitute matching) */}
-      {isGedu && (
-        <GeduCertificationCard
-          geduId={userId}
-          initial={geduCertification}
-          initialAcceptances={geduAcceptances}
-        />
-      )}
+      {/* Coverage areas, for substitute matching. */}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
+
+      {/* Last on the page, and the position is load-bearing: this is the only
+          block here whose data is fetched client-side after first paint, so at
+          the end of the run its arrival is paid for out of the page's own slack
+          and nothing already painted moves. A later tidy-up that files it beside
+          the summary card on aesthetic grounds would reintroduce that shift
+          silently. Customers only — gamers and gedus hold no marketing consents
+          at all. */}
+      {isCustomer && <UserMarketingConsentsCard customerId={userId} />}
     </div>
   );
 }

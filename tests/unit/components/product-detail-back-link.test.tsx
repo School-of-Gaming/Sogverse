@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import en from "@/../messages/en.json";
@@ -27,6 +27,35 @@ import type { ProductDetailRow } from "@/services/products";
  * name to show, and must fall back to the type's ordinary sibling link rather
  * than rendering "{empty} Clubs".
  */
+
+// The global setup mocks `useSearchParams` as permanently empty, which cannot
+// express the case this page now turns on: whether the reader arrived from a
+// browse grid, and carrying which filters. Overridden here so a test can put a
+// URL behind the link the way a card link would have.
+const mockSearch = { value: new URLSearchParams() };
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  usePathname: () => "/",
+  useSearchParams: () => mockSearch.value,
+}));
+
+/** Put a detail-page URL's query behind the next render. */
+function arriveWith(query: string) {
+  mockSearch.value = new URLSearchParams(query);
+}
+
+beforeEach(() => {
+  // Cold arrival is the default, so a test that says nothing about how the
+  // reader got here gets the case that has always existed.
+  mockSearch.value = new URLSearchParams();
+});
 
 function renderBody(
   scenario: PreviewScenario,
@@ -122,7 +151,7 @@ describe("the municipality back link on a club detail page", () => {
     // name a destination it does not go to.
     expect(backLink(container)).toEqual({
       href: "/shop",
-      text: "All municipality clubs",
+      text: "Back to municipality clubs",
     });
   });
 
@@ -130,7 +159,62 @@ describe("the municipality back link on a club detail page", () => {
     const { container } = renderBody("muni-empty", {});
     expect(backLink(container)).toEqual({
       href: "/shop",
-      text: "All municipality clubs",
+      text: "Back to municipality clubs",
     });
+  });
+
+  it("carries the grid's filters back to the municipality listing", () => {
+    arriveWith("from=browse&topic=minecraft&days=1");
+    const { container } = renderBody("muni-empty", {
+      municipalitySlug: "espoo",
+    });
+    // The slug still decides the path; the filters ride along on top of it.
+    expect(backLink(container).href).toBe(
+      "/schools/espoo?topic=minecraft&days=1",
+    );
+  });
+});
+
+/**
+ * **Where the back link goes is where the reader was, not what they are looking
+ * at.** A card link carries the grid's filter state into the detail URL, so the
+ * listing is rebuilt from it — the reader lands on the grid they left, with no
+ * Type selection they never made. Opened cold there is no state to return to,
+ * and the type's own listing is the only sensible destination.
+ */
+describe("the shop back link's destination", () => {
+  it("returns to an unfiltered shop rather than the type's listing", () => {
+    // The reported bug: browsing an unfiltered /shop, opening a club and
+    // pressing back used to land on ?category=clubs — a filter nobody chose.
+    arriveWith("from=browse");
+    const { container } = renderBody("consumer-club", {});
+    expect(backLink(container).href).toBe("/shop");
+  });
+
+  it("restores every chip the grid was carrying", () => {
+    arriveWith("from=browse&category=clubs&topic=minecraft&lang=en&days=1,3");
+    const { container } = renderBody("consumer-club", {});
+    expect(backLink(container).href).toBe(
+      "/shop?category=clubs&topic=minecraft&lang=en&days=1%2C3",
+    );
+  });
+
+  it("falls back to the type's listing when opened cold", () => {
+    // No marker: a shared link, an unfurl or a search result. There is no grid
+    // to go back to, so the label's own listing is the destination — the
+    // behaviour this page has always had.
+    const { container } = renderBody("consumer-club", {});
+    expect(backLink(container)).toEqual({
+      href: "/shop?category=clubs",
+      text: "Back to clubs",
+    });
+  });
+
+  it("ignores filter params with no marker beside them", () => {
+    // A hand-edited or copied detail URL carrying chips but no marker is still
+    // a cold arrival: the chips describe a grid this reader was never on.
+    arriveWith("topic=minecraft");
+    const { container } = renderBody("consumer-club", {});
+    expect(backLink(container).href).toBe("/shop?category=clubs");
   });
 });

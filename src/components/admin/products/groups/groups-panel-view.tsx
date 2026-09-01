@@ -29,6 +29,8 @@ import {
   readDropData,
   readChipDragData,
   resolveDrop,
+  seatOfferAvailability,
+  showUnassignedSection,
   type BlockedDropReason,
 } from "./panel-rules";
 import { UnassignedCard } from "./unassigned-card";
@@ -68,6 +70,14 @@ export interface GroupsPanelActions {
   onRequestAddGedu: (groupId: string) => void;
   /** Ask the shell to open its participant picker. */
   onRequestAddParticipant: () => void;
+  /**
+   * Offer a queued family the seat that opened. Optional, unlike its
+   * neighbours, because a shell with no mutation behind it should render the
+   * waitlist's offer *states* without an Invite control rather than one that
+   * does nothing. It answers back — see the card's own note on why this one
+   * action needs an outcome.
+   */
+  onSendSeatOffer?: (participationId: string) => Promise<void>;
 }
 
 interface GroupsPanelViewProps {
@@ -373,7 +383,45 @@ export function GroupsPanelView({
       : null;
 
   // Greyed/undraggable chips: an in-flight move/promote/demote OR removal.
+  // An in-flight seat offer is deliberately NOT here: it moves nobody, and
+  // greying a chip would say the person was going somewhere. The row's own
+  // Invite button carries that action's committed state instead.
   const busyChipIds = new Set<string>([...pending.moves, ...pending.removes]);
+
+  // Whether the inbox card is drawn at all. On a product where every arriving
+  // seat is written straight into its only group, an empty inbox is a box
+  // nothing can land in, so it is simply not there — the rule is said by the
+  // absence rather than by a caption. Anyone actually waiting brings it back.
+  //
+  // Read from the snapshot itself rather than from the `groups` fallback above:
+  // with no snapshot (the query errored) an empty list is the absence of an
+  // answer, not "this product has no groups", so the card is drawn and the
+  // panel's own error/empty state is what the admin reads.
+  //
+  // The two inputs that can HIDE the card — the group count and the inbox count
+  // — both come out of the one snapshot this render drew, so they cannot
+  // disagree with each other and the first paint is already right. `billingMode`
+  // is a prop off the product row, a *separate* cache entry that may be stale
+  // relative to the snapshot, but it can never hide anything by itself: the
+  // inbox count is consulted first. A stale "paid" only draws a card that did
+  // not need drawing, which is harmless; a stale "free" cannot hide rows the
+  // database really left unassigned, because those rows are in this snapshot
+  // and their presence short-circuits to true before billing is read at all.
+  // A row's own presence outranks the billing half, in every staleness
+  // direction.
+  const showUnassigned = snapshot
+    ? showUnassignedSection(
+        billingMode,
+        snapshot.groups,
+        snapshot.unassigned.length,
+      )
+    : true;
+
+  // Whether this product can offer a queued family the seat that opened. Both
+  // halves of the question are already on this side — the billing prop, and the
+  // group count the board is drawn from — so the waitlist card is handed the
+  // answer rather than the inputs.
+  const seatOffers = seatOfferAvailability(billingMode, groups.length);
 
   return (
     <div className="space-y-3">
@@ -431,12 +479,34 @@ export function GroupsPanelView({
         </div>
 
         <div className="space-y-3">
-          <UnassignedCard
-            participations={unassigned}
-            pendingChipIds={busyChipIds}
-            gamePlatform={gamePlatform}
-            robloxRenders={robloxRenders}
-          />
+          {/* Hidden only on a product that auto-places into its single group
+              with nobody waiting — which also removes the inbox drop target
+              there, deliberately: a member dragged off a column has the remove
+              zone (and the waitlist, where one is open) and nowhere else, and
+              resolveDrop is never asked about a target that isn't mounted. To
+              park a gamer on such a product an admin adds a second group (the
+              card reappears), drags them into the card, and deletes the extra
+              group — the card then stays, because it is no longer empty.
+
+              The card sits ABOVE the group columns, so mounting or unmounting
+              it moves the whole board, and it does so at two moments: at drop
+              time, when the optimistic move of the last inbox chip unmounts the
+              card in the same commit; and at settle time, when a group delete
+              or a participant removal refetches and pulls the board up. Both
+              are the direct result of the admin's own action, which the layout
+              rules permit, and the jump is deliberately left unanimated. The
+              honest edge: with refetch-on-focus, another admin seating the last
+              inbox row makes the card vanish on this admin's next window focus.
+              That is the same class as the chip reordering this panel already
+              does on refocus, and is accepted on the same terms. */}
+          {showUnassigned && (
+            <UnassignedCard
+              participations={unassigned}
+              pendingChipIds={busyChipIds}
+              gamePlatform={gamePlatform}
+              robloxRenders={robloxRenders}
+            />
+          )}
 
           {hasGroups ? (
             groups.map((g) => (
@@ -488,6 +558,8 @@ export function GroupsPanelView({
               pendingChipIds={busyChipIds}
               gamePlatform={gamePlatform}
               robloxRenders={robloxRenders}
+              seatOffers={seatOffers}
+              onSendSeatOffer={actions.onSendSeatOffer}
             />
           )}
         </div>

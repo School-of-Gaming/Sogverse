@@ -6,6 +6,7 @@ import {
   type SignupPanelViewProps,
   type SignupParticipantChoice,
 } from "@/components/public/products/signup-panel-view";
+import type { MarketingConsentType } from "@/types";
 
 /**
  * **What the region lock does to the signup panel.**
@@ -81,6 +82,16 @@ function panel(
     // makes "the location step outranks it" a real assertion rather than a tie.
     agreed: true,
     onAgreedChange: () => {},
+    // No enrolment conditions: the ordinary product, which is what every
+    // assertion in this file is about.
+    requiredConsentSlugs: [],
+    consentAgreements: new Set<string>(),
+    onConsentAgreementChange: () => {},
+    // No optional marketing ask by default: that is what nearly every
+    // product looks like, and the block is absent when the set is empty.
+    marketingConsentTypes: [],
+    marketingConsents: new Set<MarketingConsentType>(),
+    onMarketingConsentChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",
@@ -187,7 +198,7 @@ describe("wrong country", () => {
     // No picker, no consent, no CTA — nothing on screen before the swap is
     // still on screen after it, so nothing moved.
     expect(rows(container)).toHaveLength(0);
-    expect(container.textContent).not.toContain("rulesHeading");
+    expect(container.textContent).not.toContain("consents.heading");
     expect(container.querySelector("button")).toBeNull();
   });
 
@@ -245,14 +256,14 @@ describe("no location", () => {
     expect(rows(container)).toHaveLength(1);
     expect(container.textContent).toContain("regionLock.heading");
     expect(container.textContent).toContain("regionLock.note");
-    // Between the picker and the rules, which is the order the CTA names them
-    // in.
+    // Between the picker and the consent section, which is the order the CTA
+    // names them in.
     const text = container.textContent;
     expect(text.indexOf("regionLock.heading")).toBeGreaterThan(
       text.indexOf("whoAreYouSigningUp"),
     );
     expect(text.indexOf("regionLock.heading")).toBeLessThan(
-      text.indexOf("rulesHeading"),
+      text.indexOf("consents.heading"),
     );
   });
 
@@ -304,11 +315,11 @@ describe("no location", () => {
       text.indexOf("whoAreYouSigningUp"),
     );
     expect(text.indexOf("regionLock.eligible")).toBeLessThan(
-      text.indexOf("rulesHeading"),
+      text.indexOf("consents.heading"),
     );
   });
 
-  it("keeps the CTA in section order: gamer, then location, then rules", () => {
+  it("keeps the CTA in section order: gamer, then location, then consent", () => {
     // Nobody selected yet: the picker is above the location section, so its
     // prompt comes first even though the location is missing too.
     const noGamer = render(
@@ -321,8 +332,8 @@ describe("no location", () => {
     );
     expect(cta(noGamer.container).textContent).toContain("ctaAddGamer");
 
-    // Selected but nothing agreed: the location sits above the rules, so it is
-    // the step named.
+    // Selected but nothing agreed: the location sits above the consent
+    // section, so it is the step named.
     const unagreed = render(
       <SignupPanelView {...panel({ regionGate: noLocation(), agreed: false })} />,
     );
@@ -338,7 +349,7 @@ describe("eligible", () => {
       <SignupPanelView {...panel({ regionGate: eligible })} />,
     );
     expect(rows(container)).toHaveLength(1);
-    expect(container.textContent).toContain("rulesHeading");
+    expect(container.textContent).toContain("consents.heading");
     expect(container.textContent).toContain("regionLock.eligible");
     // The country is named, in the reader's own language — the same courtesy
     // the refusal does, and the reason this state says anything at all.

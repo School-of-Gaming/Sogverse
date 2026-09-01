@@ -72,7 +72,7 @@ describe("buildProductConfirmationEmail", () => {
   });
 
   /**
-   * The four modes are the whole shape of this mail: three price shapes and one
+   * The five modes are the whole shape of this mail: four price shapes and one
    * outcome with no price at all. Each case asserts what its own variant says
    * *and* what it must not — a waitlist mail that still carries a monthly price
    * would render perfectly and tell a parent they are being billed for a seat
@@ -97,6 +97,26 @@ describe("buildProductConfirmationEmail", () => {
       const html = buildProductConfirmationEmail(t, "en", { ...base, mode: "free", priceAmount: null });
       expect(html).toContain("Price: Free");
       expect(html).toContain("nothing to pay");
+    });
+
+    /**
+     * A municipality registration costs the family nothing at our till, which
+     * is not the same statement as "Free": some municipalities charge a small
+     * fee of their own, and the family has already been told so by their
+     * council. The mail says who bears the cost on the price line and adds
+     * nothing to the "what happens next" list, so the negative assertions are
+     * the load-bearing half of this case — including the absent bullet, which
+     * is the only place a second, wordier version of the same claim could
+     * creep back in.
+     */
+    it("says who bears the cost of a municipality registration, never 'Free'", () => {
+      const html = buildProductConfirmationEmail(t, "en", { ...base, mode: "external", priceAmount: null });
+      expect(html).toContain("Price: Paid for by your municipality");
+      expect(html).not.toContain("Price: Free");
+      expect(html).not.toContain("nothing to pay for this one");
+      // Placement only — no cost bullet of any wording.
+      expect(html).not.toContain("invoice");
+      expect(html).toContain("in a group with a Gedu");
     });
 
     it("prints no price line at all on a waitlist join", () => {

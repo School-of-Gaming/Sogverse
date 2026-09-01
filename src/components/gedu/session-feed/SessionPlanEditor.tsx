@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Eye, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { planDraftFromEditorState } from "./entry-state";
@@ -25,6 +25,16 @@ interface SessionPlanEditorProps {
   committing: boolean;
   /** Why the last save was refused, or `null`. Keeps the editor open. */
   error: string | null;
+  /**
+   * The session's photo block, in the same slot the record editor gives it —
+   * between the family-facing report and the gedu note.
+   *
+   * **A slot rather than props, for the same reason it is one there:** the
+   * staged photos belong to whatever runs and awaits the save, not to the
+   * editor that draws them. All this component decides is where the block goes
+   * and that it greys with the two fields beside it.
+   */
+  photoStrip?: ReactNode;
   onCancel: () => void;
   onSave: (draft: SessionPlanDraft) => void;
 }
@@ -49,14 +59,24 @@ interface SessionPlanEditorProps {
  *
  * Both fields are technically optional and neither says so — a marker there
  * would read as permission to skip the only two things this editor exists for.
- * The Save/Cancel row stays pinned at the bottom so neither field growing under
+ * The Cancel/Save row stays pinned at the bottom so neither field growing under
  * the writer moves it.
+ *
+ * **It carries the photo block too, in the same slot and on the same terms as
+ * the record editor** *(owner, reversing the plan)*. The block was withheld here
+ * on the reasoning that photos document what happened; the owner's answer is
+ * that a gedu writing about next Monday can already write notes, and there is no
+ * reason a picture should be the one thing they cannot attach. Nothing about the
+ * mechanism differs — the same staged semantics, the same Save, the same greying
+ * — because the difference between the two editors was never about photos: it is
+ * that a session which has not started has no register to take.
  */
 export function SessionPlanEditor({
   open,
   initialState,
   committing,
   error,
+  photoStrip,
   onCancel,
   onSave,
 }: SessionPlanEditorProps) {
@@ -96,6 +116,11 @@ export function SessionPlanEditor({
           onChange={(report) => setDraft((d) => ({ ...d, report }))}
         />
       </FamilyNoteBlock>
+
+      {/* Directly under the report and above the gedu note — the slot the
+          record editor gives it, and the one the collapsed card puts the same
+          photos in. One order on both sides of the present, open or shut. */}
+      {photoStrip}
 
       <StaffNoteBlock audienceStatedByField>
         <RichNoteField

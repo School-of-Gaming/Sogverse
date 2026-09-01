@@ -67,8 +67,7 @@ export function ProductBrowseCardView({
   audienceLabel,
   locationLine,
   spokenLanguageCode,
-  price,
-  seatBar,
+  footerLeft,
   state,
   detailHref,
   tag,
@@ -130,7 +129,7 @@ export function ProductBrowseCardView({
               entirely when there is no topic and no flag to hang it on. */}
           <div className="flex items-center gap-2">
             {topicLabel !== null && (
-              <p className="text-xs font-medium tracking-wide text-primary">
+              <p className="text-xs font-medium uppercase tracking-wide text-primary">
                 {topicLabel}
               </p>
             )}
@@ -167,7 +166,7 @@ export function ProductBrowseCardView({
           </p>
         )}
 
-        <BrowseCardFooter shell={shell} seatBar={seatBar} price={price} />
+        <BrowseCardFooter shell={shell} footerLeft={footerLeft} />
       </CardContent>
 
       {/* Nothing on this card owns a click of its own — the overlaid chips are

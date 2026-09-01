@@ -41,13 +41,17 @@ import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "./calendar";
  */
 
 /**
- * **Two scenarios**, and they cannot coexist: an empty queue and a full one are
- * the same components in their two states.
+ * **Two scenarios**, and they cannot coexist: a full attention queue and an
+ * empty one are the same component in its two states.
  *
  * `busy` is the platform under real load — sixty products, twenty-one of them
- * needing something, five gedus waiting on a decision. `quiet` is six products
- * with nothing wrong anywhere, which is the only way to see the all-clear state
- * on a page that is otherwise doing its job.
+ * needing something, five gedus not yet certified. `quiet` is six products with
+ * nothing wrong anywhere and nobody left to certify.
+ *
+ * **Both sections are empty in `quiet`, not just the queue.** They are
+ * independent now — attention is products, certification is standing
+ * information below it — so each owns an empty state that a platform under load
+ * can never reach, and one scenario carries both.
  */
 export const ADMIN_DASHBOARD_SCENARIOS = ["busy", "quiet"] as const;
 
@@ -665,7 +669,7 @@ const PRODUCT_ISSUE_SPECS: readonly {
     productId: "consumer-club-11",
     issues: [
       { kind: "unassigned-gamers", values: { count: 2 } },
-      { kind: "waitlist-open-seats", values: { waiting: 3, open: 8 } },
+      { kind: "waitlist-open-seats", values: { waiting: 3, open: 8, offers: 2 } },
     ],
   },
   {
@@ -705,13 +709,13 @@ const PRODUCT_ISSUE_SPECS: readonly {
   },
   {
     productId: "consumer-club-3",
-    issues: [{ kind: "waitlist-open-seats", values: { waiting: 3, open: 4 } }],
+    issues: [{ kind: "waitlist-open-seats", values: { waiting: 3, open: 4, offers: 0 } }],
   },
   {
     // One open seat, so the counted half of the waitlist line is seen in its
     // singular form somewhere in the scene.
     productId: "municipality-club-4",
-    issues: [{ kind: "waitlist-open-seats", values: { waiting: 4, open: 1 } }],
+    issues: [{ kind: "waitlist-open-seats", values: { waiting: 4, open: 1, offers: 0 } }],
   },
   {
     productId: "consumer-club-6",
@@ -764,6 +768,12 @@ const PRODUCT_ISSUE_SPECS: readonly {
  * state is the one the row's tint and its confirm dialog are drawn for and a
  * scene with one of each would only show whether the two are distinguishable —
  * not whether a column of them is scannable.
+ *
+ * **The record check varies independently of the contract, and every
+ * combination of the two appears.** The confirm dialog names whichever
+ * standings are missing, so a queue where the two always agreed would never
+ * raise the one-warning shapes at all — and the row a reader has to be able to
+ * scan is precisely the one that is fine on one count and not the other.
  */
 const UNCERTIFIED_GEDU_SPECS: readonly {
   id: string;
@@ -776,36 +786,48 @@ const UNCERTIFIED_GEDU_SPECS: readonly {
    * own future would be a fact the live page could not produce.
    */
   acceptedAt: string | null;
+  /**
+   * When an admin recorded seeing their criminal record extract, or `null`.
+   * Same clock discipline as the acceptance above, and never before the
+   * registration: nobody presents an extract to a platform they have not
+   * joined.
+   */
+  checkedAt: string | null;
 }[] = [
   {
     id: PERSON_IDS.venlaSalminen,
     name: "Venla Salminen",
     registeredAt: "2026-08-15T09:20:00+03:00",
     acceptedAt: "2026-08-16T18:40:00+03:00",
+    checkedAt: null,
   },
   {
     id: PERSON_IDS.topiasJarvinen,
     name: "Topias Järvinen",
     registeredAt: "2026-08-12T09:20:00+03:00",
     acceptedAt: null,
+    checkedAt: "2026-08-14T13:15:00+03:00",
   },
   {
     id: PERSON_IDS.iidaLehtonen,
     name: "Iida Lehtonen",
     registeredAt: "2026-08-08T09:20:00+03:00",
     acceptedAt: "2026-08-08T11:05:00+03:00",
+    checkedAt: "2026-08-11T09:50:00+03:00",
   },
   {
     id: PERSON_IDS.onniRantanen,
     name: "Onni Rantanen",
     registeredAt: "2026-07-27T09:20:00+03:00",
     acceptedAt: null,
+    checkedAt: null,
   },
   {
     id: PERSON_IDS.helmiKoskinen,
     name: "Helmi Koskinen",
     registeredAt: "2026-06-17T09:20:00+03:00",
     acceptedAt: null,
+    checkedAt: null,
   },
 ];
 
@@ -823,6 +845,13 @@ function uncertifiedGedus(locale: SupportedLocale): UncertifiedGedu[] {
       spec.acceptedAt === null
         ? null
         : formatDate(spec.acceptedAt, locale, {
+            dateStyle: "medium",
+            timeZone: ADMIN_DASHBOARD_TIMEZONE,
+          }),
+    criminalRecordCheckOn:
+      spec.checkedAt === null
+        ? null
+        : formatDate(spec.checkedAt, locale, {
             dateStyle: "medium",
             timeZone: ADMIN_DASHBOARD_TIMEZONE,
           }),
@@ -1040,6 +1069,9 @@ export function buildAdminDashboardFixture(
     // no adjustment to disclose. The live page decides this per snapshot.
     timeZoneAbbrev: null,
     products,
+    // Empty on both sides in `quiet`: certification is its own section now, so
+    // it needs its own empty state, and this is the only scenario that can show
+    // one.
     uncertifiedGedus: quiet ? [] : uncertifiedGedus(locale),
     users: quiet ? QUIET_USER_STATS : BUSY_USER_STATS,
     weeks,
@@ -1051,19 +1083,25 @@ export function buildAdminDashboardFixture(
 /**
  * Plausible platform numbers — one parent to roughly one and a half gamers, most
  * addresses verified, and rather more gedus registered than certified, which is
- * the whole reason the certification queue above exists.
+ * the whole reason the certification section above exists.
+ *
+ * Both rows agree with the certification list the same scenario builds: `busy`
+ * is nineteen gedus with fourteen certified against its five listed, `quiet` is
+ * five with all five certified against an empty list. A strip claiming an
+ * uncertified gedu the card below it says nothing about is the drift a fixture
+ * exists to make impossible.
  */
 const BUSY_USER_STATS: AdminDashboardData["users"] = [
   { role: "customer", total: 214, verified: 191, certified: null },
   { role: "gamer", total: 342, verified: null, certified: null },
-  { role: "gedu", total: 19, verified: 17, certified: 12 },
+  { role: "gedu", total: 19, verified: 17, certified: 14 },
   { role: "admin", total: 4, verified: 4, certified: null },
 ];
 
 const QUIET_USER_STATS: AdminDashboardData["users"] = [
   { role: "customer", total: 12, verified: 9, certified: null },
   { role: "gamer", total: 18, verified: null, certified: null },
-  { role: "gedu", total: 3, verified: 3, certified: 3 },
+  { role: "gedu", total: 5, verified: 5, certified: 5 },
   { role: "admin", total: 2, verified: 2, certified: null },
 ];
 

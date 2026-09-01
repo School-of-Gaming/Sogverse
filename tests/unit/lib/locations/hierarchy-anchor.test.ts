@@ -20,7 +20,7 @@ import { COUNTRIES } from "../../../../scripts/lib/geonames/config.mjs";
  */
 describe("country hierarchy anchors", () => {
   it("is the level immediately above `site` in the country's own hierarchy", () => {
-    // A venue is created directly beneath the row an admin confirmed in the
+    // A site is created directly beneath the row an admin confirmed in the
     // picker, so the anchor cannot be any other level without the picker
     // handing the create route a parent it does not accept. This holds for
     // US/GB/JP too, whose hierarchies put `district` below municipality.

@@ -32,6 +32,16 @@ function imageLinkWarning(err: { code?: string; message: string }): string {
 }
 
 /**
+ * The create route's twin, for the other post-RPC write: the product's
+ * marketing ask set, which is a separate statement because it is keyed on the
+ * product rather than being a column on it. A failure leaves the save itself
+ * good, so it is a sentence on a 200 rather than an error.
+ */
+function marketingConsentsWarning(err: { message: string }): string {
+  return `Product saved but its marketing consents were not applied: ${err.message}. Retry from the edit page.`;
+}
+
+/**
  * POST /api/admin/products/[id]/update — plain JSON, same shape as the create
  * route and validated on the primitive against the contract schema.
  *
@@ -97,6 +107,12 @@ export const POST = defineRoute({
       p_schedule_slots: body.schedule_slots,
       p_prices: body.prices,
       p_holiday_calendar_ids: body.holiday_calendar_ids,
+      // Wipe-and-replace, like the calendars above: the RPC hands this straight
+      // to the requirement set's single writer, so an empty array clears the
+      // conditions and a populated one replaces them. Never `?? undefined` — an
+      // omission here would be indistinguishable from "requires nothing", and
+      // the contract demands the field precisely so it cannot be one.
+      p_required_consent_slugs: body.required_consent_slugs,
       // null (unknown/none) maps to undefined so the RPC's DEFAULT NULL clears
       // the column; 0 (volunteer) survives `??` since it's not nullish.
       p_primary_gedu_fee_cents: body.primary_gedu_fee_cents ?? undefined,
@@ -116,6 +132,28 @@ export const POST = defineRoute({
       throw new ApiError("Failed to update product", 500);
     }
 
+    // The create route's shape, verbatim: every write after the RPC is one the
+    // product can survive failing, so each contributes a sentence rather than
+    // an error, and they are collected because they are independent.
+    const warnings: string[] = [];
+
+    // Wipe-and-replace, exactly as the required consents are inside the RPC:
+    // the array goes through unconditionally, so an empty one clears the asks
+    // and a populated one replaces them. Never `?? undefined` — an omission
+    // would be indistinguishable from "asks nothing", and the contract demands
+    // the field precisely so it cannot be one.
+    const { error: marketingError } = await supabase.rpc(
+      "admin_set_product_marketing_consents",
+      {
+        p_product_id: productId,
+        p_consent_types: body.marketing_consent_types,
+      },
+    );
+
+    if (marketingError) {
+      warnings.push(marketingConsentsWarning(marketingError));
+    }
+
     // The picture, in one statement, after the RPC — the same image-last shape
     // the create route uses, and unconditional for the same reason: `null` is
     // "this product has no picture", an answer the form always sends, so
@@ -131,18 +169,17 @@ export const POST = defineRoute({
       .select("id");
 
     if (linkError) {
-      return {
-        product_id: productId,
-        warning: imageLinkWarning(linkError),
-      };
-    }
-    if (linked.length === 0) {
-      return {
-        product_id: productId,
-        warning: imageLinkWarning({
+      warnings.push(imageLinkWarning(linkError));
+    } else if (linked.length === 0) {
+      warnings.push(
+        imageLinkWarning({
           message: "the product could not be found when the image was applied",
         }),
-      };
+      );
+    }
+
+    if (warnings.length > 0) {
+      return { product_id: productId, warning: warnings.join(" ") };
     }
 
     return { product_id: productId };

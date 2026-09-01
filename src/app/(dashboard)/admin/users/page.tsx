@@ -5,9 +5,16 @@ import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { UserRow } from "@/components/admin/user-row";
+import { UserRow, type GeduStandingWarnings } from "@/components/admin/user-row";
+import {
+  findGeduContractAcceptance,
+  GEDU_CONTRACT_CURRENT_VERSION,
+} from "@/components/gedu/contract/documents";
 import { useUsers, useSearchUsers, useParentGamerLinks } from "@/services/users";
-import { useGeduCertificationMap } from "@/services/gedu";
+import {
+  useGeduCertificationMap,
+  useGeduContractAcceptanceMap,
+} from "@/services/gedu";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import type { Profile, UserRole } from "@/types";
 
@@ -20,6 +27,47 @@ export default function AdminUsersPage() {
   const { data: searchResults, isLoading: isSearching } = useSearchUsers(searchQuery);
   const { data: parentGamerLinks } = useParentGamerLinks();
   const certification = useGeduCertificationMap();
+  const acceptances = useGeduContractAcceptanceMap();
+
+  /**
+   * The two warning marks are a **block**, and it stays silent until both reads
+   * behind it have answered — or gives up entirely if either failed.
+   *
+   * Two reasons, and both are about honesty rather than caution. A warning
+   * asserts that an educator has *not* done something, and an unanswered or
+   * failed read cannot support that: an empty acceptance map would badge every
+   * gedu on the platform as unsigned, which is the precise wrong answer rather
+   * than a degraded one. And the two facts come from two independent queries
+   * that can resolve in either order, so rendering each as it lands would let
+   * the second one push the first sideways in the row's right-packed mark group
+   * — the shift `UserRow`'s ordering note exists to prevent. Waiting for both
+   * makes the pair one insertion at the left end of that group, which moves
+   * nothing.
+   */
+  const standingKnown =
+    !certification.isPending &&
+    !certification.isError &&
+    !acceptances.isPending &&
+    !acceptances.isError;
+
+  const geduStandingWarnings = useMemo(() => {
+    if (!standingKnown) return new Map<string, GeduStandingWarnings>();
+    const warnings = new Map<string, GeduStandingWarnings>();
+    for (const [geduId, profile] of certification.map) {
+      warnings.set(geduId, {
+        // Matched on the base version, like every other "is this educator
+        // current" check: the two languages of one version are the same
+        // agreement, so signing either counts.
+        contract:
+          findGeduContractAcceptance(
+            acceptances.map.get(geduId) ?? [],
+            GEDU_CONTRACT_CURRENT_VERSION,
+          ) === null,
+        criminalRecordCheck: !profile.criminal_record_check_passed,
+      });
+    }
+    return warnings;
+  }, [standingKnown, certification.map, acceptances.map]);
 
   const ROLE_FILTERS: { value: UserRole; label: string }[] = [
     { value: "admin", label: c(ROLE_LABEL_KEYS.admin) },
@@ -194,6 +242,12 @@ export default function AdminUsersPage() {
                         certification.isError
                           ? null
                           : certification.map.get(user.id)?.certified ?? false
+                      }
+                      // Absent for every non-gedu, and for every gedu until
+                      // both standing reads have answered — see the block
+                      // above. `null` is silence, never "nothing missing".
+                      standingWarnings={
+                        geduStandingWarnings.get(user.id) ?? null
                       }
                     />
                   ))}

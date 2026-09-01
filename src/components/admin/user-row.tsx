@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { MailCheck, ShieldCheck } from "lucide-react";
+import {
+  FileWarning,
+  MailCheck,
+  Scale,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +24,21 @@ interface UserRowUser {
   role: UserRole;
 }
 
+/**
+ * What is *missing* from an educator's standing — the negative half of the row,
+ * and the only half either of these two facts ever prints.
+ *
+ * It arrives as one object rather than as two independent flags because the two
+ * marks are rendered as one block: see the ordering note in `UserRow` for why
+ * the block is atomic and what it costs to split it.
+ */
+export interface GeduStandingWarnings {
+  /** Has not accepted the contract version in force. */
+  contract: boolean;
+  /** No acceptable criminal record extract has been recorded. */
+  criminalRecordCheck: boolean;
+}
+
 interface UserRowProps {
   user: UserRowUser;
   linkedGamers?: UserRowUser[];
@@ -31,31 +52,74 @@ interface UserRowProps {
    * collapse into each other; only a positive answer may print the mark.
    */
   certified?: boolean | null;
+  /**
+   * What this educator's standing is missing, or `null` where that is not
+   * known — either read failed, either read has not answered yet, or the row is
+   * not a gedu.
+   *
+   * Same three-state honesty as `certified` and for the same reason: a warning
+   * mark is a claim that somebody has *not* done something, and a read that did
+   * not land cannot support one. `null` is not "nothing missing"; it is
+   * silence.
+   */
+  standingWarnings?: GeduStandingWarnings | null;
 }
 
 /**
  * One admin users-list row.
  *
- * **Two marks that mean two different things, in a fixed order.** The shield is
- * about a *person* — an admin has certified this educator — and the green check
- * is about an *address*, confirmed by whoever reads that inbox. A certified gedu
- * with a verified email carries both, so the order never varies with which of
- * them is present: certification first, verification second, then the role
- * badge. Scanning a column of rows only works if a given mark is always in the
- * same place.
+ * **Four marks that mean four different things, in a fixed order.** Left to
+ * right, always: the unsigned-contract warning, the missing-record-check
+ * warning, the certification shield, the email check — then the role badge and
+ * the chevron. The shield is about a *person* an admin has vouched for and the
+ * green check is about an *address* confirmed by whoever reads that inbox; the
+ * two warnings are about things the educator has not done yet. An educator can
+ * carry any combination, so the order never varies with which of them are
+ * present. Scanning a column of rows only works if a given mark is always in
+ * the same place.
  *
- * A gamer gets neither. Their address is the synthetic
+ * **The two warnings show regardless of certification, and that is the point.**
+ * They are not a pre-certification checklist — neither gates anything — they
+ * are how a certified educator who never signed the terms or never presented an
+ * extract is findable at all. Hiding them behind "not yet certified" would hide
+ * exactly the accounts worth finding: the legacy ones certified before either
+ * fact was recorded.
+ *
+ * **The order is load-bearing and this list is right-packed, so nothing here
+ * may be reordered on aesthetic grounds.** The group sits at the row's right
+ * edge, so a mark that arrives after first paint has to be inserted at the
+ * *left* end or it pushes the marks already painted sideways. Both warnings and
+ * the shield arrive late, from two different reads; the shield's read is one of
+ * the two the warnings wait for, so the warnings can never land first, and
+ * putting them leftmost is what makes both arrivals grow the group leftward
+ * into the row's slack. That is also why the warnings arrive as **one object**
+ * rather than two flags: their two reads can resolve in either order, and a
+ * caller that rendered each as it landed would let the second one push the
+ * first across the row.
+ *
+ * A gamer gets none of them. Their address is the synthetic
  * `@gamer.sogverse.internal` one their account was created with, so there is no
- * inbox to confirm it from and a check would be asserting something nobody did.
+ * inbox to confirm it from and a check would be asserting something nobody did;
+ * the other three are questions only an educator's row raises.
  *
- * **Both marks are printed only on a positive answer.** A mark is a claim
- * somebody made, so the absence of an answer has to read the same as "no" — see
- * `certified` for the three states that keeps honest.
+ * **Every mark is printed only on a definite answer.** A mark is a claim
+ * somebody made, so the absence of an answer has to read as silence rather than
+ * as its opposite — see `certified` and `standingWarnings` for the three states
+ * that keeps honest.
  */
-export function UserRow({ user, linkedGamers, basePath = "/admin/users", certified }: UserRowProps) {
+export function UserRow({
+  user,
+  linkedGamers,
+  basePath = "/admin/users",
+  certified,
+  standingWarnings,
+}: UserRowProps) {
   const t = useTranslations('admin.users');
   const c = useTranslations('common');
+  const contract = useTranslations('admin.geduContract');
+  const check = useTranslations('admin.geduCriminalRecordCheck');
   const emailVerified = user.role !== "gamer" && user.email_verified_at !== null;
+  const warnings = user.role === "gedu" ? standingWarnings ?? null : null;
   return (
     <div className="rounded-lg border">
       <Link
@@ -78,16 +142,32 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users", certifi
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {warnings?.contract && (
+            <StandingMark
+              icon={FileWarning}
+              tone="warning"
+              label={contract('rowNotAccepted')}
+            />
+          )}
+          {warnings?.criminalRecordCheck && (
+            <StandingMark
+              icon={Scale}
+              tone="warning"
+              label={check('rowNotRecorded')}
+            />
+          )}
           {user.role === "gedu" && certified === true && (
-            <ShieldCheck
-              className="h-4 w-4 text-success"
-              aria-label={t('certification.certified')}
+            <StandingMark
+              icon={ShieldCheck}
+              tone="success"
+              label={t('certification.certified')}
             />
           )}
           {emailVerified && (
-            <MailCheck
-              className="h-4 w-4 text-success"
-              aria-label={t('emailVerified')}
+            <StandingMark
+              icon={MailCheck}
+              tone="success"
+              label={t('emailVerified')}
             />
           )}
           <Badge className={ROLE_BADGE_STYLES[user.role]}>
@@ -130,5 +210,39 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users", certifi
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * One standing mark in the row's right-packed group.
+ *
+ * **The label is carried twice, and both are needed.** `aria-label` on a
+ * `role="img"` wrapper is what a screen reader announces; the native `title` is
+ * what a mouse gets on hover, and this is a desk surface an admin scans a whole
+ * column of — a glyph that only announces itself to assistive tech is a glyph a
+ * sighted admin has to learn by opening a row. They take the same string
+ * deliberately: one meaning, one wording, no second phrasing to keep in step.
+ *
+ * The wrapper exists because the icons do not take a `title` prop; it is a
+ * `flex` span the same size as the glyph, so the group's spacing is unchanged.
+ * The icon itself is `aria-hidden` — the wrapper is already the image, and
+ * labelling both would announce it twice.
+ */
+function StandingMark({
+  icon: Icon,
+  tone,
+  label,
+}: {
+  icon: LucideIcon;
+  tone: "success" | "warning";
+  label: string;
+}) {
+  return (
+    <span role="img" aria-label={label} title={label} className="flex">
+      <Icon
+        className={`h-4 w-4 ${tone === "success" ? "text-success" : "text-warning"}`}
+        aria-hidden
+      />
+    </span>
   );
 }

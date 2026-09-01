@@ -55,6 +55,13 @@ function pageBody(acceptance: GeduContractAcceptance | null) {
           <GeduContractPageBody
             contract={contract}
             acceptance={acceptance}
+            // Recorded, so the section above the terms renders its settled
+            // state: this file is about the signing ceremony, and a second
+            // outstanding step above it is one more thing in the markup.
+            criminalRecordCheck={{
+              passed: true,
+              recordedAt: "2026-08-20T12:00:00+00:00",
+            }}
             signerName="Aino Virtanen"
             committing={acceptance === null}
             acceptFailed={false}

@@ -1,13 +1,13 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
-import type { AttendanceMark } from "@/components/session-feed";
+import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 import type {
   FamilyProductCancellation,
   FamilyProductSchedule,
 } from "./FamilyProductPageBody";
 import type {
   FamilyProductGedu,
-  FamilyProductVenue,
+  FamilyProductSite,
   FamilySessionEntry,
 } from "./types";
 
@@ -35,7 +35,7 @@ const TIMEZONE = "Europe/Helsinki";
  * **Five scenarios, chosen for what they cannot show each other.**
  *
  * `active-club` is the kitchen sink and the only one with a live room.
- * `in-person-club` is the venue shape, which is the one arrangement where the
+ * `in-person-club` is the site shape, which is the one arrangement where the
  * page has an address and no Join at all. `camp` is a finished, end-dated
  * product: no future block, no divider, and a remote room that will never open
  * again. `locked-join` is the page in its resting state — the locked button
@@ -91,7 +91,7 @@ export interface FamilyProductPageFixture {
   cancellation: FamilyProductCancellation | null;
   gedus: readonly FamilyProductGedu[];
   groupPublicNote: string | null;
-  venue: FamilyProductVenue | null;
+  site: FamilyProductSite | null;
   voiceHref: string;
   entries: FamilySessionEntry[];
   sourceTimeZone: string;
@@ -147,6 +147,32 @@ const JOONAS: FamilyProductGedu = {
  * inert link legible in the preview's status bar.
  */
 const GROUP_ID = "mock-family-group";
+
+/**
+ * The demo photographs a fixture session can carry.
+ *
+ * They travel as `/preview-art/*.jpg` in the `id` field a stored photo uses,
+ * which the session-image URL helper passes straight through — so a scene
+ * renders the very gallery the live page does, with no fixture-only prop
+ * anywhere on its API. The numbers are the files' own pixel sizes, because
+ * sizing every box from the stored dimensions is the whole of the behaviour a
+ * reviewer is here to look at, and the set is deliberately mixed: two 16:9
+ * screenshots, a squarer one, a square and a portrait, which is the range real
+ * session photos arrive in.
+ *
+ * **The same five files are described again on the staff side, and that copy is
+ * deliberate.** A family module may not import anything under the gedu tree —
+ * the ESLint privacy zone fails the build on it — and a shared home for two
+ * fixture tables would be a component-module dependency invented to save five
+ * lines. The art is committed once; only these literals are duplicated.
+ */
+const PHOTO_ART = {
+  build: { id: "/preview-art/session-build.jpg", width: 1600, height: 900 },
+  arena: { id: "/preview-art/session-arena.jpg", width: 1600, height: 900 },
+  parkour: { id: "/preview-art/session-parkour.jpg", width: 1440, height: 810 },
+  badge: { id: "/preview-art/session-badge.jpg", width: 1200, height: 1200 },
+  tower: { id: "/preview-art/session-tower.jpg", width: 900, height: 1600 },
+} as const satisfies Record<string, SessionPhoto>;
 
 /* ------------------------------------------------------------------ */
 /*  Reports                                                            */
@@ -255,21 +281,34 @@ const SORTERS_PLAN =
  * shape and the one that proves a signed feed does not need variety to read.
  */
 type FamilyEntrySpec =
-  | { kind: "future"; report?: string; lastEditedBy?: FamilyProductGedu }
+  | {
+      kind: "future";
+      report?: string;
+      photos?: readonly SessionPhoto[];
+      lastEditedBy?: FamilyProductGedu;
+    }
   | {
       kind: "past";
       report?: string;
+      /**
+       * The session's photos, oldest first. Omitted is a session nobody
+       * photographed, which is most of them — the mix matters more than the
+       * count, because "most weeks have none" is the state the feed has to look
+       * right in. A past spec carrying photos and no report is the card shape
+       * photos introduced: something to show, nothing to sign.
+       */
+      photos?: readonly SessionPhoto[];
       attendance?: AttendanceMark;
       lastEditedBy?: FamilyProductGedu;
     };
 
 /**
  * The active club's run: seven sessions ahead (so the divider reads "6 upcoming
- * sessions" and the reveal is judged against a screenful) and sixteen behind,
+ * sessions" and the reveal is judged against a screenful) and seventeen behind,
  * which is four months and therefore three or four month dividers plus a
  * history the scroll sentinel has to feed in more than one chunk.
  *
- * The first six past entries are the states worth seeing side by side:
+ * The first seven past entries are the states worth seeing side by side:
  *
  * 1. the long recap, at the head of the past, rendered in full;
  * 2. an ordinary week, present, short report;
@@ -278,7 +317,17 @@ type FamilyEntrySpec =
  *    everything else;
  * 5. a week with a report and **no mark at all**, which renders the write-up
  *    and says nothing about attendance, because nobody said anything;
- * 6. a week with **nothing on it**, the quiet dashed line.
+ * 6. a week with **nothing on it**, the quiet dashed line;
+ * 7. **photos and no write-up** — a card, and the state the dashed line above
+ *    it is scoped by: pictures of what the group built are something to show,
+ *    so the row is a card, and it is an *unsigned* one because the chip needs
+ *    prose to attribute.
+ *
+ * Photos ride three of those. The head of the past carries the full five, which
+ * is the cap, every ratio the set has, and the arrangement the attribution
+ * chip's reserved padding has to clear (a gallery as the card's last block).
+ * The mid-history week carries a landscape-and-portrait pair, which is the wrap
+ * that has to work at 360 px and read as one line on a desktop card.
  */
 const ACTIVE_CLUB_SPECS: readonly FamilyEntrySpec[] = [
   { kind: "future" },
@@ -289,7 +338,20 @@ const ACTIVE_CLUB_SPECS: readonly FamilyEntrySpec[] = [
   { kind: "future" },
   { kind: "future", report: LIGHTHOUSE_PLAN, lastEditedBy: SANNA },
 
-  { kind: "past", report: CASTLE_RECAP, attendance: "present", lastEditedBy: SANNA },
+  {
+    kind: "past",
+    report: CASTLE_RECAP,
+    attendance: "present",
+    lastEditedBy: SANNA,
+    // The cap, in mixed ratios, under a long write-up and above the chip.
+    photos: [
+      PHOTO_ART.build,
+      PHOTO_ART.tower,
+      PHOTO_ART.arena,
+      PHOTO_ART.badge,
+      PHOTO_ART.parkour,
+    ],
+  },
   {
     kind: "past",
     report: SHORT_REPORTS[0],
@@ -305,11 +367,17 @@ const ACTIVE_CLUB_SPECS: readonly FamilyEntrySpec[] = [
   { kind: "past", report: NETHER_TRIP, attendance: "present", lastEditedBy: SANNA },
   { kind: "past", report: SHORT_REPORTS[2], lastEditedBy: SANNA },
   { kind: "past" },
+  // Photographed on the night and never written up — a card with no prose and
+  // no chip, sitting directly under the quiet dashed line it is not.
+  { kind: "past", photos: [PHOTO_ART.badge, PHOTO_ART.arena] },
   {
     kind: "past",
     report: SHORT_REPORTS[3],
     attendance: "present",
     lastEditedBy: PETRA,
+    // A landscape beside a portrait — the pair that shares a line on a desktop
+    // card and wraps at the 360 px floor.
+    photos: [PHOTO_ART.parkour, PHOTO_ART.tower],
   },
   {
     kind: "past",
@@ -410,6 +478,11 @@ const CAMP_SPECS: readonly FamilyEntrySpec[] = [
     kind: "past",
     attendance: "present",
     lastEditedBy: SANNA,
+    // The showcase is the day a camp actually gets photographed, and it is the
+    // head of a feed with no future block above it — so the gallery is the
+    // first thing on the page after the masthead here rather than several
+    // cards down.
+    photos: [PHOTO_ART.arena, PHOTO_ART.badge, PHOTO_ART.tower],
     report: `# Day five: the showcase
 
 Every team demoed their finished course, and then we all took turns failing at each other's.
@@ -594,7 +667,7 @@ interface ScenarioConfig {
   groupName: string;
   gedus: readonly FamilyProductGedu[];
   groupPublicNote: string | null;
-  venue: FamilyProductVenue | null;
+  site: FamilyProductSite | null;
   /**
    * The parent-only billing states, both of which the gamer's copy of this page
    * must render nothing for. Only one scenario carries each: they are mutually
@@ -618,7 +691,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
   /**
    * **The kitchen sink**, and the only scenario with a live room: a remote
    * weekly club four months into its run, with a session in progress, seven
-   * more ahead of it and sixteen behind.
+   * more ahead of it and seventeen behind.
    *
    * The club is named for what it builds rather than for a weekday, and that is
    * load-bearing: the run is anchored to *today* so the room can be open while
@@ -638,7 +711,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     gedus: [SANNA, PETRA],
     groupPublicNote:
       "Builders A is our redstone-heavy group. The shared world carries across every session, so anything Aino builds stays there for next week — scroll back through the sessions below to see what the group has made since it started.",
-    venue: null,
+    site: null,
     // The membership winding down, on the club rather than the camp: a camp is
     // bought outright and has no subscription to not-renew, so a "won't renew"
     // line there would be describing something that cannot happen. The parent's
@@ -649,9 +722,9 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
   },
 
   /**
-   * **The venue shape.** In person, so there is no room and therefore no Join
+   * **The site shape.** In person, so there is no room and therefore no Join
    * at all — not a locked one — and the masthead carries an address instead.
-   * It is also the only scenario with a second standing note, because the venue
+   * It is also the only scenario with a second standing note, because the site
    * has things to say that the group does not: where to drop off, which floor,
    * when the café shuts.
    */
@@ -667,7 +740,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     gedus: [PETRA, JOONAS],
     groupPublicNote:
       "Wednesday green are working through Roblox Studio from the beginning. Nothing needs installing at home — everything happens on the library's machines.",
-    venue: {
+    site: {
       name: "Sello Library, Espoo",
       address: "Leppävaarankatu 9, 02600 Espoo",
       publicNote:
@@ -704,7 +777,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     gedus: [SANNA, JOONAS],
     groupPublicNote:
       "Builders red worked towards one shared obstacle course by Friday. Everything each team built got snapped into it at the end of the week.",
-    venue: null,
+    site: null,
   },
 
   /**
@@ -726,7 +799,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     gedus: [SANNA],
     groupPublicNote:
       "Starters B is a brand-new group and everybody in it is starting from the same place. The first couple of sessions are mostly getting set up and getting to know each other.",
-    venue: null,
+    site: null,
     startsWithFeed: true,
   },
 
@@ -758,7 +831,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     gedus: [JOONAS],
     groupPublicNote:
       "An hour a week for the grown-ups: what your children are building, how the games work, and what the settings actually do. No experience assumed, and nothing to install.",
-    venue: null,
+    site: null,
     paymentProblem: true,
   },
 };
@@ -836,7 +909,7 @@ export function buildFamilyProductPageFixture(
           },
     gedus: config.gedus,
     groupPublicNote: config.groupPublicNote,
-    venue: config.venue,
+    site: config.site,
     voiceHref: `/voice/group/${GROUP_ID}`,
     entries,
     sourceTimeZone: TIMEZONE,
@@ -883,6 +956,7 @@ function toEntry(
       startsAt,
       endsAt,
       report: spec.report ?? null,
+      images: spec.photos ?? [],
       lastEditedBy,
     };
   }
@@ -892,6 +966,7 @@ function toEntry(
     startsAt,
     endsAt,
     report: spec.report ?? null,
+    images: spec.photos ?? [],
     attendance: spec.attendance ?? null,
     lastEditedBy,
   };

@@ -222,11 +222,15 @@ function toProductAttention(
   }
 
   if (product.waitlist !== null) {
-    const { waitlist_count: waiting, open_seats: open } = product.waitlist;
+    const {
+      waitlist_count: waiting,
+      open_seats: open,
+      live_offer_count: offers,
+    } = product.waitlist;
     issues.push({
       id: `${product.id}-waitlist-open-seats`,
       kind: "waitlist-open-seats",
-      values: { waiting, open },
+      values: { waiting, open, offers },
     });
   }
 
@@ -267,11 +271,12 @@ function toProductAttention(
  * separately, and the shell re-runs this cheap map against the live clock while
  * the expensive half is memoised on the calendar day.
  *
- * It also carries each candidate's standing under the contract, which is the one
- * value here that is a *date* rather than a gap and so wants the viewer's zone
- * as well as their locale. That standing informs the decision and gates nothing:
- * certification is the platform's only blocking lever, and an unsigned candidate
- * is still certifiable — over a confirmation the queue asks for first.
+ * It also carries each candidate's standing under the contract and under the
+ * criminal record check, the two values here that are *dates* rather than gaps
+ * and so want the viewer's zone as well as their locale. Both inform the
+ * decision and gate nothing: certification is the platform's only blocking
+ * lever, and a candidate missing either is still certifiable — over a
+ * confirmation the queue asks for first.
  */
 export function buildCertificationQueue(
   candidates: readonly AdminDashboardCertificationCandidate[],
@@ -309,6 +314,17 @@ function toUncertifiedGedu(
       candidate.contract_accepted_at === null
         ? null
         : formatDate(candidate.contract_accepted_at, locale, {
+            dateStyle: "medium",
+            timeZone: viewerTimeZone,
+          }),
+    // The moment an admin recorded seeing an extract — an instant, so it
+    // converts into the viewer's zone like the acceptance beside it. The wire
+    // ships no flag: the stamp is non-null exactly when the flag is true, so
+    // null here already says "no check recorded".
+    criminalRecordCheckOn:
+      candidate.criminal_record_check_at === null
+        ? null
+        : formatDate(candidate.criminal_record_check_at, locale, {
             dateStyle: "medium",
             timeZone: viewerTimeZone,
           }),

@@ -95,17 +95,20 @@ vi.mock("@/services/assignments", () => ({
   useGeduAssignedProduct: () => ({ data: reads.product, isPending: false }),
 }));
 
-vi.mock("@/services/gedu-sessions", () => ({
+// The hooks are stubbed; everything else — the SQLSTATEs the shared save module
+// reads at module scope, the photo cap and accept list the photo block reads —
+// is kept real, so a constant added to the contracts cannot silently become
+// `undefined` in here.
+vi.mock("@/services/gedu-sessions", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/gedu-sessions")>()),
   useGeduGroupFeed: () => ({ data: reads.feed, isPending: false }),
   useSetSessionNotes: noopMutation,
   useEmailSessionReport: noopMutation,
   useRecordAttendance: noopMutation,
+  useAddSessionImage: noopMutation,
+  useDeleteSessionImage: noopMutation,
   useSetGroupNotes: noopMutation,
   useSetSiteNotes: noopMutation,
-  // Read at module scope by the shared save module, so the stub has to carry
-  // them even though nothing in this file sends a report.
-  SESSION_REPORT_ALREADY_SENT_SQLSTATE: "P0001",
-  SESSION_REPORT_NO_REPORT_SQLSTATE: "P0002",
 }));
 
 vi.mock("@/services/minecraft", () => ({

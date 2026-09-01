@@ -45,7 +45,7 @@ import type { ParentDashboardParticipant } from "./parent-dashboard-page-body";
  * (see `MAX_NAMED_PILL_ENTRIES`), and this is the page it is judged on. Across
  * the three sections: a remote club live right now with a failing card beside a
  * waitlist place with no session to join and a seat nobody has been placed in;
- * an in-person camp naming its venue where the Join would be, beside a club
+ * an in-person camp naming its site where the Join would be, beside a club
  * winding down and a finished camp sitting muted *below* them (the demotion has
  * to read as history without reading as broken, and that is only visible next
  * to something live); and the parent's own two cards — a club whose Join goes
@@ -155,9 +155,9 @@ const PARENT = {
 } as const;
 
 /**
- * The venue the in-person camp runs at.
+ * The site the in-person camp runs at.
  *
- * Authored rather than derived: an in-person card with no venue would leave the
+ * Authored rather than derived: an in-person card with no site would leave the
  * footer zone this redesign exists to fill standing empty, which is the one
  * thing the card must never do.
  */
@@ -256,7 +256,7 @@ export function buildParentDashboardFixture(
               productName: "Roblox Builders Camp",
               productType: "camp",
               // In person: no room to join at all, so this card renders no Join
-              // beside Aino's lit one and names its venue instead.
+              // beside Aino's lit one and names its site instead.
               isRemote: false,
               slots: [0, 1, 2, 3, 4].map((weekday) => ({
                 weekday,
@@ -478,6 +478,14 @@ function parentsOwnSection(clock: FixtureClock): ParentDashboardParticipant {
       endsInDays: 30,
       siteName: CAMP_SITE_NAME,
       waitlistPosition: 2,
+      // A seat offer standing on the parent's own queue place, so the scene
+      // carries both halves of the waitlist story in one render: the child's
+      // Fortnite card is an ordinary place in line, this one has been asked.
+      // Thirty hours in on a five-day window, which puts the block in the
+      // middle of its life rather than at either edge — and, because the leave
+      // link is deliberately hidden while an offer stands, having exactly one
+      // of the two cards offered is the only way to see both affordances.
+      seatOfferedHoursAgo: 30,
     },
   ]);
 }

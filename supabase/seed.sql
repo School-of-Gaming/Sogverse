@@ -243,7 +243,7 @@ INSERT INTO parent_gamer (id, parent_id, gamer_id) VALUES (
 
 -- name_i18n mirrors the migrations: regions/municipalities carry their official
 -- Swedish name (00110), and the country carries its native name plus the
--- published translations (00140). Sites fall back to `name` — a venue has one
+-- published translations (00140). Sites fall back to `name` — a site has one
 -- name, whoever is reading.
 --
 -- These are their own rows, not the seeded classification: the country here is

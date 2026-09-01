@@ -69,6 +69,9 @@ function liveEntry(attendance: AttendanceMarks = {}): SessionFeedEntry {
     report: null,
     staffNote: null,
     attendance,
+    // Unphotographed: this suite is about the clock, and the photo block has
+    // nothing to say about which editor a live session opens.
+    images: [],
     // Unsigned: this suite is about the clock, and the attribution chip needs a
     // written report before it renders anything at all.
     lastEditedBy: null,
@@ -109,6 +112,10 @@ function renderFeed({
             onSendReport={() =>
               Promise.resolve({ sent: 0, failed: 0, skipped: 0 })
             }
+            // Never reached either: no photo is picked or removed anywhere in
+            // this suite.
+            onAddPhoto={() => Promise.resolve("")}
+            onRemovePhoto={() => Promise.resolve()}
           />
         </NowProvider>
       </TimezoneProvider>
@@ -262,6 +269,7 @@ describe("SessionFeedItem — the live card shows its register", () => {
       report: null,
       staffNote: null,
       attendance: {},
+      images: [],
       lastEditedBy: null,
     };
 

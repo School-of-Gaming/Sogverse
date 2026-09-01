@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import {
   ATTENDANCE_TONE,
   SessionAttributionChip,
+  SessionPhotoGallery,
   SessionReport,
   hasReport,
   type AttendanceMark,
@@ -64,9 +65,12 @@ interface FamilySessionFeedItemProps {
  * would be reading the platform's problems rather than their child's club.
  *
  * **A past session with nothing on it renders as a quiet line, not a card.** No
- * report and no mark means there is genuinely nothing to say about that evening;
- * a full card holding one apologetic sentence would give an absence of
- * paperwork the same weight on the page as an actual write-up.
+ * report, no photos and no mark means there is genuinely nothing to say about
+ * that evening; a full card holding one apologetic sentence would give an
+ * absence of paperwork the same weight on the page as an actual write-up. The
+ * corollary is the same rule read forwards: **a session with photos and no
+ * write-up is a card**, because pictures of what the group built are something
+ * to show. The chip is untouched by that — signing needs prose to sign.
  *
  * **A card with a write-up on it is signed**, with the chip straddling its
  * bottom-right corner — and it is signed identically for a parent and for the
@@ -91,11 +95,24 @@ export function FamilySessionFeedItem({
   // a report of whitespace is no report, and must fall through to the quiet
   // dashed line rather than rendering a full card around an empty body.
   const written = hasReport(entry.report);
+  const photos = entry.images;
 
-  // Nothing written and nothing to say about who was there — the one row that
-  // is not a card. It still carries its date, because the session did happen
-  // and a family scrolling the term should see the week is not missing.
-  if (entry.kind === "past" && !written && attendance === null) {
+  // Nothing written, nothing photographed, and nothing to say about who was
+  // there — the one row that is not a card. It still carries its date, because
+  // the session did happen and a family scrolling the term should see the week
+  // is not missing.
+  //
+  // **Photos alone are enough to earn a card**, and that is the rule the quiet
+  // line is scoped by rather than an exception to it: the dashed row is for a
+  // session with genuinely nothing to show, and five pictures of what the group
+  // built is something to show. The attribution chip is unmoved by this — it
+  // still needs a write-up to sign, so a photos-only card is an unsigned one.
+  if (
+    entry.kind === "past" &&
+    !written &&
+    photos.length === 0 &&
+    attendance === null
+  ) {
     return (
       <div className="rounded-md border border-dashed border-border/60 px-3 py-2 text-xs text-muted-foreground">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -176,12 +193,22 @@ export function FamilySessionFeedItem({
         {attendance !== null && <AttendanceMarkChip mark={attendance} />}
       </div>
 
-      {written && (
-        <SessionReport
-          markdown={entry.report ?? ""}
-          clamped={false}
-          className="pt-3"
-        />
+      {/* The write-up and the pictures of it are one block, because they are
+          one thing: what the gedu sent home about this session. The padding
+          lives on the block rather than on the report, so a card carrying only
+          photos sits the same distance below its date line as a card carrying
+          only prose — and a card with neither draws nothing at all, holding no
+          space open for content that is not coming. */}
+      {(written || photos.length > 0) && (
+        <div className="space-y-3 pt-3">
+          {written && (
+            <SessionReport markdown={entry.report ?? ""} clamped={false} />
+          )}
+          {/* Every box is arithmetic from the stored dimensions, so the row is
+              the right shape in the server's HTML and nothing under it moves as
+              the JPEGs decode. */}
+          <SessionPhotoGallery photos={photos} />
+        </div>
       )}
     </Card>
   );

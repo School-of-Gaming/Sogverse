@@ -42,15 +42,28 @@ describe("formatProductPrice", () => {
     expect(line.kind).toBe("free");
   });
 
-  it("returns kind=external for municipality clubs", () => {
-    const line = formatProductPrice({
-      prices: [],
-      billingMode: "external_contract",
-      productType: "municipality_club",
-      currency: "eur",
-      locale: "en",
-    });
-    expect(line.kind).toBe("external");
+  /**
+   * There is no municipality case, and this is where that is recorded.
+   *
+   * A muni club's card shows how full it is rather than what it costs, so this
+   * formatter is never called for one — and `billingMode` excludes
+   * `external_contract` so that a caller cannot ask. The old test asserted a
+   * `kind: "external"` line that no card could render; deleting the shape is
+   * what deleted the unreachable chip and its translations. There is nothing
+   * runtime left to assert, so the guarantee is pinned by a type-level check:
+   * this stops compiling the moment the exclusion is relaxed.
+   */
+  it("refuses an externally-contracted product at the type level", () => {
+    const asksForExternal = () =>
+      formatProductPrice({
+        prices: [],
+        // @ts-expect-error -- external_contract is excluded from billingMode on purpose: a municipality club takes the seat-bar half of the card footer and never asks for a price line.
+        billingMode: "external_contract",
+        productType: "municipality_club",
+        currency: "eur",
+        locale: "en",
+      });
+    expect(asksForExternal).toBeTypeOf("function");
   });
 
   it("consumer_club renders a monthly subscription from price_cents", () => {

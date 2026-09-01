@@ -26,6 +26,11 @@ import { STATUS_TINT } from "@/lib/constants/colors";
 // is exactly what a mock Request does.
 process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
 
+// A photo's src is not a link and is not built from the request: it is the
+// public bucket URL an email client fetches with a bare GET, derived from the
+// row id by the shared helper. This is the origin that helper reads.
+process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test-project.supabase.co";
+
 // --- Mocks -----------------------------------------------------------------
 
 const mockRequireRole = vi.fn();
@@ -127,6 +132,22 @@ interface ParticipationFixture {
   };
 }
 
+/**
+ * The session's photos, exactly as the images read shapes them — three rows
+ * with the three shapes real ones come in, so the mail has a pair and an odd
+ * one over.
+ */
+const IMAGES = [
+  { id: "c1000000-0000-4000-8000-000000000001", width: 1600, height: 900 },
+  { id: "c1000000-0000-4000-8000-000000000002", width: 900, height: 1600 },
+  { id: "c1000000-0000-4000-8000-000000000003", width: 1200, height: 1200 },
+];
+
+/** What the helper derives from an id: the public object, in the public bucket. */
+function bucketUrl(id: string): string {
+  return `https://test-project.supabase.co/storage/v1/object/public/session-images/${id}.jpg`;
+}
+
 /** One parent link, with the parent profile the route embeds on it. */
 interface ParentLinkFixture {
   id: string;
@@ -205,6 +226,8 @@ interface AdminData {
   participations?: ParticipationFixture[];
   participationsError?: { code: string; message: string } | null;
   parentLinks?: ParentLinkFixture[];
+  images?: typeof IMAGES;
+  imagesError?: { code: string; message: string } | null;
 }
 
 /** What the release UPDATE was handed, so a test can assert the guard on it. */
@@ -226,7 +249,11 @@ const reads: {
   productGroups: [string, unknown][];
   profiles: [string, unknown][];
   participations: [string, unknown][];
-} = { productGroups: [], profiles: [], participations: [] };
+  sessionImages: [string, unknown][];
+} = { productGroups: [], profiles: [], participations: [], sessionImages: [] };
+
+/** The columns the images read was ordered by, in the order it applied them. */
+const imageOrder: string[] = [];
 
 /** Every parent-link lookup the route made, so "none at all" can be asserted. */
 const parentLinkLookups: [string, string[]][] = [];
@@ -239,6 +266,8 @@ function setupAdminClient(data: AdminData = {}) {
     participations = PARTICIPATIONS,
     participationsError = null,
     parentLinks = PARENT_LINKS,
+    images = IMAGES,
+    imagesError = null,
   } = data;
 
   // The chains are spelled out to the exact depth the route calls them, so this
@@ -281,6 +310,30 @@ function setupAdminClient(data: AdminData = {}) {
                 });
               },
             };
+          },
+        }),
+      };
+    }
+    if (table === "group_session_images") {
+      return {
+        select: () => ({
+          eq: (column: string, value: unknown) => {
+            reads.sessionImages.push([column, value]);
+            const ordered = {
+              order: (column: string) => {
+                imageOrder.push(column);
+                return {
+                  order: (second: string) => {
+                    imageOrder.push(second);
+                    return Promise.resolve({
+                      data: imagesError ? null : images,
+                      error: imagesError,
+                    });
+                  },
+                };
+              },
+            };
+            return ordered;
           },
         }),
       };
@@ -412,6 +465,8 @@ describe("POST /api/gedu/sessions/email-report", () => {
     reads.productGroups = [];
     reads.profiles = [];
     reads.participations = [];
+    reads.sessionImages = [];
+    imageOrder.length = 0;
     parentLinkLookups.length = 0;
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
     mockGedu();
@@ -656,6 +711,75 @@ describe("POST /api/gedu/sessions/email-report", () => {
     // And every user-typed value arrives as text, never as markup.
     expect(mail.htmlContent).toContain("&lt;script&gt;");
     expect(mail.htmlContent).not.toContain("<script>");
+  });
+
+  // -- The session's photos --
+  //
+  // The mail is a snapshot: what the session had when the button was pressed
+  // is what every copy of it carries for ever. So the read that produces it is
+  // asserted the same way the recipient reads are — by what it is keyed and
+  // ordered by — and its failure is asserted to stop the send rather than
+  // quietly mail a report with the pictures missing.
+
+  it("reads the claimed session's photos, in the order every surface shows them", async () => {
+    await POST(createRequest());
+
+    // The claim's own session id, not the body's (group, date) pair.
+    expect(reads.sessionImages).toEqual([["session_id", SESSION_ID]]);
+    // `(created_at, id)` — the feed RPCs' ordering, with the id breaking a
+    // sub-tick tie so two photos uploaded in one batch cannot swap places
+    // between the app and the mail.
+    expect(imageOrder).toEqual(["created_at", "id"]);
+  });
+
+  it("carries every photo into every mail, as public bucket URLs", async () => {
+    await POST(createRequest());
+
+    // The staff copy is the same mail behind a banner, pictures included.
+    for (const mail of sentMails()) {
+      for (const image of IMAGES) {
+        expect(mail.htmlContent).toContain(`<img src="${bucketUrl(image.id)}"`);
+      }
+    }
+    // A box stated before a byte is fetched, from the stored dimensions: a
+    // 16:9 photo is limited by the width budget, a portrait by the height one.
+    const family = familyMails()[0].htmlContent;
+    expect(family).toContain(`<img src="${bucketUrl(IMAGES[0].id)}" width="216" height="122"`);
+    expect(family).toContain(`<img src="${bucketUrl(IMAGES[1].id)}" width="101" height="180"`);
+  });
+
+  it("sends the report a session has no photos on exactly as it always did", async () => {
+    setupAdminClient({ images: [] });
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(200);
+    for (const mail of sentMails()) {
+      expect(mail.htmlContent).not.toContain("/session-images/");
+      expect(mail.htmlContent).not.toContain("Photos from this session");
+    }
+  });
+
+  it("releases the claim and sends nothing when the photos cannot be read", async () => {
+    // There is one send and no second one, so a photo read that failed must
+    // not become a report mailed without its pictures — that would lose them
+    // for every family permanently, with nothing anybody could do about it.
+    setupAdminClient({
+      imagesError: { code: "57014", message: "canceling statement due to statement timeout" },
+    });
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(500);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    expect(release.patch).toEqual({
+      report_emailed_at: null,
+      report_emailed_by: null,
+    });
+    expect(release.filters).toEqual([
+      ["id", SESSION_ID],
+      ["report_emailed_at", CLAIMED_AT],
+    ]);
   });
 
   // -- Seats with nobody to mail --

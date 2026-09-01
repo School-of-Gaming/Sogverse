@@ -573,6 +573,9 @@ describe("get_admin_dashboard", () => {
       expect(attention(P_WAITLIST)?.waitlist).toEqual({
         waitlist_count: 1,
         open_seats: 2,
+        // No offer has been sent in this fixture, so the seat-offer work
+        // (00207) contributes a zero: every open seat still needs an admin.
+        live_offer_count: 0,
       });
     });
 

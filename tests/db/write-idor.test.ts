@@ -8,7 +8,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
  * Check 3 of the verification spine — the write-path IDOR loop
- * (docs/db-authorization-architecture.md §3.4).
+ * (docs/architecture/db-authorization.md §3.4).
  *
  * For every table `authenticated` may UPDATE or DELETE, a row is seeded through
  * the service-role client (RLS bypassed) and then attacked through a user-bound

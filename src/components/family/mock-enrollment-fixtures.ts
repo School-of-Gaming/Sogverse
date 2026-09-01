@@ -27,7 +27,7 @@ import type { FamilyEnrollmentSummary } from "./enrollment-rollup";
  *
  * Everything is computed from a `now` the caller supplies, so a scene can hold
  * one instant and get a deterministic page out of it. What is authored is only
- * what a schedule cannot derive: the names, the venues, and which enrollment is
+ * what a schedule cannot derive: the names, the sites, and which enrollment is
  * carrying which exceptional state.
  */
 
@@ -52,7 +52,7 @@ export interface EnrollmentFixtureSpec {
   participationId: string;
   productName: string;
   productType: ProductType;
-  /** Remote products have a voice room and no venue; in-person the reverse. */
+  /** Remote products have a voice room and no site; in-person the reverse. */
   isRemote: boolean;
   slots: FixtureSlot[];
   startedDaysAgo: number;
@@ -61,10 +61,17 @@ export interface EnrollmentFixtureSpec {
    * puts the last day in the past, which is what makes a card a finished one.
    */
   endsInDays: number | null;
-  /** The venue, on in-person products. A remote product has no building. */
+  /** The site, on in-person products. A remote product has no building. */
   siteName?: string | null;
   /** 1-based place in line, when this enrollment is a waitlist place. */
   waitlistPosition?: number | null;
+  /**
+   * Hours ago a seat was offered to this family. Only meaningful alongside
+   * `waitlistPosition`, and given as an offset rather than a stamp so a
+   * scenario reads as "asked yesterday, four days left" rather than as a date
+   * somebody has to check against the five-day window.
+   */
+  seatOfferedHoursAgo?: number;
   /**
    * The seat is paid for and nobody has been placed in a group yet. Mutually
    * exclusive with `waitlistPosition` by construction — a waitlisted family has
@@ -104,6 +111,10 @@ export function buildEnrollmentFixture(
       ? null
       : calendarDate(now, spec.endsInDays, FIXTURE_TIMEZONE);
   const waitlistPosition = spec.waitlistPosition ?? null;
+  const seatOfferSentAt =
+    spec.seatOfferedHoursAgo === undefined
+      ? null
+      : new Date(now.getTime() - spec.seatOfferedHoursAgo * 3_600_000).toISOString();
 
   // A waitlisted family holds no seat, so no occurrence of this product is
   // theirs to turn up to — the schedule still renders (it is a fact about the
@@ -157,6 +168,7 @@ export function buildEnrollmentFixture(
     endDate,
     timezone: FIXTURE_TIMEZONE,
     waitlistPosition,
+    seatOfferSentAt,
     awaiting: spec.awaiting ?? false,
     paymentProblem: spec.paymentProblem ?? false,
     cancellation:

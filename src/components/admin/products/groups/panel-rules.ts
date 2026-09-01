@@ -1,4 +1,5 @@
 import type { GameAccountExternalId } from "@/components/game-account";
+import { isNoChargeBillingMode } from "@/lib/constants/billing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { RobloxRenderMap } from "@/services/roblox";
 import type {
@@ -258,6 +259,144 @@ export function canCompEnroll(
   billingMode: BillingMode,
 ): boolean {
   return !isSubscriptionShaped(productType, billingMode);
+}
+
+// ---------------------------------------------------------------------------
+// Automatic placement into a single group
+// ---------------------------------------------------------------------------
+
+/**
+ * The enrollment writers' own predicate: a product where an arriving seat is
+ * written straight into the only group there is. Charges nothing AND has
+ * exactly one group — and deliberately nothing else, in particular not whether
+ * that group has a gedu assigned, because an unstaffed group is still the only
+ * place the seat can go.
+ *
+ * **One function, because two panel decisions ask this exact question and it
+ * has to be the same question.** Whether the Unassigned card is drawn at all
+ * and whether a waitlisted family can be offered a seat are two readings of one
+ * rule; derived independently they could only drift apart, and the drift would
+ * be invisible because each reads correct on its own.
+ *
+ * **This is also where the lockstep with the SQL is anchored.** The panel only
+ * *reflects* the rule — the database applies it, in the enrollment writers and
+ * in `send_seat_offer`'s CHECKs — so the two can disagree only if one is
+ * changed alone. The billing half is one named set on each side,
+ * `isNoChargeBillingMode` here and `public.is_no_charge` there, rather than an
+ * IN-list retyped in both: a fourth billing mode added later arrives here as
+ * "does not auto-place" and is refused there too, by construction.
+ */
+export function autoPlacesIntoSingleGroup(
+  billingMode: BillingMode,
+  groupCount: number,
+): boolean {
+  return isNoChargeBillingMode(billingMode) && groupCount === 1;
+}
+
+/**
+ * Whether the panel draws the Unassigned card at all.
+ *
+ * The rule is communicated by the card's *absence*, not by a caption: on a
+ * product where every arriving seat is written straight into the only group
+ * there is, an inbox is a box nothing can ever land in, and an empty box
+ * captioned "nothing lands here" is worse than no box. So the section is hidden
+ * on exactly one combination — the product qualifies for automatic placement
+ * AND nobody is sitting in the inbox — and shows in every other case, which is
+ * how a paid product, a product with no groups and a product with several all
+ * go on looking exactly as they did.
+ *
+ * **Anyone actually waiting wins, always.** A gamer with no group who is not on
+ * screen is a gamer nobody can seat, so a non-empty inbox shows the card even
+ * on a qualifying product. Rows that predate the placement rule are the main
+ * way that happens.
+ *
+ * The qualifying half is {@link autoPlacesIntoSingleGroup}, which is also what
+ * the seat offer asks, so the card's absence and the Invite control can only
+ * ever be reasoning about the same product.
+ *
+ * **Hidden-and-empty is a stable state, which is what makes hiding safe.** Every
+ * event that could put a row in the inbox of a qualifying product either
+ * disqualifies the product or fills the inbox, and both draw the card:
+ *
+ *  - a new enrollment is placed in the only group, so the inbox stays empty;
+ *  - deleting that group leaves zero groups, which disqualifies the product on
+ *    its own — and where the group had members, they are reset to unassigned,
+ *    so the inbox fills as well;
+ *  - adding a second group disqualifies the product on the spot;
+ *  - a chip can only be dragged into the inbox while the card is drawn, so a
+ *    drag can fill a visible inbox but can never reach a hidden one.
+ *
+ * So there is no path to a hidden card with someone inside it. Four edits can
+ * flip the answer — adding a group, deleting one, the last inbox row being
+ * moved out, and the product's billing mode being changed — and each is an
+ * admin's own action rather than data landing on its own schedule. The one
+ * caveat is that the acting admin need not be *this* one: another admin's edit
+ * arrives here on a refetch, exactly as it already does for the chips.
+ *
+ * `groups` is only ever measured, never read, and is still typed as rows with
+ * an id rather than as the count the predicate wants: the two arguments beside
+ * it are a billing mode and a number, so a list handed over in the wrong slot —
+ * the waitlist, the inbox — is caught by the compiler here instead of returning
+ * a plausible-looking wrong answer. The measuring happens at the call below, so
+ * that protection costs nothing the shared predicate has to know about.
+ */
+export function showUnassignedSection(
+  billingMode: BillingMode,
+  groups: readonly { id: string }[],
+  unassignedCount: number,
+): boolean {
+  if (unassignedCount > 0) return true;
+  return !autoPlacesIntoSingleGroup(billingMode, groups.length);
+}
+
+// ---------------------------------------------------------------------------
+// The seat offer
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether this product can offer a waitlisted family the seat that opened, and
+ * — when it cannot — whether that is worth saying out loud.
+ *
+ * The two conditions are the database's own, and they are asked here only to
+ * decide what the panel draws; `send_seat_offer` refuses independently.
+ *
+ * **The three answers are three different things to tell an admin, which is
+ * why this is a union rather than a boolean.**
+ *
+ *  - `available` — draw the Invite control on every queued row.
+ *  - `needsOneGroup` — a no-charge product whose group count is not one.
+ *    Accepting has to place the child somewhere, and a family is never asked
+ *    to choose between groups, so the offer needs exactly one destination.
+ *    This is **fixable, and the fix is on this very page** — the group columns
+ *    are directly above the waitlist — so the panel says so.
+ *  - `unavailable` — the product charges for its seat. Nothing an admin does
+ *    on this page changes that, and the reason is a property of the product
+ *    rather than of any row, so the panel says nothing at all rather than
+ *    repeating a permanently dead control down the length of the queue.
+ */
+export type SeatOfferAvailability =
+  | { kind: "available" }
+  | { kind: "needsOneGroup"; groupCount: number }
+  | { kind: "unavailable" };
+
+export function seatOfferAvailability(
+  billingMode: BillingMode,
+  groupCount: number,
+): SeatOfferAvailability {
+  // No-charge — the two billing modes where accepting a seat costs the family
+  // nothing and creates no Stripe object, so a yes can be honoured on the spot.
+  // A paid seat would need a checkout in the middle of the answer, which is a
+  // different feature. Asked on its own here, and not only through the shared
+  // predicate below, because the three answers need the two halves apart: the
+  // billing half is permanent and silent, the group half is fixable on this
+  // page and is said out loud.
+  if (!isNoChargeBillingMode(billingMode)) return { kind: "unavailable" };
+  // The same rule the Unassigned card is hidden by — an offer needs exactly one
+  // destination for the same reason an inbox has nothing to catch.
+  if (!autoPlacesIntoSingleGroup(billingMode, groupCount)) {
+    return { kind: "needsOneGroup", groupCount };
+  }
+  return { kind: "available" };
 }
 
 // ---------------------------------------------------------------------------

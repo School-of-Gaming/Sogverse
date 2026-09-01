@@ -142,7 +142,7 @@ export function PurchaseConfirmationView({
 
         <Card className="mt-8">
           <CardContent className="p-5 sm:p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <h2 className="text-sm font-semibold text-muted-foreground">
               {isWaitlist ? t("waitlist.summaryTitle") : t("summaryTitle")}
             </h2>
             {/* The picture, at the 3:2 crop the card and the detail hero paint
@@ -205,7 +205,7 @@ export function PurchaseConfirmationView({
 
         <Card className="mt-6">
           <CardContent className="p-5 sm:p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <h2 className="text-sm font-semibold text-muted-foreground">
               {t("nextTitle")}
             </h2>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
@@ -269,8 +269,9 @@ export function PurchaseConfirmationView({
           </CardContent>
         </Card>
 
-        {/* My SOG is the primary action (right on desktop, top on mobile via
-            flex-col-reverse); Keep browsing is the secondary, on the left. */}
+        {/* The app-wide button order shape — root `CLAUDE.md`, "Button Order".
+            My SOG is the affirmative (last in the DOM, so right in a row and
+            top in a stack); Keep browsing is the negative, on the left. */}
         <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
           <Link
             href={ROUTES.shop}
@@ -303,8 +304,11 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 // The price line for the summary. Subscriptions read "€X / month", one-time
-// camps/events read "€X (one-time)". External (municipality) and unavailable
-// shapes never reach a paid confirmation, so they show no price line.
+// camps/events read "€X (one-time)". External (municipality) shows no price
+// line — it never claimed one, and a page that has said nothing about the cost
+// has said nothing wrong; the emailed twin carries a line here only because it
+// had a false one to replace. Unavailable never reaches a paid confirmation at
+// all.
 function priceText(
   option: PricingOption,
   locale: string,

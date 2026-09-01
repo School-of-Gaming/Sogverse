@@ -92,8 +92,18 @@ vi.mock("next-intl", () => ({
 vi.mock("@/components/admin/products/groups/group-column", () => ({
   GroupColumn: () => <div data-testid="group-column" />,
 }));
+// Stubbed like its siblings, but this one records what it was handed: whether
+// a product may offer seats at all is decided on the panel's side, from the
+// billing prop and the group count, and a stub that dropped the props would let
+// that decision be wrong with every rendering test still green.
 vi.mock("@/components/admin/products/groups/waitlist-card", () => ({
-  WaitlistCard: () => <div data-testid="waitlist-card" />,
+  WaitlistCard: (props: {
+    seatOffers: { kind: string; groupCount?: number };
+    onSendSeatOffer?: (participationId: string) => Promise<void>;
+  }) => {
+    waitlistCard.props = props;
+    return <div data-testid="waitlist-card" />;
+  },
 }));
 vi.mock("@/components/admin/products/participant-picker-sheet", () => ({
   ParticipantPickerSheet: () => null,
@@ -115,6 +125,24 @@ const mutations = vi.hoisted(() => ({
   removeGamer: vi.fn(),
   addGamer: vi.fn(),
   other: vi.fn(),
+}));
+
+// What the waitlist card was last rendered with. `vi.hoisted` for the same
+// reason the spies are: the mock factory is lifted above the imports.
+const waitlistCard = vi.hoisted(() => ({
+  props: null as {
+    seatOffers: { kind: string; groupCount?: number };
+    onSendSeatOffer?: (participationId: string) => Promise<void>;
+  } | null,
+}));
+
+// The seat offer's mutation, and the mount-time expiry sweep beside it. The
+// sweep is fire-and-forget housekeeping with no bearing on anything this file
+// asserts; it is stubbed so the panel does not reach for a Supabase client.
+const seatOffer = vi.hoisted(() => ({ send: vi.fn() }));
+
+vi.mock("@/services/participations", () => ({
+  useSeatOfferSweepOnMount: () => {},
 }));
 
 // The batched render lookup, stubbed at the hook the way every other service
@@ -155,6 +183,11 @@ vi.mock("@/services/groups", () => {
     useMoveParticipation: stub(() => mutations.move),
     usePromoteFromWaitlist: stub(() => mutations.promote),
     useDemoteToWaitlist: stub(() => mutations.demote),
+    useSendSeatOffer: () => ({
+      mutate: vi.fn(),
+      mutateAsync: seatOffer.send,
+      isPending: false,
+    }),
     useAdminRemoveParticipantFromProduct: stub(() => mutations.removeGamer),
     useAdminAddParticipantToProduct: stub(() => mutations.addGamer),
     useRenameGroup: stub(() => mutations.other),
@@ -206,6 +239,8 @@ function participation(
     group_joined_at: null,
     note: null,
     note_updated_by_first_name: null,
+    seat_offer_sent_at: null,
+    seat_offer_expiry_notified_at: null,
     ...overrides,
   };
 }
@@ -285,6 +320,9 @@ function noMutationFired() {
 beforeEach(() => {
   dnd.onDragEnd = null;
   snapshotOverride = null;
+  waitlistCard.props = null;
+  seatOffer.send.mockReset();
+  seatOffer.send.mockResolvedValue(undefined);
   roblox.renders.mockReset();
   roblox.data = undefined;
   for (const fn of Object.values(mutations)) fn.mockReset();
@@ -372,6 +410,47 @@ describe("GroupsPanel — a blocked drop writes nothing", () => {
   });
 });
 
+describe("GroupsPanel — the inbox says the placement rule by being absent", () => {
+  // The card carries no caption about automatic placement any more; on a
+  // product that seats every arrival in its only group, it is simply not
+  // drawn. These pin that the predicate reaches the render — the rules suite
+  // proves the predicate itself.
+  //
+  // Accepted blind spot: this file mocks @dnd-kit wholesale, so nothing here
+  // pins that a `{ toGroupId: null }` drop is *unreachable* while the card is
+  // hidden. That safety rests on dnd-kit's own registration behaviour — a
+  // droppable that never mounts is never registered and so is never offered as
+  // `over` — which was verified by reading the library, not by a test.
+  const INBOX_TITLE = "admin.products.groupsPanel.unassigned.title";
+
+  it("drops the card on a no-charge product with one group and nobody waiting", () => {
+    // The base fixture is exactly that shape: one group, empty inbox.
+    renderPanel("consumer_club", "free");
+
+    expect(screen.queryByText(INBOX_TITLE)).toBeNull();
+  });
+
+  it("keeps the card the moment someone is actually unassigned", () => {
+    // Same product, same single group — a gamer with no group must never be
+    // invisible, so their presence alone brings the card back.
+    snapshotOverride = {
+      ...snapshot,
+      unassigned: [participation("0a4c9f2e-8b71-4a3d-9f60-5c2e1d7b4a83")],
+    };
+    renderPanel("consumer_club", "free");
+
+    expect(screen.getByText(INBOX_TITLE)).toBeTruthy();
+  });
+
+  it("keeps the card on a paid product with the same single group", () => {
+    // The billing half on its own: a paid seat is written by the webhook,
+    // which places nobody, so the inbox is where arrivals wait.
+    renderPanel("consumer_club", "paid");
+
+    expect(screen.getByText(INBOX_TITLE)).toBeTruthy();
+  });
+});
+
 describe("GroupsPanel — the topic decides which identity a chip draws", () => {
   // One child holding both handles, sitting in the inbox — so every case below
   // differs only in the topic the panel was rendered with.
@@ -448,5 +527,83 @@ describe("GroupsPanel — the topic decides which identity a chip draws", () => 
     // the row it does not draw, so the "(none)" label is absent too.
     expect(screen.queryByText("gameAccount.none")).toBeNull();
     expect(roblox.renders).toHaveBeenCalledWith([], "head");
+  });
+});
+
+describe("GroupsPanel — the seat offer's two preconditions reach the waitlist", () => {
+  /**
+   * Both conditions live on the panel's side of the boundary and neither is
+   * visible from `panel-rules`, which is handed the answers rather than the
+   * product. Getting either wrong shows up as an Invite button an admin can
+   * press on a product the database is bound to refuse — or, worse, as no
+   * button on the one product shape the feature exists for.
+   */
+
+  it("offers seats on a no-charge product with exactly one group", () => {
+    // The base snapshot has one group, and a free club is no-charge.
+    renderPanel("consumer_club", "free");
+
+    expect(waitlistCard.props?.seatOffers).toEqual({ kind: "available" });
+    expect(waitlistCard.props?.onSendSeatOffer).toBeTypeOf("function");
+  });
+
+  it("refuses on a paid product, and says nothing about why", () => {
+    // Same one group, opposite billing. `unavailable` is the answer that draws
+    // no control and no explanation: nothing an admin does on this page would
+    // change it, so a note per row would be noise on every paid queue there is.
+    renderPanel("consumer_club", "paid");
+
+    expect(waitlistCard.props?.seatOffers).toEqual({ kind: "unavailable" });
+  });
+
+  it("carries the group count when a no-charge product has the wrong number", () => {
+    snapshotOverride = { ...snapshot, groups: [] };
+    renderPanel("camp", "free");
+
+    // The count rides along because the card states it: this refusal *is*
+    // actionable, and the groups it is asking for are the columns above.
+    expect(waitlistCard.props?.seatOffers).toEqual({
+      kind: "needsOneGroup",
+      groupCount: 0,
+    });
+  });
+
+  it("sends the offer through the mutation, and answers back", async () => {
+    renderPanel("consumer_club", "free");
+
+    // The one action on this panel that returns something: the row's Invite
+    // button needs to know whether to let the admin press again.
+    const result = waitlistCard.props?.onSendSeatOffer?.(
+      IDS.queuedParticipation,
+    );
+    expect(seatOffer.send).toHaveBeenCalledWith({
+      participationId: IDS.queuedParticipation,
+    });
+    await expect(result).resolves.toBeUndefined();
+
+    // And it grants nothing — no chip moved.
+    expect(mutations.promote).not.toHaveBeenCalled();
+    expect(mutations.move).not.toHaveBeenCalled();
+  });
+});
+
+describe("GroupsPanel — the two features meet on one product", () => {
+  it("offers the seat and drops the inbox in the same render", () => {
+    // The union neither describe above can see: both predicates key on the
+    // same product shape — no charge, exactly one group — so the product that
+    // qualifies for a seat offer is precisely the product whose arrivals are
+    // seated automatically and whose inbox is therefore not drawn. Each half is
+    // pinned on its own above; what this adds is that they hold *together*,
+    // because the shipped page has to answer both at once. A regression that
+    // re-coupled them — an inbox reappearing to host the invited family, an
+    // offer withheld because there is nowhere unassigned to land — would leave
+    // every case above green.
+    renderPanel("consumer_club", "free");
+
+    expect(waitlistCard.props?.seatOffers).toEqual({ kind: "available" });
+    expect(waitlistCard.props?.onSendSeatOffer).toBeTypeOf("function");
+    expect(
+      screen.queryByText("admin.products.groupsPanel.unassigned.title"),
+    ).toBeNull();
   });
 });

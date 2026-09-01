@@ -70,6 +70,132 @@ describe("LocationsService.getSitesByParent", () => {
   });
 });
 
+// Every site on the platform, in full. The read that feeds the admin sites
+// table, and the only chain-carrying one whose rows do not share a parent —
+// which is exactly why it carries a chain at all. The page renders every row it
+// gets, so the read walks rather than returning a window.
+
+describe("LocationsService.getAllSites", () => {
+  let fetchMock: FetchMock;
+  let service: LocationsService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new LocationsService(createFetchStubbedClient(fetchMock));
+  });
+
+  it("filters to sites across every parent, under a total order", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(2), { from: 0, total: 2 }),
+    );
+
+    await service.getAllSites();
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("type")).toBe("eq.site");
+    // No parent filter: this read is about the level, not about one place.
+    expect(url.searchParams.has("parent_id")).toBe(false);
+    // `name` alone ties often enough (two schools, two municipalities), and a
+    // tie straddling a page boundary drops one row and repeats another.
+    expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
+  });
+
+  // Nothing retires a site — they are ours, created by an admin and absent from
+  // every upstream source — so unlike a browse level this read needs no filter.
+  it("applies no retirement filter", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(1), { from: 0, total: 1 }),
+    );
+
+    await service.getAllSites();
+
+    expect(
+      requestedUrl(fetchMock.mock.calls[0][0]).searchParams.has("retired_at"),
+    ).toBe(false);
+  });
+
+  // The walk's guard: a short page only means "done" because the server said
+  // how many rows there are, so the count is load-bearing rather than
+  // informational.
+  it("asks for an exact count", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(1), { from: 0, total: 1 }),
+    );
+
+    await service.getAllSites();
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(String(new Headers(init?.headers).get("prefer"))).toContain(
+      "count=exact",
+    );
+  });
+
+  // One short page is the whole answer, and the caller gets rows rather than a
+  // window — there is no page parameter and no total for a UI to render.
+  it("returns every row from a single short page", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(25), { from: 0, total: 25 }),
+    );
+
+    const rows = await service.getAllSites();
+
+    expect(rows).toHaveLength(25);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // The walking is the point of the shape: a level bigger than one response
+  // still arrives whole, and the caller cannot tell how many requests it took.
+  it("walks until a page comes back short and concatenates the result", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        postgrestPage(locationRows(1000), { from: 0, total: 1500 }),
+      )
+      .mockResolvedValueOnce(
+        postgrestPage(locationRows(500, 1000), { from: 1000, total: 1500 }),
+      );
+
+    const rows = await service.getAllSites();
+
+    expect(rows).toHaveLength(1500);
+    expect(requestedRanges(fetchMock)).toEqual(["0:1000", "1000:1000"]);
+  });
+
+  // A name with no path is ambiguous the moment two municipalities have a
+  // school of the same name, so the chain rides along — flattened nearest-first
+  // exactly as the keyed read's is, so one renderer serves both.
+  it("flattens each row's embedded parent nest into a nearest-first chain", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(
+        [
+          {
+            ...locationRows(1)[0],
+            type: "site",
+            parent: {
+              id: "muni",
+              name: "Helsinki",
+              parent: {
+                id: "region",
+                name: "Uusimaa",
+                parent: { id: "country", name: "Suomi", parent: null },
+              },
+            },
+          },
+        ],
+        { from: 0, total: 1 },
+      ),
+    );
+
+    const rows = await service.getAllSites();
+
+    expect(rows[0].ancestors.map((node) => node.name)).toEqual([
+      "Helsinki",
+      "Uusimaa",
+      "Suomi",
+    ]);
+    expect(rows[0].ancestors[0]).not.toHaveProperty("parent");
+  });
+});
+
 describe("LocationsService.getLocationsByIds", () => {
   let fetchMock: FetchMock;
   let service: LocationsService;
@@ -97,7 +223,7 @@ describe("LocationsService.getLocationsByIds", () => {
   // A key set is whatever a caller stored, and a stored pick can be a site —
   // the deepest row in the tree — so this read asks for four ancestor levels
   // rather than the three a municipality needs. Under-asking would silently
-  // truncate a French venue's chain at its région.
+  // truncate a French site's chain at its région.
   it("asks for four embedded ancestor levels, the deepest chain any country has", async () => {
     fetchMock.mockResolvedValue(postgrestJson([]));
 
@@ -502,6 +628,7 @@ const READS: [string, (service: LocationsService) => Promise<unknown>][] = [
   ["getChildren (root)", (s) => s.getChildren(null)],
   ["getChildren (node)", (s) => s.getChildren("loc-0")],
   ["getSitesByParent", (s) => s.getSitesByParent("loc-0")],
+  ["getAllSites", (s) => s.getAllSites()],
   ["getLocationsByIds", (s) => s.getLocationsByIds(["loc-0"])],
   [
     "getMunicipalitiesByPostalCode",

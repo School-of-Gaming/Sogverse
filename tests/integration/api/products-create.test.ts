@@ -120,6 +120,8 @@ const validBody = {
   schedule_slots: [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }],
   prices: [],
   holiday_calendar_ids: [],
+  required_consent_slugs: [],
+  marketing_consent_types: [],
   primary_gedu_fee_cents: null,
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
@@ -335,6 +337,114 @@ describe("POST /api/admin/products/create", () => {
     // supabase-js drops the key, and the RPC's DEFAULT NULL writes "unlocked".
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_region_lock_country).toBeUndefined();
+  });
+
+  it("passes the required consent slugs through as an array, always", async () => {
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({
+        data: {
+          ...validBody,
+          required_consent_slugs: ["roblox-programme-terms"],
+        },
+      }),
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({
+        p_required_consent_slugs: ["roblox-programme-terms"],
+      }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(createRequest({ data: validBody }));
+    // Never an omission, unlike the tag and the lock above: an empty array is
+    // the ordinary "requires nothing", the RPC reads it exactly as it reads
+    // NULL, and passing it keeps this line identical to the update route's,
+    // where an omission would drop a product's conditions.
+    const empty = mockUserRpc.mock.calls[0][1];
+    expect(empty.p_required_consent_slugs).toEqual([]);
+  });
+
+  it("returns 400 when the required consent field is missing", async () => {
+    mockAuthenticatedAdmin();
+    const { required_consent_slugs: _slugs, ...noSlugs } = validBody;
+    const response = await POST(createRequest({ data: noSlugs }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  // The optional marketing asks. Unlike the enrolment conditions above, they
+  // are not a parameter of `create_product` at all: the set is keyed on a
+  // product id the RPC is what produces, so it is a second call after it.
+
+  it("writes the marketing asks in a second call, after the product exists", async () => {
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({
+        data: { ...validBody, marketing_consent_types: ["lynx_educate"] },
+      }),
+    );
+
+    expect(mockUserRpc.mock.calls[0][0]).toBe("create_product");
+    expect(mockUserRpc.mock.calls[1]).toEqual([
+      "admin_set_product_marketing_consents",
+      { p_product_id: "new-prod-id", p_consent_types: ["lynx_educate"] },
+    ]);
+  });
+
+  it("sends the marketing asks as an array, always", async () => {
+    mockAuthenticatedAdmin();
+    await POST(createRequest({ data: validBody }));
+
+    // Never an omission: an empty array is the ordinary "asks nothing", the
+    // writer reads it as it reads NULL, and passing it keeps this line
+    // identical to the update route's, where an omission would leave a stale
+    // ask behind.
+    expect(mockUserRpc.mock.calls[1][1]).toEqual({
+      p_product_id: "new-prod-id",
+      p_consent_types: [],
+    });
+  });
+
+  it("returns 400 when the marketing field is missing", async () => {
+    mockAuthenticatedAdmin();
+    const { marketing_consent_types: _types, ...noTypes } = validBody;
+    const response = await POST(createRequest({ data: noTypes }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for a consent type outside the enum", async () => {
+    // Narrowed on the wire rather than left to a foreign key, because the
+    // values are a Postgres ENUM: an unknown one is a type error, not a missing
+    // row, and codegen is what this schema checks against.
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({
+        data: { ...validBody, marketing_consent_types: ["nonsense"] },
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("warns rather than errors when the marketing write fails", async () => {
+    // The image link's twin: the product exists and is editable, so reporting a
+    // good save as a failure would be the worse answer.
+    mockAuthenticatedAdmin();
+    mockUserRpc.mockImplementation(async (fn: string) =>
+      fn === "create_product"
+        ? { data: "new-prod-id", error: null }
+        : { data: null, error: { message: "product does not exist" } },
+    );
+
+    const response = await POST(createRequest());
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.product_id).toBe("new-prod-id");
+    expect(json.warning).toMatch(/marketing consents were not applied/);
+    expect(json.warning).toMatch(/edit page/);
   });
 
   it("returns 400 when the region lock field is missing", async () => {

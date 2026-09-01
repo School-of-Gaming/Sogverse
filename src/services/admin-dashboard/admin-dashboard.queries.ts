@@ -38,8 +38,18 @@ import { AdminDashboardService } from "./admin-dashboard.service";
  *
  * React Query stays the owner from there: this is the same key the certify
  * action invalidates, so the write's refetch lands here and re-renders the page.
+ *
+ * **`enabled` is here for sequencing, not for gating on data.** The seed makes
+ * this query renderable from the first frame whatever `enabled` says, so a
+ * caller passing `false` is never withholding a page — it is holding back the
+ * *fetch* until something that would change the answer has finished. Pass it
+ * `false` only for a condition that resolves on its own, on mount, and only
+ * once: a query left disabled is a query that stops following its own key.
  */
-export function useAdminDashboard(initialData: AdminDashboardSnapshot) {
+export function useAdminDashboard(
+  initialData: AdminDashboardSnapshot,
+  { enabled = true }: { enabled?: boolean } = {},
+) {
   const supabase = getClient();
   const service = new AdminDashboardService(supabase);
 
@@ -47,5 +57,6 @@ export function useAdminDashboard(initialData: AdminDashboardSnapshot) {
     queryKey: adminDashboardKeys.snapshot(),
     queryFn: () => service.getDashboard(),
     initialData,
+    enabled,
   });
 }

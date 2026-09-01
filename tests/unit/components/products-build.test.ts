@@ -1441,6 +1441,8 @@ function mockDetailRow(
     ],
     locations: null,
     product_holiday_calendars: [],
+    product_required_consents: [],
+    product_marketing_consents: [],
     ...overrides,
   };
 }
@@ -1602,5 +1604,76 @@ describe("long description", () => {
 
     const withNone = existingFormState(mockDetailRow(), consumerConfig, "en");
     expect(withNone.translations.en?.longDescription).toBe("");
+  });
+});
+
+/**
+ * **The optional marketing asks, from the form to the wire and back.**
+ *
+ * They travel on their own field beside the required slugs, and the two are
+ * deliberately not the same shape of answer: a required document is a per-seat,
+ * non-revocable condition, while a marketing ask is a question about the
+ * parent's mailbox that they may decline. What is worth pinning is that the
+ * field goes out on EVERY save — the writer replaces the whole set, so an
+ * omitted answer would leave a stale ask behind — and that it goes out in a
+ * stable registry order rather than in whatever order the boxes were clicked.
+ */
+describe("marketing consent types", () => {
+  it("sends an empty array on a product that asks nothing", () => {
+    const input = buildCreateInput(
+      validConsumerState(),
+      "consumer_club",
+      consumerConfig,
+    );
+    // Explicitly `[]` rather than omitted: an empty array is how the ask set is
+    // cleared, and the writer reads it exactly as it reads NULL.
+    expect(input.marketing_consent_types).toEqual([]);
+  });
+
+  it("carries the picked types on create and on update alike", () => {
+    const state = validConsumerState();
+    state.marketingConsentTypes = new Set(["lynx_educate"]);
+
+    expect(
+      buildCreateInput(state, "consumer_club", consumerConfig)
+        .marketing_consent_types,
+    ).toEqual(["lynx_educate"]);
+    // The update half is the load-bearing one: the RPC replaces the set on
+    // every call, so an edit made for some other reason must still restate it.
+    expect(
+      buildUpdateInput(state, consumerConfig).marketing_consent_types,
+    ).toEqual(["lynx_educate"]);
+  });
+
+  it("seeds the picker from the product's stored rows", () => {
+    const state = existingFormState(
+      mockDetailRow({
+        product_marketing_consents: [{ consent_type: "lynx_educate" }],
+      }),
+      consumerConfig,
+      "en",
+    );
+    expect(state.marketingConsentTypes).toEqual(new Set(["lynx_educate"]));
+    // And it round-trips: what the form loaded is what the next save writes.
+    expect(
+      buildUpdateInput(state, consumerConfig).marketing_consent_types,
+    ).toEqual(["lynx_educate"]);
+  });
+
+  it("drops a stored type the form cannot offer", () => {
+    // `school_of_gaming` is asked at registration and belongs to no product, so
+    // no screen can show or clear it. This is the deliberate opposite of the
+    // requirement set, where a slug the deploy cannot name is KEPT ticked:
+    // there a drop would take a legal condition off a product, and here there
+    // is no condition — the question simply goes unasked, and the parent can
+    // still answer it in their own settings.
+    const state = existingFormState(
+      mockDetailRow({
+        product_marketing_consents: [{ consent_type: "school_of_gaming" }],
+      }),
+      consumerConfig,
+      "en",
+    );
+    expect(state.marketingConsentTypes).toEqual(new Set());
   });
 });

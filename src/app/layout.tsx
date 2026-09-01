@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
-import { Dancing_Script, Press_Start_2P } from "next/font/google";
+import {
+  Dancing_Script,
+  Poppins,
+  Press_Start_2P,
+  Space_Mono,
+} from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
 import { getUserWithProfile } from "@/lib/supabase/server";
@@ -10,6 +15,34 @@ import { BRAND_LOCKUP, toDetectedLocale } from "@/lib/constants";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+
+// The brand's workhorse face, and the one every page's body and headings are
+// set in — `--font-sans` in globals.css points at it, so nothing outside that
+// one line names the family. Poppins is not a variable font on Google Fonts, so
+// each weight is a separate file and has to be asked for by name: 400/500/600/
+// 700 are what `font-normal`/`font-medium`/`font-semibold`/`font-bold` render,
+// and a weight not listed here is synthesised by the browser rather than drawn.
+// `latin-ext` is not optional — the product ships Finnish, Swedish and French.
+const poppins = Poppins({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-poppins",
+});
+
+// DELIBERATELY UNUSED IN THIS BRANCH — do not remove it as dead weight. Space
+// Mono is a sanctioned brand face; where it is actually placed is decided by the
+// companion design-pass plan, and this load exists so that plan is a styling
+// change rather than a styling change plus a font wiring change. It is loaded,
+// its variable is on <html>, and nothing reads it yet. That is the intended
+// state. `preload: false` follows from that: a preload link for a face no
+// element renders costs every visitor a font download for nothing, so preload
+// turns back on in the same change that first places the face.
+const spaceMono = Space_Mono({
+  weight: ["400", "700"],
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-space-mono",
+  preload: false,
+});
 
 const pressStart2P = Press_Start_2P({
   weight: "400",
@@ -54,7 +87,7 @@ export async function generateMetadata(): Promise<Metadata> {
     // The longer sentence is the one that tells a stranger what we actually run,
     // which is the job of both a snippet and a link preview, so both get it.
     description,
-    keywords: ["gaming", "education", "learning", "kids", "games"],
+    keywords: ["gaming", "education", "learning", "children", "games"],
     openGraph: {
       type: "website",
       siteName: "School of Gaming",
@@ -109,11 +142,22 @@ export default async function RootLayout({
   const { email: _email, metadata: _metadata, ...clientMessages } =
     (await getMessages()) as Record<string, unknown>;
 
+  // Every next/font variable class goes on <html> — that is, on `:root` — never
+  // on <body>. globals.css declares its font tokens inside `@theme`, which emits
+  // them at `:root`, so a face variable defined one element lower is invisible
+  // there: `--font-sans: var(--font-poppins)` would compute to the
+  // guaranteed-invalid value and take the whole `font-family` declaration down
+  // with it, leaving the UA stack. An earlier Inter attempt was wired exactly
+  // that way and silently never applied for as long as it shipped. The utility
+  // classes (`font-display`, `font-cursive`) survived that mistake only because
+  // `@theme inline` inlines their `var()` at the use site, where <body> is an
+  // ancestor — which is precisely why the failure was invisible.
   return (
-    <html lang={locale}>
-      <body
-        className={`${pressStart2P.variable} ${dancingScript.variable} antialiased bg-background text-foreground`}
-      >
+    <html
+      lang={locale}
+      className={`${poppins.variable} ${spaceMono.variable} ${pressStart2P.variable} ${dancingScript.variable}`}
+    >
+      <body className="antialiased bg-background text-foreground">
         <Providers
           initialUser={userWithProfile?.user ?? null}
           initialProfile={userWithProfile?.profile}

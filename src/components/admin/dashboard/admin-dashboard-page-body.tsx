@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import type { AdminDashboardData } from "./admin-dashboard-data";
+import { GeduCertificationPanel } from "./gedu-certification-panel";
 import { NeedsAttentionPanel } from "./needs-attention-panel";
 import { ProductTypeKeyRail } from "./product-type-key-rail";
 import { SchedulePanel } from "./schedule-panel";
@@ -16,9 +17,13 @@ import { UsersStrip } from "./users-strip";
  * admin actually opens this page to find out —
  *
  * 1. **Who is here?** Four numbers, each with the sub-stat its role has.
- * 2. **What needs me?** The ops queue, product-first: one card per product that
- *    needs something, then the people waiting on a certification decision.
- * 3. **What is running?** The week as seven rows, and what is lined up after it.
+ * 2. **What needs me?** The ops queue: one card per product that needs
+ *    something, and nothing else.
+ * 3. **What stands?** Who is not certified yet — kept next to the queue but
+ *    deliberately outside it, because a gedu waiting on their own contract or
+ *    background check is not work an admin can do today, and counting them as
+ *    attention owed is how a count stops being believed.
+ * 4. **What is running?** The week as seven rows, and what is lined up after it.
  *
  * **Revenue and growth are deliberately gone.** They were the two tiles that
  * could never be right — money lives in Stripe, which owns the reporting an
@@ -27,7 +32,7 @@ import { UsersStrip } from "./users-strip";
  * teaches its reader to skim, and everything below the skimmed number pays for
  * it.
  *
- * **The page is three full-width bands, not a column layout.** It was a two-thirds
+ * **The page is four full-width bands, not a column layout.** It was a two-thirds
  * / one-third band over a full-width one, and the narrow column was wrong in both
  * directions at once: four short user stats cannot fill a column whose height is
  * set by however much is wrong with the platform that morning, so it stood mostly
@@ -93,9 +98,14 @@ export function AdminDashboardPageBody({
         <div className="space-y-6">
           <UsersStrip stats={data.users} />
 
-          <NeedsAttentionPanel
-            products={data.products}
-            uncertifiedGedus={data.uncertifiedGedus}
+          <NeedsAttentionPanel products={data.products} />
+
+          {/* Directly under the queue, because the two are read together — what
+              needs doing, then who is standing by — and above the schedule,
+              which is the reference you scroll to rather than the thing you
+              opened the page for. */}
+          <GeduCertificationPanel
+            gedus={data.uncertifiedGedus}
             onCertifyGedu={onCertifyGedu}
           />
 

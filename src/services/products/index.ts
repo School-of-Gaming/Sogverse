@@ -23,7 +23,9 @@ export {
 export {
   referenceKeys,
   useHolidayCalendars,
+  useConsentDocuments,
   useUpdateSiteNotes,
+  type ConsentDocumentOption,
   type HolidayCalendarWithDates,
   type UpdateSiteNotesInput,
 } from "./reference-data.queries";

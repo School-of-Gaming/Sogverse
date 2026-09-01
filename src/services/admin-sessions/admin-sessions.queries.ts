@@ -98,6 +98,62 @@ export function useAdminEmailSessionReport(productId: string, groupId: string) {
   });
 }
 
+/**
+ * Attach one already-normalized JPEG to a session's report.
+ *
+ * The product-keyed twin of the gedu hook, and it exists for exactly the reason
+ * the shared body's rule says it must: an admin sees the gedu's session card,
+ * so the photo block came to this page free — but which document a landed photo
+ * has to appear in is the one thing the two surfaces do not share. The gedu's
+ * strip is drawn from the group feed; this one is drawn from the product's
+ * session record, so that is what a successful attach refreshes.
+ *
+ * The group id rides in the request rather than the key: the route names a
+ * session by (group, date) as every session write does, while the invalidation
+ * is the product's.
+ */
+export function useAdminAddSessionImage(productId: string, groupId: string) {
+  const queryClient = useQueryClient();
+  const service = new AdminSessionsService(getClient());
+
+  return useMutation({
+    mutationFn: (vars: {
+      sessionDate: string;
+      width: number;
+      height: number;
+      file: Blob;
+    }) => service.addSessionImage({ groupId, ...vars }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: adminSessionKeys.byProduct(productId),
+      });
+    },
+  });
+}
+
+/**
+ * Remove one photo from a session's report.
+ *
+ * No group id at all, and that is the RPC's doing rather than an omission: it
+ * resolves the photo's session — and so its group — from the row itself, and
+ * that resolution is the authorization. The product id is here for the
+ * invalidation and nothing else.
+ */
+export function useAdminDeleteSessionImage(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new AdminSessionsService(getClient());
+
+  return useMutation({
+    mutationFn: (vars: { imageId: string }) =>
+      service.deleteSessionImage(vars.imageId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: adminSessionKeys.byProduct(productId),
+      });
+    },
+  });
+}
+
 export function useAdminSetGroupNotes(productId: string, groupId: string) {
   const queryClient = useQueryClient();
   const service = new AdminSessionsService(getClient());
@@ -114,7 +170,7 @@ export function useAdminSetGroupNotes(productId: string, groupId: string) {
 }
 
 /**
- * Write the venue's two shared notes.
+ * Write the site's two shared notes.
  *
  * The address is not a parameter and never travels: it belongs to the location
  * record and is edited there. That is a property of the RPC rather than a
@@ -125,6 +181,12 @@ export function useAdminSetGroupNotes(productId: string, groupId: string) {
  * Site notes are shared by every product at the building, so in principle every
  * other product's document is now stale. Only the one being looked at is worth
  * refetching; the rest pick the change up when they are next opened.
+ *
+ * The invalidation is **returned** rather than fired and forgotten, so the
+ * promise the caller awaits does not settle until the refetched notes are in
+ * the cache — an editor holding a `committing` flag across the await keeps its
+ * Save disabled until the page holds what it just wrote, rather than
+ * re-enabling over text it is about to replace.
  */
 export function useAdminSetSiteNotes(productId: string) {
   const queryClient = useQueryClient();
@@ -136,10 +198,9 @@ export function useAdminSetSiteNotes(productId: string) {
       publicNote: string;
       geduNote: string;
     }) => service.setSiteNotes(vars),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
+    onSuccess: () =>
+      queryClient.invalidateQueries({
         queryKey: adminSessionKeys.byProduct(productId),
-      });
-    },
+      }),
   });
 }

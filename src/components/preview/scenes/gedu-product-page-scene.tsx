@@ -29,7 +29,7 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
  * absent (including saving half a roster and coming back to it), typing both
  * session notes on a past *or* a future session — pre-epoch ones included,
  * which open the same record editor — writing the group's standing notes, and,
- * on an in-person product, the venue's shared ones, plus correcting a child's
+ * on an in-person product, the site's shared ones, plus correcting a child's
  * game username from the roster — on whichever platform the scenario's topic
  * names, or not at all on the one topic that names none. A flagged session
  * turning into a finished one, and a part-marked one staying flagged, are the
@@ -63,8 +63,15 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
  * pressed again — a failed send is the only one of the three that leaves a
  * button to press, so the retry is part of what there is to look at.
  *
- * Every save resolves immediately, so the in-flight and failure states the live
- * page has are not what this scene is for; the send is the single exception on
+ * **Photos are part of the edit, and nothing leaves the browser until Save.** A
+ * picked or dropped file is prepared here and then sits on the strip as a tile;
+ * the ✕ crosses one out; Cancel throws the lot away. Pressing Save is what
+ * commits them, which is also the one save in this scene with a pause in it —
+ * long enough to see the photo block greyed alongside the register and the two
+ * written fields, which is exactly what it did not used to do.
+ *
+ * Every other save resolves immediately, so the in-flight and failure states the
+ * live page has are not what this scene is for; the send is the exception on
  * both counts, and its pause is there precisely because the in-flight frame is
  * the one a screenshot cannot show.
  *
@@ -139,6 +146,13 @@ export function GeduProductPageScene({
    * re-rendered the card.
    */
   const sendOutcomes = useRef(new Map(fixture.sendOutcomes));
+  /**
+   * Which demo picture the next "upload" settles into. A ref, because nothing
+   * renders from it and it must not reset a scene's photos when something else
+   * re-renders — and a counter rather than a random pick, so two reviewers
+   * adding a photo to the same card get the same page.
+   */
+  const scenePhotoIndex = useRef(0);
   useEffect(() => {
     const timers = pendingTimers.current;
     return () => {
@@ -238,6 +252,72 @@ export function GeduProductPageScene({
       pendingTimers.current.add(timer);
     });
 
+  /**
+   * Attach one photo — locally, and to nobody. **Reached only by pressing
+   * Save**, once per picture the reviewer staged on the card.
+   *
+   * The bytes really are decoded, downscaled and re-encoded in the browser at
+   * pick time, so what a reviewer picks is what they see on the strip, at the
+   * shape it will actually be stored at. What the scene stands in for is only
+   * the round trip Save makes: a delay long enough to watch the whole editor —
+   * the photo block now included — sit greyed while the card commits, and then
+   * the staged tiles reappear on the collapsed card as *stored* photos. The
+   * stored id is one of the committed demo pictures rather than the pick,
+   * because the scene has no bucket to have put the pick in and a `blob:` id is
+   * not something the URL helper can resolve.
+   *
+   * **The claimed dimensions are the pick's, not the demo picture's**, so a
+   * photo occupies the same box before and after the save — the one thing in
+   * this sequence a reviewer is here to check.
+   */
+  const handleAddPhoto = (
+    entryId: string,
+    photo: { file: Blob; width: number; height: number },
+  ): Promise<string> =>
+    new Promise((resolve) => {
+      const timer = window.setTimeout(() => {
+        pendingTimers.current.delete(timer);
+        const id = `${SCENE_STORED_PHOTO_ART[
+          scenePhotoIndex.current % SCENE_STORED_PHOTO_ART.length
+        ]}?n=${scenePhotoIndex.current}`;
+        scenePhotoIndex.current += 1;
+        setEntries((prev) =>
+          prev.map((entry) =>
+            entry.id === entryId && entry.kind !== "no_record"
+              ? {
+                  ...entry,
+                  images: [
+                    ...entry.images,
+                    { id, width: photo.width, height: photo.height },
+                  ],
+                }
+              : entry,
+          ),
+        );
+        resolve(id);
+      }, SIMULATED_PHOTO_MS);
+      pendingTimers.current.add(timer);
+    });
+
+  /**
+   * Detach one photo — also only on Save, and immediately once there. The
+   * crossing-out itself is what the reviewer sees on the strip; this is the
+   * write behind it.
+   */
+  const handleRemovePhoto = (imageId: string): Promise<void> => {
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.kind === "no_record"
+          ? entry
+          : {
+              ...entry,
+              images: entry.images.filter((photo) => photo.id !== imageId),
+            },
+      ),
+    );
+    return Promise.resolve();
+  };
+
   const handleSaveGroupNotes = (draft: GroupNotesDraft) => {
     setGroupNotes({
       publicNote: draft.publicNote.length > 0 ? draft.publicNote : null,
@@ -246,7 +326,7 @@ export function GeduProductPageScene({
     setGroupNotesEditing(false);
   };
 
-  // Site notes belong to the venue, so a save here would in reality touch every
+  // Site notes belong to the building, so a save here would in reality touch every
   // product running there. In the scene it touches this page's copy and stops —
   // but the panel says out loud what the real write would do, which is the part
   // that has to be right before any of this is wired up.
@@ -407,6 +487,8 @@ export function GeduProductPageScene({
       onEditEntry={setEditingEntryId}
       onSaveEntry={handleSave}
       onSendReport={handleSendReport}
+      onAddPhoto={handleAddPhoto}
+      onRemovePhoto={handleRemovePhoto}
       onSaveGameUsername={handleSaveGameUsername}
       gameStatuses={gameStatuses}
       // Every scenario has one, because the page requires one. Passed whole at
@@ -454,6 +536,35 @@ const SIMULATED_CHECK_MS = 800;
  * the card moves when the label lands.
  */
 const SIMULATED_SEND_MS = 1400;
+
+/**
+ * Roughly what a few hundred KB of JPEG costs over a home connection's upstream.
+ *
+ * Shorter than the send's, because a save can carry several photos and they go
+ * one after another — five staged pictures at the send's latency would leave a
+ * reviewer watching a frozen editor for seven seconds. Long enough, at this
+ * value, to see the one thing photos changed about a save: the block greys with
+ * the rest of the card instead of going on working beside it.
+ */
+const SIMULATED_PHOTO_MS = 600;
+
+/**
+ * What a scene's "uploaded" photo settles into.
+ *
+ * The scene has no bucket, so it cannot hand back the picture that was picked —
+ * a `blob:` URL is not something the session-image helper can resolve into a
+ * stored object. These are the committed demo pictures instead, taking turns,
+ * each one carrying a counter so that adding the same art twice still gives two
+ * distinct ids and so two React keys. The counter rides as a query string, which
+ * the static file server ignores by definition — a fragment would also have
+ * worked, but only because fetch happens to drop one, which is a detail of the
+ * transport rather than a property of the URL.
+ */
+const SCENE_STORED_PHOTO_ART = [
+  "/preview-art/session-build.jpg",
+  "/preview-art/session-tower.jpg",
+  "/preview-art/session-badge.jpg",
+] as const;
 
 /**
  * The account key a passed check lands, one per platform, standing in for what

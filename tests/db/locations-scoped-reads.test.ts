@@ -469,7 +469,7 @@ describe("locations scoped reads", () => {
    * Every walked read that remains runs over fixture-sized data, so rather than
    * keep a production read alive purely to be tested, the case builds its own
    * over-cap set: a throwaway country with one municipality and
-   * {@link OVER_CAP_SITES} venues under it, read back through a real walked
+   * {@link OVER_CAP_SITES} sites under it, read back through a real walked
    * read.
    *
    * Sites are the right vehicle because they are leaves: nothing can be
@@ -528,7 +528,7 @@ describe("locations scoped reads", () => {
 
     /** Zero-padded so `name` sorts the same way in the fixture and the answer. */
     const siteName = (index: number) =>
-      `Zywalk venue ${String(index).padStart(5, "0")}`;
+      `Zywalk site ${String(index).padStart(5, "0")}`;
 
     async function deleteFixture() {
       // Bottom-up: `parent_id` is ON DELETE RESTRICT. The sites go by their

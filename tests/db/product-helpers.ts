@@ -63,7 +63,7 @@ import { TEST_IDS } from "./constants";
  *                  once — plus a decoy product 643 with a group 644, which is
  *                  what makes "only this product's groups came back" provable
  *                  rather than merely true. 645 is a `locations` row rather
- *                  than a product: its own venue, because `site_details` is
+ *                  than a product: its own site, because `site_details` is
  *                  keyed by location and shared across products, so writing
  *                  notes on the seeded Test School would race the gedu feed's
  *                  suite in a parallel worker)
@@ -77,7 +77,53 @@ import { TEST_IDS } from "./constants";
  *                  because two of those cases delete rows — 658 is created and
  *                  deleted inside the ON DELETE SET NULL cascade case — and
  *                  neither may disturb a roster another block asserts on)
- *   637            write-idor.test.ts's product_images entry. It sits outside
+ *   660-66b        auto-assign-single-group.test.ts (six products 660-664 and
+ *                  66a — a free club with one group, one with none, one with
+ *                  two, a municipality club with one, a paid camp with one, and
+ *                  a seat-capped free club (66a) whose cap can actually be
+ *                  reached — plus their six groups 665-669 and 66b. One product
+ *                  per row of the matrix, because the thing under test is how
+ *                  many groups a product has and no single product can hold
+ *                  three answers)
+ *   670-67a        seat-offer.test.ts (670 is the offerable club — free, capped
+ *                  and with exactly ONE group, 671, because "exactly one" is
+ *                  the condition the offer exists to depend on; 672/673 are a
+ *                  PAID club and its group, 674 with groups 675/676 is the
+ *                  two-group refusal, and 677 is the no-group one. Four
+ *                  products rather than one reconfigured product, so a case
+ *                  proving a refusal cannot be weakened by a later case
+ *                  relaxing the shape it refused. 678 is the dashboard
+ *                  attention product: capped, queued, no groups and its gedu
+ *                  fee set, so the waitlist flag is the ONLY issue it can
+ *                  raise and "the product dropped out of the list" is
+ *                  assertable rather than merely likely. 679 is a CANCELLED
+ *                  club with group 67a, otherwise shaped exactly like 670 —
+ *                  its own product for the same reason the refusals above have
+ *                  theirs: flipping 670's status inside a case and flipping it
+ *                  back leaves every later case in this file depending on a
+ *                  restore that a failed assertion would have skipped)
+ *   680-683        required-consents.test.ts (four products, because the thing
+ *                  under test is what a product REQUIRES and no single product
+ *                  can hold four answers: 680 is a free club requiring both
+ *                  Roblox documents, 681 the paid twin whose shape writes no
+ *                  participation at all, 682 a club requiring nothing — the
+ *                  control that proves the gate is inert where no consent is
+ *                  asked — and 683 the queue's own club, kept apart from 680 so
+ *                  the already-enrolled gate can never stand in for the consent
+ *                  refusal the waitlist cases are asserting)
+ *   690-691        marketing-consents.test.ts (two products, and the pair is the
+ *                  whole point: 690 is PUBLISHED, so its marketing-consent ask
+ *                  is readable by a stranger browsing the shop, and 691 is
+ *                  CANCELLED, so the same ask is readable by nobody but an
+ *                  admin. `can_read_product` is what separates them, and a
+ *                  single product cannot hold both answers)
+ *   6ee            marketing-consents.test.ts's must-NOT-exist product id,
+ *                  backing the case that the ask-set writer refuses an unknown
+ *                  product even on a call that clears. Declared here for the
+ *                  same reason 6ff is: allocate it to a real fixture and that
+ *                  case quietly starts pointing at a row that exists, which is
+ *                  the one thing it must never do
+ *   637           write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather
  *                  than the id being squeezed in somewhere it would collide.

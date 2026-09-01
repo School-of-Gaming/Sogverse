@@ -8,6 +8,12 @@ import {
   PRODUCT_CONFIRMATION_MODES,
 } from "./product-confirmation";
 import { buildVerifyEmailEmail } from "./verify-email";
+import { buildSeatOfferEmail, seatOfferSubject } from "./seat-offer";
+import {
+  buildSeatOfferStaffEmail,
+  seatOfferStaffSubject,
+  SEAT_OFFER_STAFF_REASONS,
+} from "./seat-offer-staff";
 import { buildComponentsReferenceEmail } from "./components-reference";
 import {
   buildSessionReportEmail,
@@ -15,6 +21,12 @@ import {
   type SessionReportEmailOptions,
 } from "./session-report";
 import { SESSION_REPORT_SAMPLES } from "./fixtures/session-report-samples";
+import {
+  SESSION_REPORT_PHOTO_COUNTS,
+  SESSION_REPORT_PHOTO_COUNT_LABELS,
+  sessionReportPhotoFixtures,
+} from "./fixtures/session-report-photos";
+import type { EmailRenderContext } from "./render-context";
 import type { EmailTranslator } from "./translator";
 import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
@@ -84,8 +96,16 @@ export interface TemplateDefinition {
   /**
    * Validate raw params against `schema`, then build the subject line, HTML
    * email content and Reply-To. Throws a ZodError when params are malformed.
+   *
+   * `context` says where the render is going, and defaults to the send — the
+   * destination that has to be safe when a caller has not thought about it.
    */
-  render: (rawParams: unknown, t: EmailTranslator, locale: string) => RenderedTemplate;
+  render: (
+    rawParams: unknown,
+    t: EmailTranslator,
+    locale: string,
+    context?: EmailRenderContext,
+  ) => RenderedTemplate;
   /** Optional: transform UI field values into API params (e.g. a seat select → an `isSelfSeat` boolean). */
   resolveParams?: (params: Record<string, string>) => TemplateParams;
 }
@@ -101,14 +121,22 @@ function defineTemplate<P extends TemplateParams>(entry: {
   label: string;
   fields: TemplateField[];
   schema: z.ZodType<P>;
-  /** Build the HTML email content from validated params. */
-  build: (params: P, t: EmailTranslator, locale: string) => string;
+  /**
+   * Build the HTML email content from validated params. The context is there
+   * for a template whose markup depends on where the render is going — one
+   * does, and it is the fixture photographs, whose URLs are only fetchable
+   * from a dev machine by the browser previewing them. A builder that does not
+   * care simply declares three parameters and takes the fourth for free.
+   */
+  build: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
   /**
    * Generate the email subject line from validated params and translator. The
    * locale is there for a subject that prints a formatted value of its own —
-   * most subjects ignore it.
+   * most subjects ignore it, as most ignore the context, which is passed for
+   * the same reason `build` takes it: a subject derived from the same resolved
+   * options has to resolve them the same way.
    */
-  subject: (params: P, t: EmailTranslator, locale: string) => string;
+  subject: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
   /**
    * Reply-To for this template, defaulting to the support inbox — which is the
    * answer for every mail we send *to* a family. Only a template whose real
@@ -122,11 +150,11 @@ function defineTemplate<P extends TemplateParams>(entry: {
   return {
     ...rest,
     schema,
-    render: (rawParams, t, locale) => {
+    render: (rawParams, t, locale, context = { to: "send" }) => {
       const params = schema.parse(rawParams);
       return {
-        subject: subject(params, t, locale),
-        html: build(params, t, locale),
+        subject: subject(params, t, locale, context),
+        html: build(params, t, locale, context),
         replyTo: replyTo?.(params) ?? SUPPORT_EMAIL,
       };
     },
@@ -169,8 +197,8 @@ const PRODUCT_CONFIRMATION_MODE_OPTIONS = PRODUCT_CONFIRMATION_MODES.map((value)
  * the boolean the builder takes, defaulting to the child case — which is what an
  * unfilled field in the testing UI means, and what every seat was before
  * for-parents products existed. The price is cleared on the modes that state no
- * amount, so a test render of a free signup or a waitlist join carries no price
- * at all, which is what the live mail carries.
+ * amount, so a test render of a free signup, a municipality registration or a
+ * waitlist join carries no price at all, which is what the live mail carries.
  */
 function resolveProductConfirmation(params: Record<string, string>): TemplateParams {
   const { seat, priceAmount, ...rest } = params;
@@ -239,9 +267,31 @@ const SESSION_REPORT_COPY_OPTIONS = SESSION_REPORT_COPIES.map((value) => ({
   value,
 }));
 
+/**
+ * How many demo photos to hang on the fixture session.
+ *
+ * A count rather than a picker: what is worth looking at here is the grid —
+ * how a pair sits at a desktop width, what an odd one does with the row it has
+ * to itself, and what all of it reserves when a client blocks every image —
+ * and which particular screenshots fill it makes no difference to any of that.
+ * The order the fixtures come in is chosen so a small count is already mixed.
+ */
+const SESSION_REPORT_PHOTO_OPTIONS = SESSION_REPORT_PHOTO_COUNTS.map((value) => ({
+  label: SESSION_REPORT_PHOTO_COUNT_LABELS[value],
+  value,
+}));
+
 function resolveSessionReport(
-  { sample: sampleId, viewerTimezone, reportMarkdown, copy, ...rest }: SessionReportParams,
+  {
+    sample: sampleId,
+    viewerTimezone,
+    reportMarkdown,
+    copy,
+    photoCount,
+    ...rest
+  }: SessionReportParams,
   locale: string,
+  context: EmailRenderContext,
 ): SessionReportEmailOptions {
   const sample =
     SESSION_REPORT_SAMPLES.find((candidate) => candidate.id === sampleId) ??
@@ -259,6 +309,7 @@ function resolveSessionReport(
     }),
     sessionTime: formatTimeRange(sample.startsAt, sample.endsAt, locale, viewerTimezone),
     reportMarkdown: reportMarkdown.trim() === "" ? sample.markdown : reportMarkdown,
+    photos: sessionReportPhotoFixtures(Number(photoCount), context),
   };
 }
 
@@ -313,6 +364,60 @@ const verifyEmailParamsSchema = z.object({
   verificationUrl: z.string().url(),
 });
 
+/**
+ * The deadline arrives already formatted, like every other locale-aware value a
+ * builder takes: the live send has the product row and the recipient's locale
+ * and does the formatting once. Here the tester types it, which is the point —
+ * the thing worth checking about this mail is how a long absolute date sits in
+ * the callout beside two half-width buttons, in each locale.
+ */
+const seatOfferParamsSchema = z.object({
+  participantName: z.string().min(1),
+  isSelfSeat: z.boolean(),
+  productName: z.string().min(1),
+  deadline: z.string().min(1),
+  acceptUrl: z.string().url(),
+  declineUrl: z.string().url(),
+  dashboardUrl: z.string().url(),
+});
+
+const seatOfferStaffParamsSchema = z.object({
+  reason: z.enum(SEAT_OFFER_STAFF_REASONS),
+  participantName: z.string().min(1),
+  contactName: z.string().min(1),
+  contactEmail: z.string().email(),
+  productName: z.string().min(1),
+  /** Empty means "this product has no schedule", which drops the row. */
+  productSchedule: z.string().nullable(),
+  offeredAt: z.string().min(1),
+  adminProductUrl: z.string().url(),
+});
+
+/** The seat select, reused from the product-confirmation form's vocabulary. */
+function resolveSeatOffer(params: Record<string, string>): TemplateParams {
+  const { seat, ...rest } = params;
+  return { ...rest, isSelfSeat: seat === "self" };
+}
+
+/** An untouched text field posts its placeholder, so "none" has to be typed. */
+function resolveSeatOfferStaff(params: Record<string, string>): TemplateParams {
+  const { productSchedule, ...rest } = params;
+  return { ...rest, productSchedule: productSchedule.trim() || null };
+}
+
+const SEAT_OFFER_STAFF_REASON_LABELS: Record<
+  (typeof SEAT_OFFER_STAFF_REASONS)[number],
+  string
+> = {
+  declined: "The family said no",
+  no_response: "The window ran out with no answer",
+};
+
+const SEAT_OFFER_STAFF_REASON_OPTIONS = SEAT_OFFER_STAFF_REASONS.map((value) => ({
+  label: SEAT_OFFER_STAFF_REASON_LABELS[value],
+  value,
+}));
+
 const sessionReportParamsSchema = z.object({
   gamerName: z.string().min(1),
   geduName: z.string().min(1),
@@ -338,6 +443,8 @@ const sessionReportParamsSchema = z.object({
    * reaches this schema through the UI can omit it.
    */
   copy: z.enum(SESSION_REPORT_COPIES),
+  /** How many demo photos to attach. Required for the same reason `copy` is. */
+  photoCount: z.enum(SESSION_REPORT_PHOTO_COUNTS),
 });
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
@@ -455,6 +562,79 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     build: (p, t, locale) => buildVerifyEmailEmail(t, locale, p),
     subject: (_p, t) => t("verifyEmail.subject"),
   }),
+  seatOffer: defineTemplate({
+    label: "Seat Offer (Parent)",
+    fields: [
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
+      { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      {
+        key: "deadline",
+        label: "Deadline (formatted)",
+        // Exactly what the live send produces for `en` — a 24-hour clock, and
+        // month before day. A placeholder that sets the value differently to
+        // the code teaches whoever is testing the mail the wrong shape.
+        placeholder: "Monday, August 31 at 14:20 GMT+3",
+      },
+      {
+        key: "acceptUrl",
+        label: "Accept URL",
+        placeholder: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
+      },
+      {
+        key: "declineUrl",
+        label: "Decline URL",
+        placeholder: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
+      },
+      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
+    ],
+    schema: seatOfferParamsSchema,
+    build: (p, t, locale) => buildSeatOfferEmail(t, locale, p),
+    subject: (p, t) => seatOfferSubject(t, p),
+    resolveParams: resolveSeatOffer,
+  }),
+  seatOfferStaff: defineTemplate({
+    label: "Seat Offer (Staff copy)",
+    fields: [
+      {
+        key: "reason",
+        label: "What happened",
+        type: "select",
+        options: SEAT_OFFER_STAFF_REASON_OPTIONS,
+      },
+      { key: "participantName", label: "Participant Name", placeholder: "Aino" },
+      { key: "contactName", label: "Contact Name", placeholder: "Marja Virtanen" },
+      { key: "contactEmail", label: "Contact Email", placeholder: "marja@example.com" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      {
+        key: "productSchedule",
+        label: "Schedule line (empty for none)",
+        placeholder: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
+      },
+      {
+        key: "offeredAt",
+        label: "Offered at (formatted)",
+        // What the live staff send produces — pinned to the 24-hour clock like
+        // every other seat-offer surface, so the stamp staff read matches the
+        // one on the admin card.
+        placeholder: "Wed, Aug 26, 14:20 GMT+3",
+      },
+      {
+        key: "adminProductUrl",
+        label: "Admin product URL",
+        placeholder:
+          "https://sogverse.sog.gg/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+      },
+    ],
+    schema: seatOfferStaffParamsSchema,
+    build: (p, t, locale) => buildSeatOfferStaffEmail(t, locale, p),
+    subject: (p, t) => seatOfferStaffSubject(t, p),
+    resolveParams: resolveSeatOfferStaff,
+    // No `replyTo` override, and that is the accurate answer rather than an
+    // omission: the live send replies to the support inbox, which is what the
+    // default here already produces. It used to point at the family, back when
+    // the mail went to that inbox instead of to the admins themselves.
+  }),
   sessionReport: defineTemplate({
     label: "Session Report",
     fields: [
@@ -464,6 +644,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "groupName", label: "Group Name", placeholder: "Usvalaakso: Kettukallio" },
       { key: "copy", label: "Which copy", type: "select", options: SESSION_REPORT_COPY_OPTIONS },
       { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
+      { key: "photoCount", label: "Photos", type: "select", options: SESSION_REPORT_PHOTO_OPTIONS },
       { key: "viewerTimezone", label: "Timezone to format in", type: "select", options: VIEWER_TIMEZONE_OPTIONS },
       {
         key: "reportMarkdown",
@@ -478,7 +659,9 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       },
     ],
     schema: sessionReportParamsSchema,
-    build: (p, t, locale) => buildSessionReportEmail(t, locale, resolveSessionReport(p, locale)),
-    subject: (p, t, locale) => sessionReportSubject(t, resolveSessionReport(p, locale)),
+    build: (p, t, locale, context) =>
+      buildSessionReportEmail(t, locale, resolveSessionReport(p, locale, context)),
+    subject: (p, t, locale, context) =>
+      sessionReportSubject(t, resolveSessionReport(p, locale, context)),
   }),
 };

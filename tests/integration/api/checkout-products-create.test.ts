@@ -557,6 +557,56 @@ describe("POST /api/checkout/products/create", () => {
     });
   });
 
+  it("hands the ticked consent documents to the RPC, untouched", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: FREE_EVENT });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+      error: null,
+    });
+
+    await POST(
+      createRequest({
+        productId: PRODUCT_ID,
+        participantId: GAMER_ID,
+        purchaseShape: "free",
+        currency: "eur",
+        consentedDocuments: ["roblox-programme-terms"],
+      }),
+    );
+
+    // Passed straight through and never checked here: the RPC compares them
+    // against the product's requirement set under the same product-gate lock
+    // as every other signup rule, and refuses with a check violation naming
+    // whatever is missing.
+    const args = mockAdminRpc.mock.calls[0][1];
+    expect(args.p_consented_documents).toEqual(["roblox-programme-terms"]);
+  });
+
+  it("omits the argument when the client sent no consents at all", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: FREE_EVENT });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+      error: null,
+    });
+
+    await POST(
+      createRequest({
+        productId: PRODUCT_ID,
+        participantId: GAMER_ID,
+        purchaseShape: "free",
+        currency: "eur",
+      }),
+    );
+
+    // An absent field and an empty array are the same claim, so the omission
+    // reaches the RPC's DEFAULT NULL rather than being turned into a 400 that
+    // says less than the database's own refusal would.
+    const args = mockAdminRpc.mock.calls[0][1];
+    expect(args.p_consented_documents).toBeUndefined();
+  });
+
   // ── Free consumer club ────────────────────────────────────────────
   //
   // The route resolves the purchase shape's coherence with `billing_mode`
@@ -708,6 +758,33 @@ describe("POST /api/checkout/products/create", () => {
 
     const res = await POST(createRequest(VALID_BODY));
     expect(res.status).toBe(400);
+  });
+
+  it("does not disclose the consent refusal, and answers with a code instead", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CLUB });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: null,
+      error: {
+        code: "23514",
+        message:
+          "this product requires consent to roblox-privacy-policy before enrolling",
+      },
+    });
+
+    const res = await POST(createRequest(VALID_BODY));
+    const data = await res.json();
+
+    // This route discloses the RPC's refusals verbatim, and this is the one it
+    // must not: it names raw document slugs and describes a requirement the
+    // parent's screen has not caught up with. The slug in particular must not
+    // survive.
+    expect(res.status).toBe(400);
+    expect(data.error).not.toContain("roblox-privacy-policy");
+    expect(data.error).not.toContain("requires consent");
+    // The code is what the panel acts on — it refetches the product so the new
+    // document appears and the retry is a different request.
+    expect(data.code).toBe("consent_documents_required");
   });
 
   // ── Single-payment redirect path ──────────────────────────────────
@@ -1765,10 +1842,12 @@ describe("POST /api/checkout/products/create", () => {
       expect(htmlContent).not.toContain("evil.com");
     });
 
-    // Owner decision: a municipality registration is invoiced to the school
-    // off-platform, so from the family's side it is the free case exactly, and
-    // it sends the free-mode mail rather than one of its own.
-    it("mails the same free-mode confirmation for a municipality registration", async () => {
+    // A municipality registration says who bears the cost rather than "Free":
+    // some municipalities charge families a small fee of their own, so a "Free"
+    // here contradicts what the family was told by their own council. This
+    // asserts the negative too — the free-mode wording must not reach a
+    // municipality mail.
+    it("mails the external-mode confirmation for a municipality registration", async () => {
       mockAuthenticatedCustomer();
       mockAdmin({ product: MUNI_CLUB });
       mockAdminRpc.mockResolvedValueOnce({
@@ -1791,7 +1870,9 @@ describe("POST /api/checkout/products/create", () => {
       expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
       const sent = mockSendTransactionalEmail.mock.calls[0][0];
       expect(sent.toEmail).toBe("parent@example.test");
-      expect(sent.htmlContent).toContain("Price: Free");
+      expect(sent.htmlContent).toContain("Price: Paid for by your municipality");
+      expect(sent.htmlContent).not.toContain("Price: Free");
+      expect(sent.htmlContent).not.toContain("nothing to pay for this one");
     });
 
     it("speaks in the second person when the parent took the seat themselves", async () => {

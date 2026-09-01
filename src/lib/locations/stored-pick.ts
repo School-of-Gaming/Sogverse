@@ -2,11 +2,11 @@
  * Whether a stored `location_id` should be dropped because it is no longer a
  * row this control is willing to offer.
  *
- * The shapes this exists for are all real: a venue that was deleted, a legacy
+ * The shapes this exists for are all real: a site that was deleted, a legacy
  * product pinned above site level, a municipality outside the one country an
  * online municipality club may be funded by, and — the everyday one — a
  * municipality club toggled from online to in-person, which leaves a
- * municipality id in a field that now accepts only venues. The DB trigger
+ * municipality id in a field that now accepts only sites. The DB trigger
  * permits more than the UI does, so the picker is the gate: it clears a pick it
  * would never itself have offered, and the admin re-picks.
  *
@@ -43,14 +43,15 @@ import type { LocationType } from "@/types";
  * `types` is a shape constraint — which levels of the hierarchy this field may
  * point at. `countryCode` is a *business* one, and both fields use it: the
  * municipality field always, because an online municipality club is funded by a
- * Finnish kunta and by nothing else; the venue field whenever the product type
+ * Finnish kunta and by nothing else; the site field whenever the product type
  * declares a `countryBound`, because an in-person municipality club runs at a
- * Finnish venue for exactly the same reason. Neither constraint is about the
+ * Finnish site for exactly the same reason. Neither constraint is about the
  * row's shape — a French commune is a perfectly well-formed municipality and a
- * French venue a perfectly good site; the funding rule refuses both — which is
+ * French school a perfectly well-formed site; the funding rule refuses both —
+ * which is
  * why this rides as an optional country beside the accepted levels rather than
  * as a second function. Omitting it accepts those levels in every country,
- * which is what an unbound product type's venue field wants.
+ * which is what an unbound product type's site field wants.
  */
 export interface AcceptedLocation {
   /** The levels this control accepts. */
@@ -83,7 +84,7 @@ export function shouldDropStoredRow(
 ): boolean {
   if (!value) return false;
   if (row === undefined) return false;
-  // The row is gone — a deleted venue. This is the case a set-membership check
+  // The row is gone — a deleted site. This is the case a set-membership check
   // could never separate from "not fetched yet".
   if (row === null) return true;
   // A read that answered about some other id has told us nothing about this
@@ -91,7 +92,7 @@ export function shouldDropStoredRow(
   if (row.id !== value) return false;
   if (!accepted.types.includes(row.type)) return true;
   // A row at the right level in the wrong country. Both fields ask it whenever
-  // a bound applies — always for the municipality field, and for the venue
+  // a bound applies — always for the municipality field, and for the site
   // field on a country-bound product type — and it is the case the seeded
   // browse path and the country-scoped search exist to stop anyone reaching in
   // the first place. This catches what the other two cannot: a row stored

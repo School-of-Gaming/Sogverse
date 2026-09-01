@@ -28,9 +28,9 @@ export interface CountryConfig {
   /**
    * The level a parent identifies with, and the level a `site` is parented
    * under. **One field for both roles, because the architecture requires them
-   * to be the same level**: a venue is created directly beneath the row an
+   * to be the same level**: a site is created directly beneath the row an
    * admin confirmed in the picker, and a family's own location is the level
-   * directly above a venue. Splitting them would invite a config where a site's
+   * directly above a site. Splitting them would invite a config where a site's
    * parent is not the level a parent picks, which nothing downstream could
    * reconcile.
    *

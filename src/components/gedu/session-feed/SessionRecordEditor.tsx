@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Eye, Loader2, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,20 @@ interface SessionRecordEditorProps {
    * exactly as the gedu left them so the retry costs nothing.
    */
   error: string | null;
+  /**
+   * The session's photo block, rendered between the family-facing report and
+   * the gedu note. The plan editor takes it in the same slot, so a card says the
+   * same things in the same order whichever editor it opens.
+   *
+   * **A slot rather than props, because the staged photos are not this
+   * editor's to hold.** They are draft scope exactly like the register and the
+   * two written fields, but the save that commits them is the feed's — and so,
+   * for the partial-failure reason written down there, is the state saying what
+   * is left to commit. Handing the block in whole keeps this component's own
+   * state to what it can honestly answer for. All it decides is *where* the
+   * block goes and that it greys with everything else.
+   */
+  photoStrip?: ReactNode;
   onCancel: () => void;
   onSave: (draft: SessionRecordDraft) => void;
 }
@@ -78,7 +92,7 @@ interface SessionRecordEditorProps {
  * family's billing, and none of that is designed. A mock offering the control
  * would be inventing the half nobody has agreed to.
  *
- * The Save/Cancel row is pinned at the bottom, so neither field growing under
+ * The Cancel/Save row is pinned at the bottom, so neither field growing under
  * the writer moves the buttons they are heading for.
  *
  * **A save in flight greys the whole editor and never drops what was typed.**
@@ -86,6 +100,13 @@ interface SessionRecordEditorProps {
  * invites an edit that the in-flight write will not carry — and on failure the
  * editor stays exactly where it is, re-enabled, with the text untouched and one
  * line saying so. The only thing that closes this editor is a save that landed.
+ *
+ * **The photo block greys with everything else, and that is the point of it.**
+ * It used to stay live through a save, as a wordless way of saying photos were
+ * already stored and not part of the draft. They are part of it now *(owner)* —
+ * the whole card edit is held in the browser and only Save touches the backend —
+ * so a block that went on accepting files while the write it belongs to was in
+ * flight would be inviting work this Save cannot carry.
  */
 export function SessionRecordEditor({
   open,
@@ -93,6 +114,7 @@ export function SessionRecordEditor({
   initialState,
   committing,
   error,
+  photoStrip,
   onCancel,
   onSave,
 }: SessionRecordEditorProps) {
@@ -182,6 +204,11 @@ export function SessionRecordEditor({
         />
       </FamilyNoteBlock>
 
+      {/* Directly under the report and above the gedu note, which is where the
+          collapsed card puts the same photos: the two things families read sit
+          together, in one order, whether the card is open or shut. */}
+      {photoStrip}
+
       {/* The gedu note keeps the recessed treatment while it is being
           *written*, not only while it is read: the whole risk of a two-audience
           field is somebody typing for one and picturing the other. */}
@@ -210,7 +237,7 @@ export function SessionRecordEditor({
 }
 
 /**
- * The Save/Cancel row both session editors end on, with the failure line above
+ * The Cancel/Save row both session editors end on, with the failure line above
  * it.
  *
  * **The error sits above the buttons, not below them.** It is the answer to the

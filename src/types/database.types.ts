@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -42,6 +42,137 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      consent_acceptances: {
+        Row: {
+          accepted_at: string
+          accepted_by: string
+          customer_id: string
+          document_slug: string
+          document_version: string
+          id: string
+          participant_id: string
+          product_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          accepted_by: string
+          customer_id: string
+          document_slug: string
+          document_version: string
+          id?: string
+          participant_id: string
+          product_id: string
+        }
+        Update: {
+          accepted_at?: string
+          accepted_by?: string
+          customer_id?: string
+          document_slug?: string
+          document_version?: string
+          id?: string
+          participant_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consent_acceptances_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_document_fkey"
+            columns: ["document_slug", "document_version"]
+            isOneToOne: false
+            referencedRelation: "consent_document_versions"
+            referencedColumns: ["document_slug", "version"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_acceptances_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consent_document_versions: {
+        Row: {
+          created_at: string
+          document_slug: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          document_slug: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          document_slug?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consent_document_versions_document_slug_fkey"
+            columns: ["document_slug"]
+            isOneToOne: false
+            referencedRelation: "consent_documents"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      consent_documents: {
+        Row: {
+          created_at: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          slug?: string
+        }
+        Relationships: []
       }
       customer_profiles: {
         Row: {
@@ -418,18 +549,27 @@ export type Database = {
           certified: boolean
           certified_at: string | null
           certified_by: string | null
+          criminal_record_check_at: string | null
+          criminal_record_check_by: string | null
+          criminal_record_check_passed: boolean
           user_id: string
         }
         Insert: {
           certified?: boolean
           certified_at?: string | null
           certified_by?: string | null
+          criminal_record_check_at?: string | null
+          criminal_record_check_by?: string | null
+          criminal_record_check_passed?: boolean
           user_id: string
         }
         Update: {
           certified?: boolean
           certified_at?: string | null
           certified_by?: string | null
+          criminal_record_check_at?: string | null
+          criminal_record_check_by?: string | null
+          criminal_record_check_passed?: boolean
           user_id?: string
         }
         Relationships: [
@@ -448,6 +588,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "gedu_profiles_criminal_record_check_by_fkey"
+            columns: ["criminal_record_check_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_profiles_criminal_record_check_by_fkey"
+            columns: ["criminal_record_check_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "gedu_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
@@ -459,6 +613,55 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_session_images: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          height: number
+          id: string
+          session_id: string
+          width: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          height: number
+          id?: string
+          session_id: string
+          width: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          height?: number
+          id?: string
+          session_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_session_images_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_session_images_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_session_images_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "group_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -641,6 +844,84 @@ export type Database = {
           },
         ]
       }
+      marketing_consent_events: {
+        Row: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          created_at: string
+          customer_id: string
+          granted: boolean
+          id: string
+          source: string
+        }
+        Insert: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          created_at?: string
+          customer_id: string
+          granted: boolean
+          id?: string
+          source: string
+        }
+        Update: {
+          consent_type?: Database["public"]["Enums"]["marketing_consent_type"]
+          created_at?: string
+          customer_id?: string
+          granted?: boolean
+          id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_consent_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_consent_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_consents: {
+        Row: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          customer_id: string
+          granted: boolean
+          updated_at: string
+        }
+        Insert: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          customer_id: string
+          granted: boolean
+          updated_at?: string
+        }
+        Update: {
+          consent_type?: Database["public"]["Enums"]["marketing_consent_type"]
+          customer_id?: string
+          granted?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_consents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_consents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       minecraft_accounts: {
         Row: {
           minecraft_username: string | null
@@ -736,6 +1017,8 @@ export type Database = {
           id: string
           participant_id: string
           product_id: string
+          seat_offer_expiry_notified_at: string | null
+          seat_offer_sent_at: string | null
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
           stripe_checkout_session_id: string | null
@@ -750,6 +1033,8 @@ export type Database = {
           id?: string
           participant_id: string
           product_id: string
+          seat_offer_expiry_notified_at?: string | null
+          seat_offer_sent_at?: string | null
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
           stripe_checkout_session_id?: string | null
@@ -764,6 +1049,8 @@ export type Database = {
           id?: string
           participant_id?: string
           product_id?: string
+          seat_offer_expiry_notified_at?: string | null
+          seat_offer_sent_at?: string | null
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
           stripe_checkout_session_id?: string | null
@@ -990,6 +1277,29 @@ export type Database = {
         }
         Relationships: []
       }
+      product_marketing_consents: {
+        Row: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          product_id: string
+        }
+        Insert: {
+          consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          product_id: string
+        }
+        Update: {
+          consent_type?: Database["public"]["Enums"]["marketing_consent_type"]
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_marketing_consents_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_prices: {
         Row: {
           created_at: string
@@ -1015,6 +1325,36 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_required_consents: {
+        Row: {
+          document_slug: string
+          product_id: string
+        }
+        Insert: {
+          document_slug: string
+          product_id: string
+        }
+        Update: {
+          document_slug?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_required_consents_document_slug_fkey"
+            columns: ["document_slug"]
+            isOneToOne: false
+            referencedRelation: "consent_documents"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "product_required_consents_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -1857,6 +2197,16 @@ export type Database = {
         }[]
       }
       accept_gedu_contract: { Args: { p_version: string }; Returns: string }
+      add_group_session_image: {
+        Args: {
+          p_group_id: string
+          p_height: number
+          p_max_images: number
+          p_session_date: string
+          p_width: number
+        }
+        Returns: string
+      }
       admin_enroll_participant: {
         Args: { p_participant_id: string; p_product_id: string }
         Returns: Json
@@ -1864,6 +2214,13 @@ export type Database = {
       admin_remove_participation: {
         Args: { p_participation_id: string; p_product_id: string }
         Returns: Json
+      }
+      admin_set_product_marketing_consents: {
+        Args: {
+          p_consent_types: Database["public"]["Enums"]["marketing_consent_type"][]
+          p_product_id: string
+        }
+        Returns: undefined
       }
       apply_group_changes: {
         Args: {
@@ -1878,6 +2235,10 @@ export type Database = {
         Returns: Json
       }
       assert_admin: { Args: never; Returns: undefined }
+      assert_can_delete_session_image: {
+        Args: { p_image_id: string }
+        Returns: string
+      }
       assert_role: {
         Args: { p_role: Database["public"]["Enums"]["user_role"] }
         Returns: undefined
@@ -1886,6 +2247,10 @@ export type Database = {
       can_read_product: { Args: { p_product_id: string }; Returns: boolean }
       cancel_participation: {
         Args: { p_participation_id: string; p_reason: string }
+        Returns: Json
+      }
+      claim_expired_seat_offer_notifications: {
+        Args: { p_participation_id?: string }
         Returns: Json
       }
       claim_group_session_report_email: {
@@ -1919,6 +2284,7 @@ export type Database = {
       }
       create_participation: {
         Args: {
+          p_consented_documents?: string[]
           p_currency: string
           p_customer_id: string
           p_participant_id: string
@@ -1947,6 +2313,7 @@ export type Database = {
           p_product_type: Database["public"]["Enums"]["product_type"]
           p_region_lock_country?: string
           p_registration_opens_at: string
+          p_required_consent_slugs?: string[]
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number
@@ -1960,6 +2327,10 @@ export type Database = {
           p_waitlist_enabled?: boolean
         }
         Returns: string
+      }
+      delete_group_session_image: {
+        Args: { p_image_id: string }
+        Returns: undefined
       }
       demote_to_waitlist: {
         Args: { p_participation_id: string }
@@ -2108,6 +2479,10 @@ export type Database = {
       }
       immutable_unaccent: { Args: { p_value: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      is_no_charge: {
+        Args: { p_mode: Database["public"]["Enums"]["billing_mode"] }
+        Returns: boolean
+      }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
       is_voice_group_member: { Args: { p_group_id: string }; Returns: boolean }
       is_voice_group_moderator: {
@@ -2115,11 +2490,16 @@ export type Database = {
         Returns: boolean
       }
       join_product_waitlist: {
-        Args: { p_participant_id: string; p_product_id: string }
+        Args: {
+          p_consented_documents?: string[]
+          p_participant_id: string
+          p_product_id: string
+        }
         Returns: Json
       }
       join_waitlist: {
         Args: {
+          p_consented_documents?: string[]
           p_customer_id: string
           p_participant_id: string
           p_product_id: string
@@ -2160,6 +2540,20 @@ export type Database = {
         }
         Returns: Json
       }
+      record_registration_marketing_consent: {
+        Args: { p_customer_id: string; p_granted: boolean }
+        Returns: undefined
+      }
+      record_required_consents: {
+        Args: {
+          p_accepted_by: string
+          p_consented_documents: string[]
+          p_customer_id: string
+          p_participant_id: string
+          p_product_id: string
+        }
+        Returns: undefined
+      }
       refresh_product_seat_counts: {
         Args: { p_product_id: string }
         Returns: undefined
@@ -2181,6 +2575,14 @@ export type Database = {
         Returns: undefined
       }
       request_my_verification_email: { Args: never; Returns: boolean }
+      respond_seat_offer: {
+        Args: {
+          p_accept: boolean
+          p_offer_sent_at: string
+          p_participation_id: string
+        }
+        Returns: Json
+      }
       search_locations: {
         Args: {
           p_country?: string
@@ -2190,12 +2592,17 @@ export type Database = {
         }
         Returns: Json
       }
+      send_seat_offer: { Args: { p_participation_id: string }; Returns: Json }
       set_gamer_group_note: {
         Args: { p_group_id: string; p_note: string; p_participant_id: string }
         Returns: Json
       }
       set_gedu_certified: {
         Args: { p_certified: boolean; p_gedu_id: string }
+        Returns: undefined
+      }
+      set_gedu_criminal_record_check: {
+        Args: { p_gedu_id: string; p_passed: boolean }
         Returns: undefined
       }
       set_group_member_minecraft: {
@@ -2227,9 +2634,21 @@ export type Database = {
         }
         Returns: Json
       }
+      set_marketing_consent: {
+        Args: {
+          p_consent_type: Database["public"]["Enums"]["marketing_consent_type"]
+          p_granted: boolean
+          p_source: string
+        }
+        Returns: undefined
+      }
       set_my_pin: { Args: { p_pin: string }; Returns: undefined }
       set_pin_for_user: {
         Args: { p_pin: string; p_user_id: string }
+        Returns: undefined
+      }
+      set_product_required_consents: {
+        Args: { p_product_id: string; p_slugs: string[] }
         Returns: undefined
       }
       set_site_notes: {
@@ -2265,6 +2684,7 @@ export type Database = {
           p_primary_gedu_fee_cents?: number
           p_region_lock_country?: string
           p_registration_opens_at: string
+          p_required_consent_slugs?: string[]
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number
@@ -2290,6 +2710,7 @@ export type Database = {
         | "expired"
       gender_type: "boy" | "girl" | "non_binary"
       location_type: "country" | "region" | "municipality" | "district" | "site"
+      marketing_consent_type: "school_of_gaming" | "lynx_educate"
       participation_status: "reserving" | "active" | "waitlisted" | "completed"
       payment_purpose:
         | "bundle"
@@ -2451,6 +2872,7 @@ export const Constants = {
       ],
       gender_type: ["boy", "girl", "non_binary"],
       location_type: ["country", "region", "municipality", "district", "site"],
+      marketing_consent_type: ["school_of_gaming", "lynx_educate"],
       participation_status: ["reserving", "active", "waitlisted", "completed"],
       payment_purpose: [
         "bundle",

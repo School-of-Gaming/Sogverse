@@ -1,0 +1,107 @@
+"use client";
+
+import Link from "next/link";
+import { BadgeCheck, FileSignature, ScrollText } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ROUTES } from "@/lib/constants";
+import { formatDate } from "@/lib/utils";
+import { useTimezone } from "@/providers";
+import type { GeduContractAcceptance } from "@/types";
+
+/**
+ * The settings card's rendered core: the whole card, from one answer.
+ *
+ * Presentational end to end — it takes the row that answers the question and
+ * nothing else — so the live settings page and the style guide render the same
+ * card, one over a query and the other over fixtures. Which row answers is the
+ * host's decision, not this component's: a gedu can hold several acceptances,
+ * and picking the one that stands is domain logic about versions and languages
+ * rather than anything to do with how the card looks.
+ *
+ * **Nothing here is reserved, and nothing needs to be.** The heading and
+ * description are the same three lines in both states and do not move; the body
+ * below them is three blocks or four, and that difference is the card's height
+ * difference. The route reads the rows before the page renders at all, so the
+ * card is born in whichever state it is in and never changes height on its own.
+ */
+export function GeduContractSettingsCardView({
+  acceptance,
+}: {
+  /**
+   * This gedu's acceptance of the version in force: the row when they have
+   * signed it, `null` when they have not. Two states and no third — the settings
+   * route fails rather than render this page without an answer, so "still in
+   * flight" is not something this card can be.
+   */
+  acceptance: GeduContractAcceptance | null;
+}) {
+  const t = useTranslations("gedu.contract.settings");
+  const locale = useLocale();
+  const timeZone = useTimezone();
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <ScrollText className="h-5 w-5" />
+          <CardTitle>{t("title")}</CardTitle>
+        </div>
+        <CardDescription>{t("description")}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {acceptance === null ? (
+            <>
+              <p className="font-medium text-warning">{t("notAcceptedTitle")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("notAcceptedBody")}
+              </p>
+              <Link
+                href={ROUTES.gedu.contract}
+                className={buttonVariants({ variant: "default" })}
+              >
+                <FileSignature className="h-4 w-4" />
+                {t("readAndAccept")}
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="flex items-center gap-2 font-medium text-success">
+                <BadgeCheck className="h-5 w-5 shrink-0" aria-hidden />
+                {t("acceptedTitle")}
+              </p>
+              {/* The name as it was signed, on its own line — the same
+                  handwriting the signing dialog drew it in. */}
+              <p className="font-cursive text-2xl leading-none">
+                {acceptance.signed_name}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {t("acceptedDetail", {
+                  version: acceptance.contract_version,
+                  date: formatDate(acceptance.accepted_at, locale, {
+                    dateStyle: "long",
+                    timeZone,
+                  }),
+                })}
+              </p>
+              <Link
+                href={ROUTES.gedu.contract}
+                className={buttonVariants({ variant: "outline" })}
+              >
+                {t("view")}
+              </Link>
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

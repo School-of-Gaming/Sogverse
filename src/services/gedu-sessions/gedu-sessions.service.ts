@@ -1,9 +1,14 @@
 import { z } from "zod";
 import { ApiError } from "@/lib/api/api-error";
-import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
+import {
+  parseJsonResponse,
+  readApiError,
+  readErrorMessage,
+} from "@/lib/api/json-response";
 import { SESSION_RECORDING_EPOCH } from "@/lib/constants";
 import type { AppSupabaseClient } from "@/types";
 import {
+  addSessionImageResponse,
   attendanceMarkResult,
   emailSessionReportResponse,
   geduAssignmentSummaries,
@@ -11,6 +16,7 @@ import {
   groupNotesResult,
   groupSessionNotesResult,
   siteNotesResult,
+  type AddSessionImageResponse,
   type AttendanceStatus,
   type EmailSessionReportBody,
   type EmailSessionReportResponse,
@@ -192,6 +198,79 @@ export class GeduSessionsService {
     return parseJsonResponse(response, emailSessionReportResponse);
   }
 
+  /**
+   * Attach one already-normalized JPEG to a session's report.
+   *
+   * **The blob is the browser's output, not the gedu's file.** The pick has been
+   * decoded, downscaled under the edge cap and re-encoded as JPEG before it gets
+   * here — that pass is what strips EXIF/GPS and makes every stored image one
+   * format — and the dimensions travelling beside it are the *encoded* ones,
+   * which is what the row stores and what all gallery and email geometry is
+   * arithmetic from.
+   *
+   * A route rather than an RPC, because the object needs the service-role client
+   * the browser must never hold. The route's own first act is still the guarded
+   * insert on the caller's session, so the authorization has not moved.
+   *
+   * **A refusal is the answer.** Every way this can fail — in the browser or at
+   * the route — carries one of the feature's stable codes, and the surface above
+   * branches on that **code**, never on the message: the route's English is
+   * written for a log, and a reworded refusal must not be able to change what a
+   * gedu is told.
+   */
+  async addSessionImage(args: {
+    groupId: string;
+    sessionDate: string;
+    width: number;
+    height: number;
+    /** The normalized JPEG. */
+    file: Blob;
+  }): Promise<AddSessionImageResponse> {
+    const form = new FormData();
+    form.append("groupId", args.groupId);
+    form.append("sessionDate", args.sessionDate);
+    form.append("width", String(args.width));
+    form.append("height", String(args.height));
+    // A filename is required for the part to arrive as a `File` rather than a
+    // string field. It is never stored — the object is named by the row's id —
+    // so it says what the bytes are and nothing more.
+    form.append("file", args.file, "session-photo.jpg");
+
+    const response = await fetch("/api/gedu/sessions/images", {
+      method: "POST",
+      // No Content-Type header: the browser has to set the multipart boundary.
+      body: form,
+    });
+
+    if (!response.ok) {
+      throw await readApiError(response, "Failed to add the photo");
+    }
+
+    return parseJsonResponse(response, addSessionImageResponse);
+  }
+
+  /**
+   * Remove one photo from a session's report — the row, then the object.
+   *
+   * The id is the whole request: the RPC behind the route resolves the group
+   * from the image's own session row, and that resolution is the authorization.
+   * Any gedu assigned to the group may remove any photo on it, exactly as any of
+   * them may edit the report.
+   *
+   * Answers nothing on success (the route is a 204): the id that was sent is the
+   * id that is gone, and the feed refetch is what redraws the strip.
+   */
+  async deleteSessionImage(imageId: string): Promise<void> {
+    const response = await fetch(
+      `/api/gedu/sessions/images/${encodeURIComponent(imageId)}`,
+      { method: "DELETE" },
+    );
+
+    if (!response.ok) {
+      throw await readApiError(response, "Failed to remove the photo");
+    }
+  }
+
   /** Write the group's standing family-facing and gedu notes. */
   async setGroupNotes(args: {
     groupId: string;
@@ -209,13 +288,13 @@ export class GeduSessionsService {
   }
 
   /**
-   * Write the venue's shared notes — the two notes, and nothing else.
+   * Write the site's shared notes — the two notes, and nothing else.
    *
    * Site notes belong to the *location*, so every product running at that
    * building reads and writes the same paragraphs — the workspace says so out
    * loud, and this method is the write path behind it.
    *
-   * **The address is not one of them.** It is family-facing venue detail owned
+   * **The address is not one of them.** It is family-facing site detail owned
    * by the location record and edited by admins; a note-taking path that carried
    * it let a gedu save over an admin's correction with a stale cached copy
    * without either of them noticing, and let any assigned gedu rewrite it

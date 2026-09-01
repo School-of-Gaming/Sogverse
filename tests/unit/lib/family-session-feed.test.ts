@@ -59,6 +59,8 @@ function row(
     // calendar math, and every case here is indifferent to who touched the row.
     updated_by: null,
     updated_by_first_name: null,
+    /** No photos by default — this builder is about the calendar math. */
+    images: [],
     attendance: null,
     ...fields,
   };
@@ -305,6 +307,56 @@ describe("buildFamilySessionFeed — the last editor", () => {
     // is nobody to name.
     expect(byDate(build(), "2026-03-16")).toMatchObject({
       lastEditedBy: null,
+    });
+  });
+});
+
+/**
+ * The photos, which the builder does exactly two things to: carries them
+ * through in the order the RPC emitted them, and answers `[]` where there is no
+ * row.
+ *
+ * The empty array is the load-bearing half. A renderer that had to cope with a
+ * missing field would be coping with it on every projected occurrence — which
+ * is most of the feed — and the card's own "is this a quiet line" test reads
+ * the length directly.
+ */
+describe("buildFamilySessionFeed — photos", () => {
+  const PHOTOS = [
+    { id: "0b7f7d8e-3d2f-4b3a-9a2e-1c9a2d5f7b10", width: 1600, height: 900 },
+    { id: "7c1f2a44-9b6e-4a5d-8f31-2c6b4d0e91aa", width: 900, height: 1600 },
+  ];
+
+  it("carries a row's photos through in the order they arrived", () => {
+    const entries = build({ sessions: [row("2026-03-16", { images: PHOTOS })] });
+    expect(byDate(entries, "2026-03-16")).toMatchObject({
+      kind: "past",
+      images: PHOTOS,
+    });
+  });
+
+  it("carries them on a future entry too — one of them can be in progress", () => {
+    const entries = build({ sessions: [row("2026-03-23", { images: PHOTOS })] });
+    expect(byDate(entries, "2026-03-23")).toMatchObject({
+      kind: "future",
+      images: PHOTOS,
+    });
+  });
+
+  it("answers an empty array on an occurrence with no row behind it", () => {
+    expect(byDate(build(), "2026-03-16")).toMatchObject({ images: [] });
+  });
+
+  it("keeps photos and the write-up independent of each other", () => {
+    // The state the family card's shape turns on: something to show, nothing to
+    // sign. The builder makes no judgment about the pair — it passes both.
+    const entries = build({
+      sessions: [row("2026-03-16", { images: PHOTOS, report: null })],
+    });
+    expect(byDate(entries, "2026-03-16")).toMatchObject({
+      report: null,
+      images: PHOTOS,
+      attendance: null,
     });
   });
 });

@@ -1,4 +1,8 @@
 import type { AppSupabaseClient, GeduContractAcceptance } from "@/types";
+import { walkPages } from "@/lib/supabase/paging";
+
+const GEDU_CONTRACT_ACCEPTANCE_COLUMNS =
+  "gedu_id, contract_version, accepted_at, signed_name";
 
 /**
  * The gedu contract: reading who has signed what, and signing.
@@ -33,11 +37,40 @@ export class GeduContractService {
   async getAcceptances(geduId: string): Promise<GeduContractAcceptance[]> {
     const { data, error } = await this.supabase
       .from("gedu_contract_acceptances")
-      .select("gedu_id, contract_version, accepted_at, signed_name")
+      .select(GEDU_CONTRACT_ACCEPTANCE_COLUMNS)
       .eq("gedu_id", geduId)
       .order("accepted_at", { ascending: false });
     if (error) throw error;
     return data;
+  }
+
+  /**
+   * Every acceptance on the platform, for the admin surfaces that ask about a
+   * *list* of educators rather than one — the users list, which marks the gedus
+   * standing outside the terms in force.
+   *
+   * **Walked, not selected.** The one-gedu read above is bounded by
+   * construction — at most one row per version ever published — and this is the
+   * opposite: one row per educator per version, a set that only grows. A read
+   * truncated at PostgREST's `max_rows` would come back looking complete and
+   * silently drop the acceptance of every educator past the cut, which on the
+   * users list renders as a warning mark on somebody who signed years ago. The
+   * order is the table's own primary key, which is the total order the walk
+   * needs.
+   *
+   * RLS is what makes one method serve one caller: an admin sees every row and
+   * a gedu sees only their own, so this is admin-only in effect without saying
+   * so anywhere.
+   */
+  async getAllAcceptances(): Promise<GeduContractAcceptance[]> {
+    return walkPages("getAllGeduContractAcceptances", (from, to) =>
+      this.supabase
+        .from("gedu_contract_acceptances")
+        .select(GEDU_CONTRACT_ACCEPTANCE_COLUMNS, { count: "exact" })
+        .order("gedu_id")
+        .order("contract_version")
+        .range(from, to),
+    );
   }
 
   /**

@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: "Create your School of Gaming parent account",
     openGraph: {
       title: "Join School of Gaming",
-      description: "Create your School of Gaming parent account and enroll your child in Minecraft clubs led by professional game educators.",
+      description: "Create your School of Gaming parent account and enrol your child in clubs, camps and events led by professional game educators.",
     },
   };
 }

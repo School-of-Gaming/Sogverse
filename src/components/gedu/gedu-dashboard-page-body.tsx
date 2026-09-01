@@ -3,7 +3,10 @@
 import { useTranslations } from "next-intl";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type";
-import { GeduContractNotice } from "./gedu-contract-notice";
+import {
+  GeduContractNotice,
+  GeduCriminalRecordCheckNotice,
+} from "./gedu-next-step-notice";
 import {
   GeduAssignmentsSectionView,
   type GeduAssignmentCardData,
@@ -56,6 +59,7 @@ export function GeduDashboardPageBody({
   assignments,
   certified,
   contractAccepted,
+  criminalRecordCheckPassed,
   toolsCard,
   instantRoomCard,
 }: {
@@ -76,6 +80,19 @@ export function GeduDashboardPageBody({
    * acceptance gates nothing while certification gates the Tools section.
    */
   contractAccepted: boolean;
+  /**
+   * Has an admin recorded seeing this gedu's criminal record extract? `false`
+   * puts the second next-step band above everything — but only once the
+   * contract is signed and only while they are uncertified, which is the
+   * window in which presenting it is the thing left to do.
+   *
+   * A prop for the same reason `contractAccepted` is: it decides a band at the
+   * top of the body and has to be settled before the first paint. It is
+   * deliberately not folded into that flag either — two facts written by two
+   * different actors, and a single "standing" boolean could not say which band
+   * to show.
+   */
+  criminalRecordCheckPassed: boolean;
   /**
    * Has an admin certified this gedu? Gates the whole Tools section, because
    * every tool in it is a moderator power an unapproved account does not hold
@@ -144,11 +161,23 @@ export function GeduDashboardPageBody({
           regardless — `metadata` names documents, not headings. */}
       <h1 className="sr-only">{t("pageTitle")}</h1>
 
-      {/* Above the pill, and above everything a gedu came here to do. It is the
-          one errand on this page that is not optional, so it is the first thing
-          on it — and it is gone entirely once signed, leaving no hole where it
-          used to be. */}
-      {!contractAccepted && <GeduContractNotice />}
+      {/* Above the pill, and above everything a gedu came here to do. These are
+          the errands on this page that are not optional, so whichever is
+          outstanding is the first thing on it — and it is gone entirely once
+          done, leaving no hole where it used to be.
+
+          One at a time, in the order the two steps happen: the terms are
+          agreed to on the platform when an educator registers, the extract is
+          presented afterwards. The record check's band also waits on
+          certification, because for an already-certified educator the step it
+          is nudging toward has been overtaken by the decision it was informing
+          — and a band pushing somebody toward a thing that no longer changes
+          anything is noise on the dashboard of somebody already working. */}
+      {!contractAccepted ? (
+        <GeduContractNotice />
+      ) : !criminalRecordCheckPassed && !certified ? (
+        <GeduCriminalRecordCheckNotice />
+      ) : null}
 
       {/* The pill names the page rather than any one section: with the heading
           set now varying per gedu, borrowing the first section's label would

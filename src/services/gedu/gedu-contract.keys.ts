@@ -25,4 +25,15 @@ export const geduContractKeys = {
    */
   acceptances: (geduId: string) =>
     [...geduContractKeys.all, "acceptances", geduId] as const,
+  /**
+   * Every acceptance on the platform, for the admin lists that ask about many
+   * educators at once.
+   *
+   * A sibling of `acceptances` rather than a parent of it: the two answer the
+   * same question at different scales and neither is derivable from the other's
+   * cache entry, so hanging one off the other would only make an invalidation
+   * of the whole-platform read look like it reached a gedu's own — which it
+   * does not. Accepting the contract invalidates `all`, which reaches both.
+   */
+  allAcceptances: () => [...geduContractKeys.all, "acceptances-all"] as const,
 };

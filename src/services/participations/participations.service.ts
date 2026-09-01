@@ -12,6 +12,7 @@ import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { QueryData } from "@supabase/supabase-js";
 import {
   parseJsonResponse,
+  readApiError,
   readErrorMessage,
 } from "@/lib/api/json-response";
 import {
@@ -24,9 +25,15 @@ import {
   type JoinWaitlistResponse,
   type LeaveWaitlistResponse,
 } from "./participations.contracts";
+import {
+  seatOfferRespondResponse,
+  seatOfferSweepResponse,
+  type SeatOfferRespondResponse,
+  type SeatOfferSweepResponse,
+} from "./seat-offer.contracts";
 
 /**
- * A venue's name as it comes off the row — the canonical `name` plus the
+ * A site's name as it comes off the row — the canonical `name` plus the
  * `locale -> name` override map — resolved to the viewer's locale at render
  * time by the shared location-name helper.
  *
@@ -93,7 +100,7 @@ export interface MyUpcomingSessionRow {
      */
     isRemote: boolean;
     /**
-     * The venue an **in-person** product runs at, `null` on a remote one.
+     * The site an **in-person** product runs at, `null` on a remote one.
      *
      * Gated on `is_remote` rather than on whether the join found a row: a
      * remote municipality club carries a `location_id` too (the municipality
@@ -161,7 +168,7 @@ export interface MyUpcomingSessionRow {
  * formatter reads for a dated run.
  *
  * What it still does not carry is anything that only a *seat* produces: no
- * group, no subscription state, and no venue. A waitlisted family has no
+ * group, no subscription state, and no site. A waitlisted family has no
  * placement to derive a next session from and no billing relationship to be in
  * trouble with, and their card's footer is the queue sentence, so nothing
  * downstream has a use for them. The product's own id is absent for the same
@@ -214,6 +221,23 @@ export interface MyWaitlistRow {
    * the stamped-at-join value, so it shrinks as people ahead leave.
    */
   position: number;
+  /**
+   * When a seat was offered to this family, or null if none ever has been.
+   *
+   * It comes off the `participations` row rather than the position RPC, and
+   * deliberately: the RPC is `SECURITY DEFINER` and counts past the caller's
+   * RLS, so everything it returns is data the caller may not be entitled to —
+   * its comment bounds that surface to an id and an integer. This value is the
+   * caller's own row, readable under their own policies, so it belongs in the
+   * select beside every other field on this shape.
+   *
+   * Whether the offer is still LIVE is derived from it, against
+   * `SEAT_OFFER_WINDOW_DAYS` — the same arithmetic the database does, and the
+   * reason the deadline can be stated without a second round trip. An offer
+   * whose window has closed reads as an ordinary queue place again: the row is
+   * still waitlisted, and an admin may offer it afresh.
+   */
+  seatOfferSentAt: string | null;
 }
 
 /**
@@ -290,6 +314,16 @@ export type CreateParticipationInput = {
   participantId: string;
   purchaseShape: PurchaseShape;
   currency: SupportedCurrency;
+  /**
+   * The consent documents the parent ticked, as slugs — empty on the
+   * overwhelming majority of products, which require none.
+   *
+   * Required here although the wire field is optional, and the asymmetry is the
+   * point: the wire has to tolerate an omission so the database gets to give
+   * the authoritative refusal, while a *caller* stating the answer explicitly
+   * is what keeps a new signup surface from forgetting the question exists.
+   */
+  consentedDocuments: string[];
 };
 
 /**
@@ -335,10 +369,23 @@ export type {
 export type JoinWaitlistInput = {
   productId: string;
   participantId: string;
+  /** Ticked consent document slugs — see `CreateParticipationInput`. A queue
+   *  place is held to the same enrolment conditions as a seat. */
+  consentedDocuments: string[];
 };
 
 export type LeaveWaitlistInput = {
   participationId: string;
+};
+
+/**
+ * A parent's answer to a seat offer, given in My SOG. `accept: false` is a
+ * decline, which deletes the queue place — the same act the emailed "No, thank
+ * you" performs, and the reason the card puts a confirmation in front of it.
+ */
+export type InAppSeatOfferResponseInput = {
+  participationId: string;
+  accept: boolean;
 };
 
 export class ParticipationsService {
@@ -826,9 +873,10 @@ export class ParticipationsService {
       body: JSON.stringify(input),
     });
     if (!response.ok) {
-      throw new Error(
-        await readErrorMessage(response, "Failed to start checkout"),
-      );
+      // An `ApiError` rather than a bare `Error`: the panel branches on the
+      // consent-refusal code this route can attach, and only this shape carries
+      // it. The message is unchanged either way.
+      throw await readApiError(response, "Failed to start checkout");
     }
     return parseJsonResponse(response, createParticipationResponse);
   }
@@ -840,9 +888,9 @@ export class ParticipationsService {
       body: JSON.stringify(input),
     });
     if (!response.ok) {
-      throw new Error(
-        await readErrorMessage(response, "Failed to join waitlist"),
-      );
+      // Same shape as the signup door above, and for the same reason: this
+      // route can refuse a stale consent list too.
+      throw await readApiError(response, "Failed to join waitlist");
     }
     return parseJsonResponse(response, joinWaitlistResponse);
   }
@@ -868,6 +916,64 @@ export class ParticipationsService {
       );
     }
     return parseJsonResponse(response, leaveWaitlistResponse);
+  }
+
+  /**
+   * Answer a seat offer from inside My SOG — the same yes-or-no the emailed
+   * links carry, given by a parent who is already signed in.
+   *
+   * The body names only the row: the session is the credential here, and the
+   * route proves the participation belongs to the caller under their own RLS
+   * before it reads the stored stamp. There is no token to send and none to
+   * check.
+   *
+   * **Every outcome is a 200**, including the two the card has to draw as a
+   * lapsed offer rather than as a failure: `expired` is the window closing
+   * between the paint and the press, and `invalid` is the offer having already
+   * been answered or superseded. A rejection from this method therefore means
+   * the request itself did not land, which is the only case the parent should
+   * be asked to try again.
+   */
+  async respondToSeatOffer(
+    input: InAppSeatOfferResponseInput,
+  ): Promise<SeatOfferRespondResponse> {
+    const response = await fetch("/api/participations/seat-offer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to answer the seat offer"),
+      );
+    }
+    return parseJsonResponse(response, seatOfferRespondResponse);
+  }
+
+  /**
+   * Ask the server to notice any seat offers whose five-day window has closed,
+   * and tell staff about them.
+   *
+   * **This is the whole of the feature's clock, and it is an observation rather
+   * than a schedule.** Nothing in a database notices time passing; instead an
+   * admin arriving at a surface that would care about a lapsed offer says so,
+   * and the route claims and mails whatever it finds. The claim is exactly-once
+   * inside one statement, so several admins landing together produce one mail
+   * between them.
+   *
+   * Cheap and usually empty — the common answer is `{ claimed: 0 }`, which is
+   * why callers may fire it on mount without thinking about it.
+   */
+  async sweepSeatOffers(): Promise<SeatOfferSweepResponse> {
+    const response = await fetch("/api/admin/seat-offers/sweep", {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to sweep seat offers"),
+      );
+    }
+    return parseJsonResponse(response, seatOfferSweepResponse);
   }
 }
 
@@ -923,7 +1029,13 @@ type RawMyUpcomingSessionRow = QueryData<
  * The product shell it selects mirrors the sessions builder's minus the parts
  * only a seat produces — see `MyWaitlistRow` for why each half is where it is.
  * No location embed: a waitlisted card's footer is the queue sentence, so there
- * is no venue line for one to fill.
+ * is no site line for one to fill.
+ *
+ * `seat_offer_sent_at` is the one column here that is not about the product,
+ * and it is selected rather than asked of the position RPC on purpose: that RPC
+ * is SECURITY DEFINER and counts past the caller's RLS, so its answer is
+ * deliberately bounded to an id and an integer. This is the caller's own row,
+ * under their own policies.
  *
  * Ordered oldest-first by the waitlist stamp, which is neither selected nor
  * needed by the card: it just gives the band a stable order that means
@@ -941,6 +1053,7 @@ function buildMyWaitlistQuery(
       `
         id,
         participant_id,
+        seat_offer_sent_at,
         product:products!inner(
           product_type, timezone, start_date, end_date, is_remote,
           product_translations(*),
@@ -982,7 +1095,7 @@ function toMyUpcomingSessionRow(
       isRemote: product.is_remote,
       // The join is gated here rather than in the select, because the select
       // cannot express it: a remote municipality club has a `location_id` and
-      // no venue. See `MyUpcomingSessionRow.product.site`.
+      // no site. See `MyUpcomingSessionRow.product.site`.
       site: product.is_remote ? null : product.location,
       translations: product.product_translations,
     },
@@ -1025,6 +1138,7 @@ function toMyWaitlistRow(
       durationMinutes: s.duration_minutes,
     })),
     position,
+    seatOfferSentAt: row.seat_offer_sent_at,
   };
 }
 

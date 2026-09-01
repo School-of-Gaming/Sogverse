@@ -37,7 +37,7 @@ import { SessionDetailsBackLink } from "./BackLink";
 import { ParticipantRosterRow } from "./ParticipantRosterRow";
 import { rosterContactEmail } from "./types";
 import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
-import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
+import { SitePanel, type SiteNotesDraft } from "./SitePanel";
 
 /**
  * One group of one product, as the people running it work it: the group's
@@ -92,13 +92,17 @@ import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
  *   than being capped at the timeline's reading width: capped, they sat in the
  *   left third of a wide workspace with the rest of the row blank, which read as
  *   a rendering fault rather than as a choice.
- * - **An in-person product also carries its site's notes**, beside the group's
- *   own on the same row and inside the same card — a bordered column, not a
+ * - **An in-person product also carries its site**, beside the group's own
+ *   notes on the same row and inside the same card — a bordered column, not a
  *   second card, because a card inside a card says "different kind of thing"
- *   when these are two instances of one kind. Site notes belong to the *venue*
- *   and every product running there reads the same two paragraphs, so the panel
- *   names the site and says so; a remote product has no building and the row
- *   collapses back to one column.
+ *   when these are two instances of one kind. A site's name, address and two
+ *   notes belong to the *building* and every product running there reads the
+ *   same four fields, so the panel names the site and says so; a remote product
+ *   has no building and the row collapses back to one column. **What is
+ *   writable here is the same on both shells**: the two notes, which describe
+ *   the building. The name and the address are the site *record* and are edited
+ *   on the site's own page, which an admin shell links to and a gedu shell does
+ *   not have — the one difference, and it is a link rather than a capability.
  * - **The rail holds the two things that are true between sessions**, this
  *   group first: its co-teachers and roster (the reference a gedu actually
  *   reaches for mid-session), then the other groups on the product — the
@@ -121,12 +125,6 @@ import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
  *   in; a chip naming a number the reader then has to go hunting for was one
  *   more thing to read on the way to the same place. The dashboard badge stays
  *   the cross-product signal.
- */
-/**
- * The venue an in-person product runs at, with the two notes that hang off it.
- *
- * Both notes are **site-scoped**: they are shared by every product running
- * there, which is why the panel that renders them says so by name.
  */
 /**
  * The staff-only overlay on the group's roster: who is new to the group, who
@@ -164,9 +162,16 @@ export interface RosterMemberFlair {
   onSaveNote: (participantId: string, text: string) => void | Promise<void>;
 }
 
+/**
+ * The site an in-person product runs at: what it is called, where it is, and
+ * the two notes that hang off it.
+ *
+ * All four are **site-scoped** — shared by every product running there, which
+ * is why the panel that renders them says so by name.
+ */
 export interface ProductSite {
   name: string;
-  /** Street address, family-facing. `null` when the venue record has none. */
+  /** Street address, family-facing. `null` when the site record has none. */
   address: string | null;
   /** The site note families can eventually read. */
   publicNote: string | null;
@@ -215,7 +220,7 @@ interface GroupWorkspaceProps {
   /** Persist the group's notes. Awaited by the panel — see its own note. */
   onSaveGroupNotes: (draft: GroupNotesDraft) => void | Promise<void>;
   /**
-   * The venue an in-person product runs at, or `null` for a remote one.
+   * The site an in-person product runs at, or `null` for a remote one.
    *
    * **The question is `is_remote`, never "does it have a location".** A remote
    * municipality club carries a `location_id` by CHECK — the town it is run
@@ -228,19 +233,24 @@ interface GroupWorkspaceProps {
   site: ProductSite | null;
   siteNotesEditing: boolean;
   onSiteNotesEditingChange: (editing: boolean) => void;
-  /** Persist the venue's shared notes. Awaited by the panel. */
+  /** Persist the site's shared notes. Awaited by the panel. */
   onSaveSiteNotes: (draft: SiteNotesDraft) => void | Promise<void>;
   /**
-   * A control that writes the venue's **address**, for a shell whose viewer owns
-   * that field. Omitted — which is what the gedu shell does, and what a scene
-   * does — the site section is exactly what it has always been.
+   * Where this site's record is edited, for a shell whose viewer has such a
+   * page. Absent — the gedu shell's answer, and a scene's — the site section
+   * carries no way out, which is correct: a gedu has no admin site page.
    *
-   * It is a whole capability or none of it: either the caller can offer this
-   * and passes a control, or it cannot and passes nothing. The body only
-   * decides *where* it goes; every string, every mutation and every failure line
-   * inside it belong to whoever built it.
+   * **The body's site section is otherwise identical on both shells, and that is
+   * deliberate rather than incidental.** Both pass the notes save and neither
+   * passes a details save, so both surfaces render the same four fields with the
+   * same two editable — which is what "an admin sees what the gedu sees" has to
+   * mean literally. The name and the address are the site *record*, and a page
+   * scoped to one group is not where a record shared by every product in the
+   * building gets renamed; this link is how an admin gets to the page that is.
+   * Like the back link and the voice rooms' way back, it is a statement about
+   * who brought you here — the one kind of thing a shared body cannot know.
    */
-  siteAddressEditor?: ReactNode;
+  siteEditHref?: string;
   editingEntryId: string | null;
   onEditEntry: (entryId: string | null) => void;
   /**
@@ -257,6 +267,18 @@ interface GroupWorkspaceProps {
    * until the sent line takes its place; a rejection is what hands it back.
    */
   onSendReport: (entryId: string) => Promise<SessionReportSendResult>;
+  /**
+   * Attach one already-normalized JPEG to a session's report, resolving with
+   * the stored id. **Called by the card's Save**, not by the picker: a photo is
+   * held in the browser with the rest of the draft until the whole card
+   * commits.
+   */
+  onAddPhoto: (
+    entryId: string,
+    photo: { file: Blob; width: number; height: number },
+  ) => Promise<string>;
+  /** Remove one photo by its stored id. Called by the same Save. */
+  onRemovePhoto: (imageId: string) => Promise<void>;
   /**
    * Save a roster member's game username, on whichever platform this product's
    * topic is about. A gedu is the person who finds out a name is wrong —
@@ -363,11 +385,13 @@ export function GroupWorkspace({
   siteNotesEditing,
   onSiteNotesEditingChange,
   onSaveSiteNotes,
-  siteAddressEditor,
+  siteEditHref,
   editingEntryId,
   onEditEntry,
   onSaveEntry,
   onSendReport,
+  onAddPhoto,
+  onRemovePhoto,
   onSaveGameUsername,
   gameStatuses,
   robloxAvatarUrls,
@@ -540,15 +564,15 @@ export function GroupWorkspace({
                 />
                 {site !== null && (
                   <div className="border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-                    <SiteNotesPanel
+                    <SitePanel
                       siteName={site.name}
                       address={site.address}
                       publicNote={site.publicNote}
                       staffNote={site.staffNote}
                       editing={siteNotesEditing}
                       onEditingChange={onSiteNotesEditingChange}
-                      onSave={onSaveSiteNotes}
-                      addressEditor={siteAddressEditor}
+                      onSaveNotes={onSaveSiteNotes}
+                      editHref={siteEditHref}
                     />
                   </div>
                 )}
@@ -572,6 +596,8 @@ export function GroupWorkspace({
               onEditEntry={onEditEntry}
               onSaveEntry={onSaveEntry}
               onSendReport={onSendReport}
+              onAddPhoto={onAddPhoto}
+              onRemovePhoto={onRemovePhoto}
             />
           ) : (
             <Card>

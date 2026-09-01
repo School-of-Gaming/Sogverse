@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
@@ -90,6 +91,9 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [homeLocation, setHomeLocation] = useState<LocationPick | null>(null);
+  // Unticked by default, and it stays that way unless the parent ticks it: an
+  // opt-in that arrives pre-ticked is not an opt-in.
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -136,6 +140,12 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           // permanent ability to rewrite their own attribution; the grant is the
           // thing we are refusing, and the trigger is what lets us.
           referralCode: referralCode ?? undefined,
+          // Always an explicit boolean, never omitted. The schema takes it as
+          // optional so an older client that predates the box can still
+          // register — but a form that *shows* the question has an answer
+          // either way, and "unticked" is a decision the parent made rather
+          // than a field they were never asked about.
+          marketingConsent,
         }),
       });
 
@@ -288,6 +298,26 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               disabled={isLoading}
             />
           </Field>
+          {/* Deliberately not a `Field`: that primitive puts a label above its
+              control, and a checkbox is named by the sentence beside it — a
+              label above one would be a second name for the same thing. The
+              shared row is the composition instead: the sentence is the label,
+              the hint sits under it in the same column, and `aria-describedby`
+              is wired for us.
+
+              The hint is info-toned, exactly as the signup panel's marketing
+              row is — it is the same sentence, opening on the same word, doing
+              the same job of saying this one may be skipped. Leaving one of the
+              two muted and the other coloured would be drift a reader could
+              actually notice, since a parent meets both within one signup. */}
+          <CheckboxRow
+            checked={marketingConsent}
+            onCheckedChange={setMarketingConsent}
+            disabled={isLoading}
+            label={t('register.marketingConsentLabel')}
+            hint={t('register.marketingConsentHint')}
+            hintTone="info"
+          />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>

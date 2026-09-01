@@ -49,7 +49,7 @@ export async function requireRole<const R extends UserRole>(
 ): Promise<AuthSuccess<R> | NextResponse> {
   const supabase = await createClient();
   // `getClaims()` verifies the JWT locally against the project's ES256 JWKS —
-  // no GoTrue round-trip (see docs/performance.md). The proxy already verified
+  // no GoTrue round-trip (see docs/architecture/performance.md). The proxy already verified
   // and refreshed the session for this request; this is the cheap re-check.
   const { data, error: claimsError } = await supabase.auth.getClaims();
   const claims = data?.claims;

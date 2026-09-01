@@ -1,10 +1,35 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type DefinedUseQueryResult,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import type { GeduContractAcceptance } from "@/types";
 import { GeduContractService } from "./gedu-contract.service";
 import { geduContractKeys } from "./gedu-contract.keys";
+
+/**
+ * What a surface that prefetched the rows hands the hook: the rows, and
+ * optionally the moment they were read.
+ *
+ * **`initialDataUpdatedAt` is the seed's own age, and a seed without one is
+ * stamped as fetched right now.** That is right for a payload rendered for this
+ * navigation and wrong for one served back out of the router cache, which can be
+ * minutes old and would otherwise sit unquestioned for the whole 60-second
+ * `staleTime`. A caller that stamps its read at the moment it made it lets React
+ * Query age the seed honestly; the two are the same rule the family dashboards'
+ * `seedAge` states from the other end, where `0` marks a *failed* prefetch stale
+ * on arrival.
+ */
+interface GeduContractAcceptancesOptions {
+  initialData?: GeduContractAcceptance[];
+  initialDataUpdatedAt?: number;
+}
 
 /**
  * Every contract version one gedu has accepted, newest first.
@@ -16,10 +41,31 @@ import { geduContractKeys } from "./gedu-contract.keys";
  * `initialData` is here for the surface that already fetched the rows on the
  * server; the key it seeds is `geduContractKeys.acceptances(geduId)`, which is
  * why that factory lives outside this `"use client"` file.
+ *
+ * **Two signatures, because a mandatory seed and an optional one are different
+ * promises to the caller.** A surface whose page fails rather than render
+ * without the rows (the settings card) passes them unconditionally and gets a
+ * `data` that is never `undefined`, so its component has two states rather than
+ * three. A surface that degrades when its prefetch failed (the contract page,
+ * the admin certification card) passes nothing in that case and keeps handling
+ * the unanswered read. The narrowing is React Query's own — `initialData` typed
+ * as present is what makes `data` defined — and it is exposed here rather than
+ * papered over at a call site with an assertion.
  */
 export function useGeduContractAcceptances(
   geduId: string,
-  options?: { initialData?: GeduContractAcceptance[] },
+  options: {
+    initialData: GeduContractAcceptance[];
+    initialDataUpdatedAt?: number;
+  },
+): DefinedUseQueryResult<GeduContractAcceptance[], Error>;
+export function useGeduContractAcceptances(
+  geduId: string,
+  options?: GeduContractAcceptancesOptions,
+): UseQueryResult<GeduContractAcceptance[], Error>;
+export function useGeduContractAcceptances(
+  geduId: string,
+  options?: GeduContractAcceptancesOptions,
 ) {
   const supabase = getClient();
   const service = new GeduContractService(supabase);
@@ -28,7 +74,50 @@ export function useGeduContractAcceptances(
     queryKey: geduContractKeys.acceptances(geduId),
     queryFn: () => service.getAcceptances(geduId),
     initialData: options?.initialData,
+    initialDataUpdatedAt: options?.initialDataUpdatedAt,
   });
+}
+
+/**
+ * Every gedu's acceptances, keyed by educator for O(1) lookup in a list.
+ *
+ * `isError` and `isPending` travel with the map because an absent entry is
+ * ambiguous on its own — it means "this educator has signed nothing" only when
+ * the read succeeded, and "we do not know yet" otherwise. A surface that
+ * *asserts* something to the reader has to stay silent until it can tell those
+ * apart; the users list does exactly that, and holds both of its gedu marks
+ * back until this and the certification read have both answered.
+ */
+export interface GeduContractAcceptanceLookup {
+  /** geduId → that educator's acceptances. An absent key means none. */
+  map: Map<string, GeduContractAcceptance[]>;
+  isError: boolean;
+  isPending: boolean;
+}
+
+export function useGeduContractAcceptanceMap(): GeduContractAcceptanceLookup {
+  const supabase = getClient();
+  const service = new GeduContractService(supabase);
+
+  const { data, isError, isPending } = useQuery({
+    queryKey: geduContractKeys.allAcceptances(),
+    queryFn: () => service.getAllAcceptances(),
+  });
+
+  const map = useMemo(() => {
+    const byGedu = new Map<string, GeduContractAcceptance[]>();
+    for (const row of data ?? []) {
+      const rows = byGedu.get(row.gedu_id);
+      if (rows === undefined) byGedu.set(row.gedu_id, [row]);
+      else rows.push(row);
+    }
+    return byGedu;
+  }, [data]);
+
+  return useMemo(
+    () => ({ map, isError, isPending }),
+    [map, isError, isPending],
+  );
 }
 
 /**

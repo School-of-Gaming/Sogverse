@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { adminProductSessions } from "@/services/admin-sessions/admin-sessions.contracts";
 import {
+  SESSION_PHOTO_CAP,
   SESSION_REPORT_ALREADY_SENT_SQLSTATE,
   SESSION_REPORT_NO_REPORT_SQLSTATE,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
@@ -58,13 +59,13 @@ const DECOY_PRODUCT = "00000000-0000-0000-0000-000000000643";
 const DECOY_GROUP = "00000000-0000-0000-0000-000000000644";
 
 /**
- * This file's OWN venue, created under the seeded municipality rather than
+ * This file's OWN site, created under the seeded municipality rather than
  * reusing the seeded `Test School`.
  *
  * `site_details` and `site_staff_details` are keyed by location and shared by
  * every product at that building, so two db test files writing notes on the
  * seeded site would race — vitest runs files in separate workers, and the gedu
- * feed's suite writes and deletes exactly those rows. A venue nobody else knows
+ * feed's suite writes and deletes exactly those rows. A site nobody else knows
  * about makes the site-notes assertions here independent of what else CI is
  * running.
  */
@@ -247,7 +248,7 @@ describe("admin product sessions", () => {
       ).toBe(false);
     });
 
-    it("carries the venue and its two notes on an in-person product", async () => {
+    it("carries the site and its two notes on an in-person product", async () => {
       await adminAuth.rpc("set_site_notes", {
         p_location_id: SITE,
         p_public_note: "Side door, ring the bell.",
@@ -316,6 +317,65 @@ describe("admin product sessions", () => {
       expect(session?.updated_by).toBe(TEST_IDS.ADMIN);
       expect(session?.updated_by_first_name).not.toBeNull();
       expect(session?.report_emailed_at).toBeNull();
+      // An empty array rather than a missing key or a null, so the one card
+      // component rendering this document and the gedu one has a single shape
+      // to handle on a session nobody photographed.
+      expect(session?.images).toEqual([]);
+    });
+
+    it("carries a session's photos, oldest first, in the gedu document's shape", async () => {
+      // The admin surface is where this document's session shape being
+      // `get_gedu_group_feed`'s VERBATIM stops being a comment and starts being
+      // load-bearing: the admin contract imports the gedu session schema rather
+      // than restating it, so a key the gedu document grew and this one did not
+      // is a hard parse failure of the whole panel, not a missing thumbnail.
+      // The admin here teaches nothing, so both attaches are passes by ROLE.
+      const first = await adminAuth.rpc("add_group_session_image", {
+        p_group_id: GROUP_A,
+        p_session_date: YESTERDAY,
+        p_width: 1920,
+        p_height: 1080,
+        p_max_images: SESSION_PHOTO_CAP,
+      });
+      expect(first.error).toBeNull();
+      const second = await adminAuth.rpc("add_group_session_image", {
+        p_group_id: GROUP_A,
+        p_session_date: YESTERDAY,
+        p_width: 1080,
+        p_height: 1440,
+        p_max_images: SESSION_PHOTO_CAP,
+      });
+      expect(second.error).toBeNull();
+
+      const document = await readDocument();
+      const session = document.groups
+        .find((group) => group.id === GROUP_A)
+        ?.sessions.find((row) => row.session_date === YESTERDAY);
+
+      // Display order on every surface, and what the clock_timestamp() stamp
+      // taken under the session row's lock plus the id tiebreak exist to make
+      // stable — the same order session-images.test.ts pins on the gedu feed.
+      expect(session?.images.map((image) => image.id)).toEqual([
+        first.data,
+        second.data,
+      ]);
+      // Whole-object equality is how the uploader is asserted off the wire
+      // here: `created_by` is a real key on the SESSION in this document, so a
+      // search of the raw JSON for the name — the gedu feed's test — would
+      // match something legitimate. `created_by` on a PHOTO is safeguarding
+      // audit and reaches no surface.
+      expect(session?.images[0]).toEqual({
+        id: first.data,
+        width: 1920,
+        height: 1080,
+      });
+      // Mixed ratios travel intact: all gallery and email geometry is
+      // arithmetic from these numbers and is never measured.
+      expect(session?.images[1]).toEqual({
+        id: second.data,
+        width: 1080,
+        height: 1440,
+      });
     });
 
     it("refuses every non-admin caller", async () => {

@@ -10,7 +10,10 @@ import { createClient } from "@/lib/supabase/server";
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
-import { isGeduCertified } from "@/services/gedu/gedu-profiles.service";
+import {
+  getGeduCriminalRecordCheck,
+  isGeduCertified,
+} from "@/services/gedu/gedu-profiles.service";
 import {
   AssignmentsService,
   type MyAssignedProductSessionRow,
@@ -48,7 +51,7 @@ async function getInitialAssignmentRows(): Promise<MyAssignedProductSessionRow[]
 }
 
 /**
- * Prefetch the per-assignment summaries — group name, group size, venue, and
+ * Prefetch the per-assignment summaries — group name, group size, site, and
  * the outstanding-write-up count each card's badge shows.
  *
  * **Failure answers `null`, not an empty list**, and the difference matters
@@ -126,14 +129,43 @@ async function getHasAcceptedContract(): Promise<boolean> {
   }
 }
 
+/**
+ * Has an admin recorded seeing this gedu's criminal record extract? Read here
+ * rather than from the browser for the same reason the contract standing is:
+ * the band it decides sits above every section of the page.
+ *
+ * **Fails toward showing the band**, the same asymmetry the contract read
+ * takes. A gedu who has already presented an extract and is shown the band
+ * clicks through and reads that it is recorded; one who has not and is shown
+ * nothing never learns that anything is owed. The contract page is the
+ * authority in both cases, and it reads its own answer.
+ */
+async function getHasCriminalRecordCheck(): Promise<boolean> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getClaims();
+    const userId = data?.claims.sub;
+    if (!userId) return false;
+    return (await getGeduCriminalRecordCheck(supabase, userId)).passed;
+  } catch {
+    return false;
+  }
+}
+
 export default async function GeduDashboardRoute() {
-  const [initialRows, initialSummaries, certified, contractAccepted] =
-    await Promise.all([
-      getInitialAssignmentRows(),
-      getInitialAssignmentSummaries(),
-      getIsCertified(),
-      getHasAcceptedContract(),
-    ]);
+  const [
+    initialRows,
+    initialSummaries,
+    certified,
+    contractAccepted,
+    criminalRecordCheckPassed,
+  ] = await Promise.all([
+    getInitialAssignmentRows(),
+    getInitialAssignmentSummaries(),
+    getIsCertified(),
+    getHasAcceptedContract(),
+    getHasCriminalRecordCheck(),
+  ]);
 
   return (
     <GeduDashboardPage
@@ -141,6 +173,7 @@ export default async function GeduDashboardRoute() {
       initialSummaries={initialSummaries}
       certified={certified}
       contractAccepted={contractAccepted}
+      criminalRecordCheckPassed={criminalRecordCheckPassed}
     />
   );
 }

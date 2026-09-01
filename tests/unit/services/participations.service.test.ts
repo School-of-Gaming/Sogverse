@@ -134,7 +134,7 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
     };
   }
 
-  /** The same row on an in-person product, with the venue the embed returns. */
+  /** The same row on an in-person product, with the site the embed returns. */
   function inPersonRawRow(id: string, participantFirstName: string) {
     const row = rawRow(id, participantFirstName);
     return {
@@ -233,7 +233,7 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
     consoleError.mockRestore();
   });
 
-  it("carries the venue on an in-person product, raw for the viewer's locale", async () => {
+  it("carries the site on an in-person product, raw for the viewer's locale", async () => {
     mockBackend([inPersonRawRow("p1", "Alex")], { rows: [] });
 
     const result = await service.getMyUpcomingSessions("customer");
@@ -247,7 +247,7 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
     });
   });
 
-  it("drops the venue on a remote product even when a location row comes back", async () => {
+  it("drops the site on a remote product even when a location row comes back", async () => {
     // The gate is `is_remote`, not "did the join find a row" — a remote
     // municipality club carries a `location_id` for the municipality that
     // commissioned it, which is an administrative fact and not a building
@@ -298,7 +298,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
    * the slots and the zone they are wall-clock times in, and the date bounds a
    * dated run's schedule sentence needs. What is deliberately absent is
    * everything only a *seat* produces — no group, no subscription state, no
-   * venue.
+   * site.
    */
   function rawRow(id: string, participantFirstName: string) {
     return {

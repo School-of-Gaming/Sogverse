@@ -100,6 +100,17 @@ JSON the old contracts strip) do so for free; a migration the live app would act
 break under (a drop, a rename, a tightened constraint the old writes violate) needs its
 own compatibility step regardless of staging.
 
+**"Breaks under" is judged by severity, not by the letter of a parse error** (owner
+ruling, 2026-08-31). Transient read-side breakage that heals itself the moment the
+deploy completes — the canonical case: a `.strict()` response schema in the old app
+briefly failing to parse a widened document, so one page fails to load for under a
+minute — is within the accepted window, not the carve-out. Widen the RPC in place;
+do not build a versioned twin plus a cleanup migration for it. The compatibility
+step is reserved for breakage that is *permanent or write-side* (the drop / rename /
+tightened-constraint class, where old writes fail or data is wrong rather than a
+read retrying its way out), or on a surface where even a minute of failure is
+unacceptable — payments and auth, the same list that justifies staging at all.
+
 A plan splits its work into stages that land on `dev` separately only when a constraint
 forces it, and the plan names that constraint. The one that qualifies: a **high-risk or
 high-visibility area** — payments is the standing example — where even a minute of
@@ -200,7 +211,8 @@ what the document silently assumes. So before a plan counts as ready: **hand it 
 agent with no conversation context** and ask one question: *"If you were tasked with
 implementing this plan, what questions would you have? What still needs clarification?"* The
 agent may read the repo — the implementer will have the repo too; what it must not have is
-the discussion.
+the discussion. Tell it to ask, not to advise: its deliverable is questions and ambiguities,
+and any "you should also handle X" it volunteers is triaged as scope pressure, not as a gap.
 
 Triage what comes back into three piles:
 
@@ -210,6 +222,15 @@ Triage what comes back into three piles:
   just to make the question go away.
 - **Implementer's-judgment calls** — details the plan deliberately leaves free. Leave them
   free; a plan that pre-decides everything is brittle in the other direction.
+
+**A cold-read never grows the plan.** Answers get written in from decisions already made; a
+question that cannot be answered without *new* design is either genuinely open (owner) or
+implementer's judgment — never answered by designing on the spot. This is what the one-round
+cap protects: the earlier flow looped cold-reads until clean, and every round grew the plan
+to satisfy whatever that round's reviewer could imagine, until the scope blew up. The
+challenge pushes scope down and the cold-read fills in what is missing — they point in
+opposite directions on purpose, and a plan that got bigger after its cold-read is a sign the
+triage failed, not that the review worked.
 
 One round. Write the answers in, take the open decisions to the owner, and build; what a
 second cold-read would find, the implementer will find with the code in front of them.

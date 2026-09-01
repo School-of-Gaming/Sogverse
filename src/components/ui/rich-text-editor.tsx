@@ -409,18 +409,21 @@ export function RichTextEditor({
               aria-describedby={linkRejected ? linkErrorId : undefined}
               className="h-8 min-w-0 flex-1 rounded-sm bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
-            <IconButton
-              label={t("linkApply")}
-              icon={Check}
-              onClick={applyLink}
-            />
+            {/* Cancel, Remove link, Apply — the three-or-more spine from the
+                root `CLAUDE.md` "Button Order" rule: negative first,
+                affirmative last, the other action between. */}
+            <IconButton label={t("linkCancel")} icon={X} onClick={closeLinkRow} />
             <IconButton
               label={t("linkRemove")}
               icon={Unlink}
               onClick={removeLink}
               disabled={!activeTools.link}
             />
-            <IconButton label={t("linkCancel")} icon={X} onClick={closeLinkRow} />
+            <IconButton
+              label={t("linkApply")}
+              icon={Check}
+              onClick={applyLink}
+            />
           </div>
           {/* Not reserved space, for the same reason the row itself is not: it
               appears as the direct result of the writer clicking Apply, and a

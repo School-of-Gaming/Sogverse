@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "description": "Kun ruutuajasta tulee laatuaikaa – Minecraft-kerhoja ammattitaitoisten pelikasvattajien johdolla.",
+    "description": "Ruutuajasta laatuaikaa. Kerhoja, leirejä ja tapahtumia Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä, ammattitaitoisten pelikasvattajien johdolla.",
     "pages": {
       "signIn": "Kirjaudu sisään",
       "createAccount": "Luo tili",
@@ -35,7 +35,8 @@
       "robloxPrivacy": "Roblox-ohjelman tietosuojaseloste",
       "robloxSafeguarding": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
       "robloxTerms": "Roblox-ohjelman käyttöehdot",
-      "geduContract": "Gedu-sopimus"
+      "geduContract": "Gedu-sopimus",
+      "seatOffer": "Paikkatarjous"
     }
   },
   "notFound": {
@@ -105,30 +106,30 @@
   },
   "about": {
     "hero": {
-      "title": "Tietoa <primary>School of Gaming</primary> -kerhosta",
-      "subtitle": "Minecraft-kerhoissamme ruutuajasta tulee laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelin, jota lapset jo rakastavat — luoden leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa."
+      "title": "Tämä on <primary>School of Gaming</primary>",
+      "subtitle": "Ruutuajasta laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelit, joita lapset jo rakastavat — Minecraft, Roblox, Fortnite ja moni muu — ja luomme leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat oikeita taitoja ja pitävät hauskaa."
     },
     "quote": {
       "text": "”Se mikä on totta nyt, oli kerran vain mielikuvitustasi.”",
-      "attribution": "— School of Gaming -rehtorin sanat"
+      "attribution": "— The Princi-Pal"
     },
     "mission": {
       "heading": "Missiomme",
       "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa."
     },
     "values": {
-      "heading": "Asiat joista välitämme",
+      "heading": "Asiat, joista välitämme",
       "playIsEssential": {
         "title": "Leikki on lapselle välttämätöntä",
         "description": "Leikki on lapsen työtä. Se on ratkaisevan tärkeää heidän hyvinvoinnilleen ja kehitykselleen. Kerhomme on suunniteltu edistämään vapaata leikkiä, joka ruokkii mielikuvitusta, uteliaisuutta ja luovuutta — voimakkaita työkaluja minkä tahansa tulevaisuuden kohtaamiseen."
       },
       "friendsCarry": {
         "title": "Ystävät kantavat esteiden yli",
-        "description": "Ketään ei pidä jättää ilman ystävää. Leikin ja ystävyyden hetket kantavat lapsia minkä tahansa esteen yli elämässä. Kerhoissamme lapset luovat aitoja yhteyksiä jaettujen seikkailujen kautta."
+        "description": "Ketään ei pidä jättää ilman ystävää. Leikin ja ystävyyden hetket kantavat lasta minkä tahansa esteen yli elämässä. Kerhoissamme lapset luovat aitoja yhteyksiä jaettujen seikkailujen kautta."
       },
       "keepChildrenSafe": {
         "title": "Pidetään lapset turvassa verkossa",
-        "description": "Vaalimme osallistavia, ystävällisiä ja turvallisia verkkoyhteisöjä. Kasvatamme välittäviä ja kohteliaita digitaalisia kansalaisia, jotka pitävät huolta kanssapelaajistaan. Nollatoleranssi kiusaamiselle ja toksisuudelle."
+        "description": "Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Jokainen pelaajatili on liitetty vanhemman tiliin, ja lapsi kirjautuu sisään sen kautta eikä omalla salasanallaan. Nollatoleranssi kiusaamiselle ja toksisuudelle."
       },
       "familyInTheLoop": {
         "title": "Perhe mukana",
@@ -140,7 +141,7 @@
       "paragraph1": "Joka viikko pelaajamme kirjautuvat sisään ja heitä tervehtii oma pelikasvattajansa — Gedu. Gedu ohjaa heidät päivän aiheen läpi antaen lapsille tilaa ja vapautta tehdä seikkailuista omiaan.",
       "paragraph2": "Gedumme ovat itsekin pelaajia. He ymmärtävät omakohtaisesti, että lapsina ja nuorina identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Tämä ymmärrys muokkaa jokaista heidän vetämäänsä kertaa.",
       "paragraph3": "Kaikki kerhomme on rakennettu tarinoiden ympärille, jotka antavat pelaajille tilaa tutkia, luoda ja kuvitella. Viikoittaisten kertojen välillä pelaajat saavat hauskoja haasteita tehtäväksi verkossa ja sen ulkopuolella. Lomien aikana järjestämme leirejä, ja joka viikko on yhteisötapahtumia, turnauksia ja kilpailuja.",
-      "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai todellinen maailma. Samat arvot pätevät kaikkialla."
+      "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai arki. Samat arvot pätevät kaikkialla."
     },
     "forParents": {
       "heading": "Vanhemmille",
@@ -168,7 +169,7 @@
       "attention": {
         "title": "Vaatii huomiota",
         "allClearTitle": "Kaikki kunnossa",
-        "allClearBody": "Jokainen pelaaja on sijoitettu, jokaisella ryhmällä on Gedu, mistään tuotteesta ei puutu palkkiota tai maksua, eikä kukaan odota hyväksyntäpäätöstä.",
+        "allClearLine": "Sogversessa on rauha. Voit levätä nyt, ylläpitäjäseikkailija.",
         "productsLabel": "Huomiota vaativat tuotteet",
         "productsHeading": "Tuotteet",
         "issues": {
@@ -176,14 +177,14 @@
           "groupWithoutGedu": "Ryhmällä {group} ei ole Gedua",
           "waitlistOpenSeats": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana",
           "missingGeduFee": "Gedun palkkio puuttuu",
-          "missingMunicipalityFee": "Kunnan maksu puuttuu"
+          "missingMunicipalityFee": "Kunnan maksu puuttuu",
+          "waitlistOpenSeatsWithOffers": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana · {offers} odottaa vastausta"
         }
       },
       "certification": {
-        "label": "Hyväksyntää odottavat Gedut",
-        "heading": "Odottaa hyväksyntää",
+        "title": "Gedujen hyväksyntä",
         "justNow": "Hyväksytty juuri nyt: {count}",
-        "empty": "Kukaan ei odota hyväksyntäpäätöstä.",
+        "empty": "Yksikään Gedu ei odota hyväksyntää.",
         "unnamed": "Nimetön Gedu",
         "registered": "rekisteröitynyt {when}",
         "certify": "Hyväksy",
@@ -247,10 +248,27 @@
       "previousVersion": "Hyväksynyt aiemmin version {version} {date}.",
       "queueAccepted": "Sopimus hyväksytty {date}",
       "queueNotAccepted": "Sopimusta ei ole hyväksytty",
-      "confirmTitle": "Hyväksytäänkö ilman hyväksyttyä sopimusta?",
-      "confirmBody": "Gedun hyväksyminen ei edellytä hyväksyttyä sopimusta, joten voit hyväksyä hänet silti.",
-      "confirmWarning": "Tämä Gedu ei ole hyväksynyt voimassa olevaa sopimusta. Hyväksyttynä hänet voidaan liittää ryhmiin ennen kuin hän on hyväksynyt työehtonsa.",
-      "confirmAction": "Hyväksy silti"
+      "rowNotAccepted": "Ei ole hyväksynyt voimassa olevaa sopimusta"
+    },
+    "geduCriminalRecordCheck": {
+      "heading": "Rikostaustan selvitys",
+      "recorded": "Rikosrekisteriote kirjattu",
+      "recordedOn": "Rikosrekisteriote kirjattu {date}",
+      "recordedByOn": "Rikosrekisteriotteen kirjasi {name} {date}",
+      "notRecorded": "Rikosrekisteriotetta ei ole kirjattu",
+      "processDetail": "Gedu hankkii otteen itse Oikeusrekisterikeskuksesta ja esittää sen sinulle. Otteen on oltava esitettäessä alle kuusi kuukautta vanha. Emme säilytä siitä kopiota – vain merkinnän siitä, että asianmukainen ote on esitetty.",
+      "recordLabel": "Olen nähnyt tämän Gedun asianmukaisen rikosrekisteriotteen",
+      "error": "Rikostaustan selvityksen päivitys epäonnistui. Yritä uudelleen.",
+      "queueRecorded": "Ote kirjattu {date}",
+      "queueNotRecorded": "Otetta ei ole kirjattu",
+      "rowNotRecorded": "Ei ole esittänyt rikosrekisteriotetta"
+    },
+    "geduCertifyWarnings": {
+      "title": "Hyväksytäänkö silti?",
+      "body": "Hyväksyntä ei edellytä kumpaakaan näistä, joten voit hyväksyä hänet silti.",
+      "action": "Hyväksy silti",
+      "contractWarning": "Tämä Gedu ei ole hyväksynyt voimassa olevaa sopimusta. Hyväksyttynä hänet voidaan liittää ryhmiin ennen kuin hän on hyväksynyt työehtonsa.",
+      "checkWarning": "Tämä Gedu ei ole esittänyt rikosrekisteriotetta. Hyväksyttynä hänet voidaan liittää ryhmiin ennen kuin kukaan on nähnyt otetta."
     },
     "products": {
       "types": {
@@ -332,6 +350,7 @@
           "registrationOpensAt": "Ilmoittautuminen aukeaa",
           "tag": "Kenelle suunniteltu",
           "regionLock": "Maakohtainen rajaus",
+          "requiredConsents": "Vaaditut suostumukset",
           "visibility": "Näkyvyys"
         },
         "copyLink": "Kopioi julkinen linkki",
@@ -376,6 +395,8 @@
         },
         "registration": "Ilmoittautumisaika",
         "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
+        "consents": "Suostumukset",
+        "consentsDescription": "Mitä vanhempi hyväksyy ja mitä häneltä kysytään ilmoittautumisen yhteydessä. Pakolliset asiakirjat on hyväksyttävä ennen paikan varaamista, ja markkinointikysymyksistä voi kieltäytyä.",
         "visibility": "Listaus",
         "visibilityDescription": "Ratkaisee, missä tuotetta mainostetaan, ei sitä, kuka voi ostaa sen. Ilmoittautumisen avaavat ja sulkevat ilmoittautumispäivä, paikkamäärä ja tuotteen tila – ei koskaan tämä asetus."
       },
@@ -442,16 +463,16 @@
       "locationPicker": {
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
         "change": "Vaihda",
-        "noVenueHint": "Ei fyysistä toimipaikkaa. Tämän kunnan vanhemmat näkevät kerhon selatessaan.",
+        "noSiteHint": "Ei fyysistä toimipistettä. Tämän kunnan vanhemmat näkevät kerhon selatessaan.",
         "chooseMunicipality": "Valitse kunta",
         "municipalityPickerTitle": "Valitse kunta",
-        "chooseVenue": "Valitse toimipiste",
-        "venuePickerTitle": "Valitse toimipiste",
-        "venuePickerDescription": "Hae toimipistettä nimellä, niin löydät sen suoraan, tai selaa sen kuntaan asti ja katso siellä olevat toimipisteet. Jos toimipistettä ei vielä ole, voit avata uuden.",
-        "venuesIn": "Toimipisteet kunnassa {name}",
-        "venuesInDescription": "Valitse jokin olemassa oleva tai lisää uusi.",
-        "venuesHereEmpty": "Täällä ei ole vielä toimipisteitä.",
-        "addVenue": "Lisää toimipiste",
+        "chooseSite": "Valitse toimipiste",
+        "sitePickerTitle": "Valitse toimipiste",
+        "sitePickerDescription": "Hae toimipistettä nimellä, niin löydät sen suoraan, tai selaa sen kuntaan asti ja katso siellä olevat toimipisteet. Jos toimipistettä ei vielä ole, voit avata uuden.",
+        "sitesIn": "Toimipisteet kunnassa {name}",
+        "sitesInDescription": "Valitse jokin olemassa oleva tai lisää uusi.",
+        "sitesHereEmpty": "Täällä ei ole vielä toimipisteitä.",
+        "addSite": "Lisää toimipiste",
         "changeMunicipality": "Valitse toinen kunta"
       },
       "pricing": {
@@ -502,6 +523,17 @@
       },
       "regionLock": {
         "none": "Ei maakohtaista rajausta"
+      },
+      "consents": {
+        "version": "Versio {version}",
+        "noVersion": "Ei julkaistua versiota",
+        "none": "Ei mitään",
+        "marketing": {
+          "lynxEducate": {
+            "label": "Lynx Educate",
+            "description": "Tämän valitseminen lisää tuotteen ilmoittautumiseen vapaaehtoisen kysymyksen: vanhemmilta kysytään, saako heidän yhteystietonsa jakaa Lynx Educaten kanssa. Vanhempi voi kieltäytyä, eikä se vaikuta paikkaan."
+          }
+        }
       },
       "hints": {
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
@@ -715,7 +747,7 @@
         },
         "unassigned": {
           "title": "Nimeämättömät",
-          "subtitle": "Osallistujat, jotka ovat maksaneet mutta eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
+          "subtitle": "Osallistujat, jotka eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
           "empty": "Kaikilla on ryhmä.",
           "addParticipant": "Lisää osallistuja",
           "removeParticipant": "Poista osallistuja"
@@ -760,7 +792,18 @@
         "waitlist": {
           "title": "Jonotuslista",
           "subtitle": "Paikkaa odottavat osallistujat liittymisjärjestyksessä numeroituina. Vedä osallistuja ryhmään antaaksesi hänelle paikan tai pudota aktiivinen osallistuja tähän siirtääksesi hänet jonon perälle.",
-          "empty": "Jonotuslistalla ei ole ketään."
+          "empty": "Jonotuslistalla ei ole ketään.",
+          "seatOffer": {
+            "invite": "Kutsu",
+            "inviteAgain": "Kutsu uudelleen",
+            "noAnswer": "Ei vastausta",
+            "leftDays": "{count, plural, one {# päivä jäljellä} other {# päivää jäljellä}}",
+            "leftHours": "{count, plural, one {# tunti jäljellä} other {# tuntia jäljellä}}",
+            "leftLastHour": "Alle tunti jäljellä",
+            "liveTitle": "Kutsuttu. Tarjous on voimassa {deadline} asti.",
+            "expiredTitle": "Tarjous umpeutui {deadline}, eikä vastausta tullut.",
+            "needsOneGroup": "Kutsuminen edellyttää, että tuotteessa on täsmälleen yksi ryhmä, jotta paikan ottava perhe voidaan sijoittaa. Nyt ryhmiä on {count, plural, =0 {nolla} one {#} other {#}}."
+          }
         },
         "seatsOverfilled": "{count} / {total} paikkaa – {over} yli",
         "blockedMove": {
@@ -802,12 +845,7 @@
       "sessions": {
         "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
         "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
-        "railGroupHeading": "Ryhmä",
-        "addressLabel": "Toimipaikan osoite",
-        "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
-        "addAddress": "Lisää osoite",
-        "editAddress": "Muokkaa osoitetta",
-        "addressSaveFailed": "Osoitteen tallennus epäonnistui. Yritä uudelleen."
+        "railGroupHeading": "Ryhmä"
       }
     },
     "users": {
@@ -854,6 +892,14 @@
         "title": "Pelitilit",
         "description": "Aseta tai korjaa tämän tilin pelikäyttäjänimet. Tallennus tarkistaa nimen pelialustalta."
       },
+      "marketing": {
+        "title": "Markkinointiasetukset",
+        "schoolOfGaming": "School of Gaming",
+        "lynxEducate": "Lynx Educate",
+        "granted": "Sallittu",
+        "notGranted": "Ei sallittu",
+        "since": "{date} alkaen"
+      },
       "participationStatus": {
         "active": "Aktiivinen",
         "waitlisted": "Jonossa",
@@ -886,6 +932,24 @@
       "adding": "Lisätään...",
       "addType": "Lisää {type}"
     },
+    "sites": {
+      "title": "Toimipisteet",
+      "subtitle": "Kaikki alustan toimipisteet ja kussakin pyörivät tuotteet.",
+      "addSite": "Lisää toimipiste",
+      "searchPlaceholder": "Hae toimipistettä nimellä…",
+      "searchAriaLabel": "Hae toimipisteitä",
+      "columnSite": "Toimipiste",
+      "columnPlace": "Sijainti",
+      "columnProducts": "Tuotteet",
+      "searchCapped": "Näytetään {shown} ensimmäistä osumaa {total} osumasta. Tarkenna hakua kirjoittamalla lisää.",
+      "noResults": "Hakua ”{query}” vastaavaa ei löydy.",
+      "empty": "Ei vielä toimipisteitä. Lisää ensimmäinen.",
+      "backToSites": "Takaisin toimipisteisiin",
+      "notFound": "Tällä tunnuksella ei ole toimipistettä.",
+      "notASite": "Tämä sijainti ei ole toimipiste, joten sillä ei ole omaa sivua.",
+      "productsHeading": "Tämän toimipisteen tuotteet",
+      "noProducts": "Täällä ei vielä pyöri mitään."
+    },
     "testing": {
       "title": "Testaus",
       "description": "Sisäiset testaus- ja kehitystyökalut",
@@ -911,7 +975,16 @@
       "replyToPlaceholder": "vastaus@example.com",
       "sendTestEmail": "Lähetä testisähköposti",
       "emailSentSuccess": "Sähköposti lähetetty! Viestin tunnus: {messageId}",
-      "failedToSendRequest": "Pyynnön lähettäminen epäonnistui"
+      "failedToSendRequest": "Pyynnön lähettäminen epäonnistui",
+      "preview": "Esikatselu",
+      "previewDescription": "Näin viesti näkyy. Se piirretään selaimeesi, eikä sitä lähetetä, ja kuvat haetaan tältä palvelimelta – niinpä esikatselussa näkyvät myös ne kuvat, jotka kehityskoneelta lähetetystä viestistä jäävät pois.",
+      "refreshPreview": "Päivitä esikatselu",
+      "previewError": "Mallin hahmontaminen epäonnistui: {message}",
+      "previewWidth": {
+        "label": "Esikatselun leveys",
+        "desktop": "Työpöytä",
+        "mobile": "Mobiili"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -954,6 +1027,8 @@
       "passwordPlaceholder": "Luo vahva salasana",
       "confirmPasswordPlaceholder": "Vahvista salasanasi",
       "location": "Sijainti",
+      "marketingConsentLabel": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
+      "marketingConsentHint": "Vapaaehtoinen — voit muuttaa tätä milloin tahansa asetuksissasi.",
       "creatingAccount": "Luodaan tiliä...",
       "accountExists": "Tällä sähköpostiosoitteella on jo tili",
       "weakPassword": "Salasana on liian helppo arvata — kokeile pidempää tai sellaista, jota et käytä muualla",
@@ -985,6 +1060,7 @@
     },
     "registerGedu": {
       "title": "Luo School of Gaming -pelikasvattajatilisi",
+      "slogan": "Verkkoajan partiolaiset",
       "certificationAlertTitle": "Tilisi on hyväksyttävä",
       "certificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on hyväksyttävä tilisi, ennen kuin sinut voidaan liittää kerhoon tai leirille.",
       "coverageHeading": "Missä voit työskennellä?",
@@ -998,11 +1074,11 @@
     "create": {
       "enterTitle": "Luo vanhemman PIN",
       "confirmTitle": "Vahvista PIN",
-      "description": "Vanhemman PIN pitää perheesi turvassa. Vain sinä – et koskaan lapsesi – voit hyväksyä ostoksia tai hallita sitä, kenen kanssa he pelaavat. Lasten turvallisuus on kaiken tekemisemme ytimessä School of Gamingissa."
+      "description": "Jokainen ostos, jokainen ilmoittautuminen ja jokainen muutos siihen, kenen kanssa lapsesi pelaavat, kysyy ensin tätä PIN-koodia. Vain sinä tiedät sen, joten tällä tilillä ei osteta eikä muuteta mitään ilman sinua."
     },
     "unlock": {
       "title": "Syötä vanhemman PIN",
-      "description": "PIN pitää lapsesi turvassa – vain sinä voit tehdä ostoksia tai hallita heidän tilejään. Lasten turvallisuus on kaiken tekemisemme ytimessä School of Gamingissa.",
+      "description": "Ostokset ja muutokset lastesi tileihin on suojattu tällä PIN-koodilla, joten vain sinä voit tehdä ne.",
       "forgot": "Unohditko PIN-koodin?"
     },
     "mismatch": "PIN-koodit eivät täsmänneet. Yritetään uudelleen.",
@@ -1243,9 +1319,9 @@
     "forGamer": "Osallistuja: {name}",
     "forSelf": "Osallistuja: sinä",
     "scheduleLabel": "Milloin",
-    "venueLabel": "Missä",
+    "siteLabel": "Missä",
     "aboutHeading": "Tietoa ryhmästä",
-    "venueNoteHeading": "Paikassa {site}",
+    "siteNoteHeading": "Paikassa {site}",
     "feedHeading": "Kerrat",
     "attendancePresent": "Paikalla",
     "attendanceNotPresent": "Ei paikalla",
@@ -1354,7 +1430,22 @@
       "reportSentToParents": "Lähetetty vanhemmille · {sentAt}",
       "reportSendPartial": "{sent} lähetetty, {failed} epäonnistui",
       "sendReportNoReport": "Tällä kerralla ei ole enää tallennettua raporttia lähetettäväksi. Lataa sivu uudelleen nähdäksesi nykyisen sisällön.",
-      "sendReportFailed": "Raportin lähetys ei onnistunut. Yksikään perhe ei saanut sitä – yritä uudelleen."
+      "sendReportFailed": "Raportin lähetys ei onnistunut. Yksikään perhe ei saanut sitä – yritä uudelleen.",
+      "photosTitle": "Kuvat",
+      "photosEmpty": "Lisää kuva tälle kerralle.",
+      "photosDropHint": "Voit myös pudottaa kuvia tähän.",
+      "addPhoto": "Lisää kuva",
+      "removePhoto": "Poista kuva {index}",
+      "photosTrimmed": "Raporttiin mahtuu enintään {cap} kuvaa, joten niistä lisättiin {count, plural, one {vain yksi} other {vain #}}.",
+      "photoErrorDecodeFailed": "Tiedostoa ei voitu avata. Jos kuva on iPhonesta, tallenna se JPEG-muotoon ja yritä uudelleen.",
+      "photoErrorEncodeFailed": "Kuvaa ei voitu käsitellä tällä laitteella. Yritä uudelleen tai valitse pienempi kuva.",
+      "photoErrorNotJpeg": "Tiedosto ei ole JPEG, PNG tai WebP. Muunna se JPEG-muotoon ja yritä uudelleen.",
+      "photoErrorTooLarge": "Kuva on liian suuri ladattavaksi. Kokeile pienempää.",
+      "photoErrorBadDimensions": "Kuvan mittoja ei voitu lukea. Kokeile toista kuvaa.",
+      "photoErrorCapReached": "Tämä raportti on jo täynnä. Poista kuva, jotta voit lisätä uuden.",
+      "photoErrorNotAllowed": "Et voi lisätä kuvia tähän kertaan.",
+      "photoErrorUploadFailed": "Kuvan lataus ei onnistunut. Yritä uudelleen.",
+      "photoErrorRemoveFailed": "Kuvan poistaminen ei onnistunut. Kuva on yhä raportissa — yritä uudelleen."
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
@@ -1372,21 +1463,27 @@
       "saveFailed": "Muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
     },
     "siteNotes": {
-      "heading": "Toimipaikan muistiinpanot",
-      "sharedCaption": "{site} — kaikki tässä toimipaikassa järjestettävät tuotteet näkevät samat muistiinpanot, joten muokkaus näkyy niissä kaikissa.",
+      "heading": "Toimipiste",
+      "sharedCaption": "{site} — kaikki tässä toimipisteessä järjestettävät tuotteet näkevät samat tiedot, joten muokkaus näkyy niissä kaikissa.",
+      "nameLabel": "Nimi",
+      "namePlaceholder": "Toimipisteen nimi",
+      "nameRequired": "Toimipisteellä on oltava nimi.",
       "addressLabel": "Osoite",
+      "addressPlaceholder": "Katuosoite, postinumero, kaupunki",
+      "addressEmpty": "Lisää katuosoite, jotta perheet löytävät toimipisteen.",
       "edit": "Muokkaa",
+      "editSite": "Muokkaa toimipistettä",
       "cancel": "Peruuta",
       "save": "Tallenna",
       "publicEmpty": "Lisää muistiinpano perheille — mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan.",
-      "staffEmpty": "Lisää se, mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta — avaimet, välineet, tilan erityispiirteet.",
+      "staffEmpty": "Lisää se, mitä seuraavan Gedun on hyvä tietää tästä toimipisteestä — avaimet, välineet, tilan erityispiirteet.",
       "publicLabel": "Muistiinpano perheille",
       "publicHint": "Älä koskaan kirjoita tähän yksityisiä tai arkaluonteisia tietoja.",
       "publicPlaceholder": "Mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan…",
       "staffLabel": "Muistiinpano Geduille",
       "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
-      "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta.",
-      "saveFailed": "Toimipaikan muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
+      "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipisteestä.",
+      "saveFailed": "Tallennus ei onnistunut. Yritä uudelleen."
     },
     "contract": {
       "back": "Takaisin Omaan SOGiin",
@@ -1422,6 +1519,19 @@
         "view": "Näytä sopimus"
       },
       "acceptedMeta": "Versio {version}, hyväksytty {date}"
+    },
+    "criminalRecordCheck": {
+      "title": "Rikosrekisteriotteesi",
+      "howItWorks": "Ennen kuin sinut hyväksytään, esität myös lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen (rikostaustaote). Tilaat sen itse Oikeusrekisterikeskuksesta, ja sen on oltava alle kuusi kuukautta vanha, kun näytät sen meille.",
+      "noCopyKept": "Emme säilytä otteesta kopiota emmekä kirjaa siitä mitään – vain sen, että asianmukainen ote on esitetty ja milloin.",
+      "recorded": "Rikosrekisteriotteesi on kirjattu.",
+      "recordedOn": "Rikosrekisteriotteesi kirjattiin {date}.",
+      "stillNeeded": "Vielä tekemättä: näytä meille rikosrekisteriotteesi.",
+      "notice": {
+        "title": "Et ole vielä näyttänyt meille rikosrekisteriotettasi",
+        "body": "Ennen hyväksyntää esität lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen (rikostaustaote). Tilaat sen itse Oikeusrekisterikeskuksesta.",
+        "action": "Lue, miten ote hankitaan"
+      }
     }
   },
   "productType": {
@@ -1443,7 +1553,15 @@
     "readMore": "Lue lisää",
     "showLess": "Näytä vähemmän",
     "lastEditedBy": "Muokannut {name}",
-    "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}"
+    "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}",
+    "photos": {
+      "list": "Tämän kerran kuvat",
+      "open": "Avaa kuva {index}/{count}",
+      "viewer": "Kuva {index}/{count}",
+      "previous": "Edellinen kuva",
+      "next": "Seuraava kuva",
+      "close": "Sulje kuva"
+    }
   },
   "groups": {
     "materialAction": "Opetusmateriaalit",
@@ -1481,7 +1599,9 @@
       "yty": "Yty",
       "about": "Tietoa"
     },
-    "selectProfile": "Vaihda profiilia"
+    "accountMenu": "Tilivalikko – {name}",
+    "continueToAccount": "Jatka tilillesi",
+    "switchTo": "Vaihda profiiliin"
   },
   "help": {
     "title": "Apu",
@@ -1491,17 +1611,12 @@
       "body": "Ota rohkeasti yhteyttä — autamme mielellämme niin sopivan kerhon valinnassa kuin School of Gamingin toimintaan liittyvissä kysymyksissä.",
       "emailLabel": "Sähköpostimme"
     },
-    "about": {
-      "heading": "Mikä School of Gaming on?",
-      "body": "Tutustu kerhojen takana oleviin ihmisiin, lue ajatuksemme pelaamisesta ja oppimisesta sekä katso, miten tapaaminen käytännössä sujuu.",
-      "linkLabel": "Lue lisää meistä"
-    },
     "faq": {
       "heading": "Usein kysytyt kysymykset",
       "items": {
         "whatIsSogverse": {
           "q": "Mikä Sogverse on?",
-          "a": "Sogverse on School of Gamingin alusta Minecraft-kerhoille, joita vetävät ammattitaitoiset pelikasvattajat, jotta ruutuajasta tulisi laatuaikaa."
+          "a": "Sogverse on School of Gamingin alusta kerhoille, leireille ja tapahtumille, joita vetävät ammattitaitoiset pelikasvattajat Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ruutuajasta laatuaikaa."
         },
         "productTypes": {
           "q": "Mikä on kerhojen, leirien ja tapahtumien ero?",
@@ -1513,11 +1628,11 @@
         },
         "safety": {
           "q": "Onko se turvallista lapselleni?",
-          "a": "Jokaisessa tapaamisessa on pelikasvattaja paikalla, yhteisömme ovat moderoituja, eikä kiusaamista suvaita."
+          "a": "Se on rakennettu turvalliseksi. Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Pelien sisäinen chat on eri asia, ja siitä vastaavat pelit itse – omalla Minecraft-palvelimellamme Geduillamme on siihen moderointityökalut, kuten mykistys ja raportointi. Pelaajatilillä on Sogversen sisäinen osoite lapsesi oikean sähköpostiosoitteen sijaan, tili on liitetty vanhemman tiliisi, ja lapsesi kirjautuu sisään sen kautta eikä omalla salasanallaan. Ostokset ja ilmoittautumiset kysyvät vanhemman PIN-koodia. Kiusaamista emme suvaitse lainkaan."
         },
         "howToStart": {
           "q": "Miten pääsen alkuun?",
-          "a": "Luo vanhemman tili, selaa tarjontaa ja ilmoita lapsesi mukaan. Hän kirjautuu omalla tunnuksellaan tapaamisiin."
+          "a": "Luo vanhemman tili, selaa tarjontaa ja ilmoita lapsesi mukaan. Tapaamisiin hän tulee sinun tilisi kautta: vaihdat hänen profiiliinsa, eikä hän tarvitse omaa salasanaa."
         }
       }
     }
@@ -1579,7 +1694,6 @@
       "perMonth": "{price} / kk",
       "upfrontTotal": "{price}",
       "free": "Maksuton",
-      "externalContract": "Kuntasi rahoittama",
       "notAvailableInCurrency": "Ei valuutassa {currency}",
       "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
       "viewDetails": "Katso",
@@ -1617,10 +1731,10 @@
   "productDetail": {
     "jumpToSignup": "{verb} nyt!",
     "back": {
-      "consumer_club": "Kaikki kerhot",
-      "municipality_club": "Kaikki kuntakerhot",
-      "camp": "Kaikki leirit",
-      "event": "Kaikki tapahtumat"
+      "consumer_club": "Takaisin kerhoihin",
+      "municipality_club": "Takaisin kuntakerhoihin",
+      "camp": "Takaisin leireihin",
+      "event": "Takaisin tapahtumiin"
     },
     "typeLabel": {
       "consumer_club": "Kerho",
@@ -1646,7 +1760,7 @@
           "linkLabel": "Mistä sen saa"
         },
         "minecraft_education": {
-          "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii. Minecraft Education on luokkahuoneeseen tehty versio: samaa mukavaa ja avointa rakentamista, mutta mukana on lisätyökaluja opettajille, ja se on suunniteltu ohjaajan johtamaan toimintaan eikä yksin pelaamiseen.",
+          "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii. Minecraft Education on luokkahuoneeseen tehty versio: samaa mukavaa ja avointa rakentamista, mutta mukana on lisätyökaluja tapaamista vetävälle aikuiselle, ja se on suunniteltu ohjattuun toimintaan eikä yksin pelaamiseen.",
           "note": "Mitään ei tarvitse ostaa eikä koulun tiliä järjestää – School of Gaming tarjoaa Minecraft Education -tilit, joita osallistujat käyttävät kerhossa. Etäkerhoissa lapsesi tarvitsee lisäksi itse pelin, jonka voi ladata maksutta Microsoft Storesta tai Minecraft Educationin omilta sivuilta.",
           "linkLabel": "Tietoa Minecraft Educationista"
         },
@@ -1662,7 +1776,7 @@
         },
         "roblox_studio": {
           "description": "Roblox Studio on ilmainen työkalu, jolla Roblox-pelit tehdään. Lapset suunnittelevat maailmoja, rakentavat 3D-työkaluilla ja ohjelmoivat oikealla koodilla, joten omat ideat muuttuvat peleiksi, joita muut voivat oikeasti pelata. Kerhoissamme lapset eivät pelaa vaan luovat – kyse on oikeasta pelinkehityksestä.",
-          "note": "Roblox Studio on ilmainen – mitään ei tarvitse ostaa. Se toimii vain Windows- ja Mac-tietokoneilla: ei iPadilla tai muulla tabletilla, ei Chromebookilla, puhelimella eikä pelikonsolilla, joten osallistumiseen lapsesi tarvitsee pöytäkoneen tai kannettavan. Lisäksi tarvitaan ilmainen Roblox-tili, jonka ikäasetus määrää keskustelu- ja yksityisyysasetukset. Valmiit luomukset voi julkaista muiden pelaajien löydettäväksi ja pelattavaksi.",
+          "note": "Roblox Studio on ilmainen – mitään ei tarvitse ostaa. Se toimii vain Windows- ja Mac-tietokoneilla: ei iPadilla tai muulla tabletilla, ei Chromebookilla, puhelimella eikä pelikonsolilla. Lisäksi tarvitaan ilmainen Roblox-tili, jonka ikäasetus määrää keskustelu- ja yksityisyysasetukset. Valmiit luomukset voi julkaista muiden pelaajien löydettäväksi ja pelattavaksi.",
           "linkLabel": "Hanki Roblox Studio"
         },
         "rocket_league": {
@@ -1715,7 +1829,7 @@
       "ctaSubmitting": "Hetki…",
       "ctaAddGamer": "Lisää pelaaja jatkaaksesi",
       "ctaAllSet": "Olet valmis",
-      "ctaAgreeRules": "Hyväksy säännöt",
+      "ctaAgreeConsent": "Anna vaadittu suostumus",
       "ctaWaitlist": "Liity jonotuslistalle",
       "ctaSignIn": {
         "consumer_club": "Kirjaudu sisään ilmoittautuaksesi",
@@ -1734,13 +1848,23 @@
       "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
       "nonCustomerNoteParents": "Vain vanhempi voi ilmoittautua tähän.",
       "closedNote": "Tämä ei ole juuri nyt avoinna. Pidä silmällä seuraavaa kierrosta.",
-      "rulesHeading": "Säännöt",
       "rules": {
-        "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
-        "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
-        "municipality_club_self": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikkani seuraavalle jonossa olevalle perheelle.",
-        "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
-        "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä."
+        "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan.",
+        "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
+        "municipality_club_self": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikkani seuraavalle jonossa olevalle perheelle.",
+        "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan.",
+        "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan."
+      },
+      "consents": {
+        "heading": "Suostumus",
+        "agree": "Olen lukenut nämä asiakirjat ja hyväksyn ne.",
+        "bundles": {
+          "robloxProgramme": "Olen lukenut ja hyväksyn Roblox-ohjelman <terms>käyttöehdot</terms> ja <privacy>tietosuojaselosteen</privacy>."
+        },
+        "marketing": {
+          "lynxEducate": "Yhteystietoni saa jakaa luotetun kumppanimme <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia ja tarjouksia.",
+          "hint": "Vapaaehtoinen — voit muuttaa tätä milloin tahansa asetuksissasi."
+        }
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Kenet ilmoitat?",
@@ -1769,12 +1893,16 @@
       "subscriptionHint": "Laskutetaan kuukausittain · peru milloin tahansa.",
       "free": "Maksuton",
       "freeHint": "Maksua ei tarvita.",
-      "external": "Sinulle maksuton · kuntasi maksaa",
-      "externalHint": "Maksua ei tarvita – kuntasi kattaa kustannukset.",
+      "external": "Kustannettu kunnan toimesta",
       "upfrontHint": "Kertamaksu.",
       "notAvailable": "Hinta ei vielä saatavilla valuutassa {currency}.",
       "cadenceMonth": "/ kk",
-      "firstChargeOn": "Ensimmäinen maksu: {date} — tänään ei veloiteta mitään."
+      "firstChargeOn": "Ensimmäinen maksu: {date} — tänään ei veloiteta mitään.",
+      "guarantee": {
+        "title": "30 päivän rahat takaisin -takuu",
+        "body": "Jos kerho ei ole oikea lapsellesi, palautamme rahat – kiusallista keskustelua ei tarvita. 30 päivää alkaa lapsesi ensimmäisestä kerhokerrasta.",
+        "contact": "Lähetä vain viesti osoitteeseen <link>{email}</link>, niin oikea ihminen hoitaa asian."
+      }
     },
     "countdown": {
       "days": "pv",
@@ -1795,6 +1923,7 @@
     "municipalityClubs": "Kuntakerhot",
     "camps": "Leirit",
     "events": "Tapahtumat",
+    "sites": "Toimipisteet",
     "uiComponents": "UI-komponentit",
     "uiPreviews": "UI-esikatselut",
     "whatsapp": "WhatsApp",
@@ -1807,17 +1936,17 @@
   "home": {
     "hero": {
       "title": "<primary>Ruutuajasta</primary><br></br><secondary>Laatuaikaa</secondary>",
-      "subtitle": "Ammattilaisten suunnittelemat Minecraft-kerhomme edistävät tervettä pelaamista harrastuksena. Maailmanluokan pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
+      "subtitle": "Taidolla suunnitellut kerhomme edistävät tervettä pelaamista harrastuksena Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ammattitaitoiset pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",
       "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa.",
       "minecraftClubs": {
-        "title": "Ohjatut Minecraft-kerhot",
-        "description": "Pelikasvattajamme eli gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
+        "title": "Jokaisessa tapaamisessa on Gedu",
+        "description": "Pelikasvattajamme eli Gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
       },
       "screenTime": {
-        "title": "Ruutuajasta laatuaikaa",
+        "title": "Suunniteltu kartuttamaan oikeita taitoja",
         "description": "Ammattilaisten suunnittelemat kerhot muuttavat pelaamisen leikilliseksi oppimiskokemukseksi, jossa lapset kehittyvät monipuolisesti ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
       },
       "newFriends": {
@@ -1830,8 +1959,8 @@
       }
     },
     "howItWorks": {
-      "heading": "Näin se toimii",
-      "subheading": "Liity Minecraft-kerhoon kolmella helpolla askeleella.",
+      "heading": "Oppimista pelaamalla.",
+      "subheading": "Näin se toimii: liity kerhoon, leirille tai tapahtumaan kolmella helpolla askeleella.",
       "step1": {
         "title": "Luo tilisi",
         "description": "Rekisteröidy vanhempana ja luo pelaajatilit lapsillesi."
@@ -1842,7 +1971,7 @@
       },
       "step3": {
         "title": "Liity seikkailuun",
-        "description": "Pelaajasi kirjautuvat joka viikko, tapaavat pelikasvattajansa ja sukeltavat Minecraft-seikkailuihin uusien ystävien kanssa."
+        "description": "Pelaajasi kirjautuvat joka viikko, tapaavat pelikasvattajansa ja sukeltavat seikkailuun uusien ystävien kanssa."
       }
     },
     "cta": {
@@ -1903,6 +2032,21 @@
         "confirmDescriptionSelf": "Menetät paikkasi jonossa ({product}).",
         "confirmCta": "Poistu jonotuslistalta",
         "backOfLineWarning": "Jos liityt jonotuslistalle myöhemmin uudelleen, aloitat jonon lopusta."
+      },
+      "seatOffer": {
+        "title": "Paikka vapautui",
+        "bodyChild": "{name} voi saada paikan, jos haluat sen edelleen.",
+        "bodySelf": "Paikka on sinun, jos haluat sen edelleen.",
+        "bodyGamer": "Kysyimme vanhemmaltasi, haluatteko paikan edelleen.",
+        "deadline": "Vastaa viimeistään {deadline}, tai paikka siirtyy jonossa seuraavalle perheelle.",
+        "lapsed": "Tarjous ehti umpeutua, eikä paikkaa voi enää ottaa vastaan. Jos et enää tarvitse paikkaa, kerro siitä silti. Se auttaa meitä.",
+        "accept": "Otan paikan",
+        "decline": "Ei kiitos",
+        "confirmTitle": "Luovutko paikasta?",
+        "confirmBodyChild": "{name} menettää paikkansa jonossa, ja tarjoamme paikkaa seuraavalle perheelle.",
+        "confirmBodySelf": "Menetät paikkasi jonossa, ja tarjoamme paikkaa seuraavalle perheelle.",
+        "confirmCta": "Kyllä, olen varma",
+        "error": "Jokin meni pieleen, eikä vastaustasi tallennettu. Yritä uudelleen tai kirjoita meille osoitteeseen {supportEmail}."
       }
     },
     "help": {
@@ -2012,7 +2156,12 @@
     "sendVerificationEmail": "Lähetä vahvistusviesti",
     "verificationEmailSent": "Vahvistusviesti lähetetty – tarkista sähköpostisi.",
     "verificationEmailRateLimited": "Olet pyytänyt vahvistusviestiä liian monta kertaa. Odota hetki, ennen kuin yrität uudelleen.",
-    "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen."
+    "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen.",
+    "marketing": {
+      "title": "Markkinointiasetukset",
+      "schoolOfGaming": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
+      "lynxEducate": "Yhteystietoni saa jakaa luotetun kumppanimme <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia ja tarjouksia."
+    }
   },
   "tools": {
     "uncertified": {
@@ -2239,16 +2388,16 @@
   "yty": {
     "hero": {
       "title": "Mikä on <primary>Yty</primary>?",
-      "subtitle": "Yty on maaginen voima, joka ylläpitää Sogversen maailmojen herkkää tasapainoa. Tekemällä hyviä asioita — oppimalla uusia taitoja, saamalla ystäviä, käyttäytymällä hyvin ja osallistumalla yhteisöön — pelaajat ansaitsevat Yty-pisteitä itselleen ja kaikille."
+      "subtitle": "Yty on voima, joka pitää Sogversen tasapainossa. Tekemällä hyviä asioita — oppimalla uusia taitoja, saamalla ystäviä, käyttäytymällä hyvin ja osallistumalla yhteisöön — pelaajat ansaitsevat Ytyä itselleen ja kaikille."
     },
     "overview": {
       "heading": "Miten Yty toimii",
-      "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta osallistumiskerrasta, suoritetusta haasteesta ja ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Nämä pisteet kertyvät neljän elementin alle, joista jokainen heijastaa eri osa-aluetta hyvästä kasvusta.",
-      "paragraph2": "Kun pelaajat keräävät Yty-pisteitä itselleen, he kasvattavat myös koko Sogversen Yty-tasoa — muokaten tarinaa ja avaten uusia mahdollisuuksia koko yhteisölle."
+      "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta tapaamisesta, jokaisesta suoritetusta tehtävästä ja jokaisesta ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Pisteet kertyvät neljään Yty-elementtiin, joista jokainen kuvastaa eri puolta hyvästä kasvusta.",
+      "paragraph2": "Kun pelaajat keräävät Ytyä itselleen, he kasvattavat samalla koko Sogversen Ytyä — muokaten tarinaa ja avaten uusia mahdollisuuksia koko yhteisölle."
     },
     "elements": {
-      "heading": "Yty:n neljä elementtiä",
-      "subheading": "Jokainen elementti kuvastaa pelaajan suhdetta eri osa-alueeseen maailmastaan",
+      "heading": "Neljä Yty-elementtiä",
+      "subheading": "Jokainen Yty-elementti on yksi suhde, jota pelaaja kasvattaa: suhde itseensä, muihin, yhteiskuntaan ja teknologiaan",
       "harmony": {
         "name": "Harmonia",
         "description": "Suhteesi itseesi",
@@ -2261,20 +2410,20 @@
       },
       "valor": {
         "name": "Kantti",
-        "description": "Suhteesi maailmaan",
-        "detail": "Miten voin tehdä vaikutuksen? Kantti on oman paikkansa löytämistä maailmassa ja rohkeutta osallistua. Se tarkoittaa tiimityötä, omien ideoiden ilmaisemista, mielikuvituksen käyttöä ja työskentelyä paremman tulevaisuuden puolesta — paikallisesti ja maailmanlaajuisesti."
+        "description": "Suhteesi yhteiskuntaan",
+        "detail": "Miten minä voin vaikuttaa? Kantti on oman paikkansa löytämistä yhteiskunnassa ja rohkeutta osallistua siihen. Se tarkoittaa tiimityötä, omien ideoiden ilmaisemista, mielikuvituksen käyttöä ja työskentelyä paremman tulevaisuuden puolesta — paikallisesti ja maailmanlaajuisesti."
       },
       "wit": {
         "name": "Arkijärki",
-        "description": "Suhteesi mediaan ja teknologiaan",
-        "detail": "Miten navigoin digitaalisessa maailmassa? Arkijärki on terve ja kriittinen suhde peleihin, mediaan ja teknologiaan. Se tarkoittaa verkkokäyttäytymisen ymmärtämistä, kriittistä ajattelua tiedosta ja ruutuajan tasapainottamista muun elämän kanssa."
+        "description": "Suhteesi teknologiaan",
+        "detail": "Miten käytän teknologiaa hyvin? Arkijärki on terve ja kriittinen suhde peleihin, mediaan ja niiden ympärillä oleviin välineisiin. Se tarkoittaa verkkokäyttäytymisen ymmärtämistä, tiedon kriittistä arviointia ja ruutuajan tasapainottamista muun elämän kanssa."
       }
     },
     "earning": {
-      "heading": "Miten pelaajat ansaitsevat Yty-pisteitä",
-      "paragraph1": "Yty-pisteitä ansaitaan osallistumalla. Viikoittaiset kerhokerrat, tehtävien ja haasteiden suorittaminen, ystävällisyys kanssapelaajia kohtaan, yhteisötapahtumat ja leirit — kaikki nämä kartuttavat pelaajan Yty-pisteitä.",
-      "paragraph2": "Kun pisteitä kertyy tiettyjen saavutusmerkkien alle, pelaajat etenevät tasoissa — pronssista hopeaan, kultaan, platinaan ja timanttiin. Jokainen piste syöttää myös pelaajan yleistä Yty-tasoa ja elementtiä, johon se kuuluu.",
-      "paragraph3": "Eikä kyse ole vain pelaajista. Gedut, vanhemmat ja koko yhteisö voivat osallistua Sogversen Yty:n rakentamiseen tapahtumien ja yhteisten aktiviteettien kautta."
+      "heading": "Miten pelaajat ansaitsevat Ytyä",
+      "paragraph1": "Yty-pisteitä ansaitaan osallistumalla. Viikoittaiset kerhokerrat, suoritetut tehtävät, ystävällisyys kanssapelaajia kohtaan, yhteisötapahtumat ja leirit — kaikki nämä kartuttavat pelaajan Ytyä.",
+      "paragraph2": "Kun pisteitä kertyy tiettyjen saavutusmerkkien alle, pelaajat nostavat niiden tasoa — pronssista hopeaan, kultaan, platinaan ja timanttiin. Jokainen piste kasvattaa myös pelaajan yleistä Yty-tasoa ja sitä Yty-elementtiä, johon se kuuluu.",
+      "paragraph3": "Eikä kyse ole vain pelaajista. Gedut, vanhemmat ja koko yhteisö voivat osallistua Sogversen Ytyn rakentamiseen tapahtumien ja yhteisten aktiviteettien kautta."
     }
   },
   "email": {
@@ -2371,7 +2520,8 @@
       "price": {
         "subscription": "{amount} / kk",
         "upfront": "{amount} (kertamaksu)",
-        "free": "Ilmainen"
+        "free": "Ilmainen",
+        "external": "Kustannettu kunnan toimesta"
       },
       "nextTitle": "Mitä seuraavaksi tapahtuu",
       "next": {
@@ -2405,11 +2555,50 @@
       "groupLabel": "Ryhmä",
       "dateLabel": "Päivä",
       "timeLabel": "Aika",
+      "photosHeading": "Kuvia tästä kerrasta",
       "productButton": "Avaa Oma SOG",
       "closing": "Tämä raportti, aiemmat raportit ja tulevat kerrat löytyvät kaikki Oma SOG -sivulta kohdasta {productName}.",
       "staffCopyLabel": "Kopio Geduille ja ylläpitäjille",
       "staffCopyBody": "Tämä on kopio raportista, joka lähetettiin ryhmän perheille. Saat sen lähettäjänä tai ylläpitäjänä, et vanhempana.",
       "staffCopyPrivacy": "Jokainen perhe sai oman erillisen viestinsä, joka oli osoitettu vain sen omalle perheelle. Gedujen ja ylläpitäjien osoitteet näkyvät vain tämän viestin vastaanottaja- ja kopiokentissä: yksikään vanhempi ei näe niitä eikä muiden perheiden osoitteita."
+    },
+    "seatOffer": {
+      "heading": "Paikka vapautui",
+      "question": "Haluatko paikan edelleen? Kerro meille kummin päin tahansa – kieltävä vastaus auttaa yhtä paljon, sillä silloin voimme tarjota paikkaa heti seuraavalle perheelle.",
+      "deadlineLabel": "Vastaa viimeistään",
+      "deadlineBody": "{deadline}. Jos emme kuule sinusta siihen mennessä, paikka siirtyy jonossa seuraavalle perheelle.",
+      "accept": "Otan paikan",
+      "decline": "Ei kiitos",
+      "alsoInMySog": "Sama kysymys odottaa Oma SOG -sivulla, jos vastaat mieluummin siellä.",
+      "dashboardButton": "Vastaa Oma SOG -sivulla",
+      "child": {
+        "subject": "{participantName}: paikka vapautui – {productName}",
+        "opening": "Lupasimme ilmoittaa heti, kun paikka vapautuu. Nyt niin kävi: {participantName} pääsee mukaan – {productName}."
+      },
+      "self": {
+        "subject": "Paikka vapautui – {productName}",
+        "opening": "Lupasimme ilmoittaa heti, kun paikka vapautuu. Nyt niin kävi: pääset mukaan – {productName}."
+      }
+    },
+    "seatOfferStaff": {
+      "participant": "Kenelle paikka",
+      "contact": "Yhteyshenkilö",
+      "contactEmail": "Sähköposti",
+      "product": "Tuote",
+      "schedule": "Aikataulu",
+      "offeredAt": "Tarjottu",
+      "nextStep": "Tarjous on päättynyt ja paikka on jälleen vapaana. Avaa tuote, katso jonotuslista ja lähetä seuraava kutsu.",
+      "button": "Avaa tuote",
+      "declined": {
+        "subject": "{participantName} kieltäytyi paikasta – {productName}",
+        "heading": "Paikkatarjouksesta kieltäydyttiin",
+        "body": "Perhe ei voi ottaa paikkaa vastaan ja kertoi siitä meille sen sijaan, että olisi jättänyt asian auki. Heidät on poistettu jonotuslistalta."
+      },
+      "no_response": {
+        "subject": "Paikkatarjoukseen ei vastattu: {participantName} – {productName}",
+        "heading": "Paikkatarjous vanheni",
+        "body": "Vastausaika päättyi ilman vastausta. Perhe on edelleen jonotuslistalla ja paikkaa voi tarjota heille uudelleen, mutta paikka itsessään on nyt vapaa."
+      }
     }
   },
   "legal": {
@@ -2422,7 +2611,7 @@
     "intro": {
       "heading": "Lyhyesti",
       "paragraphs": [
-        "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Perheesi yksityisyyden – ja ennen kaikkea lapsesi yksityisyyden – suojaaminen on meille tärkeää, joten kirjoitimme tämän selkeällä kielellä ilman juridista jargonia.",
+        "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Tällä sivulla kerromme tärkeimmät tiedot, joita lapsestasi säilytämme, ja miksi – selkeällä kielellä ilman juridista jargonia, jotta voit tarkistaa asian itse. Pelaajatilillä on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ja tili on olemassa vain oman tilisi sisällä.",
         "Lyhyesti: keräämme vain ne tiedot, joita tarvitsemme kerhojen, leirien ja tapahtumien järjestämiseen. Emme koskaan myy sinun emmekä lapsesi tietoja. Vain vanhempi voi luoda lapselle käyttäjätilin, emmekä koskaan mainosta lapsille. Voit milloin tahansa pyytää meitä näyttämään, korjaamaan tai poistamaan tietosi lähettämällä viestin osoitteeseen {supportEmail}."
       ]
     },
@@ -2449,8 +2638,9 @@
           "Kieli- ja valuuttavalintasi – jotta sivusto näkyy sinulle odottamallasi tavalla.",
           "Salasanasi, jonka tallennamme vain salatussa (tiivistetyssä) muodossa – emme voi koskaan nähdä sitä.",
           "Maksutiedot käsitellään suoraan Stripessä. Emme koskaan näe emmekä tallenna koko korttinumeroasi.",
-          "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein.",
-          "Halutessasi lapsesi Minecraft-käyttäjätunnuksen – jotta hän voi yhdistää Minecraft-palvelimellemme tapaamisten aikana.",
+          "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan.",
+          "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet pelissä ja jotta hän voi liittyä Minecraft-palvelimellemme tapaamisten aikana.",
+          "Pelikasvattajiemme kirjoittamat merkinnät tapaamisista – läsnäolot, tapaamisraportit ja lyhyet muistiinpanot, jotka auttavat meitä tukemaan lastasi ryhmässä.",
           "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet ja analytiikka\" jäljempänä).",
           "Lyhyen koodin, joka kertoo, minkä koulun, kerhon tai kumppanin jakaman linkin kautta tulit sivustollemme – jotta tiedämme, mikä viestintä tavoittaa perheitä, ja voimme kertoa kumppaneillemme, toimiko heidän linkkinsä."
         ]
@@ -2460,7 +2650,7 @@
         "paragraphs": [
           "Suurin osa Sogversen käyttäjistä on lapsia, joten heidän turvallisuutensa ja yksityisyytensä on meille tärkeintä.",
           "Lapsi ei voi koskaan luoda omaa tiliään itse. Vain vanhempi tai huoltaja luo lapsen tilin, päättää mitä tietoja jaetaan ja antaa luvan lapsen puolesta. Näin täytämme lapsia koskevat velvollisuutemme tietosuojalainsäädännön mukaan.",
-          "Pidämme lasten tiedot vähäisinä, emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisissa lapset ovat aina koulutetun pelikasvattajan (kutsumme heitä Geduiksi) seurassa.",
+          "Kerromme edellä kohdassa \"Mitä tietoja keräämme\", mitä lapsesta säilytämme. Emme kerää lapsesta muuta kuin sen, mitä kerhojen, leirien ja tapahtumien järjestäminen vaatii. Emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
           "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen {supportEmail}, niin hoidamme asian."
         ]
       },
@@ -2502,7 +2692,9 @@
           "Brevo – lähettää sähköpostimme, kuten kuitit ja muistutukset.",
           "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset.",
           "Vercel – ylläpitää sivustoa ja tarjoaa nimettömät, evästeettömät käyttötilastot.",
-          "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia."
+          "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia.",
+          "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin ja näyttää hänen hahmokuvansa.",
+          "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin."
         ]
       },
       "cookies": {
@@ -2516,7 +2708,7 @@
       "voice": {
         "heading": "Ääni- ja videotapaamiset",
         "paragraphs": [
-          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Jokaista tapaamista johtaa ja valvoo yksi koulutetuista pelikasvattajistamme, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui."
+          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Koulutetut pelikasvattajamme ohjaavat tapaamiset livenä, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui."
         ]
       },
       "retention": {
@@ -2572,7 +2764,7 @@
       "heading": "Lyhyesti",
       "paragraphs": [
         "Nämä ovat Sogversen käyttöehdot ja ehdot, joilla ilmoitat lapsesi kerhoihin, leireille ja tapahtumiin. Olemme kirjoittaneet ne selkeällä kielellä, koska haluamme sinun ymmärtävän, mihin sitoudut – emme halua piilottaa asioita lakitekstin taakse.",
-        "Lyhyesti: kerhomme toimivat verkossa, ja koulutettu pelikasvattaja valvoo lastasi aina. Voit perua kuukausittaisen kerhon milloin tahansa, ja lapsesi ensimmäiseen kertaan liittyy rahat takaisin -takuu. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen {supportEmail}, niin oikea ihminen auttaa."
+        "Lyhyesti: kerhomme toimivat verkossa, ja niitä ohjaavat koulutetut pelikasvattajamme. Voit perua kuukausittaisen kerhon milloin tahansa, ja jokaisessa kerhossa on 30 päivän rahat takaisin -takuu: jos kerho ei ole oikea lapsellesi, kerro meille 30 päivän kuluessa hänen ensimmäisestä kerhokerrastaan, niin palautamme koko maksun. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen {supportEmail}, niin oikea ihminen auttaa."
       ]
     },
     "sections": {
@@ -2604,7 +2796,7 @@
       "online": {
         "heading": "Turvallisesti verkossa",
         "paragraphs": [
-          "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta, ja koulutettu pelikasvattajamme (kutsumme heitä geduiksi) valvoo jokaista istuntoa. Lapset eivät ole koskaan verkossa kanssamme ilman valvontaa."
+          "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta. Koulutetut pelikasvattajamme (kutsumme heitä Geduiksi) ohjaavat istunnot livenä."
         ]
       },
       "pricing": {
@@ -2617,7 +2809,7 @@
         "heading": "Kuukausittaisen kerhon peruminen",
         "paragraphs": [
           "Kerhomme toimivat kuukausitilauksena, ja voit perua sen milloin tahansa – mitään määräaikaista sitoutumista ei ole. Voit tehdä sen itse omalta tililtäsi, ja lapsesi säilyttää paikkansa sen kuukauden loppuun, jonka olet jo maksanut.",
-          "Haluamme myös, että voit kokeilla meitä huoletta. Jos lapsesi osallistuu ensimmäiseen kertaan eikä se tunnu sopivalta, kerro meille kahden päivän kuluessa tästä ensimmäisestä kerrasta, niin palautamme koko maksun."
+          "Haluamme myös, että voit kokeilla meitä huoletta, joten jokaisessa kerhossa on 30 päivän rahat takaisin -takuu. Jos kerho ei osoittaudu lapsellesi sopivaksi, lähetä viesti osoitteeseen {supportEmail} 30 päivän kuluessa hänen ensimmäisestä kerhokerrastaan, niin palautamme kaiken, mitä olet kyseisestä kerhosta maksanut. Lomaketta ei tarvitse täyttää eikä syytä tarvitse kertoa."
         ]
       },
       "campsCancellation": {
@@ -2642,7 +2834,7 @@
       "privacy": {
         "heading": "Perheesi yksityisyys",
         "paragraphs": [
-          "Suhtaudumme perheesi – ja erityisesti lapsesi – yksityisyyteen erittäin vakavasti, ja käsittelemme tietojasi Suomen ja EU:n tietosuojalainsäädännön mukaisesti. <linkPrivacy>Tietosuojaselosteemme</linkPrivacy> kertoo tarkalleen, mitä keräämme ja miksi."
+          "Käsittelemme perheesi tietoja Suomen ja EU:n tietosuojalainsäädännön mukaisesti, ja säilytämme lapsestasi niin vähän tietoa kuin pystymme: pelaajatilin luot sinä, sillä on Sogversen sisäinen osoite lapsesi oman sähköpostiosoitteen sijaan, eikä sitä käytetä koskaan mainontaan lapselle. <linkPrivacy>Tietosuojaselosteemme</linkPrivacy> kertoo tarkalleen, mitä keräämme ja miksi."
         ]
       },
       "changes": {
@@ -2665,13 +2857,13 @@
     "intro": {
       "heading": "Lyhyesti",
       "paragraphs": [
-        "Jokaisen lapsen tulee tuntea olonsa turvalliseksi, arvostetuksi ja tervetulleeksi kerhoissamme. Kiusaamiselle ja ilkeydelle ei ole täällä sijaa, ja suhtaudumme niihin vakavasti.",
+        "Jokaisen lapsen tulee tuntea olonsa turvalliseksi, arvostetuksi ja tervetulleeksi kerhoissamme. Kiusaamiselle ja ilkeydelle ei ole täällä sijaa – eikä Sogverse-alustalla voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta.",
         "Kun jokin menee pieleen, emme pelkästään rankaise – me autamme. Käytämme rauhallista, askel askeleelta etenevää tapaa, joka keskittyy auttamaan lasta ymmärtämään tapahtunutta, korjaamaan tilanteen ja toimimaan paremmin seuraavalla kerralla. Siirrymme tiukempaan vaiheeseen vain, jos käytös jatkuu, ja pidämme sinut ajan tasalla koko ajan."
       ]
     },
     "sections": {
       "commitment": {
-        "heading": "Lupauksemme lapsellesi",
+        "heading": "Lapset ensin. Aina.",
         "paragraphs": [
           "Kerhomme ovat paikka oppia, saada kavereita ja pitää hauskaa – ja se onnistuu vain, jos jokainen tuntee olonsa turvalliseksi. Olemme sitoutuneet yhteisöön, jossa ei ole kiusaamista, häirintää eikä ilkeyttä ja jossa sekä pelikasvattajat että lapset kohtelevat toisiaan kunnioittavasti."
         ]
@@ -2679,7 +2871,7 @@
       "approach": {
         "heading": "Miten käsittelemme ongelmia",
         "paragraphs": [
-          "Kun lapsi käyttäytyy tavalla, joka satuttaa tai häiritsee muita, pelikasvattajamme (kutsumme heitä geduiksi) reagoivat rauhallisesti, ystävällisesti ja lapsen ikään sopivalla tavalla. Tavoitteena on aina auttaa lasta ymmärtämään tekonsa vaikutus ja korjaamaan tilanne – ei pelkkä rankaiseminen.",
+          "Kun lapsi käyttäytyy tavalla, joka satuttaa tai häiritsee muita, pelikasvattajamme (kutsumme heitä Geduiksi) reagoivat rauhallisesti, ystävällisesti ja lapsen ikään sopivalla tavalla. Tavoitteena on aina auttaa lasta ymmärtämään tekonsa vaikutus ja korjaamaan tilanne – ei pelkkä rankaiseminen.",
           "Hoidamme useimmat tilanteet hellävaraisesti, juttelemalla kahden kesken. Jos käytös jatkuu, otamme tiukempia askelia yksi kerrallaan. Alla olevat vaiheet ovat portaikko, jota seuraamme, ja pidämme sinut mukana koko matkan."
         ]
       },
@@ -2692,25 +2884,25 @@
       "step2": {
         "heading": "Vaihe 2 – Kahdenkeskinen juttelu",
         "paragraphs": [
-          "Jos tilanne toistuu, gedu juttelee lapsesi kanssa kahden kesken ja pohtii yhdessä hänen kanssaan tekoa ja sen vaikutusta muihin. Kerromme myös kotiin, että olemme keskustelleet lapsesi kanssa hänen käytöksestään kerhossa."
+          "Jos tilanne toistuu, Gedu juttelee lapsesi kanssa kahden kesken ja pohtii yhdessä hänen kanssaan tekoa ja sen vaikutusta muihin. Kerromme myös kotiin, että olemme keskustelleet lapsesi kanssa hänen käytöksestään kerhossa."
         ]
       },
       "step3": {
         "heading": "Vaihe 3 – Puuttuminen istunnon aikana",
         "paragraphs": [
-          "Jos häiritsevä käytös jatkuu, gedu puuttuu siihen istunnon aikana – esimerkiksi mykistämällä lapsen hetkeksi tai rajoittamalla sitä, mitä hän voi pelissä tehdä. Gedu juttelee lapsesi kanssa kahden kesken, ja me viestimme kotiin."
+          "Jos häiritsevä käytös jatkuu, Gedu puuttuu siihen istunnon aikana – esimerkiksi mykistämällä lapsen hetkeksi tai rajoittamalla sitä, mitä hän voi pelissä tehdä. Gedu juttelee lapsesi kanssa kahden kesken, ja me viestimme kotiin."
         ]
       },
       "step4": {
         "heading": "Vaihe 4 – Jäähy istunnosta",
         "paragraphs": [
-          "Jos tilanne ei vieläkään rauhoitu, gedu voi pyytää lasta jäämään pois istunnon loppuosasta. Jos tarvitaan pidempi tauko, kerromme siitä etukäteen. Gedu juttelee asian läpi kahden kesken lapsesi kanssa, me viestimme kotiin, ja kanslia ({supportEmail}) liittyy mukaan keskusteluun."
+          "Jos tilanne ei vieläkään rauhoitu, Gedu voi pyytää lasta jäämään pois istunnon loppuosasta. Jos tarvitaan pidempi tauko, kerromme siitä etukäteen. Gedu juttelee asian läpi kahden kesken lapsesi kanssa, me viestimme kotiin, ja kanslia ({supportEmail}) liittyy mukaan keskusteluun."
         ]
       },
       "step5": {
         "heading": "Vaihe 5 – Tauko yhteisöstä",
         "paragraphs": [
-          "Jos käytös jatkuu kaikesta edellä kuvatusta huolimatta, lapsi voidaan poistaa SOG-yhteisöstä joksikin aikaa – tämä tarkoittaa hänen kerhojaan, Minecraft-palvelintamme ja Discordiamme. Kanslia ottaa sinuun yhteyttä ja kertoo päätöksestä, ja juttelemme tilanteesta myös lapsesi kanssa."
+          "Jos käytös jatkuu kaikesta edellä kuvatusta huolimatta, lapsi voidaan poistaa School of Gamingin yhteisöstä joksikin aikaa – tämä tarkoittaa hänen kerhojaan ja itse Sogversea, mukaan lukien pelipalvelimemme. Kanslia ottaa sinuun yhteyttä ja kertoo päätöksestä, ja juttelemme tilanteesta myös lapsesi kanssa."
         ]
       },
       "step6": {
@@ -2737,7 +2929,7 @@
     "hero": {
       "title": "Rakenna<br></br><primary>Pelaa</primary><br></br><secondary>Omista</secondary>",
       "subtitle": "Ilmainen Roblox-pelisuunnitteluohjelma nuorille – järjestäjinä Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
-      "cta": "Ilmoittaudu nyt"
+      "cta": "Hyppää mukaan!"
     },
     "lockup": {
       "heading": "Yhteistyössä",
@@ -2748,15 +2940,15 @@
     "what": {
       "eyebrow": "Mistä on kyse",
       "heading": "Opi rakentamaan Robloxissa.",
-      "paragraph1": "Ohjelma antaa 15–18-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Lynx Educaten ja School of Gamingin toteuttama ja Robloxin tukema ohjelma on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
+      "paragraph1": "Ohjelma antaa 13–17-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Ohjelman toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa, ja se on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
       "paragraph2": "Ohjelman päätteeksi osallistujat ovat julkaisseet oman teoksensa Robloxissa. Aiempaa kokemusta ei tarvita – pelkkä kiinnostus riittää."
     },
     "why": {
       "eyebrow": "Miksi mukaan",
-      "heading": "Enemmän kuin koodauskurssi",
+      "heading": "Enemmän kuin koodaamisen opettelua",
       "skills": {
-        "title": "Taitoja tulevaisuuteen",
-        "description": "Roblox Studio, tekoälyn avustama suunnittelu ja koodauslogiikan perusteet."
+        "title": "Ihmistaidot",
+        "description": "Roblox Studio, tekoälyn avustama suunnittelu ja koodauslogiikan perusteet – opitaan yhdessä muiden kanssa, ei yksin."
       },
       "people": {
         "title": "Löydä oma porukkasi",
@@ -2782,14 +2974,14 @@
     "how": {
       "eyebrow": "Näin se toimii",
       "heading": "Aloita neljässä helpossa vaiheessa",
-      "subheading": "Valitse sopiva muoto: lähitapahtumia ja verkkotapahtumia yhdestä tunnista neljään viikkoon.",
+      "subheading": "Valitse sopiva muoto: paikan päällä tai verkossa, yhdestä tunnista yhdeksään viikkoon.",
       "step1": {
         "title": "Valitse tapahtuma",
         "description": "Poimi sopiva alta – lisäämme uusia tapahtumia usein, joten käy katsomassa uudelleen."
       },
       "step2": {
         "title": "Luo tili",
-        "description": "Suoraan tapahtuman sivulla. Uusille vanhemmille nopeaa ja ilmaista."
+        "description": "Suoraan ilmoittautumissivulla. Uusille vanhemmille nopeaa ja ilmaista."
       },
       "step3": {
         "title": "Täytä nuoren tiedot",
@@ -2803,7 +2995,10 @@
     "events": {
       "heading": "Tulevat tapahtumat",
       "subheading": "Lisäämme uusia tapahtumia usein – käy katsomassa, mitä on tulossa.",
-      "empty": "Ensimmäisiä tapahtumia aikataulutetaan juuri nyt. Käy pian katsomassa, mitä on tulossa."
+      "empty": "Ensimmäisiä tapahtumia vahvistetaan parhaillaan. Käy pian katsomassa, mitä on tulossa.",
+      "previous": "Edelliset tapahtumat",
+      "next": "Seuraavat tapahtumat",
+      "browseShop": "Selaa kaikkia tapahtumia kaupassa"
     },
     "parents": {
       "eyebrow": "Vanhemmille",
@@ -2811,9 +3006,60 @@
       "body": "Nuorten ohjelman rinnalla järjestämme vanhemmille omia tilaisuuksia verkkoturvallisuudesta, lapsilukoista ja siitä, miten voit tukea nuoren luovaa työtä.",
       "cta": "Katso vanhempien tilaisuudet"
     },
+    "faq": {
+      "heading": "Usein kysytyt kysymykset",
+      "items": {
+        "programme": {
+          "question": "Mistä Ohjelmassa on kyse?",
+          "answer": "Se on ilmainen pelisuunnitteluohjelma, jossa nuoret oppivat rakentamaan Robloxissa. Sen järjestävät Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa. Ohjelma toteutetaan sekä verkossa että paikan päällä eri puolilla Ranskaa, ja lopuksi lapsesi julkaisee oman pelinsä tai esineensä."
+        },
+        "eligibility": {
+          "question": "Kuka voi osallistua?",
+          "answer": "Ranskassa asuvat 13–17-vuotiaat nuoret, jotka vanhempi tai huoltaja ilmoittaa mukaan."
+        },
+        "cost": {
+          "question": "Maksaako osallistuminen mitään?",
+          "answer": "Ei, Ohjelma on ilmoittautuneille perheille 100 % ilmainen!"
+        },
+        "experience": {
+          "question": "Tarvitseeko lapseni aiempaa kokemusta Robloxista?",
+          "answer": "Aiempaa kokemusta ei tarvita – tapaamiset opettavat pelien rakentamisen perusteista aina julkaisuun asti."
+        },
+        "where": {
+          "question": "Missä tapaamiset järjestetään?",
+          "answer": "Lähitapaamisia järjestetään Pariisissa, Lillessä, Strasbourgissa ja Bordeaux’ssa. Verkkotapaamisiin voi osallistua mistä päin Ranskaa tahansa. Kesto vaihtelee 60 minuutista 9 viikkoon.",
+          "answer2": "Tarkemmat tiedot löydät kunkin tapahtuman kohdalta."
+        },
+        "language": {
+          "question": "Millä kielellä tapaamiset pidetään?",
+          "answer": "Tapaamiset pidetään ranskaksi."
+        },
+        "equipment": {
+          "question": "Millaiset välineet lapseni tarvitsee?",
+          "answer": "Verkkoon yhdistetyn tietokoneen (Windows tai Mac) sekä pääsyn Roblox Studioon.",
+          "answer2": "Verkkotapahtumiin osallistutaan omalla tietokoneella, johon Roblox Studio on asennettu. Lähitapahtumissa tietokoneet ja välineet ovat valmiina paikan päällä."
+        },
+        "dataSharing": {
+          "question": "Jaetaanko lapseni tietoja Robloxin kanssa?",
+          "answer": "Osa tilin tiedoista jaetaan Lynx Educaten ja Robloxin kanssa Ohjelman toteuttamiseksi ja sen vaikuttavuuden arvioimiseksi. Tarkat tiedot löydät <linkPrivacy>tietosuojaselosteestamme</linkPrivacy>."
+        },
+        "media": {
+          "question": "Valokuvataanko tai videoidaanko lastani?",
+          "answer": "Tapaamisissa voidaan ottaa valokuvia sisäistä käyttöä varten. Kuvamateriaalin käyttö markkinoinnissa on täysin oma valintasi ilmoittautumisen yhteydessä, ja voit muuttaa sitä milloin tahansa."
+        },
+        "facilitators": {
+          "question": "Ketkä tapaamiset ohjaavat, ja miten heidät on tarkistettu?",
+          "answer": "Pelikasvattajat ovat School of Gamingin kouluttamia ja taustatarkistettuja yhteisen <linkSafeguarding>lasten turvallisuuden toimintaohjeemme</linkSafeguarding> mukaisesti."
+        },
+        "contact": {
+          "question": "Keneen otan yhteyttä, jos minulla on kysyttävää?",
+          "answer": "Kirjoita meille osoitteeseen <linkEmail>{email}</linkEmail>, jos sinulla on kysyttävää tai jokin askarruttaa."
+        }
+      }
+    },
     "cta": {
       "heading": "Valmis aloittamaan?",
-      "body": "Paikkoja on rajoitetusti kaupungeittain ja ryhmittäin.",
+      "body": "Paikkoja on rajoitetusti.",
       "button": "Aloita"
     },
     "legal": {
@@ -2878,7 +3124,7 @@
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming ylläpitää Sogversea, hallinnoi ilmoittautumis- ja oppimisympäristöä, tuottaa opetussisällöt ja pelikasvattajat, ohjaa oppimistapaamiset ja huolehtii lasten turvallisuuden valvonnasta.",
+          "School of Gaming ylläpitää Sogversea, hallinnoi ilmoittautumis- ja oppimisympäristöä, tuottaa tapaamisten sisällöt ja pelikasvattajat, ohjaa oppimistapaamiset ja huolehtii lasten turvallisuuden valvonnasta.",
           "School of Gaming Galactic Oy",
           "Y-tunnus: 3110461-1",
           "Isokatu 56",
@@ -2924,10 +3170,10 @@
         "blocks": [
           "Toiminnasta riippuen voimme kerätä seuraavat tiedot:",
           [
-            "Näyttönimi ja, jos se on aidosti tarpeen, etunimi.",
+            "Lapsen etunimi ja sen rinnalla vanhemman tililtä tallennettu perheen sukunimi. Pelikasvattajat ja muut osallistujat eivät koskaan näe sukunimeä – lapsi osallistuu etunimellään.",
             "Ikä, ikäryhmä tai syntymäkuukausi ja -vuosi täydellisen syntymäajan sijaan.",
             "Roblox-käyttäjätunnus ja Roblox-käyttäjätunniste.",
-            "Kurssi, kerho, leiri, tapahtuma tai ryhmä, johon lapsi osallistuu.",
+            "Kerho, leiri, tapahtuma tai ryhmä, johon lapsi osallistuu.",
             "Läsnäolo, osallistuminen, oppimisen eteneminen ja suorittaminen.",
             "Tieto siitä, julkaiseeko lapsi ensimmäisen Roblox-pelinsä, -kokemuksensa tai -digitaalisen esineensä.",
             "Julkaistun kokemuksen nimi tai linkki, kun se on tarpeen Ohjelman tuloksen todentamiseksi.",
@@ -3103,7 +3349,7 @@
           "Ohjelma toteutetaan yksityisessä ja moderoidussa oppimisympäristössä.",
           [
             "Jokaisen lapsen profiili on liitetty vanhemman tai huoltajan tiliin.",
-            "Lapset käyttävät näyttönimeä eivätkä julkaise yhteystietojaan.",
+            "Lapset osallistuvat pelkällä etunimellään – eivät koskaan yhteystiedoillaan.",
             "Mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut pelikasvattajat.",
             "Viestintä tapahtuu ryhmässä ja valvotusti.",
             "Lasten välillä ei ole yksityisiä suoraviestejä.",
@@ -3229,7 +3475,7 @@
     "intro": {
       "heading": "Sitoumuksemme",
       "blocks": [
-        "Jokaisella Ohjelmaan osallistuvalla lapsella on oikeus tuntea olonsa turvalliseksi, tulla kunnioitetuksi ja saada suojelua – osallistuipa hän verkossa tai lähitapahtumassa. Sekä Lynx Educate että School of Gaming suhtautuvat tähän vastuuseen vakavasti."
+        "Jokaisella Ohjelmaan osallistuvalla lapsella on oikeus tuntea olonsa turvalliseksi, tulla kunnioitetuksi ja saada suojelua – osallistuipa hän verkossa tai lähitapahtumassa. Tämä näkyy siinä, miten Ohjelma on rakennettu: jokaisen lapsen tili on liitetty vanhemman tiliin, viestintä tapahtuu ryhmässä eikä lasten välillä ole yksityisviestejä, ja mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut pelikasvattajat."
       ]
     },
     "sections": {
@@ -3377,5 +3623,55 @@
       "mcHeads": "Piirtää Minecraft-hahmon, joka näkyy liitetyn Minecraft-tilin vieressä. Palvelu ei vaadi mainintaa, joten tämä on kiitos eikä velvollisuus."
     },
     "opensInNewTab": "(avautuu uuteen välilehteen)"
+  },
+  "seatOffer": {
+    "offer": {
+      "title": "Paikka vapautui",
+      "child": "Paikka vapautui: {participantName} pääsee mukaan – {productName}. Haluatko paikan edelleen?",
+      "self": "Paikka vapautui sinulle – {productName}. Haluatko paikan edelleen?",
+      "deadline": "Vastaa viimeistään {deadline}. Sen jälkeen paikka siirtyy jonossa seuraavalle perheelle.",
+      "accept": "Otan paikan",
+      "decline": "Ei kiitos",
+      "confirmTitle": "Luovutko paikasta?",
+      "confirmBody": "Tarjoamme paikkaa jonotuslistalla seuraavalle perheelle, eikä tätä tarjousta voi avata uudelleen.",
+      "confirmAction": "Kyllä, olen varma",
+      "confirmCancel": "Palaa takaisin",
+      "error": "Jokin meni pieleen, eikä vastaustasi tallennettu. Yritä uudelleen tai kirjoita meille osoitteeseen {supportEmail}."
+    },
+    "accepted": {
+      "title": "Paikka on varattu",
+      "body": "Tallensimme paikan teille. Löydät sen Oma SOG -sivulta muiden perheesi ilmoittautumisten joukosta.",
+      "action": "Siirry Oma SOG -sivulle"
+    },
+    "declined": {
+      "title": "Kiitos, kun kerroit",
+      "body": "Poistimme paikan listaltasi. Koska vastasit, voimme antaa sen tänään toiselle perheelle sen sijaan, että se jäisi tyhjäksi."
+    },
+    "expired": {
+      "title": "Tarjouksen aika umpeutui",
+      "body": "Paikkatarjous on voimassa {days} päivää, ja tämä ehti umpeutua ennen kuin saimme vastauksesi.",
+      "declinePrompt": "Olet edelleen jonotuslistalla. Jos perheesi ei enää tarvitse paikkaa, voit kertoa siitä nyt, niin se vapautuu jollekin toiselle.",
+      "declineAction": "Luovun paikasta",
+      "confirmTitle": "Luovutko paikastasi?",
+      "confirmBody": "Poistamme sinut jonotuslistalta. Jos liityt myöhemmin uudelleen, aloitat jonon lopusta."
+    },
+    "used": {
+      "title": "Tämä linkki on jo käytetty",
+      "body": "Tämä kutsu ei ole enää voimassa. Löydät Oma SOG -sivulta kaikki perheesi ilmoittautumiset ja jonotuspaikat.",
+      "action": "Siirry Oma SOG -sivulle"
+    },
+    "invalid": {
+      "title": "Linkki ei toiminut",
+      "body": "Linkki on voinut katketa sähköpostiohjelmassa tai kopioitua vain osittain. Avaa se uudelleen sähköpostista tai kirjoita meille osoitteeseen {supportEmail}, niin autamme."
+    }
+  },
+  "consentDocuments": {
+    "names": {
+      "robloxProgrammeTerms": "Roblox-ohjelman käyttöehdot",
+      "robloxPrivacyPolicy": "Roblox-ohjelman tietosuojaseloste"
+    },
+    "bundles": {
+      "robloxProgramme": "Roblox-ohjelman asiakirjat"
+    }
   }
 }

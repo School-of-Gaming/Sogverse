@@ -1,11 +1,12 @@
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants";
 import { PartnerLockup } from "@/components/roblox/partner-lockup";
 
 /**
- * The /roblox hero: three-beat pixel slogan, subtitle, inert CTA, partner
- * lockup.
+ * The /roblox hero: three-beat pixel slogan, subtitle, CTA, partner lockup.
  *
  * **One column on mobile, two from `md`.** The slogan is centred and small on
  * mobile and goes flush left beside the partner marks on desktop, because the
@@ -65,17 +66,18 @@ export function RobloxHero() {
             <p className="mt-6 text-lg leading-8 text-muted-foreground md:max-w-xl">
               {t("hero.subtitle")}
             </p>
-            {/* Inert on purpose. The storefront cannot express this programme
-                yet, so every CTA on the page is a <button> that goes nowhere
-                rather than an href onto an empty shop. */}
+            {/* Lands on the storefront filtered to the programme's own
+                products. The closing CTA at the bottom of the page points at
+                the same URL — a reader who scrolls past this one must not be
+                offered a different destination for the same promise. */}
             <div className="mt-10 flex justify-center md:justify-start">
-              <button
-                type="button"
+              <Link
+                href={ROUTES.robloxShop}
                 className={buttonVariants({ size: "lg", className: "gap-2" })}
               >
                 {t("hero.cta")}
                 <ArrowRight className="h-4 w-4" />
-              </button>
+              </Link>
             </div>
           </div>
 

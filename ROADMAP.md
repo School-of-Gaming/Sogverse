@@ -1,4 +1,4 @@
-<div align="right"><strong>Last updated:</strong> 2026-06-29</div>
+<div align="right"><strong>Last updated:</strong> 2026-08-31</div>
 
 # Sogverse Roadmap
 
@@ -75,3 +75,22 @@ gantt
 **Platform Vision**
 - **AI build harness** — Long-term vision: an AI harness that lets any team member build, enabling them to integrate their own ideas and features into Sogverse.
 - **Marketplace Model** — Independent Gedus are given tools to create content, products, and market themselves on the platform.
+
+**World**
+
+The brand describes a world — Yty and its four elements, a currency, quests, seasons, a Princi-Pal — and today the product carries the vocabulary without the mechanics behind it. These are the surfaces that would close that gap. They hang off **Gamer Yty** and **Gedu Academy** above rather than running on schedules of their own, so they carry no bars on the timeline until one is picked up and scoped.
+
+- **Yty-Points balances** — A gamer's earned Yty-Points, visible to them and to the Gedus who grant them.
+- **Achievement Badges** — The named awards a gamer collects, with their metal levels.
+- **Quests** — The challenges a gamer takes on to earn Yty-Points and Achievement Badges.
+- **Seasons and Episodes** — The recurring arcs that give a term its story and change what is on offer inside it.
+- **Sogo and the store** — The world's currency, and the place a gamer spends what they have earned.
+- **Gedu Path** — A Gedu's own progression through the world, alongside the Gedu Academy that trains them.
+- **Princi-Pal voice surface** — Somewhere in the product the Princi-Pal actually speaks, rather than only being quoted.
+- **Level-3 gamer dashboard** — The gamer's own dashboard written in the world's fullest voice, the register the brand reserves for gamers, instead of the neutral product tone it uses today.
+
+**Safety**
+
+The strongest safeguard is data we never held. This hangs off **Gamer Profile** above rather than running on a schedule of its own, so it carries no bar on the timeline until it is picked up and scoped.
+
+- **Display name and age bracket** — Hold a display name and an age bracket for a gamer, and nothing else: no real name, no birth date, no real email. Then there is nothing about a child to lose, leak, or sell. Today a parent types a first name, the parent's surname is snapshotted onto it, and a birth month plus an optional gender are stored.

@@ -43,11 +43,11 @@ const ZZ = {
   RETIRED_MUNICIPALITY: "00000000-0000-0000-0000-000000000904",
   /** Live, but under the retired region — the ancestor-walk case. */
   UNDEAD_MUNICIPALITY: "00000000-0000-0000-0000-000000000905",
-  VENUE: "00000000-0000-0000-0000-000000000906",
-  /** Parked directly under the country row: depth 1, but still a venue. */
+  SITE: "00000000-0000-0000-0000-000000000906",
+  /** Parked directly under the country row: depth 1, but still a site. */
   ANNEX: "00000000-0000-0000-0000-000000000907",
-  /** A venue inside the seeded FI fixture tree, for the country restriction. */
-  FI_VENUE: "00000000-0000-0000-0000-000000000908",
+  /** A site inside the seeded FI fixture tree, for the country restriction. */
+  FI_SITE: "00000000-0000-0000-0000-000000000908",
   /** Scratch rows the trigger cases write and rewrite. */
   SCRATCH: "00000000-0000-0000-0000-000000000909",
   SCRATCH_2: "00000000-0000-0000-0000-00000000090a",
@@ -143,8 +143,8 @@ describe("locations GeoNames groundwork", () => {
         country_code: "ZZ",
       },
       {
-        id: ZZ.VENUE,
-        name: "Zzgwvenue",
+        id: ZZ.SITE,
+        name: "Zzgwsite",
         type: "site",
         parent_id: ZZ.MUNICIPALITY,
         country_code: "ZZ",
@@ -157,7 +157,7 @@ describe("locations GeoNames groundwork", () => {
         country_code: "ZZ",
       },
       {
-        id: ZZ.FI_VENUE,
+        id: ZZ.FI_SITE,
         name: "Zzgwsuomi",
         type: "site",
         parent_id: TEST_IDS.LOCATION_MUNICIPALITY,
@@ -200,7 +200,7 @@ describe("locations GeoNames groundwork", () => {
       expect(await depthOf(ZZ.COUNTRY)).toBe(0);
       expect(await depthOf(ZZ.REGION)).toBe(1);
       expect(await depthOf(ZZ.MUNICIPALITY)).toBe(2);
-      expect(await depthOf(ZZ.VENUE)).toBe(3);
+      expect(await depthOf(ZZ.SITE)).toBe(3);
     });
 
     it("overwrites a depth the writer supplied on insert", async () => {
@@ -356,7 +356,7 @@ describe("locations GeoNames groundwork", () => {
   // unique index would accept every one of them: NULLs are distinct from each
   // other unless an index declares NULLS NOT DISTINCT, so tolerance of key-less
   // rows is the default rather than something the WHERE clause bought. That
-  // clause is a size decision — it keeps every key-less row (every venue, and
+  // clause is a size decision — it keeps every key-less row (every site, and
   // every synthetic row a country's config declares) out of the index instead
   // of making it legal — and no assertion available here can tell the two index
   // forms apart, so none tries.
@@ -442,16 +442,16 @@ describe("locations GeoNames groundwork", () => {
   // Search ordering, against a tree built to break it
   // -------------------------------------------------------------------------
 
-  it("ranks places by depth and pushes venues below all of them", async () => {
+  it("ranks places by depth and pushes sites below all of them", async () => {
     // Every fixture name is a term-prefix of the needle, so all seven live rows
     // share a match rank and the tie-breaks are the whole result.
     //
-    // `Zzgwannex` is the case depth alone gets wrong: it is a venue parked
+    // `Zzgwannex` is the case depth alone gets wrong: it is a site parked
     // directly under a country row — the shape the FI/FR cutover produces when
     // a site's old municipality has no counterpart in the new tree — so it sits
     // at depth 1, shallower than the municipalities. Ordering by depth alone
     // would list it third. The explicit `type = 'site'` term ahead of depth is
-    // what keeps every venue below every place.
+    // what keeps every site below every place.
     const result = await search(anon, { p_query: NEEDLE, p_limit: 50 });
 
     expect(names(result)).toEqual([
@@ -459,9 +459,9 @@ describe("locations GeoNames groundwork", () => {
       "Zzgwregion", // region,       depth 1
       "Zzgwmuni", //   municipality, depth 2
       "Zzgwundead", // municipality, depth 2, name breaks the tie
-      "Zzgwannex", //  site,         depth 1 — a venue, so still after places
-      "Zzgwsuomi", //  site,         depth 3, in Finland
-      "Zzgwvenue", //  site,         depth 3, name breaks the tie
+      "Zzgwannex", //  site,         depth 1 — still after every place
+      "Zzgwsite", //   site,         depth 3
+      "Zzgwsuomi", //  site,         depth 3, in Finland, name breaks the tie
     ]);
   });
 

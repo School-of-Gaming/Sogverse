@@ -114,7 +114,7 @@ export function AuthProvider({
     // this callback. It can fire while the GoTrueClient's internal lock is held
     // (e.g., during _recoverAndRefresh on tab focus). A data query would call
     // getSession() → _acquireLock() → deadlock. Only synchronous React state
-    // updates are safe here. See docs/supabase-auth-lock-fix.md.
+    // updates are safe here. See docs/records/supabase-auth-lock-fix.md.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {

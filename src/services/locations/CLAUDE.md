@@ -22,11 +22,11 @@ is not caching the table but never asking for more of it than a screen shows:
 - **Searching the hierarchy** is a ranked, capped, server-side query returning a top-N
   plus the true match count, over names, official codes and postal codes at once. Nothing
   that could match the whole table is filtered in the browser.
-- **The one bounded list** a surface still needs in full — one municipality's venues — is
+- **The one bounded list** a surface still needs in full — one municipality's sites — is
   read whole and listed client-side. What makes such a list legitimate is that something
-  *outside the geography* bounds it: the venues are the children of one confirmed row. A
+  *outside the geography* bounds it: the sites are the children of one confirmed row. A
   list bounded by nothing but "this is all anyone has created so far" is the shape to be
-  suspicious of — the venue picker was one, and is a tree dialog now.
+  suspicious of — the site picker was one, and is a tree dialog now.
 
   **Rule: being bounded is not enough — a read has to be bounded by the same thing the
   screen is.** One country's municipalities were read whole on exactly the argument above,
@@ -67,7 +67,7 @@ below), `created_at`, `updated_at`.
 **`country_code` on a `site` is derived from the parent row, server-side, and any value
 the client sent is discarded.** The column exists to make country filtering
 recursion-free, which means the parent's code is the only value that can be right; a
-caller-supplied one is a second source of truth for a field with exactly one. The venue
+caller-supplied one is a second source of truth for a field with exactly one. The site
 dialog does send the right code, and that is beside the point — country-scoping the
 dialog depends on the invariant holding for every row, not for every well-behaved client.
 
@@ -613,8 +613,8 @@ départements past the page and made them unreachable by search entirely. Spelli
 order out per type fixed France and stayed wrong for a country nesting `district` *below*
 `municipality`, which the hierarchy config already sketches. `depth` is true for every
 shape and costs no per-country knowledge. **Sites are pushed below places by their own
-ordering term, ahead of depth**, because depth cannot separate them: a Finnish venue and a
-French commune both sit at depth 3, and a venue parked under a country row sits at 1.
+ordering term, ahead of depth**, because depth cannot separate them: a Finnish site and a
+French commune both sit at depth 3, and a site parked under a country row sits at 1.
 
 **Rule: the cap is a rendering budget, and the true match count is reported alongside
 it.** The panel says "showing N of M" off that gap; without it a capped list is
@@ -687,10 +687,23 @@ The reads come in three shapes.
 so the caller knows whether to offer another page. Pages accumulate rather than replace,
 so "load more" appends under rows the user is already reading.
 
-**Whole-list reads** — one municipality's venues. That one and no others, and the count is
-the point: a surface needs this in full because the row the caller already confirmed bounds
-it, and it lists whatever it gets. It is read by the page that *renders* the venues inside
-a confirmed municipality, never by a picker choosing from them.
+**Whole-list reads** — one municipality's sites, and every site there is. Two, and the
+argument for both is the same one: a surface needs the whole result because it *renders*
+the whole result. The per-municipality list is bounded by the row the caller already
+confirmed; the admin sites table is bounded by the level, and lists every row of it. Both
+are pages showing their content rather than controls choosing from a collection, which is
+the distinction that makes a whole-list read legitimate at all — neither is ever a picker.
+
+The wider of the two is the only read here whose rows do not share a parent, so it is also
+the only non-keyed read that carries a chain: a site's name is ambiguous the moment two
+municipalities have a school called the same thing, which is precisely why browsing needs
+no chain and this does. It walks its pages through the shared primitive rather than
+returning one, and that walking is entirely server-side — the surface asks for the sites
+and gets the sites, with no page parameter, no "show more" and no total to print beside a
+list that is already complete. What keeps this affordable is not a bound argued from
+today's data but the level itself: sites are the one level of this table the application
+creates, so it grows a building at a time. Watch that, not the walk — a level that outgrew
+a screen would be a reason to reshape the *surface*, and only then the read.
 
 **Rule: no read here is bounded by a country.** One was — every municipality of one
 country, each with its chain, walked past the response cap — and it is deleted rather than
@@ -727,7 +740,7 @@ browsing come back identical.
 ### Rows with their chains
 
 The keyed reads embed the ancestor chain via the FK on `parent_id` — the per-municipality
-venue list needs no chain, since its rows all share the parent the caller asked for, and a
+site list needs no chain, since its rows all share the parent the caller asked for, and a
 browse level is that same shape — and flatten it
 to a row plus `ancestors`, **nearest first**. Nearest-first is the point: `ancestors[0]` is
 the level immediately above whatever the country, which France's extra `district` level
@@ -775,13 +788,17 @@ duplicate spellings are therefore structurally impossible above site level.
 
 **Rule: mutations invalidate via the key hierarchy** — a created site invalidates the
 sites key, which is a grouping key with no query of its own sitting above the
-per-municipality venue lists, so every one of them refreshes without the mutation having
-to know which municipality the row landed in; it also invalidates the browse level it
+per-municipality site lists *and* the admin sites table's whole-level read, so every one
+of them refreshes without the mutation having to know which municipality the row landed in
+or which surfaces list it; it also invalidates the browse level it
 landed in, and every cached search needle. A rename invalidates the row's detail key and
-the lists that render it, and the search needles for the same reason. **Anything that
+the lists that render it, and the search needles for the same reason. **It also invalidates
+the whole key-set grouping key rather than one selection**: those reads exist to *render* a
+row, so a rename leaves every cached selection containing it holding the old name, and a
+mutation cannot know which selections those are. **Anything that
 changes what search matches invalidates the search key, and creating a row is one of
 those**: sites are in the index carrying their whole ancestor chain, and the needle most
-likely to be cached is the one an admin typed just before deciding the venue did not
+likely to be cached is the one an admin typed just before deciding the site did not
 exist yet.
 
 **What invalidating the search key guarantees is a refetch, not a fresh answer**, and the
@@ -789,7 +806,7 @@ difference is worth knowing before trusting it. The browse reads go to PostgREST
 back from the database, so invalidating them is the whole fix. Search does not: it goes
 through the search route, whose responses live URL-keyed in a shared cache for minutes and
 are served stale for an hour behind a revalidation. A refetch triggered a second after the
-write can therefore be answered with the same pre-creation response, and the new venue
+write can therefore be answered with the same pre-creation response, and the new site
 stays missing from that one needle until the entry ages out. This is accepted rather than
 worked around — the window is short, it closes without anyone doing anything, and the
 alternative is a client writing ranked search results it did not compute.
@@ -811,24 +828,24 @@ coverage, and the parent's own location.
 was a second configuration once — a bounded set the caller had already read whole, grouped
 under the place above each row and narrowed in memory — and it is gone with its last
 consumer. Both collections that ever had one lost the argument for different reasons, and
-both are worth keeping in mind before anyone builds it again. The **venue** list was never
+both are worth keeping in mind before anyone builds it again. The **site** list was never
 legitimately bounded: it was every `site` row, small only because of what had been created
 so far, read as Finland-only by accident and with no answer at all for a country whose
-venues nobody had opened yet. Finland's **municipalities** genuinely were bounded — the
+sites nobody had opened yet. Finland's **municipalities** genuinely were bounded — the
 *funding rule* is the bound, so "every option" is a few hundred rows that do not grow when
 a country is added — and the mode still went, because being bounded is not the same as
 being the right thing to pick from: three keystrokes against the search index reach any
 kunta faster than a scroll through a grouped list of all of them, and the same index also
 covers the ~34,900 communes the list could never hold. What the set scope cost while it
 lived is the shape of the argument: a whole branch of the panel, a grouping module, a flat
-read of every venue there was, and a second in-memory fold that had to be pinned to the
+read of every site there was, and a second in-memory fold that had to be pinned to the
 database's by a shared fixture. All of it is deleted, that panel's fold included. What does
 *not* follow is that nothing outside the database folds a name: one public page still
 narrows a small set it was handed, against slugs it computed itself — see the fold rule
 under Search for where that line falls and what keeps it honest.
 
 **Rule: a collection can be worth reading whole and still not be worth a picker.** A
-municipality's venues are read in full and rendered in full — that is a page showing its
+municipality's sites are read in full and rendered in full — that is a page showing its
 content, not a control choosing from it. (The public municipality directory used to be the
 second example here and is no longer read that way at all: it reads only the municipalities
 its clubs point at.) If a picker ever needs a set-shaped panel again, the way back is to
@@ -898,7 +915,7 @@ browsing, so there is no second code path and no flag saying which kind of row t
 ### The parent's own location
 
 An optional single row on a parent's profile — asked for on the registration form, edited
-from settings — picked at the **municipality** level, the one directly above a venue.
+from settings — picked at the **municipality** level, the one directly above a site.
 Stored as `profiles.home_location_id`, a nullable foreign key pointing straight at the
 `locations` row the picker was showing when it was confirmed.
 
@@ -966,38 +983,38 @@ both fields are the tree dialog, the same one gedu coverage and a parent's own l
 open, and both look identical until it is open: a compact affordance when empty, a card
 with a "change" affordance when set. What differs is what the dialog will accept back and
 where it starts. What lives in the product form itself and nowhere else is that card (with
-its site notes, for a venue) and the clear-on-invalid guard below.
+its site notes, when the pick is a site) and the clear-on-invalid guard below.
 
-**The venue field** stops at no country — unless the *product type* is bound to
-one: a municipality club exists only where a kunta funds it, so its venue field
+**The site field** stops at no country — unless the *product type* is bound to
+one: a municipality club exists only where a kunta funds it, so its site field
 opens inside Finland and offers no other country's rows, through the same
 `countryBound` the type's config declares. Either way it offers two ways of
-knowing where a venue is:
+knowing where a site is:
 
 - **Searching reaches a site directly.** Sites are in the search index carrying their full
   ancestor chain, so an admin who knows the building's name types it and confirms the hit.
   One step, in every country, rather than only where a list had been built up.
 - **Browsing walks down to a municipality and stops there.** Confirming one is not the
-  answer but the *next question*: the dialog then lists the venues in that municipality
+  answer but the *next question*: the dialog then lists the sites in that municipality
   and offers to name a new one.
 
 **Rule: a site is confirmable but never browsable *to*, and the asymmetry is the design
 rather than a gap in it.** The panel's rule is that a row of a pickable type is terminal,
 so offering both levels makes a municipality terminal as well — which is exactly right
-here, because confirming a municipality *means* "show me the venues here", and that
+here, because confirming a municipality *means* "show me the sites here", and that
 screen is the only one that can also carry the create affordance. Letting the tree drill
 through a municipality to its sites would take creation off the only screen with anywhere
 to put it, to reach rows search already reaches in one step.
 
-Opening a venue somewhere new is therefore still two steps, because it still answers two
+Opening a site somewhere new is therefore still two steps, because it still answers two
 questions from two sources: *where in the world* from the seeded hierarchy, *which
 building* from an admin naming a site under it. There is nothing between the two — the
-confirmed pick is the row, so it is already the venue's parent — and nothing above a site
+confirmed pick is the row, so it is already the site's parent — and nothing above a site
 is ever created.
 
 **The municipality field is the same dialog with the municipality level terminal and
 nothing after it.** Confirming a municipality *is* the answer here, which is exactly the
-half the venue flow does not have: there is no venue list, no create affordance, and
+half the site flow does not have: there is no site list, no create affordance, and
 nothing to name, because everything above a site is seeded. It opens with Finland already
 in the breadcrumb, so the first screen is the maakunnat rather than the world's countries,
 and an admin who would rather type does — the search box is the same one, against the same
@@ -1028,12 +1045,12 @@ with its own test rather than a condition inline in an effect, because it is exa
 kind of thing that reads fine in review. The same three-state shape governs the parent's
 own location field, for the same reason. The everyday trigger is not exotic: toggling a
 municipality club from online to in-person carries a municipality id into a field that now
-accepts only venues.
+accepts only sites.
 
 **Corollary: both modes now ask the same question, of a keyed read — one named function,
 and the shape of the answer is the reason it is that one.** Neither field holds a
 collection to test membership of; both look the stored id up by key and ask what came
-back. That makes a key with **no row** a *resolved* answer (the venue was deleted) rather
+back. That makes a key with **no row** a *resolved* answer (the site was deleted) rather
 than the absent case, where absent means the *read* has not landed. The distinction is not
 cosmetic and it is why a set-shaped guard cannot be substituted: read as a set, a missing
 row is "not fetched" and a dangling id survives forever; read as a lookup, an empty set is
@@ -1041,19 +1058,19 @@ row is "not fetched" and a dangling id survives forever; read as a lookup, an em
 listed a set, and went with it — leaving it behind would have left the wrong one within
 reach of a call site that looked plausible.
 
-**The two modes differ in what they accept, not in how they ask.** The venue field takes
+**The two modes differ in what they accept, not in how they ask.** The site field takes
 one level — in any country by default, in the product type's one country when the type is
 bound to one; the municipality field takes one level in one country always. The
 constraint is a *business* one either way — a French commune is a perfectly well-formed
-municipality row that the funding rule still refuses, and a French venue is a perfectly
-good site the same rule refuses for a municipality club — so it rides as an optional
-country alongside the accepted levels rather than as a second function.
+municipality row that the funding rule still refuses, and a French school is a perfectly
+well-formed site row the same rule refuses for a municipality club — so it rides as an
+optional country alongside the accepted levels rather than as a second function.
 
 ### Loading
 
 **Every read in this feature is a small indexed lookup, so none of them gets a loading
 affordance.** One level of children by `parent_id`, a capped top-N from the search index,
-one municipality's venues, one row by primary key, a page's own club-bearing
+one municipality's sites, one row by primary key, a page's own club-bearing
 municipalities by key — each lands in a frame or two. Every box has its final height from the
 first frame and fills in: no skeleton, no spinner and no delay anywhere here. The chosen-
 place card is the shape to copy: the stored id is known synchronously, so the card and its
@@ -1064,7 +1081,7 @@ extent of what it claims.
 **Corollary: anything in that card whose *height* would otherwise depend on the read has
 to be settled without it.** The name and the path are single lines with their heights
 reserved, which is enough for them. A wrapping paragraph is not so easily reserved, so the
-note explaining that a municipality club has no physical venue is written to depend on the
+note explaining that a municipality club has no physical site is written to depend on the
 *mode* rather than on the row — it says nothing the mode does not already determine, and
 in exchange it is on screen from the first frame at its final height. Interpolating the
 municipality's name into it would have been nicer to read and would have made the card's
@@ -1250,7 +1267,7 @@ foreign-key violation instead of letting the write through.
 **Rule: an in-person product pins to a `site` (leaf) location — never to a municipality,
 region or country.** This gives the ancestor-walk matcher a well-defined start point.
 Defence in depth, and each layer stops something the next one cannot: the picker only ever
-hands the form a `site`, because that is the only type its venue flow completes on; the
+hands the form a `site`, because that is the only type its site flow completes on; the
 clear-on-invalid guard drops a stored id that resolves to anything else, which is what
 catches a product whose delivery mode was toggled after it was saved; the form refuses to
 submit while the field is empty, so a dropped pick cannot be saved as nothing; and the
@@ -1329,7 +1346,7 @@ target both checked); admins manage any row, for the user-detail view.
 - **A tick is a row id, from the moment it is made to the moment it is written.** The
   picker browses the table, so a ticked node is already a row. There is nothing to resolve
   at save time, and therefore no class of claim the editor can display but not store: a
-  venue, a country row and a place in a country nobody has built a UI for are all just
+  site, a country row and a place in a country nobody has built a UI for are all just
   rows, tickable and untickable alike. Any design that gives a tick an identity other than
   its row id reintroduces a resolution step, a way for a save to be refused because the
   place has no record, and a bucket of chips a gedu can remove but never re-add.

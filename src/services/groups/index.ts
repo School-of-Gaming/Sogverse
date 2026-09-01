@@ -16,6 +16,7 @@ export {
   useAdminRemoveParticipantFromProduct,
   usePromoteFromWaitlist,
   useDemoteToWaitlist,
+  useSendSeatOffer,
   useGroupPending,
   type GroupPending,
 } from "./groups.queries";

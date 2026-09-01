@@ -8,6 +8,8 @@ import {
   readChipDragData,
   resolveDrop,
   robloxIdsFrom,
+  seatOfferAvailability,
+  showUnassignedSection,
   type DragSubject,
 } from "@/components/admin/products/groups/panel-rules";
 import type { GroupParticipationDetail, ProductGroupsSnapshot } from "@/types";
@@ -274,6 +276,8 @@ describe("dragSubjectsFrom", () => {
       group_joined_at: null,
       note: null,
       note_updated_by_first_name: null,
+      seat_offer_sent_at: null,
+      seat_offer_expiry_notified_at: null,
       ...overrides,
     };
   }
@@ -400,6 +404,8 @@ describe("chipGameIdentity", () => {
       group_joined_at: null,
       note: null,
       note_updated_by_first_name: null,
+      seat_offer_sent_at: null,
+      seat_offer_expiry_notified_at: null,
       ...overrides,
     };
   }
@@ -505,6 +511,8 @@ describe("robloxIdsFrom", () => {
       group_joined_at: null,
       note: null,
       note_updated_by_first_name: null,
+      seat_offer_sent_at: null,
+      seat_offer_expiry_notified_at: null,
     };
   }
 
@@ -568,5 +576,94 @@ describe("isSubscriptionShaped / canCompEnroll", () => {
     expect(canCompEnroll("camp", "paid")).toBe(true);
     expect(canCompEnroll("event", "paid")).toBe(true);
     expect(canCompEnroll("municipality_club", "external_contract")).toBe(true);
+  });
+});
+
+describe("showUnassignedSection", () => {
+  // The inbox is hidden on exactly one combination — the product qualifies for
+  // automatic placement (charges nothing AND has exactly one group) and nobody
+  // is waiting in it — because there the rule is said by the card's absence
+  // rather than by a caption. Every case below moves one input off that
+  // combination and expects the card back.
+  //
+  // Only the length of the group list is read, but the parameter is typed to
+  // rows with an id so that passing the waitlist or the inbox in that slot is a
+  // compile error — hence real ids here rather than bare names.
+  const none: readonly { id: string }[] = [];
+  const one = [{ id: "75a6920e-dcdf-411b-bd8a-698c851f3335" }];
+  const two = [...one, { id: "3a83c4ea-3a0b-4f73-88f1-d716117834c3" }];
+  const three = [...two, { id: "0af8e50a-acdc-4c17-adec-16941f981927" }];
+
+  it("hides an empty inbox on a no-charge product with exactly one group", () => {
+    expect(showUnassignedSection("free", one, 0)).toBe(false);
+    expect(showUnassignedSection("external_contract", one, 0)).toBe(false);
+  });
+
+  it("shows the inbox whenever anyone is actually in it", () => {
+    // The half that must never be traded away: a gamer with no group who is
+    // off screen is a gamer nobody can seat. Qualifying or not, they show.
+    expect(showUnassignedSection("free", one, 1)).toBe(true);
+    expect(showUnassignedSection("external_contract", one, 3)).toBe(true);
+  });
+
+  it("shows the inbox on a no-charge product with no groups", () => {
+    // Nothing to place into, so every arriving seat lands here.
+    expect(showUnassignedSection("free", none, 0)).toBe(true);
+    expect(showUnassignedSection("external_contract", none, 0)).toBe(true);
+  });
+
+  it("shows the inbox on a no-charge product with several groups", () => {
+    // Which group a child belongs in is a decision that stays a human's, so
+    // the seat waits here and the admin needs to see it waiting.
+    expect(showUnassignedSection("free", two, 0)).toBe(true);
+    expect(showUnassignedSection("external_contract", two, 0)).toBe(true);
+    expect(showUnassignedSection("free", three, 0)).toBe(true);
+  });
+
+  it("shows the inbox on a paid product, whatever its groups", () => {
+    // The billing half settles it on its own: a paid seat is written by the
+    // Stripe webhook, which places nobody, so the group count never matters.
+    expect(showUnassignedSection("paid", one, 0)).toBe(true);
+    expect(showUnassignedSection("paid", none, 0)).toBe(true);
+    expect(showUnassignedSection("paid", two, 0)).toBe(true);
+  });
+});
+
+describe("seatOfferAvailability", () => {
+  /**
+   * The two conditions `send_seat_offer` refuses on, asked here only to decide
+   * what the panel draws. The three answers are three different things to tell
+   * an admin, and collapsing any pair of them loses the distinction the union
+   * exists for.
+   */
+
+  it("allows a no-charge product with exactly one group", () => {
+    expect(seatOfferAvailability("free", 1)).toEqual({ kind: "available" });
+    expect(seatOfferAvailability("external_contract", 1)).toEqual({
+      kind: "available",
+    });
+  });
+
+  it("says nothing at all on a paid product, whatever its groups", () => {
+    // Not `needsOneGroup` even when the group count is also wrong: the billing
+    // is the answer, it is a property of the product rather than of this page,
+    // and no arrangement of groups would change it.
+    expect(seatOfferAvailability("paid", 1)).toEqual({ kind: "unavailable" });
+    expect(seatOfferAvailability("paid", 0)).toEqual({ kind: "unavailable" });
+    expect(seatOfferAvailability("paid", 3)).toEqual({ kind: "unavailable" });
+  });
+
+  it("names the group count when a no-charge product has the wrong number", () => {
+    // Both directions are the same refusal: with none there is nowhere to place
+    // an acceptance, and with several there is a choice nobody may make on the
+    // family's behalf. The count rides along because the card states it.
+    expect(seatOfferAvailability("free", 0)).toEqual({
+      kind: "needsOneGroup",
+      groupCount: 0,
+    });
+    expect(seatOfferAvailability("free", 2)).toEqual({
+      kind: "needsOneGroup",
+      groupCount: 2,
+    });
   });
 });

@@ -23,7 +23,7 @@
  * cannot tell you how fast real families actually arrive, and arrival shape is
  * what decides whether a given compute tier was enough. Capture it once and
  * every future opening can be planned against real numbers instead of a guess.
- * See `docs/performance.md` § F7 for the measured capacity this is watched
+ * See `docs/architecture/performance.md` § F7 for the measured capacity this is watched
  * against.
  *
  * The log lands in `scripts/output/` (gitignored), named for the opening rather
@@ -242,7 +242,7 @@ const cell = (v, width, colour) => colour(n(v).padEnd(width));
  */
 const worst = { s504: 0, s429: 0, load1: 0, register: 0, at504: null };
 
-/** Thresholds are the measured ones for this tier — docs/performance.md § F7. */
+/** Thresholds are the measured ones for this tier — docs/architecture/performance.md § F7. */
 const REG_COMFORTABLE = 250;
 const REG_DEGRADING = 360;
 

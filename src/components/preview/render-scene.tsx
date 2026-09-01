@@ -6,6 +6,7 @@ import { isGeduContractScenario } from "@/components/gedu/contract/mock-contract
 import { isGeduDashboardScenario } from "@/components/gedu/mock-dashboard-fixtures";
 import { isGroupWorkspaceScenario } from "@/components/group-workspace/mock-workspace-fixtures";
 import { isParentDashboardScenario } from "@/components/parent/mock-dashboard-fixtures";
+import { isSeatOfferScenario } from "@/components/seat-offer/mock-seat-offer-fixtures";
 import { isVoiceRoomScenario } from "@/components/voice/mock-room-fixtures";
 import {
   findConfirmationNotice,
@@ -17,6 +18,7 @@ import {
   REGION_LOCK_BASE_SCENARIO,
   findRegionLockScenario,
 } from "@/components/public/products/region-lock/region-lock-scenarios";
+import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
@@ -27,6 +29,7 @@ import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
 import { PurchaseConfirmationScene } from "./scenes/purchase-confirmation-scene";
+import { SeatOfferScene } from "./scenes/seat-offer-scene";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 import { VoiceRoomScene } from "./scenes/voice-room-scene";
 
@@ -65,6 +68,21 @@ const SCENE_RENDERERS: Record<
         <ProductDetailScene
           scenario={REGION_LOCK_BASE_SCENARIO}
           regionLock={regionLock}
+        />
+      );
+    }
+    // Same page again, on a product that asks a parent for something extra —
+    // conditions it must agree to, and a partner's mailing list it may decline.
+    // Like the region-lock trio it shares the surface but not the fixtures: one
+    // club fixture, with the two ask sets as the only things that vary.
+    if (scenario === REQUIRED_CONSENTS_SCENARIO.slug) {
+      return (
+        <ProductDetailScene
+          scenario={REQUIRED_CONSENTS_SCENARIO.baseScenario}
+          requiredConsentSlugs={REQUIRED_CONSENTS_SCENARIO.documentSlugs}
+          marketingConsentTypes={
+            REQUIRED_CONSENTS_SCENARIO.marketingConsentTypes
+          }
         />
       );
     }
@@ -115,6 +133,10 @@ const SCENE_RENDERERS: Record<
   "gamer-club": (scenario) => {
     if (!isFamilyProductScenario(scenario)) notFound();
     return <FamilyProductPageScene audience="gamer" scenario={scenario} />;
+  },
+  "seat-offer": (scenario) => {
+    if (!isSeatOfferScenario(scenario)) notFound();
+    return <SeatOfferScene scenario={scenario} />;
   },
   "admin-dashboard": (scenario) => {
     if (!isAdminDashboardScenario(scenario)) notFound();

@@ -6,11 +6,21 @@ import Link from "next/link";
 import { Globe, MapPin, MapPinCheck, Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Identicon } from "@/components/ui/identicon";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
-import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
-import type { ProductType } from "@/types";
+import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
+import {
+  consentDocumentMeta,
+  describeRequiredConsents,
+  type ConsentDocumentBundle,
+  type RequiredConsentDisplayRow,
+} from "@/lib/constants/consent-documents";
+import {
+  describeMarketingConsents,
+  type MarketingConsentAskRow,
+} from "@/lib/constants/marketing-consents";
+import type { MarketingConsentType, ProductType } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import { CountdownClock, useCountdownDone } from "./countdown-clock";
 import type { RegistrationState } from "./derive-registration-state";
@@ -195,6 +205,54 @@ export interface SignupPanelViewProps {
   onAddGamer: () => void;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
+  /**
+   * **The product's enrolment conditions**: the published documents a parent
+   * must agree to before a seat can be taken, as slugs. Empty on nearly every
+   * product, and the whole consent section ceases to exist when it is.
+   *
+   * The list is settled before the panel paints — it rides in on the same
+   * product read as the price and the schedule — so no checkbox can appear
+   * under a parent part-way through the form.
+   */
+  requiredConsentSlugs: readonly string[];
+  /**
+   * Which of the consent rows those slugs group into the parent has ticked, by
+   * row key.
+   *
+   * One entry per *bundle*, not per document: a programme's documents are handed
+   * over together and cannot be accepted apart — a parent who agrees to the
+   * terms but not the privacy policy has not met the product's conditions — so
+   * one authored sentence names them all and one tick answers it. What earns a
+   * second entry is a second bundle, or a slug belonging to no bundle at all.
+   * Never seeded; see `useSignupPanelFields`.
+   */
+  consentAgreements: ReadonlySet<string>;
+  onConsentAgreementChange: (rowKey: string, agreed: boolean) => void;
+  /**
+   * **The product's optional marketing asks**, as stored — the partners whose
+   * mailing list this product offers a parent on the way past. Empty on nearly
+   * every product, and the optional block ceases to exist when it is.
+   *
+   * Like the requirement set above, it rides in on the product read, so the
+   * block's existence is settled before the panel paints. Unlike it, these
+   * NEVER gate the CTA: a row here is a question the reader may decline, and a
+   * declined question is a complete answer that leaves the seat untouched.
+   */
+  marketingConsentTypes: readonly MarketingConsentType[];
+  /**
+   * Which of those the reader has ticked, seeded from their account's own
+   * stored answer and overlaid with anything they change here.
+   *
+   * The one thing on the panel whose value may legitimately change after first
+   * paint on data's own schedule — the account read lands a round trip late —
+   * and it is allowed to because only the *tick* moves. The box, its sentence
+   * and its hint are all on screen from the first frame, so nothing shifts.
+   */
+  marketingConsents: ReadonlySet<MarketingConsentType>;
+  onMarketingConsentChange: (
+    consentType: MarketingConsentType,
+    granted: boolean,
+  ) => void;
   onSubmit: () => void;
   /** Separate from onSubmit — the waitlist branch calls this. */
   onJoinWaitlist: () => void;
@@ -432,9 +490,26 @@ interface FormOrAuthProps extends SignupPanelViewProps {
 //
 // **A disabled CTA is an instruction.** It names the single next missing step,
 // in the order the sections stand on the page: add a gamer → set your location
-// → agree to the rules → wait for the window. The label points at the nearest
-// unfinished thing above the button, so following it is a walk down the panel
-// rather than a hunt.
+// → give the required consent → wait for the window. The label points at the
+// nearest unfinished thing above the button, so following it is a walk down the
+// panel rather than a hunt.
+//
+// **Everything a parent has to agree to lives in ONE section, and it is the last
+// one before the button.** Consent is a single heading holding one tickable row
+// per thing being agreed to: the product's own documents when it attaches any,
+// and — always, at the bottom — our rules. They are the same control in the same
+// box, because they are the same act, and the CTA therefore names one step
+// rather than walking a reader through two headings that look alike. A new thing
+// to agree to becomes another row in this section, above the rules row; it does
+// not become a section of its own.
+//
+// **One consent row carries a marker, and it is the one that does NOT gate the
+// button.** The optional marketing row below the section is the same bordered
+// control as the gates above it — the border draws the click target, not the
+// stakes — so its info-toned hint sentence, which opens with the word
+// "Optional", is what a reader (and, through `aria-describedby`, a screen
+// reader) tells them apart by. Every gate is unmarked, because a gate is the
+// ordinary thing to find here.
 //
 // **Actions live in the sections, never in the CTA.** A section that needs
 // something offers its own affordance: the dashed add-a-gamer row inside the
@@ -503,7 +578,22 @@ function UnauthenticatedOverlay({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="flex flex-col gap-2">
+    /* The app-wide button order shape — root `CLAUDE.md`, "Button Order":
+       DOM [secondary, primary] under `flex-col-reverse`, so signing in reads
+       on top. This pair only ever stacks, so there is no `sm:flex-row` half.
+       The rendered order is what it has always been; only the authoring
+       shape changed, so the whole app states this one way round. */
+    <div className="flex flex-col-reverse gap-2">
+      <Link
+        href={createAccountHref}
+        className={buttonVariants({
+          size: "lg",
+          variant: "outline",
+          className: "w-full text-base",
+        })}
+      >
+        {t("ctaCreateAccount")}
+      </Link>
       <Link
         href={signInHref}
         className={buttonVariants({
@@ -518,16 +608,6 @@ function UnauthenticatedOverlay({
             "Sign in to register"; that is left as-is on purpose, as a copy
             decision to make on its own rather than a mechanical sweep. */}
         {t(`ctaSignIn.${productType}`)}
-      </Link>
-      <Link
-        href={createAccountHref}
-        className={buttonVariants({
-          size: "lg",
-          variant: "outline",
-          className: "w-full text-base",
-        })}
-      >
-        {t("ctaCreateAccount")}
       </Link>
     </div>
   );
@@ -773,14 +853,29 @@ function SignupForm(
   // stops the CTA. The wrong-country half never reaches this component — it
   // replaced the form upstream — and `unlocked` renders nothing at all.
   const needsLocation = props.regionGate?.gate.kind === "no_location";
+  // The product's documents, grouped the way the parent will meet them: one row
+  // per bundle, plus a row for anything belonging to no bundle. Derived here
+  // rather than taken as a prop so the gate below and the rows on screen cannot
+  // disagree — an unticked row a reader can see always blocks the button.
+  const consentRows = describeRequiredConsents(props.requiredConsentSlugs);
+  // Vacuously true on the products that require nothing, which is nearly all of
+  // them — so this step costs the ordinary panel nothing and does not appear in
+  // its CTA checklist at all.
+  const consentsSatisfied = consentRows.every((row) =>
+    props.consentAgreements.has(row.key),
+  );
   const formReady =
-    props.selectedParticipantId !== null && props.agreed && !needsLocation;
+    props.selectedParticipantId !== null &&
+    props.agreed &&
+    consentsSatisfied &&
+    !needsLocation;
   const clickable = formReady && props.active && !props.submitting;
 
   // The CTA doubles as the instruction for the parent's next step: while it's
   // disabled it names exactly what's still missing, in the order they can act
-  // on it (add a gamer → set your location → agree to the rules → wait for the
-  // window), which is the order the sections stand in on the page. The same
+  // on it (add a gamer → set your location → agree to the rules → agree to the
+  // documents → wait for the window), which is the order the sections stand in
+  // on the page. The same
   // checklist runs whether or not registration is open, so a parent can finish
   // every step during the pre-open countdown and land on "Ready & waiting",
   // primed to one-tap the instant it opens. Only the final leaf differs by
@@ -803,8 +898,14 @@ function SignupForm(
         : t("ctaAllSet")
       : needsLocation
         ? t("regionLock.setLocation")
-        : !props.agreed
-          ? t("ctaAgreeRules")
+        : // One leaf for the whole consent section, whatever is unticked inside
+          // it. Two labels would have made the reader's next move ambiguous —
+          // both boxes sit under one heading and look identical, so "agree to
+          // the rules" would be pointing at a row the reader cannot tell from
+          // the one above it. The section is what they act on, so the section
+          // is what the button names.
+          !consentsSatisfied || !props.agreed
+          ? t("ctaAgreeConsent")
           : props.active
             ? props.ctaLabelActive
             : t("ctaReadyWaiting");
@@ -956,11 +1057,27 @@ function SignupForm(
         />
       )}
 
-      <RulesCheckbox
+      <RequiredConsentSection
         productType={props.productType}
         selfSeat={selectedIsSelf}
-        agreed={props.agreed}
-        onAgreedChange={props.onAgreedChange}
+        rows={consentRows}
+        agreements={props.consentAgreements}
+        onAgreementChange={props.onConsentAgreementChange}
+        rulesAgreed={props.agreed}
+        onRulesAgreedChange={props.onAgreedChange}
+      />
+
+      {/* Below the conditions and above the button: the last thing on the panel
+          before the CTA, and deliberately NOT a row inside the section above.
+          See the component's own note — the section above is one act the button
+          names, and this question does not gate it. What tells the two apart is
+          its own info-toned hint sentence, not the treatment of the box. Its
+          existence comes off the product read, so it is here or absent from the
+          first paint; only its tick arrives late. */}
+      <OptionalMarketingSection
+        rows={describeMarketingConsents(props.marketingConsentTypes)}
+        granted={props.marketingConsents}
+        onGrantedChange={props.onMarketingConsentChange}
       />
 
       <Button
@@ -982,11 +1099,91 @@ function SignupForm(
   );
 }
 
-function RulesCheckbox({
+/**
+ * **Everything a parent has to agree to, under one heading.**
+ *
+ * One section, always present, holding one tickable row per thing being agreed
+ * to: the product's own required documents when it attaches any, and — always,
+ * last — our rules. Both rows are the same control, a bordered clickable box
+ * that lights when ticked, because they are the same act. The heading names the
+ * act rather than the paperwork ("Consent"), which is also what the disabled
+ * CTA points at, so a reader following the button lands on a section rather
+ * than on one of two boxes they cannot tell apart.
+ *
+ * **The heading says "Consent" and not "Required consent", because the rows
+ * below it are no longer the only consent rows on the panel.** The optional
+ * marketing row sits just outside this section wearing the same border, so a
+ * heading claiming "required" would be the only thing separating them and it
+ * would sit above one of the two rather than on either. The distinction lives on
+ * the rows instead — and on exactly one of them: the optional row carries the
+ * word, every gate carries nothing.
+ *
+ * **The rules row carries no heading of its own.** It used to be its own titled
+ * section, and beside a second titled section of identically-shaped boxes that
+ * title stopped meaning anything: two headings, two boxes, one act. What the
+ * heading was doing — giving the CTA's prompt a visible referent — is now done
+ * by the section's own, so the row is left to be a sentence and a checkbox. Like
+ * every gate here it carries no marker: it sits in the same stack, under the
+ * same heading, at the same spacing, and it gates the CTA exactly as they do.
+ *
+ * **And its sentence names its own document, exactly as a bundle's does.** The
+ * rules row is a consent to our Anti-Bullying and Discipline policy, so the
+ * words that name that policy are the link to it — the reader can read what
+ * they are being asked to agree to from inside the box that asks. Every row in
+ * the section therefore behaves the same way, which is the point: a parent must
+ * not be able to tell our rules from a product's documents by their treatment.
+ *
+ * **One checkbox per bundle, not per document — and the sentence IS the
+ * consent.** A programme hands its terms and its privacy policy over together
+ * and they cannot be accepted apart — a parent who agreed to one and not the
+ * other has not met the conditions and cannot enrol — so the pair is one row,
+ * and its label is one authored sentence naming both documents inline, each
+ * name a link. The database still records one acceptance row per document
+ * against its own version; that is the server's bookkeeping of one act, and it
+ * does not need a control each.
+ *
+ * **Inline, rather than a list of links above a generic "I agree to these
+ * documents".** What a parent is agreeing to is a sentence, and a sentence that
+ * points at its own documents by name is the thing they can actually read back
+ * to themselves. The cost is that each bundle's sentence is authored per
+ * locale with its own fixed named tags — and that is the point rather than the
+ * price: no locale has to format a variadic list of document names into a
+ * grammatical sentence, because every locale simply writes one.
+ *
+ * **The links are inside the clickable box, and a click on one reads rather
+ * than ticks.** That is not a handler, it is the DOM: a `<label>`'s activation
+ * behaviour is skipped outright when the click lands on an interactive
+ * descendant, and an `<a href>` is one — so the link navigates and the box does
+ * not toggle, in every engine and in jsdom. Nothing on the box listens for
+ * clicks itself, so there is nothing for an anchor to `stopPropagation` away
+ * from; adding one would buy no safety here and would silently break any
+ * delegated listener an ancestor later wants. A row that grows its own
+ * `onClick` is the moment to revisit that, and the tests pin which mechanism is
+ * doing the work so the change cannot pass unnoticed.
+ *
+ * They open in a new tab, deliberately and not as a stylistic default — the
+ * panel behind them is holding a chosen child, a possibly half-answered location
+ * question and a ticked box or two, and navigating away would throw all of it
+ * out to read a document the panel is *asking* them to read.
+ *
+ * **A slug belonging to no bundle is still offered, and still gates.** It has no
+ * sentence of its own and nothing to link to, so it gets a row carrying the
+ * generic sentence with its raw slug above it, as plain text — clicking it ticks
+ * the box like any other part of the row, because there is nothing to read there
+ * and so nothing being interrupted. Today that is exactly the drift case, a slug
+ * the database knows and this deploy does not: registry rows arrive by migration
+ * and the map ships in the same deploy, so it is a defect to notice. It looks
+ * wrong, which is correct — and the alternative, dropping it, would let the
+ * enrolment through without a consent the product legally requires.
+ */
+function RequiredConsentSection({
   productType,
   selfSeat,
-  agreed,
-  onAgreedChange,
+  rows,
+  agreements,
+  onAgreementChange,
+  rulesAgreed,
+  onRulesAgreedChange,
 }: {
   productType: ProductType;
   /**
@@ -996,46 +1193,285 @@ function RulesCheckbox({
    * which row is lit, and the sentence has to follow the row.
    */
   selfSeat: boolean;
-  agreed: boolean;
-  onAgreedChange: (next: boolean) => void;
+  /**
+   * What this product requires, grouped into the rows a parent meets. Empty on
+   * nearly every product, leaving the heading and the rules row — the baseline
+   * every panel shows. Nothing is reserved for rows that are not there: the
+   * requirement set arrives with the product read and cannot change under a
+   * reader mid-form, so there is no late arrival to hold room for.
+   */
+  rows: readonly RequiredConsentDisplayRow[];
+  agreements: ReadonlySet<string>;
+  onAgreementChange: (rowKey: string, agreed: boolean) => void;
+  rulesAgreed: boolean;
+  onRulesAgreedChange: (next: boolean) => void;
 }) {
-  const t = useTranslations("productDetail.signupPanel.rules");
-  // Heading names this section "The Rules" so the CTA's "Agree to the rules"
-  // prompt has a visible referent — the rule sentence itself never says the
-  // word. The whole box is one clickable toggle (heading + rule + checkbox)
-  // that highlights when agreed. No nested box: unlike the gamer picker — whose
-  // outer box wraps a border-per-selectable-row — the rules section is a single
-  // choice, so a box-in-a-box would just be visual noise.
-  const tPanel = useTranslations("productDetail.signupPanel");
+  const t = useTranslations("productDetail.signupPanel");
+  const tRules = useTranslations("productDetail.signupPanel.rules");
   // Exactly one of the four rules third-persons a child: the municipality
   // club's, which is a consent about "my child's seat" opening for the next
   // family. The other three are about conduct and read identically whoever
   // holds the seat, so the self variant is keyed on the one rule that needs it
   // rather than duplicating three identical sentences into a parallel group
   // that would then have to be kept in step in five locales.
+  //
+  // Rich text, like a bundle's sentence and for the same reason: the rules
+  // sentence names the policy it is a consent to, and the name is the link.
+  // All five variants carry the one `<policy>` tag, so the tag map is written
+  // once here rather than per variant — a locale that drops it would render its
+  // own words unlinked rather than lose the clause.
+  const policyTag = {
+    policy: (chunks: React.ReactNode) => (
+      <ConsentSentenceLink href={ROUTES.antiBullying}>
+        {chunks}
+      </ConsentSentenceLink>
+    ),
+  };
   const ruleText =
     selfSeat && productType === "municipality_club"
-      ? t("municipality_club_self")
-      : t(productType);
+      ? tRules.rich("municipality_club_self", policyTag)
+      : tRules.rich(productType, policyTag);
   return (
-    <label
-      className={cn(
-        "block cursor-pointer rounded-md border p-4 transition-colors",
-        agreed
-          ? "border-primary bg-primary/5"
-          : "border-border bg-muted/30 hover:bg-accent/50"
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold">{t("consents.heading")}</h3>
+      {rows.map((row) =>
+        row.kind === "bundle" ? (
+          <BundleConsentRow
+            key={row.key}
+            bundle={row.bundle}
+            agreed={agreements.has(row.key)}
+            onAgreedChange={(next) => onAgreementChange(row.key, next)}
+          />
+        ) : (
+          <ConsentRow
+            key={row.key}
+            agreed={agreements.has(row.key)}
+            onAgreedChange={(next) => onAgreementChange(row.key, next)}
+            sentence={
+              <>
+                {/* The raw slug at the head of the sentence rather than in a
+                    slot of its own: it is part of what this row is asking, and
+                    a row that names a document has to name it where the reader
+                    is already looking. Never an anchor with nowhere to go — an
+                    empty href resolves to the page the reader is already on. */}
+                <span className="mb-2 block font-medium text-foreground">
+                  {row.slug}
+                </span>
+                {t("consents.agree")}
+              </>
+            }
+          />
+        ),
       )}
-    >
-      <h3 className="text-sm font-semibold">{tPanel("rulesHeading")}</h3>
-      <div className="mt-3 flex items-start gap-3 text-xs">
-        <Checkbox
-          className="mt-0.5"
-          checked={agreed}
-          onChange={(e) => onAgreedChange(e.target.checked)}
+      {/* Ours, and always last: whatever else a product attaches to a seat, the
+          final thing a parent agrees to before the button is the one thing
+          School of Gaming asks of them. */}
+      <ConsentRow
+        agreed={rulesAgreed}
+        onAgreedChange={onRulesAgreedChange}
+        sentence={ruleText}
+      />
+    </div>
+  );
+}
+
+/**
+ * **The optional ask: a partner's mailing list, offered on the way past.**
+ *
+ * Everything about it is chosen to say "this is not one of those" to a reader
+ * who has just met the Required consent section, because the single most
+ * expensive mistake here would be a parent believing they had to tick it:
+ *
+ * - **It stands outside the section above**, with no heading of its own. That
+ *   section is one act — everything a parent must agree to, which the CTA names
+ *   as one step — and a row inside it that did not gate the button would be a
+ *   box the reader cannot tell from the ones that do.
+ * - **It says "Optional" in its own hint, and that sentence is the only marker
+ *   in the consent area** — every gate above it is unmarked, so this is the
+ *   exception rather than one label among many. The distinction has been carried
+ *   three ways now and the current one is the cheapest: first by *withholding*
+ *   the border the required rows wear (a plain line beside boxed gates), which
+ *   died when the border became the click target rather than a weight — the
+ *   lighter rows read as gates that had failed to render, and nothing reached a
+ *   reader who was not looking at the screen. Then by an info-toned chip at the
+ *   end of the first line, which said one word the hint underneath was already
+ *   saying and spent a line of rail height doing it. Now the hint says it alone,
+ *   in the colour the chip wore, and it is in the row's accessible description
+ *   either way.
+ * - **It says it is optional in its own words** too, under the sentence, and names
+ *   where the answer can be changed later — because it *can* be, which is the
+ *   deepest difference between this and everything above it. A required consent
+ *   is a statement about the moment of enrolment and cannot be unmade; this is
+ *   a standing permission about a mailbox, and the parent owns it afterwards.
+ *
+ * **The partner is a link, and it opens in a new tab** — the same treatment a
+ * consent document's name gets, for the same two reasons. A parent asked to
+ * hand their address to somebody has to be able to look at who that somebody
+ * is, and the panel behind them is holding a half-filled form that must survive
+ * the reading.
+ *
+ * **Nothing here touches the CTA.** No leaf in the button's checklist, no entry
+ * in `formReady`: declining is a complete answer, and a button that waited on
+ * one would be a requirement wearing an optional label.
+ *
+ * Renders nothing at all when the product asks for nothing, which is nearly
+ * every product. There is no space held open for it: the ask set arrives with
+ * the product read and cannot appear under a reader mid-form.
+ */
+function OptionalMarketingSection({
+  rows,
+  granted,
+  onGrantedChange,
+}: {
+  rows: readonly MarketingConsentAskRow[];
+  granted: ReadonlySet<MarketingConsentType>;
+  onGrantedChange: (consentType: MarketingConsentType, next: boolean) => void;
+}) {
+  const t = useTranslations("productDetail.signupPanel.consents.marketing");
+  if (rows.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      {/* The hint goes under the sentence rather than beside it: at rail width
+          there is no beside, and the sentence is what the tick means while this
+          is a note about the tick. In the info tone, because this sentence is
+          also the row's optional marker — it opens with the word, so nothing
+          else has to carry it. */}
+      {rows.map(({ type, ask }) => (
+        <CheckboxRow
+          key={type}
+          size="xs"
+          checked={granted.has(type)}
+          onCheckedChange={(next) => onGrantedChange(type, next)}
+          label={
+            <span className="text-muted-foreground">
+              {t.rich(ask.sentenceKey, {
+                link: (chunks) => (
+                  <ConsentSentenceLink href={ask.href}>
+                    {chunks}
+                  </ConsentSentenceLink>
+                ),
+              })}
+            </span>
+          }
+          hint={t("hint")}
+          hintTone="info"
         />
-        <span className="text-muted-foreground">{ruleText}</span>
-      </div>
-    </label>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * **One bundle, as the sentence that consents to it.**
+ *
+ * The label is the bundle's own authored sentence, rendered as rich text so
+ * each named tag becomes a link to the document it names — `<terms>…</terms>`
+ * and `<privacy>…</privacy>` on the Roblox bundle, whose slugs the bundle's
+ * `sentenceTags` map supplies. A component per bundle rather than a loop with
+ * hooks in it, and it is also what keeps the tag map local to the row it
+ * belongs to.
+ *
+ * A tag pointed at a document this deploy cannot name renders its own words as
+ * plain text instead of as an anchor. It should be unreachable — a bundle only
+ * ever names documents from the same map — but a link the renderer will not
+ * trust must degrade to its label rather than to an anchor with nowhere to go,
+ * because an empty href resolves to the page the reader is already on.
+ */
+function BundleConsentRow({
+  bundle,
+  agreed,
+  onAgreedChange,
+}: {
+  bundle: ConsentDocumentBundle;
+  agreed: boolean;
+  onAgreedChange: (next: boolean) => void;
+}) {
+  const t = useTranslations("productDetail.signupPanel.consents.bundles");
+  const tags: Record<string, (chunks: React.ReactNode) => React.ReactNode> = {};
+  for (const [tag, slug] of Object.entries(bundle.sentenceTags)) {
+    const meta = consentDocumentMeta(slug);
+    tags[tag] = (chunks) =>
+      meta === null ? (
+        <span className="font-medium text-foreground">{chunks}</span>
+      ) : (
+        <ConsentSentenceLink href={meta.href}>{chunks}</ConsentSentenceLink>
+      );
+  }
+  return (
+    <ConsentRow
+      agreed={agreed}
+      onAgreedChange={onAgreedChange}
+      sentence={t.rich(bundle.sentenceKey, tags)}
+    />
+  );
+}
+
+/**
+ * A document named inside a consent sentence, as the link that opens it.
+ *
+ * One treatment for every such name, wherever it appears: a bundle's documents
+ * and the rules row's policy are the same kind of thing to a reader, so telling
+ * them apart by weight or colour would be inventing a distinction the section
+ * does not have. New tab, for the reason on the section above — the panel is
+ * holding a half-filled form the reader is meant to come back to.
+ */
+function ConsentSentenceLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-primary underline-offset-2 hover:underline"
+    >
+      {children}
+    </a>
+  );
+}
+
+/**
+ * One thing to agree to: the shared `CheckboxRow`, carrying the sentence and
+ * nothing else.
+ *
+ * Shared by every row rather than written per kind, because "the rows are
+ * indistinguishable" is the point of the section — a reader must not be able to
+ * tell our rules from a product's documents by their treatment, only by what
+ * they say.
+ *
+ * **No marker, and that is what says "required".** Every row here is a gate, and
+ * gates are the ordinary case in this section — the exception is the optional
+ * marketing row below it, which is the only one that says anything about which
+ * kind it is. Labelling both was tried and made a column of repeated words that
+ * wrapped badly at rail width and told a reader nothing they could act on; one
+ * marked exception among unmarked defaults says the same thing for free.
+ *
+ * `sentence` takes a node rather than a string because a consent sentence
+ * carries its own links inline — a bundle's documents, the rules row's policy,
+ * and the raw slug that heads a drift row. A caller passing links accepts that
+ * a click on one reads instead of ticking, which the DOM gives for free (see
+ * the section's note above).
+ */
+function ConsentRow({
+  agreed,
+  onAgreedChange,
+  sentence,
+}: {
+  agreed: boolean;
+  onAgreedChange: (next: boolean) => void;
+  sentence: React.ReactNode;
+}) {
+  return (
+    <CheckboxRow
+      size="xs"
+      checked={agreed}
+      onCheckedChange={onAgreedChange}
+      label={<span className="text-muted-foreground">{sentence}</span>}
+    />
   );
 }
 

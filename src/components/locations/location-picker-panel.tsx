@@ -39,11 +39,11 @@ import type { Json, LocationType } from "@/types";
  *
  * There was a second scope here — a bounded set the caller had already fetched
  * in full, grouped and filtered in memory — and it is gone with its last
- * consumer. Both surfaces that had one (every venue, then Finland's
+ * consumer. Both surfaces that had one (every site, then Finland's
  * municipalities) are tree dialogs now, so a panel that could be either was
  * carrying a whole branch, a grouping module and a second in-memory fold for
  * nobody. **A collection worth listing whole still exists** — a municipality's
- * venues is one — but a *picker* over it does not, and the way back is to build
+ * sites is one — but a *picker* over it does not, and the way back is to build
  * the scope again against a real caller rather than to keep one warm.
  *
  * ## The two selection modes

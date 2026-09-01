@@ -55,6 +55,31 @@ const ENGLISH_UNDER_KLINGON = [
   "metadata.pages.robloxPrivacy",
   "metadata.pages.robloxSafeguarding",
   "metadata.pages.robloxTerms",
+  // The two consent documents a product can require, named — and the label of
+  // the bundle they are published as, which names the same documents as a set.
+  // Their *names* only — the sentence a parent ticks, its heading and the CTA
+  // that points at it are ordinary product copy and stay in Klingon. A link
+  // label has to call a document what the document itself is called, and both
+  // of these documents are served in English under `tlh`, exactly as the
+  // `roblox.legal.*` labels pointing at the same two pages already are.
+  //
+  // Which is why the signup panel's *bundle sentence* — the one a parent
+  // actually ticks, with those two names inside its `<terms>` / `<privacy>`
+  // tags — is authored under `productDetail.signupPanel.consents.bundles`
+  // instead, deliberately outside this list. A subtree root exempts everything
+  // beneath it, so a sentence filed in here would have been served in English
+  // whole; filed where it is, `tlh` writes the sentence in Klingon and spells
+  // the two document names in English inside it, which is exactly the split
+  // this exemption is trying to draw.
+  //
+  // The same split, same shape, one namespace over: the rules sentences under
+  // `productDetail.signupPanel.rules` name the Anti-Bullying and Discipline
+  // policy inside a `<policy>` tag, and that page's own copy (`discipline`) and
+  // its labels are exempted above. So `tlh` writes those sentences in Klingon
+  // too, with the English policy name inside the tag. Nothing here needs a new
+  // entry — the point of recording it is that the next such sentence does not
+  // either.
+  "consentDocuments",
   "roblox.legal.privacy",
   "roblox.legal.safeguarding",
   "roblox.legal.terms",

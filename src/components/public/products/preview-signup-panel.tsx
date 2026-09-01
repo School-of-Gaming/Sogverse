@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ProductBrowseRow } from "@/types";
+import type { MarketingConsentType, ProductBrowseRow } from "@/types";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import type { RegionGate } from "./region-lock/region-gate";
@@ -41,6 +41,18 @@ interface PreviewSignupPanelProps {
     | "start_date"
     | "timezone"
   >;
+  /**
+   * The consent documents this scenario's product requires, as slugs — the
+   * scene's half of what the live route reads off the product embed. Defaulted
+   * to none so every ordinary scenario stays exactly as it was.
+   */
+  requiredConsentSlugs?: readonly string[];
+  /**
+   * The marketing consents this scenario's product asks about — the scene's
+   * half of the other detail-query embed. Defaulted to none so every ordinary
+   * scenario stays exactly as it was.
+   */
+  marketingConsentTypes?: readonly MarketingConsentType[];
   state: RegistrationState;
   authState: AuthState;
   /** Where the CTA lands — the matching `/preview/confirmation/<scenario>`. */
@@ -61,8 +73,16 @@ interface PreviewSignupPanelProps {
 // commit takes, short enough not to annoy someone clicking through demos.
 const FAKE_COMMIT_MS = 600;
 
+// Hoisted so the default is one stable array rather than a fresh literal per
+// render — the hook holds it in state-shaped props and a new identity every
+// render is churn nobody asked for.
+const NO_CONSENTS: readonly string[] = [];
+const NO_MARKETING_CONSENTS: readonly MarketingConsentType[] = [];
+
 export function PreviewSignupPanel({
   product,
+  requiredConsentSlugs = NO_CONSENTS,
+  marketingConsentTypes = NO_MARKETING_CONSENTS,
   state,
   authState,
   summaryHref,
@@ -71,7 +91,18 @@ export function PreviewSignupPanel({
   onLocationPicked,
 }: PreviewSignupPanelProps) {
   const router = useRouter();
-  const fields = useSignupPanelFields(product, authState);
+  const fields = useSignupPanelFields(
+    product,
+    authState,
+    requiredConsentSlugs,
+    marketingConsentTypes,
+    // No seed, and deliberately no read to get one: a scene has no session, and
+    // the account read is only correct for a signed-in customer — an admin
+    // looking at a preview would get every parent's rows. So the boxes start
+    // unticked and toggle against local state, which is the honest picture of
+    // this panel for a parent who has never answered.
+    undefined,
+  );
   const [committing, setCommitting] = useState(false);
   // The location dialog is the panel adapter's, here as in production — the
   // view asks for it and this is what owns whether it is open.

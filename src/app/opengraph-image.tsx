@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 import { DARK_THEME, BRAND, GRADIENT } from "@/lib/constants/colors";
 import { BRAND_LOCKUP } from "@/lib/constants";
 import { SogMark } from "@/components/og/marks";
-import { interFonts } from "@/components/og/fonts";
+import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
 
 export const alt = BRAND_LOCKUP;
 export const size = { width: 1200, height: 630 };
@@ -26,7 +26,7 @@ export const contentType = "image/png";
  * number, because the click has to still be worth having once they arrive.
  */
 export default async function Image() {
-  const fonts = await interFonts();
+  const fonts = await ogFonts();
 
   return new ImageResponse(
     (
@@ -48,31 +48,43 @@ export default async function Image() {
           padding: "48px 80px",
         }}
       >
-        <SogMark height={350} />
+        {/* The mark's height is what the rest of the card is budgeted against:
+            630px less the 48px padding top and bottom leaves 534px, and the
+            two-line statement plus its sub-line spend 206 of it. 310 keeps the
+            column inside that budget with room to spare — a taller mark pushes
+            the sub-line's descenders onto the bottom edge, which reads as a
+            crop rather than as a card. */}
+        <SogMark height={310} />
 
+        {/* The vision statement, drawn the way the styled home hero draws it:
+            the canonical capitalization, broken across lines, and no full stop
+            — a graphic rather than a sentence. Two lines, not the hero's four,
+            because this one has to stay readable at thumbnail width. */}
         <div
           style={{
             display: "flex",
-            gap: "14px",
-            marginTop: "44px",
-            fontFamily: "Inter",
+            flexDirection: "column",
+            alignItems: "center",
+            lineHeight: 1.12,
+            marginTop: "36px",
+            fontFamily: OG_FONT_FAMILY,
             fontSize: "50px",
             fontWeight: 600,
             letterSpacing: "-1px",
             color: DARK_THEME.foreground,
           }}
         >
-          <span>Where screen time becomes</span>
-          {/* The payoff half of the tagline in the mark's own yellow — the only
-              accent below the badge, so the eye finishes the line. */}
-          <span style={{ color: BRAND.primary }}>quality time</span>
+          <span>Where Screen Time Becomes</span>
+          {/* The payoff half in the mark's own yellow — the only accent below
+              the badge, so the eye finishes the line. */}
+          <span style={{ color: BRAND.primary }}>Quality Time</span>
         </div>
 
         <div
           style={{
             display: "flex",
             marginTop: "20px",
-            fontFamily: "Inter",
+            fontFamily: OG_FONT_FAMILY,
             fontSize: "32px",
             fontWeight: 400,
             color: DARK_THEME.mutedFg,

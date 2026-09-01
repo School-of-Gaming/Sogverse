@@ -327,6 +327,19 @@ export function ProductDetailPage({
       signupPanel={
         <SignupPanel
           product={product}
+          // Off the detail query's own embed, which is the only read that has
+          // it: the browse row deliberately does not publish a product's
+          // enrolment conditions, so the panel takes them beside the product
+          // rather than off it.
+          requiredConsentSlugs={product.product_required_consents.map(
+            (consent) => consent.document_slug,
+          )}
+          // The other embed on the same read, and the same reasoning: what a
+          // product asks at signup is not on the browse row, because a card
+          // never names it.
+          marketingConsentTypes={product.product_marketing_consents.map(
+            (consent) => consent.consent_type,
+          )}
           state={state}
           authState={authState}
           regionGate={regionGate}

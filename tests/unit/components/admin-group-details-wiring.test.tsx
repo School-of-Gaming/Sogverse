@@ -9,6 +9,7 @@ import {
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { ROUTES } from "@/lib/constants";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { AdminGroupDetailsPage } from "@/components/admin/products/group-details/admin-group-details-page";
@@ -42,8 +43,13 @@ import type { ProductGroupsSnapshot, ProductType } from "@/types";
  *  4. **The note write is the shared mutation**, once, with the trimmed text —
  *     the same one the gedu page and the voice room call, which is what makes
  *     an edit here show up there.
- *  5. **The site section carries the admin-only address control**, which is the
- *     whole of what this surface adds to a section a gedu already edits.
+ *  5. **The site section is handed a link, not a second capability.** The notes
+ *     are writable here, exactly as they are on the gedu's own page; the site's
+ *     name and address are the building's record and are edited on the site's
+ *     own page, which this shell links to and a gedu shell has no way to. That
+ *     is the whole of what this surface adds to the section, and it is what
+ *     keeps "an admin sees what the gedu sees" literally true of it — so what
+ *     this file checks is that the link is there and the record editor is not.
  *
  * Every read and every mutation is stubbed at its hook: what is under test is
  * what the shell did with an answer, never how it asked.
@@ -91,8 +97,6 @@ const noopMutation = vi.hoisted(() => () => ({
 
 vi.mock("@/services/products", () => ({
   useProductAdmin: () => ({ data: reads.product, isPending: false }),
-  // Read by the admin-only address control inside the site section.
-  useUpdateSiteNotes: noopMutation,
 }));
 
 vi.mock("@/services/admin-sessions", () => ({
@@ -100,16 +104,19 @@ vi.mock("@/services/admin-sessions", () => ({
   useAdminSetSessionNotes: noopMutation,
   useAdminRecordAttendance: noopMutation,
   useAdminEmailSessionReport: noopMutation,
+  useAdminAddSessionImage: noopMutation,
+  useAdminDeleteSessionImage: noopMutation,
   useAdminSetGroupNotes: noopMutation,
   useAdminSetSiteNotes: noopMutation,
 }));
 
-vi.mock("@/services/gedu-sessions", () => ({
+// The hooks are stubbed; everything else — the SQLSTATEs the shared save module
+// reads at module scope, the photo cap and accept list the photo block reads —
+// is kept real, so a constant added to the contracts cannot silently become
+// `undefined` in here.
+vi.mock("@/services/gedu-sessions", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/gedu-sessions")>()),
   useGeduGroupFeed: () => ({ data: reads.feed, isPending: false }),
-  // Read at module scope by the shared save module, so the stub has to carry
-  // them even though nothing in this file sends a report.
-  SESSION_REPORT_ALREADY_SENT_SQLSTATE: "P0001",
-  SESSION_REPORT_NO_REPORT_SQLSTATE: "P0002",
 }));
 
 vi.mock("@/services/groups", () => ({
@@ -199,6 +206,8 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     schedule_slots: [],
     locations: null,
     product_holiday_calendars: [],
+    product_required_consents: [],
+    product_marketing_consents: [],
   };
 }
 
@@ -243,8 +252,8 @@ function adminSessions(): AdminProductSessions {
       timezone: "Europe/Helsinki",
       start_date: "2025-09-01",
       end_date: null,
-      // In person, so the venue's section — and the address control on it —
-      // renders.
+      // In person, so the site's section — and the details fields on it —
+      // render.
       is_remote: false,
       schedule_slots: [],
     },
@@ -368,6 +377,20 @@ function isLit(button: HTMLElement): boolean {
   return button.querySelector("svg")?.classList.contains("text-info") === true;
 }
 
+/**
+ * The site panel, as its own query scope — the standing-notes card holds the
+ * group's panel beside it, with an identically-named Edit button and Save.
+ * Scoped from the panel's own heading, since neither panel carries a landmark.
+ */
+function sitePanel() {
+  const heading = screen.getByRole("heading", { name: "Site" });
+  const panel = heading.parentElement?.parentElement;
+  if (panel === null || panel === undefined) {
+    throw new Error("The site panel's root element was not found.");
+  }
+  return within(panel);
+}
+
 /** Matches the note dialog's own title, whichever member it was opened for. */
 const NOTE_DIALOG_TITLE = /^Note about /;
 
@@ -441,17 +464,34 @@ describe("admin group details — the page an admin gets is the gedu's page", ()
     expect(isLit(noteButton("Siiri"))).toBe(true);
   });
 
-  it("offers the admin-only address control inside the venue's section", () => {
+  it("links to the site's own page instead of editing the record here", () => {
     renderPage("consumer_club");
 
-    // The address itself is read-only on both surfaces and shown by the shared
-    // panel; what this page adds is the one control that may write it.
+    // The address reads the same as it does for a gedu, on the same component.
+    expect(screen.getByText("Viides linja 11, 00530 Helsinki")).toBeTruthy();
+
+    const panel = sitePanel();
+
+    // The notes stay editable — that is the shared staff content, and the
+    // gedu's whole edit surface. The editor stays mounted and `inert` while
+    // shut, so what says it is open is the pencil's own state rather than the
+    // fields' absence.
+    const pencil = panel.getByRole("button", { name: "Edit" });
+    expect(pencil.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(pencil);
+    expect(pencil.getAttribute("aria-expanded")).toBe("true");
+    expect(panel.getByLabelText("Note for families")).toBeTruthy();
+
+    // The record is not editable here, open editor or not: this page is scoped
+    // to one group of one product, and a rename typed on it would land on every
+    // product in the building while reading as a change to this one.
+    expect(panel.queryByLabelText("Name")).toBeNull();
+    expect(panel.queryByLabelText("Address")).toBeNull();
+
+    // The way through is one navigation, to the page whose scope says so.
     expect(
-      screen.getByText("Viides linja 11, 00530 Helsinki"),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Edit address" }),
-    ).toBeTruthy();
+      panel.getByRole("link", { name: "Edit site" }).getAttribute("href"),
+    ).toBe(ROUTES.admin.site(IDS.location));
   });
 });
 

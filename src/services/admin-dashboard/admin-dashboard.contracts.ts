@@ -56,6 +56,13 @@ export const adminDashboardUserStat = z.object({
  * that are "not yet". It informs the decision and gates nothing: certification
  * remains the platform's only blocking lever over an educator, and an unsigned
  * candidate is still certifiable.
+ *
+ * `criminal_record_check_at` is when an admin recorded seeing this candidate's
+ * criminal record extract, or null where none has been recorded. The flag behind
+ * it is deliberately not on the wire: the moment is stamped exactly when the flag
+ * is set and cleared with it, so a second field could only ever contradict the
+ * first. It informs the certification decision on the same terms as the contract
+ * stamp beside it and gates nothing either.
  */
 export const adminDashboardCertificationCandidate = z.object({
   id: z.string(),
@@ -63,6 +70,7 @@ export const adminDashboardCertificationCandidate = z.object({
   last_name: z.string(),
   created_at: z.string(),
   contract_accepted_at: z.string().nullable(),
+  criminal_record_check_at: z.string().nullable(),
 });
 
 /** A group with members and nobody teaching it. */
@@ -75,10 +83,24 @@ export const adminDashboardGroupWithoutGedu = z.object({
  * People queueing while seats stand open — both halves, because the line an
  * admin reads names both ("4 waitlisted · 2 seats open"). Null on a product
  * where the situation does not arise at all: no queue, no cap, or no free seat.
+ *
+ * Since 00207 there is a fourth way for it to be null, and it is the one worth
+ * knowing about: **every open seat already carries a live seat offer.** The
+ * attention queue is a list of things for an admin to do, and once the families
+ * have been asked there is nothing to do but wait — so the product drops out,
+ * and a decline or an expiry puts it back on its own.
  */
 export const adminDashboardWaitlistPressure = z.object({
   waitlist_count: z.number(),
   open_seats: z.number(),
+  /**
+   * How many waitlisted families on this product are currently holding a live
+   * offer. Always strictly less than `open_seats` — that inequality is what
+   * kept the product in the list — and it is here so the line can explain
+   * itself rather than leaving an admin to wonder why a queue of four beside
+   * two open seats sometimes shows and sometimes does not.
+   */
+  live_offer_count: z.number(),
 });
 
 /**

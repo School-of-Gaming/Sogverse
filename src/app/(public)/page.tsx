@@ -146,7 +146,12 @@ export default function HomePage() {
             <p className="mt-4 text-muted-foreground">
               {t('cta.subheading')}
             </p>
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+            {/* The app-wide button order shape — root `CLAUDE.md`, "Button
+                Order". Creating an account is the primary CTA (last in the DOM,
+                so right in a row and top in a stack); exploring the shop is the
+                secondary alternative beside it. This is the same pair the
+                purchase confirmation draws, and the two have to agree. */}
+            <div className="mt-8 flex flex-col-reverse gap-4 sm:flex-row">
               <Link
                 href={ROUTES.shop}
                 className={buttonVariants({ variant: "outline", size: "lg" })}

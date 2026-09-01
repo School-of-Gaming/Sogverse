@@ -1,5 +1,50 @@
 # Referral landing clicks
 
+## SUSPENDED — 2026-08-26. Do not build this.
+
+**Both of this plan's load-bearing premises have collapsed, and the feature it extends may
+itself be renamed or retired.** The full investigation, with sources, is in
+`docs/roblox-todo.md` under *Attribution, cookie consent, and the Lynx data export*; read that
+before touching anything here.
+
+What changed:
+
+- **"Device storage would require a consent banner" is not the test.** Under EDPB
+  *Guidelines 2/2023* §3.1 ¶50–51, Art 5(3) is engaged by a tracking parameter in a URL
+  regardless of what the site stores — storage *or* access, and the access limb catches the
+  proxy read we already do server-side. So the rejected alternative that turned down a
+  cookie was turned down on a reason that does not hold, and neither does the first of the
+  six constraints in `src/lib/referral.ts` that this plan's *Constraints discovered* section
+  affirms.
+- **A banner is likely coming anyway, and not because of `?ref=`.** The Vercel Speed
+  Insights and Web Analytics scripts engage Art 5(3) on their own, and Germany and Finland
+  have no audience-measurement exemption to claim. So "the privacy policy's analytics
+  paragraph already describes Vercel's analytics as cookieless and non-identifying, which
+  this event is; no policy change is part of v1" is no longer a safe reading.
+- **The denominator this plan exists to produce was never asked for.** Every reference to
+  UTM in Lynx's document is about *registration records*, not traffic — a per-person export
+  carrying one "utm parameter" field beside `parent email`. Nothing in it mentions clicks,
+  impressions or a conversion rate. And this plan already concedes in its own *Constraints
+  discovered* section that ad platforms count clicks better than we can.
+- **The cheap alternative is no longer blocked.** Web Analytics Plus is $10/month per team
+  and tracks UTM natively — so *"the owner does not want the add-on"* is a decision worth
+  re-taking rather than a constraint, and it would delete every implementation step below.
+
+**The likely end-state is deletion, not resumption** — `docs/roblox-todo.md` now carries the
+reasoning, and this file's remaining value is the one thing worth rescuing first:
+
+> **The partner code prefix convention.** Codes issued to or for a partner are prefixed with
+> the partner's slug and a hyphen (`lynx-summer-a`, `rblx-launch`). This cannot be
+> retrofitted — the value is immutable on a profile once written — and it survives a rename
+> to UTM unchanged, as a `utm_campaign` naming convention. **Settle it before the first Lynx
+> campaign link goes out**, whatever happens to the rest of this plan.
+
+Everything below is preserved as written on the day it was decided. It is a record of a
+decision made on a premise now known to be false — not a specification. Nothing in it should
+be built without the open decisions in `docs/roblox-todo.md` being answered first.
+
+---
+
 Count how many people arrive on the site with a `?ref=` code, so the code becomes a
 conversion *rate* (accounts created with the code ÷ arrivals carrying it) instead of only
 an accounts count.

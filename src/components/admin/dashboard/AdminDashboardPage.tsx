@@ -12,6 +12,7 @@ import {
   type AdminDashboardSnapshot,
 } from "@/services/admin-dashboard";
 import { useSetGeduCertified } from "@/services/gedu";
+import { useSeatOfferSweepOnMount } from "@/services/participations";
 import { AdminDashboardPageBody } from "./admin-dashboard-page-body";
 import {
   buildAdminDashboardData,
@@ -68,7 +69,40 @@ export function AdminDashboardPage({
   const now = useNow();
   const queryClient = useQueryClient();
 
-  const { data: snapshot } = useAdminDashboard(initialSnapshot);
+  /**
+   * A seat offer runs out by the clock, and there is no clock — so an admin
+   * arriving here *is* the observation. The queue below subtracts live offers
+   * from a product's open seats, which means a lapsed one is precisely a
+   * product that ought to be back on this list.
+   *
+   * **The read is sequenced behind it rather than interrupted by it, and that
+   * is a layout decision.** The attention queue is a sorted run, and a claim
+   * puts a product *back* into it — so an invalidation arriving after the page
+   * had painted would insert a card into the middle of a list an admin was
+   * already reading, on data's own schedule and with nothing they did to
+   * explain it. That is the shift the layout rule forbids outright. Gating the
+   * query instead means any fetch this mount was going to make happens once,
+   * after the claim, and carries it — so the sorted run is right the first time
+   * it is drawn and never re-sorts underneath anyone.
+   *
+   * Two things keep the gate from becoming a loading state. The flag flips on
+   * *settle*, not on success, so a Brevo outage or a lost request cannot hold
+   * the page's own data hostage. And the seed means there is nothing to hold
+   * back in the first place: the route already awaited this snapshot, so the
+   * dashboard paints in full while the sweep is still in the air. What is
+   * deferred is a network fetch nobody is looking at, not a page.
+   *
+   * The invalidation is suppressed here for the same reason — it is the
+   * interruption this arrangement exists to remove, and a claim it makes is
+   * reflected the next time this page is opened. The groups panel keeps it: its
+   * board is a different read, cheap to redo, and one that has to show a freed
+   * seat while the admin is standing in front of the queue it came out of.
+   */
+  const sweepSettled = useSeatOfferSweepOnMount({ invalidateDashboard: false });
+
+  const { data: snapshot } = useAdminDashboard(initialSnapshot, {
+    enabled: sweepSettled,
+  });
   const setCertified = useSetGeduCertified();
 
   const viewerDay = formatInTimeZone(now, timeZone, "yyyy-MM-dd");

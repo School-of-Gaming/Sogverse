@@ -7,6 +7,9 @@ import {
   readErrorMessage,
 } from "@/lib/api/json-response";
 import { adminSessionKeys } from "@/services/admin-sessions";
+// The keys module rather than the package index: that index re-exports the
+// service class, and this file only needs the cache key factory.
+import { siteKeys } from "@/services/sites/sites.queries";
 import { updateSiteNotesResponse } from "./reference-data.contracts";
 import type { CalendarHoliday, HolidayCalendar } from "@/types";
 
@@ -16,6 +19,7 @@ export type HolidayCalendarWithDates = HolidayCalendar & {
 
 export const referenceKeys = {
   holidayCalendars: ["products", "holiday-calendars"] as const,
+  consentDocuments: ["products", "consent-documents"] as const,
 };
 
 export function useHolidayCalendars() {
@@ -34,6 +38,72 @@ export function useHolidayCalendars() {
   });
 }
 
+/**
+ * One consent document the platform has published, with the version that is
+ * current *right now* — the row with the greatest `created_at` for that slug,
+ * which is the same derivation the enrolment RPC makes when it stamps an
+ * acceptance.
+ *
+ * `currentVersion` is null only for a slug with no published version at all,
+ * which is a data state only a migration could create. The admin form says so
+ * rather than hiding the document: a product requiring it would fail to enrol
+ * anybody, and that is worth seeing before it is picked.
+ */
+export interface ConsentDocumentOption {
+  slug: string;
+  currentVersion: string | null;
+}
+
+/**
+ * Every consent document a product can be made to require.
+ *
+ * A direct read through the caller's own client, like the holiday calendars
+ * above: the table is a list of published document slugs with no personal data
+ * in it, readable by `anon` and `authenticated` alike under migration 00210, so
+ * a route would add nothing but a hop.
+ *
+ * The "current version" is resolved here rather than in SQL because PostgREST
+ * has no greatest-n-per-group: the versions ride in on the embed and the
+ * greatest `created_at` is picked in JS, with `version` descending as the
+ * tiebreaker — the *same* order the database's own writer uses, so the version
+ * an admin is shown is the version an enrolment would record.
+ */
+export function useConsentDocuments() {
+  const supabase = getClient();
+
+  return useQuery<ConsentDocumentOption[]>({
+    queryKey: referenceKeys.consentDocuments,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("consent_documents")
+        .select("slug, consent_document_versions(version, created_at)")
+        .order("slug");
+      if (error) throw error;
+      return data.map((row) => ({
+        slug: row.slug,
+        currentVersion: currentVersionOf(row.consent_document_versions),
+      }));
+    },
+  });
+}
+
+function currentVersionOf(
+  versions: { version: string; created_at: string }[],
+): string | null {
+  let current: { version: string; created_at: string } | null = null;
+  for (const candidate of versions) {
+    if (
+      current === null ||
+      candidate.created_at > current.created_at ||
+      (candidate.created_at === current.created_at &&
+        candidate.version > current.version)
+    ) {
+      current = candidate;
+    }
+  }
+  return current?.version ?? null;
+}
+
 export interface UpdateSiteNotesInput {
   location_id: string;
   member?: { address?: string | null; notes?: string | null };
@@ -43,13 +113,21 @@ export interface UpdateSiteNotesInput {
 /**
  * Write a site's member-visible address/notes and its staff notes.
  *
- * **The only read that carries any of this into a page is the admin product's
- * session document**, so that is what the write invalidates — the invalidation
- * belongs on the mutation rather than on whichever component happened to fire
- * it. The gedu group feed carries the same site fields, but it is not
- * invalidated here and must not be: this route is admin-only, so a client that
- * can reach this mutation has never held a gedu feed, and invalidating one
- * would be a no-op dressed up as thoroughness.
+ * **Two reads carry these fields into a page, and both are invalidated here** —
+ * the invalidation belongs on the mutation rather than on whichever component
+ * happened to fire it. The admin product's session document carries a site's
+ * address and notes alongside the product running there; the admin site page
+ * reads the same three fields on their own.
+ *
+ * **The gedu group feed carries them too, and is deliberately not invalidated —
+ * but not because no client here holds one.** One does: the admin group details
+ * page mounts the feed alongside the session record. What it takes from the feed
+ * is the roster and the product's own title and material link; the *site* it
+ * renders comes from the session document above. So no surface able to fire this
+ * mutation reads the feed's copy of these fields, and invalidating it would
+ * refetch a value nothing is looking at. What would change that is a surface
+ * rendering `feed.product.site` beside one of these writes — add the key here in
+ * the same change, rather than trusting this paragraph.
  *
  * Keyed at every product rather than one: a site is shared by every product at
  * the building, and this mutation is not told which of them is on screen. Only
@@ -78,8 +156,14 @@ export function useUpdateSiteNotes() {
       return parseJsonResponse(res, updateSiteNotesResponse);
     },
     onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: adminSessionKeys.products(),
-      }),
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: adminSessionKeys.products(),
+        }),
+        // Every site's notes rather than the one just written: only mounted
+        // queries refetch, and exactly one site page is ever mounted — same
+        // arrangement as the product key above.
+        queryClient.invalidateQueries({ queryKey: siteKeys.notes() }),
+      ]),
   });
 }

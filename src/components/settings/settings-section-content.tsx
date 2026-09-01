@@ -14,8 +14,15 @@ import { GameAccountCard } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
-import { GeduContractSettingsCard } from "@/components/gedu/contract/gedu-contract-settings-card";
+import {
+  GeduContractSettingsCard,
+  type GeduContractSeed,
+} from "@/components/gedu/contract/gedu-contract-settings-card";
 import { HomeLocationField } from "@/components/locations/home-location-field";
+import {
+  MarketingPreferencesFields,
+  MARKETING_CONSENT_ORDER,
+} from "@/components/settings/marketing-preferences-fields";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
@@ -25,7 +32,26 @@ import { useLocationsByIds, type LocationWithChain } from "@/services/locations"
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
 import { useMyRobloxAccount, useUpdateMyRoblox } from "@/services/roblox";
-import { isGamerProfile, type ProfileUpdate, type SpokenLanguageCode } from "@/types";
+import {
+  useMyMarketingConsents,
+  useSetMarketingConsent,
+} from "@/services/marketing-consents";
+import {
+  isGamerProfile,
+  type MarketingConsent,
+  type MarketingConsentType,
+  type ProfileUpdate,
+  type SpokenLanguageCode,
+} from "@/types";
+
+/**
+ * The baseline a failed marketing-consent read falls back to: nothing granted.
+ *
+ * Module-level so it is one stable array rather than a fresh one per render —
+ * the value is read during render and never mutated, and a new identity each
+ * time is churn with no reader.
+ */
+const NO_MARKETING_CONSENTS: readonly MarketingConsent[] = [];
 
 /**
  * A keyed location read, as the picker's own value shape. The two are already
@@ -37,7 +63,20 @@ function toLocationPick(row: LocationWithChain | undefined): LocationPick | null
   return { location: row, ancestors: row.ancestors };
 }
 
-export function SettingsSectionContent() {
+export function SettingsSectionContent({
+  geduContractSeed,
+}: {
+  /**
+   * A gedu's contract acceptances as the route read them, with the moment it
+   * read them. Threaded straight through to the card's data shell, which seeds
+   * the very cache entry the hook reads.
+   *
+   * **Absent means "not a gedu", and nothing else.** The route reads only for a
+   * gedu and fails rather than render this page without an answer, so there is
+   * no failed-read value to carry and no third state for the card to be in.
+   */
+  geduContractSeed?: GeduContractSeed;
+}) {
   const t = useTranslations('settings');
   const c = useTranslations('common');
   const { user, profile, refreshProfile } = useAuth();
@@ -204,6 +243,70 @@ export function SettingsSectionContent() {
     ? homeLocationEdit.pick
     : savedHomeLocation;
 
+  // ---------------------------------------------------------------------
+  // Marketing preferences
+  //
+  // A group inside this card rather than a card of its own, and therefore
+  // saved by this card's button. Parents only: the consent is held by the adult
+  // whose mailbox it is about, which is what the RPC's `assert_role('customer')`
+  // guard enforces — for a gamer or a gedu the database would refuse the write,
+  // so the group is not offered. The read is switched off for them for the same
+  // reason: `useMyMarketingConsents` widens under an admin's own SELECT policy
+  // and holds no grant for `anon`, so a caller that cannot promise a customer
+  // session must not make it.
+  // ---------------------------------------------------------------------
+  const { data: marketingConsentRows, isError: marketingReadFailed } =
+    useMyMarketingConsents({ enabled: isParent });
+  const setMarketingConsent = useSetMarketingConsent();
+
+  /**
+   * The baseline the boxes render from and a save diffs against.
+   *
+   * **A failed read resolves to "nothing granted" rather than to "not known
+   * yet".** The two states are the same `undefined` from the query's data, and
+   * collapsing them left a parent staring at two boxes disabled forever with
+   * nothing saying why — a dead control is a worse answer than a wrong-looking
+   * one. So on an error the group renders unticked and *usable*, and the
+   * ordinary change-only save logic runs against that empty baseline.
+   *
+   * **What makes an assumed-empty baseline safe is the change-only save.** An
+   * untouched box equals the assumed baseline, so it is not written at all: a
+   * parent who granted a consent months ago, hits a network blip today, and
+   * saves an unrelated name change is not silently withdrawn — nothing about
+   * their consents is sent. Only a box they actually moved is written, and it is
+   * written as shown, because submitting the form is the parent saying the UI
+   * state in front of them is what they want on file. Ticking something they
+   * already held is then a no-op at the database, which the RPC handles by
+   * appending no event.
+   *
+   * The loading path is untouched and still `undefined`: the boxes stay disabled
+   * until the seed lands, which guards an edit/seed race rather than an error.
+   */
+  const marketingConsents = marketingReadFailed
+    ? NO_MARKETING_CONSENTS
+    : marketingConsentRows;
+
+  /** What the baseline says is granted. A consent with no row at all is a no. */
+  const savedMarketingGranted = (consentType: MarketingConsentType) =>
+    marketingConsents?.some(
+      (row) => row.consent_type === consentType && row.granted,
+    ) ?? false;
+
+  /**
+   * Edits made on top of the saved answers, keyed by consent.
+   *
+   * The same wrapper-over-the-saved-value shape the home location above uses,
+   * and for the same reason: `false` is a real edit — the parent unticked the
+   * box — and a bare boolean map could not tell it from "not touched yet".
+   * Untouched consents stay absent, which is what lets a save write only what
+   * actually changed.
+   */
+  const [marketingEdits, setMarketingEdits] = useState<
+    Partial<Record<MarketingConsentType, boolean>>
+  >({});
+  const marketingGranted = (consentType: MarketingConsentType) =>
+    marketingEdits[consentType] ?? savedMarketingGranted(consentType);
+
   const handleSaveProfile = async () => {
     if (!user) return;
 
@@ -233,9 +336,15 @@ export function SettingsSectionContent() {
       const updates: ProfileUpdate = {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-        phone: toE164Digits(phone),
         spoken_languages: spokenLanguages,
       };
+
+      // A child's phone number is data we do not want to hold, so a gamer's
+      // settings neither render the phone field nor write the key — omitting
+      // it here is what guarantees a save can never store one.
+      if (!isGamer) {
+        updates.phone = toE164Digits(phone);
+      }
 
       // Only when we know what the current value is. An unresolved read is
       // `undefined`, and writing `null` for it would clear a location the user
@@ -247,6 +356,54 @@ export function SettingsSectionContent() {
 
       await updateProfile.mutateAsync({ userId: user.id, updates });
       await refreshProfile();
+
+      // Marketing consents are separate writes, because they are: each one is
+      // an RPC that appends to the consent event log, not a profile column. So
+      // they run after the profile update has landed, and **only for the
+      // consents whose answer actually changed** — the RPC would no-op an
+      // unchanged one, but a no-op still costs a round trip and still writes a
+      // "source: settings" touch nobody made.
+      //
+      // Skipped entirely while the read is UNRESOLVED: the boxes were disabled,
+      // so there are no edits, and comparing against a seed of `false` would
+      // manufacture a write for a parent who is already opted in. A read that
+      // FAILED is a different case and passes this gate deliberately — its
+      // baseline is the empty one above, and the change-only comparison is what
+      // keeps that safe: an untouched box matches the assumed baseline and is
+      // never sent, so only a box the parent actually moved is written.
+      //
+      // **A refusal here throws into the catch below**, which is the deliberate
+      // partial-failure shape: the profile half has already saved, so the
+      // reader sees the error and no success line — the honest report of "some
+      // of that did not land". The boxes keep showing what they chose (the
+      // edits are local and a failed write leaves them untouched), so pressing
+      // Save again re-attempts exactly the consents that still differ. The
+      // profile update re-running with identical values is harmless.
+      //
+      // **The refusal is re-thrown as our own translated sentence**, and that is
+      // the point of the inner catch. These are `.rpc()` calls, so a failure
+      // arrives as a PostgrestError carrying raw Postgres English — a guard's
+      // message, a constraint name — and the catch below prints an error's
+      // `message` verbatim. Showing a parent "new row violates row-level
+      // security policy" is worse than useless: it is untranslated, it means
+      // nothing to them, and it leaks the shape of the schema. The original is
+      // kept as `cause` so it still reaches a console or a report.
+      if (isParent && marketingConsents !== undefined) {
+        try {
+          for (const consentType of MARKETING_CONSENT_ORDER) {
+            const next = marketingGranted(consentType);
+            if (next === savedMarketingGranted(consentType)) continue;
+            await setMarketingConsent.mutateAsync({
+              consentType,
+              granted: next,
+              source: "settings",
+            });
+          }
+        } catch (consentError: unknown) {
+          throw new Error(t('failedToUpdateProfile'), { cause: consentError });
+        }
+      }
+
       setSuccessMessage(t('profileUpdated'));
     } catch (error: unknown) {
       const message =
@@ -336,18 +493,38 @@ export function SettingsSectionContent() {
             </Field>
           )}
 
-          <Field label={c('phoneNumber')} htmlFor="phone" optional>
-            <InternationalPhoneInput
-              id="phone"
-              value={phone || undefined}
-              onChange={(value) => setPhone(value ?? "")}
-            />
-          </Field>
+          {/* No phone for gamers — a child's phone number is data we do not
+              want to hold. The save path omits the key for gamers too. */}
+          {!isGamer && (
+            <Field label={c('phoneNumber')} htmlFor="phone" optional>
+              <InternationalPhoneInput
+                id="phone"
+                value={phone || undefined}
+                onChange={(value) => setPhone(value ?? "")}
+              />
+            </Field>
+          )}
 
           <SpokenLanguageCheckboxes
             selected={spokenLanguages}
             onChange={setSpokenLanguages}
           />
+
+          {/* Between the spoken languages and the location: the two questions
+              about what we send a family and where they are, under the fields
+              that say who they are. Parents only — see the block above. */}
+          {isParent && (
+            <MarketingPreferencesFields
+              granted={marketingGranted}
+              onChange={(consentType, next) =>
+                setMarketingEdits((current) => ({
+                  ...current,
+                  [consentType]: next,
+                }))
+              }
+              disabled={marketingConsents === undefined || isSaving}
+            />
+          )}
 
           {isParent && (
             <Field
@@ -422,6 +599,62 @@ export function SettingsSectionContent() {
         </CardContent>
       </Card>
 
+      {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
+
+      {showGameAccounts && (
+        <>
+          <GameAccountCard
+            platform="minecraft"
+            title={t('minecraftAccount')}
+            description={t('minecraftDescription')}
+            username={mcAccount?.minecraft_username ?? null}
+            externalId={mcAccount?.minecraft_uuid ?? null}
+            onSave={(value) => updateMyMc.mutateAsync(value)}
+            note={
+              /* A courtesy credit, not a licence condition — mc-heads asks for
+                 nothing and encourages this. One home is enough for a thank-you,
+                 and this is the page where a person is looking at their own skin,
+                 so it is the one that earns it. An anchor is fine here: the
+                 no-off-site-links rule governs staff-authored copy shown to
+                 families, not the app's own chrome. */
+              <p className="text-xs text-muted-foreground">
+                {t.rich('mcHeadsAttribution', {
+                  link: (chunks) => (
+                    <a
+                      href="https://mc-heads.net"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground"
+                    >
+                      {chunks}
+                    </a>
+                  ),
+                })}
+              </p>
+            }
+          />
+
+          <GameAccountCard
+            platform="roblox"
+            title={t('robloxAccount')}
+            description={t('robloxDescription')}
+            username={robloxAccount?.roblox_username ?? null}
+            externalId={robloxAccount?.roblox_user_id ?? null}
+            onSave={(value) => updateMyRoblox.mutateAsync(value)}
+          />
+        </>
+      )}
+
+      {/* The seed's presence is the role test: the route reads these rows only
+          for a gedu, so a viewer who is not one has nothing to hand down and no
+          card to render. */}
+      {user && geduContractSeed && (
+        <GeduContractSettingsCard geduId={user.id} seed={geduContractSeed} />
+      )}
+
+      {/* Security is the last card on the page for every role — an owner
+          ruling. The exit and the rarely-used credential actions come after the
+          things people came to edit. */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -471,61 +704,6 @@ export function SettingsSectionContent() {
           )}
         </CardContent>
       </Card>
-
-      {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
-
-      {showGameAccounts && (
-        <>
-          <GameAccountCard
-            platform="minecraft"
-            title={t('minecraftAccount')}
-            description={t('minecraftDescription')}
-            username={mcAccount?.minecraft_username ?? null}
-            externalId={mcAccount?.minecraft_uuid ?? null}
-            onSave={(value) => updateMyMc.mutateAsync(value)}
-            note={
-              /* A courtesy credit, not a licence condition — mc-heads asks for
-                 nothing and encourages this. One home is enough for a thank-you,
-                 and this is the page where a person is looking at their own skin,
-                 so it is the one that earns it. An anchor is fine here: the
-                 no-off-site-links rule governs staff-authored copy shown to
-                 families, not the app's own chrome. */
-              <p className="text-xs text-muted-foreground">
-                {t.rich('mcHeadsAttribution', {
-                  link: (chunks) => (
-                    <a
-                      href="https://mc-heads.net"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline hover:text-foreground"
-                    >
-                      {chunks}
-                    </a>
-                  ),
-                })}
-              </p>
-            }
-          />
-
-          <GameAccountCard
-            platform="roblox"
-            title={t('robloxAccount')}
-            description={t('robloxDescription')}
-            username={robloxAccount?.roblox_username ?? null}
-            externalId={robloxAccount?.roblox_user_id ?? null}
-            onSave={(value) => updateMyRoblox.mutateAsync(value)}
-          />
-        </>
-      )}
-
-      {/* Last on the page, and that is a layout decision rather than a ranking
-          one. This is the only card here whose body is decided by a read the
-          server did not seed, so it is the only one that can grow after the
-          first paint — and at the foot of the page there is nothing under it
-          to push down when it does. Anywhere higher it would have to hold a
-          slot open at the taller of its two states, leaving a visible hole in
-          the shorter one. */}
-      {isGedu && user && <GeduContractSettingsCard geduId={user.id} />}
     </div>
   );
 }

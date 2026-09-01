@@ -546,7 +546,7 @@ describe("the attention queue", () => {
               { id: "g1", name: "Tiistai A" },
               { id: "g2", name: "Tiistai B" },
             ],
-            waitlist: { waitlist_count: 3, open_seats: 1 },
+            waitlist: { waitlist_count: 3, open_seats: 1, live_offer_count: 0 },
             missing_gedu_fee: true,
           }),
         ],
@@ -567,13 +567,37 @@ describe("the attention queue", () => {
       { kind: "unassigned-gamers", values: { count: 1 } },
       { kind: "group-without-gedu", values: { group: "Tiistai A" } },
       { kind: "group-without-gedu", values: { group: "Tiistai B" } },
-      { kind: "waitlist-open-seats", values: { waiting: 3, open: 1 } },
+      { kind: "waitlist-open-seats", values: { waiting: 3, open: 1, offers: 0 } },
       { kind: "missing-gedu-fee" },
     ]);
     // Two group lines on one card need two keys.
     expect(new Set(data.products[0].issues.map((issue) => issue.id)).size).toBe(
       5,
     );
+  });
+
+  it("carries the live seat-offer count into the waitlist fact", () => {
+    // The RPC only lists a product whose open seats exceed its live offers, so
+    // this is the shape the card has to explain: four queued, two seats free,
+    // one family already asked — and therefore one offer still to send. The
+    // count would be silently droppable without this case, and the line would
+    // go back to reading as though nobody had been asked at all.
+    const data = build(
+      snapshot({
+        attention_products: [
+          attentionProduct({
+            id: "club",
+            waitlist: { waitlist_count: 4, open_seats: 2, live_offer_count: 1 },
+          }),
+        ],
+      }),
+    );
+
+    expect(
+      data.products[0].issues.map(({ id: _id, ...issue }) => issue),
+    ).toEqual([
+      { kind: "waitlist-open-seats", values: { waiting: 4, open: 2, offers: 1 } },
+    ]);
   });
 
   it("prefers the viewer's locale for a product's name, falling back to English", () => {
@@ -631,6 +655,7 @@ describe("the certification queue", () => {
           // One candidate has signed the current contract and one has not, so
           // the fixture pair covers both standings a queue card can show.
           contract_accepted_at: "2026-08-16T10:00:00+03:00",
+          criminal_record_check_at: null,
         },
         {
           id: "4889fea4-0602-438f-adfe-2cef72d485ff",
@@ -638,6 +663,7 @@ describe("the certification queue", () => {
           last_name: "Koskinen",
           created_at: "2026-06-17T09:20:00+03:00",
           contract_accepted_at: null,
+          criminal_record_check_at: null,
         },
       ],
       "en",
@@ -663,6 +689,7 @@ describe("the certification queue", () => {
           last_name: "   ",
           created_at: "2026-08-15T09:20:00+03:00",
           contract_accepted_at: null,
+          criminal_record_check_at: null,
         },
       ],
       "en",
@@ -685,6 +712,7 @@ describe("the certification queue", () => {
         last_name: "Salminen",
         created_at: "2026-08-15T09:20:00+03:00",
         contract_accepted_at: "2026-08-16T00:40:00+03:00",
+        criminal_record_check_at: null,
       },
       {
         id: "4889fea4-0602-438f-adfe-2cef72d485ff",
@@ -692,6 +720,7 @@ describe("the certification queue", () => {
         last_name: "Koskinen",
         created_at: "2026-06-17T09:20:00+03:00",
         contract_accepted_at: null,
+        criminal_record_check_at: null,
       },
     ];
 
@@ -709,6 +738,46 @@ describe("the certification queue", () => {
       LOS_ANGELES,
     );
     expect(losAngeles[0].contractAcceptedOn).toBe("Aug 15, 2026");
+  });
+
+  it("dates a criminal record check in the viewer's zone, independently of the contract", () => {
+    // The same midnight-straddling instant as above, on the other standing —
+    // and the two candidates disagree with each other on both counts, which is
+    // what would catch a mapping that read one field into the other.
+    const candidates = [
+      {
+        id: "38763617-b031-49af-9fd4-3320e7509019",
+        first_name: "Venla",
+        last_name: "Salminen",
+        created_at: "2026-08-15T09:20:00+03:00",
+        contract_accepted_at: null,
+        criminal_record_check_at: "2026-08-16T00:40:00+03:00",
+      },
+      {
+        id: "4889fea4-0602-438f-adfe-2cef72d485ff",
+        first_name: "Helmi",
+        last_name: "Koskinen",
+        created_at: "2026-06-17T09:20:00+03:00",
+        contract_accepted_at: "2026-08-16T00:40:00+03:00",
+        criminal_record_check_at: null,
+      },
+    ];
+
+    const helsinki = buildCertificationQueue(candidates, "en", NOW, HELSINKI);
+    expect(helsinki[0].criminalRecordCheckOn).toBe("Aug 16, 2026");
+    expect(helsinki[0].contractAcceptedOn).toBeNull();
+    // No check recorded, and one recorded as unacceptable, are the same false
+    // in the column and so the same null on the wire: both mean the check has
+    // not been satisfied, and the queue does not pretend to tell them apart.
+    expect(helsinki[1].criminalRecordCheckOn).toBeNull();
+
+    const losAngeles = buildCertificationQueue(
+      candidates,
+      "en",
+      NOW,
+      LOS_ANGELES,
+    );
+    expect(losAngeles[0].criminalRecordCheckOn).toBe("Aug 15, 2026");
   });
 });
 

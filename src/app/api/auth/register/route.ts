@@ -68,6 +68,7 @@ export const POST = defineRoute({
       homeLocationId,
       locale: requestedLocale,
       referralCode,
+      marketingConsent,
     } = body;
 
     // The schema takes this as a plain string and leaves the format rule here,
@@ -228,6 +229,56 @@ export const POST = defineRoute({
       });
     } catch (error) {
       console.error("[auth/register] welcome email failed", error);
+    }
+
+    // The marketing answer, and the one write in this handler that a *client*
+    // can never make: `marketing_consents` carries no Data API write grant, and
+    // `set_marketing_consent` refuses the `registration` source precisely so
+    // that this provenance can only be claimed from here, with the service-role
+    // client, on the account this request has just created (see 00220's header).
+    //
+    // LAST, deliberately. It is the least important thing this route does and
+    // the only one with no user-visible consequence if it fails, so it goes
+    // after the mail — nothing above it can be delayed or broken by a consent
+    // write, and the parent's account, their profile extras and their welcome
+    // link are all already settled by the time it runs.
+    //
+    // WRITTEN EVEN WHEN THEY DECLINED. An absent row means "never asked", a
+    // `granted = false` row means "asked and said no", and this form asked — so
+    // recording the refusal is what makes the settings card's later read a
+    // definite answer rather than a shrug. An absent field is read as a decline
+    // for the same reason the form always sends one: see the contract.
+    //
+    // NEVER FATAL, on the same reasoning as the home-location write above and
+    // then some: losing an opt-in under-markets, which is the safe direction to
+    // fail in, and there is nothing here worth destroying a working account
+    // over.
+    //
+    // ONE RPC, AND THAT IS THE POINT. The state row and its event row are
+    // written by `record_registration_marketing_consent` (00221) in a single
+    // transaction. This used to be two PostgREST calls — an upsert then an
+    // insert — and two calls are two transactions: a failed second one left
+    // `marketing_consents` asserting an answer that `marketing_consent_events`
+    // could not corroborate, which is the exact state 00220 built the log to
+    // rule out. On the one consent whose whole value is provable provenance, an
+    // opt-in nobody can evidence is worse than an opt-in nobody recorded.
+    //
+    // The function is service-role-only and hardcodes both the consent type and
+    // the `registration` source, so this route cannot claim that provenance for
+    // anything but our own mailing list, and nothing a client can reach can
+    // claim it at all.
+    //
+    // WRITTEN EVEN WHEN THEY DECLINED, and the function agrees: an absent row
+    // means "never asked", a `granted = false` row means "asked and said no",
+    // and a first explicit no is a change that earns its event.
+    try {
+      const { error: consentError } = await admin.rpc(
+        "record_registration_marketing_consent",
+        { p_customer_id: userId, p_granted: marketingConsent ?? false },
+      );
+      if (consentError) throw consentError;
+    } catch (error) {
+      console.error("[auth/register] marketing consent write failed", error);
     }
 
     return { userId };

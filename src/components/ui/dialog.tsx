@@ -5,18 +5,31 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 /**
- * How wide a dialog is allowed to get.
+ * How much of the viewport a dialog is allowed to take.
  *
  * `default` is the width every dialog in the app had before there was a
  * choice; `wide` is for a dialog whose content is a *layout* rather than a
  * message — a browsing grid beside a reference column, where two thirds of a
  * narrow box is two tiles across and unusable.
+ *
+ * `fullscreen` is the third kind: a dialog whose content *is* the viewport —
+ * a picture the reader opened in order to look at it properly. It drops the
+ * width cap entirely and takes the wrapper's full height, so a caller can
+ * centre something inside the whole screen rather than inside a card. It is a
+ * size on the primitive rather than a lightbox of its own precisely because
+ * the portal, the backdrop, the z-layer and the one-dialog-answers-Escape
+ * register are the parts that are easy to get subtly wrong, and there must go
+ * on being exactly one answer to each.
  */
-export type DialogSize = "default" | "wide";
+export type DialogSize = "default" | "wide" | "fullscreen";
 
 const DIALOG_SIZE_CLASS: Record<DialogSize, string> = {
   default: "max-w-lg",
   wide: "max-w-6xl",
+  // `h-full` is what the width caps do not need: the other two sizes are as
+  // tall as their content, and this one has to hand its child the height to
+  // centre a picture in.
+  fullscreen: "h-full max-w-none",
 };
 
 /**
@@ -135,7 +148,39 @@ function Dialog({ open, onOpenChange, size = "default", children }: DialogProps)
   return createPortal(
     <DialogDepthContext.Provider value={depth + 1}>
       <DialogSizeContext.Provider value={size}>
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          // **A submit inside a dialog never reaches the page behind it**, and
+          // the portal is the reason that is not already true.
+          //
+          // The DOM node moves to `document.body`, so a *browser* can never
+          // submit a host form from in here. React can: it dispatches on the
+          // tree it rendered, not the one the browser laid out, and in that
+          // tree the dialog is still a child of whatever opened it. So a dialog
+          // carrying a `<form>` of its own, opened from inside another form,
+          // hands its submit straight to that form's `onSubmit` —
+          // indistinguishable from the user pressing the page's own Save.
+          //
+          // Not hypothetical: naming a new site from the product form's site
+          // picker saved the product — with the *old* site, since the pick
+          // lands a round trip later — and navigated off the edit page while
+          // the create request was still in the air. `preventDefault` in the
+          // inner handler does not touch it; that cancels the browser's default
+          // action, and the host's handler is another React listener on the
+          // same event.
+          //
+          // **It is contained here rather than in each dialog** because the
+          // trap belongs to portals rather than to any one dialog: it fails
+          // silently, only when a dialog is opened from inside a form, and the
+          // dialog's author is rarely the person who chose to mount it there.
+          // One line at the portal's own root makes the class impossible for
+          // every dialog, present and future, and it can cost nothing
+          // legitimate — a form inside a dialog is by definition the dialog's
+          // own, and every handler *within* the dialog still runs, since those
+          // sit below this node rather than above it. `Sheet` carries the same
+          // line for the same reason.
+          onSubmit={(event) => event.stopPropagation()}
+        >
           <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => onOpenChange(false)}
@@ -212,14 +257,17 @@ function DialogFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      // Button order convention: footers are authored DOM-order [secondary, …,
-      // primary]. On desktop (sm:flex-row sm:justify-end) that reads left→right
-      // as secondary…primary (primary on the right). On mobile we keep the same
-      // order with plain `flex-col` — secondary on top, primary on the bottom
-      // (thumb-reachable) — so the primary action is the "last" one in both
-      // layouts (rightmost ≙ bottommost). `gap-2` (not `space-x`) so the stacked
+      // The app-wide button order rule (root `CLAUDE.md`, "Button Order"):
+      // affirmative on the right in a row, on top in a stack. Footers are
+      // authored DOM-order [negative, …, affirmative], and this one class list
+      // places them both ways — `sm:flex-row sm:justify-end` reads left→right
+      // with the affirmative last (rightmost), and `flex-col-reverse` stacks
+      // that same last child on top. `gap-2` (not `space-x`) so the stacked
       // mobile buttons get vertical spacing too.
-      className={cn("mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end", className)}
+      className={cn(
+        "mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        className
+      )}
       {...props}
     />
   );

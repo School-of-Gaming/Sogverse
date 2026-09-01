@@ -53,7 +53,12 @@ function clubStarting(startDate: string | null): ProductBrowseRow {
 }
 
 function firstChargeDateFor(product: ProductBrowseRow): string | null {
-  const { result } = renderHook(() => useSignupPanelFields(product, READY));
+  // No consents of either kind, and no seeded account answer: this test is
+  // about the first-charge projection, and both ask sets are different fields
+  // of the same hook.
+  const { result } = renderHook(() =>
+    useSignupPanelFields(product, READY, [], [], undefined),
+  );
   return result.current.firstChargeDate;
 }
 

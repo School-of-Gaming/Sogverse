@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
 
 /**
  * Wire contracts for the gedu session-feed RPCs.
@@ -133,6 +134,29 @@ export const geduFeedRosterEntry = z.object({
 });
 
 /**
+ * One photo attached to a session's report, as the gedu document carries it.
+ *
+ * Three fields and no fourth. The id is the whole address: the object it names
+ * is `<id>.jpg` in the public bucket, derived by the URL helper rather than
+ * stored, and the id is also the React key and the argument the remove control
+ * sends. The dimensions are here because every renderer — the app gallery and
+ * the report email alike — sizes its boxes by **arithmetic from these**, never
+ * by measuring, which is what lets server HTML and first client paint agree and
+ * keeps a mail laying out correctly with every image blocked.
+ *
+ * `created_by` is deliberately absent: it is safeguarding audit that answers
+ * "who put this here", it gates nothing, and nothing renders it — the same
+ * treatment `report_emailed_by` gets on the session row above.
+ */
+export const sessionImageSummary = z.object({
+  id: z.string(),
+  width: z.number(),
+  height: z.number(),
+});
+
+export type SessionImageSummary = z.infer<typeof sessionImageSummary>;
+
+/**
  * One stored session row.
  *
  * `attendance` is the sparse per-gamer map exactly as stored — a roster id
@@ -187,10 +211,23 @@ export const geduFeedSession = z.object({
    * `updated_by_first_name` above — so the column stays in the database.
    */
   report_emailed_at: z.string().nullable(),
+  /**
+   * The session's photos, oldest first — ordered `(created_at, id)` by the RPC,
+   * which is the display order on every surface. An empty array when there are
+   * none, never a missing key or a null, so the gallery has one shape to
+   * handle.
+   *
+   * **This key was added to the gedu document in place**, and could be, because
+   * the schemas in this file are tolerant of unknown keys: the app still
+   * deployed during a release window ignores a key it does not know. The family
+   * document's schema is `.strict()` at every level, so the same widening there
+   * needed a versioned RPC instead.
+   */
+  images: z.array(sessionImageSummary),
   attendance: z.record(z.string(), attendanceStatus),
 });
 
-/** The venue, on in-person products. `null` on anything remote. */
+/** The site, on in-person products. `null` on anything remote. */
 export const geduFeedSite = z.object({
   location_id: z.string(),
   name: z.string(),
@@ -257,7 +294,7 @@ export const geduAssignmentSummary = z.object({
   group_name: z.string(),
   /** Active participations in THIS group, not across the product. */
   group_participant_count: z.number(),
-  /** The venue name on in-person products; `null` when there is no building. */
+  /** The site name on in-person products; `null` when there is no building. */
   site_name: z.string().nullable(),
   attention_count: z.number(),
 });
@@ -299,7 +336,7 @@ export const groupNotesResult = z.object({
  * What `set_site_notes` hands back.
  *
  * `address` is a **read-back, never an input.** The RPC does not accept an
- * address and never writes one — the venue address belongs to the location
+ * address and never writes one — the site address belongs to the location
  * record and is an admin's to edit — so what comes back here is whatever was
  * already stored, echoed so a caller can see the current value without a second
  * round trip. It used to be a parameter, and that let a gedu's note save quietly
@@ -404,3 +441,208 @@ export const emailSessionReportResponse = z.object({
 export type EmailSessionReportResponse = z.infer<
   typeof emailSessionReportResponse
 >;
+
+// ---------------------------------------------------------------------------
+// Session-report photos
+// ---------------------------------------------------------------------------
+
+/**
+ * **How many photos one report may carry — the single point of control.**
+ *
+ * Nothing else in the system holds this number: the route passes it to the
+ * insert RPC as a parameter, the RPC enforces it under the session row's lock,
+ * and the editor hides its add affordance once a session holds this many. So
+ * raising the cap is this one line and no migration. SQL keeps only a hard
+ * sanity ceiling of 24, which exists so a buggy caller cannot ask for something
+ * absurd — the two numbers are not derived from one another and are not meant
+ * to be.
+ */
+export const SESSION_PHOTO_CAP = 5;
+
+/**
+ * The file input's `accept` list — and the reason the mainline iPhone path
+ * needs no code at all.
+ *
+ * iOS Safari transcodes a photo-library pick to JPEG on its way through an
+ * input whose accept list excludes HEIC, so naming only web formats here is
+ * what makes an iPhone photo arrive decodable. Raw HEIC still comes in by the
+ * side doors (a Files-app pick, a macOS drag-drop) and is refused by the
+ * route's magic-byte check with copy the gedu can act on; there is deliberately
+ * no decode shim.
+ *
+ * It is an `accept` attribute value, not a validation list. Nothing trusts it:
+ * the browser re-encodes every pick to JPEG and the route verifies the bytes.
+ */
+export const SESSION_PHOTO_ACCEPT = "image/jpeg,image/png,image/webp";
+
+/**
+ * The upload's byte cap — a generous 3 MB against a normalized output that
+ * should be well under 1 MB.
+ *
+ * It is a bound on something already normalized rather than a limit on what a
+ * gedu may pick, which is why it can be this loose: a 4K screenshot is a few
+ * hundred KB by the time it leaves the browser. Anything near this figure means
+ * the client-side pass did not run, and the route refuses rather than rescues.
+ */
+export const SESSION_PHOTO_MAX_BYTES = 3 * 1024 * 1024;
+
+/**
+ * The longest edge the browser downscales to, and the JPEG quality it
+ * re-encodes at. Passed explicitly into the normalization pass — that module
+ * carries fallbacks so it can be exercised alone, but these are the values the
+ * product uses and the place they are changed.
+ */
+export const SESSION_PHOTO_MAX_EDGE = 2048;
+
+/** @see SESSION_PHOTO_MAX_EDGE */
+export const SESSION_PHOTO_JPEG_QUALITY = 0.8;
+
+/**
+ * The plausibility bound on the dimensions a client claims, and the code-side
+ * twin of the table's CHECK.
+ *
+ * **Deliberately looser than the edge cap above, and not derived from it.** The
+ * client normalizes to ~2048 px; this is a sanity bound on a *claimed* number,
+ * not a restatement of a *derived* one. What it defends is layout arithmetic —
+ * the stored dimensions are what the gallery and the email size their boxes
+ * from — and the uploader is an assigned staff member, so the worst an
+ * implausible value produces is a mis-sized box in that group's own mail. The
+ * route checks it so the refusal is a stable code rather than a raw 23514, and
+ * the CHECK still stands behind that.
+ */
+export const SESSION_PHOTO_MAX_DIMENSION = 4096;
+
+/**
+ * The SQLSTATE `add_group_session_image` refuses with when the session already
+ * holds its cap, beside the `42501` every gedu RPC raises for a group the
+ * caller does not teach.
+ *
+ * A code of its own because the UI answers it differently from every other
+ * refusal — "remove one first", not "that did not work" — and because a
+ * message is not a contract: a reworded `RAISE` must not be able to reclassify
+ * it. Declared here so the route matches a named value; the migration that
+ * raises it names this file in return.
+ */
+export const SESSION_PHOTO_CAP_REACHED_SQLSTATE = "P0023";
+
+/**
+ * **One vocabulary of refusals, wherever they arise.**
+ *
+ * A photo upload can fail in the browser (the decoder refuses a raw HEIC, a
+ * canvas encode fails) or at the route (the bytes are not a JPEG, they are over
+ * the cap, the session is full). The gedu does not care which side answered —
+ * they care what to do next — so both halves travel as members of ONE union
+ * that the UI resolves with `t()`. The two client codes are absorbed from the
+ * normalization module rather than restated, so there is no second spelling of
+ * `decodeFailed` to keep in step. **Removal answers from the same union**: the
+ * strip that shows a photo is the strip that takes it away, so a refusal from
+ * either direction has to reach one error slot.
+ *
+ * These are **keys, not copy**: nothing renders `err.message`, and a route's
+ * own English is written for a log.
+ *
+ * - `decodeFailed` / `encodeFailed` — the browser pass, before any upload.
+ * - `notJpeg` — the magic-byte check refused the bytes. The raw-HEIC door, and
+ *   the one refusal whose copy tells the gedu to convert and try again.
+ * - `tooLarge` — over {@link SESSION_PHOTO_MAX_BYTES}.
+ * - `badDimensions` — the claimed width/height are missing or outside
+ *   {@link SESSION_PHOTO_MAX_DIMENSION}.
+ * - `capReached` — the session already holds {@link SESSION_PHOTO_CAP} photos.
+ *   Reachable despite the editor hiding its add control, because two tabs can
+ *   race and the RPC is what actually decides.
+ * - `notAllowed` — not this caller's group, or not a role that may attach or
+ *   remove.
+ * - `removeFailed` — a REMOVAL did not complete. The photo is still on the card
+ *   and the control beside it is the retry: this code is only ever answered
+ *   while there is something left to retry against, which is the whole reason
+ *   the delete route deletes the object before the row (see that route's
+ *   docblock). Its copy says the photo was not removed and to try again — never
+ *   that it was.
+ * - `uploadFailed` — everything else on the ADD path: storage refused the
+ *   object, the compensation ran, or the session date turned out not to be
+ *   writable. One code because the gedu's next move is the same for all of
+ *   them — try again.
+ */
+export const SESSION_PHOTO_ERROR_CODES = [
+  ...NORMALIZE_IMAGE_ERROR_CODES,
+  "notJpeg",
+  "tooLarge",
+  "badDimensions",
+  "capReached",
+  "notAllowed",
+  "removeFailed",
+  "uploadFailed",
+] as const;
+
+export type SessionPhotoErrorCode = (typeof SESSION_PHOTO_ERROR_CODES)[number];
+
+/**
+ * Narrow an error's `code` to the union above.
+ *
+ * A route's code arrives as an untyped string off the wire, and a UI that
+ * looked it up blindly would render a missing translation key on the one path
+ * where something already went wrong. Anything unrecognized falls back to
+ * `uploadFailed` at the call site.
+ */
+export function isSessionPhotoErrorCode(
+  value: unknown,
+): value is SessionPhotoErrorCode {
+  return (
+    typeof value === "string" &&
+    (SESSION_PHOTO_ERROR_CODES as readonly string[]).includes(value)
+  );
+}
+
+/**
+ * The non-file half of `POST /api/gedu/sessions/images`'s multipart form.
+ *
+ * The file travels beside these as a `File`; everything here arrives as a form
+ * string, which is why the two numbers coerce. The session is named by (group,
+ * date) rather than by row id, exactly as every other write on this surface
+ * names it — session rows are lazily materialized, so the id is not something a
+ * caller reliably holds, while the pair is the row's real identity.
+ *
+ * The dimensions are the CLIENT'S claim about the JPEG it just encoded, and
+ * they are **trusted after this bound check**. There is no server-side SOF
+ * parser: it would defend a cosmetic outcome against an already-assigned staff
+ * member with ~30 lines of hand-rolled binary parsing and no precedent in this
+ * repo.
+ */
+export const addSessionImageFields = z.object({
+  groupId: z.string().uuid(),
+  /** The product-local calendar date, `YYYY-MM-DD`. A bare date, no zone. */
+  sessionDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "sessionDate must be a YYYY-MM-DD date"),
+  width: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(SESSION_PHOTO_MAX_DIMENSION),
+  height: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(SESSION_PHOTO_MAX_DIMENSION),
+});
+
+export type AddSessionImageFields = z.infer<typeof addSessionImageFields>;
+
+/**
+ * What the upload answers: the new row's id, and nothing else.
+ *
+ * The id is the whole of what the caller does not already know — it names the
+ * object that was just stored, so the URL follows from it by helper. The width,
+ * the height and the session are values the caller just sent.
+ */
+export const addSessionImageResponse = z.object({ id: z.string().uuid() });
+
+export type AddSessionImageResponse = z.infer<typeof addSessionImageResponse>;
+
+/**
+ * The dynamic segment of `DELETE /api/gedu/sessions/images/[id]`.
+ *
+ * The photo id is the whole request: the RPC resolves the group from the row
+ * itself, and that resolution is the authorization.
+ */
+export const deleteSessionImageParams = z.object({ id: z.string().uuid() });

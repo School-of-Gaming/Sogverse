@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Field } from "@/components/ui/field";
 import { FormSection, InfoCallout } from "../form-primitives";
-import { LocationPicker } from "../location-picker";
+import { ChosenSitePanel, LocationPicker } from "../location-picker";
 import {
   locationPickerMode,
   type FormState,
@@ -59,23 +59,40 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
 
       <div className="mt-3 space-y-4">
         {showLocationPicker ? (
-          <Field
-            label={
-              state.isRemote ? t("labels.municipality") : t("labels.site")
-            }
-            hint={
-              state.isRemote
-                ? t("hints.municipalityHint")
-                : t("hints.siteHint")
-            }
-          >
-            <LocationPicker
-              value={state.locationId}
-              onChange={(id) => setState({ ...state, locationId: id })}
-              pickable={pickerMode}
-              countryCode={config.countryBound ?? undefined}
-            />
-          </Field>
+          <>
+            <Field
+              label={
+                state.isRemote ? t("labels.municipality") : t("labels.site")
+              }
+              hint={
+                state.isRemote
+                  ? t("hints.municipalityHint")
+                  : t("hints.siteHint")
+              }
+            >
+              <LocationPicker
+                value={state.locationId}
+                onChange={(id) => setState({ ...state, locationId: id })}
+                pickable={pickerMode}
+                countryCode={config.countryBound ?? undefined}
+              />
+            </Field>
+
+            {/* The building itself, editable here rather than only on its own
+                page: an admin who has just named one has everything they know
+                about it in front of them, and every field in the panel belongs
+                to the *site* — shared by every product running there — so it
+                saves on its own routes the moment its Save is pressed and never
+                joins this form's submit. It is a sibling of the field above and
+                not a child of it, so the field's hint stays against the control
+                it describes. */}
+            {pickerMode === "site" && (
+              <ChosenSitePanel
+                value={state.locationId}
+                countryCode={config.countryBound ?? undefined}
+              />
+            )}
+          </>
         ) : (
           <InfoCallout text={t("hints.onlineNoLocation")} />
         )}

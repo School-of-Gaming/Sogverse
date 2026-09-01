@@ -7,6 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { adminSessionKeys } from "@/services/admin-sessions";
 import { LocationsService } from "./locations.service";
 import {
   LOCATION_SEARCH_LIMIT,
@@ -31,10 +32,14 @@ export const locationKeys = {
   detail: (id: string) => [...locationKeys.details(), id] as const,
   // A grouping key with no query of its own: `sites()` is the parent of
   // `sitesByParent`, so invalidating it after a site is created refreshes every
-  // per-municipality venue list at once, whichever one the new row landed in.
+  // per-municipality site list at once, whichever one the new row landed in.
   sites: () => [...locationKeys.all, "sites"] as const,
   sitesByParent: (parentId: string) =>
     [...locationKeys.sites(), "by-parent", parentId] as const,
+  // The admin sites table's whole-level read, under `sites()` so a created or
+  // renamed site refreshes the table exactly as it refreshes the
+  // per-municipality lists — neither mutation has to know this surface exists.
+  sitesAll: () => [...locationKeys.sites(), "all"] as const,
   // Browsing is keyed by the node opened, with the root under its own key so
   // "the countries" is a cache entry like any other level.
   children: () => [...locationKeys.all, "children"] as const,
@@ -57,8 +62,12 @@ export const locationKeys = {
       types ? [...types].sort().join(",") : "",
       country ?? "",
     ] as const,
+  // A grouping key with no query of its own, sitting above every key-set
+  // lookup: a rename changes what those reads render, and the mutation cannot
+  // know which selections happen to contain the row it just renamed.
+  keyed: () => [...locationKeys.all, "by-ids"] as const,
   byIds: (ids: readonly string[]) =>
-    [...locationKeys.all, "by-ids", keySet(ids)] as const,
+    [...locationKeys.keyed(), keySet(ids)] as const,
 };
 
 export function useLocation(id: string) {
@@ -91,7 +100,7 @@ export function useSitesByParent(parentId: string | null | undefined) {
  * How long a browsed or searched level stays fresh. Countries, regions and
  * communes are seeded reference data that changes when a migration says so, and
  * reopening the picker should not re-fetch the top of the tree; the one thing
- * that does change under a user — a newly created venue — invalidates this key
+ * that does change under a user — a newly created site — invalidates this key
  * explicitly from the create mutation.
  */
 const REFERENCE_DATA_STALE_MS = 5 * 60 * 1000;
@@ -120,6 +129,25 @@ export function useLocationChildren(parentId: string | null) {
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.hasMore ? allPages.length : undefined,
+    staleTime: REFERENCE_DATA_STALE_MS,
+  });
+}
+
+/**
+ * Every site on the platform, each with its ancestor chain.
+ *
+ * A plain query over a walked read, not an infinite one: the admin sites table
+ * renders every row it is handed, so there is no page for the UI to advance and
+ * nothing for a "show more" to fetch. The walking is the service's, server-side
+ * and invisible here.
+ */
+export function useAllSites() {
+  const supabase = getClient();
+  const service = new LocationsService(supabase);
+
+  return useQuery({
+    queryKey: locationKeys.sitesAll(),
+    queryFn: () => service.getAllSites(),
     staleTime: REFERENCE_DATA_STALE_MS,
   });
 }
@@ -182,14 +210,25 @@ export function useLocationSearch(
   });
 }
 
-/** Specific rows by id, each with its chain — coverage chips, a stored pick. */
-export function useLocationsByIds(ids: readonly string[]) {
+/**
+ * Specific rows by id, each with its chain — coverage chips, a stored pick.
+ *
+ * `retry` follows the same rule as the search hook's: React Query's default is
+ * left in place, and only a call site that has thought about what its wait looks
+ * like names a different one. How long a failure may take is a property of what
+ * the caller renders while it is unresolved, not of the read.
+ */
+export function useLocationsByIds(
+  ids: readonly string[],
+  options?: { retry?: number | boolean },
+) {
   const supabase = getClient();
   const service = new LocationsService(supabase);
 
   return useQuery({
     queryKey: locationKeys.byIds(ids),
     queryFn: () => service.getLocationsByIds(ids),
+    retry: options?.retry,
   });
 }
 
@@ -202,12 +241,12 @@ export function useCreateLocation() {
     mutationFn: (location: CreateLocationBody) => service.createLocation(location),
     onSuccess: () => {
       // The only thing this route creates is a site, and a new site changes
-      // the per-municipality venue list it landed in — plus the browse level it
+      // the per-municipality site list it landed in — plus the browse level it
       // was created under, which is now one row longer.
       //
       // And every cached search needle, for the same reason a rename does:
       // sites are in the search index carrying their whole ancestor chain, so
-      // an admin who names a venue and then types its name must find it. A
+      // an admin who names a site and then types its name must find it. A
       // cached "no results" for that very needle is the likely one to be
       // holding, because looking before creating is how the flow goes.
       //
@@ -217,14 +256,14 @@ export function useCreateLocation() {
       // search goes through /api/locations/search, whose responses are keyed by
       // URL in a shared cache for five minutes and served stale for an hour
       // while they revalidate. So the refetch can legitimately be answered with
-      // the same pre-creation response the admin already saw, and the venue
+      // the same pre-creation response the admin already saw, and the site
       // stays missing from that one needle until the entry ages out. Nothing on
       // this side can shorten that window: seeding the new row into the search
       // cache by hand would be this client inventing a ranked result the server
       // did not produce, which is worse than a stale one it did.
       //
       // RETURNED, not fired-and-forgotten: React Query awaits a promise
-      // returned from onSuccess before resolving mutateAsync, so the venue
+      // returned from onSuccess before resolving mutateAsync, so the site
       // dialog cannot hand a freshly created id back to a form whose caches
       // still describe the world before it existed.
       return Promise.all([
@@ -245,11 +284,40 @@ export function useUpdateLocation() {
     mutationFn: ({ id, updates }: { id: string; updates: Pick<Location, "name"> }) =>
       service.updateLocation(id, updates),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: locationKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: locationKeys.sites() });
-      queryClient.invalidateQueries({ queryKey: locationKeys.children() });
-      // A rename changes what search matches, so every cached needle is stale.
-      queryClient.invalidateQueries({ queryKey: locationKeys.search() });
+      // RETURNED, not fired-and-forgotten: React Query awaits a promise returned
+      // from onSuccess before resolving mutateAsync, so a rename editor holding
+      // a `committing` flag across the await keeps its Save button disabled
+      // until the refetches land. Without the return, `mutateAsync` resolves on
+      // the write alone and the button re-enables over a name the page is still
+      // about to replace.
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: locationKeys.detail(id) }),
+        queryClient.invalidateQueries({ queryKey: locationKeys.sites() }),
+        queryClient.invalidateQueries({ queryKey: locationKeys.children() }),
+        // Every key-set lookup, not only one naming this id: those reads exist
+        // to *render* a row, so the name they are holding is now the old one,
+        // and the mutation has no way to tell which selections contain it.
+        queryClient.invalidateQueries({ queryKey: locationKeys.keyed() }),
+        // A rename changes what search matches, so every cached needle is stale.
+        queryClient.invalidateQueries({ queryKey: locationKeys.search() }),
+        // The admin product session document names the site its product runs
+        // at, and that name is now the old one — the same reason the site-notes
+        // mutation invalidates this key, and the same arrangement: every
+        // product rather than one, because only mounted queries refetch and
+        // exactly one product document is ever mounted.
+        //
+        // **The gedu group feed carries the name too, and is deliberately not
+        // invalidated — but not because no client here holds one.** One does:
+        // the admin group details page mounts the feed alongside the session
+        // record. What it takes from the feed is the roster and the product's
+        // own title and material link; the *site* it renders comes from the
+        // session document above. So no surface able to fire this write reads
+        // the feed's copy of the name, and invalidating it would refetch a
+        // value nothing is looking at. What would change that is a surface
+        // rendering `feed.product.site` beside a rename — add the key here in
+        // the same change, rather than trusting this paragraph.
+        queryClient.invalidateQueries({ queryKey: adminSessionKeys.products() }),
+      ]);
     },
   });
 }

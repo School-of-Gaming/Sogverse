@@ -31,22 +31,58 @@ const TZ = "Europe/Helsinki";
 const METRICS = ["TTFB", "FCP", "LCP", "INP", "CLS"];
 const DEVICES = ["desktop", "mobile"];
 
+// The CLI's auth file, wherever this version of the CLI keeps it.
+//
+// **The XDG-style paths come first, and that ordering is the whole point.** The
+// CLI moved its auth file (on Windows, `%APPDATA%/com.vercel.cli/Data` →
+// `%APPDATA%/xdg.data/com.vercel.cli`) and did not delete the old one, so a
+// machine logged in across the move keeps two: one live, one frozen at whatever
+// it held on moving day. Reading the stale one yields a token that is
+// syntactically fine and merely no longer valid, which the internal endpoint
+// reports as a 403 `invalidToken` — from the call site, indistinguishable from
+// having been deauthorized, and it sends the reader looking for a moved
+// endpoint instead of a moved file.
+//
+// Ordering alone would not survive the next move, which would leave this list's
+// winner stale in turn. That is what the expiry check below is for: an expired
+// candidate is skipped rather than returned, so a newer file further down still
+// wins, and the list's order stops being load-bearing.
+const AUTH_FILES = [
+  process.env.XDG_DATA_HOME &&
+    join(process.env.XDG_DATA_HOME, "com.vercel.cli", "auth.json"),
+  process.env.APPDATA &&
+    join(process.env.APPDATA, "xdg.data", "com.vercel.cli", "auth.json"),
+  process.env.APPDATA &&
+    join(process.env.APPDATA, "com.vercel.cli", "Data", "auth.json"),
+  join(homedir(), "Library", "Application Support", "com.vercel.cli", "auth.json"),
+  join(homedir(), ".local", "share", "com.vercel.cli", "auth.json"),
+].filter(Boolean);
+
 function getToken() {
   if (process.env.VERCEL_TOKEN) return process.env.VERCEL_TOKEN;
-  const candidates = [
-    process.env.APPDATA &&
-      join(process.env.APPDATA, "com.vercel.cli", "Data", "auth.json"),
-    join(homedir(), "Library", "Application Support", "com.vercel.cli", "auth.json"),
-    join(homedir(), ".local", "share", "com.vercel.cli", "auth.json"),
-  ].filter(Boolean);
-  for (const file of candidates) {
-    if (existsSync(file)) {
-      const { token } = JSON.parse(readFileSync(file, "utf8"));
-      if (token) return token;
+
+  // `expiresAt` is seconds since the epoch. The CLI refreshes its own token
+  // using the `refreshToken` stored beside it; this script deliberately does
+  // not — that would mean reimplementing an undocumented OAuth flow inside a
+  // reporting script, and `vercel login` is a one-line fix the reader can act
+  // on. What the script owes the reader is the diagnosis, not the repair.
+  const expired = [];
+  for (const file of AUTH_FILES) {
+    if (!existsSync(file)) continue;
+    const { token, expiresAt } = JSON.parse(readFileSync(file, "utf8"));
+    if (!token) continue;
+    if (expiresAt && expiresAt * 1000 <= Date.now()) {
+      expired.push(file + " (expired " + new Date(expiresAt * 1000).toISOString() + ")");
+      continue;
     }
+    return token;
   }
+
   console.error(
-    "No Vercel token found. Log in with `vercel login` or set VERCEL_TOKEN."
+    expired.length
+      ? "Vercel token expired. Run 'vercel login', then retry.\n  " +
+          expired.join("\n  ")
+      : "No Vercel token found. Log in with 'vercel login' or set VERCEL_TOKEN."
   );
   process.exit(1);
 }

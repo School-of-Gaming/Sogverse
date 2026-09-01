@@ -9,10 +9,10 @@ import type { LocationType } from "@/types";
  * The clear-on-invalid decision, on its own.
  *
  * The product form drops a stored `location_id` the current mode would no
- * longer accept: a deleted venue, a legacy product pinned above site level, a
+ * longer accept: a deleted site, a legacy product pinned above site level, a
  * municipality outside the one country an online municipality club may be
  * funded by, and a municipality club toggled from online to in-person, which
- * leaves a municipality id in a field that now takes only venues. That is
+ * leaves a municipality id in a field that now takes only sites. That is
  * right, and it is one frame away from being a data-loss bug: whatever the
  * control checks against arrives asynchronously, so a guard that answers before
  * it is there wipes a valid location the moment an admin opens an existing
@@ -24,7 +24,7 @@ import type { LocationType } from "@/types";
  * keyed lookup can give that look alike and mean opposite things.
  */
 
-const VENUES: AcceptedLocation = { types: ["site"] };
+const SITES: AcceptedLocation = { types: ["site"] };
 const FI_MUNICIPALITIES: AcceptedLocation = {
   types: ["municipality"],
   countryCode: "FI",
@@ -37,14 +37,14 @@ function row(id: string, type: LocationType, countryCode: string | null = "FI") 
 describe("shouldDropStoredRow (one row by id)", () => {
   describe("while the keyed read has not landed", () => {
     it("keeps a stored value when the row is undefined", () => {
-      expect(shouldDropStoredRow("loc-hki", undefined, VENUES)).toBe(false);
+      expect(shouldDropStoredRow("loc-hki", undefined, SITES)).toBe(false);
     });
 
     // A read that failed also leaves the data undefined, and dropping the value
     // on a network blip would be worse than showing it a moment late.
     it("does not distinguish a pending read from a failed one", () => {
       expect(
-        shouldDropStoredRow("a-venue-that-was-deleted", undefined, VENUES),
+        shouldDropStoredRow("a-site-that-was-deleted", undefined, SITES),
       ).toBe(false);
     });
 
@@ -60,23 +60,23 @@ describe("shouldDropStoredRow (one row by id)", () => {
   describe("once the read has landed", () => {
     it("keeps a row of an accepted type", () => {
       expect(
-        shouldDropStoredRow("loc-hki", row("loc-hki", "site"), VENUES),
+        shouldDropStoredRow("loc-hki", row("loc-hki", "site"), SITES),
       ).toBe(false);
     });
 
     // The everyday case: a municipality club toggled from online to in-person
-    // carries its municipality id into a field that only takes venues.
+    // carries its municipality id into a field that only takes sites.
     it("drops a row at a level this control does not accept", () => {
       expect(
-        shouldDropStoredRow("loc-hki", row("loc-hki", "municipality"), VENUES),
+        shouldDropStoredRow("loc-hki", row("loc-hki", "municipality"), SITES),
       ).toBe(true);
     });
 
     // The distinction this guard's shape exists for. A key with no row is a
-    // resolved answer — the venue was deleted — where a set-membership check
+    // resolved answer — the site was deleted — where a set-membership check
     // could only ever see "absent" and would keep a dangling id forever.
     it("drops a value the read found no row for", () => {
-      expect(shouldDropStoredRow("loc-gone", null, VENUES)).toBe(true);
+      expect(shouldDropStoredRow("loc-gone", null, SITES)).toBe(true);
     });
 
     it("accepts any of several types when the control offers several", () => {
@@ -139,13 +139,13 @@ describe("shouldDropStoredRow (one row by id)", () => {
     });
 
     // Without the constraint the same row is fine anywhere, which is what the
-    // venue field wants: a school in Lille is as good a venue as one in Espoo.
+    // site field wants: a school in Lille is as good a site as one in Espoo.
     it("ignores the country when the control does not constrain it", () => {
       expect(
-        shouldDropStoredRow("loc-fr", row("loc-fr", "site", "FR"), VENUES),
+        shouldDropStoredRow("loc-fr", row("loc-fr", "site", "FR"), SITES),
       ).toBe(false);
       expect(
-        shouldDropStoredRow("loc-null", row("loc-null", "site", null), VENUES),
+        shouldDropStoredRow("loc-null", row("loc-null", "site", null), SITES),
       ).toBe(false);
     });
   });
@@ -155,16 +155,16 @@ describe("shouldDropStoredRow (one row by id)", () => {
   // side of the line every other unresolved state lands on.
   it("treats a row for some other id as no answer at all", () => {
     expect(
-      shouldDropStoredRow("loc-hki", row("loc-tre", "municipality"), VENUES),
+      shouldDropStoredRow("loc-hki", row("loc-tre", "municipality"), SITES),
     ).toBe(false);
   });
 
   describe("when nothing is stored", () => {
     it("has nothing to drop", () => {
-      expect(shouldDropStoredRow(null, null, VENUES)).toBe(false);
-      expect(shouldDropStoredRow(null, undefined, VENUES)).toBe(false);
-      expect(shouldDropStoredRow(undefined, null, VENUES)).toBe(false);
-      expect(shouldDropStoredRow("", null, VENUES)).toBe(false);
+      expect(shouldDropStoredRow(null, null, SITES)).toBe(false);
+      expect(shouldDropStoredRow(null, undefined, SITES)).toBe(false);
+      expect(shouldDropStoredRow(undefined, null, SITES)).toBe(false);
+      expect(shouldDropStoredRow("", null, SITES)).toBe(false);
       expect(shouldDropStoredRow(null, null, FI_MUNICIPALITIES)).toBe(false);
     });
   });

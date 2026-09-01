@@ -4,6 +4,7 @@ import {
   SESSION_FEED_ADULT_ID,
   SESSION_FEED_EDITORS,
   SESSION_FEED_GAMER_IDS,
+  SESSION_FEED_PHOTO_ART,
   SESSION_FEED_ROSTER,
   SESSION_FEED_TIMEZONE,
   buildSessionFeedFixture,
@@ -50,7 +51,7 @@ import type {
  * The two that survived that cull are the product shapes: `club` is remote and
  * weekly, `camp` is in-person and daily. Everything else the *page* can do — a
  * year of history, a session written up but never marked off, a skipped week,
- * an unstaffed sister group, a venue's shared notes — is packed into whichever
+ * an unstaffed sister group, a site's shared notes — is packed into whichever
  * of the two it belongs to.
  *
  * The two beside them are the *roster's* shapes, and they exist for the same
@@ -82,7 +83,7 @@ export interface GroupNotesFixture {
 }
 
 /**
- * The venue an in-person product runs at, with the notes that hang off it.
+ * The site an in-person product runs at, with the notes that hang off it.
  *
  * Site notes belong to the *location*, not the product: the schema keeps the
  * family-facing pair (address + note) and the Gedu-only note on the site row,
@@ -125,7 +126,7 @@ export interface GroupWorkspaceFixture {
   sourceTimeZone: string;
   /** Standing notes about the group, distinct from any one session's. */
   groupNotes: GroupNotesFixture;
-  /** The venue and its shared notes, or `null` for a remote product. */
+  /** The site and its shared notes, or `null` for a remote product. */
   site: SiteFixture | null;
   /**
    * Staff-facing lesson/material URL, read from the product's staff-details
@@ -191,7 +192,7 @@ interface ScenarioConfig {
    * nothing to lock), and only an in-person page carries site notes.
    */
   isRemote: boolean;
-  /** The venue, on in-person products only. */
+  /** The site, on in-person products only. */
   site: SiteFixture | null;
   materialUrl: string | null;
   groupName: string;
@@ -609,6 +610,31 @@ function yearlongSpecs(): readonly EntrySpec[] {
     COVERED_BY_PETRA_AT.has(index)
       ? SESSION_FEED_EDITORS.petra
       : SESSION_FEED_EDITORS.sanna;
+  /**
+   * The weeks somebody photographed. Index 0 — the week a gedu has just run,
+   * first past card on the page — carries the full five: the cap state (add
+   * affordance absent, gallery as a signed card's last block) has to be on the
+   * first screen, because it is the one the photo strip's review always needs.
+   * Index 1 is already the marked-off-never-reported week, so its pair shows
+   * photographed-but-unwritten still owing its report; index 15 is an ordinary
+   * mid-scrollback pair (one landscape, one portrait) so mixed ratios appear
+   * again deep in the feed. Applied as a post-pass so every branch of the loop
+   * above stays about the state it exists to seed.
+   */
+  const PHOTOS_AT = new Map([
+    [
+      0,
+      [
+        SESSION_FEED_PHOTO_ART.build,
+        SESSION_FEED_PHOTO_ART.tower,
+        SESSION_FEED_PHOTO_ART.arena,
+        SESSION_FEED_PHOTO_ART.badge,
+        SESSION_FEED_PHOTO_ART.parkour,
+      ],
+    ],
+    [1, [SESSION_FEED_PHOTO_ART.badge, SESSION_FEED_PHOTO_ART.arena]],
+    [15, [SESSION_FEED_PHOTO_ART.build, SESSION_FEED_PHOTO_ART.tower]],
+  ]);
   const past: EntrySpec[] = [];
 
   for (let index = 0; index < 53; index++) {
@@ -682,7 +708,10 @@ function yearlongSpecs(): readonly EntrySpec[] {
 
   return [
     ...CLUB_FUTURE_SPECS,
-    ...past,
+    ...past.map((spec, index) => {
+      const photos = PHOTOS_AT.get(index);
+      return photos ? { ...spec, photos } : spec;
+    }),
     // Before the epoch and written up anyway — a gedu going back over an old
     // term. It renders as an ordinary past entry with a half-finished register
     // and wears no alert at all, which is the only way to see on this page that
@@ -917,7 +946,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
    * All three are things the club scenario structurally cannot show. Daily
    * cadence packs the dates far tighter than a club ever does — consecutive
    * weekdays with a weekend gap through the middle — which is the layout stress
-   * a weekly fixture never applies. In person means the product has a *venue*,
+   * a weekly fixture never applies. In person means the product has a *site*,
    * so this is the only scenario carrying site notes, and it means there is no
    * voice room anywhere on the page: no Join button is rendered at all.
    *
@@ -994,7 +1023,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
       publicNote:
         "Builders red are working towards one shared obstacle course by Friday. Everything each team builds gets snapped into it at the end of the week.",
       staffNote:
-        "Venue laptops are slow to load Studio — start them ten minutes early. Lunch is 12:30, there is a proper break at 15:00, and the room has to be clear by 18:00.",
+        "The site's laptops are slow to load Studio — start them ten minutes early. Lunch is 12:30, there is a proper break at 15:00, and the room has to be clear by 18:00.",
     },
     // Notes, and an empty newcomers map — the one place the two gates are shown
     // coming apart, and the exact shape the live shell hands a non-club product.

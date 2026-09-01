@@ -1,14 +1,17 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { ShieldCheck } from "lucide-react";
 import { formatCurrencyFromCents } from "@/lib/utils";
+import { SUPPORT_EMAIL } from "@/lib/constants";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { PricingOption } from "./pricing-options";
 
 // Single-option price display. There is one purchase option per product, so
 // this is purely informational — no selection. Consumer clubs show the
-// monthly subscription price; camps/paid events the upfront total; free and
-// municipality (external) products show a no-payment note.
+// monthly subscription price; camps/paid events the upfront total; free
+// products a no-payment note, and municipality (external) ones who bears the
+// cost instead.
 
 // **This section carries no box**, and that is the panel's one rule doing its
 // work: a border means you can act on it. Elsewhere in the panel a bordered box
@@ -44,6 +47,50 @@ export function PricingPanelView({
         locale={locale}
         firstChargeDate={firstChargeDate}
       />
+      {/* A paid club, and nothing else. The guarantee is real for clubs only —
+          camps and events are paid upfront against a held seat, a free or
+          municipality-funded product has no money to give back — so the
+          `subscription` option *is* the condition: it is the one kind
+          `buildPricingOption` returns for a paid consumer club. Rendered from
+          the same prop the price above reads, so it is on screen at first paint
+          and never arrives late to push the CTA down. */}
+      {option.kind === "subscription" && <MoneyBackGuarantee />}
+    </div>
+  );
+}
+
+/**
+ * The 30-day money-back guarantee, stated plainly on the panel where a parent
+ * decides. No hedging and no conditions in the small print: the window runs
+ * from the child's first session (the later of the two events, and the only
+ * point at which a family can know), the refund is manual through support, and
+ * the copy says so rather than implying a button exists.
+ */
+function MoneyBackGuarantee() {
+  const t = useTranslations("productDetail.pricing.guarantee");
+  return (
+    <div className="flex gap-2.5 border-t border-border pt-3">
+      <ShieldCheck
+        className="mt-0.5 h-4 w-4 shrink-0 text-success"
+        aria-hidden="true"
+      />
+      <div className="space-y-1">
+        <p className="text-sm font-semibold">{t("title")}</p>
+        <p className="text-xs text-muted-foreground">{t("body")}</p>
+        <p className="text-xs text-muted-foreground">
+          {t.rich("contact", {
+            email: SUPPORT_EMAIL,
+            link: (chunks) => (
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="text-primary hover:underline"
+              >
+                {chunks}
+              </a>
+            ),
+          })}
+        </p>
+      </div>
     </div>
   );
 }
@@ -104,14 +151,14 @@ function OptionRow({
         </div>
       );
     case "external":
-      return (
-        <div>
-          <p className="text-base font-bold">{t("external")}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("externalHint")}
-          </p>
-        </div>
-      );
+      // The one option with no second line. It used to carry a hint saying no
+      // payment was needed, which is only true of our till: some municipalities
+      // ask families for a small fee of their own, and a parent who has been
+      // told that by their council reads ours as a contradiction. Everything
+      // honest that could stand there instead was a description of who invoices
+      // whom — our arrangement with the municipality, not a fact a family has
+      // any use for — so the line above states who bears the cost and stops.
+      return <p className="text-base font-bold">{t("external")}</p>;
     case "unavailable":
       return (
         <div>

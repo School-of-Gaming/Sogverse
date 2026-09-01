@@ -61,6 +61,51 @@ export type GeduContractVersion =
 export type GeduContractAcceptance =
   Database["public"]["Tables"]["gedu_contract_acceptances"]["Row"];
 
+// consent_documents / consent_document_versions / product_required_consents /
+// consent_acceptances (00210) — the enrolment-consent feature.
+//
+// Row aliases only, for the same reason the gedu contract has none: not one of
+// these four tables carries a write grant for any Data API role. Documents and
+// versions arrive by migration, a product's requirement set is written by
+// `set_product_required_consents`, and an acceptance is written by
+// `record_required_consents` from inside the two enrolment RPCs — so an Insert
+// type here would name a statement nothing in the app is allowed to make.
+//
+// A ConsentAcceptance is a NON-REVOCABLE enrolment condition and carries no
+// revoked state by design; the revocable marketing/media consents are a
+// separate future system and must not be folded into these types.
+export type ConsentDocument =
+  Database["public"]["Tables"]["consent_documents"]["Row"];
+export type ConsentDocumentVersion =
+  Database["public"]["Tables"]["consent_document_versions"]["Row"];
+export type ProductRequiredConsent =
+  Database["public"]["Tables"]["product_required_consents"]["Row"];
+export type ConsentAcceptance =
+  Database["public"]["Tables"]["consent_acceptances"]["Row"];
+
+// marketing_consents / marketing_consent_events / product_marketing_consents
+// (00220) — the REVOCABLE marketing-consent feature, and deliberately not the
+// same system as the four aliases above. A ConsentAcceptance is a
+// non-revocable enrolment condition keyed per seat; a MarketingConsent is
+// account-level, carries a current state, and can be switched off from
+// settings at any time. Nothing should ever widen one set of types into the
+// other — see 00210's header and 00220's.
+//
+// Row aliases only, on the same reasoning as the enrolment-consent block: none
+// of these three tables carries a write grant for any Data API role. A parent's
+// own answer is written by `set_marketing_consent` (or, at registration, by the
+// register route's service-role client), and a product's ask set by
+// `admin_set_product_marketing_consents` — so an Insert type here would name a
+// statement nothing in the app is allowed to make.
+export type MarketingConsentType =
+  Database["public"]["Enums"]["marketing_consent_type"];
+export type MarketingConsent =
+  Database["public"]["Tables"]["marketing_consents"]["Row"];
+export type MarketingConsentEvent =
+  Database["public"]["Tables"]["marketing_consent_events"]["Row"];
+export type ProductMarketingConsent =
+  Database["public"]["Tables"]["product_marketing_consents"]["Row"];
+
 // minecraft_accounts
 export type MinecraftAccount = Database["public"]["Tables"]["minecraft_accounts"]["Row"];
 export type MinecraftAccountUpdate = Database["public"]["Tables"]["minecraft_accounts"]["Update"];
@@ -131,7 +176,7 @@ export type GeduLocation = Database["public"]["Tables"]["gedu_locations"]["Row"]
 export type GeduLocationInsert = Database["public"]["Tables"]["gedu_locations"]["Insert"];
 
 // ---------------------------------------------------------------------------
-// products (see docs/products-architecture.md)
+// products (see docs/architecture/products.md)
 // ---------------------------------------------------------------------------
 
 // Enums
@@ -245,7 +290,7 @@ export type { ProductBrowseRow } from "@/services/products/products.service";
 
 // ---------------------------------------------------------------------------
 // products — participations, payments, family subs (00039)
-// See docs/products-architecture.md §§ 5.5, 5.7, 5.7a, 5.1a, 6.1.
+// See docs/architecture/products.md §§ 5.5, 5.7, 5.7a, 5.1a, 6.1.
 // ---------------------------------------------------------------------------
 
 // Enums
@@ -259,7 +304,7 @@ export type ParticipationInsert = Database["public"]["Tables"]["participations"]
 
 /**
  * Derived 3-state placement vocabulary for participations.
- * See products-architecture.md §3 "Participation state vocabulary":
+ * See docs/architecture/products.md §3 "Participation state vocabulary":
  *   - 'waitlisted'  — `status = 'waitlisted'`
  *   - 'unassigned'  — `status = 'active' AND group_id IS NULL`
  *   - 'assigned'    — `status = 'active' AND group_id IS NOT NULL`
@@ -299,7 +344,7 @@ export type ProductSeatCount = Database["public"]["Tables"]["product_seat_counts
 
 // ---------------------------------------------------------------------------
 // products — groups & gedu assignments (00049)
-// See docs/products-architecture.md §4.1, §5.4, §6.1a.
+// See docs/architecture/products.md §4.1, §5.4, §6.1a.
 // ---------------------------------------------------------------------------
 
 // product_groups
@@ -329,6 +374,14 @@ export type GroupSessionUpdate = Database["public"]["Tables"]["group_sessions"][
 // state is the absence of a row, not a value.
 export type SessionAttendance = Database["public"]["Tables"]["session_attendance"]["Row"];
 export type SessionAttendanceInsert = Database["public"]["Tables"]["session_attendance"]["Insert"];
+
+// group_session_images — the photos attached to one session's report. Same
+// posture as the two tables above (RLS on, zero policies, nothing granted to
+// `authenticated`), so these aliases likewise serve the service-role side. The
+// row's id is also the object's name in the public `session-images` bucket,
+// which is why there is no path column to alias.
+export type GroupSessionImage = Database["public"]["Tables"]["group_session_images"]["Row"];
+export type GroupSessionImageInsert = Database["public"]["Tables"]["group_session_images"]["Insert"];
 
 // The attendance vocabulary is a text column with a CHECK rather than a
 // Postgres enum (adding 'late'/'excused' is expected), so there is no
@@ -612,7 +665,7 @@ export type ParticipationSubscriptionState = Omit<
 
 /**
  * The identity a locally-verified JWT actually guarantees. `getClaims()`
- * (see docs/performance.md) yields only the signed claims — `id` (`sub`) and
+ * (see docs/architecture/performance.md) yields only the signed claims — `id` (`sub`) and
  * `email` — not the fully-populated GoTrue `User` that `getUser()` returned.
  * Derived from `User` via `Pick` so the field types track the SDK; every
  * server auth helper (`getUser`, `getUserWithProfile`, `requireRole`) and the
@@ -627,7 +680,7 @@ export type AuthenticatedUser = Pick<User, "id" | "email">;
  * `auth.getUser()`.
  *
  * `getUser()` is a GoTrue HTTP round-trip; on the per-request / per-RSC-prefetch
- * server path it fans out into the F1 auth-waterfall (see docs/performance.md).
+ * server path it fans out into the F1 auth-waterfall (see docs/architecture/performance.md).
  * Server identity must instead come from `auth.getClaims()` (local ES256
  * verification, no round-trip). Subtracting `getUser` from the type makes a
  * server-side `supabase.auth.getUser()` a *compile* error — the structural

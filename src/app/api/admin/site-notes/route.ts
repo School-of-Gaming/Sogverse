@@ -14,7 +14,7 @@ import {
  *
  * **A field absent from the request is left alone — it is not written null.**
  * The member row carries two independent things with two different owners: the
- * venue's street address, which only an admin edits, and the family-facing site
+ * site's street address, which only an admin edits, and the family-facing site
  * note, which the session-record panel writes through an RPC that admins and
  * gedus share. Treating an omitted key as "set it to null" made those two
  * writers clobber each other — an address save would blank a note somebody had

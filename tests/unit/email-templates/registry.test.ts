@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { BRAND } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
@@ -179,6 +179,7 @@ describe("templateRegistry sessionReport", () => {
     productName: "Minecraft: Cozy Adventures",
     groupName: "Usvalaakso: Kettukallio",
     copy: "family",
+    photoCount: "0",
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
@@ -281,6 +282,172 @@ describe("templateRegistry sessionReport", () => {
     expect(staff.html).toContain(styledName("Usvalaakso: Kettukallio"));
   });
 
+  /**
+   * The photo count is the tool's whole answer to a question no unit test can
+   * settle: what a grid of pictures looks like in a real inbox, with images on
+   * and with images off. So the select has to actually hang photos on the
+   * fixture session — and the fixtures have to be absolute, because a relative
+   * path is unfetchable from wherever the test send lands.
+   */
+  it("hangs the chosen number of demo photos on the fixture session", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    try {
+      const none = templateRegistry.sessionReport.render(params, t, "en");
+      expect(none.html).not.toContain("Photos from this session");
+
+      const three = templateRegistry.sessionReport.render(
+        { ...params, photoCount: "3" },
+        t,
+        "en",
+      );
+      expect(three.html).toContain("Photos from this session");
+      expect(three.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
+        .toHaveLength(3);
+      // The staff copy is the same mail behind a banner, pictures included.
+      const staff = templateRegistry.sessionReport.render(
+        { ...params, photoCount: "3", copy: "staff" },
+        t,
+        "en",
+      );
+      expect(staff.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
+        .toHaveLength(3);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  /**
+   * A send from a dev machine carries no photos, on exactly the terms the
+   * shell's brand mark takes: a `localhost` src is unreachable by construction
+   * for the inbox the mail is about to land in, and a *failed* fetch is worse
+   * than an absent one — Gmail's proxy paints its broken-image glyph in every
+   * well the design reserved. The rule is that an `<img>` which will
+   * predictably fail is never emitted, and a fixture is not exempt from it.
+   */
+  it("sends no photos when the origin is one only a dev machine can reach", () => {
+    for (const origin of ["http://localhost:3000", "http://127.0.0.1:3000"]) {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
+      try {
+        const { html } = templateRegistry.sessionReport.render(
+          { ...params, photoCount: "5" },
+          t,
+          "en",
+          { to: "send" },
+        );
+        expect(html, `origin ${origin} produced photos`)
+          .not.toContain("Photos from this session");
+        expect(html).not.toContain("/preview-art/");
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    }
+  });
+
+  /**
+   * And the default is the send — pinned where it can actually be told apart.
+   *
+   * The two cases above and below both pass a context or have no origin to build
+   * from, so neither would notice the default drifting to `preview`. A reachable-
+   * looking loopback origin with **no context argument at all** is the one shape
+   * that separates them: as a send it drops the photos, as a preview it would
+   * keep them. A caller who has not thought about where the mail is going is
+   * sending it, which is the conservative half of the pair.
+   */
+  it("defaults to the send, so an unstated context drops a loopback origin's photos", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+    try {
+      const { html } = templateRegistry.sessionReport.render(
+        { ...params, photoCount: "5" },
+        t,
+        "en",
+      );
+      expect(html).not.toContain("Photos from this session");
+      expect(html).not.toContain("/preview-art/");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  /**
+   * The preview is the other destination, and the reason the context exists:
+   * the mail drawn in `/admin/testing` is fetched by the browser looking at
+   * it, so the loopback origin that is useless in an inbox is the right one
+   * here. Suppressing the grid there would leave the one surface built to show
+   * it with nothing to show — no pairs, no spanning odd one, no wells.
+   */
+  it("keeps the photos in a preview, resolved against the previewing browser", () => {
+    // Not the env: a preview names the origin its own browser will fetch from,
+    // which is the dev server actually serving the art whatever port it is on.
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+    try {
+      const { html } = templateRegistry.sessionReport.render(
+        { ...params, photoCount: "5" },
+        t,
+        "en",
+        { to: "preview", origin: "http://localhost:3010" },
+      );
+      expect(html).toContain("Photos from this session");
+      const sources = html.match(/<img src="[^"]+"/g) ?? [];
+      expect(
+        sources.filter((tag) => tag.startsWith('<img src="http://localhost:3010/preview-art/')),
+      ).toHaveLength(5);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  /**
+   * A real origin is a real origin in both destinations — the distinction is
+   * about reachability, not about the tool, so a staging or production send is
+   * unchanged by any of it.
+   */
+  it("carries the photos from a public origin whichever way it is rendered", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    try {
+      const contexts = [
+        { to: "send" },
+        { to: "preview", origin: "https://sogverse.sog.gg" },
+      ] as const;
+      for (const context of contexts) {
+        const { html } = templateRegistry.sessionReport.render(
+          { ...params, photoCount: "3" },
+          t,
+          "en",
+          context,
+        );
+        expect(html, `context ${context.to} dropped the photos`)
+          .toContain("Photos from this session");
+        expect(html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
+          .toHaveLength(3);
+      }
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  /**
+   * No origin is the third case, and it is an impossibility rather than a
+   * judgment: there is no absolute URL to put in a `src`, and a half-built one
+   * is what this directory never emits. The default context is the send, which
+   * is what a caller who has not thought about it should get.
+   */
+  it("renders no photos at all when no site origin can be built", () => {
+    for (const origin of ["", "not-a-url"]) {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
+      try {
+        const { html } = templateRegistry.sessionReport.render(
+          { ...params, photoCount: "5" },
+          t,
+          "en",
+        );
+        expect(html, `origin ${JSON.stringify(origin)} produced photos`)
+          .not.toContain("Photos from this session");
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    }
+  });
+
   it("rejects a sample id it does not know", () => {
     expect(() =>
       templateRegistry.sessionReport.render({ ...params, sample: "1999-01-01" }, t, "en"),
@@ -339,12 +506,35 @@ describe("every template renders in every locale", () => {
       firstName: "Marja",
       verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
     },
+    seatOffer: {
+      participantName: "Aino",
+      isSelfSeat: false,
+      productName: "Minecraft 101",
+      deadline: "Sunday, 31 August at 14:20 GMT+3",
+      acceptUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
+      declineUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
+      dashboardUrl: "https://sogverse.sog.gg/parent",
+    },
+    seatOfferStaff: {
+      reason: "declined",
+      participantName: "Aino",
+      contactName: "Marja Virtanen",
+      contactEmail: "marja@example.com",
+      productName: "Minecraft 101",
+      productSchedule: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
+      offeredAt: "Tue, 26 Aug, 14:20 GMT+3",
+      adminProductUrl:
+        "https://sogverse.sog.gg/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+    },
     sessionReport: {
       gamerName: "Aino",
       geduName: "Marianne",
       productName: "Minecraft: Cozy Adventures",
       groupName: "Usvalaakso: Kettukallio",
       copy: "family",
+      // Photos, so the locale sweep also reaches the one section with a
+      // translated line of its own above it.
+      photoCount: "3",
       sample: "en",
       viewerTimezone: "Europe/Helsinki",
       reportMarkdown: "",
@@ -362,6 +552,12 @@ describe("every template renders in every locale", () => {
    */
   const TEMPLATE_VARIANTS: Record<string, Record<string, string | boolean | null>[]> = {
     sessionReport: [{ copy: "family" }, { copy: "staff" }],
+    // The offer speaks in two voices, and each has its own heading, opening and
+    // subject — four keys per locale that only the self variant reaches.
+    seatOffer: [{ isSelfSeat: false }, { isSelfSeat: true }],
+    // Declined and no-response are three keys apiece, in five locales, and only
+    // the reason they name is ever rendered.
+    seatOfferStaff: [{ reason: "declined" }, { reason: "no_response" }],
   };
 
   function variantsOf(key: string): Record<string, string | boolean | null>[] {

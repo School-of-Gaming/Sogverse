@@ -62,7 +62,18 @@ import {
   type FixtureClock,
 } from "@/components/family/mock-enrollment-fixtures";
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
+import {
+  SessionPhotoGallery,
+  SessionPhotoViewer,
+  type SessionPhoto,
+} from "@/components/session-feed";
 import { SESSION_FEED_ADULT_ID } from "@/components/gedu/session-feed/mock-fixtures";
+import { GeduContractSettingsCardView } from "@/components/gedu/contract/gedu-contract-settings-card-view";
+import {
+  findGeduContractAcceptance,
+  GEDU_CONTRACT_CURRENT_VERSION,
+} from "@/components/gedu/contract/documents";
+import { buildGeduContractAcceptance } from "@/components/gedu/contract/mock-contract-fixtures";
 import { useNow, useTimezone } from "@/providers";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -74,7 +85,7 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { UserRole, VoiceZone } from "@/types";
+import type { GeduContractAcceptance, UserRole, VoiceZone } from "@/types";
 import {
   LocationPickerPanel,
   type LocationChainSummary,
@@ -354,66 +365,33 @@ function VoiceAvatarDemo() {
 /*  Checkbox Demo                                                      */
 /* ------------------------------------------------------------------ */
 
+/**
+ * The primitive's own states, and nothing else. The labelled consent
+ * compositions built on it — a sentence, a hint, a Required/Optional chip in a
+ * bordered clickable row — are `CheckboxRow`, and they are judged on the
+ * surfaces that use them rather than from a demo card here.
+ */
 function CheckboxDemo() {
-  const [agreed, setAgreed] = useState(true);
   const [newsletter, setNewsletter] = useState(false);
-  const [boxed, setBoxed] = useState(true);
 
   return (
-    <>
-      <div className="flex flex-wrap items-center gap-6">
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <Checkbox
-            checked={newsletter}
-            onChange={(e) => setNewsletter(e.target.checked)}
-          />
-          Unchecked / checked (toggle me)
-        </label>
-        <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
-          <Checkbox checked={false} disabled />
-          Disabled
-        </label>
-        <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
-          <Checkbox checked disabled />
-          Disabled (checked)
-        </label>
-      </div>
-
-      <div className="flex flex-wrap items-start gap-6">
-        {/* Multi-line label: `mt-0.5` pins the box to the first line. */}
-        <label className="flex max-w-md items-start gap-2 text-xs cursor-pointer">
-          <Checkbox
-            className="mt-0.5"
-            checked={agreed}
-            onChange={(e) => setAgreed(e.target.checked)}
-          />
-          <span className="text-muted-foreground">
-            By registering I agree to the program rules and the cancellation
-            policy. This label wraps onto multiple lines, so the box pins to the
-            first line rather than centering on the whole block.
-          </span>
-        </label>
-
-        {/* The boxed gate the signup panel uses: the container itself reacts. */}
-        <label
-          className={`flex max-w-md cursor-pointer items-start gap-3 rounded-md border p-3 text-xs transition-colors ${
-            boxed
-              ? "border-primary bg-primary/5"
-              : "border-input hover:bg-accent/50"
-          }`}
-        >
-          <Checkbox
-            className="mt-0.5"
-            checked={boxed}
-            onChange={(e) => setBoxed(e.target.checked)}
-          />
-          <span className="text-muted-foreground">
-            The container border lights to primary once checked, giving the
-            required agreement visible weight instead of reading as fine print.
-          </span>
-        </label>
-      </div>
-    </>
+    <div className="flex flex-wrap items-center gap-6">
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <Checkbox
+          checked={newsletter}
+          onChange={(e) => setNewsletter(e.target.checked)}
+        />
+        Unchecked / checked (toggle me)
+      </label>
+      <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
+        <Checkbox checked={false} disabled />
+        Disabled
+      </label>
+      <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
+        <Checkbox checked disabled />
+        Disabled (checked)
+      </label>
+    </div>
   );
 }
 
@@ -1191,7 +1169,7 @@ function GamerNoteDialogDemo() {
 /*  Family — Enrollment Card                                            */
 /* ------------------------------------------------------------------ */
 
-/** The venue the one in-person fixture is held at. */
+/** The site the one in-person fixture is held at. */
 const ENROLLMENT_DEMO_SITE = "Kirjasto Oodi, Helsinki";
 
 /** The three-way comparison's columns, in the order they are read. */
@@ -1324,6 +1302,19 @@ function EnrollmentCardDemo() {
         slots: [futureSlot(now, 6, "15:00", 90, FIXTURE_TIMEZONE)],
         waitlistPosition: 3,
       }),
+      // The same queue place, asked. Thirty hours into a five-day window, so
+      // the deadline reads as a real moment rather than as either edge of the
+      // window. It belongs in the matrix beside the other two for exactly the
+      // reason they are there: the block is worded three ways, and only the
+      // child's copy has no way to answer it.
+      seatOffered: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-seat-offered",
+        productName: "Valheim Survival Club",
+        slots: [futureSlot(now, 6, "15:00", 90, FIXTURE_TIMEZONE)],
+        waitlistPosition: 3,
+        seatOfferedHoursAgo: 30,
+      }),
       inPerson: build({
         participationId: "demo-enrollment-in-person",
         productName: "Cosmic Builders Camp",
@@ -1351,6 +1342,12 @@ function EnrollmentCardDemo() {
   // The confirm dialog in front of it is pure UI and works.
   const inert = () => {};
 
+  // The seat offer's answer, inert the same way. It resolves rather than
+  // rejecting, which leaves the buttons committed and the spinner running —
+  // which is what a real answer leaves behind, since the refetch that follows
+  // takes the card off the waitlist band entirely.
+  const inertAnswer = () => Promise.resolve("accepted" as const);
+
   // One card. The three arms take different props rather than one `audience`
   // string, which is the point: the child's card cannot be handed a portal or a
   // leave handler at all, and the parent's own seat has no `onJoinClick` to
@@ -1372,6 +1369,7 @@ function EnrollmentCardDemo() {
           audience="self"
           onOpenPortal={inert}
           onLeaveWaitlist={inert}
+          onRespondToSeatOffer={inertAnswer}
         />
       );
     }
@@ -1383,17 +1381,22 @@ function EnrollmentCardDemo() {
         onOpenPortal={inert}
         onJoinClick={inert}
         onLeaveWaitlist={inert}
+        onRespondToSeatOffer={inertAnswer}
       />
     );
   };
 
-  // The two states whose footer is worded three ways. They are the matrix.
+  // The states whose footer is worded three ways. They are the matrix.
   const compared: readonly {
     label: string;
     enrollment: (typeof cards)[keyof typeof cards];
   }[] = [
     { label: "Awaiting placement", enrollment: cards.awaiting },
     { label: "Waitlisted", enrollment: cards.waitlisted },
+    // Directly under the plain queue place, because the pair is the comparison
+    // worth having: the leave link stands down when the offer arrives, and
+    // seeing the two rows together is the only way to notice that.
+    { label: "Seat offered", enrollment: cards.seatOffered },
   ];
 
   // Everything else, one wording each, at a width the card reads at.
@@ -1876,6 +1879,154 @@ function ProductTypePaletteDemo() {
             </span>
           </div>
         </div>
+      </SubSection>
+    </Section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Session photos — the shared gallery and its viewer                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The fixture art, with its real dimensions.
+ *
+ * The `id` field carries a path rather than a UUID on purpose: the session-image
+ * URL helper passes a leading-slash value straight through, so demo art travels
+ * in the same field a stored photo's id does and the gallery needs no
+ * demo-only prop. The files are genuine JPEGs — the optimizer has to be able to
+ * actually serve them — and the numbers below are the files' own pixel sizes,
+ * because sizing from the stored dimensions is the whole behaviour under test.
+ */
+const SESSION_PHOTO_ART = {
+  build: { id: "/preview-art/session-build.jpg", width: 1600, height: 900 },
+  arena: { id: "/preview-art/session-arena.jpg", width: 1600, height: 900 },
+  parkour: { id: "/preview-art/session-parkour.jpg", width: 1440, height: 810 },
+  badge: { id: "/preview-art/session-badge.jpg", width: 1200, height: 1200 },
+  tower: { id: "/preview-art/session-tower.jpg", width: 900, height: 1600 },
+} as const;
+
+/**
+ * A full report's worth of photos, at the cap and in mixed ratios — the set the
+ * gallery cases and the viewer's paging demo both draw, so the row and the
+ * overlay are demonstrably showing the same five pictures.
+ */
+const SESSION_PHOTO_SET: readonly SessionPhoto[] = [
+  SESSION_PHOTO_ART.build,
+  SESSION_PHOTO_ART.badge,
+  SESSION_PHOTO_ART.tower,
+  SESSION_PHOTO_ART.parkour,
+  SESSION_PHOTO_ART.arena,
+];
+
+const SESSION_PHOTO_CASES: readonly {
+  caption: string;
+  photos: readonly SessionPhoto[];
+  /** A width cap on the box the gallery is drawn in, where the point of the
+   *  case is how the row behaves inside it. */
+  frameClassName?: string;
+}[] = [
+  {
+    caption: "Five — the cap, mixed ratios",
+    photos: SESSION_PHOTO_SET,
+  },
+  {
+    caption: "One",
+    photos: [SESSION_PHOTO_ART.arena],
+  },
+  {
+    caption: "A portrait beside a landscape",
+    photos: [SESSION_PHOTO_ART.tower, SESSION_PHOTO_ART.build],
+  },
+  {
+    // 312px is what a 360px phone leaves after the dashboard layout's own
+    // gutter, which is the width the mobile floor is actually judged at.
+    caption: "Five, at the 360px floor (312px of card)",
+    photos: SESSION_PHOTO_SET,
+    frameClassName: "w-[312px]",
+  },
+];
+
+function SessionPhotosDemo() {
+  // One overlay, so one piece of state — which set is open and where in it.
+  // The single-photo case is a set of one rather than a second holder: it is
+  // the same component answering a shorter list, which is the whole of what
+  // hides its arrows.
+  const [viewer, setViewer] = useState<{
+    photos: readonly SessionPhoto[];
+    index: number;
+  } | null>(null);
+
+  return (
+    <Section title="Session photos">
+      <p className="text-sm text-muted-foreground -mt-2">
+        The photos attached to a session report, drawn identically on the staff
+        feed and the family one &mdash; a wrapping row of thumbnails that share
+        a <strong>height</strong>, keep their own widths and sit{" "}
+        <strong>centred</strong> in the row, so mixed ratios sit together
+        uncropped and a part-full last line reads as a set rather than as a row
+        that ran out. Every box is sized by arithmetic from the stored
+        dimensions, never from a decoded image, which is what keeps the row from
+        reshuffling as the JPEGs land.
+      </p>
+
+      <SubSection title="Gallery">
+        <div className="grid gap-6 xl:grid-cols-2">
+          {SESSION_PHOTO_CASES.map((demoCase) => (
+            <div key={demoCase.caption} className="space-y-2">
+              <DemoCaption>{demoCase.caption}</DemoCaption>
+              <div
+                className={cn(
+                  "rounded-lg border bg-card p-4",
+                  demoCase.frameClassName,
+                )}
+              >
+                <SessionPhotoGallery photos={demoCase.photos} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="Fullscreen viewer">
+        <p className="text-sm text-muted-foreground">
+          Tapping any thumbnail above opens it; the two buttons here open it
+          directly, because an overlay can only be looked at one at a time. It
+          takes the whole viewport &mdash; dark ground, the picture contained
+          inside it &mdash; and it <strong>pages through the set</strong> with
+          the two side arrows or the left/right arrow keys, wrapping at both
+          ends so neither control is ever sitting there unable to act. A set of
+          one gets no arrows at all. Escape, the backdrop, the margins beside
+          the picture, the picture itself and the corner button all close it;
+          the three controls do not, which is why pressing next is never also a
+          request to leave.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            onClick={() =>
+              setViewer({ photos: SESSION_PHOTO_SET, index: 0 })
+            }
+          >
+            Open the five-photo set
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              setViewer({ photos: [SESSION_PHOTO_ART.tower], index: 0 })
+            }
+          >
+            Open a single photo
+          </Button>
+        </div>
+        <SessionPhotoViewer
+          photos={viewer?.photos ?? []}
+          index={viewer?.index ?? null}
+          onIndexChange={(index) =>
+            setViewer((open) => (open === null ? null : { ...open, index }))
+          }
+          onClose={() => setViewer(null)}
+        />
       </SubSection>
     </Section>
   );
@@ -2403,16 +2554,16 @@ export default function AdminUIComponentsPage() {
               <DemoCaption>Searching</DemoCaption>
               {/* The caller reads the type to decide what the confirmation
                   meant — a site is the answer, a municipality is the next
-                  question ("show me the venues here", which is also the only
+                  question ("show me the sites here", which is also the only
                   screen that can offer to create one). That is why a site is
                   confirmable but never browsable to: making a municipality
                   terminal is exactly what stops the tree walking past the
                   screen that carries creation. And a prefix match beats an
                   infix one however late in the table it sits. */}
               <p className="text-sm text-muted-foreground">
-                Configured the way the product form&rsquo;s venue dialog
+                Configured the way the product form&rsquo;s site dialog
                 configures it: <code>municipality</code> and <code>site</code>{" "}
-                are both pickable, so the venue &ldquo;Gymnase municipal de
+                are both pickable, so the site &ldquo;Gymnase municipal de
                 Nîmes&rdquo; is confirmable straight from a search. In the real
                 app the ranking, the cap and the match count all come from the
                 database.
@@ -2610,6 +2761,8 @@ export default function AdminUIComponentsPage() {
         <EnrollmentCardDemo />
       </Section>
 
+      <SessionPhotosDemo />
+
       <Section title="Rich text editor — authoring and what it stores">
         <p className="text-sm text-muted-foreground -mt-2">
           The shared authoring control for anywhere a person writes prose the
@@ -2658,6 +2811,85 @@ export default function AdminUIComponentsPage() {
         </p>
         <MinecraftPasswordResetDemo />
       </Section>
+
+      <Section title="Gedu contract — settings card">
+        <p className="text-sm text-muted-foreground -mt-2">
+          The contract card on a gedu&rsquo;s settings page, in both the states
+          it has. The settings route reads the acceptances before the page
+          renders and fails if it cannot, so the card is born signed or unsigned
+          and there is no third thing for it to be.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The database keeps one acceptance row per signed version &mdash; the
+          legal record of what was agreed and when, which a new version does not
+          make untrue. The card names exactly one of them: the earliest
+          acceptance of the version <em>in force</em>. So a second season on file
+          renders identically to one, and a gedu who signed only last season
+          reads as <em>Not accepted</em>.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The settings page is one column wide, so each state wraps later there
+          than in these columns.
+        </p>
+        <GeduContractSettingsCardDemo />
+      </Section>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Gedu contract — settings card                                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * When the fixture educator signed each version. Fixed literals, unlike the
+ * contract scene's clock-relative one: the card renders the date absolutely, so
+ * nothing here goes stale — and a moment that moved would move the line it is
+ * printed on, which is the one thing this section exists to hold still.
+ */
+const CONTRACT_CARD_SIGNED_AT = "2026-03-14T09:12:00.000Z";
+
+const CONTRACT_CARD_CURRENT_ROW = buildGeduContractAcceptance({
+  acceptedAt: CONTRACT_CARD_SIGNED_AT,
+});
+
+/** What the settings page's read comes back holding — the card's two states. */
+const CONTRACT_CARD_CASES: readonly {
+  label: string;
+  acceptances: GeduContractAcceptance[];
+}[] = [
+  { label: "No signature", acceptances: [] },
+  // A second row for an older version would render this column pixel for pixel:
+  // the card names the earliest acceptance of the version in force and nothing
+  // else. Two identical renders are one state, so there is one column.
+  { label: "Signed", acceptances: [CONTRACT_CARD_CURRENT_ROW] },
+];
+
+/**
+ * Both answers side by side, so their bottom edges can be read against each
+ * other — the card is the only one on the settings page whose height its data
+ * decides, and whether the two can be made one height is the open question
+ * about it.
+ *
+ * The rows go through the real matcher rather than being hand-picked, so what
+ * each column shows is what the data shell would have handed the card, not a
+ * claim about it. `items-start` is load-bearing: a stretching grid would give
+ * both columns the taller card's height and erase the comparison.
+ */
+function GeduContractSettingsCardDemo() {
+  return (
+    <div className="grid items-start gap-x-6 gap-y-8 md:grid-cols-2">
+      {CONTRACT_CARD_CASES.map(({ label, acceptances }) => (
+        <div key={label} className="space-y-3">
+          <DemoCaption>{label}</DemoCaption>
+          <GeduContractSettingsCardView
+            acceptance={findGeduContractAcceptance(
+              acceptances,
+              GEDU_CONTRACT_CURRENT_VERSION,
+            )}
+          />
+        </div>
+      ))}
     </div>
   );
 }
@@ -2720,13 +2952,13 @@ function noopSubmit() {}
  *
  * It once had a second, "set" scope — a bounded, pre-fetched collection grouped
  * under the place above each row — but every surface that used one (the flat
- * every-venue list, the Finnish municipality list) now reaches the same rows
+ * every-site list, the Finnish municipality list) now reaches the same rows
  * through this tree, so the panel has one shape and the demos below show its
  * states.
  *
  * Its consumers: gedu coverage, a parent's own location, and the product form's
- * venue and municipality fields — the last two as dialogs, configured by
- * `pickableTypes` (a venue pick stops at `site`, a municipality pick at
+ * site and municipality fields — the last two as dialogs, configured by
+ * `pickableTypes` (a site pick stops at `site`, a municipality pick at
  * `municipality`, seeded at Finland).
  *
  * In the real app a container above the panel owns the browse position, the
@@ -2781,8 +3013,8 @@ const NIMES = fixtureRow("30189", "Nîmes", "municipality");
 
 /**
  * Fixture search hits for the needle "nimes", each with the path a real hit
- * carries. The third is a venue rather than a commune, and it is the whole
- * point of the search demo's configuration: the product form's venue dialog
+ * carries. The third is a site rather than a commune, and it is the whole
+ * point of the search demo's configuration: the product form's site dialog
  * makes `site` pickable alongside `municipality`, so an admin who knows the
  * building's name confirms it here in one step instead of walking down to its
  * commune first. Both types rank against the same needle.
@@ -2839,8 +3071,8 @@ function LocationPickerDemo() {
     return (
       <div className="space-y-3 rounded-md border border-input bg-card p-4">
         <p className="text-sm">
-          Confirmed <span className="font-medium">{confirmed}</span> — the venue
-          flow would now list the venues already in it, with that row as the
+          Confirmed <span className="font-medium">{confirmed}</span> — the site
+          flow would now list the sites already in it, with that row as the
           parent of any new one.
         </p>
         <Button
@@ -2945,9 +3177,9 @@ function LocationSearchDemo() {
           search: { rows: HITS, total: 47, hasMore: false, loading: false },
           selection: {
             mode: "single",
-            // The venue dialog's own configuration: two confirmable types, and
+            // The site dialog's own configuration: two confirmable types, and
             // the caller decides what each one meant — a site is the answer, a
-            // municipality is "show me the venues here".
+            // municipality is "show me the sites here".
             pickableTypes: ["municipality", "site"],
             onConfirm: () => Promise.resolve(),
             onCancel: () => setQuery(""),
@@ -3009,7 +3241,7 @@ function LocationBoundCountryDemo() {
 /**
  * The parent's own place: one optional municipality, on the registration form
  * and in settings. It asks single mode for the municipality level — Finland's
- * kunta, France's commune, the one directly above a venue.
+ * kunta, France's commune, the one directly above a site.
  *
  * The box *is* the picker rather than a display row over a "choose" button —
  * one control, and no button caption that has to guess what the viewer's

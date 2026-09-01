@@ -14,6 +14,11 @@ import {
   isSupportedCurrency,
   SUPPORTED_CURRENCIES,
 } from "@/lib/constants";
+import { completeConsentBundles } from "@/lib/constants/consent-documents";
+import {
+  ATTACHABLE_MARKETING_CONSENT_TYPES,
+  isAttachableMarketingConsent,
+} from "@/lib/constants/marketing-consents";
 import { isSeededCountry } from "@/lib/constants/location-hierarchies";
 import {
   isSupportedLocale,
@@ -579,6 +584,31 @@ function buildSharedFields(
         })
       : [],
     holiday_calendar_ids: Array.from(state.holidayCalendarIds),
+    // The enrolment conditions, on every save including the empty array that
+    // means "requires nothing" — the RPC replaces the whole set on every call,
+    // so an omitted answer would drop a product's conditions rather than
+    // preserve them. Not gated by any type config: the mechanism is generic and
+    // the database has no per-type rule for it to mirror.
+    //
+    // Bundles are completed on the way out, so what is written matches what the
+    // form showed: a stored half-bundle ticks its row, and a save must not
+    // leave the product in a state the form says it is not in.
+    required_consent_slugs: completeConsentBundles(
+      Array.from(state.requiredConsentSlugs),
+    ),
+    // The optional marketing asks, on every save including the empty array that
+    // means "asks nothing" — the writer replaces the whole set on every call,
+    // so an omitted answer would leave a stale ask behind rather than preserve
+    // an intended one.
+    //
+    // In registry order rather than the Set's insertion order, so two admins
+    // ticking the same boxes in different orders send the same payload. There
+    // is no bundle-completion step here and there never will be: a marketing
+    // ask is one consent standing alone, not a document that only makes sense
+    // beside another.
+    marketing_consent_types: ATTACHABLE_MARKETING_CONSENT_TYPES.filter((type) =>
+      state.marketingConsentTypes.has(type),
+    ),
     primary_gedu_fee_cents: feeDraftToCents(
       state.primaryGeduFee.status,
       state.primaryGeduFee.amount,
@@ -609,7 +639,7 @@ function buildSharedFields(
  * decides whether the product is *listed* on the shop and schools pages, not
  * whether anyone may see or buy it. An unlisted product is reachable, readable
  * and purchasable by direct link, which is what makes it usable for a campaign
- * or an unannounced cohort. See docs/products-architecture.md § "Lifecycle &
+ * or an unannounced cohort. See docs/architecture/products.md § "Lifecycle &
  * listing".
  */
 export function buildCreateInput(
@@ -843,6 +873,27 @@ export function existingFormState(
     })),
     holidayCalendarIds: new Set(
       product.product_holiday_calendars.map((h) => h.calendar_id),
+    ),
+    // Straight through from the join table. A stored slug this deploy cannot
+    // name is deliberately NOT filtered out the way an un-seeded region lock is
+    // — the checkbox renders the raw slug and stays ticked, so a save made for
+    // some other reason cannot silently drop a legal condition the product
+    // really carries. The write contract admits any string for exactly this
+    // reason; the foreign key is what refuses a slug that is not published.
+    requiredConsentSlugs: new Set(
+      product.product_required_consents.map((c) => c.document_slug),
+    ),
+    // Straight through from its own join table, and — unlike the requirement
+    // set above — a stored type this deploy cannot offer IS dropped here, which
+    // is the same asymmetry `describeMarketingConsents` makes on the family
+    // side. A required document kept ticked protects a legal condition from a
+    // save made for some other reason; a marketing ask has no such condition to
+    // protect, and keeping one the form cannot show would leave a checkbox
+    // state nobody can see or clear.
+    marketingConsentTypes: new Set(
+      product.product_marketing_consents
+        .map((c) => c.consent_type)
+        .filter((type) => isAttachableMarketingConsent(type)),
     ),
     signupThreshold:
       product.signup_threshold != null ? String(product.signup_threshold) : "",

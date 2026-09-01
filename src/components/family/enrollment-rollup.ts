@@ -65,7 +65,7 @@ export interface FamilyEnrollmentSummary {
   /** Where the Join navigates. `"#"` keeps it inert. */
   voiceHref: string;
   /**
-   * The venue an in-person enrollment runs at, `null` for a remote one. The
+   * The site an in-person enrollment runs at, `null` for a remote one. The
    * in-person counterpart of the Join button — the same question (where is this
    * happening) answered the other way a product can answer it.
    */
@@ -83,6 +83,20 @@ export interface FamilyEnrollmentSummary {
    * — so it is a state of this summary rather than a separate band.
    */
   waitlistPosition: number | null;
+  /**
+   * When a seat was offered to this family, or `null` if none ever has been.
+   * Only a waitlisted enrollment can carry one — a CHECK forbids the stamp on
+   * any other status — so it is `null` on every seat by construction.
+   *
+   * **The raw stamp travels, not a live-or-lapsed verdict**, even though this
+   * roll-up already holds a clock. The card is where the answer is *acted* on:
+   * an offer that lapses while a parent is looking at it has to flip in place
+   * rather than vanish, and after they answer, the card has to keep showing the
+   * lapsed state the server just reported. Both need the card to hold state of
+   * its own against this value, and a pre-chewed boolean would leave it nothing
+   * to hold that state against.
+   */
+  seatOfferSentAt: string | null;
   /**
    * The seat is bought and paid for and nobody has been put in a group yet
    * (`group_id IS NULL`) — the state between a purchase landing and an admin
@@ -267,7 +281,7 @@ export interface FamilyRollUpArgs {
   waitlistRows: readonly MyWaitlistRow[];
   /** The instant every derivation is anchored to — the shared clock's tick. */
   now: Date;
-  /** Viewer's UI locale, for the product name and the venue name. */
+  /** Viewer's UI locale, for the product name and the site name. */
   locale: SupportedLocale;
   /** Viewer's IANA zone — the schedule sentence is stated in it. */
   timeZone: string;
@@ -630,6 +644,9 @@ function sessionSummary(
     endDate: product.endDate,
     timezone: product.timezone,
     waitlistPosition: null,
+    // A seat is not a queue place, and the offer stamp is forbidden on any
+    // status but `waitlisted` — so there is nothing here to carry, ever.
+    seatOfferSentAt: null,
     awaiting,
     paymentProblem: row.paymentProblem,
     // Emitted for the whole of a winding-down membership's life, including the
@@ -679,6 +696,7 @@ function waitlistSummary(
     endDate: product.endDate,
     timezone: product.timezone,
     waitlistPosition: row.position,
+    seatOfferSentAt: row.seatOfferSentAt,
     awaiting: false,
     // Both are facts about a subscription, and a queue position is not one:
     // nothing has been charged for a place in line, so there is nothing to be

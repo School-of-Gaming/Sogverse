@@ -13,6 +13,7 @@ import type {
   FamilyEnrollmentSummary,
   FamilyParticipantEnrollments,
 } from "@/components/family/enrollment-rollup";
+import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
 import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
 import { ParentHelpSection } from "./ParentHelpSection";
 
@@ -203,6 +204,7 @@ export function ParentDashboardPageBody({
   onJoinClick,
   onLeaveWaitlist,
   leavingParticipationIds,
+  onRespondToSeatOffer,
 }: {
   /** The parent's children, in the order their sections appear. */
   gamers: readonly ParentDashboardParticipant[];
@@ -267,6 +269,21 @@ export function ParentDashboardPageBody({
    * which is exactly the re-enable the disabled-state rule forbids.
    */
   leavingParticipationIds?: ReadonlySet<string>;
+  /**
+   * A parent answered a seat offer — yes or no — on one of these cards.
+   *
+   * Unlike every other action on this page it **returns** something, because
+   * two of the server's four answers ("the window closed", "already answered")
+   * are not failures and the card has to draw them as a lapsed offer rather
+   * than as an error. The card owns the decline confirmation and the committed
+   * state; the shell owns the mutation. There is no in-flight set beside this
+   * one for the same reason: the block that fired it keeps its own flag and
+   * stays committed until the answer resolves.
+   */
+  onRespondToSeatOffer?: (
+    action: ParentEnrollmentAction,
+    accept: boolean,
+  ) => Promise<SeatOfferRespondResponse["outcome"]>;
 }) {
   const t = useTranslations("dashboardSections");
   const f = useTranslations("family");
@@ -402,21 +419,23 @@ export function ParentDashboardPageBody({
                     >
                       {gamer.firstName}
                     </h2>
-                    {/* The identity page — name, game accounts — kept as a quiet
-                        affordance beside the heading: managing a child is a
-                        sometimes action, and a loud button here would compete
-                        with the cards for the first thing read. `ml-auto` so a
-                        long name wraps against the heading's space, not the
-                        link's. */}
+                    {/* The identity page — name, game accounts. An outline
+                        button, not a ghost one: this is a mobile-first surface
+                        and ghost affordances are hover-discovered, so on touch
+                        a quiet grey link reads as a label. The border is what
+                        says "pressable". The repetition cost is bounded — most
+                        families have one or two gamers; three or more is very
+                        rare. `ml-auto` so a long name wraps against the
+                        heading's space, not the link's. */}
                     <Link
                       href={`${ROUTES.customer.gamers}/${gamer.id}`}
                       aria-label={f("manageGamerAria", {
                         name: gamer.firstName,
                       })}
                       className={buttonVariants({
-                        variant: "ghost",
+                        variant: "outline",
                         size: "sm",
-                        className: "ml-auto shrink-0 text-muted-foreground",
+                        className: "ml-auto shrink-0",
                       })}
                     >
                       <UserCog className="h-4 w-4" aria-hidden />
@@ -458,6 +477,14 @@ export function ParentDashboardPageBody({
                           leavingWaitlist={leavingParticipationIds?.has(
                             enrollment.participationId,
                           )}
+                          onRespondToSeatOffer={
+                            onRespondToSeatOffer &&
+                            ((accept) =>
+                              onRespondToSeatOffer(
+                                { seat: "gamer", gamer, enrollment },
+                                accept,
+                              ))
+                          }
                         />
                       ))}
                     </div>
@@ -543,6 +570,11 @@ export function ParentDashboardPageBody({
                     leavingWaitlist={leavingParticipationIds?.has(
                       enrollment.participationId,
                     )}
+                    onRespondToSeatOffer={
+                      onRespondToSeatOffer &&
+                      ((accept) =>
+                        onRespondToSeatOffer({ seat: "self", enrollment }, accept))
+                    }
                   />
                 ))}
               </div>

@@ -46,9 +46,12 @@ export function TopicInfoCard({ topic }: { topic: ProductTopic }) {
     <Card>
       <CardContent className="space-y-4 p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3">
-          {/* Deliberately NOT the uppercase section-heading style: the heading
-              interpolates a brand literal, and CSS `uppercase` would mangle the
-              casing the brand rule protects ("Pokémon GO" → "POKÉMON GO"). */}
+          {/* Never `uppercase` here, whatever the neighbouring labels do: the
+              heading interpolates a brand literal, and CSS `uppercase` would
+              mangle the casing the brand rule protects ("Pokémon GO" → "POKÉMON
+              GO"). A card heading is the page speaking, so it is sentence case
+              anyway and matches the overview card beside it — but the reason it
+              can never go back stands on its own. */}
           <h2 className="text-sm font-semibold text-muted-foreground">
             {t("topicInfo.heading", { name: meta.label })}
           </h2>

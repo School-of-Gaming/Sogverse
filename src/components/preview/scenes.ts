@@ -4,6 +4,7 @@ import {
   PREVIEW_SCENARIOS,
 } from "@/components/public/products/mock-detail-fixtures";
 import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
+import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
 
 /**
  * The **full-page preview scene registry**.
@@ -50,9 +51,11 @@ import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/
  * `"dashboard"` is the shell every non-admin role meets — header plus the
  * dashboard layout, no sidebar. `"admin"` is the same layout with the sidebar
  * the admin role actually gets, and it is a separate kind because that sidebar
- * takes a third of the width on a surface designed to use width.
+ * takes a third of the width on a surface designed to use width. `"auth"` is
+ * the signed-out shell — the public one with its `<main>` centring a single
+ * narrow column, which is the whole geometry of a page whose body is one card.
  */
-export type PreviewChromeKind = "public" | "dashboard" | "admin";
+export type PreviewChromeKind = "public" | "auth" | "dashboard" | "admin";
 
 export interface PreviewScenarioMeta {
   /** URL segment — `/preview/{surface}/{slug}`. */
@@ -128,9 +131,16 @@ export const PREVIEW_SCENES = [
     surface: "products",
     title: "Product detail page",
     description:
-      "The public product page a parent lands on from the shop, once per state its signup panel can be met in: registration window, audience, and region lock.",
+      "The public product page a parent lands on from the shop, once per state its signup panel can be met in: registration window, audience, region lock, and the consent asks — required and optional together.",
     chrome: "public",
-    scenarios: [...PRODUCT_SCENARIOS, ...REGION_LOCK_SCENARIO_META],
+    scenarios: [
+      ...PRODUCT_SCENARIOS,
+      ...REGION_LOCK_SCENARIO_META,
+      {
+        slug: REQUIRED_CONSENTS_SCENARIO.slug,
+        label: REQUIRED_CONSENTS_SCENARIO.label,
+      },
+    ],
   },
   {
     surface: "confirmation",
@@ -201,7 +211,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-dashboard",
     title: "Gedu dashboard",
     description:
-      "The body /gedu renders, over fixtures: the unsigned-contract band, one roll-up card per group grouped by type noun, and the Tools section beneath. Badge counts are counted out of the feed each card links to.",
+      "The body /gedu renders, over fixtures: the next-step band, one roll-up card per group grouped by type noun, and the Tools section beneath. Badge counts are counted out of the feed each card links to.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -214,13 +224,13 @@ export const PREVIEW_SCENES = [
         slug: "clubs-only",
         label: "Clubs only",
         description:
-          "The single-noun composition, at the card count where the grid wraps — and the page with the band signed away.",
+          "The single-noun composition, at the card count where the grid wraps — and the page with no band at all.",
       },
       {
         slug: "uncertified",
         label: "Awaiting certification",
         description:
-          "An account awaiting approval, which by definition has no assignments.",
+          "An account awaiting approval, which by definition has no assignments — under the criminal-record band, the other of the two.",
       },
     ],
   },
@@ -228,7 +238,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-contract",
     title: "Gedu contract",
     description:
-      "The page a Game Educator reads and signs their contract on: the terms verbatim in your own locale's language, with the acceptance panel beneath. The signing dialog's sign and date steps work; accepting is inert.",
+      "The page a Game Educator reads and signs their contract on: the criminal record extract explained above, the terms verbatim in your own locale's language, and the acceptance panel beneath. The signing dialog's sign and date steps work; accepting is inert.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -260,7 +270,7 @@ export const PREVIEW_SCENES = [
         slug: "camp",
         label: "Camp — in person, daily",
         description:
-          "The in-person, daily, end-dated shape — the only one with a venue and a long future block.",
+          "The in-person, daily, end-dated shape — the only one with a site and a long future block.",
       },
       {
         slug: "roblox",
@@ -312,7 +322,7 @@ export const PREVIEW_SCENES = [
       {
         slug: "in-person-club",
         label: "Club — in person",
-        description: "The venue shape: an address, and no Join at all.",
+        description: "The site shape: an address, and no Join at all.",
       },
       {
         slug: "camp",
@@ -343,10 +353,30 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "seat-offer",
+    title: "Seat-offer landing page",
+    description:
+      "The page the seat-offer mail links to, in each state it can be met in. Answering reaches no backend and still moves the panel: accept and decline hold their real committing states and land on the real card, and the decline confirmation works against local state.",
+    chrome: "auth",
+    scenarios: [
+      { slug: "live", label: "The offer" },
+      {
+        slug: "expired",
+        label: "Window closed",
+        description:
+          "The seat has gone, but declining has not — the one answer the deadline never governed.",
+      },
+      { slug: "accepted", label: "Seat accepted" },
+      { slug: "declined", label: "Seat declined" },
+      { slug: "used", label: "Link already used" },
+      { slug: "dead-link", label: "Dead link" },
+    ],
+  },
+  {
     surface: "admin-dashboard",
     title: "Admin dashboard (draft redesign)",
     description:
-      "The /admin redesign over fixtures, pinned to a fixed Monday: the users strip, the needs-attention queue, and the week's schedule. Filters, week steps and Certify work against local state.",
+      "The /admin redesign over fixtures, pinned to a fixed Monday: the users strip, the needs-attention queue, Gedu certification, and the week's schedule. Filters, week steps and Certify work against local state.",
     chrome: "admin",
     scenarios: [
       {
@@ -358,7 +388,8 @@ export const PREVIEW_SCENES = [
       {
         slug: "quiet",
         label: "Quiet platform — all clear",
-        description: "The all-clear, which a full queue cannot show.",
+        description:
+          "The empty states, which a platform under load has no way to reach.",
       },
     ],
   },

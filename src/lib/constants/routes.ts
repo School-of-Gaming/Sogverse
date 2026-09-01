@@ -154,8 +154,6 @@ export const ROUTES = {
     `/shop/confirmation?session_id=${sessionId}`,
   /** "Back to listing" URL — `/shop` with the type's category pre-selected. */
   shopBrowse: shopBrowseHref,
-  yty: "/#yty",
-  about: "/#about",
   docs: "/docs",
   login: "/login",
   register: "/register",
@@ -177,6 +175,20 @@ export const ROUTES = {
    * otherwise be bounced to the PIN pad and never verify).
    */
   verifyEmail: "/verify-email",
+  /**
+   * Landing page for the seat-offer email link. Public and session-agnostic for
+   * the same reason `verifyEmail` is, with one extra: the person clicking is a
+   * parent on a family device, so they may well be signed in as their own
+   * child. The signed `?token=` names the offer and IS the authorization, and
+   * an auth-gated route would bounce that reader somewhere before the token was
+   * ever read.
+   *
+   * Unlike `verifyEmail`, nothing here acts on the GET. Accepting a seat is not
+   * idempotent and it grants something, so the page only renders and the two
+   * answers are POSTs behind buttons — an inbox scanner following the link must
+   * never take a seat on a family's behalf.
+   */
+  seatOffer: "/seat-offer",
   selectProfile: "/select-profile",
   help: "/help",
   /** Public municipality-club discovery page — list + search of Finnish municipalities. */
@@ -209,6 +221,28 @@ export const ROUTES = {
    * sitemap and noindex together when the content is ready to be found.
    */
   roblox: "/roblox",
+  /**
+   * The Programme's own slice of the storefront: Roblox Studio products
+   * delivered in French. This is where every "register" / "get started" CTA on
+   * `/roblox` lands — the programme has no storefront of its own, so the shop
+   * filtered down to it *is* its catalogue, and the same URL is shared by the
+   * hero and the closing CTA so both promise the same page.
+   *
+   * The `topic` and `lang` param names, and their comma-separated list
+   * grammar, are the browse-filter hook's (`use-browse-filters.ts`); the values
+   * are the `product_topic` and `spoken_language` enums' own. Keep the two in
+   * sync — same arrangement as `shopBrowse` and the `category` param above. An
+   * unrecognised value there reads as no selection rather than an empty grid,
+   * so a stale link degrades to a wider shop rather than to nothing.
+   */
+  robloxShop: "/shop?topic=roblox_studio&lang=fr",
+  /**
+   * The parent-facing half of the same slice — French-language products whose
+   * audience is parents rather than their teens, which is what the programme's
+   * digital-safety sessions for parents are. Deliberately not topic-filtered:
+   * a parent session is about online safety, not about Roblox Studio.
+   */
+  robloxParentSessions: "/shop?lang=fr&audience=parents",
   /**
    * The Programme's own privacy policy, supplementing the platform one at
    * `/privacy`. Shares `/roblox`'s unpublished posture exactly — noindex, no
@@ -266,13 +300,20 @@ export const ROUTES = {
     user: (id: string) => `/admin/users/${id}`,
     product: adminProductHref,
     consumerClubs: "/admin/consumer-clubs",
-    consumerClubsNew: "/admin/consumer-clubs/new",
     municipalityClubs: "/admin/municipality-clubs",
-    municipalityClubsNew: "/admin/municipality-clubs/new",
     camps: "/admin/camps",
-    campsNew: "/admin/camps/new",
     events: "/admin/events",
-    eventsNew: "/admin/events/new",
+    /**
+     * Every site on the platform — the `site` rows of the location tree, listed
+     * and edited as things in their own right rather than as a field on
+     * whichever product happens to run there.
+     *
+     * Sites are still *created* from a product's site picker and nowhere else,
+     * which is why there is no "new site" route here: a site exists to be
+     * pointed at, and the flow that needs one is the flow that names it.
+     */
+    sites: "/admin/sites",
+    site: (id: string) => `/admin/sites/${id}`,
     /**
      * Platform-operations tools that belong to no one product — the instant
      * voice room and the Minecraft Education password reset, both shared by

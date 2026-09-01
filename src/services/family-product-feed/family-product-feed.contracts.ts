@@ -8,7 +8,7 @@ import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contrac
  *
  * The RPC returns a JSONB document, which the type generator can only see as
  * `Json`, so this schema — written from the function body, most recently
- * rewritten by migration 00174 — is the structure. A db test parses real
+ * widened with the per-session photos — is the structure. A db test parses real
  * Postgres output through it in CI, so
  * the two cannot drift apart quietly: a changed key fails the parse loudly
  * instead of arriving as `undefined` three components later.
@@ -89,6 +89,28 @@ export const familyFeedPerson = z
   .strict();
 
 /**
+ * One photo on a family-facing session card.
+ *
+ * Byte-identical to the gedu document's image shape and **not imported from
+ * it**, on the same terms as the two duplicated shapes above: a vocabulary is
+ * shared, a document shape is not. What a family may receive has to be a
+ * visible edit in this file, and `created_by` — safeguarding audit that gates
+ * nothing and renders nowhere — is exactly the field `.strict()` is here to
+ * refuse.
+ *
+ * The id is the whole address (the object is `<id>.jpg`, derived by helper, not
+ * stored) and the dimensions are what the gallery's geometry is arithmetic
+ * from, so nothing reflows as an image decodes.
+ */
+export const familyFeedSessionImage = z
+  .object({
+    id: z.string(),
+    width: z.number(),
+    height: z.number(),
+  })
+  .strict();
+
+/**
  * One stored session, as a family may see it.
  *
  * The gedu twin of this shape carries `gedu_note`, the audit columns and a
@@ -142,12 +164,14 @@ export const familyFeedSession = z
      */
     updated_by: z.string().nullable(),
     updated_by_first_name: z.string().nullable(),
+    /** Oldest first, `(created_at, id)` — the display order on every surface. */
+    images: z.array(familyFeedSessionImage),
     attendance: attendanceStatus.nullable(),
   })
   .strict();
 
 /**
- * The venue, on in-person products. `null` on anything remote.
+ * The site, on in-person products. `null` on anything remote.
  *
  * A remote municipality club carries a `location_id` too (a municipality, by
  * CHECK), so the RPC gates this on `is_remote = false` rather than on the
@@ -231,5 +255,6 @@ export const familyProductFeed = z
 
 export type FamilyProductFeed = z.infer<typeof familyProductFeed>;
 export type FamilyFeedSession = z.infer<typeof familyFeedSession>;
+export type FamilyFeedSessionImage = z.infer<typeof familyFeedSessionImage>;
 export type FamilyFeedSite = z.infer<typeof familyFeedSite>;
 export type FamilyFeedPerson = z.infer<typeof familyFeedPerson>;

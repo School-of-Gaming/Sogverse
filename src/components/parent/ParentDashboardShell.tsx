@@ -8,6 +8,7 @@ import { useFamilyEnrollments } from "@/components/family/use-family-enrollments
 import type { FamilyMember } from "@/services/family";
 import {
   useLeaveWaitlist,
+  useRespondToSeatOffer,
   type MyUpcomingSessionRow,
   type MyWaitlistRow,
 } from "@/services/participations";
@@ -67,6 +68,7 @@ export function ParentDashboardShell({
     initialFamily,
   });
   const leaveWaitlist = useLeaveWaitlist();
+  const respondToSeatOffer = useRespondToSeatOffer();
 
   const [addGamerOpen, setAddGamerOpen] = useState(false);
 
@@ -162,6 +164,33 @@ export function ParentDashboardShell({
     );
   }
 
+  /**
+   * The parent's yes or no to a seat offer.
+   *
+   * **The only action on this page that hands an answer back to the card**, and
+   * there is no in-flight set beside `leavingIds` for it. Both differences come
+   * from the same fact: this action has four outcomes rather than two, and half
+   * of them ("the five days ran out", "this offer was already answered") are
+   * ordinary answers that the offer block has to draw as a lapsed offer — in
+   * place, without the card moving. Only the block knows it is showing them, so
+   * only the block can decide when to stop looking committed, and it holds that
+   * flag itself.
+   *
+   * `mutateAsync` rather than `mutate`, so the promise the block awaits resolves
+   * only after the hook's invalidation has settled. On the accepted path that
+   * means the refetched rows have already turned this queue place into a seat by
+   * the time the block hears about it, and the card it lived on is a different
+   * card.
+   */
+  function handleRespondToSeatOffer(
+    { enrollment }: ParentEnrollmentAction,
+    accept: boolean,
+  ) {
+    return respondToSeatOffer
+      .mutateAsync({ participationId: enrollment.participationId, accept })
+      .then(({ outcome }) => outcome);
+  }
+
   return (
     <>
       <ParentDashboardPageBody
@@ -178,6 +207,7 @@ export function ParentDashboardShell({
         onJoinClick={handleJoinClick}
         onLeaveWaitlist={handleLeaveWaitlist}
         leavingParticipationIds={leavingIds}
+        onRespondToSeatOffer={handleRespondToSeatOffer}
       />
 
       <AddGamerDialog open={addGamerOpen} onOpenChange={setAddGamerOpen} />

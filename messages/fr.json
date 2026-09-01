@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "description": "Là où le temps d’écran devient du temps qui fait grandir, grâce à des clubs Minecraft encadrés par des animateurs professionnels.",
+    "description": "Du temps d’écran au temps qui fait grandir. Clubs, stages et événements sur Minecraft, Roblox, Fortnite et bien d’autres, encadrés par des professionnels.",
     "pages": {
       "signIn": "Connexion",
       "createAccount": "Créer un compte",
@@ -18,7 +18,7 @@
       "familyProduct": "Séances et comptes rendus",
       "familyProductDescription": "Le calendrier de ce groupe et le compte rendu de chaque séance.",
       "gamerDashboard": "Mon SOG",
-      "gamerDashboardDescription": "Vos clubs, stages et événements dans le Sogverse",
+      "gamerDashboardDescription": "Vos clubs, stages et événements dans Sogverse",
       "voiceSession": "Session vocale",
       "help": "Aide",
       "shop": "Boutique",
@@ -35,7 +35,8 @@
       "robloxPrivacy": "Politique de confidentialité du Programme Roblox",
       "robloxSafeguarding": "Politique de protection de l’enfance du Programme Roblox",
       "robloxTerms": "Conditions générales du Programme Roblox",
-      "geduContract": "Contrat Gedu"
+      "geduContract": "Contrat Gedu",
+      "seatOffer": "Proposition de place"
     }
   },
   "notFound": {
@@ -106,11 +107,11 @@
   "about": {
     "hero": {
       "title": "À propos de <primary>School of Gaming</primary>",
-      "subtitle": "Dans nos clubs Minecraft, le temps d’écran devient du temps qui fait vraiment grandir. Nous réunissons les enfants, des animateurs passionnés et le jeu qu’ils adorent, pour créer des moments où les liens se nouent, les compétences se forgent, et le plaisir est au rendez-vous."
+      "subtitle": "Du temps d’écran au temps qui fait grandir. Nous réunissons les enfants, des animateurs professionnels et les jeux qu’ils adorent déjà — Minecraft, Roblox, Fortnite et bien d’autres — pour créer des moments où les liens se nouent, les compétences se forgent, et le plaisir est au rendez-vous."
     },
     "quote": {
       "text": "« Tout ce qui est réel aujourd’hui n’était hier que dans votre imagination. »",
-      "attribution": "— Le Maître du Jeu, School of Gaming"
+      "attribution": "— The Princi-Pal"
     },
     "mission": {
       "heading": "Notre mission",
@@ -128,7 +129,7 @@
       },
       "keepChildrenSafe": {
         "title": "Protéger les enfants en ligne",
-        "description": "Nous construisons des communautés où la bienveillance est la règle. Nos clubs apprennent aux enfants à être de bons citoyens du numérique : ceux qui veillent sur les autres, pas ceux qui font du mal. Tolérance zéro pour le harcèlement."
+        "description": "La plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés. Chaque compte joueur est rattaché à un compte parent, et l’enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Tolérance zéro pour le harcèlement."
       },
       "familyInTheLoop": {
         "title": "La famille reste dans la boucle",
@@ -137,10 +138,10 @@
     },
     "howClubsWork": {
       "heading": "Comment fonctionnent nos clubs",
-      "paragraph1": "Chaque semaine, les joueurs retrouvent leur Gedu, leur animateur de jeu. Ensemble, ils explorent le thème du jour dans l’univers Minecraft, mais le Gedu laisse toujours aux enfants la liberté de s’approprier l’aventure.",
+      "paragraph1": "Chaque semaine, les joueurs retrouvent leur Gedu, leur animateur de jeu. Ensemble, ils explorent le thème du jour, mais le Gedu laisse toujours aux enfants la liberté de s’approprier l’aventure.",
       "paragraph2": "Nos Gedus sont des joueurs avant tout. Ils savent ce que c’est de grandir avec les jeux vidéo, de construire son identité en ligne, de se lier d’amitié à travers un écran. Cette expérience, ils la mettent au service des enfants à chaque session.",
       "paragraph3": "Les clubs sont construits autour d’histoires évolutives qui invitent à explorer, créer et imaginer. Entre les sessions, les joueurs reçoivent des défis à relever, en ligne et dans la vraie vie. Les vacances sont l’occasion de stages, et tout au long de l’année ont lieu des tournois, des événements communautaires et des concours.",
-      "paragraph4": "Chaque joueur s’engage à se comporter avec bienveillance et intégrité : en jeu, en vocal, dans la vie réelle. Les mêmes valeurs, partout."
+      "paragraph4": "Chaque joueur s’engage à se comporter avec bienveillance et intégrité : en jeu, en vocal, dans la vie de tous les jours. Les mêmes valeurs, partout."
     },
     "forParents": {
       "heading": "Pour les parents",
@@ -168,7 +169,7 @@
       "attention": {
         "title": "À traiter",
         "allClearTitle": "Tout est en ordre",
-        "allClearBody": "Chaque joueur est placé, chaque groupe a un Gedu, aucun produit n’attend une rémunération ou un montant, et personne n’attend une décision de certification.",
+        "allClearLine": "Sogverse est en paix. Reposez-vous, âme aventurière.",
         "productsLabel": "Produits à traiter",
         "productsHeading": "Produits",
         "issues": {
@@ -176,14 +177,14 @@
           "groupWithoutGedu": "Le groupe {group} n’a pas de Gedu",
           "waitlistOpenSeats": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}}",
           "missingGeduFee": "Rémunération Gedu manquante",
-          "missingMunicipalityFee": "Montant commune manquant"
+          "missingMunicipalityFee": "Montant commune manquant",
+          "waitlistOpenSeatsWithOffers": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}} · {offers} en attente de réponse"
         }
       },
       "certification": {
-        "label": "Gedus en attente de certification",
-        "heading": "En attente de certification",
+        "title": "Certification des Gedus",
         "justNow": "{count} certifiés à l’instant",
-        "empty": "Personne n’attend une décision de certification.",
+        "empty": "Aucun Gedu n’est en attente de certification.",
         "unnamed": "Gedu sans nom",
         "registered": "inscrit {when}",
         "certify": "Certifier",
@@ -247,10 +248,27 @@
       "previousVersion": "A accepté auparavant la version {version} le {date}.",
       "queueAccepted": "Contrat accepté le {date}",
       "queueNotAccepted": "Contrat non accepté",
-      "confirmTitle": "Certifier sans contrat accepté ?",
-      "confirmBody": "La certification n’exige pas de contrat accepté : vous pouvez donc le certifier quand même.",
-      "confirmWarning": "Ce Gedu n’a pas accepté le contrat en vigueur. Une fois certifié, il pourra être affecté à des groupes avant d’avoir accepté les conditions qui encadrent son travail.",
-      "confirmAction": "Certifier quand même"
+      "rowNotAccepted": "N’a pas accepté le contrat en vigueur"
+    },
+    "geduCriminalRecordCheck": {
+      "heading": "Vérification du casier judiciaire",
+      "recorded": "Extrait de casier judiciaire enregistré",
+      "recordedOn": "Extrait de casier judiciaire enregistré le {date}",
+      "recordedByOn": "Extrait de casier judiciaire enregistré par {name} le {date}",
+      "notRecorded": "Aucun extrait de casier judiciaire enregistré",
+      "processDetail": "Le Gedu obtient lui-même l’extrait auprès du Centre finlandais des registres judiciaires et vous le présente. Il doit dater de moins de six mois au moment de la présentation, et nous n’en conservons aucune copie — seulement la trace indiquant qu’un extrait acceptable a été présenté.",
+      "recordLabel": "J’ai vu un extrait de casier judiciaire acceptable pour ce Gedu",
+      "error": "Impossible de mettre à jour la vérification du casier judiciaire. Veuillez réessayer.",
+      "queueRecorded": "Extrait enregistré le {date}",
+      "queueNotRecorded": "Extrait non enregistré",
+      "rowNotRecorded": "N’a pas présenté d’extrait de casier judiciaire"
+    },
+    "geduCertifyWarnings": {
+      "title": "Certifier quand même ?",
+      "body": "La certification n’exige ni l’un ni l’autre : vous pouvez donc le certifier quand même.",
+      "action": "Certifier quand même",
+      "contractWarning": "Ce Gedu n’a pas accepté le contrat en vigueur. Une fois certifié, il pourra être affecté à des groupes avant d’avoir accepté les conditions qui encadrent son travail.",
+      "checkWarning": "Ce Gedu n’a pas présenté d’extrait de casier judiciaire. Une fois certifié, il pourra être affecté à des groupes avant que quiconque l’ait vu."
     },
     "products": {
       "types": {
@@ -332,6 +350,7 @@
           "registrationOpensAt": "Ouverture des inscriptions",
           "tag": "Conçu pour",
           "regionLock": "Restriction par pays",
+          "requiredConsents": "Consentements obligatoires",
           "visibility": "Visibilité"
         },
         "copyLink": "Copier le lien public",
@@ -376,6 +395,8 @@
         },
         "registration": "Ouverture des inscriptions",
         "registrationDescription": "Choisissez à partir de quand les parents peuvent s’inscrire.",
+        "consents": "Consentements",
+        "consentsDescription": "Ce qu’un parent accepte, et ce qui lui est demandé, au moment de l’inscription. Les documents obligatoires doivent être acceptés avant de réserver une place ; les questions marketing peuvent être refusées.",
         "visibility": "Catalogue",
         "visibilityDescription": "Détermine où ce produit est mis en avant, pas qui peut l’acheter. Les inscriptions s’ouvrent et se ferment selon la date d’ouverture, le nombre de places et le statut du produit — jamais selon ce réglage."
       },
@@ -442,16 +463,16 @@
       "locationPicker": {
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
         "change": "Changer",
-        "noVenueHint": "Aucun lieu physique. Les parents de cette commune verront le club lorsqu’ils parcourront le catalogue.",
+        "noSiteHint": "Aucun site physique. Les parents de cette commune verront le club lorsqu’ils parcourront le catalogue.",
         "chooseMunicipality": "Choisir une commune",
         "municipalityPickerTitle": "Choisir une commune",
-        "chooseVenue": "Choisir un site",
-        "venuePickerTitle": "Choisir un site",
-        "venuePickerDescription": "Recherchez le site par son nom pour le trouver directement, ou descendez jusqu’à sa commune pour voir les sites qui s’y trouvent. S’il n’existe pas encore, ouvrez-en un nouveau.",
-        "venuesIn": "Sites à {name}",
-        "venuesInDescription": "Choisissez-en un qui existe déjà, ou ajoutez-en un nouveau.",
-        "venuesHereEmpty": "Aucun site ici pour l’instant.",
-        "addVenue": "Ajouter un site",
+        "chooseSite": "Choisir un site",
+        "sitePickerTitle": "Choisir un site",
+        "sitePickerDescription": "Recherchez le site par son nom pour le trouver directement, ou descendez jusqu’à sa commune pour voir les sites qui s’y trouvent. S’il n’existe pas encore, ouvrez-en un nouveau.",
+        "sitesIn": "Sites à {name}",
+        "sitesInDescription": "Choisissez-en un qui existe déjà, ou ajoutez-en un nouveau.",
+        "sitesHereEmpty": "Aucun site ici pour l’instant.",
+        "addSite": "Ajouter un site",
         "changeMunicipality": "Choisir une autre commune"
       },
       "pricing": {
@@ -502,6 +523,17 @@
       },
       "regionLock": {
         "none": "Aucune restriction par pays"
+      },
+      "consents": {
+        "version": "Version {version}",
+        "noVersion": "Aucune version publiée",
+        "none": "Aucun",
+        "marketing": {
+          "lynxEducate": {
+            "label": "Lynx Educate",
+            "description": "Cocher cette case ajoute une question facultative à l’inscription à ce produit : il est demandé aux parents s’ils souhaitent partager leurs coordonnées avec Lynx Educate. Un parent peut refuser, et la place n’est pas affectée."
+          }
+        }
       },
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
@@ -715,7 +747,7 @@
         },
         "unassigned": {
           "title": "Sans groupe",
-          "subtitle": "Personnes qui ont payé mais ne sont pas encore dans un groupe. Faites-les glisser dans un groupe pour les placer.",
+          "subtitle": "Personnes qui ne sont pas encore dans un groupe. Faites-les glisser dans un groupe pour les placer.",
           "empty": "Tout le monde a un groupe.",
           "addParticipant": "Ajouter un participant",
           "removeParticipant": "Retirer le participant"
@@ -760,7 +792,18 @@
         "waitlist": {
           "title": "Liste d’attente",
           "subtitle": "Personnes en attente d’une place, numérotées dans leur ordre d’arrivée. Faites-en glisser une dans un groupe pour lui donner une place, ou déposez ici un participant actif pour l’envoyer en fin de liste.",
-          "empty": "Personne n’est sur la liste d’attente."
+          "empty": "Personne n’est sur la liste d’attente.",
+          "seatOffer": {
+            "invite": "Inviter",
+            "inviteAgain": "Inviter à nouveau",
+            "noAnswer": "Sans réponse",
+            "leftDays": "{count, plural, one {# jour restant} other {# jours restants}}",
+            "leftHours": "{count, plural, one {# heure restante} other {# heures restantes}}",
+            "leftLastHour": "Moins d’une heure",
+            "liveTitle": "Invitée. L’offre est valable jusqu’au {deadline}.",
+            "expiredTitle": "L’offre a expiré le {deadline} sans réponse.",
+            "needsOneGroup": "Pour inviter, le produit doit compter exactement un groupe, afin que la famille qui accepte ait une place où aller. Il en compte actuellement {count, plural, =0 {aucun} one {#} other {#}}."
+          }
         },
         "seatsOverfilled": "{count} places sur {total} – {over} en trop",
         "blockedMove": {
@@ -802,12 +845,7 @@
       "sessions": {
         "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
         "loading": "Chargement du suivi des séances de ce produit.",
-        "railGroupHeading": "Groupe",
-        "addressLabel": "Adresse du lieu",
-        "addressPlaceholder": "Rue, code postal, ville",
-        "addAddress": "Ajouter une adresse",
-        "editAddress": "Modifier l’adresse",
-        "addressSaveFailed": "L’adresse n’a pas été enregistrée. Réessayez."
+        "railGroupHeading": "Groupe"
       }
     },
     "users": {
@@ -854,6 +892,14 @@
         "title": "Comptes de jeu",
         "description": "Définissez ou corrigez les noms d’utilisateur de jeu de ce compte. L’enregistrement vérifie le nom auprès de la plateforme."
       },
+      "marketing": {
+        "title": "Préférences marketing",
+        "schoolOfGaming": "School of Gaming",
+        "lynxEducate": "Lynx Educate",
+        "granted": "Accordé",
+        "notGranted": "Non accordé",
+        "since": "depuis le {date}"
+      },
       "participationStatus": {
         "active": "Actif",
         "waitlisted": "En liste d’attente",
@@ -886,6 +932,24 @@
       "adding": "Ajout...",
       "addType": "Ajouter {type}"
     },
+    "sites": {
+      "title": "Sites",
+      "subtitle": "Tous les sites de la plateforme et les produits qui s’y déroulent.",
+      "addSite": "Ajouter un site",
+      "searchPlaceholder": "Rechercher un site par son nom…",
+      "searchAriaLabel": "Rechercher des sites",
+      "columnSite": "Site",
+      "columnPlace": "Localisation",
+      "columnProducts": "Produits",
+      "searchCapped": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
+      "noResults": "Aucun résultat pour « {query} ».",
+      "empty": "Aucun site pour l’instant. Ajoutez le premier.",
+      "backToSites": "Retour aux sites",
+      "notFound": "Aucun site ne correspond à cet identifiant.",
+      "notASite": "Cet emplacement n’est pas un site : il n’a donc pas de page ici.",
+      "productsHeading": "Produits sur ce site",
+      "noProducts": "Rien ne s’y déroule pour l’instant."
+    },
     "testing": {
       "title": "Tests",
       "description": "Outils internes de test et de développement",
@@ -911,7 +975,16 @@
       "replyToPlaceholder": "reponse@exemple.com",
       "sendTestEmail": "Envoyer l’e-mail de test",
       "emailSentSuccess": "E-mail envoyé ! ID du message : {messageId}",
-      "failedToSendRequest": "Échec de l’envoi de la requête"
+      "failedToSendRequest": "Échec de l’envoi de la requête",
+      "preview": "Aperçu",
+      "previewDescription": "Le rendu de l’e-mail. Il est dessiné ici dans votre navigateur et n’est pas envoyé, et ses images se chargent depuis ce serveur : un aperçu montre donc les photos qu’un envoi depuis une machine de développement laisse de côté.",
+      "refreshPreview": "Actualiser l’aperçu",
+      "previewError": "Impossible de faire le rendu de ce modèle : {message}",
+      "previewWidth": {
+        "label": "Largeur de l’aperçu",
+        "desktop": "Ordinateur",
+        "mobile": "Mobile"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -954,6 +1027,8 @@
       "passwordPlaceholder": "Créez un mot de passe solide",
       "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
       "location": "Localisation",
+      "marketingConsentLabel": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
+      "marketingConsentHint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres.",
       "creatingAccount": "Création du compte...",
       "accountExists": "Un compte existe déjà avec cette adresse e-mail",
       "weakPassword": "Ce mot de passe est trop facile à deviner — essayez-en un plus long, ou un que vous n'utilisez nulle part ailleurs",
@@ -985,6 +1060,7 @@
     },
     "registerGedu": {
       "title": "Créez votre compte Gedu chez School of Gaming",
+      "slogan": "Les scouts de l’ère connectée",
       "certificationAlertTitle": "Votre compte doit être certifié",
       "certificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit certifier votre compte avant que vous puissiez être affecté à un club ou à un stage.",
       "coverageHeading": "Zones où vous pouvez animer",
@@ -998,11 +1074,11 @@
     "create": {
       "enterTitle": "Créer un code PIN parent",
       "confirmTitle": "Confirmez votre code PIN",
-      "description": "Votre code PIN parent protège votre famille. Vous seul — jamais vos enfants — pouvez valider des achats ou gérer avec qui ils jouent. Leur sécurité est au cœur de tout ce que nous faisons à School of Gaming."
+      "description": "Chaque achat, chaque inscription et chaque changement dans les personnes avec qui vos enfants jouent demande d’abord ce code PIN. Vous seul le connaissez : rien ne peut être acheté ni modifié sur ce compte sans vous."
     },
     "unlock": {
       "title": "Saisissez votre code PIN parent",
-      "description": "Votre code PIN protège vos enfants — vous seul pouvez effectuer des achats ou gérer leurs comptes. Leur sécurité est au cœur de tout ce que nous faisons à School of Gaming.",
+      "description": "Les achats et les modifications des comptes de vos enfants passent par ce code PIN : vous seul pouvez les effectuer.",
       "forgot": "Vous avez oublié votre code PIN ?"
     },
     "mismatch": "Ces codes PIN ne correspondent pas. Réessayons.",
@@ -1243,9 +1319,9 @@
     "forGamer": "pour {name}",
     "forSelf": "pour vous",
     "scheduleLabel": "Quand",
-    "venueLabel": "Où",
+    "siteLabel": "Où",
     "aboutHeading": "À propos du groupe",
-    "venueNoteHeading": "À {site}",
+    "siteNoteHeading": "À {site}",
     "feedHeading": "Séances",
     "attendancePresent": "Présent",
     "attendanceNotPresent": "Pas présent",
@@ -1262,7 +1338,7 @@
     "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Mon SOG rassemble toutes vos inscriptions."
   },
   "selectProfile": {
-    "title": "Qui entre dans le Sogverse ?"
+    "title": "Qui entre dans Sogverse ?"
   },
   "footer": {
     "copyright": "© {year} School of Gaming. Tous droits réservés.",
@@ -1354,7 +1430,22 @@
       "reportSentToParents": "Envoyé aux parents · {sentAt}",
       "reportSendPartial": "{sent} envoyés, {failed} en échec",
       "sendReportNoReport": "Cette séance n’a plus de compte rendu enregistré à envoyer. Rechargez la page pour voir ce qu’elle contient maintenant.",
-      "sendReportFailed": "Le compte rendu n’a pas pu être envoyé. Aucune famille ne l’a reçu — réessayez."
+      "sendReportFailed": "Le compte rendu n’a pas pu être envoyé. Aucune famille ne l’a reçu — réessayez.",
+      "photosTitle": "Photos",
+      "photosEmpty": "Ajoutez une photo à cette séance.",
+      "photosDropHint": "Vous pouvez aussi déposer des photos ici.",
+      "addPhoto": "Ajouter une photo",
+      "removePhoto": "Supprimer la photo {index}",
+      "photosTrimmed": "Un compte rendu accepte {cap} photos au maximum : {count, plural, one {seule la première a été ajoutée} other {seules les # premières ont été ajoutées}}.",
+      "photoErrorDecodeFailed": "Ce fichier n’a pas pu être ouvert. S’il vient d’un iPhone, enregistrez-le en JPEG et réessayez.",
+      "photoErrorEncodeFailed": "Cette photo n’a pas pu être préparée sur cet appareil. Réessayez ou choisissez-en une plus petite.",
+      "photoErrorNotJpeg": "Ce fichier n’est ni un JPEG, ni un PNG, ni un WebP. Convertissez-le en JPEG et réessayez.",
+      "photoErrorTooLarge": "Cette photo est trop lourde pour être envoyée. Essayez-en une plus petite.",
+      "photoErrorBadDimensions": "Les dimensions de cette photo n’ont pas pu être lues. Essayez-en une autre.",
+      "photoErrorCapReached": "Ce compte rendu est déjà complet. Supprimez une photo pour en ajouter une autre.",
+      "photoErrorNotAllowed": "Vous ne pouvez pas ajouter de photos à cette séance.",
+      "photoErrorUploadFailed": "Cette photo n’a pas été envoyée. Réessayez.",
+      "photoErrorRemoveFailed": "Cette photo n’a pas pu être supprimée. Elle est toujours sur le compte rendu : réessayez."
     },
     "groupNotes": {
       "heading": "À propos du groupe",
@@ -1372,10 +1463,16 @@
       "saveFailed": "Ces notes n’ont pas été enregistrées. Réessayez."
     },
     "siteNotes": {
-      "heading": "Notes sur le lieu",
-      "sharedCaption": "{site} — tous les produits organisés sur ce lieu affichent les mêmes notes : une modification ici les change partout.",
+      "heading": "Site",
+      "sharedCaption": "{site} — tous les produits organisés sur ce site affichent les mêmes informations : une modification les change partout.",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Le nom de ce site",
+      "nameRequired": "Un site doit avoir un nom.",
       "addressLabel": "Adresse",
+      "addressPlaceholder": "Rue, code postal, ville",
+      "addressEmpty": "Ajoutez l’adresse dont les familles ont besoin pour trouver le site.",
       "edit": "Modifier",
+      "editSite": "Modifier le site",
       "cancel": "Annuler",
       "save": "Enregistrer",
       "publicEmpty": "Ajoutez une note pour les familles — par quelle porte entrer, où attendre, quoi apporter.",
@@ -1386,7 +1483,7 @@
       "staffLabel": "Note pour les Gedus",
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
       "staffPlaceholder": "Clés, matériel, particularités de la salle — ce que le prochain Gedu sur place doit savoir.",
-      "saveFailed": "Ces notes sur le lieu n’ont pas été enregistrées. Réessayez."
+      "saveFailed": "L’enregistrement a échoué. Réessayez."
     },
     "contract": {
       "back": "Retour à Mon SOG",
@@ -1422,6 +1519,19 @@
         "view": "Voir le contrat"
       },
       "acceptedMeta": "Version {version}, accepté le {date}"
+    },
+    "criminalRecordCheck": {
+      "title": "Votre extrait de casier judiciaire",
+      "howItWorks": "Avant votre certification, vous présentez également un extrait de casier judiciaire pour le travail auprès d’enfants. Vous le demandez vous-même au Centre finlandais des registres judiciaires, et il doit dater de moins de six mois au moment où vous nous le montrez.",
+      "noCopyKept": "Nous n’en conservons aucune copie et n’en enregistrons rien — seulement le fait qu’un extrait acceptable a été présenté, et quand.",
+      "recorded": "Votre extrait de casier judiciaire a été enregistré.",
+      "recordedOn": "Votre extrait de casier judiciaire a été enregistré le {date}.",
+      "stillNeeded": "Il reste à faire : nous montrer votre extrait de casier judiciaire.",
+      "notice": {
+        "title": "Vous ne nous avez pas montré votre extrait de casier judiciaire",
+        "body": "Avant de pouvoir être certifié, vous présentez un extrait de casier judiciaire pour le travail auprès d’enfants. Vous le demandez vous-même au Centre finlandais des registres judiciaires.",
+        "action": "Voir comment faire"
+      }
     }
   },
   "productType": {
@@ -1443,7 +1553,15 @@
     "readMore": "Lire la suite",
     "showLess": "Réduire",
     "lastEditedBy": "Par {name}",
-    "laterSessions": "{count, plural, one {encore # séance à venir} other {encore # séances à venir}}"
+    "laterSessions": "{count, plural, one {encore # séance à venir} other {encore # séances à venir}}",
+    "photos": {
+      "list": "Photos de la séance",
+      "open": "Ouvrir la photo {index} sur {count}",
+      "viewer": "Photo {index} sur {count}",
+      "previous": "Photo précédente",
+      "next": "Photo suivante",
+      "close": "Fermer la photo"
+    }
   },
   "groups": {
     "materialAction": "Supports pédagogiques",
@@ -1481,7 +1599,9 @@
       "yty": "Yty",
       "about": "À propos"
     },
-    "selectProfile": "Changer de profil"
+    "accountMenu": "Menu du compte – {name}",
+    "continueToAccount": "Continuer vers votre compte",
+    "switchTo": "Changer de profil"
   },
   "help": {
     "title": "Aide",
@@ -1491,17 +1611,12 @@
       "body": "Écrivez-nous quand vous voulez — nous sommes ravis de vous aider, du choix du bon club aux questions sur le fonctionnement de School of Gaming.",
       "emailLabel": "Écrivez-nous à"
     },
-    "about": {
-      "heading": "Qui est School of Gaming ?",
-      "body": "Découvrez les personnes derrière les clubs, notre vision du jeu et de l’apprentissage, et le déroulement concret d’une session.",
-      "linkLabel": "En savoir plus sur nous"
-    },
     "faq": {
       "heading": "Questions fréquentes",
       "items": {
         "whatIsSogverse": {
           "q": "Qu’est-ce que Sogverse ?",
-          "a": "Sogverse est la plateforme de School of Gaming dédiée aux clubs Minecraft encadrés par des animateurs professionnels, où le temps d’écran devient du temps qui fait grandir."
+          "a": "Sogverse est la plateforme de School of Gaming dédiée aux clubs, stages et événements encadrés par des animateurs professionnels, sur Minecraft, Roblox, Fortnite et bien d’autres. Du temps d’écran au temps qui fait grandir."
         },
         "productTypes": {
           "q": "Quelle est la différence entre les clubs, les stages et les événements ?",
@@ -1513,11 +1628,11 @@
         },
         "safety": {
           "q": "Est-ce sans danger pour mon enfant ?",
-          "a": "Un animateur accompagne chaque session, nos communautés sont modérées et nous appliquons une tolérance zéro face au harcèlement."
+          "a": "C’est ainsi qu’il a été conçu. La plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés. Le chat dans les jeux est une autre affaire, géré par les jeux eux-mêmes — sur notre propre serveur Minecraft, nos Gedus disposent d’outils de modération, dont la mise en sourdine et le signalement. Un compte joueur porte une adresse interne Sogverse plutôt que le véritable e-mail de votre enfant, il est rattaché à votre compte parent, et votre enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Les achats et les inscriptions demandent votre code PIN parent. Et nous appliquons une tolérance zéro face au harcèlement."
         },
         "howToStart": {
           "q": "Comment commencer ?",
-          "a": "Créez un compte parent, parcourez notre offre et inscrivez votre enfant. Il se connectera avec son propre compte pour les sessions."
+          "a": "Créez un compte parent, parcourez notre offre et inscrivez votre enfant. Pour les sessions, il se connecte via votre compte : vous basculez sur son profil, il n’a donc jamais besoin d’un mot de passe à lui."
         }
       }
     }
@@ -1579,7 +1694,6 @@
       "perMonth": "{price} / mois",
       "upfrontTotal": "{price}",
       "free": "Gratuit",
-      "externalContract": "Financé par votre commune",
       "notAvailableInCurrency": "Pas en {currency}",
       "endedNote": "Celui-ci est terminé — le prochain arrive bientôt !",
       "viewDetails": "Voir",
@@ -1617,10 +1731,10 @@
   "productDetail": {
     "jumpToSignup": "{verb} maintenant !",
     "back": {
-      "consumer_club": "Tous les clubs",
-      "municipality_club": "Tous les clubs municipaux",
-      "camp": "Tous les stages",
-      "event": "Tous les événements"
+      "consumer_club": "Retour aux clubs",
+      "municipality_club": "Retour aux clubs municipaux",
+      "camp": "Retour aux stages",
+      "event": "Retour aux événements"
     },
     "typeLabel": {
       "consumer_club": "Club",
@@ -1646,7 +1760,7 @@
           "linkLabel": "Où se le procurer"
         },
         "minecraft_education": {
-          "description": "Minecraft est un jeu de construction créatif — imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent. Minecraft Education est une version conçue pour la classe : la même construction ouverte et bienveillante, avec des outils supplémentaires pour les enseignants, pensée pour des activités encadrées par un animateur plutôt que pour le jeu en solo.",
+          "description": "Minecraft est un jeu de construction créatif — imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent. Minecraft Education est une version conçue pour la classe : la même construction ouverte et bienveillante, avec des outils supplémentaires pour l’adulte qui anime la session, pensée pour des activités encadrées plutôt que pour le jeu en solo.",
           "note": "Il n’y a rien à acheter ni de compte scolaire à obtenir — School of Gaming fournit les comptes Minecraft Education que les participants utilisent pendant le club. Pour les clubs à distance, votre enfant doit en plus télécharger le jeu lui-même, gratuitement, depuis le Microsoft Store ou depuis le site de Minecraft Education.",
           "linkLabel": "À propos de Minecraft Education"
         },
@@ -1662,7 +1776,7 @@
         },
         "roblox_studio": {
           "description": "Roblox Studio est l’outil gratuit avec lequel les vrais jeux Roblox sont créés. Dans nos clubs, les enfants construisent leurs propres mondes en 3D et écrivent de vrais programmes pour les faire fonctionner — leurs idées deviennent des jeux auxquels d’autres peuvent vraiment jouer. C’est la première étape pour la création de jeux vidéo.",
-          "note": "Roblox Studio est entièrement gratuit, il n’y a rien à acheter. Il fonctionne uniquement sur PC Windows ou Mac — pas sur iPad, tablette, Chromebook, téléphone ou console. Votre enfant a donc besoin d’un ordinateur fixe ou portable pour participer. Un compte Roblox gratuit est aussi nécessaire ; les paramètres d’âge du compte permettent de gérer le chat et la confidentialité. Une fois leur jeu terminé, ils pourront le publier pour que d’autres joueurs le découvrent !",
+          "note": "Roblox Studio est entièrement gratuit, il n’y a rien à acheter. Il fonctionne uniquement sur PC Windows ou Mac — pas sur iPad, tablette, Chromebook, téléphone ou console. Un compte Roblox gratuit est aussi nécessaire ; les paramètres d’âge du compte permettent de gérer le chat et la confidentialité. Une fois leur jeu terminé, ils pourront le publier pour que d’autres joueurs le découvrent !",
           "linkLabel": "Obtenir Roblox Studio"
         },
         "rocket_league": {
@@ -1715,7 +1829,7 @@
       "ctaSubmitting": "Un instant…",
       "ctaAddGamer": "Ajoutez un joueur pour continuer",
       "ctaAllSet": "Tout est prêt",
-      "ctaAgreeRules": "Acceptez les règles",
+      "ctaAgreeConsent": "Donnez le consentement requis",
       "ctaWaitlist": "Rejoindre la liste d’attente",
       "ctaSignIn": {
         "consumer_club": "Connectez-vous pour vous inscrire",
@@ -1734,13 +1848,23 @@
       "nonCustomerNote": "Seuls les parents peuvent inscrire un joueur ici.",
       "nonCustomerNoteParents": "Seuls les parents peuvent s’inscrire ici.",
       "closedNote": "Ce n’est pas ouvert pour le moment. Guettez la prochaine occasion.",
-      "rulesHeading": "Les règles",
       "rules": {
-        "consumer_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques.",
-        "municipality_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, et que des absences répétées et non justifiées peuvent libérer la place de mon enfant au profit de la famille suivante sur la liste d’attente.",
-        "municipality_club_self": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, et que des absences répétées et non justifiées peuvent libérer ma place au profit de la famille suivante sur la liste d’attente.",
-        "camp": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques.",
-        "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques."
+        "consumer_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>.",
+        "municipality_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>, et que des absences répétées et non justifiées peuvent libérer la place de mon enfant au profit de la famille suivante sur la liste d’attente.",
+        "municipality_club_self": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>, et que des absences répétées et non justifiées peuvent libérer ma place au profit de la famille suivante sur la liste d’attente.",
+        "camp": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>.",
+        "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>."
+      },
+      "consents": {
+        "heading": "Consentement",
+        "agree": "J’ai lu et j’accepte ces documents.",
+        "bundles": {
+          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> du Programme Roblox."
+        },
+        "marketing": {
+          "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres.",
+          "hint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres."
+        }
       },
       "whoAreYouSigningUp": {
         "consumer_club": "Qui inscrivez-vous ?",
@@ -1769,12 +1893,16 @@
       "subscriptionHint": "Facturé mensuellement · résiliable à tout moment.",
       "free": "Gratuit",
       "freeHint": "Aucun paiement nécessaire.",
-      "external": "Gratuit pour vous · payé par votre commune",
-      "externalHint": "Aucun paiement nécessaire — votre commune prend en charge le coût.",
+      "external": "Pris en charge par votre commune",
       "upfrontHint": "Paiement unique.",
       "notAvailable": "Les tarifs ne sont pas encore disponibles en {currency}.",
       "cadenceMonth": "/ mois",
-      "firstChargeOn": "Premier paiement le {date} — rien à payer aujourd’hui."
+      "firstChargeOn": "Premier paiement le {date} — rien à payer aujourd’hui.",
+      "guarantee": {
+        "title": "30 jours satisfait ou remboursé",
+        "body": "Si cela ne convient pas à votre enfant, nous vous remboursons — sans discussion gênante. Les 30 jours courent à partir de sa première session.",
+        "contact": "Écrivez simplement à <link>{email}</link> et une vraie personne s’en occupe."
+      }
     },
     "countdown": {
       "days": "j",
@@ -1795,6 +1923,7 @@
     "municipalityClubs": "Clubs municipaux",
     "camps": "Stages",
     "events": "Événements",
+    "sites": "Sites",
     "uiComponents": "Composants UI",
     "uiPreviews": "Aperçus UI",
     "whatsapp": "WhatsApp",
@@ -1807,17 +1936,17 @@
   "home": {
     "hero": {
       "title": "Du temps d’écran<br></br><primary>au temps qui</primary><br></br>fait<br></br><secondary>grandir</secondary>",
-      "subtitle": "Nos clubs Minecraft, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter."
+      "subtitle": "Nos clubs, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis — sur Minecraft, Roblox, Fortnite et bien d’autres. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter."
     },
     "features": {
       "heading": "Le jeu vidéo, un vrai loisir",
       "subheading": "Comme le foot ou la musique, avec de bons amis et quelqu’un pour guider.",
       "minecraftClubs": {
-        "title": "Des clubs Minecraft avec des animateurs",
+        "title": "Chaque session a son animateur",
         "description": "Nos animateurs sont des joueurs avant tout. Ils savent ce que c’est de grandir avec les jeux vidéo, de se faire des amis en ligne, de construire son identité à travers un écran. Chaque session est encadrée par quelqu’un qui comprend vraiment."
       },
       "screenTime": {
-        "title": "Du temps d’écran au temps qui fait grandir",
+        "title": "Conçu pour développer de vraies compétences",
         "description": "Des clubs pensés pour que le jeu soit formateur : les enfants développent des compétences concrètes, se lient d’amitié, et vivent des aventures qui leur appartiennent."
       },
       "newFriends": {
@@ -1830,8 +1959,8 @@
       }
     },
     "howItWorks": {
-      "heading": "Comment ça marche",
-      "subheading": "Rejoignez un club en trois étapes simples.",
+      "heading": "Apprendre en jouant.",
+      "subheading": "Comment ça marche : rejoignez un club, un stage ou un événement en trois étapes simples.",
       "step1": {
         "title": "Créez votre compte",
         "description": "Inscrivez-vous en tant que parent et créez les comptes de jeu de vos enfants."
@@ -1842,7 +1971,7 @@
       },
       "step3": {
         "title": "À vous de jouer !",
-        "description": "Chaque semaine, vos enfants rejoignent leur animateur et plongent dans une nouvelle aventure Minecraft avec leurs amis."
+        "description": "Chaque semaine, vos enfants rejoignent leur animateur et plongent dans une nouvelle aventure avec leurs amis."
       }
     },
     "cta": {
@@ -1903,6 +2032,21 @@
         "confirmDescriptionSelf": "Vous perdrez votre place dans la file pour {product}.",
         "confirmCta": "Quitter la liste d’attente",
         "backOfLineWarning": "Si vous vous réinscrivez plus tard, vous repartirez de la fin de la file."
+      },
+      "seatOffer": {
+        "title": "Une place s’est libérée",
+        "bodyChild": "{name} peut avoir la place, si vous la voulez toujours.",
+        "bodySelf": "La place est à vous, si vous la voulez toujours.",
+        "bodyGamer": "Nous avons demandé à un parent si tu la veux toujours.",
+        "deadline": "Répondez avant le {deadline}, sinon la place ira à la famille suivante sur la liste.",
+        "lapsed": "Cette proposition a expiré, la place ne peut donc plus être acceptée. Si vous n’avez plus besoin de place, nous le dire nous aide toujours.",
+        "accept": "Accepter la place",
+        "decline": "Non, merci",
+        "confirmTitle": "Renoncer à la place ?",
+        "confirmBodyChild": "{name} perdra sa place dans la file, et nous la proposerons à la famille suivante.",
+        "confirmBodySelf": "Vous perdrez votre place dans la file, et nous la proposerons à la famille suivante.",
+        "confirmCta": "Oui, j’en suis sûr",
+        "error": "Une erreur est survenue et votre réponse n’a pas été enregistrée. Réessayez ou écrivez-nous à {supportEmail}."
       }
     },
     "help": {
@@ -2012,7 +2156,12 @@
     "sendVerificationEmail": "Envoyer l’e-mail de vérification",
     "verificationEmailSent": "E-mail de vérification envoyé — consultez votre boîte de réception.",
     "verificationEmailRateLimited": "Vous avez demandé cet e-mail trop de fois. Veuillez patienter un moment avant de réessayer.",
-    "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer."
+    "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer.",
+    "marketing": {
+      "title": "Préférences marketing",
+      "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
+      "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres."
+    }
   },
   "tools": {
     "uncertified": {
@@ -2239,16 +2388,16 @@
   "yty": {
     "hero": {
       "title": "Qu’est-ce que l’<primary>Yty</primary> ?",
-      "subtitle": "L’Yty est la force qui maintient l’équilibre des mondes du Sogverse. Apprendre quelque chose de nouveau, se faire un ami, se comporter avec bienveillance, participer à la communauté : chaque bonne action fait grandir l’Yty de chaque joueur et celle du Sogverse tout entier."
+      "subtitle": "L’Yty est la force qui maintient l’équilibre de Sogverse. Apprendre quelque chose de nouveau, se faire un ami, se comporter avec bienveillance, participer à la communauté : chaque bonne action fait grandir l’Yty de chaque joueur et celle de Sogverse tout entier."
     },
     "overview": {
       "heading": "Comment fonctionne l’Yty",
-      "paragraph1": "Chaque joueur part de zéro. Sessions suivies, défis relevés, gestes de bienveillance : tout se transforme en points d’Yty. Ces points se répartissent sur quatre éléments, chacun reflétant une dimension de la croissance personnelle.",
-      "paragraph2": "En accumulant de l’Yty pour eux-mêmes, les joueurs font aussi grandir celle du Sogverse entier, influençant l’histoire et ouvrant de nouvelles possibilités pour toute la communauté."
+      "paragraph1": "Chaque joueur part de zéro. Sessions suivies, quêtes accomplies, gestes de bienveillance : tout se transforme en points d’Yty. Ces points se répartissent sur les quatre éléments de l’Yty, chacun reflétant une dimension de la croissance personnelle.",
+      "paragraph2": "En accumulant de l’Yty pour eux-mêmes, les joueurs font aussi grandir celle de Sogverse tout entier, influençant l’histoire et ouvrant de nouvelles possibilités pour toute la communauté."
     },
     "elements": {
       "heading": "Les quatre éléments de l’Yty",
-      "subheading": "Chaque élément reflète la relation d’un joueur à une dimension différente de son monde.",
+      "subheading": "Chaque élément de l’Yty est une relation que le joueur fait grandir : à lui-même, aux autres, à la société et à la technologie",
       "harmony": {
         "name": "Harmonie",
         "description": "Ta relation à toi-même",
@@ -2261,20 +2410,20 @@
       },
       "valor": {
         "name": "Bravoure",
-        "description": "Ta relation au monde",
-        "detail": "Comment est-ce que je fais une différence ? La Bravoure, c’est trouver sa place dans le monde et avoir le cran d’y contribuer. Travailler en équipe, porter ses idées, utiliser son imagination pour construire quelque chose qui compte."
+        "description": "Ta relation à la société",
+        "detail": "Comment est-ce que je fais une différence ? La Bravoure, c’est trouver sa place dans la société et avoir le cran d’y contribuer. Travailler en équipe, porter ses idées, utiliser son imagination pour construire quelque chose qui compte."
       },
       "wit": {
         "name": "Discernement",
-        "description": "Ta relation aux médias et à la technologie",
-        "detail": "Comment je m’y retrouve dans le monde numérique ? Le Discernement, c’est avoir un rapport sain et critique à la technologie. Comprendre les dynamiques en ligne, reconnaître une fausse info, et trouver le bon équilibre entre l’écran et le reste de la vie."
+        "description": "Ta relation à la technologie",
+        "detail": "Comment bien utiliser la technologie ? Le Discernement, c’est avoir un rapport sain et critique aux jeux, aux médias et aux outils qui les entourent. Comprendre les dynamiques en ligne, reconnaître une fausse info, et trouver le bon équilibre entre l’écran et le reste de la vie."
       }
     },
     "earning": {
       "heading": "Comment les joueurs gagnent de l’Yty",
-      "paragraph1": "L’Yty se gagne en participant. Sessions hebdomadaires, quêtes et défis, bienveillance envers les autres joueurs, événements communautaires, stages : tout compte.",
-      "paragraph2": "Au fil des points accumulés, les joueurs font progresser leurs badges de réussite, du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente à la fois leur niveau global et l’élément auquel il correspond.",
-      "paragraph3": "Et ce n’est pas réservé aux joueurs. Les Gedus, les parents, toute la communauté peuvent contribuer à l’Yty du Sogverse à travers les événements et les activités partagées."
+      "paragraph1": "L’Yty se gagne en participant. Sessions hebdomadaires, quêtes accomplies, bienveillance envers les autres joueurs, événements communautaires, stages : tout compte.",
+      "paragraph2": "Au fil des points accumulés, les joueurs font progresser leurs badges de réussite, du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente à la fois leur niveau d’Yty global et l’élément auquel il correspond.",
+      "paragraph3": "Et ce n’est pas réservé aux joueurs. Les Gedus, les parents, toute la communauté peuvent contribuer à l’Yty de Sogverse à travers les événements et les activités partagées."
     }
   },
   "email": {
@@ -2371,7 +2520,8 @@
       "price": {
         "subscription": "{amount} / mois",
         "upfront": "{amount} (paiement unique)",
-        "free": "Gratuit"
+        "free": "Gratuit",
+        "external": "Pris en charge par votre commune"
       },
       "nextTitle": "La suite",
       "next": {
@@ -2405,11 +2555,50 @@
       "groupLabel": "Groupe",
       "dateLabel": "Date",
       "timeLabel": "Heure",
+      "photosHeading": "Photos de la session",
       "productButton": "Ouvrir dans Mon SOG",
       "closing": "Ce compte rendu, les précédents et les prochaines sessions se trouvent sur la page de {productName} dans Mon SOG.",
       "staffCopyLabel": "Copie pour les Gedus et les admins",
       "staffCopyBody": "Ceci est une copie du compte rendu envoyé aux familles du groupe. Vous la recevez en tant qu’expéditeur ou en tant qu’administrateur, et non en tant que parent.",
       "staffCopyPrivacy": "Chaque famille a reçu son propre e-mail, adressé à elle seule. Les adresses des Gedus et des admins qui figurent dans les champs À et Cc de cette copie n’apparaissent que sur cette copie : aucun parent ne les voit, et aucune famille n’en voit une autre."
+    },
+    "seatOffer": {
+      "heading": "Une place s’est libérée",
+      "question": "La voulez-vous toujours ? Dites-le-nous dans un sens comme dans l’autre — un non aide tout autant, car il nous permet de proposer la place à la famille suivante sans attendre.",
+      "deadlineLabel": "Merci de répondre avant le",
+      "deadlineBody": "{deadline}. Sans réponse de votre part d’ici là, la place ira à la famille suivante sur la liste.",
+      "accept": "Accepter la place",
+      "decline": "Non, merci",
+      "alsoInMySog": "La même question vous attend dans Mon SOG, si vous préférez répondre là-bas.",
+      "dashboardButton": "Répondre dans Mon SOG",
+      "child": {
+        "subject": "{participantName} : une place s’est libérée pour {productName}",
+        "opening": "Nous avions promis de vous écrire dès qu’une place se libérerait. C’est le cas : {participantName} peut nous rejoindre — {productName}."
+      },
+      "self": {
+        "subject": "Une place s’est libérée pour {productName}",
+        "opening": "Nous avions promis de vous écrire dès qu’une place se libérerait. C’est le cas : vous pouvez nous rejoindre — {productName}."
+      }
+    },
+    "seatOfferStaff": {
+      "participant": "Place pour",
+      "contact": "Contact",
+      "contactEmail": "E-mail",
+      "product": "Produit",
+      "schedule": "Horaires",
+      "offeredAt": "Proposée le",
+      "nextStep": "La proposition est terminée et la place est de nouveau libre. Ouvrez le produit pour voir la file d’attente et envoyer la prochaine invitation.",
+      "button": "Ouvrir le produit",
+      "declined": {
+        "subject": "{participantName} a refusé une place pour {productName}",
+        "heading": "Une proposition de place a été refusée",
+        "body": "La famille ne peut pas prendre la place et nous l’a dit plutôt que de la laisser en suspens. Elle a été retirée de la liste d’attente."
+      },
+      "no_response": {
+        "subject": "Aucune réponse à une proposition de place pour {participantName} — {productName}",
+        "heading": "Une proposition de place a expiré",
+        "body": "Le délai de réponse s’est écoulé sans réponse. La famille reste sur la liste d’attente et peut recevoir une nouvelle proposition, mais la place elle-même est libre dès maintenant."
+      }
     }
   },
   "legal": {
@@ -2422,7 +2611,7 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Protéger la vie privée de votre famille — et celle de votre enfant avant tout — compte beaucoup pour nous : nous avons donc rédigé ce document en langage clair plutôt qu’en jargon juridique.",
+        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Cette page liste l’essentiel de ce que nous conservons sur votre enfant, et pourquoi — en langage clair plutôt qu’en jargon juridique, pour que vous puissiez le vérifier vous-même. Un compte joueur porte une adresse interne Sogverse plutôt qu’un véritable e-mail, et il n’existe qu’à l’intérieur de votre propre compte.",
         "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d’un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à {supportEmail}."
       ]
     },
@@ -2449,8 +2638,9 @@
           "Vos préférences de langue et de devise — pour que le site s’affiche comme vous l’attendez.",
           "Votre mot de passe, que nous ne conservons que sous forme chiffrée (hachée) — nous ne pouvons jamais le voir.",
           "Les informations de paiement sont traitées directement dans Stripe. Nous ne voyons ni ne conservons jamais votre numéro de carte complet.",
-          "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement.",
-          "Facultativement, le nom d’utilisateur Minecraft de votre enfant — pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
+          "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement. Nous enregistrons aussi votre nom de famille sur son compte, parce que votre enfant fait partie de votre compte ; les Gedus et les autres joueurs ne le voient jamais. Le compte lui-même porte une adresse interne Sogverse plutôt qu’un véritable e-mail.",
+          "Facultativement, le nom d’utilisateur de votre enfant dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant de compte que le jeu lui attribue, pour que nous puissions le reconnaître dans le jeu et pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
+          "Ce que nos animateurs notent au fil des sessions — présences, comptes rendus de session et courtes notes qui nous aident à accompagner votre enfant dans le groupe.",
           "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies et statistiques » ci-dessous).",
           "Si vous êtes arrivé par un lien partagé par une école, un club ou une organisation partenaire, un code court indiquant lequel — pour que nous sachions quelles actions touchent réellement les familles, et que nous puissions dire à nos partenaires si la leur a fonctionné."
         ]
@@ -2460,7 +2650,7 @@
         "paragraphs": [
           "La plupart des personnes qui utilisent Sogverse sont des enfants : leur sécurité et leur vie privée sont donc notre priorité absolue.",
           "Un enfant ne peut jamais créer son propre compte. Seul un parent ou un tuteur crée le compte d’un enfant, choisit ce qui est partagé et donne son autorisation en son nom. C’est ainsi que nous respectons nos obligations vis-à-vis des enfants au regard du droit de la protection des données.",
-          "Nous réduisons au minimum les informations concernant les enfants, nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Pendant les sessions en direct, les enfants sont toujours accompagnés par l’un de nos animateurs formés (nous les appelons les Gedus).",
+          "Ce que nous conservons au sujet d’un enfant est présenté ci-dessus sous « Les informations que nous collectons », et nous ne collectons rien sur un enfant au-delà de ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne montrons jamais de publicité aux enfants et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Les sessions en direct sont animées par nos animateurs formés (nous les appelons les Gedus).",
           "Si vous souhaitez consulter, modifier ou supprimer les informations de votre enfant, écrivez simplement à {supportEmail} et nous nous en occuperons."
         ]
       },
@@ -2502,7 +2692,9 @@
           "Brevo — envoie nos e-mails, comme les reçus et les rappels.",
           "Daily.co — assure les sessions audio et vidéo en direct.",
           "Vercel — héberge le site et fournit des statistiques d’utilisation anonymes et sans cookies.",
-          "Meta (WhatsApp) — utilisé pour envoyer certains messages et rappels aux familles qui préfèrent WhatsApp."
+          "Meta (WhatsApp) — utilisé pour envoyer certains messages et rappels aux familles qui préfèrent WhatsApp.",
+          "Roblox — reçoit l’identifiant de compte Roblox de votre enfant, pour que nous puissions vérifier le compte et afficher son avatar.",
+          "Mojang (Microsoft) — reçoit le nom d’utilisateur Minecraft de votre enfant, pour que nous puissions vérifier le compte."
         ]
       },
       "cookies": {
@@ -2516,7 +2708,7 @@
       "voice": {
         "heading": "Sessions audio et vidéo",
         "paragraphs": [
-          "Les clubs, stages et événements en direct se déroulent en audio et en vidéo, via Daily.co. Chaque session est animée et supervisée par l’un de nos animateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit."
+          "Les clubs, stages et événements en direct se déroulent en audio et en vidéo, via Daily.co. Les sessions sont animées en direct par nos animateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit."
         ]
       },
       "retention": {
@@ -2572,7 +2764,7 @@
       "heading": "En bref",
       "paragraphs": [
         "Voici les conditions d’utilisation de Sogverse et d’inscription de votre enfant à nos clubs, stages et événements. Nous les avons rédigées en langage clair, parce que nous voulons que vous compreniez vraiment ce que vous acceptez — et non que vous ayez à décrypter du jargon juridique.",
-        "En résumé : nos clubs se déroulent en ligne, votre enfant étant toujours encadré par un animateur formé. Vous pouvez résilier un club mensuel quand vous le souhaitez, et la première session de votre enfant est satisfait ou remboursé. Si vous avez une question, écrivez à {supportEmail} : une vraie personne vous répondra."
+        "En résumé : nos clubs se déroulent en ligne, animés en direct par nos animateurs formés. Vous pouvez résilier un club mensuel quand vous le souhaitez, et chaque club est couvert par une garantie satisfait ou remboursé de 30 jours : si cela ne convient pas à votre enfant, dites-le-nous dans les 30 jours suivant sa première session et nous vous remboursons intégralement. Si vous avez une question, écrivez à {supportEmail} : une vraie personne vous répondra."
       ]
     },
     "sections": {
@@ -2604,7 +2796,7 @@
       "online": {
         "heading": "La sécurité en ligne",
         "paragraphs": [
-          "Les outils que nous utilisons pour les sessions en direct ont leurs propres règles d’âge minimum, fixées par les entreprises qui les éditent et par la loi locale. Pour rester sûrs et dans les règles, les enfants de moins de 13 ans participent via le compte de leur parent, et chaque session est supervisée par l’un de nos animateurs formés (nous les appelons les Gedus). Les enfants ne sont jamais en ligne avec nous sans surveillance."
+          "Les outils que nous utilisons pour les sessions en direct ont leurs propres règles d’âge minimum, fixées par les entreprises qui les éditent et par la loi locale. Pour rester sûrs et dans les règles, les enfants de moins de 13 ans participent via le compte de leur parent. Les sessions sont animées en direct par nos animateurs formés (nous les appelons les Gedus)."
         ]
       },
       "pricing": {
@@ -2617,7 +2809,7 @@
         "heading": "Résilier un club mensuel",
         "paragraphs": [
           "Nos clubs fonctionnent par abonnement mensuel, et vous êtes libre de résilier quand vous le souhaitez — il n’y a aucun engagement de durée. Vous pouvez le faire vous-même depuis votre compte, et votre enfant conserve sa place jusqu’à la fin du mois déjà réglé.",
-          "Nous voulons aussi que vous puissiez nous essayer en toute confiance. Si votre enfant assiste à sa première session et que cela ne lui convient finalement pas, dites-le-nous dans les 2 jours suivant cette première session et nous vous remboursons intégralement."
+          "Nous voulons aussi que vous puissiez nous essayer en toute confiance : chaque club est couvert par une garantie satisfait ou remboursé de 30 jours. Si cela ne convient finalement pas à votre enfant, écrivez à {supportEmail} dans les 30 jours suivant sa première session et nous vous remboursons tout ce que vous avez versé pour ce club. Aucun formulaire à remplir, aucune justification à donner."
         ]
       },
       "campsCancellation": {
@@ -2642,7 +2834,7 @@
       "privacy": {
         "heading": "La vie privée de votre famille",
         "paragraphs": [
-          "Nous prenons très au sérieux la vie privée de votre famille — et surtout celle de votre enfant — et nous traitons vos informations conformément au droit finlandais et européen de la protection des données. Notre <linkPrivacy>politique de confidentialité</linkPrivacy> explique exactement ce que nous collectons et pourquoi."
+          "Nous traitons les informations de votre famille conformément au droit finlandais et européen de la protection des données, et nous en conservons le moins possible sur votre enfant : un compte joueur est créé par vous, porte une adresse interne Sogverse plutôt que l’e-mail de votre enfant, et ne sert jamais à lui adresser de la publicité. Notre <linkPrivacy>politique de confidentialité</linkPrivacy> explique exactement ce que nous collectons et pourquoi."
         ]
       },
       "changes": {
@@ -2665,13 +2857,13 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "Chaque enfant doit se sentir en sécurité, respecté et bienvenu dans nos clubs. Le harcèlement et la méchanceté n’y ont pas leur place, et nous les prenons au sérieux.",
+        "Chaque enfant doit se sentir en sécurité, respecté et bienvenu dans nos clubs. Le harcèlement et la méchanceté n’y ont pas leur place — et la plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés.",
         "Quand quelque chose se passe mal, nous ne nous contentons pas de sanctionner. Nous aidons. Nous suivons une démarche calme et progressive, qui vise à aider l’enfant à comprendre ce qui s’est passé, à réparer et à mieux faire la fois suivante. Nous ne passons à une étape plus ferme que si le comportement se répète, et nous vous tenons informé tout du long."
       ]
     },
     "sections": {
       "commitment": {
-        "heading": "Notre promesse à votre enfant",
+        "heading": "Les enfants d’abord. Toujours.",
         "paragraphs": [
           "Nos clubs sont un endroit pour apprendre, se faire des amis et s’amuser — et cela ne fonctionne que si chacun s’y sent en sécurité. Nous nous engageons pour une communauté sans harcèlement, sans intimidation et sans cruauté, où chaque enfant est traité avec respect par nos animateurs et par les autres enfants."
         ]
@@ -2710,7 +2902,7 @@
       "step5": {
         "heading": "Étape 5 — Une mise à l’écart de la communauté",
         "paragraphs": [
-          "Si le comportement persiste malgré tout ce qui précède, un enfant peut être écarté de la communauté SOG pendant un temps — cela concerne ses clubs, notre serveur Minecraft et notre Discord. Notre bureau vous contacte pour vous expliquer la décision, et nous en parlons aussi avec votre enfant."
+          "Si le comportement persiste malgré tout ce qui précède, un enfant peut être écarté de la communauté School of Gaming pendant un temps — cela concerne ses clubs et Sogverse lui-même, y compris nos serveurs de jeu. Notre bureau vous contacte pour vous expliquer la décision, et nous en parlons aussi avec votre enfant."
         ]
       },
       "step6": {
@@ -2737,7 +2929,7 @@
     "hero": {
       "title": "Construisez<br></br><primary>Jouez</primary><br></br><secondary>Publiez</secondary>",
       "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
-      "cta": "Inscrivez-vous"
+      "cta": "Lancez-vous !"
     },
     "lockup": {
       "heading": "Une collaboration entre",
@@ -2748,15 +2940,15 @@
     "what": {
       "eyebrow": "Le programme",
       "heading": "Apprenez à construire sur Roblox.",
-      "paragraph1": "Ce programme donne aux ados de 15–18 ans en France l’occasion de concevoir, coder et publier leur propre jeu Roblox — avec les personnes qui comptent le plus pour les encourager. Proposé par Lynx Educate et School of Gaming, et soutenu par Roblox, c’est une introduction pratique à la création de jeux, à la créativité numérique et à la collaboration en ligne en toute sécurité.",
+      "paragraph1": "Ce programme donne aux ados de 13–17 ans en France l’occasion de concevoir, coder et publier leur propre jeu Roblox — avec les personnes qui comptent le plus pour les encourager. Proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox, c’est une introduction pratique à la création de jeux, à la créativité numérique et à la collaboration en ligne en toute sécurité.",
       "paragraph2": "À la fin du programme, les participants auront publié leur propre création originale sur Roblox. Aucune expérience requise — juste de la curiosité."
     },
     "why": {
       "eyebrow": "Pourquoi participer",
-      "heading": "Bien plus qu’un cours de code",
+      "heading": "Bien plus qu’apprendre à coder",
       "skills": {
-        "title": "Des compétences pour l’avenir",
-        "description": "Roblox Studio, la conception assistée par IA et les bases de la logique de programmation."
+        "title": "Compétences humaines",
+        "description": "Roblox Studio, la conception assistée par IA et les bases de la logique de programmation — appris avec d’autres, pas tout seul."
       },
       "people": {
         "title": "Rencontrez les vôtres",
@@ -2782,14 +2974,14 @@
     "how": {
       "eyebrow": "Comment ça marche",
       "heading": "Commencez en quatre étapes simples",
-      "subheading": "Choisissez le format qui vous convient : des événements en présentiel ou en ligne, d’une heure à quatre semaines.",
+      "subheading": "Choisissez le format qui vous convient : en présentiel ou en ligne, d’une heure à neuf semaines.",
       "step1": {
         "title": "Choisissez un événement",
         "description": "Parmi les options ci-dessous — nous en ajoutons souvent, alors revenez y jeter un œil."
       },
       "step2": {
         "title": "Créez votre compte",
-        "description": "Directement sur la page de l’événement. Rapide et gratuit pour les nouveaux parents."
+        "description": "Directement depuis la page d’inscription. Rapide et gratuit pour les nouveaux parents."
       },
       "step3": {
         "title": "Renseignez les informations de votre ado",
@@ -2801,9 +2993,12 @@
       }
     },
     "events": {
-      "heading": "Événements à venir",
+      "heading": "Prochains événements",
       "subheading": "Nous ajoutons souvent de nouveaux événements — revenez voir ce qui arrive.",
-      "empty": "Les premiers événements sont en cours de programmation. Revenez bientôt pour découvrir ce qui arrive."
+      "empty": "Les premiers événements sont en cours de programmation. Revenez bientôt pour découvrir ce qui arrive.",
+      "previous": "Événements précédents",
+      "next": "Événements suivants",
+      "browseShop": "Voir tous les événements dans la boutique"
     },
     "parents": {
       "eyebrow": "Pour les parents",
@@ -2811,9 +3006,60 @@
       "body": "En parallèle du programme pour les ados, nous organisons des sessions dédiées aux parents sur la sécurité numérique, le contrôle parental et la façon d’accompagner votre ado dans sa démarche créative.",
       "cta": "Voir nos sessions parents"
     },
+    "faq": {
+      "heading": "Questions fréquentes",
+      "items": {
+        "programme": {
+          "question": "Qu’est-ce que le Programme ?",
+          "answer": "Un programme gratuit de création de jeux où les jeunes apprennent à construire sur Roblox, animé par Lynx Educate et School of Gaming, en collaboration avec Roblox. Il se déroule en ligne comme en présentiel partout en France, et se conclut par la publication du jeu ou de l’objet créé par votre enfant."
+        },
+        "eligibility": {
+          "question": "Qui peut participer ?",
+          "answer": "Les jeunes de 13 à 17 ans résidant en France, inscrits par un parent ou un représentant légal."
+        },
+        "cost": {
+          "question": "Est-ce que c’est payant ?",
+          "answer": "Non, le Programme est 100 % gratuit pour les familles inscrites !"
+        },
+        "experience": {
+          "question": "Mon enfant doit-il déjà connaître Roblox ?",
+          "answer": "Aucune expérience préalable n’est nécessaire — les sessions sont conçues pour apprendre la création de jeux, des bases jusqu’à la publication."
+        },
+        "where": {
+          "question": "Où se déroulent les sessions ?",
+          "answer": "Les sessions en présentiel ont lieu à Paris, Lille, Strasbourg et Bordeaux. Les sessions en ligne sont ouvertes aux familles partout en France. Leur durée va de 60 minutes à 9 semaines.",
+          "answer2": "Consultez chaque événement pour le détail."
+        },
+        "language": {
+          "question": "Dans quelle langue se déroulent les sessions ?",
+          "answer": "Les sessions se déroulent en français."
+        },
+        "equipment": {
+          "question": "De quel matériel mon enfant a-t-il besoin ?",
+          "answer": "Un ordinateur (Windows ou Mac) connecté à Internet, ainsi qu’un accès à Roblox Studio.",
+          "answer2": "Pour les événements en ligne, les jeunes se connectent avec leur propre ordinateur, Roblox Studio installé. Pour les événements en présentiel, les ordinateurs et le matériel sont fournis sur place."
+        },
+        "dataSharing": {
+          "question": "Les informations de mon enfant sont-elles transmises à Roblox ?",
+          "answer": "Certaines informations de compte sont transmises à Lynx Educate et à Roblox pour assurer le déroulement du Programme et en évaluer l’efficacité. Le détail complet figure dans notre <linkPrivacy>politique de confidentialité</linkPrivacy>."
+        },
+        "media": {
+          "question": "Mon enfant sera-t-il photographié ou filmé ?",
+          "answer": "Les sessions peuvent être photographiées pour nos archives internes. L’utilisation des images à des fins de communication externe relève entièrement de votre choix, exprimé à l’inscription et modifiable à tout moment."
+        },
+        "facilitators": {
+          "question": "Qui anime les sessions, et comment les animateurs sont-ils vérifiés ?",
+          "answer": "Les animateurs sont formés et vérifiés par School of Gaming, conformément à notre <linkSafeguarding>politique de protection de l’enfance</linkSafeguarding> commune."
+        },
+        "contact": {
+          "question": "Qui contacter en cas de question ?",
+          "answer": "Écrivez-nous à <linkEmail>{email}</linkEmail> pour toute question ou préoccupation."
+        }
+      }
+    },
     "cta": {
       "heading": "Prêt à commencer ?",
-      "body": "Les places sont limitées par ville et par groupe.",
+      "body": "Les places sont limitées.",
       "button": "Commencer"
     },
     "legal": {
@@ -2878,7 +3124,7 @@
       "responsibleSog": {
         "heading": "School of Gaming Galactic Oy",
         "blocks": [
-          "School of Gaming exploite Sogverse, gère l’environnement d’inscription et d’apprentissage, fournit le programme pédagogique et les animateurs, anime les sessions d’apprentissage et assure la supervision en matière de protection de l’enfance.",
+          "School of Gaming exploite Sogverse, gère l’environnement d’inscription et d’apprentissage, fournit le contenu des sessions et les animateurs, anime les sessions d’apprentissage et assure la supervision en matière de protection de l’enfance.",
           "School of Gaming Galactic Oy",
           "Numéro d’entreprise : 3110461-1",
           "Isokatu 56",
@@ -2924,10 +3170,10 @@
         "blocks": [
           "Selon l’activité, nous pouvons collecter :",
           [
-            "Un nom d’affichage et, lorsque cela est réellement nécessaire, un prénom.",
+            "Le prénom de l’enfant, conservé aux côtés du nom de famille repris du compte du parent. Les animateurs et les autres participants ne voient jamais ce nom de famille — l’enfant participe sous son prénom.",
             "L’âge, une tranche d’âge, ou le mois et l’année de naissance plutôt qu’une date de naissance complète.",
             "Le nom d’utilisateur Roblox et l’identifiant Roblox.",
-            "Le cours, le club, le stage, l’événement ou le groupe fréquenté.",
+            "Le club, le stage, l’événement ou le groupe fréquenté.",
             "La présence, la participation, la progression et l’achèvement du parcours.",
             "Le fait que l’enfant publie son premier jeu, sa première expérience ou son premier objet numérique Roblox.",
             "Le nom ou le lien d’une expérience publiée, lorsque cela est nécessaire pour vérifier le résultat du Programme.",
@@ -3103,7 +3349,7 @@
           "Le Programme se déroule dans un environnement d’apprentissage privé et modéré.",
           [
             "Le profil de chaque enfant est rattaché à un compte parent ou représentant légal.",
-            "Les enfants utilisent un nom d’affichage plutôt que de publier leurs coordonnées.",
+            "Les enfants participent sous leur seul prénom — jamais avec leurs coordonnées.",
             "Seuls les participants inscrits et les animateurs vérifiés peuvent rejoindre les sessions.",
             "Les échanges se font en groupe et sous supervision.",
             "Il n’existe pas de messagerie privée directe entre enfants.",
@@ -3229,7 +3475,7 @@
     "intro": {
       "heading": "Notre engagement",
       "blocks": [
-        "Chaque enfant qui participe à ce Programme a le droit de se sentir en sécurité, respecté et protégé — qu’il participe en ligne ou qu’il assiste à un événement en présentiel. Lynx Educate et School of Gaming prennent tous deux cette responsabilité au sérieux."
+        "Chaque enfant qui participe à ce Programme a le droit de se sentir en sécurité, respecté et protégé — qu’il participe en ligne ou qu’il assiste à un événement en présentiel. Cela repose sur la manière dont le Programme est construit : le compte de chaque enfant est rattaché à celui d’un parent, la communication se fait en groupe, sans messagerie privée entre enfants, et seuls les participants inscrits et des animateurs vérifiés peuvent y prendre part."
       ]
     },
     "sections": {
@@ -3367,7 +3613,7 @@
   },
   "attributions": {
     "title": "Crédits et licences",
-    "intro": "Certaines parties du Sogverse s’appuient sur des données et des services que d’autres partagent librement. Cette page les recense, explique ce que chacun apporte et renvoie aux conditions dans lesquelles nous les utilisons.",
+    "intro": "Certaines parties de Sogverse s’appuient sur des données et des services que d’autres partagent librement. Cette page les recense, explique ce que chacun apporte et renvoie aux conditions dans lesquelles nous les utilisons.",
     "sourceLabel": "Source :",
     "licenceLabel": "Licence :",
     "dataVersion": "Données publiées le {date}",
@@ -3377,5 +3623,55 @@
       "mcHeads": "Dessine le personnage Minecraft affiché à côté d’un compte Minecraft associé. Rien ne nous oblige à les citer : ils ne demandent rien en retour, et ce crédit est un remerciement."
     },
     "opensInNewTab": "(s’ouvre dans un nouvel onglet)"
+  },
+  "seatOffer": {
+    "offer": {
+      "title": "Une place s’est libérée",
+      "child": "Une place s’est libérée pour {participantName} — {productName}. La voulez-vous toujours ?",
+      "self": "Une place s’est libérée pour vous — {productName}. La voulez-vous toujours ?",
+      "deadline": "Merci de répondre avant le {deadline}. Passé ce délai, la place ira à la famille suivante sur la liste.",
+      "accept": "Accepter la place",
+      "decline": "Non, merci",
+      "confirmTitle": "Renoncer à la place ?",
+      "confirmBody": "Nous la proposerons à la famille suivante sur la liste d’attente, et cette proposition ne pourra pas être rouverte.",
+      "confirmAction": "Oui, j’en suis sûr",
+      "confirmCancel": "Retour",
+      "error": "Une erreur est survenue et votre réponse n’a pas été enregistrée. Réessayez ou écrivez-nous à {supportEmail}."
+    },
+    "accepted": {
+      "title": "La place est réservée",
+      "body": "Nous avons gardé la place pour vous. Vous la retrouverez dans Mon SOG, avec toutes les autres inscriptions de votre famille.",
+      "action": "Aller sur Mon SOG"
+    },
+    "declined": {
+      "title": "Merci de nous l’avoir dit",
+      "body": "Nous avons retiré la place de votre liste. Grâce à votre réponse, une autre famille pourra en profiter dès aujourd’hui au lieu de la laisser vide."
+    },
+    "expired": {
+      "title": "Cette proposition a expiré",
+      "body": "Une proposition de place reste ouverte {days} jours, et celle-ci s’est refermée avant que nous ayons de vos nouvelles.",
+      "declinePrompt": "Vous restez sur la liste d’attente. Si votre famille n’a plus besoin de place du tout, vous pouvez nous le dire maintenant et la libérer pour quelqu’un d’autre.",
+      "declineAction": "Renoncer à notre place",
+      "confirmTitle": "Renoncer à votre place ?",
+      "confirmBody": "Nous vous retirerons de la liste d’attente. Si vous vous réinscrivez plus tard, vous repartirez de la fin de la file."
+    },
+    "used": {
+      "title": "Ce lien a déjà été utilisé",
+      "body": "Cette invitation n’est plus ouverte. Toutes les inscriptions de votre famille, et chaque place que vous attendez, sont dans Mon SOG.",
+      "action": "Aller sur Mon SOG"
+    },
+    "invalid": {
+      "title": "Ce lien n’a pas fonctionné",
+      "body": "Il a peut-être été coupé par votre messagerie, ou copié seulement en partie. Essayez de l’ouvrir à nouveau depuis l’e-mail, ou écrivez-nous à {supportEmail} et nous vous aiderons."
+    }
+  },
+  "consentDocuments": {
+    "names": {
+      "robloxProgrammeTerms": "Conditions générales du Programme Roblox",
+      "robloxPrivacyPolicy": "Politique de confidentialité du Programme Roblox"
+    },
+    "bundles": {
+      "robloxProgramme": "Documents du Programme Roblox"
+    }
   }
 }

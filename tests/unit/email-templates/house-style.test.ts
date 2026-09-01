@@ -91,12 +91,37 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     firstName: "Marja",
     verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
   },
+  seatOffer: {
+    participantName: "Aino",
+    isSelfSeat: false,
+    productName: "Minecraft 101",
+    deadline: "Sunday, 31 August at 14:20 GMT+3",
+    acceptUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
+    declineUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
+    dashboardUrl: "https://sogverse.sog.gg/parent",
+  },
+  seatOfferStaff: {
+    reason: "declined",
+    participantName: "Aino",
+    contactName: "Marja Virtanen",
+    contactEmail: "marja@example.com",
+    productName: "Minecraft 101",
+    productSchedule: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
+    offeredAt: "Tue, 26 Aug, 14:20 GMT+3",
+    adminProductUrl:
+      "https://sogverse.sog.gg/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+  },
   sessionReport: {
     gamerName: "Aino",
     geduName: "Marianne",
     productName: "Minecraft: Cozy Adventures",
     groupName: "Usvalaakso: Kettukallio",
     copy: "family",
+    // Three, so the sweep sees the photo grid at all: a pair of cells, an odd
+    // one spanning the row, and three toned wells whose fills and corners have
+    // to answer to the same rules as everything else in a mail. The stub above
+    // is what makes the fixture URLs resolvable, exactly as it does the mark's.
+    photoCount: "3",
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
@@ -159,6 +184,22 @@ const MAILS: Record<string, () => [string, string][]> = {
   "session-report": () => [
     ...fromRegistry("sessionReport"),
     ...fromRegistry("sessionReport", "sessionReport (staff copy)", { copy: "staff" }),
+  ],
+  // Both voices of the parent mail. Every sentence moves between the second and
+  // the third person on `isSelfSeat`, and the two are swept for the same reason
+  // the staff mail's two flavours are: a variant nothing renders is a variant
+  // nothing can vouch for.
+  "seat-offer": () => [
+    ...fromRegistry("seatOffer"),
+    ...fromRegistry("seatOffer", "seatOffer (own seat)", { isSelfSeat: true }),
+  ],
+  // Both flavours of the staff mail: they differ only in two sentences, but a
+  // variant nothing renders is a variant nothing can vouch for.
+  "seat-offer-staff": () => [
+    ...fromRegistry("seatOfferStaff"),
+    ...fromRegistry("seatOfferStaff", "seatOfferStaff (no response)", {
+      reason: "no_response",
+    }),
   ],
   "verify-email": () => fromRegistry("verifyEmail"),
   welcome: () => [...fromRegistry("welcomeParent"), ...fromRegistry("welcomeGedu")],

@@ -4,6 +4,11 @@ import {
   sessionReportSubject,
 } from "@/lib/email-templates/session-report";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
+import {
+  PHOTO_BOX,
+  sessionPhotoBox,
+  type SessionReportPhoto,
+} from "@/lib/email-templates/session-photos";
 import { BRAND, DARK_THEME, STATUS_TINT } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
@@ -191,6 +196,206 @@ describe("the staff copy's banner", () => {
     for (const color of banner.matchAll(/<p style="[^"]*color:(#[0-9a-fA-F]{6})/g)) {
       expect(color[1]).toBe(DARK_THEME.foreground);
     }
+  });
+});
+
+/**
+ * The photos, and the render that decides how they are built: none of them
+ * loading.
+ *
+ * A parent reads this mail with images off — the default in a large share of
+ * inboxes — or reads it a month later, after a photo was deleted and its URL
+ * started 404ing. Neither is an edge case, so every assertion here is about the
+ * mail that arrives with nothing fetched: a box whose size was known before any
+ * byte of JPEG, painted, in the right place, whatever shape the picture is.
+ */
+describe("the photos under the report", () => {
+  const BUCKET = "https://xyz.supabase.co/storage/v1/object/public/session-images";
+
+  /** The three shapes real photos come in, as the stored dimensions say. */
+  const PHOTOS = {
+    landscape: { src: `${BUCKET}/a.jpg`, width: 1600, height: 900 },
+    portrait: { src: `${BUCKET}/b.jpg`, width: 900, height: 1600 },
+    square: { src: `${BUCKET}/c.jpg`, width: 1200, height: 1200 },
+  } as const satisfies Record<string, SessionReportPhoto>;
+
+  const HEADING = "Photos from this session";
+
+  function withPhotos(photos: SessionReportPhoto[], staffCopy = false): string {
+    return buildSessionReportEmail(t, "en", { ...base, photos, staffCopy });
+  }
+
+  /** Every `<img>` in the mail, as its attributes. */
+  function images(html: string): { src: string; width: number; height: number }[] {
+    return [...html.matchAll(/<img src="([^"]*)" width="(\d+)" height="(\d+)"/g)].map(
+      (match) => ({ src: match[1], width: Number(match[2]), height: Number(match[3]) }),
+    );
+  }
+
+  /** The photos alone — the shell's brand mark is an image too. */
+  function photoImages(html: string) {
+    return images(html).filter((image) => image.src.startsWith(BUCKET));
+  }
+
+  it("renders every photo, in the order it was given them", () => {
+    const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]);
+
+    expect(html).toContain(HEADING);
+    expect(photoImages(html).map((image) => image.src)).toEqual([
+      PHOTOS.landscape.src,
+      PHOTOS.portrait.src,
+      PHOTOS.square.src,
+    ]);
+  });
+
+  /**
+   * The mail this template sent before photos existed is still the mail most
+   * reports are. No heading, no empty grid, no space held open for something
+   * that is not coming — and an absent array and an empty one mean the same.
+   */
+  it("leaves a photo-less report exactly as it was", () => {
+    const none = buildSessionReportEmail(t, "en", base);
+
+    expect(none).not.toContain(HEADING);
+    expect(photoImages(none)).toEqual([]);
+    expect(withPhotos([])).toBe(none);
+  });
+
+  /**
+   * The whole point of storing the dimensions. Every box is stated on the
+   * `<img>` as attributes *and* in its inline style, and again on the cell
+   * behind it, so a client holds the space open before it has fetched
+   * anything — and holds it open for ever if the object is gone.
+   */
+  it("states every box's size before a byte of JPEG is fetched", () => {
+    const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait]);
+
+    for (const photo of [PHOTOS.landscape, PHOTOS.portrait]) {
+      const box = sessionPhotoBox(photo.width, photo.height);
+      expect(html).toContain(
+        `<img src="${photo.src}" width="${box.width}" height="${box.height}"`,
+      );
+      expect(html).toContain(`width:${box.width}px;height:${box.height}px`);
+      // The cell behind it: same size, so the well is the picture's own box
+      // rather than the whole half-column.
+      expect(html).toContain(`<td width="${box.width}" height="${box.height}"`);
+    }
+  });
+
+  /**
+   * The requirement in one assertion: a blocked portrait must not reserve the
+   * card's full column. Derived from the height budget, not from the width the
+   * mail happens to have.
+   */
+  it("budgets a portrait's height instead of letting it fill the column", () => {
+    const box = sessionPhotoBox(PHOTOS.portrait.width, PHOTOS.portrait.height);
+
+    expect(box.height).toBe(PHOTO_BOX.maxHeight);
+    expect(box.width).toBeLessThan(PHOTO_BOX.maxWidth / 2);
+    // And no box of any shape escapes either budget.
+    for (const [width, height] of [
+      [1600, 900],
+      [1200, 1200],
+      [900, 1600],
+      [4096, 1],
+      [1, 4096],
+    ]) {
+      const any = sessionPhotoBox(width, height);
+      expect(any.width).toBeLessThanOrEqual(PHOTO_BOX.maxWidth);
+      expect(any.height).toBeLessThanOrEqual(PHOTO_BOX.maxHeight);
+      expect(any.width).toBeGreaterThan(0);
+      expect(any.height).toBeGreaterThan(0);
+    }
+  });
+
+  /** A dimension that cannot make a ratio must not put NaN in an attribute. */
+  it("falls back to a square rather than emitting a NaN box", () => {
+    for (const [width, height] of [
+      [0, 0],
+      [-4, 3],
+      [Number.NaN, 900],
+    ]) {
+      expect(sessionPhotoBox(width, height)).toEqual({
+        width: PHOTO_BOX.maxHeight,
+        height: PHOTO_BOX.maxHeight,
+      });
+    }
+  });
+
+  /**
+   * Two to a row, and an odd one spans rather than sitting beside an empty
+   * half — a hole where a photo was meant to be is the one arrangement that
+   * reads as a fault.
+   */
+  it("pairs the photos and gives an odd last one the whole row", () => {
+    const odd = withPhotos([PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]);
+
+    expect(odd.match(/colspan="2"/g)).toHaveLength(1);
+    // The spanning cell is the last one, and it holds the last photo.
+    expect(odd.lastIndexOf('colspan="2"')).toBeLessThan(odd.indexOf(PHOTOS.square.src));
+    expect(odd.lastIndexOf('colspan="2"')).toBeGreaterThan(odd.indexOf(PHOTOS.portrait.src));
+
+    const even = withPhotos([PHOTOS.landscape, PHOTOS.portrait]);
+    expect(even).not.toContain('colspan="2"');
+    expect(even.match(/width="50%"/g)).toHaveLength(2);
+
+    // One photo is the same shape as any other odd tail: centred, spanning.
+    expect(withPhotos([PHOTOS.square]).match(/colspan="2"/g)).toHaveLength(1);
+  });
+
+  /**
+   * The stacking rule lives in the shell because a media query cannot be
+   * written inline — but it is only reachable if the cells carry the class it
+   * names, so both halves are asserted from the rendered mail.
+   */
+  it("marks the cells the shell's media query stacks", () => {
+    const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait]);
+
+    expect(html).toMatch(/@media only screen and \(max-width: \d+px\)/);
+    expect(html).toContain(".photo-cell");
+    expect(html.match(/class="photo-cell"/g)).toHaveLength(2);
+  });
+
+  /**
+   * The well is what the reader sees when nothing loads, so it is a real
+   * surface: a palette tone declared twice (Gmail's dark theme rewrites a
+   * background-color and leaves a gradient alone) inside the app's own border.
+   */
+  it("paints the reserved box as a toned well, declared twice", () => {
+    const html = withPhotos([PHOTOS.landscape]);
+
+    expect(html).toContain(
+      `background-color:${DARK_THEME.bg};background-image:linear-gradient(${DARK_THEME.bg},${DARK_THEME.bg});border:1px solid ${DARK_THEME.border}`,
+    );
+  });
+
+  /**
+   * Nothing to read out and nothing to leave behind in a blocked render: the
+   * line above the grid is what says what these are.
+   */
+  it("gives every photo an empty alt", () => {
+    const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]);
+
+    const tags = html.match(/<img [^>]*>/g) ?? [];
+    expect(tags.length).toBe(photoImages(html).length);
+    for (const tag of tags) {
+      expect(tag).toContain('alt=""');
+    }
+  });
+
+  /** The staff copy is the same mail behind a banner, pictures included. */
+  it("carries the same photos into the staff copy", () => {
+    const family = photoImages(withPhotos([PHOTOS.landscape, PHOTOS.square]));
+    const staff = photoImages(withPhotos([PHOTOS.landscape, PHOTOS.square], true));
+
+    expect(staff).toEqual(family);
+  });
+
+  /** No `<a>` around a photo: the grid adds no destination the mail did not have. */
+  it("adds no link to the mail", () => {
+    const html = withPhotos([PHOTOS.landscape, PHOTOS.portrait, PHOTOS.square]);
+
+    expect(html.match(/<a /g)).toHaveLength(1);
   });
 });
 

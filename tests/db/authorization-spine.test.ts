@@ -8,7 +8,7 @@ import { accessTokenFor, callRpcRaw, createAdminTestClient } from "./helpers";
 import { TEST_CREDENTIALS } from "./constants";
 
 /**
- * The verification spine — docs/db-authorization-architecture.md §3.4.
+ * The verification spine — docs/architecture/db-authorization.md §3.4.
  *
  * Four of the five checks live here (the write-path IDOR loop is check 3, in
  * write-idor.test.ts, because it needs table fixtures rather than catalog
@@ -70,6 +70,24 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   apply_group_changes: { permittedRoles: ["admin"] },
   create_product: { permittedRoles: ["admin"] },
   update_product: { permittedRoles: ["admin"] },
+  // The single writer of product_required_consents (00210). It exists as its own
+  // RPC rather than as an inline INSERT because create_product is SECURITY
+  // INVOKER: an inline write there would run as the admin's own session role and
+  // would need a table write grant on the join table, which is the Data API
+  // surface that migration keeps at zero. Exposed to `authenticated` for exactly
+  // that reason, and guard-first like every other admin RPC. The positive half of
+  // the matrix IS assertable with no fixture: an admin passes the guard and the
+  // all-NULL call deletes nothing and inserts nothing rather than raising.
+  set_product_required_consents: { permittedRoles: ["admin"] },
+  // The single writer of product_marketing_consents (00220) — the revocable
+  // consent system's mirror of the RPC directly above, and its own RPC for the
+  // same reason: the admin product form reaches it as the admin's own session
+  // role, and an inline INSERT would need a table write grant the migration
+  // deliberately never issues. The positive half of the matrix IS assertable
+  // with no fixture: an admin passes the guard and is then refused by the
+  // product-existence check with `no_data_found`, which is an error but not the
+  // forbidden one.
+  admin_set_product_marketing_consents: { permittedRoles: ["admin"] },
   get_product_groups_with_details: { permittedRoles: ["admin"] },
   // The admin product page's whole session record (00200). Its second question
   // is "does this product exist", which a NULL id answers with P0002 rather
@@ -83,6 +101,12 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   promote_from_waitlist: { permittedRoles: ["admin"] },
   demote_to_waitlist: { permittedRoles: ["admin"] },
   set_gedu_certified: { permittedRoles: ["admin"] },
+  // Recording that an educator presented a criminal record extract (00213).
+  // Same shape as the certification RPC beside it: past the admin guard, a NULL
+  // target is nobody's account and the "is not a gedu" raise answers with P0001
+  // rather than a second 42501 — so the positive half of the matrix is
+  // assertable here with no fixture.
+  set_gedu_criminal_record_check: { permittedRoles: ["admin"] },
   // Phase 3's new-RPC conversions. Past the admin guard, all-NULL arguments hit
   // "no such product" / "no such participation" — an error, but not 42501.
   admin_enroll_participant: { permittedRoles: ["admin"] },
@@ -94,6 +118,26 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // `no_data_found` — an error, but not the forbidden one, which is exactly what
   // the positive half of the matrix asserts.
   join_product_waitlist: { permittedRoles: ["customer"] },
+  // The one self-service writer of a marketing consent (00220). Role-gated
+  // rather than self-scoping despite naming no subject — the same shape
+  // `accept_gedu_contract` carries below, and the same reasoning: its first
+  // statement IS a guard primitive, which is what check 1 reads, and the two
+  // classifications are exclusive. The scoping property is real and is enforced
+  // in the body rather than by this table (the row is keyed to auth.uid() and
+  // there is no argument that could aim it at another family); the RLS scope
+  // half is pinned by marketing-consents.test.ts.
+  //
+  // The role gate is the load-bearing half here and is why this is the right
+  // classification of the two: a marketing consent belongs to the purchasing
+  // customer, and a gamer, a gedu and an ADMIN are all refused — the admin
+  // deliberately, because an admin who is also a parent toggles their consents
+  // on that customer account rather than through this function. A self-scoping
+  // classification would prove nothing about any of that.
+  //
+  // The positive half of the matrix IS assertable with no fixture: a customer
+  // passes the guard and is then refused by the NULL consent type with
+  // check_violation, which is not the forbidden error.
+  set_marketing_consent: { permittedRoles: ["customer"] },
 
   // --- gedu-gated ----------------------------------------------------------
   get_my_assigned_products: { permittedRoles: ["gedu"] },
@@ -183,6 +227,53 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "passes that half and is refused by P0021, there being no session to send. " +
       "Positive paths: gedu-session-feed.test.ts for the gedu, " +
       "admin-product-sessions.test.ts for the admin.",
+  },
+  // The session-photo pair (00222). The same two-part gate as every writer
+  // above — an admin or a gedu on the first statement, then "and do you teach
+  // this group" — and the widening is the point: ANY gedu assigned to the group
+  // may attach or remove a photo, matching how the report itself is edited.
+  // There is no per-photo ownership, and `created_by` is safeguarding audit that
+  // gates nothing.
+  add_group_session_image: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "for a gedu, the assignment half of the gate refuses a NULL group with a " +
+      "second 42501; an admin passes that half and is then refused by the " +
+      "cap-sanity check, a NULL cap being outside the 1..24 a caller may ask " +
+      "for, which is check_violation rather than 42501 — but the annotation is " +
+      "per function rather than per role, so the positive half is unassertable " +
+      "here either way. Positive paths, for both roles: session-images.test.ts.",
+  },
+  // Keyed on the image id alone, because a per-thumbnail remove control has
+  // nothing else. The group is resolved from the image's own session row, and
+  // that resolution IS the second half of the gate — which is also why a photo
+  // id belonging to another group and one belonging to nothing are refused
+  // identically, so the function cannot be used as an oracle for real ids.
+  delete_group_session_image: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "refused twice over on NULL arguments, for BOTH permitted roles — a NULL " +
+      "image id resolves to no group at all, and the no-such-row arm answers " +
+      "42501 deliberately rather than distinguishing itself from someone " +
+      "else's row. Positive paths, for both roles: session-images.test.ts.",
+  },
+  // The check-only half of removal (00224). It mutates nothing and answers one
+  // question — may this caller remove this photo? — and it exists because the
+  // route deletes the storage OBJECT before the row, on the service-role client:
+  // an admin client must never act for a caller whose authorization has not been
+  // proved, and object-first is what makes a failed removal visible and
+  // retryable. Role-gated like the pair above rather than self-scoping: its
+  // first statement is the same guard primitive, and the group half of the gate
+  // is resolved from the photo's own session row, not from auth.uid() alone.
+  assert_can_delete_session_image: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "byte for byte the delete RPC's gate above, so it is refused the same way " +
+      "on NULL arguments and for BOTH permitted roles — a NULL image id " +
+      "resolves to no group, and the no-such-row arm answers 42501 rather than " +
+      "distinguishing itself from someone else's row, which is what keeps it " +
+      "from being an oracle for real photo ids. Positive paths, for both " +
+      "roles: session-images.test.ts.",
   },
   set_group_notes: {
     permittedRoles: ["gedu", "admin"],
@@ -400,7 +491,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   location_search_blob: {
     scopeTest: "tests/db/search-fold-agreement.test.ts",
-    why: "folds the strings it is handed into one delimited blob, reads nothing; reachable because the locations.search_blob generated column evaluates it under the writing role's privileges, so an admin creating a venue needs it",
+    why: "folds the strings it is handed into one delimited blob, reads nothing; reachable because the locations.search_blob generated column evaluates it under the writing role's privileges, so an admin creating a site needs it",
   },
 };
 
@@ -478,6 +569,13 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   ["gedu_profiles", "certified"],
   ["gedu_profiles", "certified_at"],
   ["gedu_profiles", "certified_by"],
+  // The criminal record check gates nothing, but it is an admin's statement
+  // about the person whose row it sits on — writable, it would let an educator
+  // certify their own background check to whoever reads the queue. Its audit
+  // pair is stamped server-side by set_gedu_criminal_record_check.
+  ["gedu_profiles", "criminal_record_check_passed"],
+  ["gedu_profiles", "criminal_record_check_at"],
+  ["gedu_profiles", "criminal_record_check_by"],
   // Enrollment state — a writable status is a free seat.
   ["participations", "status"],
   ["participations", "customer_id"],

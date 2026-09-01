@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { consentRefusalError } from "@/services/participations/consent-refusal";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import {
   DEFAULT_LOCALE,
@@ -68,7 +69,8 @@ export const POST = defineRoute({
 
   // The RPC's refusals are written for the parent to read — "registration has
   // not yet opened", "product is not accepting signups" — and the shop renders
-  // them verbatim beside the signup button.
+  // them verbatim beside the signup button. The consent refusal is the one
+  // exception and is swapped for a code below, before it can be disclosed.
   discloseErrorMessages:
     "create_participation's messages are the user-facing explanation of a refused signup, and the shop surface renders them as-is",
 
@@ -205,10 +207,21 @@ export const POST = defineRoute({
         p_customer_id: user.id,
         p_purchase_shape: purchaseShape,
         p_currency: currency,
+        // The enrolment conditions the parent ticked. Passed straight through
+        // and never checked here: `record_required_consents` inside the RPC is
+        // what compares them against the product's requirement set, under the
+        // same product-gate lock as every other signup rule, and it refuses
+        // with a check violation naming what is missing. Doing it here as well
+        // would put a second copy of the rule outside the lock, where it could
+        // read a requirement set that changed a moment later.
+        p_consented_documents: body.consentedDocuments,
       },
     );
 
-    if (rpcErr) throw rpcErr;
+    // Every refusal but one travels on to be disclosed verbatim. The consent
+    // refusal is swapped for a generic message and a code the panel can act on
+    // — see `consent-refusal.ts` for why this one is not the parent's to read.
+    if (rpcErr) throw consentRefusalError(rpcErr) ?? rpcErr;
 
     const rpcParsed = createParticipationRpcResult.safeParse(rpcResult);
     if (!rpcParsed.success) {
@@ -242,13 +255,16 @@ export const POST = defineRoute({
       // to fire and forget: the helper swallows its own failures and cannot
       // throw, so a Brevo outage never surfaces as an unhandled rejection.
       //
-      // **Both no-charge outcomes send the same mail.** A municipality
-      // registration is invoiced to the school off-platform, so from the
-      // family's side it is the free case exactly — nothing to pay, nothing to
-      // manage, a seat that is already theirs — and `free` is the mode that
-      // says so. Owner decision; a distinct `external` mode was considered and
-      // turned down as copy that would differ from this one only in ways a
-      // parent has no use for.
+      // **The two no-charge outcomes send different mails.** They used to send
+      // the same one — a municipality registration is invoiced off-platform, so
+      // from our till it is the free case exactly — and that reasoning stopped
+      // at our till. Most municipalities carry the whole cost, but some ask
+      // families for a small fee of their own, which the municipality has
+      // already told them about; our "Free" then contradicts something the
+      // reader knows, and a confirmation mail is a bad place to be corrected by
+      // your own council. `external` names who bears the cost and stops there:
+      // what the municipality then asks of a family is not ours to state, and
+      // how we settle up with the municipality is not theirs to read.
       after(
         sendProductConfirmationEmail({
           client: admin,
@@ -256,7 +272,7 @@ export const POST = defineRoute({
           customerId: user.id,
           participantId,
           productId,
-          mode: "free",
+          mode: rpcJson.kind === "external_active" ? "external" : "free",
         }),
       );
 

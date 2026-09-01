@@ -416,9 +416,12 @@ export function useDeleteGroup(productId: string) {
 
 /**
  * Admin comp-enrollment mutation — drops a participant (a child, or an adult on
- * a for-parents product) directly into a product (status='active',
- * group_id=NULL). Invalidates the product's groups snapshot so the new chip
- * appears in the Unassigned card. Kept as a plain mutation: it doesn't go
+ * a for-parents product) directly into a product (status='active'). The seat's
+ * group is the enrollment RPC's decision, not this mutation's: a product that
+ * charges nothing and has exactly one group seats them in it, everything else
+ * lands group_id=NULL. So the invalidated snapshot is also how the caller finds
+ * out where the chip went — it may appear in a group column rather than in the
+ * Unassigned card. Kept as a plain mutation: it doesn't go
  * through apply_group_changes (enrollment lifecycle, not group structure) and
  * the picker lacks the full participation row to optimistically insert, so it
  * just refetches on success.
@@ -501,6 +504,57 @@ export function usePromoteFromWaitlist(productId: string) {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
     },
     onSettled: () => {
+      invalidateGroupChange(queryClient, key);
+    },
+  });
+}
+
+/**
+ * Offer a waitlisted family the seat that opened.
+ *
+ * **No optimistic patch, deliberately.** Every other action in this panel moves
+ * a chip, and an optimistic patch is what keeps the chip from jumping; this one
+ * moves nothing — it stamps a column and sends a mail — so the only thing to
+ * show is the stamp itself, and the only honest source of that is the server
+ * (the RPC returns the instant it actually wrote, which is what the emailed
+ * deadline is signed over). Inventing a client-side "now" here would draw a
+ * deadline a minute or two away from the one in the family's inbox.
+ *
+ * **It greys no chip, and `useGroupPending` deliberately classifies it into
+ * nothing.** The key sits under `groupMutationBase` like every other action
+ * here, so the registry's filter selects it — but there is no branch for it,
+ * because greying a chip is how this panel says "this person is going
+ * somewhere" and an invite moves nobody. The in-flight state belongs to the
+ * row's own Invite button, which holds itself committed from the click until
+ * the control is replaced.
+ *
+ * Settling through `invalidateGroupChange` so the dashboard's attention queue —
+ * which now subtracts live offers from a product's open seats — stops nagging
+ * about a seat that has just been offered.
+ */
+export function useSendSeatOffer(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new GroupsService(getClient());
+  const key = groupsKeys.byProduct(productId);
+
+  return useMutation({
+    mutationKey: [...groupMutationBase(productId), "seatOffer"],
+    // The invalidation is awaited INSIDE the mutation rather than left to
+    // onSettled, which is `destructiveSettle`'s trick above applied to a
+    // different consumer. There it keeps a mutation `pending` so an element
+    // stays greyed; here nothing greys and what depends on the timing is the
+    // PROMISE this hook hands back. The row's Invite button clears its
+    // committed state when that promise settles, so resolving in onSettled —
+    // the moment the write returns, before the snapshot carrying the new stamp
+    // has landed — would re-enable the button for the frame or two before the
+    // control it belongs to is replaced.
+    mutationFn: async ({ participationId }: { participationId: string }) => {
+      await service.sendSeatOffer(productId, participationId);
+      await invalidateGroupChange(queryClient, key);
+    },
+    // The offer did not go out — reconcile with server truth so the row shows
+    // whatever it really has, and let the control come back.
+    onError: () => {
       invalidateGroupChange(queryClient, key);
     },
   });

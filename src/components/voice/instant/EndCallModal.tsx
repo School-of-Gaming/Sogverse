@@ -27,9 +27,10 @@ interface EndCallModalProps {
  *
  * For guests this is a simple "Leave call" confirmation. For moderators it
  * adds an "End for everyone" option that destroys the Daily room and
- * disconnects all participants. The destructive option is intentionally
- * the secondary button so a fast click on the primary leaves only the
- * moderator instead of taking down the whole call.
+ * disconnects all participants. That option is the row's destructive middle
+ * action — the footer runs Cancel, End for everyone, Leave — so a fast click
+ * on the affirmative leaves only the moderator instead of taking down the
+ * whole call.
  */
 export function EndCallModal({
   open,

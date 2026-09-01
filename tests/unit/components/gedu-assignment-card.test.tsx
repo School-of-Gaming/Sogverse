@@ -23,7 +23,7 @@ import type { GeduAssignmentCardData } from "@/components/gedu/GeduAssignmentsSe
  * stretches — so a card that is short by a line or two is invisible until it is
  * the one alone on the last row, which is precisely where an ended club was
  * turning up looking clipped. Every state therefore renders the same three rows,
- * and the footer holds the Join's height whether it contains a button, a venue,
+ * and the footer holds the Join's height whether it contains a button, a site,
  * an end date or nothing at all.
  *
  * Rendered to static markup: none of that depends on an effect, and the
@@ -126,7 +126,7 @@ describe("every card is the same height whatever its footer holds", () => {
     expect(html).not.toContain(messages.voiceButton.joinVoice);
   });
 
-  it("names the venue on an in-person product, with no Join anywhere", () => {
+  it("names the site on an in-person product, with no Join anywhere", () => {
     const html = cardHtml(onsiteCard);
     expect(html).toContain(onsiteCard.assignment.siteName!);
     expect(html).not.toContain(messages.voiceButton.joinVoice);
