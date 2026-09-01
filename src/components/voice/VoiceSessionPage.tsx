@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { GamerNoteDialog } from "@/components/member-flair";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
 import { VoiceRoom } from "@/components/voice/VoiceRoom";
+import { GroupSessionChat } from "@/components/voice/GroupSessionChat";
 import { VoiceMemberFlairProvider } from "@/components/voice/VoiceMemberFlairProvider";
 import { deriveVoiceMemberFlair } from "@/components/voice/derive-voice-member-flair";
 import {
@@ -181,7 +182,17 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
   return (
     <>
       <VoiceMemberFlairProvider value={flair}>
-        <VoiceRoom onLeave={handleLeave} leaveLabel={t('leave')} />
+        <VoiceRoom
+          onLeave={handleLeave}
+          leaveLabel={t('leave')}
+          // The live chat, in the height the room grants it. This page is the
+          // seam for chat exactly as it is for the staff overlay: the room and
+          // everything in it are pure consumers, so the channel, the history
+          // read and the subscription belong out here beside the token.
+          chat={(heightClassName) => (
+            <GroupSessionChat groupId={groupId} heightClassName={heightClassName} />
+          )}
+        />
       </VoiceMemberFlairProvider>
 
       {/* Outside the provider's subtree and mounted by the page, exactly as the

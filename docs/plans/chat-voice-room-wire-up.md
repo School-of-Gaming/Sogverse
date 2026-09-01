@@ -554,6 +554,28 @@ only — push the branch to exercise them. Each migration is pushed and types re
    contract honoured in the room layout, the voice preview scenes' fixture-driven
    chat slot. Old `ChatPanel`/hook/keys deleted; the voice provider contract sheds
    its chat fields; instant rooms render no chat.
+   *Landed. Five judgment calls departed from the wording above, and are
+   recorded here rather than rediscovered:*
+   - **The typing payload carries an account id and nothing else, as a repeating
+     ping with a short expiry** — not a name plus a boolean. The name a bubble
+     draws comes from the roster, so an ungated broadcast cannot put a chosen
+     name in front of a room of children; and an expiring ping needs no "stopped
+     writing" message, so a client that closes mid-sentence heals itself.
+   - **The viewer's own typing is detected by an `input`-capture listener on the
+     container's wrapper**, because the chat components take no typing handler
+     and giving them one would be the first crack in the transport-free
+     contract. It covers the in-place editor for free.
+   - **The locked refusal drops the echo instead of drawing a retry-less failed
+     bubble.** The shared delivery note always offers retry on `failed`, and
+     widening it is not a budgeted component change; nobody else ever saw the
+     message, and the composer's own lock notice is what explains where it went.
+   - **The send mutation writes the settled row into the history cache instead
+     of invalidating it** (every other write invalidates). The RPC answers with
+     the server `created_at`, the one field the echo could not know, so the
+     alternative was a 200-row refetch to learn a row already in hand.
+   - Image drafts from the composer are dropped in the container, with a comment,
+     until step 5 gives them somewhere to go.
+
 5. **Images**: the private bucket + storage policy migration, the composer staging's
    normalize pass, `sharp` as a dependency (+ `serverExternalPackages`) with the
    shared re-encode helper wired into the new chat upload route **and** the

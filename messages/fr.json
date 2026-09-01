@@ -2397,12 +2397,6 @@
       "fuchsia": "Fuchsia",
       "pink": "Rose"
     },
-    "chat": {
-      "title": "Chat",
-      "placeholder": "Écrivez un message…",
-      "send": "Envoyer",
-      "empty": "Aucun message pour l’instant"
-    },
     "instant": {
       "joinFailed": "Impossible de rejoindre la salle. Veuillez réessayer.",
       "share": {
@@ -3750,6 +3744,7 @@
   "chat": {
     "log": "Messages du chat",
     "empty": "Rien n’a encore été dit.",
+    "unavailable": "Le chat n’est pas disponible pour le moment.",
     "unread": "{count, plural, one {# nouveau message} other {# nouveaux messages}}",
     "jumpToLatest": "Aller au message le plus récent",
     "composer": {

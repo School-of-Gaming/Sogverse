@@ -50,6 +50,27 @@ import { CHAT_REACTION_CODES } from "@/lib/constants/chat";
  */
 export const CHAT_LOCKED_SQLSTATE = "P0024";
 
+/**
+ * Whether a rejected write was refused by a lock.
+ *
+ * Lives beside the code rather than in the service, because it is the same wire
+ * fact seen from the caller's side: PostgREST hands the SQLSTATE back on the
+ * error object's `code` field, and every client that has to tell this refusal
+ * apart asks the question exactly once, here.
+ *
+ * A thrown value is `unknown` at the boundary, so the guard narrows rather than
+ * asserting — a network failure and a Postgres refusal both arrive as
+ * exceptions, and only one of them carries a code.
+ */
+export function isChatLockedError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === CHAT_LOCKED_SQLSTATE
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Vocabulary
 // ---------------------------------------------------------------------------

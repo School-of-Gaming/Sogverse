@@ -2397,12 +2397,6 @@
       "fuchsia": "Fuksia",
       "pink": "Pinkki"
     },
-    "chat": {
-      "title": "Keskustelu",
-      "placeholder": "Kirjoita viesti…",
-      "send": "Lähetä",
-      "empty": "Ei vielä viestejä"
-    },
     "instant": {
       "joinFailed": "Huoneeseen liittyminen epäonnistui. Yritä uudelleen.",
       "share": {
@@ -3750,6 +3744,7 @@
   "chat": {
     "log": "Keskusteluviestit",
     "empty": "Täällä ei ole vielä sanottu mitään.",
+    "unavailable": "Chat ei ole juuri nyt käytettävissä.",
     "unread": "{count, plural, one {# uusi viesti} other {# uutta viestiä}}",
     "jumpToLatest": "Siirry uusimpaan viestiin",
     "composer": {

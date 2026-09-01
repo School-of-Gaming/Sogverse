@@ -2441,12 +2441,6 @@
       "fuchsia": "pIQqu’",
       "pink": "pIQ"
     },
-    "chat": {
-      "title": "ja’chuq",
-      "placeholder": "QIn yIghItlh…",
-      "send": "yIngeH",
-      "empty": "QIn tu’lu’be’"
-    },
     "instant": {
       "joinFailed": "Daq muv Dabe’lu’. yItoH’egh!",
       "share": {
@@ -2904,6 +2898,7 @@
   "chat": {
     "log": "ja’chuq QInmey",
     "empty": "not jatlhlu’.",
+    "unavailable": "DaH ja’chuq poSbe’.",
     "unread": "{count, plural, one {# QIn chu’} other {# QInmey chu’}}",
     "jumpToLatest": "QIn Qav yIghoS",
     "composer": {

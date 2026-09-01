@@ -3083,12 +3083,6 @@
       "fuchsia": "Fuchsia",
       "pink": "Pink"
     },
-    "chat": {
-      "title": "Chat",
-      "placeholder": "Type a message…",
-      "send": "Send",
-      "empty": "No messages yet"
-    },
     "instant": {
       "joinFailed": "Couldn’t join the room. Please try again.",
       "share": {
@@ -3750,6 +3744,7 @@
   "chat": {
     "log": "Chat messages",
     "empty": "Nothing said yet.",
+    "unavailable": "Chat is unavailable right now.",
     "unread": "{count, plural, one {# new message} other {# new messages}}",
     "jumpToLatest": "Jump to the newest message",
     "composer": {

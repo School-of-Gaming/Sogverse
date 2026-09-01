@@ -2397,12 +2397,6 @@
       "fuchsia": "Fuchsia",
       "pink": "Rosa"
     },
-    "chat": {
-      "title": "Chatt",
-      "placeholder": "Skriv ett meddelande…",
-      "send": "Skicka",
-      "empty": "Inga meddelanden än"
-    },
     "instant": {
       "joinFailed": "Kunde inte gå med i rummet. Försök igen.",
       "share": {
@@ -3750,6 +3744,7 @@
   "chat": {
     "log": "Chattmeddelanden",
     "empty": "Inget sagt än.",
+    "unavailable": "Chatten är inte tillgänglig just nu.",
     "unread": "{count, plural, one {# nytt meddelande} other {# nya meddelanden}}",
     "jumpToLatest": "Hoppa till det senaste meddelandet",
     "composer": {
