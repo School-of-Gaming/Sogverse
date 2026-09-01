@@ -496,6 +496,41 @@ Owner direction (2026-08-31), added during implementation:
       deviation from the Guidebook's calm-ring prescription and must be logged in
       `docs/brand-guidebook-deviations.md` in the wiring change.** Slide drops.
 
+28. **Walkthrough rulings, fourth batch** (owner, 2026-09-01):
+    - **The selection state is RULED: brand edge + neutral lift** (`border-primary
+      bg-accent`) — "I like the 'Brand edge, neutral lift'. We can move forward
+      with that." This settles the strength axis's third tier (Act and Label were
+      already ruled great) — **the strength-axis slide drops fully settled** —
+      and binds the 22 selection-ground call sites at wiring: the `/5` wash is
+      replaced by the accent lift under the full-value edge everywhere.
+    - **The trophy is RULED, and with a cleaner doctrine than the proposed art
+      exemption: the sprite's gold is a trophy's gold, not the brand's amber.**
+      "It shouldn't need an exception because it shouldn't be using brand colors.
+      It's art." So artwork never references brand tokens at all — the wiring
+      change decouples the pixel-art palette from `--primary` into the sprite's
+      own hex constants (which may *look* gold; they are the artwork's colours).
+      Scope clarification this settles: the shading rule governs UI uses of the
+      brand tokens; artwork carries its own palette and is outside it.
+    - **Edges: the owner sees no difference between the three edge treatments at
+      rest or at hover** — confirming the /40 edges do no brand work. Session
+      recommendation, posed for confirmation (not yet ruled): at rest the brand
+      edges go **neutral** (`border-border`); hover feedback goes **full-value**
+      (`border-primary` on hover — visible, and compliant because full value is
+      an authored brand value) so a hover actually reads.
+    - **The gradient's problem is named: the wash, not the gradient** — "I would
+      be more ok with the gradient if it didn't wash out our brand color." Next
+      round's candidates are full-value gradients that travel only **between
+      authored brand values** (e.g. glow-strong → glow-soft as a gradient border
+      or leading strip on the live card) — vibrant, on-grammar for liveness, and
+      compliant because no pixel leaves the authored palette's line.
+    - **"You are here" fact-check answered:** the amber active *fill* exists on
+      exactly one surface — the admin sidebar (`navItemsByRole` defines items for
+      admin only; no other role renders a sidebar nav). The header's nav marks
+      the active link with amber *text* (`text-primary` vs muted) at label
+      strength on every role and public pages — the same you-are-here question
+      one strength quieter, flagged for the owner to say whether the ruling
+      follows there or the text treatment stays.
+
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
 around, so the map in **Problem** and step 6's consumer list both shrink:

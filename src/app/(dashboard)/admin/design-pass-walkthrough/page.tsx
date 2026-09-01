@@ -3,9 +3,7 @@
 import {
   AudioLines,
   CalendarClock,
-  Check,
   ChevronRight,
-  CircleCheck,
   Joystick,
   LayoutDashboard,
   Radio,
@@ -14,7 +12,6 @@ import {
   Users,
 } from "lucide-react";
 import { ENROLLMENT_TONES } from "@/components/family/enrollment-tones";
-import { TROPHY_CUP } from "@/components/admin/dashboard/pixel-art";
 import { cn } from "@/lib/utils";
 
 /**
@@ -33,8 +30,9 @@ import { cn } from "@/lib/utils";
  * same shape over and over: one hue carrying several meanings, several hues
  * carrying one meaning, and no vocabulary at all for *how loud* a colour is
  * being spoken. Almost all of that is now ruled and dropped. What is left is
- * five open questions — the selection treatment, the trophy, the edge, the
- * gradient and the active nav item — and a hub of pages to sign off.
+ * three open questions — the edge, the gradient and the active nav mark — and
+ * a hub of pages to sign off. Five slides: the palette for context, the
+ * shading rule, "you are here", the scene hub and the recap.
  *
  * **A settled slide is dropped, and a comment is left where it stood.** The
  * deck shrinks as the review proceeds, so what is on screen is always what is
@@ -57,10 +55,10 @@ import { cn } from "@/lib/utils";
  * asking seeing what you are proposing. I need to see violations of the rule and
  * what you suggest as the replacement"). A generic square standing in for a
  * class of violation reads as an invention; the app's own row, chip or card with
- * its own copy reads as the defect it is. **The trophy was the last abstract
- * exhibit and is now real too** (owner, on the abstract cells: "it loses its
- * color. But maybe I need to see it in something real") — the sprite draws from
- * the exported `TROPHY_CUP` rows inside the real all-clear card.
+ * its own copy reads as the defect it is. Every surviving exhibit is drawn on
+ * the construct it governs: the browse card and its price chip for the edge,
+ * the live enrollment card for the gradient, the admin sidebar and the header
+ * strip for the active mark.
  *
  * **Every draft is drawn on the settled type.** The typography rulings landed
  * first: Press Start 2P is out of the product and every site it held is re-set
@@ -81,14 +79,10 @@ import { cn } from "@/lib/utils";
  * sample names the file they came from, so a reader can tell a quotation from a
  * live read.
  *
- * **One home per comparison.** The selection question now lives on the strength
- * slide, because it *is* that axis's third tier and the owner rejected both of
- * its drawn forms in one breath; the shading slide keeps only a pointer.
- *
- * **`--accent` is a neutral token** — `0 0% 13%`, zero saturation — which is
- * what makes a `bg-accent` lift a legal answer under the shading rule: the ban
- * is on brand colours mixed off their authored values, and a grey is not a
- * brand colour.
+ * **One home per comparison.** "You are here" now carries both of its
+ * strengths — the sidebar's fill and the header's text — because they are one
+ * question asked twice, and the shading slide keeps the edge and the gradient,
+ * which are both questions about how a brand value may be mixed.
  *
  * **The home page is not in this deck** (owner ruling, 2026-09-01): it is parked
  * into its own dedicated pass. Product-type colours are out of scope and the
@@ -106,7 +100,6 @@ import { cn } from "@/lib/utils";
 
 const SLIDES = [
   { id: "palette-today", title: "The palette today" },
-  { id: "strength", title: "The strength axis" },
   { id: "shading", title: "The shading rule" },
   { id: "you-are-here", title: '"You are here" is not "act"' },
   { id: "scenes", title: "The pages, in their scenes" },
@@ -148,8 +141,10 @@ function Caption({ children }: { children: React.ReactNode }) {
 function Ruling({ children }: { children: React.ReactNode }) {
   // No wash: bg-primary/5 was this card's ground until the shading ruling
   // bound tint grounds at card scale — the deck compiles with its own rule.
-  // The /40 edge stays pending the still-open edge scope call, which is drawn
-  // one slide down on the app's own constructs.
+  // The /40 edge stays until the edge question is confirmed; it is exactly the
+  // value the shading slide's rest comparison is asking about, so leaving it
+  // here is the deck showing the thing it is asking about rather than
+  // pre-empting the answer.
   return (
     <div className="space-y-1.5 rounded-lg border border-primary/40 bg-card px-4 py-3">
       <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
@@ -330,120 +325,57 @@ const BRAND_SWATCHES: readonly { label: string; hex: string; className: string }
  */
 
 /* ------------------------------------------------------------------ */
-/*  Slide 2 — the strength axis                                        */
+/*  Dropped — the strength axis                                        */
 /* ------------------------------------------------------------------ */
 
 /**
- * **The doctrine's missing dimension.** The grammar says which family a surface
- * reaches for; nothing until now said how *loudly* it may speak. Three
- * strengths, and deliberately only three: a solid fill is the loudest thing a
- * colour can be and is spent on the thing you are asked to *do*; a chip with
- * coloured text is a label, read but not clicked; the third tier marks the one
- * item among several that is currently chosen. Glow is the family drawn here
- * because it is the one the ensemble rule says we hear least.
+ * **RULED 2026-09-01, all three tiers — the slide drops fully settled.**
  *
- * **Two of the three tiers are ruled** (owner, 2026-09-01): Act and Label are
- * "great" as drawn. The Label tier's ground moved with the same batch's chip
- * ruling — a tinted brand ground becomes the neutral `bg-muted` under
- * full-value family ink — so it is drawn here in its ruled form rather than the
- * tinted one it was proposed in.
+ *   - **Act** — a solid fill at full value, spent on the thing the reader is
+ *     asked to *do*. Ruled "great" as drawn.
+ *   - **Label** — a chip that is read but not clicked: the neutral `bg-muted`
+ *     ground under full-value family ink, which is the form the chip ruling
+ *     gave it (a tinted brand ground is no longer available to any chip).
+ *     Ruled "great" as drawn.
+ *   - **Selection** — the one item among several that is currently chosen:
+ *     **`border-primary bg-accent`**, a brand edge with a neutral lift. "I like
+ *     the 'Brand edge, neutral lift'. We can move forward with that." The
+ *     thicker-edge and leading-bar candidates are dead with it.
  *
- * **The third tier is the batch's real design problem, and it has now been
- * rejected in both of its drawn forms.** The tint ground it was first proposed
- * with fell to the shading ruling; the solid-edge-only correction that replaced
- * it fell to the owner the next round — "the very thing you are engaging with
- * loses its color after you've selected it" — and the shading slide's
- * `bg-transparent` twin fell with it: "aside from the checkbox itself there is
- * no way to highlight that this whole box has been selected."
+ * **The selection ruling binds the 22 selection-ground call sites at wiring**:
+ * every `bg-primary/5` selected ground becomes `bg-accent` under a full-value
+ * `border-primary`. That is the whole of what the census's selection row asked,
+ * and it closes the last of the shading rule's five classes.
  *
- * So a selected row has to read *selected as a whole* and stay vibrant, without
- * a shaded brand ground. All three candidates below hold the brand at full
- * value and take their lift, where they take one, from a **neutral** token —
- * `--accent` is `0 0% 13%`, zero saturation, so the tint ban does not reach it.
+ * **Why the lift is legal under the shading rule:** `--accent` is `0 0% 13%`,
+ * zero saturation. The ban is on brand colours mixed off their authored values,
+ * and a grey is not a brand colour — so a neutral lift under a full-value brand
+ * edge leaves every brand pixel on its authored line.
  *
- * The row is the real one: `ui/checkbox-row.tsx`'s container, at the
- * registration form's own consent sentence and hint. Its shipped checked state
- * is `border-primary bg-primary/5`, which is one of the 22 census violations.
- *
- * **The app-as-shipped amber row is dropped from this slide.** It argued that
- * one amber was doing three jobs at one strength, and the axis it argued for is
- * now agreed; its third cell — the `bg-primary/5` selection ground — survives
- * as the "as shipped" column below, which is the only part still under
- * decision. The nav job it also quoted is the next slide, drawn on the real
- * sidebar.
+ * The two rejected forms are recorded because they are the reason the ruled one
+ * looks as it does: a tinted brand ground fell to the shading ruling, and the
+ * edge-only correction that replaced it fell to the owner the round after —
+ * "the very thing you are engaging with loses its color after you've selected
+ * it", and its `bg-transparent` twin with it: "aside from the checkbox itself
+ * there is no way to highlight that this whole box has been selected."
  */
-const STRENGTH_SHAPE =
-  "inline-flex h-9 items-center justify-center rounded-md px-4";
-
-/** The ruled CTA type (Poppins 16px / 600) every draft step is set in. */
-const STRENGTH_TYPE_RULED = "text-base font-semibold";
-
-const STRENGTH_STEPS: readonly {
-  word: string;
-  sample: string;
-  className: string;
-  note: string;
-}[] = [
-  {
-    word: "Act",
-    sample: "Join the club",
-    className: "bg-yty-glow-strong text-background",
-    note: "ruled · ink on the fill 6.63:1",
-  },
-  {
-    word: "Label",
-    sample: "Achievement",
-    className: "bg-muted text-yty-glow-soft",
-    note: "ruled · neutral ground under family ink, 7.14:1",
-  },
-];
-
-/**
- * The consent row's checked container, three ways. Each is drawn beside an
- * untouched unchecked row (`border-input`, the component's own), because the
- * question is not whether a treatment looks good on its own — it is whether
- * selected and not-selected read apart at a glance in a stack of rows.
- *
- * Class strings are literal because Tailwind scans source text.
- */
-const SELECTION_CANDIDATES: readonly {
-  label: string;
-  checkedClass: string;
-  note: string;
-}[] = [
-  {
-    label: "As shipped — the bound violation",
-    checkedClass: "border-primary bg-primary/5",
-    note: "border-primary bg-primary/5 · the wash composites to #252119",
-  },
-  {
-    label: "Brand edge, neutral lift",
-    checkedClass: "border-primary bg-accent",
-    note: "border-primary bg-accent · body on the lift 13.75:1",
-  },
-  {
-    label: "Thicker brand edge",
-    checkedClass: "border-2 border-primary bg-transparent",
-    note: "border-2 border-primary · no ground at all",
-  },
-  {
-    label: "Leading brand bar, neutral lift",
-    checkedClass: "border-input border-l-4 border-l-primary bg-accent",
-    note: "border-l-4 border-l-primary bg-accent · normal edge elsewhere",
-  },
-];
 
 /* ------------------------------------------------------------------ */
-/*  Slide 3 — the shading rule                                         */
+/*  Slide 2 — the shading rule                                         */
 /* ------------------------------------------------------------------ */
 
 /**
  * **The principle, owner 2026-09-01: if the brand colours are darkened or
  * shaded past strong or soft, they are no longer our brand colours.** The
- * strength axis above says how loudly a family may speak; this says that
- * loudness is chosen from the values the brand actually fixes, not mixed on the
- * way to the screen. A slash-alpha class is a mix: `bg-primary/10` is not amber
- * at ten percent, it is whatever amber and the ground behind it average out to.
+ * strength axis said how loudly a family may speak; this says that loudness is
+ * chosen from the values the brand actually fixes, not mixed on the way to the
+ * screen. A slash-alpha class is a mix: `bg-primary/10` is not amber at ten
+ * percent, it is whatever amber and the ground behind it average out to.
+ *
+ * **The rule governs UI uses of the brand tokens, and stops there** (owner,
+ * 2026-09-01, ruling the trophy). Artwork carries its own palette and sits
+ * outside the rule entirely — not as an exemption from it, but because artwork
+ * should never have been reaching for a brand token in the first place.
  *
  * **The census is a command, not a list.** Regenerate it with
  * `rg -n "(hover:|focus:|group-hover:|active:)?(text|bg|border|from|to|via|ring)-primary/[0-9]+" src`
@@ -458,7 +390,7 @@ const SELECTION_CANDIDATES: readonly {
  *   - **Tinted label chips** — bound; `bg-primary/20 text-primary` becomes
  *     **`bg-muted text-primary`**. Six shipped sites (status chips, avatar
  *     initials, counts), plus the lifecycle ladder's completed rung and the
- *     strength axis's Label tier, which is redrawn above in its ruled form.
+ *     strength axis's Label tier.
  *   - **Washed grounds under full-value ink** — bound; `bg-primary/10` becomes
  *     `bg-muted`, edge and ink unchanged. Nine sites. The chip-scale icon-accent
  *     tile (`border-yty-<family>-strong/30 bg-yty-<family>-strong/10` under a
@@ -468,9 +400,10 @@ const SELECTION_CANDIDATES: readonly {
  *     and the hover affordance becomes a **non-colour** one — a shadow or a
  *     ring, implementer's call at wiring, since the recipe is one line and the
  *     choice does not want a per-surface decision.
- *   - **Selection grounds** — rejected in both forms and moved *up* to the
- *     strength axis, where it is that axis's third tier. One home per
- *     comparison; the 22 call sites follow whatever is picked there.
+ *   - **Selection grounds** — bound, and now ruled with the strength axis:
+ *     `bg-primary/5` under a selected row becomes the neutral `bg-accent` lift
+ *     beneath a full-value `border-primary`. All 22 call sites follow. See the
+ *     dropped strength axis's comment.
  *
  * The two sanctioned keeps stand throughout: the home hero band and the
  * closing-CTA wash.
@@ -492,68 +425,67 @@ const SELECTION_CANDIDATES: readonly {
 const BUTTON_SHAPE =
   "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-base font-semibold transition-colors";
 
+/* ------------------------------------------------------------------ */
+/*  Dropped from slide 2 — the all-clear trophy                        */
+/* ------------------------------------------------------------------ */
+
 /**
- * **The trophy, in something real** (owner: "it loses its color. But maybe I
- * need to see it in something real").
+ * **RULED 2026-09-01, and with a cleaner doctrine than the art exemption the
+ * exhibit posed.** "It shouldn't need an exception because it shouldn't be
+ * using brand colors. It's art."
  *
- * The sprite's rows come from the exported `TROPHY_CUP`, so the artwork here
- * cannot drift from the artwork the admin dashboard draws. Only the *shade*
- * glyph's class varies, which is the whole of what is being ruled — the cup's
- * full-value pixels stay `bg-primary` and its base stays `bg-muted-foreground`
- * in all three. It is drawn through a local cell renderer rather than through
- * `PixelSprite` because that component's colour map is a module constant with
- * no way in; one renderer for all three is what keeps the three cells
- * comparable.
+ * So the sprite's gold is a **trophy's** gold, not the brand's amber. The
+ * exhibit had asked which of three shades the cup's shadow pixels should take,
+ * on the assumption that the artwork was entitled to reach for `--primary` and
+ * merely had to reach for it legally. The ruling refuses the premise.
  *
- * The card around it is the real all-clear panel — the wordmark title, the
- * in-fiction line, the cup, the check — re-set in the ruled Poppins, since
- * Press Start 2P is retired.
+ * **Wiring action:** decouple the pixel-art palette from `--primary`
+ * altogether. The sprite gets its own hex constants — which may well *look*
+ * gold; they are the artwork's colours, authored for the artwork, and they move
+ * only when someone redraws the art. No token reference survives in the
+ * pixel-art colour map, so there is nothing left for a future palette change to
+ * drag the trophy along with, and nothing for the shading census to flag.
  *
- * The candidate resolution to pose beside the two corrections: **pixel art is
- * artwork, not a UI surface**, so it takes an art exemption the way a photograph
- * does, and the shipped cell is what the exemption ships. The third cell is the
- * other answer — a correction that keeps the colour by reaching for a second
- * brand family at full value instead of mixing the first one down.
+ * **Scope this settles, and it is wider than one sprite:** the shading rule
+ * governs **UI uses of the brand tokens**. Artwork — pixel art, illustration, a
+ * photograph — carries its own palette and is outside the rule, not exempted
+ * from it. An exemption would have implied artwork is entitled to brand tokens
+ * and is being forgiven for how it mixes them; it is not entitled to them at
+ * all.
  */
-const TROPHY_SHADES: readonly {
-  label: string;
-  shade: string;
-  note: string;
-}[] = [
-  {
-    label: "As shipped — and what an art exemption keeps",
-    shade: "bg-primary/55",
-    note: "bg-primary/55 · composites to #95690c, 3.57:1 on the card",
-  },
-  {
-    label: "The rejected correction",
-    shade: "bg-muted-foreground",
-    note: "bg-muted-foreground · #a6a6a6, 7.15:1 — the same grey as the base row",
-  },
-  {
-    label: "A different correction — a second family, full value",
-    shade: "bg-yty-valor-strong",
-    note: "bg-yty-valor-strong · #FD700D, 6.22:1, nothing mixed",
-  },
-];
 
 /**
  * **Low-alpha edges and hover edge-lifts, merged into one choice** (owner, of
  * both classes: "I didn't even know these borders had color. It's so subtle I
  * don't even see it").
  *
- * They were two rows asking the same question about the same value, so they are
- * one exhibit now: the browse card's "Free" price chip at rest, and the browse
- * card itself drawn *at* its hover value, under three edge treatments. Drawing
- * the hover state statically is deliberate — a state you pass through cannot be
+ * **The owner saw no difference between any of the three, at rest or at hover**
+ * — which is the finding, not a failure of the exhibit: an edge nobody can see
+ * as a brand colour was never doing brand work.
+ *
+ * **The session's recommendation, drawn rather than argued, and posed for
+ * confirmation.** It splits the two states rather than ruling one value for
+ * both, because they want opposite things. At **rest** the edge is furniture: a
+ * card sitting quietly in a grid does not need to be spending the brand, so the
+ * brand edges go **neutral** (`border-border`). At **hover** the edge is
+ * feedback, and feedback that cannot be seen is not feedback, so it goes to
+ * **full value** (`border-primary`) — which is also the compliant answer,
+ * because full value is an authored brand value and nothing is mixed.
+ *
+ * Two exhibits, because there are two questions. The rest comparison keeps all
+ * three treatments on the chip and the card, so the recommendation is chosen
+ * from the same field the owner already looked at. The hover pair is only two:
+ * the shipped /40 lift beside the recommended full-value edge, both drawn
+ * statically *at* their hover value — a state you pass through cannot be
  * compared in passing.
  *
  * Chips quote `public/products/status-chip.tsx` (the `primary` outline tone at
  * `md`); the card quotes `public/products/browse-card-shell.tsx`'s openable
  * feedback. Ink is held constant at `text-primary` in every column, so the only
- * thing changing is the edge.
+ * thing changing is the edge. The rest column drops the hover shadow, which is
+ * what makes it the rest state.
  */
-const EDGE_TREATMENTS: readonly {
+const EDGE_REST: readonly {
   label: string;
   chip: string;
   card: string;
@@ -562,73 +494,100 @@ const EDGE_TREATMENTS: readonly {
   {
     label: "As shipped — the /40 brand edge",
     chip: "border-primary/40 text-primary",
-    card: "border-primary/40 shadow-lg",
+    card: "border-primary/40",
     note: "composites to #745310 · 2.48:1 against the card",
   },
   {
     label: "Full-value brand edge",
     chip: "border-primary text-primary",
-    card: "border-primary shadow-lg",
+    card: "border-primary",
     note: "#FAA901 · 8.90:1 against the card",
   },
   {
-    label: "Neutral edge",
+    label: "Neutral edge — recommended at rest",
     chip: "border-border text-primary",
-    card: "border-border shadow-lg",
-    note: "#333333 · 1.38:1 — the hover is then the shadow alone",
+    card: "border-border",
+    note: "#333333 · the card stops spending the brand on furniture",
+  },
+];
+
+const EDGE_HOVER: readonly {
+  label: string;
+  card: string;
+  note: string;
+}[] = [
+  {
+    label: "As shipped — the /40 lift",
+    card: "border-primary/40 shadow-lg",
+    note: "#745310 · 2.48:1 — the lift the owner could not see",
+  },
+  {
+    label: "Full value — recommended at hover",
+    card: "border-primary shadow-lg",
+    note: "#FAA901 · 8.90:1 — visible, and nothing mixed",
   },
 ];
 
 /**
- * **The gradient wash may be the one exception** (owner: "a gradient on card,
- * for example the product card in My SOG, gives it wanted attention beyond what
- * only the Live label provides. Either you keep the gradient or you come up with
- * ideas that keep the vibrancy without violating a shading rule").
+ * **The defect is the wash, not the gradient** (owner, 2026-09-01: "I would be
+ * more ok with the gradient if it didn't wash out our brand color"). That
+ * names the problem precisely enough to redraw the row: a gradient is not a
+ * violation of the shading rule *as a construct* — it is a violation when its
+ * endpoints are not brand values. The shipped one fades `primary/5` to
+ * `transparent`, so every pixel of it is amber mixed down toward the card.
  *
- * So this row stops being a violation-and-replacement pair and becomes a
- * three-way choice on the real live enrollment card. The complaint being tested
- * is *loss of attention*, which means a candidate that reads flat loses the
- * argument by rendering rather than by anything written here.
+ * So the candidates below are **full-value** gradients: each one travels
+ * strictly between two authored brand values, with no alpha, no transparent
+ * endpoint and no dark endpoint anywhere in the ramp. A gradient that only
+ * interpolates between authored colours never leaves the palette — every pixel
+ * of it is a colour the brand fixes, or a point on the straight line between
+ * two of them.
+ *
+ * **Glow is the family, because the card's state is live and liveness is
+ * glow** (already ruled). Strong to soft is the pair, so the ramp runs
+ * `#1AB061 → #6AC66B`.
+ *
+ * Both candidates keep the **ruled** `bg-muted` Live chip — the chip ruling
+ * landed, so a tinted brand ground is no longer available to it — and both are
+ * built on the same faithful live enrollment card as the reference, so the only
+ * thing differing across the three is where the brand is spent.
  *
  * The shipped gradient is read live from `family/enrollment-tones.ts` rather
- * than restated. The Live chip is drawn in its **ruled** form in the first two
- * candidates — the chip ruling landed this batch, so a tinted brand ground is no
- * longer available to it — and the third spends its vibrancy differently: a
- * solid glow fill on the chip, and the approved chip-scale icon-accent tile
- * carrying the family on a wholly neutral card.
+ * than restated, and is kept as the reference labelled with the objection it
+ * drew.
  */
 const LIVE_CARD_CANDIDATES: readonly {
   label: string;
+  frame: string | null;
   shell: string;
-  badge: string;
-  tile: string | null;
+  strip: string | null;
   note: string;
 }[] = [
   {
-    label: "The gradient kept",
+    label: "As shipped — the wash the owner objected to",
+    frame: null,
     shell: ENROLLMENT_TONES.current.live,
-    badge: "border-yty-glow-strong bg-muted text-yty-glow-soft",
-    tile: null,
-    note: `${ENROLLMENT_TONES.current.live} · would become a named sanctioned class, like the hero band`,
+    strip: null,
+    note: `${ENROLLMENT_TONES.current.live} · amber mixed down to /5, then to transparent`,
   },
   {
-    label: "Solid edge + leading accent strip",
-    shell: "border-primary border-l-4 border-l-primary",
-    badge: "border-yty-glow-strong bg-muted text-yty-glow-soft",
-    tile: null,
-    note: "border-primary border-l-4 border-l-primary · neutral card ground",
+    label: "Gradient border — glow strong to soft",
+    frame: "bg-gradient-to-r from-yty-glow-strong to-yty-glow-soft p-[2px]",
+    shell: "border-transparent",
+    strip: null,
+    note: "#1AB061 → #6AC66B · a 2px frame, neutral card ground inside it",
   },
   {
-    label: "Accent tile + solid glow chip",
+    label: "Leading strip — glow strong to soft",
+    frame: null,
     shell: "border-border",
-    badge: "border-yty-glow-strong bg-yty-glow-strong text-background",
-    tile: "border-yty-glow-strong/30 bg-yty-glow-strong/10 text-yty-glow-soft",
-    note: "the approved icon-accent tile · ink on the glow fill 6.63:1",
+    strip: "bg-gradient-to-b from-yty-glow-strong to-yty-glow-soft",
+    note: "#1AB061 → #6AC66B · a 4px edge down the card, neutral ground",
   },
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Slide 4 — "you are here" is not "act"                              */
+/*  Slide 3 — "you are here" is not "act"                              */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -657,7 +616,17 @@ const LIVE_CARD_CANDIDATES: readonly {
  * replacement — the app's own ink at fill weight — so choosing it here spends no
  * new vocabulary.
  *
- * Classes restated from the sidebar, which is a client module.
+ * **Where else this treatment shows** (the owner's fact-check, now answered and
+ * drawn). The amber *fill* exists on exactly one surface: the admin sidebar.
+ * `navItemsByRole` in `layout/sidebar.tsx` is keyed by role and only `admin`
+ * has entries, so no other role renders a sidebar nav at all. But the same
+ * question is asked one strength quieter on every page in the product,
+ * signed in or out — the header's nav marks the active link in amber *text*
+ * against muted, which is the label tier rather than the fill tier of the same
+ * "you are here" idea. So it gets the second exhibit below, and its own line in
+ * the ruling: the sidebar's answer does not automatically bind it.
+ *
+ * Classes restated from the sidebar and the header, which are client modules.
  */
 const SIDEBAR_ITEMS: readonly { label: string; icon: React.ReactNode }[] = [
   { label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -684,6 +653,57 @@ const NAV_TREATMENTS: readonly {
     label: "Inverted fill",
     active: "bg-foreground text-background",
     note: "ink on the app's own ink · 16.00:1",
+  },
+];
+
+/**
+ * The header's own nav strip — the same "you are here" question at label
+ * strength. Two links, which is the whole nav: the storefront is a single Shop
+ * entry and the row is deliberately capped at two, because a measured third
+ * link overflowed the 360px floor in every locale but English.
+ *
+ * `HEADER_NAV_SHAPE` restates `NAV_LINK_CLASS` from `layout/header.tsx` with
+ * two deliberate edits, so the sample is a quotation a reader can check rather
+ * than one they have to trust:
+ *
+ *   - the **weight is lifted out**, because the alternative changes it. A
+ *     neutral mark at label strength has only two dimensions to work with and
+ *     `text-foreground` alone against `text-muted-foreground` is a thinner
+ *     signal than amber was; the honest way to show that is to let the
+ *     candidate spend weight and say so, not to hold weight constant and let
+ *     the neutral lose a comparison it was never given the tools for. Each
+ *     treatment therefore supplies both halves of both states.
+ *   - `hover:text-primary` is **dropped**, because nothing here is hovered and
+ *     a hover rule in a static sample is a class that can never fire. It is
+ *     unaffected either way: the hover is feedback, and feedback keeps the
+ *     brand under the edge recommendation one slide up.
+ */
+const HEADER_NAV_SHAPE =
+  "inline-flex min-h-11 items-center whitespace-nowrap rounded-md px-2 text-sm transition-colors";
+
+/** The header's two links, in order, at the `en` labels. */
+const HEADER_NAV_LINKS = ["About", "Shop"] as const;
+
+/** The link the sample marks as current. */
+const HEADER_NAV_ACTIVE_LABEL = "About";
+
+const HEADER_NAV_TREATMENTS: readonly {
+  label: string;
+  active: string;
+  inactive: string;
+  note: string;
+}[] = [
+  {
+    label: "Today — amber text",
+    active: "font-medium text-primary",
+    inactive: "font-medium text-muted-foreground",
+    note: "text-primary vs text-muted-foreground · the act colour, on a link you cannot take",
+  },
+  {
+    label: "Neutral-emphatic text",
+    active: "font-semibold text-foreground",
+    inactive: "font-medium text-muted-foreground",
+    note: "text-foreground font-semibold vs text-muted-foreground font-medium · colour and weight, no brand spent",
   },
 ];
 
@@ -966,123 +986,6 @@ const NAV_TREATMENTS: readonly {
 /*  Small shapes the exhibits are built from                           */
 /* ------------------------------------------------------------------ */
 
-/** A strength sample with the one word it is an example of underneath it. */
-function StrengthCell({
-  word,
-  sample,
-  className,
-  note,
-}: {
-  word: string;
-  sample: string;
-  className: string;
-  note: string;
-}) {
-  return (
-    <div className="w-48 space-y-2">
-      <span className={cn(STRENGTH_SHAPE, STRENGTH_TYPE_RULED, className)}>
-        {sample}
-      </span>
-      <div className="text-sm font-semibold text-foreground">{word}</div>
-      <Annotation>{note}</Annotation>
-    </div>
-  );
-}
-
-/**
- * The real consent row — `ui/checkbox-row.tsx`'s container, box, sentence column
- * and info-toned hint, at the registration form's own copy. The container class
- * is the only thing a caller varies, because it is the only thing under
- * decision.
- */
-function ConsentRow({
-  checked,
-  containerClass,
-}: {
-  checked: boolean;
-  containerClass: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex w-72 items-start gap-3 rounded-md border p-3 text-sm",
-        containerClass,
-      )}
-    >
-      <span
-        className={cn(
-          "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border",
-          checked
-            ? "border-primary bg-primary text-primary-foreground"
-            : "border-input",
-        )}
-      >
-        {checked ? <Check className="h-3 w-3" strokeWidth={3} aria-hidden /> : null}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-foreground">
-          School of Gaming may send me news and offers by email.
-        </span>
-        <span className="mt-1 block text-xs text-info">
-          Optional — you can change this anytime in your settings.
-        </span>
-      </span>
-    </div>
-  );
-}
-
-/**
- * The trophy cup, drawn from the exported artwork with one glyph's colour under
- * decision. `cell` is the screen size of one art pixel: the card draws it at the
- * shipped 3px, and the magnified copy beneath at 7px, because a 27x30 sprite is
- * not a size anybody can judge a colour at.
- */
-function TrophySprite({ shade, cell }: { shade: string; cell: string }) {
-  return (
-    <div className="flex shrink-0 flex-col" aria-hidden>
-      {TROPHY_CUP.rows.map((row, y) => (
-        <div key={y} className="flex">
-          {[...row].map((glyph, x) => (
-            <span
-              key={x}
-              className={cn(
-                cell,
-                glyph === "P" && "bg-primary",
-                glyph === "p" && shade,
-                glyph === "f" && "bg-muted-foreground",
-              )}
-            />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/**
- * The admin dashboard's all-clear panel, at its real composition and copy, with
- * the title re-set in the ruled Poppins. The sprite inside it is at the shipped
- * 3px; the magnified copy sits beneath the card.
- */
-function AllClearSample({ shade }: { shade: string }) {
-  return (
-    <div className="w-full max-w-sm rounded-lg border bg-card text-card-foreground shadow-sm">
-      <div className="flex flex-row flex-wrap items-center justify-between gap-x-6 gap-y-3 p-6">
-        <h3 className="text-base font-semibold leading-none text-primary">
-          All clear
-        </h3>
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
-          <p className="text-sm text-muted-foreground">
-            Sogverse is at peace. You may rest now, admin adventurer.
-          </p>
-          <TrophySprite shade={shade} cell="h-[3px] w-[3px]" />
-          <CircleCheck className="h-5 w-5 shrink-0 text-success" aria-hidden />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /** The browse card's free-price chip — `StatusChip` at tone primary, size md. */
 function FreeChip({ className }: { className: string }) {
   return (
@@ -1097,7 +1000,11 @@ function FreeChip({ className }: { className: string }) {
   );
 }
 
-/** A public browse card, drawn statically at its hover value. */
+/**
+ * A public browse card. The caller supplies the edge, and the hover exhibit
+ * also supplies the `shadow-lg` — drawing the hover statically, because a state
+ * you pass through cannot be compared in passing.
+ */
 function BrowseCard({ className }: { className: string }) {
   return (
     <div className={cn("w-64 space-y-2 rounded-lg border bg-card p-4", className)}>
@@ -1119,52 +1026,61 @@ function BrowseCard({ className }: { className: string }) {
 /**
  * The live enrollment card from My SOG, at the real card's rows — type eyebrow,
  * product name, Live badge and chevron in the corner cluster, the schedule line,
- * and the Join at the foot. Only the shell, the badge and the optional leading
- * tile vary; everything else is constant, so the three candidates differ in
- * exactly the thing being ruled.
+ * and the Join at the foot. The Live chip is held constant in its **ruled**
+ * form (`bg-muted` under full-value glow ink), so the three candidates differ
+ * in exactly the thing under decision: where the brand is spent on the card
+ * itself.
+ *
+ * Three parts vary, and each is one candidate's whole answer:
+ *
+ *   - **`shell`** — the card's own edge. The reference passes the shipped wash
+ *     here, which is a `bg-gradient` class and therefore also its ground.
+ *   - **`frame`** — the gradient-border wrapper. The classic technique: a
+ *     padded element carrying the gradient as its *background*, with the opaque
+ *     card sitting inside it, so the only gradient pixels visible are the ring
+ *     of padding around the card. The wrapper owns the width and the radius;
+ *     the card takes `rounded-[inherit]` so the inner corner follows the outer
+ *     one, and `border-transparent` so its own border does not paint over the
+ *     frame.
+ *   - **`strip`** — a 4px full-value bar down the left edge, absolutely
+ *     positioned inside the card's own `overflow-hidden` box so it takes the
+ *     card's corner radius rather than sticking out square.
  */
 function LiveEnrollmentCard({
+  frame,
   shell,
-  badge,
-  tile,
+  strip,
 }: {
+  frame: string | null;
   shell: string;
-  badge: string;
-  tile: string | null;
+  strip: string | null;
 }) {
-  return (
+  const card = (
     <div
-      className={cn("w-72 overflow-hidden rounded-lg border bg-card", shell)}
+      className={cn(
+        "relative overflow-hidden border bg-card",
+        frame === null ? "w-72 rounded-lg" : "rounded-[inherit]",
+        shell,
+      )}
     >
+      {strip === null ? null : (
+        <span
+          className={cn("absolute inset-y-0 left-0 w-1", strip)}
+          aria-hidden
+        />
+      )}
       <div className="flex flex-col gap-4 p-5">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-start gap-3">
-            {tile === null ? null : (
-              <span
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border",
-                  tile,
-                )}
-              >
-                <AudioLines className="h-5 w-5" aria-hidden />
-              </span>
-            )}
-            <div className="min-w-0 space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Club
-              </p>
-              <p className="text-lg font-semibold leading-tight">
-                Explorers Club
-              </p>
-            </div>
+          <div className="min-w-0 space-y-1">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Club
+            </p>
+            <p className="text-lg font-semibold leading-tight">
+              Explorers Club
+            </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full border px-2 py-0 text-[10px] font-semibold uppercase tracking-wide",
-                badge,
-              )}
-            >
+            <span className="inline-flex items-center gap-1 rounded-full border border-yty-glow-strong bg-muted px-2 py-0 text-[10px] font-semibold uppercase tracking-wide text-yty-glow-soft">
               <Radio className="h-3 w-3" aria-hidden />
               Live
             </span>
@@ -1195,6 +1111,10 @@ function LiveEnrollmentCard({
       </div>
     </div>
   );
+
+  if (frame === null) return card;
+
+  return <div className={cn("w-72 rounded-lg", frame)}>{card}</div>;
 }
 
 /**
@@ -1218,6 +1138,37 @@ function SidebarSample({ active }: { active: string }) {
           <span className="overflow-hidden text-ellipsis">{item.label}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * The header's nav strip — the two links in their real order and shape, on the
+ * header's own sticky ground, with the account chrome to their right left out
+ * because none of it is under decision.
+ */
+function HeaderNavSample({
+  active,
+  inactive,
+}: {
+  active: string;
+  inactive: string;
+}) {
+  return (
+    <div className="flex h-16 w-72 items-center justify-end border-b bg-background px-4">
+      <div className="-ml-2 flex items-center gap-2">
+        {HEADER_NAV_LINKS.map((label) => (
+          <span
+            key={label}
+            className={cn(
+              HEADER_NAV_SHAPE,
+              label === HEADER_NAV_ACTIVE_LABEL ? active : inactive,
+            )}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1312,72 +1263,26 @@ export default function DesignPassWalkthroughPage() {
           narrows to the world. See the comment at the constants' old
           position. */}
 
+      {/* Dropped — the strength axis. RULED on all three tiers: Act is the
+          solid fill, Label is bg-muted under full-value family ink, and
+          Selection is border-primary bg-accent ("I like the 'Brand edge,
+          neutral lift'. We can move forward with that"), which binds the 22
+          selection-ground call sites at wiring. See the comment at the
+          constants' old position. */}
+
       {/* ----------------------------------------------------------- 2 */}
-      <Slide id="strength">
-        <div className="space-y-3">
-          <Marker>Two tiers, ruled</Marker>
-          <div className="flex flex-wrap gap-6">
-            {STRENGTH_STEPS.map((step) => (
-              <StrengthCell key={step.word} {...step} />
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <Marker>The third tier — selection, and the 22 call sites</Marker>
-          <div className="flex flex-wrap gap-6">
-            {SELECTION_CANDIDATES.map((candidate) => (
-              <div key={candidate.label} className="space-y-2">
-                <Marker>{candidate.label}</Marker>
-                <ConsentRow checked containerClass={candidate.checkedClass} />
-                <ConsentRow checked={false} containerClass="border-input" />
-                <Annotation>{candidate.note}</Annotation>
-              </div>
-            ))}
-          </div>
-        </div>
-        <Caption>
-          Each candidate sits above an untouched unchecked row, because the
-          question is whether the whole box reads as chosen — not whether the
-          checkbox does.
-        </Caption>
-
-        <Ruling>
-          <p>
-            Act and Label are ruled great; Label&rsquo;s ground is redrawn on
-            the chip ruling.
-          </p>
-          <p>
-            Pick the selection treatment — it binds this axis&rsquo;s third tier
-            and all 22 selection grounds. (recommended: brand edge + neutral
-            lift)
-          </p>
-        </Ruling>
-      </Slide>
-
-      {/* ----------------------------------------------------------- 3 */}
       <Slide id="shading">
-        <div className="space-y-3">
-          <Marker>The admin all-clear trophy — the real sprite</Marker>
-          <div className="flex flex-wrap gap-8">
-            {TROPHY_SHADES.map((variant) => (
-              <div
-                key={variant.label}
-                className="w-full max-w-sm space-y-3"
-              >
-                <Marker>{variant.label}</Marker>
-                <AllClearSample shade={variant.shade} />
-                <TrophySprite shade={variant.shade} cell="h-[7px] w-[7px]" />
-                <Annotation>{variant.note}</Annotation>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Dropped from this slide — the all-clear trophy. RULED with a cleaner
+            doctrine than the art exemption: "It shouldn't need an exception
+            because it shouldn't be using brand colors. It's art." The sprite's
+            gold is a trophy's gold, so wiring decouples the pixel-art palette
+            from --primary into the sprite's own hex constants. See the comment
+            at the constants' old position. */}
 
         <div className="space-y-3">
-          <Marker>Brand edges — at rest, and at hover</Marker>
+          <Marker>Brand edges at rest</Marker>
           <div className="flex flex-wrap gap-8">
-            {EDGE_TREATMENTS.map((treatment) => (
+            {EDGE_REST.map((treatment) => (
               <div key={treatment.label} className="space-y-3">
                 <Marker>{treatment.label}</Marker>
                 <FreeChip className={treatment.chip} />
@@ -1386,74 +1291,111 @@ export default function DesignPassWalkthroughPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="space-y-3">
+          <Marker>The same card at hover</Marker>
+          <div className="flex flex-wrap gap-8">
+            {EDGE_HOVER.map((treatment) => (
+              <div key={treatment.label} className="space-y-3">
+                <Marker>{treatment.label}</Marker>
+                <BrowseCard className={treatment.card} />
+                <Annotation>{treatment.note}</Annotation>
+              </div>
+            ))}
+          </div>
           <Caption>
-            An edge nobody can see as brand colour was never doing brand work.
+            An edge nobody can see as brand colour was never doing brand work —
+            but a hover has to be seen to be feedback.
           </Caption>
         </div>
 
         <div className="space-y-3">
-          <Marker>The live card — the gradient, or vibrancy without it</Marker>
+          <Marker>The live card — the gradient, at full value</Marker>
           <div className="flex flex-wrap gap-8">
             {LIVE_CARD_CANDIDATES.map((candidate) => (
               <div key={candidate.label} className="w-72 space-y-3">
                 <Marker>{candidate.label}</Marker>
                 <LiveEnrollmentCard
+                  frame={candidate.frame}
                   shell={candidate.shell}
-                  badge={candidate.badge}
-                  tile={candidate.tile}
+                  strip={candidate.strip}
                 />
                 <Annotation>{candidate.note}</Annotation>
               </div>
             ))}
           </div>
+          <Caption>
+            A gradient that travels only between authored values never leaves
+            the palette.
+          </Caption>
         </div>
 
         <Ruling>
           <p>
-            Closed this batch: dimmed brand ink, tinted label chips
+            Closed: dimmed brand ink, tinted label chips
             (&rarr;&nbsp;<code>bg-muted</code>), washed grounds
-            (&rarr;&nbsp;<code>bg-muted</code>), and hover darkening (the primary
-            fill stops darkening; the affordance goes non-colour).
+            (&rarr;&nbsp;<code>bg-muted</code>), hover darkening (the primary
+            fill stops darkening; the affordance goes non-colour), selection
+            grounds (&rarr;&nbsp;<code>border-primary bg-accent</code>) and the
+            trophy (artwork gets its own hexes, not brand tokens).
           </p>
           <p>
-            The trophy — art exemption (pixel art is artwork, like a photo), or
-            one of the two corrections.
+            The edge — confirm the recommendation, neutral at rest and
+            full-value at hover, or name a different split.
           </p>
           <p>
-            The edge — full-value brand, or neutral. Ruling neutral retires the
-            brand edge everywhere it is currently spoken at low alpha.
-          </p>
-          <p>
-            The live card — keep the gradient as a named sanctioned class, or
-            name the alternative.
-          </p>
-          <p>
-            Selection grounds moved up to the strength axis, where the third
-            tier lives.
+            The live card — keep the wash as a sanctioned class, or the gradient
+            border, or the leading strip.
           </p>
         </Ruling>
       </Slide>
 
-      {/* ----------------------------------------------------------- 4 */}
+      {/* ----------------------------------------------------------- 3 */}
       <Slide id="you-are-here">
-        <div className="flex flex-wrap gap-8">
-          {NAV_TREATMENTS.map((treatment) => (
-            <div key={treatment.label} className="space-y-2">
-              <Marker>{treatment.label}</Marker>
-              <SidebarSample active={treatment.active} />
-              <Annotation>{treatment.note}</Annotation>
-            </div>
-          ))}
+        <div className="space-y-3">
+          <Marker>The admin sidebar — the amber fill&rsquo;s one home</Marker>
+          <div className="flex flex-wrap gap-8">
+            {NAV_TREATMENTS.map((treatment) => (
+              <div key={treatment.label} className="space-y-2">
+                <Marker>{treatment.label}</Marker>
+                <SidebarSample active={treatment.active} />
+                <Annotation>{treatment.note}</Annotation>
+              </div>
+            ))}
+          </div>
         </div>
+
+        <div className="space-y-3">
+          <Marker>The header — every role, and every public page</Marker>
+          <div className="flex flex-wrap gap-8">
+            {HEADER_NAV_TREATMENTS.map((treatment) => (
+              <div key={treatment.label} className="space-y-2">
+                <Marker>{treatment.label}</Marker>
+                <HeaderNavSample
+                  active={treatment.active}
+                  inactive={treatment.inactive}
+                />
+                <Annotation>{treatment.note}</Annotation>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <Caption>
-          The real sidebar&rsquo;s items, icons, shape and width — only the
-          active item&rsquo;s fill differs.
+          The amber fill exists only on the admin sidebar; the header marks the
+          active link in amber text at label strength on every role and every
+          public page — the same question, one strength quieter.
         </Caption>
 
         <Ruling>
           <p>
-            Confirm the inverted fill from the real composition, or keep
-            today&rsquo;s amber. (recommended: the inverted fill)
+            Confirm the inverted fill for the sidebar, or keep today&rsquo;s
+            amber. (recommended: the inverted fill)
+          </p>
+          <p>
+            Say whether the header&rsquo;s active text follows it — neutral and
+            emphatic — or keeps its amber.
           </p>
         </Ruling>
       </Slide>
@@ -1506,7 +1448,7 @@ export default function DesignPassWalkthroughPage() {
           product page are signed off as pages. See the comment at the
           constants' old position. */}
 
-      {/* ----------------------------------------------------------- 5 */}
+      {/* ----------------------------------------------------------- 4 */}
       <Slide id="scenes">
         <Links>
           <DeckLink href="/preview/parent-dashboard/busy-family">
@@ -1562,24 +1504,20 @@ export default function DesignPassWalkthroughPage() {
           docs/brand-guidebook-deviations.md. See the comment at the constants'
           old position. */}
 
-      {/* ----------------------------------------------------------- 6 */}
+      {/* ----------------------------------------------------------- 5 */}
       <Slide id="recap">
         <ol className="max-w-prose list-decimal space-y-1.5 pl-5 text-sm text-foreground">
           <li>
-            The selection treatment — binds the strength axis&rsquo;s third tier
-            and all 22 selection grounds.
+            The edge — confirm neutral at rest and full-value at hover, or name
+            a different split.
           </li>
           <li>
-            The gradient exception — keep the live card&rsquo;s wash as a
-            sanctioned class, or name the alternative.
-          </li>
-          <li>The edge — full-value brand, or neutral.</li>
-          <li>
-            The trophy — art exemption, or one of the two corrections.
+            The gradient — the wash kept as a sanctioned class, the gradient
+            border, or the leading strip.
           </li>
           <li>
-            &ldquo;You are here&rdquo; — confirm the inverted fill from the real
-            sidebar.
+            &ldquo;You are here&rdquo; — confirm the inverted fill for the
+            sidebar, and say whether the header&rsquo;s active text follows.
           </li>
           <li>
             The pages, from their scenes — My SOG, the family product page, the
