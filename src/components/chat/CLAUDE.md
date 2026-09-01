@@ -423,6 +423,15 @@ writing is detected by an input-capture listener wrapped *around* this surface �
 components take no typing handler, and giving them one would be the first crack in the
 transport-free contract.
 
+**Rule: there is no rate limiting on this surface — backend or UI — by decision** *(owner,
+2026-09-01)*. A hostile-but-authenticated client can spam sends, reaction toggles and
+image uploads up to whatever the moderator lock and account removal catch; the lock is
+the per-person control that was asked for, and it is immediate. This is a decision, not
+an oversight — do not add a limiter as a drive-by hardening. If real usage ever shows
+abuse the lock cannot handle, the repo's shipped shape to follow is
+advisory-lock-then-count (a plain count is bypassed by parallel requests), with the
+window sized so a full image burst plus its text cannot refuse itself.
+
 **Rule: a stored picture is read through one storage policy, and that policy is the whole
 boundary.** The bucket is private, an object's name is its message row's id, and the
 bytes are served by the authenticated read route (`GET /api/chat/images/[id]`), which
