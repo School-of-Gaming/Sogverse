@@ -679,7 +679,7 @@ function WrongCountryOverlay({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="flex items-start gap-3 rounded-md border border-info/30 bg-info/10 p-4">
+    <div className="flex items-start gap-3 rounded-md border border-info bg-muted p-4">
       <Globe className="mt-0.5 h-5 w-5 shrink-0 text-info" />
       <p className="text-sm text-foreground">
         {t.rich("regionLock.wrongCountry", {
@@ -729,7 +729,7 @@ function WrongCountryOverlay({
 function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="rounded-md border border-info/40 p-4">
+    <div className="rounded-md border border-info p-4">
       <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
         <MapPin className="h-4 w-4 shrink-0 text-info" />
         {t("regionLock.heading")}
@@ -741,7 +741,7 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
       <button
         type="button"
         onClick={onSetLocation}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-foreground/30 hover:bg-accent hover:text-foreground"
       >
         <MapPin className="h-4 w-4" />
         {t("regionLock.setLocation")}
@@ -806,7 +806,7 @@ function RegionEligibleSection({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="rounded-md border border-info/40 p-4">
+    <div className="rounded-md border border-info p-4">
       <p className="flex items-start gap-2 text-sm text-foreground">
         <MapPinCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" />
         <span>
@@ -965,8 +965,11 @@ function SignupForm(
                           // border against a 1px input border is a thin
                           // distinction. An inset ring doubles the line without
                           // changing the box, so selecting a row cannot nudge
-                          // its own text by a pixel.
-                          "border-primary bg-primary/10 ring-1 ring-inset ring-primary/50"
+                          // its own text by a pixel. Both lines are amber at its
+                          // authored value and the lift is a neutral token —
+                          // brand edge, neutral lift, like every other selected
+                          // row in the app.
+                          "border-primary bg-accent ring-1 ring-inset ring-primary"
                         : "border-input hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
@@ -1029,7 +1032,7 @@ function SignupForm(
             <button
               type="button"
               onClick={props.onAddGamer}
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-foreground/30 hover:bg-accent hover:text-foreground"
             >
               <Plus className="h-4 w-4" />
               {tFamily("addGamer")}

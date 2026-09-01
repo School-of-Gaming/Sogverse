@@ -531,7 +531,10 @@ export function ParentDashboardPageBody({
                 <button
                   type="button"
                   onClick={onAddGamer}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/40 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  // The gray idiom every dashed add affordance wears: the edge
+                  // firms up and a neutral lift comes in behind it, rather than
+                  // an amber edge a phone-first audience would never see.
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/40 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-foreground/30 hover:bg-accent hover:text-foreground focus-visible:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <UserPlus className="h-4 w-4" aria-hidden />
                   {f("addGamer")}

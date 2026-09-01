@@ -508,7 +508,7 @@ function PickRow({
       className={cn(
         "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm",
         selected
-          ? "bg-primary/10 text-primary"
+          ? "bg-muted text-primary"
           : "hover:bg-accent hover:text-accent-foreground",
       )}
     >

@@ -59,9 +59,14 @@ export function ChatReactionRow({
           className={cn(
             "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs leading-none transition-colors",
             "disabled:cursor-default disabled:opacity-60",
+            // Mine reads as selected the way every selection in the app does:
+            // full-value amber on the edge and in the ink, over the same
+            // neutral ground the other pills sit on. The tinted ground it used
+            // to carry was a darkened amber, and matching the neighbours'
+            // ground here keeps the pressed pill from reading as a dip.
             tally.mine
-              ? "border-primary bg-primary/15 text-primary"
-              : "border-border bg-muted text-muted-foreground hover:border-border hover:bg-accent",
+              ? "border-primary bg-muted text-primary"
+              : "border-border bg-muted text-muted-foreground hover:bg-accent",
           )}
         >
           <span aria-hidden className="text-xl leading-none">

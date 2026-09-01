@@ -55,15 +55,11 @@ import type { YtyPalette } from "@/lib/constants/yty";
  * wit-soft on the card is 7.57:1, both against the 4.5:1 body bar. Every glyph
  * clears the 3:1 bar by a wide margin.
  *
- * **The `current` entry is today's rendering, with one deliberate exception.**
- * It holds each class string whole and in its original order so the live path's
- * `className` is byte-for-byte what it was before this map existed — except for
- * the ruled de-tinting of `border-primary/40` to `border-primary`, which is not
- * a draft but a correction: the tint half of the edge question is ruled, and the
- * layer bug that made every coloured border invisible has been fixed on this
- * branch, so this *is* the honest baseline the owner is reviewing for the first
- * time. Whether that edge keeps its colour or goes neutral is the one open
- * question left, and it is answered by browsing the app, not from this file.
+ * **There is no `current` form left.** The entry held today's rendering while
+ * the drafts were under review; every class in it was a shaded brand value the
+ * shading rule bans, so it converts rather than survives as a comparison. All
+ * three keys point at the one ruled set, and the map itself retires when the
+ * palette machinery collapses.
  *
  * Classes are literal strings because Tailwind scans source text.
  *
@@ -81,15 +77,16 @@ export interface EnrollmentDraftTones {
    * card's feedback is written down is this map.
    */
   openable: string;
-  /** The live card's edge, and its wash where it still has one. */
+  /** The live card's edge — transparent, because the ignition ring paints it. */
   live: string;
   /**
    * The ignition ring's gradient, or `null` where the palette paints none.
-   * `null` is also what tells the card not to render the overlay at all, so the
-   * live path's DOM is unchanged rather than gaining an empty span.
+   * `null` is also what tells the card not to render the overlay at all. No
+   * palette answers `null` any more; the slot stays nullable until the palette
+   * machinery collapses.
    */
   liveRing: string | null;
-  /** The awaiting-placement card's edge, and its wash where it still has one. */
+  /** The awaiting-placement card's edge. */
   awaiting: string;
   /** The Live badge's border, ground and label. */
   liveBadge: string;
@@ -122,15 +119,14 @@ const BRAND_TONES: EnrollmentDraftTones = {
 };
 
 export const ENROLLMENT_TONES: Record<YtyPalette, EnrollmentDraftTones> = {
-  current: {
-    openable: OPENABLE,
-    live: "border-primary bg-gradient-to-r from-primary/5 to-transparent",
-    liveRing: null,
-    awaiting: "border-info/40 bg-gradient-to-r from-info/5 to-transparent",
-    liveBadge:
-      "gap-1 border-success/50 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
-    awaitingGlyph: "mt-0.5 h-4 w-4 shrink-0 text-info",
-  },
+  /**
+   * The ruled form is now the only form. What `current` used to hold — an amber
+   * edge over a `primary/5` fade, an `info/40` edge over an `info/5` fade, and a
+   * `success/10` badge ground — was three shaded brand values, all of which the
+   * shading rule bans; there is no compliant "today" left to compare against, so
+   * every key points at the one ruled set until the palette machinery collapses.
+   */
+  current: BRAND_TONES,
   brand: BRAND_TONES,
   /** Dose is a home-page question; a dashboard card takes the one draft. */
   "brand-lively": BRAND_TONES,

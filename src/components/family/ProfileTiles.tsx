@@ -104,10 +104,17 @@ export function ProfileTile(props: ProfileTileProps) {
     <>
       <div
         className={cn(
-          "relative aspect-square w-full overflow-hidden rounded-lg border-2 ring-offset-2 ring-offset-background transition-[border,box-shadow] duration-150",
+          // The mark is the ring and only the ring: white at four when this is
+          // the profile you are on or pointing at, a neutral two otherwise. The
+          // amber it used to wear was doing you-are-here work that white does
+          // better against a mosaic of coloured identicons, and the /50 rest
+          // ring was that amber mixed toward the page. The `border-2` stays and
+          // stays transparent — a ring draws with box-shadow and moves nothing,
+          // but dropping a border class would move the picture inside it.
+          "relative aspect-square w-full overflow-hidden rounded-lg border-2 border-transparent ring-offset-2 ring-offset-background transition-[box-shadow] duration-150",
           isActive
-            ? "border-transparent ring-4 ring-primary"
-            : "border-border ring-0 ring-primary/50 group-hover:border-transparent group-hover:ring-4 group-focus-visible:border-transparent group-focus-visible:ring-4",
+            ? "ring-4 ring-foreground"
+            : "ring-2 ring-border group-hover:ring-4 group-hover:ring-foreground group-focus-visible:ring-4 group-focus-visible:ring-foreground",
         )}
       >
         <Identicon id={member.id} size={112} />
@@ -174,7 +181,12 @@ export function AddGamerTile({
       )}
       aria-label={t("addGamer")}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/40 transition-colors duration-150 group-hover:border-primary group-hover:bg-primary/5 group-focus-visible:border-primary">
+      {/* The gray idiom every dashed add affordance in the app wears: the edge
+          firms up and a neutral lift comes in behind it. The amber edge and its
+          `primary/5` wash are gone — the wash was a brand hue mixed down into a
+          surface, and the edge was colour spent behind a cursor that a family
+          on a phone never sees. */}
+      <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/40 transition-colors duration-150 group-hover:border-foreground/30 group-hover:bg-accent group-focus-visible:border-foreground/30">
         <div className="absolute inset-0 flex items-center justify-center">
           <Plus
             className={cn(

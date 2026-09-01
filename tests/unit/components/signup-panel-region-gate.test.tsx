@@ -118,15 +118,16 @@ const setLocationButton = (c: HTMLElement) =>
   );
 
 /**
- * The tinted blocks the region-lock surfaces render inside.
+ * The blocks the region-lock surfaces render inside.
  *
- * Matched on the class attribute by substring rather than as a CSS class,
- * because a Tailwind opacity modifier carries a `/` that a class selector would
- * have to escape — and the escaping, not the assertion, is what would break
- * first.
+ * Matched as a whole class token (`~=`) rather than by substring: the edge is
+ * `border-info` at its authored value on all three surfaces, and a substring
+ * match would also catch a hypothetical `border-info-foreground` while a
+ * `.border-info` selector would need escaping the day an opacity modifier came
+ * back.
  */
 const infoBlocks = (c: HTMLElement) => [
-  ...c.querySelectorAll<HTMLElement>('[class*="border-info/"]'),
+  ...c.querySelectorAll<HTMLElement>('[class~="border-info"]'),
 ];
 
 /**
@@ -213,16 +214,18 @@ describe("wrong country", () => {
   it("states it as information, with the country weighted", () => {
     // The treatment is the point of this state, not decoration: a parent who
     // came to buy meets an inert panel, so the one thing left on it has to
-    // read as an answer rather than as a page that failed to load. Info tint
-    // (nothing is wrong and nothing is theirs to fix), and the country — the
-    // single fact they are scanning for — goes through a weighted wrapper.
+    // read as an answer rather than as a page that failed to load. It is the
+    // info family (nothing is wrong and nothing is theirs to fix), carried by a
+    // full-value edge over a neutral fill, and the country — the single fact
+    // they are scanning for — goes through a weighted wrapper.
     //
     // The panel's own type header is weighted too, so the assertion is which
     // weighted element the country landed in rather than that one exists.
     const { container } = render(
       <SignupPanelView {...panel({ regionGate: wrongCountry })} />,
     );
-    expect(container.innerHTML).toContain("bg-info/10");
+    expect(container.innerHTML).toContain("border-info");
+    expect(container.innerHTML).not.toContain("bg-info/");
     const weighted = [...container.querySelectorAll(".font-semibold")].filter(
       (el) => el.textContent.includes("Finland"),
     );
@@ -437,9 +440,10 @@ describe("the info family", () => {
       },
       says: "regionLock.wrongCountry",
       // The loud tier: the refusal replaces the form and is the one thing on
-      // the panel, so it carries the full tinted surface.
-      border: "border-info/30",
-      tinted: true,
+      // the panel, so it is the one of the three that fills its surface. The
+      // fill is a neutral token — a brand hue mixed down into a ground is no
+      // longer that hue, so every surface here says "info" with its edge.
+      filled: true,
     },
     {
       name: "the question",
@@ -451,19 +455,17 @@ describe("the info family", () => {
       // The quiet tier: a section inside a working form carries the family's
       // hue on its border alone (the EnrollmentCard "awaiting" opacity), so
       // the form stays the loudest thing on its own panel.
-      border: "border-info/40",
-      tinted: false,
+      filled: false,
     },
     {
       name: "the confirmation",
       regionGate: eligible,
       says: "regionLock.eligible",
-      border: "border-info/40",
-      tinted: false,
+      filled: false,
     },
   ];
 
-  for (const { name, regionGate, says, border, tinted } of surfaces) {
+  for (const { name, regionGate, says, filled } of surfaces) {
     it(`marks ${name} as information, anchored by an info-coloured glyph`, () => {
       const { container } = render(
         <SignupPanelView {...panel({ regionGate })} />,
@@ -475,9 +477,14 @@ describe("the info family", () => {
       expect(blocks).toHaveLength(1);
       const block = blocks[0];
       expect(block.textContent).toContain(says);
-      expect(block.className).toContain(border);
-      // Volume follows stakes: only the refusal fills its surface.
-      expect(block.className.includes("bg-info/")).toBe(tinted);
+      // One edge value across all three: the family's hue at the value the
+      // palette authors it at, never mixed toward the panel behind it.
+      expect(classTokens(block)).toContain("border-info");
+      // Volume follows stakes: only the refusal fills its surface, and it fills
+      // it with a neutral.
+      expect([...classTokens(block)].includes("bg-muted")).toBe(filled);
+      // No surface carries a shaded version of the family hue anywhere.
+      expect(block.className).not.toMatch(/(bg|border|text)-info\//);
       // One anchor, and in anchor position — see `anchorGlyphs`.
       expect(anchorGlyphs(block)).toHaveLength(1);
       // Never the action colour, never an alarm colour: nothing here has gone
@@ -509,9 +516,7 @@ describe("the info family", () => {
       for (const token of ["rounded-md", "border", "p-4"]) {
         expect(tokens).toContain(token);
       }
-      expect(
-        [...tokens].some((t) => t.startsWith("border-info/")),
-      ).toBe(true);
+      expect(tokens).toContain("border-info");
     }
   });
 

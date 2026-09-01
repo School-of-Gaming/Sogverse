@@ -121,7 +121,7 @@ function ContactList({
               selectedPhone === contact.phone && "bg-muted"
             )}
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-primary">
               {(contact.wa_name ?? contact.phone).slice(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
@@ -192,7 +192,7 @@ function ChatThread({
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium text-primary">
           {(contactName ?? phone).slice(0, 2).toUpperCase()}
         </div>
         <div>

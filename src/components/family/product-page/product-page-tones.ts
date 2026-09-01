@@ -34,10 +34,11 @@ import type { YtyPalette } from "@/lib/constants/yty";
  * shape the doctrine was written for; this page has no booking action, because
  * the family already holds the seat.
  *
- * The `current` entry holds each class string whole and in its original order,
- * so the live path's `className` is byte-for-byte what it was before this map
- * existed. Classes are literal strings because Tailwind scans source text.
- * Retires with the draft, along with every `palette` prop that reads it.
+ * There is no `current` form left: every class it held was a shaded status tint
+ * that the token convergence turned into a shaded *brand* value, so it converts
+ * rather than surviving as a comparison. Classes are literal strings because
+ * Tailwind scans source text. Retires with the draft, along with every `palette`
+ * prop that reads it.
  */
 export interface FamilyProductDraftTones {
   /** The masthead's schedule glyph. */
@@ -70,16 +71,14 @@ const BRAND_TONES: FamilyProductDraftTones = {
 
 export const FAMILY_PRODUCT_TONES: Record<YtyPalette, FamilyProductDraftTones> =
   {
-    current: {
-      scheduleGlyph: "mt-0.5 h-4 w-4 shrink-0 text-muted-foreground",
-      gedusLabel:
-        "text-[11px] font-medium uppercase tracking-wider text-muted-foreground",
-      nextCard: "border-info/50",
-      liveTag: "border-info bg-info/10 text-info",
-      futureTag: "border-info/50 text-info",
-      nextMarker: "bg-info",
-      futureMarker: "bg-info/40",
-    },
+    /**
+     * The ruled form is now the only form. What `current` held — an `info/50`
+     * card edge, an `info/10` tag ground and an `info/40` rail marker — became
+     * three shaded brand values the moment `--info` converged onto wit, and the
+     * shading rule bans all three; the page itself is signed off as drafted, so
+     * there is nothing left for a "today" entry to compare against.
+     */
+    current: BRAND_TONES,
     brand: BRAND_TONES,
     "brand-lively": BRAND_TONES,
   };

@@ -86,7 +86,7 @@ export function SessionCreationsBlock({
     <div
       className={cn(
         "space-y-2 rounded-md border p-2.5",
-        owed ? "border-warning/40 bg-warning/5" : "border-border bg-muted/20",
+        owed ? "border-warning bg-muted" : "border-border bg-muted/20",
       )}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -144,7 +144,7 @@ export function SessionCreationsBlock({
                   has
                     ? "border-transparent bg-muted/40 text-muted-foreground hover:text-foreground"
                     : owed
-                      ? "border-warning bg-warning/15 font-semibold text-warning"
+                      ? "border-warning bg-muted font-semibold text-warning"
                       : "border-border text-foreground hover:bg-muted",
                 )}
               >

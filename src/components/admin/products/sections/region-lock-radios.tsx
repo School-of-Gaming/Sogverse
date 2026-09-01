@@ -83,8 +83,8 @@ export function RegionLockRadios({
             className={cn(
               "flex cursor-pointer items-center gap-3 rounded-md border p-3 text-sm transition-colors",
               selected
-                ? "border-primary bg-primary/5"
-                : "border-input hover:border-foreground/30"
+                ? "border-primary bg-accent"
+                : "border-input hover:bg-accent"
             )}
           >
             <input

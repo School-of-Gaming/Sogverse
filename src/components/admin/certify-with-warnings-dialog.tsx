@@ -87,7 +87,7 @@ function WarningLine({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start gap-2 rounded-md border border-warning/60 bg-warning/10 px-3 py-2.5 text-sm font-medium text-warning">
+    <div className="flex items-start gap-2 rounded-md border border-warning bg-muted px-3 py-2.5 text-sm font-medium text-warning">
       {icon}
       <span>{children}</span>
     </div>

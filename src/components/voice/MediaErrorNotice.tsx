@@ -32,7 +32,7 @@ export function MediaErrorNotice({ category, className }: MediaErrorNoticeProps)
   return (
     <div
       className={cn(
-        "rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive",
+        "rounded-md border border-destructive bg-muted px-3 py-2 text-sm text-destructive",
         className,
       )}
       role="alert"

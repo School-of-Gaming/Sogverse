@@ -17,16 +17,15 @@ interface AboutSectionProps {
 }
 
 /**
- * The mission card's wash. Today it is an amber→violet blend — a two-colour-era
- * construct, and one of the sites the flat default retires — so every brand dose
- * replaces it with a single-hue wash of the drafts' workhorse pink, at the alpha
- * that lands it at roughly the card's own brightness. The live path keeps
- * today's literal, which is what makes this a comparison rather than a change.
+ * The mission card's ground. The amber→violet blend it used to carry was a
+ * card-scale wash of two brand hues, which the shading rule bans: a brand colour
+ * darkened into a surface is no longer that brand colour, and this card is not
+ * one of the two sanctioned home keeps. So the live path's ground is neutral;
+ * every brand dose replaces it with a single-hue wash of the drafts' workhorse
+ * pink, at the alpha that lands it at roughly the card's own brightness.
  */
 function missionCardClass(palette: YtyPalette): string {
-  return palette === "current"
-    ? "bg-gradient-to-r from-primary/5 to-secondary/5"
-    : "bg-yty-harmony-strong/10";
+  return palette === "current" ? "bg-muted" : "bg-yty-harmony-strong/10";
 }
 
 const valueIcons = [Sparkles, Heart, Shield, Users];
@@ -100,6 +99,11 @@ export function AboutSection({ id, palette = "current" }: AboutSectionProps) {
             <Card key={value.key}>
               <CardHeader>
                 <div className="flex items-center gap-4">
+                  {/* Icon medallion: the shading rule's one standing exemption
+                      (owner, 2026-09-01) — a brand colour lighting a glyph at
+                      chip scale, not a colour painted as a card's ground. The
+                      card behind it stays neutral, which is the constraint the
+                      exemption came with. */}
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                     <value.icon className="h-6 w-6 text-primary" />
                   </div>

@@ -257,10 +257,18 @@ Two consequences follow, and they pull in opposite directions if you read them q
   through resolution, so an unresolved `@` in one is a mention of nobody.
 
 **Rule: mentions are the `info` token, everywhere they show** *(owner ruling)* — the chip
-inside the body and the tint-and-ring on a row that names the reader are one colour,
-because they are one concept. Primary stays the surface's own emphasis (a sender's name,
-a quote bar) and, specifically, the **jump flash**: that is the log pointing at where a
-reply landed, not a mention, and it fades.
+inside the body and the ring on a row that names the reader are one colour, because they
+are one concept. Primary stays the surface's own emphasis (a sender's name) and,
+specifically, the **jump flash**: that is the log pointing at where a reply landed, not a
+mention, and it fades.
+
+**Rule: on this surface a colour is carried by ink, a ring or an edge at its authored
+value — never by a ground tinted with it.** A brand hue darkened into a surface is no
+longer that hue, so the mention chip, the mention ring, the jump flash and the pressed
+reaction pill all sit on a neutral ground and say what they are with the colour on top of
+it. The quote bar is the other half of the same doctrine and goes further: a resting edge
+is furniture, so it is neutral, and the sender's name beside it is where the surface's
+amber lives.
 
 **Rule: the character cap counts the *composed* text, so the stored body can run longer —
 and the cap therefore bites *before* resolution, never after.** The send takes the display

@@ -189,6 +189,11 @@ export default function RobloxPage() {
               <Card key={reason.key} className="bg-card/50">
                 <CardHeader>
                   <div className="flex items-center gap-4">
+                    {/* Icon medallion: the shading rule's one standing
+                        exemption (owner, 2026-09-01) — a brand colour lighting a
+                        glyph at chip scale, not a colour painted as a card's
+                        ground. The card behind it stays neutral, which is the
+                        constraint the exemption came with. */}
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                       <reason.icon className="h-5 w-5 text-primary" />
                     </div>

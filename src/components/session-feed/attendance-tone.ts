@@ -46,12 +46,16 @@ export interface AttendanceTone {
 }
 
 export const ATTENDANCE_TONE: Record<AttendanceMarkState, AttendanceTone> = {
-  present: { text: "text-success", border: "border-success/40" },
+  // Full value on the edge, because these chips carry no ground: the edge is
+  // most of the chip's area and is what makes the mark readable at a glance. A
+  // low-alpha edge is a hue mixed toward the page, which is neither the family
+  // colour nor a neutral.
+  present: { text: "text-success", border: "border-success" },
   // Warning, not muted: absent and unmarked sat one shade of grey apart and
   // could not be told apart at a glance (owner ruling, 2026-08-25). Warning is
   // still deliberately short of destructive — an absence is a fact to notice,
   // not a fault to punish, on the family surface as much as the staff ones.
-  absent: { text: "text-warning", border: "border-warning/40" },
+  absent: { text: "text-warning", border: "border-warning" },
   // The state still asking for something, so it is the one that stays faint and
   // keeps a dashed edge instead of settling in beside the answered chips.
   unmarked: {

@@ -6,13 +6,18 @@ const alertVariants = cva(
   "relative flex rounded-lg border text-sm",
   {
     variants: {
+      // A status alert wears its family at full value on the edge and in the
+      // ink, over a neutral ground. The half-alpha edge and the tinted ground it
+      // replaces were the same mistake twice: a hue mixed down toward the page
+      // is no longer that hue, and the edge — the one part of an alert that is
+      // read as "something is wrong here" before a word of it is — was the
+      // faintest thing on the box.
       variant: {
         default: "border-border bg-muted/50 text-foreground",
-        destructive:
-          "border-destructive/50 bg-destructive/10 text-destructive",
-        success: "border-success/50 bg-success/10 text-success",
-        info: "border-info/50 bg-info/10 text-info",
-        warning: "border-warning/50 bg-warning/10 text-warning",
+        destructive: "border-destructive bg-muted text-destructive",
+        success: "border-success bg-muted text-success",
+        info: "border-info bg-muted text-info",
+        warning: "border-warning bg-muted text-warning",
       },
       align: {
         left: "items-start gap-3 p-3",

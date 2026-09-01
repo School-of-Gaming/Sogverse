@@ -20,7 +20,11 @@ const checkboxRowVariants = cva(
         xs: "text-xs",
       },
       checked: {
-        true: "border-primary bg-primary/5",
+        // Brand edge, neutral lift. A shaded brand ground (`bg-primary/5`) is
+        // a darkened brand colour, which is no longer the brand colour; the
+        // lift comes from a neutral token instead and the amber stays at its
+        // authored value on the edge, where it reads as selection.
+        true: "border-primary bg-accent",
         false: "border-input",
       },
       disabled: {

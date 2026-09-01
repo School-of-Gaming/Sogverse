@@ -76,7 +76,7 @@ function AssignedProductRow({
       href={ROUTES.admin.product(productType, productId)}
       className={cn(
         "group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground",
-        needsGroup && "border-warning bg-warning/5",
+        needsGroup && "border-warning bg-muted",
       )}
     >
       <div className="min-w-0">

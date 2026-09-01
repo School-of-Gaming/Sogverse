@@ -126,7 +126,7 @@ export function IdentitySection({
                 className={cn(
                   "inline-flex items-center gap-1 rounded-t-md border-b-2 px-3 py-1.5 text-sm transition-colors",
                   isActive
-                    ? "border-primary bg-primary/5 text-primary"
+                    ? "border-primary bg-accent text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >

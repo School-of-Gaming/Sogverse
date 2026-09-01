@@ -26,7 +26,12 @@ export function ProgrammeCta() {
 
   return (
     <section className="container mx-auto px-4 py-16 sm:py-24">
-      <Card className="mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10">
+      {/* Neutral ground. This card copies the home page's closing CTA, but the
+          amber→violet wash is sanctioned *there* and the exemption list is
+          closed — a brand hue mixed down into a surface is no longer that hue,
+          and the two sanctioned keeps are the hero band and the home closing
+          CTA, both in the home page body. The card's own lift carries it here. */}
+      <Card className="mx-auto max-w-3xl bg-muted">
         <CardContent className="flex flex-col items-center py-12 text-center">
           <h2 className="text-2xl font-semibold sm:text-3xl">{t("heading")}</h2>
           <p className="mt-4 max-w-xl text-muted-foreground">{t("body")}</p>

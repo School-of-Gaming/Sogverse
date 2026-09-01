@@ -301,10 +301,12 @@ export function SessionPhotoStrip({
       }}
       className={cn(
         "rounded-md bg-muted/40 p-3 transition-colors sm:p-3.5",
-        // Tinted and ringed rather than resized: the answer to "will this land
+        // Lifted and ringed rather than resized: the answer to "will this land
         // here" has to be visible without the block growing under a pointer
-        // that is mid-gesture.
-        dragging && "bg-primary/10 ring-2 ring-primary",
+        // that is mid-gesture. The amber is on the ring at its authored value
+        // and the lift is a neutral token — the same brand-edge/neutral-lift
+        // shape every other drop target and selected row in the app wears.
+        dragging && "bg-accent ring-2 ring-primary",
         // Greyed with the rest of the editor while the card commits, because
         // what is on this strip is part of what that Save is carrying.
         disabled && "opacity-60",

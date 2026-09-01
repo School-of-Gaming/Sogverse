@@ -60,14 +60,13 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
                 className={cn(
                   "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
                   state.startMode === option
-                    ? "border-primary bg-primary/5"
+                    ? "border-primary bg-accent"
                     : "border-input",
                   lockStartMode
                     ? "cursor-not-allowed opacity-60"
                     : cn(
                         "cursor-pointer",
-                        state.startMode !== option &&
-                          "hover:border-foreground/30"
+                        state.startMode !== option && "hover:bg-accent"
                       )
                 )}
               >
@@ -171,11 +170,9 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
                       key={option}
                       className={cn(
                         "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
-                        active
-                          ? "border-primary bg-primary/5"
-                          : "border-input",
+                        active ? "border-primary bg-accent" : "border-input",
                         "cursor-pointer",
-                        !active && "hover:border-foreground/30"
+                        !active && "hover:bg-accent"
                       )}
                     >
                       <input

@@ -180,7 +180,7 @@ export function MinecraftPasswordResetCardView({
                     "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-md border px-3 py-2",
                     result.ok
                       ? "border-border bg-muted/30"
-                      : "border-destructive/40 bg-destructive/5",
+                      : "border-destructive bg-muted",
                   )}
                 >
                   {result.ok ? (
@@ -266,7 +266,7 @@ function CopyAllButton({ lines }: { lines: readonly string[] }) {
       variant="outline"
       size="sm"
       onClick={() => void copy(lines.join("\n"))}
-      className={cn("gap-1.5", copied && "border-success/40 text-success")}
+      className={cn("gap-1.5", copied && "border-success text-success")}
     >
       {copied ? (
         <Check className="h-4 w-4" aria-hidden />

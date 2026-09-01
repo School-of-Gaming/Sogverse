@@ -43,7 +43,7 @@ export function InfoCallout({
         "flex items-start gap-2 rounded-md border border-dashed px-3 py-2 text-xs",
         variant === "info"
           ? "border-border bg-muted/30 text-muted-foreground"
-          : "border-primary bg-primary/5 text-foreground"
+          : "border-primary bg-muted text-foreground"
       )}
     >
       <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />

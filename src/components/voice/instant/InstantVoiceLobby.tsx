@@ -253,7 +253,7 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: Inst
             <div className="flex flex-col items-center gap-3">
               <div
                 ref={frameRef}
-                className="relative h-48 w-48 overflow-hidden rounded-2xl border-2 border-border bg-muted ring-1 ring-primary/30 transition-shadow"
+                className="relative h-48 w-48 overflow-hidden rounded-2xl border-2 border-border bg-muted ring-1 ring-border transition-shadow"
               >
                 {/* Always-mounted video; hidden when camera is off so toggling
                     on doesn't have to re-attach `srcObject`. */}
@@ -324,7 +324,7 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: Inst
             )}
 
             {error && (
-              <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div className="rounded-md border border-destructive bg-muted px-3 py-2 text-sm text-destructive">
                 {error}
               </div>
             )}

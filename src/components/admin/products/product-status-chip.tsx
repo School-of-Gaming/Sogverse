@@ -18,7 +18,9 @@ import type { EffectiveProductStatus } from "@/lib/products/effective-status";
  * place looking different from the other.
  */
 const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
-  pending: "bg-primary/20 text-primary",
+  // Neutral ground, full-value ink: a tinted brand ground is a darkened brand
+  // colour, so the amber lives in the label and the lift comes from a neutral.
+  pending: "bg-muted text-primary",
   running: "bg-primary text-primary-foreground",
   completed: "bg-muted text-muted-foreground",
   cancelled: "bg-destructive/20 text-destructive",

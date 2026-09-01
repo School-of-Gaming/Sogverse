@@ -604,8 +604,11 @@ function ProblemNotice({
     <p
       className={cn(
         "mt-5 flex items-start gap-2 rounded-md border px-3 py-2.5 text-sm",
+        // Full-value family edge on a neutral ground — the app's one alert
+        // shape. The edge is what says something is wrong before a word of the
+        // notice is read, so it must not be the faintest mark on the box.
         tone === "destructive"
-          ? "border-destructive/40 bg-destructive/10 text-destructive"
+          ? "border-destructive bg-muted text-destructive"
           : "border-border bg-muted/40 text-muted-foreground",
       )}
     >

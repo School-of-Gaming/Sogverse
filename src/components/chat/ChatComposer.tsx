@@ -288,7 +288,7 @@ export function ChatComposer({
         // box rather than sitting inside it, so the composer's own height
         // never depends on whether somebody is halfway through a name.
         "relative rounded-md border border-border bg-background transition-colors",
-        dragging && "border-primary bg-primary/5",
+        dragging && "border-primary bg-accent",
         className,
       )}
       onDragEnter={() => {

@@ -108,7 +108,11 @@ export function SessionFeedAlertBadge({
     <Badge
       variant="outline"
       className={cn(
-        "gap-1.5 border-warning/50 bg-warning/10 text-warning",
+        // Full-value family edge on a neutral ground — the alert shape the
+        // whole app uses. The edge is what says "something here wants
+        // attention" before a word of the label is read, so it is the last
+        // thing that should have been the faintest mark on the badge.
+        "gap-1.5 border-warning bg-muted text-warning",
         className,
       )}
     >

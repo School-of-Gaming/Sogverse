@@ -407,9 +407,13 @@ function Chip({
       aria-pressed={active}
       className={cn(
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+        // At rest the chip is neutral furniture and hover is the app's neutral
+        // lift; the amber arrives only once the filter is *on*, as a solid fill
+        // at its authored value. A colour that appeared under a cursor would be
+        // vibrancy the phone-first half of this page's audience never sees.
         active
           ? "border-primary bg-primary text-primary-foreground shadow-sm"
-          : "border-input bg-background text-foreground/80 hover:border-primary hover:bg-accent",
+          : "border-input bg-background text-foreground/80 hover:bg-accent",
         className,
       )}
     >

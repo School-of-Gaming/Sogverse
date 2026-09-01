@@ -128,7 +128,7 @@ export function ImagePicker({
         }}
         className={cn(
           "rounded-md border border-input bg-background p-4 transition-colors",
-          dragging && "border-primary bg-primary/5",
+          dragging && "border-primary bg-accent",
         )}
       >
         {/* The one 3:2 frame every product picture is painted in — the same

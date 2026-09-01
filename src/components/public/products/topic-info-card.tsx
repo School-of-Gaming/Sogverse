@@ -64,7 +64,7 @@ export function TopicInfoCard({ topic }: { topic: ProductTopic }) {
 
         <p className="text-sm text-muted-foreground">{p("description")}</p>
 
-        <div className="flex gap-2 rounded-md bg-info/10 px-3 py-2 text-sm text-muted-foreground">
+        <div className="flex gap-2 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-info" />
           <p>{p("note")}</p>
         </div>

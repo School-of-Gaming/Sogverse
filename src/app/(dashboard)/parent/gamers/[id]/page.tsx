@@ -173,13 +173,13 @@ export default function GamerDetailsPage() {
           </div>
 
           {profileSuccess && (
-            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
+            <div className="rounded-md border border-success bg-muted p-3 text-sm text-success">
               {profileSuccess}
             </div>
           )}
 
           {profileError && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-md border border-destructive bg-muted p-3 text-sm text-destructive">
               {profileError}
             </div>
           )}

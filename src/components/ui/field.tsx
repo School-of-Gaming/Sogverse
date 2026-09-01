@@ -2,6 +2,7 @@ import { useId } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 /**
  * The ids a field hands its control, so the control can point at them.
@@ -44,6 +45,11 @@ export interface FieldDescriptors {
  * password?" link) — kept here so those fields stay inside the primitive
  * instead of regrowing a hand-rolled label.
  *
+ * `invalid` marks the field as refused: the label turns red, and the control in
+ * the slot draws its own red edge off the `aria-invalid` the same caller sets on
+ * it. Pass both or neither — a red label over a normal box, or a red box under a
+ * normal label, each says half of what happened.
+ *
  * `icon` puts a glyph at the head of the label, decoratively: it is hidden from
  * assistive technology, because a picture cannot say anything the label text
  * does not already say. It is for a label that has become a *title* — one that
@@ -56,6 +62,7 @@ export function Field({
   icon: Icon,
   htmlFor,
   optional = false,
+  invalid = false,
   hint,
   labelAction,
   children,
@@ -64,6 +71,17 @@ export function Field({
   icon?: LucideIcon;
   htmlFor?: string;
   optional?: boolean;
+  /**
+   * The control inside has been refused. The label turns `text-destructive`;
+   * the red edge on the control itself is the primitive's own, drawn off
+   * `aria-invalid`, which the caller sets on the control in the same breath.
+   *
+   * Two halves rather than one because they answer to different owners: the
+   * edge belongs to whatever control is in the slot (an input, a textarea, a
+   * composite widget), and the label belongs to this wrapper — which cannot see
+   * the control's attributes and must be told.
+   */
+  invalid?: boolean;
   hint?: string;
   labelAction?: React.ReactNode;
   children: React.ReactNode | ((ids: FieldDescriptors) => React.ReactNode);
@@ -83,7 +101,10 @@ export function Field({
         <Label
           id={labelId}
           htmlFor={htmlFor}
-          className={Icon ? "flex items-center gap-1.5" : undefined}
+          className={cn(
+            Icon && "flex items-center gap-1.5",
+            invalid && "text-destructive",
+          )}
         >
           {Icon && <Icon className="h-4 w-4 shrink-0" aria-hidden />}
           <span>

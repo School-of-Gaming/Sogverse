@@ -1,7 +1,5 @@
-import { cn } from "@/lib/utils";
-
 /**
- * The dashboard's pixel sprites, drawn in the page's own colour tokens.
+ * The dashboard's pixel sprites, drawn in the artwork's own palette.
  *
  * **Why a sprite at all.** The all-clear had become the one state on this page
  * with nothing to look at — an icon and a paragraph centred in the space the
@@ -13,10 +11,8 @@ import { cn } from "@/lib/utils";
  *
  * **Drawn here rather than shipped as an asset.** A 9x10 sprite is smaller as
  * markup than as any image file, needs no network round trip on a page whose
- * whole design is that it has no loading state, and — the part that decides it —
- * inherits the palette. An exported PNG would freeze today's gold into a file no
- * token change can reach, so the day `--primary` moves, every surface follows
- * except this one.
+ * whole design is that it has no loading state, and stays editable as a picture
+ * rather than as a binary — a cell moves by editing one character of a string.
  *
  * **Nothing here animates, and that is a property of the surface rather than an
  * omission.** The all-clear was prototyped with motion — a particle burst, a
@@ -28,26 +24,48 @@ import { cn } from "@/lib/utils";
  */
 
 /**
- * One glyph per cell, one row per string, every row the same width.
+ * **The sprites' own palette, and it is deliberately not the brand's**
+ * *(owner ruling, 2026-09-01: "It shouldn't need an exception because it
+ * shouldn't be using brand colors. It's art.")*.
  *
- * Upper case is the full-strength token and lower case its shade — the whole
- * shading vocabulary a sprite this size can use. A glyph the map does not know
- * draws nothing, which is what `.` relies on: the type is `Partial` so that
- * missing entry is a `string | undefined` the compiler can see, rather than a
- * lie the lookup tells its caller.
+ * **Artwork never references brand tokens.** These sprites used to draw in
+ * `--primary` and its 55% shade, which made a trophy's gold and the brand's
+ * amber one value: the day the brand hue moves, a cup would move with it for no
+ * reason anybody could name, and the shading rule — which governs *UI* uses of
+ * the brand tokens — would have to grow an exception to permit the shade. A
+ * picture carries its own colours instead, and both problems go away rather than
+ * being negotiated. So: a trophy's gold, which happens to look like gold.
+ *
+ * They are opaque literals rather than alphas for the same reason they are
+ * literals at all — an alpha is a dependency on whatever ground the sprite is
+ * placed over, and a picture should look the same wherever it is drawn. The
+ * shade is the old 55% amber composited once against the card it sat on, so the
+ * cup renders pixel-for-pixel as it did.
+ *
+ * One glyph per cell, one row per string, every row the same width. Upper case
+ * is the full-strength colour and lower case its shade — the whole shading
+ * vocabulary a sprite this size can use. A glyph the map does not know draws
+ * nothing, which is what `.` relies on: the type is `Partial` so that missing
+ * entry is a `string | undefined` the compiler can see, rather than a lie the
+ * lookup tells its caller.
  *
  * **Only `P`, `p` and `f` are on screen today** — they are the cup. `M` and `F`
  * are reachable only through `FIREWORK_BURST` below, which is deliberately not
- * rendered, so anybody retuning these tokens should know that changing those two
- * changes nothing an admin sees.
+ * rendered, so anybody retuning these colours should know that changing those
+ * two changes nothing an admin sees.
  */
 const PIXEL_COLORS: Partial<Record<string, string>> = {
   ".": "",
-  P: "bg-primary",
-  p: "bg-primary/55",
-  M: "bg-secondary",
-  F: "bg-foreground",
-  f: "bg-muted-foreground",
+  /** Trophy gold. */
+  P: "#FAA901",
+  /** Trophy gold in shadow — the cup's inner bowl and stem. */
+  p: "#95690C",
+  /** Spark violet, on the unrendered firework's tips. */
+  M: "#8F00E2",
+  /** The firework's white core. */
+  F: "#EDEDED",
+  /** The plinth the cup stands on. */
+  f: "#A6A6A6",
 };
 
 export interface PixelArt {
@@ -118,9 +136,13 @@ export function PixelSprite({ art }: { art: PixelArt }) {
       {art.rows.map((row, y) => (
         <div key={y} className="flex">
           {[...row].map((glyph, x) => (
+            // An inline background rather than a class: these are the artwork's
+            // own colours, not tokens, and a Tailwind class would put them back
+            // in the design system they were just taken out of.
             <span
               key={x}
-              className={cn("h-[3px] w-[3px]", PIXEL_COLORS[glyph])}
+              className="h-[3px] w-[3px]"
+              style={{ backgroundColor: PIXEL_COLORS[glyph] }}
             />
           ))}
         </div>

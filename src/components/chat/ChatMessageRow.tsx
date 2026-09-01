@@ -169,8 +169,13 @@ export function ChatMessageRow({
           // reads the same wherever it appears. The flash stays **primary**: it
           // is not a mention, it is the log pointing at where a jump landed,
           // and it fades after a second.
-          mentionsViewer && "bg-info/10 ring-1 ring-info/40",
-          flashing && "bg-primary/20 ring-1 ring-primary",
+          //
+          // The colour is carried entirely by the ring, at its authored value:
+          // a brand hue darkened into a ground is no longer that hue, so the
+          // lift comes from the neutral accent token and both marks are told
+          // apart by the ring they wear.
+          mentionsViewer && "bg-accent ring-1 ring-info",
+          flashing && "bg-accent ring-1 ring-primary",
           message.delivery === "pending" && "opacity-60",
         )}
       >

@@ -486,10 +486,10 @@ export default function TestingPage() {
             {/* Result banner */}
             {result && (
               <div
-                className={`rounded-md p-3 text-sm ${
+                className={`rounded-md border bg-muted p-3 text-sm ${
                   result.type === "success"
-                    ? "bg-success/10 text-success"
-                    : "bg-destructive/10 text-destructive"
+                    ? "border-success text-success"
+                    : "border-destructive text-destructive"
                 }`}
               >
                 {result.message}

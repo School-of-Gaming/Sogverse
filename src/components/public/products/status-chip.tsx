@@ -16,10 +16,15 @@ export type ChipTone = "primary" | "warning" | "info" | "muted";
 export type ChipSize = "sm" | "md";
 
 // Semantic tone per chip. Keeps the colour decision in one place.
+//
+// Every tone's edge is at its authored value. An outline chip carries no filled
+// ground, so the edge is most of its area and is what makes the tone readable;
+// a low-alpha edge is the hue mixed toward the page behind it, which is a
+// different colour rather than a quieter one.
 const TONE_OUTLINE: Record<ChipTone, string> = {
   primary: "border-primary text-primary",
-  warning: "border-warning/50 text-warning",
-  info: "border-info/40 text-info",
+  warning: "border-warning text-warning",
+  info: "border-info text-info",
   muted: "border-border text-muted-foreground",
 };
 

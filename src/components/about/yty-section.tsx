@@ -20,17 +20,16 @@ interface YtySectionProps {
 }
 
 /**
- * The overview card's wash — an amber→violet blend today, and one of the sites
- * the flat default retires. Every brand dose replaces it with a single-hue wash;
- * the live path keeps today's literal, which is what makes this a comparison
- * rather than a change. The element cards below are identical under every dose,
- * which is deliberate and unaffected — their fade is same-hue, so it is a wash
- * rather than a blend.
+ * The overview card's ground. The amber→violet blend it used to carry was a
+ * card-scale wash of two brand hues, which the shading rule bans outright: a
+ * brand colour darkened into a surface is no longer that brand colour, and this
+ * card is not one of the two sanctioned home keeps. So the live path's ground is
+ * neutral; every brand dose replaces it with a single-hue wash. The element
+ * cards below are identical under every dose, which is deliberate and
+ * unaffected — their fade is same-hue, so it is a wash rather than a blend.
  */
 function overviewCardClass(palette: YtyPalette): string {
-  return palette === "current"
-    ? "bg-gradient-to-r from-primary/5 to-secondary/5"
-    : "bg-yty-harmony-strong/10";
+  return palette === "current" ? "bg-muted" : "bg-yty-harmony-strong/10";
 }
 
 export function YtySection({ id, palette = "current" }: YtySectionProps) {

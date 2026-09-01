@@ -68,7 +68,7 @@ export function NowDivider({
           than the month ticks, so the rail says where the boundary is too. */}
       <span
         aria-hidden
-        className="absolute -left-6 top-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-info/70"
+        className="absolute -left-6 top-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-info"
       />
 
       <button
@@ -76,7 +76,12 @@ export function NowDivider({
         onClick={onToggle}
         aria-expanded={open}
         aria-controls={controls}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-info/40 bg-info/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-info transition-colors hover:bg-info/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        // The divider marks *time*, which is the wit family's word, so it wears
+        // that family at its authored value on the edge and in the ink — no
+        // filled ground, because the edge is most of a pill's area and does the
+        // work. Hover is the app's neutral lift; colour spent only behind a
+        // cursor never reaches a family on a phone.
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-info px-3 py-1 text-xs font-semibold uppercase tracking-wider text-info transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <ChevronUp
           aria-hidden
@@ -90,7 +95,7 @@ export function NowDivider({
 
       {/* The rule runs out to the edge from the label, so the boundary reads
           across the whole column without a box being drawn anywhere. */}
-      <span aria-hidden className="h-0.5 flex-1 rounded-full bg-info/40" />
+      <span aria-hidden className="h-0.5 flex-1 rounded-full bg-info" />
     </div>
   );
 }

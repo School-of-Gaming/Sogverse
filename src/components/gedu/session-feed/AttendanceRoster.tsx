@@ -84,7 +84,12 @@ export function AttendanceRoster({
                 onToggle={() => toggle("present")}
                 label={t("presentLabel")}
                 icon={<Check className="h-3 w-3" aria-hidden />}
-                pressedClassName="border-success bg-success/20 text-success"
+                // The same fill mechanism its neighbour uses — a foreground
+                // tint says "chosen" — with the family colour on the edge and
+                // in the glyph at its authored value. A green ground would be
+                // green mixed down toward the row, which is a different colour
+                // rather than a quieter one.
+                pressedClassName="border-success bg-foreground/15 text-success"
               />
               <MarkOption
                 pressed={mark === "absent"}

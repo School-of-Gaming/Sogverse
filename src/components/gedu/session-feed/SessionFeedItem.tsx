@@ -455,7 +455,10 @@ export function SessionFeedItem({
         // and the chip's size does not change. The ~11px it leaves clears a
         // thumbnail's bottom border exactly as it clears the staff-note box's.
         signedBy !== null && "pb-8 sm:pb-8",
-        entry.kind === "future" && prominent && "border-info/50",
+        // Full value, like the family feed's next-session edge: the two feeds
+        // draw one timeline and must agree, and a half-alpha edge is a hue
+        // mixed toward the card rather than a quieter version of it.
+        entry.kind === "future" && prominent && "border-info",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -472,8 +475,8 @@ export function SessionFeedItem({
               className={cn(
                 "text-[10px] uppercase tracking-wide",
                 live
-                  ? "border-info bg-info/10 text-info"
-                  : "border-info/50 text-info",
+                  ? "border-info bg-muted text-info"
+                  : "border-info text-info",
               )}
             >
               {live ? b("live") : prominent ? b("nextSession") : b("upcoming")}

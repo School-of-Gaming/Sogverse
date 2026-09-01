@@ -113,6 +113,11 @@ interface FeatureAccent {
  * glow card-lift was **dropped** ("let's drop the glow effect"), so the card
  * carries no family edge and no glow: neutral ground, tinted tile, soft glyph.
  *
+ * The tile's own edge is drawn at **full value** — the owner chose the coloured
+ * column knowing it held colour ("I want the icon's border to have color"). The
+ * `/30` edge it replaces was the one part of this construct the shading rule
+ * bound: the tint ground is the ruled exemption, a mixed-down edge never was.
+ *
  * Measured on the composited card ground (`bg-card/50` over the page is
  * `#161616`): the soft glyph reads 6.60–7.49 over its tint, against a 3:1 bar
  * for a 24 px icon.
@@ -120,22 +125,22 @@ interface FeatureAccent {
 const FEATURE_ACCENTS_RULED: Record<FeatureKey, FeatureAccent> = {
   minecraftClubs: {
     card: "bg-card/50",
-    tile: "border-yty-harmony-strong/30 bg-yty-harmony-strong/10",
+    tile: "border-yty-harmony-strong bg-yty-harmony-strong/10",
     glyph: "text-yty-harmony-soft",
   },
   screenTime: {
     card: "bg-card/50",
-    tile: "border-yty-glow-strong/30 bg-yty-glow-strong/10",
+    tile: "border-yty-glow-strong bg-yty-glow-strong/10",
     glyph: "text-yty-glow-soft",
   },
   newFriends: {
     card: "bg-card/50",
-    tile: "border-yty-valor-strong/30 bg-yty-valor-strong/10",
+    tile: "border-yty-valor-strong bg-yty-valor-strong/10",
     glyph: "text-yty-valor-soft",
   },
   parents: {
     card: "bg-card/50",
-    tile: "border-yty-wit-strong/30 bg-yty-wit-strong/10",
+    tile: "border-yty-wit-strong bg-yty-wit-strong/10",
     glyph: "text-yty-wit-soft",
   },
 };
@@ -436,6 +441,12 @@ export function HomeFeaturesSection({ palette = "current" }: HomeSectionProps) {
             lively dose's construct. `sectionRule` stays a slot only for the
             how-it-works section, whose dose is still open. */}
       </div>
+      {/* The live path's tile keeps its `bg-primary/10` ground: a chip-scale
+          tile accenting an icon is the shading rule's one standing exemption
+          (owner, 2026-09-01) — a brand colour lighting a 48px glyph is not a
+          colour painted as a card's ground, which is what the rule is aimed at.
+          The card behind it stays neutral, which is the constraint that
+          exemption came with. */}
       <div className="mx-auto mt-16 grid max-w-5xl gap-8 sm:grid-cols-2">
         {features.map((feature) => (
           <Card key={feature.key} className={featureAccents ? featureAccents[feature.key].card : "bg-card/50"}>
@@ -516,6 +527,9 @@ export function HomeCtaSection({ palette = "current" }: HomeSectionProps) {
 
   return (
     <section className="container mx-auto px-4 py-24">
+      {/* The amber→violet wash is the second of the two sanctioned keeps (the
+          hero band is the first): a pre-existing identity moment the owner
+          ruled kept exactly as it is, not a licence for new washes. */}
       <Card className={draft ? draft.ctaCard : "mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10"}>
         <CardContent className="flex flex-col items-center py-12 text-center">
           <h2 className={draft ? draft.ctaHeading : CTA_HEADING_TYPE}>

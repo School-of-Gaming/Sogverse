@@ -194,7 +194,11 @@ function DayCell({
         isSession && "bg-primary text-primary-foreground font-semibold",
         isSkipped && "border border-muted-foreground/60 text-muted-foreground line-through",
         !isSession && !isSkipped && "text-muted-foreground/70",
-        isToday && !isSession && !isSkipped && "ring-1 ring-primary/60",
+        // Today is a quiet neutral mark. Amber on this grid means "a session
+        // runs on this day" — the filled cells above — so spending a shaded
+        // version of it on the date instead would be the same colour saying two
+        // things at two strengths.
+        isToday && !isSession && !isSkipped && "ring-1 ring-border",
       )}
       title={skipReason ?? undefined}
     >

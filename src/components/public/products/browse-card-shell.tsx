@@ -183,13 +183,15 @@ export function useBrowseCardShell(
       isEnded && "opacity-70 grayscale-[40%]",
       openHref && [
         "cursor-pointer",
-        "hover:border-primary hover:shadow-lg",
+        // The lift is a shadow and nothing else. The amber edge these three
+        // utilities used to paint was authored blind — an unlayered
+        // `border-color` rule meant no border colour in the app ever rendered
+        // — and colour spent only behind a cursor never reaches the families
+        // who meet the shop on a phone anyway.
+        "hover:shadow-lg",
         // `focus-within` so keyboard focus on the stretched link lights the
-        // whole card, not just the invisible anchor. `active` is the touch
-        // half of the same signal: a phone has no hover, so without it a tap
-        // gets no acknowledgement until the next page paints.
-        "focus-within:border-primary focus-within:shadow-lg",
-        "active:border-primary",
+        // whole card, not just the invisible anchor.
+        "focus-within:shadow-lg",
       ],
     ),
   };

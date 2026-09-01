@@ -40,12 +40,14 @@ export function ChatBodyText({
             key={index}
             // **Info, not primary** *(owner ruling)*. A mention is one concept
             // and wears one colour wherever it shows: the chip here and the
-            // tint on a row that names the reader are the same token, so
+            // ring on a row that names the reader are the same token, so
             // learning it once is enough. Primary is the surface's own
-            // emphasis — the sender's name, a reply's quote bar, the jump
-            // flash — and a mention borrowing it made "about you" and "this is
-            // ours" the same colour.
-            className="rounded bg-info/15 px-1 font-medium text-info"
+            // emphasis — the sender's name, the jump flash — and a mention
+            // borrowing it made "about you" and "this is ours" the same
+            // colour.
+            // The chip's ground is neutral and the colour is all in the ink:
+            // a brand hue darkened into a ground is no longer that hue.
+            className="rounded bg-muted px-1 font-medium text-info"
           >
             {`@${accounts.get(segment.id)?.name ?? segment.name}`}
           </span>

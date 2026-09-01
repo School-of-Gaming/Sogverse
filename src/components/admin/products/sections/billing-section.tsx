@@ -86,8 +86,8 @@ export function BillingSection({
                   className={cn(
                     "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors",
                     active
-                      ? "border-primary bg-primary/5"
-                      : "border-input hover:border-foreground/30"
+                      ? "border-primary bg-accent"
+                      : "border-input hover:bg-accent"
                   )}
                 >
                   <input
@@ -170,8 +170,8 @@ export function BillingSection({
                   className={cn(
                     "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
                     active
-                      ? "border-primary bg-primary/5"
-                      : "border-input hover:border-foreground/30"
+                      ? "border-primary bg-accent"
+                      : "border-input hover:bg-accent"
                   )}
                 >
                   <input

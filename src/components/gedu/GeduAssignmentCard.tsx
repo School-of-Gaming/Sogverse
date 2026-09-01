@@ -249,11 +249,35 @@ export function GeduAssignmentCard({
           // state edge the moment both draw. Hover is feedback, not state —
           // the gray idiom carries it (owner ruling, 2026-09-01).
           "hover:border-foreground/30 hover:shadow-lg focus-within:border-foreground/30 focus-within:shadow-lg",
-          live &&
-            "border-primary bg-gradient-to-r from-primary/5 to-transparent",
+          // Liveness is glow, and it is painted rather than laid out — see the
+          // ignition ring below. The card keeps a 1px border class in both
+          // states and swaps only its colour: with border-box sizing, dropping
+          // it would move the content box a pixel the instant a session opens.
+          live ? "border-transparent" : "border-border",
         )}
       >
-        <CardContent className="flex h-full flex-col gap-4 p-5">
+        {/* **The ignition ring — painted, never laid out.** The same mechanism
+            the family's enrollment card lights, and deliberately the same: one
+            session opening is one fact, and a gedu and a parent watching the
+            same club start should not be looking at two different marks. A
+            gradient span fills the card with a `bg-card` cover 2px inside it,
+            both under the content, so a live card wears a 2px glow edge without
+            a single box changing size — which is what lets a session opening
+            repaint the card while a gedu is mid-reach for the Join. The amber
+            edge and its `primary/5` fade this replaces were a state edge in the
+            act colour over a brand hue mixed down toward the card. */}
+        {live && (
+          <span aria-hidden className="pointer-events-none absolute inset-0">
+            <span className="absolute inset-0 bg-gradient-to-r from-yty-glow-strong to-yty-glow-soft" />
+            <span className="absolute inset-[2px] rounded-md bg-card" />
+          </span>
+        )}
+
+        {/* `relative` unconditionally, so the class does not churn at ignition.
+            An absolutely-positioned overlay paints above static in-flow content
+            in the same stacking context, so the content has to be positioned
+            too or the ring covers it. */}
+        <CardContent className="relative flex h-full flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
               <p
@@ -329,7 +353,11 @@ export function GeduAssignmentCard({
                 <Badge
                   variant="outline"
                   className={cn(
-                    "gap-1 border-success/50 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
+                    // The family enrollment card's Live chip, class for class:
+                    // full-value glow edge, neutral ground, soft glow ink (the
+                    // strong variant cannot carry text at this size on this
+                    // ground). One mark for one fact, on both surfaces.
+                    "gap-1 border-yty-glow-strong bg-muted px-2 py-0 text-[10px] uppercase tracking-wide text-yty-glow-soft",
                     !live && "invisible",
                   )}
                 >

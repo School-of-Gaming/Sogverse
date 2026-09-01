@@ -46,7 +46,10 @@ export const VoiceAvatar = forwardRef<HTMLDivElement, VoiceAvatarProps>(
         style={glowStyle}
         className={cn(
           "relative h-11 w-11 overflow-hidden rounded-md border-2 border-border transition-shadow",
-          isLocal && "ring-1 ring-primary/30",
+          // A quiet neutral mark, not a shaded amber one: "this tile is you" is
+          // furniture, and a brand hue at 30% is that hue mixed toward whatever
+          // is behind it rather than a softer version of it.
+          isLocal && "ring-1 ring-border",
           className,
         )}
       >

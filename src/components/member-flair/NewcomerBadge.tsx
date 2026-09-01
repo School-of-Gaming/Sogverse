@@ -43,7 +43,11 @@ export function NewcomerBadge({
     <span
       title={t("newcomerTooltip", { days })}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full border border-success/40 bg-success/15 px-1.5 py-0 text-[10px] font-medium leading-4 text-success",
+        // A badge that has a ground carries its tone in the ground and the ink,
+        // so the edge is neutral furniture; and the ground itself is a neutral
+        // token, because a brand hue mixed down into a surface is no longer
+        // that hue.
+        "inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-muted px-1.5 py-0 text-[10px] font-medium leading-4 text-success",
         className,
       )}
     >
@@ -91,8 +95,12 @@ function WeekMeter({ days }: { days: number }) {
         <span
           key={index}
           className={cn(
+            // A spent pip is *absent*, not a faded green: a dimmed brand hue is
+            // a different colour rather than a quieter one, so the drained half
+            // of the meter is drawn in the neutral ink the rest of the app
+            // spends on things that are switched off.
             "h-1 w-1 rounded-full",
-            index < PIPS - spent ? "bg-success" : "bg-success/25",
+            index < PIPS - spent ? "bg-success" : "bg-muted-foreground/40",
           )}
         />
       ))}

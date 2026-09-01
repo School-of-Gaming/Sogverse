@@ -111,6 +111,9 @@ export function PurchaseConfirmationView({
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-col items-center text-center">
+          {/* Icon medallion: the shading rule's one standing exemption (owner,
+              2026-09-01) — a brand colour lighting a glyph, not a colour
+              painted as a card's ground. */}
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             {isWaitlist ? (
               <Hourglass className="h-7 w-7 text-primary" />
@@ -407,6 +410,9 @@ export function PurchaseConfirmationNotice({
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-col items-center text-center">
+          {/* Icon medallion: the shading rule's one standing exemption (owner,
+              2026-09-01) — a brand colour lighting a glyph, not a colour
+              painted as a card's ground. */}
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             {isFinalizing ? (
               <Loader2 className="h-7 w-7 animate-spin text-primary" />

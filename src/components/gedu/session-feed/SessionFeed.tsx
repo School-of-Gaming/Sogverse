@@ -830,7 +830,10 @@ function markerTone(
 ): string {
   switch (entry.kind) {
     case "future":
-      return prominent ? "bg-info" : "bg-info/40";
+      // Strong → soft, never full → dimmed: `--info` is wit-strong, and a dot
+      // at 40% alpha is that hue mixed toward the page rather than a quieter
+      // version of it. The family feed's rail steps the same pair.
+      return prominent ? "bg-info" : "bg-yty-wit-soft";
     case "past":
       switch (completeness) {
         case "needs_attention":

@@ -14,7 +14,7 @@ export const YTY_ELEMENTS = [
     color: {
       bg: "bg-yty-harmony/10",
       bgGradient: "from-yty-harmony/10 to-yty-harmony/5",
-      border: "border-yty-harmony/30",
+      border: "border-yty-harmony",
       accent: "text-yty-harmony",
       ring: "ring-yty-harmony",
     },
@@ -27,7 +27,7 @@ export const YTY_ELEMENTS = [
     color: {
       bg: "bg-yty-glow/10",
       bgGradient: "from-yty-glow/10 to-yty-glow/5",
-      border: "border-yty-glow/30",
+      border: "border-yty-glow",
       accent: "text-yty-glow",
       ring: "ring-yty-glow",
     },
@@ -40,7 +40,7 @@ export const YTY_ELEMENTS = [
     color: {
       bg: "bg-yty-valor/10",
       bgGradient: "from-yty-valor/10 to-yty-valor/5",
-      border: "border-yty-valor/30",
+      border: "border-yty-valor",
       accent: "text-yty-valor",
       ring: "ring-yty-valor",
     },
@@ -53,7 +53,7 @@ export const YTY_ELEMENTS = [
     color: {
       bg: "bg-yty-wit/10",
       bgGradient: "from-yty-wit/10 to-yty-wit/5",
-      border: "border-yty-wit/30",
+      border: "border-yty-wit",
       accent: "text-yty-wit",
       ring: "ring-yty-wit",
     },
@@ -104,9 +104,17 @@ export interface YtyElementColor {
  *   three-plus-an-exception.
  * - **`bg`, `bgGradient`, `border` and `ring` take the strong variant.** None
  *   of them carries text: the tints are 10% and 5% washes behind an icon, the
- *   border is a 30% card edge, and the ring is a non-text state indicator where
- *   the 3:1 bar applies and even wit-strong clears it. Strong is the truer
- *   brand hue, and at those alphas it is what keeps a wash from washing out.
+ *   border is a full-value family edge, and the ring is a non-text state
+ *   indicator where the 3:1 bar applies and even wit-strong clears it. Strong is
+ *   the truer brand hue, and at those alphas it is what keeps a wash from
+ *   washing out.
+ * - **The edge is drawn at full value, and this construct's tint ground is the
+ *   ruled exemption to the shading rule** (owner, 2026-09-01, choosing it
+ *   knowing it held colour: "the border is colored. I want the icon's border to
+ *   have color"). A chip-scale tile accenting an icon is not a colour painted as
+ *   a card's ground, which is what the rule is aimed at; the `/30` edge it used
+ *   to carry *was* bound by the rule, and was the muddy valor edge the owner
+ *   disliked. Final form: tint ground, full-value family edge, soft glyph.
  *   The app's own foreground over the 10% tint measures 12.5–13.5:1 on the
  *   card, so that pairing constrains nothing — and the tightest pairing of the
  *   lot, the zone's soft label over its own 10% strong tint, still clears at
@@ -125,28 +133,28 @@ export const YTY_ELEMENT_DRAFT_COLORS: Record<YtyElementId, YtyElementColor> = {
   harmony: {
     bg: "bg-yty-harmony-strong/10",
     bgGradient: "from-yty-harmony-strong/10 to-yty-harmony-strong/5",
-    border: "border-yty-harmony-strong/30",
+    border: "border-yty-harmony-strong",
     accent: "text-yty-harmony-soft",
     ring: "ring-yty-harmony-strong",
   },
   glow: {
     bg: "bg-yty-glow-strong/10",
     bgGradient: "from-yty-glow-strong/10 to-yty-glow-strong/5",
-    border: "border-yty-glow-strong/30",
+    border: "border-yty-glow-strong",
     accent: "text-yty-glow-soft",
     ring: "ring-yty-glow-strong",
   },
   valor: {
     bg: "bg-yty-valor-strong/10",
     bgGradient: "from-yty-valor-strong/10 to-yty-valor-strong/5",
-    border: "border-yty-valor-strong/30",
+    border: "border-yty-valor-strong",
     accent: "text-yty-valor-soft",
     ring: "ring-yty-valor-strong",
   },
   wit: {
     bg: "bg-yty-wit-strong/10",
     bgGradient: "from-yty-wit-strong/10 to-yty-wit-strong/5",
-    border: "border-yty-wit-strong/30",
+    border: "border-yty-wit-strong",
     accent: "text-yty-wit-soft",
     ring: "ring-yty-wit-strong",
   },

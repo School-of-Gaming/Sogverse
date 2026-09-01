@@ -489,7 +489,7 @@ function StatusPill({ hasClubs, t }: { hasClubs: boolean; t: Translate }) {
       className={cn(
         "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium",
         hasClubs
-          ? "bg-primary/10 text-primary"
+          ? "bg-muted text-primary"
           : "bg-muted text-muted-foreground",
       )}
     >

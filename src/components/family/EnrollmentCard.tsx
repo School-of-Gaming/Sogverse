@@ -533,7 +533,15 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                 badge can be as wide as its translation needs — "Live" is four
                 characters in English and rather more elsewhere. `invisible` is
                 `visibility: hidden`, so an unstarted session is out of the
-                accessibility tree too. */}
+                accessibility tree too.
+
+                **The order is load-bearing, not aesthetic.** The group is
+                right-packed, so the Live badge comes first in it and the
+                chevron last: a badge that lights when a session opens grows the
+                group leftward into the title's slack, and the chevron a parent
+                is reaching for holds its position to the pixel. Re-ordering
+                these two on how they read would put the chevron behind a mark
+                that arrives on data's own schedule. */}
             <div className="flex shrink-0 items-center gap-2">
               {canGoLive && (
                 <Badge
@@ -911,7 +919,7 @@ function LeaveWaitlistLink({
         confirmLabel={t("confirmCta")}
         onConfirm={onConfirm}
       >
-        <div className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/10 px-3 py-2.5 text-sm font-semibold text-destructive">
+        <div className="flex items-start gap-2 rounded-md border border-destructive bg-muted px-3 py-2.5 text-sm font-semibold text-destructive">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>{t("backOfLineWarning")}</span>
         </div>

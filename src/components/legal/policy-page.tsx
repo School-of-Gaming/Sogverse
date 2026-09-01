@@ -104,7 +104,7 @@ function PolicyBlocks({ blocks }: { blocks: PolicyBlock[] }) {
  */
 function PendingNotice({ notice }: { notice: string }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-md border border-dashed border-warning/60 bg-warning/5 px-4 py-3">
+    <div className="flex items-start gap-2.5 rounded-md border border-dashed border-warning bg-muted px-4 py-3">
       <TriangleAlert
         className="mt-0.5 h-4 w-4 shrink-0 text-warning"
         aria-hidden="true"
@@ -154,7 +154,7 @@ export function PolicyPage({
       {draftNotice && (
         <div
           role="note"
-          className="mt-8 flex items-start gap-4 rounded-lg border-2 border-warning bg-warning/10 p-5 sm:p-6"
+          className="mt-8 flex items-start gap-4 rounded-lg border-2 border-warning bg-muted p-5 sm:p-6"
         >
           <TriangleAlert
             className="mt-0.5 h-7 w-7 shrink-0 text-warning"

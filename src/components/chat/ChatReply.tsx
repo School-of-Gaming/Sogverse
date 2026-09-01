@@ -52,7 +52,10 @@ export function ChatQuotedMessage({
       onClick={onJump}
       aria-label={t("jump", { name })}
       className={cn(
-        "flex w-full items-start gap-1.5 rounded border-l-2 border-primary bg-muted/60 px-2 py-1 text-left text-xs transition-colors hover:bg-muted",
+        // The quote bar is furniture — it marks where a quotation starts, and a
+        // resting edge is neutral. The sender's name beside it still carries
+        // the surface's amber, which is what says whose words these are.
+        "flex w-full items-start gap-1.5 rounded border-l-2 border-border bg-muted/60 px-2 py-1 text-left text-xs transition-colors hover:bg-muted",
         className,
       )}
     >

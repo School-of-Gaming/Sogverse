@@ -194,13 +194,13 @@ export function HelpFeedbackCardView({
         {/* The answer, last in the card — see the component docblock for why it
             can only go here. */}
         {succeeded && (
-          <p className="rounded-md bg-success/10 p-3 text-sm text-success">
+          <p className="rounded-md border border-success bg-muted p-3 text-sm text-success">
             {t(`${audience}.thankYou`)}
           </p>
         )}
 
         {error !== null && (
-          <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          <p className="rounded-md border border-destructive bg-muted p-3 text-sm text-destructive">
             {error === "rateLimited"
               ? t(`${audience}.tooManyRequests`)
               : t(`${audience}.failed`)}

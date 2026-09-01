@@ -546,7 +546,7 @@ function ContactEmailCell({ email }: { email: string }) {
       aria-label={copied ? t("emailCopied") : t("copyContactEmail", { email })}
       className={cn(
         "group flex w-full min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-muted/40 px-2 py-1 text-left text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        copied && "border-success/40 text-success",
+        copied && "border-success text-success",
       )}
     >
       <span className="min-w-0 flex-1 truncate">{email}</span>

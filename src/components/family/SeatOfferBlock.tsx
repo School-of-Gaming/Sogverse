@@ -68,19 +68,19 @@ const BRAND_SEAT_OFFER_TONE = {
  * nothing is mixed.
  *
  * The container's *whole* class string lives here rather than only its border,
- * so the live path's `className` is the exact string it was before this map
- * existed — a draft must not reorder a live surface's classes on its way past.
- * Classes are literal strings because Tailwind scans source text.
+ * so a caller cannot reassemble it half-drafted. Classes are literal strings
+ * because Tailwind scans source text.
  */
 const SEAT_OFFER_TONES: Record<
   YtyPalette,
   { container: string; glyph: string; title: string }
 > = {
-  current: {
-    container: "w-full space-y-3 border-t border-info/25 pt-4 text-left",
-    glyph: "mt-0.5 h-4 w-4 shrink-0 text-info",
-    title: "text-info",
-  },
+  /**
+   * The ruled form is now the only form: the `/25` rule `current` held was a
+   * shaded brand value the moment `--info` converged onto wit, and there is no
+   * compliant "today" left to compare it against.
+   */
+  current: BRAND_SEAT_OFFER_TONE,
   brand: BRAND_SEAT_OFFER_TONE,
   /** Dose is a home-page question; a dashboard card takes the one draft. */
   "brand-lively": BRAND_SEAT_OFFER_TONE,

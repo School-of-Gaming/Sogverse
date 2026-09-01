@@ -568,10 +568,12 @@ function ChatImageRunItem({
         messages.map((message) => message.id),
       )}
       className={cn(
-        // A ring and a tint, never a border: the run keeps exactly the box it
-        // had, so flashing it after a jump moves nothing around it.
+        // A ring and a neutral lift, never a border: the run keeps exactly the
+        // box it had, so flashing it after a jump moves nothing around it. The
+        // amber is on the ring at its authored value — a brand hue darkened
+        // into a ground stops being that hue.
         "mt-1 rounded transition-colors",
-        flashing && "bg-primary/20 ring-1 ring-primary",
+        flashing && "bg-accent ring-1 ring-primary",
       )}
     >
       {quoted !== null && (
