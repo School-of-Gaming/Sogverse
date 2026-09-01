@@ -447,6 +447,55 @@ Owner direction (2026-08-31), added during implementation:
       dev is in this plan's surface-map revision; element-card consumers are
       the `/about` section, the voice zones and the style guide.
 
+27. **Walkthrough rulings, third batch — shading scope closed, two over-corrections
+    caught** (owner, 2026-09-01):
+    - **Shading scope, now closed per class:** dimmed brand ink — bound, correction
+      approved. Tinted label chips — bound, `bg-muted text-primary` replacement
+      approved. Washed grounds under full-value ink — bound, approved. Hover
+      darkening of the primary fill — bound ("these buttons don't need a 90%
+      alpha"); the wiring change removes `hover:bg-primary/90` and picks a
+      non-colour hover affordance (shadow/ring — implementer's call). Low-alpha
+      edges and hover edge-lifts — owner's observation: "I didn't even know these
+      borders had color. It's so subtle I don't even see it" (both classes) — no
+      explicit ruling yet; next round renders the choice (full-value brand edge vs
+      neutral edge) on the real constructs, since an invisible brand colour argues
+      it was never doing brand work.
+    - **The trophy correction is rejected as drawn** ("it loses its color. But
+      maybe I need to see it in something real") — next round renders the real
+      admin all-clear trophy sprite both ways. Session's candidate resolution, to
+      pose: pixel-art illustration is *artwork*, not a UI surface — an art
+      exemption (like photos) rather than a violation.
+    - **The selection state is rejected in both its forms — this is the batch's
+      real design problem.** The strength axis's corrected edge-only tier: "the
+      very thing you are engaging with loses its color after you've selected it."
+      The shading slide's `bg-transparent` selection ground: "aside from the
+      checkbox itself there is no way to highlight that this whole box has been
+      selected." So a selected row must read *selected as a whole* and stay
+      vibrant, without a shaded brand ground. Candidates to render next round on
+      the real consent row: solid primary edge + neutral `bg-accent` lift (brand
+      on the edge, lift from a neutral token — compliant because the tint ban is
+      about brand colours, not neutrals), a thicker full-value edge, a solid
+      full-value leading bar + neutral lift.
+    - **Gradient washes may be the one exception** — "a gradient on card, for
+      example the product card in My SOG, gives it wanted attention beyond what
+      only the Live label provides. Either you keep the gradient or you come up
+      with ideas that keep the vibrancy without violating a shading rule." Next
+      round renders, on the real live enrollment card: the gradient kept (as a
+      named sanctioned class, like the hero band), vs vibrancy alternatives
+      (solid edge + accent strip, icon-tile accent + glow chip). Owner picks.
+    - **"You are here" leans inverted fill** — "what I like most. But I'd need to
+      see real example of the app to make the call." Next round draws the real
+      admin sidebar composition with the inverted-fill active item.
+    - **The pages-in-scenes 360 framing is retired** — owner is right that the
+      palette does not touch layout ("these colors should not impact mobile
+      layout"); nothing in the draft changes any breakpoint. The slide becomes a
+      plain link hub, no viewport instruction.
+    - **The calm ring is RULED: the palette comes in** — "Frankly I love all the
+      extra colors." Billing/safeguarding/legal surfaces take the grammar where
+      marks have jobs (status chips, dates, names), not amber-only. **This is a
+      deviation from the Guidebook's calm-ring prescription and must be logged in
+      `docs/brand-guidebook-deviations.md` in the wiring change.** Slide drops.
+
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
 around, so the map in **Problem** and step 6's consumer list both shrink:
