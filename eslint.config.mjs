@@ -157,6 +157,17 @@ const eslintConfig = defineConfig([
             // `GamerCreationList` are their inferred types — all four travel
             // together as one vocabulary, the same shape attendance crosses
             // in.
+            //
+            // **The indirect path is a known, accepted limit**: this covers
+            // the direct import specifier only, and `GroupStaffOverlay` and
+            // its member shape are re-exported from `@/types`, which is
+            // unrestricted and has to stay so — it is where every convenience
+            // alias in the app lives. The gedu entry above has exactly the
+            // same hole and is accepted on the same terms. The rule is a
+            // structural reminder at the obvious reach, not a proof: what
+            // actually keeps a staff document off a family page is that the
+            // family document has no field for it, so a component importing
+            // the type through the barrel still has nothing to put in it.
             group: ["@/services/member-flair", "@/services/member-flair/*"],
             allowImportNames: [
               "gamerCreation",

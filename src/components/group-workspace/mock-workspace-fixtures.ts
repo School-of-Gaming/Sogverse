@@ -206,8 +206,21 @@ interface ScenarioConfig {
   startTime: string;
   durationMinutes: number;
   slots: GeduAssignedProduct["product"]["schedule_slots"];
-  /** How far back the product started, in days before `now`. */
-  startedDaysAgo: number;
+  /**
+   * How far back the product started, in days before `now` — or
+   * `"first-session"` for a run that opened on the day of its own first
+   * scheduled session.
+   *
+   * The second form exists because a count of days back from `now` and the
+   * feed's own dates agree only by accident: the feed pins its sessions to the
+   * schedule's weekday and `now` is whatever day it is, so counting back whole
+   * weeks lands up to a cadence step *after* the oldest session the feed
+   * carries. Nothing breaks — the final-session derivation only needs the start
+   * date at or below the last session — but a run whose start date sits after
+   * its own first card is a fixture contradicting itself on screen. Read off
+   * the feed, it cannot.
+   */
+  startedDaysAgo: number | "first-session";
   /**
    * Days after `now` the product ends, `null` for an ongoing club, or
    * `"last-session"` for a run whose end date is the day of its own last
@@ -1433,11 +1446,12 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     startTime: "16:00",
     durationMinutes: 90,
     slots: [{ weekday: 0, start_time: "16:00", duration_minutes: 90 }],
-    // Five weekly sessions, so the run opened four weeks before its last one.
-    // A day or two of slack either side of that would be fine — the start date
-    // only has to sit at or below the final session for the derivation to find
-    // it — but the honest number is the one the feed actually produces.
-    startedDaysAgo: 4 * 7,
+    // The day of its own first session, read off the feed for the same reason
+    // the end date is. Five weekly sessions is four weeks of run, but four
+    // weeks back from `now` is four weeks back from whatever weekday it is —
+    // which put the start date up to six days *after* the oldest session on the
+    // page, on a run whose whole subject is its own last one.
+    startedDaysAgo: "first-session",
     // Read off the feed rather than offset from `now`: the end date of a
     // finished run *is* its last session's day, and it has to be exactly that
     // or the final-session derivation lands on a different day, or on none.
@@ -1528,10 +1542,24 @@ export function buildGroupWorkspaceFixture(
         ? dateOf(entries[0].startsAt)
         : calendarDate(now, config.endsInDays);
 
+  /**
+   * The day the run opened: an offset from `now`, or **the day of its own first
+   * session**, read off the feed above.
+   *
+   * The feed is strictly descending, so its last entry is the oldest session
+   * there is. The second form is the honest one wherever a scenario's start
+   * date is meant to be the run's own beginning rather than roughly that far
+   * back — see the config field for what the offset costs.
+   */
+  const startDate =
+    config.startedDaysAgo === "first-session"
+      ? dateOf(entries[entries.length - 1].startsAt)
+      : calendarDate(now, -config.startedDaysAgo);
+
   const assignedGroup: GeduAssignedProductGroup = {
     id: groupId,
     name: config.groupName,
-    created_at: calendarDate(now, -config.startedDaysAgo),
+    created_at: startDate,
     is_my_group: true,
     participant_count: SESSION_FEED_ROSTER.length,
     gedus: [
@@ -1547,7 +1575,7 @@ export function buildGroupWorkspaceFixture(
   const peerGroups: GeduAssignedProductGroup[] = config.peers.map((peer) => ({
     id: peer.id,
     name: peer.name,
-    created_at: calendarDate(now, -config.startedDaysAgo),
+    created_at: startDate,
     is_my_group: false,
     participant_count: peer.participantCount,
     gedus: peer.gedus.map((gedu) => ({
@@ -1564,7 +1592,7 @@ export function buildGroupWorkspaceFixture(
         product_type: config.productType,
         topic: config.topic,
         timezone: SESSION_FEED_TIMEZONE,
-        start_date: calendarDate(now, -config.startedDaysAgo),
+        start_date: startDate,
         end_date: endDate,
         is_remote: config.isRemote,
         // Flagged on two scenarios, one per tone of the session card's

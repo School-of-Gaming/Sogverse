@@ -168,8 +168,11 @@ ban, and the ESLint config says so.
   disagree about whether the last session of a term is finished. The same value feeds
   three things — the session feed's completeness, the block on the final session's own
   card, and the roster's per-row marker — so a row can never be marked while the card
-  beside it reads finished, and the card can never name somebody the rail leaves
-  unmarked.
+  beside it reads finished, and whenever the card's block is warning-toned the rail
+  marks the same people. Only that direction holds: before the run's final session
+  ends nothing is owed yet, so the block states the obligation informationally — every
+  member chipped, nobody marked on the rail — and a card naming somebody the rail
+  leaves unmarked is that state rather than a disagreement.
 - **`types.ts` / `roster-helpers.tsx`** — the roster row alias and the two questions every
   roster consumer has to answer identically (which address, which game account).
 - **`BackLink.tsx`** — the workspace's default back link, which is the gedu shell's.

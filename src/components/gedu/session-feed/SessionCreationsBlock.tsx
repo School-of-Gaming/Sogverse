@@ -35,10 +35,12 @@ import type { SessionFeedGamer } from "./types";
  * session ends nothing is owed yet, so the block is informational: this is the
  * last session, here is what it will want. Once the session has ended and the
  * condition is unmet it takes the warning tone, which is exactly when the card's
- * own needs-attention line fires — the two are read off one derivation, so the
- * block can never be calm beside an amber header. What the neutral half buys is
- * the whole of the owner's complaint: the work is discoverable while there is
- * still time to do it, rather than only after the run is over.
+ * own needs-attention line fires — the two are read off one derivation, so a
+ * warning-toned block always sits under an amber header. Not the converse: a
+ * header goes amber for any of four unmet conditions, so a card owing nothing
+ * but its report is amber over a perfectly calm block. What the neutral half
+ * buys is the whole of the owner's complaint: the work is discoverable while
+ * there is still time to do it, rather than only after the run is over.
  *
  * **An empty roster renders nothing at all**, which is the same exemption the
  * completeness derivation makes: there is nobody to owe, so there is nothing to

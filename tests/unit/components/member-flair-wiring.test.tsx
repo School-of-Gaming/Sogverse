@@ -96,6 +96,15 @@ const STORED_CREATION = {
   url: "https://www.planetminecraft.com/project/oskar-dome/",
 } as const;
 
+/**
+ * A second entry on the same member — a list shape the editor cannot author and
+ * the RPC will happily store, since it writes whatever list it is handed.
+ */
+const SECOND_CREATION = {
+  title: "The lighthouse",
+  url: "https://www.planetminecraft.com/project/oskar-lighthouse/",
+} as const;
+
 // --------------------------------------------------------------------------
 // The services, stubbed at their hooks. `vi.hoisted` because `vi.mock`
 // factories are lifted above the imports and these have to exist by then.
@@ -274,9 +283,16 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
   };
 }
 
-function renderPage(productType: ProductType) {
+function renderPage(
+  productType: ProductType,
+  /**
+   * The feed document on its way in, adjusted — for the one claim below whose
+   * roster row this fixture's defaults cannot produce.
+   */
+  adjustFeed: (feed: GeduGroupFeed) => GeduGroupFeed = (feed) => feed,
+) {
   reads.product = assignedProduct(productType);
-  reads.feed = groupFeed(productType);
+  reads.feed = adjustFeed(groupFeed(productType));
 
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -673,6 +689,41 @@ describe("gedu product page — writing the creation", () => {
       ).toBeNull(),
     );
     expect(setNote).not.toHaveBeenCalled();
+    expect(setCreations).not.toHaveBeenCalled();
+  });
+
+  it("leaves a stored list of two alone when only the note changed", async () => {
+    // The regression this pins: measuring the creations half by the stored
+    // list's *length* calls a list of two "changed" on a save that never
+    // touched it — so a Gedu writing a note would silently truncate somebody's
+    // pair to the one entry these fields happen to show, with no error and no
+    // way to notice. A list longer than one is unreachable from this editor
+    // and perfectly reachable by data, since the RPC writes what it is handed.
+    // Measured against what the fields were seeded with, an untouched pair
+    // sends nothing.
+    renderPage("consumer_club", (feed) => ({
+      ...feed,
+      roster: feed.roster.map((member) =>
+        member.participant_id === IDS.oskar
+          ? { ...member, creations: [STORED_CREATION, SECOND_CREATION] }
+          : member,
+      ),
+    }));
+    fireEvent.click(flairButton("Oskar"));
+
+    // The editor shows the first of the two, which is what the note-only save
+    // must not write back as the whole list.
+    expect(creationTitleBox()).toHaveProperty("value", STORED_CREATION.title);
+
+    fireEvent.change(noteBox(), { target: { value: "Needs stretching." } });
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: FLAIR_DIALOG_TITLE }),
+      ).toBeNull(),
+    );
+    expect(setNote).toHaveBeenCalledTimes(1);
     expect(setCreations).not.toHaveBeenCalled();
   });
 

@@ -67,9 +67,11 @@ const BLANK_CREATION: CreationDraft = { title: "", url: "" };
  * The stored list as this editor's one pair of fields.
  *
  * A list holding more than one is not a state the editor can produce, so the
- * first entry is what it shows; saving then replaces the whole list with what
- * is in the fields, which is the normalisation and not a silent loss of a state
- * anything here could have created.
+ * first entry is what it shows — and this is also what a save measures the
+ * draft *against*, so a longer list left untouched is left alone. Editing the
+ * pair replaces the whole list with what is in the fields, which is the
+ * normalisation and not a silent loss of a state anything here could have
+ * created.
  */
 function seedCreationDraft(creations: readonly GamerCreation[]): CreationDraft {
   if (creations.length === 0) return BLANK_CREATION;
@@ -238,28 +240,36 @@ export function GamerFlairDialog({
       ? []
       : [{ title: nextTitle, url: nextUrl }];
 
-    const nextNote = draft.trim();
-    const noteChanged = nextNote !== committed.note;
-
     /**
-     * **The draft is compared raw, against the raw stored value.** What would
-     * be *sent* is trimmed, so comparing the trimmed value would call a stored
+     * **Both halves compare the draft raw, against the raw stored value.** What
+     * is *sent* is trimmed, so comparing the trimmed value would call a stored
      * entry that carries padding "changed" every single time the dialog is
      * opened — and a Gedu who opened it, read it and pressed Save would restamp
      * somebody else's provenance without having typed a character. Only a
      * caller outside this editor can store padding (the RPC writes verbatim),
      * which is precisely why the comparison must not assume nobody has.
-     *
-     * A stored list longer than one is the same kind of thing: unreachable from
-     * here, so the length test alone marks it changed and the save normalises
-     * it to what the fields hold.
      */
-    const stored = committed.creations.length === 1 ? committed.creations[0] : null;
+    const nextNote = draft.trim();
+    const noteChanged = draft !== committed.note;
+
+    /**
+     * **The creations half is measured against what the editor was *seeded*
+     * with** — the same first-entry reduction the fields show — and never
+     * against the stored list's length.
+     *
+     * A stored list longer than one is unreachable from this editor and
+     * perfectly reachable by data: the RPC writes whatever list it is handed.
+     * Measured by length, such a list reads as "changed" on every save,
+     * including one where nothing but the note was touched — so a note edit
+     * would silently truncate somebody's pair to the single entry these fields
+     * happen to hold. Measured against the seed, an untouched pair writes
+     * nothing and the longer list survives. A Gedu who genuinely edits the
+     * creation still normalises it to one, which is this editor's documented
+     * intent rather than a loss of a state anything here created.
+     */
+    const seeded = seedCreationDraft(committed.creations);
     const creationsChanged =
-      nextCreations.length !== committed.creations.length ||
-      (stored !== null &&
-        (creationDraft.title !== stored.title ||
-          creationDraft.url !== stored.url));
+      creationDraft.title !== seeded.title || creationDraft.url !== seeded.url;
 
     setCommitting(true);
     setError(null);
@@ -272,16 +282,19 @@ export function GamerFlairDialog({
       if (noteChanged) {
         await onSaveNote(nextNote);
         done.note = nextNote;
+        // The field now holds exactly what was written — see the creations
+        // re-seed below, which both halves need for the same reason.
+        setDraft(nextNote);
       }
       if (creationsChanged) {
         await onSaveCreations(nextCreations);
         done.creations = nextCreations;
-        // The fields now hold exactly what was written. Only this half needs
-        // it: the note is compared trimmed and so already agrees with what it
-        // sent, where the creation is compared raw and would otherwise read as
-        // changed on a retry over nothing but a trailing space. It is invisible
-        // — it removes whitespace the Gedu cannot see — and it touches only the
-        // half that landed, never the one still to be sent.
+        // The fields now hold exactly what was written. Both halves are
+        // compared raw against what landed, and what landed is trimmed, so a
+        // draft left carrying padding would read as changed on a retry over
+        // nothing but a trailing space. It is invisible — it removes
+        // whitespace the Gedu cannot see — and it touches only the half that
+        // landed, never the one still to be sent.
         setCreationDraft(seedCreationDraft(nextCreations));
       }
       // `committing` left set: the dialog unmounts its content on close, so

@@ -480,19 +480,6 @@ export function GeduProductPageScene({
   };
 
   /**
-   * A Gedu writing, rewriting or retiring a note about one member.
-   *
-   * The text arrives trimmed, and an empty one is a real action rather than a
-   * no-op: it **deletes** the key, which is what puts the row back to an unlit note button and
-   * is how a Gedu drops guidance that no longer applies. The editor stamp moves
-   * with it — this scene's viewer is Sanna, so a note she rewrites now says so,
-   * and a cleared note takes its attribution with it rather than leaving a name
-   * attached to nothing.
-   *
-   * Like every write in this scene bar the send, it resolves immediately: the
-   * dialog's disabled-until-saved frame is the live page's to show.
-   */
-  /**
    * A Gedu recording, editing or clearing what a member made.
    *
    * The one thing worth feeling here is that this half is **family-facing**: the
@@ -510,6 +497,19 @@ export function GeduProductPageScene({
     );
   };
 
+  /**
+   * A Gedu writing, rewriting or retiring a note about one member.
+   *
+   * The text arrives trimmed, and an empty one is a real action rather than a
+   * no-op: it **deletes** the key, which is what puts the row back to an unlit
+   * note button and is how a Gedu drops guidance that no longer applies. The
+   * editor stamp moves with it — this scene's viewer is Sanna, so a note she
+   * rewrites now says so, and a cleared note takes its attribution with it
+   * rather than leaving a name attached to nothing.
+   *
+   * Like every write in this scene bar the send, it resolves immediately: the
+   * dialog's disabled-until-saved frame is the live page's to show.
+   */
   const handleSaveNote = (participantId: string, text: string) => {
     setGamerNotes(({ [participantId]: _cleared, ...rest }) =>
       text.length > 0 ? { ...rest, [participantId]: text } : rest,

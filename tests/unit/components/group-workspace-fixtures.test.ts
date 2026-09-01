@@ -25,6 +25,16 @@ import { finalSessionDate, sessionEntryId } from "@/lib/session-occurrence";
  *
  * So the alignment is asserted here, against the real derivations rather than a
  * restatement of them. Nothing is rendered: what could go wrong is arithmetic.
+ *
+ * **One line is restated rather than imported, deliberately.** `obligationFor`
+ * below rebuilds the obligation the workspace body derives, and every part of
+ * it but one is the real thing — `finalSessionDate` and `sessionEntryId` are
+ * the functions the page calls. The exception is the `withCreations` set, whose
+ * derivation in the body is a one-line filter over a map the shell has already
+ * built; extracting a shared helper for it would cost a module and an import to
+ * spare a single `list.length > 0`. The drift it leaves exposed is
+ * correspondingly small, and it is the one thing in this file a reader should
+ * check by eye rather than trust.
  */
 
 /** The instant every fixture below is built around — a Wednesday. */

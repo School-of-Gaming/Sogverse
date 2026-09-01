@@ -738,8 +738,19 @@ export function GroupWorkspace({
       {/* One dialog for the whole page. It stays mounted with the member it was
           opened for until the close lands, so nothing in it changes under the
           reader on the way out — and it sits here, above both the rail and the
-          feed, because both of them open it. */}
+          feed, because both of them open it.
+
+          Keyed on the member, so a draft can never outlive the person it was
+          typed about. The dialog seeds its fields on the closed→open edge, so
+          an `openFor` moving straight from one member to another — without a
+          close in between — would carry the first one's half-written note into
+          the second one's dialog. Nothing can do that today: the dialog is
+          modal and its backdrop closes it before any other control is
+          reachable. The key is structural rather than a fix, and it is here
+          because *two* surfaces now hold this setter; a third route in would
+          not have to notice this to be safe. */}
       <GamerFlairDialog
+        key={openFor ?? "none"}
         open={openFor !== null}
         onOpenChange={(open) => {
           if (!open) setOpenFor(null);

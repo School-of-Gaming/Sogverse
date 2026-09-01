@@ -648,11 +648,6 @@ export function SessionFeed({
   };
 
   /**
-   * The rail marker for one row: its tone from what the session still owes, and
-   * the quiet size on a placeholder line so the dot sits against its own text
-   * rather than against a card that isn't there.
-   */
-  /**
    * What one card should say about creations, or `null` — which is every card
    * on every ordinary product, and every card but one on a flagged one.
    *
@@ -681,6 +676,11 @@ export function SessionFeed({
     };
   };
 
+  /**
+   * The rail marker for one row: its tone from what the session still owes, and
+   * the quiet size on a placeholder line so the dot sits against its own text
+   * rather than against a card that isn't there.
+   */
   const markerClass = (
     entry: SessionFeedEntry,
     { prominent }: SessionFeedRowContext,
