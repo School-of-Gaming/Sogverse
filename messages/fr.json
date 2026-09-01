@@ -105,6 +105,8 @@
     "gedus": "Gedus"
   },
   "about": {
+    "pageTitle": "À propos",
+    "sectionNav": "Sur cette page",
     "hero": {
       "title": "À propos de <primary>School of Gaming</primary>",
       "subtitle": "Du temps d’écran au temps qui fait grandir. Nous réunissons les enfants, des animateurs professionnels et les jeux qu’ils adorent déjà — Minecraft, Roblox, Fortnite et bien d’autres — pour créer des moments où les liens se nouent, les compétences se forgent, et le plaisir est au rendez-vous."
@@ -147,6 +149,31 @@
       "heading": "Pour les parents",
       "paragraph1": "Accompagner son enfant dans le jeu vidéo, ça s’apprend aussi. Le monde du gaming évolue vite, et personne ne peut tout suivre. On est là pour ça : vous tenir au courant, vous expliquer ce qui se passe, et faire en sorte que vous vous sentiez à l’aise avec ce que vit votre enfant.",
       "paragraph2": "Côté pratique, vous gardez la main sur tout : comptes, inscriptions, dépenses. Votre enfant joue dans un environnement sécurisé, encadré par des professionnels qui s’investissent vraiment."
+    },
+    "faq": {
+      "heading": "Questions fréquentes",
+      "items": {
+        "whatIsSogverse": {
+          "question": "Qu’est-ce que Sogverse ?",
+          "answer": "Sogverse est la plateforme de School of Gaming dédiée aux clubs, stages et événements encadrés par des animateurs professionnels, sur Minecraft, Roblox, Fortnite et bien d’autres. Du temps d’écran au temps qui fait grandir."
+        },
+        "productTypes": {
+          "question": "Quelle est la différence entre les clubs, les stages et les événements ?",
+          "answer": "Les clubs se retrouvent selon un rythme régulier. Les stages se déroulent sur plusieurs jours pendant les vacances scolaires. Les événements sont des rendez-vous ponctuels."
+        },
+        "whoLeads": {
+          "question": "Qui anime les sessions ?",
+          "answer": "Chaque session est animée par un Gedu — un animateur de jeu qui est lui-même joueur et sait accompagner les enfants dans le jeu comme en dehors."
+        },
+        "safety": {
+          "question": "Est-ce sans danger pour mon enfant ?",
+          "answer": "C’est ainsi qu’il a été conçu. La plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés. Le chat dans les jeux est une autre affaire, géré par les jeux eux-mêmes — sur notre propre serveur Minecraft, nos Gedus disposent d’outils de modération, dont la mise en sourdine et le signalement. Un compte joueur porte une adresse interne Sogverse plutôt que le véritable e-mail de votre enfant, il est rattaché à votre compte parent, et votre enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Les achats et les inscriptions demandent votre code PIN parent. Et nous appliquons une tolérance zéro face au harcèlement."
+        },
+        "howToStart": {
+          "question": "Comment commencer ?",
+          "answer": "Créez un compte parent, parcourez notre offre et inscrivez votre enfant. Pour les sessions, il se connecte via votre compte : vous basculez sur son profil, il n’a donc jamais besoin d’un mot de passe à lui."
+        }
+      }
     }
   },
   "admin": {
@@ -1597,7 +1624,8 @@
       "shop": "Boutique",
       "help": "Aide",
       "yty": "Yty",
-      "about": "À propos"
+      "about": "À propos",
+      "faq": "FAQ"
     },
     "accountMenu": "Menu du compte – {name}",
     "continueToAccount": "Continuer vers votre compte",
@@ -1936,7 +1964,8 @@
   "home": {
     "hero": {
       "title": "Du temps d’écran<br></br><primary>au temps qui</primary><br></br>fait<br></br><secondary>grandir</secondary>",
-      "subtitle": "Nos clubs, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis — sur Minecraft, Roblox, Fortnite et bien d’autres. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter."
+      "subtitle": "Nos clubs, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis — sur Minecraft, Roblox, Fortnite et bien d’autres. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter.",
+      "aboutCta": "En savoir plus sur nous"
     },
     "features": {
       "heading": "Le jeu vidéo, un vrai loisir",

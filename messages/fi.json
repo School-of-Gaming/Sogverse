@@ -105,6 +105,8 @@
     "gedus": "Gedut"
   },
   "about": {
+    "pageTitle": "Tietoa meistä",
+    "sectionNav": "Tällä sivulla",
     "hero": {
       "title": "Tämä on <primary>School of Gaming</primary>",
       "subtitle": "Ruutuajasta laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelit, joita lapset jo rakastavat — Minecraft, Roblox, Fortnite ja moni muu — ja luomme leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat oikeita taitoja ja pitävät hauskaa."
@@ -147,6 +149,31 @@
       "heading": "Vanhemmille",
       "paragraph1": "Vanhempien pelikasvatus on yhtä tärkeä osa toimintaamme kuin itse kerhot. Haluamme auttaa vanhempia pysymään mukana jatkuvasti muuttuvassa pelimaailmassa, jotta he voivat tukea lapsiaan luottavaisin mielin.",
       "paragraph2": "Sinä pidät langat käsissäsi — hallitset tilejä, ilmoittautumisia ja kulutusta — samalla kun lapsesi nauttii turvallisesta ympäristöstä, jota ohjaavat välittävät ammattilaiset."
+    },
+    "faq": {
+      "heading": "Usein kysytyt kysymykset",
+      "items": {
+        "whatIsSogverse": {
+          "question": "Mikä Sogverse on?",
+          "answer": "Sogverse on School of Gamingin alusta kerhoille, leireille ja tapahtumille, joita vetävät ammattitaitoiset pelikasvattajat Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ruutuajasta laatuaikaa."
+        },
+        "productTypes": {
+          "question": "Mikä on kerhojen, leirien ja tapahtumien ero?",
+          "answer": "Kerhot kokoontuvat säännöllisesti. Leirit järjestetään useamman päivän ajan koulujen lomilla. Tapahtumat ovat kertaluonteisia kokoontumisia."
+        },
+        "whoLeads": {
+          "question": "Kuka vetää tapaamiset?",
+          "answer": "Jokaista tapaamista vetää Gedu — pelikasvattaja, joka pelaa itsekin ja osaa tukea lapsia pelissä ja sen ulkopuolella."
+        },
+        "safety": {
+          "question": "Onko se turvallista lapselleni?",
+          "answer": "Se on rakennettu turvalliseksi. Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Pelien sisäinen chat on eri asia, ja siitä vastaavat pelit itse – omalla Minecraft-palvelimellamme Geduillamme on siihen moderointityökalut, kuten mykistys ja raportointi. Pelaajatilillä on Sogversen sisäinen osoite lapsesi oikean sähköpostiosoitteen sijaan, tili on liitetty vanhemman tiliisi, ja lapsesi kirjautuu sisään sen kautta eikä omalla salasanallaan. Ostokset ja ilmoittautumiset kysyvät vanhemman PIN-koodia. Kiusaamista emme suvaitse lainkaan."
+        },
+        "howToStart": {
+          "question": "Miten pääsen alkuun?",
+          "answer": "Luo vanhemman tili, selaa tarjontaa ja ilmoita lapsesi mukaan. Tapaamisiin hän tulee sinun tilisi kautta: vaihdat hänen profiiliinsa, eikä hän tarvitse omaa salasanaa."
+        }
+      }
     }
   },
   "admin": {
@@ -1597,7 +1624,8 @@
       "shop": "Kauppa",
       "help": "Apu",
       "yty": "Yty",
-      "about": "Tietoa"
+      "about": "Tietoa",
+      "faq": "UKK"
     },
     "accountMenu": "Tilivalikko – {name}",
     "continueToAccount": "Jatka tilillesi",
@@ -1936,7 +1964,8 @@
   "home": {
     "hero": {
       "title": "<primary>Ruutuajasta</primary><br></br><secondary>Laatuaikaa</secondary>",
-      "subtitle": "Taidolla suunnitellut kerhomme edistävät tervettä pelaamista harrastuksena Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ammattitaitoiset pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
+      "subtitle": "Taidolla suunnitellut kerhomme edistävät tervettä pelaamista harrastuksena Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ammattitaitoiset pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat.",
+      "aboutCta": "Lue lisää meistä"
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",

@@ -105,6 +105,8 @@
     "gedus": "Geduer"
   },
   "about": {
+    "pageTitle": "Om oss",
+    "sectionNav": "På den här sidan",
     "hero": {
       "title": "Om <primary>School of Gaming</primary>",
       "subtitle": "Där skärmtid blir kvalitetstid. Vi sammanför barn, professionella spelfostrare och spelen som barnen redan älskar — Minecraft, Roblox, Fortnite och fler — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
@@ -147,6 +149,31 @@
       "heading": "För föräldrar",
       "paragraph1": "Spelfostran för föräldrar är en lika viktig del av det vi gör som själva klubbarna. Vi vill hjälpa föräldrar att hänga med i den ständigt föränderliga spelvärlden så att de kan stötta sina barn med tillförsikt.",
       "paragraph2": "Du har kontrollen — du hanterar konton, anmälningar och utgifter — medan ditt barn njuter av en trygg miljö ledd av professionella som bryr sig."
+    },
+    "faq": {
+      "heading": "Vanliga frågor",
+      "items": {
+        "whatIsSogverse": {
+          "question": "Vad är Sogverse?",
+          "answer": "Sogverse är School of Gamings plattform för klubbar, läger och evenemang ledda av professionella spelfostrare — i Minecraft, Roblox, Fortnite och mer. Där skärmtid blir kvalitetstid."
+        },
+        "productTypes": {
+          "question": "Vad är skillnaden mellan klubbar, läger och evenemang?",
+          "answer": "Klubbar träffas regelbundet. Läger pågår under flera dagar under skolloven. Evenemang är enstaka tillfällen."
+        },
+        "whoLeads": {
+          "question": "Vem leder träffarna?",
+          "answer": "Varje träff leds av en Gedu — en spelfostrare som själv är gamer och vet hur man stöttar barn i spelet och utanför."
+        },
+        "safety": {
+          "question": "Är det säkert för mitt barn?",
+          "answer": "Det är byggt för att vara det. Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Chatten inne i spelen är en annan sak och sköts av spelen själva – på vår egen Minecraft-server har våra Geduer moderationsverktyg för den, bland annat att tysta och rapportera. Ett spelarkonto har en intern Sogverse-adress i stället för ditt barns riktiga e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn loggar in via det kontot i stället för med ett eget lösenord. Köp och anmälningar kräver din föräldra-PIN. Och vi har nolltolerans mot mobbning."
+        },
+        "howToStart": {
+          "question": "Hur kommer jag igång?",
+          "answer": "Skapa ett föräldrakonto, bläddra bland utbudet och anmäl ditt barn. Till träffarna går hen in via ditt konto: du växlar till barnets profil, så hen behöver inget eget lösenord."
+        }
+      }
     }
   },
   "admin": {
@@ -1597,7 +1624,8 @@
       "shop": "Butik",
       "help": "Hjälp",
       "yty": "Yty",
-      "about": "Om oss"
+      "about": "Om oss",
+      "faq": "FAQ"
     },
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",
@@ -1936,7 +1964,8 @@
   "home": {
     "hero": {
       "title": "Där<br></br><primary>skärmtid</primary><br></br>blir<br></br><secondary>kvalitetstid</secondary>",
-      "subtitle": "Våra skickligt utformade klubbar främjar hälsosamt spelande som hobby — i Minecraft, Roblox, Fortnite och mer. Professionella spelfostrare gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar."
+      "subtitle": "Våra skickligt utformade klubbar främjar hälsosamt spelande som hobby — i Minecraft, Roblox, Fortnite och mer. Professionella spelfostrare gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar.",
+      "aboutCta": "Läs mer om oss"
     },
     "features": {
       "heading": "Gör spelande till en fantastisk hobby",

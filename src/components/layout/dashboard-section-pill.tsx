@@ -72,7 +72,8 @@ export function DashboardSectionPill({
     id: string,
   ) => {
     e.preventDefault();
-    // Shared with the home pill and the product page's jump-to-signup button —
+    // Shared with the About page's pill and the product page's jump-to-signup
+    // button —
     // see the helper for why it is native `scrollIntoView` and why the landing
     // offset stays in CSS (`scroll-mt-*` on the section).
     scrollToAnchor(id);

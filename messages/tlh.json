@@ -98,6 +98,8 @@
     "gedus": "Gedupu’"
   },
   "about": {
+    "pageTitle": "maH tIqel",
+    "sectionNav": "nav DevwI’",
     "hero": {
       "title": "<primary>noH Quj yejHaD</primary> tIqel",
       "subtitle": "naDev Quj yay’ moj. puqpu’, Gedu’pu’ Dun, je Qujmey puqpu’ muSHa’bogh — Minecraft, Roblox, Fortnite latlh je — DIboqmoH. jup chu’ luSuq, laHmey teH luchenmoH, ’ej lutIvqu’."
@@ -195,6 +197,31 @@
       "retiredNote": "Those last three names are retired. The Privacy Policy, the Terms & Conditions and the Anti-Bullying Policy now read the same in every locale, Federation Standard included — they are binding documents, and no family should have to decode their own rights. An honourable translation, but the wrong battlefield for one.",
       "note": "Date and time formatting appears in English because the browser’s Intl APIs don’t have Klingon locale data. Klingons don’t use a 7-day week anyway.",
       "qapla": "Qapla’!"
+    },
+    "faq": {
+      "heading": "qaSchuq SeghHommey",
+      "items": {
+        "whatIsSogverse": {
+          "question": "Sogverse ’oH nuq?",
+          "answer": "noH Quj yejHaD pat ’oH Sogverse’e’: ghom’a’mey, raghmey, wanI’mey je — Gedu’pu’ Dun DevtaH — Minecraft, Roblox, Fortnite latlh je. naDev Quj yay’ moj."
+        },
+        "productTypes": {
+          "question": "ghom’a’mey, raghmey, wanI’mey: chay’ juHHa’chuq?",
+          "answer": "ghom’a’mey rurchuq qaSchuq. raghmey, ghojmoHwI’ poH qaSchuq. wanI’mey wa’logh neH qaSchuq."
+        },
+        "whoLeads": {
+          "question": "’Iv DevtaH qep?",
+          "answer": "Hoch qep DevtaH Gedu — Quj ghojmoHwI’, Quj toy’wI’ je ghaH, ’ej puqpu’ boQ."
+        },
+        "safety": {
+          "question": "puqwI’ QaQ’a’?",
+          "answer": "vaj chenmoHlu’. Sogverse pat: pegh QInmey ngeHmeH mIw tu’lu’be’. ghom DaqmeyDaq jatlh toy’wI’pu’, ’ej ja’chuqtaHvIS Hoch pa’ QInmey lulegh ’ej polbe’lu’. Qujmey QInmey pIm — ’ach Minecraft SepmajDaq chaH SeH Gedu’pu’maj: tamchoHmoHlaH ’ej ja’laH. Sogverse pong pegh ghaj toy’wI’ account — puqlI’ QIn Daq teH lo’be’ — ’ej vav account tlhej boqlu’; vav accountDaq ’el puqlI’, pegh mu’mey Daj Hutlh. je’ghach muvghach je poQ vav PIN. ’ej qIp: not wIchaw’."
+        },
+        "howToStart": {
+          "question": "chay’ jIQaplaH?",
+          "answer": "vav Account yIchel, yIQong, je puqlIj yIqar. qep’a’meyDaq vav accountlIj lo’ puqlI’: puqlI’ Daq DawIv, ’ej pegh mu’mey Daj Hutlh."
+        }
+      }
     }
   },
   "admin": {
@@ -1641,7 +1668,8 @@
       "shop": "ngevwI’",
       "help": "boQ",
       "yty": "Yty",
-      "about": "maH"
+      "about": "maH",
+      "faq": "ghelmeH"
     },
     "accountMenu": "qa’ De’wI’ – {name}",
     "continueToAccount": "qa’lIj yIghoS",
@@ -1980,7 +2008,8 @@
   "home": {
     "hero": {
       "title": "naDev<br></br><primary>Daq tIv</primary><br></br>moj<br></br><secondary>Qap tIv</secondary>",
-      "subtitle": "po’taHvIS chenmoHlu’ ghom’a’meymaj: Quj QaQ Hob chenmoH — Minecraft, Roblox, Fortnite latlh je. Gedu’pu’ Dun Hoch qep ghojmoHmeH tIv chenmoH — jup chu’ luSuq puqpu’, laHmeychaj mojaq luchenmoH, ’ej muSHa’bogh lutIv."
+      "subtitle": "po’taHvIS chenmoHlu’ ghom’a’meymaj: Quj QaQ Hob chenmoH — Minecraft, Roblox, Fortnite latlh je. Gedu’pu’ Dun Hoch qep ghojmoHmeH tIv chenmoH — jup chu’ luSuq puqpu’, laHmeychaj mojaq luchenmoH, ’ej muSHa’bogh lutIv.",
+      "aboutCta": "maH yIqel"
     },
     "features": {
       "heading": "toy’a’ QaQ Hob yIchenmoH",

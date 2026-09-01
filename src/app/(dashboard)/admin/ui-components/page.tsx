@@ -29,6 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
+import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -2395,6 +2396,86 @@ export default function AdminUIComponentsPage() {
         </SubSection>
         <SubSection title="The note editor">
           <GamerNoteDialogDemo />
+        </SubSection>
+      </Section>
+
+      <Section title="FAQ accordion">
+        <p className="text-sm text-muted-foreground">
+          Every FAQ on the site is drawn as this list. The caller resolves its
+          own strings and composes each answer, so an answer can be one
+          paragraph, several, or carry a link. Given no items the component
+          renders nothing at all — there is no empty state to show, which is why
+          that case is pinned in a unit test instead of demoed here.
+        </p>
+        <SubSection title="A list of questions">
+          <div className="max-w-3xl">
+            <FaqAccordion
+              items={[
+                {
+                  key: "plain",
+                  question: "What is the difference between clubs, camps and events?",
+                  answer: (
+                    <p>
+                      Clubs meet on a recurring schedule. Camps run across
+                      multiple days during school breaks. Events are one-off
+                      get-togethers.
+                    </p>
+                  ),
+                },
+                {
+                  key: "two-paragraphs",
+                  question: "What equipment does my child need?",
+                  answer: (
+                    <>
+                      <p>
+                        A computer that runs the game, a headset with a
+                        microphone, and a reasonably steady connection.
+                      </p>
+                      <p>
+                        Camps and events sometimes run on site, in which case the
+                        room provides the machines.
+                      </p>
+                    </>
+                  ),
+                },
+                {
+                  key: "with-a-link",
+                  question: "Who leads the sessions?",
+                  answer: (
+                    <p>
+                      Every session is hosted by a Gedu — a Game Educator who is
+                      also a gamer.{" "}
+                      <a
+                        href={ROUTES.about}
+                        className="text-primary underline underline-offset-4 hover:no-underline"
+                      >
+                        Read more about us
+                      </a>
+                      .
+                    </p>
+                  ),
+                },
+              ]}
+            />
+          </div>
+        </SubSection>
+        <SubSection title="A single question">
+          <div className="max-w-3xl">
+            <FaqAccordion
+              items={[
+                {
+                  key: "only",
+                  question: "How do I get started?",
+                  answer: (
+                    <p>
+                      Create a parent account, browse what is on offer, and enrol
+                      your child.
+                    </p>
+                  ),
+                },
+              ]}
+            />
+          </div>
         </SubSection>
       </Section>
 

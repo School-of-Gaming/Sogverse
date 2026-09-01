@@ -105,6 +105,8 @@
     "gedus": "Gedus"
   },
   "about": {
+    "pageTitle": "About us",
+    "sectionNav": "On this page",
     "hero": {
       "title": "About <primary>School of Gaming</primary>",
       "subtitle": "Where Screen Time Becomes Quality Time. We bring together children, professional Game Educators, and the games children already love — Minecraft, Roblox, Fortnite and more — creating playful learning experiences where they make new friends, develop real skills, and have fun."
@@ -147,6 +149,31 @@
       "heading": "For parents",
       "paragraph1": "Parental game education is just as important a part of what we do as the clubs themselves. We want to help parents keep up with the ever-changing gaming world so they can support their children with confidence.",
       "paragraph2": "You stay in control — managing accounts, enrolments, and spending — while your child enjoys a safe environment guided by professionals who care."
+    },
+    "faq": {
+      "heading": "Frequently asked questions",
+      "items": {
+        "whatIsSogverse": {
+          "question": "What is Sogverse?",
+          "answer": "Sogverse is School of Gaming’s platform for clubs, camps and events led by professional Game Educators, in Minecraft, Roblox, Fortnite and more. Where Screen Time Becomes Quality Time."
+        },
+        "productTypes": {
+          "question": "What’s the difference between clubs, camps, and events?",
+          "answer": "Clubs meet on a recurring schedule. Camps run across multiple days during school breaks. Events are one-off get-togethers."
+        },
+        "whoLeads": {
+          "question": "Who leads the sessions?",
+          "answer": "Every session is hosted by a Gedu — a Game Educator who’s also a gamer and knows how to support children in-game and out."
+        },
+        "safety": {
+          "question": "Is it safe for my child?",
+          "answer": "It is built to be. The Sogverse platform has no direct-message feature: conversation happens in shared group spaces, and chat during a call goes to the whole room and is never stored. In-game chat is a separate thing, run by the games themselves — on our own Minecraft server our Gedus have moderation tools for it, including muting and reporting. A gamer account carries an internal Sogverse address rather than your child’s real email, it is linked to your parent account, and your child signs in through that account rather than with a password of their own. Purchases and enrolments ask for your parent PIN. And we have zero tolerance for bullying."
+        },
+        "howToStart": {
+          "question": "How do I get started?",
+          "answer": "Create a parent account, browse what’s on offer, and enrol your child. For sessions they join through your account — you switch to their profile, so they never need a password of their own."
+        }
+      }
     }
   },
   "admin": {
@@ -1597,7 +1624,8 @@
       "shop": "Shop",
       "help": "Help",
       "yty": "Yty",
-      "about": "About"
+      "about": "About",
+      "faq": "FAQ"
     },
     "accountMenu": "Account menu – {name}",
     "continueToAccount": "Continue to your account",
@@ -1936,7 +1964,8 @@
   "home": {
     "hero": {
       "title": "Where<br></br><primary>Screen Time</primary><br></br>Becomes<br></br><secondary>Quality Time</secondary>",
-      "subtitle": "Our skilfully designed clubs promote healthy gaming as a hobby, in Minecraft, Roblox, Fortnite and more. Professional Game Educators make every session a playful learning experience where children make new friends, develop their unique talents, and have fun doing what they love."
+      "subtitle": "Our skilfully designed clubs promote healthy gaming as a hobby, in Minecraft, Roblox, Fortnite and more. Professional Game Educators make every session a playful learning experience where children make new friends, develop their unique talents, and have fun doing what they love.",
+      "aboutCta": "Learn more about us"
     },
     "features": {
       "heading": "Make gaming a great hobby",
