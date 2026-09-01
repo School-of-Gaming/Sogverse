@@ -244,7 +244,11 @@ export function GeduAssignmentCard({
           // stretches every one of them to the tallest rather than leaving the
           // short ones floating.
           "group relative h-full cursor-pointer overflow-hidden transition-[border-color,box-shadow,transform]",
-          "hover:border-primary hover:shadow-lg focus-within:border-primary focus-within:shadow-lg",
+          // Neutral hover on purpose: the amber lift was authored blind (the
+          // pre-fix layer bug never rendered it) and fights the live card's
+          // state edge the moment both draw. Hover is feedback, not state —
+          // the gray idiom carries it (owner ruling, 2026-09-01).
+          "hover:border-foreground/30 hover:shadow-lg focus-within:border-foreground/30 focus-within:shadow-lg",
           live &&
             "border-primary bg-gradient-to-r from-primary/5 to-transparent",
         )}

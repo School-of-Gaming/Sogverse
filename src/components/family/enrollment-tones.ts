@@ -98,8 +98,17 @@ export interface EnrollmentDraftTones {
 }
 
 /** The hover/focus feedback, one string for both palettes — see `openable`. */
+/*
+ * Neutral on purpose (owner, 2026-09-01). The amber hover border was authored
+ * blind — the pre-fix layer bug meant it never rendered — and the moment it
+ * became visible it collided with the live card's green state edge: two
+ * meanings fighting for one border. Hover is functional feedback and stays in
+ * the neutral idiom (the app's own gray lift); a border that carries *state*
+ * is never repainted by a hover. Colour spent only behind hover also never
+ * reaches the mobile-first family audience.
+ */
 const OPENABLE =
-  "hover:border-primary hover:shadow-lg focus-within:border-primary focus-within:shadow-lg";
+  "hover:border-foreground/30 hover:shadow-lg focus-within:border-foreground/30 focus-within:shadow-lg";
 
 /** The ruled draft, shared by both draft slugs — see the note on `brand-lively`. */
 const BRAND_TONES: EnrollmentDraftTones = {

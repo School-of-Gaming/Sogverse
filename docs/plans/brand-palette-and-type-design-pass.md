@@ -700,6 +700,20 @@ Owner direction (2026-08-31), added during implementation:
     coloured-on-hover-only candidates on parent/gamer surfaces; desktop-first
     admin/gedu surfaces may still use hover colour where it earns its keep.
 
+34. **The first border-review crash, and the ruling it produced** (owner,
+    2026-09-01): on My SOG, a live product card's green state edge is fought by
+    the amber hover border the moment the cursor lands — "these are the kind of
+    crashes that I couldn't have seen before because of the bug you fixed."
+    Ruling, derived from the owner's own hover principle and applied on the
+    branch: **a border that carries state is never repainted by a hover; hover
+    lifts on state-bearing cards go to the neutral gray idiom**
+    (`hover:border-foreground/30`, shadows kept). Applied to the enrollment
+    card's shared `openable` tone and the gedu assignment card. The public
+    browse cards and filter chips keep their (now full-value) amber hover for
+    the moment — they carry no state edge to fight — and their fate is the
+    border deck's hover slide, where the owner's mobile-first principle
+    already weighs against colour-only-on-hover for family-facing surfaces.
+
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
 around, so the map in **Problem** and step 6's consumer list both shrink:
