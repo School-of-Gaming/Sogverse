@@ -150,28 +150,35 @@ export const chatChannelRoster = z.array(chatRosterEntry);
  *
  * **The object's name is the message row's id**, with no extension — the
  * session-images "the primary key IS the object name" pattern, minus the
- * suffix, because a private object is fetched through a signed URL that carries
- * its own content type and nothing reads the name for one. So there is no path
- * column and no name helper: the id a caller already holds is the object.
+ * suffix, because a private object is served through the read route below,
+ * which carries its own content type; nothing reads the name for one. So there
+ * is no path column and no name helper: the id a caller already holds is the
+ * object.
  *
- * Private, and read only through signed URLs the viewer mints for themselves —
- * minting requires SELECT under storage RLS, which is what makes the bucket's
- * one policy (00231) the whole read boundary for the bytes: membership, the
- * family time bound and the hidden state all ride on it.
+ * Private, and read only through `GET /api/chat/images/[id]`, which downloads
+ * the object ON THE VIEWER'S OWN SESSION — so the bucket's one SELECT policy
+ * (00231) stays the whole read boundary for the bytes: membership, the family
+ * time bound and the hidden state all ride on it, answered afresh on every
+ * fetch. No signed URLs are minted anywhere (owner decision, 2026-09-01,
+ * recorded in 00233): a signed URL is a bearer token any viewer could copy out
+ * of devtools and share for its whole lifetime, and on a surface children use
+ * that was a standing edge worth removing rather than accepting.
  */
 export const CHAT_IMAGES_BUCKET = "chat-images";
 
 /**
- * How long a minted image URL stays good — half a day.
+ * The app path a stored chat image is fetched from — the one spelling of the
+ * read route's address, shared by the container that renders it, the route
+ * that would link to itself, and the tests that call the handler.
  *
- * **A flat, generous constant rather than anything derived.** The point is that
- * URLs never churn mid-room: they are minted in one batch per history load, and
- * an expiry comfortably past any session means nothing a reader is looking at
- * goes stale under them. If a tab somehow outlives it, the next refetch re-mints
- * the batch — that is the whole recovery story, and it is why this number does
- * not have to be tuned against a session's real length.
+ * A pure function of the message id, derivable with no async step and no
+ * state: the route authorizes per fetch on the viewer's session cookies, so
+ * unlike a signed URL this path never expires, never rotates, and is useless
+ * to anybody who is not signed in as a channel member.
  */
-export const CHAT_IMAGE_SIGNED_URL_TTL_SECONDS = 12 * 60 * 60;
+export function chatImagePath(messageId: string): string {
+  return `/api/chat/images/${messageId}`;
+}
 
 /**
  * The non-file half of `POST /api/chat/images`'s multipart form.
@@ -199,20 +206,27 @@ export type ChatImageUploadFields = z.infer<typeof chatImageUploadFields>;
 
 /**
  * What the upload answers: the id it stored under, the server's own
- * `created_at`, and the dimensions it measured.
+ * `created_at`, the dimensions it measured, and the `image_stored_at` stamp.
  *
- * The stamp is there for the reason the text send's is — it is the one field
+ * The created stamp is there for the reason the text send's is — it is a field
  * the echo could not know, so the cache can be brought to server truth exactly
  * rather than by refetching two hundred rows to learn one. The **dimensions**
  * are here for the same reason one step further out: they are the numbers the
  * row actually holds, and a burst of six pictures that had to invalidate the
  * history to learn them would be six refetches of the whole log.
+ *
+ * **`imageStoredAt` is non-optional because a 200 from this route MEANS the
+ * flag committed** — row, object, then `mark_chat_image_stored`, and a failure
+ * of any of the three is the compensated 500, never a success with a hole in
+ * it. The sender's cache write copies it onto the settled row so the sender's
+ * own cache never holds a NULL-flag row for a picture that sent.
  */
 export const chatImageUploadResponse = z.object({
   id: z.string().uuid(),
   createdAt: z.string(),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
+  imageStoredAt: z.string(),
 });
 
 export type ChatImageUploadResponse = z.infer<typeof chatImageUploadResponse>;

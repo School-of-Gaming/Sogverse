@@ -359,6 +359,22 @@ guard's alone.
 
 ### Images
 
+> **Superseded in part (owner, 2026-09-01):** two decisions below did not survive
+> contact with staging and were replaced during the build — see migration 00233's
+> header and `src/components/chat/CLAUDE.md` for the shipped design.
+> **Signed URLs are gone**: the client-minted, expiring URL model reproduced a
+> permanent-blank failure (a burst's row INSERTs arrive before the bytes; a mint
+> refused for earliness was never re-asked, and no later event changes the id set)
+> and its URLs were bearer tokens a viewer could share for 12 hours. Stored images
+> are now served by an authenticated read route (`GET /api/chat/images/[id]`) that
+> calls `storage.download` on the viewer's OWN client — the one bucket policy stays
+> the entire boundary, answered per fetch, and hide-retraction gets stricter (next
+> fetch, not next mint). **The renderer's bounded `onError` retry is gone with it**:
+> the row now announces its own bytes — `image_stored_at`, flipped by the upload
+> route after the storage write and delivered over the existing realtime stream —
+> so a client fetches only when the object provably exists, event-driven, with no
+> timers anywhere. Everything else in this section shipped as planned.
+
 Any channel participant may send (decided: no moderator-only tier — every participant
 in a scheduled room is an authenticated, parent-linked identity, the EXIF strip is
 server-enforced, and persistence makes everything reviewable). The fan-out send, the

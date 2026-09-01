@@ -20,11 +20,11 @@ import {
   applyChatLockChange,
   applyChatMessageChange,
   applyChatReactionChange,
+  chatImagePath,
   chatKeys,
   isChatLockedError,
   useChatChannel,
   useChatHistory,
-  useChatImageUrls,
   useChatRoster,
   useEditChatMessage,
   useHideChatMessage,
@@ -148,35 +148,56 @@ function GroupSessionChatRoom({
     [profile.id, profile.first_name, profile.role],
   );
 
-  const history = useChatHistory(channelId);
+  /**
+   * Which channel's realtime subscription is live, or `null` for none yet.
+   *
+   * **Subscribe, then snapshot.** The history fetch is held until the
+   * subscription's SUBSCRIBED ack so that every commit is either ≤ the fetch's
+   * snapshot (in the answer) or ≥ the ack (delivered as a payload) — with the
+   * two racing, a commit landing between the snapshot and the ack is in
+   * neither, and for a row that never moves again (an image's
+   * `image_stored_at` flip is often the last event its row ever emits) that
+   * gap is a permanent blank rather than a delay. The cost is one channel-join
+   * round trip on an already-open socket before the log's first paint, inside
+   * a box that already renders empty at its final size.
+   */
+  const [subscribedChannel, setSubscribedChannel] = useState<string | null>(
+    null,
+  );
+
+  const history = useChatHistory(channelId, {
+    enabled: subscribedChannel === channelId,
+  });
   const roster = useChatRoster(channelId);
 
   /**
-   * Every image message in the log, and the signed URLs minted for them.
+   * Payloads that arrived before the history snapshot resolved.
    *
-   * The hook accumulates: a log that gains a picture asks about that picture,
-   * not about the whole log again, and one that merely refetched asks nothing.
-   * Expiry is a flat half-day, and a URL past half of it joins the next batch
-   * while the old one keeps drawing.
+   * The subscription is live before the fetch starts (see above), so a payload
+   * can land while the cache still holds nothing to patch — and dropping it
+   * would reopen the very gap the ordering closed. Buffered here and applied
+   * through the same pure patchers the moment there is a log to apply them to:
+   * either by the next live payload (which drains the queue first, keeping
+   * arrival order) or by the flush effect below when no further payload comes.
+   * The patchers are idempotent upserts, so a buffered row the snapshot
+   * already carries lands harmlessly on itself. Cleared on channel teardown —
+   * a payload for a channel we left is moot, and the next mount starts from
+   * its own snapshot.
    */
-  const imageIds = useMemo(
-    () =>
-      (history.data?.messages ?? [])
-        .filter((row) => row.image_width !== null && row.image_height !== null)
-        .map((row) => row.id),
-    [history.data],
+  const bufferedPatchesRef = useRef<((current: ChatHistory) => ChatHistory)[]>(
+    [],
   );
-  const imageUrls = useChatImageUrls(channelId, imageIds);
 
   /**
    * The pictures this viewer sent, by message id: the blob the log is drawing
    * and the bytes a retry would re-send.
    *
-   * **The sender never waits for a signed URL for their own picture.** Their
-   * copy is drawn from the object URL the composer already minted, from the
-   * optimistic echo through to the settled row — which also means they are the
-   * one viewer who cannot see the window in which a row exists and its object
-   * does not.
+   * **The sender never waits for their own picture.** Their copy is drawn from
+   * the object URL the composer already minted, from the optimistic echo
+   * through to the settled row — preferred over the read route's path so the
+   * picture they are looking at is never re-downloaded — which also means they
+   * are the one viewer who cannot see the window in which a row exists and its
+   * object does not.
    *
    * Nothing is ever removed. A staged picture's object URL belongs to the
    * message it became (the chat components' contract), so revoking one would
@@ -231,8 +252,19 @@ function GroupSessionChatRoom({
   useEffect(() => {
     const historyKey = chatKeys.history(channelId);
     const patch = (change: (current: ChatHistory) => ChatHistory) => {
+      // No snapshot yet: hold the payload for the flush (see the buffer's
+      // comment). With one, drain anything held first so application order is
+      // arrival order, then apply.
+      if (queryClient.getQueryData<ChatHistory>(historyKey) === undefined) {
+        bufferedPatchesRef.current.push(change);
+        return;
+      }
+      const queued = bufferedPatchesRef.current;
+      bufferedPatchesRef.current = [];
       queryClient.setQueryData<ChatHistory>(historyKey, (current) =>
-        current === undefined ? current : change(current),
+        current === undefined
+          ? current
+          : [...queued, change].reduce((log, apply) => apply(log), current),
       );
     };
 
@@ -315,6 +347,9 @@ function GroupSessionChatRoom({
       })
       .subscribe((status) => {
         if (status !== "SUBSCRIBED") return;
+        // The gate the history fetch is waiting behind — from here on, every
+        // commit the snapshot misses arrives as a payload.
+        setSubscribedChannel(channelId);
         // **The only reconnect signal Realtime offers.** A re-subscribe means
         // the socket went away and came back, so anything that happened while
         // it was down was never delivered and a stranded pending echo has no
@@ -330,11 +365,30 @@ function GroupSessionChatRoom({
       });
 
     liveChannelRef.current = live;
+    const buffer = bufferedPatchesRef;
     return () => {
       liveChannelRef.current = null;
+      buffer.current = [];
       void supabase.removeChannel(live);
     };
   }, [channelId, queryClient, supabase]);
+
+  // The flush half of the buffer: the snapshot has landed and no later payload
+  // has drained the queue yet. Idempotent against the drain in `patch` — both
+  // clear before applying, so a patch is applied exactly once.
+  useEffect(() => {
+    if (history.data === undefined) return;
+    if (bufferedPatchesRef.current.length === 0) return;
+    const queued = bufferedPatchesRef.current;
+    bufferedPatchesRef.current = [];
+    queryClient.setQueryData<ChatHistory>(
+      chatKeys.history(channelId),
+      (current) =>
+        current === undefined
+          ? current
+          : queued.reduce((log, apply) => apply(log), current),
+    );
+  }, [history.data, channelId, queryClient]);
 
   // Expire the writing list. The timer exists only while somebody is on it, so
   // a quiet room costs nothing.
@@ -436,8 +490,8 @@ function GroupSessionChatRoom({
 
   /**
    * The same round trip for a picture: the echo is already on screen, the route
-   * writes the row and stores the object, and the settled row goes straight
-   * into the cache.
+   * writes the row, stores the object and flips `image_stored_at`, and the
+   * settled row goes straight into the cache.
    *
    * A lock is dropped rather than retried for exactly the reason a text send's
    * is — the composer is already disabled by the lock's own arrival, so a retry
@@ -486,16 +540,21 @@ function GroupSessionChatRoom({
         ? []
         : toChatMessages(
             history.data,
-            // The signed URL if one has been minted, this viewer's own blob if
-            // the picture is theirs, and neither until the next batch lands.
-            (messageId) =>
-              imageUrls[messageId] ?? ownImages.get(messageId)?.src,
+            // A pure function of the row: this viewer's own blob if the
+            // picture is theirs (never re-downloaded, never waited for), the
+            // read route's stable path once the row's flag says the bytes
+            // landed, and nothing — the renderer's quiet box — until it does.
+            // The flag's realtime UPDATE is what flips it, and by then the
+            // object provably exists, so no fetch can ever be early.
+            (row) =>
+              ownImages.get(row.id)?.src ??
+              (row.image_stored_at !== null ? chatImagePath(row.id) : undefined),
           );
     return [
       ...settled,
       ...pending.filter((row) => !settledIds.has(row.id)),
     ];
-  }, [history.data, imageUrls, ownImages, pending, settledIds]);
+  }, [history.data, ownImages, pending, settledIds]);
 
   const accounts = useMemo(
     () => toChatAccounts(roster.data ?? [], viewer),

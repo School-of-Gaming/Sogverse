@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import type { ChatReactionCode } from "@/lib/constants/chat";
@@ -10,12 +9,7 @@ import type {
   ChatMessageRow,
   ChatReactionRow,
 } from "@/types";
-import { CHAT_IMAGE_SIGNED_URL_TTL_SECONDS } from "./chat.contracts";
-import {
-  ChatService,
-  type ChatHistory,
-  type ChatImageUrls,
-} from "./chat.service";
+import { ChatService, type ChatHistory } from "./chat.service";
 
 /**
  * React Query hooks for persisted chat, plus the only legal edits to the
@@ -40,8 +34,9 @@ export const chatKeys = {
     [...chatKeys.channel(channelId), "history"] as const,
   roster: (channelId: string) =>
     [...chatKeys.channel(channelId), "roster"] as const,
-  // Signed image URLs carry no key: they are accumulated in the hook's own
-  // state rather than cached per set of ids — see `useChatImageUrls`.
+  // Image URLs carry no key and no hook: a stored picture's `src` is a pure
+  // function of its own row (`chatImagePath` once `image_stored_at` is set),
+  // so there is nothing asynchronous to cache.
 };
 
 // ---------------------------------------------------------------------------
@@ -68,6 +63,17 @@ export function useChatChannel(groupId: string) {
 /**
  * The latest 200 messages, plus the channel's reactions and visible lock rows.
  *
+ * **`enabled` exists so the container can hold this fetch until its realtime
+ * subscription is live — subscribe, then snapshot.** With the fetch and the
+ * subscribe racing, a commit landing after the fetch's snapshot but before the
+ * subscription's ack is in neither the answer nor any payload, and for a
+ * change whose row never moves again (an image's `image_stored_at` flip is the
+ * sharp case — often the last event its row ever emits) that gap is a
+ * permanent hole rather than a delay. Ordered, every commit is ≤ the snapshot
+ * (in the fetch) or ≥ the ack (delivered as a payload); the container buffers
+ * payloads that arrive while this query has no data yet and flushes them
+ * through the patchers below once it does.
+ *
  * **Refetch-on-focus is left at its default, deliberately.** A payload dropped
  * on a socket that stays up arrives as nothing at all, and Realtime offers no
  * signal for it — so React Query's own focus behaviour is the gap filler, and a
@@ -81,13 +87,17 @@ export function useChatChannel(groupId: string) {
  * that row until the next focus refetch. So a resolved fetch keeps the cached
  * rows that can only postdate its snapshot.
  */
-export function useChatHistory(channelId: string) {
+export function useChatHistory(
+  channelId: string,
+  options: { enabled: boolean } = { enabled: true },
+) {
   const service = new ChatService(getClient());
   const queryClient = useQueryClient();
   const historyKey = chatKeys.history(channelId);
 
   return useQuery({
     queryKey: historyKey,
+    enabled: options.enabled,
     queryFn: async () => {
       const fetched = await service.getHistory(channelId);
       return withNewerCachedMessages(
@@ -99,20 +109,31 @@ export function useChatHistory(channelId: string) {
 }
 
 /**
- * A fetched log, plus any cached message strictly newer than the newest row it
- * brought back.
+ * A fetched log reconciled against what the cache already holds: any cached
+ * message strictly newer than the newest fetched row is kept, and a cached
+ * `image_stored_at` survives a snapshot that predates it.
  *
- * **Sound only because messages are never deleted.** A removal is an UPDATE, so
- * a row the cache holds and the fetch does not is a row that did not exist when
- * the fetch took its snapshot — which, for anything ordered after the newest
- * row fetched, can only be an arrival the subscription patched in meanwhile.
- * Anything at or before that boundary is left alone: the fetch is the authority
- * on the window it read, so an edit or a tombstone it carries wins.
+ * **The union of newer rows is sound only because messages are never
+ * deleted.** A removal is an UPDATE, so a row the cache holds and the fetch
+ * does not is a row that did not exist when the fetch took its snapshot —
+ * which, for anything ordered after the newest row fetched, can only be an
+ * arrival the subscription patched in meanwhile. Anything at or before that
+ * boundary is left alone: the fetch is the authority on the window it read, so
+ * an edit or a tombstone it carries wins.
+ *
+ * **The `image_stored_at` merge is sound because the column is MONOTONE.**
+ * Nothing ever sets it back to NULL (00233 — the object is immutable and never
+ * deleted), so a fetched NULL against a cached value can only mean the
+ * snapshot predates the flag's commit, and taking `cached ?? fetched` is
+ * exactly right. Without this, a stale refetch resolving just after the flag's
+ * payload would revert the row and — the row never moving again — leave the
+ * picture blank until the next focus refetch.
  *
  * The other flavours of the same race — an UPDATE (an edit, a hide) that a
  * stale snapshot reverts — are deliberately not treated here. They self-heal on
  * the next focus refetch or realtime payload, and untangling them would need
- * per-row versions this surface does not have.
+ * per-row versions this surface does not have; the stored flag earns its merge
+ * by being the one UPDATE that is both monotone and final.
  *
  * An empty answer is taken at face value rather than unioned: the only ways to
  * read nothing are an empty channel and a read window that has closed, and in
@@ -124,16 +145,27 @@ function withNewerCachedMessages(
 ): ChatHistory {
   if (held === undefined || fetched.messages.length === 0) return fetched;
 
-  const newest = fetched.messages[fetched.messages.length - 1];
-  const fetchedIds = new Set(fetched.messages.map((row) => row.id));
+  const heldById = new Map(held.messages.map((row) => [row.id, row]));
+  const messages = fetched.messages.map((row) => {
+    if (row.image_stored_at !== null) return row;
+    const cached = heldById.get(row.id);
+    return cached !== undefined && cached.image_stored_at !== null
+      ? { ...row, image_stored_at: cached.image_stored_at }
+      : row;
+  });
+
+  const newest = messages[messages.length - 1];
+  const fetchedIds = new Set(messages.map((row) => row.id));
   const newer = held.messages.filter(
     (row) => !fetchedIds.has(row.id) && messageComesBefore(newest, row),
   );
-  if (newer.length === 0) return fetched;
 
   // Both lists carry the one `(created_at, id)` order and every kept row sorts
   // after the last fetched one, so appending preserves it.
-  return { ...fetched, messages: [...fetched.messages, ...newer] };
+  return {
+    ...fetched,
+    messages: newer.length === 0 ? messages : [...messages, ...newer],
+  };
 }
 
 /**
@@ -149,178 +181,6 @@ export function useChatRoster(channelId: string) {
     queryKey: chatKeys.roster(channelId),
     queryFn: () => service.getRoster(channelId),
   });
-}
-
-/** One minted URL, with the instant it was minted at. */
-interface MintedChatImageUrl {
-  url: string;
-  mintedAt: number;
-}
-
-/** The map before anything has been minted, as one stable empty object. */
-const NO_MINTED_URLS: Readonly<Record<string, MintedChatImageUrl>> = {};
-
-/**
- * How old a minted URL may get before it is re-minted: half its own lifetime.
- *
- * Late enough that nothing churns during a session — a changed `src` is a fresh
- * download of a picture the reader is already looking at — and early enough
- * that a tab left open all day never draws a link that has expired.
- */
-const CHAT_IMAGE_URL_STALE_MS = (CHAT_IMAGE_SIGNED_URL_TTL_SECONDS / 2) * 1000;
-
-/**
- * Signed URLs for the log's stored images, **accumulated rather than re-asked**.
- *
- * The set-keyed shape is wrong for a log that grows under the reader: every
- * arriving picture is a different set, so every INSERT of a burst would discard
- * the answer and re-mint every URL in the room, for every viewer — and a
- * six-picture send from one child would have every other client mint the whole
- * log six times over. So this keeps a map and asks only about what is not in
- * it, which is the same accumulate-don't-re-ask shape the voice room's Roblox
- * thumbnail lookup uses for a roster whose membership moves.
- *
- * **Minting is still one batched call per change**, never one per picture: a
- * change asks about everything it brought at once, and a change that brings no
- * new picture asks nothing at all.
- *
- * **An entry is never allowed to outlive its URL.** Each carries the instant it
- * was minted, a timer wakes on the oldest one currently in the log, and
- * anything past half its lifetime joins the next batch — the old URL keeps
- * drawing until the fresh one lands, so nothing blanks. An id whose re-mint
- * comes back refused is *dropped* rather than kept: that is a moderator hiding
- * the picture, which is exactly the retraction the storage policy exists for,
- * and holding a soon-to-expire URL for it would only delay the empty box.
- *
- * An id the batch could not sign — an object still landing, a hidden message —
- * simply stays out of the map, and is asked about again the next time the log
- * changes. The renderer draws the same empty box either way.
- */
-export function useChatImageUrls(
-  channelId: string,
-  messageIds: readonly string[],
-): ChatImageUrls {
-  const supabase = getClient();
-
-  // Tagged with the channel it belongs to and reset during render when the two
-  // disagree — the thumbnail retry's shape, for the same reason: a URL is
-  // minted against one channel's policy answer, and carrying a map across would
-  // be a render's worth of somebody else's log.
-  const [minted, setMinted] = useState<{
-    channelId: string;
-    urls: Readonly<Record<string, MintedChatImageUrl>>;
-  }>(() => ({ channelId, urls: NO_MINTED_URLS }));
-  // The ids a batch is out for. Never cleared wholesale, and it does not need
-  // to be: a message id belongs to one channel for good, so an id in flight
-  // when the channel changes can never be asked about again anyway, and the
-  // settle below removes exactly what it added.
-  const inFlightRef = useRef<ReadonlySet<string>>(new Set());
-  const mountedRef = useRef(true);
-  /** Bumped by the expiry timer below, to make the mint effect look again. */
-  const [expiryTick, setExpiryTick] = useState(0);
-
-  if (minted.channelId !== channelId) {
-    setMinted({ channelId, urls: NO_MINTED_URLS });
-  }
-  const urls = minted.channelId === channelId ? minted.urls : NO_MINTED_URLS;
-
-  // Set in the body rather than initialised once: React's development-mode
-  // double invocation runs this effect's cleanup and then its setup again, and
-  // a ref that only ever moved to `false` would stay there for the real mount.
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  // What has been minted, readable from the mint effect without making that
-  // effect depend on it — which would re-run it on its own result.
-  const urlsRef = useRef(urls);
-  useEffect(() => {
-    urlsRef.current = urls;
-  }, [urls]);
-
-  // The set as one primitive, so the effect below re-runs when the log's
-  // pictures really changed and not because a parent handed over an equal array.
-  const idList = [...new Set(messageIds)].sort().join(",");
-
-  useEffect(() => {
-    const ids = idList === "" ? [] : idList.split(",");
-    const now = Date.now();
-    const held = urlsRef.current;
-    const wanted = ids.filter((id) => {
-      if (inFlightRef.current.has(id)) return false;
-      if (!Object.hasOwn(held, id)) return true;
-      return now - held[id].mintedAt >= CHAT_IMAGE_URL_STALE_MS;
-    });
-    if (wanted.length === 0) return;
-
-    // Marked before the request goes out, so a picture arriving while a batch
-    // is in flight asks about itself alone rather than about it again.
-    inFlightRef.current = new Set([...inFlightRef.current, ...wanted]);
-
-    const service = new ChatService(supabase);
-    void service
-      .signImageUrls(wanted)
-      // A failed batch is "no URL" for the ids it asked about, settled rather
-      // than left pending — they are drawing the empty box already, and the
-      // next change to the log asks again.
-      .catch((): ChatImageUrls => ({}))
-      .then((signed) => {
-        const remaining = new Set(inFlightRef.current);
-        for (const id of wanted) remaining.delete(id);
-        inFlightRef.current = remaining;
-        if (!mountedRef.current) return;
-
-        // A Map rather than the record itself, so an id the batch did not
-        // answer for reads as absent rather than as a key that happens to be
-        // missing.
-        const fresh = new Map(Object.entries(signed));
-        const mintedAt = Date.now();
-        setMinted((previous) => {
-          if (previous.channelId !== channelId) return previous;
-          const next = { ...previous.urls };
-          for (const id of wanted) {
-            const url = fresh.get(id);
-            // Either the fresh URL, or nothing at all: an id we asked about and
-            // did not get back must not keep an entry, or a stale one would sit
-            // in the map past its own expiry and wake the timer forever.
-            if (url === undefined) delete next[id];
-            else next[id] = { url, mintedAt };
-          }
-          return { channelId, urls: next };
-        });
-      });
-  }, [channelId, idList, supabase, expiryTick]);
-
-  // Wake when the oldest URL the log is actually drawing goes stale. Entries
-  // for pictures that have scrolled out of the window are ignored: nothing
-  // re-mints them, so letting one drive the timer would wake it forever.
-  useEffect(() => {
-    const ids = idList === "" ? [] : idList.split(",");
-    const ages = ids.flatMap((id) =>
-      Object.hasOwn(urls, id) ? [urls[id].mintedAt] : [],
-    );
-    if (ages.length === 0) return;
-
-    const due = Math.min(...ages) + CHAT_IMAGE_URL_STALE_MS - Date.now();
-    const timer = window.setTimeout(
-      () => setExpiryTick((tick) => tick + 1),
-      Math.max(due, 0),
-    );
-    return () => window.clearTimeout(timer);
-  }, [idList, urls]);
-
-  // The shape a consumer reads: the URL alone, with the mint stamp — this
-  // hook's own bookkeeping — left behind.
-  return useMemo(
-    () =>
-      Object.fromEntries(
-        Object.entries(urls).map(([id, entry]) => [id, entry.url]),
-      ),
-    [urls],
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -385,6 +245,7 @@ export function useSendChatMessage(channelId: string) {
                   hidden_by: null,
                   image_width: null,
                   image_height: null,
+                  image_stored_at: null,
                   reply_to_message_id: variables.replyToMessageId,
                 }),
               },
@@ -412,13 +273,15 @@ export interface ChatImageSendVariables {
  * reason**: a send fans a burst out into one message per picture, so six
  * invalidations would be six refetches of a two-hundred-row log to learn six
  * rows the route already answered with. The response carries everything the
- * echo could not know — the server stamp and the dimensions the re-encode
- * measured — so the cache goes to server truth exactly.
+ * echo could not know — the server stamp, the dimensions the re-encode
+ * measured, and `imageStoredAt`, which a 200 from the route guarantees — so
+ * the cache goes to server truth exactly, and the sender's own cache never
+ * holds a NULL-flag row for a picture that sent.
  *
- * The row lands here before its object does anywhere: a subscriber other than
- * the sender briefly holds an image message whose bytes are still arriving, and
- * no second event corrects it. That is what the renderer's bounded retry is
- * for. The sender is the one viewer who never sees it, because their own blob
+ * Every other subscriber's row arrives flag-NULL over realtime the instant it
+ * exists and flips when the route's `mark_chat_image_stored` UPDATE lands —
+ * which is the event that makes their client fetch the bytes, and by then the
+ * object provably exists. The sender never waits for any of it: their own blob
  * is what draws their copy.
  */
 export function useSendChatImage(channelId: string) {
@@ -452,6 +315,7 @@ export function useSendChatImage(channelId: string) {
                   hidden_by: null,
                   image_width: stored.width,
                   image_height: stored.height,
+                  image_stored_at: stored.imageStoredAt,
                   reply_to_message_id: variables.replyToMessageId,
                 }),
               },
@@ -473,12 +337,14 @@ export function useSendChatImage(channelId: string) {
  * was when its statement ran, so a payload patched into the cache while the
  * request was in flight is not in the answer. The history query unions back the
  * rows that can only postdate that snapshot — new messages, which are the ones
- * whose loss would be visible and permanent. It does *not* reconcile an UPDATE
- * the snapshot predates: an edit or a tombstone that lands mid-flight can be
- * momentarily reverted by the answer, and heals on the next payload or focus
- * refetch. That is the accepted half, alongside the two the container's own
- * comments record (a re-subscribe is the only reconnect signal; a payload
- * dropped on a socket that stays up arrives as silence).
+ * whose loss would be visible and permanent — and preserves a cached
+ * `image_stored_at` over a fetched NULL, the one UPDATE whose loss would also
+ * be permanent (its row may never move again) and whose monotonicity makes the
+ * merge exact. It does *not* reconcile any other UPDATE the snapshot predates:
+ * an edit or a tombstone that lands mid-flight can be momentarily reverted by
+ * the answer, and heals on the next payload or focus refetch. That is the
+ * accepted half, alongside the one the container's own comments record (a
+ * payload dropped on a socket that stays up arrives as silence).
  */
 function useChatWrite<TVariables, TResult>(
   channelId: string,

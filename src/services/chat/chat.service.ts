@@ -7,8 +7,6 @@ import type {
   ChatReactionRow,
 } from "@/types";
 import {
-  CHAT_IMAGES_BUCKET,
-  CHAT_IMAGE_SIGNED_URL_TTL_SECONDS,
   chatChannelRow,
   chatChannelRoster,
   chatImageUploadResponse,
@@ -28,10 +26,13 @@ import {
  * refuses cross-participant reads, so naming the people in a log needs a
  * deliberate hole in that refusal.
  *
- * No API route is involved anywhere here. Every write is authorized by the
- * caller's own session inside a SECURITY DEFINER function, so there is no
- * server-side secret to hide behind a route — the first route on this surface
- * arrives with images, which need the storage admin client for the object.
+ * Two API routes exist beside this class and neither moves the boundary: the
+ * image upload route (the storage admin client a browser must never hold) and
+ * the image read route, which downloads the object on the VIEWER'S OWN session
+ * so the bucket's one policy answers — an `<img>` cannot carry an auth header,
+ * and the route is the translation from cookie session to policy answer,
+ * nothing more. Every table write is authorized by the caller's own session
+ * inside a SECURITY DEFINER function.
  */
 
 /**
@@ -62,17 +63,6 @@ export interface ChatHistory {
    */
   locks: ChatChannelLockRow[];
 }
-
-/**
- * Signed URLs for stored chat images, keyed by the message id that names the
- * object.
- *
- * A missing key is the honest answer for two different situations — an object
- * that has not landed yet (the row is written before the bytes) and one the
- * bucket policy refused — and the renderer draws the same empty box for both,
- * so nothing here has to tell them apart.
- */
-export type ChatImageUrls = Record<string, string>;
 
 export class ChatService {
   constructor(private supabase: AppSupabaseClient) {}
@@ -186,33 +176,6 @@ export class ChatService {
   }
 
   /**
-   * Creates the row for an image message, with the dimensions the upload route's
-   * re-encode measured.
-   *
-   * **Called by that route, not by a browser**, and row-first on purpose: the
-   * guard runs before any bytes are stored, and the object's name is this row's
-   * id. Client-claimed dimensions never reach the columns — a fabricated
-   * `1 × 20000` would be a layout bomb in every viewer's log.
-   */
-  async sendImageMessage(input: {
-    id: string;
-    channelId: string;
-    width: number;
-    height: number;
-    replyToMessageId: string | null;
-  }): Promise<string> {
-    const { data, error } = await this.supabase.rpc("send_chat_image_message", {
-      p_id: input.id,
-      p_channel_id: input.channelId,
-      p_width: input.width,
-      p_height: input.height,
-      p_reply_to_message_id: input.replyToMessageId ?? undefined,
-    });
-    if (error) throw error;
-    return data;
-  }
-
-  /**
    * Sends one picture: the bytes go to the route, the row comes back.
    *
    * **The only method on this surface that is not a `.rpc()`**, and the reason
@@ -220,8 +183,9 @@ export class ChatService {
    * client a browser must never hold. The route's own first act is still
    * `send_chat_image_message` on the CALLER'S session, so the authorization has
    * not moved anywhere; what the route adds is the re-encode (the EXIF strip
-   * that no modified client can bypass, and the dimensions it measures) and the
-   * storage write.
+   * that no modified client can bypass, and the dimensions it measures), the
+   * storage write, and the `mark_chat_image_stored` flip whose realtime UPDATE
+   * is what tells every other viewer the picture is fetchable.
    *
    * The blob is the composer's own normalized JPEG — the same artifact the
    * staged thumbnail is drawn from — so what the sender saw and what the room
@@ -259,40 +223,6 @@ export class ChatService {
     }
 
     return parseJsonResponse(response, chatImageUploadResponse);
-  }
-
-  /**
-   * Mint a signed URL for each stored image in one call.
-   *
-   * **Batched, and minted on the viewer's own client on purpose**: signing
-   * requires SELECT on the object under storage RLS, so the bucket's policy is
-   * what decides — membership, the family time bound, and a hidden message's
-   * picture being refused to anyone but a moderator all fall out of one call
-   * nobody had to remember to make.
-   *
-   * An id the policy refuses comes back as a per-path error rather than a
-   * failure of the batch, and is simply absent from the map. That is the same
-   * answer as "not minted yet", which is what the renderer's empty box already
-   * draws — a moderator hiding a picture mid-room and a picture whose object is
-   * still landing look identical here, and neither is worth a second state.
-   */
-  async signImageUrls(messageIds: readonly string[]): Promise<ChatImageUrls> {
-    if (messageIds.length === 0) return {};
-
-    const { data, error } = await this.supabase.storage
-      .from(CHAT_IMAGES_BUCKET)
-      .createSignedUrls([...messageIds], CHAT_IMAGE_SIGNED_URL_TTL_SECONDS);
-    if (error) throw error;
-
-    const urls: ChatImageUrls = {};
-    for (const entry of data) {
-      // `path` is the object name, which is the message id. A row the policy
-      // refused carries its own `error` and a null url, and simply does not
-      // join the map.
-      if (entry.path === null || entry.signedUrl === null) continue;
-      urls[entry.path] = entry.signedUrl;
-    }
-    return urls;
   }
 
   /** Edits one's own standing text message. Returns the new `edited_at`. */

@@ -2,13 +2,11 @@ export {
   ChatService,
   CHAT_HISTORY_LIMIT,
   type ChatHistory,
-  type ChatImageUrls,
 } from "./chat.service";
 export {
   chatKeys,
   useChatChannel,
   useChatHistory,
-  useChatImageUrls,
   useChatRoster,
   useSendChatImage,
   useSendChatMessage,
@@ -25,8 +23,8 @@ export {
 } from "./chat.queries";
 export {
   CHAT_IMAGES_BUCKET,
-  CHAT_IMAGE_SIGNED_URL_TTL_SECONDS,
   CHAT_LOCKED_SQLSTATE,
+  chatImagePath,
   isChatLockedError,
   chatChannelRow,
   chatChannelRoster,

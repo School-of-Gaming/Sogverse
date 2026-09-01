@@ -25,7 +25,13 @@ import {
 /**
  * POST /api/chat/images — sending one picture into a chat channel.
  *
- * Three properties are what this file exists to hold still.
+ * Four properties are what this file exists to hold still.
+ *
+ * **A 200 means row, object AND stored flag committed, in that order.** The
+ * row replicates to every subscriber before its bytes exist, and the flag's
+ * own realtime UPDATE is the one event that tells them the bytes have landed —
+ * so the mark must run strictly after the storage write, and a mark that fails
+ * must fail the send (sweep + tombstone), never answer success around a hole.
  *
  * **The strip is a mechanism.** Chat's uploader is any child or parent, not an
  * assigned member of staff, so "a picture of a child never leaves here carrying
@@ -79,6 +85,8 @@ const CHANNEL_ID = "6b1f0f4c-2d9e-4a71-8c53-91d0a7b4e2f8";
 const MESSAGE_ID = "c47d3a10-5e88-4b2f-9d61-0a3f7c5b8e12";
 const REPLY_TO_ID = "1e5c9b74-3a20-4d6e-8f11-72c4d9a0b563";
 const CREATED_AT = "2026-09-01T17:22:31.412Z";
+/** What mark_chat_image_stored stamps — a moment after the row's own stamp. */
+const STORED_AT = "2026-09-01T17:22:33.907Z";
 
 /** A JPEG with GPS, a copyright and an orientation tag. Built once. */
 let exifJpeg: Buffer;
@@ -154,7 +162,16 @@ describe("POST /api/chat/images", () => {
       data: { id: CHANNEL_ID },
       error: null,
     });
-    mockRpc.mockResolvedValue({ data: CREATED_AT, error: null });
+    // The two RPCs of the happy path answer with their own stamps: the send
+    // with created_at, the mark with image_stored_at. Refusal cases override
+    // per test with mockResolvedValue(Once).
+    mockRpc.mockImplementation((fn: unknown) =>
+      Promise.resolve(
+        fn === "mark_chat_image_stored"
+          ? { data: STORED_AT, error: null }
+          : { data: CREATED_AT, error: null },
+      ),
+    );
     mockUpload.mockResolvedValue({ error: null });
     mockRemove.mockResolvedValue({ error: null });
   });
@@ -295,23 +312,26 @@ describe("POST /api/chat/images", () => {
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  // --- The happy path: row, then object ------------------------------------
+  // --- The happy path: row, then object, then flag --------------------------
 
-  it("writes the row on the caller's client and then stores the object", async () => {
+  it("writes the row, stores the object, then flips the stored flag", async () => {
     const response = await POST(createRequest());
 
     expect(response.status).toBe(200);
+    // A 200 carries the flag's stamp because a 200 MEANS the flag committed —
+    // the sender's cache write copies it onto the settled row.
     expect(await response.json()).toEqual({
       id: MESSAGE_ID,
       createdAt: CREATED_AT,
       width: 24,
       height: 16,
+      imageStoredAt: STORED_AT,
     });
 
     // The dimensions are the re-encode's, and the reply parameter travels even
     // when it is absent — a burst with no text puts the reply on the first
     // picture, so this is not a symmetric extra.
-    expect(mockRpc).toHaveBeenCalledWith("send_chat_image_message", {
+    expect(mockRpc).toHaveBeenNthCalledWith(1, "send_chat_image_message", {
       p_id: MESSAGE_ID,
       p_channel_id: CHANNEL_ID,
       p_width: 24,
@@ -330,6 +350,16 @@ describe("POST /api/chat/images", () => {
         upsert: false,
         cacheControl: "31536000",
       }),
+    );
+
+    // The flag runs on the CALLER'S client, strictly after the storage write
+    // returned — that ordering is what makes its realtime UPDATE a promise
+    // that the object exists, so a receiver's fetch can never be early.
+    expect(mockRpc).toHaveBeenNthCalledWith(2, "mark_chat_image_stored", {
+      p_id: MESSAGE_ID,
+    });
+    expect(mockUpload.mock.invocationCallOrder[0]).toBeLessThan(
+      mockRpc.mock.invocationCallOrder[1],
     );
 
     // The sweep belongs to the failure path alone.
@@ -432,6 +462,30 @@ describe("POST /api/chat/images", () => {
     // empty image box every viewer's renderer already handles; a moderator's
     // remove control is the repair.
     expect(mockRpc).toHaveBeenCalledTimes(2);
+    expect(response.status).toBe(500);
+  });
+
+  it("fails the whole send when the stored flag cannot be committed", async () => {
+    // The upload landed; the mark did not. Answering 200 here would read as
+    // sent on the sender's screen and stay permanently blank on everyone
+    // else's — no client fetches an unflagged picture, and no later event
+    // corrects it — so an unflagged success is a failed send: the object is
+    // swept, the row is tombstoned, and the sender gets the failed bubble.
+    mockRpc
+      .mockResolvedValueOnce({ data: CREATED_AT, error: null })
+      .mockResolvedValueOnce({
+        data: null,
+        error: { code: "XX000", message: "the mark failed" },
+      })
+      .mockResolvedValueOnce({ data: CREATED_AT, error: null });
+
+    const response = await POST(createRequest());
+
+    expect(mockUpload).toHaveBeenCalled();
+    expect(mockRemove).toHaveBeenCalledWith([MESSAGE_ID]);
+    expect(mockRpc).toHaveBeenLastCalledWith("hide_chat_message", {
+      p_id: MESSAGE_ID,
+    });
     expect(response.status).toBe(500);
   });
 

@@ -148,6 +148,7 @@ export type Database = {
           hidden_by: string | null
           id: string
           image_height: number | null
+          image_stored_at: string | null
           image_width: number | null
           reply_to_message_id: string | null
           sender_id: string
@@ -161,6 +162,7 @@ export type Database = {
           hidden_by?: string | null
           id: string
           image_height?: number | null
+          image_stored_at?: string | null
           image_width?: number | null
           reply_to_message_id?: string | null
           sender_id: string
@@ -174,6 +176,7 @@ export type Database = {
           hidden_by?: string | null
           id?: string
           image_height?: number | null
+          image_stored_at?: string | null
           image_width?: number | null
           reply_to_message_id?: string | null
           sender_id?: string
@@ -2805,6 +2808,7 @@ export type Database = {
         Returns: string
       }
       location_search_separator: { Args: never; Returns: string }
+      mark_chat_image_stored: { Args: { p_id: string }; Returns: string }
       participation_state: {
         Args: {
           p_group_id: string

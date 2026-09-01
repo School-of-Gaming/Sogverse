@@ -21,12 +21,13 @@ only give a second copy the chance to disagree.
 
 **Rule: the image URL is resolved by the container, not by the renderer.** A stored image
 arrives as `{ id, src, width, height }` with `src` already servable, and nothing here asks
-where one came from. That is the permanent shape rather than a stand-in for a helper: the
-bucket is private, so a stored picture is read through a signed URL that has to be *minted*
-for a viewer and expires — it cannot be derived from an id the way a public object's URL
-can. The three kinds of `src` these components meet (a signed URL, the sender's own staged
-blob, fixture art) are only distinguishable by whoever produced them, which is exactly why
-producing them is not this module's job. See "The wire behind the props" for what the
+where one came from. The address itself is now derivable — a stored picture is served by
+the authenticated read route at a stable path built from the message id — but the
+*decision* is not: which of the three kinds of `src` a picture gets (the read route's
+path, the sender's own staged blob, fixture art), and whether it gets one at all rather
+than the placeholder (a row whose bytes have not landed yet draws nothing servable), is a
+function of row state and viewer that only the container holds. Producing the answer is
+therefore still not this module's job. See "The wire behind the props" for what the
 container does.
 
 ## The capability module
@@ -242,9 +243,9 @@ turned away, and a send hands ownership to the message it became — the log is 
 blob, so revoking it at the composer would blank the thumbnail the sender just posted. The
 message's URL is freed when the page goes, and that lifetime is deliberate rather than
 provisional: the container keeps a sender's own staged blob for as long as the page lives
-and prefers it over any signed URL, so a sender never waits for a mint, never watches
-their own picture reload, and is the one viewer who cannot see the window in which a row
-exists and its object does not.
+and prefers it over the read route's path, so a sender never waits for a fetch, never
+watches their own picture re-download, and is the one viewer who cannot see the window in
+which a row exists and its object does not.
 
 **Rule: the fullscreen overlay is not this module's — it is the shared
 `FullscreenImageViewer` in `components/ui`** *(owner ruling: the two forks are combined)*.
@@ -258,15 +259,15 @@ its images straight through; nothing adapts them, which is why chat has no viewe
 all where the session feed keeps a thin one to resolve ids into URLs.
 
 **Rule: every chat image renders `unoptimized`, and that holds for stored pictures too.**
-A stored chat image is read through a signed URL minted per viewer and rotating on every
-mint, so the optimizer could never serve one of its cached renditions twice — and
-bypassing it is also what keeps the private `chat-images` bucket out of
-`images.remotePatterns`, where a pattern would be a standing optimizer permission on a
-bucket whose entire read boundary is one storage policy. The other two kinds of `src` this
-surface meets, a staged blob and fixture art, the optimizer cannot fetch at all. So the
-flag is right for every picture this renderer can be handed, which is what keeps it a
-property of the component rather than a decision per image — the renderer still cannot
-tell one kind of URL from another, and now it does not have to.
+A stored chat image is served by the authenticated read route, which answers on the
+viewer's own session cookies — and the optimizer's server-side fetch carries no cookies,
+so an optimized request could only ever meet the route's 404. Bypassing it is also what
+keeps the private chat-image surface out of `images.remotePatterns`, where a pattern
+would be a standing optimizer permission on a boundary that is one storage policy. The
+other two kinds of `src` this surface meets, a staged blob and fixture art, the optimizer
+cannot fetch at all. So the flag is right for every picture this renderer can be handed,
+which is what keeps it a property of the component rather than a decision per image — the
+renderer still cannot tell one kind of URL from another, and now it does not have to.
 
 ## One home: the preview scene, not the style guide
 
@@ -317,9 +318,10 @@ tombstone-for-participants / dimmed-original-for-moderators split is drawn here,
 client. That exposure is accepted rather than overlooked: everyone in the room received
 the body before it was hidden, and redacting it on the wire would protect only a late
 joiner reading removed text out of network traffic with devtools. **Hidden pictures are
-stricter for free** — the storage policy refuses a fresh signed URL for a hidden message
-to anyone but a moderator, so hiding retracts the image; only an already-minted URL
-survives, until it expires.
+stricter for free** — the storage policy admits a hidden message's object only to
+moderators, and every read re-answers it at fetch time through the read route, so hiding
+retracts the image from the next fetch onward; what survives is only what a member's own
+browser already cached, the same already-received exposure as the text.
 
 **Rule: the typing indicator rides a Realtime broadcast that is not RLS-gated, so its
 payload is an account id and nothing else.** Realtime authorization policies are machinery
@@ -337,31 +339,36 @@ components take no typing handler, and giving them one would be the first crack 
 transport-free contract.
 
 **Rule: a stored picture is read through one storage policy, and that policy is the whole
-boundary.** The bucket is private, an object's name is its message row's id, and minting a
-signed URL requires SELECT on the object — so membership, the family time bound (a
-participant can read a channel only around its own session window; staff have none,
+boundary.** The bucket is private, an object's name is its message row's id, and the
+bytes are served by the authenticated read route (`GET /api/chat/images/[id]`), which
+downloads the object ON THE VIEWER'S OWN session — so membership, the family time bound
+(a participant can read a channel only around its own session window; staff have none,
 because after-the-fact review is the point of keeping the rows) and the hidden state are
-all enforced by one predicate, on a path nobody has to remember to call.
-The container **accumulates** the URLs rather than re-asking: it holds a map and mints, in
-one batched call, only the ids it has no live URL for — so a picture arriving asks about
-that picture, and a burst of six does not have every client in the room re-mint the whole
-log six times. A URL lasts half a day and is treated as stale at half of that; a timer
-wakes on the oldest one the log is drawing and puts it in the next batch, with the old URL
-still drawing until the fresh one lands, so no thumbnail blanks and none outlives its own
-expiry. A picture the policy refuses is simply absent from the batch — the same absence as
-one whose object has not landed yet, the renderer draws the same empty box for both, and
-the next change to the log asks again. An id whose *re-mint* is refused loses its entry
-outright: that is a moderator hiding the picture, which is exactly the retraction the
-policy exists for.
+all enforced by one predicate, re-answered on every fetch, on a path nobody has to
+remember to call. **No signed URLs are minted anywhere** *(owner decision, 2026-09-01,
+recorded in migration 00233)*: a signed URL is a bearer token any viewer could copy out
+of devtools and share for its whole lifetime, and the read route deletes that exposure
+along with the entire client-side machinery the expiring tokens demanded — the
+accumulated URL map, the staleness timer, the batch-mint economy. The route's path is a
+pure function of the message id, immutable bytes behind it, so the browser caches each
+picture privately, forever, and a re-render or reload costs nothing.
 
-**A row lands before its bytes, and the renderer's bounded retry is what covers it.** The
-upload writes the message row first, which is what keeps the send guard in front of the
-stored bytes, and that row reaches every other subscriber the instant it exists with no
-second event to announce the object. So a thumbnail that will not load re-attempts a few
-times over a couple of seconds and then stops: past that the picture is not late, it is
-missing, and a renderer hammering a URL that will never answer is worse than a blank box.
-Every box is arithmetic from the stored dimensions throughout, so none of this moves the
-log.
+**A row lands before its bytes, and the row itself says when they have landed —
+`image_stored_at`, written by the upload route the moment the storage write returns.**
+Row first keeps the send guard in front of the stored bytes; the flag closes the window
+that ordering opens. Its realtime UPDATE reaches every subscriber on the same stream the
+row did, and the container resolves a stored picture's `src` only for a flagged row — so
+by the time any client fetches, the object provably exists (the flag commits strictly
+after it, in the same database the route reads), and "asked too early" is unreachable
+rather than retried. Until the flag lands the renderer draws the placeholder in the same
+arithmetic box; when it lands, the `src` flips inside a box that never changes shape.
+The flag is **monotone** — never cleared — which is what lets the history read merge it
+across refetch races exactly (`cached ?? fetched`), and the container subscribes before
+it takes its first history snapshot (buffering payloads that beat the snapshot) so no
+flag can fall between the two. There are no timers, no re-asks and no bounded retries
+anywhere on this path: a picture whose flag never comes (an upload failure whose
+compensating tombstone also failed, a server that died mid-send) stays the quiet empty
+box, generates zero traffic, and a moderator's remove control is its repair.
 
 **Rule: reviewing a past session's chat is a psql session, not a screen.** Messages and
 image bytes are kept indefinitely and nothing deletes them, but the app reads only the

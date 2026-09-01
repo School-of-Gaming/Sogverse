@@ -425,9 +425,9 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     why: "boolean about the caller's own moderator standing in a voice group",
   },
 
-  // --- chat (00228 / 00229) ------------------------------------------------
+  // --- chat (00228 / 00229 / 00233) ----------------------------------------
   //
-  // Eleven entries, and every one of them is self-scoping for the same reason:
+  // Twelve entries, and every one of them is self-scoping for the same reason:
   // **chat authorization is a MEMBERSHIP question, not a role question.** A
   // gamer, a parent, a gedu and an admin are all legitimate callers of the same
   // RPC and which one you are decides nothing on its own — a seat-holder and an
@@ -468,6 +468,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   send_chat_image_message: {
     scopeTest: "tests/db/chat-rpcs.test.ts",
     why: "the image row's creator, same guards and same auth.uid() sender as the text send. Called by the upload route on the uploader's own client — that guard IS the authorization, and the admin client is used for the storage write alone — with the dimensions the route's re-encode measured rather than any a client claimed",
+  },
+  mark_chat_image_stored: {
+    scopeTest: "tests/db/chat-rpcs.test.ts",
+    why: "stamps image_stored_at on the caller's OWN image message once its object has landed — ownership is the whole guard (a missing row and somebody else's row refuse identically; a text message is refused as a class), and deliberately no membership, lock or hidden check: this completes a send send_chat_image_message already authorized, and none of those landing mid-upload may strand a legitimate picture as permanently blank. Idempotent and monotone — a standing stamp is returned, never moved. Directly callable harm is self-harm: marking your own never-uploaded image stored only blanks your own message",
   },
   edit_chat_message: {
     scopeTest: "tests/db/chat-rpcs.test.ts",

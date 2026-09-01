@@ -131,7 +131,7 @@ Analysis:  createMediaStreamSource(MediaStream([track])) → AnalyserNode   ← 
 
 Persisted messages, images, reactions, replies, mentions and moderation, in their own tables over Supabase Realtime. The Daily app-message channel carries moderator signalling only — it is not a chat transport.
 
-**The surface itself lives in `src/components/chat/` and is documented there**: the transport-free contract, the layout rules it leans on, and the wire facts behind the props (the hidden-body exposure, the ungated typing broadcast, the signed-URL image boundary). What this directory owns is the seam.
+**The surface itself lives in `src/components/chat/` and is documented there**: the transport-free contract, the layout rules it leans on, and the wire facts behind the props (the hidden-body exposure, the ungated typing broadcast, the one-storage-policy image boundary behind the authenticated read route). What this directory owns is the seam.
 
 **Rule: the room takes chat as a slot and grants it a height.** `VoiceRoom` renders whatever its `chat` prop draws and passes that function the height class the surface must occupy — the chat surface has exactly one height and never grows, and how much of *this* page it gets is the room's decision rather than the component's default. The card around the slot supplies the bottom padding the typing indicator is drawn into.
 

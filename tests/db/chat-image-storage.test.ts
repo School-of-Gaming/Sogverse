@@ -18,14 +18,17 @@ import { getStringRecord } from "../helpers/json";
  * The `chat-images` storage policy (00231) — the one read boundary the bytes
  * have.
  *
- * **Minting a signed URL requires SELECT on the object under storage RLS**,
- * which is what lets a single policy carry the whole of it: membership, the
- * family time bound, and a hidden message's picture being refused to everyone
- * but a moderator. Nothing in the app has to remember to check any of that —
- * which is exactly why nothing in the app would notice if the policy stopped
- * doing it. Every case below therefore goes through `createSignedUrl` on a real
- * caller's own client, because that is the call the browser makes and the only
- * one that exercises the policy.
+ * **Reading the object requires SELECT on it under storage RLS**, which is
+ * what lets a single policy carry the whole of it: membership, the family time
+ * bound, and a hidden message's picture being refused to everyone but a
+ * moderator. Nothing in the app has to remember to check any of that — which
+ * is exactly why nothing in the app would notice if the policy stopped doing
+ * it. In production the policy is exercised by the read route's
+ * `storage.download` on the viewer's own client (no signed URL is minted
+ * anywhere since 00233); every case below goes through `createSignedUrl` on a
+ * real caller's own client instead, because the two are gated by the same
+ * SELECT predicate and the mint is the one storage read a db test can make
+ * without standing up the app in front of it.
  *
  * The object is written with the service-role client, as the upload route
  * writes it: the bucket grants SELECT alone, so there is no client-side write

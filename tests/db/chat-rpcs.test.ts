@@ -19,7 +19,8 @@ import {
 import { getStringRecord } from "../helpers/json";
 
 /**
- * The chat surface's nine RPCs and two membership predicates (00228 / 00229).
+ * The chat surface's ten RPCs and two membership predicates (00228 / 00229,
+ * plus 00233's mark_chat_image_stored).
  *
  * This file is the **scope test** every chat entry in the authorization spine's
  * self-scoping allowlist names, and that classification is why it looks the way
@@ -750,6 +751,108 @@ describe("chat RPCs", () => {
       });
 
       expect(result.error?.code).toBe(FORBIDDEN);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // mark_chat_image_stored
+  // -------------------------------------------------------------------------
+  //
+  // The completion half of the image send (00233): the upload route flips
+  // image_stored_at on the caller's own client once the object lands, and the
+  // flag's realtime UPDATE is what tells every viewer the bytes exist.
+  // Ownership is the WHOLE guard, and the absences are the point — no
+  // membership, lock or hidden check, because this completes a send the send
+  // RPC already authorized, and none of those landing mid-upload may strand a
+  // legitimately sent picture as permanently blank.
+
+  describe("mark_chat_image_stored", () => {
+    /** A fresh image row of the gamer's, as the upload route creates one. */
+    async function gamerSendsImage(): Promise<string> {
+      const id = newMessageId();
+      ok(
+        await gamerAuth.rpc("send_chat_image_message", {
+          p_id: id,
+          p_channel_id: channelId,
+          p_width: 800,
+          p_height: 600,
+        }),
+      );
+      return id;
+    }
+
+    it("stamps the sender's own image row, and a repeat returns the same stamp", async () => {
+      const id = await gamerSendsImage();
+
+      const first = await gamerAuth.rpc("mark_chat_image_stored", { p_id: id });
+      expect(first.error).toBeNull();
+      expect(first.data).toBeTruthy();
+
+      // Idempotent by COALESCE — the write side of the column's monotonicity.
+      // The upload route calls once; this pins that a retry or a race cannot
+      // move a stamp other clients have already acted on.
+      const again = await gamerAuth.rpc("mark_chat_image_stored", { p_id: id });
+      expect(again.error).toBeNull();
+      expect(again.data).toBe(first.data);
+
+      const row = await admin
+        .from("chat_messages")
+        .select("image_stored_at")
+        .eq("id", id)
+        .single();
+      expect(row.data?.image_stored_at).toBeTruthy();
+    });
+
+    it("refuses somebody else's message, identically to one that does not exist", async () => {
+      const id = await gamerSendsImage();
+
+      const other = await gamer2Auth.rpc("mark_chat_image_stored", {
+        p_id: id,
+      });
+      const missing = await gamer2Auth.rpc("mark_chat_image_stored", {
+        p_id: newMessageId(),
+      });
+
+      // One refusal for both, so the function is no oracle for message ids.
+      expect(other.error?.code).toBe(FORBIDDEN);
+      expect(missing.error?.code).toBe(FORBIDDEN);
+
+      const row = await admin
+        .from("chat_messages")
+        .select("image_stored_at")
+        .eq("id", id)
+        .single();
+      expect(row.data?.image_stored_at).toBeNull();
+    });
+
+    it("refuses a text message — there are no bytes to have landed", async () => {
+      const id = await gamerSends("words carry no object");
+
+      const result = await gamerAuth.rpc("mark_chat_image_stored", {
+        p_id: id,
+      });
+
+      expect(result.error?.code).toBe(CHECK_VIOLATION);
+    });
+
+    it("survives a lock and a mid-upload hide — completion is not refusable", async () => {
+      const id = await gamerSendsImage();
+
+      // A moderator removes the picture and locks its sender while the bytes
+      // are still landing. Neither may strand the flag: the hide because the
+      // moderator's own dimmed original needs it to fetch, the lock because
+      // the send it completes was authorized before the lock existed.
+      ok(await geduAuth.rpc("hide_chat_message", { p_id: id }));
+      await lockGamer();
+      try {
+        const result = await gamerAuth.rpc("mark_chat_image_stored", {
+          p_id: id,
+        });
+        expect(result.error).toBeNull();
+        expect(result.data).toBeTruthy();
+      } finally {
+        await unlockGamer();
+      }
     });
   });
 

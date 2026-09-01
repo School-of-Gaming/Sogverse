@@ -64,10 +64,23 @@ const JPEG_SOI = [0xff, 0xd8, 0xff];
  * re-encodes; it does not rescue: an image whose true dimensions are
  * implausible is refused by the RPC's own bound.
  *
- * **Row first, then object, and a failed upload tombstones the row.** The order
- * is what keeps the guard in front of the bytes. The compensation is a *hide*
- * rather than a delete, and deliberately: the INSERT has already reached every
- * subscriber over realtime by the time storage answers, and messages are never
+ * **Row, then object, then flag — and a 200 means all three committed.** The
+ * order is what keeps the guard in front of the bytes, and the flag is what
+ * keeps every other viewer honest about them: the row reaches every subscriber
+ * over realtime the instant it exists, while its bytes are still in flight, so
+ * after the storage write returns this route flips `image_stored_at` through
+ * `mark_chat_image_stored` (00233) on the same caller client the insert ran
+ * on. That UPDATE's realtime arrival is the event that tells each viewer the
+ * picture is fetchable — by then the object provably exists, because the flag
+ * was committed strictly after it, in the same database the read route asks.
+ *
+ * **A failure of the object OR of the flag runs one compensation: sweep the
+ * object, tombstone the row, 500.** The mark half is load-bearing, not
+ * tidiness — a success answered to the sender with the flag uncommitted would
+ * read as sent on their screen and stay permanently blank on everyone else's,
+ * since no client fetches an unflagged picture and no later event corrects
+ * it. The compensation is a *hide* rather than a delete, and deliberately: the
+ * INSERT has already reached every subscriber, and messages are never
  * physically deleted — there is no DELETE for a subscriber to receive, so a
  * hard delete would leave every other client drawing a picture that will never
  * arrive. Hiding is an UPDATE, it replicates, and it turns the row into the
@@ -165,6 +178,45 @@ export const POST = defineRoute({
     // here. The object's name IS the message id, so no path is stored and
     // `upsert: false` can only ever collide with itself.
     const bucket = createAdminClient().storage.from(CHAT_IMAGES_BUCKET);
+
+    /**
+     * Undo a send whose object or flag did not commit: sweep, tombstone, 500.
+     *
+     * One compensation for both late failures, because the invariant is one:
+     * a 200 from this route means row, object AND flag committed, so anything
+     * short of that converges on the tombstone every failed send leaves.
+     *
+     * The object first, and best-effort — on the ordinary failure there is
+     * nothing there to remove, but an upload that failed *after* its bytes
+     * landed (or a flag that failed after a clean upload) would otherwise
+     * leave an object behind that no standing row names. Then the row, on the
+     * same client the insert ran on — hiding one's own message is the one
+     * write a lock leaves, so this compensation cannot itself be refused by a
+     * lock that landed mid-upload.
+     */
+    const failSend = async (failure: string): Promise<never> => {
+      const { error: sweepError } = await bucket.remove([upload.fields.id]);
+      if (sweepError) {
+        console.error(
+          `[${ROUTE_LABEL}] post-failure object sweep failed for message ${upload.fields.id}:`,
+          sweepError,
+        );
+      }
+      const { error: hideError } = await supabase.rpc("hide_chat_message", {
+        p_id: upload.fields.id,
+      });
+      if (hideError) {
+        // Loudly, and then stop. The row survives with its flag unset, which
+        // no client ever fetches and every viewer's renderer draws as the
+        // quiet empty box; a moderator's remove control is its repair.
+        console.error(
+          `[${ROUTE_LABEL}] compensation failed — message ${upload.fields.id} survives with no object:`,
+          hideError,
+        );
+      }
+      throw new ApiError(failure, 500);
+    };
+
     const { error: uploadError } = await bucket.upload(
       upload.fields.id,
       stored.bytes,
@@ -174,41 +226,38 @@ export const POST = defineRoute({
         cacheControl: IMMUTABLE_CACHE_CONTROL,
       },
     );
-
     if (uploadError) {
       console.error(
         `[${ROUTE_LABEL}] storage upload failed for message ${upload.fields.id}:`,
         uploadError,
       );
-      // The object first, and best-effort: on the ordinary failure there is
-      // nothing there to remove, but an upload that failed *after* its bytes
-      // landed would leave one behind that no row names.
-      const { error: sweepError } = await bucket.remove([upload.fields.id]);
-      if (sweepError) {
-        console.error(
-          `[${ROUTE_LABEL}] post-failure object sweep failed for message ${upload.fields.id}:`,
-          sweepError,
-        );
-      }
-      // Then the row, on the same client the insert ran on — hiding one's own
-      // message is the one write a lock leaves, so this compensation cannot
-      // itself be refused by a lock that landed mid-upload.
-      const { error: hideError } = await supabase.rpc("hide_chat_message", {
-        p_id: upload.fields.id,
-      });
-      if (hideError) {
-        // Loudly, and then stop. The row survives naming an object that does
-        // not exist, which draws as the empty image box every viewer's renderer
-        // already handles, and a moderator's remove control is its repair.
-        console.error(
-          `[${ROUTE_LABEL}] compensation failed — message ${upload.fields.id} survives with no object:`,
-          hideError,
-        );
-      }
-      throw new ApiError(
+      return failSend(
         `the image object could not be stored: ${uploadError.message}`,
-        500,
       );
+    }
+
+    // --- 5. The flag, back on the caller's client ----------------------------
+    //
+    // The commit every other viewer is waiting for: its realtime UPDATE is
+    // what tells them the bytes exist, so it runs strictly after the storage
+    // write returns and a failure here is a failed SEND, not a footnote — an
+    // unflagged success would read as sent to the sender and stay permanently
+    // blank for everyone else, with no later event to correct it.
+    const { data: imageStoredAt, error: markError } = await supabase.rpc(
+      "mark_chat_image_stored",
+      { p_id: upload.fields.id },
+    );
+    if (markError) {
+      console.error(
+        `[${ROUTE_LABEL}] mark_chat_image_stored failed for message ${upload.fields.id}:`,
+        markError,
+      );
+      return failSend(
+        `the stored image could not be flagged: ${markError.message}`,
+      );
+    }
+    if (typeof imageStoredAt !== "string") {
+      return failSend("mark_chat_image_stored returned no stamp");
     }
 
     return {
@@ -216,6 +265,7 @@ export const POST = defineRoute({
       createdAt,
       width: stored.width,
       height: stored.height,
+      imageStoredAt,
     };
   },
 });

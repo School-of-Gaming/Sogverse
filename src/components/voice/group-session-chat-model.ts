@@ -5,6 +5,7 @@ import type {
   ChatReactionEntry,
 } from "@/components/chat";
 import type { ChatChannelRoster, ChatHistory } from "@/services/chat";
+import type { ChatMessageRow } from "@/types";
 
 /**
  * The turn from stored rows to the shapes the chat components draw.
@@ -59,11 +60,13 @@ export function toChatAccounts(
  * picture in a burst must not be able to break the overlay somebody opened on
  * its neighbour.
  *
- * Two different situations resolve to it and neither is worth telling apart
- * here: an object still landing (the row is written first, so every subscriber
- * but the sender can see the row before the bytes), and a mint the bucket
- * policy refused — which is what a moderator hiding a picture looks like from
- * the outside.
+ * One situation resolves to it: a row whose `image_stored_at` is still NULL —
+ * bytes in flight (seconds, ended by the flag's own realtime arrival), or lost
+ * for good (an upload failure whose compensation did not land, a send the
+ * server died in the middle of). The two are indistinguishable without a
+ * clock, and this surface deliberately runs no clocks: the honest rendering
+ * for both is the same quiet box, and a moderator's remove control is the
+ * repair for the permanent one.
  */
 export const UNRESOLVED_CHAT_IMAGE_SRC =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
@@ -82,13 +85,17 @@ export const UNRESOLVED_CHAT_IMAGE_SRC =
  *
  * **`imageSrc` is where the container's contract with the renderer is kept:**
  * the components take a URL somebody else produced, and this is that somebody.
- * It answers with the signed URL minted for that message, the sender's own blob
- * for a picture they just sent, or nothing — and nothing becomes the placeholder
- * above rather than an empty string.
+ * It is handed the whole row because the answer is a pure function of row
+ * state — the sender's own blob for a picture they just sent, the read route's
+ * stable path once `image_stored_at` says the bytes landed, and nothing for a
+ * row still waiting on its flag — and nothing becomes the placeholder above
+ * rather than an empty string. No async step, no cache, no clock: the flag's
+ * realtime UPDATE re-renders the log, and the src flips inside a box that
+ * never changes shape.
  */
 export function toChatMessages(
   history: ChatHistory,
-  imageSrc: (messageId: string) => string | undefined,
+  imageSrc: (row: ChatMessageRow) => string | undefined,
 ): ChatMessage[] {
   const reactionsByMessage = new Map<string, ChatReactionEntry[]>();
   for (const reaction of history.reactions) {
@@ -107,10 +114,10 @@ export function toChatMessages(
       row.image_width !== null && row.image_height !== null
         ? {
             // The message id, which is also the object's name in the bucket
-            // and the key the signed URLs come back under — one identity for
-            // the row, the bytes and the React key.
+            // and the id the read route serves it by — one identity for the
+            // row, the bytes and the React key.
             id: row.id,
-            src: imageSrc(row.id) ?? UNRESOLVED_CHAT_IMAGE_SRC,
+            src: imageSrc(row) ?? UNRESOLVED_CHAT_IMAGE_SRC,
             width: row.image_width,
             height: row.image_height,
           }
