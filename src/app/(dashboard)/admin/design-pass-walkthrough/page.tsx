@@ -1,6 +1,22 @@
 /* eslint-disable i18next/no-literal-string -- temporary admin-only review deck for the brand design pass; every string here is owner-facing walkthrough narration about drafts, never product copy that ships in any locale, and the whole page is deleted before the wiring phase merges */
 
-import { Info } from "lucide-react";
+import {
+  Check,
+  CheckCheck,
+  ChevronRight,
+  CircleAlert,
+  CircleCheck,
+  Copy,
+  FileWarning,
+  Globe,
+  Info,
+  Loader2,
+  Lock,
+  MailCheck,
+  Send,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
 import { ENROLLMENT_TONES } from "@/components/family/enrollment-tones";
 import { ATTENDANCE_TONE } from "@/components/session-feed/attendance-tone";
 import { ROLE_BADGE_STYLES } from "@/lib/constants/roles";
@@ -26,6 +42,16 @@ import { cn } from "@/lib/utils";
  * role-gates every path under `/admin`, so reaching it by URL is already gated
  * without this page doing anything.
  *
+ * **This is the system deck — layer one, "rule on the system once".** A
+ * six-territory census swept the app against the draft doctrine and found the
+ * same shape over and over: one hue carrying several meanings, several hues
+ * carrying one meaning, and no vocabulary at all for *how loud* a colour is
+ * being spoken. Slides 4–13 are that finding, one defect per slide, each drawn
+ * from the classes the app really ships; slide 14 is the token question the
+ * same census raised. The surface slides that follow (15–20) are then only
+ * sign-offs, because the rules they apply have already been ruled on above
+ * them.
+ *
  * **Show, don't tell — this page is exhibits, not argument** (owner direction,
  * 2026-09-01: "update them so I can see what you mean and not read what you
  * mean"). Every slide is a title, a rendered comparison, at most one caption
@@ -36,20 +62,31 @@ import { cn } from "@/lib/utils";
  * code comments. A slide carrying more words than the UI it shows is a bug.
  *
  * **Every comparison renders the real components inline** — never a screenshot
- * and never an iframed page. The zone presentation maps, the Yty colour maps,
- * the enrollment tone map and the attendance tone map are read here directly, so
- * a sample is the draft's real presentation rather than a picture of it. Beside
- * each sample is a plain link to the full preview scene, the live page or a
- * style-guide anchor.
+ * and never an iframed page. Where a map is importable from a server component
+ * it is read here directly (the zone presentations, the Yty colours, the
+ * enrollment tones, the attendance tones, the role badge styles), so the sample
+ * is the draft's real presentation rather than a picture of it. Where the map
+ * is private to a client module — the admin product status chip, the WhatsApp
+ * delivery ladder, the session feed's badges and rail markers — the classes are
+ * **restated literally** and the slide's caption says where they came from, so
+ * a reader can tell a quotation from a live read.
+ *
+ * **One home per comparison.** Folding this deck's new system slides in moved
+ * three exhibits rather than copying them: the role badges left the grammar
+ * slide for the role-families slide, the feed rail markers left the
+ * grammar-in-the-wild slide for the time slide, and the status-token chips left
+ * the status slide entirely — that collision is now shown in real context by
+ * the liveness and time slides, so the status slide keeps only the swatch
+ * evidence its distances annotate.
  *
  * **The home page is not in this deck** (owner ruling, 2026-09-01): it is parked
  * into its own dedicated pass — the owner is comfortable with the current
  * amber/violet hero and its gradient is a live option there — so no home draft
- * rides with this review. The dose question, the hero exhibits and the dusk-sky
- * gradient went with it. What survives here is the `/about` elements section,
- * which is a different route and one of this pass's three real consumers; its
- * cards are on the elements slide. The home preview scenes still exist and are
- * untouched, ready for that pass.
+ * rides with this review. What survives here is the `/about` elements section,
+ * which is a different route and one of this pass's three real consumers.
+ *
+ * **Product-type colours are out of scope** (owner, 2026-09-01) and the
+ * identicon has its own pass, so neither appears on any slide.
  *
  * **Two honesty caveats, stated once here rather than on every slide.** Tailwind
  * breakpoints read the *viewport*, not the container, so an inline sample is
@@ -72,13 +109,23 @@ const SLIDES = [
   { id: "palette-today", title: "The palette today" },
   { id: "strong-soft", title: "Strong and soft" },
   { id: "grammar", title: "Colour as grammar" },
+  { id: "strength", title: "The strength axis" },
+  { id: "you-are-here", title: '"You are here" is not "act"' },
+  { id: "lifecycle", title: "Lifecycles are one hue, stepped" },
+  { id: "liveness", title: "Liveness is glow" },
+  { id: "time", title: "Time is wit" },
+  { id: "eligibility", title: "Eligibility, one colour" },
+  { id: "roles", title: "Role families" },
+  { id: "violet-weight", title: "Violet's replacement weight" },
+  { id: "ensemble", title: "The ensemble trim" },
+  { id: "warning-adjacency", title: "Warning is amber's neighbour" },
+  { id: "status-colours", title: "Status colours meet the palette" },
   { id: "grammar-wild", title: "The grammar in the wild" },
   { id: "gamer-floor", title: "The gamer dashboard at 360" },
   { id: "elements", title: "The Yty element cards" },
   { id: "buttons", title: "Buttons" },
   { id: "zones", title: "Voice-zone tiles" },
   { id: "reach", title: "The calm ring" },
-  { id: "status-colours", title: "Status colours meet the palette" },
   { id: "recap", title: "Recap" },
 ] as const;
 
@@ -216,6 +263,32 @@ function SampleGroup({
 
 /** A sample sits on the deck's card unless it asks for the page's own ground. */
 const PAGE_SURFACE = "bg-background";
+
+/**
+ * Today above, the draft below, with the two labels the deck uses everywhere.
+ * A comparison whose halves are not labelled the same way on every slide costs
+ * the reader a re-read per slide.
+ */
+function BeforeAfter({
+  before,
+  after,
+}: {
+  before: React.ReactNode;
+  after: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Marker>Today</Marker>
+        {before}
+      </div>
+      <div className="space-y-2">
+        <Marker>Draft</Marker>
+        {after}
+      </div>
+    </div>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  Swatches and tables                                                */
@@ -428,6 +501,12 @@ const SPLIT_SAMPLE = "The relationship with technology";
 /**
  * The proposed vocabulary: one family, one meaning, derived from what the Yty
  * elements already stand for rather than invented beside them.
+ *
+ * **The role badges used to be on this slide and are not any more.** They are
+ * the grammar's largest single application, they need the density proof beside
+ * them to be judged at all, and a comparison with two homes goes stale in the
+ * one nobody opens — so they are slide 10 in full, and this slide keeps the
+ * vocabulary and violet's overload.
  */
 const GRAMMAR_CHIPS: readonly {
   family: string;
@@ -455,21 +534,21 @@ const GRAMMAR_CHIPS: readonly {
     word: "Growth",
     swatch: "bg-yty-glow-strong",
     wordClass: "text-yty-glow-soft",
-    examples: ["Progress", "Achievements", "Yty-Points"],
+    examples: ["Progress", "Achievements", "Liveness"],
   },
   {
     family: "Wit blue",
     word: "Knowledge",
     swatch: "bg-yty-wit-strong",
     wordClass: "text-yty-wit-soft",
-    examples: ["Information", "Learning", "Tips"],
+    examples: ["Information", "Time ahead", "Eligibility"],
   },
   {
     family: "Valor orange",
     word: "Adventure",
     swatch: "bg-yty-valor-strong",
     wordClass: "text-yty-valor-soft",
-    examples: ["Camps", "Events", "Live now"],
+    examples: ["Camps", "Events", "Quests"],
   },
   {
     family: "Violet",
@@ -493,42 +572,247 @@ const VIOLET_MEANINGS: readonly { chip: string; meaning: string }[] = [
   { chip: "Adults", meaning: "Who may hold a seat" },
 ];
 
-/** The four role badges exactly as the app draws them today. */
-const ROLE_BADGES_TODAY: readonly { label: string; className: string }[] = [
-  { label: "Gamer", className: ROLE_BADGE_STYLES.gamer },
-  { label: "Parent", className: ROLE_BADGE_STYLES.customer },
-  { label: "Gedu", className: ROLE_BADGE_STYLES.gedu },
-  { label: "Admin", className: ROLE_BADGE_STYLES.admin },
-];
-
-/**
- * **An illustration, not a proposal.** One way the four roles could take real
- * families under the grammar, drawn so the question has something to look at.
- * Gedu uses wit's *soft* variant rather than its strong one for the same reason
- * the home page's third circle does: ink on wit-strong measures 3.81:1.
- */
-const ROLE_BADGES_ILLUSTRATED: readonly { label: string; className: string }[] = [
-  { label: "Gamer", className: "bg-yty-glow-strong text-background" },
-  { label: "Parent", className: "bg-yty-harmony-strong text-background" },
-  { label: "Gedu", className: "bg-yty-wit-soft text-background" },
-  { label: "Admin", className: "bg-foreground text-background" },
-];
-
 /* ------------------------------------------------------------------ */
-/*  Slide 4 — the grammar in the wild                                  */
+/*  Slide 4 — the strength axis                                        */
 /* ------------------------------------------------------------------ */
 
 /**
- * **The shop is not on this slide, and that is a ruling rather than an
- * omission.** The grammar's only proposal for the storefront was to colour the
- * product types from the four families (camp = valor, club = glow, and so on);
- * the owner rejected it on 2026-09-01 — the admin product palette was placed
- * 25–30° clear of the function colours precisely so a category mark can never be
- * mistaken for a state mark, and the pairing is admin-only anyway. A parent's
- * browse card carries no type colour at all, so with the mapping dead there is
- * nothing type-coloured left for any parent-facing sample to show, and the
- * comparison came out whole rather than staying as a settled note.
+ * **The doctrine's missing dimension.** Slide 3 says which family a surface
+ * reaches for; nothing until now said how *loudly* it may speak. Without that,
+ * two surfaces obeying the grammar perfectly can still collide, because they
+ * pick the same family at the same strength for two different jobs — which is
+ * exactly what the amber row below shows the app doing today.
+ *
+ * Three strengths, and deliberately only three: a solid fill is the loudest
+ * thing a colour can be and is spent on the thing you are asked to *do*; a tint
+ * with coloured text is a label, read but not clicked; an edge with a faint
+ * wash marks the one item among several that is currently chosen. Glow is the
+ * family drawn here because it is the one the ensemble rule says we hear least.
  */
+const STRENGTH_SHAPE =
+  "inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium";
+
+const STRENGTH_STEPS: readonly {
+  word: string;
+  sample: string;
+  className: string;
+}[] = [
+  {
+    word: "Act",
+    sample: "Join the club",
+    className: "bg-yty-glow-strong text-background",
+  },
+  {
+    word: "Label",
+    sample: "Achievement",
+    className: "bg-yty-glow-strong/15 text-yty-glow-soft",
+  },
+  {
+    word: "Selection",
+    sample: "Every week",
+    className:
+      "border border-yty-glow-strong bg-yty-glow-strong/5 text-foreground",
+  },
+];
+
+/**
+ * The collision the axis fixes, in the app's own classes. The first two are
+ * byte-identical in strength — `--sidebar-primary` mirrors `--primary` and both
+ * pair it with the ink foreground — and they mean two entirely different
+ * things. The third is already at edge strength, which is the axis being obeyed
+ * by accident rather than by rule.
+ */
+const AMBER_JOBS: readonly {
+  job: string;
+  where: string;
+  sample: string;
+  className: string;
+}[] = [
+  {
+    job: "Act",
+    where: "a primary button",
+    sample: "Explore clubs",
+    className: "bg-primary text-primary-foreground shadow",
+  },
+  {
+    job: "You are here",
+    where: "the admin sidebar's active item",
+    sample: "Products",
+    className: "bg-sidebar-primary text-sidebar-primary-foreground",
+  },
+  {
+    job: "Selected",
+    where: "a form choice",
+    sample: "Every week",
+    className: "border border-primary bg-primary/5 text-foreground",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Slide 5 — "you are here" is not "act"                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The narrowest consequence of the axis, and the one with the widest blast
+ * radius: amber is the act colour, and an active nav item is not an act — it is
+ * the one place you cannot go, because you are already there. Drawing it in the
+ * CTA fill spends the loudest colour in the palette on the least actionable
+ * element on screen.
+ *
+ * The alternative keeps the *strength* (a fill, because "you are here" does
+ * need to win its row) and spends a neutral: the ground lifts and the label
+ * goes to full foreground weight. Classes restated from the sidebar and the
+ * checkbox row, both of which are client modules.
+ */
+const NAV_SAMPLE_ITEMS = ["Dashboard", "Products", "Users"] as const;
+
+const NAV_TREATMENTS: readonly {
+  label: string;
+  active: string;
+  rest: string;
+}[] = [
+  {
+    label: "Today",
+    active: "bg-sidebar-primary text-sidebar-primary-foreground",
+    rest: "text-sidebar-foreground",
+  },
+  {
+    label: "Foreground strength",
+    active: "bg-accent font-semibold text-foreground",
+    rest: "text-sidebar-foreground",
+  },
+];
+
+const SELECTION_TREATMENTS: readonly { label: string; className: string }[] = [
+  { label: "Today", className: "border-primary bg-primary/5" },
+  { label: "Foreground strength", className: "border-foreground/50 bg-foreground/5" },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Slide 6 — lifecycles are one hue, stepped                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * **Restated, not imported, and the caption says so.** The admin product
+ * chip's status map is module-private to a client component, so there is
+ * nothing a server component can read; these strings are a quotation of it.
+ *
+ * The defect is visible without a word: `completed` and `expired` are the same
+ * two classes, so two different ends to a product's life are drawn as one.
+ * Under the idiom the normal progression walks one hue from edge to solid to
+ * tint to grey, and only the abnormal exit — cancelled — keeps a second colour,
+ * because it is the one state that is not a step along the ladder at all.
+ */
+const LIFECYCLE_SHAPE =
+  "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs";
+
+const PRODUCT_STATUS_TODAY: readonly { status: string; className: string }[] = [
+  { status: "pending", className: "bg-primary/20 text-primary" },
+  { status: "running", className: "bg-primary text-primary-foreground" },
+  { status: "completed", className: "bg-muted text-muted-foreground" },
+  { status: "cancelled", className: "bg-destructive/20 text-destructive" },
+  { status: "expired", className: "bg-muted text-muted-foreground" },
+];
+
+const PRODUCT_STATUS_DRAFT: readonly { status: string; className: string }[] = [
+  { status: "pending", className: "border border-primary/40 text-primary/80" },
+  { status: "running", className: "bg-primary text-primary-foreground" },
+  { status: "completed", className: "bg-primary/15 text-primary" },
+  { status: "cancelled", className: "bg-destructive/20 text-destructive" },
+  { status: "expired", className: "bg-muted text-muted-foreground" },
+];
+
+/**
+ * The same idiom on a ladder that has no colour at all today. Three of the
+ * WhatsApp console's five delivery states are drawn in the inherited text
+ * colour, one is violet and one is destructive — so the ladder reads as two
+ * marks and three absences rather than as a progression. Classes restated: the
+ * console picks them in nested ternaries and keeps no map.
+ */
+const DELIVERY_TODAY: readonly {
+  state: string;
+  icon: LucideIcon;
+  className: string;
+}[] = [
+  { state: "pending", icon: Loader2, className: "" },
+  { state: "sent", icon: Check, className: "" },
+  { state: "delivered", icon: CheckCheck, className: "" },
+  { state: "read", icon: CheckCheck, className: "text-secondary" },
+  { state: "failed", icon: CircleAlert, className: "text-destructive" },
+];
+
+const DELIVERY_DRAFT: readonly {
+  state: string;
+  icon: LucideIcon;
+  className: string;
+}[] = [
+  { state: "pending", icon: Loader2, className: "text-muted-foreground" },
+  { state: "sent", icon: Check, className: "text-yty-wit-soft/40" },
+  { state: "delivered", icon: CheckCheck, className: "text-yty-wit-soft/70" },
+  { state: "read", icon: CheckCheck, className: "text-yty-wit-soft" },
+  { state: "failed", icon: CircleAlert, className: "text-destructive" },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Slide 7 — liveness is glow                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * One badge, one word, two colours — decided independently on two surfaces a
+ * family can have open at the same time. The green half is read from the real
+ * tone map; the blue half is restated, because both feeds build it inline.
+ *
+ * The converged badge is also read from the map rather than written out, so the
+ * third sample is the actual draft the enrollment card would ship.
+ */
+const LIVE_BADGE_SHAPE = "inline-flex items-center gap-1 rounded-full border";
+
+const LIVE_BADGES_TODAY: readonly { where: string; className: string }[] = [
+  {
+    where: "Enrollment card, gedu assignment card",
+    className: ENROLLMENT_TONES.current.liveBadge,
+  },
+  {
+    where: "Gedu session feed, family session feed",
+    className:
+      "border-info bg-info/10 px-2 py-0 text-[10px] uppercase tracking-wide text-info",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Slide 8 — time is wit                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The feed's whole future system is drawn in `--info` — the badge on a session
+ * that has not happened, the rail dot marking the next one, the pill that
+ * divides what is past from what is ahead. Under the grammar that is wit's
+ * territory rather than a status token's: every one of these marks is the
+ * platform telling the reader something about time, and none of them is a
+ * status anyone can act on.
+ *
+ * The rail markers moved here from the grammar-in-the-wild slide, which is why
+ * that slide is now the enrollment card and the attendance chip only.
+ */
+const FUTURE_BADGE_SHAPE =
+  "inline-flex shrink-0 items-center rounded-full border px-2 py-0 text-[10px] uppercase tracking-wide";
+
+const FUTURE_BADGES: readonly {
+  label: string;
+  today: string;
+  draft: string;
+}[] = [
+  {
+    label: "Next session",
+    today: "border-info/50 text-info",
+    draft: "border-yty-wit-soft/50 text-yty-wit-soft",
+  },
+  {
+    label: "Upcoming",
+    today: "border-info/50 text-info",
+    draft: "border-yty-wit-soft/50 text-yty-wit-soft",
+  },
+];
 
 /**
  * The family feed's rail marker, today and under the grammar.
@@ -552,6 +836,294 @@ const FEED_MARKER_SAMPLES: readonly {
   },
 ];
 
+const NOW_DIVIDER_TONES: readonly {
+  tick: string;
+  pill: string;
+  rule: string;
+}[] = [
+  {
+    tick: "bg-info/70",
+    pill: "border-info/40 bg-info/10 text-info",
+    rule: "bg-info/40",
+  },
+  {
+    tick: "bg-yty-wit-soft/70",
+    pill: "border-yty-wit-strong/40 bg-yty-wit-strong/10 text-yty-wit-soft",
+    rule: "bg-yty-wit-strong/40",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Slide 9 — eligibility, one colour                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Three surfaces answering one question — *is this for me?* — in three
+ * different colours: the media chip on a product card fills violet, the
+ * region-lock strip tints info, the schools pill tints amber. A parent moving
+ * from the shop to a municipality page to a product meets all three in a
+ * minute, and nothing connects them.
+ *
+ * Under the grammar the answer is wit at label strength everywhere: it is
+ * information about the reader's fit, it is never clickable, and tinting it
+ * keeps the amber pill from reading as an act.
+ */
+const ELIGIBILITY_TONES: readonly {
+  who: string;
+  strip: string;
+  stripGlyph: string;
+  pill: string;
+}[] = [
+  {
+    who: "bg-secondary text-secondary-foreground",
+    strip: "border-info/30 bg-info/10",
+    stripGlyph: "text-info",
+    pill: "bg-primary/10 text-primary",
+  },
+  {
+    who: "bg-yty-wit-strong/20 text-yty-wit-soft",
+    strip: "border-yty-wit-strong/30 bg-yty-wit-strong/10",
+    stripGlyph: "text-yty-wit-soft",
+    pill: "bg-yty-wit-strong/10 text-yty-wit-soft",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Slide 10 — role families                                           */
+/* ------------------------------------------------------------------ */
+
+/** The four role badges exactly as the app draws them today, from the map. */
+const ROLE_BADGES_TODAY: readonly { label: string; className: string }[] = [
+  { label: "Gamer", className: ROLE_BADGE_STYLES.gamer },
+  { label: "Parent", className: ROLE_BADGE_STYLES.customer },
+  { label: "Gedu", className: ROLE_BADGE_STYLES.gedu },
+  { label: "Admin", className: ROLE_BADGE_STYLES.admin },
+];
+
+/**
+ * The proposal. Two of the four do not move: the gamer keeps amber, because a
+ * gamer is who the product is *for* and amber is the brand's own lead; the
+ * admin keeps ink, because it is deliberately outside the palette. The two that
+ * move are the two that need a family — parent to harmony, which is the people
+ * colour, and gedu to wit, which retires the gradient that only ever existed
+ * because a fourth role arrived with no hue left.
+ *
+ * Gedu takes wit's *soft* variant rather than its strong one for the same
+ * reason the element cards do: ink on wit-strong measures 3.81:1.
+ */
+const ROLE_BADGES_PROPOSED: readonly { label: string; className: string }[] = [
+  { label: "Gamer", className: "bg-primary text-primary-foreground" },
+  { label: "Parent", className: "bg-yty-harmony-strong text-background" },
+  { label: "Gedu", className: "bg-yty-wit-soft text-background" },
+  { label: "Admin", className: "bg-foreground text-background" },
+];
+
+/**
+ * The density proof. A role badge is never seen alone: in the admin users list
+ * it sits inside a right-packed run with up to four status glyphs, and the
+ * question a swatch cannot answer is whether a *family* mark and a *status*
+ * mark stay legible as two different kinds of thing at that spacing. Row shape
+ * and glyph tones restated from the users list.
+ */
+const USER_ROW_PEOPLE = [
+  "Aino Virtanen",
+  "Mikael Lindgren",
+  "Sofia Nurmi",
+  "Elias Koskinen",
+] as const;
+
+/* ------------------------------------------------------------------ */
+/*  Slide 11 — violet's replacement weight                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Narrowing violet to "the world" leaves a real hole, and it is worth showing
+ * rather than asserting: two gedu actions need to be *filled* — they are the
+ * only thing to do on their row — without claiming the primary CTA's amber. The
+ * violet fill is what does that job today.
+ *
+ * Both candidates spend a neutral instead of a hue, which is the point: the
+ * grammar's families are all committed to meanings, so an emphasis tier that
+ * needs no meaning should not borrow one.
+ */
+const BUTTON_SHAPE =
+  "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors";
+
+const EMPHASIS_TREATMENTS: readonly { name: string; className: string }[] = [
+  {
+    name: "Today — violet fill",
+    className:
+      "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+  },
+  {
+    name: "Foreground fill",
+    className: "bg-foreground text-background shadow-sm hover:bg-foreground/90",
+  },
+  {
+    name: "Heavy outline",
+    className:
+      "border-2 border-foreground bg-transparent text-foreground hover:bg-foreground/10",
+  },
+];
+
+const EMPHASIS_ACTIONS: readonly { label: string; icon: LucideIcon }[] = [
+  { label: "Send report", icon: Send },
+  { label: "Join", icon: Lock },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Slide 12 — the ensemble trim                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The ensemble rule's first half, drawn. Sixteen surfaces acknowledge a
+ * mechanical act — copied, saved, sent, verified — in success green, and every
+ * one of them would converge onto glow. That would put the growth colour on
+ * clipboard feedback more often than on anything a child actually did, which is
+ * the showcase skewing itself.
+ *
+ * The trim is not "no colour": it is that a mechanical acknowledgement gets the
+ * quiet treatment and glow stays reserved for domain facts — progress,
+ * achievement, presence, liveness.
+ */
+const ACK_TONES: readonly {
+  chip: string;
+  banner: string;
+  glyph: string;
+}[] = [
+  {
+    chip: "border-success text-success",
+    banner: "bg-success/10 text-success",
+    glyph: "text-success",
+  },
+  {
+    chip: "border-border text-muted-foreground",
+    banner: "border border-border bg-muted/40 text-muted-foreground",
+    glyph: "text-muted-foreground",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Slide 13 — warning is amber's neighbour                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * `--warning` sits 4.5 degrees of hue from `--primary`. That is not a defect
+ * anyone introduced — a warning colour is *supposed* to be amber — but it does
+ * mean the act colour and the caution colour are, to a reader glancing at a
+ * dense page, the same colour. The admin dashboard's attention panel is where
+ * it shows: one header slot draws an amber count when something needs doing and
+ * an amber wordmark when nothing does.
+ */
+const AMBER_NEIGHBOURS: readonly {
+  label: string;
+  hex: string;
+  note: string;
+  className: string;
+}[] = [
+  {
+    label: "--primary",
+    hex: "#FAA901",
+    note: "hue 40.5°",
+    className: "bg-primary",
+  },
+  {
+    label: "--warning",
+    hex: "#E7B008",
+    note: "hue 45.0° — 4.5° away",
+    className: "bg-warning",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Slide 14 — status colours                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The functional status tokens against the brand family each one now sits in.
+ *
+ * Distances are CIE76 in Lab — a rough but honest "how far apart would a person
+ * call these"; under about 25 is where two colours read as two shades of one
+ * thing. They are annotated on the swatches rather than tabled, because the
+ * swatches are what make the claim and the number is the footnote.
+ *
+ * **The tinted-chip exhibit that used to sit under these swatches is gone.**
+ * Slides 7 and 8 now show the same collision in the app's own surfaces — a Live
+ * badge that is green on one page and blue on another, a whole future system in
+ * info — which is strictly better evidence than two invented chips, and keeping
+ * both would be two homes for one comparison.
+ *
+ * Warning and destructive are absent: at 43.9 and 42.6 from their nearest brand
+ * family they are a different colour by any measure, and a before-and-after
+ * showing no collision would read as a rendering fault. Warning's *other*
+ * adjacency — to amber — is slide 13.
+ */
+const STATUS_SWATCH_ROWS: readonly {
+  heading: string;
+  swatches: readonly {
+    label: string;
+    hex: string;
+    note?: string;
+    className: string;
+  }[];
+}[] = [
+  {
+    heading: "One blue, or three?",
+    swatches: [
+      { label: "--info", hex: "#308CE8", className: "bg-info" },
+      {
+        label: "Wit strong",
+        hex: "#3A71DE",
+        note: "17.5 away",
+        className: "bg-yty-wit-strong",
+      },
+      {
+        label: "Wit soft",
+        hex: "#4DB3F5",
+        note: "22.7 away",
+        className: "bg-yty-wit-soft",
+      },
+    ],
+  },
+  {
+    heading: "One green, or three?",
+    swatches: [
+      { label: "--success", hex: "#2EB88A", className: "bg-success" },
+      {
+        label: "Glow strong",
+        hex: "#1AB061",
+        note: "19.1 away",
+        className: "bg-yty-glow-strong",
+      },
+      {
+        label: "Glow soft",
+        hex: "#6AC66B",
+        note: "24.7 away",
+        className: "bg-yty-glow-soft",
+      },
+    ],
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Slide 15 — the grammar in the wild                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * **The shop is not on this slide, and that is a ruling rather than an
+ * omission.** The grammar's only proposal for the storefront was to colour the
+ * product types from the four families; the owner rejected it on 2026-09-01 —
+ * the admin product palette was placed 25–30° clear of the function colours
+ * precisely so a category mark can never be mistaken for a state mark, and the
+ * pairing is admin-only anyway.
+ *
+ * The rail markers left this slide for slide 8, where the rest of the feed's
+ * future system is, and the status-convergence ruling left it for slides 7, 8
+ * and 14, which now carry it once each in the territory it belongs to. What
+ * remains here is the pair of surfaces the owner asked to see the grammar
+ * *applied* on rather than argued about.
+ */
+
 /**
  * The attendance chip's three states under the grammar, beside the app's own
  * `ATTENDANCE_TONE`. Only present moves: absent keeps warning amber because
@@ -571,12 +1143,12 @@ const ATTENDANCE_GRAMMAR: Record<keyof typeof ATTENDANCE_TONE, string> = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Slide 7 — buttons                                                  */
+/*  Slide 18 — buttons                                                 */
 /* ------------------------------------------------------------------ */
 
 /**
- * The button shape every sample wears — the base of the real variant recipe at
- * its default size, at today's CTA type. (The *type* question moved to the
+ * The button samples wear `BUTTON_SHAPE` — the base of the real variant recipe
+ * at its default size, at today's CTA type. (The *type* question moved to the
  * typography deck; this slide is colour and shape.)
  *
  * **Written out rather than called for.** Using the button primitive here would
@@ -584,9 +1156,6 @@ const ATTENDANCE_GRAMMAR: Record<keyof typeof ATTENDANCE_TONE, string> = {
  * samples are literal copies of the variants' own class strings on inert spans.
  * They are at rest only; the style guide draws every state.
  */
-const BUTTON_SHAPE =
-  "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors";
-
 const BUTTON_SAMPLES: readonly { name: string; className: string }[] = [
   {
     name: "Primary — unchanged",
@@ -648,117 +1217,8 @@ const BUTTON_COUNTS: readonly {
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Slide 10 — status colours                                          */
-/* ------------------------------------------------------------------ */
-
-/**
- * The functional status tokens against the brand family each one now sits in.
- *
- * Distances are CIE76 in Lab — a rough but honest "how far apart would a person
- * call these"; under about 25 is where two colours read as two shades of one
- * thing. They are annotated on the swatches rather than tabled, because the
- * swatches are what make the claim and the number is the footnote.
- *
- * Warning and destructive are absent: at 43.9 and 42.6 from their nearest brand
- * family they are a different colour by any measure, and a before-and-after
- * showing no collision would read as a rendering fault.
- */
-const STATUS_SWATCH_ROWS: readonly {
-  heading: string;
-  swatches: readonly {
-    label: string;
-    hex: string;
-    note?: string;
-    className: string;
-  }[];
-}[] = [
-  {
-    heading: "One blue, or three?",
-    swatches: [
-      { label: "--info", hex: "#308CE8", className: "bg-info" },
-      {
-        label: "Wit strong",
-        hex: "#3A71DE",
-        note: "17.5 away",
-        className: "bg-yty-wit-strong",
-      },
-      {
-        label: "Wit soft",
-        hex: "#4DB3F5",
-        note: "22.7 away",
-        className: "bg-yty-wit-soft",
-      },
-    ],
-  },
-  {
-    heading: "One green, or three?",
-    swatches: [
-      { label: "--success", hex: "#2EB88A", className: "bg-success" },
-      {
-        label: "Glow strong",
-        hex: "#1AB061",
-        note: "19.1 away",
-        className: "bg-yty-glow-strong",
-      },
-      {
-        label: "Glow soft",
-        hex: "#6AC66B",
-        note: "24.7 away",
-        className: "bg-yty-glow-soft",
-      },
-    ],
-  },
-];
-
-/**
- * The same collision as the app actually draws it — the tinted chip shape both
- * halves already use, so the confusion is visible in context rather than as
- * squares.
- */
-const STATUS_CHIPS: readonly {
-  status: { label: string; className: string };
-  brand: { label: string; className: string };
-}[] = [
-  {
-    status: {
-      label: "Info notice",
-      className: "border-info/40 bg-info/10 text-info",
-    },
-    brand: {
-      label: "Wit — technology",
-      className:
-        "border-yty-wit-strong/40 bg-yty-wit-strong/10 text-yty-wit-soft",
-    },
-  },
-  {
-    status: {
-      label: "Payment succeeded",
-      className: "border-success/40 bg-success/10 text-success",
-    },
-    brand: {
-      label: "Glow — others",
-      className:
-        "border-yty-glow-strong/40 bg-yty-glow-strong/10 text-yty-glow-soft",
-    },
-  },
-];
-
-/* ------------------------------------------------------------------ */
 /*  Small shapes the exhibits are built from                           */
 /* ------------------------------------------------------------------ */
-
-function StatusChip({ label, className }: { label: string; className: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold",
-        className,
-      )}
-    >
-      {label}
-    </span>
-  );
-}
 
 /** A filled badge, the shape the app's role and status badges already take. */
 function Pill({ label, className }: { label: string; className: string }) {
@@ -790,6 +1250,236 @@ function GrammarChip({ chip }: { chip: (typeof GRAMMAR_CHIPS)[number] }) {
           <li key={example}>{example}</li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** A strength sample with the one word it is an example of underneath it. */
+function StrengthCell({
+  word,
+  sample,
+  className,
+  note,
+}: {
+  word: string;
+  sample: string;
+  className: string;
+  note?: string;
+}) {
+  return (
+    <div className="w-48 space-y-2">
+      <span className={cn(STRENGTH_SHAPE, className)}>{sample}</span>
+      <div className="text-sm font-semibold text-foreground">{word}</div>
+      {note ? (
+        <div className="text-[11px] text-muted-foreground">{note}</div>
+      ) : null}
+    </div>
+  );
+}
+
+/** A three-item sidebar at the real item shape, one of them active. */
+function NavSample({
+  active,
+  rest,
+}: {
+  active: string;
+  rest: string;
+}) {
+  return (
+    <div className="w-56 space-y-1 rounded-lg bg-sidebar-background p-4">
+      {NAV_SAMPLE_ITEMS.map((item) => (
+        <div
+          key={item}
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium",
+            item === "Products" ? active : rest,
+          )}
+        >
+          {item}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** The checkbox row's ticked shape, which is where selection colour is spent. */
+function SelectionSample({ className }: { className: string }) {
+  return (
+    <div
+      className={cn(
+        "flex w-56 items-start gap-3 rounded-md border p-3 text-sm text-foreground",
+        className,
+      )}
+    >
+      <span className="mt-0.5 h-4 w-4 shrink-0 rounded-sm border border-current" />
+      <span>Every week</span>
+    </div>
+  );
+}
+
+/** The admin status chip's shape, so a lifecycle step is judged where it lives. */
+function LifecycleChip({
+  status,
+  className,
+}: {
+  status: string;
+  className: string;
+}) {
+  return <span className={cn(LIFECYCLE_SHAPE, className)}>{status}</span>;
+}
+
+/** One rung of a delivery ladder: the glyph, at the size the console draws it. */
+function DeliveryRung({
+  state,
+  icon: Icon,
+  className,
+}: {
+  state: string;
+  icon: LucideIcon;
+  className: string;
+}) {
+  return (
+    <div className="flex w-24 flex-col items-center gap-1.5">
+      <Icon className={cn("h-4 w-4", className)} aria-hidden />
+      <span className="text-[11px] text-muted-foreground">{state}</span>
+    </div>
+  );
+}
+
+/** The outline badge both Live badges wear; the tone arrives whole. */
+function LiveBadge({ className }: { className: string }) {
+  return <span className={cn(LIVE_BADGE_SHAPE, className)}>Live</span>;
+}
+
+/** A rail dot at the size the family feed draws it, with its label beside it. */
+function MarkerRow({ label, className }: { label: string; className: string }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className={cn("h-2.5 w-2.5 rounded-full", className)} aria-hidden />
+      <span className="text-xs text-muted-foreground">{label}</span>
+    </span>
+  );
+}
+
+/** The feed's now-divider, at its real geometry so the pill reads in context. */
+function NowDividerSample({
+  tone,
+}: {
+  tone: (typeof NOW_DIVIDER_TONES)[number];
+}) {
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <span
+        className={cn("h-0.5 w-4 shrink-0 rounded-full", tone.tick)}
+        aria-hidden
+      />
+      <span
+        className={cn(
+          "inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider",
+          tone.pill,
+        )}
+      >
+        Now
+      </span>
+      <span
+        className={cn("h-0.5 flex-1 rounded-full", tone.rule)}
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+/** The three eligibility answers, in the three shapes the app really uses. */
+function EligibilityRow({
+  tone,
+}: {
+  tone: (typeof ELIGIBILITY_TONES)[number];
+}) {
+  return (
+    <div className="flex flex-wrap items-start gap-4">
+      <span
+        className={cn(
+          "inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium shadow-sm",
+          tone.who,
+        )}
+      >
+        Ages 8–12
+      </span>
+      <span
+        className={cn(
+          "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+          tone.pill,
+        )}
+      >
+        Clubs available
+      </span>
+      <div
+        className={cn(
+          "flex w-72 items-start gap-3 rounded-md border p-4",
+          tone.strip,
+        )}
+      >
+        <Globe
+          className={cn("mt-0.5 h-5 w-5 shrink-0", tone.stripGlyph)}
+          aria-hidden
+        />
+        <p className="text-sm text-foreground">
+          This club runs in Finland only.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * One admin users-list row, right-packed exactly as the list packs it: the
+ * status glyphs, then the role badge, then the chevron. The order is the real
+ * one, because it is what puts the family mark next to the status marks.
+ */
+function UserRowSample({
+  name,
+  badge,
+}: {
+  name: string;
+  badge: { label: string; className: string };
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b p-4 last:border-b-0">
+      <span className="min-w-0 truncate text-sm text-foreground">{name}</span>
+      <span className="flex shrink-0 items-center gap-2">
+        <FileWarning className="h-4 w-4 text-warning" aria-hidden />
+        <ShieldCheck className="h-4 w-4 text-success" aria-hidden />
+        <MailCheck className="h-4 w-4 text-success" aria-hidden />
+        <Pill
+          label={badge.label}
+          className={cn("px-2 py-0 text-[10px]", badge.className)}
+        />
+        <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+      </span>
+    </div>
+  );
+}
+
+/** The two acknowledgement shapes the app spends success green on. */
+function AckSample({ tone }: { tone: (typeof ACK_TONES)[number] }) {
+  return (
+    <div className="flex flex-wrap items-start gap-4">
+      <span
+        className={cn(
+          "flex shrink-0 items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm",
+          tone.chip,
+        )}
+      >
+        <Copy className="h-4 w-4" aria-hidden />
+        sogverse.com/r/8fk2
+      </span>
+      <span className={cn("rounded-md p-3 text-sm", tone.banner)}>
+        Your changes have been saved.
+      </span>
+      <span className={cn("flex items-center gap-1.5 text-sm", tone.glyph)}>
+        <Check className="h-4 w-4" aria-hidden />
+        Verification email sent
+      </span>
     </div>
   );
 }
@@ -837,16 +1527,6 @@ function EnrollmentStates({ palette }: { palette: YtyPalette }) {
         </div>
       </div>
     </div>
-  );
-}
-
-/** A rail dot at the size the family feed draws it, with its label beside it. */
-function MarkerRow({ label, className }: { label: string; className: string }) {
-  return (
-    <span className="inline-flex items-center gap-2">
-      <span className={cn("h-2.5 w-2.5 rounded-full", className)} aria-hidden />
-      <span className="text-xs text-muted-foreground">{label}</span>
-    </span>
   );
 }
 
@@ -947,12 +1627,14 @@ export default function DesignPassWalkthroughPage() {
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Brand design pass — colour</h1>
+        <h1 className="text-3xl font-bold">
+          Brand design pass — colour & grammar
+        </h1>
         <p className="max-w-prose text-muted-foreground">
           Can Sogverse be as fun, colourful, bright and lively as the sog.gg
-          marketing site while keeping the dark ground — all while adhering to the
-          Guidebook? Each slide draws today beside the draft and asks one
-          question; type is the other deck, at{" "}
+          marketing site while keeping the dark ground — all while adhering to
+          the Guidebook? Slides 4–14 rule on the system once; the rest apply it.
+          Type is the other deck, at{" "}
           <DeckLink href="/admin/design-pass-typography">
             /admin/design-pass-typography
           </DeckLink>
@@ -1080,25 +1762,6 @@ export default function DesignPassWalkthroughPage() {
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Marker>Role badges — today, then real families</Marker>
-          <div className="flex flex-wrap items-center gap-3">
-            {ROLE_BADGES_TODAY.map((badge) => (
-              <Pill key={badge.label} {...badge} />
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            {ROLE_BADGES_ILLUSTRATED.map((badge) => (
-              <Pill key={badge.label} {...badge} />
-            ))}
-          </div>
-          <Caption>
-            Gedu is an amber-to-violet gradient today because a fourth role
-            arrived with no hue left; the second row is an illustration, not a
-            decided mapping.
-          </Caption>
-        </div>
-
         <Ruling>
           <p>
             Adopt the grammar as the app&rsquo;s colour vocabulary. (recommended:
@@ -1108,23 +1771,184 @@ export default function DesignPassWalkthroughPage() {
             Violet narrows to &ldquo;the world&rdquo; and stops carrying UI
             grammar. (recommended: narrow)
           </p>
-          <p>
-            Role badges take real families, retiring the gradient — mapping
-            settled with you. (recommended: adopt)
-          </p>
         </Ruling>
       </Slide>
 
       {/* ----------------------------------------------------------- 4 */}
-      <Slide id="grammar-wild">
+      <Slide id="strength">
         <div className="space-y-3">
-          <Marker>My SOG enrollment cards — today, then the draft</Marker>
-          <EnrollmentStates palette="current" />
-          <EnrollmentStates palette="brand" />
+          <Marker>One family, three strengths</Marker>
+          <div className="flex flex-wrap gap-6">
+            {STRENGTH_STEPS.map((step) => (
+              <StrengthCell key={step.word} {...step} />
+            ))}
+          </div>
         </div>
 
         <div className="space-y-3">
-          <Marker>Session-feed rail markers</Marker>
+          <Marker>One amber, three jobs</Marker>
+          <div className="flex flex-wrap gap-6">
+            {AMBER_JOBS.map((job) => (
+              <StrengthCell
+                key={job.job}
+                word={job.job}
+                sample={job.sample}
+                note={job.where}
+                className={job.className}
+              />
+            ))}
+          </div>
+        </div>
+        <Caption>
+          The first two are the same fill and the same ink — the sidebar token
+          mirrors the CTA token exactly.
+        </Caption>
+
+        <Ruling>
+          <p>
+            Adopt the strength axis — solid fill = act, tint = label, edge = the
+            current selection. (recommended: adopt)
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ----------------------------------------------------------- 5 */}
+      <Slide id="you-are-here">
+        <div className="flex flex-wrap gap-8">
+          {NAV_TREATMENTS.map((treatment) => (
+            <div key={treatment.label} className="space-y-2">
+              <Marker>{treatment.label}</Marker>
+              <NavSample active={treatment.active} rest={treatment.rest} />
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-8">
+          {SELECTION_TREATMENTS.map((treatment) => (
+            <div key={treatment.label} className="space-y-2">
+              <Marker>{treatment.label}</Marker>
+              <SelectionSample className={treatment.className} />
+            </div>
+          ))}
+        </div>
+
+        <Ruling>
+          <p>
+            Selected and active states leave amber, which stays the act colour.
+            (recommended: the foreground-strength treatment)
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ----------------------------------------------------------- 6 */}
+      <Slide id="lifecycle">
+        <BeforeAfter
+          before={
+            <div className="flex flex-wrap items-center gap-3">
+              {PRODUCT_STATUS_TODAY.map((step) => (
+                <LifecycleChip key={step.status} {...step} />
+              ))}
+            </div>
+          }
+          after={
+            <div className="flex flex-wrap items-center gap-3">
+              {PRODUCT_STATUS_DRAFT.map((step) => (
+                <LifecycleChip key={step.status} {...step} />
+              ))}
+            </div>
+          }
+        />
+        <Caption>
+          Restated from the admin product chip, whose map is private to its
+          module — completed and expired are the same two classes today.
+        </Caption>
+
+        <BeforeAfter
+          before={
+            <div className="flex flex-wrap items-start gap-2">
+              {DELIVERY_TODAY.map((rung) => (
+                <DeliveryRung key={rung.state} {...rung} />
+              ))}
+            </div>
+          }
+          after={
+            <div className="flex flex-wrap items-start gap-2">
+              {DELIVERY_DRAFT.map((rung) => (
+                <DeliveryRung key={rung.state} {...rung} />
+              ))}
+            </div>
+          }
+        />
+        <Caption>
+          The WhatsApp console&rsquo;s delivery ladder, restated: it picks these
+          in nested ternaries and keeps no map.
+        </Caption>
+
+        <Ruling>
+          <p>
+            Adopt the lifecycle idiom — one hue stepped by strength for the
+            normal progression, a second colour only for the abnormal exit.
+            (recommended: adopt)
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ----------------------------------------------------------- 7 */}
+      <Slide id="liveness">
+        <BeforeAfter
+          before={
+            <div className="space-y-2">
+              {LIVE_BADGES_TODAY.map((badge) => (
+                <div key={badge.where} className="flex items-center gap-3">
+                  <span className="w-20 shrink-0">
+                    <LiveBadge className={badge.className} />
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {badge.where}
+                  </span>
+                </div>
+              ))}
+            </div>
+          }
+          after={
+            <LiveBadge className={ENROLLMENT_TONES.brand.liveBadge} />
+          }
+        />
+        <Caption>
+          One word, two colours, on two surfaces a family can have open at once.
+        </Caption>
+
+        <Ruling>
+          <p>
+            Liveness is glow everywhere — the enrollment card, the gedu
+            assignment card and both session feeds converge on one badge.
+            (recommended: converge)
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ----------------------------------------------------------- 8 */}
+      <Slide id="time">
+        <div className="space-y-3">
+          <Marker>Session badges</Marker>
+          {FUTURE_BADGES.map((badge) => (
+            <div key={badge.label} className="flex flex-wrap items-center gap-6">
+              <span className="w-36 shrink-0">
+                <span className={cn(FUTURE_BADGE_SHAPE, badge.today)}>
+                  {badge.label}
+                </span>
+              </span>
+              <span className="w-36 shrink-0">
+                <span className={cn(FUTURE_BADGE_SHAPE, badge.draft)}>
+                  {badge.label}
+                </span>
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-3">
+          <Marker>Rail markers</Marker>
           {FEED_MARKER_SAMPLES.map((row) => (
             <div key={row.label} className="flex flex-wrap items-center gap-6">
               <span className="w-52 shrink-0">
@@ -1135,6 +1959,224 @@ export default function DesignPassWalkthroughPage() {
               </span>
             </div>
           ))}
+        </div>
+
+        <div className="space-y-3">
+          <Marker>The now divider</Marker>
+          {NOW_DIVIDER_TONES.map((tone) => (
+            <NowDividerSample key={tone.pill} tone={tone} />
+          ))}
+        </div>
+        <Caption>Today on the left and above; the draft beside and below.</Caption>
+
+        <Ruling>
+          <p>
+            The feed&rsquo;s future system converges to wit — what the platform
+            tells you about time ahead. (recommended: converge)
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ----------------------------------------------------------- 9 */}
+      <Slide id="eligibility">
+        <BeforeAfter
+          before={<EligibilityRow tone={ELIGIBILITY_TONES[0]} />}
+          after={<EligibilityRow tone={ELIGIBILITY_TONES[1]} />}
+        />
+        <Caption>
+          The product card&rsquo;s audience chip, the schools pill and the
+          region-lock strip — one question, three colours.
+        </Caption>
+
+        <Ruling>
+          <p>
+            Eligibility is wit at label strength everywhere. (recommended: adopt)
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ---------------------------------------------------------- 10 */}
+      <Slide id="roles">
+        <BeforeAfter
+          before={
+            <div className="flex flex-wrap items-center gap-3">
+              {ROLE_BADGES_TODAY.map((badge) => (
+                <Pill key={badge.label} {...badge} />
+              ))}
+            </div>
+          }
+          after={
+            <div className="flex flex-wrap items-center gap-3">
+              {ROLE_BADGES_PROPOSED.map((badge) => (
+                <Pill key={badge.label} {...badge} />
+              ))}
+            </div>
+          }
+        />
+        <Caption>
+          Gedu is an amber-to-violet gradient today because a fourth role arrived
+          with no hue left.
+        </Caption>
+
+        <div className="space-y-3">
+          <Marker>Beside the status marks, at list density</Marker>
+          <div className="overflow-hidden rounded-lg border bg-card">
+            {USER_ROW_PEOPLE.map((name, index) => (
+              <UserRowSample
+                key={name}
+                name={name}
+                badge={ROLE_BADGES_TODAY[index]}
+              />
+            ))}
+          </div>
+          <div className="overflow-hidden rounded-lg border bg-card">
+            {USER_ROW_PEOPLE.map((name, index) => (
+              <UserRowSample
+                key={name}
+                name={name}
+                badge={ROLE_BADGES_PROPOSED[index]}
+              />
+            ))}
+          </div>
+        </div>
+
+        <Ruling>
+          <p>
+            Role badges take real families, retiring the gradient — the mapping
+            itself is open to swaps. (recommended: adopt)
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ---------------------------------------------------------- 11 */}
+      <Slide id="violet-weight">
+        {EMPHASIS_ACTIONS.map((action) => (
+          <div key={action.label} className="flex flex-wrap items-center gap-4">
+            {EMPHASIS_TREATMENTS.map((treatment) => (
+              <div key={treatment.name} className="w-56 space-y-2">
+                <span className={cn(BUTTON_SHAPE, treatment.className)}>
+                  <action.icon className="h-4 w-4" aria-hidden />
+                  {action.label}
+                </span>
+                <div className="text-[11px] text-muted-foreground">
+                  {treatment.name}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+        <Caption>
+          The gedu&rsquo;s send-report button and the locked Join — filled, but
+          never the primary CTA.
+        </Caption>
+
+        <Ruling>
+          <p>
+            Pick the emphasis tier that replaces the violet fill.
+            (recommended: foreground fill)
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ---------------------------------------------------------- 12 */}
+      <Slide id="ensemble">
+        <BeforeAfter
+          before={<AckSample tone={ACK_TONES[0]} />}
+          after={<AckSample tone={ACK_TONES[1]} />}
+        />
+        <Caption>
+          Glow stays reserved for domain facts — progress, achievement, presence,
+          liveness — so green does not flood the ensemble.
+        </Caption>
+
+        <Ruling>
+          <p>
+            Adopt the trim — mechanical acknowledgements go quiet rather than
+            converging onto glow. (recommended: adopt)
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ---------------------------------------------------------- 13 */}
+      <Slide id="warning-adjacency">
+        <div className="flex flex-wrap gap-4">
+          {AMBER_NEIGHBOURS.map((swatch) => (
+            <Swatch key={swatch.label} {...swatch} />
+          ))}
+        </div>
+
+        <div className="space-y-3">
+          <Marker>The admin attention panel, both states of one slot</Marker>
+          <div className="rounded-lg border bg-card">
+            <div className="flex flex-row items-center justify-between gap-4 p-6">
+              <span className="text-xl font-semibold text-foreground">
+                Needs attention
+              </span>
+              <span className="rounded-full bg-warning/15 px-3 py-1 text-sm font-semibold text-warning">
+                3
+              </span>
+            </div>
+          </div>
+          <div className="rounded-lg border bg-card">
+            <div className="flex flex-row flex-wrap items-center justify-between gap-x-6 gap-y-3 p-6">
+              <span className="font-display text-sm leading-relaxed tracking-normal text-primary sm:text-base">
+                All clear
+              </span>
+              <span className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
+                <span className="text-sm text-muted-foreground">
+                  Nothing is waiting on you.
+                </span>
+                <CircleCheck className="h-5 w-5 shrink-0 text-success" aria-hidden />
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <Ruling>
+          <p>
+            Own the adjacency — a warning mark always carries a glyph and never
+            sits inside an amber-act container. (recommended: adopt)
+          </p>
+          <p>
+            Or retune <code>--warning</code> away from amber — an escalation,
+            since it moves a functional token.
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ---------------------------------------------------------- 14 */}
+      <Slide id="status-colours">
+        {STATUS_SWATCH_ROWS.map((row) => (
+          <div key={row.heading} className="space-y-3">
+            <Marker>{row.heading}</Marker>
+            <div className="flex flex-wrap gap-4">
+              {row.swatches.map((swatch) => (
+                <Swatch key={swatch.label} {...swatch} />
+              ))}
+            </div>
+          </div>
+        ))}
+        <Caption>
+          Distances are CIE76 in Lab; under about 25 two colours read as one thing
+          at two strengths. Slides 7 and 8 are these two collisions in context.
+        </Caption>
+
+        <Ruling>
+          <p>
+            Status colours — A, converge <code>--info</code> onto wit and{" "}
+            <code>--success</code> onto glow; B, keep both sets; or C, defer to
+            the categorical-labelling follow-up. (recommended: A — both are
+            tokens, so no call site changes)
+          </p>
+        </Ruling>
+      </Slide>
+
+      {/* ---------------------------------------------------------- 15 */}
+      <Slide id="grammar-wild">
+        <div className="space-y-3">
+          <Marker>My SOG enrollment cards — today, then the draft</Marker>
+          <EnrollmentStates palette="current" />
+          <EnrollmentStates palette="brand" />
         </div>
 
         <div className="space-y-3">
@@ -1156,10 +2198,6 @@ export default function DesignPassWalkthroughPage() {
 
         <Ruling>
           <p>
-            The status convergence on these surfaces as drafted. (recommended:
-            adopt)
-          </p>
-          <p>
             Sign off the grammar per surface — My SOG, the family product page —
             or name which to hold back.
           </p>
@@ -1178,7 +2216,7 @@ export default function DesignPassWalkthroughPage() {
         </Links>
       </Slide>
 
-      {/* ----------------------------------------------------------- 5 */}
+      {/* ---------------------------------------------------------- 16 */}
       <Slide id="gamer-floor">
         <Caption>
           No exhibit here: a breakpoint reads the browser window, not a box on
@@ -1204,7 +2242,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ----------------------------------------------------------- 6 */}
+      {/* ---------------------------------------------------------- 17 */}
       <Slide id="elements">
         <div className="flex flex-wrap gap-4">
           {YTY_ELEMENTS.map((element) => (
@@ -1246,7 +2284,7 @@ export default function DesignPassWalkthroughPage() {
         </Links>
       </Slide>
 
-      {/* ---------------------------------------------------------- 7 */}
+      {/* ---------------------------------------------------------- 18 */}
       <Slide id="buttons">
         <div className="space-y-2">
           {BUTTON_SAMPLES.map((row) => (
@@ -1289,7 +2327,7 @@ export default function DesignPassWalkthroughPage() {
         </Links>
       </Slide>
 
-      {/* ---------------------------------------------------------- 8 */}
+      {/* ---------------------------------------------------------- 19 */}
       <Slide id="zones">
         <SampleGroup title="The four Yty zones — today, then the draft">
           <Sample
@@ -1319,7 +2357,7 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 9 */}
+      {/* ---------------------------------------------------------- 20 */}
       <Slide id="reach">
         <Caption>
           Nothing to draw here — this is a rule, not an appearance. The Guidebook
@@ -1336,51 +2374,23 @@ export default function DesignPassWalkthroughPage() {
         </Ruling>
       </Slide>
 
-      {/* --------------------------------------------------------- 10 */}
-      <Slide id="status-colours">
-        {STATUS_SWATCH_ROWS.map((row) => (
-          <div key={row.heading} className="space-y-3">
-            <Marker>{row.heading}</Marker>
-            <div className="flex flex-wrap gap-4">
-              {row.swatches.map((swatch) => (
-                <Swatch key={swatch.label} {...swatch} />
-              ))}
-            </div>
-          </div>
-        ))}
-
-        <div className="space-y-3">
-          <Marker>The same collision, as the app draws it</Marker>
-          {STATUS_CHIPS.map((pair) => (
-            <div key={pair.status.label} className="flex flex-wrap items-center gap-3">
-              <StatusChip {...pair.status} />
-              <StatusChip {...pair.brand} />
-            </div>
-          ))}
-        </div>
-        <Caption>
-          Distances are CIE76 in Lab; under about 25 two colours read as one thing
-          at two strengths.
-        </Caption>
-
-        <Ruling>
-          <p>
-            Status colours — A, converge <code>--info</code> onto wit and{" "}
-            <code>--success</code> onto glow; B, keep both sets; or C, defer to
-            the categorical-labelling follow-up. (recommended: A — both are
-            tokens, so no call site changes)
-          </p>
-        </Ruling>
-      </Slide>
-
-      {/* --------------------------------------------------------- 11 */}
+      {/* ---------------------------------------------------------- 21 */}
       <Slide id="recap">
         <ol className="max-w-prose list-decimal space-y-1.5 pl-5 text-sm text-foreground">
           <li>The strong and soft split.</li>
           <li>Adopt the colour grammar.</li>
           <li>Violet narrows to &ldquo;the world&rdquo;.</li>
+          <li>The strength axis — solid = act, tint = label, edge = selection.</li>
+          <li>Selected and active states leave amber.</li>
+          <li>The lifecycle idiom — one hue, stepped.</li>
+          <li>Liveness is glow everywhere.</li>
+          <li>The future system converges to wit.</li>
+          <li>Eligibility is wit at label strength.</li>
           <li>Role badges take real families, retiring the gradient.</li>
-          <li>The status convergence on the parent surfaces as drafted.</li>
+          <li>Violet&rsquo;s replacement emphasis — foreground fill, or heavy outline.</li>
+          <li>The ensemble trim on mechanical acknowledgements.</li>
+          <li>Warning&rsquo;s adjacency to amber — own it, or retune the token.</li>
+          <li>Status colours — converge, keep both, or defer.</li>
           <li>The grammar per surface — My SOG, the family product page.</li>
           <li>The gamer dashboard&rsquo;s colour at the 360 floor.</li>
           <li>The Yty element cards as drafted.</li>
@@ -1389,7 +2399,6 @@ export default function DesignPassWalkthroughPage() {
           <li>The third button tier — A, B or C.</li>
           <li>The voice-zone tiles.</li>
           <li>The calm ring — confirm amber-only, or adjust.</li>
-          <li>Status colours — converge, keep both, or defer.</li>
         </ol>
       </Slide>
     </div>
