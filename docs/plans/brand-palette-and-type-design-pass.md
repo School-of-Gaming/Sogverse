@@ -380,6 +380,73 @@ Owner direction (2026-08-31), added during implementation:
       the family's word, never two grammar fills in one view, ink pairings from the
       contrast table (fills needing dark ink use soft), destructive red untouched.
 
+26. **Walkthrough rulings, second batch — the full-deck sweep** (owner, 2026-09-01):
+    - **Approved and settled, slides dropped:** the colour grammar as a whole ("I
+      like all the colors. Approved" — the vocabulary binds, all six families);
+      lifecycles-one-hue-stepped ("looks good", with a compliance reconciliation
+      below); liveness-is-glow; time-is-wit; eligibility-one-colour (in principle
+      — see the product-colour note); role families (batch 1); the Yty element
+      cards ("sign off"); the voice-zone tiles ("looks great"); the grammar in
+      the wild ("I like it" — My SOG's own sign-off happens from the preview
+      scene, which he looks forward to).
+    - **`--warning` is RULED: retune to the orange shift `#E2761B`** (hue 27.4°,
+      Δ27.4 to primary, Δ15.2 to valor-strong — the owner weighed the valor
+      proximity and accepts it: "I don't think it will get confused with valor…
+      I think it's ok that it is closer to error which is red"). Wiring: the
+      `--warning` token retunes, `src/lib/constants/colors.ts` follows, the
+      glyph-discipline rider (a warning mark always carries a glyph) stands.
+    - **Violet's replacement weight is RULED: the foreground fill.** The owner's
+      follow-on question — do buttons take different brand colours by action? —
+      answered yes: that is exactly the buttons proposal, which he then ruled.
+    - **Buttons are RULED: adopt the bold, colourful grammar fills — and usage
+      is delegated** ("I leave it up to you how to use them in the app"). The
+      session's constraint set is therefore the operative doctrine at wiring: a
+      grammar fill only where the action *is* the family's word; never beside a
+      primary CTA and never two grammar fills in one view; ink pairings from the
+      contrast table (wit fills soft with dark ink); destructive red untouched.
+    - **The ensemble trim is REJECTED.** Mechanical acknowledgements keep
+      success green: "things that I would want to check my eye is working /
+      confirmed / approved, and note is muted / natural / dismissive" — green is
+      the affirmative register, muted reads dismissive. Consequence accepted
+      with it: after the status convergence, glow appears on confirmations too;
+      the ensemble rule's "hear glow least" ambition yields on this class.
+    - **Reconciliation the lifecycle approval needs (session, flagged):** the
+      approved stepping is the *construct* stepping (outline → solid fill →
+      tint), but the draft's pending chip carried `text-primary/80` dimmed ink,
+      which the shading rule bans. Pending steps down by construct with
+      full-value ink; the completed tint chip finalizes with the still-open
+      chip ruling.
+    - **The strength axis's own third tier violated the tint-ground ruling**
+      (owner caught it: the "Every week" selection samples carried `/5` washes).
+      The proposal's selection tier is corrected to solid edge + transparent
+      ground; the app-as-shipped row keeps quoting the wash because it *is* the
+      census violation. The label tier (tinted chip) is annotated as pending the
+      chip ruling.
+    - **"You are here" is accepted in principle, blocked on contrast** — the
+      neutral treatment dropped the selected/unselected clarity amber gave.
+      Deck reworked with stronger neutral candidates (the inverted foreground
+      fill the owner just chose as the emphasis tier is the lead candidate).
+    - **The shading slide is reworked to show violations, not abstractions** —
+      the owner wants the app's real violating constructs beside the suggested
+      replacement, not generic shapes.
+    - **The calm ring failed its own show-don't-tell rule** ("Nothing to see so
+      I can't rule on anything") — reworked to render a billing/safeguarding
+      surface amber-only beside the same surface with palette leakage.
+    - **Still open:** the gamer-dashboard-at-360 sign-off (the owner asked what
+      the slide is for — it is a link hub to judge the mobile-first floor in a
+      phone-sized window, since a breakpoint reads the window, not a box);
+      tinted label chips; low-alpha edges; hover darkening/lifts; the calm
+      ring; you-are-here's treatment; My SOG + family product page from the
+      preview scenes.
+    - **Product-page colour ideas** (the owner's ask on eligibility): colour
+      arrives from families doing real jobs, not from eligibility — grammar
+      buttons (a valor "Book the camp"), time rows in wit, liveness glow
+      ("live now" / "starts soon"), harmony on community facts (spots, friends
+      attending) — composed on the family product page scene for sign-off.
+    - **Confirmed already tracked:** the gamer dashboard's Yty grid removal on
+      dev is in this plan's surface-map revision; element-card consumers are
+      the `/about` section, the voice zones and the style guide.
+
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
 around, so the map in **Problem** and step 6's consumer list both shrink:
