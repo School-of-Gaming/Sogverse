@@ -75,7 +75,7 @@ export function AboutFaq({ id }: AboutFaqProps) {
       className="container mx-auto scroll-mt-[var(--header-height)] px-4 py-16 sm:py-24"
     >
       <div className="mx-auto max-w-3xl">
-        <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
+        <h2 className="text-center text-3xl font-semibold tracking-tight sm:text-4xl">
           {t("heading")}
         </h2>
         <div className="mt-12">

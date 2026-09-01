@@ -140,7 +140,7 @@ export function PolicyPage({
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <div className="space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
         {subtitle && (
           <p className="text-muted-foreground">
             <PolicyText text={subtitle} />
@@ -176,7 +176,7 @@ export function PolicyPage({
       <div className="mt-10 space-y-10">
         {sections.map((section, si) => (
           <section key={si} className="space-y-3">
-            <h2 className="text-2xl font-bold">{section.heading}</h2>
+            <h2 className="text-2xl font-semibold">{section.heading}</h2>
             <PolicyBlocks blocks={section.blocks} />
             {section.subsections?.map((subsection, sub) => (
               <div key={sub} className="space-y-3 pt-3">

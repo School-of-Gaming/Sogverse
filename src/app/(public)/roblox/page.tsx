@@ -135,7 +135,7 @@ export default function RobloxPage() {
       <section className="container mx-auto px-4 py-16 sm:py-24">
         <div className="mx-auto max-w-3xl">
           <Eyebrow>{t("what.eyebrow")}</Eyebrow>
-          <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
             {t("what.heading")}
           </h2>
           <div className="mt-8 space-y-6 text-lg leading-8 text-muted-foreground">
@@ -151,7 +151,7 @@ export default function RobloxPage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <Eyebrow>{t("how.eyebrow")}</Eyebrow>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
               {t("how.heading")}
             </h2>
             <p className="mt-4 text-muted-foreground">{t("how.subheading")}</p>
@@ -180,7 +180,7 @@ export default function RobloxPage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <Eyebrow>{t("why.eyebrow")}</Eyebrow>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
               {t("why.heading")}
             </h2>
           </div>
@@ -214,7 +214,7 @@ export default function RobloxPage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
             <Eyebrow>{t("parents.eyebrow")}</Eyebrow>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
               {t("parents.heading")}
             </h2>
             <p className="mt-6 text-lg leading-8 text-muted-foreground">

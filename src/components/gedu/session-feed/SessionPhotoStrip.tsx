@@ -171,7 +171,7 @@ export function SessionPhotoStrip({
    * Preparing a 4K screenshot is a real decode-and-re-encode pass, so a batch
    * is not instant even though nothing leaves the browser. The flag is live
    * before the first render after the click, which is what stops a fast second
-   * press starting a second batch over the same remaining slots.
+   * click from starting a second batch over the same remaining slots.
    */
   const [preparing, setPreparing] = useState(false);
   /** How many of an over-cap selection were taken, or `null` for no trim. */

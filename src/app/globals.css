@@ -175,13 +175,18 @@
   --color-yty-glow: #fbbf24;
   --color-yty-valor: #fb7185;
   --color-yty-wit: #a78bfa;
-  /* YTY Element colors — the brand's exact hues, as strong/soft pairs.
-     DESIGN-PASS DRAFT, pending owner sign-off: these are consumed only by the
-     preview scenes' `brand` palette and the admin walkthrough deck's samples
-     (see YTY_ELEMENT_DRAFT_COLORS in src/lib/constants/yty.ts), so nothing live
-     renders them yet. The four
-     single tokens above stay until the scenes are signed off, at which point
-     these names are what the wiring lands on and those retire.
+  /* YTY Element colors — the brand's exact hues, as strong/soft pairs, ruled
+     and live. The shared button recipe (src/components/ui/button.tsx) is what
+     renders them today: its four grammar-fill variants take valor, harmony and
+     glow in strong and wit in soft, and that last one is the contrast result
+     below picking the fill strength, not a stylistic preference. Every other
+     consumer — the Yty element tiles, the voice zones, the enrollment and
+     product-page tone maps, the /about washes — still reads these only on a
+     `brand` draft path beside the live literal it will replace (see
+     YTY_ELEMENT_DRAFT_COLORS in src/lib/constants/yty.ts), and promotes with
+     the rest of the design pass. The four single tokens above are the
+     stand-ins those live literals are still drawn from, which is why they stay
+     until that promotion lands.
 
      The four above are raw Tailwind defaults and are wrong on every element —
      the brand fixes Harmony pink, Glow green, Valor orange, Wit blue, and two
@@ -232,20 +237,21 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   /* The app face. Poppins is the brand's workhorse typeface, so it is what body
-     copy and every heading not claimed by --font-display renders in; the
-     fallbacks are the UA's own sans, never a second webfont. This block emits
-     at :root, so the face variable it points at has to be defined at :root too —
-     see the note beside the <html> className in src/app/layout.tsx for why that
-     is load-bearing and not a stylistic preference. The Open Graph cards are
-     drawn by satori, which cannot read CSS at all and fetches its own copy of
-     Poppins (src/components/og/fonts.ts). */
+     copy and every heading renders in — there is no display face; the two other
+     faces below are each spent on one narrow job. The fallbacks are the UA's
+     own sans, never a second webfont. This block emits at :root, so the face
+     variable it points at has to be defined at :root too — see the note beside
+     the <html> className in src/app/layout.tsx for why that is load-bearing and
+     not a stylistic preference. The Open Graph cards are drawn by satori, which
+     cannot read CSS at all and fetches its own copy of Poppins
+     (src/components/og/fonts.ts). */
   --font-sans: var(--font-poppins);
-  --font-display: var(--font-press-start-2p);
   /* Space Mono — the Guidebook's sanctioned mono, whose named first use is
-     "in-platform UI". DESIGN-PASS DRAFT: the only thing rendering it is the
-     gamer dashboard's greeting under the preview scenes' `brand` draft, so no
-     live route reads this token yet (which is also why the face still loads
-     with `preload: false` — see src/app/layout.tsx).
+     "in-platform UI", and here that is read narrowly: the platform naming one
+     of its own places. Two placements, and the list is closed — the voice
+     room's zone names, and /select-profile's "Who is entering Sogverse?".
+     Marketing copy, user content, badges, section headings and the dashboard
+     section pill are all Poppins by ruling.
 
      Deliberately NOT `--font-mono`: that name owns Tailwind's own `font-mono`
      utility, which ~7 live surfaces already spend on machine text — a room

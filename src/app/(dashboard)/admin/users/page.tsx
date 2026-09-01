@@ -163,7 +163,7 @@ export default function AdminUsersPage() {
     // globals.css.
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div>
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <h1 className="text-3xl font-semibold">{t('title')}</h1>
         <p className="text-muted-foreground">
           {t('manageAccounts')}
         </p>

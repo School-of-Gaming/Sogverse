@@ -137,7 +137,7 @@ async function AdminDashboardLoadFailure({ reason }: { reason: string | null }) 
   return (
     <div className="space-y-6 pb-12">
       <div>
-        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <h1 className="text-3xl font-semibold">{t("title")}</h1>
         <p className="text-muted-foreground">{t("description")}</p>
       </div>
       {/* The reason is a message off the wire, never translated copy — it is

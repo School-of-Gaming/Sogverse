@@ -225,7 +225,7 @@ export function GeduDashboardPageBody({
               <div className="mx-auto max-w-5xl space-y-6">
                 <h2
                   id={`${ACTIVITY_HEADING_KEY[group.type]}-heading`}
-                  className="text-3xl font-bold"
+                  className="text-3xl font-semibold"
                 >
                   {t(ACTIVITY_HEADING_KEY[group.type])}
                 </h2>
@@ -258,7 +258,7 @@ export function GeduDashboardPageBody({
           className="scroll-mt-32"
         >
           <div className="mx-auto max-w-5xl space-y-6">
-            <h2 id="tools-heading" className="text-3xl font-bold">
+            <h2 id="tools-heading" className="text-3xl font-semibold">
               {t("tools")}
             </h2>
             {/* One notice for the section, not one per panel. Certification is
@@ -296,7 +296,7 @@ export function GeduDashboardPageBody({
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-5xl space-y-6">
-            <h2 id="help-heading" className="text-3xl font-bold">
+            <h2 id="help-heading" className="text-3xl font-semibold">
               {h("heading")}
             </h2>
             {helpForm}

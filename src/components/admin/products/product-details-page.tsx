@@ -244,7 +244,7 @@ function HeaderCard({
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {kicker}
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">{title}</h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{title}</h1>
           {description && (
             <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
               {description}

@@ -77,7 +77,7 @@ export function AdminDashboardPageBody({
         {/* "Dashboard", not "My SOG": the admin surface is genuinely an admin
             panel and is called one, which is the single exception to the
             product-wide naming rule. */}
-        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <h1 className="text-3xl font-semibold">{t("title")}</h1>
         <p className="text-muted-foreground">{t("description")}</p>
       </div>
 

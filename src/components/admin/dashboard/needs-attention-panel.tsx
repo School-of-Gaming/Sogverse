@@ -104,19 +104,16 @@ function AllClearPanel() {
           wordmark and wraps within itself rather than pushing the card sideways.
           `justify-end` keeps it packed right wherever it lands. */}
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-6 gap-y-3 space-y-0">
-        {/* The wordmark is the card's heading, in the pixel face the cup beside
-            it is drawn in, and every class here is cancelling something
-            `CardTitle` assumes about a normal title. `leading-relaxed` because
-            Press Start 2P sets roughly one em per glyph and wants none of the
-            tight leading; `tracking-normal` because the base class ships
-            `tracking-tight`, which tailwind-merge has no reason to drop, and
-            negative letter-spacing smudges pixel glyphs into their neighbours;
-            `text-sm` because at the title's own size the longest locale would
-            set this wider than a phone. The one diacritic any locale puts in
-            this face is Swedish's ä (U+00E4), which is inside the `latin`
-            subset the font is loaded with, so it renders in the pixel face
-            rather than falling back mid-word. */}
-        <CardTitle className="font-display text-sm leading-relaxed tracking-normal text-primary sm:text-base">
+        {/* The wordmark is the card's heading, and it now wears `CardTitle`'s
+            own type unaltered — Poppins at 24px / SemiBold 600, which is the
+            Guidebook's H3 exactly. Every class that used to sit here was
+            cancelling something the base assumes about a normal title, and all
+            of it was there for the pixel face: the face is retired, so the
+            cancellations go with it. The size holds at the 360px floor, where
+            the card gives ~280px and the longest locale (French's 17-character
+            "Tout est en ordre", ~9.4em of Poppins SemiBold) sets 224px. Only
+            the colour is still this card's own. */}
+        <CardTitle className="text-primary">
           {t("allClearTitle")}
         </CardTitle>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">

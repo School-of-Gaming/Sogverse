@@ -66,7 +66,7 @@ export default async function VerifyEmailPage({
         <MailX className="h-12 w-12 text-destructive" />
       )}
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-semibold">
           {verified ? t("successTitle") : t("invalidTitle")}
         </h1>
         <p className="text-muted-foreground">

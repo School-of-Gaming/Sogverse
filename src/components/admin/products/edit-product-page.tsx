@@ -48,7 +48,7 @@ export function EditProductPage({
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {t("editPage.kicker", { label: label.toLowerCase() })}
         </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
           {product
             ? t("editPage.title", {
                 name:

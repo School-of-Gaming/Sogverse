@@ -42,7 +42,7 @@ export function YtySection({ id, palette = "current" }: YtySectionProps) {
     <section id={id} className="container mx-auto scroll-mt-[var(--header-height)] px-4 py-16 sm:py-24">
       {/* Hero */}
       <div className="mx-auto max-w-3xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           {t.rich("hero.title", {
             primary: (chunks) => <span className="text-primary">{chunks}</span>,
           })}
@@ -67,7 +67,7 @@ export function YtySection({ id, palette = "current" }: YtySectionProps) {
 
       {/* Four Elements */}
       <div className="mx-auto mt-16 max-w-5xl">
-        <h3 className="text-center text-2xl font-bold">{t("elements.heading")}</h3>
+        <h3 className="text-center text-2xl font-semibold">{t("elements.heading")}</h3>
         <p className="mt-2 text-center text-muted-foreground">{t("elements.subheading")}</p>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {YTY_ELEMENTS.map((el) => {
@@ -98,7 +98,7 @@ export function YtySection({ id, palette = "current" }: YtySectionProps) {
 
       {/* Earning Yty */}
       <div className="mx-auto mt-16 max-w-3xl">
-        <h3 className="text-center text-2xl font-bold">{t("earning.heading")}</h3>
+        <h3 className="text-center text-2xl font-semibold">{t("earning.heading")}</h3>
         <div className="mt-8 space-y-6 text-muted-foreground">
           <p>{t("earning.paragraph1")}</p>
           <p>{t("earning.paragraph2")}</p>

@@ -259,7 +259,7 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           {t.rich("hero.title", {
             primary: (chunks) => <span className="text-primary">{chunks}</span>,
           })}

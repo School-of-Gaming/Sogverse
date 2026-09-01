@@ -367,7 +367,7 @@ export function ProductDetailPageBody({
               municipality={municipality}
             />
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl lg:mt-0 lg:min-w-0 lg:flex-1">
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl lg:mt-0 lg:min-w-0 lg:flex-1">
             {tr?.name}
           </h1>
         </div>

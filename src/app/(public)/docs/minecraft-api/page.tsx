@@ -59,7 +59,7 @@ export default function MinecraftApiDocsPage() {
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight">
+      <h1 className="text-3xl font-semibold tracking-tight">
         {t('title')}
       </h1>
       <p className="mt-4 text-lg text-muted-foreground">

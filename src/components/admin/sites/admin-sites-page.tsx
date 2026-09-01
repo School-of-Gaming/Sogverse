@@ -128,7 +128,7 @@ export function AdminSitesPage() {
     <div className="mx-auto max-w-6xl space-y-6" data-reserve-scroll-gutter>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <h1 className="text-3xl font-semibold">{t("title")}</h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button

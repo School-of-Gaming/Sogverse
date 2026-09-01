@@ -335,7 +335,18 @@ function ZoneCard({
         <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", zone.color.tile)}>
           <Icon className={cn("h-5 w-5", zone.color.glyph)} />
         </span>
-        <span className="flex-1 truncate text-sm font-medium">{label}</span>
+        {/* One of the two places Space Mono is spent (the other is
+            /select-profile's "Who is entering Sogverse?"): a zone name is the
+            platform naming one of its own places — the lobby, the four Yty
+            elements, and whatever a moderator has called a room of their own —
+            so the label wears the world's face rather than the app's. It stays
+            `text-sm`: the mono's fixed 0.6em advance is wider than Poppins at
+            the same size, and this label already gives way (`truncate`) to the
+            lock pill and the mod controls beside it. `font-normal` rather than
+            the `font-medium` it wore in Poppins: Space Mono ships 400 and 700
+            only, so 500 would resolve to 400 regardless and the class would be
+            describing a weight the face does not have. */}
+        <span className="flex-1 truncate font-brand-mono text-sm font-normal">{label}</span>
         {zone.isLocked && (
           <span className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
             <Lock className="h-2.5 w-2.5" />

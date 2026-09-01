@@ -22,17 +22,11 @@ import type { YtyPalette } from "@/lib/constants/yty";
  * every construct it proposed was ruled out, and its slug now renders the same
  * ruled dose if an old link reaches it.
  *
- * **The hero's h1 stays in Press Start 2P under the draft, deliberately.** The
- * design pass reviews every Press Start 2P placement against the owner's
- * "rare and specialized uses" ruling, and this is the site the ruling is
- * *for*: the front page's one arcade sentence, seen once, by a stranger,
- * before anything else. Swapping it here would leave the face with no
- * flagship placement while keeping it loaded, which is the worst of both — so
- * the h1's *face* is unchanged across all three scenarios and the comparison
- * stays about the palette; what the lively doses change is its colour, from
- * amber and violet to white with a green marker stroke behind the payoff
- * words. The gamer dashboard's greeting is the placement that moves; that one
- * is a heading a child meets on every visit, which is the opposite of rare.
+ * **The hero's h1 is no longer a type comparison.** The pixel display face it
+ * used to wear is retired from the product, so the h1 is settled Poppins at the
+ * Guidebook's H1 on the live route and in every scenario alike — the type is
+ * identical on both sides of the comparison, which is what keeps the comparison
+ * about the palette. What the doses change is its colour.
  */
 export function HomeScene({ palette }: { palette: YtyPalette }) {
   return <HomePageBody palette={palette} />;

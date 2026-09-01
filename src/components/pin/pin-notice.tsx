@@ -21,7 +21,7 @@ export function PinNotice({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       {icon}
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <h1 className="text-2xl font-semibold">{title}</h1>
         <p className="text-muted-foreground">{description}</p>
       </div>
       {action}

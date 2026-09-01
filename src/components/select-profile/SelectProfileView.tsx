@@ -30,7 +30,19 @@ export function SelectProfileView({
 
   return (
     <div className="w-full max-w-3xl space-y-10 sm:space-y-12">
-      <h1 className="text-balance text-center text-3xl font-bold sm:text-4xl">
+      {/* One of the two places Space Mono is spent (the other is the voice
+          room's zone names): the platform asking, in its own voice, who is
+          entering it. Everything else on this page — and every heading that is
+          the brand *speaking* rather than the world naming itself — is Poppins.
+          The mono advances a fixed 0.6em per character against Poppins' ~0.55,
+          so the scale steps down one notch from the H1 it replaces: at 24px the
+          widest locale (25 characters, English and French alike) sets 360px and
+          takes two balanced lines inside the 328px the 360px floor gives, with
+          the longest single word at 130px; from `sm` it is one line at 30px.
+          `font-bold`, not the app's SemiBold heading weight, because Space Mono
+          ships 400 and 700 and nothing between — asking for 600 would render
+          700 anyway and only make the source say something untrue. */}
+      <h1 className="text-balance text-center font-brand-mono text-2xl font-bold sm:text-3xl">
         {t("title")}
       </h1>
       <FamilyProfileSelector

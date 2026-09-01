@@ -118,7 +118,7 @@ export function PurchaseConfirmationView({
               <CheckCircle2 className="h-8 w-8 text-primary" />
             )}
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">
             {isWaitlist ? t("waitlist.heading") : t("heading")}
           </h1>
           <p className="mt-2 text-muted-foreground">
@@ -416,7 +416,7 @@ export function PurchaseConfirmationNotice({
               <Info className="h-7 w-7 text-primary" />
             )}
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">
             {copy.heading}
           </h1>
           <p className="mt-2 text-muted-foreground">{copy.subheading}</p>

@@ -45,7 +45,7 @@ function ContractBlock({ block }: { block: GeduContractBlock }) {
   switch (block.kind) {
     case "heading":
       return block.level === 2 ? (
-        <h2 className="mt-10 text-xl font-bold tracking-tight first:mt-0 sm:text-2xl">
+        <h2 className="mt-10 text-xl font-semibold tracking-tight first:mt-0 sm:text-2xl">
           <ContractText text={block.text} />
         </h2>
       ) : (
@@ -134,7 +134,7 @@ export function GeduContractDocumentView({
       lang={document.language}
       className="mx-auto max-w-3xl text-sm leading-relaxed sm:text-base"
     >
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
         <ContractText text={document.title} />
       </h1>
       <div className="mt-6">

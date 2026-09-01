@@ -77,7 +77,7 @@ export function PinSet({
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-8 text-center">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <h1 className="text-2xl font-semibold">{title}</h1>
         {description && <p className="text-muted-foreground">{description}</p>}
       </div>
       <PinPad

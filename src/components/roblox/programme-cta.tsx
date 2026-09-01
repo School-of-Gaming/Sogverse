@@ -28,7 +28,7 @@ export function ProgrammeCta() {
     <section className="container mx-auto px-4 py-16 sm:py-24">
       <Card className="mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10">
         <CardContent className="flex flex-col items-center py-12 text-center">
-          <h2 className="text-2xl font-bold sm:text-3xl">{t("heading")}</h2>
+          <h2 className="text-2xl font-semibold sm:text-3xl">{t("heading")}</h2>
           <p className="mt-4 max-w-xl text-muted-foreground">{t("body")}</p>
           <Link
             href={ROUTES.robloxShop}

@@ -236,7 +236,7 @@ export const PREVIEW_SCENES = [
         slug: BRAND_PALETTE_SCENARIO.slug,
         label: BRAND_PALETTE_SCENARIO.label,
         description:
-          "The booked page again under the whole brand draft: the enrollment cards in the ruled colour grammar, and the greeting re-set from Press Start 2P into Poppins at the Guidebook's scale.",
+          "The booked page again under the whole brand draft: the enrollment cards in the ruled colour grammar, under the settled Poppins greeting.",
       },
     ],
   },

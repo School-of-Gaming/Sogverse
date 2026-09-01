@@ -1,11 +1,6 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
-import {
-  Dancing_Script,
-  Poppins,
-  Press_Start_2P,
-  Space_Mono,
-} from "next/font/google";
+import { Dancing_Script, Poppins, Space_Mono } from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
 import { getUserWithProfile } from "@/lib/supabase/server";
@@ -29,26 +24,16 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
-// A sanctioned brand face, placed so far only in design-pass drafts on
-// admin-only surfaces: `--font-brand-mono` in globals.css points at it, and the
-// style guide's type specimens and the gamer-dashboard preview scene are what
-// render it. No live family-facing route does — the gamer greeting still draws
-// in the display face until the owner rules on the draft — so `preload: false`
-// still stands: a preload link buys nothing for a face that only an admin
-// reviewing a draft ever sees, and costs every other visitor a font download.
-// Preload turns back on in the wiring phase that first places the face on a
-// live route.
+// A sanctioned brand face, and the platform's own voice: `--font-brand-mono` in
+// globals.css points at it, and it is spent on exactly two live surfaces — the
+// voice room's zone names and /select-profile's "Who is entering Sogverse?".
+// Both are the platform naming one of its own places, which is the whole of the
+// face's remit; everything else is Poppins. Preloaded like the app face,
+// because both of those surfaces render it on first paint.
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin", "latin-ext"],
   variable: "--font-space-mono",
-  preload: false,
-});
-
-const pressStart2P = Press_Start_2P({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-press-start-2p",
 });
 
 // The hand-written face a signature renders in. `latin-ext` is not optional:
@@ -58,8 +43,8 @@ const dancingScript = Dancing_Script({
   weight: "600",
   subsets: ["latin", "latin-ext"],
   // The face's own variable; `--font-cursive` in globals.css points at it, the
-  // same indirection `--font-display` uses for Press Start 2P, so a component
-  // asks for "the cursive font" and never for a specific family.
+  // same indirection every other face here goes through, so a component asks
+  // for "the cursive font" and never for a specific family.
   variable: "--font-dancing-script",
 });
 
@@ -150,13 +135,13 @@ export default async function RootLayout({
   // guaranteed-invalid value and take the whole `font-family` declaration down
   // with it, leaving the UA stack. An earlier Inter attempt was wired exactly
   // that way and silently never applied for as long as it shipped. The utility
-  // classes (`font-display`, `font-cursive`) survived that mistake only because
-  // `@theme inline` inlines their `var()` at the use site, where <body> is an
-  // ancestor — which is precisely why the failure was invisible.
+  // classes (`font-brand-mono`, `font-cursive`) survived that mistake only
+  // because `@theme inline` inlines their `var()` at the use site, where <body>
+  // is an ancestor — which is precisely why the failure was invisible.
   return (
     <html
       lang={locale}
-      className={`${poppins.variable} ${spaceMono.variable} ${pressStart2P.variable} ${dancingScript.variable}`}
+      className={`${poppins.variable} ${spaceMono.variable} ${dancingScript.variable}`}
     >
       <body className="antialiased bg-background text-foreground">
         <Providers

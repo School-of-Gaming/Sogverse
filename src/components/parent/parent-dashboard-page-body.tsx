@@ -399,7 +399,7 @@ export function ParentDashboardPageBody({
             <div className="mx-auto max-w-3xl space-y-6">
               <h2
                 id={`${EMPTY_GAMERS_SECTION_ID}-heading`}
-                className="text-3xl font-bold"
+                className="text-3xl font-semibold"
               >
                 {t("myGamers")}
               </h2>
@@ -435,7 +435,7 @@ export function ParentDashboardPageBody({
                     </Avatar>
                     <h2
                       id={`${gamerSectionId(gamer)}-heading`}
-                      className="min-w-0 break-words text-3xl font-bold"
+                      className="min-w-0 break-words text-3xl font-semibold"
                     >
                       {gamer.firstName}
                     </h2>
@@ -567,7 +567,7 @@ export function ParentDashboardPageBody({
                 </Avatar>
                 <h2
                   id={`${SELF_SECTION_ID}-heading`}
-                  className="min-w-0 break-words text-3xl font-bold"
+                  className="min-w-0 break-words text-3xl font-semibold"
                 >
                   {self.firstName}
                 </h2>
@@ -610,7 +610,7 @@ export function ParentDashboardPageBody({
           className="scroll-mt-32"
         >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 id="billing-heading" className="text-3xl font-bold">
+            <h2 id="billing-heading" className="text-3xl font-semibold">
               {t("billing")}
             </h2>
             {billingCard}
@@ -637,7 +637,7 @@ export function ParentDashboardPageBody({
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 id="help-heading" className="text-3xl font-bold">
+            <h2 id="help-heading" className="text-3xl font-semibold">
               {h("heading")}
             </h2>
             {helpForm}

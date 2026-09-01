@@ -123,7 +123,7 @@ export function AdminSiteDetailPage({ siteId }: { siteId: string }) {
           than a guess, and nothing below them moves when the row lands. */}
       <div className="space-y-1">
         <p className="min-h-5 truncate text-sm text-muted-foreground">{path}</p>
-        <h1 className="min-h-9 text-3xl font-bold">{name}</h1>
+        <h1 className="min-h-9 text-3xl font-semibold">{name}</h1>
       </div>
 
       <SiteBody

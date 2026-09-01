@@ -50,7 +50,13 @@ export function CallEndedScreen({ reason, code, copyright }: CallEndedScreenProp
               <RoomLinkChip code={code} />
             </div>
           )}
-          <h2 className="pt-6 font-display text-2xl font-bold leading-tight tracking-tight md:text-3xl">
+          {/* The Guidebook's H2 — 36px / SemiBold 600 / 1.2 — stepped down to
+              30px below `sm`, the same pair the home page's own section
+              headings take. The card is `max-w-xl`, so the widest beat any
+              locale sets here (French's 16-character "Du temps d'écran", ~8.8em
+              of Poppins SemiBold) is 317px of the ~496px this card gives it,
+              and 264px of the 280px left at the 360px floor. */}
+          <h2 className="pt-6 text-3xl font-semibold leading-[1.2] tracking-tight sm:text-4xl">
             {tHome.rich("title", {
               br: () => <br />,
               primary: (chunks) => (

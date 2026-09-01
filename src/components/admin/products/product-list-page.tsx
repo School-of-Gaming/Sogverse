@@ -62,7 +62,7 @@ export function ProductListPage({ productType }: ProductListPageProps) {
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{plural}</h1>
+          <h1 className="text-2xl font-semibold">{plural}</h1>
           <p className="text-muted-foreground">
             {t("list.subtitle", { plural })}
           </p>

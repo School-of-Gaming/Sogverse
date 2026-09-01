@@ -58,7 +58,7 @@ export function NewProductPage({
           </p>
         )}
         <h1
-          className={`${isCloning ? "mt-1 " : ""}text-2xl font-bold tracking-tight sm:text-3xl`}
+          className={`${isCloning ? "mt-1 " : ""}text-2xl font-semibold tracking-tight sm:text-3xl`}
         >
           {!isCloning
             ? t("newPage.title", { label })

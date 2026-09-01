@@ -68,15 +68,15 @@ export function ytyPaletteFor(scenario: string): YtyPalette {
 /**
  * Which face a surface's own display heading is set in.
  *
- * `"display"` is Press Start 2P — `--font-display`, what every such heading
- * wears today — and `"sans"` is Poppins at the Guidebook's own scale, which is
- * what every one of those headings becomes: the face retires from the product
- * entirely, and the greeting's Space Mono draft was superseded with it. The two
- * are not interchangeable at one size, because Press Start 2P advances a full em
- * per character where Poppins advances a little over half of one — so a surface
- * that takes this prop carries a size per face rather than a face alone.
+ * **The axis is settled and both answers are now the same one.** The pixel
+ * display face is retired from the product and unloaded, so every heading that
+ * wore it — and the greeting's superseded Space Mono draft with them — is
+ * Poppins at the Guidebook's own scale, on the live route and in every
+ * scenario alike. What survives here is inert plumbing: the prop still
+ * threads, and it no longer decides anything.
  *
- * Retires with the draft: once the face is unloaded there is one answer.
+ * Retires with the draft: promotion drops the prop and the surfaces keep the
+ * one string.
  */
 export type DisplayFace = "display" | "sans";
 

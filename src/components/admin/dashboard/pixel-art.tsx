@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils";
  * with nothing to look at — an icon and a paragraph centred in the space the
  * queue used to fill, which reads as an *empty* panel rather than a *cleared*
  * one. A drawn mark is what makes that difference legible at a glance, and a
- * pixel one is the register this platform already speaks in: `font-display`
- * beside it is Press Start 2P, and the audience is a games company's own staff.
+ * pixel one is the register this platform speaks in: the audience is a games
+ * company's own staff. The title beside it is plain Poppins — the sprite is
+ * illustration and keeps its register whatever the type does.
  *
  * **Drawn here rather than shipped as an asset.** A 9x10 sprite is smaller as
  * markup than as any image file, needs no network round trip on a page whose

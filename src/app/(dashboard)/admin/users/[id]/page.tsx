@@ -248,7 +248,7 @@ export default async function AdminUserDetailPage({
             <Identicon id={profile.id} size={64} />
           </Avatar>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-semibold">
               {[profile.first_name, profile.last_name].filter(Boolean).join(" ")}
             </h1>
             {!isGamer && profile.email && (

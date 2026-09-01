@@ -187,7 +187,7 @@ export function SeatOfferResponse({
     return (
       <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-semibold">
             {lapsed ? t("expired.confirmTitle") : t("offer.confirmTitle")}
           </h1>
           <p className="text-muted-foreground">
@@ -235,7 +235,7 @@ export function SeatOfferResponse({
           aria-hidden
         />
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold">{t("expired.title")}</h1>
+          <h1 className="text-2xl font-semibold">{t("expired.title")}</h1>
           <p className="text-muted-foreground">
             {t("expired.body", { days: SEAT_OFFER_WINDOW_DAYS })}
           </p>
@@ -267,7 +267,7 @@ export function SeatOfferResponse({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       <CalendarClock className="h-12 w-12 text-primary" aria-hidden />
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{t("offer.title")}</h1>
+        <h1 className="text-2xl font-semibold">{t("offer.title")}</h1>
         <p className="text-muted-foreground">
           {step.isSelfSeat
             ? t("offer.self", { productName: step.productName })
@@ -411,7 +411,7 @@ function Outcome({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       {icon}
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <h1 className="text-2xl font-semibold">{title}</h1>
         <p className="text-muted-foreground">{body}</p>
       </div>
       {children}

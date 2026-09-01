@@ -58,7 +58,7 @@ export function AboutSection({ id, palette = "current" }: AboutSectionProps) {
     <section id={id} className="container mx-auto scroll-mt-[var(--header-height)] px-4 py-16 sm:py-24">
       {/* Hero */}
       <div className="mx-auto max-w-3xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           {t.rich("hero.title", {
             primary: (chunks) => <span className="text-primary">{chunks}</span>,
           })}
@@ -94,7 +94,7 @@ export function AboutSection({ id, palette = "current" }: AboutSectionProps) {
 
       {/* Values */}
       <div className="mx-auto mt-16 max-w-5xl">
-        <h3 className="text-center text-2xl font-bold">{t("values.heading")}</h3>
+        <h3 className="text-center text-2xl font-semibold">{t("values.heading")}</h3>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {values.map((value) => (
             <Card key={value.key}>
@@ -118,7 +118,7 @@ export function AboutSection({ id, palette = "current" }: AboutSectionProps) {
 
       {/* How Clubs Work */}
       <div className="mx-auto mt-16 max-w-3xl">
-        <h3 className="text-center text-2xl font-bold">{t("howClubsWork.heading")}</h3>
+        <h3 className="text-center text-2xl font-semibold">{t("howClubsWork.heading")}</h3>
         <div className="mt-8 space-y-6 text-muted-foreground">
           <p>{t("howClubsWork.paragraph1")}</p>
           <p>{t("howClubsWork.paragraph2")}</p>
@@ -129,7 +129,7 @@ export function AboutSection({ id, palette = "current" }: AboutSectionProps) {
 
       {/* For Parents */}
       <div className="mx-auto mt-16 max-w-3xl">
-        <h3 className="text-center text-2xl font-bold">{t("forParents.heading")}</h3>
+        <h3 className="text-center text-2xl font-semibold">{t("forParents.heading")}</h3>
         <div className="mt-8 space-y-6 text-muted-foreground">
           <p>{t("forParents.paragraph1")}</p>
           <p>{t("forParents.paragraph2")}</p>

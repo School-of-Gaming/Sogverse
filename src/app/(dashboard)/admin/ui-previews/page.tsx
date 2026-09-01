@@ -34,7 +34,7 @@ export default function AdminUIPreviewsPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">UI Previews</h1>
+        <h1 className="text-3xl font-semibold">UI Previews</h1>
         <p className="max-w-prose text-muted-foreground">
           Full-page preview scenes: one fixture-driven page each, served at{" "}
           <code>/preview/{"{surface}"}/{"{scenario}"}</code> inside the same

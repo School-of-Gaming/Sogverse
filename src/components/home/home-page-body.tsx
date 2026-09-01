@@ -183,10 +183,12 @@ interface HomeDraftClasses {
 }
 
 /**
- * The settled type, one copy for both doses.
+ * The settled type, one copy for both doses **and for the live path** — the
+ * type is no longer a draft axis, so the `draft ?` ternaries below reach for
+ * these same constants on either side and only colour still differs.
  *
- * Press Start 2P is gone from the whole product and every site it held is
- * re-set in Poppins at the Guidebook's own scale (A.3: H1 48–56px / 600 / 1.1,
+ * The pixel display face is gone from the whole product and every site it held
+ * is re-set in Poppins at the Guidebook's own scale (A.3: H1 48–56px / 600 / 1.1,
  * H2 ~36px / 600 / 1.2), headings are SemiBold 600 rather than the habitual
  * 700, and the CTA row is 16px / 600. The doses differ in colour and in nothing
  * else, so the type lives here rather than being written twice.
@@ -365,7 +367,7 @@ export function HomeHeroSection({ palette = "current" }: HomeSectionProps) {
     <section className={draft ? draft.hero : "relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]"}>
       <div className="container mx-auto px-4 py-24 sm:py-32">
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className={draft ? draft.heroTitle : "font-display text-2xl font-bold tracking-tight md:text-6xl"}>
+          <h1 className={draft ? draft.heroTitle : HERO_TITLE_TYPE}>
             {t.rich('hero.title', {
               br: () => <br />,
               primary: (chunks) => <span className={draft ? draft.heroPrimary : "text-primary"}>{chunks}</span>,
@@ -423,7 +425,7 @@ export function HomeFeaturesSection({ palette = "current" }: HomeSectionProps) {
   return (
     <section className="container mx-auto px-4 py-24">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className={draft ? draft.sectionHeading : "text-3xl font-bold tracking-tight sm:text-4xl"}>
+        <h2 className={draft ? draft.sectionHeading : SECTION_HEADING_TYPE}>
           {t('features.heading')}
         </h2>
         <p className="mt-4 text-muted-foreground">
@@ -465,7 +467,7 @@ export function HomeHowItWorksSection({ palette = "current" }: HomeSectionProps)
     <section className={draft ? draft.howItWorksSection : "bg-muted/30 py-24"}>
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className={draft ? draft.sectionHeading : "text-3xl font-bold tracking-tight sm:text-4xl"}>
+          <h2 className={draft ? draft.sectionHeading : SECTION_HEADING_TYPE}>
             {t('howItWorks.heading')}
           </h2>
           <p className="mt-4 text-muted-foreground">
@@ -516,7 +518,7 @@ export function HomeCtaSection({ palette = "current" }: HomeSectionProps) {
     <section className="container mx-auto px-4 py-24">
       <Card className={draft ? draft.ctaCard : "mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10"}>
         <CardContent className="flex flex-col items-center py-12 text-center">
-          <h2 className={draft ? draft.ctaHeading : "text-2xl font-bold sm:text-3xl"}>
+          <h2 className={draft ? draft.ctaHeading : CTA_HEADING_TYPE}>
             {t('cta.heading')}
           </h2>
           <p className="mt-4 text-muted-foreground">

@@ -6,13 +6,13 @@ import { ROUTES } from "@/lib/constants";
 import { PartnerLockup } from "@/components/roblox/partner-lockup";
 
 /**
- * The /roblox hero: three-beat pixel slogan, subtitle, CTA, partner lockup.
+ * The /roblox hero: three-beat slogan, subtitle, CTA, partner lockup.
  *
  * **One column on mobile, two from `md`.** The slogan is centred and small on
  * mobile and goes flush left beside the partner marks on desktop, because the
- * two viewports have opposite problems. At 60px the three lines measure roughly
- * 480 / 420 / 360px, so centring them makes a ragged triangle that reads as
- * accidental; a shared left edge turns that stagger into structure. At 24px on
+ * two viewports have opposite problems. At 56px the three lines measure roughly
+ * 250 / 200 / 180px, so centring them makes a ragged triangle that reads as
+ * accidental; a shared left edge turns that stagger into structure. At 30px on
  * mobile the same stagger is small enough that centring is simply the better
  * balance, and there is no width to put anything beside it anyway.
  *
@@ -21,30 +21,24 @@ import { PartnerLockup } from "@/components/roblox/partner-lockup";
  * than below it. `PartnerLockup` handles its own row-to-stack switch at the
  * same breakpoint.
  *
- * `font-display` is Press Start 2P. No `tracking-tight` (negative tracking
- * smudges pixel glyphs together) and no `text-balance` (the line breaks are
- * authored in the copy).
+ * **The slogan is Poppins at the Guidebook's H1** — 48–56px / SemiBold 600 /
+ * line-height 1.1, with 30px as the mobile step. No `text-balance` (the line
+ * breaks are authored in the copy).
  *
- * The slogan has two size scales because the font is monospace at exactly 1em
- * per character, so a beat's width is just (characters x font-size) and the
- * two-column layout gives it half the container. English's longest beat is 8
- * characters and clears 60px; French's "Construisez" is 11 and does not. One
- * scale for both would mean shrinking English to fit French, so long copy gets
- * its own smaller scale — see `longBeats` below.
+ * **One scale, and the character-count branch that used to pick between two is
+ * gone.** That branch was arithmetic for a 1em-advance face: a beat's width was
+ * exactly (characters x font-size), so French's 11-character "Construisez" blew
+ * past English's 8 at the same size and needed its own smaller scale. Poppins
+ * SemiBold averages ~0.55em per character, which halves every beat and lets one
+ * scale carry every locale. The binding case is French at `md`, where the
+ * two-column grid is tightest: `max-w-6xl px-4` gives 736px of content at a
+ * 768px viewport, and `md:gap-12` leaves 344px per column — "Construisez" at
+ * 6.05em sets 290px at 48px, so 48 is the `md` step and 56 waits for `lg`
+ * (472px of column). At the 360px floor the hero is one full-width column with
+ * 328px of content, where the same beat is 182px at 30px.
  */
 export function RobloxHero() {
   const t = useTranslations("roblox");
-
-  // Does any beat exceed the 8 characters the big scale allows? Read off the raw
-  // message (the rendered title is React elements) with its tags stripped.
-  const rawTitle: unknown = t.raw("hero.title");
-  const longBeats =
-    typeof rawTitle === "string" &&
-    rawTitle.replace(/<[^>]+>/g, "\n").split("\n").some((beat) => beat.length > 8);
-
-  const sloganSize = longBeats
-    ? "text-2xl sm:text-4xl md:text-3xl lg:text-4xl xl:text-5xl"
-    : "text-2xl sm:text-4xl lg:text-5xl xl:text-6xl";
 
   return (
     // Same gradient treatment as the home page hero, pulled up under the
@@ -54,7 +48,7 @@ export function RobloxHero() {
       <div className="container mx-auto max-w-6xl px-4 py-20 sm:py-28">
         <div className="grid items-center gap-14 md:grid-cols-2 md:gap-12">
           <div className="text-center md:text-left">
-            <h1 className={`font-display font-bold leading-snug ${sloganSize}`}>
+            <h1 className="font-sans text-3xl font-semibold leading-[1.1] sm:text-5xl lg:text-[56px]">
               {t.rich("hero.title", {
                 br: () => <br />,
                 primary: (chunks) => <span className="text-primary">{chunks}</span>,

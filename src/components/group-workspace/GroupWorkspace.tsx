@@ -588,7 +588,7 @@ export function GroupWorkspace({
             {p(data.product.product_type)}
           </span>
 
-          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
             {productName}
           </h1>
 

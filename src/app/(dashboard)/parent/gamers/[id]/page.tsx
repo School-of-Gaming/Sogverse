@@ -133,7 +133,7 @@ export default function GamerDetailsPage() {
       </Link>
 
       <div>
-        <h1 className="text-3xl font-bold">{t('gamerDetail.title')}</h1>
+        <h1 className="text-3xl font-semibold">{t('gamerDetail.title')}</h1>
         <p className="text-muted-foreground">
           {t('gamerDetail.subtitle', { name: gamer.first_name })}
         </p>

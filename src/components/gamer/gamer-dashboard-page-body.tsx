@@ -11,36 +11,37 @@ import type { YtyPalette } from "@/lib/constants/yty";
 import type { DisplayFace } from "@/components/preview/palette-scenarios";
 
 /**
- * The greeting's face, size and weight, as one choice per face — literal class
- * strings, because Tailwind scans source text and a size picked by template
- * emits a class with no rule behind it. The weight travels with the face here
- * rather than sitting on the element, so the draft's SemiBold 600 does not have
- * to out-argue a `font-bold` written beside it.
+ * The greeting's face, size and weight — a literal class string, because
+ * Tailwind scans source text and a size picked by template emits a class with
+ * no rule behind it. The weight travels with the face here rather than sitting
+ * on the element, so the settled SemiBold 600 does not have to out-argue a
+ * `font-bold` written beside it.
  *
- * **The draft is Poppins, not Space Mono.** The earlier draft set this line in
- * the world's own face; the ruling that retires Press Start 2P from the product
- * re-sets every one of its sites in Poppins at the Guidebook's scale, and the
- * greeting goes with them — it is the app welcoming a child by name, which is
- * the trust register Poppins carries, not the platform naming one of its own
- * places.
+ * **It is Poppins, not Space Mono.** An earlier draft set this line in the
+ * world's own face; the ruling that retired the pixel display face from the
+ * product re-set every one of its sites in Poppins at the Guidebook's scale,
+ * and the greeting went with them — it is the app welcoming a child by name,
+ * which is the trust register Poppins carries, not the platform naming one of
+ * its own places.
  *
- * **The size is not shared, because the two faces are not the same width.**
- * Press Start 2P advances a full em per character; Poppins SemiBold averages a
- * little over half of one, so the same numbers would set a greeting barely half
- * the width. The draft's numbers are the arithmetic at the 360px floor in the
- * widest locale: the dashboard shell is `container p-6`, which is 312px of
- * content there, and Finnish sets the longest first word ("Tervetuloa," — 11
- * characters, against French's "Bienvenue,"). At 30px Poppins that whole
- * greeting is ~280px for a typical first name and stays on one line; today's
- * 20px Press Start 2P is ~340px and wraps. A long name (Aleksanteri) wraps
- * under either, at the space, which `break-words` already handles. The 36px
- * step from `md:` up is the Guidebook's own H2.
+ * **The size is the arithmetic at the 360px floor in the widest locale**: the
+ * dashboard shell is `container p-6`, which is 312px of content there, and
+ * Finnish sets the longest first word ("Tervetuloa," — 11 characters, against
+ * French's "Bienvenue,"). At 30px Poppins that whole greeting is ~280px for a
+ * typical first name and stays on one line. A long name (Aleksanteri) wraps at
+ * the space, which `break-words` already handles. The 36px step from `md:` up
+ * is the Guidebook's own H2.
  *
- * Retires with the draft: promotion picks one row and deletes the map.
+ * **Both keys are the same string, and that is the settled answer rather than
+ * an oversight** — the face question closed when the pixel face retired, so
+ * the draft scenario and the live route render one greeting. The map retires
+ * with the draft: promotion drops the prop and keeps the string.
  */
+const GREETING_TYPE = "font-sans text-3xl font-semibold leading-[1.2] md:text-4xl";
+
 const GREETING_FACE: Record<DisplayFace, string> = {
-  display: "font-display text-xl font-bold md:text-3xl",
-  sans: "font-sans text-3xl font-semibold leading-[1.2] md:text-4xl",
+  display: GREETING_TYPE,
+  sans: GREETING_TYPE,
 };
 
 /**
@@ -104,10 +105,9 @@ export function GamerDashboardPageBody({
    */
   palette?: YtyPalette;
   /**
-   * Which face the greeting is set in — same shape and same default rule as
-   * `palette`: today's Press Start 2P unless the draft scenario asks for the
-   * settled Poppins. See `GREETING_FACE` above for why each face carries its
-   * own size.
+   * Which face the greeting is set in. Both answers are now the same Poppins
+   * line — see `GREETING_FACE` above — so this prop is inert draft plumbing
+   * that retires with the scenario axis it belongs to.
    */
   greetingFace?: DisplayFace;
 }) {
@@ -152,8 +152,8 @@ export function GamerDashboardPageBody({
             still sticks the moment it reaches the top of the viewport. */}
         <div className="text-center">
           {/* Two-size pattern matching the public Home heading: a long Finnish
-              word like "Tervetuloa," overflows mobile at the next size up under
-              either face. break-words is a safety net for longer translations —
+              word like "Tervetuloa," overflows mobile at the next size up.
+              break-words is a safety net for longer translations —
               and for the name too, which is the longest thing that can land in
               this line and the one part of it no translator controls. */}
           <h2
@@ -183,7 +183,7 @@ export function GamerDashboardPageBody({
               <div className="mx-auto max-w-3xl space-y-6">
                 <h2
                   id={`${ACTIVITY_HEADING_KEY[group.type]}-heading`}
-                  className="text-3xl font-bold"
+                  className="text-3xl font-semibold"
                 >
                   {s(ACTIVITY_HEADING_KEY[group.type])}
                 </h2>
@@ -247,7 +247,7 @@ export function GamerDashboardPageBody({
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 id="help-heading" className="text-3xl font-bold">
+            <h2 id="help-heading" className="text-3xl font-semibold">
               {h("gamerHeading")}
             </h2>
             {helpForm}

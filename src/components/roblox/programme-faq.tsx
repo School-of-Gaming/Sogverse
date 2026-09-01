@@ -112,7 +112,7 @@ export function ProgrammeFaq() {
     <section className="bg-muted/30 py-16 sm:py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
+          <h2 className="text-center text-3xl font-semibold tracking-tight sm:text-4xl">
             {t("heading")}
           </h2>
           <div className="mt-12">

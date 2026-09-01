@@ -57,7 +57,7 @@ function GeduNextStepBand({
       >
         <Icon className="mt-0.5 h-6 w-6 shrink-0 text-warning" aria-hidden />
         <div className="min-w-0 space-y-1">
-          <p className="text-lg font-bold text-warning">{title}</p>
+          <p className="text-lg font-semibold text-warning">{title}</p>
           <p className="text-sm text-foreground">{body}</p>
           <p className="inline-flex items-center gap-1.5 pt-1 text-sm font-medium text-warning">
             {action}
