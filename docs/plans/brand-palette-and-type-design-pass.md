@@ -133,6 +133,28 @@ Owner direction (2026-08-31), added during implementation:
     categorical palette and leaves the ruling with the owner. Buttons keep amber
     everywhere, because amber is the act colour.
 
+**Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
+About restructure and the help restructure moved two of the surfaces this plan was written
+around, so the map in **Problem** and step 6's consumer list both shrink:
+
+- **The home page no longer hosts the Yty section.** The elements section and the About
+  copy live on the public `/about` route, which the header points every reader at; the home
+  page keeps the hero, the feature cards, how-it-works and the closing CTA, and offers
+  About from a hero button. `/about` is not a preview scene and does not get one — its
+  elements section takes a `palette` prop that nothing passes, and the draft is judged from
+  the walkthrough deck's inline element-card samples, drawn from the same colour maps that
+  section reads. The home scene's three scenarios are therefore the *dose* question only.
+- **The gamer dashboard no longer has a Yty grid.** It was a decorative tiling of the four
+  elements over a feature that does nothing, and the Help section took its slot. The gamer
+  draft's scope is now the enrollment-card colour grammar plus the greeting's face swap,
+  which is what its `brand-palette` scenario and the deck's gamer slide show; the deck's
+  rebuilt grid sample is deleted rather than relabelled, because it depicted a surface that
+  no longer exists.
+- **Step 6's consumer list is three, not five**: the `/about` elements section, the
+  Yty-named voice zones, and the style guide's swatches and fixtures. One knock-on worth
+  knowing at wiring: the colour map's `bgGradient` slot now has no renderer at all — the
+  deleted grid was its only one — so promotion decides whether the five-slot shape keeps it.
+
 ## Rejected alternatives
 
 - **Mechanical token swap without design review** — rejected. The brand hues were tuned

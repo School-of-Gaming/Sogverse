@@ -169,8 +169,9 @@
   --color-yty-wit: #a78bfa;
   /* YTY Element colors — the brand's exact hues, as strong/soft pairs.
      DESIGN-PASS DRAFT, pending owner sign-off: these are consumed only by the
-     preview scenes' `brand` palette (see YTY_ELEMENT_DRAFT_COLORS in
-     src/lib/constants/yty.ts), so nothing live renders them yet. The four
+     preview scenes' `brand` palette and the admin walkthrough deck's samples
+     (see YTY_ELEMENT_DRAFT_COLORS in src/lib/constants/yty.ts), so nothing live
+     renders them yet. The four
      single tokens above stay until the scenes are signed off, at which point
      these names are what the wiring lands on and those retire.
 

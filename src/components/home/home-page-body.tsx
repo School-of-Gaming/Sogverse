@@ -20,7 +20,7 @@ type FeatureKey = (typeof featureKeys)[number];
 type HomeDraftPalette = Exclude<YtyPalette, "current">;
 
 /* ------------------------------------------------------------------ */
-/*  Design-pass draft — the brand palette beyond the Yty section        */
+/*  Design-pass draft — the brand palette across the home page          */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -30,8 +30,9 @@ type HomeDraftPalette = Exclude<YtyPalette, "current">;
  * The home page is a marketing surface, and the Guidebook's own colour
  * rationing puts marketing on the side that welcomes the full palette — so the
  * question this draft exists to answer is not *whether* pink, green, orange and
- * blue reach past the Yty cards but *how far*. Two doses, drawn as two
- * scenarios, because a page cannot be seen at two doses at once:
+ * blue reach into this page but *how far*. (There is no Yty section here to
+ * fence them into: the elements are explained on `/about`.) Two doses, drawn as
+ * two scenarios, because a page cannot be seen at two doses at once:
  *
  * - **`brand`** — accents. One element family per feature card, the palette on
  *   the three how-it-works circles, a single pink wash in the hero, and a
@@ -54,8 +55,7 @@ type HomeDraftPalette = Exclude<YtyPalette, "current">;
  *
  * **A single-hue fade is a wash, not a smear.** One hue fading to transparent
  * introduces no second colour and invents nothing — the accented hero's harmony
- * radial and the Yty element cards' `bgGradient` slot are both that shape — so
- * they sit outside the retirement and are unchanged.
+ * radial is that shape — so it sits outside the retirement and is unchanged.
  *
  * **Amber stays the identity mark and the CTA colour in both.** It is the
  * ambient wash that the lively dose gives up, not the button.

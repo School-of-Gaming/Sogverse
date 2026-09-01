@@ -14,8 +14,9 @@ import type { YtyPalette } from "@/lib/constants/yty";
  * the Yty palette *and* the display-face swap together, because a scenario per
  * typeface would be two links whose difference has to be held in memory — and
  * the two changes cannot conflict for the reader's attention anyway (one is the
- * greeting's face, the other is a grid of cards further down). Anything else
- * the draft grows lands here too rather than forking a third scenario.
+ * greeting's face, the other is the state colour on the cards below it).
+ * Anything else the draft grows lands here too rather than forking a third
+ * scenario.
  *
  * Data-only and type-only in its import, so the registry beside it stays free
  * of React: `YtyPalette` is erased at compile time.

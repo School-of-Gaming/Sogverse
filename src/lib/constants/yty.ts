@@ -81,9 +81,11 @@ export interface YtyElementColor {
 /**
  * **Design-pass draft — the brand's own Yty hues, on the dark ground.**
  *
- * Consumed only by the preview scenes (`palette="brand"`); no live route reads
- * it, so promoting the palette means replacing `YTY_ELEMENTS[n].color` with
- * these classes and deleting this export — not adding a second permanent map.
+ * Consumed only by the design pass's own review surfaces — the walkthrough
+ * deck's element-card samples, and the `palette` prop the About page's elements
+ * section takes but nothing live passes. No live route reads it, so promoting
+ * the palette means replacing `YTY_ELEMENTS[n].color` with these classes and
+ * deleting this export — not adding a second permanent map.
  *
  * **Which variant feeds which slot is decided by `scripts/yty-contrast.mjs`,
  * not by eye.** Every pairing is measured against both grounds — the page
@@ -92,8 +94,9 @@ export interface YtyElementColor {
  * ones quoted here:
  *
  * - **`accent` takes the soft variant, on all four elements.** The accent class
- *   carries body-size text as well as icons — the home section renders the
- *   element's description in it at `text-sm`, directly on the card — so the
+ *   carries body-size text as well as icons — the About page's elements section
+ *   renders the element's description in it at `text-sm`, directly on the card —
+ *   so the
  *   binding threshold is 4.5:1, not 3:1. Wit-strong (`#3A71DE`) measures
  *   3.81:1 on the card: fine for a 24px icon, short of body copy. Soft clears
  *   it on every element (7.15 / 8.21 / 8.18 / 7.53), and using soft uniformly
@@ -168,16 +171,19 @@ export const YTY_ELEMENT_DRAFT_COLORS: Record<YtyElementId, YtyElementColor> = {
  * case made for it, one site at a time.
  *
  * **A single-hue fade is a wash, not a smear.** One hue fading to transparent
- * introduces no second colour and invents nothing — the element cards'
- * `bgGradient` slot and the accented hero's harmony radial are both that shape —
- * so they are outside the retirement and stay.
+ * introduces no second colour and invents nothing — the `bgGradient` slot below
+ * and the accented hero's harmony radial are both that shape — so they are
+ * outside the retirement and stay. (Nothing renders `bgGradient` today: its one
+ * consumer was the gamer dashboard's decorative element grid, which the help
+ * restructure deleted. The slot stays because the five-slot shape is what every
+ * Yty presentation fills.)
  *
  * The element cards themselves are identical under both doses, which is
- * deliberate: the open questions are about the page around them, and varying
+ * deliberate: the open questions are about the pages around them, and varying
  * both at once would make the comparison unreadable.
  *
- * Only the preview scenes pass anything but `"current"`, and the whole type
- * retires with the draft map at promotion.
+ * Only the preview scenes and the walkthrough deck pass anything but
+ * `"current"`, and the whole type retires with the draft map at promotion.
  */
 export type YtyPalette = "current" | "brand" | "brand-lively";
 

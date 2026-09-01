@@ -10,9 +10,11 @@ interface YtySectionProps {
   /** Optional anchor id for scrollspy navigation. */
   id?: string;
   /**
-   * Which Yty palette the element cards draw in. Defaults to the live one, so
-   * the public route is untouched; the home preview scene passes a draft dose.
-   * Retires when the draft palette promotes.
+   * Which Yty palette the element cards draw in. Defaults to the live one, and
+   * nothing passes anything else today — there is no About scene, and the draft
+   * is judged from the walkthrough deck's inline samples, which read the same
+   * colour maps this section does. The prop is what makes promotion a value
+   * change rather than a rewrite, and retires with the draft palette.
    */
   palette?: YtyPalette;
 }

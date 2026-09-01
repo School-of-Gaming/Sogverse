@@ -40,16 +40,15 @@ import { cn } from "@/lib/utils";
  * screenshot and never an iframed page. The home page's four colour-bearing
  * sections are exported from the page body for exactly this, so a sample in the
  * deck is the route's own code under a different palette prop and cannot drift
- * from it; the Yty section, the zone presentation maps and the Yty colour maps
- * are consumed the same way. Beside each sample is a plain link to the full
- * preview scene or style-guide anchor, which is where the full-page truth
- * lives.
+ * from it; the zone presentation maps and the Yty colour maps are consumed the
+ * same way. Beside each sample is a plain link to the full preview scene, the
+ * live page or a style-guide anchor, which is where the full-page truth lives.
  *
  * **Two honesty caveats, stated inline wherever they bite.** Tailwind
  * breakpoints read the *viewport*, not the container, so an inline sample is
  * always showing desktop styling however narrow its box is — where the 360 px
- * truth is the point (the gamer grid, the greeting's wrapping) the deck says so
- * and leans on the link. And a sample sits on the deck's own ground unless it
+ * truth is the point (the gamer dashboard's cards, the greeting's wrapping) the
+ * deck says so and leans on the link. And a sample sits on the deck's own ground unless it
  * says otherwise; the page-shaped samples are given `bg-background` so their
  * colour is judged against the ground the page actually has.
  *
@@ -69,9 +68,9 @@ const SLIDES = [
   { id: "strong-soft", title: "The strong and soft split" },
   { id: "grammar", title: "Colour as grammar" },
   { id: "grammar-wild", title: "The grammar in the wild" },
-  { id: "home-yty", title: "Home Yty section" },
+  { id: "home-yty", title: "The home page, and the Yty element cards" },
   { id: "gradients", title: "Gradients are retired — one candidate left" },
-  { id: "gamer-floor", title: "Gamer dashboard at the 360 floor" },
+  { id: "gamer-floor", title: "The gamer dashboard at the 360 floor" },
   { id: "greeting-face", title: "The greeting face" },
   { id: "wit", title: "Wit, up close" },
   { id: "buttons", title: "Buttons" },
@@ -852,14 +851,14 @@ const GRADIENT_SITES: readonly {
   },
   {
     site: "Mission card and Yty overview card",
-    today: "Amber into violet at 5%, on the home page and nowhere else",
+    today: "Amber into violet at 5%, on the About page and nowhere else",
     proposal:
       "Retired in every brand dose. One harmony wash at 10%, on both cards",
   },
   {
     site: "Same-hue fades to transparent",
     today:
-      "The gamer Yty cards' bgGradient slot, the accented hero's harmony radial, and the live-card edges on enrollment and assignment cards",
+      "The Yty colour map's bgGradient slot, the accented hero's harmony radial, and the live-card edges on enrollment and assignment cards",
     proposal:
       "Kept, and reclassified: one hue fading to transparent adds no second colour and invents nothing, so it is a wash rather than a smear",
   },
@@ -1393,7 +1392,7 @@ function AttendanceChip({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Element cards, zone tiles and the gamer grid                       */
+/*  Element cards and zone tiles                                       */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -1429,42 +1428,6 @@ function PaletteElementCard({
         {element.name}
       </div>
       <p className={cn("text-sm", color.accent)}>{element.description}</p>
-    </div>
-  );
-}
-
-/**
- * The gamer dashboard's Yty grid, drawn from the same colour map the dashboard
- * draws it from.
- *
- * It is rebuilt here rather than imported because the grid is inline markup
- * inside the dashboard body and is not separable without carving up a live
- * page for a review aid's benefit — so the *colours* are the real ones and the
- * *markup* is a copy, which is the honest way round: what this slide rules on
- * is the palette.
- */
-function GamerYtyGrid({ palette }: { palette: YtyPalette }) {
-  return (
-    <div className="grid w-[360px] grid-cols-2 gap-4 p-4">
-      {YTY_ELEMENTS.map((element) => {
-        const color = ytyElementColor(element, palette);
-        const Icon = element.icon;
-        return (
-          <div
-            key={element.id}
-            className={cn(
-              "rounded-lg border bg-gradient-to-br p-4 text-center",
-              color.bgGradient,
-            )}
-          >
-            <Icon className={cn("mx-auto h-8 w-8", color.accent)} aria-hidden />
-            <div className="mt-2 text-base font-semibold">{element.name}</div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {element.description}
-            </p>
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -1675,8 +1638,9 @@ export default function DesignPassWalkthroughPage() {
           The number that settles it is wit. Wit-strong measures 3.81:1 against
           the card ground: fine for a 24 px glyph, which needs 3:1, and short of
           the 4.5:1 that body-size text needs. The slot in question carries body
-          text — the home section sets each element&rsquo;s one-line description
-          in it — so soft is what carries text, and every soft clears between
+          text — the About page&rsquo;s elements section sets each
+          element&rsquo;s one-line description in it — so soft is what carries
+          text, and every soft clears between
           7.15 and 8.21 on the card. The tightest pairing in the whole draft is
           a zone&rsquo;s own soft label over its own 10% strong tint, and the
           worst of those is 6.32:1.
@@ -2196,13 +2160,26 @@ export default function DesignPassWalkthroughPage() {
           what the page draws.
         </Prose>
         <Prose>
-          The draft no longer stops at the Yty section. The four feature cards
-          each take one element family in display order — pink, green, orange,
-          blue — with the soft variant on the glyph and the strong one on the
-          tile wash and its edge. The three how-it-works circles become harmony,
-          glow and wit fills carrying ink. And the hero gains colour in its
-          glow. Valor is deliberately absent from the circles: an orange one
-          beside the amber CTA is the same collision slide 2 opened with.
+          The draft colours the whole page rather than one section of it. The
+          four feature cards each take one element family in display order —
+          pink, green, orange, blue — with the soft variant on the glyph and the
+          strong one on the tile wash and its edge. The three how-it-works
+          circles become harmony, glow and wit fills carrying ink. And the hero
+          gains colour in its glow. Valor is deliberately absent from the
+          circles: an orange one beside the amber CTA is the same collision
+          slide 2 opened with.
+        </Prose>
+        <Prose>
+          <strong className="font-semibold text-foreground">
+            The Yty elements are not on this page.
+          </strong>{" "}
+          The four element cards and the overview above them live on the About
+          page — the home page keeps the hero, the features, how-it-works and the
+          closing CTA, and sends a reader to About from a button in the hero. The
+          element cards are still the palette&rsquo;s most concentrated use, so
+          they are drawn at the foot of this slide from the same colour maps the
+          About page reads; they are just no longer part of the dose question,
+          because the page they sit on is not one of the three above.
         </Prose>
         <Prose>
           <strong className="font-semibold text-foreground">Accented</strong>{" "}
@@ -2293,7 +2270,19 @@ export default function DesignPassWalkthroughPage() {
         </SampleGroup>
 
         <div className="space-y-3">
-          <Marker>The Yty element cards — today beside the draft</Marker>
+          <div className="flex items-baseline justify-between gap-4">
+            <Marker>
+              The Yty element cards, on the About page — today beside the draft
+            </Marker>
+            <a
+              href="/about#yty"
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Open the elements section on About
+            </a>
+          </div>
           <div className="flex flex-wrap gap-4">
             {YTY_ELEMENTS.map((element) => (
               <PaletteElementCard
@@ -2314,19 +2303,25 @@ export default function DesignPassWalkthroughPage() {
           </div>
           <Prose>
             The element cards are identical under both drafts — the dose question
-            is about the page around them — so there is one draft row here rather
-            than two. Slide 10 looks at the wit card in that row up close.
+            is about the pages around them — so there is one draft row here
+            rather than two. Slide 10 looks at the wit card in that row up close.
+            The link above opens the live About page, which draws the{" "}
+            <em>current</em> palette: the draft is the second row here, and there
+            is no About scenario to open, because these two rows are the whole of
+            what would change there.
           </Prose>
         </div>
 
         <Ruling>
           <p>
-            Sign off the home draft — the Yty section plus the new feature,
-            how-it-works and hero colour — or name what to tune.
+            Sign off the draft — the home page&rsquo;s feature cards,
+            how-it-works circles and hero, plus the element cards the About page
+            carries — or name what to tune.
           </p>
           <p>
             Pick the dose: accented, lively, or a point between the two named as
-            a change.
+            a change. The element cards are outside that question; they are the
+            same under both.
           </p>
         </Ruling>
       </Slide>
@@ -2414,8 +2409,8 @@ export default function DesignPassWalkthroughPage() {
         <Prose>
           The line the table draws: a <em>same-hue</em> fade to transparent is a
           wash and stays, because there is no second colour in it and nothing was
-          invented — the accented hero&rsquo;s pink radial, the Yty cards&rsquo;
-          own fades, the live enrollment card&rsquo;s amber edge. A{" "}
+          invented — the accented hero&rsquo;s pink radial, the live enrollment
+          card&rsquo;s amber edge. A{" "}
           <em>two-hue blend</em> is what retires. The standing cost, worth naming
           because it recurs: flattening a multi-hue rule forces a hue to be
           chosen, and that is a small design decision each time — the section
@@ -2441,44 +2436,58 @@ export default function DesignPassWalkthroughPage() {
         <Prose>
           The gamer dashboard is a mobile-first surface, so it is judged at the
           360 px floor — the Android baseline, and the archetypal family phone
-          in our markets. The grid below is drawn in a 360 px box, and for{" "}
-          <em>this</em> grid that is honest: it is a two-column grid at every
-          width, with no breakpoint in it, so what you see is what a phone gets.
+          in our markets. What the draft changes on it is two things: the
+          enrollment cards take the colour grammar, the same way a
+          parent&rsquo;s do, and the greeting swaps from Press Start 2P to Space
+          Mono. Nothing else on the page moves — the Help section that ends it
+          is untouched.
         </Prose>
         <Prose>
-          The draft carries two changes at once, because they cannot compete for
-          your attention: the Yty grid in the brand hues, and the greeting
-          swapped from Press Start 2P to Space Mono. The greeting has its own
-          slide next; this slide is about the grid.
+          <strong className="font-semibold text-foreground">
+            This is the one slide with no sample of its own, on purpose.
+          </strong>{" "}
+          Both halves are already drawn elsewhere in this deck — the card states
+          on slide 5, the greeting line at 360 px on slide 9 — and neither can be
+          judged <em>here</em> for the reason the whole page exists to warn about:
+          a breakpoint reads the browser window, not the box a sample sits in, so
+          a 360 px box on this screen would still be showing you the desktop
+          layout. The two links below are the honest answer, and they are worth
+          opening in a phone-sized window: the same page, once as it ships and
+          once under the whole draft, with the cards, the greeting and the scroll
+          between them all at the width a child actually meets.
+        </Prose>
+        <Prose>
+          A note on what is <em>not</em> here any more: this slide used to draw a
+          four-card Yty grid, because the gamer dashboard used to carry one. It
+          does not — the grid was decorative, the feature behind it did nothing,
+          and the Help section took its slot. The elements are explained on the
+          About page now, and their cards are on slide 6.
         </Prose>
 
-        <SampleGroup title="The Yty grid at the 360 floor">
-          <Sample
-            label="Today"
+        <div className="flex flex-wrap gap-4 text-xs">
+          <a
             href="/preview/gamer-dashboard/typical"
-            surface={PAGE_SURFACE}
+            target="_blank"
+            rel="noreferrer"
+            className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
-            <GamerYtyGrid palette="current" />
-          </Sample>
-          <Sample
-            label="Draft"
+            Open the page as it ships
+          </a>
+          <a
             href="/preview/gamer-dashboard/brand-palette"
-            surface={PAGE_SURFACE}
+            target="_blank"
+            rel="noreferrer"
+            className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
-            <GamerYtyGrid palette="brand" />
-          </Sample>
-        </SampleGroup>
-
-        <Prose>
-          What the samples cannot show is the page around the grid — the
-          greeting&rsquo;s wrapping, the enrollment cards above it, and how the
-          grid lands after a scroll. Everything on this page is drawn at the
-          browser&rsquo;s width whatever box it is in, so the two links are the
-          real 360 px answer and are worth opening on a phone-sized window.
-        </Prose>
+            Open the same page under the whole draft
+          </a>
+        </div>
 
         <Ruling>
-          <p>Sign off the Yty grid at the floor, or name what to tune.</p>
+          <p>
+            Sign off the gamer dashboard at the floor — the cards and the
+            greeting together, as one page — or name what to tune.
+          </p>
         </Ruling>
       </Slide>
 
@@ -2765,8 +2774,10 @@ export default function DesignPassWalkthroughPage() {
       {/* ---------------------------------------------------------- 13 */}
       <Slide id="zones">
         <Prose>
-          The Yty-named voice zones are the third surface the palette feeds, and
-          the split applies unchanged: the element&rsquo;s soft variant on the
+          The Yty-named voice zones are the other surface the palette feeds —
+          the About page&rsquo;s elements section is the first, and after that
+          there is only the style guide&rsquo;s own swatches. The split applies
+          unchanged here: the element&rsquo;s soft variant on the
           glyph and the label, strong on the tile wash, the ring and the glow.
           The arithmetic here is already settled — a zone&rsquo;s label over its
           own tint is the tightest pairing in the draft and still clears at
@@ -2822,7 +2833,7 @@ export default function DesignPassWalkthroughPage() {
           This slide used to ask an open question about how far the palette
           reaches. You have since answered it — the site should be brighter and
           more fun, the way the marketing is — so the drafts stopped fencing the
-          palette inside the Yty section. Slide 6 is what that decision looks
+          palette inside the Yty element cards. Slide 6 is what that decision looks
           like on a real page, at two doses; slide 4 is what it would mean for
           the colours to carry meaning rather than only brightness, and slide 5
           is that meaning on the shop, My SOG and a family&rsquo;s product page.
@@ -3001,8 +3012,9 @@ export default function DesignPassWalkthroughPage() {
             the family product page.
           </li>
           <li>
-            Slide 6 — the home draft: the Yty section plus the feature cards,
-            the how-it-works circles and the hero.
+            Slide 6 — the home draft: the feature cards, the how-it-works
+            circles and the hero, plus the Yty element cards the About page
+            carries.
           </li>
           <li>Slide 6 — the dose: accented, or lively.</li>
           <li>
@@ -3013,7 +3025,10 @@ export default function DesignPassWalkthroughPage() {
             Slide 7 — if kept, the boundary of that sanction: this hero, or
             heroes imitating the social imagery.
           </li>
-          <li>Slide 8 — the gamer dashboard Yty grid at the 360 floor.</li>
+          <li>
+            Slide 8 — the gamer dashboard at the 360 floor: the enrollment cards
+            and the greeting together, as one page.
+          </li>
           <li>Slide 9 — the greeting swaps from Press Start 2P to Space Mono.</li>
           <li>
             Slide 9 — the greeting&rsquo;s wide-screen size: text-4xl as

@@ -24,11 +24,12 @@ import { displayFaceFor, ytyPaletteFor } from "../palette-scenarios";
  * for the same reason the parent and gedu scenes hold theirs — see
  * `parent-dashboard-scene.tsx`.
  *
- * One scenario differs from `typical` in nothing but the brand draft: the Yty
- * hues and the greeting's face are judged here rather than on a card in the
- * style guide, because this is a mobile-first surface — the grid is two columns
- * at 360px, and the greeting is the one heading in the app whose face has to
- * survive the widest locale in that width.
+ * One scenario differs from `typical` in nothing but the brand draft: the
+ * enrollment cards under the draft colour grammar, and the greeting's face
+ * swapped to Space Mono. Both are judged here rather than on a card in the style
+ * guide, because this is a mobile-first surface — the greeting is the one
+ * heading in the app whose face has to survive the widest locale at 360px, and
+ * the cards are what a child scrolls past under it.
  */
 export function GamerDashboardScene({
   scenario,

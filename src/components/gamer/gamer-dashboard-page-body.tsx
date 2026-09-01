@@ -200,9 +200,9 @@ export function GamerDashboardPageBody({
                   <div className="space-y-3">
                     {group.items.map((enrollment) => (
                       // The draft scenario is the whole proposal rather than
-                      // one axis of it, so the cards take the palette here as
-                      // well as the Yty grid below — a child's My SOG and a
-                      // parent's have to agree about what a Live badge is.
+                      // one axis of it, so the cards take the palette here just
+                      // as they do on the parent's page — a child's My SOG and
+                      // a parent's have to agree about what a Live badge is.
                       <EnrollmentCard
                         key={enrollment.participationId}
                         enrollment={enrollment}
