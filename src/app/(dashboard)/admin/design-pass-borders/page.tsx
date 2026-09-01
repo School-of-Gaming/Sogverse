@@ -60,7 +60,12 @@ import { cn } from "@/lib/utils";
  * **Verified 2026-09-01 against this branch — 160 instances, 138 borders and 22
  * rings**, which is the direction-32 figure ("~150") re-run with the prefix list
  * completed (`focus-within:` was missing) and with `.md`/`colors.ts` comment
- * matches dropped:
+ * matches dropped. **Post-merge note (same day): the dev merge (chat wire-up +
+ * gamer creations) brings the census to 163** — the material additions are the
+ * gedu session-feed creations block's warning edges (`border-warning` on its
+ * notice, `border-warning/40` tinted — the tint falls under the standing ban
+ * and resolves with slide 3's ruling). Dev's authors also worked under the
+ * layer bug, so their borders were authored blind like everything here:
  *
  * - **primary — 47 borders** (36 bare, 5 `hover:`, 2 `focus-visible:`, 1
  *   `focus-within:`, 1 `group-hover:`, 1 `active:`, 1 `/40`). The branch has
