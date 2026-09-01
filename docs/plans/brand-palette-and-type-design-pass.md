@@ -139,6 +139,22 @@ Owner direction (2026-08-31), added during implementation:
     are tracked there. The colour deck keeps fourteen slides and eighteen rulings, and each
     comparison now has exactly one home. **Both pages are deleted before this branch
     merges.**
+15. **Three colour rulings** (owner, 2026-09-01): role-colour grammar is only established
+    if it appears outside admin UIs — the sweep names the family-facing homes; the
+    product-type palette converges onto the brand families but the type↔colour pairing
+    remains an **admin-only** tool (~90% of families only ever hold clubs, so parent
+    surfaces do not colour by type); and **the home page is parked into its own dedicated
+    pass** — the owner is comfortable with the current amber/violet hero, its gradient is
+    a live option there, and no home draft rides with the main review.
+16. **Review pages show, they never tell** (owner, 2026-09-01) — codified as a rule in the
+    root `CLAUDE.md` UI-reference section, binding the style guide and preview scenes; the
+    two temp decks were rewritten to it. "The console is where you describe things, the
+    review pages are where you show things."
+17. **The doctrine and the census** (2026-09-01): the owner set the pass's codification
+    test — a fresh session must be able to style a new page from the written rules alone —
+    and a six-territory read-only census swept every surface against the draft doctrine
+    (rings: calm / family story / full palette; function → grammar → decoration). Census
+    findings and the doctrine's open seams are triaged with the owner before any wiring.
 
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
