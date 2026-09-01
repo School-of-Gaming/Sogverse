@@ -222,6 +222,31 @@ Owner direction (2026-08-31), added during implementation:
       standing rare-use exception, or convert). **All current Press Start 2P sites
       convert together in one wiring change once this is ruled** — no piecemeal
       conversion. Until the ruling, `--font-display` and the face's load stay.
+23. **Press Start 2P is removed entirely — everything converts to Poppins** (owner,
+    2026-09-01, closing direction 22's torn state and finishing direction 20): "let's
+    replace all Press Start 2P with Poppins. We remove it entirely out of the app
+    (including OG images)." Consequences, all wiring items in one change:
+    - All six sites re-set in Poppins at the Guidebook's scale for their heading level —
+      including the **gamer greeting**, which supersedes its Space Mono draft, and the
+      **admin all-clear title**. The pixel-art trophy sprite beside the all-clear is
+      illustration, not type, and **stays** unless the owner says otherwise (the ruling
+      names the font; removing the sprite too would leave the state bare — reversible
+      either way).
+    - The profile-select header's typed "SOG" goes with the face, replaced by the drawn
+      mark (direction 22). Verified against origin/dev 2026-09-01: `SelectProfileHeader`
+      still renders the `font-display` span there — the *main* header has no pixel font,
+      which is what makes the stand-in look outdated; this is the select-profile page's
+      simplified header only.
+    - The `/roblox` hero's type swap needs **no fresh partner approval**: the partner
+      rule governs placements of the Roblox *mark*, and re-setting our own heading above
+      the already-approved lockup places the mark nowhere new. Its character-count scale
+      arithmetic (valid only for a 1em-advance face) is rewritten with the swap.
+    - The `Press_Start_2P` load, `--font-press-start-2p`, and `--font-display` all
+      retire; the tracking-tight and greeting-size rulings are moot; the deviations
+      log's Press Start 2P entry closes as "retired", and the root CLAUDE.md's rare-use
+      rule for the face is deleted in the same wiring change.
+    - **OG images verified already clean**: the OG font pipeline fetches Poppins 400/600
+      only, so "including OG images" is satisfied with no change.
 
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written

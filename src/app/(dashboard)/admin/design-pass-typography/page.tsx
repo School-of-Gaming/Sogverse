@@ -29,16 +29,16 @@ import { cn } from "@/lib/utils";
  * on the page: it lives in the session reports, in the plan, and in these code
  * comments. A slide carrying more words than the UI it shows is a bug.
  *
- * **Press Start 2P's fate is the open question** (owner, 2026-09-01: torn —
- * "none of these fonts really give it the uniqueness it deserves"). What is
- * *not* open: the marketing-voice sites leave the face whatever is decided —
- * the home hero, /roblox and the call-ended screen all set marketing copy the
- * Guidebook keeps display quirk out of — and the profile-select header is
- * settled by artwork (the drawn mark replaces the typed stand-in; dropped from
- * this deck, straight to wiring). So the live question is the two in-world
- * playful sites, the gamer greeting and the admin all-clear: keep the pixel
- * face there under the standing rare-use exception, or convert. All sites
- * convert together in one change once that is ruled (owner, 2026-09-01).
+ * **Press Start 2P is removed entirely — every site converts to Poppins**
+ * (owner ruling, 2026-09-01, closing the earlier torn state). That includes
+ * the gamer greeting, superseding its Space Mono draft, and makes the
+ * tracking and greeting-size slides moot. The profile-select header is
+ * settled by artwork (the drawn mark replaces the typed stand-in). All sites
+ * convert together in one wiring change; the face's load and
+ * `--font-display` retire with them. The OG images were checked and already
+ * render Poppins only, so "including OG images" is satisfied with no change.
+ * This deck's typography rulings are now all in — the slides stay up as the
+ * record until the pass ends.
  *
  * **Face is voice, which is what decides each replacement.** Poppins is the app
  * speaking, Space Mono is Sogverse-the-world speaking, Crimson Pro is editorial,
