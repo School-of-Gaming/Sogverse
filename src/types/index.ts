@@ -450,6 +450,15 @@ export type VoiceZoneUpdate = Database["public"]["Tables"]["voice_zones"]["Updat
 export type VoicePrivateZoneOccupant = Database["public"]["Tables"]["voice_private_zone_occupants"]["Row"];
 export type VoicePrivateZoneOccupantInsert = Database["public"]["Tables"]["voice_private_zone_occupants"]["Insert"];
 
+// chat (00228/00229) — persisted messaging in the scheduled voice rooms. Rows
+// only; the transport-free UI shapes (`ChatMessage`, `ChatAccount`) live in
+// src/components/chat/ and are deliberately not these.
+export type ChatChannelType = Database["public"]["Enums"]["chat_channel_type"];
+export type ChatChannel = Database["public"]["Tables"]["chat_channels"]["Row"];
+export type ChatMessageRow = Database["public"]["Tables"]["chat_messages"]["Row"];
+export type ChatReactionRow = Database["public"]["Tables"]["chat_reactions"]["Row"];
+export type ChatChannelLockRow = Database["public"]["Tables"]["chat_channel_locks"]["Row"];
+
 // get_product_groups_with_details — returns JSONB, so the generated type is
 // `Json`. The structured shape is derived from the productGroupsSnapshot zod
 // contract (the same schema the service and db tests parse through), so the
