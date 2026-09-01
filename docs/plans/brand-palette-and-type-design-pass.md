@@ -779,6 +779,12 @@ Owner direction (2026-08-31), added during implementation:
     review phase's sole remaining item is the three page sign-offs from the
     scenes.
 
+37. **The three page sign-offs land — the review phase is COMPLETE** (owner,
+    2026-09-01: "The scenes look good."). My SOG, the family product page and
+    the gamer dashboard are signed off as drafted from their scenes. Every
+    ruling the pass needed has been made; what follows is the wiring spec and
+    its execution.
+
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
 around, so the map in **Problem** and step 6's consumer list both shrink:
@@ -916,6 +922,147 @@ One branch off `dev` (after the companion plan merges), `feat/brand-palette-desi
     TODO, and the two plans' git history). Nothing brand-ruling-shaped remains in memory.
     (Repo-scoped memory is not chezmoi-managed — no capture or commit-and-push obligation
     applies to this deletion.)
+
+## The wiring spec — current law as fleet work packages
+
+**This section is what the wiring executes from; the direction ledger above is the
+audit trail behind it, not instructions.** Where the two could be read to disagree,
+this section is the resolution — it was written after the last ruling (direction 37)
+by the session that held the whole supersession chain. A fresh session picks this up
+**in the existing worktree** (`.claude/worktrees/brand-palette`, branch
+`feat/brand-palette-design-pass`) at worktree-flow phase 2 — never a new branch: this
+branch carries the drafts the wiring promotes, and its transitional state (resurrected
+borders at review values) must not land before these packages run. Every package:
+build by a delegated Opus agent, files disjoint from concurrently running packages,
+verification command green before the package counts done.
+
+**Global verifications (run at the end, all packages landed):** `npm run lint` (zero
+errors, zero warnings) · `npm run type-check` · `npm run test` · the census greps
+below each returning their stated end-state · `node scripts/yty-contrast.mjs` clean
+against its thresholds. DB is untouched by this pass — no migrations, no db tests.
+
+### P1 — Tokens and constants
+Files: `src/app/globals.css`, `src/lib/constants/colors.ts`.
+- `--warning` retunes from `#E7B008` → **`#E2761B`** (hue 27.4°; Δ27.4 to primary,
+  Δ15.2 to valor-strong — accepted by the owner). Rider (copy-level, not CSS): a
+  warning mark always carries a glyph.
+- `--info` converges onto wit-strong `#3A71DE`; `--success` onto glow-strong
+  `#1AB061`. Token-level only — call sites keep their `info`/`success` classes.
+- `colors.ts` (email/OG hex constants) updates to match all three in the same
+  change — owner's explicit instruction, so emails and OG images agree with the app.
+- Verify: grep the old hexes (`#E7B008`, old info/success values from globals) →
+  zero outside git history; contrast script re-run.
+
+### P2 — Typography: Press Start 2P out, Poppins everywhere, Space Mono placed
+Files: font loading (`src/app/layout.tsx` / font module), `globals.css` font tokens,
+home hero, `/roblox` hero (incl. its char-count scale rewrite), the voice call-ended
+screen, the select-profile drawn mark, OG image generation, the gamer greeting,
+`docs/brand-guidebook-deviations.md`, root `CLAUDE.md` (the rare-use rule deletes).
+- Every Press Start 2P site converts to Poppins at the pinned scale: H1 48–56px /
+  600 / 1.1 (mobile floor 30px — French at the 360 floor is the binding case);
+  H2 36 / 600 / 1.2; H3 24–28 / 600 / 1.3. Headings app-wide are SemiBold 600 —
+  `font-bold` on headings sweeps to `font-semibold`.
+- `--font-display` and the Press Start 2P `next/font` loading are removed entirely.
+- Deviations log: the Press Start 2P entry closes "retired"; Dancing Script's
+  signature-only exception is added; the root `CLAUDE.md` "rare, specialized uses"
+  rule for Press Start 2P is deleted.
+- Space Mono (`--font-brand-mono`) is placed **only** where the platform speaks its
+  own vocabulary as a label — never marketing pages, never user content, never the
+  section pill, badges or section headings (ruled: those stay Poppins).
+- Verify: `rg -i "press.start|font-display"` in `src/` → zero (the brand-mono token
+  and Space Mono loading remain).
+
+### P3 — Buttons
+Files: `src/components/ui/button.tsx`, its call sites, style guide.
+- CTA type lands in the recipe: `text-base font-semibold`; the home page's per-site
+  overrides collapse back onto the plain variant.
+- `hover:bg-primary/90` is removed; the hover affordance goes non-colour (shadow or
+  ring — implementer's pick, one recipe line).
+- The `secondary` violet fill retires; the neutral emphasis tier is the foreground
+  fill `bg-foreground text-background` (the ruled violet replacement). The single
+  violet-fill call site converts.
+- Grammar-fill variants (valor, harmony, glow; wit fills **soft** with dark ink)
+  are added to the recipe and placed at the implementer's judgment under the ruled
+  constraints: only where the action *is* the family's word; never beside a primary
+  CTA; never two grammar fills in one view; destructive red untouched. Sparingly —
+  zero placements is an acceptable v1.
+
+### P4 — Shading corrections (the tint ban executed)
+Files: the census's hit list — regenerate, never trust a frozen list:
+`rg -n "(hover:|focus:|focus-visible:|focus-within:|group-hover:|active:)?(text|bg|border|from|to|via|ring)-(primary|secondary|info|success)/[0-9]+" src -g '!src/components/preview/**'`
+- Selection grounds (22 sites): `border-primary bg-primary/5` → `border-primary
+  bg-accent` (the checkbox row's variant line fixes every consent row at once).
+- Washed grounds `bg-primary/10` → `bg-muted`; **exempt**: chip-scale icon
+  medallions (the accent construct) and the two sanctioned home keeps (hero band,
+  closing-CTA wash) — the only brand washes that survive, and the exemption list
+  is closed.
+- Tinted label chips `bg-primary/15|20 text-primary` → `bg-muted text-primary`.
+- Enrollment live gradient wash → the ignition ring (promote the draft: painted
+  overlay, constant geometry — see P7). `hover:bg-secondary/80` → solid.
+- The admin trophy sprite decouples from `--primary` into its own hex constants
+  (artwork carries its own palette; outside the shading rule by doctrine).
+- info/success `/N` uses (~50) resolve under the border/alert law in P5 — full
+  value where the construct keeps colour, neutral otherwise — in the same pass as
+  the token convergence so no shaded brand colour ships.
+- Verify: the regeneration grep returns only the closed exemption list.
+
+### P5 — Borders (direction 36 verbatim — the classes are pinned there)
+Files: the border census hits. Apply direction 36's table: hover border colour dies
+everywhere (accent/shadow feedback; gray idiom on add affordances; the chat pill's
+no-op deleted); profile rings white-on-hover/neutral-at-rest; form validation gains
+full-value `border-destructive`; alerts full-value family edges on muted grounds;
+chips split on ground (no ground → coloured edge, ground → neutral edge); Yty tiles
+`border-yty-X-strong bg-yty-X-strong/10`; resting card edges neutral (gedu live card
+may adopt the ignition ring — implementer's judgment, noted in direction 36).
+- Verify: the prefixed-border census → only the ruled survivors.
+
+### P6 — Nav marks
+Files: `src/components/layout/sidebar.tsx`.
+- The admin sidebar's active item: `bg-sidebar-primary text-sidebar-primary-foreground`
+  → the inverted fill `bg-foreground text-background` (drop the two sidebar-primary
+  tokens if nothing else consumes them). The header's active link stays amber text —
+  ruled, no change.
+
+### P7 — Promotion: drafts become the live bodies, machinery dissolves
+Files: `enrollment-tones.ts`, `product-page-tones.ts`, `home-page-body.tsx`,
+`gamer-dashboard-page-body.tsx`, the `/about` elements section, zone tiles,
+`palette-scenarios.ts`, scene registry, style guide.
+- Every `brand` draft path becomes the only path: the `palette` props and dose maps
+  collapse, `current` keys die, scenarios collapse to one per scene, the retired
+  slugs go. The layout does not change in this step (scene rule).
+- The two remaining decks (`design-pass-typography`, `design-pass-walkthrough`)
+  delete; the style guide's stale type-faces specimen reconciles.
+- Verify: `rg "YtyPalette|BRAND_PALETTE_SCENARIO|palette-scenarios"` → zero;
+  preview-scenes test green at its new counts.
+
+### P8 — Law, guards, story (what outlives the plan)
+Files: root `CLAUDE.md`, `src/components/voice/CLAUDE.md`,
+`docs/brand-guidebook-deviations.md`, `docs/records/` (new),
+`docs/investigations/brand-pass-census-2026-09.md` (deletes), tests.
+- **CI guard 1 — the tint ban:** a unit test running the P4 regeneration grep and
+  failing on any hit outside the closed exemption allowlist (named per file+class).
+- **CI guard 2 — the layer regression:** a test asserting `globals.css` contains no
+  top-level (unlayered) universal `border-color` rule — the bug that hid the app's
+  border colours for seven months must not return silently.
+- Root `CLAUDE.md` gains the distilled law, one rule + one-line why each: the
+  shading rule and its art/accent/sanctioned-keeps exemptions; the colour grammar
+  (six families, six meanings); the strength axis; the border doctrine (neutral
+  furniture, the coloured-border constructs with jobs, state-never-repainted-by-
+  hover); the hover-colour principle (vibrancy at rest — mobile-first families
+  never see hover); the audience colour budget (family+gedu colourful, admin
+  restrained); the retired PS2P rule replaced by the Poppins scale.
+- `docs/records/brand-design-pass-2026-09.md`: the frozen story — the pass, the
+  layer bug and resurrection, the census, and the direction ledger moved from this
+  plan (this plan then compresses to spec + pointers).
+- Deviations log: calm-ring entry (palette-in, owner ruling); PS2P closes; Dancing
+  Script added. The memory file `project_brand_guidebook_alignment.md` (+ its
+  `MEMORY.md` line) deletes — everything it holds is codified by this package.
+
+**Sequencing:** P1 first (tokens feed everything). P2/P3/P6 are file-disjoint and
+parallel. P4 and P5 overlap files with each other and with P7 — run P4+P5 together
+or sequenced, then P7 last of the code packages. P8 runs last (its guards assert
+the end state). Then the branch-level code review (worktree-flow phase 4, delegated),
+then phase 5 landing on the owner's explicit word only.
 
 ## Acceptance criteria
 
