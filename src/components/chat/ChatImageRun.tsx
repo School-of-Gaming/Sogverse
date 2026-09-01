@@ -9,6 +9,7 @@ import {
   CHAT_IMAGE_THUMB_HEIGHT,
   chatThumbnailWidth,
 } from "./chat-image-geometry";
+import { isTouchGesture } from "./touch-gesture";
 import type { ChatDelivery, ChatImageRef } from "./types";
 
 /**
@@ -61,6 +62,8 @@ export function ChatImageRun({
   deliveries,
   overlay,
   footer,
+  revealedIndex = null,
+  onRevealIndex,
   className,
 }: {
   images: readonly ChatImageRef[];
@@ -94,6 +97,14 @@ export function ChatImageRun({
    * moves nothing already drawn to the left of it.
    */
   footer?: (index: number) => React.ReactNode;
+  /**
+   * Which thumbnail's affordances a tap is holding open, and how to change it —
+   * the touch path's half of the precedence below. Omitted where a caller has
+   * nothing to reveal, and a tap then opens the picture on the first press
+   * exactly as a click does.
+   */
+  revealedIndex?: number | null;
+  onRevealIndex?: (index: number) => void;
   className?: string;
 }) {
   const t = useTranslations("chat.images");
@@ -121,6 +132,30 @@ export function ChatImageRun({
               aria-label={t("open", { index: index + 1, count: images.length })}
               onClick={(event) => {
                 triggerRef.current = event.currentTarget;
+                // **A finger's first tap reveals, its second opens; a cursor
+                // and a keyboard open on the first press, as they always
+                // have.** A thumbnail fills its whole cell, so there is no
+                // margin beside the picture a tap could mean something else in
+                // — the only two candidates were this and putting the reveal
+                // on the picture and the opening somewhere else entirely.
+                //
+                // Which way round is the whole question, and it is settled by
+                // what a *mouse* already gets for free: hovering a thumbnail
+                // has shown the bar before the click lands, so a click that is
+                // also a reveal would take away the one-press open for nothing.
+                // A finger has been shown nothing, so its first tap is the one
+                // that has to say what is here. The cost is the second tap on a
+                // picture, paid only by touch and only once per picture — and
+                // it buys back reply, react and remove on a photograph, which
+                // on a phone were previously unreachable altogether.
+                if (
+                  onRevealIndex !== undefined &&
+                  revealedIndex !== index &&
+                  isTouchGesture(event)
+                ) {
+                  onRevealIndex(index);
+                  return;
+                }
                 setOpenIndex(index);
               }}
               className={cn(

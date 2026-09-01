@@ -149,9 +149,11 @@ The rest of the section is the log's own behaviour under that budget:
   path, and the retry has to be readable and reachable. Pinned by a test that compares
   the two renders' in-flow elements, because jsdom cannot measure and the class list is
   what decides the height.
-- **Everything that appears on hover or on somebody else's schedule is absolutely
-  positioned**: the message action bar, the unread pill, and the typing indicator. None
-  of them can move a row. The indicator's spot took three tries to land (its doc
+- **Everything that appears on hover, on a tap, or on somebody else's schedule is
+  absolutely positioned**: the message action bar, the unread pill, and the typing
+  indicator. None of them can move a row. That is also what lets the bar have a touch
+  path at all (below): revealing it costs no height, so the gesture that reveals it
+  cannot move anything either. The indicator's spot took three tries to land (its doc
   comment tells the story): it overlays the *embedding container's bottom padding*,
   just past the surface's own bottom edge — space that already exists, holds nothing
   it could cover, and is not read as an empty slot while nobody is writing. It is also
@@ -160,7 +162,62 @@ The rest of the section is the log's own behaviour under that budget:
   bottom padding under it.
 - **Menus and pickers portal out** (`ChatPopover`), because the log clips its own
   children. It measures the trigger at open time — a user gesture, the one moment
-  measuring is free — and closes on a scroll rather than following one.
+  measuring is free — and closes on a scroll rather than following one. **Its alignment
+  is a preference and the viewport is the constraint**: right-aligned to the trigger and
+  hung above it, then pushed back inside an 8px margin on whichever edge that would have
+  escaped, with the box capped at the window's own width so a clamp always has somewhere
+  to put it. A `fixed` overlay off the edge of the screen is unreachable by any scroll,
+  and the case that found it is real — a small thumbnail at the *start* of a picture run
+  anchors the bar far enough left that a right-aligned picker begins off-screen. The
+  arithmetic is a pure function (`placeChatPopover`) because jsdom cannot measure, so
+  the clamp can only be pinned apart from the DOM.
+
+## Reaching the actions without a hover
+
+The action bar was revealed by `group-hover` and nothing else, which on a phone left
+reply, react, edit and every moderation act unreachable — on the surface a family is
+most likely to meet the product on. **A tap on a message now reveals the same bar a
+cursor reveals**, in the same place, at the same size, so the touch path costs the
+layout nothing.
+
+**The two halves are one bar and one state class, never two components.** Hover is
+still CSS; the tap is a `revealed` prop the log holds, because the rule that makes the
+gesture usable — *one row's bar at a time* — is a fact about the log rather than about
+a row. Any act taken from the bar puts it away, so a reply never costs a second press
+to dismiss what offered it, and a press anywhere outside the revealed row closes it.
+
+**A finger is told apart from a cursor per gesture, by `pointerType`, never by asking
+what kind of device this is** (`touch-gesture.ts` carries the reasoning). A media query
+describes the device's *primary* input, so a finger on a touchscreen laptop would be
+told it is a mouse. A browser that reports nothing is treated as a mouse, which is
+exactly the behaviour that shipped before the touch path existed.
+
+**The precedence on a picture: a finger's first tap reveals, its second opens; a cursor
+and a keyboard open on the first press as they always have.** A thumbnail fills its
+whole cell, so there is no margin beside the picture for a tap to mean something else
+in — the choice was only ever which of the two gestures comes first. What settles it is
+what a mouse already has for free: hovering a thumbnail has shown the bar *before* the
+click lands, so making that click a reveal would take away a one-press open and buy
+nothing. A finger has been shown nothing, so its first tap is the one that has to say
+what is there. The cost is one extra tap per picture, paid only by touch, and it buys
+back reply, react and remove on a photograph.
+
+**Hidden means untouchable, not merely invisible.** The bar straddles its row's top
+edge, so an `opacity-0` bar that still hit-tests is a strip of invisible buttons over
+the bottom of the message *above* it — survivable with a cursor, which reveals whatever
+it passes over, and on a phone a tap that opens a reaction picker out of nowhere. So
+`pointer-events` travels with the opacity in every state. Keyboard reach is untouched
+and must stay so: `pointer-events: none` takes nothing out of the tab order, the bar is
+never hidden by `display` or `hidden`, and focus turns opacity and pointer events back
+on together.
+
+**It is reviewed in the scene with device emulation on, and there is deliberately no
+control for it.** The scene drives the production components, so the tap path is live at
+`/preview/chat/session` — but a desktop pointer honestly reports `mouse`, so the gesture
+only exists once the browser is emulating a phone, which is the same mode the 360px
+width is judged in anyway. A scene toggle that forced every click to count as a tap
+would be a preview-only branch inside the components the scene exists to show
+unbranched.
 
 ## The mention token
 

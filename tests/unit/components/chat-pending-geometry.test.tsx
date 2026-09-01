@@ -98,6 +98,7 @@ function renderRow(delivery: ChatDelivery) {
           mentionable: [AINO],
           repliedTo: null,
           flashing: false,
+          actionsRevealed: false,
           capabilities: deriveChatMessageCapabilities(
             { viewer: AINO, locked: false },
             message,
@@ -115,6 +116,7 @@ function renderRow(delivery: ChatDelivery) {
           onRestore: noop,
           onSetLock: noop,
           onRetry: noop,
+          onToggleActions: noop,
         }}
       />
     </NextIntlClientProvider>,
