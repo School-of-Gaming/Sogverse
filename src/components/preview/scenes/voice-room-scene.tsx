@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GamerNoteDialog } from "@/components/member-flair";
+import { GamerFlairDialog } from "@/components/member-flair";
 import { VoiceRoom } from "@/components/voice/VoiceRoom";
 import { VoiceRoomContext } from "@/components/voice/VoiceRoomProvider";
 import { VoiceMemberFlairProvider } from "@/components/voice/VoiceMemberFlairProvider";
@@ -17,6 +17,7 @@ import type {
   VoiceRoomContextValue,
 } from "@/components/voice/hooks/types";
 import { composeZones } from "@/lib/voice/zone-composition";
+import type { GamerCreation } from "@/types";
 
 /**
  * The scheduled group voice room, over fixtures, as staff and as a child.
@@ -28,6 +29,12 @@ import { composeZones } from "@/lib/voice/zone-composition";
  * position beside the zones and the dock overlapping its foot are all part of
  * what makes a mark legible or invisible there.
  *
+ * **The rail carries all three ways a row can be lit**, because the button says
+ * only that *something* is recorded: one member with creations and no note, one
+ * with both, one with a note alone, and the rest dimmed. Opening any of them
+ * gives the same per-gamer dialog the workspace gives, with its two labelled
+ * audiences, and both halves write against local state.
+ *
  * **Sanna, the Gedu running the session, is in the room but not in the group**
  * — she has no note button on her own row, and neither would a second Gedu or a
  * visiting admin. That is what the fixture's seat list is for: a room is not a
@@ -38,6 +45,9 @@ import { composeZones } from "@/lib/voice/zone-composition";
  * call, no token, no network. Actions are inert; what works is what is pure
  * UI, plus the note dialog against local state.
  */
+/** The list a member with no creations is handed — one identity, every render. */
+const NO_CREATIONS: readonly GamerCreation[] = [];
+
 export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
   const isStaff = scenario === "gedu";
 
@@ -48,7 +58,10 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
   const [participants] = useState(() => buildParticipants(scenario));
   const [fixture] = useState(() => buildFlairFixture(now));
   const [notes, setNotes] = useState<Record<string, string>>(fixture.notes);
-  const [noteTarget, setNoteTarget] = useState<{
+  const [creations, setCreations] = useState<
+    Record<string, readonly GamerCreation[]>
+  >(fixture.creations);
+  const [flairTarget, setFlairTarget] = useState<{
     id: string;
     name: string;
   } | null>(null);
@@ -125,7 +138,8 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
         newcomers: fixture.newcomers,
         notes,
         noteEditors: fixture.noteEditors,
-        onOpenNote: (id: string, name: string) => setNoteTarget({ id, name }),
+        creations,
+        onOpenFlair: (id: string, name: string) => setFlairTarget({ id, name }),
       }
     : null;
 
@@ -140,18 +154,26 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
         </VoiceMemberFlairProvider>
       </VoiceRoomContext.Provider>
 
-      {noteTarget !== null && (
-        <GamerNoteDialog
+      {flairTarget !== null && (
+        <GamerFlairDialog
           open
           onOpenChange={(open) => {
-            if (!open) setNoteTarget(null);
+            if (!open) setFlairTarget(null);
           }}
-          name={noteTarget.name}
-          note={notes[noteTarget.id] ?? ""}
-          lastEditedBy={fixture.noteEditors[noteTarget.id] ?? null}
-          onSave={(text) =>
-            setNotes(({ [noteTarget.id]: _cleared, ...rest }) =>
-              text.length > 0 ? { ...rest, [noteTarget.id]: text } : rest,
+          name={flairTarget.name}
+          note={notes[flairTarget.id] ?? ""}
+          lastEditedBy={fixture.noteEditors[flairTarget.id] ?? null}
+          creations={creations[flairTarget.id] ?? NO_CREATIONS}
+          onSaveNote={(text) =>
+            setNotes(({ [flairTarget.id]: _cleared, ...rest }) =>
+              text.length > 0 ? { ...rest, [flairTarget.id]: text } : rest,
+            )
+          }
+          // Both halves live against local state, and both spell "none" by
+          // dropping the key — which is what puts the row's button back out.
+          onSaveCreations={(next) =>
+            setCreations(({ [flairTarget.id]: _cleared, ...rest }) =>
+              next.length > 0 ? { ...rest, [flairTarget.id]: next } : rest,
             )
           }
         />

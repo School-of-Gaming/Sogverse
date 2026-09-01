@@ -16,6 +16,7 @@ import type { SessionFeedEntry, SessionFeedGamer } from "@/components/gedu/sessi
 import { platformForTopic } from "@/lib/products/topics";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type {
+  GamerCreation,
   GeduAssignedProduct,
   GeduAssignedProductGroup,
   GeduAssignedProductRosterEntry,
@@ -98,9 +99,10 @@ export interface SiteFixture {
 }
 
 /**
- * The roster's staff-only overlay: who is new to the group, who has been written
- * about, and by whom. Every record is keyed by participant id, and absence is
- * the ordinary answer — most of a roster is neither.
+ * The roster's per-member overlay: who is new to the group, who has been written
+ * about and by whom, and what each of them has made. Every record is keyed by
+ * participant id, and absence is the ordinary answer — most of a roster is none
+ * of the three.
  */
 export interface MemberFlairFixture {
   /** ISO join stamps, one per member still inside the newcomer window. */
@@ -109,6 +111,11 @@ export interface MemberFlairFixture {
   notes: Record<string, string>;
   /** Who last wrote each note, keyed the same way as `notes`. */
   noteEditors: Record<string, string>;
+  /**
+   * Creations, one entry per member who has any — an empty list is spelled by
+   * having no key at all, exactly as the live derivation spells it.
+   */
+  creations: Record<string, readonly GamerCreation[]>;
 }
 
 export interface GroupWorkspaceFixture {
@@ -823,6 +830,43 @@ function clubMemberFlair(now: Date): MemberFlairFixture {
       [SESSION_FEED_GAMER_IDS.siiri]: "Sanna",
       [SESSION_FEED_GAMER_IDS.emil]: "Petra",
     },
+    /**
+     * **Two members with creations, and deliberately not the two with notes.**
+     *
+     * The button at the end of a row is lit by either, so a roster where the
+     * same people carry both would never show that — the club's rail now has a
+     * row lit by a note alone (Siiri, who also has one), a row lit by a creation
+     * alone (Aino), and rows lit by nothing, which is most of them.
+     *
+     * Aino carries **two**, because one and many are different shapes in the
+     * dialog: a single row with a remove control beside it, and a list the
+     * reader has to scan. Almost every real member has zero or one, so the
+     * second entry is the only place the plural case can be looked at.
+     *
+     * One URL is deliberately not a URL at all. It is what the no-validation
+     * decision actually produces — staff paste what they have — and it is the
+     * value the family card's parse-or-degrade path exists for, so a reviewer
+     * can see what a Gedu sees when they type one: nothing, which is the
+     * accepted gap.
+     */
+    creations: {
+      [SESSION_FEED_GAMER_IDS.aino]: [
+        {
+          title: "Lohikäärmeen linna — the castle world",
+          url: "https://www.planetminecraft.com/project/lohikaarmeen-linna/",
+        },
+        {
+          title: "Clock tower, first build",
+          url: "shared world: /warp aino-tower",
+        },
+      ],
+      [SESSION_FEED_GAMER_IDS.siiri]: [
+        {
+          title: "Underwater dome with the working airlock",
+          url: "https://www.planetminecraft.com/project/siiri-dome/",
+        },
+      ],
+    },
   };
 }
 
@@ -865,6 +909,11 @@ function campMemberFlair(): MemberFlairFixture {
       [SESSION_FEED_GAMER_IDS.oskar]: "Sanna",
       [SESSION_FEED_GAMER_IDS.linnea]: "Joonas",
     },
+    // Nothing yet, and that is the point of having it here: a camp writes its
+    // creations up on the last day, and this one is nine days into a run with
+    // four weeks to go. Every row's button is therefore lit by a note or by
+    // nothing, which is the other half of the comparison the club's rail makes.
+    creations: {},
   };
 }
 
@@ -879,7 +928,7 @@ function campMemberFlair(): MemberFlairFixture {
  * roster, not a page without the capability.
  */
 function quietMemberFlair(): MemberFlairFixture {
-  return { newcomers: {}, notes: {}, noteEditors: {} };
+  return { newcomers: {}, notes: {}, noteEditors: {}, creations: {} };
 }
 
 /* ------------------------------------------------------------------ */
@@ -1202,9 +1251,14 @@ export function buildGroupWorkspaceFixture(
         end_date:
           config.endsInDays === null ? null : calendarDate(now, config.endsInDays),
         is_remote: config.isRemote,
-        // Unflagged: no scenario here is a product that contractually requires
-        // a creation from every member, so nothing in these fixtures ever owes
-        // one. Flipping this is what a scenario for the owed signal would do.
+        // **Unflagged on every scenario, deliberately.** Creations themselves
+        // are on show — the club's rail has rows lit by one — but the *owed*
+        // signal cannot be: it needs a flagged product whose run has already
+        // finished, and none of the four product shapes here is that. Making one
+        // of them so would cost the scenario the thing it exists to show (the
+        // camp's live session and long future, the club's year of backlog), so
+        // the owed marker is covered by unit tests rather than by a fifth
+        // scenario nobody asked for.
         requires_gamer_creations: false,
         translations: [
           {

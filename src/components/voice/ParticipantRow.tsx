@@ -20,7 +20,7 @@ import {
   type GameAccountExternalId,
   type GamePlatform,
 } from "@/components/game-account";
-import { GamerNoteButton, NewcomerBadge } from "@/components/member-flair";
+import { GamerFlairButton, NewcomerBadge } from "@/components/member-flair";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { VoiceRole } from "./hooks/types";
@@ -82,7 +82,7 @@ export interface ParticipantRowProps {
      to pass, and the flair renders as absence.
 
      Absence is the resting state throughout — every one of these is optional,
-     and with `onOpenNote` omitted the row renders exactly as it did before the
+     and with `onOpenFlair` omitted the row renders exactly as it did before the
      overlay existed. */
 
   /**
@@ -96,14 +96,17 @@ export interface ParticipantRowProps {
    * own `new Date()`. Only consulted when `newcomerJoinedAt` is set.
    */
   flairNow?: Date;
-  /** Whether a Gedu note exists for this member in this group. */
-  hasNote?: boolean;
   /**
-   * Opens the note dialog. Its presence is what puts the note button at the end
-   * of the row: a viewer with no note access passes nothing and the row has no
+   * Whether anything has been recorded about this member in this group — a Gedu
+   * note, a creation, or both.
+   */
+  hasContent?: boolean;
+  /**
+   * Opens the per-gamer dialog. Its presence is what puts the button at the end
+   * of the row: a viewer with no staff access passes nothing and the row has no
    * trailing control for a screen reader to announce.
    */
-  onOpenNote?: () => void;
+  onOpenFlair?: () => void;
 }
 
 export function ParticipantRow({
@@ -115,8 +118,8 @@ export function ParticipantRow({
   onLock,
   newcomerJoinedAt,
   flairNow,
-  hasNote,
-  onOpenNote,
+  hasContent,
+  onOpenFlair,
 }: ParticipantRowProps) {
   const c = useTranslations("common");
   const showModMenu = isModView && !p.isLocal && !p.isOwner;
@@ -270,11 +273,11 @@ export function ParticipantRow({
           one fixed place: parking it on a conditional control would mean the
           row had no sink at all on the rows that lack it. */}
       <div className="order-4 ml-auto flex shrink-0 items-center gap-2 sm:order-5">
-        {onOpenNote && (
-          <GamerNoteButton
+        {onOpenFlair && (
+          <GamerFlairButton
             name={p.userName}
-            hasNote={hasNote === true}
-            onOpen={onOpenNote}
+            hasContent={hasContent === true}
+            onOpen={onOpenFlair}
           />
         )}
 

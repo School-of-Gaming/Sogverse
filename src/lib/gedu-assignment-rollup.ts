@@ -125,7 +125,17 @@ export interface GeduAssignmentSummary {
   siteName: string | null;
   /** Where a click anywhere on the card navigates — the product's feed. */
   openHref: string;
-  /** Owed past sessions still missing their register, their report, or both. */
+  /**
+   * How many owed past sessions still need something — the number behind the
+   * card's badge, computed server-side by the assignment-summaries RPC and
+   * carried through here rather than re-derived.
+   *
+   * A session counts while its register is unfinished, its report unwritten, its
+   * report unsent, or — on the final session of a run that requires creations —
+   * a current member still owes one. The unit is **sessions**, not gaps: the
+   * final session has one more way to need attention, never a second entry in
+   * the count.
+   */
   attentionCount: number;
 }
 

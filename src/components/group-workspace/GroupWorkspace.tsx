@@ -7,9 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MaterialLink } from "@/components/ui/material-link";
 import { PersonChipList } from "@/components/ui/person-chip";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
-import { GamerNoteDialog } from "@/components/member-flair";
+import { GamerFlairDialog } from "@/components/member-flair";
 import {
   SessionFeed,
+  entryOwesCreations,
+  type CreationsObligation,
   type SessionEntryDraft,
   type SessionFeedEntry,
   type SessionFeedGamer,
@@ -18,6 +20,7 @@ import {
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { finalSessionDate, sessionEntryId } from "@/lib/session-occurrence";
 import { cn } from "@/lib/utils";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
@@ -27,7 +30,11 @@ import type {
 } from "@/components/game-account";
 import type { RobloxRenderMap } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
-import type { GeduAssignedProduct, GeduAssignedProductGroup } from "@/types";
+import type {
+  GamerCreation,
+  GeduAssignedProduct,
+  GeduAssignedProductGroup,
+} from "@/types";
 import {
   CopyAllEmailsButton,
   deduplicateEmails,
@@ -127,19 +134,25 @@ import { SitePanel, type SiteNotesDraft } from "./SitePanel";
  *   the cross-product signal.
  */
 /**
- * The staff-only overlay on the group's roster: who is new to the group, who
- * has a Gedu note, and how a note is written back.
+ * The per-member overlay on the group's roster: who is new to the group, what
+ * staff have written about them, what they have made, and how both are written
+ * back.
  *
- * **One object rather than five props, because it is one decision.** A caller
+ * **One object rather than seven props, because it is one decision.** A caller
  * that made this page's staff-scoped read of the group's membership can answer
  * all of it at once — there is no surface holding newcomer stamps but no notes,
- * so five props would be five ways to spell one fact.
+ * so seven props would be seven ways to spell one fact.
  *
  * Every record is keyed by `participant_id`, and **absence is the common case**:
- * most members are neither new nor written about, so a missing key is the answer
- * rather than a gap. The value types say `| undefined` for exactly that reason —
- * a lookup here misses far more often than it hits, and the maps are the answer
- * to "who is marked", never a guarantee about who is in them.
+ * most members are neither new, nor written about, nor carrying a creation, so a
+ * missing key is the answer rather than a gap. The value types say `| undefined`
+ * for exactly that reason — a lookup here misses far more often than it hits,
+ * and the maps are the answer to "who is marked", never a guarantee about who is
+ * in them.
+ *
+ * It is *mostly* staff-only. The creations are the exception, and the dialog
+ * that edits them says so: staff write them and the member's own family reads
+ * them on their product page.
  */
 export interface RosterMemberFlair {
   /**
@@ -155,11 +168,26 @@ export interface RosterMemberFlair {
   /** Who last wrote each note, where that is known. Read only for members who have one. */
   noteEditors: Readonly<Record<string, string | undefined>>;
   /**
+   * What each member made during the run. A member with none has **no key** —
+   * an empty list is left out on the way in, exactly as a null note is — so the
+   * key set is "who has a creation", which is what the owed derivation reads.
+   */
+  creations: Readonly<Record<string, readonly GamerCreation[] | undefined>>;
+  /**
    * Persist one member's note. **Awaited by the dialog**, which holds its Save
    * disabled until the write lands and closes only then; the trimmed text
    * arrives here, and an empty string means "clear it".
    */
   onSaveNote: (participantId: string, text: string) => void | Promise<void>;
+  /**
+   * Replace one member's creations. **Awaited by the dialog**, same contract as
+   * the note's; an empty list deletes the row. Both writes are idempotent
+   * replaces, which is what lets the dialog retry a half-landed save.
+   */
+  onSaveCreations: (
+    participantId: string,
+    creations: readonly GamerCreation[],
+  ) => void | Promise<void>;
 }
 
 /**
@@ -433,6 +461,67 @@ export function GroupWorkspace({
   );
 
   /**
+   * What this run's final session owes in creations, or `null` on every product
+   * that does not require them — which is almost all of them.
+   *
+   * **Derived here rather than by either shell**, for the same reason the roster
+   * flair maps are: the gedu's workspace and the admin's group page must reach
+   * the same answer, and it is assembled from things this body already holds —
+   * the product's flag and schedule, and the roster's creations map. A second
+   * copy in each shell would be a second place for a Gedu and an admin to
+   * disagree about whether the last session of a term is finished.
+   *
+   * The final session is the schedule's last occurrence on or before the end
+   * date, which is exactly what the dashboard's SQL computes; an open-ended
+   * product has none and therefore never owes.
+   */
+  const creationsObligation = useMemo<CreationsObligation | null>(() => {
+    if (!data.product.requires_gamer_creations) return null;
+    const date = finalSessionDate({
+      slots: data.product.schedule_slots,
+      startDate: data.product.start_date,
+      endDate: data.product.end_date,
+    });
+    return {
+      finalEntryId:
+        date === null ? null : sessionEntryId(data.my_group_id, date),
+      // The map's keys are already "who has at least one" — an empty list is
+      // left out on the way in — and the length test states that rather than
+      // trusting it silently.
+      withCreations: new Set(
+        Object.entries(memberFlair.creations)
+          .filter(([, list]) => (list?.length ?? 0) > 0)
+          .map(([participantId]) => participantId),
+      ),
+    };
+  }, [data.product, data.my_group_id, memberFlair.creations]);
+
+  /**
+   * Whether the roster should be *itemizing* that obligation right now.
+   *
+   * The session card can say "this group's final session is not done"; only the
+   * roster can say which members it is waiting on. Both answer off the same
+   * derivation, so a row can never be marked while the card beside it reads
+   * finished — and the gate is the entry's own `owed`, which is what keeps the
+   * marker off a final session that has not happened yet, or one from before the
+   * enforcement epoch.
+   */
+  const finalEntry = useMemo(
+    () =>
+      creationsObligation?.finalEntryId == null
+        ? undefined
+        : entries.find(
+            (entry) => entry.id === creationsObligation.finalEntryId,
+          ),
+    [entries, creationsObligation],
+  );
+  const creationsOwedNow =
+    finalEntry !== undefined &&
+    finalEntry.kind === "past" &&
+    finalEntry.owed &&
+    entryOwesCreations(finalEntry, feedRoster, creationsObligation);
+
+  /**
    * Where leaving a voice room lands — this workspace, always.
    *
    * Named rather than left to the Join button's "wherever you clicked from"
@@ -528,6 +617,8 @@ export function GroupWorkspace({
               gameStatuses={gameStatuses}
               robloxAvatarUrls={robloxAvatarUrls}
               memberFlair={memberFlair}
+              creationsOwedNow={creationsOwedNow}
+              creationsObligation={creationsObligation}
             />
           )}
 
@@ -591,6 +682,7 @@ export function GroupWorkspace({
               entries={entries}
               now={feedNow}
               roster={feedRoster}
+              creations={creationsObligation}
               sourceTimeZone={sourceTimeZone}
               editingEntryId={editingEntryId}
               onEditEntry={onEditEntry}
@@ -611,6 +703,15 @@ export function GroupWorkspace({
     </div>
   );
 }
+
+/**
+ * The list a member with no creations is handed.
+ *
+ * A module constant rather than a `[]` literal at the call site: the dialog
+ * seeds its draft from this prop on the closed→open edge, and a fresh array
+ * every render is a new identity for something that is always the same nothing.
+ */
+const EMPTY_CREATIONS: readonly GamerCreation[] = [];
 
 /* ------------------------------------------------------------------ */
 /*  Reference rail                                                     */
@@ -841,6 +942,8 @@ function GroupRailCard({
   gameStatuses,
   robloxAvatarUrls,
   memberFlair,
+  creationsOwedNow,
+  creationsObligation,
 }: {
   group: GeduAssignedProductGroup;
   /** The card's heading, or `undefined` for the gedu's "My Group". */
@@ -866,6 +969,14 @@ function GroupRailCard({
    * that page has.
    */
   memberFlair: RosterMemberFlair;
+  /**
+   * Whether this group's final session is currently owed creations — the gate
+   * on the per-row marker. False on every unflagged product, on an open-ended
+   * one, and on a flagged run whose last session has not finished yet.
+   */
+  creationsOwedNow: boolean;
+  /** Who already has a creation, so a row can ask whether *it* is one of them. */
+  creationsObligation: CreationsObligation | null;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
@@ -875,14 +986,15 @@ function GroupRailCard({
     [roster],
   );
   /**
-   * Whose note is open — an id, not the note itself, so the dialog always shows
-   * what the record currently holds rather than a copy taken when it opened.
+   * Whose dialog is open — an id, not the values themselves, so the dialog
+   * always shows what the record currently holds rather than a copy taken when
+   * it opened.
    */
-  const [noteFor, setNoteFor] = useState<string | null>(null);
-  const noteMember =
-    noteFor === null
+  const [openFor, setOpenFor] = useState<string | null>(null);
+  const openMember =
+    openFor === null
       ? null
-      : (roster.find((member) => member.participant_id === noteFor) ?? null);
+      : (roster.find((member) => member.participant_id === openFor) ?? null);
 
   return (
     <RailCard
@@ -941,14 +1053,24 @@ function GroupRailCard({
                   memberFlair.newcomers[member.participant_id] ?? null
                 }
                 flairNow={memberFlair.now}
-                hasNote={
-                  (memberFlair.notes[member.participant_id] ?? "").length > 0
+                hasContent={
+                  (memberFlair.notes[member.participant_id] ?? "").length > 0 ||
+                  (memberFlair.creations[member.participant_id]?.length ?? 0) > 0
+                }
+                // The itemization of the session-level obligation: while the
+                // final session is owed creations, every member who has none
+                // wears the marker, and it routes to the same dialog every
+                // other row's button does.
+                owesCreation={
+                  creationsOwedNow &&
+                  creationsObligation !== null &&
+                  !creationsObligation.withCreations.has(member.participant_id)
                 }
                 // Handed to every row, not only the ones already written
                 // about: an empty note is what the add flow opens, most of the
                 // roster is that case, and a marker that appeared only on rows
                 // that already had one would leave no way to write the first.
-                onOpenNote={() => setNoteFor(member.participant_id)}
+                onOpenFlair={() => setOpenFor(member.participant_id)}
               />
             ))}
           </ul>
@@ -958,19 +1080,26 @@ function GroupRailCard({
       {/* One dialog for the whole roster. It stays mounted with the member it
           was opened for until the close lands, so nothing in it changes under
           the reader on the way out. */}
-      <GamerNoteDialog
-        open={noteFor !== null}
+      <GamerFlairDialog
+        open={openFor !== null}
         onOpenChange={(open) => {
-          if (!open) setNoteFor(null);
+          if (!open) setOpenFor(null);
         }}
-        name={noteMember?.first_name ?? ""}
-        note={noteFor === null ? "" : (memberFlair.notes[noteFor] ?? "")}
+        name={openMember?.first_name ?? ""}
+        note={openFor === null ? "" : (memberFlair.notes[openFor] ?? "")}
         lastEditedBy={
-          noteFor === null ? null : (memberFlair.noteEditors[noteFor] ?? null)
+          openFor === null ? null : (memberFlair.noteEditors[openFor] ?? null)
         }
-        onSave={async (text) => {
-          if (noteFor === null) return;
-          await memberFlair.onSaveNote(noteFor, text);
+        creations={
+          openFor === null ? EMPTY_CREATIONS : (memberFlair.creations[openFor] ?? EMPTY_CREATIONS)
+        }
+        onSaveNote={async (text) => {
+          if (openFor === null) return;
+          await memberFlair.onSaveNote(openFor, text);
+        }}
+        onSaveCreations={async (creations) => {
+          if (openFor === null) return;
+          await memberFlair.onSaveCreations(openFor, creations);
         }}
       />
     </RailCard>

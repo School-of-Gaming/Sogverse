@@ -124,6 +124,55 @@ export function isPlannableEntry(
 }
 
 /**
+ * What a flagged product's **final session** owes in creations, as the client
+ * derives it — the fourth thing a session can be incomplete for.
+ *
+ * `null` everywhere it does not apply, which is almost everywhere: a product
+ * whose `requires_gamer_creations` is false, and every surface that has no
+ * roster creations to hand. That is the whole of the flag's reach into this
+ * module — there is no boolean here, because "no obligation" and "the flag is
+ * off" are one state and one is enough.
+ */
+export interface CreationsObligation {
+  /**
+   * The feed entry id of the run's **last computed occurrence on or before the
+   * end date**, or `null` when the run has none.
+   *
+   * An id rather than a date because that is what an entry carries, and the id
+   * is `(group, product-local date)` — the same pair Postgres keys a session by
+   * — so comparing ids is comparing occurrences. `null` is an open-ended
+   * product: no final session, so nothing ever owes.
+   */
+  finalEntryId: string | null;
+  /** Participant ids holding at least one creation in this group. */
+  withCreations: ReadonlySet<string>;
+}
+
+/**
+ * Whether this entry is that final session **and** somebody on the current
+ * roster still owes a creation for it.
+ *
+ * Measured over the roster it is handed, never over the map's keys, exactly as
+ * attendance is: leaving the group clears the debt and joining after the final
+ * session reopens it. An empty roster owes nothing, which falls out of `some`
+ * rather than needing to be said.
+ *
+ * **It says nothing about the clock or the epoch**, deliberately — the caller
+ * pairs it with `owed` in the same breath as the emailed test, which is what
+ * keeps this in step with the SQL, whose fourth condition sits inside the same
+ * epoch-floored, already-finished occurrence set as the other three.
+ */
+export function entryOwesCreations(
+  entry: SessionFeedEntry,
+  roster: readonly SessionFeedGamer[],
+  creations: CreationsObligation | null,
+): boolean {
+  if (creations === null || creations.finalEntryId === null) return false;
+  if (entry.id !== creations.finalEntryId) return false;
+  return roster.some((gamer) => !creations.withCreations.has(gamer.id));
+}
+
+/**
  * What a past session says about itself, or nothing at all.
  *
  * Two states, because two is how many a card can usefully wear:
@@ -202,16 +251,36 @@ export type SessionCompleteness = "needs_attention" | "complete";
  * send is also what finishes the session: carving it out here would leave such
  * a session flagged for ever with nothing the gedu could do about it, and would
  * force the SQL twin to grow its own notion of mailability to agree.
+ *
+ * **The fourth part — the creations — belongs to exactly one session of a
+ * flagged run, and rides beside the email test for the same reason.** The
+ * owner's framing is that creations are the *final session's* work: on a product
+ * that contractually requires one per member, that session is not finished until
+ * every current member has at least one. It sits inside the `owed` branch
+ * because the SQL's own fourth condition sits inside an occurrence set that is
+ * floored at the epoch — so a pre-epoch final session ignores it here exactly as
+ * the badge ignores it there, and history keeps its check.
+ *
+ * **This derivation exists twice — here for the card, and in SQL for the
+ * dashboard badge — and now on FOUR conditions.** A change to either half is a
+ * change to both, in the same commit: a badge counting a session the card calls
+ * finished is worse than either being wrong alone. The SQL side derives the
+ * final session from the schedule with a seven-day walk back from the end date;
+ * the client derives the same date the same way and hands it in as
+ * {@link CreationsObligation}.
  */
 export function entryCompleteness(
   entry: SessionFeedEntry,
   roster: readonly SessionFeedGamer[],
+  creations: CreationsObligation | null = null,
 ): SessionCompleteness | null {
   if (entry.kind !== "past") return null;
   const finished =
     attendanceTally(roster, entry.attendance).complete &&
     hasReport(entry.report) &&
-    (!entry.owed || entry.reportEmailedAt !== null);
+    (!entry.owed ||
+      (entry.reportEmailedAt !== null &&
+        !entryOwesCreations(entry, roster, creations)));
   if (finished) return "complete";
   return entry.owed && roster.length > 0 ? "needs_attention" : null;
 }
@@ -222,14 +291,15 @@ export function entryCompleteness(
  *
  * It means exactly one thing: **a session that has finished, dated on or after
  * the enforcement epoch, whose register is unfinished, whose report has not
- * been written, or whose report has not been emailed to the families.** Any one
- * gap on its own is enough, so an entry carrying a full report with half a
- * roster unmarked is flagged, so is one marked off to the last child with
- * nothing written for the families, and so is one written up and never sent —
- * a write-up nobody was told about is one nobody reads. A session older than the
- * epoch is never flagged however little is on it, which is the whole of what the
- * epoch does — and a session still under way is not flagged either, because the
- * hour it would be nagging about has not run out yet.
+ * been written, whose report has not been emailed to the families, or which is
+ * the final session of a creations-requiring run with a member still owing
+ * one.** Any one gap on its own is enough, so an entry carrying a full report
+ * with half a roster unmarked is flagged, so is one marked off to the last child
+ * with nothing written for the families, and so is one written up and never sent
+ * — a write-up nobody was told about is one nobody reads. A session older than
+ * the epoch is never flagged however little is on it, which is the whole of what
+ * the epoch does — and a session still under way is not flagged either, because
+ * the hour it would be nagging about has not run out yet.
  *
  * **A partial save does not discharge it.** Saving is always allowed, so the
  * flag cannot be "has anything been recorded" or half a roster would silence
@@ -239,30 +309,36 @@ export function entryCompleteness(
 export function entryNeedsAttention(
   entry: SessionFeedEntry,
   roster: readonly SessionFeedGamer[],
+  creations: CreationsObligation | null = null,
 ): boolean {
   // Reads the state rather than re-deriving it, so the epoch and empty-roster
   // exemptions above are applied exactly once and the badge can never disagree
   // with the card.
-  return entryCompleteness(entry, roster) === "needs_attention";
+  return entryCompleteness(entry, roster, creations) === "needs_attention";
 }
 
 /**
- * Whether an entry has reached the target state — marked off, reported, and
- * (where it was owed) the report sent to the families.
+ * Whether an entry has reached the target state — marked off, reported, the
+ * report sent to the families, and (on a flagged run's final session) every
+ * member's creation supplied.
  */
 export function entryIsComplete(
   entry: SessionFeedEntry,
   roster: readonly SessionFeedGamer[],
+  creations: CreationsObligation | null = null,
 ): boolean {
-  return entryCompleteness(entry, roster) === "complete";
+  return entryCompleteness(entry, roster, creations) === "complete";
 }
 
 /** How many entries are the gedu's outstanding work — the alert-badge count. */
 export function countEntriesNeedingAttention(
   entries: readonly SessionFeedEntry[],
   roster: readonly SessionFeedGamer[],
+  creations: CreationsObligation | null = null,
 ): number {
-  return entries.filter((entry) => entryNeedsAttention(entry, roster)).length;
+  return entries.filter((entry) =>
+    entryNeedsAttention(entry, roster, creations),
+  ).length;
 }
 
 /* ------------------------------------------------------------------ */

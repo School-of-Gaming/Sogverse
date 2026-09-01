@@ -59,6 +59,75 @@ export interface SlotShape {
 }
 
 /**
+ * The **last occurrence a product's schedule projects on or before its end
+ * date**, as a bare `YYYY-MM-DD`, or `null` when the run has no final session
+ * at all.
+ *
+ * There is no stored final-session flag anywhere — occurrences come from the
+ * schedule — so "the final session" has to be derived, and it is derived here
+ * so the one client that needs it and the SQL that computes the dashboard's
+ * count answer the same question the same way. **The two are twins and must
+ * stay so**: the assignment-summaries RPC walks the same seven-day window with
+ * the same weekday test, and a change to either half is a change to both.
+ *
+ * Three properties, each of which the SQL shares:
+ *
+ * - **An open-ended product has none.** A club with no end date has no last
+ *   session, so this answers `null` and anything gated on it never fires. That
+ *   is documented behaviour, not an error.
+ * - **Seven days ending at `endDate`, floored at `startDate`, is the whole
+ *   search.** Slots are weekly, so a run of a week or more has every weekday
+ *   inside that window and a shorter run is wholly inside it — which makes the
+ *   maximum over the window the maximum over the run, at a bounded cost.
+ * - **Pure calendar arithmetic, UTC-pinned.** Both bounds are bare dates with no
+ *   time of day, so there is no zone to convert through and no DST to step over;
+ *   the walk is `Date.UTC` day arithmetic, exactly as the root `CLAUDE.md` asks
+ *   of a zoneless date. The weekday convention is the app's own — 0 is Monday —
+ *   which is what `EXTRACT(ISODOW …) - 1` produces on the SQL side.
+ */
+export function finalSessionDate(args: {
+  slots: readonly { weekday: number }[];
+  /** Product-local `YYYY-MM-DD`, or `null` on a run with no declared start. */
+  startDate: string | null;
+  /** Product-local `YYYY-MM-DD`, or `null` on an open-ended run. */
+  endDate: string | null;
+}): string | null {
+  const { slots, startDate, endDate } = args;
+  if (endDate === null || slots.length === 0) return null;
+
+  const weekdays = new Set(slots.map((slot) => slot.weekday));
+  const end = Date.parse(`${endDate}T00:00:00.000Z`);
+  if (Number.isNaN(end)) return null;
+
+  for (let back = 0; back < 7; back++) {
+    const day = new Date(end - back * 86_400_000);
+    const date = utcCalendarDate(day);
+    // Below the product's own start there is nothing left to find: the run had
+    // not begun. Bare-date string comparison is a calendar comparison.
+    if (startDate !== null && date < startDate) return null;
+    // `getUTCDay()` is 0 = Sunday; the app's slots are 0 = Monday.
+    if (weekdays.has((day.getUTCDay() + 6) % 7)) return date;
+  }
+  return null;
+}
+
+/**
+ * A UTC-pinned instant back as its own `YYYY-MM-DD`.
+ *
+ * Written out of the `getUTC*` fields rather than sliced off an ISO string, so
+ * the shape of the call cannot be mistaken for the banned
+ * `new Date().toISOString().slice(0, 10)` — which is the same characters
+ * standing for a completely different, and wrong, thing: somebody's local date
+ * read in UTC. This one is only ever handed a date that was UTC-pinned when it
+ * was built.
+ */
+function utcCalendarDate(instant: Date): string {
+  const month = String(instant.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(instant.getUTCDate()).padStart(2, "0");
+  return `${instant.getUTCFullYear()}-${month}-${day}`;
+}
+
+/**
  * If the slot's *previous* occurrence is still inside its voice window
  * right now (and within the product's start/end-date bounds), return
  * it. Otherwise null — callers fall through to `getNextSessionStart`

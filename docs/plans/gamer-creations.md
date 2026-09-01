@@ -355,18 +355,99 @@ messages — glyphs are lucide icons in components).
    wire the roster button's state and label to note-or-creations; carry
    creations through the voice flair derivation so the voice mount behaves
    identically.
+
+   *The two components were **renamed**: `GamerNoteDialog` → `GamerFlairDialog`
+   and `GamerNoteButton` → `GamerFlairButton` (the plan leaves this free). A
+   dialog named for the note while holding a family-visible list is the kind of
+   misleading name the repo's docs care about, and "flair" is already the word
+   the whole feature area uses — the service, the maps, the props. The message
+   keys moved with them: `openNote`/`noteTitle`/`notePrivacy` are retired in
+   favour of `openMember`, `openMemberCreationOwed`, `memberTitle`, and the two
+   audience/label/hint sets.*
+
+   *Save semantics: **one Save committing only the halves that changed**. The
+   dialog asks one question, so it has one affirmative button — and change
+   detection is not an optimisation here but a correctness point: both rows
+   carry their own `updated_by`/`updated_at`, so re-sending an untouched note
+   when somebody adds a creation would restamp it and put a name on the "last
+   edited by" line that never wrote a word. A half that has landed is remembered
+   for the life of the open dialog, so a retry after a partial failure sends only
+   what is still outstanding (the shape the session card's photo saves already
+   use). `committing` is flipped synchronously before the first write and left
+   set on the close.*
+
+   *A half-filled creation row **refuses the save without flipping `committing`**
+   — the refusal is a validation answer rather than an action in flight, so the
+   button never greys for it. The creations list scrolls inside itself past
+   `40vh`, because twenty rows in a centred dialog with no scroll of its own
+   would push the footer off the screen.*
 7. **Owed signal**: the fourth completeness condition in the client-side
    entry-completeness derivation (final session of a flagged product +
    creations tally over the current roster), with creations arriving as a
    fourth roster-flair map; the roster-row marker gated on the same
    condition; the TS rollup twin updated in lockstep with the summaries
    RPC.
+
+   *The "TS rollup twin" the SQL comment names is the **gedu feed's entry-state
+   module**, not `gedu-assignment-rollup.ts` — the latter carries the server's
+   number through untouched and only had its doc-comment corrected. The
+   condition enters `entryCompleteness` as an optional third argument, a
+   `CreationsObligation` of `{ finalEntryId, withCreations }`; `null` means "no
+   obligation", which is how an unflagged product spells it, so there is no
+   second boolean to keep in step. It sits **inside** the `owed` branch, beside
+   the emailed test, because the SQL's fourth condition lives inside an
+   epoch-floored occurrence set — a pre-epoch final session therefore keeps its
+   green check on both sides.*
+
+   *"The final session" is derived by a new `finalSessionDate` in
+   `src/lib/session-occurrence.ts`, a literal twin of the SQL lateral: the seven
+   days ending at `end_date`, floored at `start_date`, greatest day whose weekday
+   a slot names, UTC-pinned calendar arithmetic throughout. It is a third thing
+   the two halves must agree on, and it is written down as such in
+   `src/components/session-feed/CLAUDE.md`.*
+
+   *Marker rendering: **a third tone on the existing button**, not a badge beside
+   it. Dim / lit / warning, with the accessible name changing too so the signal
+   is never colour alone. Reasons: the one-authoring-surface rule wants every
+   creations signal to route into the one dialog, and toning the control that
+   already opens it is the only rendering that cannot become a second way in (a
+   badge is either clickable — a second affordance — or inert beside a control
+   that is not); and a colour change costs no layout, where a new element in the
+   row's right-packed trailing group would have to be ordered against what is
+   there. Owed outranks lit, because it is the only one of the three states that
+   is work.*
+
+   *The existing surfaces were **verified rather than extended**: the final
+   session's card takes the amber needs-attention line and its timeline marker
+   the warning tone with no new machinery (both read `entryCompleteness` through
+   the feed's one completeness map), and the dashboard badge is the server's
+   count, already widened in 00227. Nothing family-facing sees the flag or the
+   owed state — the family document carries neither, and the workspace body is
+   inside the family-privacy import zone.*
 8. **Family card**: the Creations card in the family product page body,
    non-empty-only, parse-or-degrade, all three audiences.
 9. **Fixtures & demos**: the note dialog's style-guide demo, the two
    preview scenes that mount it, the voice/workspace fixtures, and the
    family product page scene's kitchen-sink scenario — all gain creations
    states (no new scenario; the card coexists with existing states).
+
+   *Staff half done. The style-guide demo now seeds a two-entry list beside the
+   note, so the two-audience split can be judged in one screenshot; both the
+   workspace club fixture and the voice-room fixture put creations on **different
+   members from the notes**, so all three ways a row's button can be lit — note
+   alone, creation alone, both — sit side by side, which is the only way to see
+   that the marker is not a note marker. One fixture URL is deliberately not a
+   URL, which is what the no-validation decision actually produces and what the
+   family card's degrade-to-text path exists for.*
+
+   *One state has **no preview**: the owed marker. It needs a flagged product
+   whose run has already finished, and none of the four workspace scenarios is
+   that shape — giving one of them an ended run would cost it the thing it exists
+   to show (the camp's live session and long future, the club's year of backlog),
+   and a fifth scenario is exactly what "no new scenario" forbids. It is covered
+   end to end by unit tests instead, in the gedu shell's wiring suite: the flag,
+   the schedule's last occurrence, the roster's creations, the tone, the renamed
+   control, and the click that lands in the same dialog.*
 10. **i18n**: all five locales.
 11. **Verify**: lint, type-check, unit/integration locally; push for DB
     tests (CI-only).

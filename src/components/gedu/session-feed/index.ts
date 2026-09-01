@@ -45,6 +45,7 @@ export {
   entryCompleteness,
   entryIsComplete,
   entryNeedsAttention,
+  entryOwesCreations,
   isEditableEntry,
   isLiveEntry,
   isPlannableEntry,
@@ -52,7 +53,11 @@ export {
   planEditorStateFromEntry,
   rosterScopedMarks,
 } from "./entry-state";
-export type { AttendanceTally, SessionCompleteness } from "./entry-state";
+export type {
+  AttendanceTally,
+  CreationsObligation,
+  SessionCompleteness,
+} from "./entry-state";
 export {
   PartialSessionSaveError,
   isPartialSessionSaveError,

@@ -3,7 +3,7 @@ import {
   SESSION_FEED_GAMER_IDS,
 } from "@/components/gedu/session-feed/mock-fixtures";
 import type { VoiceParticipant } from "./hooks/types";
-import type { VoiceZone } from "@/types";
+import type { GamerCreation, VoiceZone } from "@/types";
 
 /**
  * Fixtures for the voice-room preview scene.
@@ -195,7 +195,8 @@ export const SEATED_MEMBER_IDS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * The staff overlay: four newcomers spread across the window, and two notes.
+ * The staff overlay: four newcomers spread across the window, two notes, and two
+ * members carrying creations.
  *
  * **Four, at 1, 10, 19 and 28 days — one per pip of the badge's meter.** The
  * badge drains a four-pip block across the window, so four members spread
@@ -204,14 +205,22 @@ export const SEATED_MEMBER_IDS: ReadonlySet<string> = new Set([
  *
  * Two notes, one of them on a newcomer (Siiri) so a single row is seen wearing
  * both marks at once, and one on a settled member (Elias) so a note is also
- * seen alone. Every other row has none, which is the case the note button has
- * to keep serving: it is present and dimmed there, because writing the first
- * note is the common action.
+ * seen alone. Every other row has none, which is the case the button has to keep
+ * serving: it is present and dimmed there, because writing the first thing is
+ * the common action.
+ *
+ * **The creations are on deliberately different people from the notes**, because
+ * the button says only that *something* is recorded: Aino has creations and no
+ * note, Siiri has both, and Elias has a note alone — so the rail carries all
+ * three ways a row can be lit, side by side, which is the only way to see that
+ * the mark is not a note marker. Aino carries two, since one entry and a list
+ * are different shapes in the dialog and almost every real member has one.
  */
 export function buildFlairFixture(now: Date): {
   newcomers: Record<string, string>;
   notes: Record<string, string>;
   noteEditors: Record<string, string>;
+  creations: Record<string, readonly GamerCreation[]>;
 } {
   const daysAgo = (days: number) =>
     new Date(now.getTime() - days * DAY_MS).toISOString();
@@ -232,6 +241,24 @@ export function buildFlairFixture(now: Date): {
     noteEditors: {
       [SESSION_FEED_GAMER_IDS.siiri]: "Sanna",
       [SESSION_FEED_GAMER_IDS.elias]: "Petra",
+    },
+    creations: {
+      [SESSION_FEED_GAMER_IDS.aino]: [
+        {
+          title: "Lohikäärmeen linna — the castle world",
+          url: "https://www.planetminecraft.com/project/lohikaarmeen-linna/",
+        },
+        {
+          title: "Clock tower, first build",
+          url: "shared world: /warp aino-tower",
+        },
+      ],
+      [SESSION_FEED_GAMER_IDS.siiri]: [
+        {
+          title: "Underwater dome with the working airlock",
+          url: "https://www.planetminecraft.com/project/siiri-dome/",
+        },
+      ],
     },
   };
 }

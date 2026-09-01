@@ -12,7 +12,11 @@ import {
   type SessionFeedRowContext,
 } from "@/components/session-feed";
 import { SessionFeedItem } from "./SessionFeedItem";
-import { entryCompleteness, type SessionCompleteness } from "./entry-state";
+import {
+  entryCompleteness,
+  type CreationsObligation,
+  type SessionCompleteness,
+} from "./entry-state";
 import { isPartialSessionSaveError } from "./partial-save";
 import { sessionPhotoErrorCode } from "./photo-failure";
 import {
@@ -63,6 +67,16 @@ interface SessionFeedProps {
   now: Date;
   /** The group's current roster, for the attendance summary and checklist. */
   roster: readonly SessionFeedGamer[];
+  /**
+   * What the run's final session owes in creations, on a product that requires
+   * them — the fourth thing a session can be incomplete for.
+   *
+   * Omitted (or `null`) on every other product and every other surface, which
+   * is the overwhelmingly common case: nothing owes, and the feed reads exactly
+   * as it did before creations existed. It is the caller's because deriving it
+   * needs the product's flag and its schedule, neither of which a feed carries.
+   */
+  creations?: CreationsObligation | null;
   /**
    * The zone the schedule was authored in (products are authored in the club's
    * local zone). Sessions always render in the *viewer's* zone; this is only
@@ -192,6 +206,7 @@ export function SessionFeed({
   entries,
   now,
   roster,
+  creations = null,
   sourceTimeZone,
   editingEntryId,
   onEditEntry,
@@ -373,9 +388,12 @@ export function SessionFeed({
   const completenessById = useMemo(
     () =>
       new Map<string, SessionCompleteness | null>(
-        entries.map((entry) => [entry.id, entryCompleteness(entry, roster)]),
+        entries.map((entry) => [
+          entry.id,
+          entryCompleteness(entry, roster, creations),
+        ]),
       ),
-    [entries, roster],
+    [entries, roster, creations],
   );
 
   if (entries.length === 0) {

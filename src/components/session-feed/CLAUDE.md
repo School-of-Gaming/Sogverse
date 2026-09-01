@@ -124,6 +124,19 @@ nobody was told about is a write-up nobody reads — the report is the main thin
 a family gets back between payments, and a family that never learns it is there
 gets nothing.
 
+**Rule: exactly one session of a run can owe a fourth thing, and it is the last
+one.** On a product flagged as requiring a creation from every member, the run's
+**final session** — the last occurrence the schedule projects on or before the
+end date — is not finished until every current roster member has at least one.
+The framing is what makes it fit: creations are that session's work, so they
+ride the owed pattern the other three already have rather than inventing a
+second one, and the badge's unit is unchanged — the final session simply has one
+more way to need attention, never a second entry in the count. An open-ended
+product has no final session and therefore never owes; that is documented
+behaviour, not an error. What the session pattern *cannot* say is which members
+are missing, because that is per-member data: the roster answers it, on the same
+page, routing to the same dialog.
+
 **Rule: the send is asked of *owed* sessions only, and the other two are asked
 of every past one.** What is owed is dated from the recording epoch, and the
 finished state has no epoch floor of its own — a session from before the epoch
@@ -178,8 +191,15 @@ starts.
 the dashboard badge — and a change to one is a change to both, in the same
 commit.** They answer the same question for two surfaces, and a badge counting a
 session the card calls finished is worse than either being wrong alone. The two
-places already share the whitespace-trimmed test for "has a report"; they now
-also share the emailed test and its epoch gate.
+places already share the whitespace-trimmed test for "has a report"; they also
+share the emailed test and its epoch gate, and now the creations condition —
+which means they share a **third** derivation as well, the one that says which
+occurrence is a run's last. Both walk the seven days ending at the end date,
+floored at the start date, and take the greatest whose weekday a slot names;
+seven is enough because slots are weekly. The creations condition sits inside
+the epoch-floored half on both sides, exactly as the emailed test does, so a
+pre-epoch final session keeps its check rather than losing it to a term that
+finished before the platform asked.
 
 ## The attribution chip
 
