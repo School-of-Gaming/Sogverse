@@ -1,10 +1,7 @@
 /* eslint-disable i18next/no-literal-string -- temporary admin-only review deck for the brand design pass; every string here is owner-facing walkthrough narration about drafts, never product copy that ships in any locale, and the whole page is deleted before the wiring phase merges */
 
 import { Fragment } from "react";
-import Image from "next/image";
 import { Crimson_Pro } from "next/font/google";
-import sogLogoSimple from "@/assets/brand/sog-logo-simple.svg";
-import { SogWordmark } from "@/components/brand/sog-wordmark";
 import { NeedsAttentionPanel } from "@/components/admin/dashboard/needs-attention-panel";
 import { ROLE_BADGE_STYLES } from "@/lib/constants/roles";
 import {
@@ -32,14 +29,16 @@ import { cn } from "@/lib/utils";
  * on the page: it lives in the session reports, in the plan, and in these code
  * comments. A slide carrying more words than the UI it shows is a bug.
  *
- * **Press Start 2P is retiring** (owner ruling, 2026-09-01: "we don't need our
- * Press Start 2P when the Guidebook has given us so much to work with" — the
- * same move as retiring the invented colours). So the site slides no longer ask
- * whether a site keeps the face; they ask what replaces it there. All six of its
- * sites lose it: four are re-set in another face, the admin all-clear may lose
- * its title with the face rather than be re-set at all, and the profile-select
- * header is answered by artwork rather than by type — the main header already
- * draws the real mark, and the lettered "SOG" there is an outdated stand-in.
+ * **Press Start 2P's fate is the open question** (owner, 2026-09-01: torn —
+ * "none of these fonts really give it the uniqueness it deserves"). What is
+ * *not* open: the marketing-voice sites leave the face whatever is decided —
+ * the home hero, /roblox and the call-ended screen all set marketing copy the
+ * Guidebook keeps display quirk out of — and the profile-select header is
+ * settled by artwork (the drawn mark replaces the typed stand-in; dropped from
+ * this deck, straight to wiring). So the live question is the two in-world
+ * playful sites, the gamer greeting and the admin all-clear: keep the pixel
+ * face there under the standing rare-use exception, or convert. All sites
+ * convert together in one change once that is ruled (owner, 2026-09-01).
  *
  * **Face is voice, which is what decides each replacement.** Poppins is the app
  * speaking, Space Mono is Sogverse-the-world speaking, Crimson Pro is editorial,
@@ -95,7 +94,6 @@ const SLIDES = [
   { id: "site-home", title: "The home hero" },
   { id: "site-greeting", title: "The gamer greeting" },
   { id: "site-roblox", title: "The Roblox programme hero" },
-  { id: "site-profile", title: "The profile-select mark" },
   { id: "site-call-ended", title: "The call-ended screen" },
   { id: "site-all-clear", title: "The admin all-clear" },
   { id: "tracking", title: "Tracking on the pixel face" },
@@ -992,8 +990,8 @@ export default function DesignPassTypographyPage() {
         </Caption>
 
         <Ruling>
-          Gamer greeting — Space Mono as drafted, or Poppins. (recommended: Space
-          Mono)
+          Gamer greeting — keep Press Start 2P under the rare-use exception,
+          Space Mono as drafted, or Poppins.
         </Ruling>
 
         <Links>
@@ -1026,61 +1024,9 @@ export default function DesignPassTypographyPage() {
       </Slide>
 
       {/* ----------------------------------------------------------- 5 */}
-      <Slide id="site-profile">
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <div className="text-[11px] text-muted-foreground">
-              Today — /select-profile letters it
-            </div>
-            <div className="rounded-lg border bg-background p-4">
-              <div className="flex items-center gap-2">
-                <span className="font-display text-xl font-bold text-primary">
-                  SOG
-                </span>
-                <span className="text-lg font-semibold">Sogverse</span>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <div className="text-[11px] text-muted-foreground">
-              The main header — badge plus the mark&rsquo;s own lettering
-            </div>
-            <div className="rounded-lg border bg-background p-4">
-              {/* The signed-out header's composition, mirrored: the badge at
-                  its wide height beside `SogWordmark` at 15px. Not a link here,
-                  matching /select-profile, where the mark is deliberately
-                  non-clickable so nobody is yanked out of the picker. */}
-              <span className="flex items-center gap-2">
-                <Image
-                  src={sogLogoSimple}
-                  alt=""
-                  width={379}
-                  height={207.5}
-                  className="h-11 w-auto"
-                  unoptimized
-                />
-                <SogWordmark height={15} className="text-foreground" />
-              </span>
-            </div>
-          </div>
-        </div>
-        <Caption>
-          Not a typeface question — and answering it with the drawn mark removes
-          one of the six Press Start 2P sites outright.
-        </Caption>
-
-        <Ruling>
-          Profile-select — replace the typed stand-in with the header&rsquo;s
-          real mark, non-clickable as today, or keep the stand-in. (recommended:
-          replace)
-        </Ruling>
-
-        <Links>
-          <DeckLink href="/select-profile">The profile picker</DeckLink>
-        </Links>
-      </Slide>
-
-      {/* ----------------------------------------------------------- 6 */}
+      {/* Slide count note: the profile-select slide that sat here is settled
+          (owner, 2026-09-01 — the drawn mark replaces the typed stand-in) and
+          was dropped from the deck; the swap itself is a wiring item. */}
       <Slide id="site-call-ended">
         <Stack settings={CALL_ENDED_SETTINGS} lines={HOME_HERO_LINES} />
         <Caption>
@@ -1094,7 +1040,7 @@ export default function DesignPassTypographyPage() {
         </Ruling>
       </Slide>
 
-      {/* ----------------------------------------------------------- 7 */}
+      {/* ----------------------------------------------------------- 6 */}
       <Slide id="site-all-clear">
         <NeedsAttentionPanel products={[]} />
 
@@ -1105,8 +1051,9 @@ export default function DesignPassTypographyPage() {
         </Caption>
 
         <Ruling>
-          Admin all-clear — retire the title and the sprite together, or re-set
-          the title in Space Mono beside it. (recommended: Space Mono)
+          Admin all-clear — keep the pixel title and sprite as they are, retire
+          the pair together, or re-set the title in Space Mono beside the
+          sprite.
         </Ruling>
 
         <Links>
@@ -1116,7 +1063,7 @@ export default function DesignPassTypographyPage() {
         </Links>
       </Slide>
 
-      {/* ----------------------------------------------------------- 8 */}
+      {/* ----------------------------------------------------------- 7 */}
       <Slide id="tracking">
         <Pair settings={TRACKING_HERO} lines={["Quality Time"]} />
         <Pair settings={TRACKING_CARD} lines={["Quality Time"]} />
@@ -1133,7 +1080,7 @@ export default function DesignPassTypographyPage() {
         </Ruling>
       </Slide>
 
-      {/* ----------------------------------------------------------- 9 */}
+      {/* ----------------------------------------------------------- 8 */}
       <Slide id="greeting-size">
         <div className="space-y-3">
           <Marker>At the floor — a 360px phone gives this page 312px</Marker>
@@ -1194,7 +1141,7 @@ export default function DesignPassTypographyPage() {
         </Links>
       </Slide>
 
-      {/* ---------------------------------------------------------- 10 */}
+      {/* ----------------------------------------------------------- 9 */}
       <Slide id="cta-type">
         <div className="overflow-x-auto">
           <div className="grid min-w-[36rem] grid-cols-[minmax(12rem,auto)_repeat(2,minmax(10rem,1fr))] items-center gap-x-6 gap-y-3">
@@ -1237,7 +1184,7 @@ export default function DesignPassTypographyPage() {
         </Links>
       </Slide>
 
-      {/* ---------------------------------------------------------- 11 */}
+      {/* ---------------------------------------------------------- 10 */}
       <Slide id="heading-weight">
         <Pair settings={HEADING_WEIGHT_SETTINGS} lines={HEADING_SAMPLE} />
         <Caption>
@@ -1251,7 +1198,7 @@ export default function DesignPassTypographyPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 12 */}
+      {/* ---------------------------------------------------------- 11 */}
       <Slide id="world-voice">
         <Candidate
           title="Voice-room zone list"
@@ -1297,7 +1244,7 @@ export default function DesignPassTypographyPage() {
         </Links>
       </Slide>
 
-      {/* ---------------------------------------------------------- 13 */}
+      {/* ---------------------------------------------------------- 12 */}
       <Slide id="mono-reach">
         <Candidate
           title="Badge labels"
@@ -1368,7 +1315,7 @@ export default function DesignPassTypographyPage() {
         </Ruling>
       </Slide>
 
-      {/* ---------------------------------------------------------- 14 */}
+      {/* ---------------------------------------------------------- 13 */}
       <Slide id="recap">
         <ol className="max-w-prose list-decimal space-y-1.5 pl-5 text-sm text-foreground">
           <li>Dancing Script — log the signature exception, or replace it.</li>
@@ -1377,13 +1324,15 @@ export default function DesignPassTypographyPage() {
             keep it parked.
           </li>
           <li>Home hero — Poppins at the Guidebook&rsquo;s H1, or name another.</li>
-          <li>Gamer greeting — Space Mono as drafted, or Poppins.</li>
+          <li>
+            Gamer greeting — keep Press Start 2P, Space Mono as drafted, or
+            Poppins.
+          </li>
           <li>/roblox hero — Poppins, gated on the partner review.</li>
-          <li>Profile-select — the real mark, or the typed stand-in.</li>
           <li>Call-ended screen — Poppins, or Space Mono.</li>
           <li>
-            Admin all-clear — retire the title and sprite, or re-set the title in
-            Space Mono.
+            Admin all-clear — keep the pixel pair, retire it, or re-set the
+            title in Space Mono.
           </li>
           <li>
             <code>tracking-tight</code> — drop it wherever a replacement is

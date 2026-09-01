@@ -186,6 +186,42 @@ Owner direction (2026-08-31), added during implementation:
     facts: progress, achievement, presence, liveness), and free colour (decoration,
     identity, marketing) is spent preferentially on the under-represented families —
     when colour is free, pick the family the surface hears least.
+22. **The first typography ruling batch** (owner, 2026-09-01, from the typography deck):
+    - **Dancing Script is sanctioned, signature-only.** Wiring logs it in the deviations
+      file as an owner-approved exception scoped to signature lines and nothing else.
+    - **Crimson Pro is placed for editorial moments**, starting with /about's Princi-Pal
+      pull quote (upright, one step larger than the sans it replaces — the deck's
+      treatment). It becomes a loaded face at wiring time, on the same `next/font`
+      rules as the others.
+    - **CTA type follows the Guidebook**: A.3's CTA row is Poppins 16px / SemiBold 600 /
+      line-height 1 — adopted; the one-line change in the shared button recipe carries it
+      product-wide.
+    - **Heading weight is SemiBold 600** per the Guidebook's scale, replacing the habitual
+      700 across the app's headings.
+    - **The world-voice recommendations are adopted**: the voice-room zone names and
+      /select-profile's "Who is entering Sogverse?" go Space Mono; the public-page lore
+      stays Poppins as marketing copy.
+    - **Space Mono's reach is decided, not parked** (the owner rejected the park): beyond
+      the world-voice census above, everything stays Poppins — role badge labels, the
+      dashboard section headings, and the dashboard section pill. The pill was ruled on
+      the owner's direct question ("space is very limited there on mobile"): it keeps
+      Poppins at its current small type, because the mono's fixed 0.6em advance and the
+      Guidebook pill spec's bold caps both spend width exactly where the bar has none —
+      it horizontally scrolls on phones already — and the parent dashboard's pills are
+      children's *names*, user content that must not be re-cased or widened.
+    - **The profile-select mark is settled and dropped from the review**: the typed
+      Press Start 2P "SOG" stand-in (still live on dev — checked 2026-09-01) is replaced
+      by the header's drawn mark at wiring, non-clickable as today. Not a typeface
+      decision; its deck slide is deleted.
+    - **Press Start 2P's retirement is reopened — direction 20 is amended, not
+      executed.** The owner is torn: "none of these fonts really give it the uniqueness
+      it deserves." What stands regardless of the outcome: the marketing-voice sites
+      (home hero, /roblox, call-ended screen) leave the face on voice grounds, and
+      profile-select is settled by artwork — so the live question is only the two
+      in-world playful sites, the gamer greeting and the admin all-clear (keep under the
+      standing rare-use exception, or convert). **All current Press Start 2P sites
+      convert together in one wiring change once this is ruled** — no piecemeal
+      conversion. Until the ruling, `--font-display` and the face's load stay.
 
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
