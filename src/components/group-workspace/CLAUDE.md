@@ -48,6 +48,14 @@ ban, and the ESLint config says so.
 ## What lives here
 
 - **`GroupWorkspace.tsx`** — the body, and the props every shell fills.
+
+  **Rule: the body owns the one per-member dialog, because more than one thing
+  opens it.** Every roster row's button opens it, and so does every name in the
+  final session's creations block down in the feed. A page can only ever have
+  one open, so what the body holds is *which member* — an id, never a copy of
+  their values — and both callers ask it to change. Holding that state in either
+  of the two surfaces would mean two dialogs with two drafts for one question,
+  and the two would be free to disagree about what is stored.
 - **`ParticipantRosterRow.tsx`** — one seat on the rail's roster: identity, age, contact,
   game account editor, and the per-member flair (newcomer badge, and the button that opens
   that member's dialog).
@@ -157,9 +165,11 @@ ban, and the ESLint config says so.
   run's final session is owed creations comes from the product's flag, the schedule's last
   occurrence on or before the end date, and that map — all of which the shared body
   already holds. A copy in each shell would be a second place for a gedu and an admin to
-  disagree about whether the last session of a term is finished. The same value feeds the
-  session feed's completeness and the roster's per-row marker, so a row can never be
-  marked while the card beside it reads finished.
+  disagree about whether the last session of a term is finished. The same value feeds
+  three things — the session feed's completeness, the block on the final session's own
+  card, and the roster's per-row marker — so a row can never be marked while the card
+  beside it reads finished, and the card can never name somebody the rail leaves
+  unmarked.
 - **`types.ts` / `roster-helpers.tsx`** — the roster row alias and the two questions every
   roster consumer has to answer identically (which address, which game account).
 - **`BackLink.tsx`** — the workspace's default back link, which is the gedu shell's.

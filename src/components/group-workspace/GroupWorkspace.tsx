@@ -435,6 +435,20 @@ export function GroupWorkspace({
   const timeZone = useTimezone();
   const now = useNow();
 
+  /**
+   * Whose per-gamer dialog is open — an id, not the values themselves, so the
+   * dialog always shows what the records currently hold rather than a copy taken
+   * when it opened.
+   *
+   * **It lives on the page rather than on the rail card, because two places now
+   * route into one dialog**: every roster row's button, and every chip in the
+   * final session's creations block down in the feed. One open dialog is all
+   * this page can ever have, so holding the id anywhere lower would mean a
+   * second dialog with a second draft and a second parser for the one the
+   * reader would then have two ways to open.
+   */
+  const [openFor, setOpenFor] = useState<string | null>(null);
+
   const productName =
     resolveTranslation(data.product.translations, uiLocale)?.name ?? "";
 
@@ -458,6 +472,21 @@ export function GroupWorkspace({
   const voiceState = useMemo(
     () => computeVoiceState({ product: data.product, now, locale, timeZone }),
     [data.product, now, locale, timeZone],
+  );
+
+  /**
+   * The member the open dialog is about, found in this group's roster — the
+   * only roster on the page that carries one, and the only set of people either
+   * of the two ways in can name.
+   */
+  const openMember = useMemo(
+    () =>
+      openFor === null
+        ? null
+        : (assignedGroup?.roster?.find(
+            (member) => member.participant_id === openFor,
+          ) ?? null),
+    [assignedGroup, openFor],
   );
 
   /**
@@ -619,6 +648,7 @@ export function GroupWorkspace({
               memberFlair={memberFlair}
               creationsOwedNow={creationsOwedNow}
               creationsObligation={creationsObligation}
+              onOpenFlair={setOpenFor}
             />
           )}
 
@@ -683,6 +713,10 @@ export function GroupWorkspace({
               now={feedNow}
               roster={feedRoster}
               creations={creationsObligation}
+              // The final session's block is a route into the same dialog the
+              // rail's buttons open — one authoring surface, reached from
+              // wherever the obligation is stated.
+              onOpenMemberFlair={setOpenFor}
               sourceTimeZone={sourceTimeZone}
               editingEntryId={editingEntryId}
               onEditEntry={onEditEntry}
@@ -700,6 +734,35 @@ export function GroupWorkspace({
           )}
         </div>
       </div>
+
+      {/* One dialog for the whole page. It stays mounted with the member it was
+          opened for until the close lands, so nothing in it changes under the
+          reader on the way out — and it sits here, above both the rail and the
+          feed, because both of them open it. */}
+      <GamerFlairDialog
+        open={openFor !== null}
+        onOpenChange={(open) => {
+          if (!open) setOpenFor(null);
+        }}
+        name={openMember?.first_name ?? ""}
+        note={openFor === null ? "" : (memberFlair.notes[openFor] ?? "")}
+        lastEditedBy={
+          openFor === null ? null : (memberFlair.noteEditors[openFor] ?? null)
+        }
+        creations={
+          openFor === null
+            ? EMPTY_CREATIONS
+            : (memberFlair.creations[openFor] ?? EMPTY_CREATIONS)
+        }
+        onSaveNote={async (text) => {
+          if (openFor === null) return;
+          await memberFlair.onSaveNote(openFor, text);
+        }}
+        onSaveCreations={async (creations) => {
+          if (openFor === null) return;
+          await memberFlair.onSaveCreations(openFor, creations);
+        }}
+      />
     </div>
   );
 }
@@ -923,11 +986,12 @@ function rosterAvatarUrl(
  * right order: the Join and the copy-all row sit above the roster inside this
  * card, so the two urgent things are still the first two things.
  *
- * **It owns the one note dialog.** The button lives on a row, but the dialog does
- * not: eight rows holding eight dialogs would be eight parsers and eight drafts
- * for a surface that can only ever have one open. The card holds *which* member
- * is open instead, and the dialog reads that member's note out of the record it
- * was handed.
+ * **The dialog is not this card's, and the button on a row is not either.**
+ * Eight rows holding eight dialogs would be eight parsers and eight drafts for a
+ * surface that can only ever have one open — and the card is no longer the only
+ * way in, since the final session's creations block down in the feed opens the
+ * same dialog for the same people. So the page holds which member is open and
+ * this card asks it to change.
  */
 function GroupRailCard({
   group,
@@ -944,6 +1008,7 @@ function GroupRailCard({
   memberFlair,
   creationsOwedNow,
   creationsObligation,
+  onOpenFlair,
 }: {
   group: GeduAssignedProductGroup;
   /** The card's heading, or `undefined` for the gedu's "My Group". */
@@ -977,6 +1042,12 @@ function GroupRailCard({
   creationsOwedNow: boolean;
   /** Who already has a creation, so a row can ask whether *it* is one of them. */
   creationsObligation: CreationsObligation | null;
+  /**
+   * Open one member's per-gamer dialog. The dialog itself belongs to the page,
+   * not to this card: the final session's creations block opens the same one,
+   * and a page can only ever have one open.
+   */
+  onOpenFlair: (participantId: string) => void;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
@@ -985,16 +1056,6 @@ function GroupRailCard({
     () => deduplicateEmails(roster.map(rosterContactEmail)),
     [roster],
   );
-  /**
-   * Whose dialog is open — an id, not the values themselves, so the dialog
-   * always shows what the record currently holds rather than a copy taken when
-   * it opened.
-   */
-  const [openFor, setOpenFor] = useState<string | null>(null);
-  const openMember =
-    openFor === null
-      ? null
-      : (roster.find((member) => member.participant_id === openFor) ?? null);
 
   return (
     <RailCard
@@ -1070,38 +1131,12 @@ function GroupRailCard({
                 // about: an empty note is what the add flow opens, most of the
                 // roster is that case, and a marker that appeared only on rows
                 // that already had one would leave no way to write the first.
-                onOpenFlair={() => setOpenFor(member.participant_id)}
+                onOpenFlair={() => onOpenFlair(member.participant_id)}
               />
             ))}
           </ul>
         )}
       </div>
-
-      {/* One dialog for the whole roster. It stays mounted with the member it
-          was opened for until the close lands, so nothing in it changes under
-          the reader on the way out. */}
-      <GamerFlairDialog
-        open={openFor !== null}
-        onOpenChange={(open) => {
-          if (!open) setOpenFor(null);
-        }}
-        name={openMember?.first_name ?? ""}
-        note={openFor === null ? "" : (memberFlair.notes[openFor] ?? "")}
-        lastEditedBy={
-          openFor === null ? null : (memberFlair.noteEditors[openFor] ?? null)
-        }
-        creations={
-          openFor === null ? EMPTY_CREATIONS : (memberFlair.creations[openFor] ?? EMPTY_CREATIONS)
-        }
-        onSaveNote={async (text) => {
-          if (openFor === null) return;
-          await memberFlair.onSaveNote(openFor, text);
-        }}
-        onSaveCreations={async (creations) => {
-          if (openFor === null) return;
-          await memberFlair.onSaveCreations(openFor, creations);
-        }}
-      />
     </RailCard>
   );
 }

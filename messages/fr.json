@@ -1344,7 +1344,10 @@
     "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}.",
     "loadingPage": "Chargement des séances de ce groupe.",
     "notFoundTitle": "Rien à afficher ici",
-    "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Mon SOG rassemble toutes vos inscriptions."
+    "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Mon SOG rassemble toutes vos inscriptions.",
+    "creationsIntro": "{count, plural, one {Voici ce que {name} a créé dans ce groupe — à célébrer, et à partager.} other {Voici ce que {name} a créé dans ce groupe — à célébrer, et à partager.}}",
+    "creationsIntroSelf": "{count, plural, one {Voici ce que vous avez créé dans ce groupe — à célébrer, et à partager.} other {Voici ce que vous avez créé dans ce groupe — à célébrer, et à partager.}}",
+    "creationsIntroGamer": "{count, plural, one {Voici ce que tu as créé dans ce groupe — à célébrer, et à partager.} other {Voici ce que tu as créé dans ce groupe — à célébrer, et à partager.}}"
   },
   "selectProfile": {
     "title": "Qui entre dans Sogverse ?"
@@ -1454,7 +1457,12 @@
       "photoErrorCapReached": "Ce compte rendu est déjà complet. Supprimez une photo pour en ajouter une autre.",
       "photoErrorNotAllowed": "Vous ne pouvez pas ajouter de photos à cette séance.",
       "photoErrorUploadFailed": "Cette photo n’a pas été envoyée. Réessayez.",
-      "photoErrorRemoveFailed": "Cette photo n’a pas pu être supprimée. Elle est toujours sur le compte rendu : réessayez."
+      "photoErrorRemoveFailed": "Cette photo n’a pas pu être supprimée. Elle est toujours sur le compte rendu : réessayez.",
+      "creationsTitle": "Créations",
+      "creationsAddedCount": "{added} sur {total} ajoutées",
+      "creationsHint": "C’est la dernière séance du cycle, et elle n’est terminée que lorsque chacun a une création. Ouvrez un nom pour en ajouter une.",
+      "creationsMemberDone": "{name} — création ajoutée",
+      "creationsMemberMissing": "{name} — création manquante"
     },
     "groupNotes": {
       "heading": "À propos du groupe",

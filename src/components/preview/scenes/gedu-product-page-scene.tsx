@@ -56,10 +56,18 @@ import type {
  * shape here is that — giving one of them an ended run would cost it the thing
  * it exists to show. On that page the last card reads needs-attention with every
  * ordinary obligation discharged, its timeline marker takes the warning tone,
- * and the two members still owing wear it on their roster buttons. Those buttons
- * open the same dialog every other row's does, which is the point: supplying the
- * creation from there clears the row, and clearing the last one turns the card
+ * the card itself lists the roster and marks the two it is waiting on, and those
+ * two wear the same tone on their roster buttons. Every one of those opens the
+ * same dialog every other row's does, which is the point: supplying the creation
+ * from either place clears the row, and clearing the last one turns the card
  * green while you watch.
+ *
+ * **The camp is the same block a month earlier.** It is flagged too, with a run
+ * that has not finished, so the last day of it — the top of the future block,
+ * behind the divider's reveal — carries the creations block informationally:
+ * nought of nine, nothing owed, and every name already a way in to the dialog.
+ * That is the half of the signal a finished run cannot show, and it is why the
+ * block is not gated on the session having ended.
  *
  * **The camp is where the two marks come apart**: notes on its rows and no badge
  * on any of them, which is the clubs-only badge rule beside a note that has no

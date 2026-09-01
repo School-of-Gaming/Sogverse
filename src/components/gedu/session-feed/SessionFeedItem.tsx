@@ -27,6 +27,10 @@ import {
   type SessionCompleteness,
 } from "./entry-state";
 import type { SessionReportSendResult } from "./send-report";
+import {
+  SessionCreationsBlock,
+  type SessionCreationsState,
+} from "./SessionCreationsBlock";
 import { SessionPhotoStrip } from "./SessionPhotoStrip";
 import type { SessionPhotoEditing } from "./staged-photos";
 import { SessionPlanEditor } from "./SessionPlanEditor";
@@ -114,6 +118,17 @@ interface SessionFeedItemProps {
    */
   photoEditing: SessionPhotoEditing;
   /**
+   * What this session owes in creations, or `null` — which is every entry but
+   * one, on every product but a flagged one.
+   *
+   * Only a flagged run's **final** session is ever handed this, and the feed is
+   * what decides that: it holds the obligation, so a card never has to work out
+   * whether it is the last one. Its `owed` half is read off the same derivation
+   * as the header's needs-attention line, which is why the two can never
+   * disagree.
+   */
+  creations: SessionCreationsState | null;
+  /**
    * Hand the Edit button up to the feed as it mounts.
    *
    * The feed is what shuts this editor — on cancel, and on a save that has
@@ -180,6 +195,15 @@ interface SessionFeedItemProps {
  * that text, to those families, and a control in the corner would have been
  * one more thing in the row that already carries the state and the editor.
  *
+ * **One card of a flagged run carries a fourth obligation, and it carries the
+ * means to discharge it.** The final session's card draws the creations block
+ * under its register, in the collapsed state and in the open editor alike, so a
+ * gedu who opens the session to fix what it is flagged for finds out who it is
+ * waiting on and gets to that member's dialog from there. It renders before the
+ * run ends as well as after — informational then, warning-toned once the session
+ * has ended owing something — because work that only announces itself after the
+ * last chance to do it has passed is a complaint rather than a queue.
+ *
  * **The report counts as owed work, and that reverses an earlier call.** A
  * marked-off session with nothing written used to be deliberately silent, on the
  * argument that the report was optional and a badge would nag for work nobody
@@ -242,6 +266,7 @@ export function SessionFeedItem({
   sendError,
   onSendReport,
   photoEditing,
+  creations,
   registerEditButton,
   onToggleEdit,
   onCancelEdit,
@@ -298,6 +323,29 @@ export function SessionFeedItem({
     />
   );
 
+  /**
+   * The creations block, or `null` on every card that is not a flagged run's
+   * last one.
+   *
+   * **Built twice, in two states of one component**, because the card and the
+   * open editor are two sibling regions and only one of them is on screen at a
+   * time — exactly the arrangement the attendance summary and the attendance
+   * roster already have. The editor's copy greys with the save; the card's has
+   * no save to grey with. Building it here rather than in either place is what
+   * keeps the two saying the same thing in the same slot, which is the rule the
+   * whole card is arranged around.
+   */
+  const creationsBlock = (inEditor: boolean) =>
+    creations === null ? null : (
+      <SessionCreationsBlock
+        roster={roster}
+        withCreations={creations.withCreations}
+        owed={creations.owed}
+        disabled={inEditor && committing}
+        onOpenMember={creations.onOpenMember}
+      />
+    );
+
   const recordEditor = recordable && (
     <CollapsibleRegion open={editing} instant id={editorId}>
       <SessionRecordEditor
@@ -307,6 +355,7 @@ export function SessionFeedItem({
         committing={committing}
         error={saveError}
         photoStrip={photoStrip}
+        creationsBlock={creationsBlock(true)}
         onCancel={onCancelEdit}
         onSave={onSave}
       />
@@ -467,6 +516,7 @@ export function SessionFeedItem({
           live={live}
           clampReport={clampReport}
           reportAction={reportSend}
+          creationsBlock={creationsBlock(false)}
         />
       </CollapsibleRegion>
 
@@ -480,6 +530,7 @@ export function SessionFeedItem({
             committing={committing}
             error={saveError}
             photoStrip={photoStrip}
+            creationsBlock={creationsBlock(true)}
             onCancel={onCancelEdit}
             onSave={onSave}
           />
@@ -546,6 +597,7 @@ function SessionEntryBody({
   live,
   clampReport,
   reportAction,
+  creationsBlock,
 }: {
   entry: SessionFeedEntry;
   roster: readonly SessionFeedGamer[];
@@ -558,6 +610,13 @@ function SessionEntryBody({
    * send about a session that has not happened.
    */
   reportAction: ReactNode;
+  /**
+   * The creations block, in the same slot the open editor gives it — under the
+   * register and above the report — so the collapsed card and the expanded one
+   * say the same things in the same sequence. `null` on every card but a
+   * flagged run's last.
+   */
+  creationsBlock: ReactNode;
 }) {
   const t = useTranslations("gedu.sessionFeed");
 
@@ -600,6 +659,7 @@ function SessionEntryBody({
           {showAttendance && (
             <AttendanceSummary roster={roster} attendance={marks} />
           )}
+          {creationsBlock}
           <WrittenFields entry={entry} clampReport={clampReport} />
           {/* A future session with nothing on it still needs a line, or the
               card is a bare date with no reason to exist on the page. It stays
@@ -626,6 +686,7 @@ function SessionEntryBody({
       return (
         <div className="space-y-3 pb-1 pt-3">
           <AttendanceSummary roster={roster} attendance={entry.attendance} />
+          {creationsBlock}
           <WrittenFields
             entry={entry}
             clampReport={clampReport}

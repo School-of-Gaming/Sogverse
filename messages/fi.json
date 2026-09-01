@@ -1344,7 +1344,10 @@
     "cancellationNoticeNoSession": "Peruit tämän jäsenyyden – se ei uusiudu. Käyttöoikeus jatkuu {date} asti.",
     "loadingPage": "Ladataan tämän ryhmän kertoja.",
     "notFoundTitle": "Täällä ei ole näytettävää",
-    "notFoundBody": "Tätä sivua ei voitu avata. Omasta SOGista löydät kaiken, mihin olet ilmoittautunut."
+    "notFoundBody": "Tätä sivua ei voitu avata. Omasta SOGista löydät kaiken, mihin olet ilmoittautunut.",
+    "creationsIntro": "{count, plural, one {Tämän {name} on tehnyt ryhmässä – sitä saa juhlia ja jakaa.} other {Nämä {name} on tehnyt ryhmässä – niitä saa juhlia ja jakaa.}}",
+    "creationsIntroSelf": "{count, plural, one {Tämän olet tehnyt ryhmässä – sitä saa juhlia ja jakaa.} other {Nämä olet tehnyt ryhmässä – niitä saa juhlia ja jakaa.}}",
+    "creationsIntroGamer": "{count, plural, one {Tämän olet tehnyt ryhmässä – sitä saa juhlia ja jakaa.} other {Nämä olet tehnyt ryhmässä – niitä saa juhlia ja jakaa.}}"
   },
   "selectProfile": {
     "title": "Kuka astuu Sogverseen?"
@@ -1454,7 +1457,12 @@
       "photoErrorCapReached": "Tämä raportti on jo täynnä. Poista kuva, jotta voit lisätä uuden.",
       "photoErrorNotAllowed": "Et voi lisätä kuvia tähän kertaan.",
       "photoErrorUploadFailed": "Kuvan lataus ei onnistunut. Yritä uudelleen.",
-      "photoErrorRemoveFailed": "Kuvan poistaminen ei onnistunut. Kuva on yhä raportissa — yritä uudelleen."
+      "photoErrorRemoveFailed": "Kuvan poistaminen ei onnistunut. Kuva on yhä raportissa — yritä uudelleen.",
+      "creationsTitle": "Teokset",
+      "creationsAddedCount": "{added}/{total} lisätty",
+      "creationsHint": "Kauden viimeinen kerta on valmis vasta, kun jokaisella on teos. Avaa nimi ja lisää teos.",
+      "creationsMemberDone": "{name} – teos lisätty",
+      "creationsMemberMissing": "{name} – teos puuttuu"
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",

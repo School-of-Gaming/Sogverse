@@ -133,9 +133,28 @@ ride the owed pattern the other three already have rather than inventing a
 second one, and the badge's unit is unchanged — the final session simply has one
 more way to need attention, never a second entry in the count. An open-ended
 product has no final session and therefore never owes; that is documented
-behaviour, not an error. What the session pattern *cannot* say is which members
-are missing, because that is per-member data: the roster answers it, on the same
-page, routing to the same dialog.
+behaviour, not an error.
+
+**Rule: a card that flags work states what the work is and offers the way to do
+it — the fourth obligation is itemized on the card itself.** The other three are
+provided from the session surface: the register in the editor, the write-up in
+the editor, the send under the report. A fourth that could only be *diagnosed*
+from a rail card elsewhere on the page left a gedu opening the editor, finding
+every field full, and having nothing to fix. So the final session's card carries
+the roster with each member marked done or still wanted, and each name opens
+that member's per-gamer dialog — the one authoring surface, reached from the
+place the obligation is stated rather than duplicated at it. The roster's own
+per-row marker stays: it answers the same question from the other end of the
+page, off the same derivation, so the two can never disagree.
+
+**Rule: that block renders from the day the final session is scheduled, not from
+the moment it is owed.** Before the session ends it is informational — this is
+the last session, here is what it will want — and it takes the warning tone
+exactly when the card's needs-attention line fires. Work that only announces
+itself after the last chance to do it has passed is a complaint rather than a
+queue. **Nothing about the completeness derivation moved with it**: what is
+*owed* still flips at the final session's end instant like every other thing a
+session owes, and only the block's rendering runs ahead of it.
 
 **Rule: the send is asked of *owed* sessions only, and the other two are asked
 of every past one.** What is owed is dated from the recording epoch, and the

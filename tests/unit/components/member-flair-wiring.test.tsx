@@ -16,7 +16,10 @@ import { GeduProductPage } from "@/components/gedu/session-details/GeduProductPa
 // below drives it over a fake transport so the error the dialog meets is the one
 // supabase-js actually builds.
 import { MemberFlairService } from "@/services/member-flair/member-flair.service";
-import type { PastSessionFeedEntry } from "@/components/gedu/session-feed";
+import type {
+  FutureSessionFeedEntry,
+  PastSessionFeedEntry,
+} from "@/components/gedu/session-feed";
 import type { GeduGroupFeed } from "@/services/gedu-sessions";
 import type { GeduAssignedProduct, ProductType } from "@/types";
 import {
@@ -792,6 +795,11 @@ function finalSessionEntry(): PastSessionFeedEntry {
  */
 function renderEndedRun(
   overrides: Partial<GeduAssignedProduct["product"]>,
+  /**
+   * Earlier sessions of the same run, for the one claim that needs more than
+   * one card on the page: only the *final* session carries the creations block.
+   */
+  earlierSessions: readonly PastSessionFeedEntry[] = [],
 ): ReturnType<typeof render> {
   const product = assignedProduct("consumer_club");
   reads.product = {
@@ -805,7 +813,7 @@ function renderEndedRun(
     },
   };
   reads.feed = groupFeed("consumer_club");
-  feedEntries.value = [finalSessionEntry()];
+  feedEntries.value = [finalSessionEntry(), ...earlierSessions];
 
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -875,5 +883,170 @@ describe("gedu product page — the owed-creation marker", () => {
     renderEndedRun({ requires_gamer_creations: true, end_date: null });
 
     expect(owedButton("Siiri")).toBeNull();
+  });
+});
+
+/**
+ * ============================================================================
+ * The creations block on the final session's own card.
+ * ============================================================================
+ *
+ * The roster's marker answers *who*; this answers it in the one place a gedu
+ * who opened the session to fix what it is flagged for is actually looking.
+ * That was the whole of the owner's complaint: the last card of a flagged run
+ * went amber for a reason the card itself could not state, and the editor
+ * underneath it showed a full register and a written report with nothing left
+ * to do.
+ *
+ * Four things are asserted here and each is a way the block could be built and
+ * still be useless. It has to be on the **final** session and no other; it has
+ * to render **before** that session ends, quietly, which is the half that makes
+ * the work findable in time; it has to take the warning tone at the moment the
+ * card's own header does; and every name on it has to reach the same dialog the
+ * roster's button opens, because a signal that cannot be acted on is the thing
+ * being fixed.
+ */
+
+/** The Monday after this file's `NOW` — a final session still ahead of us. */
+const UPCOMING_END_DATE = "2026-03-23";
+
+/** That session, with nothing recorded on it: the run has not got there yet. */
+function upcomingFinalSessionEntry(): FutureSessionFeedEntry {
+  return {
+    kind: "future",
+    id: `${IDS.group}:${UPCOMING_END_DATE}`,
+    startsAt: new Date("2026-03-23T14:30:00.000Z"),
+    endsAt: new Date("2026-03-23T16:00:00.000Z"),
+    report: null,
+    staffNote: null,
+    attendance: {},
+    images: [],
+    lastEditedBy: null,
+  };
+}
+
+/** The same page with a flagged run whose last session has not happened yet. */
+function renderUpcomingRun(): ReturnType<typeof render> {
+  const product = assignedProduct("consumer_club");
+  reads.product = {
+    ...product,
+    product: {
+      ...product.product,
+      start_date: "2026-01-05",
+      end_date: UPCOMING_END_DATE,
+      schedule_slots: MONDAY_SLOTS,
+      requires_gamer_creations: true,
+    },
+  };
+  reads.feed = groupFeed("consumer_club");
+  feedEntries.value = [upcomingFinalSessionEntry()];
+
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <TimezoneProvider initialTimezone="Europe/Helsinki">
+        <NowProvider initialNow={NOW}>
+          <GeduProductPage productId={IDS.product} />
+        </NowProvider>
+      </TimezoneProvider>
+    </NextIntlClientProvider>,
+  );
+}
+
+/**
+ * The block's chips for one member.
+ *
+ * There are two of every chip and that is by construction rather than a bug:
+ * the collapsed card and the card's editor are sibling regions that both draw
+ * the block, exactly as they both draw the register, and only one of them is
+ * ever on screen.
+ */
+function creationChips(firstName: string, missing: boolean): HTMLElement[] {
+  return screen.queryAllByRole("button", {
+    name: missing
+      ? `${firstName} — creation still needed`
+      : `${firstName} — creation added`,
+  });
+}
+
+/** Whether a chip is wearing the owed tone rather than the informational one. */
+function isWarningToned(chip: HTMLElement): boolean {
+  return chip.className.includes("text-warning");
+}
+
+describe("gedu product page — the final session's creations block", () => {
+  it("names who is missing, and marks the one who is done as done", () => {
+    renderEndedRun({ requires_gamer_creations: true });
+
+    // The itemization, on the card rather than only in the rail: two waiting,
+    // one already in, and a count that says so without needing the colour.
+    expect(creationChips("Siiri", true).length).toBeGreaterThan(0);
+    expect(creationChips("Emil", true).length).toBeGreaterThan(0);
+    expect(creationChips("Oskar", false).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1 of 3 added").length).toBeGreaterThan(0);
+  });
+
+  it("takes the warning tone once the session has ended owing something", () => {
+    renderEndedRun({ requires_gamer_creations: true });
+
+    for (const chip of creationChips("Siiri", true)) {
+      expect(isWarningToned(chip)).toBe(true);
+    }
+  });
+
+  it("renders before the run ends, and stays quiet there", () => {
+    // The answer to "it only turns yellow after the final session ends": the
+    // block is on that card from the day the session is scheduled, so the work
+    // is findable while there is still time to do it. Nothing is owed yet, so
+    // nothing is amber.
+    renderUpcomingRun();
+
+    const chips = creationChips("Siiri", true);
+    expect(chips.length).toBeGreaterThan(0);
+    for (const chip of chips) expect(isWarningToned(chip)).toBe(false);
+    // Oskar's creation is already in — the same roster the owed case reads —
+    // so the count is the same on both sides of the session's end. What
+    // changes is only whether it is anybody's problem yet.
+    expect(screen.getAllByText("1 of 3 added").length).toBeGreaterThan(0);
+  });
+
+  it("opens the same dialog the roster's button opens", () => {
+    renderEndedRun({ requires_gamer_creations: true });
+    fireEvent.click(creationChips("Siiri", true)[0]);
+
+    // One authoring surface: the block is a route into the per-gamer dialog,
+    // never a second editor beside it.
+    expect(
+      flairDialog().getByRole("heading", { name: "About Siiri" }),
+    ).toBeTruthy();
+  });
+
+  it("is absent on the same finished run with the flag off", () => {
+    renderEndedRun({ requires_gamer_creations: false });
+
+    expect(creationChips("Siiri", true)).toHaveLength(0);
+    expect(creationChips("Oskar", false)).toHaveLength(0);
+  });
+
+  it("is absent on a flagged run with no final session to hang it on", () => {
+    // An open-ended product can be flagged and simply never owes, so there is
+    // no session for the block to be about either.
+    renderEndedRun({ requires_gamer_creations: true, end_date: null });
+
+    expect(creationChips("Siiri", true)).toHaveLength(0);
+  });
+
+  it("stays on the final session when the run has other sessions too", () => {
+    // Exactly one card of a run may carry it, however many cards there are —
+    // otherwise a fifty-week club would repeat the same obligation fifty times.
+    const earlier: PastSessionFeedEntry = {
+      ...finalSessionEntry(),
+      id: `${IDS.group}:2026-03-02`,
+      startsAt: new Date("2026-03-02T14:30:00.000Z"),
+      endsAt: new Date("2026-03-02T16:00:00.000Z"),
+    };
+    renderEndedRun({ requires_gamer_creations: true }, [earlier]);
+
+    // One card, drawing the block in both of its two regions.
+    expect(screen.getAllByText("1 of 3 added")).toHaveLength(2);
   });
 });

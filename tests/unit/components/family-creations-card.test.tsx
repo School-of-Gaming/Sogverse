@@ -2,6 +2,10 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import fi from "@/../messages/fi.json";
+import sv from "@/../messages/sv.json";
+import fr from "@/../messages/fr.json";
+import tlh from "@/../messages/tlh.json";
 import { FamilyCreationsCard } from "@/components/family/product-page/FamilyCreationsCard";
 import {
   FamilyProductPageBody,
@@ -28,8 +32,10 @@ import { TimezoneProvider } from "@/providers/timezone-provider";
  *     being stored XSS. The degrade is to a label, never to an anchor with
  *     nowhere to go — a blank `href` resolves to the current page.
  *
- * The card carries one copy for every audience, so there is nothing here keyed
- * to who is reading; the body decides nothing about it either way.
+ * A third rule joined them, and it is the only thing on this card keyed to who
+ * is reading: **the line under the heading names the maker, and never names the
+ * reader at themselves.** A parent is told what their child made; the child and
+ * a parent in a seat of their own are told the same thing in the second person.
  */
 
 const NEW_TAB = messages.familyProduct.creationOpensInNewTab;
@@ -58,10 +64,17 @@ function linkName(title: string): string {
   return `${title}${NEW_TAB}`;
 }
 
-function renderCard(creations: readonly FamilyCreation[]) {
+function renderCard(
+  creations: readonly FamilyCreation[],
+  audience: FamilyProductPageAudience = "customer",
+) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <FamilyCreationsCard creations={creations} />
+      <FamilyCreationsCard
+        creations={creations}
+        audience={audience}
+        name="Aino"
+      />
     </NextIntlClientProvider>,
   );
 }
@@ -109,6 +122,68 @@ describe("the heading", () => {
     const heading = messages.familyProduct.creationsHeading;
     expect(heading).toContain(`one {${HEADING_ONE}}`);
     expect(heading).toContain(`other {${HEADING_MANY}}`);
+  });
+});
+
+/**
+ * The line under the heading, in the three forms it has. Spelled out rather
+ * than formatted through the ICU machinery, so a copy edit fails loudly instead
+ * of quietly matching nothing.
+ */
+const INTRO_PARENT =
+  "Something Aino made in this group — worth celebrating, and worth sharing.";
+const INTRO_SECOND_PERSON =
+  "Something you made in this group — worth celebrating, and worth sharing.";
+
+describe("the line under the heading", () => {
+  it("tells a parent what their child made, by name", () => {
+    const { queryByText } = renderCard(
+      [{ title: "The castle gate", url: "https://example.com/castle" }],
+      "customer",
+    );
+    expect(queryByText(INTRO_PARENT)).not.toBeNull();
+  });
+
+  for (const audience of ["self", "gamer"] as const) {
+    it(`speaks to the ${audience} audience in the second person, never at them by name`, () => {
+      // A page that says "something Aino made" to Aino reads as a page about
+      // somebody else who shares her name — the same rule the masthead's
+      // attribution follows.
+      const { container, queryByText } = renderCard(
+        [{ title: "The castle gate", url: "https://example.com/castle" }],
+        audience,
+      );
+      expect(queryByText(INTRO_SECOND_PERSON)).not.toBeNull();
+      expect(container.textContent).not.toContain("Aino");
+    });
+  }
+
+  it("carries no line at all when there is no card", () => {
+    const { queryByText } = renderCard([], "customer");
+    expect(queryByText(INTRO_PARENT)).toBeNull();
+  });
+
+  it("names somebody on the parent's line and on no other, in every locale", () => {
+    // The three-way split exists *because* of the name: a second-person line
+    // that acquired one would be naming the reader at themselves, which is the
+    // exact thing the self variant was added to prevent — and it is a mistake a
+    // translator makes rather than a compiler catches. Every locale is checked
+    // because only English is ever read in a test that renders.
+    for (const catalog of [messages, fi, sv, fr, tlh]) {
+      expect(catalog.familyProduct.creationsIntro).toContain("{name}");
+      expect(catalog.familyProduct.creationsIntroSelf).not.toContain("{name}");
+      expect(catalog.familyProduct.creationsIntroGamer).not.toContain("{name}");
+      // Pluralized against the count on both branches, like the heading above
+      // it: the editor authors one, and the wire shape still allows a list.
+      for (const line of [
+        catalog.familyProduct.creationsIntro,
+        catalog.familyProduct.creationsIntroSelf,
+        catalog.familyProduct.creationsIntroGamer,
+      ]) {
+        expect(line).toContain("{count, plural,");
+        expect(line).toContain("other {");
+      }
+    }
   });
 });
 
@@ -252,9 +327,10 @@ describe("on the family product page", () => {
   ];
 
   for (const audience of AUDIENCES) {
-    it(`shows the card, in the same words, to the ${audience} audience`, () => {
+    it(`shows the card, under one heading, to the ${audience} audience`, () => {
       // The gamer revisiting their own work is a design goal, not a leftover:
-      // one card, one heading, no copy keyed to who is reading.
+      // one card and one heading, whoever is reading. Only the line under that
+      // heading changes, and it is asserted on its own above.
       const { getByRole, queryByText } = renderPage(audience, CREATIONS);
       expect(queryByText(HEADING_ONE)).not.toBeNull();
       expect(

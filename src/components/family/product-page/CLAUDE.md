@@ -152,7 +152,7 @@ rather than the stored string, and the degrade is to a label rather than to an a
 a blank `href`, which is not inert but resolves to the current page. The title is required
 for exactly this reason: it is what the degrade path has to say.
 
-**Rule: one copy, for all three audiences.** The heading is the bare noun on a parent's
+**Rule: one heading, for all three audiences.** The heading is the bare noun on a parent's
 page, on a parent's own seat and on the child's own — the same decision the gedus label
 takes, and for the same two reasons: the masthead has already said whose page this is, and
 a possessive built around a name has to inflect that name in half the locales we ship. It
@@ -161,6 +161,18 @@ one thing — which is why the noun is pluralized against the count rather than 
 plural: the staff editor authors one creation, so a fixed "Creations" over a single entry
 would be the one place those two words came apart. A gamer coming back to their own work
 is the point of the card, not a side effect of sharing a body.
+
+**Rule: the line under that heading is the one piece of copy on this card keyed to who is
+reading, and it says what a heading cannot.** A bare noun over a link is a filing label;
+what the card holds is a child's work, so one warm sentence names the maker and says it is
+worth celebrating and worth sharing. A parent is told what their child made, by name; the
+child, and a parent in a seat of their own, are told the same thing in the **second
+person** — a page that says "something Sanna made" to Sanna reads as a page about a
+stranger who shares her name, which is the rule the masthead's attribution already
+follows. Three variants rather than two, because French addresses a child and an adult
+differently and one second-person string cannot serve both. **The name is only ever a
+nominative subject**, like every name-carrying string on this page: nothing is possessed,
+declined or suffixed, so no locale has to inflect a name it has never seen.
 
 ## Membership grants the group's history
 

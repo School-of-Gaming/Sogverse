@@ -76,16 +76,48 @@ describe("every workspace scenario", () => {
     });
   }
 
-  it("flags exactly one product as requiring creations", () => {
-    // The flag and a finished run travel together, and only one scenario is
-    // that shape. A second flagged scenario would mean somebody had turned the
-    // signal on somewhere it cannot fire.
+  it("flags exactly the two products the block has tones for", () => {
+    // The session card's creations block has two states and each needs a run
+    // of its own: one still going (the camp, informational) and one finished
+    // (`owed`, amber). A third flagged scenario would be a signal turned on
+    // somewhere that shows nothing the other two do not.
     const flagged = GROUP_WORKSPACE_SCENARIOS.filter(
       (s) =>
         buildGroupWorkspaceFixture(NOW, s).data.product
           .requires_gamer_creations,
     );
-    expect(flagged).toEqual(["owed"]);
+    expect(flagged).toEqual(["camp", "owed"]);
+  });
+});
+
+describe("the camp scenario", () => {
+  const fixture = buildGroupWorkspaceFixture(NOW, "camp");
+
+  it("has a final session, and it is still ahead of now", () => {
+    // The pre-end half of the block, and the same alignment the owed scenario
+    // needs: the end date, the schedule's weekdays and the furthest-away entry
+    // all naming one day. Without it the block has no card to render on and the
+    // scenario silently shows nothing.
+    const obligation = obligationFor(fixture);
+    expect(obligation).not.toBeNull();
+    const final = fixture.entries.find(
+      (entry) => entry.id === obligation!.finalEntryId,
+    );
+    expect(final).toBeDefined();
+    expect(final!.kind).toBe("future");
+    expect(final!.endsAt.getTime()).toBeGreaterThan(NOW.getTime());
+  });
+
+  it("owes nothing yet, which is what makes the block informational", () => {
+    // Nobody has published anything and nothing is owed, because a session that
+    // has not happened cannot be behind on anything. Both halves matter: an
+    // empty roster of creations *and* a card that stays calm about it.
+    const obligation = obligationFor(fixture);
+    expect(obligation!.withCreations.size).toBe(0);
+    const final = fixture.entries.find(
+      (entry) => entry.id === obligation!.finalEntryId,
+    )!;
+    expect(entryCompleteness(final, fixture.feedRoster, obligation)).toBeNull();
   });
 });
 

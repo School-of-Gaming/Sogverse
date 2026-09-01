@@ -14,6 +14,7 @@ import {
 import { SessionFeedItem } from "./SessionFeedItem";
 import {
   entryCompleteness,
+  entryOwesCreations,
   type CreationsObligation,
   type SessionCompleteness,
 } from "./entry-state";
@@ -26,6 +27,7 @@ import {
   type StagedSessionPhoto,
   type StagedSessionPhotos,
 } from "./staged-photos";
+import type { SessionCreationsState } from "./SessionCreationsBlock";
 import type { SessionPhotoErrorCode } from "@/services/gedu-sessions";
 import {
   sessionReportSendFailure,
@@ -77,6 +79,18 @@ interface SessionFeedProps {
    * needs the product's flag and its schedule, neither of which a feed carries.
    */
   creations?: CreationsObligation | null;
+  /**
+   * Open one roster member's per-gamer dialog — how the final session's
+   * creations block reaches the one place a creation is authored.
+   *
+   * **It travels with `creations` and is useless without it**: the block is the
+   * only thing on this feed that calls it, and the block renders only where an
+   * obligation exists. A caller that derives the obligation is by construction
+   * the surface that owns the dialog, so passing one without the other is a
+   * caller mistake rather than a supported state — the block is withheld, and
+   * the card is left saying what it says today.
+   */
+  onOpenMemberFlair?: (participantId: string) => void;
   /**
    * The zone the schedule was authored in (products are authored in the club's
    * local zone). Sessions always render in the *viewer's* zone; this is only
@@ -207,6 +221,7 @@ export function SessionFeed({
   now,
   roster,
   creations = null,
+  onOpenMemberFlair,
   sourceTimeZone,
   editingEntryId,
   onEditEntry,
@@ -637,6 +652,35 @@ export function SessionFeed({
    * the quiet size on a placeholder line so the dot sits against its own text
    * rather than against a card that isn't there.
    */
+  /**
+   * What one card should say about creations, or `null` — which is every card
+   * on every ordinary product, and every card but one on a flagged one.
+   *
+   * **The obligation belongs to a single entry and the feed is what knows
+   * which**, so a card never asks whether it is the last session of the run.
+   * Two things are decided here and both matter. Whether the block renders at
+   * all is the *flag*, not the clock: a flagged run's final session carries it
+   * from the day it is scheduled, which is what makes the work findable while
+   * there is still time to do it. Whether the block is **owed** is the same
+   * test the header's amber is derived from — finished, owed at all, and
+   * somebody still missing — so the block and the line above it can never
+   * disagree about the state of one card.
+   */
+  const creationsFor = (
+    entry: SessionFeedEntry,
+  ): SessionCreationsState | null => {
+    if (creations === null || onOpenMemberFlair === undefined) return null;
+    if (creations.finalEntryId !== entry.id) return null;
+    return {
+      withCreations: creations.withCreations,
+      owed:
+        entry.kind === "past" &&
+        entry.owed &&
+        entryOwesCreations(entry, roster, creations),
+      onOpenMember: onOpenMemberFlair,
+    };
+  };
+
   const markerClass = (
     entry: SessionFeedEntry,
     { prominent }: SessionFeedRowContext,
@@ -725,6 +769,7 @@ export function SessionFeed({
               onStageRemoval: (imageId) => stageRemoval(entry.id, imageId),
               onError: setPhotoError,
             }}
+            creations={creationsFor(entry)}
             registerEditButton={(node) => {
               if (node === null) editButtons.current.delete(entry.id);
               else editButtons.current.set(entry.id, node);

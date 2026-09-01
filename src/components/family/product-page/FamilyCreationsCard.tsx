@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveWebUrl } from "@/lib/navigation/web-url";
+import type { FamilyProductPageAudience } from "./FamilyProductPageBody";
 import type { FamilyCreation } from "./types";
 
 /**
@@ -25,15 +26,33 @@ import type { FamilyCreation } from "./types";
  * the notes it would displace the standing context every page has with a card
  * most pages do not.
  *
- * **One copy for all three audiences.** The heading is the bare noun on a
- * parent's page, on a parent's own seat and on the child's own — the same
- * decision the gedus label above it takes, and for the same two reasons: the
- * masthead has already said whose page this is, and a possessive built around a
- * name has to inflect that name in half the locales we ship. It is also the
- * word the gedu who typed it sees, so a family and their gedu use one word for
- * one thing — **which is why the noun is pluralized against the count.** The
- * editor authors one creation, so a page saying "Creations" over a single entry
- * would be the one place those two words came apart.
+ * **The heading is one bare noun for all three audiences; the line under it is
+ * not.** The heading is the same word on a parent's page, on a parent's own seat
+ * and on the child's own — the same decision the gedus label above it takes, and
+ * for the same two reasons: the masthead has already said whose page this is,
+ * and a possessive built around a name has to inflect that name in half the
+ * locales we ship. It is also the word the gedu who typed it sees, so a family
+ * and their gedu use one word for one thing — **which is why the noun is
+ * pluralized against the count.** The editor authors one creation, so a page
+ * saying "Creations" over a single entry would be the one place those two words
+ * came apart.
+ *
+ * **What the heading could not do is say why the card is here** *(owner)*. A
+ * bare noun over a link is a filing label; what a parent is being handed is
+ * their child's work, and the card now says so in one warm line under the
+ * heading. That line is the one thing on this card keyed to who is reading:
+ * a parent is told what their child made, and the child is told the same thing
+ * in the second person — the register the rest of a gamer's copy on this page
+ * already uses. A parent holding a seat of their own gets the second person
+ * too, because a page that says "something Sanna made" to Sanna reads as a page
+ * about somebody else who shares her name — the same rule the masthead's
+ * attribution follows. It is the *name* that makes three variants necessary and
+ * not two: French addresses a child and an adult differently, so one
+ * second-person string could not serve both.
+ *
+ * **The name is only ever a nominative subject**, exactly as every other
+ * name-carrying string on this page is built: nothing is possessed, declined or
+ * suffixed, so no locale has to inflect a name it has never seen.
  *
  * **A title is a link only when its stored URL parses as http(s); otherwise it
  * is text.** The field is stored raw and unvalidated by design, so this is the
@@ -43,8 +62,18 @@ import type { FamilyCreation } from "./types";
  */
 export function FamilyCreationsCard({
   creations,
+  audience,
+  name,
 }: {
   creations: readonly FamilyCreation[];
+  /** Whose copy of the page this is — see the note above on why it matters. */
+  audience: FamilyProductPageAudience;
+  /**
+   * The first name of whoever holds this seat. Read only on a parent's page
+   * about their child; the other two audiences are addressed in the second
+   * person and never see it.
+   */
+  name: string;
 }) {
   const t = useTranslations("familyProduct");
 
@@ -59,6 +88,12 @@ export function FamilyCreationsCard({
         <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           {t("creationsHeading", { count: creations.length })}
         </h2>
+        {/* Under the heading rather than over it: the heading is what a reader
+            scanning the page for this card finds, and the sentence is what they
+            read once they have. */}
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          {t(INTRO_KEY[audience], { count: creations.length, name })}
+        </p>
         {/* A list, so a reader on a screen reader is told how many there are
             before walking them. Index keys are safe here and nowhere near a
             reorder: array order *is* the order staff arranged them in, there is
@@ -78,6 +113,19 @@ export function FamilyCreationsCard({
     </Card>
   );
 }
+
+/**
+ * Which of the three intro lines an audience reads.
+ *
+ * A total map over the audience union rather than a chain of ternaries, so a
+ * fourth audience cannot be added without the compiler asking what it says to
+ * the person in the seat.
+ */
+const INTRO_KEY = {
+  customer: "creationsIntro",
+  self: "creationsIntroSelf",
+  gamer: "creationsIntroGamer",
+} as const satisfies Record<FamilyProductPageAudience, string>;
 
 /**
  * One entry: a link when the stored value is one, its own title when it is not.

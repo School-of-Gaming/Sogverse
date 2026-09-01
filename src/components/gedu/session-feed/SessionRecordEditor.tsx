@@ -54,6 +54,17 @@ interface SessionRecordEditorProps {
    * block goes and that it greys with everything else.
    */
   photoStrip?: ReactNode;
+  /**
+   * The final session's creations block, directly under the register.
+   *
+   * A slot for the same reason the photo strip is one, and for one more: the
+   * creations are not part of this draft at all. They are written through the
+   * per-gamer dialog, which only the surface owning the roster can open — so
+   * this editor renders where the block goes and nothing else about it. Absent
+   * on every session that is not a flagged run's last, which is nearly all of
+   * them.
+   */
+  creationsBlock?: ReactNode;
   onCancel: () => void;
   onSave: (draft: SessionRecordDraft) => void;
 }
@@ -92,6 +103,14 @@ interface SessionRecordEditorProps {
  * family's billing, and none of that is designed. A mock offering the control
  * would be inventing the half nobody has agreed to.
  *
+ * **On a flagged run's final session it carries a fourth thing, and that one is
+ * not part of the draft.** The creations block sits directly under the register
+ * — the other per-member obligation, next to the list it itemizes — and routes
+ * to the per-gamer dialog rather than editing anything here. It is a slot,
+ * because a session editor has no business knowing what a creation is; what it
+ * decides is that a gedu who opened this session to fix what it is flagged for
+ * meets the answer on the way past the roster.
+ *
  * The Cancel/Save row is pinned at the bottom, so neither field growing under
  * the writer moves the buttons they are heading for.
  *
@@ -115,6 +134,7 @@ export function SessionRecordEditor({
   committing,
   error,
   photoStrip,
+  creationsBlock,
   onCancel,
   onSave,
 }: SessionRecordEditorProps) {
@@ -185,6 +205,13 @@ export function SessionRecordEditor({
           />
         </div>
       </div>
+
+      {/* Directly under the register, because it is the other thing this
+          session owes *per member* — a gedu who has just walked the roster is
+          the person who knows which of them published anything. It sits above
+          the report for the same reason attendance does: the two per-member
+          obligations are the ones whose state cannot be read off the body. */}
+      {creationsBlock}
 
       {/* One title per box, naming the field and its audience together, so the
           words a writer reads are attached to the thing they are typing into.

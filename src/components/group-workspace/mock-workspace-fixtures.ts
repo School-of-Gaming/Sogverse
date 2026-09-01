@@ -71,8 +71,15 @@ import type {
  * — the camp's session in progress and long future, the club's year of backlog,
  * the two identity scenarios' live rosters. Every part of the owed signal is on
  * that one page at once (the final card's needs-attention line, its timeline
- * marker, and the rows of the members it is waiting on), so there is one page
- * to open rather than four.
+ * marker, the block on the card naming who it is waiting on, and those members'
+ * rows), so there is one page to open rather than four.
+ *
+ * The *other* half of that signal — a flagged run whose last session has not
+ * happened yet, where the same block states what will be wanted and nothing is
+ * owed — is the **camp's**, and it costs no sixth page: the camp is already the
+ * only end-dated run still going, so flagging it adds a state that genuinely
+ * coexists with everything else on that page instead of asking for one of its
+ * own.
  */
 export const GROUP_WORKSPACE_SCENARIOS = [
   "club",
@@ -203,24 +210,30 @@ interface ScenarioConfig {
   startedDaysAgo: number;
   /**
    * Days after `now` the product ends, `null` for an ongoing club, or
-   * `"last-session"` for a run that is already over.
+   * `"last-session"` for a run whose end date is the day of its own last
+   * scheduled session.
    *
-   * The third form exists because a finished run's end date is not an offset
-   * from anything — it is **the day of its own last session**, and it has to be
-   * exactly that or the derivation of "the final session" finds a different day
-   * or no day at all. So it is read off the feed the fixture just built rather
-   * than guessed at with a negative offset that would have to be kept in step
-   * with the spec list's length, the cadence and the weekday by hand.
+   * The third form exists because such an end date is not an offset from
+   * anything — it has to be **exactly** that day or the derivation of "the
+   * final session" finds a different one, or none. So it is read off the feed
+   * the fixture just built rather than guessed at with an offset that would
+   * have to be kept in step with the spec list's length, the cadence and the
+   * weekday by hand. Every scenario carrying a final session anybody looks at
+   * uses it, finished or not.
    */
   endsInDays: number | null | "last-session";
   /**
    * Whether this product's contract requires a creation from every member —
-   * the admin flag, and the only thing that turns the owed signal on.
+   * the admin flag, and the only thing that puts the creations block on a
+   * session card at all.
    *
-   * False on every scenario but `owed`. Creations themselves are on show
-   * without it (the club's rail has rows lit by one); what the flag adds is the
-   * *owed* state, which also needs a run that has finished, so the two travel
-   * together on one scenario.
+   * **Two scenarios carry it, and they are the block's two tones.** The camp is
+   * flagged with a run still going, so its last session states the obligation
+   * in the informational tone while there is a month left to meet it; `owed` is
+   * flagged with a run that has ended, so its last session states the same
+   * thing in warning. Neither can be the other without losing what it is for.
+   * Creations themselves are on show without the flag at all — the club's rail
+   * has rows lit by one — because the flag adds the obligation, not the data.
    */
   requiresGamerCreations: boolean;
   /**
@@ -940,7 +953,9 @@ function campMemberFlair(): MemberFlairFixture {
     // Nothing yet, and that is the point of having it here: a camp writes its
     // creations up on the last day, and this one is nine days into a run with
     // four weeks to go. Every row's button is therefore lit by a note or by
-    // nothing, which is the other half of the comparison the club's rail makes.
+    // nothing, which is the other half of the comparison the club's rail makes
+    // — and, since this scenario is flagged, it is also what the last day's
+    // creations block looks like at nought of nine with nothing owed yet.
     creations: {},
   };
 }
@@ -1178,6 +1193,15 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
    * count at one now that a missing write-up is owed work too. The club beside
    * it carries the real backlog; one gap here is the difference between "a camp
    * gedu who is on top of it" and "a card state nobody can see".
+   *
+   * **It is also the only scenario whose creations are wanted but not yet
+   * owed**, which is the state the whole pre-end half of that block exists for.
+   * The camp is flagged and its run has a month left, so the last day of it —
+   * top of the future block, behind the divider's reveal — carries the block in
+   * its informational tone with nobody published yet. That is a state no
+   * finished run can show and no unflagged product can have, and it is the
+   * answer to "a gedu should be able to see this coming"; `owed` is the same
+   * block after the last session has been and gone.
    */
   camp: {
     productName: "Roblox Builders Camp",
@@ -1204,13 +1228,22 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     durationMinutes: 10 * 60,
     slots: CAMP_SLOTS,
     startedDaysAgo: 9,
-    // Four weeks out, which comfortably covers seventeen more weekday
-    // sessions however the run lines up against the weekends it straddles.
-    // What matters is only that the product *is* end-dated: that is what takes
-    // the eight-occurrence cap off the horizon and lets the future block be
-    // seventeen entries long.
-    endsInDays: 28,
-    requiresGamerCreations: false,
+    // **The day of its own last scheduled session**, read off the feed rather
+    // than guessed at as an offset. It used to be a round four weeks out, which
+    // comfortably covered the seventeen future entries and was wrong by a few
+    // days in a way nothing noticed — until the creations block, which is drawn
+    // on the run's *final* session and so has to be able to find it. Being
+    // end-dated at all is what takes the eight-occurrence cap off the horizon
+    // and lets the future block be seventeen entries long; being end-dated on
+    // the right day is what lets the last of them know it is the last.
+    endsInDays: "last-session",
+    // Flagged, and the run has **not** finished — which is the other half of
+    // the creations signal and the only scenario that can be it. The final
+    // session sits at the top of the future block carrying the block in its
+    // informational tone: nine members, none of them published yet, nothing
+    // owed and four weeks to go. `owed` below is the same block after the run
+    // has ended, and the two are the whole of what the block can look like.
+    requiresGamerCreations: true,
     isRemote: false,
     // The site pair is deliberately half-written: the family note is there and
     // the staff note is not, so the partial-fill ghost is reviewable on a real
@@ -1370,11 +1403,12 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
    *
    * **Everything the signal does is on this one page.** The newest card carries
    * the amber needs-attention line, its marker on the timeline takes the warning
-   * tone, and the two members still owing carry the warning tone on their roster
-   * buttons — which open the same dialog every other row's button opens, because
-   * there is one authoring surface and the signal is a route to it rather than a
-   * second way in. The four cards below the last one are green, so the amber has
-   * something to be amber against.
+   * tone, the card itself names the two members it is waiting on, and those two
+   * carry the warning tone on their roster buttons — every one of which opens
+   * the same dialog every other row's button opens, because there is one
+   * authoring surface and each signal is a route to it rather than a second way
+   * in. The four cards below the last one are green, so the amber has something
+   * to be amber against.
    *
    * It is deliberately thin on everything else — a five-week run, one peer
    * group, no site, no backlog of any other kind — for the same reason the two
@@ -1476,10 +1510,16 @@ export function buildGroupWorkspaceFixture(
   );
 
   /**
-   * The run's end date: an offset from `now`, nothing at all, or — for a run
-   * that is already over — **the day of its own newest session**, read off the
-   * feed above. `entries[0]` is that session: the feed is strictly descending
-   * and a spec list with no future entries is dated entirely behind `now`.
+   * The run's end date: an offset from `now`, nothing at all, or **the day of
+   * its own last session**, read off the feed above.
+   *
+   * `entries[0]` is that session whichever side of `now` it falls on, because
+   * the feed is strictly descending: on a finished run it is the newest past
+   * entry, and on a run still going it is the furthest-away future one. Both
+   * need the third form for the same reason — the final-session derivation
+   * looks up an entry id built from this date, so an end date that is a day or
+   * two past the schedule's last occurrence finds a day the feed does not
+   * carry, and everything hanging off "the final session" goes quiet.
    */
   const endDate =
     config.endsInDays === null
@@ -1527,12 +1567,12 @@ export function buildGroupWorkspaceFixture(
         start_date: calendarDate(now, -config.startedDaysAgo),
         end_date: endDate,
         is_remote: config.isRemote,
-        // Flagged on `owed` alone. Creations themselves are on show without it —
-        // the club's rail has rows lit by one — and what the flag adds is the
-        // *owed* state, which additionally needs a run that has already
-        // finished; the two travel together, on the one scenario that is that
-        // shape, because giving an existing scenario an ended run would cost it
-        // the thing it exists to show.
+        // Flagged on two scenarios, one per tone of the session card's
+        // creations block: the camp, whose run is still going, states the
+        // obligation quietly; `owed`, whose run has ended, states it in amber.
+        // Creations themselves are on show without the flag — the club's rail
+        // has rows lit by one — because what the flag adds is the obligation,
+        // not the data.
         requires_gamer_creations: config.requiresGamerCreations,
         translations: [
           {

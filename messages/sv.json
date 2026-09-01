@@ -1344,7 +1344,10 @@
     "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}.",
     "loadingPage": "Laddar gruppens tillfällen.",
     "notFoundTitle": "Inget att visa här",
-    "notFoundBody": "Vi kunde inte öppna den här sidan. På Min SOG finns allt du är anmäld till."
+    "notFoundBody": "Vi kunde inte öppna den här sidan. På Min SOG finns allt du är anmäld till.",
+    "creationsIntro": "{count, plural, one {Det här har {name} gjort i gruppen – något att fira och dela.} other {De här har {name} gjort i gruppen – något att fira och dela.}}",
+    "creationsIntroSelf": "{count, plural, one {Det här har du gjort i gruppen – något att fira och dela.} other {De här har du gjort i gruppen – något att fira och dela.}}",
+    "creationsIntroGamer": "{count, plural, one {Det här har du gjort i gruppen – något att fira och dela.} other {De här har du gjort i gruppen – något att fira och dela.}}"
   },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"
@@ -1454,7 +1457,12 @@
       "photoErrorCapReached": "Den här rapporten är redan full. Ta bort en bild för att lägga till en ny.",
       "photoErrorNotAllowed": "Du kan inte lägga till bilder på det här tillfället.",
       "photoErrorUploadFailed": "Bilden laddades inte upp. Försök igen.",
-      "photoErrorRemoveFailed": "Bilden kunde inte tas bort. Den finns kvar i rapporten — försök igen."
+      "photoErrorRemoveFailed": "Bilden kunde inte tas bort. Den finns kvar i rapporten — försök igen.",
+      "creationsTitle": "Skapelser",
+      "creationsAddedCount": "{added} av {total} tillagda",
+      "creationsHint": "Det här är omgångens sista tillfälle, så det är inte klart förrän alla har en skapelse. Öppna ett namn för att lägga till en.",
+      "creationsMemberDone": "{name} – skapelse tillagd",
+      "creationsMemberMissing": "{name} – skapelse saknas"
     },
     "groupNotes": {
       "heading": "Om gruppen",

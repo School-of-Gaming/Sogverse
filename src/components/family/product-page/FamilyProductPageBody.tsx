@@ -515,8 +515,13 @@ export function FamilyProductPageBody({
           is usually absent can sit without either displacing something every
           page has or being buried under a history nobody scrolls to the end
           of. Suppression and the parse-or-degrade rule are the card's own; see
-          its note. */}
-      <FamilyCreationsCard creations={creations} />
+          its note — as is the line under its heading, which is the one piece of
+          copy on the card that changes with who is reading. */}
+      <FamilyCreationsCard
+        creations={creations}
+        audience={audience}
+        name={participant.firstName}
+      />
 
       <section className="mt-6">
         <h2 className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">

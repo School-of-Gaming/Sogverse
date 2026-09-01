@@ -1392,7 +1392,10 @@
     "cancellationNoticeNoSession": "may’morgh DanatlhHa’pu’! qaSqa’be’. {date} tlhab SoH.",
     "loadingPage": "ghom’a’vam may’mey laDlu’…",
     "notFoundTitle": "naDev pagh tu’lu’",
-    "notFoundBody": "poSlu’laHbe’. My SOG-Daq Hoch DaleghlaH."
+    "notFoundBody": "poSlu’laHbe’. My SOG-Daq Hoch DaleghlaH.",
+    "creationsIntro": "{count, plural, one {ghomvamDaq chenmoHta’ {name}. yIQuch ’ej latlhpu’vaD yI’ang!} other {ghomvamDaq chenmoHta’mey chenmoHpu’ {name}. yIQuch ’ej latlhpu’vaD yI’ang!}}",
+    "creationsIntroSelf": "{count, plural, one {ghomvamDaq bIchenmoHta’. yIQuch ’ej latlhpu’vaD yI’ang!} other {ghomvamDaq chenmoHta’mey DachenmoHpu’. yIQuch ’ej latlhpu’vaD yI’ang!}}",
+    "creationsIntroGamer": "{count, plural, one {ghomvamDaq bIchenmoHta’. yIQuch ’ej latlhpu’vaD yI’ang!} other {ghomvamDaq chenmoHta’mey DachenmoHpu’. yIQuch ’ej latlhpu’vaD yI’ang!}}"
   },
   "selectProfile": {
     "title": "Sogverse ’el ’Iv?"
@@ -1498,7 +1501,12 @@
       "photoErrorCapReached": "buy’ De’vam. wa’ mIllogh yIteq, ’ej latlh yIchel.",
       "photoErrorNotAllowed": "may’vamvaD mIllogh Dachel net chaw’be’.",
       "photoErrorUploadFailed": "mIllogh ngeHlu’be’. yIboq.",
-      "photoErrorRemoveFailed": "mIllogh teqlu’be’ — De’vamDaq ratlh. yIboq."
+      "photoErrorRemoveFailed": "mIllogh teqlu’be’ — De’vamDaq ratlh. yIboq.",
+      "creationsTitle": "chenmoHta’mey",
+      "creationsAddedCount": "{added}/{total} chelta’",
+      "creationsHint": "may’ Qav ’oH may’vam’e’. Hoch chenmoHta’ ghajDI’ neH rInpu’. pong yIpoS ’ej chenmoHta’ yIchel.",
+      "creationsMemberDone": "{name} — chenmoHta’ chelta’",
+      "creationsMemberMissing": "{name} — chenmoHta’ Hutlh"
     },
     "groupNotes": {
       "heading": "ghom’a’vam",

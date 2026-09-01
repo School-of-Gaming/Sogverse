@@ -1344,7 +1344,10 @@
     "cancellationNoticeNoSession": "You canceled this membership — it won’t renew. Access runs through {date}.",
     "loadingPage": "Loading this group’s sessions.",
     "notFoundTitle": "Nothing to show here",
-    "notFoundBody": "We couldn’t open this one. My SOG has everything you’re signed up for."
+    "notFoundBody": "We couldn’t open this one. My SOG has everything you’re signed up for.",
+    "creationsIntro": "{count, plural, one {Something {name} made in this group — worth celebrating, and worth sharing.} other {Things {name} has made in this group — worth celebrating, and worth sharing.}}",
+    "creationsIntroSelf": "{count, plural, one {Something you made in this group — worth celebrating, and worth sharing.} other {Things you have made in this group — worth celebrating, and worth sharing.}}",
+    "creationsIntroGamer": "{count, plural, one {Something you made in this group — worth celebrating, and worth sharing.} other {Things you have made in this group — worth celebrating, and worth sharing.}}"
   },
   "selectProfile": {
     "title": "Who is entering Sogverse?"
@@ -1454,7 +1457,12 @@
       "photoErrorCapReached": "This report is already full. Remove a photo to add another.",
       "photoErrorNotAllowed": "You can’t add photos to this session.",
       "photoErrorUploadFailed": "That photo didn’t upload. Try again.",
-      "photoErrorRemoveFailed": "That photo couldn’t be removed. It is still on the report — try again."
+      "photoErrorRemoveFailed": "That photo couldn’t be removed. It is still on the report — try again.",
+      "creationsTitle": "Creations",
+      "creationsAddedCount": "{added} of {total} added",
+      "creationsHint": "This is the run’s last session, so it isn’t finished until everyone here has a creation. Open a name to add one.",
+      "creationsMemberDone": "{name} — creation added",
+      "creationsMemberMissing": "{name} — creation still needed"
     },
     "groupNotes": {
       "heading": "About this group",

@@ -440,6 +440,35 @@ messages — glyphs are lucide icons in components).
    there. Owed outranks lit, because it is the only one of the three states that
    is work.*
 
+   ***Owner deviation: the final session's card itemizes the obligation too, and
+   does so before the run ends.*** *The plan said the session pattern cannot say
+   which members are missing, so the roster answers it. On review that left the
+   real failure it was meant to prevent: a Gedu opens the flagged session to fix
+   what it is flagged for, finds the register full and the report written, and has
+   nothing to do — the itemization was a tone on a button in a rail card at the
+   other end of the page, and "only after the final session ends" at that. So the
+   final session's card gains a **creations block**, in the same slot in its
+   collapsed body and in whichever editor it opens: under the register, which is
+   the other per-member obligation, above the report. It lists every roster member
+   with a check or a plus and a count, and each name opens that member's
+   `GamerFlairDialog` — the one authoring surface, reached from where the
+   obligation is stated rather than duplicated there. The roster marker stays; the
+   two read off one derivation.*
+
+   *Two things that did **not** change with it, and both are load-bearing. The
+   **completeness derivation is untouched** — what is owed still flips at the final
+   session's end instant, on both sides of the stack — and only the block's
+   *rendering* runs ahead of it: neutral from the day that session is scheduled,
+   warning-toned at exactly the moment the card's needs-attention line fires. And
+   the **needs-attention label stays the generic one**: it stands for four
+   obligations, so naming creations in it would be wrong on the other three. What
+   answers "what is this card missing" is the block's own count directly beneath
+   it.*
+
+   *The dialog moved up with it: it is mounted by `GroupWorkspace` rather than by
+   the rail card, because two surfaces now open it and a page may only ever have
+   one open.*
+
    *The existing surfaces were **verified rather than extended**: the final
    session's card takes the amber needs-attention line and its timeline marker
    the warning tone with no new machinery (both read `entryCompleteness` through
@@ -475,6 +504,17 @@ messages — glyphs are lucide icons in components).
    has one home and cannot drift into two answers. The helper returns the
    parser's own serialization rather than the input, because what a caller hands
    an anchor has to be the exact string the scheme test ran against.*
+
+   ***Owner deviation: the card carries a line of copy under its heading, and
+   that line is audience-aware.*** *"Creations" over a link is a filing label; a
+   parent needs telling that this is something their child made and that it is
+   worth celebrating and sharing. So the card takes the page's `audience` and the
+   participant's first name and draws one warm sentence: named for a parent
+   reading about their child, second person for the child and for a parent in a
+   seat of their own. Three keys rather than two because French addresses a child
+   and an adult differently. The name stays a bare nominative subject, and the
+   sentence is pluralized against the count like the heading above it. The heading,
+   the list markup and the parse-or-degrade rule are untouched.*
 
    *The card's prop type is a locally-declared `FamilyCreation` in the page's
    types module, not the contracts' entry type. That is this module's existing
@@ -522,6 +562,17 @@ messages — glyphs are lucide icons in components).
    data-level fixture test pins the alignment the scenario depends on (the flag,
    the end date, the schedule's weekday and the newest entry's date all naming
    one day), because a preview that stops producing its state fails silently.*
+
+   ***Owner deviation: the camp scenario is flagged too, and its end date is now
+   its own last session.*** *The block's informational half — a flagged run whose
+   last session has not happened yet — could not be looked at anywhere: the club
+   is open-ended, and `owed` is over. The camp is the only end-dated run still
+   going, so flagging it adds a state that genuinely coexists with everything that
+   page already shows rather than asking for a sixth scenario. Its end date moved
+   from a round four weeks out to `"last-session"`, because the derivation looks up
+   an entry id built from that date and a few days of slack found a day the feed
+   does not carry. The fixture test's "exactly one flagged scenario" rule became
+   "exactly the two the block has tones for".*
 
    *One thing landed under that scenario and is worth naming on its own: the
    workspace fixture now keys its feed entries the way the live page does —
