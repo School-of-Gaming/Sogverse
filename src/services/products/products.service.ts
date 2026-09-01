@@ -338,6 +338,22 @@ export type CreateProductInput = {
    * accepted — see the column comment in migration 00193.
    */
   region_lock_country: string | null;
+  /**
+   * Does every member of this product owe a creation — a link to the thing they
+   * made — by the time it ends? An admin decision, deliberately not derived
+   * from `topic`: not every Roblox-Studio product is sponsored, so a contract
+   * obligation is stated rather than inferred.
+   *
+   * Staff-facing only: a family sees nothing different on a flagged product,
+   * and what the flag changes is signals (the final session's completeness
+   * gains a fourth condition), never the authoring surface.
+   *
+   * Required and non-nullable, and the update half is again the load-bearing
+   * one: the RPC assigns this column on every call and its parameter defaults
+   * to **false**, so an omitted field would unflag a product rather than leave
+   * it alone.
+   */
+  requires_gamer_creations: boolean;
   spoken_language_code: SpokenLanguageCode;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a
@@ -422,6 +438,11 @@ export type UpdateProductInput = {
    *  half too, and that is the load-bearing one: the RPC assigns every editable
    *  column, so an omitted code unlocks the product. */
   region_lock_country: string | null;
+  /** Creation requirement — see CreateProductInput. Required on the update half
+   *  too, and that is the load-bearing one: the RPC assigns every editable
+   *  column and this parameter defaults to false, so an omitted answer unflags
+   *  the product. */
+  requires_gamer_creations: boolean;
   spoken_language_code: SpokenLanguageCode;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a

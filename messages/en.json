@@ -405,6 +405,10 @@
           "free": "Free",
           "external_contract": "External contract (municipality)"
         },
+        "requiresGamerCreations": {
+          "required": "Required",
+          "notRequired": "Not required"
+        },
         "fields": {
           "publicUrl": "Public link",
           "topic": "Topic",
@@ -425,6 +429,7 @@
           "tag": "Designed for",
           "regionLock": "Region lock",
           "requiredConsents": "Required consents",
+          "requiresGamerCreations": "Gamer creations",
           "visibility": "Visibility"
         },
         "copyLink": "Copy public link",
@@ -480,6 +485,7 @@
         "longDescription": "Long description",
         "topic": "Topic",
         "materialUrl": "Lesson material URL",
+        "requiresGamerCreations": "Every gamer needs a creation link",
         "seatAudience": "Who can take a seat",
         "tag": "Designed for",
         "regionLock": "Region lock",
@@ -614,6 +620,7 @@
         "longDescription": "Optional. The full pitch, shown only on the product’s detail page. Headings, lists, emphasis and links are all available.",
         "topicHint": "What this product is about. Families see it as the Subject filter in the shop and on the product page’s About card.",
         "materialUrlHint": "Optional. For Gedus only — families never see this.",
+        "requiresGamerCreationsHint": "For products a contract requires it of. The final session keeps a needs-attention mark until every gamer in the group has a creation recorded. Families see nothing different.",
         "seatAudienceHint": "Pick at least one. Both means a product a parent and their gamer take part in together — the shop labels it “For families”.",
         "forGamersHint": "A parent signs their gamer up and the gamer takes the seat. Needs an age range.",
         "forParentsHint": "A parent takes a seat for themselves and attends it. No age range — age describes children, not adults.",
@@ -1406,6 +1413,8 @@
     "siteLabel": "Where",
     "aboutHeading": "About this group",
     "siteNoteHeading": "At {site}",
+    "creationsHeading": "{count, plural, one {Creation} other {Creations}}",
+    "creationOpensInNewTab": "(opens in a new tab)",
     "feedHeading": "Sessions",
     "attendancePresent": "Present",
     "attendanceNotPresent": "Not present",
@@ -1419,7 +1428,10 @@
     "cancellationNoticeNoSession": "You canceled this membership — it won’t renew. Access runs through {date}.",
     "loadingPage": "Loading this group’s sessions.",
     "notFoundTitle": "Nothing to show here",
-    "notFoundBody": "We couldn’t open this one. My SOG has everything you’re signed up for."
+    "notFoundBody": "We couldn’t open this one. My SOG has everything you’re signed up for.",
+    "creationsIntro": "{count, plural, one {When {name} finishes building something in this group — a game, a world, a project — their Gedu links it here, so you can see what all that playing has made. Open it together and let {name} show you around.} other {When {name} finishes building something in this group — a game, a world, a project — their Gedu links it here, so you can see what all that playing has made. Open them together and let {name} show you around.}}",
+    "creationsIntroSelf": "{count, plural, one {When you finish building something in this group, your Gedu links it here — finished work, worth coming back to and worth sharing.} other {When you finish building something in this group, your Gedu links it here — finished work, worth coming back to and worth sharing.}}",
+    "creationsIntroGamer": "{count, plural, one {When you finish building something in this group, your Gedu links it here — so you can come back to it, and show it off. You made this.} other {When you finish building something in this group, your Gedu links it here — so you can come back to them, and show them off. You made these.}}"
   },
   "selectProfile": {
     "title": "Who is entering Sogverse?"
@@ -1545,7 +1557,12 @@
       "photoErrorCapReached": "This report is already full. Remove a photo to add another.",
       "photoErrorNotAllowed": "You can’t add photos to this session.",
       "photoErrorUploadFailed": "That photo didn’t upload. Try again.",
-      "photoErrorRemoveFailed": "That photo couldn’t be removed. It is still on the report — try again."
+      "photoErrorRemoveFailed": "That photo couldn’t be removed. It is still on the report — try again.",
+      "creationsTitle": "Creations",
+      "creationsAddedCount": "{added} of {total} added",
+      "creationsHint": "This is the run’s last session, so it isn’t finished until everyone here has a creation. Open a name to add one.",
+      "creationsMemberDone": "{name} — creation added",
+      "creationsMemberMissing": "{name} — creation still needed"
     },
     "groupNotes": {
       "heading": "About this group",
@@ -1690,11 +1707,22 @@
   "memberFlair": {
     "newcomer": "New",
     "newcomerTooltip": "New to this group — joined {days, plural, =0 {today} one {# day ago} other {# days ago}}",
-    "openNote": "Gedu note about {name}",
-    "noteTitle": "Note about {name}",
-    "notePrivacy": "Only Gedus and admins can see this note. It stays with this group, session to session.",
+    "openMember": "Note and creation about {name}",
+    "openMemberCreationOwed": "Note and creation about {name} — a creation is still needed",
+    "memberTitle": "About {name}",
+    "noteAudience": "Gedus and admins",
+    "noteLabel": "Private note",
+    "noteHint": "Only Gedus and admins see this. It stays with this group, session to session.",
     "notePlaceholder": "Anything to note about {name} in this group.",
-    "noteLastEdited": "Last edited by {name}"
+    "noteLastEdited": "Last edited by {name}",
+    "creationAudience": "Families see this",
+    "creationLabel": "Creation",
+    "creationHint": "Something {name} has made in this group. Their own family sees it on their page.",
+    "creationTitleLabel": "Creation title",
+    "creationTitlePlaceholder": "What they made",
+    "creationUrlLabel": "Creation link",
+    "creationUrlPlaceholder": "Link to it",
+    "creationIncomplete": "A creation needs both a title and a link."
   },
   "richText": {
     "bold": "Bold",

@@ -134,6 +134,50 @@ const eslintConfig = defineConfig([
             message:
               "Family surfaces must not import gedu document shapes — only the shared attendance vocabulary (attendanceStatus / AttendanceStatus / SUPPORTED_ATTENDANCE_STATUSES) crosses this line, because it mirrors a database CHECK constraint.",
           },
+          {
+            // member-flair owns two different things behind one barrel: the
+            // staff overlay document (`groupStaffOverlay` and its member
+            // shape, keyed by participant and carrying a note and a join
+            // stamp no family may see) and the creation entry vocabulary
+            // (`gamerCreation` / `gamerCreationList`) that the overlay's own
+            // `creations` field is typed with. The overlay is a staff
+            // document shape on the same terms as the gedu ones above, and it
+            // must stay off this side of the line even though the same file
+            // also defines this zone's one legitimate export.
+            //
+            // The creation vocabulary is the narrow exception, on the same
+            // terms as `attendanceStatus`: `gamerCreation` is the code-side
+            // twin of one CHECK constraint (a creation's keys, caps and
+            // blankness rule), so a second definition of what a creation
+            // entry may contain would be a second source of truth for one
+            // fact rather than a per-document choice. The family product feed
+            // contracts file imports `gamerCreationList` for exactly that
+            // reason and says so at length; `gamerCreation` is the
+            // single-entry schema it is built from, and `GamerCreation` /
+            // `GamerCreationList` are their inferred types — all four travel
+            // together as one vocabulary, the same shape attendance crosses
+            // in.
+            //
+            // **The indirect path is a known, accepted limit**: this covers
+            // the direct import specifier only, and `GroupStaffOverlay` and
+            // its member shape are re-exported from `@/types`, which is
+            // unrestricted and has to stay so — it is where every convenience
+            // alias in the app lives. The gedu entry above has exactly the
+            // same hole and is accepted on the same terms. The rule is a
+            // structural reminder at the obvious reach, not a proof: what
+            // actually keeps a staff document off a family page is that the
+            // family document has no field for it, so a component importing
+            // the type through the barrel still has nothing to put in it.
+            group: ["@/services/member-flair", "@/services/member-flair/*"],
+            allowImportNames: [
+              "gamerCreation",
+              "GamerCreation",
+              "gamerCreationList",
+              "GamerCreationList",
+            ],
+            message:
+              "Family surfaces must not import member-flair's staff overlay document shapes — only the shared creation-entry vocabulary (gamerCreation / GamerCreation / gamerCreationList / GamerCreationList) crosses this line, because it mirrors a database CHECK constraint.",
+          },
         ],
       }],
     },

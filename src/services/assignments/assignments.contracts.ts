@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 
 /**
  * Runtime contracts for the gedu assignment RPCs. The generated types can't
@@ -57,6 +58,14 @@ export const geduAssignedProduct = z.object({
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),
     is_remote: z.boolean(),
+    /**
+     * Does this product contractually require a creation from every member
+     * (00227)? Staff-facing only. Carried here in deliberate parity with the
+     * gedu group feed's shell, for the reason every other field on this
+     * document is: the page composes both, and a field on one shell and not the
+     * other is exactly the drift that parity exists to prevent.
+     */
+    requires_gamer_creations: z.boolean(),
     translations: z.array(productTranslationSummary),
     schedule_slots: z.array(scheduleSlotSummary),
   }),
@@ -120,6 +129,15 @@ export const geduAssignedProduct = z.object({
             group_joined_at: z.string().nullable(),
             note: z.string().nullable(),
             note_updated_by_first_name: z.string().nullable(),
+            /**
+             * The member's creations (00227), always an array and never null.
+             * The one field on this roster that is not staff-only — the
+             * member's own family reads the same list — and kept in parity with
+             * the gedu feed's roster entry for the same reason the rest of this
+             * row is: one roster shape with two definitions is how the two
+             * drift.
+             */
+            creations: gamerCreationList,
           })
         )
         .nullable(),

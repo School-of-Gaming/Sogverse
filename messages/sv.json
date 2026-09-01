@@ -405,6 +405,10 @@
           "free": "Gratis",
           "external_contract": "Externt avtal (kommun)"
         },
+        "requiresGamerCreations": {
+          "required": "Krävs",
+          "notRequired": "Krävs inte"
+        },
         "fields": {
           "publicUrl": "Publik länk",
           "topic": "Ämne",
@@ -425,6 +429,7 @@
           "tag": "Utformad för",
           "regionLock": "Landsbegränsning",
           "requiredConsents": "Obligatoriska samtycken",
+          "requiresGamerCreations": "Spelarnas skapelser",
           "visibility": "Synlighet"
         },
         "copyLink": "Kopiera den publika länken",
@@ -480,6 +485,7 @@
         "longDescription": "Lång beskrivning",
         "topic": "Ämne",
         "materialUrl": "URL till lektionsmaterial",
+        "requiresGamerCreations": "Varje spelare behöver en länk till sin skapelse",
         "seatAudience": "Vem kan ta en plats",
         "tag": "Utformad för",
         "regionLock": "Landsbegränsning",
@@ -614,6 +620,7 @@
         "longDescription": "Valfritt. Hela presentationen, som visas endast på produktens detaljsida. Rubriker, listor, betoning och länkar är tillgängliga.",
         "topicHint": "Vad produkten handlar om. Familjer ser det som Ämne-filtret i butiken och på produktsidans infokort.",
         "materialUrlHint": "Valfritt. Endast för Geduer — familjer ser aldrig detta.",
+        "requiresGamerCreationsHint": "För produkter där ett avtal kräver det. Det sista tillfället är markerat som att det behöver åtgärd tills varje spelare i gruppen har en skapelse registrerad. Familjer ser ingen skillnad.",
         "seatAudienceHint": "Välj minst ett. Väljer du båda blir det en produkt som en förälder och hens spelare deltar i tillsammans – i butiken märks den ”För familjer”.",
         "forGamersHint": "En förälder anmäler sin spelare och spelaren tar platsen. Kräver ett åldersintervall.",
         "forParentsHint": "En förälder tar en plats åt sig själv och deltar. Inget åldersintervall – ålder beskriver barn, inte vuxna.",
@@ -1406,6 +1413,8 @@
     "siteLabel": "Var",
     "aboutHeading": "Om gruppen",
     "siteNoteHeading": "På {site}",
+    "creationsHeading": "{count, plural, one {Skapelse} other {Skapelser}}",
+    "creationOpensInNewTab": "(öppnas i en ny flik)",
     "feedHeading": "Tillfällen",
     "attendancePresent": "Närvarande",
     "attendanceNotPresent": "Inte närvarande",
@@ -1419,7 +1428,10 @@
     "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}.",
     "loadingPage": "Laddar gruppens tillfällen.",
     "notFoundTitle": "Inget att visa här",
-    "notFoundBody": "Vi kunde inte öppna den här sidan. På Min SOG finns allt du är anmäld till."
+    "notFoundBody": "Vi kunde inte öppna den här sidan. På Min SOG finns allt du är anmäld till.",
+    "creationsIntro": "{count, plural, one {När {name} bygger klart något i den här gruppen – ett spel, en värld, ett projekt – lägger Gedun länken här, så att du får se vad allt spelande har blivit till. Öppna den tillsammans och låt {name} visa dig runt.} other {När {name} bygger klart något i den här gruppen – ett spel, en värld, ett projekt – lägger Gedun länken här, så att du får se vad allt spelande har blivit till. Öppna dem tillsammans och låt {name} visa dig runt.}}",
+    "creationsIntroSelf": "{count, plural, one {När du bygger klart något i den här gruppen lägger Gedun länken här – färdigt arbete, värt att återvända till och värt att dela.} other {När du bygger klart något i den här gruppen lägger Gedun länken här – färdigt arbete, värt att återvända till och värt att dela.}}",
+    "creationsIntroGamer": "{count, plural, one {När du bygger klart något i den här gruppen lägger Gedun länken här – så kan du komma tillbaka till det och visa upp det. Det här har du gjort.} other {När du bygger klart något i den här gruppen lägger Gedun länken här – så kan du komma tillbaka till dem och visa upp dem. Allt det här har du gjort.}}"
   },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"
@@ -1545,7 +1557,12 @@
       "photoErrorCapReached": "Den här rapporten är redan full. Ta bort en bild för att lägga till en ny.",
       "photoErrorNotAllowed": "Du kan inte lägga till bilder på det här tillfället.",
       "photoErrorUploadFailed": "Bilden laddades inte upp. Försök igen.",
-      "photoErrorRemoveFailed": "Bilden kunde inte tas bort. Den finns kvar i rapporten — försök igen."
+      "photoErrorRemoveFailed": "Bilden kunde inte tas bort. Den finns kvar i rapporten — försök igen.",
+      "creationsTitle": "Skapelser",
+      "creationsAddedCount": "{added} av {total} tillagda",
+      "creationsHint": "Det här är omgångens sista tillfälle, så det är inte klart förrän alla har en skapelse. Öppna ett namn för att lägga till en.",
+      "creationsMemberDone": "{name} – skapelse tillagd",
+      "creationsMemberMissing": "{name} – skapelse saknas"
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -1690,11 +1707,22 @@
   "memberFlair": {
     "newcomer": "Ny",
     "newcomerTooltip": "Ny i den här gruppen — gick med {days, plural, =0 {i dag} one {för # dag sedan} other {för # dagar sedan}}",
-    "openNote": "Gedu-anteckning om {name}",
-    "noteTitle": "Anteckning om {name}",
-    "notePrivacy": "Bara Geduer och administratörer ser den här anteckningen. Den stannar i den här gruppen, från gång till gång.",
+    "openMember": "Anteckning och skapelse om {name}",
+    "openMemberCreationOwed": "Anteckning och skapelse om {name} — en skapelse saknas fortfarande",
+    "memberTitle": "Om {name}",
+    "noteAudience": "Geduer och administratörer",
+    "noteLabel": "Privat anteckning",
+    "noteHint": "Bara Geduer och administratörer ser det här. Det stannar i den här gruppen, från gång till gång.",
     "notePlaceholder": "Anteckningar om {name} i den här gruppen.",
-    "noteLastEdited": "Senast redigerad av {name}"
+    "noteLastEdited": "Senast redigerad av {name}",
+    "creationAudience": "Familjer ser det här",
+    "creationLabel": "Skapelse",
+    "creationHint": "Något som {name} har gjort i den här gruppen. Familjen ser det på sin egen sida.",
+    "creationTitleLabel": "Titel för skapelsen",
+    "creationTitlePlaceholder": "Vad de gjorde",
+    "creationUrlLabel": "Länk till skapelsen",
+    "creationUrlPlaceholder": "Länk till den",
+    "creationIncomplete": "En skapelse behöver både en titel och en länk."
   },
   "richText": {
     "bold": "Fet stil",

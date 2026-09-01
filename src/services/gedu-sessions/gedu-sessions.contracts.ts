@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
+import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 
 /**
  * Wire contracts for the gedu session-feed RPCs.
@@ -131,6 +132,20 @@ export const geduFeedRosterEntry = z.object({
   group_joined_at: z.string().nullable(),
   note: z.string().nullable(),
   note_updated_by_first_name: z.string().nullable(),
+  /**
+   * The things this member made during the group's run (00227), in the order
+   * staff arranged them — and the one field on this roster that is **not
+   * staff-only**: the member's own family reads the same list on their product
+   * page. It rides here because the roster is where the per-gamer dialog is
+   * opened from, and because the client tallies it against this same roster to
+   * decide whether a flagged product's final session still owes creations.
+   *
+   * Always an array, never null: `[]` is what "no creations" looks like on the
+   * wire, so no consumer has to decide what an absent list means. The list's
+   * rules live with the write that produces it, which is why the shape is
+   * imported rather than restated here.
+   */
+  creations: gamerCreationList,
 });
 
 /**
@@ -254,6 +269,17 @@ export const geduGroupFeed = z.object({
     is_remote: z.boolean(),
     /** Gedu/admin-only lesson material. Never rendered to a family. */
     material_url: z.string().nullable(),
+    /**
+     * Does this product contractually require a creation from every member
+     * (00227)? Staff-facing only — no family document carries it, and a family
+     * sees nothing different on a flagged product.
+     *
+     * It is on this shell because the fourth completeness condition is derived
+     * **client-side**, from this flag, the schedule and the roster's
+     * `creations`: no document carries an "owed" field, so without the flag on
+     * the wire there is no way to ask the question at all.
+     */
+    requires_gamer_creations: z.boolean(),
     translations: z.array(productTranslationSummary),
     schedule_slots: z.array(scheduleSlotSummary),
   }),
@@ -278,10 +304,16 @@ export type GeduFeedSite = z.infer<typeof geduFeedSite>;
  *
  * `attention_count` is computed server-side against the same holiday-blind
  * weekday expansion the client uses, floored at `max(product start, epoch)`, and
- * counts a finished session until **all three** parts are in: every current
- * roster member marked, a non-empty report written, and that report emailed to
- * the families. The dashboard deliberately never fetches a feed to derive it —
+ * counts a finished session until **all four** parts are in: every current
+ * roster member marked, a non-empty report written, that report emailed to the
+ * families, and — on the run's FINAL session of a product with
+ * `requires_gamer_creations` set — every current roster member holding at least
+ * one creation. The dashboard deliberately never fetches a feed to derive it —
  * a page of cards would otherwise be a page of history downloads.
+ *
+ * The fourth part fires on exactly one occurrence per run, and an open-ended
+ * product (no `end_date`) has no final session, so it may be flagged and never
+ * owes — documented behaviour, not an error.
  *
  * **This derivation exists twice and the two must agree** — here in SQL for the
  * badge, and in TypeScript in the gedu feed's entry-state module for the card.

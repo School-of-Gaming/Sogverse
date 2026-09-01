@@ -355,6 +355,26 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "write-IDOR loop entry, the notes table carrying no write grant for any " +
       "client role. Positive path, for both roles: member-flair.test.ts.",
   },
+  // The note's structural twin (00227): the list of things a member made during
+  // this group's run, replaced whole. Same two roles, same two guards, same
+  // reason for both — a substitute standing in for another group is exactly the
+  // person who needs to record what a child finished today. The one thing that
+  // differs is downstream and changes nothing here: this list IS family-visible
+  // (the member's own family reads it on their product page), which is a
+  // property of which documents emit it, not of who may write it.
+  set_gamer_group_creations: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "refused twice over on NULL arguments, for BOTH permitted roles, exactly " +
+      "as the note write above is — no gedu teaches the product of a NULL " +
+      "group, and no NULL participant sits in a NULL group, which is the " +
+      "target check an admin is deliberately still bound by. (A NULL " +
+      "p_creations is coalesced to an empty list and reaches neither guard, so " +
+      "it is the guards and nothing else answering.) That target check is also " +
+      "what stands in for a write-IDOR loop entry, gamer_group_creations " +
+      "carrying no write grant for any client role. Positive path, for both " +
+      "roles: gamer-creations.test.ts.",
+  },
 
   // --- the guard primitives themselves -------------------------------------
   // Exposed to `authenticated` because create_product is SECURITY INVOKER, so

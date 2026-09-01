@@ -142,6 +142,8 @@ function ParticipantRowWithGlow({
   const memberFlair =
     flair !== null && flair.members.has(participant.userId) ? flair : null;
   const note = memberFlair?.notes[participant.userId] ?? "";
+  const creationCount =
+    memberFlair?.creations[participant.userId]?.length ?? 0;
 
   return (
     <ParticipantRow
@@ -151,14 +153,17 @@ function ParticipantRowWithGlow({
       avatarRef={avatarRef}
       newcomerJoinedAt={flair?.newcomers[participant.userId]}
       flairNow={flair?.now}
-      hasNote={note !== ""}
+      // The same test the workspace roster makes: a note, a creation, or both.
+      // The room draws no owed marker — whether a creation is *wanted* is a fact
+      // about the product's schedule, which this document does not carry.
+      hasContent={note !== "" || creationCount > 0}
       // Absent for a viewer with no overlay, which is what keeps a child's row
       // a plain avatar with no button semantics to announce.
-      onOpenNote={
+      onOpenFlair={
         memberFlair === null
           ? undefined
           : () =>
-              memberFlair.onOpenNote(participant.userId, participant.userName)
+              memberFlair.onOpenFlair(participant.userId, participant.userName)
       }
       onMute={onMute}
       onLock={onLock}

@@ -20,7 +20,10 @@ import {
   type GroupWorkspaceScenario,
 } from "@/components/group-workspace/mock-workspace-fixtures";
 import { useNow } from "@/providers";
-import type { GeduAssignedProductRosterEntry } from "@/types";
+import type {
+  GamerCreation,
+  GeduAssignedProductRosterEntry,
+} from "@/types";
 
 /**
  * The gedu's product page built around the session feed, over fixtures.
@@ -35,14 +38,36 @@ import type { GeduAssignedProductRosterEntry } from "@/types";
  * turning into a finished one, and a part-marked one staying flagged, are the
  * two most important things to feel here. Nothing persists past a reload.
  *
- * **The roster's staff flair is live too, on every scenario — because the page
- * requires it.** The note button at the end of every row opens that member's
- * Gedu note — most of them empty, which is the add flow — and saving one lights
- * the button, while saving an empty one puts it out again. The newcomer badges
- * are read-only: their meters drain against the scene's frozen clock, which is
- * what lets four ages spread across the window be compared in one screenshot.
- * The two identity scenarios start with nothing lit, which is the quiet roster
- * most real groups are, and their note buttons still write.
+ * **The roster's per-member dialog is live too, on every scenario — because the
+ * page requires it.** The button at the end of every row opens that member's
+ * dialog: the private note on top, the family-facing creations below it, and
+ * both halves writing against local state. Most rows are empty, which is the add
+ * flow, and saving into either half lights the button while emptying both puts
+ * it out again. The club's rail is where the two are seen apart — one row lit by
+ * a note, one by a creation, one by both — because the button says only that
+ * *something* is there. The newcomer badges are read-only: their meters drain
+ * against the scene's frozen clock, which is what lets four ages spread across
+ * the window be compared in one screenshot. The two identity scenarios start
+ * with nothing lit, which is the quiet roster most real groups are, and their
+ * dialogs still write.
+ *
+ * **The owed marker has a scenario of its own**, because it needs a product
+ * flagged as requiring creations whose run has already finished, and no other
+ * shape here is that — giving one of them an ended run would cost it the thing
+ * it exists to show. On that page the last card reads needs-attention with every
+ * ordinary obligation discharged, its timeline marker takes the warning tone,
+ * the card itself lists the roster and marks the two it is waiting on, and those
+ * two wear the same tone on their roster buttons. Every one of those opens the
+ * same dialog every other row's does, which is the point: supplying the creation
+ * from either place clears the row, and clearing the last one turns the card
+ * green while you watch.
+ *
+ * **The camp is the same block a month earlier.** It is flagged too, with a run
+ * that has not finished, so the last day of it — the top of the future block,
+ * behind the divider's reveal — carries the creations block informationally:
+ * nought of nine, nothing owed, and every name already a way in to the dialog.
+ * That is the half of the signal a finished run cannot show, and it is why the
+ * block is not gated on the session having ended.
  *
  * **The camp is where the two marks come apart**: notes on its rows and no badge
  * on any of them, which is the clubs-only badge rule beside a note that has no
@@ -123,6 +148,17 @@ export function GeduProductPageScene({
   const [noteEditors, setNoteEditors] = useState<Record<string, string>>(
     () => fixture.memberFlair.noteEditors,
   );
+  /**
+   * The creations, live against local state beside the notes.
+   *
+   * Keyed the same way and holding the same convention: a member with none has
+   * **no key**, so removing the last entry drops the key rather than leaving an
+   * empty array behind — which is exactly what the live derivation does with the
+   * `[]` the RPC emits, and what puts the row's button back out.
+   */
+  const [gamerCreations, setGamerCreations] = useState<
+    Record<string, readonly GamerCreation[]>
+  >(() => fixture.memberFlair.creations);
 
   /**
    * Which identity this scenario's roster shows, read off the fixture's own
@@ -444,14 +480,32 @@ export function GeduProductPageScene({
   };
 
   /**
+   * A Gedu recording, editing or clearing what a member made.
+   *
+   * The one thing worth feeling here is that this half is **family-facing**: the
+   * dialog says so above the fields, and what is typed in the scene is what a
+   * parent would read on their own product page. Like the note beside it, an
+   * empty list is a real action — it drops the key, and the row's button goes
+   * back out unless a note is still holding it lit.
+   */
+  const handleSaveCreations = (
+    participantId: string,
+    creations: readonly GamerCreation[],
+  ) => {
+    setGamerCreations(({ [participantId]: _cleared, ...rest }) =>
+      creations.length > 0 ? { ...rest, [participantId]: creations } : rest,
+    );
+  };
+
+  /**
    * A Gedu writing, rewriting or retiring a note about one member.
    *
    * The text arrives trimmed, and an empty one is a real action rather than a
-   * no-op: it **deletes** the key, which is what puts the row back to an unlit note button and
-   * is how a Gedu drops guidance that no longer applies. The editor stamp moves
-   * with it — this scene's viewer is Sanna, so a note she rewrites now says so,
-   * and a cleared note takes its attribution with it rather than leaving a name
-   * attached to nothing.
+   * no-op: it **deletes** the key, which is what puts the row back to an unlit
+   * note button and is how a Gedu drops guidance that no longer applies. The
+   * editor stamp moves with it — this scene's viewer is Sanna, so a note she
+   * rewrites now says so, and a cleared note takes its attribution with it
+   * rather than leaving a name attached to nothing.
    *
    * Like every write in this scene bar the send, it resolves immediately: the
    * dialog's disabled-until-saved frame is the live page's to show.
@@ -502,7 +556,9 @@ export function GeduProductPageScene({
         newcomers: fixture.memberFlair.newcomers,
         notes: gamerNotes,
         noteEditors,
+        creations: gamerCreations,
         onSaveNote: handleSaveNote,
+        onSaveCreations: handleSaveCreations,
       }}
       // Deliberately not passed. A Roblox render can only be resolved by
       // account id through our own route, and a scene must not reach a

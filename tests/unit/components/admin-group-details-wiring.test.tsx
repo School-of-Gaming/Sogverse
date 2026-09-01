@@ -76,6 +76,11 @@ const JOINED_RECENTLY = "2026-03-06T12:00:00.000Z";
 const STORED_NOTE =
   "Quiet in big groups — pair her rather than letting her pick a partner.";
 
+const STORED_CREATION = {
+  title: "Underwater dome",
+  url: "https://www.planetminecraft.com/project/oskar-dome/",
+} as const;
+
 // --------------------------------------------------------------------------
 // The services, stubbed at their hooks. `vi.hoisted` because `vi.mock`
 // factories are lifted above the imports and these have to exist by then.
@@ -88,6 +93,7 @@ const reads = vi.hoisted(() => ({
 }));
 
 const setNote = vi.hoisted(() => vi.fn());
+const setCreations = vi.hoisted(() => vi.fn());
 
 const noopMutation = vi.hoisted(() => () => ({
   mutate: vi.fn(),
@@ -134,6 +140,10 @@ vi.mock("@/services/roblox", () => ({
 
 vi.mock("@/services/member-flair", () => ({
   useSetGamerGroupNote: () => ({ mutateAsync: setNote, isPending: false }),
+  useSetGamerGroupCreations: () => ({
+    mutateAsync: setCreations,
+    isPending: false,
+  }),
 }));
 
 // The calendar merge is a pure module with its own suite, and this page's
@@ -176,6 +186,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     max_age: 12,
     tag: null,
     region_lock_country: null,
+    requires_gamer_creations: false,
     spoken_language_code: "en",
     product_staff_details: null,
     image_id: null,
@@ -219,6 +230,7 @@ function feedMember(
     group_joined_at?: string | null;
     note?: string | null;
     note_updated_by_first_name?: string | null;
+    creations?: GeduGroupFeed["roster"][number]["creations"];
   } = {},
 ): GeduGroupFeed["roster"][number] {
   return {
@@ -236,6 +248,10 @@ function feedMember(
     group_joined_at: flair.group_joined_at ?? null,
     note: flair.note ?? null,
     note_updated_by_first_name: flair.note_updated_by_first_name ?? null,
+    // `[]` is what the RPC emits for a member with none — a list has a real
+    // empty value where a note has a null. One row overrides it below, so the
+    // "lit by a note OR a creation" claim can be made on this shell too.
+    creations: flair.creations ?? [],
   };
 }
 
@@ -301,6 +317,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
       end_date: null,
       is_remote: false,
       material_url: null,
+      requires_gamer_creations: false,
       translations: [{ locale: "en", name: "Monday Club", description: "" }],
       schedule_slots: [],
     },
@@ -317,7 +334,8 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
         note: STORED_NOTE,
         note_updated_by_first_name: "Sanna",
       }),
-      feedMember(IDS.oskar, "Oskar"),
+      // A creation and no note — the other half of the "lit by either" claim.
+      feedMember(IDS.oskar, "Oskar", { creations: [STORED_CREATION] }),
       feedMember(IDS.emil, "Emil", { group_joined_at: JOINED_RECENTLY }),
     ],
     sessions: [],
@@ -363,15 +381,17 @@ function renderPage(productType: ProductType) {
   );
 }
 
-/** The note button on one member's row, found by its accessible name. */
-function noteButton(firstName: string): HTMLElement {
-  return screen.getByRole("button", { name: `Gedu note about ${firstName}` });
+/** The per-gamer dialog's button on one member's row, by its accessible name. */
+function flairButton(firstName: string): HTMLElement {
+  return screen.getByRole("button", {
+    name: `Note and creation about ${firstName}`,
+  });
 }
 
 /**
- * Whether that button is **lit** — the whole of the "this member has a note"
- * marker. The button itself is on every row, because opening an empty note is
- * the add flow; what carries the mark is the icon's own colour.
+ * Whether that button is **lit** — the whole of the "something is recorded about
+ * this member" marker. The button itself is on every row, because opening an
+ * empty dialog is the add flow; what carries the mark is the icon's own colour.
  */
 function isLit(button: HTMLElement): boolean {
   return button.querySelector("svg")?.classList.contains("text-info") === true;
@@ -391,22 +411,33 @@ function sitePanel() {
   return within(panel);
 }
 
-/** Matches the note dialog's own title, whichever member it was opened for. */
-const NOTE_DIALOG_TITLE = /^Note about /;
+/**
+ * Matches the dialog's own title, whichever member it was opened for.
+ *
+ * Anchored on this roster's three names rather than on the word: the standing
+ * notes panel a card away is headed "About this group", and a looser pattern
+ * would ask that panel the question this file means to ask the dialog.
+ */
+const FLAIR_DIALOG_TITLE = /^About (Siiri|Oskar|Emil)$/;
 
 /**
- * The open note dialog, as its own query scope — the page around it carries
+ * The open per-gamer dialog, as its own query scope — the page around it carries
  * other editors with their own textboxes and Save buttons. The scope is taken
  * from the dialog's own title rather than from a role: the shared `Dialog`
  * portals a plain div and carries no `role="dialog"`.
  */
-function noteDialog() {
-  const title = screen.getByRole("heading", { name: NOTE_DIALOG_TITLE });
+function flairDialog() {
+  const title = screen.getByRole("heading", { name: FLAIR_DIALOG_TITLE });
   const content = title.parentElement?.parentElement;
   if (content === null || content === undefined) {
-    throw new Error("The note dialog's content element was not found.");
+    throw new Error("The per-gamer dialog's content element was not found.");
   }
   return within(content);
+}
+
+/** The note's textarea, named apart from the creation rows' inputs. */
+function noteBox() {
+  return flairDialog().getByRole("textbox", { name: "Private note" });
 }
 
 beforeEach(() => {
@@ -418,23 +449,32 @@ beforeEach(() => {
     note_updated_by_first_name: null,
     updated_at: null,
   });
+  setCreations.mockReset();
+  setCreations.mockResolvedValue({
+    group_id: IDS.group,
+    participant_id: IDS.oskar,
+    creations: [],
+    updated_at: null,
+  });
 });
 
 afterEach(cleanup);
 
 describe("admin group details — the page an admin gets is the gedu's page", () => {
-  it("renders the group's roster from the feed, with the note button on every row", () => {
+  it("renders the group's roster from the feed, with the dialog's button on every row", () => {
     renderPage("consumer_club");
 
     expect(screen.getByText("Siiri")).toBeTruthy();
     expect(screen.getByText("Oskar")).toBeTruthy();
     expect(screen.getByText("Emil")).toBeTruthy();
 
-    expect(isLit(noteButton("Siiri"))).toBe(true);
-    // Present but unlit: the affordance is how the first note gets written, so
+    // Lit by a note, lit by a creation, lit by nothing — the marker says
+    // something is recorded, not that a note is.
+    expect(isLit(flairButton("Siiri"))).toBe(true);
+    expect(isLit(flairButton("Oskar"))).toBe(true);
+    // Present but unlit: the affordance is how the first one gets written, so
     // gating it on having one would leave no way in.
-    expect(isLit(noteButton("Oskar"))).toBe(false);
-    expect(isLit(noteButton("Emil"))).toBe(false);
+    expect(isLit(flairButton("Emil"))).toBe(false);
   });
 
   it("heads the roster rail with the category word, not the gedu's possessive", () => {
@@ -454,14 +494,15 @@ describe("admin group details — the page an admin gets is the gedu's page", ()
     expect(screen.getAllByText("New")).toHaveLength(2);
   });
 
-  it("draws no badge on a camp, and still draws the note", () => {
-    // The two marks are gated differently: the newcomers map goes over empty on
-    // a non-club product while the notes go over untouched. Same roster, same
-    // stamps, one product type apart.
+  it("draws no badge on a camp, and still draws both markers", () => {
+    // The marks are gated differently: the newcomers map goes over empty on a
+    // non-club product while the notes and the creations go over untouched.
+    // Same roster, same stamps, one product type apart.
     renderPage("camp");
 
     expect(screen.queryByText("New")).toBeNull();
-    expect(isLit(noteButton("Siiri"))).toBe(true);
+    expect(isLit(flairButton("Siiri"))).toBe(true);
+    expect(isLit(flairButton("Oskar"))).toBe(true);
   });
 
   it("links to the site's own page instead of editing the record here", () => {
@@ -495,25 +536,27 @@ describe("admin group details — the page an admin gets is the gedu's page", ()
   });
 });
 
-describe("admin group details — writing a note", () => {
+describe("admin group details — writing a note and creations", () => {
   it("opens the dialog seeded with what is stored, and names the last editor", () => {
     renderPage("consumer_club");
-    fireEvent.click(noteButton("Siiri"));
+    fireEvent.click(flairButton("Siiri"));
 
-    const dialog = noteDialog();
-    expect(
-      dialog.getByRole("heading", { name: "Note about Siiri" }),
-    ).toBeTruthy();
-    expect(dialog.getByRole("textbox")).toHaveProperty("value", STORED_NOTE);
+    const dialog = flairDialog();
+    expect(dialog.getByRole("heading", { name: "About Siiri" })).toBeTruthy();
+    expect(noteBox()).toHaveProperty("value", STORED_NOTE);
     expect(dialog.getByText("Last edited by Sanna")).toBeTruthy();
+    // Both audiences are stated in words on this shell too — an admin sees what
+    // the gedu sees, down to the labels on the two halves.
+    expect(dialog.getByText("Gedus and admins")).toBeTruthy();
+    expect(dialog.getByText("Families see this")).toBeTruthy();
   });
 
   it("saves through the shared mutation once, with the trimmed text", async () => {
     renderPage("consumer_club");
-    fireEvent.click(noteButton("Siiri"));
+    fireEvent.click(flairButton("Siiri"));
 
-    const dialog = noteDialog();
-    fireEvent.change(dialog.getByRole("textbox"), {
+    const dialog = flairDialog();
+    fireEvent.change(noteBox(), {
       target: { value: "  Pair her with Emil this week.  " },
     });
     fireEvent.click(dialog.getByRole("button", { name: "Save" }));
@@ -522,6 +565,35 @@ describe("admin group details — writing a note", () => {
     expect(setNote).toHaveBeenCalledWith({
       participantId: IDS.siiri,
       note: "Pair her with Emil this week.",
+    });
+    // The other half was untouched, so it is not rewritten — which is what
+    // keeps the creations row's own "last edited by" honest.
+    expect(setCreations).not.toHaveBeenCalled();
+  });
+
+  it("binds the creations write too, seeded from the same document", async () => {
+    // The whole claim of this page: an admin gets the gedu's page, and that now
+    // includes the second half of the dialog. A shell that bound only the note
+    // would render a creations editor whose Save went nowhere.
+    renderPage("consumer_club");
+    fireEvent.click(flairButton("Oskar"));
+
+    const dialog = flairDialog();
+    expect(
+      dialog.getByRole("textbox", { name: "Creation title" }),
+    ).toHaveProperty("value", STORED_CREATION.title);
+
+    fireEvent.change(dialog.getByRole("textbox", { name: "Creation title" }), {
+      target: { value: "Underwater dome, finished" },
+    });
+    fireEvent.click(dialog.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(setCreations).toHaveBeenCalledTimes(1));
+    expect(setCreations).toHaveBeenCalledWith({
+      participantId: IDS.oskar,
+      creations: [
+        { title: "Underwater dome, finished", url: STORED_CREATION.url },
+      ],
     });
   });
 
@@ -539,21 +611,24 @@ describe("admin group details — writing a note", () => {
     );
 
     renderPage("consumer_club");
-    fireEvent.click(noteButton("Siiri"));
-    fireEvent.click(noteDialog().getByRole("button", { name: "Save" }));
+    fireEvent.click(flairButton("Siiri"));
+    // A change first: Save commits only the halves that differ from what is
+    // stored, so an untouched dialog has nothing to hold the button through.
+    fireEvent.change(noteBox(), { target: { value: "Rewritten." } });
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
 
-    expect(noteDialog().getByRole("button", { name: "Save" })).toHaveProperty(
+    expect(flairDialog().getByRole("button", { name: "Save" })).toHaveProperty(
       "disabled",
       true,
     );
     // A second press cannot get a second write out while it is disabled.
-    fireEvent.click(noteDialog().getByRole("button", { name: "Save" }));
+    fireEvent.click(flairDialog().getByRole("button", { name: "Save" }));
     expect(setNote).toHaveBeenCalledTimes(1);
 
     settle();
     await waitFor(() =>
       expect(
-        screen.queryByRole("heading", { name: NOTE_DIALOG_TITLE }),
+        screen.queryByRole("heading", { name: FLAIR_DIALOG_TITLE }),
       ).toBeNull(),
     );
   });

@@ -405,6 +405,10 @@
           "free": "Gratuit",
           "external_contract": "Contrat externe (commune)"
         },
+        "requiresGamerCreations": {
+          "required": "Obligatoire",
+          "notRequired": "Non obligatoire"
+        },
         "fields": {
           "publicUrl": "Lien public",
           "topic": "Thème",
@@ -425,6 +429,7 @@
           "tag": "Conçu pour",
           "regionLock": "Restriction par pays",
           "requiredConsents": "Consentements obligatoires",
+          "requiresGamerCreations": "Créations des joueurs",
           "visibility": "Visibilité"
         },
         "copyLink": "Copier le lien public",
@@ -480,6 +485,7 @@
         "longDescription": "Description longue",
         "topic": "Thème",
         "materialUrl": "URL du matériel pédagogique",
+        "requiresGamerCreations": "Chaque joueur doit avoir un lien vers sa création",
         "seatAudience": "Qui peut occuper une place",
         "tag": "Conçu pour",
         "regionLock": "Restriction par pays",
@@ -614,6 +620,7 @@
         "longDescription": "Facultatif. La présentation complète, affichée uniquement sur la page de détail du produit. Titres, listes, mises en valeur et liens sont disponibles.",
         "topicHint": "Ce dont parle ce produit. Les familles le voient comme filtre « Univers » dans la boutique et sur la carte d’info de la page produit.",
         "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
+        "requiresGamerCreationsHint": "Pour les produits dont un contrat l’exige. La dernière séance reste signalée comme nécessitant une action tant que chaque joueur du groupe n’a pas de création enregistrée. Les familles ne voient aucune différence.",
         "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son joueur participent ensemble — la boutique l'affiche « Pour les familles ».",
         "forGamersHint": "Un parent inscrit son joueur et le joueur occupe la place. Nécessite une tranche d’âge.",
         "forParentsHint": "Un parent occupe une place pour lui-même et y participe. Pas de tranche d’âge — l’âge décrit les enfants, pas les adultes.",
@@ -1406,6 +1413,8 @@
     "siteLabel": "Où",
     "aboutHeading": "À propos du groupe",
     "siteNoteHeading": "À {site}",
+    "creationsHeading": "{count, plural, one {Création} other {Créations}}",
+    "creationOpensInNewTab": "(s’ouvre dans un nouvel onglet)",
     "feedHeading": "Séances",
     "attendancePresent": "Présent",
     "attendanceNotPresent": "Pas présent",
@@ -1419,7 +1428,10 @@
     "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}.",
     "loadingPage": "Chargement des séances de ce groupe.",
     "notFoundTitle": "Rien à afficher ici",
-    "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Mon SOG rassemble toutes vos inscriptions."
+    "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Mon SOG rassemble toutes vos inscriptions.",
+    "creationsIntro": "{count, plural, one {Quand {name} termine quelque chose dans ce groupe — un jeu, un monde, un projet — son Gedu en met le lien ici, pour que vous voyiez ce que tout ce temps de jeu a produit. Ouvrez-le ensemble et laissez {name} vous faire visiter.} other {Quand {name} termine quelque chose dans ce groupe — un jeu, un monde, un projet — son Gedu en met le lien ici, pour que vous voyiez ce que tout ce temps de jeu a produit. Ouvrez-les ensemble et laissez {name} vous faire visiter.}}",
+    "creationsIntroSelf": "{count, plural, one {Quand vous terminez quelque chose dans ce groupe, votre Gedu en met le lien ici — du travail achevé, qui mérite qu’on y revienne et qu’on le partage.} other {Quand vous terminez quelque chose dans ce groupe, votre Gedu en met le lien ici — du travail achevé, qui mérite qu’on y revienne et qu’on le partage.}}",
+    "creationsIntroGamer": "{count, plural, one {Quand tu termines quelque chose dans ce groupe, ton Gedu en met le lien ici — pour que tu puisses y revenir et le montrer. C’est toi qui as fait ça.} other {Quand tu termines quelque chose dans ce groupe, ton Gedu en met le lien ici — pour que tu puisses y revenir et les montrer. C’est toi qui as fait tout ça.}}"
   },
   "selectProfile": {
     "title": "Qui entre dans Sogverse ?"
@@ -1545,7 +1557,12 @@
       "photoErrorCapReached": "Ce compte rendu est déjà complet. Supprimez une photo pour en ajouter une autre.",
       "photoErrorNotAllowed": "Vous ne pouvez pas ajouter de photos à cette séance.",
       "photoErrorUploadFailed": "Cette photo n’a pas été envoyée. Réessayez.",
-      "photoErrorRemoveFailed": "Cette photo n’a pas pu être supprimée. Elle est toujours sur le compte rendu : réessayez."
+      "photoErrorRemoveFailed": "Cette photo n’a pas pu être supprimée. Elle est toujours sur le compte rendu : réessayez.",
+      "creationsTitle": "Créations",
+      "creationsAddedCount": "{added} sur {total} ajoutées",
+      "creationsHint": "C’est la dernière séance du cycle, et elle n’est terminée que lorsque chacun a une création. Ouvrez un nom pour en ajouter une.",
+      "creationsMemberDone": "{name} — création ajoutée",
+      "creationsMemberMissing": "{name} — création manquante"
     },
     "groupNotes": {
       "heading": "À propos du groupe",
@@ -1690,11 +1707,22 @@
   "memberFlair": {
     "newcomer": "Nouveau",
     "newcomerTooltip": "Nouveau dans ce groupe — {days, plural, =0 {aujourd’hui} one {il y a # jour} other {il y a # jours}}",
-    "openNote": "Note pour les Gedus au sujet de {name}",
-    "noteTitle": "Note au sujet de {name}",
-    "notePrivacy": "Cette note est visible uniquement par les Gedus et les admins. Elle reste attachée à ce groupe, d’une séance à l’autre.",
+    "openMember": "Note et création au sujet de {name}",
+    "openMemberCreationOwed": "Note et création au sujet de {name} — une création manque encore",
+    "memberTitle": "À propos de {name}",
+    "noteAudience": "Gedus et admins",
+    "noteLabel": "Note privée",
+    "noteHint": "Visible uniquement par les Gedus et les admins. Elle reste attachée à ce groupe, d’une séance à l’autre.",
     "notePlaceholder": "Notes au sujet de {name} dans ce groupe.",
-    "noteLastEdited": "Dernière modification par {name}"
+    "noteLastEdited": "Dernière modification par {name}",
+    "creationAudience": "Visible par les familles",
+    "creationLabel": "Création",
+    "creationHint": "Quelque chose que {name} a réalisé dans ce groupe. Sa famille le voit sur sa propre page.",
+    "creationTitleLabel": "Titre de la création",
+    "creationTitlePlaceholder": "Ce qui a été réalisé",
+    "creationUrlLabel": "Lien de la création",
+    "creationUrlPlaceholder": "Lien vers la création",
+    "creationIncomplete": "Une création a besoin d’un titre et d’un lien."
   },
   "richText": {
     "bold": "Gras",
