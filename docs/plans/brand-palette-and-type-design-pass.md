@@ -165,7 +165,20 @@ Owner direction (2026-08-31), added during implementation:
 19. **The identicon is out of scope** (owner, 2026-09-01): it needs work — every avatar is
     amber+violet decoration, and a four-tertiary recolour is the ensemble rule's biggest
     equalizer — but it gets **its own pass another time**; nothing in this pass touches it.
-20. **The ensemble rule** (owner, 2026-09-01): amber and violet stay the brand leads; the
+20. **Press Start 2P retires app-wide** (owner, 2026-09-01, superseding the rare-use
+    exception): the Guidebook's own type system replaces the invented face the same way
+    the brand palette replaced the invented colours. Typography is UI grammar — face =
+    voice: Poppins is the app speaking (trust register, all UI and marketing), Space Mono
+    is Sogverse-the-world speaking (in-platform display moments), Crimson Pro the
+    editorial voice (parked until an editorial surface exists), plain mono the machine,
+    Dancing Script signature-only pending its own ruling. Per-site replacements are
+    reviewed on the typography deck; the /roblox hero's replacement additionally keeps
+    its partner gate (it sits above the approved lockup — owner's explicit go, and
+    partner review if he judges it needed); the home hero's Poppins variant is drafted
+    in the home pass. Wiring unloads the face and retires `--font-display` deliberately,
+    site by site — never by repointing the token. The deviations log's Press Start 2P
+    entry closes as "retired" when the wiring lands.
+21. **The ensemble rule** (owner, 2026-09-01): amber and violet stay the brand leads; the
     four tertiaries (pink, green, blue, orange) should read as **equally represented**
     across the app in general, so grammar frequency must not skew the showcase. Two
     halves: semantics are trimmed where they would flood (mechanical acknowledgements —
