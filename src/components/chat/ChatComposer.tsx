@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ImagePlus, Lock, Send, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -101,6 +101,16 @@ export function ChatComposer({
     field.focus();
     field.setSelectionRange(caret, caret);
   });
+
+  // Choosing a reply target is choosing to write: pressing Reply — on this
+  // message or a different one mid-strip — puts the caret in the field so the
+  // hand goes straight from click to typing. Keyed on the id so re-renders
+  // with the same target do not steal focus from wherever the user took it.
+  const replyTargetId = replyingTo?.id ?? null;
+  useEffect(() => {
+    if (replyTargetId === null) return;
+    fieldRef.current?.focus();
+  }, [replyTargetId]);
 
   const stage = async (files: readonly File[]) => {
     if (!capabilities.canAttachImages || files.length === 0) return;
