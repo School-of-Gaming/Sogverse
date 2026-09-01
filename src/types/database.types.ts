@@ -307,6 +307,69 @@ export type Database = {
           },
         ]
       }
+      gamer_group_creations: {
+        Row: {
+          created_at: string
+          creations: Json
+          group_id: string
+          participant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          creations: Json
+          group_id: string
+          participant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          creations?: Json
+          group_id?: string
+          participant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamer_group_creations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_creations_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_creations_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_creations_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_creations_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gamer_group_notes: {
         Row: {
           created_at: string
@@ -1512,6 +1575,7 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"]
           region_lock_country: string | null
           registration_opens_at: string
+          requires_gamer_creations: boolean
           seat_count: number | null
           signup_threshold: number | null
           spoken_language_code: Database["public"]["Enums"]["spoken_language"]
@@ -1544,6 +1608,7 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"]
           region_lock_country?: string | null
           registration_opens_at: string
+          requires_gamer_creations?: boolean
           seat_count?: number | null
           signup_threshold?: number | null
           spoken_language_code: Database["public"]["Enums"]["spoken_language"]
@@ -1576,6 +1641,7 @@ export type Database = {
           product_type?: Database["public"]["Enums"]["product_type"]
           region_lock_country?: string | null
           registration_opens_at?: string
+          requires_gamer_creations?: boolean
           seat_count?: number | null
           signup_threshold?: number | null
           spoken_language_code?: Database["public"]["Enums"]["spoken_language"]
@@ -2314,6 +2380,7 @@ export type Database = {
           p_region_lock_country?: string
           p_registration_opens_at: string
           p_required_consent_slugs?: string[]
+          p_requires_gamer_creations?: boolean
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number
@@ -2593,6 +2660,14 @@ export type Database = {
         Returns: Json
       }
       send_seat_offer: { Args: { p_participation_id: string }; Returns: Json }
+      set_gamer_group_creations: {
+        Args: {
+          p_creations: Json
+          p_group_id: string
+          p_participant_id: string
+        }
+        Returns: Json
+      }
       set_gamer_group_note: {
         Args: { p_group_id: string; p_note: string; p_participant_id: string }
         Returns: Json
@@ -2685,6 +2760,7 @@ export type Database = {
           p_region_lock_country?: string
           p_registration_opens_at: string
           p_required_consent_slugs?: string[]
+          p_requires_gamer_creations?: boolean
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number

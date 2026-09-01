@@ -27,6 +27,7 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     max_age: 12,
     tag: null,
     region_lock_country: null,
+    requires_gamer_creations: false,
     spoken_language_code: "en",
     // The link is the id; `image_path` is the column the trigger derives from
     // it, and the embed is what the form's image card paints from.

@@ -273,6 +273,23 @@ messages — glyphs are lucide icons in components).
    emission (the 00203/00204-style precedent — it is per-migration and
    hand-written, not a standing mechanism). Push, regenerate types, add
    aliases.
+
+   *Landed as `00227_a_gamer_shows_what_they_made.sql`. Names: table
+   `gamer_group_creations`; RPC `set_gamer_group_creations(p_group_id uuid,
+   p_participant_id uuid, p_creations jsonb) RETURNS jsonb`; column
+   `products.requires_gamer_creations`; new defaulted arg
+   `p_requires_gamer_creations boolean DEFAULT false` appended to both product
+   RPCs. Caps: ≤20 entries, title ≤200 chars, url ≤2000 chars. Emitted key is
+   `creations`, always an array (`[]` when there is no row), never null.*
+
+   *Two deviations, both additive. (1) The plan says "the flag and the schedule
+   already reach the workspace via the product" — the flag did not, being a new
+   column, so the product shells of the gedu group feed AND the gedu
+   assigned-product document also emit `requires_gamer_creations`. Step 7's
+   client-side derivation has no other route to it. (2) Fixtures constructing a
+   full `products` row gained `requires_gamer_creations: false` (the public
+   product-detail mock and three unit-test fixtures), which the NOT NULL column
+   forces at compile time.*
 2. **Contracts**: zod schemas for the RPC body and every widened document
    shape, in the owning services' contracts files; the safeguarding
    justification written into the family contracts doc-comment per its own

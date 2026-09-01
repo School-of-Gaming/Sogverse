@@ -427,6 +427,30 @@ export type {
 } from "@/services/member-flair/member-flair.contracts";
 
 // ---------------------------------------------------------------------------
+// gamer creations (00227) — the things a member made during a group's run, as a
+// list of {title, url}. The private note's structural twin, with one difference
+// that decides nothing here and everything downstream: the gamer's own family
+// reads this list, where the note is staff-only forever.
+// ---------------------------------------------------------------------------
+
+// gamer_group_creations — one row per (group, member), and the same access
+// arrangement as gamer_group_notes above: no Data API role holds a grant, RLS is
+// on with no policy at all, every read rides a document RPC and every write goes
+// through `set_gamer_group_creations`. So these aliases exist for the
+// service-role side (db tests, admin tooling), not for browser queries.
+//
+// `creations` types as `Json` — the generator cannot see the CHECK that makes it
+// an array of {title, url}. The structured shape is the zod contract the service
+// and the db tests parse through.
+//
+// No Update alias: the write RPC upserts, and an empty list deletes the row
+// rather than storing [], so nothing in the app makes a bare UPDATE statement
+// for one to name.
+export type GamerGroupCreations = Database["public"]["Tables"]["gamer_group_creations"]["Row"];
+export type GamerGroupCreationsInsert =
+  Database["public"]["Tables"]["gamer_group_creations"]["Insert"];
+
+// ---------------------------------------------------------------------------
 // voice zones (00103) — the persisted half of the discrete-zone voice model.
 // See src/components/voice/CLAUDE.md for the discrete-zone voice model.
 // Lobby + the 4 Yty zones stay virtual/hardcoded on the client; only these
