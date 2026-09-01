@@ -118,11 +118,18 @@ export function JoinVoiceButton({
     );
   }
 
+  // The locked state is `outline`, not the neutral emphasis tier the retired
+  // violet fill converted into. A fill is an emphasis claim, and this button is
+  // the one thing on the card that cannot be acted on yet — drawn at the tier
+  // above every other control on the surface it would out-shout the open
+  // sibling card's amber Join. Outline reads as the quiet, bounded "not yet"
+  // this state actually is, and survives the uniform `disabled:opacity-50`
+  // legibly on both the page and the card ground.
   return (
     <button
       type="button"
       disabled
-      className={cn(buttonVariants({ size, variant: "secondary" }), "gap-1.5")}
+      className={cn(buttonVariants({ size, variant: "outline" }), "gap-1.5")}
     >
       <Lock className="h-4 w-4" />
       {t("locked", { date: opensDate, time: opensTime })}

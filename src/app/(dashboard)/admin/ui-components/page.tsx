@@ -21,7 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -228,7 +228,7 @@ function Section({
   return (
     <SectionSlugContext.Provider value={slug}>
       <section className="space-y-4">
-        <AnchorHeading as="h2" id={slug} className="text-2xl font-bold">
+        <AnchorHeading as="h2" id={slug} className="text-2xl font-semibold">
           {title}
         </AnchorHeading>
         <div className="rounded-lg border p-6 space-y-6">{children}</div>
@@ -2229,64 +2229,115 @@ function SessionPhotosDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Button — the Guidebook-proposed set, beside today's                 */
+/*  Button — the shipped set, every state side by side                  */
 /* ------------------------------------------------------------------ */
 
 /**
- * A review surface, not a component. Every class here is local to this page:
- * `Button` renders exactly as it does everywhere else in the app, and nothing
- * promotes until the owner has picked from what this section shows.
+ * The button set as it ships, drawn from the live recipe rather than restated
+ * here, so this table cannot disagree with the app.
  *
- * The Guidebook specs, so this section stands without it: Primary is a #FAA901
- * fill with a #121212 label and no border — which is what `--primary` and
- * `--primary-foreground` already are, to the digit. Its Secondary is a 2px
- * border on transparent, specced dark-on-white and therefore invisible on our
- * ground; its "on dark backgrounds" button — a 2px light border on transparent —
- * is the one that works here, and is what the proposed secondary is built from.
- * The third tier is ours to design, and the options below are the ask.
- *
- * **The type half is no longer a question.** The Guidebook's CTA row — Poppins
- * 16px / SemiBold 600 — is ruled, and one line in the shared recipe carries it
- * to every button in the product. So the colour set is drawn *on* that type,
- * which is what the candidates will ship in; the second table keeps today's
- * 14px / 500 beside it as the record of what the ruling moves, and says which
- * of the two is the ruled one.
+ * Four columns because a button has four states worth judging and three of them
+ * are invisible in a row of resting samples. Hover cannot be frozen on a real
+ * button, so each row carries a second copy wearing its hover rules as static
+ * ones — the one place on this page where a class is duplicated out of the
+ * recipe, and the reason each row states its hover rule beside itself: when the
+ * recipe's hover affordance changes, this column changes with it or it lies.
  */
+type ButtonStateRow = {
+  /** The `variant` prop this row draws. */
+  variant: NonNullable<ButtonProps["variant"]>;
+  /** What the variant is for, in one clause. */
+  note: string;
+  /**
+   * The variant's `hover:` rules with the prefix removed, so the hover
+   * treatment can be looked at rather than remembered. Mirrors the recipe.
+   */
+  hoverClassName: string;
+};
 
 /**
- * The live button's base and default size, minus the type classes — those are
- * the variable in the second table, so they can't be baked in here.
+ * The tiers, loudest first. `secondary` is the neutral emphasis fill the violet
+ * retired into — same variant name, no relation to `--secondary` any more.
  */
+const BUTTON_TIER_ROWS: readonly ButtonStateRow[] = [
+  {
+    variant: "default",
+    note: "Primary CTA — amber is the act colour",
+    hoverClassName: "ring-2 ring-foreground",
+  },
+  {
+    variant: "secondary",
+    note: "Neutral emphasis — the app's own ink at fill weight",
+    hoverClassName: "ring-2 ring-muted-foreground",
+  },
+  {
+    variant: "outline",
+    note: "Bounded, recessive",
+    hoverClassName: "bg-accent text-accent-foreground",
+  },
+  {
+    variant: "ghost",
+    note: "Quietest tier — no border, no fill",
+    hoverClassName: "bg-accent text-accent-foreground",
+  },
+  {
+    variant: "link",
+    note: "A link wearing a button's hit area",
+    hoverClassName: "underline",
+  },
+  {
+    variant: "destructive",
+    note: "Ruled untouched by the palette pass — the one fill that still darkens on hover",
+    hoverClassName: "bg-destructive/90",
+  },
+];
+
+/**
+ * The grammar fills. Each note is the family's word, because the word is the
+ * whole test for whether a button may take the colour at all.
+ */
+const BUTTON_GRAMMAR_ROWS: readonly ButtonStateRow[] = [
+  {
+    variant: "valor",
+    note: "Adventure — “Book the camp”. Dark ink at 6.69:1",
+    hoverClassName: "ring-2 ring-foreground",
+  },
+  {
+    variant: "harmony",
+    note: "People — “Invite a friend”. Dark ink at 6.11:1",
+    hoverClassName: "ring-2 ring-foreground",
+  },
+  {
+    variant: "glow",
+    note: "Growth — “Claim the badge”. Dark ink at 6.63:1",
+    hoverClassName: "ring-2 ring-foreground",
+  },
+  {
+    variant: "wit",
+    note: "Knowledge — “See the schedule”. Fills soft: strong is 4.10:1 and fails body. Dark ink at 8.10:1",
+    hoverClassName: "ring-2 ring-foreground",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Button — the third tier, still an open design question              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The one part of the button review the owner has not ruled. The Guidebook
+ * stops after two tiers; today's `ghost` is what we ship as the third, and the
+ * two candidates beside it are the alternatives. Classes here are local to this
+ * page — nothing below is a live variant except the first row, which restates
+ * today's ghost so the comparison has a baseline.
+ *
+ * When this is ruled, the winner goes into the recipe and this subsection goes
+ * with the question.
+ */
+
+/** The live button's base and default size, at the ruled CTA type. */
 const DRAFT_BUTTON_BASE =
-  "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0";
+  "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0";
 
-/** 14px / 500 is what every button in the app wears today. */
-const DRAFT_TYPE_TODAY = "text-sm font-medium";
-/** 16px / 600 is the Guidebook's CTA type, and the ruled one. */
-const DRAFT_TYPE_RULED = "text-base font-semibold";
-
-/**
- * The counting rule behind every "call sites" number below, stated because the
- * figure is the owner's decision input and a wrong one argues for the wrong
- * decision. A call site is an occurrence of `<Button variant="X">` **plus** an
- * occurrence of `buttonVariants({ variant: "X" })` — the helper is how a
- * `<Link>` wears the button's clothes, so those anchors are as much a call site
- * as a real button — counted across app code (`src/`) and excluding this
- * style-guide page, whose demos are not usage.
- *
- * Both halves matter, and each is a way the number goes wrong on its own: a
- * bare grep for `variant="outline"` also catches `<Badge variant="outline">`,
- * which is a different component and inflates the count, while missing the
- * helper deflates it. Regenerate rather than trust these:
- *
- *   grep -rn 'variant="X"' src/            (then discard non-Button hits)
- *   grep -rn 'buttonVariants(' src/        (then keep the variant: "X" ones)
- *
- * Measured 2026-08-31: outline 61 (44 Button + 17 buttonVariants), ghost 24
- * (all Button), secondary 1 (a single `buttonVariants` anchor, no Button at
- * all). Secondary's number is the surprising one and it is the point: retiring
- * that variant touches one line.
- */
 type DraftButtonRow = {
   /** The row's name in the comparison. */
   name: string;
@@ -2300,40 +2351,6 @@ type DraftButtonRow = {
 };
 
 const DRAFT_ROWS = {
-  // Byte-for-byte today's `default`. Shown as one row rather than two identical
-  // ones: "unchanged" is the finding, and two rows would imply a difference.
-  primary: {
-    name: "Primary",
-    note: "today's default · unchanged",
-    className: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-    hoverClassName: "bg-primary/90",
-  },
-  todayOutline: {
-    name: "outline",
-    note: "today · 61 call sites",
-    className:
-      "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
-    hoverClassName: "bg-accent text-accent-foreground",
-  },
-  todaySecondary: {
-    name: "secondary",
-    note: "today · 1 call site",
-    className:
-      "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-    hoverClassName: "bg-secondary/80",
-  },
-  // Hover fills with the border's own colour at a tenth alpha: the shape the
-  // Guidebook draws has no fill to darken, so the only move that doesn't
-  // introduce a second hue is to let the border's colour wash inward. Disabled
-  // is the app's uniform half-opacity fade — border, label and fill together —
-  // so a bordered variant stays legible as the same button.
-  secondaryOnDark: {
-    name: "Secondary on dark",
-    note: "proposed",
-    className:
-      "border-2 border-foreground bg-transparent text-foreground hover:bg-foreground/10",
-    hoverClassName: "bg-foreground/10",
-  },
   tierGhost: {
     name: "Third tier, option A — ghost as today",
     note: "today's ghost · 24 call sites",
@@ -2355,199 +2372,194 @@ const DRAFT_ROWS = {
   },
 } as const satisfies Record<string, DraftButtonRow>;
 
-const BUTTON_PROPOSAL_GROUPS: readonly {
-  title: string;
-  caption: string;
-  rows: readonly DraftButtonRow[];
-}[] = [
-  {
-    title: "Primary — already conformant",
-    caption:
-      "The Guidebook's Primary is today's default to the digit: amber fill, ink label, no border. Nothing to decide.",
-    rows: [DRAFT_ROWS.primary],
-  },
-  {
-    title: "Secondary on dark — replaces both of today's filled-or-bordered mids",
-    caption:
-      "Open decision: does the violet fill retire into this one, or survive under another name for the job it does today?",
-    rows: [
-      DRAFT_ROWS.todayOutline,
-      DRAFT_ROWS.todaySecondary,
-      DRAFT_ROWS.secondaryOnDark,
-    ],
-  },
-  {
-    title: "Third tier — open design",
-    caption:
-      "The Guidebook stops after two. Three candidates for the quietest tier, all inheriting whatever the row above settles.",
-    rows: [
-      DRAFT_ROWS.tierGhost,
-      DRAFT_ROWS.tierQuietOutline,
-      DRAFT_ROWS.tierLabel,
-    ],
-  },
-];
-
-/** The proposed set, for the type table — every row a decision could land on. */
-const BUTTON_PROPOSAL_SET: readonly DraftButtonRow[] = [
-  DRAFT_ROWS.primary,
-  DRAFT_ROWS.secondaryOnDark,
+const THIRD_TIER_CANDIDATES: readonly DraftButtonRow[] = [
   DRAFT_ROWS.tierGhost,
   DRAFT_ROWS.tierQuietOutline,
   DRAFT_ROWS.tierLabel,
 ];
 
-function DraftButtonLabel({ row }: { row: DraftButtonRow }) {
+/** The four states every button table on this page draws, in one order. */
+const BUTTON_DEMO_STATES = [
+  "resting",
+  "hover",
+  "disabled",
+  "loading",
+] as const;
+type ButtonDemoState = (typeof BUTTON_DEMO_STATES)[number];
+
+/**
+ * The column captions, stated once so the two tables cannot drift apart on
+ * what a column means.
+ */
+function ButtonStateHeadings() {
+  return (
+    <Fragment>
+      <div />
+      <DemoCaption>Resting &mdash; hover it</DemoCaption>
+      <DemoCaption>Hover, frozen</DemoCaption>
+      <DemoCaption>Disabled</DemoCaption>
+      <DemoCaption>Loading</DemoCaption>
+    </Fragment>
+  );
+}
+
+function ButtonDemoLabel({ name, note }: { name: string; note: string }) {
   return (
     <div className="min-w-0">
-      <div className="text-sm text-foreground">{row.name}</div>
+      <div className="text-sm text-foreground">{name}</div>
       <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-        {row.note}
+        {note}
       </div>
     </div>
   );
 }
 
 /**
- * One draft button. `typeClass` is the variable the second table sweeps; the
- * frozen-hover copy takes the row's hover rules as static ones, and twMerge
- * resolves them against the resting rules they override.
+ * One live button in one state. The frozen-hover copy applies the row's hover
+ * rules statically, and twMerge resolves them against the resting rules they
+ * override.
  */
-function DraftButton({
+function ButtonStateCell({
   row,
-  typeClass,
   state,
 }: {
-  row: DraftButtonRow;
-  typeClass: string;
-  state: "resting" | "hover" | "disabled" | "loading";
+  row: ButtonStateRow;
+  state: ButtonDemoState;
 }) {
   return (
-    <button
-      type="button"
-      disabled={state === "disabled" || state === "loading"}
-      // The frozen copy is a picture of a state, not something to click into.
-      tabIndex={state === "hover" ? -1 : undefined}
-      className={cn(
-        DRAFT_BUTTON_BASE,
-        typeClass,
-        row.className,
-        state === "hover" && row.hoverClassName,
-      )}
-    >
-      {state === "loading" && <Loader2 className="animate-spin" aria-hidden />}
-      Join club
-    </button>
+    <div>
+      <Button
+        variant={row.variant}
+        disabled={state === "disabled" || state === "loading"}
+        // The frozen copy is a picture of a state, not something to click into.
+        tabIndex={state === "hover" ? -1 : undefined}
+        className={cn(state === "hover" && row.hoverClassName)}
+      >
+        {state === "loading" && <Loader2 className="animate-spin" aria-hidden />}
+        Join club
+      </Button>
+    </div>
   );
 }
 
-function ButtonProposalDemo() {
+/**
+ * One draft third-tier candidate. Hand-built rather than a variant, because
+ * two of the three are proposals the recipe does not carry.
+ */
+function DraftButton({
+  row,
+  state,
+}: {
+  row: DraftButtonRow;
+  state: ButtonDemoState;
+}) {
   return (
-    <Fragment>
-      <SubSection title="Guidebook proposal — today beside proposed">
-        <p className="text-sm text-muted-foreground">
-          Draft classes local to this page, drawn on the ruled CTA type &mdash;
-          Poppins 16px / 600. The live Button is untouched, and destructive and
-          link stay as functional variants outside this set.
-        </p>
-        {/* One grid for all three groups, so a column means the same thing all
-            the way down and the comparison is made by looking, not by scrolling
-            back. Hover can't be frozen on a real button, so each row carries a
-            static copy of its hover rules beside the interactive one.
+    <div>
+      <button
+        type="button"
+        disabled={state === "disabled" || state === "loading"}
+        tabIndex={state === "hover" ? -1 : undefined}
+        className={cn(
+          DRAFT_BUTTON_BASE,
+          row.className,
+          state === "hover" && row.hoverClassName,
+        )}
+      >
+        {state === "loading" && <Loader2 className="animate-spin" aria-hidden />}
+        Join club
+      </button>
+    </div>
+  );
+}
 
-            The five columns have a hard floor of roughly 832px, which is wider
-            than a narrow viewport — and a comparison grid is exactly the wide
-            content the layout rules say must scroll inside its own container
-            rather than take the whole admin document sideways with it. Hence
-            the `overflow-x-auto` wrapper: below its floor the grid scrolls, the
-            page does not. */}
-        <div className="overflow-x-auto">
-          <div className="grid grid-cols-[minmax(14rem,auto)_repeat(4,minmax(8rem,1fr))] items-center gap-x-6 gap-y-3">
-            <div />
-            <DemoCaption>Resting &mdash; hover it</DemoCaption>
-            <DemoCaption>Hover, frozen</DemoCaption>
-            <DemoCaption>Disabled</DemoCaption>
-            <DemoCaption>Loading</DemoCaption>
+/**
+ * The shipped set, every state side by side.
+ *
+ * One grid for both groups, so a column means the same thing all the way down
+ * and the comparison is made by looking rather than by scrolling back. The five
+ * columns have a hard floor of roughly 832px, which is wider than a narrow
+ * viewport — and a comparison grid is exactly the wide content the layout rules
+ * say must scroll inside its own container rather than take the whole admin
+ * document sideways with it. Hence the `overflow-x-auto` wrapper: below its
+ * floor the grid scrolls, the page does not.
+ */
+function ButtonStatesDemo() {
+  return (
+    <SubSection title="Variants — every state">
+      <p className="text-sm text-muted-foreground">
+        The live <code>Button</code>, at the ruled CTA type (Poppins 16px / 600).
+        No fill darkens on hover: a filled variant takes a 2px ring instead, so
+        the brand colour stays the colour it was authored as.{" "}
+        <code>destructive</code> is the ruled exception and keeps its 90% fill.
+      </p>
+      <div className="overflow-x-auto">
+        <div className="grid grid-cols-[minmax(14rem,auto)_repeat(4,minmax(8rem,1fr))] items-center gap-x-6 gap-y-3">
+          <ButtonStateHeadings />
 
-            {BUTTON_PROPOSAL_GROUPS.map((group) => (
-              <Fragment key={group.title}>
-                <div className="col-span-full space-y-0.5 border-t pt-4">
-                  <h4 className="text-sm font-semibold">{group.title}</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {group.caption}
-                  </p>
-                </div>
-                {group.rows.map((row) => (
-                  <Fragment key={row.name}>
-                    <DraftButtonLabel row={row} />
-                    <div>
-                      <DraftButton
-                        row={row}
-                        typeClass={DRAFT_TYPE_RULED}
-                        state="resting"
-                      />
-                    </div>
-                    <div>
-                      <DraftButton
-                        row={row}
-                        typeClass={DRAFT_TYPE_RULED}
-                        state="hover"
-                      />
-                    </div>
-                    <div>
-                      <DraftButton
-                        row={row}
-                        typeClass={DRAFT_TYPE_RULED}
-                        state="disabled"
-                      />
-                    </div>
-                    <div>
-                      <DraftButton
-                        row={row}
-                        typeClass={DRAFT_TYPE_RULED}
-                        state="loading"
-                      />
-                    </div>
-                  </Fragment>
-                ))}
-              </Fragment>
-            ))}
+          <div className="col-span-full space-y-0.5 border-t pt-4">
+            <h4 className="text-sm font-semibold">Tiers</h4>
+            <p className="text-xs text-muted-foreground">
+              Loudest first. The emphasis tier below the amber CTA is neutral by
+              design — every hue is committed to a meaning now, and this tier
+              needs none.
+            </p>
           </div>
-        </div>
-      </SubSection>
+          {BUTTON_TIER_ROWS.map((row) => (
+            <Fragment key={row.variant}>
+              <ButtonDemoLabel name={row.variant} note={row.note} />
+              {BUTTON_DEMO_STATES.map((state) => (
+                <ButtonStateCell key={state} row={row} state={state} />
+              ))}
+            </Fragment>
+          ))}
 
-      <SubSection title="CTA type — today beside Guidebook">
-        {/* Same floor, same wrapper as the grid above — three columns bottom out
-            around 592px, so this one scrolls inside itself too rather than
-            widening the document. */}
-        <div className="overflow-x-auto">
-          <div className="grid grid-cols-[minmax(14rem,auto)_repeat(2,minmax(10rem,1fr))] items-center gap-x-6 gap-y-3">
-            <div />
-            <DemoCaption>Today &mdash; 14px / 500</DemoCaption>
-            <DemoCaption>Ruled &mdash; Poppins 16px / 600</DemoCaption>
-            {BUTTON_PROPOSAL_SET.map((row) => (
-              <Fragment key={row.name}>
-                <DraftButtonLabel row={row} />
-                <div>
-                  <DraftButton
-                    row={row}
-                    typeClass={DRAFT_TYPE_TODAY}
-                    state="resting"
-                  />
-                </div>
-                <div>
-                  <DraftButton
-                    row={row}
-                    typeClass={DRAFT_TYPE_RULED}
-                    state="resting"
-                  />
-                </div>
-              </Fragment>
-            ))}
+          <div className="col-span-full space-y-0.5 border-t pt-4">
+            <h4 className="text-sm font-semibold">Grammar fills</h4>
+            <p className="text-xs text-muted-foreground">
+              A grammar fill only where the action <em>is</em> the family&rsquo;s
+              word — never beside a primary CTA, never two in one view, never on
+              a destructive action. Every fill carries dark ink; wit fills soft,
+              because wit-strong is 4.10:1 and fails the body threshold this type
+              size sits under.
+            </p>
           </div>
+          {BUTTON_GRAMMAR_ROWS.map((row) => (
+            <Fragment key={row.variant}>
+              <ButtonDemoLabel name={row.variant} note={row.note} />
+              {BUTTON_DEMO_STATES.map((state) => (
+                <ButtonStateCell key={state} row={row} state={state} />
+              ))}
+            </Fragment>
+          ))}
         </div>
-      </SubSection>
-    </Fragment>
+      </div>
+    </SubSection>
+  );
+}
+
+function ThirdTierProposalDemo() {
+  return (
+    <SubSection title="Third tier — still open">
+      <p className="text-sm text-muted-foreground">
+        The one part of the button set the owner has not ruled. Option A is
+        today&rsquo;s <code>ghost</code> and is what ships; B and C are draft
+        classes local to this page. When this is ruled, the winner goes into the
+        recipe and this table goes with the question.
+      </p>
+      <div className="overflow-x-auto">
+        <div className="grid grid-cols-[minmax(14rem,auto)_repeat(4,minmax(8rem,1fr))] items-center gap-x-6 gap-y-3">
+          <ButtonStateHeadings />
+          {THIRD_TIER_CANDIDATES.map((row) => (
+            <Fragment key={row.name}>
+              <ButtonDemoLabel name={row.name} note={row.note} />
+              {BUTTON_DEMO_STATES.map((state) => (
+                <DraftButton key={state} row={row} state={state} />
+              ))}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+    </SubSection>
   );
 }
 
@@ -2689,7 +2701,7 @@ export default function AdminUIComponentsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">UI Components</h1>
+        <h1 className="text-3xl font-semibold">UI Components</h1>
         <p className="text-muted-foreground">
           Living style guide &mdash; every component variant, composite pattern,
           and color token used across the app.
@@ -2771,40 +2783,16 @@ export default function AdminUIComponentsPage() {
       <TypeFacesDemo />
 
       <Section title="Button">
-        <SubSection title="Variants">
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="default">Default</Button>
-            <Button variant="destructive">Destructive</Button>
-            <Button variant="outline">Outline</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="ghost">Ghost</Button>
-            <Button variant="link">Link</Button>
-          </div>
-          {/* The same six, one prop apart, directly under themselves — the
-              disabled treatment is only judgeable against the enabled one. */}
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="default" disabled>
-              Default
-            </Button>
-            <Button variant="destructive" disabled>
-              Destructive
-            </Button>
-            <Button variant="outline" disabled>
-              Outline
-            </Button>
-            <Button variant="secondary" disabled>
-              Secondary
-            </Button>
-            <Button variant="ghost" disabled>
-              Ghost
-            </Button>
-            <Button variant="link" disabled>
-              Link
-            </Button>
-          </div>
-        </SubSection>
+        <ButtonStatesDemo />
 
         <SubSection title="Sizes">
+          <p className="text-sm text-muted-foreground">
+            The CTA type sits in the base, so <code>default</code>,{" "}
+            <code>lg</code> and <code>icon</code> all wear 16px / 600.{" "}
+            <code>sm</code> keeps its own 12px: it is the dense variant for
+            toolbars, table rows and card footers, and the ruled CTA type governs
+            CTAs rather than the compact affordances beside them.
+          </p>
           <div className="flex flex-wrap items-center gap-3">
             <Button size="sm">Small</Button>
             <Button size="default">Default</Button>
@@ -2832,7 +2820,7 @@ export default function AdminUIComponentsPage() {
           </div>
         </SubSection>
 
-        <ButtonProposalDemo />
+        <ThirdTierProposalDemo />
       </Section>
 
       <Section title="Badge">
