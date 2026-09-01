@@ -62,9 +62,13 @@ instead of tripping the `profiles.phone` CHECK).
 
 ## Certification
 
-A new gedu starts **uncertified but with broad platform access** — certification gates two
-things: **group assignment** and **instant-voice-room moderation**. Everything else is
-open to an uncertified gedu.
+A new gedu starts **uncertified but with broad platform access** — certification gates a
+gedu's **operational capabilities**: being assigned to work, and the tools that come with
+running a session. It does not gate the platform, and an uncertified gedu still signs in,
+reads My SOG, edits their profile and coverage, and accepts the contract. **The
+authoritative list of what it gates is the code**: the `requireCertifiedGedu` routes in
+the route posture registry plus the assignment gate below. An enumeration here would be a
+second list to keep current, and the last one was wrong.
 
 - **`set_gedu_certified(gedu_id, certified)` RPC** — admin-only (guard-first `assert_admin()`),
   stamps `certified_at = now()` / `certified_by = auth.uid()` server-side. Granted to

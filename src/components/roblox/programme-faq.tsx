@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ChevronDown } from "lucide-react";
+import {
+  FaqAccordion,
+  type FaqAccordionItem,
+} from "@/components/ui/faq-accordion";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 
@@ -42,18 +45,14 @@ const ANSWER_LINK_CLASS =
 
 /**
  * The Programme's FAQ: the signed-off Lynx Educate copy, translated in every
- * locale, behind a native `<details>` accordion.
+ * locale, behind the shared `FaqAccordion`.
  *
- * Native `<details>`/`<summary>` rather than an ARIA disclosure widget — the
- * answers are readable and keyboard-operable before hydration and with no
- * client JS at all, which is the right shape for a public marketing page under
- * a nonce-based CSP. Eleven answers is also well past the point where a flat
- * list stops being scannable, so the accordion is what makes the section usable
- * rather than a decoration on it.
- *
- * Expanding an answer pushes the items below it down. That is a direct result
- * of the reader's own tap, on the surface they tapped, so the layout rule is
- * satisfied — nothing moves on data's schedule.
+ * The rows are the shared component's; everything the Programme page adds to
+ * them is composed here, which is the division that keeps the shared layer from
+ * growing a prop per page. The tinted band and the heading are this page's, and
+ * so is every answer: each is handed over already rendered, links, second
+ * paragraphs and all, so the accordion never resolves a string or a rich-text
+ * tag on the Programme's behalf.
  *
  * Tinted ground so it separates the plain "For parents" section above it from
  * the plain closing CTA below — the page alternates plain and tinted bands, and
@@ -89,6 +88,26 @@ export function ProgrammeFaq() {
     ),
   };
 
+  const items: FaqAccordionItem[] = FAQ_ITEM_KEYS.map((key) => ({
+    key,
+    question: t(`items.${key}.question`),
+    answer: (
+      <>
+        <p>{t.rich(`items.${key}.answer`, answerTags)}</p>
+        {/* The equipment answer's second half: what each format expects a
+            family to bring, which is a full paragraph. */}
+        {key === "equipment" && <p>{t("items.equipment.answer2")}</p>}
+        {/* The locations answer's closing aside, subordinate in the signed-off
+            copy and rendered as one. */}
+        {key === "where" && (
+          <p className="text-sm italic text-muted-foreground/80">
+            {t("items.where.answer2")}
+          </p>
+        )}
+      </>
+    ),
+  }));
+
   return (
     <section className="bg-muted/30 py-16 sm:py-24">
       <div className="container mx-auto px-4">
@@ -96,35 +115,8 @@ export function ProgrammeFaq() {
           <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
             {t("heading")}
           </h2>
-          <div className="mt-12 divide-y divide-border overflow-hidden rounded-lg border bg-card/50">
-            {FAQ_ITEM_KEYS.map((key) => (
-              <details key={key} className="group">
-                {/* `list-none` kills the disclosure triangle in Gecko and
-                    Blink, the `::-webkit-details-marker` rule in WebKit; the
-                    chevron below replaces it so the affordance sits on the
-                    side the reader's thumb is already on. */}
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-4 py-4 text-left font-semibold transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-6 sm:py-5 [&::-webkit-details-marker]:hidden">
-                  <span>{t(`items.${key}.question`)}</span>
-                  <ChevronDown
-                    aria-hidden="true"
-                    className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
-                  />
-                </summary>
-                <div className="space-y-3 px-4 pb-5 leading-7 text-muted-foreground sm:px-6">
-                  <p>{t.rich(`items.${key}.answer`, answerTags)}</p>
-                  {/* The equipment answer's second half: what each format
-                      expects a family to bring, which is a full paragraph. */}
-                  {key === "equipment" && <p>{t("items.equipment.answer2")}</p>}
-                  {/* The locations answer's closing aside, subordinate in the
-                      signed-off copy and rendered as one. */}
-                  {key === "where" && (
-                    <p className="text-sm italic text-muted-foreground/80">
-                      {t("items.where.answer2")}
-                    </p>
-                  )}
-                </div>
-              </details>
-            ))}
+          <div className="mt-12">
+            <FaqAccordion items={items} />
           </div>
         </div>
       </div>

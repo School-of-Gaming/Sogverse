@@ -190,7 +190,17 @@ export const ROUTES = {
    */
   seatOffer: "/seat-offer",
   selectProfile: "/select-profile",
-  help: "/help",
+  /**
+   * Public identity page — who School of Gaming is, what Yty is, and the
+   * public FAQ. Reached from the header in both auth states: it is the one
+   * page carrying this copy, and the home page it used to live on is
+   * unreachable for a signed-in reader (the proxy bounces `/` to their
+   * dashboard).
+   *
+   * Deliberately **not** PIN-exempt: a locked customer session meets the
+   * parent-PIN pad here exactly as it does at `/shop`.
+   */
+  about: "/about",
   /** Public municipality-club discovery page — list + search of Finnish municipalities. */
   schools: "/schools",
   /**

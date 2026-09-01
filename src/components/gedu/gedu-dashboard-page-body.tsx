@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
+import { GeduHelpFaq } from "@/components/help/help-faq";
 import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type";
 import {
   GeduContractNotice,
@@ -62,6 +63,7 @@ export function GeduDashboardPageBody({
   criminalRecordCheckPassed,
   toolsCard,
   instantRoomCard,
+  helpForm,
 }: {
   /** One roll-up per assignment, already sorted soonest-first. */
   assignments: readonly GeduAssignmentCardData[];
@@ -110,8 +112,16 @@ export function GeduDashboardPageBody({
    * slice of this page's layout.
    */
   instantRoomCard: React.ReactNode;
+  /**
+   * The ask-for-help-or-send-feedback form, shown to every gedu — certified or
+   * not. A node for the same reason the two tool panels are: it is a
+   * self-contained panel with a backend action behind it, and handing it in is
+   * what lets the preview scene render the real form with the submit inert.
+   */
+  helpForm: React.ReactNode;
 }) {
   const t = useTranslations("dashboardSections");
+  const h = useTranslations("helpSection");
 
   /**
    * The sections the page is made of: one per noun the gedu actually runs, or a
@@ -145,6 +155,10 @@ export function GeduDashboardPageBody({
       label: t(ACTIVITY_HEADING_KEY[group.type]),
     })),
     { id: "tools", label: t("tools") },
+    // Last, and unconditional: it is the one section an uncertified gedu — the
+    // person on this platform who most needs a way to ask what happens next —
+    // can actually use.
+    { id: "help", label: t("help") },
   ];
 
   return (
@@ -237,16 +251,11 @@ export function GeduDashboardPageBody({
             their Minecraft account. They were two sections until the second
             tool arrived and made it obvious they were one: a heading per tool
             means a pill chip per tool, and a nav that grows a chip every time
-            somebody adds a button is a nav that stops fitting on a phone.
-
-            Last section, so it gets the viewport-height min: without it the
-            page bottoms out mid-scroll and clicking the Tools chip leaves the
-            heading in the middle of the viewport. Same shape as the parent
-            dashboard's last section. */}
+            somebody adds a button is a nav that stops fitting on a phone. */}
         <section
           id="tools"
           aria-labelledby="tools-heading"
-          className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
+          className="scroll-mt-32"
         >
           <div className="mx-auto max-w-5xl space-y-6">
             <h2 id="tools-heading" className="text-3xl font-bold">
@@ -264,6 +273,34 @@ export function GeduDashboardPageBody({
             ) : (
               <UncertifiedToolsNotice />
             )}
+          </div>
+        </section>
+
+        {/* Help & feedback — the same section the two family dashboards carry,
+            in the same order: the message form, with the support address inside
+            its lead paragraph, and this role's own FAQ beneath it.
+
+            **A sibling of Tools rather than a card inside it, which is what
+            puts it outside the certification gate by construction.** An
+            uncertified gedu reads the awaiting-certification notice above and
+            then has somewhere to ask about it; a card inside Tools would have
+            been hidden by the same flag that hides the two moderator tools, on
+            the one dashboard with nothing else on it.
+
+            Now the last section, so the viewport-height min moves here from
+            Tools: without it the page bottoms out mid-scroll and clicking this
+            chip leaves the heading in the middle of the viewport. */}
+        <section
+          id="help"
+          aria-labelledby="help-heading"
+          className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
+        >
+          <div className="mx-auto max-w-5xl space-y-6">
+            <h2 id="help-heading" className="text-3xl font-bold">
+              {h("heading")}
+            </h2>
+            {helpForm}
+            <GeduHelpFaq />
           </div>
         </section>
       </div>

@@ -29,6 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
+import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -45,6 +46,10 @@ import {
   type PersonChipListPerson,
 } from "@/components/ui/person-chip";
 import { GamerNoteDialog, NewcomerBadge } from "@/components/member-flair";
+import {
+  HelpFeedbackCardView,
+  type HelpFeedbackAudience,
+} from "@/components/help/help-feedback-card-view";
 import { MinecraftPasswordResetCardView } from "@/components/tools/minecraft-password-reset-card-view";
 import type { MinecraftPasswordResetResult } from "@/services/minecraft-education/minecraft-education.contracts";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
@@ -2401,6 +2406,86 @@ export default function AdminUIComponentsPage() {
         </SubSection>
       </Section>
 
+      <Section title="FAQ accordion">
+        <p className="text-sm text-muted-foreground">
+          Every FAQ on the site is drawn as this list. The caller resolves its
+          own strings and composes each answer, so an answer can be one
+          paragraph, several, or carry a link. Given no items the component
+          renders nothing at all — there is no empty state to show, which is why
+          that case is pinned in a unit test instead of demoed here.
+        </p>
+        <SubSection title="A list of questions">
+          <div className="max-w-3xl">
+            <FaqAccordion
+              items={[
+                {
+                  key: "plain",
+                  question: "What is the difference between clubs, camps and events?",
+                  answer: (
+                    <p>
+                      Clubs meet on a recurring schedule. Camps run across
+                      multiple days during school breaks. Events are one-off
+                      get-togethers.
+                    </p>
+                  ),
+                },
+                {
+                  key: "two-paragraphs",
+                  question: "What equipment does my child need?",
+                  answer: (
+                    <>
+                      <p>
+                        A computer that runs the game, a headset with a
+                        microphone, and a reasonably steady connection.
+                      </p>
+                      <p>
+                        Camps and events sometimes run on site, in which case the
+                        room provides the machines.
+                      </p>
+                    </>
+                  ),
+                },
+                {
+                  key: "with-a-link",
+                  question: "Who leads the sessions?",
+                  answer: (
+                    <p>
+                      Every session is hosted by a Gedu — a Game Educator who is
+                      also a gamer.{" "}
+                      <a
+                        href={ROUTES.about}
+                        className="text-primary underline underline-offset-4 hover:no-underline"
+                      >
+                        Read more about us
+                      </a>
+                      .
+                    </p>
+                  ),
+                },
+              ]}
+            />
+          </div>
+        </SubSection>
+        <SubSection title="A single question">
+          <div className="max-w-3xl">
+            <FaqAccordion
+              items={[
+                {
+                  key: "only",
+                  question: "How do I get started?",
+                  answer: (
+                    <p>
+                      Create a parent account, browse what is on offer, and enrol
+                      your child.
+                    </p>
+                  ),
+                },
+              ]}
+            />
+          </div>
+        </SubSection>
+      </Section>
+
       <Section title="Alert">
         <div className="space-y-3 max-w-lg">
           <Alert>
@@ -2815,6 +2900,26 @@ export default function AdminUIComponentsPage() {
         <MinecraftPasswordResetDemo />
       </Section>
 
+      <Section title="Help & feedback form">
+        {/* One card, rendered unchanged in the parent, gamer and gedu Help
+            sections. Every state is here because the three preview scenes can
+            only ever show the idle one — a scene must never gain a live submit
+            that emails every admin. */}
+        <p className="text-sm text-muted-foreground -mt-2">
+          The first card of each pair is live &mdash; type into it &mdash;
+          because the textarea, the two counters and the
+          disabled-until-long-enough button are pure UI over local state. The
+          rest are the states a real submit produces, driven by props.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The refused state is the database&rsquo;s rolling-hour rate limit,
+          which the route answers with a 429. It is worded here rather than
+          shown as the route&rsquo;s own English sentence, which is written for
+          a developer reading a log.
+        </p>
+        <HelpFeedbackDemo />
+      </Section>
+
       <Section title="Gedu contract — settings card">
         <p className="text-sm text-muted-foreground -mt-2">
           The contract card on a gedu&rsquo;s settings page, in both the states
@@ -2945,6 +3050,96 @@ function MinecraftPasswordResetDemo() {
 }
 
 function noopSubmit() {}
+
+/* ------------------------------------------------------------------ */
+/*  Help & feedback form                                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The two audiences and every state a submit can leave the card in, side by
+ * side — which is the whole reason this section exists: the dashboards render
+ * the idle card and nothing else, and states compared from memory are not
+ * compared at all.
+ *
+ * The idle card of each audience holds its own message so typing works; the
+ * others are driven by props alone, because no click can reach them here.
+ */
+function HelpFeedbackDemo() {
+  return (
+    <div className="space-y-6">
+      <SubSection title="Adult — parent and gedu">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <LiveHelpFeedbackDemoCard audience="adult" />
+          <HelpFeedbackCardView
+            audience="adult"
+            message="My daughter cannot hear anyone in the club room."
+            onMessageChange={noopMessage}
+            submitting
+            succeeded={false}
+            error={null}
+            onSubmit={noopSubmit}
+          />
+          <HelpFeedbackCardView
+            audience="adult"
+            message=""
+            onMessageChange={noopMessage}
+            submitting={false}
+            succeeded
+            error={null}
+            onSubmit={noopSubmit}
+          />
+          <HelpFeedbackCardView
+            audience="adult"
+            message="My daughter cannot hear anyone in the club room."
+            onMessageChange={noopMessage}
+            submitting={false}
+            succeeded={false}
+            error="rateLimited"
+            onSubmit={noopSubmit}
+          />
+        </div>
+      </SubSection>
+
+      <SubSection title="Gamer">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <LiveHelpFeedbackDemoCard audience="gamer" />
+          <HelpFeedbackCardView
+            audience="gamer"
+            message="My mic does not work."
+            onMessageChange={noopMessage}
+            submitting={false}
+            succeeded={false}
+            error="failed"
+            onSubmit={noopSubmit}
+          />
+        </div>
+      </SubSection>
+    </div>
+  );
+}
+
+/** The card a reader can actually type into, over local state. */
+function LiveHelpFeedbackDemoCard({
+  audience,
+}: {
+  audience: HelpFeedbackAudience;
+}) {
+  const [message, setMessage] = useState("");
+
+  return (
+    <HelpFeedbackCardView
+      audience={audience}
+      message={message}
+      onMessageChange={setMessage}
+      submitting={false}
+      succeeded={false}
+      error={null}
+      onSubmit={noopSubmit}
+    />
+  );
+}
+
+function noopMessage() {}
 
 /* ------------------------------------------------------------------ */
 /*  Location Picker Demo                                               */

@@ -1,6 +1,7 @@
 "use client";
 
 import { useGamerEnrollments } from "@/components/family/use-family-enrollments";
+import { HelpFeedbackCard } from "@/components/help/help-feedback-card";
 import type {
   MyUpcomingSessionRow,
   MyWaitlistRow,
@@ -15,8 +16,8 @@ import { GamerDashboardPageBody } from "./gamer-dashboard-page-body";
  * is nobody to switch into, so the Join is a plain link and no dialog fronts it;
  * leaving a waitlist is a decision with a cost and belongs to the adult who
  * joined it; a child has no billing to fix and no sibling to add. So the whole
- * shell is the roll-up and the greeting's name — everything else the page needs
- * is already in the body.
+ * shell is the roll-up, the greeting's name and the one thing a child *can* do
+ * that reaches a backend — writing to us for help.
  *
  * The name arrives as a prop from the server component rather than being read
  * from a session here. That keeps the body presentational (a preview scene
@@ -48,6 +49,12 @@ export function GamerDashboardShell({
   });
 
   return (
-    <GamerDashboardPageBody firstName={firstName} enrollments={enrollments} />
+    <GamerDashboardPageBody
+      firstName={firstName}
+      enrollments={enrollments}
+      // The child-facing wording, and the only variant the form has: a reply to
+      // a gamer resolves to their linked parent's mailbox, which the copy says.
+      helpForm={<HelpFeedbackCard audience="gamer" />}
+    />
   );
 }

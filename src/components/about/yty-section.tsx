@@ -11,6 +11,8 @@ export function YtySection({ id }: YtySectionProps) {
   const t = useTranslations("yty");
 
   return (
+    // The `py-16` is what clears the /about section pill on an anchor landing —
+    // the scroll offset covers the header only. See `section-pill.tsx`.
     <section id={id} className="container mx-auto scroll-mt-[var(--header-height)] px-4 py-16 sm:py-24">
       {/* Hero */}
       <div className="mx-auto max-w-3xl text-center">

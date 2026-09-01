@@ -38,7 +38,10 @@ const NOW = new Date("2026-02-11T20:00:00Z");
  */
 const EMPTY_LINE = messages.dashboardSections.myGroupsEmptyStateGedu;
 
-function dashboardHtml(assignments: readonly GeduAssignmentCardData[]): string {
+function dashboardHtml(
+  assignments: readonly GeduAssignmentCardData[],
+  { certified = true }: { certified?: boolean } = {},
+): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages}>
       {/* The real providers, seeded rather than mocked: a card reads the
@@ -47,7 +50,7 @@ function dashboardHtml(assignments: readonly GeduAssignmentCardData[]): string {
         <NowProvider initialNow={NOW}>
           <GeduDashboardPageBody
             assignments={assignments}
-            certified
+            certified={certified}
             // Signed and checked, so neither next-step band is on the page:
             // this file is about how the activity sections are composed, and a
             // band above them is one more thing in the markup it asserts
@@ -56,6 +59,10 @@ function dashboardHtml(assignments: readonly GeduAssignmentCardData[]): string {
             criminalRecordCheckPassed
             toolsCard={<div />}
             instantRoomCard={<div />}
+            // Marked rather than anonymous: whether the section still renders
+            // the node it was handed is the assertion below, and an unmarked
+            // `<div />` is indistinguishable from the page's own markup.
+            helpForm={<div id="help-form" />}
           />
         </NowProvider>
       </TimezoneProvider>
@@ -105,6 +112,43 @@ describe("the gedu dashboard's empty state", () => {
   it("invents no camps or events to sit empty beside it", () => {
     expect(html).not.toContain(">Camps</h2>");
     expect(html).not.toContain(">Events</h2>");
+  });
+});
+
+/**
+ * **Help & feedback is a sibling of Tools, not a card inside it — which is the
+ * whole reason it survives the certification gate.**
+ *
+ * The gedu who most needs a way to ask what happens next is the one waiting for
+ * an admin to certify them, and their dashboard has nothing else on it. A card
+ * inside Tools would have been hidden by the same flag that hides the two
+ * moderator tools, so the shape is the guarantee and it is pinned here: the
+ * uncertified page keeps the section, its chip, the message form and the answer
+ * to the very question they are waiting on, and still withholds the tools.
+ */
+describe("a gedu still awaiting certification", () => {
+  const html = dashboardHtml([], { certified: false });
+
+  it("still gets the Help & feedback section and its pill chip", () => {
+    expect(html).toContain('id="help"');
+    expect(html).toContain('href="#help"');
+    // The heading carries an ampersand, which React escapes on the way out —
+    // compare against the catalogue's own words rather than a retyped literal.
+    expect(html).toContain(
+      `>${messages.helpSection.heading.replace("&", "&amp;")}</h2>`,
+    );
+  });
+
+  it("still gets the message form, which is the point of the section", () => {
+    expect(html).toContain('id="help-form"');
+  });
+
+  it("still answers what certification means, which is what they are waiting on", () => {
+    expect(html).toContain(messages.gedu.helpFaq.items.certification.question);
+  });
+
+  it("is still refused the tools themselves", () => {
+    expect(html).toContain(messages.tools.uncertified.body);
   });
 });
 
