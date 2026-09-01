@@ -2,7 +2,9 @@
 
 import { Fragment } from "react";
 import Image from "next/image";
+import { Crimson_Pro } from "next/font/google";
 import sogLogoSimple from "@/assets/brand/sog-logo-simple.svg";
+import { SogWordmark } from "@/components/brand/sog-wordmark";
 import { NeedsAttentionPanel } from "@/components/admin/dashboard/needs-attention-panel";
 import { ROLE_BADGE_STYLES } from "@/lib/constants/roles";
 import { YTY_PRESENTATIONS } from "@/lib/constants/voice-zones";
@@ -27,19 +29,38 @@ import { cn } from "@/lib/utils";
  * on the page: it lives in the session reports, in the plan, and in these code
  * comments. A slide carrying more words than the UI it shows is a bug.
  *
- * **Every specimen is the real string in the real classes.** Each Press Start 2P
- * slide draws the heading that site actually renders — the English message,
- * decomposed from its rich-text tags where it has any — set in the class list the
- * live component carries, beside the same words in Space Mono and in Poppins.
+ * **Press Start 2P is retiring** (owner ruling, 2026-09-01: "we don't need our
+ * Press Start 2P when the Guidebook has given us so much to work with" — the
+ * same move as retiring the invented colours). So the site slides no longer ask
+ * whether a site keeps the face; they ask what replaces it there. All six of its
+ * sites lose it: four are re-set in another face, the admin all-clear may lose
+ * its title with the face rather than be re-set at all, and the profile-select
+ * header is answered by artwork rather than by type — the main header already
+ * draws the real mark, and the lettered "SOG" there is an outdated stand-in.
+ *
+ * **Face is voice, which is what decides each replacement.** Poppins is the app
+ * speaking, Space Mono is Sogverse-the-world speaking, Crimson Pro is editorial,
+ * Dancing Script signs a name. A parent-facing marketing surface takes Poppins —
+ * the Guidebook is explicit that Poppins is what carries parent trust and that
+ * the mono belongs inside the world — and an in-platform surface a child meets is
+ * where the world-voice argument is live.
+ *
+ * **Every specimen is the real string in the real classes.** Each site slide
+ * draws the heading that site actually renders — the English message, decomposed
+ * from its rich-text tags where it has any — set in the class list the live
+ * component carries, beside its replacement candidates.
  *
  * **The sizing rule behind every Space Mono row.** Press Start 2P advances
  * exactly one em per character; Space Mono advances about 0.6. So a string keeps
  * its *line footprint* across a swap only at roughly 1.67x the font size, and
- * that is the size each Space Mono row on the six site slides is drawn at — the
+ * that is the size each footprint-matched Space Mono row is drawn at — the
  * footprint is what the existing layout has room for. The eye reads the two
  * faces as much closer than that, which is why the greeting's draft raises the
  * size by 1.2x and pockets the difference as slack; that trade is the
- * greeting-size slide, and it is drawn rather than explained.
+ * greeting-size slide, and it is drawn rather than explained. Poppins rows are
+ * sized from the Guidebook's own scale instead (A.3: H1 48–56px / 600 / 1.1),
+ * because a replacement that is going to live there should be drawn at the size
+ * it will live at, not at the size the retiring face happened to need.
  *
  * **Honesty caveat, stated once here rather than on every slide.** Tailwind
  * breakpoints read the *viewport*, so every size on this page is written out
@@ -58,11 +79,11 @@ import { cn } from "@/lib/utils";
 /* ------------------------------------------------------------------ */
 
 const SLIDES = [
-  { id: "faces", title: "The three faces" },
+  { id: "faces", title: "The face inventory" },
   { id: "site-home", title: "The home hero" },
   { id: "site-greeting", title: "The gamer greeting" },
   { id: "site-roblox", title: "The Roblox programme hero" },
-  { id: "site-profile", title: "The profile-select wordmark" },
+  { id: "site-profile", title: "The profile-select mark" },
   { id: "site-call-ended", title: "The call-ended screen" },
   { id: "site-all-clear", title: "The admin all-clear" },
   { id: "tracking", title: "Tracking on the pixel face" },
@@ -216,7 +237,7 @@ function Pair({
 }
 
 /**
- * The six Press Start 2P sites.
+ * The sites Press Start 2P is leaving, and what is offered in its place.
  *
  * `lines` is the site's own English string with its rich-text tags resolved: the
  * home hero and the call-ended screen both set `home.hero.title`, whose `<br>`
@@ -224,8 +245,16 @@ function Pair({
  * `roblox.hero.title` the same way. The colour chunks are deliberately dropped —
  * a type comparison in three colours is a colour comparison.
  *
- * Every Space Mono row is at the footprint-matched size (see the module comment):
- * 60px pixel face against 96px mono, 30 against 48, 20 against 30, 16 against 24.
+ * Two sizing rules, one per candidate face (both stated in the module comment).
+ * A Space Mono row is footprint-matched to the pixel face it replaces — 60px
+ * against 96px mono, 30 against 48, 16 against 24 — because the existing layout
+ * has room for the footprint. A Poppins row is drawn at the Guidebook's own
+ * scale for the heading level it is: H1 48–56px / 600 / 1.1, H3 24–28 / 600 /
+ * 1.3.
+ *
+ * Where a slide offers no Space Mono row, that is the voice argument doing the
+ * work rather than an omission: the home and /roblox heroes are parent-facing
+ * marketing, and the Guidebook keeps the mono out of exactly that copy.
  */
 const HOME_HERO_LINES = [
   "Where",
@@ -236,96 +265,69 @@ const HOME_HERO_LINES = [
 
 const HOME_SETTINGS = [
   {
-    label: "Today — Press Start 2P, text-6xl",
+    label: "Today — Press Start 2P, 60px",
     className: "font-display text-6xl font-bold tracking-tight",
   },
   {
-    label: "Space Mono, text-8xl",
-    className: "font-brand-mono text-8xl font-bold",
-  },
-  {
-    label: "Poppins bold, text-6xl",
-    className: "font-sans text-6xl font-bold tracking-tight",
+    label: "Poppins SemiBold, 56px / 1.1 — the Guidebook’s H1",
+    className: "font-sans text-[56px] font-semibold leading-[1.1]",
   },
 ] as const;
 
 const GREETING_SETTINGS = [
   {
-    label: "Today — Press Start 2P, text-3xl",
+    label: "Today — Press Start 2P, 30px",
     className: "font-display text-3xl font-bold",
   },
   {
-    label: "Space Mono, text-4xl — as drafted",
+    label: "Space Mono, 36px — as drafted",
     className: "font-brand-mono text-4xl font-bold",
   },
   {
-    label: "Space Mono, text-5xl — today’s footprint",
+    label: "Space Mono, 48px — today’s footprint",
     className: "font-brand-mono text-5xl font-bold",
   },
   {
-    label: "Poppins bold, text-3xl",
-    className: "font-sans text-3xl font-bold",
+    label: "Poppins SemiBold, 36px / 1.2 — the Guidebook’s H2",
+    className: "font-sans text-4xl font-semibold leading-[1.2]",
   },
 ] as const;
 
 const ROBLOX_SETTINGS = [
   {
-    label: "Today — Press Start 2P, text-6xl",
+    label: "Today — Press Start 2P, 60px",
     className: "font-display text-6xl font-bold leading-snug",
   },
   {
-    label: "Space Mono, text-8xl",
-    className: "font-brand-mono text-8xl font-bold leading-snug",
-  },
-  {
-    label: "Poppins bold, text-6xl",
-    className: "font-sans text-6xl font-bold leading-snug",
-  },
-] as const;
-
-const PROFILE_SETTINGS = [
-  {
-    label: "Today — Press Start 2P, text-xl",
-    className: "font-display text-xl font-bold text-primary",
-  },
-  {
-    label: "Space Mono, text-3xl",
-    className: "font-brand-mono text-3xl font-bold text-primary",
-  },
-  {
-    label: "Poppins bold, text-xl",
-    className: "font-sans text-xl font-bold text-primary",
+    label: "Poppins SemiBold, 56px / 1.1 — the Guidebook’s H1",
+    className: "font-sans text-[56px] font-semibold leading-[1.1]",
   },
 ] as const;
 
 const CALL_ENDED_SETTINGS = [
   {
-    label: "Today — Press Start 2P, text-3xl",
+    label: "Today — Press Start 2P, 30px",
     className: "font-display text-3xl font-bold leading-tight tracking-tight",
   },
   {
-    label: "Space Mono, text-5xl",
-    className: "font-brand-mono text-5xl font-bold leading-tight",
+    label: "Poppins SemiBold, 28px / 1.3 — the Guidebook’s H3",
+    className: "font-sans text-[28px] font-semibold leading-[1.3]",
   },
   {
-    label: "Poppins bold, text-3xl",
-    className: "font-sans text-3xl font-bold leading-tight tracking-tight",
+    label: "Space Mono, 48px — today’s footprint",
+    className: "font-brand-mono text-5xl font-bold leading-tight",
   },
 ] as const;
 
 const ALL_CLEAR_SETTINGS = [
   {
-    label: "Today — Press Start 2P, text-base",
+    label: "Today — Press Start 2P, 16px",
     className:
       "font-display text-base leading-relaxed tracking-normal text-primary",
   },
   {
-    label: "Space Mono, text-2xl",
+    label: "Space Mono, 24px — today’s footprint",
     className: "font-brand-mono text-2xl font-bold text-primary",
-  },
-  {
-    label: "Poppins bold, text-base",
-    className: "font-sans text-base font-bold text-primary",
   },
 ] as const;
 
@@ -335,15 +337,113 @@ const ALL_CLEAR_SETTINGS = [
 
 const FACE_SAMPLE = ["Clubs, camps and events"] as const;
 
-const FACE_COLUMNS: readonly {
+/**
+ * Crimson Pro, loaded for this page and nothing else.
+ *
+ * The Guidebook's serif accent is not in the app — no token points at it and no
+ * surface sets it — so an inventory either shows it or lies about the shape of
+ * the roster. Loading it here is deliberately *not* a placement: no `@theme`
+ * entry, no `--font-*` token, no variable on `<html>`, so nothing outside this
+ * file can reach the face and deleting the file deletes the load. `preload:
+ * false` for the same reason Space Mono carries it — one admin reading a deck is
+ * not worth a preload on every visitor's page. No `weight`, because Crimson Pro
+ * is a variable font: the whole axis arrives, so the specimen rows can ask for
+ * 700 and 400 through the ordinary utilities like every other row.
+ */
+const crimsonPro = Crimson_Pro({
+  subsets: ["latin", "latin-ext"],
+  preload: false,
+});
+
+/**
+ * The roster, one row per face, in the order the Guidebook introduces them —
+ * the three working faces first, then the two the app added on its own.
+ *
+ * `status` is the Guidebook's standing for the face, and `job` is the voice it
+ * carries; the same sample string runs across every row so the rows compare
+ * themselves. Dancing Script set in a sentence is unreadable, and that is the
+ * honest thing to show: its only job is a name on a line, drawn beside its own
+ * ruling further down.
+ */
+const FACE_ROWS: readonly {
   name: string;
-  token: string;
+  status: string;
+  source: string;
+  job: string;
   className: string;
 }[] = [
-  { name: "Poppins", token: "--font-sans", className: "font-sans" },
-  { name: "Space Mono", token: "--font-brand-mono", className: "font-brand-mono" },
-  { name: "Press Start 2P", token: "--font-display", className: "font-display" },
+  {
+    name: "Poppins",
+    status: "Workhorse",
+    source: "--font-sans",
+    job: "The app speaking — headings and body copy.",
+    className: "font-sans",
+  },
+  {
+    name: "Space Mono",
+    status: "World",
+    source: "--font-brand-mono",
+    job: "Sogverse speaking — in-platform UI, quest and story art.",
+    className: "font-brand-mono",
+  },
+  {
+    name: "Crimson Pro",
+    status: "Serif accent",
+    source: "loaded by this page alone",
+    job: "Editorial headlines and pull quotes — never long UI text.",
+    className: crimsonPro.className,
+  },
+  {
+    name: "Press Start 2P",
+    status: "Retiring",
+    source: "--font-display",
+    job: "Six sites; each one’s replacement is a slide below.",
+    className: "font-display",
+  },
+  {
+    name: "Dancing Script",
+    status: "Unlogged",
+    source: "--font-cursive",
+    job: "A signature, and nothing else.",
+    className: "font-cursive",
+  },
 ];
+
+/**
+ * The rest of the Guidebook's roster. We hold no files for any of them, so a
+ * rendered "specimen" would be the page's own face wearing another face's name —
+ * the one thing a specimen table must never do. Names, dashed boxes, no
+ * specimens.
+ */
+const NAMED_ONLY: readonly { name: string; status: string }[] = [
+  { name: "Lazydog", status: "Campaign" },
+  { name: "Shlop", status: "Campaign" },
+  { name: "True Typewriter", status: "Campaign" },
+  { name: "Work Sans", status: "Retired" },
+  { name: "Plus Jakarta Sans", status: "Dropped" },
+];
+
+/**
+ * The signature exactly as the gedu contract draws it: the ceremony line's
+ * label, its 64px rule, and the name sitting on it in the cursive face.
+ *
+ * The live line is `text-3xl sm:text-4xl`; this draws the wide size literally,
+ * per the breakpoint caveat in the module comment. The name is a fixture.
+ */
+function SignatureExhibit() {
+  return (
+    <div className="w-full max-w-sm rounded-lg border bg-background p-4">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Signature
+      </p>
+      <div className="mt-1 flex h-16 items-end border-b border-border">
+        <span className="px-2 pb-2 font-cursive text-4xl leading-none">
+          Aino Virtanen
+        </span>
+      </div>
+    </div>
+  );
+}
 
 const FACE_SIZES: readonly { label: string; className: string }[] = [
   { label: "30px / 700", className: "text-3xl font-bold" },
@@ -403,30 +503,16 @@ const TRACKING_CARD = [
 ] as const;
 
 /* ------------------------------------------------------------------ */
-/*  Slide 4 — the beat-width constraint                                */
+/*  Slide 4 — the /roblox hero                                         */
 /* ------------------------------------------------------------------ */
 
 /**
- * Why the /roblox hero cannot change face without rewriting its layout: the
- * component measures whether any beat exceeds eight characters and drops to a
- * smaller scale if one does, and that test is only valid because the face
- * advances exactly one em per character. English's longest beat is 8 and
- * French's is 11 — drawn at one size so the difference the threshold exists to
- * catch is visible rather than described.
+ * The hero's three beats. Its component picks a scale by measuring whether any
+ * beat exceeds eight characters, a test that is only valid because the pixel
+ * face advances exactly one em per character — so the face leaving takes that
+ * arithmetic with it, which is the cost stated in this slide's ruling.
  */
-const BEAT_SETTINGS = [
-  {
-    label: "English — longest beat 8 characters",
-    className: "font-display text-4xl font-bold leading-snug",
-  },
-  {
-    label: "French — longest beat 11 characters, same size",
-    className: "font-display text-4xl font-bold leading-snug",
-  },
-] as const;
-
 const BEATS_EN = ["Build It", "Play It", "Own It"] as const;
-const BEATS_FR = ["Construisez", "Jouez", "Publiez"] as const;
 
 /* ------------------------------------------------------------------ */
 /*  Slide 9 — the greeting at the floor                                */
@@ -450,22 +536,22 @@ const GREETING_FLOOR: readonly {
   className: string;
 }[] = [
   {
-    label: "Today — Press Start 2P, text-xl",
+    label: "Today — Press Start 2P, 20px",
     text: "Welcome, Aino!",
     className: "font-display text-xl",
   },
   {
-    label: "Today — Press Start 2P, text-xl, Finnish",
+    label: "Today — Press Start 2P, 20px, Finnish",
     text: "Tervetuloa, Aino!",
     className: "font-display text-xl",
   },
   {
-    label: "Draft — Space Mono, text-2xl",
+    label: "Draft — Space Mono, 24px",
     text: "Welcome, Aino!",
     className: "font-brand-mono text-2xl",
   },
   {
-    label: "Draft — Space Mono, text-2xl, Finnish",
+    label: "Draft — Space Mono, 24px, Finnish",
     text: "Tervetuloa, Aino!",
     className: "font-brand-mono text-2xl",
   },
@@ -475,10 +561,10 @@ const GREETING_WIDE: readonly {
   label: string;
   className: string;
 }[] = [
-  { label: "Today — Press Start 2P, text-3xl", className: "font-display text-3xl" },
-  { label: "Draft — Space Mono, text-4xl", className: "font-brand-mono text-4xl" },
+  { label: "Today — Press Start 2P, 30px", className: "font-display text-3xl" },
+  { label: "Draft — Space Mono, 36px", className: "font-brand-mono text-4xl" },
   {
-    label: "Space Mono, text-5xl — today’s footprint",
+    label: "Space Mono, 48px — today’s footprint",
     className: "font-brand-mono text-5xl",
   },
 ];
@@ -625,8 +711,8 @@ export default function DesignPassTypographyPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Brand design pass — typography</h1>
         <p className="max-w-prose text-muted-foreground">
-          Which faces the platform speaks in, and where. Each slide shows the real
-          words in the real classes, today beside the alternatives, and asks one
+          Press Start 2P is retiring, so each slide shows a site&rsquo;s real
+          words as they render today beside what replaces them, and asks one
           question — colour is the other deck, at{" "}
           <DeckLink href="/admin/design-pass-walkthrough">
             /admin/design-pass-walkthrough
@@ -655,29 +741,61 @@ export default function DesignPassTypographyPage() {
 
       {/* ----------------------------------------------------------- 1 */}
       <Slide id="faces">
-        <div className="grid gap-6 md:grid-cols-3">
-          {FACE_COLUMNS.map((face) => (
-            <div key={face.name} className="min-w-0 space-y-4 rounded-lg border p-4">
-              <div>
+        <div className="divide-y rounded-lg border">
+          {FACE_ROWS.map((face) => (
+            <div
+              key={face.name}
+              className="grid gap-4 p-4 md:grid-cols-[13rem_minmax(0,1fr)]"
+            >
+              <div className="space-y-1">
                 <div className="text-sm font-semibold text-foreground">
                   {face.name}
                 </div>
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                  {face.token}
+                <Marker>{face.status}</Marker>
+                <div className="text-[11px] text-muted-foreground">
+                  {face.source}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {face.job}
                 </div>
               </div>
-              {FACE_SIZES.map((size) => (
-                <div key={size.label} className="space-y-1">
-                  <div className="text-[11px] text-muted-foreground">
-                    {size.label}
+              <div className="min-w-0 space-y-3">
+                {FACE_SIZES.map((size) => (
+                  <div key={size.label} className="space-y-1">
+                    <div className="text-[11px] text-muted-foreground">
+                      {size.label}
+                    </div>
+                    <p
+                      className={cn(
+                        face.className,
+                        size.className,
+                        "break-words",
+                      )}
+                    >
+                      {FACE_SAMPLE[0]}
+                    </p>
                   </div>
-                  <p className={cn(face.className, size.className, "break-words")}>
-                    {FACE_SAMPLE[0]}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ))}
+        </div>
+
+        <div className="space-y-2">
+          <Marker>Named only — no files here, so no specimens</Marker>
+          <div className="flex flex-wrap gap-2">
+            {NAMED_ONLY.map((face) => (
+              <span
+                key={face.name}
+                className="inline-flex items-baseline gap-2 rounded-md border border-dashed px-3 py-1.5"
+              >
+                <span className="text-sm text-foreground">{face.name}</span>
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  {face.status}
+                </span>
+              </span>
+            ))}
+          </div>
         </div>
 
         <Pair settings={WEIGHT_SETTINGS} lines={FACE_SAMPLE} />
@@ -685,6 +803,21 @@ export default function DesignPassTypographyPage() {
           Press Start 2P ships one weight — every bold you see in it is
           browser-synthesised, not drawn.
         </Caption>
+
+        <div className="space-y-2">
+          <Marker>Dancing Script&rsquo;s one site — the gedu contract</Marker>
+          <SignatureExhibit />
+        </div>
+
+        <Ruling>
+          Dancing Script — log it as a sanctioned signature exception, or replace
+          the signature treatment. (recommended: log it)
+        </Ruling>
+
+        <Ruling>
+          Crimson Pro — place it on an editorial surface, or park it until one
+          exists. (recommended: park)
+        </Ruling>
 
         <Links>
           <DeckLink href="/admin/ui-components#type-faces-specimens">
@@ -696,10 +829,14 @@ export default function DesignPassTypographyPage() {
       {/* ----------------------------------------------------------- 2 */}
       <Slide id="site-home">
         <Stack settings={HOME_SETTINGS} lines={HOME_HERO_LINES} />
+        <Caption>
+          No Space Mono row: this is the parent-facing marketing surface the
+          Guidebook keeps the world&rsquo;s face out of.
+        </Caption>
 
         <Ruling>
-          Home hero — keep Press Start 2P, swap to Space Mono, or drop it.
-          (recommended: keep)
+          Home hero — Poppins at the Guidebook&rsquo;s H1, or another face named
+          here. (recommended: Poppins)
         </Ruling>
 
         <Links>
@@ -711,12 +848,13 @@ export default function DesignPassTypographyPage() {
       <Slide id="site-greeting">
         <Stack settings={GREETING_SETTINGS} lines={["Welcome, Aino!"]} />
         <Caption>
-          The one site the draft moves — a child reads this line every visit.
+          The one site already drafted — a child reads this line every visit,
+          inside the world.
         </Caption>
 
         <Ruling>
-          Gamer greeting — swap to Space Mono, or keep Press Start 2P.
-          (recommended: swap)
+          Gamer greeting — Space Mono as drafted, or Poppins. (recommended: Space
+          Mono)
         </Ruling>
 
         <Links>
@@ -732,20 +870,15 @@ export default function DesignPassTypographyPage() {
       {/* ----------------------------------------------------------- 4 */}
       <Slide id="site-roblox">
         <Stack settings={ROBLOX_SETTINGS} lines={BEATS_EN} />
-
-        <div className="flex flex-wrap gap-4">
-          <Setting {...BEAT_SETTINGS[0]} lines={BEATS_EN} />
-          <Setting {...BEAT_SETTINGS[1]} lines={BEATS_FR} />
-        </div>
         <Caption>
-          The hero picks its scale by counting characters, which only works
-          because this face is exactly one em per character — and it sits above
-          the partner lockup Roblox approved as given.
+          This hero sits above the lockup Roblox approved as given, so any change
+          here ships only on your explicit go-ahead and a partner review.
         </Caption>
 
         <Ruling>
-          /roblox hero — keep, or reopen Roblox&rsquo;s approval and rewrite the
-          scale arithmetic. (recommended: keep)
+          /roblox hero — Poppins at the Guidebook&rsquo;s H1, which also rewrites
+          the character-count scale, or hold pending partner review.
+          (recommended: Poppins, gated on the review)
         </Ruling>
 
         <Links>
@@ -755,43 +888,52 @@ export default function DesignPassTypographyPage() {
 
       {/* ----------------------------------------------------------- 5 */}
       <Slide id="site-profile">
-        <Stack settings={PROFILE_SETTINGS} lines={["SOG"]} />
-
-        <div className="flex flex-wrap items-end gap-6">
+        <div className="space-y-4">
           <div className="space-y-1">
             <div className="text-[11px] text-muted-foreground">
-              Today — the header letters it
+              Today — /select-profile letters it
             </div>
             <div className="rounded-lg border bg-background p-4">
-              <span className="font-display text-xl font-bold text-primary">
-                SOG
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-display text-xl font-bold text-primary">
+                  SOG
+                </span>
+                <span className="text-lg font-semibold">Sogverse</span>
+              </div>
             </div>
           </div>
           <div className="space-y-1">
             <div className="text-[11px] text-muted-foreground">
-              The sanctioned drawn monogram
+              The main header — badge plus the mark&rsquo;s own lettering
             </div>
             <div className="rounded-lg border bg-background p-4">
-              <Image
-                src={sogLogoSimple}
-                alt=""
-                width={379}
-                height={207.5}
-                className="h-11 w-auto"
-                unoptimized
-              />
+              {/* The signed-out header's composition, mirrored: the badge at
+                  its wide height beside `SogWordmark` at 15px. Not a link here,
+                  matching /select-profile, where the mark is deliberately
+                  non-clickable so nobody is yanked out of the picker. */}
+              <span className="flex items-center gap-2">
+                <Image
+                  src={sogLogoSimple}
+                  alt=""
+                  width={379}
+                  height={207.5}
+                  className="h-11 w-auto"
+                  unoptimized
+                />
+                <SogWordmark height={15} className="text-foreground" />
+              </span>
             </div>
           </div>
         </div>
         <Caption>
-          A mark, not a heading — and the brand already has one drawn.
+          Not a typeface question — and answering it with the drawn mark removes
+          one of the six Press Start 2P sites outright.
         </Caption>
 
         <Ruling>
-          Profile-select — keep the lettered SOG, or put the drawn mark there.
-          (recommended: keep; swapping in the mark is a brand-assets change, not a
-          type one)
+          Profile-select — replace the typed stand-in with the header&rsquo;s
+          real mark, non-clickable as today, or keep the stand-in. (recommended:
+          replace)
         </Ruling>
 
         <Links>
@@ -803,13 +945,13 @@ export default function DesignPassTypographyPage() {
       <Slide id="site-call-ended">
         <Stack settings={CALL_ENDED_SETTINGS} lines={HOME_HERO_LINES} />
         <Caption>
-          Reads <code>home.hero.title</code> directly, so it quotes slide
-          2&rsquo;s face — and it has no standalone URL.
+          It reads <code>home.hero.title</code> but is met inside a call, not on
+          the marketing page — and it has no standalone URL.
         </Caption>
 
         <Ruling>
-          Call-ended screen — follow the home hero, or answer it separately.
-          (recommended: follow)
+          Call-ended screen — Poppins, as the marketing line it quotes, or Space
+          Mono, as the world it is met in. (recommended: open)
         </Ruling>
       </Slide>
 
@@ -820,12 +962,12 @@ export default function DesignPassTypographyPage() {
         <Stack settings={ALL_CLEAR_SETTINGS} lines={["All clear"]} />
         <Caption>
           The real panel, above — the pixel face and the pixel trophy are one joke
-          in two parts.
+          in two parts, so they go together or stay together.
         </Caption>
 
         <Ruling>
-          Admin all-clear — keep the wordmark and the trophy, or cut both
-          together. (recommended: keep)
+          Admin all-clear — retire the title and the sprite together, or re-set
+          the title in Space Mono beside it. (recommended: Space Mono)
         </Ruling>
 
         <Links>
@@ -846,8 +988,9 @@ export default function DesignPassTypographyPage() {
         </Caption>
 
         <Ruling>
-          Drop <code>tracking-tight</code> from those two, or leave them.
-          (recommended: drop)
+          Wherever a replacement is deferred — /roblox pending partner review, or
+          any site you hold — drop <code>tracking-tight</code> meanwhile, or
+          leave it. (recommended: drop)
         </Ruling>
       </Slide>
 
@@ -898,9 +1041,8 @@ export default function DesignPassTypographyPage() {
         </div>
 
         <Ruling>
-          The greeting&rsquo;s wide size — <code>text-4xl</code> as drafted, or{" "}
-          <code>text-5xl</code> to keep today&rsquo;s footprint. (recommended:
-          text-4xl)
+          The greeting&rsquo;s wide size — 36px as drafted, or 48px to keep
+          today&rsquo;s footprint. (recommended: 36px)
         </Ruling>
 
         <Links>
@@ -1033,20 +1175,22 @@ export default function DesignPassTypographyPage() {
       {/* ---------------------------------------------------------- 12 */}
       <Slide id="recap">
         <ol className="max-w-prose list-decimal space-y-1.5 pl-5 text-sm text-foreground">
-          <li>Home hero — keep Press Start 2P, swap, or drop.</li>
-          <li>Gamer greeting — swap to Space Mono, or keep.</li>
-          <li>/roblox hero — keep, or reopen the partner approval.</li>
-          <li>Profile-select — keep the lettered SOG, or draw the mark.</li>
-          <li>Call-ended screen — follow the home hero, or answer separately.</li>
-          <li>Admin all-clear — keep the wordmark and trophy, or cut both.</li>
+          <li>Dancing Script — log the signature exception, or replace it.</li>
+          <li>Crimson Pro — place it on an editorial surface, or park it.</li>
+          <li>Home hero — Poppins at the Guidebook&rsquo;s H1, or name another.</li>
+          <li>Gamer greeting — Space Mono as drafted, or Poppins.</li>
+          <li>/roblox hero — Poppins, gated on the partner review.</li>
+          <li>Profile-select — the real mark, or the typed stand-in.</li>
+          <li>Call-ended screen — Poppins, or Space Mono.</li>
           <li>
-            <code>tracking-tight</code> on the pixel face — drop from the two
-            sites that carry it, or leave.
+            Admin all-clear — retire the title and sprite, or re-set the title in
+            Space Mono.
           </li>
           <li>
-            Greeting&rsquo;s wide size — <code>text-4xl</code> or{" "}
-            <code>text-5xl</code>.
+            <code>tracking-tight</code> — drop it wherever a replacement is
+            deferred, or leave it.
           </li>
+          <li>Greeting&rsquo;s wide size — 36px, or 48px.</li>
           <li>CTA type — 14px / 500, or 16px / 600.</li>
           <li>Space Mono&rsquo;s reach — park the candidates, or name which to draft.</li>
         </ol>
