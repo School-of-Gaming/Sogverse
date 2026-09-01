@@ -1,25 +1,38 @@
 import { useTranslations } from "next-intl";
 import { FaqAccordion, type FaqAccordionItem } from "@/components/ui/faq-accordion";
+import { SUPPORT_EMAIL } from "@/lib/constants";
 
 /**
- * The public FAQ's questions, in the order a stranger meets them: what we are,
- * what the three things we sell are, who runs a session, whether it is safe for
- * a child, and how to begin.
+ * The public FAQ's questions, ordered for a parent deciding whether to sign
+ * their child up: who we are, then the practical questions, then the safety
+ * block, then how to start, and last the one question on the page a parent is
+ * not asking — how to become a Game Educator.
  *
  * **The order is load-bearing and lives here, not in the message files**, so
  * every locale renders the same sequence. Each key names an
  * `about.faq.items.<key>` entry in all five catalogs.
  *
- * The list is seeded with the five answers the public help page carried and
- * grows one question at a time: a new entry costs its message keys plus one
- * line here, and nothing structural.
+ * The list grows one question at a time: a new entry costs its message keys
+ * plus one line here, and nothing structural.
  */
 const FAQ_ITEM_KEYS = [
   "whatIsSogverse",
+  "isItASchool",
+  "ages",
+  "games",
+  "equipment",
   "productTypes",
+  "billing",
+  "cancellation",
+  "severalChildren",
+  "languages",
+  "municipalityClubs",
   "whoLeads",
   "safety",
+  "gamerAccounts",
+  "childData",
   "howToStart",
+  "becomeGedu",
 ] as const;
 
 interface AboutFaqProps {
@@ -38,6 +51,10 @@ interface AboutFaqProps {
  * Answers are plain paragraphs: this copy carries no links by design. The
  * footer already puts the support address on every public page, and pointing a
  * reader out of an answer is a decision to make per question, not a default.
+ * The two answers that *name* that address take it as a `{supportEmail}` value
+ * rather than spelling it out — a literal in `messages/` is how the legal pages
+ * once ended up with three different addresses across five languages — and it
+ * still renders as text, not as a link.
  */
 export function AboutFaq({ id }: AboutFaqProps) {
   const t = useTranslations("about.faq");
@@ -45,7 +62,7 @@ export function AboutFaq({ id }: AboutFaqProps) {
   const items: FaqAccordionItem[] = FAQ_ITEM_KEYS.map((key) => ({
     key,
     question: t(`items.${key}.question`),
-    answer: <p>{t(`items.${key}.answer`)}</p>,
+    answer: <p>{t(`items.${key}.answer`, { supportEmail: SUPPORT_EMAIL })}</p>,
   }));
 
   if (items.length === 0) return null;

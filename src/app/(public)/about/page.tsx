@@ -18,7 +18,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * The public About page: identity, Yty, and the public FAQ.
+ * The public About page: identity, the public FAQ, and Yty.
+ *
+ * The FAQ sits second because it is what a parent came for — the practical
+ * questions they are deciding on — and Yty last because it is the idea behind
+ * the offer rather than an answer to anything they asked.
  *
  * This copy used to be two anchored sections on the home page, which put it out
  * of reach of every family who has an account — the proxy bounces a signed-in
@@ -43,9 +47,9 @@ export default function AboutPage() {
 
       <AboutSection id="about" />
 
-      <YtySection id="yty" />
-
       <AboutFaq id="faq" />
+
+      <YtySection id="yty" />
     </>
   );
 }

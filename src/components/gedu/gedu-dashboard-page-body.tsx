@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
-import { HelpContactCard } from "@/components/help/help-contact-card";
 import { GeduHelpFaq } from "@/components/help/help-faq";
 import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type";
 import {
@@ -278,8 +277,8 @@ export function GeduDashboardPageBody({
         </section>
 
         {/* Help & feedback — the same section the two family dashboards carry,
-            in the same order: the support address, the message form, and this
-            role's own FAQ (empty today, so it renders nothing at all).
+            in the same order: the message form, with the support address inside
+            its lead paragraph, and this role's own FAQ beneath it.
 
             **A sibling of Tools rather than a card inside it, which is what
             puts it outside the certification gate by construction.** An
@@ -300,7 +299,6 @@ export function GeduDashboardPageBody({
             <h2 id="help-heading" className="text-3xl font-bold">
               {h("heading")}
             </h2>
-            <HelpContactCard />
             {helpForm}
             <GeduHelpFaq />
           </div>

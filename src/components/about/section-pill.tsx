@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
  * header once used for them; `faq` was added there so all three read from one
  * namespace.
  */
-const SECTIONS = ["about", "yty", "faq"] as const;
+const SECTIONS = ["about", "faq", "yty"] as const;
 type SectionId = (typeof SECTIONS)[number];
 
 /**
@@ -28,17 +28,19 @@ type SectionId = (typeof SECTIONS)[number];
  * rather than `fixed` for the same reason: with nothing to float over it can
  * take a slot of its own in the flow and stop overlapping the first heading.
  *
- * Scrollspy by scroll position rather than `IntersectionObserver`: the FAQ is
- * the last section and, with every answer collapsed, is short enough that no
- * reasonable observer band ever contains it — the highlight would stick on Yty
- * however far the reader scrolled. Taking the last section whose top has passed
- * a reference line just below the bar *moves* that blind spot rather than
- * removing it: on a tall viewport the collapsed FAQ plus the footer beneath it
- * can be shorter than the screen, so the document runs out of scroll before the
- * FAQ's top ever crosses the line, and its chip could never light — clicking it
- * would visibly do nothing. The bottom-of-document fallback below is what
- * closes it: at maximum scroll the last section is the one being looked at, by
- * definition, whatever the position scan says.
+ * Scrollspy by scroll position rather than `IntersectionObserver`: a short last
+ * section is short enough that no reasonable observer band ever contains it, so
+ * the highlight would stick on the section above it however far the reader
+ * scrolled. Taking the last section whose top has passed a reference line just
+ * below the bar *moves* that blind spot rather than removing it: on a tall
+ * viewport the last section plus the footer beneath it can be shorter than the
+ * screen, so the document runs out of scroll before that section's top ever
+ * crosses the line, and its chip could never light — clicking it would visibly
+ * do nothing. The bottom-of-document fallback below is what closes it: at
+ * maximum scroll the last section is the one being looked at, by definition,
+ * whatever the position scan says. It is written against `SECTIONS`' last
+ * entry rather than against a named section, so reordering the page reorders
+ * the fallback with it.
  */
 export function SectionPill() {
   const t = useTranslations("header.nav");

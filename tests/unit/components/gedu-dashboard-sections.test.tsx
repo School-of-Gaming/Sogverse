@@ -59,7 +59,10 @@ function dashboardHtml(
             criminalRecordCheckPassed
             toolsCard={<div />}
             instantRoomCard={<div />}
-            helpForm={<div />}
+            // Marked rather than anonymous: whether the section still renders
+            // the node it was handed is the assertion below, and an unmarked
+            // `<div />` is indistinguishable from the page's own markup.
+            helpForm={<div id="help-form" />}
           />
         </NowProvider>
       </TimezoneProvider>
@@ -120,8 +123,8 @@ describe("the gedu dashboard's empty state", () => {
  * an admin to certify them, and their dashboard has nothing else on it. A card
  * inside Tools would have been hidden by the same flag that hides the two
  * moderator tools, so the shape is the guarantee and it is pinned here: the
- * uncertified page keeps the section, its chip and its contact card, and still
- * withholds the tools.
+ * uncertified page keeps the section, its chip, the message form and the answer
+ * to the very question they are waiting on, and still withholds the tools.
  */
 describe("a gedu still awaiting certification", () => {
   const html = dashboardHtml([], { certified: false });
@@ -136,8 +139,12 @@ describe("a gedu still awaiting certification", () => {
     );
   });
 
-  it("still gets the support address, which is the point of the section", () => {
-    expect(html).toContain(messages.helpSection.contact.body);
+  it("still gets the message form, which is the point of the section", () => {
+    expect(html).toContain('id="help-form"');
+  });
+
+  it("still answers what certification means, which is what they are waiting on", () => {
+    expect(html).toContain(messages.gedu.helpFaq.items.certification.question);
   });
 
   it("is still refused the tools themselves", () => {

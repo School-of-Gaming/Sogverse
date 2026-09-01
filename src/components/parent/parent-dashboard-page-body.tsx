@@ -13,7 +13,6 @@ import type {
   FamilyEnrollmentSummary,
   FamilyParticipantEnrollments,
 } from "@/components/family/enrollment-rollup";
-import { HelpContactCard } from "@/components/help/help-contact-card";
 import { ParentHelpFaq } from "@/components/help/help-faq";
 import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
 import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
@@ -606,11 +605,12 @@ export function ParentDashboardPageBody({
           </div>
         </section>
 
-        {/* Help & feedback — the same three pieces every role's section is made
-            of, in the same order: the support address, the message form, and
-            the role's own FAQ. The FAQ is empty today and renders nothing at
-            all, so the section is a card and a form until the first parent
-            question is answered.
+        {/* Help & feedback — the same two pieces every role's section is made
+            of, in the same order: the message form, and the role's own FAQ
+            beneath it. The support address used to sit above the form in a card
+            of its own; it is a sentence inside the form's lead paragraph now,
+            so there is one place to write to us rather than a box saying it in
+            a second grammar.
 
             The heading says "Help & feedback" while the pill chip above says
             just "Help": a chip is width-constrained and shares a bar with up to
@@ -628,7 +628,6 @@ export function ParentDashboardPageBody({
             <h2 id="help-heading" className="text-3xl font-bold">
               {h("heading")}
             </h2>
-            <HelpContactCard />
             {helpForm}
             <ParentHelpFaq />
           </div>

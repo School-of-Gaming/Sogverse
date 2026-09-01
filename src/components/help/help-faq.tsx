@@ -5,6 +5,7 @@ import {
   FaqAccordion,
   type FaqAccordionItem,
 } from "@/components/ui/faq-accordion";
+import { SUPPORT_EMAIL } from "@/lib/constants";
 
 /**
  * The role FAQs, one exported component per dashboard.
@@ -15,34 +16,53 @@ import {
  * because they share one block of markup and nothing else; three files would
  * have been three copies of the heading.
  *
- * **All three ship empty, and an empty one renders nothing at all** — no
- * heading, no card, no reserved space. The questions each role's section will
- * answer have been asked but not yet answered; a slot held open for copy that
- * does not exist is dead space, and a placeholder answer is copy we would be
- * shipping to a family. Adding a question costs its two message keys in all
- * five locales plus one line in the array below, and nothing structural.
+ * **An empty list renders nothing at all** — no heading, no card, no reserved
+ * space. A slot held open for copy that does not exist is dead space, and a
+ * placeholder answer is copy we would be shipping to a family. Adding a
+ * question costs its two message keys in all five locales plus one line in the
+ * array below, and nothing structural.
  *
  * The arrays are `as const`, which is what makes that promise
- * compiler-checked: the first entry added narrows the key to its own literal,
- * the composed lookup below resolves to a real message key, and a key naming a
- * question with no message behind it fails the build.
+ * compiler-checked: each entry narrows the key to its own literal, the composed
+ * lookup below resolves to a real message key, and a key naming a question with
+ * no message behind it fails the build.
  *
- * **The `as const` on each composed key is load-bearing while the arrays are
- * empty**, and is the one thing here that looks removable and is not. A
- * template literal is otherwise widened to `string`, which the translator's key
- * parameter rejects the moment the array has no entries to narrow it — so
- * without the assertion a list becomes uncompilable exactly when it is empty,
- * which is the state all three ship in.
+ * **The `as const` on each composed key is load-bearing**, and is the one thing
+ * here that looks removable and is not. A template literal is otherwise widened
+ * to `string`, which the translator's key parameter rejects the moment an array
+ * has no entries to narrow it — so without the assertion a list becomes
+ * uncompilable exactly when it is emptied, which is the state all three shipped
+ * in and any of them could return to.
+ *
+ * Answers are single plain paragraphs, the same shape the About page's FAQ
+ * uses. The one that names the support address takes it as a `{supportEmail}`
+ * value rather than spelling it out, and it stays text: the form directly above
+ * every one of these lists already carries the live mailto for the two adult
+ * roles, and a second one inside an answer would be the same link twice.
  */
 
-/** Parent operating questions — the parent PIN, session reports, timezones. */
-const PARENT_FAQ_KEYS = [] as const;
+/** Parent operating questions — the parent PIN, reports, absences, times. */
+const PARENT_FAQ_KEYS = [
+  "parentPin",
+  "sessionReports",
+  "missedSessions",
+  "sessionTimes",
+] as const;
 
-/** Gamer questions, child-facing — joining a room, audio, Yty, the oath. */
-const GAMER_FAQ_KEYS = [] as const;
+/** Gamer questions, child-facing — getting in, being heard, being treated well. */
+const GAMER_FAQ_KEYS = [
+  "joiningSession",
+  "micTrouble",
+  "someoneIsMean",
+] as const;
 
-/** Gedu operating questions — certification, assignment, escalation paths. */
-const GEDU_FAQ_KEYS = [] as const;
+/** Gedu operating questions — certification, assignment, the two escalations. */
+const GEDU_FAQ_KEYS = [
+  "certification",
+  "groupAssignment",
+  "safeguardingConcern",
+  "gamerCannotConnect",
+] as const;
 
 export function ParentHelpFaq() {
   const t = useTranslations("parent");
@@ -52,7 +72,13 @@ export function ParentHelpFaq() {
       items={PARENT_FAQ_KEYS.map((key) => ({
         key,
         question: t(`helpFaq.items.${key}.question` as const),
-        answer: <p>{t(`helpFaq.items.${key}.answer` as const)}</p>,
+        answer: (
+          <p>
+            {t(`helpFaq.items.${key}.answer` as const, {
+              supportEmail: SUPPORT_EMAIL,
+            })}
+          </p>
+        ),
       }))}
     />
   );
@@ -66,7 +92,13 @@ export function GamerHelpFaq() {
       items={GAMER_FAQ_KEYS.map((key) => ({
         key,
         question: t(`helpFaq.items.${key}.question` as const),
-        answer: <p>{t(`helpFaq.items.${key}.answer` as const)}</p>,
+        answer: (
+          <p>
+            {t(`helpFaq.items.${key}.answer` as const, {
+              supportEmail: SUPPORT_EMAIL,
+            })}
+          </p>
+        ),
       }))}
     />
   );
@@ -80,7 +112,13 @@ export function GeduHelpFaq() {
       items={GEDU_FAQ_KEYS.map((key) => ({
         key,
         question: t(`helpFaq.items.${key}.question` as const),
-        answer: <p>{t(`helpFaq.items.${key}.answer` as const)}</p>,
+        answer: (
+          <p>
+            {t(`helpFaq.items.${key}.answer` as const, {
+              supportEmail: SUPPORT_EMAIL,
+            })}
+          </p>
+        ),
       }))}
     />
   );

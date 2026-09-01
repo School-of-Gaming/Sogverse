@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { SUPPORT_EMAIL } from "@/lib/constants";
 
 /** Shorter than this and there is nothing for a human to act on. */
 export const HELP_MESSAGE_MIN_LENGTH = 10;
@@ -104,22 +105,52 @@ export function HelpFeedbackCardView({
   return (
     <Card>
       <CardContent className="space-y-4 pt-6">
-        {/* Icon plus lead text, the same grammar as the contact card above it,
-            so the two cards in this section read as one pair rather than as two
-            unrelated boxes. */}
+        {/* Icon plus lead text: the form opens the section, so this paragraph
+            is the first thing the reader meets and has to say what the section
+            is for. */}
         <div className="flex items-start gap-3">
           <MessageSquare
             className="mt-0.5 h-5 w-5 shrink-0 text-primary"
             aria-hidden
           />
           <div className="space-y-1 text-sm text-muted-foreground">
-            <p>{t(`${audience}.description`)}</p>
-            {/* A gamer's reply goes to their linked parent's mailbox, so the
-                one thing a child needs told is who will actually reach them.
-                Its own line rather than appended to the sentence above: it is a
-                different fact, and one the child's parent may be reading over
-                their shoulder. */}
-            {audience === "gamer" && <p>{t("gamer.replyNote")}</p>}
+            {audience === "adult" ? (
+              /* The support address lives *in* the adult lead paragraph rather
+                 than in a card of its own beside it: one place to write to us
+                 and one shape to read, instead of a box that said the same
+                 thing in a second grammar. The address is interpolated from the
+                 constant and never typed into `messages/` — a literal there is
+                 how the legal pages once carried three different addresses
+                 across five languages — and it renders as a live mailto,
+                 because a dashboard draws no footer and this is the only place
+                 on the page it appears. */
+              <p>
+                {t.rich("adult.description", {
+                  email: SUPPORT_EMAIL,
+                  link: (chunks) => (
+                    <a
+                      href={`mailto:${SUPPORT_EMAIL}`}
+                      className="text-primary hover:underline"
+                    >
+                      {chunks}
+                    </a>
+                  ),
+                })}
+              </p>
+            ) : (
+              <>
+                <p>{t("gamer.description")}</p>
+                {/* A gamer's reply goes to their linked parent's mailbox, so
+                    the one thing a child needs told is who will actually reach
+                    them. Its own line rather than appended to the sentence
+                    above: it is a different fact, and one the child's parent
+                    may be reading over their shoulder. The child-facing copy
+                    names no address at all — a gamer account has no mailbox of
+                    its own, so handing a child one would be an answer they
+                    cannot use. */}
+                <p>{t("gamer.replyNote")}</p>
+              </>
+            )}
           </div>
         </div>
 

@@ -93,8 +93,9 @@ describe("a gamer with every kind of thing booked", () => {
     expect(html).not.toContain('href="#yty"');
   });
 
-  it("offers no support email: a gamer account has no mailbox of its own", () => {
-    expect(html).not.toContain(messages.helpSection.contact.emailLabel);
+  it("answers the gamer's own questions under the form", () => {
+    expect(html).toContain(messages.gamer.helpFaq.items.joiningSession.question);
+    expect(html).toContain(messages.helpSection.faqHeading);
   });
 });
 

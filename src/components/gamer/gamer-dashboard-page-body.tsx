@@ -172,11 +172,12 @@ export function GamerDashboardPageBody({
         </div>
 
         {/* Help — the form and the gamer FAQ, and deliberately **no support
-            email card**: a gamer account has no mailbox of its own, and the
-            form already resolves a reply to the linked parent. The other two
-            roles' sections carry one; this is the one difference between them,
-            and it is expressed by not rendering the card rather than by a
-            variant prop on it.
+            address anywhere in it**: a gamer account has no mailbox of its own,
+            and the form already resolves a reply to the linked parent. The
+            adult roles' form carries the address in its lead paragraph; the
+            child-facing copy of that same paragraph does not, which is the one
+            difference between the three sections and lives in the copy rather
+            than in a prop on the form.
 
             The heading is written to a child while the pill chip above stays
             the short shared word.
