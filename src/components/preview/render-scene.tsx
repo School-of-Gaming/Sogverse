@@ -121,8 +121,12 @@ const SCENE_RENDERERS: Record<
     return <GeduProductPageScene scenario={scenario} />;
   },
   chat: (scenario) => {
+    // Checked and not handed on, like the shop grid above: there is one chat
+    // scenario, so the scene body branches on nothing — but the check still
+    // belongs here, so a slug the registry does not declare 404s rather than
+    // rendering the session chat under a made-up name.
     if (!isChatSceneScenario(scenario)) notFound();
-    return <ChatScene scenario={scenario} />;
+    return <ChatScene />;
   },
   "voice-room": (scenario) => {
     if (!isVoiceRoomScenario(scenario)) notFound();

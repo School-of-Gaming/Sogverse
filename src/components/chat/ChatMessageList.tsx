@@ -63,6 +63,7 @@ const STICK_TOLERANCE_PX = 24;
 export function ChatMessageList({
   messages,
   accounts,
+  mentionable,
   viewer,
   viewerLocked,
   lockedAccountIds,
@@ -74,6 +75,14 @@ export function ChatMessageList({
 }: {
   messages: readonly ChatMessage[];
   accounts: ReadonlyMap<string, ChatAccount>;
+  /**
+   * The same roster the composer resolves against, in the same order — what an
+   * edit typed in place turns into a mention. An array rather than the map
+   * above because the *order* is load-bearing: it is what settles two accounts
+   * sharing a name, and the two ways to write a mention have to settle it
+   * identically.
+   */
+  mentionable: readonly ChatAccount[];
   viewer: ChatAccount;
   /** Whether the viewer is locked — takes every writing affordance away. */
   viewerLocked: boolean;
@@ -94,11 +103,13 @@ export function ChatMessageList({
    */
   outboundToken?: number;
   /**
-   * The log's fixed height, chosen by the container (see `ChatView`). Whatever
-   * the value, it must be a *fixed* height — the rule in this component's
-   * header is about growth, not about any one size.
+   * The log's fixed height, chosen by the container (see `ChatView`, which
+   * owns the default and hands this `h-full`). Whatever the value, it must be a
+   * *fixed* height — the rule in this component's header is about growth, not
+   * about any one size. Required rather than defaulted, so the default lives in
+   * exactly one place instead of in two that can disagree.
    */
-  heightClassName?: string;
+  heightClassName: string;
   className?: string;
 }) {
   const t = useTranslations("chat");
@@ -213,10 +224,7 @@ export function ChatMessageList({
         onScroll={handleScroll}
         aria-label={t("log")}
         role="log"
-        className={cn(
-          "relative overflow-y-auto pr-1",
-          heightClassName ?? "h-80 sm:h-96",
-        )}
+        className={cn("relative overflow-y-auto pr-1", heightClassName)}
       >
         {messages.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
@@ -286,6 +294,7 @@ export function ChatMessageList({
                           context={{
                             viewer,
                             accounts,
+                            mentionable,
                             repliedTo:
                               item.message.replyToId === null
                                 ? null

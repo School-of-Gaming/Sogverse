@@ -103,13 +103,3 @@ export interface ChatMessage {
   reactions: readonly ChatReactionEntry[];
   delivery: ChatDelivery;
 }
-
-/** Whether a message draws a picture rather than words. */
-export function isChatImageMessage(message: ChatMessage): boolean {
-  return message.image !== null;
-}
-
-/** Whether a message has been removed and shows a tombstone. */
-export function isChatMessageHidden(message: ChatMessage): boolean {
-  return message.hiddenAt !== null;
-}

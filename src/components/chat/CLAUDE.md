@@ -67,8 +67,16 @@ accident later.
 
 ## Layout rules this surface leans on hardest
 
-- **The log is a fixed-height scroll region.** A log that grew with its content would push
-  the composer down the page on every arrival, which is a change on data's own schedule.
+- **The log is a fixed-height scroll region, and the height is the container's to
+  choose.** A log that grew with its content would push the composer down the page on
+  every arrival, which is a change on data's own schedule. The surface takes a height
+  class from whatever embeds it — a voice-room panel, a future full-page chat — and any
+  value is fine; growing with content is what is forbidden. The default lives in
+  `ChatView` and nowhere else, which is why the list's own height class is required
+  rather than defaulted. The preview scene's geometry controls exist to judge the design
+  at each reuse shape. The fixed height covers the log *plus the reply strip*: starting a
+  reply hands the strip its height out of the log's, so no composer state can resize the
+  surface or move anything below it.
 - **It sticks to the bottom only for a reader already there.** Somebody who scrolled up
   keeps their exact position and gets a count plus one press to come back.
 - **A removal leaves a tombstone, never a hole.** The row keeps its place, so a message
@@ -77,13 +85,6 @@ accident later.
   gallery's function at this module's own thumbnail height. Nothing measures a decoded
   image — in a scrolling log that is not a nicety, since a row that grew after paint would
   move whatever the reader was on.
-- **The log is a fixed-height scroll region, and the height is the container's to
-  choose.** The surface takes a height class from whatever embeds it — a voice-room
-  panel, a future full-page chat. Any value is fine; growing with content is what is
-  forbidden. The preview scene's geometry controls exist to judge the design at each
-  reuse shape. The fixed height covers the log *plus the reply strip*: starting a
-  reply hands the strip its height out of the log's, so no composer state can resize
-  the surface or move anything below it.
 - **The mention suggestion list floats above the composer, overlaying the log.** In flow
   it grew the composer with every keystroke after an `@`, which changed the height of the
   whole surface — the same defect the fixed log and the reply strip's borrowed height
@@ -115,12 +116,22 @@ The name is a snapshot so the sentence reads wherever the body travels; the **id
 truth, so a renderer that has the account draws its current name and the highlight keys on
 an account rather than on a string anybody could type.
 
-**Rule: the composer never shows that token.** Picking a name inserts `@Name` — the form
-the sentence reads in — and the substitution happens once, at send, over the whole draft
+**Rule: no field a writer types into ever shows that token — the composer and the
+in-place editor alike.** Picking a name inserts `@Name`, the form the sentence reads in;
+the substitution happens once, on the way out, over the whole draft
 (`resolveChatMentions`). A writer watching brackets and a UUID appear inside their own
 half-finished sentence is watching the plumbing *(owner ruling)*, and the character cap
 would be counting characters they cannot see. The stored format is unchanged; what
 changed is that nobody has to look at it.
+
+**The editor is the composer's mirror and has to stay one**, because it opens on a body
+the composer already wrote: it seeds the field by flattening the tokens back to `@Name`
+(`chatBodyPlainText`) and resolves again on save, against **the same roster array in the
+same order** — `ChatView` derives that array once and hands it to both. The order is what
+settles two accounts sharing a name, so a second list built somewhere else would let one
+word mean two different people depending on which field it was typed into. The
+consequence a reader should expect: a name typed for the first time *during* an edit
+becomes a mention, exactly as it would have in the composer.
 
 Two consequences follow, and they pull in opposite directions if you read them quickly:
 
@@ -140,9 +151,14 @@ because they are one concept. Primary stays the surface's own emphasis (a sender
 a quote bar) and, specifically, the **jump flash**: that is the log pointing at where a
 reply landed, not a mention, and it fades.
 
-**Rule: the character cap counts the *composed* text, so the stored body can run longer.**
-See the constant's own header: the send RPC either measures the display length or caps the
-column high enough, and must not apply the composer's number to the stored string.
+**Rule: the character cap counts the *composed* text, so the stored body can run longer —
+and the cap therefore bites *before* resolution, never after.** The send takes the display
+text and resolves it itself, in that one order, so there is no call spelling for "already
+resolved, do not cap": a cap applied to the token form would cut a draft that is at the
+limit and names somebody, possibly mid-token, leaving `@[Väinö](789a4f…` in the log as
+literal text. Pinned by a test at exactly the cap. The wire-side half is in the constant's
+own header: the send RPC either measures the display length or caps the column high
+enough, and must not apply the composer's number to the stored string.
 
 ## The reaction set is a constants edit
 

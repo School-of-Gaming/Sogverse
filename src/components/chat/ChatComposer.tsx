@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { ChatComposerCapabilities } from "./capabilities";
-import { resolveChatMentions } from "./chat-body";
 import {
   CHAT_IMAGE_THUMB_HEIGHT,
   chatThumbnailWidth,
@@ -27,8 +26,18 @@ import {
 import { readStagedChatImages } from "./stage-files";
 import type { ChatAccount, ChatMessage } from "./types";
 
-/** How far back from the caret a `@` can start a mention. */
-const MENTION_PATTERN = /@([^\s@]{0,32})$/;
+/**
+ * How far back from the caret a `@` can start a mention.
+ *
+ * **The `@` has to open a word**, which is what group 1 is for: it captures
+ * either the start of the text or the single non-word character in front of the
+ * `@`, so an `@` sitting *inside* a word opens nothing. Without that, typing an
+ * address — `someone@ex` — put a list of children's names over the log while
+ * somebody was writing an email into a chat. Group 2 is the query. The prefix is
+ * captured rather than looked behind so `insertMention` can put it back with a
+ * `"$1"` replacement, which needs no lookbehind support to be correct.
+ */
+const MENTION_PATTERN = /(^|[^\p{L}\p{N}_@])@([^\s@]{0,32})$/u;
 
 /**
  * The composer: one box holding the reply being answered, the pictures waiting
@@ -133,11 +142,12 @@ export function ChatComposer({
   };
 
   const submit = () => {
-    // The one place the display form becomes the stored one. Everything above
-    // this line — the field, the cap, the suggestion list, the caret — works in
-    // `@Name`; everything below it works in `@[Name](id)`.
-    const body = resolveChatMentions(text, accounts);
-    const drafts = fanOutChatSend(body, staged, replyingTo?.id ?? null);
+    // The display form goes out exactly as it was typed: the fan-out caps it and
+    // *then* resolves, which is the only order that keeps the cap a promise
+    // about the sentence rather than about the markup. Everything in this
+    // component — the field, its `maxLength`, the suggestion list, the caret —
+    // works in `@Name`, and `@[Name](id)` exists only past that call.
+    const drafts = fanOutChatSend(text, staged, accounts, replyingTo?.id ?? null);
     if (drafts.length === 0) return;
     onSend(drafts);
     setText("");
@@ -150,7 +160,7 @@ export function ChatComposer({
     setText(next);
     setRefused(0);
     const match = MENTION_PATTERN.exec(next.slice(0, caret));
-    setMentionQuery(match === null ? null : match[1].toLowerCase());
+    setMentionQuery(match === null ? null : match[2].toLowerCase());
     setMentionIndex(0);
   };
 
@@ -166,7 +176,9 @@ export function ChatComposer({
   const insertMention = (account: ChatAccount) => {
     const field = fieldRef.current;
     const caret = field?.selectionStart ?? text.length;
-    const before = text.slice(0, caret).replace(MENTION_PATTERN, "");
+    // `"$1"` keeps the character that opened the word — the space or bracket in
+    // front of the `@` is part of the sentence, not part of the mention.
+    const before = text.slice(0, caret).replace(MENTION_PATTERN, "$1");
     const token = `@${account.name} `;
     setText(`${before}${token}${text.slice(caret)}`);
     setMentionQuery(null);

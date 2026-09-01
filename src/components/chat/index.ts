@@ -52,13 +52,11 @@ export {
   type StagedChatImage,
 } from "./composer-staging";
 export { readStagedChatImage, readStagedChatImages } from "./stage-files";
-export {
-  isChatImageMessage,
-  isChatMessageHidden,
-  type ChatAccount,
-  type ChatDelivery,
-  type ChatImageRef,
-  type ChatMessage,
-  type ChatReactionEntry,
-  type ChatRole,
+export type {
+  ChatAccount,
+  ChatDelivery,
+  ChatImageRef,
+  ChatMessage,
+  ChatReactionEntry,
+  ChatRole,
 } from "./types";

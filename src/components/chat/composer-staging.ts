@@ -2,6 +2,8 @@ import {
   MAX_CHAT_MESSAGE_LENGTH,
   MAX_STAGED_CHAT_IMAGES,
 } from "@/lib/constants/chat";
+import { resolveChatMentions } from "./chat-body";
+import type { ChatAccount } from "./types";
 
 /**
  * The composer's staging queue, and what a send makes of it.
@@ -80,10 +82,23 @@ export interface ChatSendDraft {
  *
  * **Pictures first, then the words.** A burst read top to bottom is the set and
  * then whatever the sender wanted to say about it, which is how the same
- * gesture reads in every chat anybody already uses. The text is trimmed and
- * capped; an empty draft with an empty queue produces nothing at all, which is
- * what makes "Send does nothing when there is nothing to send" a property
- * rather than a guard at the call site.
+ * gesture reads in every chat anybody already uses. An empty draft with an empty
+ * queue produces nothing at all, which is what makes "Send does nothing when
+ * there is nothing to send" a property rather than a guard at the call site.
+ *
+ * **This function takes the *display* text and does the mention resolution
+ * itself, in that order, because the order is the whole correctness argument.**
+ * The cap is a promise about the sentence somebody wrote — so it is measured on
+ * `@Name`, before a mention becomes `@[Name](uuid)` — and the stored body it
+ * produces is therefore allowed to run longer than `maxLength`. A caller that
+ * resolved first and handed the token form in would get the cap applied to the
+ * markup: a draft at the limit naming somebody would lose its tail, possibly
+ * mid-token, leaving `@[Väinö](789a4f…` sitting in the log as literal text. The
+ * seam is closed by construction rather than by convention — there is no
+ * argument spelling for "already resolved, do not cap", because that is the
+ * mistake this signature exists to make unavailable. (See
+ * `MAX_CHAT_MESSAGE_LENGTH`'s own header for the wire-side half of the same
+ * contract.)
  *
  * **One reply target per burst, on exactly one draft.** The composer answers one
  * message, so quoting it on every picture would draw the same quote five times
@@ -93,12 +108,21 @@ export interface ChatSendDraft {
  * that is no longer a reply to anything.
  */
 export function fanOutChatSend(
+  /** What the writer typed, in the display form they can see: `@Name`. */
   text: string,
   staged: readonly StagedChatImage[],
+  /**
+   * Everyone mentionable, in the order the surface listed them — the order is
+   * what settles a duplicate name (`resolveChatMentions` states the tolerance).
+   * Pass `[]` for a surface with no roster; the words then travel untouched.
+   */
+  accounts: readonly ChatAccount[],
   replyToId: string | null = null,
+  /** The cap on the *composed* text, applied before resolution. */
   maxLength: number = MAX_CHAT_MESSAGE_LENGTH,
 ): ChatSendDraft[] {
-  const body = text.trim().slice(0, maxLength);
+  const composed = text.trim().slice(0, maxLength);
+  const body = resolveChatMentions(composed, accounts);
   const drafts: ChatSendDraft[] = staged.map((image) => ({
     body: null,
     image,

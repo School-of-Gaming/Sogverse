@@ -80,6 +80,12 @@ export function ChatView({
 
   const byId = new Map(accounts.map((account) => [account.id, account]));
   const viewerLocked = lockedAccountIds.has(viewer.id);
+  // Everyone the viewer can name, derived once and handed to *both* places a
+  // mention can be written: the composer and the in-place editor. One array is
+  // the point — the order is what settles two accounts sharing a name, so a
+  // second list built somewhere else could resolve the same word to a different
+  // person depending on whether it was typed into a new message or an edit.
+  const mentionable = accounts.filter((account) => account.id !== viewer.id);
   const replyingTo =
     replyToId === null
       ? null
@@ -107,6 +113,7 @@ export function ChatView({
         <ChatMessageList
           messages={messages}
           accounts={byId}
+          mentionable={mentionable}
           viewer={viewer}
           viewerLocked={viewerLocked}
           lockedAccountIds={lockedAccountIds}
@@ -131,7 +138,7 @@ export function ChatView({
           viewer,
           locked: viewerLocked,
         })}
-        accounts={accounts.filter((account) => account.id !== viewer.id)}
+        accounts={mentionable}
         replyingTo={replyingTo}
         onSend={(drafts) => {
           handlers.onSend(drafts);

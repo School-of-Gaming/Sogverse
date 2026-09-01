@@ -50,8 +50,9 @@ These are decided, and they invalidate the previous investigation's framing:
   role-preview and a live backend test at once, and the backend's job — enforcing the
   restrictions — is exactly what the preview half had to bypass. Each purpose now
   lives where the repo already puts it: **design** iterates in a fully client-side
-  interactive preview scene with mock accounts (`docs/plans/chat-preview-scene.md` —
-  honest there because there is no backend to bypass); **transport truth** is shaken
+  interactive preview scene with mock accounts (built — `/preview/chat/session`, whose
+  contract is `src/components/chat/CLAUDE.md`; honest there because there is no backend
+  to bypass); **transport truth** is shaken
   down in a staging test group's real voice room during the wire-up; **security** is
   proven by the CI authorization spine. A mock is ~95% honest about look and in-hand
   behavior and 0% about the wire, and the split follows that line. The retired

@@ -4,10 +4,7 @@
 import { useState } from "react";
 import { Play } from "lucide-react";
 import { ChatView } from "@/components/chat";
-import {
-  CHAT_SCENE_ACCOUNTS,
-  type ChatSceneScenario,
-} from "@/components/chat/mock-chat-fixtures";
+import { CHAT_SCENE_ACCOUNTS } from "@/components/chat/mock-chat-fixtures";
 import { FIXTURE_TIMEZONE } from "@/components/family/mock-enrollment-fixtures";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,11 +36,7 @@ import {
  * file and renders its real states, including the optimistic echo's pending and
  * failed bubbles, which the latency control exists to make visible.
  */
-export function ChatScene({
-  scenario: _scenario,
-}: {
-  scenario: ChatSceneScenario;
-}) {
+export function ChatScene() {
   // One instant, frozen at mount: the seeded conversation is anchored to it, so
   // a ticking clock would walk the whole log's timestamps under whoever is
   // reading them.
@@ -72,6 +65,10 @@ export function ChatScene({
         <Card>
           <CardContent className="pt-6">
             <ChatView
+              // Switching "Acting as" is a change of person, not a handoff: the
+              // half-written draft, the staged pictures and the reply target
+              // belonged to whoever was typing, so the next viewer starts clean.
+              key={viewer.id}
               messages={store.messages}
               accounts={CHAT_SCENE_ACCOUNTS}
               viewer={viewer}

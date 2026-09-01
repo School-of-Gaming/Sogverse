@@ -65,6 +65,7 @@ function renderRow(hidden: boolean, viewer: ChatAccount) {
         context={{
           viewer,
           accounts,
+          mentionable: [SANNA],
           repliedTo: null,
           flashing: false,
           capabilities: deriveChatMessageCapabilities(

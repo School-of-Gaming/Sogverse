@@ -83,6 +83,11 @@ export function useChatSceneStore(now: Date): ChatSceneStore {
   // otherwise accumulate one dead id per arrival for as long as it is up.
   const timers = useRef(new Set<number>());
   const scriptCursor = useRef(0);
+  // Which messages `failing` has already refused once, so the retry lands. An
+  // id drops out the moment its message settles as sent — the set is answering
+  // "is this attempt the first one?", and once a message is through it has no
+  // further attempts to be asked about. Keeping it would leave one dead string
+  // per send for as long as the scene is open.
   const alreadyFailed = useRef(new Set<string>());
 
   const later = useCallback((fn: () => void, ms: number) => {
@@ -125,6 +130,9 @@ export function useChatSceneStore(now: Date): ChatSceneStore {
   const settle = useCallback(
     (messageId: string) => {
       if (latency === "instant") {
+        // Reachable with an id in the set: a message refused under `failing`,
+        // then retried after the control was flipped back to `instant`.
+        alreadyFailed.current.delete(messageId);
         patch(messageId, { delivery: "sent" });
         return;
       }
@@ -132,6 +140,7 @@ export function useChatSceneStore(now: Date): ChatSceneStore {
         const shouldFail =
           latency === "failing" && !alreadyFailed.current.has(messageId);
         if (shouldFail) alreadyFailed.current.add(messageId);
+        else alreadyFailed.current.delete(messageId);
         patch(messageId, { delivery: shouldFail ? "failed" : "sent" });
       }, LATENCY_MS);
     },

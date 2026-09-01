@@ -8,7 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { ChatMessageCapabilities } from "./capabilities";
-import { chatBodyMentions } from "./chat-body";
+import {
+  chatBodyMentions,
+  chatBodyPlainText,
+  resolveChatMentions,
+} from "./chat-body";
 import { ChatBodyText } from "./ChatBodyText";
 import { ChatDeliveryNote } from "./ChatDeliveryNote";
 import { ChatImageRun } from "./ChatImageRun";
@@ -22,6 +26,14 @@ import type { ChatAccount, ChatMessage } from "./types";
 export interface ChatMessageRowContext {
   viewer: ChatAccount;
   accounts: ReadonlyMap<string, ChatAccount>;
+  /**
+   * Everyone the viewer can name, in the composer's own order — the roster an
+   * edit typed in place resolves against. It has to be the *same array the
+   * composer got*, because the order is what settles two accounts sharing a
+   * name, and one word must not mean two people depending on which field it was
+   * written in.
+   */
+  mentionable: readonly ChatAccount[];
   /** The message this one quotes, already resolved — `null` when it quotes none. */
   repliedTo: ChatMessage | null;
   capabilities: ChatMessageCapabilities;
@@ -55,6 +67,14 @@ export interface ChatMessageRowHandlers {
  * losing the conversation around it. Nothing survives that swap — the read view
  * is gone and the editor is there instead — so the layout rule has nothing to
  * say about the size difference between them.
+ *
+ * **The editor is a composer, and it obeys the composer's rule about the token.**
+ * Opening it flattens the stored body back to `@Name` and saving puts the tokens
+ * back, against the same roster in the same order. That is what makes the
+ * field's `maxLength` measure the sentence rather than the markup, and it is why
+ * a name typed for the first time *during* an edit becomes a mention exactly as
+ * it would have in the composer — a body that came out of one and goes back
+ * through the other has to travel in one direction, not one and a half.
  */
 export function ChatMessageRow({
   message,
@@ -69,7 +89,8 @@ export function ChatMessageRow({
   const te = useTranslations("chat.editor");
   const [draft, setDraft] = useState<string | null>(null);
 
-  const { viewer, accounts, capabilities, repliedTo, flashing } = context;
+  const { viewer, accounts, mentionable, capabilities, repliedTo, flashing } =
+    context;
   const sender = accounts.get(message.senderId) ?? null;
   const hidden = message.hiddenAt !== null;
   const mentionsViewer = !hidden && chatBodyMentions(message.body, viewer.id);
@@ -125,7 +146,11 @@ export function ChatMessageRow({
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              const next = draft.trim();
+              // The mirror of `onStartEdit` below: the field holds `@Name` and
+              // the store holds `@[Name](id)`, so the token goes back on the way
+              // out — which also turns a name typed for the first time here into
+              // a mention, exactly as the composer would have.
+              const next = resolveChatMentions(draft.trim(), mentionable);
               if (next.length > 0) handlers.onSubmitEdit(next);
               setDraft(null);
             }}
@@ -188,7 +213,12 @@ export function ChatMessageRow({
           unsent={message.delivery !== "sent"}
           onReply={handlers.onReply}
           onToggleReaction={handlers.onToggleReaction}
-          onStartEdit={() => setDraft(message.body ?? "")}
+          // Seeded with the sentence, never the markup: a writer who opened
+          // their own message and found `@[Aino](3f2b…)` where they had written
+          // "@Aino" would be reading the plumbing — the same thing the composer
+          // refuses to show them — and the field's `maxLength` would be counting
+          // characters they cannot see.
+          onStartEdit={() => setDraft(chatBodyPlainText(message.body))}
           onDelete={handlers.onDelete}
           onHide={handlers.onHide}
           onRestore={handlers.onRestore}
