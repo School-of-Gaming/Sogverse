@@ -3717,7 +3717,7 @@
     },
     "tombstone": {
       "text": "Tämä viesti on poistettu.",
-      "staffOnly": "Henkilökunta voi yhä lukea sen."
+      "staffOnly": "Gedut ja ylläpitäjät voivat yhä lukea sen."
     },
     "reactions": {
       "add": "Lisää reaktio",
@@ -3734,10 +3734,10 @@
       "unlock": "Päästä {name} takaisin keskusteluun",
       "lockedTag": "Lukittu pois keskustelusta",
       "deleteTitle": "Poistetaanko tämä viesti?",
-      "deleteBody": "Kaikki näkevät, että viesti on poistettu, ja henkilökunnalle jää siitä kopio.",
+      "deleteBody": "Kaikki näkevät, että viesti on poistettu, ja kopio siitä jää Geduille ja ylläpitäjille.",
       "deleteConfirm": "Poista",
       "hideTitle": "Poistetaanko tämä viesti kaikilta?",
-      "hideBody": "Kaikki näkevät, että viesti on poistettu, ja henkilökunnalle jää siitä kopio.",
+      "hideBody": "Kaikki näkevät, että viesti on poistettu, ja kopio siitä jää Geduille ja ylläpitäjille.",
       "hideConfirm": "Poista kaikilta"
     },
     "typing": {

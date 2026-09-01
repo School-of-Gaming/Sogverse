@@ -3717,7 +3717,7 @@
     },
     "tombstone": {
       "text": "Ce message a été retiré.",
-      "staffOnly": "L’équipe peut encore le lire."
+      "staffOnly": "Les Gedus et les admins peuvent encore le lire."
     },
     "reactions": {
       "add": "Ajouter une réaction",
@@ -3734,10 +3734,10 @@
       "unlock": "Déverrouiller le chat pour {name}",
       "lockedTag": "Chat verrouillé",
       "deleteTitle": "Supprimer ce message ?",
-      "deleteBody": "Tout le monde verra qu’un message a été retiré, et l’équipe en conserve une copie.",
+      "deleteBody": "Tout le monde verra qu’un message a été retiré, et les Gedus et les admins en conservent une copie.",
       "deleteConfirm": "Supprimer",
       "hideTitle": "Retirer ce message pour tout le monde ?",
-      "hideBody": "Tout le monde verra qu’un message a été retiré, et l’équipe en conserve une copie.",
+      "hideBody": "Tout le monde verra qu’un message a été retiré, et les Gedus et les admins en conservent une copie.",
       "hideConfirm": "Retirer"
     },
     "typing": {

@@ -69,6 +69,7 @@ export function ChatMessageList({
   timeZone,
   handlers,
   outboundToken = 0,
+  heightClassName,
   className,
 }: {
   messages: readonly ChatMessage[];
@@ -92,6 +93,12 @@ export function ChatMessageList({
    * button. A token the surface bumps is what tells the two apart.
    */
   outboundToken?: number;
+  /**
+   * The log's fixed height, chosen by the container (see `ChatView`). Whatever
+   * the value, it must be a *fixed* height — the rule in this component's
+   * header is about growth, not about any one size.
+   */
+  heightClassName?: string;
   className?: string;
 }) {
   const t = useTranslations("chat");
@@ -191,7 +198,10 @@ export function ChatMessageList({
         onScroll={handleScroll}
         aria-label={t("log")}
         role="log"
-        className="relative h-80 overflow-y-auto pr-1 sm:h-96"
+        className={cn(
+          "relative overflow-y-auto pr-1",
+          heightClassName ?? "h-80 sm:h-96",
+        )}
       >
         {messages.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">

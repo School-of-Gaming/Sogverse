@@ -2871,7 +2871,7 @@
     },
     "tombstone": {
       "text": "QInvam teqlu’pu’.",
-      "staffOnly": "laDlaHtaH vumwI’pu’."
+      "staffOnly": "laDlaHtaH Gedupu’ che’wI’pu’ je."
     },
     "reactions": {
       "add": "jangHom yIchel",
@@ -2888,10 +2888,10 @@
       "unlock": "ja’chuqDaq {name} yInoD",
       "lockedTag": "ja’chuqvo’ jonlu’",
       "deleteTitle": "QInvam yIteq’a’?",
-      "deleteBody": "QIn teqlu’pu’ ’e’ legh Hoch; velqa’ lupol vumwI’pu’.",
+      "deleteBody": "QIn teqlu’pu’ ’e’ legh Hoch; velqa’ lupol Gedupu’ che’wI’pu’ je.",
       "deleteConfirm": "yIteq",
       "hideTitle": "Hochvo’ QInvam yIteq’a’?",
-      "hideBody": "QIn teqlu’pu’ ’e’ legh Hoch; velqa’ lupol vumwI’pu’.",
+      "hideBody": "QIn teqlu’pu’ ’e’ legh Hoch; velqa’ lupol Gedupu’ che’wI’pu’ je.",
       "hideConfirm": "Hochvo’ yIteq"
     },
     "typing": {

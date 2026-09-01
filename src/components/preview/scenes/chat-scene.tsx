@@ -49,6 +49,8 @@ export function ChatScene({
   // reading them.
   const [now] = useState(() => new Date());
   const store = useChatSceneStore(now);
+  const [width, setWidth] = useState<PanelWidth>(PANEL_WIDTHS[2]);
+  const [height, setHeight] = useState<LogHeight>(LOG_HEIGHTS[1]);
 
   const viewer =
     CHAT_SCENE_ACCOUNTS.find((account) => account.id === store.viewerId) ??
@@ -56,33 +58,41 @@ export function ChatScene({
 
   return (
     <div className="space-y-4">
-      <SceneControls store={store} />
+      <SceneControls
+        store={store}
+        width={width}
+        setWidth={setWidth}
+        height={height}
+        setHeight={setHeight}
+      />
 
-      {/* The room's own chat panel, unchanged: a card with the surface inside
-          it, at whatever width the dashboard container gives — which is the
-          geometry the voice room will hand it. */}
-      <Card>
-        <CardContent className="pt-6">
-          <ChatView
-            messages={store.messages}
-            accounts={CHAT_SCENE_ACCOUNTS}
-            viewer={viewer}
-            lockedAccountIds={store.lockedIds}
-            typingAccountIds={store.typingIds}
-            timeZone={FIXTURE_TIMEZONE}
-            handlers={{
-              onSend: store.send,
-              onToggleReaction: store.toggleReaction,
-              onEdit: store.edit,
-              onDelete: store.remove,
-              onHide: store.remove,
-              onRestore: store.restore,
-              onSetLock: store.setLock,
-              onRetry: store.retry,
-            }}
-          />
-        </CardContent>
-      </Card>
+      {/* The chat panel in a card, at whichever of the reuse geometries the
+          controls have picked — full width is what the voice room hands it. */}
+      <div className={width.className}>
+        <Card>
+          <CardContent className="pt-6">
+            <ChatView
+              messages={store.messages}
+              accounts={CHAT_SCENE_ACCOUNTS}
+              viewer={viewer}
+              lockedAccountIds={store.lockedIds}
+              typingAccountIds={store.typingIds}
+              logHeightClassName={height.className}
+              timeZone={FIXTURE_TIMEZONE}
+              handlers={{
+                onSend: store.send,
+                onToggleReaction: store.toggleReaction,
+                onEdit: store.edit,
+                onDelete: store.remove,
+                onHide: store.remove,
+                onRestore: store.restore,
+                onSetLock: store.setLock,
+                onRetry: store.retry,
+              }}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -94,6 +104,27 @@ const LATENCY_MODES: readonly { value: ChatSceneLatency; label: string }[] = [
 ];
 
 /**
+ * The geometries the surface has to look good at — the whole point of the
+ * height being a prop. The chat is meant to be reused (a voice-room panel
+ * today, other embeddings later), so the scene lets the design be judged at
+ * each shape rather than only at the one the card happens to give.
+ */
+const PANEL_WIDTHS = [
+  { value: "phone", label: "Phone (360px)", className: "max-w-[360px]" },
+  { value: "narrow", label: "Narrow (480px)", className: "max-w-[480px]" },
+  { value: "full", label: "Full width", className: "" },
+] as const;
+
+const LOG_HEIGHTS = [
+  { value: "short", label: "Short", className: "h-56 sm:h-64" },
+  { value: "default", label: "Default", className: "h-80 sm:h-96" },
+  { value: "tall", label: "Tall", className: "h-96 sm:h-[32rem]" },
+] as const;
+
+type PanelWidth = (typeof PANEL_WIDTHS)[number];
+type LogHeight = (typeof LOG_HEIGHTS)[number];
+
+/**
  * The simulation controls.
  *
  * Visibly not part of the product: a dashed, muted strip above the card, so
@@ -101,8 +132,16 @@ const LATENCY_MODES: readonly { value: ChatSceneLatency; label: string }[] = [
  */
 function SceneControls({
   store,
+  width,
+  setWidth,
+  height,
+  setHeight,
 }: {
   store: ReturnType<typeof useChatSceneStore>;
+  width: PanelWidth;
+  setWidth: (width: PanelWidth) => void;
+  height: LogHeight;
+  setHeight: (height: LogHeight) => void;
 }) {
   return (
     <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/30 p-3 text-sm">
@@ -162,6 +201,34 @@ function SceneControls({
         >
           Every 5 seconds
         </Button>
+      </ControlRow>
+
+      <ControlRow label="Panel width">
+        {PANEL_WIDTHS.map((option) => (
+          <Button
+            key={option.value}
+            type="button"
+            size="sm"
+            variant={width.value === option.value ? "default" : "outline"}
+            onClick={() => setWidth(option)}
+          >
+            {option.label}
+          </Button>
+        ))}
+      </ControlRow>
+
+      <ControlRow label="Log height">
+        {LOG_HEIGHTS.map((option) => (
+          <Button
+            key={option.value}
+            type="button"
+            size="sm"
+            variant={height.value === option.value ? "default" : "outline"}
+            onClick={() => setHeight(option)}
+          >
+            {option.label}
+          </Button>
+        ))}
       </ControlRow>
     </div>
   );

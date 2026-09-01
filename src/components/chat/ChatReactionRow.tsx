@@ -57,7 +57,7 @@ export function ChatReactionRow({
               : "border-border bg-muted text-muted-foreground hover:border-border hover:bg-accent",
           )}
         >
-          <span aria-hidden className="text-base leading-none">
+          <span aria-hidden className="text-xl leading-none">
             {CHAT_REACTION_GLYPHS[tally.code]}
           </span>
           <span className="tabular-nums">{tally.count}</span>
@@ -97,7 +97,7 @@ export function ChatReactionPicker({
           onClick={() => onPick(code)}
           aria-label={t(code)}
           title={t(code)}
-          className="rounded-full px-2 py-1 text-xl leading-none transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-full px-2 py-1 text-2xl leading-none transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span aria-hidden>{CHAT_REACTION_GLYPHS[code]}</span>
         </button>

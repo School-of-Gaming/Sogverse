@@ -3717,7 +3717,7 @@
     },
     "tombstone": {
       "text": "This message was removed.",
-      "staffOnly": "Staff can still read it."
+      "staffOnly": "Gedus & Admins can still read it."
     },
     "reactions": {
       "add": "Add a reaction",
@@ -3734,10 +3734,10 @@
       "unlock": "Let {name} chat again",
       "lockedTag": "Locked out of chat",
       "deleteTitle": "Delete this message?",
-      "deleteBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
+      "deleteBody": "Everyone will see that a message was removed, and Gedus & Admins keep a copy of it.",
       "deleteConfirm": "Delete",
       "hideTitle": "Remove this message for everyone?",
-      "hideBody": "Everyone will see that a message was removed, and staff keep a copy of it.",
+      "hideBody": "Everyone will see that a message was removed, and Gedus & Admins keep a copy of it.",
       "hideConfirm": "Remove"
     },
     "typing": {

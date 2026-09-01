@@ -3717,7 +3717,7 @@
     },
     "tombstone": {
       "text": "Det här meddelandet togs bort.",
-      "staffOnly": "Personalen kan fortfarande läsa det."
+      "staffOnly": "Geduer och administratörer kan fortfarande läsa det."
     },
     "reactions": {
       "add": "Lägg till en reaktion",
@@ -3734,10 +3734,10 @@
       "unlock": "Lås upp chatten för {name}",
       "lockedTag": "Chatten låst",
       "deleteTitle": "Radera det här meddelandet?",
-      "deleteBody": "Alla ser att ett meddelande togs bort, och personalen behåller en kopia av det.",
+      "deleteBody": "Alla ser att ett meddelande togs bort, och Geduer och administratörer behåller en kopia av det.",
       "deleteConfirm": "Radera",
       "hideTitle": "Ta bort det här meddelandet för alla?",
-      "hideBody": "Alla ser att ett meddelande togs bort, och personalen behåller en kopia av det.",
+      "hideBody": "Alla ser att ett meddelande togs bort, och Geduer och administratörer behåller en kopia av det.",
       "hideConfirm": "Ta bort"
     },
     "typing": {

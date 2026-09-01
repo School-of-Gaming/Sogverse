@@ -45,6 +45,7 @@ export function ChatView({
   viewer,
   lockedAccountIds,
   typingAccountIds,
+  logHeightClassName,
   timeZone,
   handlers,
   className,
@@ -57,6 +58,13 @@ export function ChatView({
   lockedAccountIds: ReadonlySet<string>;
   /** Who is typing right now. The viewer is ignored if they appear. */
   typingAccountIds: readonly string[];
+  /**
+   * The log's fixed height, as a class the container chooses. Geometry belongs
+   * to whatever embeds the chat — a voice-room panel and a future full-page
+   * surface want different boxes around the same behaviour — so the height is
+   * an input, with the default living beside the log itself.
+   */
+  logHeightClassName?: string;
   /** The viewer's own IANA zone — every clock face renders in it. */
   timeZone: string;
   handlers: ChatViewHandlers;
@@ -96,8 +104,8 @@ export function ChatView({
         timeZone={timeZone}
         handlers={logHandlers}
         outboundToken={outboundToken}
+        heightClassName={logHeightClassName}
       />
-      <ChatTypingIndicator names={typingNames} />
 
       <ChatComposer
         capabilities={deriveChatComposerCapabilities({
@@ -116,21 +124,25 @@ export function ChatView({
           setOutboundToken((token) => token + 1);
         }}
       />
+      <ChatTypingIndicator names={typingNames} />
     </div>
   );
 }
 
 /**
- * Who is writing, in a strip of its own between the log and the composer.
+ * Who is writing, in a reserved strip *below* the composer — the Slack/Discord
+ * placement, and the third cut of this component.
  *
  * **The strip is reserved: one line tall, rendered whether or not anybody is
  * typing.** An indicator arrives and leaves on somebody else's schedule — the
  * one kind of change the layout rule forbids outright — so it may neither move
- * the composer under a reader's thumb (which rules out rendering in flow only
- * while up) nor sit over the log's last line (the first cut overlaid it there,
- * and made exactly the line a reader is most likely mid-way through
- * unreadable — owner ruling 2026-09-01). A permanently empty line is the cheap
- * end of that trade, and it is the same shape every standard chat settles on.
+ * anything (which rules out rendering in flow only while up) nor sit over the
+ * log's last line (the first cut overlaid it there and made exactly the line a
+ * reader is mid-way through unreadable). The second cut reserved the line
+ * *between* log and composer, where it read as a gap splitting two things that
+ * belong together; under the composer the same empty line reads as bottom
+ * padding, which is why the multi-user chats shaped like this one all put it
+ * there (owner ruling 2026-09-01).
  */
 function ChatTypingIndicator({ names }: { names: readonly string[] }) {
   const t = useTranslations("chat.typing");

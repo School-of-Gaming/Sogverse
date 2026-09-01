@@ -7,6 +7,16 @@ the UI. The old voice `ChatPanel` (`src/components/voice/ChatPanel.tsx`) is a *r
 for the two conventions it already had right — sender grouping and an auto-sticking
 fixed-height log — and is otherwise untouched by this module.
 
+## Design direction: Discord-inspired, never Discord-copied
+
+**Rule: where a design question has a Discord answer and no reason to differ, take the
+Discord answer** (owner ruling, 2026-09-01). Most of our gamers and Gedus arrive from
+Discord, so its conventions are the muscle memory this surface inherits — the typing
+indicator below the composer, reactions as toggleable tally pills, sender-grouped runs.
+This is a tiebreaker for familiarity, not a target: we do not copy its look, and a
+convention that is wrong for a product full of children (open emoji pickers, DMs) is
+wrong here regardless of familiarity.
+
 ## The contract: transport-free, props in, intentions out
 
 **Rule: nothing in this directory opens a socket, holds a query, or knows where its rows
@@ -59,13 +69,18 @@ plausibly still wants.
   gallery's function at this module's own thumbnail height. Nothing measures a decoded
   image — in a scrolling log that is not a nicety, since a row that grew after paint would
   move whatever the reader was on.
+- **The log is a fixed-height scroll region, and the height is the container's to
+  choose.** The surface takes a height class from whatever embeds it — a voice-room
+  panel, a future full-page chat — with a default beside the log itself. Any value is
+  fine; growing with content is what is forbidden. The preview scene's geometry
+  controls exist to judge the design at each reuse shape.
 - **Everything that appears on hover or on somebody else's schedule is absolutely
   positioned**: the message action bar and the unread pill. None of them can move a row.
   The typing indicator is the one exception, and it reserves instead: a one-line strip
-  between log and composer, rendered empty when nobody is writing. Overlaying it on the
-  log's last line was tried first and made exactly the line a reader is mid-way through
-  unreadable, so this surface pays the reserved line — the arrival still moves nothing,
-  and now covers nothing either.
+  *below the composer*, rendered empty when nobody is writing. Overlaying the log's
+  last line made that line unreadable, and reserving *between* log and composer read
+  as a gap splitting two things that belong together — under the composer the same
+  empty line reads as bottom padding, which is where Slack and Discord put it too.
 - **Menus and pickers portal out** (`ChatPopover`), because the log clips its own
   children. It measures the trigger at open time — a user gesture, the one moment
   measuring is free — and closes on a scroll rather than following one.
