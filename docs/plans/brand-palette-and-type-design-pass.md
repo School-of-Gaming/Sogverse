@@ -596,6 +596,77 @@ Owner direction (2026-08-31), added during implementation:
       with the `current` palette path staying byte-identical. Page sign-offs
       happen against the refreshed scenes.
 
+31. **The edge question is RULED, closing the shading rule's last scope call**
+    (owner, 2026-09-01): **neutral at rest AND neutral at hover.** The owner's
+    two facts settle it: "I have never noticed a colored border in our app in
+    the past" — correct, and stronger than he knew: the layer bug meant every
+    coloured border was dead since the initial commit, so the *experienced* app
+    has never had brand edges at all — and "I thought that pattern has been we
+    highlight a neutral color anyway" — also correct: the app's real hover
+    idiom is the neutral lift (`hover:bg-accent`-style grounds, shadows), and
+    the browse cards' amber hover border was authored but never rendered. So
+    the session's full-value-at-hover recommendation is rejected in favour of
+    the idiom users actually lived with: at wiring, all ~21 `border-primary/N`
+    rest edges and hover lifts go neutral (`border-border` / delete the colour
+    class, keeping the shadow and accent lifts), which is perceptually a no-op
+    against the app everyone has actually seen. With this, **every system
+    question on the walkthrough deck is ruled**; only the per-page sign-offs
+    from the refreshed scenes remain.
+    Three precision notes, same day: **(a)** "always neutral" carries the ruled
+    exceptions where the border *is* the construct — the selected row's full
+    amber edge, the Live chip's glow edge, the icon-accent tile's edge, the
+    ignition ring. **(b) Rings are not in the no-op class**: `ring-*` utilities
+    draw with box-shadow, not border-colour, so `ring-primary/N` sites always
+    rendered and were genuinely experienced — they are shaded brand values
+    bound by the shading rule but their correction is a visible change, decided
+    per site at wiring, not swept. **(c) SUPERSEDED same day — the
+    neutralization ruling is rescinded and the question reopens as a review.**
+    On seeing the coloured borders for the first time (the layer fix made them
+    visible), the owner: "now that I see borders with color I am wondering if
+    maybe we should keep them. I agree they shouldn't be tinted. But now I get
+    to review them for the first time." What stands from 31: the tint ban (no
+    `/N` shaded edge survives anywhere). What reopens: coloured-vs-neutral,
+    per site, decided by the owner's first-ever in-app review. To make that
+    review possible, the branch promotes every census border site from `/N` to
+    **full value** (`border-primary/40` → `border-primary`, prefixes kept) —
+    compliant with the shading rule, and showing the coloured-border world at
+    authored strength. The keep-or-neutralize rulings land after the owner
+    browses the branch; the earlier "neutral is the default" statement is
+    parked until then.
+
+32. **The border review's first findings, and the full census** (owner + session,
+    2026-09-01):
+    - **Full-palette border census** (regeneration: the direction-25 command with
+      `border-` and all colour families): **~150 coloured-border instances across
+      ten families** — border-primary 29 full + ~20 tinted, functional statuses
+      (destructive/warning/info/success) ~40 mostly tinted, yty ~20 tinted,
+      border-foreground 6 full + 15 tinted hovers. Every one authored blind:
+      nobody ever saw them render before the layer fix.
+    - **Valor as a border colour: ruled not great** (owner's first sighting).
+    - **The voice zones: ruled — the current zone's border takes the zone's own
+      colour** (owner: "should likely be the color of the zone itself",
+      superseding both the resurrected white `border-foreground` ring, which
+      "hurts the glow effect", and a glow-only interim). Mechanism, applied on
+      the branch: the glow class already sets `--glow-color`, so the current
+      card and the zone dialog wear `border-[var(--glow-color)]` — one class,
+      every zone colour, full value. Non-current zones keep `border-border`.
+    - **The zone icon/colour pickers' white selection ring is KEPT** (flagged,
+      not yet owner-reviewed): selected-vs-unselected in those mod-only pickers
+      was `border-foreground` vs `border-transparent` — both dead, so the
+      selected state was literally indistinguishable until the fix. The
+      resurrection is a usability repair there, and an amber selection edge
+      would fight the colour swatches being picked.
+    - **Finding for the owner to confirm: the approved icon-accent tile was
+      approved with its edge dead.** The tile recipe's `border-yty-X-strong/30`
+      never rendered during the home review — the look the owner approved was
+      tint ground + quiet neutral edge. Now visible, the /30 edges are tinted
+      (banned by the standing tint ban) and are likely the valor mud the owner
+      disliked. Recommendation: restore the approved look — tile edges go
+      neutral (`border-border`), tile grounds stay — pending the owner's word,
+      since it edits a ruled construct's class recipe.
+    - The in-app border review continues on the branch; keep-or-neutral rulings
+      per family/construct land as they are made.
+
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
 around, so the map in **Problem** and step 6's consumer list both shrink:

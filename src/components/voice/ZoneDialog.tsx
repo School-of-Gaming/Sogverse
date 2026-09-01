@@ -85,7 +85,11 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("border-foreground", colorClasses.glow)}>
+      {/* The dialog's edge takes the picked zone colour, matching the zone
+          card's current-zone treatment: the glow class defines --glow-color,
+          the border borrows it. (border-foreground before the layer fix — it
+          never rendered, and the white ring fought the glow once it did.) */}
+      <DialogContent className={cn("border-[var(--glow-color)]", colorClasses.glow)}>
         <DialogHeader>
           <DialogTitle>{isEdit ? t("editZone") : t("newZone")}</DialogTitle>
         </DialogHeader>

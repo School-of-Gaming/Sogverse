@@ -316,10 +316,17 @@ function ZoneCard({
       aria-label={tappable ? t("joinZone", { zone: accessibleLabel }) : undefined}
       className={cn(
         "rounded-xl border px-3 py-2.5 transition-colors",
-        // Active zone: high-contrast border to mark "you're here" (vs the muted
-        // grey of the others), with the zone's color spilling in from the edge
-        // via an inset-shadow glow. Non-active: muted grey border.
-        isCurrent ? cn("border-foreground", zone.color.glow) : "border-border",
+        // Active zone: the inset glow marks "you're here", and the border takes
+        // the zone's own colour at full value — the glow class sets --glow-color,
+        // so one arbitrary-value class colours the edge to match every zone with
+        // no per-colour class list. (A border-foreground ring was authored here
+        // originally but never rendered — the pre-2026-09 layer bug killed all
+        // border-colour utilities — and when the fix resurrected it the owner
+        // ruled the white ring hurt the glow; owner 2026-09-01: the border
+        // "should likely be the color of the zone itself".)
+        isCurrent
+          ? cn(zone.color.glow, "border-[var(--glow-color)]")
+          : "border-border",
         isOver && canDropHere && "ring-2 ring-primary bg-accent/40",
         tappable && "cursor-pointer hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}
