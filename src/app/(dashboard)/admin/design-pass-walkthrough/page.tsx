@@ -1055,10 +1055,8 @@ export default function DesignPassWalkthroughPage() {
       {/* ----------------------------------------------------------- 3 */}
       <Slide id="recap">
         <ol className="max-w-prose list-decimal space-y-1.5 pl-5 text-sm text-foreground">
-          <li>
-            The coloured borders, now at full value across the branch — browse
-            the app and say, per site, keep the colour or go neutral.
-          </li>
+          {/* The border review closed 2026-09-01 (plan direction 36, every
+              slide ruled in one sitting) and its deck is deleted. */}
           <li>
             The pages, from their scenes — My SOG, the family product page, the
             gamer dashboard.

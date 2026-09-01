@@ -700,6 +700,16 @@ Owner direction (2026-08-31), added during implementation:
     coloured-on-hover-only candidates on parent/gamer surfaces; desktop-first
     admin/gedu surfaces may still use hover colour where it earns its keep.
 
+33b. **The border deck's format is ruled** (owner, 2026-09-01): every construct
+    renders in **three clear columns** — (1) as the app ships now, post-layer-fix,
+    the branch's current rendering; (2) what will ship with the design updated —
+    the rulings and recommendations applied, colour kept where the design keeps
+    colour; (3) the neutral proposal, where one is proposed (empty otherwise).
+    And **every border that appears or changes on hover/focus gets an explicit,
+    complete inventory** — the owner: "the real easy case to miss" — one
+    dedicated section enumerating all prefixed border sites from the census,
+    each drawn rest-beside-hover statically with its source named.
+
 34. **The first border-review crash, and the ruling it produced** (owner,
     2026-09-01): on My SOG, a live product card's green state edge is fought by
     the amber hover border the moment the cursor lands — "these are the kind of
@@ -713,6 +723,61 @@ Owner direction (2026-08-31), added during implementation:
     the moment — they carry no state edge to fight — and their fate is the
     border deck's hover slide, where the owner's mobile-first principle
     already weighs against colour-only-on-hover for family-facing surfaces.
+
+36. **The border review is RULED IN FULL — every slide, one sitting** (owner,
+    2026-09-01). The deck deletes with this direction; the classes below are the
+    law, pinned from the chosen columns, and they are the border work-packages'
+    conversion targets at wiring:
+    - **Hover, everywhere it appears** (the complete 31-utility census):
+      - *State-bearing cards* — already ruled and applied (direction 34).
+      - *Admin option rows and dashboard strips* (13 sites): the gray hover
+        border class is **deleted** — hover feedback is `hover:bg-accent`
+        alone; rest edges stay `border-input`/`border-border`.
+      - *Shop browse cards*: all three prefixed `border-primary` utilities die;
+        rest `border-border`, hover `shadow-lg` only.
+      - *Shop filter chips*: `rest: border-input · hover:bg-accent`, no colour
+        class.
+      - *Dashed add affordances and the add-profile tile*: gray idiom —
+        `hover:border-foreground/30 hover:bg-accent` (tile:
+        `group-hover:border-foreground/30 group-hover:bg-accent`); the tile's
+        `group-hover:bg-primary/5` wash — the hover census's only washed brand
+        ground — dies.
+      - *Chat reaction pill's no-op `hover:border-border`*: deleted (draws
+        nothing).
+    - **Profile tiles + rings, one ruling** ("I want to hover white here… the
+      primary colored ring is not right"): active/hover ring goes **white** —
+      `ring-4 ring-foreground` — and the rest ring goes neutral `ring-2
+      ring-border`; the tiles' `ring-primary/50` is dead. The quiet ring marks
+      (voice avatar, calendar today) go `ring-1 ring-border`.
+    - **Form validation: column 2 — full-value `border-destructive`** with
+      `text-destructive` on the label. The first red error edge the app has
+      ever shipped.
+    - **Status banners and alerts: column 2 — full-value family edges** on
+      muted grounds (`border-warning`/`border-info`/`border-success`/
+      `border-destructive` + family ink; the gedu notice keeps its `border-2`
+      weight). Every `/N` status tint resolves up to full value, including the
+      50 info/success alpha uses the convergence change owns.
+    - **Outline chips and badges: split by whether the badge has a ground.**
+      No filled ground → **column 2, coloured edge** (`border-primary` /
+      `border-warning` / `border-info` per tone — the edge is most of the
+      chip's area and does the work). With a ground → **column 3, neutral
+      edge** (`border-border`, the tone carried by ground + ink).
+    - **Yty accent tiles: the full-value family edge** — `border-yty-X-strong
+      bg-yty-X-strong/10`. The owner chose the third column *knowing* it held
+      colour ("the border is colored. I want the icon's border to have color"),
+      superseding direction 32's neutral recommendation; the earlier valor
+      complaint was about the `/30` mud, not the family colour at authored
+      value. The tile construct's final form: tint ground, full-value family
+      edge, soft glyph.
+    - **Card edges at rest: column 3, neutral** — the gedu assignment live
+      card's edge and wash go (`border-border`; liveness stays on its chip —
+      implementer note: adopting the enrollment card's ignition ring there is
+      the consistent treatment, at the wiring session's judgment), the admin
+      week-row today marker goes `border-border bg-accent`, and the chat quote
+      bar goes `border-l-2 border-border`.
+    With this, the border review is closed, the borders deck deletes, and the
+    review phase's sole remaining item is the three page sign-offs from the
+    scenes.
 
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
