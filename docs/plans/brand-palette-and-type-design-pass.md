@@ -155,7 +155,17 @@ Owner direction (2026-08-31), added during implementation:
     and a six-territory read-only census swept every surface against the draft doctrine
     (rings: calm / family story / full palette; function → grammar → decoration). Census
     findings and the doctrine's open seams are triaged with the owner before any wiring.
-18. **The ensemble rule** (owner, 2026-09-01): amber and violet stay the brand leads; the
+18. **Product-type colours stay as they are** (owner, 2026-09-01 — reversing the earlier
+    convergence lean): the admin type palette (cyan/magenta/lime/indigo) was placed 25–30°
+    clear of the function colours precisely so a category and a state stay legible in one
+    dense row, and converging onto brand families lands every type within 7–21° of a
+    function colour it must sit beside. The pairing is admin-only either way, so the
+    brand-candy value of converging is nil and the legibility cost is real. The type
+    palette is out of this pass's scope.
+19. **The identicon is out of scope** (owner, 2026-09-01): it needs work — every avatar is
+    amber+violet decoration, and a four-tertiary recolour is the ensemble rule's biggest
+    equalizer — but it gets **its own pass another time**; nothing in this pass touches it.
+20. **The ensemble rule** (owner, 2026-09-01): amber and violet stay the brand leads; the
     four tertiaries (pink, green, blue, orange) should read as **equally represented**
     across the app in general, so grammar frequency must not skew the showcase. Two
     halves: semantics are trimmed where they would flood (mechanical acknowledgements —
@@ -330,6 +340,12 @@ implementer can't settle against "rare and specialized"; the /roblox hero typefa
 
 ## Follow-ups (live and die with this plan unless the owner names them)
 
+- **The identicon pass** — *owner-named, 2026-09-01, survives this plan*: recolour the
+  avatar mosaic off `[primary, secondary, white]` (today every face in the app is
+  amber+violet decoration) — the four-tertiary ensemble is the natural candidate and the
+  arbitrary-identity exemption (the zone palette's) the natural ruling shape. One array in
+  the identicon module recolours every avatar in the product; stability per user must
+  survive the change or every face shifts at once.
 - **The categorical-labelling system**: a proper meaning-free multi-state palette now that
   pink/green/blue exist, and retirement of the yellow/black/purple gradient trick — owner
   is interested; explored informally in the scenes, but the app-wide redesign waits for
