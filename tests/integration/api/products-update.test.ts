@@ -85,6 +85,7 @@ const validBody = {
   max_age: 12,
   tag: null,
   region_lock_country: null,
+  requires_gamer_creations: false,
   spoken_language_code: "en",
   image_id: IMAGE_ID,
   material_url: null,
@@ -302,6 +303,37 @@ describe("POST /api/admin/products/[id]/update", () => {
     // takes: null → undefined → dropped key → the RPC's DEFAULT NULL.
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_region_lock_country).toBeUndefined();
+  });
+
+  it("sends the creation-requirement flag explicitly on every save", async () => {
+    mockAuthenticatedAdmin();
+
+    await POST(
+      updateRequest({
+        data: { ...validBody, requires_gamer_creations: true },
+      }),
+      { params },
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "update_product",
+      expect.objectContaining({ p_requires_gamer_creations: true }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(updateRequest({ data: validBody }), { params });
+    // Unflagging is an explicit `false`, NOT an omission — the parameter
+    // defaults to false because the column is NOT NULL, so a dropped key would
+    // unflag the product on any edit made for some other reason.
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_requires_gamer_creations).toBe(false);
+  });
+
+  it("returns 400 when the creation-requirement flag is missing", async () => {
+    mockAuthenticatedAdmin();
+    const { requires_gamer_creations: _flag, ...noFlag } = validBody;
+    const response = await POST(updateRequest({ data: noFlag }), { params });
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("replaces the requirement set on every save, empty array included", async () => {

@@ -437,6 +437,11 @@ function Workspace({
         start_date: sessions.product.start_date,
         end_date: sessions.product.end_date,
         is_remote: sessions.product.is_remote,
+        // The feed's copy rather than the admin row's: the two shells are in
+        // deliberate parity on the gedu side, and taking the flag from the same
+        // document the roster's creations come from is what keeps the
+        // client-side owed derivation reading one consistent picture.
+        requires_gamer_creations: feed.product.requires_gamer_creations,
         translations: feed.product.translations,
         schedule_slots: sessions.product.schedule_slots,
       },
@@ -457,7 +462,15 @@ function Workspace({
         roster: candidate.id === groupId ? feed.roster : null,
       })),
     }),
-    [product, sessions, feed.product.translations, feed.roster, groupId, gedusByGroup],
+    [
+      product,
+      sessions,
+      feed.product.translations,
+      feed.product.requires_gamer_creations,
+      feed.roster,
+      groupId,
+      gedusByGroup,
+    ],
   );
 
   /**

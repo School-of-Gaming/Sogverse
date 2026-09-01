@@ -530,6 +530,16 @@ function buildSharedFields(
     // cannot leave a lock behind a field nobody can see.
     region_lock_country: config.regionLockable ? state.regionLockCountry : null,
     spoken_language_code: spokenLanguageCode,
+    // Round-tripped from state on every save, the same shape the audience pair
+    // above uses and for the same reason sharpened: `update_product` assigns
+    // this column on every call and its parameter defaults to **false**, so an
+    // omitted answer would not preserve the flag — it would clear it. Sending
+    // state's answer every time, `false` included, is what makes unflagging a
+    // product something an admin did rather than something the payload forgot.
+    //
+    // Not gated by any type config: the obligation comes from a sponsor's
+    // contract, and the database has no per-type rule for a gate to mirror.
+    requires_gamer_creations: state.requiresGamerCreations,
     // The catalogue entry, on every save including the `null` that means no
     // picture — the route writes the column unconditionally, so an omission
     // and a removal would be the same request. The served path is derived from
@@ -859,6 +869,9 @@ export function existingFormState(
     regionLockCountry: isSeededCountry(product.region_lock_country)
       ? product.region_lock_country
       : null,
+    // Straight through: a NOT NULL boolean column and a boolean field, with no
+    // empty state between them to translate.
+    requiresGamerCreations: product.requires_gamer_creations,
     spokenLanguageCode: product.spoken_language_code,
     isRemote: product.is_remote,
     locationId: product.location_id,

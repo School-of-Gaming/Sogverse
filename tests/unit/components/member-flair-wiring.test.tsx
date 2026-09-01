@@ -163,6 +163,10 @@ function feedMember(
     group_joined_at: flair.group_joined_at ?? null,
     note: flair.note ?? null,
     note_updated_by_first_name: flair.note_updated_by_first_name ?? null,
+    // Empty on every row: the marks this file asserts on are the note and the
+    // stamp, and a creation would be a second thing the same assertions could
+    // be reading.
+    creations: [],
   };
 }
 
@@ -183,6 +187,7 @@ function assignedProduct(productType: ProductType): GeduAssignedProduct {
       end_date: null,
       // In person, so the rail draws no Join button and no room is involved.
       is_remote: false,
+      requires_gamer_creations: false,
       translations: [{ locale: "en", name: "Monday A", description: "" }],
       schedule_slots: [],
     },
@@ -212,6 +217,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
       end_date: null,
       is_remote: false,
       material_url: null,
+      requires_gamer_creations: false,
       translations: [{ locale: "en", name: "Monday A", description: "" }],
       schedule_slots: [],
     },

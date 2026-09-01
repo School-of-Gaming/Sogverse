@@ -1151,6 +1151,69 @@ describe("the region lock on the wire", () => {
   });
 });
 
+// The creation requirement is a staff-facing flag with the tag's "assign on
+// every call" hazard and the OPPOSITE wire shape: the column is NOT NULL, so its
+// RPC parameter defaults to `false` rather than to null, and the answer has to
+// travel as a real boolean on every save. An omission would not be "no answer",
+// it would be "unflag this product".
+describe("the creation requirement on the wire", () => {
+  it("creates an unflagged product by default", () => {
+    expect(initialState(consumerConfig, "en").requiresGamerCreations).toBe(
+      false,
+    );
+
+    const out = buildCreateInput(
+      validConsumerState(),
+      "consumer_club",
+      consumerConfig,
+    );
+    expect(out).toHaveProperty("requires_gamer_creations");
+    expect(out.requires_gamer_creations).toBe(false);
+  });
+
+  it("carries the flag through create and update alike", () => {
+    const s = validConsumerState();
+    s.requiresGamerCreations = true;
+    expect(
+      buildCreateInput(s, "consumer_club", consumerConfig)
+        .requires_gamer_creations,
+    ).toBe(true);
+    expect(buildUpdateInput(s, consumerConfig).requires_gamer_creations).toBe(
+      true,
+    );
+  });
+
+  it("emits an explicit false when a flagged product is unflagged again", () => {
+    const s = validConsumerState();
+    s.requiresGamerCreations = true;
+    expect(buildUpdateInput(s, consumerConfig).requires_gamer_creations).toBe(
+      true,
+    );
+
+    s.requiresGamerCreations = false;
+    const cleared = buildUpdateInput(s, consumerConfig);
+    // Present and false, never absent — the RPC parameter's own default is
+    // false, so a missing key and a deliberate unflag would be one request.
+    expect(cleared).toHaveProperty("requires_gamer_creations");
+    expect(cleared.requires_gamer_creations).toBe(false);
+  });
+
+  it("is offered on every product type — no config gate", () => {
+    // The obligation comes from a sponsor's contract rather than from the kind
+    // of product, and the database has no per-type rule for a gate to mirror.
+    const s = validConsumerState();
+    s.requiresGamerCreations = true;
+    s.endDate = "2027-05-31";
+    s.uncapped = false;
+    s.seatCount = "12";
+    expect(buildUpdateInput(s, muniConfig).requires_gamer_creations).toBe(true);
+    expect(buildUpdateInput(s, campConfig).requires_gamer_creations).toBe(true);
+    expect(buildUpdateInput(s, eventConfig).requires_gamer_creations).toBe(
+      true,
+    );
+  });
+});
+
 describe("fees", () => {
   it("maps fee drafts to cents: fee→cents, volunteer→0, unknown/none→null", () => {
     const s = validConsumerState();

@@ -8,10 +8,14 @@ import {
 
 /**
  * ============================================================================
- * What a refused note write hands the surface above it.
+ * What a refused flair write hands the surface above it.
  * ============================================================================
  *
- * A note save can be refused for real, not only in theory: an admin moves a
+ * Both writes on this service — the private note and the creations list beside
+ * it in the same dialog — are refused the same two ways and share one mapping,
+ * which is why they are asserted together here.
+ *
+ * A save can be refused for real, not only in theory: an admin moves a
  * member out of a group while a Gedu has a stale roster open, and the Gedu's
  * next save meets the RPC's target check. Postgres answers `42501` with the
  * message `Forbidden` — English, untranslated, written for a log — and all
@@ -121,6 +125,88 @@ describe("MemberFlairService.setGamerGroupNote — refusals", () => {
     await expect(save()).resolves.toMatchObject({
       note: "Pair her with Emil this week.",
       note_updated_by_first_name: "Sanna",
+    });
+  });
+});
+
+describe("MemberFlairService.setGamerGroupCreations", () => {
+  let fetchMock: FetchMock;
+  let service: MemberFlairService;
+
+  const CREATION = {
+    title: "Skyward Bazaar",
+    url: "https://www.roblox.com/games/1818/skyward-bazaar",
+  };
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new MemberFlairService(createFetchStubbedClient(fetchMock));
+  });
+
+  const save = (creations = [CREATION]) =>
+    service.setGamerGroupCreations({
+      groupId: GROUP_ID,
+      participantId: PARTICIPANT_ID,
+      creations,
+    });
+
+  it("shares the note write's refusal mapping", async () => {
+    // The two writes sit side by side in one dialog and are refused the same two
+    // ways, so a raw SQL message must be stopped at the same point for both —
+    // this is the assertion that keeps the creations write from growing its own
+    // (missing) mapping.
+    for (const [code, message] of [
+      ["42501", "Forbidden"],
+      [
+        "23514",
+        'new row for relation "gamer_group_creations" violates check constraint "chk_gamer_group_creations_shape"',
+      ],
+    ]) {
+      fetchMock.mockResolvedValue(sqlError(code, message, 400));
+
+      const err = await save().catch((e: unknown) => e);
+
+      expect(err instanceof Error ? err.message : "unreachable").toBe("");
+      expect(err instanceof Error ? err.cause : null).toMatchObject({ code });
+    }
+  });
+
+  it("refuses a malformed list before it costs a round trip", async () => {
+    // The caps in the contracts file are the table's CHECK, so the service
+    // parses on the way OUT as well as back — which is what keeps that
+    // constraint a loud backstop rather than a routine error path.
+    await expect(save([{ title: "   ", url: "https://example.com" }])).rejects.toThrow();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the stored list when the RPC accepts it", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestJson({
+        group_id: GROUP_ID,
+        participant_id: PARTICIPANT_ID,
+        creations: [CREATION],
+        updated_at: "2026-03-16T12:00:00.000Z",
+      }),
+    );
+
+    await expect(save()).resolves.toMatchObject({ creations: [CREATION] });
+  });
+
+  it("reads an empty save back as the empty shape", async () => {
+    // An empty list DELETES the row, and the RPC answers with the same keys
+    // either way, so a caller merges one shape.
+    fetchMock.mockResolvedValue(
+      postgrestJson({
+        group_id: GROUP_ID,
+        participant_id: PARTICIPANT_ID,
+        creations: [],
+        updated_at: null,
+      }),
+    );
+
+    await expect(save([])).resolves.toMatchObject({
+      creations: [],
+      updated_at: null,
     });
   });
 });

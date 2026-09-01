@@ -43,6 +43,9 @@ function member(
     group_joined_at: null,
     note: null,
     note_updated_by_first_name: null,
+    // Never null on the wire: a list has a real empty value where a note does
+    // not, so the RPC emits `[]` and this default says the same thing.
+    creations: [],
     ...flair,
   };
 }

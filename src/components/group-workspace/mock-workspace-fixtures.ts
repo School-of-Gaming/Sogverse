@@ -1202,6 +1202,10 @@ export function buildGroupWorkspaceFixture(
         end_date:
           config.endsInDays === null ? null : calendarDate(now, config.endsInDays),
         is_remote: config.isRemote,
+        // Unflagged: no scenario here is a product that contractually requires
+        // a creation from every member, so nothing in these fixtures ever owes
+        // one. Flipping this is what a scenario for the owed signal would do.
+        requires_gamer_creations: false,
         translations: [
           {
             locale: "en",
@@ -1352,6 +1356,7 @@ function buildRoster(
         group_joined_at: null,
         note: null,
         note_updated_by_first_name: null,
+        creations: [],
       };
     }
     const detail = details[person.id];
@@ -1386,6 +1391,7 @@ function buildRoster(
       group_joined_at: null,
       note: null,
       note_updated_by_first_name: null,
+      creations: [],
     };
   });
 }

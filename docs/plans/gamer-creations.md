@@ -294,16 +294,60 @@ messages — glyphs are lucide icons in components).
    shape, in the owning services' contracts files; the safeguarding
    justification written into the family contracts doc-comment per its own
    rule.
+
+   *The **creation entry** schema (and its three caps) lives in the member-flair
+   contracts — the service that owns the write — and is imported by the gedu
+   feed, the assigned-product document and the family feed rather than restated
+   in each. That is a deliberate reading of the family file's own
+   duplicated-on-purpose rule: what it forbids sharing is a **document shape**,
+   and what it shares already is a **vocabulary** whose members must match one
+   CHECK constraint. A creation entry is the second kind — exactly the keys
+   `title` and `url`, non-blank, 200/2000, at most twenty, all of it one CHECK —
+   so a second copy beside the family document would be a second source of truth
+   for one fact. What stays that file's own decision is the shape of the KEY, a
+   flat array for one participation and never a map, which is the half that
+   carries the privacy. The justification is written into the family file's
+   header, beside its `.strict()` paragraph.*
+
+   *The `requires_gamer_creations` flag also reaches the hand-written
+   `GeduAssignedProductShell` interface in `src/types/index.ts`, and `creations`
+   reaches `GeduAssignedProductRosterEntry` beside it — that interface is the
+   shared roster row type the workspace's rows consume, so widening the two zod
+   schemas without it would have left the data unreachable from the components.
+   The admin group-details shell fills the flag from the **group feed's** copy
+   rather than the admin product row's, so the flag and the roster's creations
+   come from one document.*
+
+   *Compile-forced fills, all inert: `creations: []` and
+   `requires_gamer_creations: false` in the workspace preview fixtures and in
+   two component wiring tests, and `creations: []` in the voice flair test's
+   member factory. Step 9 owns turning any of them into a real state.*
 3. **DB tests**: classify the new RPC in the spine (role-gated,
    guard-first); parse real RPC output through the new schemas (widened
    documents, write path, widened summaries); negative cases for both
    guards (unassigned Gedu, parent, gamer; assigned Gedu targeting a
    profile with no participation in the group). No write-IDOR registry
    entry — no client write grant; the target check stands in.
+
+   *Landed as a new file, `tests/db/gamer-creations.test.ts` (fixture range
+   6b0–6b6, registered in `product-helpers.ts`), rather than as additions to
+   `member-flair.test.ts`: the summaries condition needs a FLAGGED product whose
+   run has already ENDED and whose other three conditions are satisfied, and
+   doing that to a shared fixture would move the counts every other block
+   asserts on. The spine entry is `set_gamer_group_creations`, role-gated,
+   permitting gedu and admin, carrying the same all-NULL-args note the write
+   beside it carries. While registering the range, `session-images.test.ts`'s
+   previously unlisted 6a0–6a3/6a9 was added to the registry too.*
 4. **Service + queries**: write method and mutation hook, invalidating the
    staff document keys the note write already invalidates (family keys are
    *not* invalidated — the writer is always staff and never holds a family
    cache entry). Reads arrive through existing hooks as documents widen.
+
+   *The service's private refusal-mapping symbols were renamed from note-shaped
+   to flair-shaped and are now shared by both writes: the two sit in one dialog,
+   are refused by the same two SQLSTATEs, and hand the same dialog the same
+   message-less error. The four invalidated keys likewise moved into one shared
+   helper, so the two writes cannot drift into invalidating different sets.*
 5. **Product form**: the flag's checkbox row, form-state field, build/
    hydrate wiring through the existing create/update path.
 6. **Gedu dialog**: grow the per-gamer dialog (two-audience labeling

@@ -103,6 +103,7 @@ const validBody = {
   max_age: 12,
   tag: null,
   region_lock_country: null,
+  requires_gamer_creations: false,
   spoken_language_code: "en",
   image_id: IMAGE_ID,
   material_url: null,
@@ -337,6 +338,25 @@ describe("POST /api/admin/products/create", () => {
     // supabase-js drops the key, and the RPC's DEFAULT NULL writes "unlocked".
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_region_lock_country).toBeUndefined();
+  });
+
+  it("passes the creation-requirement flag through as a boolean, always", async () => {
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({ data: { ...validBody, requires_gamer_creations: true } }),
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({ p_requires_gamer_creations: true }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(createRequest({ data: validBody }));
+    // Never an omission, unlike the tag and the lock above: the parameter
+    // defaults to false rather than null (the column is NOT NULL), so a
+    // dropped key would mean "unflagged" rather than "no answer".
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_requires_gamer_creations).toBe(false);
   });
 
   it("passes the required consent slugs through as an array, always", async () => {

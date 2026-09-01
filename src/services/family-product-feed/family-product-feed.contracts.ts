@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 
 /**
  * Wire contract for `get_my_family_product_feed` — everything a family
@@ -15,8 +16,9 @@ import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contrac
  *
  * **This schema is also a privacy assertion, and that is its second job.** The
  * document deliberately has no place to put a `gedu_note` of any scope, no
- * roster, no other child's attendance, no parent email, no `material_url` and
- * no completeness/owed state. The RPC never selects those columns — that is
+ * roster, no other child's attendance, no other child's creations, no parent
+ * email, no `material_url`, no `requires_gamer_creations` flag and no
+ * completeness/owed state. The RPC never selects those columns — that is
  * where the guarantee actually lives — but a schema that cannot *represent*
  * them means a future widening of the SQL has to be a visible, deliberate edit
  * here too, rather than a field that quietly starts flowing through.
@@ -33,6 +35,34 @@ import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contrac
  * the privacy line is asking for. Nested objects get it too: strict does not
  * recurse, so a root-only `.strict()` would leave every inner shape — the ones
  * that would actually carry a leaked field — wide open.
+ *
+ * **Every staff-authored field a family may read is justified here in writing,
+ * and `creations` (00227) is the one that needed the most.** It is the only
+ * staff-authored family-facing field in the product that carries LINKS —
+ * session reports are deliberately link-free, because a write-up sent to one
+ * family is this platform pointing them somewhere it does not control, and the
+ * report's own renderer degrades a markdown link to its plain label. Creations
+ * are the deliberate, owner-approved exception, for the reason an exception has
+ * to turn on: the link **is** the content. A published Roblox game or a Scratch
+ * project is a URL and nothing else, so a "creation" that could not be opened
+ * would be a title describing something the family cannot reach.
+ *
+ * The trust boundary that makes it safe, in three parts, each checkable:
+ *
+ * - **Only staff write it.** `gamer_group_creations` grants no client role
+ *   anything at all, RLS is on with no policy, and the single writer is a
+ *   SECURITY DEFINER RPC admitting an admin or a gedu assigned to the group's
+ *   product. No family member, and no gamer, can put a link into this field.
+ * - **Only the gamer's own family reads it.** It is a TOP-LEVEL array on a
+ *   document already scoped to one participation, never a map keyed by
+ *   participant — so another child's creations have nowhere to live here BY
+ *   TYPE, and no downstream filter can be forgotten.
+ * - **An unparseable value degrades to text, never to an anchor.** The URL is
+ *   stored as raw text with no validation (owner decision: staff are trusted),
+ *   so the render side parses it and builds an anchor only when it parses as
+ *   http(s); anything else — a `javascript:` value above all — renders as its
+ *   title in plain text. That is why the title is required rather than
+ *   optional: it is the label the degrade path needs.
  */
 
 /*
@@ -53,6 +83,16 @@ import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contrac
  *
  * If they ever have to move in lockstep, that is a signal the underlying
  * columns changed, and both files should be edited in the same change.
+ *
+ * `gamerCreationList` below is imported for the same reason `attendanceStatus`
+ * is, and it is worth naming because it looks at first glance like the case the
+ * paragraph above forbids. It is a **vocabulary**: what a creation entry may
+ * contain — exactly the keys `title` and `url`, both non-blank, capped at 200
+ * and 2000 characters, at most twenty of them — is one CHECK constraint in the
+ * database, not a per-document choice. A second copy here would be a second
+ * source of truth for one fact. What stays this file's own decision is the
+ * thing that actually carries the privacy: the *shape* of the key on this
+ * document, which is a flat array for one participation and never a map.
  */
 
 const productTranslationSummary = z
@@ -237,6 +277,23 @@ export const familyProductFeed = z
     site: familyFeedSite.nullable(),
     /** Who teaches this group. Ordered by first name. */
     gedus: z.array(familyFeedPerson),
+    /**
+     * THIS participant's own creations in THIS group, in the order staff
+     * arranged them, and nobody else's (00227).
+     *
+     * **A flat array, not a map keyed by participant — and that type choice is
+     * the privacy guarantee**, the same move `attendance` makes below where the
+     * gedu feed carries a map over the roster and this document carries one
+     * answer. Another child's work has nowhere to live here, so no filter
+     * downstream can be forgotten. The full justification for a family reading
+     * a staff-authored field that carries links is in this file's header, per
+     * its own rule.
+     *
+     * Empty array when there is nothing, never null: the card renders on "is
+     * this empty" and never on "is this null", so no creations means no card and
+     * no reserved space.
+     */
+    creations: gamerCreationList,
     /**
      * The group's FULL stored history, newest first — including sessions from
      * before this participant enrolled, and rows the schedule no longer

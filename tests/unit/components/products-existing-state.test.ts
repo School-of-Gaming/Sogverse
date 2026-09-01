@@ -410,6 +410,38 @@ describe("buildUpdateInput round-trip", () => {
     expect(input.region_lock_country).toBeNull();
   });
 
+  // The creation requirement is the same trap once more, with the flag's own
+  // spelling of it: the RPC parameter defaults to FALSE, so a stored `true`
+  // that fails the round trip is not left alone — it is cleared, and a
+  // sponsored product silently stops owing its contract's creations on the next
+  // edit of anything at all.
+  it("re-emits a stored creation requirement through an unrelated edit", () => {
+    const product = syntheticConsumerProduct();
+    product.requires_gamer_creations = true;
+    const state = existingFormState(product, consumerConfig, "en");
+    expect(state.requiresGamerCreations).toBe(true);
+
+    state.translations = {
+      en: {
+        name: "Build Club Renamed",
+        shortDescription: "Build castles together.",
+        longDescription: "",
+      },
+    };
+    expect(
+      buildUpdateInput(state, consumerConfig).requires_gamer_creations,
+    ).toBe(true);
+  });
+
+  it("round-trips an unflagged product as an explicit false", () => {
+    const product = syntheticConsumerProduct(); // requires_gamer_creations: false
+    const state = existingFormState(product, consumerConfig, "en");
+    const input = buildUpdateInput(state, consumerConfig);
+
+    expect(input).toHaveProperty("requires_gamer_creations");
+    expect(input.requires_gamer_creations).toBe(false);
+  });
+
   it("loads a lock on an unseedable country as unlocked", () => {
     // "ES" is a declared but unseeded country: the picker cannot offer it, so a
     // stored lock on one would render as a select whose value matches no option

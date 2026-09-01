@@ -117,6 +117,20 @@ import { TEST_IDS } from "./constants";
  *                  CANCELLED, so the same ask is readable by nobody but an
  *                  admin. `can_read_product` is what separates them, and a
  *                  single product cannot hold both answers)
+ *   6a0-6a3, 6a9   session-images.test.ts (two products 6a0/6a1 with their
+ *                  groups 6a2/6a3; 6a9 is an image id that must never exist,
+ *                  declared here for the same reason 6ee and 6ff below are)
+ *   6b0-6b6        gamer-creations.test.ts (6b0 is the club the list is written
+ *                  on, with groups 6b1 and 6b2 — the second holds a member of
+ *                  the SAME product, which is what makes the target-check case
+ *                  about the GROUP rather than about the person existing; 6b3
+ *                  is a product the gedu does not teach, with its group 6b4, so
+ *                  a refusal there is the actor half alone; 6b5 with its group
+ *                  6b6 is the FLAGGED product whose run has already ended — the
+ *                  only shape the summaries RPC's fourth condition can fire on,
+ *                  kept apart because its cases satisfy the other three
+ *                  conditions and would otherwise move the counts every other
+ *                  block asserts on)
  *   6ee            marketing-consents.test.ts's must-NOT-exist product id,
  *                  backing the case that the ask-set writer refuses an unknown
  *                  product even on a call that clears. Declared here for the
