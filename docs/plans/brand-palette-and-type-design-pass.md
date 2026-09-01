@@ -312,6 +312,57 @@ Owner direction (2026-08-31), added during implementation:
       accordingly: the first-contact pair is tuned for recognition and recruitment;
       the signed-in four are where the grammar earns its keep day to day.
 
+25. **Walkthrough rulings, first batch — colour & grammar** (owner, 2026-09-01):
+    - **The strong/soft split is ruled fine.** The wit-strong flag (3.81:1 for body
+      text on the card ground) is handled by mechanism, not by retuning: wit's *text
+      and ink* always use soft (the element cards, the gedu badge already do), and
+      strong stays for fills, edges and swatches that carry no body text. The brand
+      values themselves do not move. Slide dropped as settled.
+    - **Colour-as-grammar is agreed in principle** ("I agree with your reasoning")
+      but not signed off: the owner wants **practical examples from the app**, not
+      abstract chips, before the vocabulary binds. Deck extended with real-construct
+      samples per family.
+    - **The shading rule — the watered-surface principle hardened to all scales**
+      (owner, stressed "to be codified"): "If the brand colors are darkened or shaded
+      past strong or soft, they are no longer our brand colors." To codify as a
+      standing rule (root `CLAUDE.md` at wiring), with the review decks updated to
+      comply. The owner sees **many existing violations for `--primary`** and wants
+      them corrected — a census of primary-at-off-values across `src/` feeds the
+      wiring phase. Open scope questions to render for ruling rather than guess:
+      hover-state darkening (`hover:bg-primary/90`), tint grounds under full-value
+      ink (`bg-primary/20 text-primary` chips — the approved icon-tile precedent
+      sits on this line), and low-alpha edges (the strength axis's third tier).
+    - **`--warning` vs `--primary` is to be *settled in this pass*** — the owner has
+      "never liked how close" they are and did not accept mere glyph-discipline as
+      the answer ("I don't know how to get around this... this design pass is the
+      place to settle this once and for all"). Deck extended with retune candidates
+      drawn in the admin attention-panel exhibit, distances to primary *and*
+      valor-strong annotated (orange-shifted candidates risk the valor collision).
+    - **Role families are ruled approved**, plus a standing directive: **reinforce
+      the role colours through the app wherever roles are understood, even where no
+      explicit role label is present** — a wiring-phase direction, not a deck one.
+      Slide dropped as settled.
+    - **Violet's replacement weight: violet is ruled out; the fill *weight* is ruled
+      right; the colour is open.** The owner questions white ("White isn't a brand
+      color so it's strange to see it here"). Session recommendation, recorded:
+      neutral is correct *because* it is not a brand colour — every hue is now
+      committed to a meaning, and this emphasis tier needs no meaning; the
+      foreground fill is the app's own ink at fill weight, not a new colour. Deck
+      renders a brand-hue candidate beside the neutrals so the comparison is seen,
+      not asserted.
+    - **Status colours are ruled: option A** — converge `--info` onto wit and
+      `--success` onto glow at the token, no call-site changes. Owner's explicit
+      instruction riding with it: **`src/lib/constants/colors.ts` must be updated in
+      the same wiring change**, so emails and OG images carry the converged values.
+      Slide dropped as settled.
+    - **Buttons may take colour only where the action's meaning matches the
+      family's grammar word** — the owner's framing, offered for thoughts rather
+      than ruled. Session position rendered on the deck for next round: grammar
+      fills are plausible but must not break amber's act-monopoly on a surface —
+      proposed constraint set: a grammar-coloured button only where the action *is*
+      the family's word, never two grammar fills in one view, ink pairings from the
+      contrast table (fills needing dark ink use soft), destructive red untouched.
+
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
 around, so the map in **Problem** and step 6's consumer list both shrink:
