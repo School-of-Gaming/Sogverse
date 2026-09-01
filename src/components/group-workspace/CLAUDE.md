@@ -48,8 +48,26 @@ ban, and the ESLint config says so.
 ## What lives here
 
 - **`GroupWorkspace.tsx`** — the body, and the props every shell fills.
+
+  **Rule: the body owns the one per-member dialog, because more than one thing
+  opens it.** Every roster row's button opens it, and so does every name in the
+  final session's creations block down in the feed. A page can only ever have
+  one open, so what the body holds is *which member* — an id, never a copy of
+  their values — and both callers ask it to change. Holding that state in either
+  of the two surfaces would mean two dialogs with two drafts for one question,
+  and the two would be free to disagree about what is stored.
 - **`ParticipantRosterRow.tsx`** — one seat on the rail's roster: identity, age, contact,
-  game account editor, and the staff flair (newcomer badge, note button).
+  game account editor, and the per-member flair (newcomer badge, and the button that opens
+  that member's dialog).
+
+  **Rule: the button at the end of the row has three tones and no siblings.** Dimmed is
+  "nothing recorded", lit is "a note, a creation, or both", and the warning tone is "this
+  group's final session is still owed a creation from this member" — which also renames
+  the control, so the reason reaches a screen reader as words rather than as a colour.
+  Every creations signal routes into the one dialog, so a *second* mark beside the button
+  would be either a second way in or something a reader cannot act on; and a tone costs no
+  layout, where a new element in the row's right-packed trailing group would have to be
+  ordered against what is already there.
 - **`GroupNotesPanel.tsx` / `SitePanel.tsx` / `TwoAudienceNotesPanel.tsx`** — the standing
   notes, and the site. Both named panels are built on the same two-audience editor with
   different copy and a different owner (the group; the site); the site's puts two more
@@ -136,10 +154,25 @@ ban, and the ESLint config says so.
 - **`game-username-save.ts`** — the same split for the roster's username editor: the
   platform dispatch and the checking/verified/unverified machine, taking both platforms'
   mutations and the shell's status setter as arguments.
-- **`derive-roster-flair.ts`** — the group feed's roster rows turned into the three sparse
+- **`derive-roster-flair.ts`** — the group feed's roster rows turned into the four sparse
   maps the flair prop carries. Holds the clubs-only badge gate and the absence-is-none
   convention, both of which fail silently, and neither of which needs a React tree to
-  test.
+  test. The creations map extends the convention rather than bending it: the RPC emits
+  `[]` where a note is null, so an empty list is left *out* on length — which makes the
+  map's key set "who has a creation", exactly what the owed derivation reads.
+
+  **The obligation itself is derived in the body, not in either shell.** Whether this
+  run's final session is owed creations comes from the product's flag, the schedule's last
+  occurrence on or before the end date, and that map — all of which the shared body
+  already holds. A copy in each shell would be a second place for a gedu and an admin to
+  disagree about whether the last session of a term is finished. The same value feeds
+  three things — the session feed's completeness, the block on the final session's own
+  card, and the roster's per-row marker — so a row can never be marked while the card
+  beside it reads finished, and whenever the card's block is warning-toned the rail
+  marks the same people. Only that direction holds: before the run's final session
+  ends nothing is owed yet, so the block states the obligation informationally — every
+  member chipped, nobody marked on the rail — and a card naming somebody the rail
+  leaves unmarked is that state rather than a disagreement.
 - **`types.ts` / `roster-helpers.tsx`** — the roster row alias and the two questions every
   roster consumer has to answer identically (which address, which game account).
 - **`BackLink.tsx`** — the workspace's default back link, which is the gedu shell's.

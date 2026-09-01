@@ -236,6 +236,23 @@ export interface FormState {
   // product, so a state that could hold it would be a state no screen can show.
   marketingConsentTypes: Set<AttachableMarketingConsentType>;
 
+  // Does every member of this product owe a creation — a link to the thing
+  // they made — by the time it ends? An admin decision, never derived from
+  // `topic`: not every Roblox-Studio product is sponsored, and the obligation
+  // comes from a contract rather than from the subject matter.
+  //
+  // Staff-facing in every direction: a family sees nothing different on a
+  // flagged product, and no family document carries the column. What the flag
+  // changes is *signals* — the final session's completeness gains a fourth
+  // condition — never the authoring surface, which is the same on every
+  // product.
+  //
+  // Round-tripped from state on every save like the audience pair above,
+  // because `update_product` assigns every editable column on every call and
+  // the parameter defaults to FALSE: an omitted answer would unflag the
+  // product rather than preserve it.
+  requiresGamerCreations: boolean;
+
   // Visibility
   isVisible: boolean;
 }
@@ -323,6 +340,10 @@ export function initialState(
     // Nothing asked until somebody says otherwise. A default ask would put a
     // partner's marketing question in front of families nobody decided to ask.
     marketingConsentTypes: new Set(),
+    // Nothing owed until somebody says otherwise. The obligation comes from a
+    // sponsor's contract, so it is stated per product rather than defaulted —
+    // and false being the resting state is what makes flagging the opt-in.
+    requiresGamerCreations: false,
     isVisible: false,
   };
 }

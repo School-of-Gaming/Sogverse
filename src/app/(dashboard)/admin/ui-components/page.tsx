@@ -46,7 +46,7 @@ import {
   PersonChipList,
   type PersonChipListPerson,
 } from "@/components/ui/person-chip";
-import { GamerNoteDialog, NewcomerBadge } from "@/components/member-flair";
+import { GamerFlairDialog, NewcomerBadge } from "@/components/member-flair";
 import {
   HelpFeedbackCardView,
   type HelpFeedbackAudience,
@@ -92,7 +92,12 @@ import type {
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
 import type { YtyPalette } from "@/lib/constants/yty";
-import type { GeduContractAcceptance, UserRole, VoiceZone } from "@/types";
+import type {
+  GamerCreation,
+  GeduContractAcceptance,
+  UserRole,
+  VoiceZone,
+} from "@/types";
 import {
   LocationPickerPanel,
   type LocationChainSummary,
@@ -1035,8 +1040,6 @@ function buildDemoVoiceContext(room: DemoRoom): VoiceRoomContextValue {
     muteParticipant: noop,
     lockParticipant: noop,
     getAnalyser: () => null,
-    messages: [],
-    sendChatMessage: noop,
     join: asyncNoop,
     leave: asyncNoop,
   };
@@ -1299,37 +1302,57 @@ function NewcomerBadgeDemo() {
 const NEWCOMER_BADGE_STOPS = [0, 8, 16, 24];
 
 /**
- * The note editor itself — an overlay, so the style guide is its home: it opens
- * above whatever summoned it and the page behind it contributes nothing to how
- * it reads.
+ * The per-gamer dialog itself — an overlay, so the style guide is its home: it
+ * opens above whatever summoned it and the page behind it contributes nothing to
+ * how it reads.
  *
- * Live against local state, including the one behaviour worth checking here:
- * saving an empty note is a real action that retires the note rather than a
- * no-op.
+ * **What has to be judged here is the two-audience split.** The creation on top
+ * is read by the member's own family; the private note under it is staff working
+ * memory. Getting those the wrong way round is the only real risk the dialog
+ * carries, so the bordered block and the padlocked one have to read as opposites
+ * at a glance, with the audience stated in words in each — and one page is where
+ * they are compared, because a reviewer sees both halves in one screenshot.
+ *
+ * Both halves are live against local state, including the two behaviours worth
+ * checking here: saving an empty note is a real action that retires it rather
+ * than a no-op, and **one creation field filled without the other** refuses the
+ * save with a line under it, which is what keeps the database's CHECK a backstop
+ * rather than a routine error path. Emptying both fields is the third, and is
+ * how a creation is cleared.
  */
-function GamerNoteDialogDemo() {
+function GamerFlairDialogDemo() {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(
     "Quiet in big groups — pair her rather than letting her pick a partner. Has warmed up a lot since autumn.",
   );
+  // One entry, because one is what the editor authors — the wire shape is still
+  // an array, and a demo seeding two would be showing a state no Gedu can reach.
+  const [creations, setCreations] = useState<readonly GamerCreation[]>([
+    {
+      title: "Underwater dome with the working airlock",
+      url: "https://www.planetminecraft.com/project/siiri-dome/",
+    },
+  ]);
 
   return (
     <div className="space-y-2">
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        Open the note about Siiri
+        Open the dialog about Siiri
       </Button>
       <p className="text-xs text-muted-foreground">
-        {note === ""
-          ? "No note — the dialog opens on the add flow."
-          : "Has a note."}
+        {note === "" && creations.length === 0
+          ? "Nothing recorded — the dialog opens on the add flow, and the roster button is dimmed."
+          : `${note === "" ? "No note" : "Has a note"}, ${creations.length} creation${creations.length === 1 ? "" : "s"}.`}
       </p>
-      <GamerNoteDialog
+      <GamerFlairDialog
         open={open}
         onOpenChange={setOpen}
         name="Siiri"
         note={note}
         lastEditedBy="Sanna"
-        onSave={setNote}
+        creations={creations}
+        onSaveNote={setNote}
+        onSaveCreations={setCreations}
       />
     </div>
   );
@@ -3032,11 +3055,15 @@ export default function AdminUIComponentsPage() {
         </div>
       </Section>
 
-      <Section title="Member flair — newcomer badge & Gedu notes">
+      <Section title="Member flair — newcomer badge & the per-gamer dialog">
         <p className="max-w-prose text-sm text-muted-foreground">
-          Staff-only marks a Gedu reads off a roster before they read a name.
-          Neither ever reaches a family surface: the data behind them comes from
-          staff-scoped reads, so a parent&rsquo;s page has nothing to pass.
+          The marks a Gedu reads off a roster before they read a name, and the
+          dialog behind them. The badge never reaches a family surface: the data
+          behind it comes from staff-scoped reads, so a parent&rsquo;s page has
+          nothing to pass. The dialog is where that stops being the whole story
+          — the note in it is staff-only for ever, and the creations under it are
+          read by the member&rsquo;s own family, which is why each half states
+          its audience above the fields.
         </p>
         <p className="max-w-prose text-sm text-muted-foreground">
           The glyph and the note marker are both picked here — three options can
@@ -3052,8 +3079,8 @@ export default function AdminUIComponentsPage() {
         <SubSection title="The newcomer badge">
           <NewcomerBadgeDemo />
         </SubSection>
-        <SubSection title="The note editor">
-          <GamerNoteDialogDemo />
+        <SubSection title="The per-gamer dialog">
+          <GamerFlairDialogDemo />
         </SubSection>
       </Section>
 

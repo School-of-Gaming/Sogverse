@@ -5,10 +5,14 @@ import { getClient } from "@/lib/supabase/client";
 import { assignmentKeys } from "@/services/assignments/assignments.keys";
 import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.keys";
 import { groupsKeys } from "@/services/groups/groups.queries";
+import type { GamerCreation } from "./member-flair.contracts";
 import { memberFlairKeys } from "./member-flair.keys";
 import { MemberFlairService } from "./member-flair.service";
 
-/** React Query bindings for the staff overlay and the (group, member) note. */
+/**
+ * React Query bindings for the staff overlay and the two (group, member)
+ * writes: the private note, and the creations list beside it.
+ */
 
 /**
  * One group's staff-only marks.
@@ -43,16 +47,9 @@ export function useGroupStaffOverlay(groupId: string | null, enabled: boolean) {
 /**
  * Write, replace or clear one member's note in this group.
  *
- * **Four keys, because four documents carry the same note.** The first three are
- * what the live surfaces read: the overlay behind the voice room, the gedu group
- * feed's roster (the copy the gedu product page actually renders), and the gedu
- * assignment document. `groupsKeys.all` is there because the admin snapshot
- * *carries* the note too, and a document holding a stale note is a document
- * holding a wrong one.
- *
- * The last two are invalidated at the top of their hierarchies rather than by
- * id: this mutation knows a group, not a product, and each is one cheap
- * staff-only single-document read on a low-traffic surface.
+ * The documents it invalidates, and why those, are in
+ * {@link invalidateStaffFlairDocuments} — shared with the creations write below,
+ * which rides exactly the same set.
  */
 export function useSetGamerGroupNote(groupId: string) {
   const queryClient = useQueryClient();
@@ -62,14 +59,65 @@ export function useSetGamerGroupNote(groupId: string) {
     mutationFn: (vars: { participantId: string; note: string }) =>
       service.setGamerGroupNote({ groupId, ...vars }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: memberFlairKeys.overlay(groupId),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: geduSessionKeys.feed(groupId),
-      });
-      void queryClient.invalidateQueries({ queryKey: assignmentKeys.all });
-      void queryClient.invalidateQueries({ queryKey: groupsKeys.all });
+      invalidateStaffFlairDocuments(queryClient, groupId);
     },
   });
+}
+
+/**
+ * Replace one member's creations in this group.
+ *
+ * **The same staff documents, and deliberately no family key.** The note and the
+ * creations list ride the same three staff documents, so a write to either
+ * invalidates the same set — see {@link invalidateStaffFlairDocuments}.
+ *
+ * The family product page carries this list too, and its key is **not**
+ * invalidated, which is a decision rather than an omission: the writer is always
+ * staff (an admin, or a gedu assigned to the product), and a staff client never
+ * holds a family cache entry to go stale. The family's own next visit reads the
+ * document fresh.
+ */
+export function useSetGamerGroupCreations(groupId: string) {
+  const queryClient = useQueryClient();
+  const service = new MemberFlairService(getClient());
+
+  return useMutation({
+    mutationFn: (vars: {
+      participantId: string;
+      creations: readonly GamerCreation[];
+    }) => service.setGamerGroupCreations({ groupId, ...vars }),
+    onSuccess: () => {
+      invalidateStaffFlairDocuments(queryClient, groupId);
+    },
+  });
+}
+
+/**
+ * **Four keys, because four documents carry a member's staff flair.** The first
+ * three are what the live surfaces read: the overlay behind the voice room, the
+ * gedu group feed's roster (the copy the gedu product page actually renders),
+ * and the gedu assignment document. `groupsKeys.all` is there because the admin
+ * snapshot *carries* the note too, and a document holding a stale note is a
+ * document holding a wrong one.
+ *
+ * The last two are invalidated at the top of their hierarchies rather than by
+ * id: a flair write knows a group, not a product, and each is one cheap
+ * staff-only single-document read on a low-traffic surface.
+ *
+ * Shared by both writes so the two cannot drift into invalidating different
+ * sets — the note and the creations list sit side by side in one dialog and ride
+ * the same documents, so a key added for one is a key the other needs too.
+ */
+function invalidateStaffFlairDocuments(
+  queryClient: ReturnType<typeof useQueryClient>,
+  groupId: string,
+): void {
+  void queryClient.invalidateQueries({
+    queryKey: memberFlairKeys.overlay(groupId),
+  });
+  void queryClient.invalidateQueries({
+    queryKey: geduSessionKeys.feed(groupId),
+  });
+  void queryClient.invalidateQueries({ queryKey: assignmentKeys.all });
+  void queryClient.invalidateQueries({ queryKey: groupsKeys.all });
 }

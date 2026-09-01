@@ -68,6 +68,7 @@ function renderRow(hidden: boolean, viewer: ChatAccount) {
           mentionable: [SANNA],
           repliedTo: null,
           flashing: false,
+          actionsRevealed: false,
           capabilities: deriveChatMessageCapabilities(
             { viewer, locked: false },
             message,
@@ -85,6 +86,7 @@ function renderRow(hidden: boolean, viewer: ChatAccount) {
           onRestore: noop,
           onSetLock: noop,
           onRetry: noop,
+          onToggleActions: noop,
         }}
       />
     </NextIntlClientProvider>,

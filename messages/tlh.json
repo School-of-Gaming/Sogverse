@@ -453,6 +453,10 @@
           "free": "HuchHa’",
           "external_contract": "DIvI’ qaSpu’qa’ (veng)"
         },
+        "requiresGamerCreations": {
+          "required": "poQlu’",
+          "notRequired": "poQbe’lu’"
+        },
         "fields": {
           "publicUrl": "Hoch He",
           "topic": "Doch",
@@ -473,6 +477,7 @@
           "tag": "’Iv chenmoHlu’pu’",
           "regionLock": "Sep ngaQmoH",
           "requiredConsents": "poQlu’bogh chaw’mey",
+          "requiresGamerCreations": "toy’wI’ chenmoHtaHbogh Doch",
           "visibility": "leghlu"
         },
         "copyLink": "Hoch He yIghItlhqa'",
@@ -528,6 +533,7 @@
         "longDescription": "QIn nI’",
         "topic": "Doch",
         "materialUrl": "ghojmoHmeH De’ URL",
+        "requiresGamerCreations": "chenmoHta’bogh Doch He poQlu’ Hoch toy’wI’vaD",
         "seatAudience": "quS Suq ’Iv",
         "tag": "’Iv chenmoHlu’pu’",
         "regionLock": "Sep ngaQmoH",
@@ -662,6 +668,7 @@
         "longDescription": "vItlhutlh. QIn naQ, Doch ’aqroSDaq neH cha’lu’. nargh, tetlh, ’ej ghomHa’ ghItlh lo’laH.",
         "topicHint": "Doch qel malja’vam. qech-lojmIt lulegh qorDu’pu’ malja’Daq, ’ej De’ navDaq je.",
         "materialUrlHint": "vItlhutlh. Gedupu’vaD neH — ghu’pu’ luleghbe’.",
+        "requiresGamerCreationsHint": "Doch poQbogh ghItlh ’oH. Hoch ghom toy’wI’ chenmoHta’ghach qonlu’pa’, Qu’ Qav rInbe’ ’ej buSlu’nIS. pagh pIm legh qorDu’pu’.",
         "seatAudienceHint": "wa’ yIwIv, pagh cha’. cha’ DawIvDI’, qorDu’ lop: vav toy’wI’ je tay’. malja’Daq per: qorDu’pu’vaD.",
         "forGamersHint": "toy’wI’ chel vav, ’ej quS Suq toy’wI’. DIS mach DIS tIn je poQ.",
         "forParentsHint": "quS Suq vav ’ej lop ghaH. DIS poQbe’ — puqpu’ DIS qel, loDpu’ DISbe’.",
@@ -1454,6 +1461,8 @@
     "siteLabel": "nuqDaq",
     "aboutHeading": "ghom’a’vam De’",
     "siteNoteHeading": "{site}Daq",
+    "creationsHeading": "{count, plural, one {chenmoHta’} other {chenmoHta’mey}}",
+    "creationOpensInNewTab": "(Daq chu’Daq poSlu’)",
     "feedHeading": "may’mey",
     "attendancePresent": "pawpu’",
     "attendanceNotPresent": "pawbe’",
@@ -1467,7 +1476,10 @@
     "cancellationNoticeNoSession": "may’morgh DanatlhHa’pu’! qaSqa’be’. {date} tlhab SoH.",
     "loadingPage": "ghom’a’vam may’mey laDlu’…",
     "notFoundTitle": "naDev pagh tu’lu’",
-    "notFoundBody": "poSlu’laHbe’. My SOG-Daq Hoch DaleghlaH."
+    "notFoundBody": "poSlu’laHbe’. My SOG-Daq Hoch DaleghlaH.",
+    "creationsIntro": "{count, plural, one {ghomvamDaq vay’ rInmoHDI’ {name} – Quj, qo’, Qu’ – naDev ’oH ’ang Gedu. vaj Qujmo’ chenpu’bogh Dalegh. tugh yIpoSmoH ’ej {name} yIQoy!} other {ghomvamDaq vay’ rInmoHDI’ {name} – Quj, qo’, Qu’ – naDev ’oH ’ang Gedu. vaj Qujmo’ chenpu’bogh Dalegh. tugh tIpoSmoH ’ej {name} yIQoy!}}",
+    "creationsIntroSelf": "{count, plural, one {ghomvamDaq vay’ DarInmoHDI’, naDev ’oH ’ang Gedu – Qu’ rInpu’bogh: yIqaw ’ej yI’ang.} other {ghomvamDaq vay’ DarInmoHDI’, naDev chaH ’ang Gedu – Qu’mey rInpu’bogh: tIqaw ’ej tI’ang.}}",
+    "creationsIntroGamer": "{count, plural, one {ghomvamDaq vay’ DarInmoHDI’, naDev ’oH ’ang Gedu – DaghoS ’ej latlhpu’vaD Da’anglaH. bIchenmoHta’ SoH!} other {ghomvamDaq vay’ DarInmoHDI’, naDev chaH ’ang Gedu – tIghoS ’ej latlhpu’vaD tI’anglaH. Hoch DachenmoHta’ SoH!}}"
   },
   "selectProfile": {
     "title": "Sogverse ’el ’Iv?"
@@ -1589,7 +1601,12 @@
       "photoErrorCapReached": "buy’ De’vam. wa’ mIllogh yIteq, ’ej latlh yIchel.",
       "photoErrorNotAllowed": "may’vamvaD mIllogh Dachel net chaw’be’.",
       "photoErrorUploadFailed": "mIllogh ngeHlu’be’. yIboq.",
-      "photoErrorRemoveFailed": "mIllogh teqlu’be’ — De’vamDaq ratlh. yIboq."
+      "photoErrorRemoveFailed": "mIllogh teqlu’be’ — De’vamDaq ratlh. yIboq.",
+      "creationsTitle": "chenmoHta’mey",
+      "creationsAddedCount": "{added}/{total} chelta’",
+      "creationsHint": "may’ Qav ’oH may’vam’e’. Hoch chenmoHta’ ghajDI’ neH rInpu’. pong yIpoS ’ej chenmoHta’ yIchel.",
+      "creationsMemberDone": "{name} — chenmoHta’ chelta’",
+      "creationsMemberMissing": "{name} — chenmoHta’ Hutlh"
     },
     "groupNotes": {
       "heading": "ghom’a’vam",
@@ -1734,11 +1751,22 @@
   "memberFlair": {
     "newcomer": "SuvwI’ chu’",
     "newcomerTooltip": "ghomvamDaq SuvwI’ chu’ — {days, plural, =0 {DaHjaj muvpu’} one {# jaj ret muvpu’} other {# jaj ret muvpu’}}",
-    "openNote": "{name} qonta’ — Gedupu’vaD",
-    "noteTitle": "{name} qonta’",
-    "notePrivacy": "Gedupu’ che’wI’pu’ je neH bIH lulegh. ghomvamDaq reH ratlh qonta’.",
+    "openMember": "{name} qonta’ chenmoHta’ je",
+    "openMemberCreationOwed": "{name} qonta’ chenmoHta’ je — chenmoHta’ poQlu’taH",
+    "memberTitle": "{name} De’",
+    "noteAudience": "Gedupu’ che’wI’pu’ je",
+    "noteLabel": "pegh qonta’",
+    "noteHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. ghomvamDaq reH ratlh.",
     "notePlaceholder": "ghomvamDaq {name} qonta’.",
-    "noteLastEdited": "Qav choHwI’: {name}"
+    "noteLastEdited": "Qav choHwI’: {name}",
+    "creationAudience": "qorDu’pu’ lulaD",
+    "creationLabel": "chenmoHta’",
+    "creationHint": "ghomvamDaq wa’ chenmoHta’ {name}. qorDu’Daj legh.",
+    "creationTitleLabel": "chenmoHta’ pong",
+    "creationTitlePlaceholder": "nuq chenmoHta’",
+    "creationUrlLabel": "chenmoHta’ ghItlhHom",
+    "creationUrlPlaceholder": "ghItlhHom",
+    "creationIncomplete": "chenmoHta’ pong ghItlhHom je poQ."
   },
   "richText": {
     "bold": "ngutlh tIn",
@@ -2441,12 +2469,6 @@
       "fuchsia": "pIQqu’",
       "pink": "pIQ"
     },
-    "chat": {
-      "title": "ja’chuq",
-      "placeholder": "QIn yIghItlh…",
-      "send": "yIngeH",
-      "empty": "QIn tu’lu’be’"
-    },
     "instant": {
       "joinFailed": "Daq muv Dabe’lu’. yItoH’egh!",
       "share": {
@@ -2904,6 +2926,7 @@
   "chat": {
     "log": "ja’chuq QInmey",
     "empty": "not jatlhlu’.",
+    "unavailable": "DaH ja’chuq poSbe’.",
     "unread": "{count, plural, one {# QIn chu’} other {# QInmey chu’}}",
     "jumpToLatest": "QIn Qav yIghoS",
     "composer": {
@@ -2959,6 +2982,8 @@
     "moderation": {
       "lock": "ja’chuqvo’ {name} yIjon",
       "unlock": "ja’chuqDaq {name} yInoD",
+      "lockChat": "ja’chuq yIjon",
+      "unlockChat": "ja’chuq yInoD",
       "lockedTag": "ja’chuqvo’ jonlu’",
       "deleteTitle": "QInvam yIteq’a’?",
       "deleteBody": "QIn teqlu’pu’ ’e’ legh Hoch; velqa’ lupol Gedupu’ che’wI’pu’ je.",

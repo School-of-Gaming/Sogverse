@@ -18,9 +18,11 @@ export { ChatBodyText } from "./ChatBodyText";
 
 export {
   deriveChatComposerCapabilities,
+  deriveChatLockControl,
   deriveChatMessageCapabilities,
   isChatModerator,
   type ChatComposerCapabilities,
+  type ChatLockControl,
   type ChatMessageCapabilities,
   type ChatViewerState,
 } from "./capabilities";

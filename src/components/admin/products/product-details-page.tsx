@@ -16,6 +16,7 @@ import {
   MapPin,
   Pencil,
   Shapes,
+  Sparkles,
   Tag,
   Wallet,
   ExternalLink,
@@ -535,6 +536,24 @@ function OperationalFacts({
             </a>
           </Fact>
         )}
+
+        {/* The form's other staff-only field, beside the lesson link above it.
+            Always rendered, for the same reason required consents is above:
+            "not required" is the ordinary answer, and a row that only appears
+            when the flag is on would leave an admin unable to tell "off" from
+            "this page does not say". */}
+        <Fact
+          icon={Sparkles}
+          label={t("detailsPage.fields.requiresGamerCreations")}
+        >
+          {product.requires_gamer_creations ? (
+            t("detailsPage.requiresGamerCreations.required")
+          ) : (
+            <span className="text-muted-foreground">
+              {t("detailsPage.requiresGamerCreations.notRequired")}
+            </span>
+          )}
+        </Fact>
       </CardContent>
     </Card>
   );

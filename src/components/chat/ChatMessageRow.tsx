@@ -20,6 +20,7 @@ import { ChatMessageActions } from "./ChatMessageActions";
 import { ChatQuotedMessage } from "./ChatReply";
 import { ChatReactionRow } from "./ChatReactionRow";
 import { ChatTombstone } from "./ChatTombstone";
+import { isTouchGesture } from "./touch-gesture";
 import type { ChatAccount, ChatMessage } from "./types";
 
 /** Everything a row needs that is not the message itself. */
@@ -39,6 +40,11 @@ export interface ChatMessageRowContext {
   capabilities: ChatMessageCapabilities;
   /** True while the log is flashing this row after a jump. */
   flashing: boolean;
+  /**
+   * True while a tap is holding this row's action bar open — the log owns it,
+   * because only one row's bar may be open at a time.
+   */
+  actionsRevealed: boolean;
 }
 
 /** What a row can ask the surface to do. */
@@ -52,6 +58,8 @@ export interface ChatMessageRowHandlers {
   onRestore: () => void;
   onSetLock: (locked: boolean) => void;
   onRetry: () => void;
+  /** A tap on the row itself: show this row's action bar, or put it away. */
+  onToggleActions: () => void;
 }
 
 /**
@@ -89,15 +97,56 @@ export function ChatMessageRow({
   const te = useTranslations("chat.editor");
   const [draft, setDraft] = useState<string | null>(null);
 
-  const { viewer, accounts, mentionable, capabilities, repliedTo, flashing } =
-    context;
+  const {
+    viewer,
+    accounts,
+    mentionable,
+    capabilities,
+    repliedTo,
+    flashing,
+    actionsRevealed,
+  } = context;
   const sender = accounts.get(message.senderId) ?? null;
   const hidden = message.hiddenAt !== null;
   const mentionsViewer = !hidden && chatBodyMentions(message.body, viewer.id);
   const editing = draft !== null;
 
+  /**
+   * A tap on the message itself, which is how a phone asks for the action bar.
+   *
+   * Three things it must not be, and each is one line here:
+   *
+   * - **A mouse click.** Hover has already shown the bar to a cursor, so a
+   *   click that also pinned it open would only be a way to leave a bar
+   *   standing on a row nobody is pointing at — and it would fire at the end of
+   *   a drag that was selecting text to quote.
+   * - **The tap that took an action.** The bar's own buttons, a reaction pill,
+   *   the quote that jumps to an original and the picture that opens full
+   *   screen all sit inside this row, and a tap on one of them is that control's
+   *   answer, never also the row's. Anything that can be pressed is therefore
+   *   somebody else's tap.
+   * - **A tap inside the open editor.** A field being typed into is not a
+   *   message being read, and the bar is not even rendered while it is up.
+   */
+  const tapToReveal = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (editing) return;
+    if (!isTouchGesture(event)) return;
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest("a, button, input, textarea, select") !== null
+    ) {
+      return;
+    }
+    handlers.onToggleActions();
+  };
+
   return (
-    <div className="group relative pr-1">
+    // No key handler beside the tap, and no role on the row: the gesture adds
+    // no capability a keyboard lacks, because it only reveals a bar that is
+    // already in the tab order and already appears on `focus-within`. Making
+    // every message in a log a control would be the regression, not the fix.
+    <div className="group relative pr-1" onClick={tapToReveal}>
       {repliedTo !== null && (
         <ChatQuotedMessage
           message={repliedTo}
@@ -171,7 +220,16 @@ export function ChatMessageRow({
             {message.body !== null && (
               <ChatBodyText body={message.body} accounts={accounts} />
             )}
-            {message.image !== null && <ChatImageRun images={[message.image]} />}
+            {message.image !== null && (
+              <ChatImageRun
+                images={[message.image]}
+                // A picture-only message *is* the whole row, so there is no
+                // text beside it for a tap to land on: the thumbnail carries
+                // the reveal, and it reveals this row's own bar.
+                revealedIndex={actionsRevealed ? 0 : null}
+                onRevealIndex={handlers.onToggleActions}
+              />
+            )}
             {message.editedAt !== null && (
               <span className="ml-1 align-baseline text-[11px] text-muted-foreground">
                 {t("edited")}
@@ -181,6 +239,10 @@ export function ChatMessageRow({
         )}
       </div>
 
+      {/* The round trip, and it costs this row nothing until a send actually
+          fails: a pending echo's note is out of flow, so the row is the same
+          height before and after the acknowledgement that turns it into the
+          settled message. Nothing below it moves when the log reconciles. */}
       <ChatDeliveryNote
         delivery={message.delivery}
         onRetry={handlers.onRetry}
@@ -211,6 +273,7 @@ export function ChatMessageRow({
           sender={sender}
           capabilities={capabilities}
           unsent={message.delivery !== "sent"}
+          revealed={actionsRevealed}
           onReply={handlers.onReply}
           onToggleReaction={handlers.onToggleReaction}
           // Seeded with the sentence, never the markup: a writer who opened

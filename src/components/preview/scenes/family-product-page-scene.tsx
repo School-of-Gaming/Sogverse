@@ -66,6 +66,10 @@ export function FamilyProductPageScene({
       cancellation={fixture.cancellation}
       gedus={fixture.gedus}
       groupPublicNote={fixture.groupPublicNote}
+      // On the kitchen sink only, and empty everywhere else — which is the
+      // state most real pages are in and the one worth being able to see: no
+      // card, and no space held open for one.
+      creations={fixture.creations}
       site={fixture.site}
       voiceHref={fixture.voiceHref}
       // Passing a handler is what makes the Join a `<button>` rather than a

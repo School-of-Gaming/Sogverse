@@ -317,6 +317,12 @@ export const PREVIEW_SCENES = [
         description:
           "The topic that names no game account, where every roster row is the short one.",
       },
+      {
+        slug: "owed",
+        label: "Creations owed — a finished flagged run",
+        description:
+          "The one product shape the owed signal needs: flagged, and over.",
+      },
     ],
   },
   {

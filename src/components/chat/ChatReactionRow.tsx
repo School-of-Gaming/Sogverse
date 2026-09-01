@@ -40,7 +40,14 @@ export function ChatReactionRow({
   if (tallies.length === 0) return null;
 
   return (
-    <div className={cn("flex flex-wrap gap-1", className)}>
+    // The bottom margin is the row's own, not its embedders': the emoji sits in
+    // a `leading-none` line box it paints PAST (color-emoji fonts carry ascent/
+    // descent well beyond 1em), so without clearance the glyph bleeds a few
+    // pixels below the pill's border into whatever renders next — the visible
+    // case being the quote strip of a reply directly beneath. Rows in a run
+    // stack with zero gap by design, so the clearance has to travel with the
+    // pills that need it.
+    <div className={cn("mb-1 flex flex-wrap gap-1", className)}>
       {tallies.map((tally) => (
         <button
           key={tally.code}

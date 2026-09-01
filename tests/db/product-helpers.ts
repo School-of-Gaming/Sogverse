@@ -117,12 +117,56 @@ import { TEST_IDS } from "./constants";
  *                  CANCELLED, so the same ask is readable by nobody but an
  *                  admin. `can_read_product` is what separates them, and a
  *                  single product cannot hold both answers)
+ *   6a0-6a3, 6a9   session-images.test.ts (two products 6a0/6a1 with their
+ *                  groups 6a2/6a3; 6a9 is an image id that must never exist,
+ *                  declared here for the same reason 6ee and 6ff below are)
+ *   6b0-6b6        gamer-creations.test.ts (6b0 is the club the list is written
+ *                  on, with groups 6b1 and 6b2 — the second holds a member of
+ *                  the SAME product, which is what makes the target-check case
+ *                  about the GROUP rather than about the person existing; 6b3
+ *                  is a product the gedu does not teach, with its group 6b4, so
+ *                  a refusal there is the actor half alone; 6b5 with its group
+ *                  6b6 is the FLAGGED product whose run has already ended — the
+ *                  only shape the summaries RPC's fourth condition can fire on,
+ *                  kept apart because its cases satisfy the other three
+ *                  conditions and would otherwise move the counts every other
+ *                  block asserts on)
  *   6ee            marketing-consents.test.ts's must-NOT-exist product id,
  *                  backing the case that the ask-set writer refuses an unknown
  *                  product even on a call that clears. Declared here for the
  *                  same reason 6ff is: allocate it to a real fixture and that
  *                  case quietly starts pointing at a row that exists, which is
  *                  the one thing it must never do
+ *   7e1-7e2        chat-rpcs.test.ts (7e1 is the club whose schedule slot is
+ *                  placed so its session window is OPEN while the file runs —
+ *                  which is what lets ensure_chat_channel find one — and 7e2 is
+ *                  its opposite: a club with NO schedule slot at all, so the
+ *                  window search has nothing to find and the refusal is about
+ *                  the search rather than about membership. One product cannot
+ *                  hold both answers)
+ *   7e3            chat-image-storage.test.ts (one club, shaped like 7e1 — a
+ *                  schedule slot placed so its window is open while the file
+ *                  runs — with its own product rather than 7e1's because that
+ *                  file's cases hide and restore messages in the channel this
+ *                  one's objects hang off, and a storage read refused by
+ *                  somebody else's tombstone would look exactly like the policy
+ *                  working. 7e9 is its must-NOT-exist object name, backing the
+ *                  case that an object no message row names is readable by
+ *                  nobody: allocate it to a real fixture and that case quietly
+ *                  starts pointing at a row that exists)
+ *   7ee, 7ef       chat-rpcs.test.ts's must-NOT-exist message and channel ids,
+ *                  backing the cases that an unknown message is refused exactly
+ *                  as somebody else's is, and that the membership predicate
+ *                  answers a total `false` rather than NULL for a channel that
+ *                  is not there. Declared here for the reason 6ff and 6ee are:
+ *                  allocate either to a real fixture and those cases quietly
+ *                  start pointing at rows that exist
+ *   7f1-7f4        chat-session-window.test.ts (four products because the thing
+ *                  under test is the TIMEZONE and no single product can hold
+ *                  four: UTC, a northern DST zone, a southern one — one of the
+ *                  two is always on summer time — and a fixed-offset zone in
+ *                  which it is just after local midnight, which is what
+ *                  exercises the SQL window search's adjacent-day probe)
  *   637           write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather

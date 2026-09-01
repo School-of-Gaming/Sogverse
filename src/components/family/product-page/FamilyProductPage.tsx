@@ -220,6 +220,10 @@ export function FamilyProductPage({
           firstName: gedu.first_name,
         }))}
         groupPublicNote={feed.group.public_note}
+        // Already this participation's own list and nobody else's — the
+        // document carries a flat array rather than a map keyed by
+        // participant, so there is no filtering to do here and none to forget.
+        creations={feed.creations}
         site={
           feed.site === null
             ? null

@@ -121,6 +121,12 @@ export function ChatMessageList({
   const atBottomRef = useRef(true);
   const [behind, setBehind] = useState(0);
   const [flashId, setFlashId] = useState<string | null>(null);
+  // Which message's action bar a tap is holding open — the touch counterpart of
+  // hover, and the log's state rather than a row's for the one reason a row
+  // could not hold it: only one may be open at a time. See `ChatMessageRow`
+  // for what a tap is and is not, and `touch-gesture.ts` for why a mouse never
+  // reaches this state at all.
+  const [revealedId, setRevealedId] = useState<string | null>(null);
 
   const byId = new Map(messages.map((message) => [message.id, message]));
   const groups = groupChatMessages(messages);
@@ -226,6 +232,77 @@ export function ChatMessageList({
     return () => window.clearTimeout(timer);
   }, [flashId]);
 
+  // A press anywhere but the revealed row puts its bar away. The row's own tap
+  // handler is what *toggles* it, and the two do not fight: a press inside the
+  // row is skipped here and answered there, a press on any other row closes
+  // this one before that row's tap opens its own, and a press outside the log
+  // entirely — the composer, the page — simply closes.
+  //
+  // `mousedown` rather than `click` because it is the first of the pair and
+  // fires for a finger too (a tap synthesises the mouse events after it), which
+  // is the same event this feature's popovers already dismiss on. Capture, so
+  // it still arrives if something between here and the document stops the
+  // bubble.
+  useEffect(() => {
+    if (revealedId === null) return;
+    const onDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (rowRefs.current.get(revealedId)?.contains(target) === true) return;
+      setRevealedId(null);
+    };
+    document.addEventListener("mousedown", onDown, true);
+    return () => document.removeEventListener("mousedown", onDown, true);
+  }, [revealedId]);
+
+  /**
+   * The handlers, with the bar put away after every one of them.
+   *
+   * A bar revealed by a tap has answered the tap the moment the reader picks
+   * something out of it, and leaving it standing would make every action cost a
+   * second, meaningless press to dismiss what it opened. Hover needs none of
+   * this — a cursor takes the bar away by leaving — which is exactly why it is
+   * wrapped here, once, rather than remembered at each of the eight call sites.
+   */
+  const acted: ChatLogHandlers = {
+    onReply: (messageId) => {
+      setRevealedId(null);
+      handlers.onReply(messageId);
+    },
+    onToggleReaction: (messageId, code) => {
+      setRevealedId(null);
+      handlers.onToggleReaction(messageId, code);
+    },
+    onEdit: (messageId, body) => {
+      setRevealedId(null);
+      handlers.onEdit(messageId, body);
+    },
+    onDelete: (messageId) => {
+      setRevealedId(null);
+      handlers.onDelete(messageId);
+    },
+    onHide: (messageId) => {
+      setRevealedId(null);
+      handlers.onHide(messageId);
+    },
+    onRestore: (messageId) => {
+      setRevealedId(null);
+      handlers.onRestore(messageId);
+    },
+    onSetLock: (accountId, locked) => {
+      setRevealedId(null);
+      handlers.onSetLock(accountId, locked);
+    },
+    onRetry: (messageId) => {
+      setRevealedId(null);
+      handlers.onRetry(messageId);
+    },
+  };
+
+  const toggleActions = (messageId: string) => {
+    setRevealedId((current) => (current === messageId ? null : messageId));
+  };
+
   const jumpTo = (messageId: string) => {
     const el = logRef.current;
     const row = rowRefs.current.get(messageId);
@@ -305,9 +382,11 @@ export function ChatMessageList({
                           viewerLocked={viewerLocked}
                           lockedAccountIds={lockedAccountIds}
                           flashId={flashId}
+                          revealedId={revealedId}
+                          onReveal={setRevealedId}
                           rowRefs={rowRefs}
                           jumpTo={jumpTo}
-                          handlers={handlers}
+                          handlers={acted}
                         />
                       );
                     }
@@ -333,20 +412,23 @@ export function ChatMessageList({
                               lockedAccountIds.has(item.message.senderId),
                             ),
                             flashing: flashId === item.message.id,
+                            actionsRevealed: revealedId === item.message.id,
                           }}
                           handlers={{
-                            onReply: () => handlers.onReply(item.message.id),
+                            onReply: () => acted.onReply(item.message.id),
                             onJumpTo: jumpTo,
                             onToggleReaction: (code) =>
-                              handlers.onToggleReaction(item.message.id, code),
+                              acted.onToggleReaction(item.message.id, code),
                             onSubmitEdit: (body) =>
-                              handlers.onEdit(item.message.id, body),
-                            onDelete: () => handlers.onDelete(item.message.id),
-                            onHide: () => handlers.onHide(item.message.id),
-                            onRestore: () => handlers.onRestore(item.message.id),
+                              acted.onEdit(item.message.id, body),
+                            onDelete: () => acted.onDelete(item.message.id),
+                            onHide: () => acted.onHide(item.message.id),
+                            onRestore: () => acted.onRestore(item.message.id),
                             onSetLock: (locked) =>
-                              handlers.onSetLock(item.message.senderId, locked),
-                            onRetry: () => handlers.onRetry(item.message.id),
+                              acted.onSetLock(item.message.senderId, locked),
+                            onRetry: () => acted.onRetry(item.message.id),
+                            onToggleActions: () =>
+                              toggleActions(item.message.id),
                           }}
                         />
                       </div>
@@ -439,6 +521,8 @@ function ChatImageRunItem({
   viewerLocked,
   lockedAccountIds,
   flashId,
+  revealedId,
+  onReveal,
   rowRefs,
   jumpTo,
   handlers,
@@ -450,6 +534,13 @@ function ChatImageRunItem({
   viewerLocked: boolean;
   lockedAccountIds: ReadonlySet<string>;
   flashId: string | null;
+  /**
+   * The message whose bar a tap is holding open, which for a burst is one
+   * *thumbnail* — each picture is its own message, so the log's single
+   * reveal covers both kinds of row with one id and no second concept.
+   */
+  revealedId: string | null;
+  onReveal: (messageId: string) => void;
   rowRefs: React.RefObject<Map<string, HTMLDivElement>>;
   jumpTo: (messageId: string) => void;
   handlers: ChatLogHandlers;
@@ -458,6 +549,8 @@ function ChatImageRunItem({
     messages.find((message) => message.replyToId !== null)?.replyToId ?? null;
   const quoted = quotedId === null ? null : (byId.get(quotedId) ?? null);
   const flashing = messages.some((message) => message.id === flashId);
+  const revealedAt = messages.findIndex((message) => message.id === revealedId);
+  const revealedIndex = revealedAt === -1 ? null : revealedAt;
 
   const capabilities = messages.map((message) =>
     deriveChatMessageCapabilities(
@@ -505,11 +598,14 @@ function ChatImageRunItem({
           );
         })}
         deliveries={messages.map((message) => message.delivery)}
+        revealedIndex={revealedIndex}
+        onRevealIndex={(index) => onReveal(messages[index].id)}
         overlay={(index) => (
           <ChatMessageActions
             sender={accounts.get(messages[index].senderId) ?? null}
             capabilities={capabilities[index]}
             unsent={messages[index].delivery !== "sent"}
+            revealed={messages[index].id === revealedId}
             onReply={() => handlers.onReply(messages[index].id)}
             onToggleReaction={(code) =>
               handlers.onToggleReaction(messages[index].id, code)
@@ -522,8 +618,9 @@ function ChatImageRunItem({
               handlers.onSetLock(messages[index].senderId, locked)
             }
             // The thumbnail is the hover target here, not a text row, so the
-            // bar keys off the picture's own group rather than a row's.
-            className="group-hover/thumb:opacity-100"
+            // bar keys off the picture's own group rather than a row's. The
+            // tap half needs no variant — it arrives as `revealed` above.
+            className="group-hover/thumb:pointer-events-auto group-hover/thumb:opacity-100"
           />
         )}
         footer={(index) => (

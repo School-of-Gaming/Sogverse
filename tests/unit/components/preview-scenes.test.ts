@@ -122,20 +122,23 @@ describe("preview scene registry", () => {
    * changes with which type nouns a gedu runs, and a single-noun page is a shape
    * the all-three page structurally cannot show.
    *
-   * The product page's is four because it has **two** exclusive axes rather than
-   * one, and the ceiling is the sum of them: the product's shape (remote and
-   * weekly against in-person and daily) and the roster's, since a product has
+   * The product page's is five because it has **three** exclusive axes rather
+   * than one, and the ceiling is the sum of them: the product's shape (remote and
+   * weekly against in-person and daily); the roster's, since a product has
    * exactly one topic and a topic gives exactly one of three answers about which
-   * game identity the rows show — Minecraft, Roblox, or none. Neither axis can be
-   * folded into the other, and neither may grow a scenario per *state*: that is
-   * still what this ceiling exists to stop.
+   * game identity the rows show — Minecraft, Roblox, or none; and whether the
+   * run is over on a product whose contract requires a creation from every
+   * member, which is the only shape the owed signal exists in and is exclusive
+   * with every scenario that needs a live or future session. No axis can be
+   * folded into another, and none may grow a scenario per *state*: that is still
+   * what this ceiling exists to stop.
    */
   it("keeps the gedu scenes down to their mutually-exclusive scenarios", () => {
     // A ceiling, not an equality: this test is here to stop a scene creeping
     // back up to a scenario per state, and pinning the exact count would also
     // fail on the day somebody correctly *folds* two scenarios into one.
     const MAX_SCENARIOS: Record<string, number> = {
-      "gedu-product": 4,
+      "gedu-product": 5,
       "gedu-dashboard": 3,
     };
     for (const surface of ["gedu-product", "gedu-dashboard"] as const) {

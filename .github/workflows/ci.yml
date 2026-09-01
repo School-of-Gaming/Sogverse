@@ -170,26 +170,36 @@ jobs:
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
-      # The DB tests only exercise Postgres via PostgREST + GoTrue (see
-      # tests/db/helpers.ts) — so only those two, kong (which routes to them),
-      # postgres itself, and supavisor (the pooler fronting the exposed db port the
-      # CLI applies migrations through) get to boot. Everything else is excluded:
+      # The DB tests exercise Postgres via PostgREST + GoTrue (see
+      # tests/db/helpers.ts) and, in one file, the Storage API — so those three,
+      # kong (which routes to them), postgres itself, and supavisor (the pooler
+      # fronting the exposed db port the CLI applies migrations through) get to
+      # boot. Everything else is excluded:
       #
       # - edge-runtime is the flaky one — its boot-time Deno download intermittently
       #   fails the tail-end health check with `Error status 502` (known upstream
       #   flake: supabase/cli #3775, #2893, #4535) and fails the whole job on a
       #   container the tests never touch. --ignore-health-check is the documented
       #   backstop for that 502; the kept containers come up fine.
-      # - realtime, storage-api, postgres-meta, mailpit, studio, imgproxy, vector,
-      #   logflare are simply unused. Mailpit is safe to drop because local auth
-      #   autoconfirms (enable_confirmations = false in supabase/config.toml), so
-      #   GoTrue never contacts SMTP on any path a test exercises.
+      # - realtime, postgres-meta, mailpit, studio, imgproxy, vector, logflare are
+      #   simply unused. Mailpit is safe to drop because local auth autoconfirms
+      #   (enable_confirmations = false in supabase/config.toml), so GoTrue never
+      #   contacts SMTP on any path a test exercises. imgproxy stays out with
+      #   storage-api in: it serves image *transformations*, which nothing here
+      #   asks for — an object is uploaded and downloaded, and neither touches
+      #   it.
+      # - storage-api is kept because the `chat-images` policy is a
+      #   `storage.objects` RLS rule, and downloading the object is what
+      #   evaluates it — the same call the read route makes on the viewer's own
+      #   client. Without the container that boundary — membership, the family
+      #   time bound, and a hidden picture's retraction, all on pictures of
+      #   children — has no automated coverage at all.
       #
-      # Together the exclusions cut boot from ~5 min (full stack) to well under it;
-      # the full-stack baseline and per-container drift move around with runner
-      # weather, so treat the step's own timing in the run as the current number.
+      # Together the exclusions cut boot well below the ~5 min full stack; the
+      # baseline and per-container drift move around with runner weather, so treat
+      # the step's own timing in the run as the current number.
       - name: Start local Supabase
-        run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare,realtime,storage-api,postgres-meta,mailpit --ignore-health-check
+        run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare,realtime,postgres-meta,mailpit --ignore-health-check
 
       - name: Run database tests
         run: npm run test:db

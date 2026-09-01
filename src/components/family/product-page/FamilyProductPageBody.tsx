@@ -24,9 +24,11 @@ import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { FamilyProductBackLink } from "./BackLink";
+import { FamilyCreationsCard } from "./FamilyCreationsCard";
 import { FamilySessionFeed } from "./FamilySessionFeed";
 import { FAMILY_PRODUCT_TONES } from "./product-page-tones";
 import type {
+  FamilyCreation,
   FamilyProductGedu,
   FamilyProductSite,
   FamilySessionEntry,
@@ -58,10 +60,13 @@ import type {
  *   never see. A one-column page is not a degraded two-column one here; there is
  *   nothing to put beside the feed.
  * - **The masthead answers "when and where", the notes card answers "what
- *   should I know", the feed answers "what happened".** In that order, because
- *   that is the order a parent opening this page on a Monday afternoon wants
- *   them: the join button or the address first, the standing context once, and
- *   the story underneath for as long as they care to scroll.
+ *   should I know", the creations card answers "what have they made", the feed
+ *   answers "what happened".** In that order, because that is the order a
+ *   parent opening this page on a Monday afternoon wants them: the join button
+ *   or the address first, the standing context once, the handful of things
+ *   their child has to show for the term, and the story underneath for as long
+ *   as they care to scroll. The creations card is absent on almost every page
+ *   and takes no space when it is.
  * - **Remote products carry a Join; in-person ones carry an address and no Join
  *   at all** — not a locked one. A locked button is a promise that it will
  *   unlock, and a camp in a library never will. A remote product whose run has
@@ -166,6 +171,16 @@ export interface FamilyProductPageBodyProps {
   gedus: readonly FamilyProductGedu[];
   /** The group's standing note for families, plain text. `null` = none. */
   groupPublicNote: string | null;
+  /**
+   * What this participant has made in this group, in the order staff arranged
+   * them — and nobody else's. Empty, which is the common case, renders no card
+   * and reserves no space for one.
+   *
+   * Required rather than defaulted: the list rides the same document as the
+   * rest of the page, so every caller has it, and a prop that could be omitted
+   * would let a surface silently stop showing a child their own work.
+   */
+  creations: readonly FamilyCreation[];
   /** The site and its family-facing detail, or `null` for a remote product. */
   site: FamilyProductSite | null;
   /** Where the Join navigates when the window is open. */
@@ -270,6 +285,7 @@ export function FamilyProductPageBody({
   cancellation = null,
   gedus,
   groupPublicNote,
+  creations,
   site,
   voiceHref,
   onJoinClick,
@@ -507,6 +523,19 @@ export function FamilyProductPageBody({
           </CardContent>
         </Card>
       )}
+
+      {/* What this child has made, between the standing context and the term's
+          history — the order the page reads in, and the only place a card that
+          is usually absent can sit without either displacing something every
+          page has or being buried under a history nobody scrolls to the end
+          of. Suppression and the parse-or-degrade rule are the card's own; see
+          its note — as is the line under its heading, which is the one piece of
+          copy on the card that changes with who is reading. */}
+      <FamilyCreationsCard
+        creations={creations}
+        audience={audience}
+        name={participant.firstName}
+      />
 
       <section className="mt-6">
         <h2 className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">

@@ -405,6 +405,10 @@
           "free": "Maksuton",
           "external_contract": "Ulkoinen sopimus (kunta)"
         },
+        "requiresGamerCreations": {
+          "required": "Vaaditaan",
+          "notRequired": "Ei vaadita"
+        },
         "fields": {
           "publicUrl": "Julkinen linkki",
           "topic": "Aihe",
@@ -425,6 +429,7 @@
           "tag": "Kenelle suunniteltu",
           "regionLock": "Maakohtainen rajaus",
           "requiredConsents": "Vaaditut suostumukset",
+          "requiresGamerCreations": "Pelaajien teokset",
           "visibility": "Näkyvyys"
         },
         "copyLink": "Kopioi julkinen linkki",
@@ -480,6 +485,7 @@
         "longDescription": "Pitkä kuvaus",
         "topic": "Aihe",
         "materialUrl": "Oppimateriaalin osoite",
+        "requiresGamerCreations": "Jokaiselta pelaajalta vaaditaan linkki omaan teokseensa",
         "seatAudience": "Kuka voi ottaa paikan",
         "tag": "Kenelle suunniteltu",
         "regionLock": "Maakohtainen rajaus",
@@ -614,6 +620,7 @@
         "longDescription": "Valinnainen. Koko esittely, joka näkyy vain tuotteen tuotesivulla. Käytettävissä ovat otsikot, luettelot, korostukset ja linkit.",
         "topicHint": "Mistä tuotteessa on kyse. Perheet näkevät tämän Aihe-suodattimena kaupassa ja tuotesivun tietokortissa.",
         "materialUrlHint": "Valinnainen. Vain Geduille — perheet eivät näe tätä.",
+        "requiresGamerCreationsHint": "Tuotteille, joilta sopimus sitä vaatii. Viimeinen kerta pysyy huomiota vaativana, kunnes jokaiselta ryhmän pelaajalta on kirjattu teos. Perheille ei näy mitään eroa.",
         "seatAudienceHint": "Valitse vähintään yksi. Molempien valitseminen tarkoittaa toimintaa, johon vanhempi ja pelaaja osallistuvat yhdessä — kaupassa se näkyy merkinnällä ”Perheille”.",
         "forGamersHint": "Vanhempi ilmoittaa pelaajan, ja pelaaja ottaa paikan. Vaatii ala- ja yläikärajan.",
         "forParentsHint": "Vanhempi ottaa paikan itselleen ja osallistuu toimintaan. Ei ikärajoja – ikä koskee lapsia, ei aikuisia.",
@@ -1406,6 +1413,8 @@
     "siteLabel": "Missä",
     "aboutHeading": "Tietoa ryhmästä",
     "siteNoteHeading": "Paikassa {site}",
+    "creationsHeading": "{count, plural, one {Teos} other {Teokset}}",
+    "creationOpensInNewTab": "(avautuu uuteen välilehteen)",
     "feedHeading": "Kerrat",
     "attendancePresent": "Paikalla",
     "attendanceNotPresent": "Ei paikalla",
@@ -1419,7 +1428,10 @@
     "cancellationNoticeNoSession": "Peruit tämän jäsenyyden – se ei uusiudu. Käyttöoikeus jatkuu {date} asti.",
     "loadingPage": "Ladataan tämän ryhmän kertoja.",
     "notFoundTitle": "Täällä ei ole näytettävää",
-    "notFoundBody": "Tätä sivua ei voitu avata. Omasta SOGista löydät kaiken, mihin olet ilmoittautunut."
+    "notFoundBody": "Tätä sivua ei voitu avata. Omasta SOGista löydät kaiken, mihin olet ilmoittautunut.",
+    "creationsIntro": "{count, plural, one {Kun {name} saa tässä ryhmässä valmiiksi pelin, maailman tai muun projektin, Gedu linkittää sen tänne, niin näet, mitä pelaamisesta on syntynyt. Avatkaa se yhdessä: {name} kertoo siitä mielellään lisää.} other {Kun {name} saa tässä ryhmässä valmiiksi pelin, maailman tai muun projektin, Gedu linkittää sen tänne, niin näet, mitä pelaamisesta on syntynyt. Avatkaa ne yhdessä: {name} kertoo niistä mielellään lisää.}}",
+    "creationsIntroSelf": "{count, plural, one {Kun saat tässä ryhmässä jotain valmiiksi, Gedu linkittää sen tänne – valmista työtä, johon kannattaa palata ja jota kannattaa jakaa.} other {Kun saat tässä ryhmässä jotain valmiiksi, Gedu linkittää sen tänne – valmista työtä, johon kannattaa palata ja jota kannattaa jakaa.}}",
+    "creationsIntroGamer": "{count, plural, one {Kun saat tässä ryhmässä jotain valmiiksi, Gedu linkittää sen tänne, niin voit palata siihen ja näyttää sen muille. Sinä teit tämän.} other {Kun saat tässä ryhmässä jotain valmiiksi, Gedu linkittää sen tänne, niin voit palata niihin ja näyttää ne muille. Sinä teit nämä.}}"
   },
   "selectProfile": {
     "title": "Kuka astuu Sogverseen?"
@@ -1545,7 +1557,12 @@
       "photoErrorCapReached": "Tämä raportti on jo täynnä. Poista kuva, jotta voit lisätä uuden.",
       "photoErrorNotAllowed": "Et voi lisätä kuvia tähän kertaan.",
       "photoErrorUploadFailed": "Kuvan lataus ei onnistunut. Yritä uudelleen.",
-      "photoErrorRemoveFailed": "Kuvan poistaminen ei onnistunut. Kuva on yhä raportissa — yritä uudelleen."
+      "photoErrorRemoveFailed": "Kuvan poistaminen ei onnistunut. Kuva on yhä raportissa — yritä uudelleen.",
+      "creationsTitle": "Teokset",
+      "creationsAddedCount": "{added}/{total} lisätty",
+      "creationsHint": "Kauden viimeinen kerta on valmis vasta, kun jokaisella on teos. Avaa nimi ja lisää teos.",
+      "creationsMemberDone": "{name} – teos lisätty",
+      "creationsMemberMissing": "{name} – teos puuttuu"
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
@@ -1690,11 +1707,22 @@
   "memberFlair": {
     "newcomer": "Uusi",
     "newcomerTooltip": "Uusi tässä ryhmässä — liittyi {days, plural, =0 {tänään} one {# päivä sitten} other {# päivää sitten}}",
-    "openNote": "Muistiinpano Geduille pelaajasta {name}",
-    "noteTitle": "Muistiinpano pelaajasta {name}",
-    "notePrivacy": "Vain Gedut ja ylläpitäjät näkevät tämän muistiinpanon. Se pysyy tässä ryhmässä kerrasta toiseen.",
+    "openMember": "Muistiinpano ja teos pelaajasta {name}",
+    "openMemberCreationOwed": "Muistiinpano ja teos pelaajasta {name} — teos puuttuu vielä",
+    "memberTitle": "Tietoja pelaajasta {name}",
+    "noteAudience": "Gedut ja ylläpitäjät",
+    "noteLabel": "Yksityinen muistiinpano",
+    "noteHint": "Vain Gedut ja ylläpitäjät näkevät tämän. Se pysyy tässä ryhmässä kerrasta toiseen.",
     "notePlaceholder": "Muistiinpanoja pelaajasta {name} tässä ryhmässä.",
-    "noteLastEdited": "Viimeksi muokannut {name}"
+    "noteLastEdited": "Viimeksi muokannut {name}",
+    "creationAudience": "Perheet näkevät tämän",
+    "creationLabel": "Teos",
+    "creationHint": "Jokin, jonka {name} on tehnyt tässä ryhmässä. Hänen oma perheensä näkee sen omalla sivullaan.",
+    "creationTitleLabel": "Teoksen nimi",
+    "creationTitlePlaceholder": "Mitä hän teki",
+    "creationUrlLabel": "Teoksen linkki",
+    "creationUrlPlaceholder": "Linkki teokseen",
+    "creationIncomplete": "Teos tarvitsee sekä nimen että linkin."
   },
   "richText": {
     "bold": "Lihavointi",
@@ -2396,12 +2424,6 @@
       "purple": "Purppura",
       "fuchsia": "Fuksia",
       "pink": "Pinkki"
-    },
-    "chat": {
-      "title": "Keskustelu",
-      "placeholder": "Kirjoita viesti…",
-      "send": "Lähetä",
-      "empty": "Ei vielä viestejä"
     },
     "instant": {
       "joinFailed": "Huoneeseen liittyminen epäonnistui. Yritä uudelleen.",
@@ -3750,6 +3772,7 @@
   "chat": {
     "log": "Keskusteluviestit",
     "empty": "Täällä ei ole vielä sanottu mitään.",
+    "unavailable": "Chat ei ole juuri nyt käytettävissä.",
     "unread": "{count, plural, one {# uusi viesti} other {# uutta viestiä}}",
     "jumpToLatest": "Siirry uusimpaan viestiin",
     "composer": {
@@ -3805,6 +3828,8 @@
     "moderation": {
       "lock": "Lukitse {name} pois keskustelusta",
       "unlock": "Päästä {name} takaisin keskusteluun",
+      "lockChat": "Lukitse keskustelu",
+      "unlockChat": "Vapauta keskustelu",
       "lockedTag": "Lukittu pois keskustelusta",
       "deleteTitle": "Poistetaanko tämä viesti?",
       "deleteBody": "Kaikki näkevät, että viesti on poistettu, ja kopio siitä jää Geduille ja ylläpitäjille.",

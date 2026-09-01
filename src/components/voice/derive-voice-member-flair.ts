@@ -1,5 +1,5 @@
 import { showsNewcomerBadge } from "@/components/member-flair";
-import type { GroupStaffOverlay } from "@/types";
+import type { GamerCreation, GroupStaffOverlay } from "@/types";
 import type { VoiceMemberFlair } from "./VoiceMemberFlairProvider";
 
 /**
@@ -7,7 +7,7 @@ import type { VoiceMemberFlair } from "./VoiceMemberFlairProvider";
  *
  * **The two shapes are deliberately different, and this is where one becomes the
  * other.** `get_group_staff_overlay` answers with a product type and one record
- * per active member; the context wants one clock, the seat-holder set, and three
+ * per active member; the context wants one clock, the seat-holder set, and four
  * sparse maps. Neither shape moves to meet the other, and nothing is put into
  * the context that the document does not already imply.
  *
@@ -32,7 +32,15 @@ import type { VoiceMemberFlair } from "./VoiceMemberFlairProvider";
  *   for the same reason.
  * - **Absence is how "none" is spelled.** A NULL from the RPC is *left out* of
  *   its map, never written in as a null — every consumer downstream reads a
- *   missing key as the answer.
+ *   missing key as the answer. The creations list extends the convention rather
+ *   than bending it: the RPC emits `[]` where a note is null, so an empty list
+ *   is left out for the same reason, and the map's keys are "who has one".
+ *
+ * The room draws **no owed marker**, and cannot: whether creations are owed is a
+ * fact about the product's flag and the run's final session, and this document
+ * carries neither. That signal belongs to the workspace, where the schedule is;
+ * what the room offers is the same dialog, so a Gedu can supply a creation
+ * mid-session.
  *
  * A `null` or absent overlay yields `null`: no provider value, and the room
  * renders exactly as it did before any of this existed. That is what a family's
@@ -41,7 +49,7 @@ import type { VoiceMemberFlair } from "./VoiceMemberFlairProvider";
 export function deriveVoiceMemberFlair(
   overlay: GroupStaffOverlay | null | undefined,
   now: Date,
-  onOpenNote: (userId: string, name: string) => void,
+  onOpenFlair: (userId: string, name: string) => void,
 ): VoiceMemberFlair | null {
   if (overlay == null) return null;
 
@@ -50,6 +58,7 @@ export function deriveVoiceMemberFlair(
   const newcomers: Record<string, string> = {};
   const notes: Record<string, string> = {};
   const noteEditors: Record<string, string> = {};
+  const creations: Record<string, readonly GamerCreation[]> = {};
 
   for (const [userId, member] of Object.entries(overlay.members)) {
     if (drawsNewcomerBadge && member.group_joined_at !== null) {
@@ -59,6 +68,7 @@ export function deriveVoiceMemberFlair(
     if (member.note_updated_by_first_name !== null) {
       noteEditors[userId] = member.note_updated_by_first_name;
     }
+    if (member.creations.length > 0) creations[userId] = member.creations;
   }
 
   return {
@@ -67,6 +77,7 @@ export function deriveVoiceMemberFlair(
     newcomers,
     notes,
     noteEditors,
-    onOpenNote,
+    creations,
+    onOpenFlair,
   };
 }

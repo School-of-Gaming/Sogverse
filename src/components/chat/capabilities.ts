@@ -45,7 +45,24 @@ import type { ChatAccount, ChatMessage, ChatRole } from "./types";
  * to silence another in front of the children they are both responsible for —
  * so `lockControl` excludes fellow moderators (and the viewer themselves), and a
  * staff problem is handled off the platform, by people, as it should be.
+ *
+ * Because a lock is about the person, **the answer is derived per person and the
+ * message menu is only one of the places that asks**: the voice room's
+ * participant rail offers the same control beside a name, so a moderator can
+ * lift a lock without first hunting the log for something that child wrote.
+ * `deriveChatLockControl` is what both call, which is what keeps a lock from
+ * being offered in one place and refused in the other.
  */
+
+/**
+ * Which way a lock switch points against one person, or `null` where no lock
+ * control is offered at all.
+ *
+ * Named rather than spelled out at each use site because two surfaces ask for
+ * it — a message's menu and the voice room's participant rail — and they must
+ * be asking the same question, in the same words, of the same function.
+ */
+export type ChatLockControl = "lock" | "unlock" | null;
 
 /** Admin and gedu hold every moderator control; nobody else holds any. */
 const MODERATOR_ROLES: readonly ChatRole[] = ["admin", "gedu"];
@@ -130,8 +147,52 @@ export interface ChatMessageCapabilities {
    * The asymmetric half of the principle in this module's header: a lock is a
    * judgement about a person rather than about a message, so it is not offered
    * against a colleague.
+   *
+   * **It is the *person's* answer, not the message's** — `deriveChatLockControl`
+   * below decides it, and the participant rail asks that function directly with
+   * no message in hand. A lock offered beside one of somebody's messages and
+   * refused beside their name in the rail would be two answers to one question.
    */
-  lockControl: "lock" | "unlock" | null;
+  lockControl: ChatLockControl;
+}
+
+/**
+ * Whether this viewer may lock one *person* out of the channel, and which way
+ * the switch points.
+ *
+ * **Per person, with no message in it** — which is the whole reason it is its
+ * own function. A lock is a judgement about somebody rather than about anything
+ * they said, so the surfaces that offer one are not all message surfaces: the
+ * voice room's participant rail offers it beside a name, where a moderator is
+ * looking at the room rather than hunting through the log for something that
+ * person happened to write. Both surfaces ask here, so neither can drift from
+ * the other or from the RPC's guard.
+ *
+ * The rules, and each one's reason:
+ *
+ * - **Moderators only, from the positive allow-list.** A parent in a chat is a
+ *   participant, exactly like a child.
+ * - **Never against a fellow moderator, and never against yourself.** The
+ *   asymmetric half of the principle in this module's header: between
+ *   colleagues a lock is not moderation but one member of staff silencing
+ *   another in front of children they are both responsible for.
+ * - **Never against somebody the caller cannot name.** A target the roster does
+ *   not carry is not a member of this channel as far as this client can tell —
+ *   a voice-only guest on the rail, a sender whose roster entry has not landed
+ *   yet — and locking somebody whose name the control cannot even print is a
+ *   moderation act aimed at a blank.
+ */
+export function deriveChatLockControl(
+  viewer: ChatAccount,
+  /** The person the control would act on, or `null` where none is known. */
+  target: ChatAccount | null,
+  /** Whether that person is currently locked — points the switch. */
+  targetLocked: boolean,
+): ChatLockControl {
+  if (!isChatModerator(viewer.role)) return null;
+  if (target === null || target.id === viewer.id) return null;
+  if (isChatModerator(target.role)) return null;
+  return targetLocked ? "unlock" : "lock";
 }
 
 /**
@@ -199,8 +260,6 @@ export function deriveChatMessageCapabilities(
   // of their own back from. A send still in flight is neither.
   const deletable = settled || message.delivery === "failed";
 
-  const senderModerates = sender !== null && isChatModerator(sender.role);
-
   return {
     canEdit: own && !hidden && writable && message.body !== null,
     canDelete: own && !hidden && deletable,
@@ -209,11 +268,9 @@ export function deriveChatMessageCapabilities(
     canReply: !hidden && writable,
     canReact: !hidden && writable,
     canSeeHiddenBody: moderator && hidden,
-    lockControl:
-      moderator && !own && !senderModerates
-        ? senderLocked
-          ? "unlock"
-          : "lock"
-        : null,
+    // The person's answer, asked with the sender in hand. Nothing about the
+    // message enters it — a lock is about who said it, not what was said — and
+    // the rail asks the same function with no message at all.
+    lockControl: deriveChatLockControl(state.viewer, sender, senderLocked),
   };
 }

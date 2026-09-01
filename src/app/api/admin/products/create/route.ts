@@ -104,6 +104,12 @@ export const POST = defineRoute({
       // also the last place the code is checked — nothing downstream of here
       // re-reads it, because the lock is enforced in the shop's UI alone.
       p_region_lock_country: body.region_lock_country ?? undefined,
+      // Unconditional, never `?? undefined` — the parameter defaults to FALSE
+      // rather than to NULL (the column is NOT NULL), so an omission would not
+      // mean "no answer", it would mean "unflagged". Passing the boolean
+      // through keeps this line identical to the update route's, where the same
+      // omission would clear a flag an admin set.
+      p_requires_gamer_creations: body.requires_gamer_creations,
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
       p_timezone: body.timezone,

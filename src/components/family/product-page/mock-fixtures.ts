@@ -7,6 +7,7 @@ import type {
   FamilyProductSchedule,
 } from "./FamilyProductPageBody";
 import type {
+  FamilyCreation,
   FamilyProductGedu,
   FamilyProductSite,
   FamilySessionEntry,
@@ -99,6 +100,8 @@ export interface FamilyProductPageFixture {
   cancellation: FamilyProductCancellation | null;
   gedus: readonly FamilyProductGedu[];
   groupPublicNote: string | null;
+  /** What this participant made in the group. Empty on all but one scenario. */
+  creations: readonly FamilyCreation[];
   site: FamilyProductSite | null;
   voiceHref: string;
   entries: FamilySessionEntry[];
@@ -675,6 +678,17 @@ interface ScenarioConfig {
   groupName: string;
   gedus: readonly FamilyProductGedu[];
   groupPublicNote: string | null;
+  /**
+   * What the group's gedu has recorded that this participant made — one entry
+   * where there is one, because one is what the editor can author.
+   *
+   * **Two scenarios carry one each and the other three carry none**, which is
+   * the honest ratio rather than a gap: almost every enrollment has none, so
+   * most pages here are also the state where the card is absent and holds no
+   * space. The two that have one are the two renderings — `active-club` a real
+   * link, `camp` a stored value that is not one and degrades to its title.
+   */
+  creations?: readonly FamilyCreation[];
   site: FamilyProductSite | null;
   /**
    * The parent-only billing states, both of which the gamer's copy of this page
@@ -723,6 +737,25 @@ const ACTIVE_CLUB: ScenarioConfig = {
   groupPublicNote:
     "Builders A is our redstone-heavy group. The shared world carries across every session, so anything Aino builds stays there for next week — scroll back through the sessions below to see what the group has made since it started.",
   site: null,
+  /**
+   * **One creation, and it is a link** — the same one the gedu workspace's
+   * club fixture puts in Aino's dialog, written the same way on purpose. That
+   * scene shows what a gedu typed; this one shows what a family gets for it,
+   * and the pair read side by side is the whole round trip.
+   *
+   * One rather than two because one is what the editor can now author: the
+   * dialog holds a single title and link, so a two-entry page here would be
+   * showing a state no Gedu can produce. The *degraded* case — a stored value
+   * that is not a URL, rendering as its plain title — is on the `camp`
+   * scenario instead, where a finished in-house build is the natural way to
+   * end up with something to name and nothing to link.
+   */
+  creations: [
+    {
+      title: "Lohikäärmeen linna — the castle world",
+      url: "https://www.planetminecraft.com/project/lohikaarmeen-linna/",
+    },
+  ],
   // The membership winding down, on the club rather than the camp: a camp is
   // bought outright and has no subscription to not-renew, so a "won't renew"
   // line there would be describing something that cannot happen. The parent's
@@ -803,6 +836,27 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     groupPublicNote:
       "Builders red worked towards one shared obstacle course by Friday. Everything each team built got snapped into it at the end of the week.",
     site: null,
+    /**
+     * **The creation whose URL is not a URL**, which is what the card's
+     * degrade-to-text path exists for and the direct product of storing the
+     * field raw: staff are trusted to paste whatever they have, and what they
+     * have here is not a link at all. It renders as its title in plain text,
+     * with nothing on the gedu's side having warned them it would — the
+     * accepted gap, on show.
+     *
+     * A finished camp is the honest place for it. The thing a child built lives
+     * in the group's own place on the room's machines, so there was never a
+     * public URL to give, and the gedu wrote down where it is instead. The
+     * `active-club` scenario carries the linked half; between them the two
+     * renderings are a page apart rather than a scroll apart, which is the cost
+     * of the editor authoring one creation.
+     */
+    creations: [
+      {
+        title: "The lava-jump section of the obstacle course",
+        url: "in the Builders red shared place — not published",
+      },
+    ],
   },
 
   /**
@@ -934,6 +988,7 @@ export function buildFamilyProductPageFixture(
           },
     gedus: config.gedus,
     groupPublicNote: config.groupPublicNote,
+    creations: config.creations ?? [],
     site: config.site,
     voiceHref: `/voice/group/${GROUP_ID}`,
     entries,

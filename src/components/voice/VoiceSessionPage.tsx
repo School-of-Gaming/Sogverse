@@ -4,16 +4,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
-import { GamerNoteDialog } from "@/components/member-flair";
+import { GamerFlairDialog } from "@/components/member-flair";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
 import { VoiceRoom } from "@/components/voice/VoiceRoom";
+import { GroupSessionChat } from "@/components/voice/GroupSessionChat";
+import type { ParticipantChatControls } from "@/components/voice/ParticipantRow";
 import { VoiceMemberFlairProvider } from "@/components/voice/VoiceMemberFlairProvider";
 import { deriveVoiceMemberFlair } from "@/components/voice/derive-voice-member-flair";
 import {
   useGroupStaffOverlay,
+  useSetGamerGroupCreations,
   useSetGamerGroupNote,
 } from "@/services/member-flair";
 import { useVoiceToken } from "@/services/voice";
+import type { GamerCreation } from "@/types";
 
 interface VoiceSessionPageProps {
   /** A `product_groups.id` — the token endpoint derives the Daily room name from the group + current session window. */
@@ -28,8 +32,8 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
   const getToken = useVoiceToken();
   const [error, setError] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
-  /** Whose note is open, and the name the dialog puts in its own copy. */
-  const [noteTarget, setNoteTarget] = useState<{
+  /** Whose dialog is open, and the name it puts in its own copy. */
+  const [flairTarget, setFlairTarget] = useState<{
     id: string;
     name: string;
   } | null>(null);
@@ -39,6 +43,32 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
   // connecting spinner with no way out.
   const [wasJoined, setWasJoined] = useState(false);
   const hasAttemptedJoin = useRef(false);
+
+  /**
+   * The chat lock offered against each person in the room, published by the
+   * chat container and handed to the participant rail.
+   *
+   * **The page is the seam here for the same reason it is for the staff
+   * overlay.** The rail and the panel are siblings inside the room, the room is
+   * a pure consumer of its context, and chat state deliberately never enters
+   * that context — so the one place that can see both is out here. What travels
+   * is a function of a user id, not the chat's state: the container keeps
+   * ownership of the lock rows and of the write, and the rail is handed a
+   * conclusion it renders.
+   *
+   * The published value is memoised on the roster and the standing locks, so
+   * this state settles once and then moves only when a lock actually does.
+   */
+  const [chatControls, setChatControls] = useState<ParticipantChatControls | null>(
+    null,
+  );
+  // Wrapped, because a state setter handed a *function* would run it as an
+  // updater — and the value here is a function. Stable by construction, which
+  // is what keeps the publishing effect from firing on every render.
+  const publishChatControls = useCallback(
+    (controls: ParticipantChatControls | null) => setChatControls(() => controls),
+    [],
+  );
 
   // Auto-join on mount (and reconnect on refresh). No client-side
   // session-end polling — Daily's token `exp` boundary is the hard
@@ -63,7 +93,7 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
   }, []);
 
   /**
-   * The staff-only overlay for this room, and the note write behind it.
+   * The staff-supplied overlay for this room, and the two writes behind it.
    *
    * **This page is the seam.** Every component inside the room is a pure
    * consumer of context — the participant list reads the overlay through
@@ -72,6 +102,13 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
    * the leave. Nothing about any of it rides the Daily token: `user_name` is
    * broadcast to every peer in the room, children included, and these are staff
    * notes about children.
+   *
+   * The overlay carries a member's creations beside their note, so the dialog
+   * the room opens is the same dialog the workspace opens — the owner's call:
+   * a Gedu is never better placed to write down what a gamer just made than in
+   * the session they made it in. What the room does *not* draw is the owed
+   * marker: whether a creation is wanted is a fact about the product's schedule,
+   * which this document deliberately does not carry.
    *
    * `isModerator` is the gate, and it exists **only to avoid firing a request
    * that would be refused** — the RPC's own `42501` is the boundary, and a
@@ -84,6 +121,7 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
    */
   const { data: overlay } = useGroupStaffOverlay(groupId, isModerator);
   const setGamerNote = useSetGamerGroupNote(groupId);
+  const setGamerCreations = useSetGamerGroupCreations(groupId);
 
   /**
    * One instant, taken at mount and never advanced — **the room deliberately
@@ -100,8 +138,8 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
    */
   const [now] = useState(() => new Date());
 
-  const openNote = useCallback((userId: string, name: string) => {
-    setNoteTarget({ id: userId, name });
+  const openFlair = useCallback((userId: string, name: string) => {
+    setFlairTarget({ id: userId, name });
   }, []);
 
   /**
@@ -110,8 +148,8 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
    * rules with their own unit tests, and none of them needs a React tree.
    */
   const flair = useMemo(
-    () => deriveVoiceMemberFlair(overlay, now, openNote),
-    [overlay, now, openNote],
+    () => deriveVoiceMemberFlair(overlay, now, openFlair),
+    [overlay, now, openFlair],
   );
 
   const handleLeave = useCallback(async () => {
@@ -181,29 +219,55 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
   return (
     <>
       <VoiceMemberFlairProvider value={flair}>
-        <VoiceRoom onLeave={handleLeave} leaveLabel={t('leave')} />
+        <VoiceRoom
+          onLeave={handleLeave}
+          leaveLabel={t('leave')}
+          // The live chat, in the height the room grants it. This page is the
+          // seam for chat exactly as it is for the staff overlay: the room and
+          // everything in it are pure consumers, so the channel, the history
+          // read and the subscription belong out here beside the token.
+          chat={(heightClassName) => (
+            <GroupSessionChat
+              groupId={groupId}
+              heightClassName={heightClassName}
+              onChatControlsChange={publishChatControls}
+            />
+          )}
+          // ...and what that container knows about who may be locked, handed
+          // back to the rail on the other side of the room. Null until the
+          // channel opens, which is the same thing "this room has no chat"
+          // looks like from here.
+          participantChatControls={chatControls ?? undefined}
+        />
       </VoiceMemberFlairProvider>
 
       {/* Outside the provider's subtree and mounted by the page, exactly as the
           preview scene models it: one dialog for the whole room, opened by
-          whichever row's button was pressed, saving through the same mutation
+          whichever row's button was pressed, saving through the same mutations
           and the same invalidations the gedu product page uses. */}
-      {noteTarget !== null && (
-        <GamerNoteDialog
+      {flairTarget !== null && (
+        <GamerFlairDialog
           open
           onOpenChange={(open) => {
-            if (!open) setNoteTarget(null);
+            if (!open) setFlairTarget(null);
           }}
-          name={noteTarget.name}
-          note={flair?.notes[noteTarget.id] ?? ''}
-          lastEditedBy={flair?.noteEditors?.[noteTarget.id] ?? null}
-          // The write's promise, straight through. The dialog owns the
+          name={flairTarget.name}
+          note={flair?.notes[flairTarget.id] ?? ''}
+          lastEditedBy={flair?.noteEditors?.[flairTarget.id] ?? null}
+          creations={flair?.creations[flairTarget.id] ?? NO_CREATIONS}
+          // Each write's promise, straight through. The dialog owns the
           // committing flag that keeps Save disabled from the click until the
           // close, so nothing here derives one from `isPending`.
-          onSave={async (text) => {
+          onSaveNote={async (text) => {
             await setGamerNote.mutateAsync({
-              participantId: noteTarget.id,
+              participantId: flairTarget.id,
               note: text,
+            });
+          }}
+          onSaveCreations={async (creations) => {
+            await setGamerCreations.mutateAsync({
+              participantId: flairTarget.id,
+              creations,
             });
           }}
         />
@@ -211,6 +275,12 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
     </>
   );
 }
+
+/**
+ * The list a member with no creations is handed — a module constant so the
+ * dialog's seed does not see a new empty array on every render.
+ */
+const NO_CREATIONS: readonly GamerCreation[] = [];
 
 export function VoiceSessionPage(props: VoiceSessionPageProps) {
   return (

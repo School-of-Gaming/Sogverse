@@ -43,6 +43,242 @@ export type Database = {
           },
         ]
       }
+      chat_channel_locks: {
+        Row: {
+          channel_id: string
+          locked_at: string | null
+          locked_by: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          locked_at?: string | null
+          locked_by?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_channel_locks_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_channel_locks_locked_by_fkey"
+            columns: ["locked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_channel_locks_locked_by_fkey"
+            columns: ["locked_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_channel_locks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_channel_locks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_channels: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          session_ends_at: string
+          session_opens_at: string
+          type: Database["public"]["Enums"]["chat_channel_type"]
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          session_ends_at: string
+          session_opens_at: string
+          type: Database["public"]["Enums"]["chat_channel_type"]
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          session_ends_at?: string
+          session_opens_at?: string
+          type?: Database["public"]["Enums"]["chat_channel_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_channels_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          body: string | null
+          channel_id: string
+          created_at: string
+          edited_at: string | null
+          hidden_at: string | null
+          hidden_by: string | null
+          id: string
+          image_height: number | null
+          image_stored_at: string | null
+          image_width: number | null
+          reply_to_message_id: string | null
+          sender_id: string
+        }
+        Insert: {
+          body?: string | null
+          channel_id: string
+          created_at?: string
+          edited_at?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
+          id: string
+          image_height?: number | null
+          image_stored_at?: string | null
+          image_width?: number | null
+          reply_to_message_id?: string | null
+          sender_id: string
+        }
+        Update: {
+          body?: string | null
+          channel_id?: string
+          created_at?: string
+          edited_at?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
+          id?: string
+          image_height?: number | null
+          image_stored_at?: string | null
+          image_width?: number | null
+          reply_to_message_id?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_hidden_by_fkey"
+            columns: ["hidden_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_hidden_by_fkey"
+            columns: ["hidden_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_reactions: {
+        Row: {
+          channel_id: string
+          code: string
+          created_at: string
+          message_id: string
+          sender_id: string
+        }
+        Insert: {
+          channel_id: string
+          code: string
+          created_at?: string
+          message_id: string
+          sender_id: string
+        }
+        Update: {
+          channel_id?: string
+          code?: string
+          created_at?: string
+          message_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_reactions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_reactions_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_reactions_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consent_acceptances: {
         Row: {
           accepted_at: string
@@ -301,6 +537,69 @@ export type Database = {
           {
             foreignKeyName: "feedback_submissions_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gamer_group_creations: {
+        Row: {
+          created_at: string
+          creations: Json
+          group_id: string
+          participant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          creations: Json
+          group_id: string
+          participant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          creations?: Json
+          group_id?: string
+          participant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamer_group_creations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_creations_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_creations_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_creations_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_group_creations_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "user_search_index"
             referencedColumns: ["id"]
@@ -1512,6 +1811,7 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"]
           region_lock_country: string | null
           registration_opens_at: string
+          requires_gamer_creations: boolean
           seat_count: number | null
           signup_threshold: number | null
           spoken_language_code: Database["public"]["Enums"]["spoken_language"]
@@ -1544,6 +1844,7 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"]
           region_lock_country?: string | null
           registration_opens_at: string
+          requires_gamer_creations?: boolean
           seat_count?: number | null
           signup_threshold?: number | null
           spoken_language_code: Database["public"]["Enums"]["spoken_language"]
@@ -1576,6 +1877,7 @@ export type Database = {
           product_type?: Database["public"]["Enums"]["product_type"]
           region_lock_country?: string | null
           registration_opens_at?: string
+          requires_gamer_creations?: boolean
           seat_count?: number | null
           signup_threshold?: number | null
           spoken_language_code?: Database["public"]["Enums"]["spoken_language"]
@@ -2167,6 +2469,13 @@ export type Database = {
           is_strict: boolean
         }[]
       }
+      _list_replicated_tables: {
+        Args: never
+        Returns: {
+          replica_identity: string
+          table_name: string
+        }[]
+      }
       _list_security_definer_without_search_path: {
         Args: never
         Returns: {
@@ -2249,6 +2558,18 @@ export type Database = {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
+      chat_body_mentions_are_roster: {
+        Args: { p_body: string; p_channel_id: string }
+        Returns: boolean
+      }
+      chat_caller_is_locked: {
+        Args: { p_channel_id: string }
+        Returns: boolean
+      }
+      chat_channel_roster_ids: {
+        Args: { p_channel_id: string }
+        Returns: string[]
+      }
       claim_expired_seat_offer_notifications: {
         Args: { p_participation_id?: string }
         Returns: Json
@@ -2314,6 +2635,7 @@ export type Database = {
           p_region_lock_country?: string
           p_registration_opens_at: string
           p_required_consent_slugs?: string[]
+          p_requires_gamer_creations?: boolean
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number
@@ -2340,9 +2662,30 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: unknown
       }
+      edit_chat_message: {
+        Args: { p_body: string; p_id: string }
+        Returns: string
+      }
       effective_status: {
         Args: { p_product_id: string }
         Returns: Database["public"]["Enums"]["effective_product_status"]
+      }
+      ensure_chat_channel: {
+        Args: { p_group_id: string }
+        Returns: {
+          created_at: string
+          group_id: string
+          id: string
+          session_ends_at: string
+          session_opens_at: string
+          type: Database["public"]["Enums"]["chat_channel_type"]
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "chat_channels"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       ensure_group_session: {
         Args: { p_group_id: string; p_session_date: string }
@@ -2357,6 +2700,14 @@ export type Database = {
       get_admin_product_sessions: {
         Args: { p_product_id: string }
         Returns: Json
+      }
+      get_chat_channel_roster: {
+        Args: { p_channel_id: string }
+        Returns: {
+          first_name: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
       }
       get_gedu_assigned_product: {
         Args: { p_product_id: string }
@@ -2477,8 +2828,17 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: boolean
       }
+      hide_chat_message: { Args: { p_id: string }; Returns: string }
       immutable_unaccent: { Args: { p_value: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      is_chat_channel_member: {
+        Args: { p_channel_id: string }
+        Returns: boolean
+      }
+      is_chat_channel_moderator: {
+        Args: { p_channel_id: string }
+        Returns: boolean
+      }
       is_no_charge: {
         Args: { p_mode: Database["public"]["Enums"]["billing_mode"] }
         Returns: boolean
@@ -2515,6 +2875,7 @@ export type Database = {
         Returns: string
       }
       location_search_separator: { Args: never; Returns: string }
+      mark_chat_image_stored: { Args: { p_id: string }; Returns: string }
       participation_state: {
         Args: {
           p_group_id: string
@@ -2583,6 +2944,7 @@ export type Database = {
         }
         Returns: Json
       }
+      restore_chat_message: { Args: { p_id: string }; Returns: undefined }
       search_locations: {
         Args: {
           p_country?: string
@@ -2592,7 +2954,38 @@ export type Database = {
         }
         Returns: Json
       }
+      send_chat_image_message: {
+        Args: {
+          p_channel_id: string
+          p_height: number
+          p_id: string
+          p_reply_to_message_id?: string
+          p_width: number
+        }
+        Returns: string
+      }
+      send_chat_message: {
+        Args: {
+          p_body: string
+          p_channel_id: string
+          p_id: string
+          p_reply_to_message_id?: string
+        }
+        Returns: string
+      }
       send_seat_offer: { Args: { p_participation_id: string }; Returns: Json }
+      set_chat_lock: {
+        Args: { p_channel_id: string; p_locked: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      set_gamer_group_creations: {
+        Args: {
+          p_creations: Json
+          p_group_id: string
+          p_participant_id: string
+        }
+        Returns: Json
+      }
       set_gamer_group_note: {
         Args: { p_group_id: string; p_note: string; p_participant_id: string }
         Returns: Json
@@ -2664,6 +3057,10 @@ export type Database = {
         Returns: boolean
       }
       submit_my_feedback: { Args: { p_message: string }; Returns: boolean }
+      toggle_chat_reaction: {
+        Args: { p_code: string; p_message_id: string }
+        Returns: boolean
+      }
       update_product: {
         Args: {
           p_assistant_gedu_fee_cents?: number
@@ -2685,6 +3082,7 @@ export type Database = {
           p_region_lock_country?: string
           p_registration_opens_at: string
           p_required_consent_slugs?: string[]
+          p_requires_gamer_creations?: boolean
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number
@@ -2702,6 +3100,7 @@ export type Database = {
     }
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
+      chat_channel_type: "group_session"
       effective_product_status:
         | "pending"
         | "running"
@@ -2863,6 +3262,7 @@ export const Constants = {
   public: {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
+      chat_channel_type: ["group_session"],
       effective_product_status: [
         "pending",
         "running",

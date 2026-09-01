@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
-import { GamerNoteButton, NewcomerBadge } from "@/components/member-flair";
+import { GamerFlairButton, NewcomerBadge } from "@/components/member-flair";
 import {
   gameFigureHeight,
   GAME_PLATFORMS,
@@ -89,26 +89,38 @@ interface ParticipantRosterRowProps {
    */
   flairNow: Date;
   /**
-   * Whether a Gedu has written a note about this person in this group. It only
-   * lights the note button at the end of the row; the note's *text* never
-   * reaches this row, which merely opens the dialog that holds it.
+   * Whether anything has been recorded about this person in this group — a
+   * Gedu note, a creation, or both. It only lights the button at the end of the
+   * row; neither value's *text* reaches this row, which merely opens the dialog
+   * that holds them.
    *
    * Arrives with the roster rather than after it — so the button is painted in
    * its final state in the first frame, rather than lighting up under a reader
    * who is already looking at the row.
    */
-  hasNote: boolean;
+  hasContent: boolean;
   /**
-   * Open this person's Gedu note — the caller owns the dialog, because one
+   * Whether this person still owes a creation for the group's final session —
+   * the per-member itemization of a session-level obligation, which turns the
+   * button's tone to warning and renames it.
+   *
+   * The gate is the caller's, because it is a fact about the *product* (does it
+   * require creations) and its *schedule* (has the final session happened),
+   * neither of which a roster row knows. Absent on every ordinary product.
+   */
+  owesCreation?: boolean;
+  /**
+   * Open this person's per-gamer dialog — the caller owns it, because one
    * roster can only have one open.
    *
-   * **Every row gets it**, including the majority with nothing written yet:
-   * opening an empty note *is* the add flow, and gating the affordance on
-   * {@link hasNote} would leave no way to write the first one. That is also why
-   * it is required rather than a capability a caller can withhold — a roster on
-   * this page with no way in to a note is not a state the product has.
+   * **Every row gets it**, including the majority with nothing recorded yet:
+   * opening an empty dialog *is* the add flow, and gating the affordance on
+   * {@link hasContent} would leave no way to write the first note or add the
+   * first creation. That is also why it is required rather than a capability a
+   * caller can withhold — a roster on this page with no way in is not a state
+   * the product has.
    */
-  onOpenNote: () => void;
+  onOpenFlair: () => void;
   /**
    * Where the platform's check for this child's name has got to, when one is in
    * flight or has just landed. Omitted, the row derives its own resting state
@@ -187,13 +199,22 @@ interface ParticipantRosterRowProps {
  * something arriving on the data's own schedule.
  *
  * **Staff flair is a required fact of this row, not an extra.** A newcomer badge
- * on the identity line and a note button at the end of it come off a
- * staff-scoped read, and the only page that draws this row is the staff-only
- * group workspace — so the capability is never in question and the row does not
- * pretend it can be. What *is* per-member is which marks are lit: a `null` join
- * stamp renders no badge, and a member nobody has written about gets the same
- * note button, dimmed. Both facts arrive in the same payload as the roster, so
- * neither lands beside a name that is already on screen.
+ * on the identity line and the per-gamer dialog's button at the end of it come
+ * off a staff-scoped read, and the only page that draws this row is the
+ * staff-only group workspace — so the capability is never in question and the
+ * row does not pretend it can be. What *is* per-member is which marks are lit: a
+ * `null` join stamp renders no badge, and a member nobody has recorded anything
+ * about gets the same button, dimmed. Both facts arrive in the same payload as
+ * the roster, so neither lands beside a name that is already on screen.
+ *
+ * **The owed-creation marker is the button's third tone, not a fourth thing on
+ * the row.** On a product that contractually requires a creation from every
+ * member, the run's final session is not finished until they are all in, and the
+ * roster is what itemizes who is missing. Toning the control that already opens
+ * that member's dialog is what keeps the plan's one-authoring-surface rule true
+ * — a badge beside it would be either a second way in or a mark you cannot act
+ * on — and it costs no layout at all, where a new element in the trailing group
+ * would have to be ordered against the ones already there.
  */
 export function ParticipantRosterRow({
   participant,
@@ -203,8 +224,9 @@ export function ParticipantRosterRow({
   avatarUrl,
   newcomerJoinedAt,
   flairNow,
-  hasNote,
-  onOpenNote,
+  hasContent,
+  owesCreation,
+  onOpenFlair,
 }: ParticipantRosterRowProps) {
   const t = useTranslations("gedu.sessionDetails");
   const c = useTranslations("common");
@@ -293,10 +315,11 @@ export function ParticipantRosterRow({
             />
           )}
         </div>
-        <GamerNoteButton
+        <GamerFlairButton
           name={participant.first_name}
-          hasNote={hasNote}
-          onOpen={onOpenNote}
+          hasContent={hasContent}
+          owesCreation={owesCreation}
+          onOpen={onOpenFlair}
         />
       </div>
       {contactEmail !== null && <ContactEmailCell email={contactEmail} />}

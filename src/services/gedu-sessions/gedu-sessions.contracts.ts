@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
+import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 
 /**
  * Wire contracts for the gedu session-feed RPCs.
@@ -131,6 +132,20 @@ export const geduFeedRosterEntry = z.object({
   group_joined_at: z.string().nullable(),
   note: z.string().nullable(),
   note_updated_by_first_name: z.string().nullable(),
+  /**
+   * The things this member made during the group's run (00227), in the order
+   * staff arranged them — and the one field on this roster that is **not
+   * staff-only**: the member's own family reads the same list on their product
+   * page. It rides here because the roster is where the per-gamer dialog is
+   * opened from, and because the client tallies it against this same roster to
+   * decide whether a flagged product's final session still owes creations.
+   *
+   * Always an array, never null: `[]` is what "no creations" looks like on the
+   * wire, so no consumer has to decide what an absent list means. The list's
+   * rules live with the write that produces it, which is why the shape is
+   * imported rather than restated here.
+   */
+  creations: gamerCreationList,
 });
 
 /**
@@ -254,6 +269,17 @@ export const geduGroupFeed = z.object({
     is_remote: z.boolean(),
     /** Gedu/admin-only lesson material. Never rendered to a family. */
     material_url: z.string().nullable(),
+    /**
+     * Does this product contractually require a creation from every member
+     * (00227)? Staff-facing only — no family document carries it, and a family
+     * sees nothing different on a flagged product.
+     *
+     * It is on this shell because the fourth completeness condition is derived
+     * **client-side**, from this flag, the schedule and the roster's
+     * `creations`: no document carries an "owed" field, so without the flag on
+     * the wire there is no way to ask the question at all.
+     */
+    requires_gamer_creations: z.boolean(),
     translations: z.array(productTranslationSummary),
     schedule_slots: z.array(scheduleSlotSummary),
   }),
@@ -278,10 +304,16 @@ export type GeduFeedSite = z.infer<typeof geduFeedSite>;
  *
  * `attention_count` is computed server-side against the same holiday-blind
  * weekday expansion the client uses, floored at `max(product start, epoch)`, and
- * counts a finished session until **all three** parts are in: every current
- * roster member marked, a non-empty report written, and that report emailed to
- * the families. The dashboard deliberately never fetches a feed to derive it —
+ * counts a finished session until **all four** parts are in: every current
+ * roster member marked, a non-empty report written, that report emailed to the
+ * families, and — on the run's FINAL session of a product with
+ * `requires_gamer_creations` set — every current roster member holding at least
+ * one creation. The dashboard deliberately never fetches a feed to derive it —
  * a page of cards would otherwise be a page of history downloads.
+ *
+ * The fourth part fires on exactly one occurrence per run, and an open-ended
+ * product (no `end_date`) has no final session, so it may be flagged and never
+ * owes — documented behaviour, not an error.
  *
  * **This derivation exists twice and the two must agree** — here in SQL for the
  * badge, and in TypeScript in the gedu feed's entry-state module for the card.
@@ -498,17 +530,17 @@ export const SESSION_PHOTO_MAX_EDGE = 2048;
 export const SESSION_PHOTO_JPEG_QUALITY = 0.8;
 
 /**
- * The plausibility bound on the dimensions a client claims, and the code-side
- * twin of the table's CHECK.
+ * The plausibility bound on an image's dimensions, and the code-side twin of
+ * the table's CHECK.
  *
  * **Deliberately looser than the edge cap above, and not derived from it.** The
- * client normalizes to ~2048 px; this is a sanity bound on a *claimed* number,
- * not a restatement of a *derived* one. What it defends is layout arithmetic —
- * the stored dimensions are what the gallery and the email size their boxes
- * from — and the uploader is an assigned staff member, so the worst an
- * implausible value produces is a mis-sized box in that group's own mail. The
- * route checks it so the refusal is a stable code rather than a raw 23514, and
- * the CHECK still stands behind that.
+ * client normalizes to ~2048 px; this is a sanity bound, not a restatement of a
+ * derived value. What it defends is layout arithmetic — the stored dimensions
+ * are what the gallery and the email size their boxes from. The route applies
+ * it twice: once to the claimed pair on the way in, so an obviously wrong form
+ * is refused before any decode work, and once to what its re-encode actually
+ * measured, which is the number that reaches the row. Both refusals carry a
+ * stable code rather than a raw 23514, and the CHECK still stands behind them.
  */
 export const SESSION_PHOTO_MAX_DIMENSION = 4096;
 
@@ -603,10 +635,13 @@ export function isSessionPhotoErrorCode(
  * caller reliably holds, while the pair is the row's real identity.
  *
  * The dimensions are the CLIENT'S claim about the JPEG it just encoded, and
- * they are **trusted after this bound check**. There is no server-side SOF
- * parser: it would defend a cosmetic outcome against an already-assigned staff
- * member with ~30 lines of hand-rolled binary parsing and no precedent in this
- * repo.
+ * they are **an early plausibility refusal and nothing else** — what the row
+ * stores is what the route's own `sharp` re-encode measured. They are still
+ * sent, and still bounded here, because refusing an implausible claim before
+ * any decode work happens is what gives the gedu the dimension copy rather than
+ * a generic failure; a claim that passes this check and then decodes to
+ * something else is refused just the same, by the route, against the measured
+ * numbers.
  */
 export const addSessionImageFields = z.object({
   groupId: z.string().uuid(),

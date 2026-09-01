@@ -9,6 +9,10 @@ import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useVoiceMemberFlair } from "./VoiceMemberFlairProvider";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 import { ParticipantRow } from "./ParticipantRow";
+import type {
+  ParticipantChatControl,
+  ParticipantChatControls,
+} from "./ParticipantRow";
 import type { VoiceParticipant, LockState } from "./hooks/types";
 import type { VoiceMemberFlair } from "./VoiceMemberFlairProvider";
 
@@ -31,7 +35,21 @@ function gameAvatarUrlFor(
   return renders[String(id)] ?? null;
 }
 
-export function ParticipantList() {
+export function ParticipantList({
+  participantChatControls,
+}: {
+  /**
+   * The chat lock offered against each person, from whoever supplied the room's
+   * chat — threaded down as a prop rather than read from a context.
+   *
+   * **Chat state stays out of the voice room's context** (see ./CLAUDE.md): the
+   * provider carries no chat hook and no chat fields, so the style-guide mock
+   * has nothing chat-shaped to fake and a room can be rendered with no chat at
+   * all. This is the other half of the same seam the `chat` slot is — the room
+   * is handed what to draw and asks for nothing.
+   */
+  participantChatControls?: ParticipantChatControls;
+}) {
   const {
     participants,
     lockStates,
@@ -95,6 +113,7 @@ export function ParticipantList() {
           }
           isLocalOwner={isModerator}
           flair={flair}
+          chatControl={participantChatControls?.(p.userId) ?? null}
           onMute={(track) => muteParticipant(p.sessionId, track)}
           onLock={(track, locked) =>
             lockParticipant(p.sessionId, track, locked)
@@ -118,6 +137,7 @@ function ParticipantRowWithGlow({
   lockState,
   isLocalOwner,
   flair,
+  chatControl,
   onMute,
   onLock,
 }: {
@@ -128,6 +148,8 @@ function ParticipantRowWithGlow({
   isLocalOwner: boolean;
   /** The viewer's staff overlay, or `null` where they have none. */
   flair: VoiceMemberFlair | null;
+  /** This person's chat lock, already decided. `null` where none is offered. */
+  chatControl: ParticipantChatControl | null;
   onMute: (track: "audio" | "video") => void;
   onLock: (track: "audio" | "video", locked: boolean) => void;
 }) {
@@ -142,6 +164,8 @@ function ParticipantRowWithGlow({
   const memberFlair =
     flair !== null && flair.members.has(participant.userId) ? flair : null;
   const note = memberFlair?.notes[participant.userId] ?? "";
+  const creationCount =
+    memberFlair?.creations[participant.userId]?.length ?? 0;
 
   return (
     <ParticipantRow
@@ -151,17 +175,21 @@ function ParticipantRowWithGlow({
       avatarRef={avatarRef}
       newcomerJoinedAt={flair?.newcomers[participant.userId]}
       flairNow={flair?.now}
-      hasNote={note !== ""}
+      // The same test the workspace roster makes: a note, a creation, or both.
+      // The room draws no owed marker — whether a creation is *wanted* is a fact
+      // about the product's schedule, which this document does not carry.
+      hasContent={note !== "" || creationCount > 0}
       // Absent for a viewer with no overlay, which is what keeps a child's row
       // a plain avatar with no button semantics to announce.
-      onOpenNote={
+      onOpenFlair={
         memberFlair === null
           ? undefined
           : () =>
-              memberFlair.onOpenNote(participant.userId, participant.userName)
+              memberFlair.onOpenFlair(participant.userId, participant.userName)
       }
       onMute={onMute}
       onLock={onLock}
+      chatControl={chatControl}
     />
   );
 }

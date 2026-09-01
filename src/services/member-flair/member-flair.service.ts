@@ -1,25 +1,32 @@
-import type { AppSupabaseClient } from "@/types";
+import type { AppSupabaseClient, Json } from "@/types";
 import {
+  gamerGroupCreationsResult,
   gamerGroupNoteResult,
   groupStaffOverlay,
+  setGamerGroupCreationsBody,
+  type GamerCreation,
+  type GamerGroupCreationsResult,
   type GamerGroupNoteResult,
   type GroupStaffOverlay,
 } from "./member-flair.contracts";
 
 /**
- * The SQLSTATEs a note write can come back with whose `message` is a raw
+ * The SQLSTATEs a flair write can come back with whose `message` is a raw
  * database string, written for a log and never for a Gedu.
  *
- * `42501` is the RPC's own refusal and reads as the literal word `Forbidden`;
- * `23514` is the length CHECK and reads as a constraint name. Both are real
- * paths — an admin can move a member out of a group while a Gedu has a stale
- * roster open, and the Gedu's next save is refused — and both would otherwise
- * be printed, untranslated, into a dialog in a Finnish or French session.
+ * `42501` is a RPC's own refusal and reads as the literal word `Forbidden`;
+ * `23514` is a CHECK — the note's length, or the creations list's whole shape —
+ * and reads as a constraint name. Both are real paths on both writes: an admin
+ * can move a member out of a group while a Gedu has a stale roster open, and
+ * the Gedu's next save is refused. Either would otherwise be printed,
+ * untranslated, into a dialog in a Finnish or French session.
  */
-const OPAQUE_NOTE_WRITE_SQLSTATES = new Set(["42501", "23514"]);
+const OPAQUE_FLAIR_WRITE_SQLSTATES = new Set(["42501", "23514"]);
 
 /**
- * A write refusal the surface has nothing true to say about.
+ * A write refusal the surface has nothing true to say about — shared by both
+ * writes on this service, because both are refused the same two ways and the
+ * dialog that shows them is one dialog.
  *
  * It carries **no message on purpose**. The only alternatives were showing the
  * database's own English words or inventing a locale string per SQLSTATE for a
@@ -37,36 +44,37 @@ const OPAQUE_NOTE_WRITE_SQLSTATES = new Set(["42501", "23514"]);
  * anyway. One `.throwOnError()`, or one library release that always constructs
  * the class, and `Forbidden` would be on a Gedu's screen in a Finnish session.
  */
-class UnexplainedNoteWriteError extends Error {
+class UnexplainedFlairWriteError extends Error {
   constructor(cause: unknown) {
     super("", { cause });
-    this.name = "UnexplainedNoteWriteError";
+    this.name = "UnexplainedFlairWriteError";
   }
 }
 
 /**
- * The two staff-only marks that are genuinely **new** — the group staff overlay
- * and the (group, member) note write.
+ * The per-member marks that have no other home — the group staff overlay, the
+ * (group, member) note write, and since 00227 the (group, member) creations
+ * write.
  *
- * This service owns only those two. The badge and note *reads* that ride the
- * three existing roster documents stay with the services that already own those
- * documents (`assignments`, `gedu-sessions`, `groups`): they are extra fields on
- * a document those services already fetch, and moving them here would be a
- * second system. What lives here is what none of them owns — and what the voice
- * room, which owns no roster document at all, needs a home for that is not named
- * after somebody else's surface.
+ * This service owns only those. The note, badge and creations *reads* that ride
+ * the existing roster documents stay with the services that already own those
+ * documents (`assignments`, `gedu-sessions`, `groups`, `family-product-feed`):
+ * they are extra fields on a document those services already fetch, and moving
+ * them here would be a second system. What lives here is what none of them owns
+ * — and what the voice room, which owns no roster document at all, needs a home
+ * for that is not named after somebody else's surface.
  *
- * Both methods are plain `.rpc()` calls on the injected client. **No `fetch`, no
- * API route**: neither RPC needs a server-side secret — the note write is
- * authorized by `auth.uid()` inside a `SECURITY DEFINER` function, which is the
- * reverse of needing the service role — so the browser client is enough and the
- * route posture registry is untouched.
+ * Every method is a plain `.rpc()` call on the injected client. **No `fetch`, no
+ * API route**: no RPC here needs a server-side secret — each write is authorized
+ * by `auth.uid()` inside a `SECURITY DEFINER` function, which is the reverse of
+ * needing the service role — so the browser client is enough and the route
+ * posture registry is untouched.
  *
- * Both RPCs raise `42501` for a caller who is neither an admin nor a gedu on the
- * group's product. The read surfaces that as `null` — a refused read is a clean
- * "not yours" state, and a family or gamer client never asks in the first place.
- * The write lets it throw, because a write that was refused is something the
- * editor has to tell the gedu about.
+ * All three RPCs raise `42501` for a caller who is neither an admin nor a gedu
+ * on the group's product. The read surfaces that as `null` — a refused read is a
+ * clean "not yours" state, and a family or gamer client never asks in the first
+ * place. The writes let it throw, because a write that was refused is something
+ * the editor has to tell the gedu about.
  */
 export class MemberFlairService {
   constructor(private supabase: AppSupabaseClient) {}
@@ -106,7 +114,7 @@ export class MemberFlairService {
    * **A refusal is mapped here, once, for all three surfaces.** The gedu page,
    * the voice room and the admin group details page all hand the rejection straight
    * to the same dialog, so this is the single point where a raw SQL message is
-   * stopped from reaching a reader — see {@link UnexplainedNoteWriteError}.
+   * stopped from reaching a reader — see {@link UnexplainedFlairWriteError}.
    */
   async setGamerGroupNote({
     groupId,
@@ -124,12 +132,70 @@ export class MemberFlairService {
     });
 
     if (error) {
-      if (OPAQUE_NOTE_WRITE_SQLSTATES.has(error.code)) {
-        throw new UnexplainedNoteWriteError(error);
+      if (OPAQUE_FLAIR_WRITE_SQLSTATES.has(error.code)) {
+        throw new UnexplainedFlairWriteError(error);
       }
       throw error;
     }
 
     return gamerGroupNoteResult.parse(data);
+  }
+
+  /**
+   * Replace the whole list of creations for one member of one group.
+   *
+   * **Replace-the-list, not per-row edits.** Nothing reads or references a
+   * single creation — the dialog holds the list and hands back what it now is —
+   * and an **empty list deletes the row**, because absence of a row is what "no
+   * creations" means on every surface. The RPC answers with the same keys
+   * either way, so a caller merges one shape.
+   *
+   * The list is validated here before it goes out: the caps in the contracts
+   * file are the table's CHECK, so a malformed list is refused without a round
+   * trip and the constraint stays the loud backstop it is designed to be rather
+   * than a routine error path.
+   *
+   * **Idempotent**, which is what makes the two-write dialog safe to retry: the
+   * same list written twice is the same row, so a save that got one half in and
+   * lost the other can simply be repeated.
+   *
+   * A refusal is mapped through the same named list the note write uses — see
+   * {@link UnexplainedFlairWriteError}.
+   */
+  async setGamerGroupCreations({
+    groupId,
+    participantId,
+    creations,
+  }: {
+    groupId: string;
+    participantId: string;
+    creations: readonly GamerCreation[];
+  }): Promise<GamerGroupCreationsResult> {
+    const body = setGamerGroupCreationsBody.parse({
+      groupId,
+      participantId,
+      creations,
+    });
+
+    const { data, error } = await this.supabase.rpc(
+      "set_gamer_group_creations",
+      {
+        p_group_id: body.groupId,
+        p_participant_id: body.participantId,
+        // The argument is `jsonb`, so the generated signature takes `Json`. The
+        // parse above is what makes that widening honest — the value reaching
+        // here has already been held to the table's own shape.
+        p_creations: body.creations satisfies Json,
+      },
+    );
+
+    if (error) {
+      if (OPAQUE_FLAIR_WRITE_SQLSTATES.has(error.code)) {
+        throw new UnexplainedFlairWriteError(error);
+      }
+      throw error;
+    }
+
+    return gamerGroupCreationsResult.parse(data);
   }
 }
