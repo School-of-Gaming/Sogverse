@@ -253,8 +253,17 @@
   --font-cursive: var(--font-dancing-script);
 }
 
-* {
-  border-color: hsl(var(--border));
+/* The app-wide default border colour. MUST live inside @layer base: Tailwind 4
+   emits every utility inside @layer utilities, and an UNLAYERED rule beats all
+   layered rules regardless of specificity — so this exact rule, unlayered,
+   silently killed every border-colour utility in the app (border-primary,
+   border-destructive, border-yty-*) from the initial commit until 2026-09-01.
+   Inside base, it is what it was always meant to be: the default a utility
+   overrides. */
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
 }
 
 /* All interactive elements should show a pointer cursor — except dnd-kit

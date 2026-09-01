@@ -556,6 +556,46 @@ Owner direction (2026-08-31), added during implementation:
       links among amber's jobs — a header nav item is a link. Only the admin
       sidebar's fill remains open on the active-mark question.
 
+30. **Walkthrough rulings, sixth batch** (owner, 2026-09-01):
+    - **The gradient border's ignition pair is APPROVED** ("Yes looks identical.
+      Approved."). The wash and the leading strip are dead; at wiring the
+      enrollment tone map's `live` entry converts to the painted-overlay ring
+      (direction 29's mechanism).
+    - **The admin sidebar's active item is RULED: the inverted fill** ("That's
+      fine for the admin side panel"). With it, a **standing colour-budget
+      principle**, owner's words: "Parent, gamer, and gedu surfaces deserve more
+      color than admin surfaces in general." Family *and gedu* surfaces lean
+      colourful; admin leans restrained — to be codified with the grammar in the
+      root `CLAUDE.md` at wiring. The you-are-here question is fully settled
+      (sidebar inverted, header amber text kept).
+    - **The edge exhibit rendered identically for the owner — root-caused, and
+      it was an app-wide bug, not staleness.** `globals.css` carried an
+      **unlayered** `* { border-color: hsl(var(--border)) }` rule; Tailwind 4
+      emits every utility inside `@layer utilities`, and unlayered CSS beats
+      all layered CSS regardless of specificity — so **every border-colour
+      utility in the app (`border-primary`, `border-destructive`, every
+      `border-yty-*`) has been dead since the initial commit**. Fixed on this
+      branch by wrapping the rule in `@layer base` (verified in the served
+      chunk). Consequences: the owner's "I didn't even know these borders had
+      color" and the checkbox row's invisible selected edge were this bug, not
+      subtlety; several exhibits were ruled on partially-broken renders and the
+      edge question re-opens on the fixed rendering (the selection ruling's
+      brand edge now actually draws amber — worth a visual re-confirm).
+      **Landing decision (owner's): ride the branch rather than cherry-pick to
+      dev** is the session's recommendation — fixing it alone would surface
+      every /40 mud edge across the live app before the wiring pass corrects
+      them to neutral or full value; the fix and the corrections belong in one
+      release.
+    - **The preview scenes are outdated against the rulings** (owner: "The
+      scenes are fine but now they look outdated on our rulings") — the
+      brand-palette scenario drafts still show pre-ruling constructs. Ordered:
+      re-cut the scenario draft classes/structures to the ruled forms
+      (directions 22–29) — ignition ring on live cards, `bg-muted` chips under
+      family ink, washes retired, selection as brand-edge+accent-lift, settled
+      type, grammar buttons where the delegated usage doctrine places them —
+      with the `current` palette path staying byte-identical. Page sign-offs
+      happen against the refreshed scenes.
+
 **Surface map revised (2026-09-01).** Rebasing this branch onto a `dev` that landed the
 About restructure and the help restructure moved two of the surfaces this plan was written
 around, so the map in **Problem** and step 6's consumer list both shrink:
