@@ -185,9 +185,11 @@ export function HelpFeedbackCardView({
           </div>
         </Field>
 
-        <Button onClick={onSubmit} disabled={submitting || !canSubmit}>
-          {submitting ? c("sending") : t("submit")}
-        </Button>
+        <div className="flex justify-center">
+          <Button onClick={onSubmit} disabled={submitting || !canSubmit}>
+            {submitting ? c("sending") : t("submit")}
+          </Button>
+        </div>
 
         {/* The answer, last in the card — see the component docblock for why it
             can only go here. */}
