@@ -16,6 +16,17 @@
  *   signal — who has my child for ninety minutes — and people are harmony.
  *   The chips under it stay neutral: they carry identicons and names, and the
  *   colour belongs on the label that says what they are.
+ * - **What a child has made is growth, and growth is glow.** The creations
+ *   label is the only thing on this page that is neither a time nor a person:
+ *   it is the term's evidence, which is the family's own word. It is drawn in
+ *   the same micro-label shape as the Gedus label, so the two read as one kind
+ *   of mark carrying two different meanings rather than as decoration.
+ *
+ * **The feed's own heading stays neutral, deliberately.** Its subject is time,
+ * which would make it wit — but the run of sessions beneath it is already
+ * wearing wit on every future tag, edge and marker, so a wit heading over them
+ * would be the page saying one word twice and the colour would stop marking
+ * anything.
  *
  * **Strong on edges and markers, soft on ink**, which is the mechanism the
  * element cards were signed off on: wit-strong cannot carry body text on this
@@ -42,6 +53,8 @@ export interface FamilyProductTones {
   scheduleGlyph: string;
   /** The micro-label over the gedu chips. */
   gedusLabel: string;
+  /** The creations card's heading — the same micro-label shape. */
+  creationsLabel: string;
   /** The next session's card edge, on top of the card's own classes. */
   nextCard: string;
   /** The tag on a session that has started and not finished. */
@@ -58,6 +71,8 @@ export const FAMILY_PRODUCT_TONES: FamilyProductTones = {
   scheduleGlyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
   gedusLabel:
     "text-[11px] font-medium uppercase tracking-wider text-yty-harmony-soft",
+  creationsLabel:
+    "text-[11px] font-medium uppercase tracking-wider text-yty-glow-soft",
   nextCard: "border-yty-wit-strong",
   liveTag: "border-yty-glow-strong bg-muted text-yty-glow-soft",
   futureTag: "border-yty-wit-strong bg-muted text-yty-wit-soft",

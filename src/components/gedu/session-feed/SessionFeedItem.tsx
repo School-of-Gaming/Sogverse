@@ -457,8 +457,11 @@ export function SessionFeedItem({
         signedBy !== null && "pb-8 sm:pb-8",
         // Full value, like the family feed's next-session edge: the two feeds
         // draw one timeline and must agree, and a half-alpha edge is a hue
-        // mixed toward the card rather than a quieter version of it.
-        entry.kind === "future" && prominent && "border-info",
+        // mixed toward the card rather than a quieter version of it. Spelled in
+        // wit's own vocabulary rather than as `--info` — the two resolve to the
+        // same hue, and the family feed's next-session edge names the family, so
+        // one timeline is written in one vocabulary end to end.
+        entry.kind === "future" && prominent && "border-yty-wit-strong",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -472,14 +475,18 @@ export function SessionFeedItem({
             // that produced the rule found "live" in two colours, and this
             // site was one of them). The waiting states stay wit: time ahead
             // is wit's territory, and the family split is what separates a
-            // running session from a scheduled one at a glance.
+            // running session from a scheduled one at a glance — and both tags
+            // are now the family product page's own two, class for class, down
+            // to the neutral ground under them. The wit half used to name
+            // `--info` and carry no ground, which made one construct read as
+            // two on the two feeds drawing the same timeline.
             <Badge
               variant="outline"
               className={cn(
                 "text-[10px] uppercase tracking-wide",
                 live
                   ? "border-yty-glow-strong bg-muted text-yty-glow-soft"
-                  : "border-info text-yty-wit-soft",
+                  : "border-yty-wit-strong bg-muted text-yty-wit-soft",
               )}
             >
               {live ? b("live") : prominent ? b("nextSession") : b("upcoming")}

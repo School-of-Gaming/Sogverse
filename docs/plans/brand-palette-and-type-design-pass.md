@@ -386,6 +386,50 @@ first-contact page and was never put to the owner. — The JoinVoiceButton's
 "Opens …" label is the same time fact as the schedule rows and a candidate for
 the wit glyph treatment, left because a button speaks act grammar.
 
+### P10 — The vibrancy pass (2026-09-02, owner feedback after browsing the branch)
+
+The owner's verdict on the wired result, surface by surface, and it re-anchors
+the pass to direction 7 (*as fun, colourful, bright and lively as the marketing
+site*): the shop — the most-visited page — shows only amber and violet; the
+public product page is barely better and its info surfaces disagree about
+carrying the blue border; /about's mission section "lost its gradient… we have 6
+colorful colors to work with and we went with grey here, that's not what I
+wanted"; the care-icons and /roblox's step circles and feature icons all sit in
+generic primary while home's equivalents got families — "it worries me to see…
+different versions of these icons colors loose in the app"; My SOG lost the
+violet button's colour and "didn't gain much back"; the admin club details page
+should use colour "not as decoration but as helping admins parse information";
+and the button fleet — grammar fills, tiers — is built, demoed, "yet when I look
+through the app I see almost none of these get used anywhere." Closing line:
+this is a sweeping rebrand that "should touch just about every single surface."
+
+What this direction settles:
+- **The escalated CTA question is answered by use**: the grammar fills are to be
+  placed, including as a surface's primary CTA where the action is the family's
+  word. The doctrine's other constraints stand (never two fills in one view,
+  ink from the contrast table, destructive untouched).
+- **The neutralized marketing cards get colour back, but not the gradient**
+  (owner refinement, same day: "with 6 brand colors if we can make it colorful
+  without needing a gradient at all I'd be happy to see it and give you my
+  thoughts"). Home's kept washes stay exactly as ruled; the /about mission and
+  overview cards and /roblox's closing CTA take a flat six-family draft
+  treatment inside the law — no gradients, no washes — designed as one sibling
+  treatment and marked in code as a draft for the owner's reaction. The
+  sanctioned-keeps list does not widen.
+- **One icon-tile construct**: the ruled accent tile (tint ground, full-value
+  family edge, soft glyph) is the app's only icon medallion; the primary-only
+  `bg-primary/10` medallion variant retires, its sites take families
+  distributed per the ensemble rule.
+- **One info-surface construct**: an info callout is `border-info` full-value on
+  `bg-muted` with wit-soft ink, everywhere.
+- **Step/numbered circles speak the palette** the way home's how-it-works
+  circles do, on every surface that draws the construct.
+- **The colour budget's colourful side gets its colour**: shop, product
+  details, My SOG (all three roles) gain grammar-anchored and free colour;
+  admin gains grammar-functional colour for parsing, not decoration.
+Executed as fleet slices A–D (public marketing / shop+product / My SOG /
+gedu+admin), each slice's conversions annotated in code with the meaning.
+
 ## Acceptance criteria
 
 - The Yty tokens render the exact brand hues (script-verified round-trip), every consumer

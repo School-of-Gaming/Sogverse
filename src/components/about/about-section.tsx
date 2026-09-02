@@ -1,5 +1,6 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Heart, Shield, Sparkles, Users } from "lucide-react";
+import { BrandSpectrumRule } from "@/components/ui/brand-spectrum-rule";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AboutSectionProps {
@@ -9,6 +10,48 @@ interface AboutSectionProps {
 
 const valueIcons = [Sparkles, Heart, Shield, Users];
 const valueKeys = ["playIsEssential", "friendsCarry", "keepChildrenSafe", "familyInTheLoop"] as const;
+
+type ValueKey = (typeof valueKeys)[number];
+
+/**
+ * One element family per value, chosen by what the value's own copy is about —
+ * the same ruled accent tile the home page's feature cards and the Yty element
+ * cards draw (tint ground, full-value family edge, soft glyph), replacing the
+ * generic amber medallion these four used to share. Four values, four
+ * tertiaries, one each, which is the ensemble rule holding on one grid.
+ *
+ * Classes are literal strings because Tailwind scans source text — a templated
+ * `bg-yty-${id}-strong/10` emits a class name with no rule behind it.
+ */
+const VALUE_ACCENTS: Record<ValueKey, { tile: string; glyph: string }> = {
+  // "Play is a child's work… crucial for their wellbeing and development" —
+  // growth, which is glow's own word.
+  playIsEssential: {
+    tile: "border-yty-glow-strong bg-yty-glow-strong/10",
+    glyph: "text-yty-glow-soft",
+  },
+  // "No one should be left without a friend… children build genuine
+  // connections" — people, harmony.
+  friendsCarry: {
+    tile: "border-yty-harmony-strong bg-yty-harmony-strong/10",
+    glyph: "text-yty-harmony-soft",
+  },
+  // The safety copy is a list of platform mechanisms — no direct messages, chat
+  // never stored, a gamer account signed into through a parent's. That is a
+  // fact about the technology, and wit is the family that carries knowledge and
+  // the machinery behind it.
+  keepChildrenSafe: {
+    tile: "border-yty-wit-strong bg-yty-wit-strong/10",
+    glyph: "text-yty-wit-soft",
+  },
+  // "Parents are partners… while they enjoy the freedom to explore, create, and
+  // make friends" — the value is a child's adventure with the family holding
+  // the rope, and valor is adventure.
+  familyInTheLoop: {
+    tile: "border-yty-valor-strong bg-yty-valor-strong/10",
+    glyph: "text-yty-valor-soft",
+  },
+};
 
 const easterEggRows = [
   "brandName", "tagline", "delete", "deleting", "close", "cancel", "getStarted",
@@ -56,14 +99,18 @@ export function AboutSection({ id }: AboutSectionProps) {
         </p>
       </div>
 
-      {/* Mission. The ground is neutral: the amber→violet blend it used to
+      {/* Mission. The ground stays neutral — the amber→violet blend it used to
           carry was a card-scale wash of two brand hues, and a brand colour
           darkened into a surface is no longer that brand colour (owner,
-          2026-09-01). A single-hue wash at card scale is the same construct and
-          is no better — the ruled exemption is chip scale, an icon medallion,
-          not a card's ground. */}
+          2026-09-01) — and the colour arrives instead as the six families at
+          full value along the top edge.
+          Flat six-family draft, P10 — owner to review; the gradient alternative
+          is home's kept construct, still live on its closing CTA for
+          comparison. The Yty overview card below and /roblox's closing CTA draw
+          the same rule: one treatment, three marketing cards. */}
       <div className="mx-auto mt-16 max-w-4xl">
-        <Card className="bg-muted">
+        <Card className="overflow-hidden bg-muted">
+          <BrandSpectrumRule />
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">{t("mission.heading")}</CardTitle>
           </CardHeader>
@@ -83,13 +130,17 @@ export function AboutSection({ id }: AboutSectionProps) {
             <Card key={value.key}>
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  {/* Icon medallion: the shading rule's one standing exemption
-                      (owner, 2026-09-01) — a brand colour lighting a glyph at
-                      chip scale, not a colour painted as a card's ground. The
-                      card behind it stays neutral, which is the constraint the
-                      exemption came with. */}
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <value.icon className="h-6 w-6 text-primary" />
+                  {/* The ruled accent tile — tint ground, full-value family
+                      edge, soft glyph — and the shading rule's one standing
+                      exemption (owner, 2026-09-01): a brand colour lighting a
+                      glyph at chip scale, not a colour painted as a card's
+                      ground. The card behind it stays neutral, which is the
+                      constraint the exemption came with. The family is the
+                      value's own meaning; see VALUE_ACCENTS above. */}
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-lg border ${VALUE_ACCENTS[value.key].tile}`}
+                  >
+                    <value.icon className={`h-6 w-6 ${VALUE_ACCENTS[value.key].glyph}`} />
                   </div>
                   <CardTitle className="text-lg">{value.title}</CardTitle>
                 </div>

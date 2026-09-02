@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { BrandSpectrumRule } from "@/components/ui/brand-spectrum-rule";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
 
@@ -29,9 +30,16 @@ export function YtySection({ id }: YtySectionProps) {
       {/* Overview. Neutral ground, for the reason the About page's mission card
           is neutral: a brand hue washed across a whole card composites into a
           darker colour that is no longer the brand's. The element cards below
-          are the ruled exemption — chip-scale tiles accenting an icon. */}
+          are the ruled exemption — chip-scale tiles accenting an icon.
+          Flat six-family draft, P10 — owner to review; the gradient alternative
+          is home's kept construct. The rule is the mission card's, drawn
+          identically: the two cards a reader meets one after the other on this
+          page have to be one treatment, not two experiments. It earns its place
+          here twice over — the four elements this card introduces are four of
+          the six blocks in it. */}
       <div className="mx-auto mt-16 max-w-4xl">
-        <Card className="bg-muted">
+        <Card className="overflow-hidden bg-muted">
+          <BrandSpectrumRule />
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">{t("overview.heading")}</CardTitle>
           </CardHeader>

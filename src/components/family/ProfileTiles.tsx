@@ -27,6 +27,35 @@ const SKELETON_LABEL: Record<TileSize, string> = {
 };
 
 /**
+ * The name label's ink, by the role whose tile it is — the ruled role families,
+ * which `ROLE_BADGE_STYLES` (`src/lib/constants/roles.ts`) spells as fills for
+ * the surfaces that badge a role outright: **a parent is harmony, a gamer is
+ * amber.** This row is where that grammar earns its keep without a badge in
+ * sight, which is the standing direction to reinforce the role colours wherever
+ * roles are understood even with no explicit label present (direction 25): the
+ * page asking who is entering Sogverse shows every role a family has, side by
+ * side, with nothing but a face and a first name to tell them apart.
+ *
+ * **Ink takes the soft variant where the family has one** — the mechanism the
+ * element cards were signed off on — and amber has no strong/soft split, so it
+ * is drawn as itself. Measured on the page ground: amber 9.58:1, harmony-soft
+ * 7.70:1, both clear of the 4.5:1 body bar.
+ *
+ * **The colour says who, the ring says where you are**, and the two are kept
+ * apart deliberately. The tile's mark is the ring alone — white at four when
+ * this is the profile you are on or pointing at, neutral two otherwise — so the
+ * label is free to carry identity at rest on every tile, the active one
+ * included. It does not repaint on hover either: an identity is not hover
+ * feedback, and colour spent behind a cursor never reaches a family on a phone.
+ *
+ * Classes are literal strings because Tailwind scans source text.
+ */
+const ROLE_INK: Record<FamilyMember["role"], string> = {
+  customer: "text-yty-harmony-soft",
+  gamer: "text-primary",
+};
+
+/**
  * Wrap-on-every-breakpoint, centered. Vertical padding leaves room for the
  * active tile's ring + ring-offset so neither gets clipped by section
  * boundaries.
@@ -126,11 +155,16 @@ export function ProfileTile(props: ProfileTileProps) {
       </div>
       {/* whitespace-nowrap + text-center lets long names spill into the
           gap between tiles instead of truncating. The wrapper itself stays
-          a fixed width so avatar layout is unchanged; only the text overflows. */}
+          a fixed width so avatar layout is unchanged; only the text overflows.
+
+          The ink is the person's **role**, at rest, on every tile — see
+          `ROLE_INK`. It replaces a muted-to-white pair that was saying a second
+          time what the ring already says: the ring is the you-are-here mark, so
+          this line was free to start carrying who somebody is instead. */}
       <span
         className={cn(
           "whitespace-nowrap text-center text-xs font-medium sm:text-sm",
-          isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+          ROLE_INK[member.role],
         )}
       >
         {member.first_name}

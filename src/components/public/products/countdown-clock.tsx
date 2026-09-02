@@ -83,7 +83,11 @@ function Cell({ value, label }: { value: number | undefined; label: string }) {
       <p className="text-xl font-bold tabular-nums sm:text-2xl">
         {value === undefined ? "--" : pad2(value)}
       </p>
-      <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
+      {/* The unit words carry the family, the numerals stay the app's own ink:
+          a countdown is time ahead, which is wit's word, and this is the only
+          ink in the cell free to say so — the number is the value, and the
+          cell's edge is furniture. Wit ink is always soft. */}
+      <p className="text-[9px] uppercase tracking-wider text-yty-wit-soft">
         {label}
       </p>
     </div>

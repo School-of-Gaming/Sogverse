@@ -1,6 +1,6 @@
 "use client";
 
-import { Globe, MapPin } from "lucide-react";
+import { Clock, Globe, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { ProductBanner } from "@/components/ui/product-banner";
@@ -140,11 +140,41 @@ export function ProductBrowseCardView({
               up in the top-right chip, or it has yielded that slot to the
               audience badge. */}
           <ul className="space-y-0.5 text-xs text-muted-foreground">
-            {scheduleLines.map((line, idx) => (
-              <li key={idx} className="line-clamp-1">
-                {line}
+            {/* **Time ahead is wit's word** — the same soft-blue clock the
+                family enrollment card and the detail page's Schedule fact
+                wear, so a parent meets one colour for "when" from the grid to
+                the page it opens. The glyph carries the family and the line
+                stays muted: the row's content is already a date, and colouring
+                the prose would read as a coloured paragraph.
+
+                One glyph for the whole block rather than one per line: a camp
+                prints two schedule lines (dates, then times) and two stacked
+                clocks would say the fact twice. The lines keep their own rows
+                inside it. */}
+            {scheduleLines.length > 0 && (
+              <li className="flex items-start gap-1">
+                <Clock
+                  className="mt-0.5 h-3 w-3 shrink-0 text-yty-wit-soft"
+                  aria-hidden
+                />
+                {/* `line-clamp-1` supplies the block-level display these rows
+                    need (`-webkit-box`), so no `block` beside it — two display
+                    utilities on one element resolve by Tailwind's source order
+                    rather than by intent. */}
+                <span className="min-w-0 flex-1 space-y-0.5">
+                  {scheduleLines.map((line, idx) => (
+                    <span key={idx} className="line-clamp-1">
+                      {line}
+                    </span>
+                  ))}
+                </span>
               </li>
-            ))}
+            )}
+            {/* Where it happens keeps the muted glyph: a place is neither a
+                time, a person nor a piece of knowledge, so it is the fact on
+                this card with no family — and the overview card's own location
+                row reads the same way. (The region-lock strip's wit answers a
+                different question: whether the product is sold to you.) */}
             <li className="flex items-center gap-1 line-clamp-1">
               {locationLine.kind === "in_person" ? (
                 <MapPin className="h-3 w-3 shrink-0" aria-hidden />

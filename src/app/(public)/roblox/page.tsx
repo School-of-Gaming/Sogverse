@@ -91,6 +91,81 @@ const whyKeys = [
 
 const stepKeys = ["step1", "step2", "step3", "step4"] as const;
 
+type WhyKey = (typeof whyKeys)[number];
+
+/**
+ * The four steps wear the four tertiaries, in the home page's own order —
+ * harmony, glow, wit, then valor for the fourth step home does not have. The
+ * circles are a sequence, not four facts, so the colour is free and the
+ * ensemble rule spends it evenly: one element family per step.
+ *
+ * **Valor is here and is deliberately absent from home's three.** There, an
+ * orange circle sat a scroll away from the amber CTA the section exists to
+ * feed; this band carries no button at all, and a fourth step needs a fourth
+ * family rather than a repeat.
+ *
+ * **Wit is the one circle drawn soft, and that is the measured answer** (the
+ * same one home's third circle takes): ink on wit-strong is 4.10:1, under the
+ * 4.5:1 bar, while soft clears at 8.10 and keeps one ink colour across the run.
+ * The other three on ink: harmony 6.11:1, glow 6.63:1, valor 6.69:1
+ * (`node scripts/yty-contrast.mjs`).
+ */
+const STEP_CIRCLES: readonly [string, string, string, string] = [
+  "mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yty-harmony-strong text-xl font-bold text-background",
+  "mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yty-glow-strong text-xl font-bold text-background",
+  "mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yty-wit-soft text-xl font-bold text-background",
+  "mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yty-valor-strong text-xl font-bold text-background",
+];
+
+/**
+ * One element family per reason, chosen by what the reason's own copy says —
+ * the ruled accent tile (tint ground, full-value family edge, soft glyph),
+ * replacing the generic amber medallion all six used to share. Six cards over
+ * four families means two families sit twice; the grid is two columns, and no
+ * family lands beside or under its own repeat.
+ *
+ * Classes are literal strings because Tailwind scans source text — a templated
+ * `bg-yty-${id}-strong/10` emits a class name with no rule behind it.
+ */
+const WHY_ACCENTS: Record<WhyKey, { tile: string; glyph: string }> = {
+  // "Roblox Studio, AI-assisted design and the fundamentals of coding logic" —
+  // knowledge and the machinery behind it, which is wit's whole territory.
+  skills: {
+    tile: "border-yty-wit-strong bg-yty-wit-strong/10",
+    glyph: "text-yty-wit-soft",
+  },
+  // "Meet your people. Connect with other creators" — people, harmony.
+  people: {
+    tile: "border-yty-harmony-strong bg-yty-harmony-strong/10",
+    glyph: "text-yty-harmony-soft",
+  },
+  // "Walk away with a real, published creation" — you leave with more than you
+  // arrived with, which is growth.
+  portfolio: {
+    tile: "border-yty-glow-strong bg-yty-glow-strong/10",
+    glyph: "text-yty-glow-soft",
+  },
+  // "Top projects are showcased at our closing celebration event" — the payoff
+  // is an event, and events are valor's own noun in the grammar.
+  recognised: {
+    tile: "border-yty-valor-strong bg-yty-valor-strong/10",
+    glyph: "text-yty-valor-soft",
+  },
+  // "Creative, social, and made to be enjoyed" — the one concrete claim in it
+  // is social, so it goes to harmony rather than reading as decoration.
+  fun: {
+    tile: "border-yty-harmony-strong bg-yty-harmony-strong/10",
+    glyph: "text-yty-harmony-soft",
+  },
+  // "Dedicated parent sessions on digital safety, civility, and parental
+  // controls" — safety told as mechanism, the same fact /about's
+  // keep-children-safe value states, and it wears the same family there.
+  safe: {
+    tile: "border-yty-wit-strong bg-yty-wit-strong/10",
+    glyph: "text-yty-wit-soft",
+  },
+};
+
 /** Small uppercase section label — the [WHAT IS THIS] / [WHY JOIN] markers. */
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
@@ -113,6 +188,7 @@ export default function RobloxPage() {
   const steps = stepKeys.map((key, i) => ({
     key,
     number: i + 1,
+    circle: STEP_CIRCLES[i],
     title: t(`how.${key}.title`),
     description: t(`how.${key}.description`),
   }));
@@ -159,9 +235,8 @@ export default function RobloxPage() {
           <div className="mx-auto mt-14 grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((step) => (
               <div key={step.key} className="text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground">
-                  {step.number}
-                </div>
+                {/* The four steps wear the four tertiaries — see STEP_CIRCLES. */}
+                <div className={step.circle}>{step.number}</div>
                 <h3 className="mt-4 text-lg font-semibold">{step.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {step.description}
@@ -189,13 +264,17 @@ export default function RobloxPage() {
               <Card key={reason.key} className="bg-card/50">
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    {/* Icon medallion: the shading rule's one standing
-                        exemption (owner, 2026-09-01) — a brand colour lighting a
+                    {/* The ruled accent tile — tint ground, full-value family
+                        edge, soft glyph — and the shading rule's one standing
+                        exemption (owner, 2026-09-01): a brand colour lighting a
                         glyph at chip scale, not a colour painted as a card's
                         ground. The card behind it stays neutral, which is the
-                        constraint the exemption came with. */}
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <reason.icon className="h-5 w-5 text-primary" />
+                        constraint the exemption came with. The family is the
+                        reason's own meaning; see WHY_ACCENTS above. */}
+                    <div
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border ${WHY_ACCENTS[reason.key].tile}`}
+                    >
+                      <reason.icon className={`h-5 w-5 ${WHY_ACCENTS[reason.key].glyph}`} />
                     </div>
                     <CardTitle className="text-lg">{reason.title}</CardTitle>
                   </div>

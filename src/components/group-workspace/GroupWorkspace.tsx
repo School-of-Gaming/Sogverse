@@ -601,7 +601,10 @@ export function GroupWorkspace({
                   pseudo-element rather than a text node — it does not belong in
                   the message files. */}
               <span className="inline-flex items-center gap-1 before:mr-1 before:text-muted-foreground/50 before:content-['·']">
-                <Users className="h-4 w-4" aria-hidden />
+                {/* People are harmony, in ink only — the same glyph tone the
+                    rail's counts and the dashboard card's carry, so a headcount
+                    is one colour wherever staff meet one. */}
+                <Users className="h-4 w-4 text-yty-harmony-soft" aria-hidden />
                 {t("participantCount", {
                   count: assignedGroup.participant_count,
                 })}
@@ -830,7 +833,9 @@ function ParticipantCount({ count }: { count: number }) {
   const t = useTranslations("gedu.sessionDetails");
   return (
     <span className="inline-flex shrink-0 items-center gap-1 text-[11px] tabular-nums text-muted-foreground">
-      <Users className="h-3 w-3" aria-hidden />
+      {/* People are harmony — the glyph carries it, the number stays muted, so
+          the rail's counts and the peer rows' read as one kind of fact. */}
+      <Users className="h-3 w-3 text-yty-harmony-soft" aria-hidden />
       {t("participantCount", { count })}
     </span>
   );
@@ -903,7 +908,11 @@ function OtherGroupsRailCard({
                   "6 gamers" reads as six children, and the whole point of
                   this card is knowing whose room you would be covering. */}
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                {/* Harmony, like every other people label on this page — the
+                    label is what carries the family, the chips under it stay
+                    neutral because they carry identicons and names. Same
+                    decision the family product page's gedus label made. */}
+                <span className="text-[10px] font-medium uppercase tracking-wider text-yty-harmony-soft">
                   {g("gedus")}
                 </span>
                 {group.gedus.length === 0 ? (
@@ -1091,7 +1100,12 @@ function GroupRailCard({
       )}
 
       <div className="space-y-1.5">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        {/* The rail's two people labels take harmony — who teaches this group
+            and who is in it are the page's people facts, and the family product
+            page's own gedus label is this class, character for character. The
+            chips below stay neutral: the colour belongs on the label that says
+            what they are. */}
+        <p className="text-[11px] font-medium uppercase tracking-wider text-yty-harmony-soft">
           {g("gedus")}
         </p>
         {group.gedus.length === 0 ? (
@@ -1102,7 +1116,8 @@ function GroupRailCard({
       </div>
 
       <div className="space-y-2 border-t border-border pt-3">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        {/* The second of the pair — see the gedus label above. */}
+        <p className="text-[11px] font-medium uppercase tracking-wider text-yty-harmony-soft">
           {t("participantsLabel")}
         </p>
         {roster.length === 0 ? (

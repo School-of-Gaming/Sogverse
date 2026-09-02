@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 // sit next to a busy thumbnail or a progress bar but legible at a glance.
 // Shared by the seat-availability bar (`sm`) and the browse-card price block
 // (`md`) so those surfaces speak with one visual voice.
-export type ChipTone = "primary" | "warning" | "info" | "muted";
+export type ChipTone = "primary" | "harmony" | "warning" | "info" | "muted";
 
 // Two sizes: `sm` rides the seat-availability bar (text-xs, matching the
 // seats-remaining row beside it); `md` stands in for a price-row badge — sized
@@ -23,6 +23,10 @@ export type ChipSize = "sm" | "md";
 // different colour rather than a quieter one.
 const TONE_OUTLINE: Record<ChipTone, string> = {
   primary: "border-primary text-primary",
+  // People, and how many of them still fit — harmony's word, and the same
+  // family the seat meter this chip rides fills in. Strong on the edge, soft in
+  // the ink: the split every family chip in the app makes.
+  harmony: "border-yty-harmony-strong text-yty-harmony-soft",
   warning: "border-warning text-warning",
   info: "border-info text-yty-wit-soft",
   muted: "border-border text-muted-foreground",

@@ -67,7 +67,12 @@ export function TopicInfoCard({ topic }: { topic: ProductTopic }) {
 
         <p className="text-sm text-muted-foreground">{p("description")}</p>
 
-        <div className="flex gap-2 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+        {/* One info construct, everywhere: a full-value `border-info` edge on a
+            neutral `bg-muted` ground with wit-soft ink — the shape the shared
+            alert and the region-lock blocks wear. This note had the ground and
+            the glyph but no edge, which is the disagreement between info
+            surfaces the review caught. */}
+        <div className="flex gap-2 rounded-md border border-info bg-muted px-3 py-2 text-sm text-muted-foreground">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft" />
           <p>{p("note")}</p>
         </div>

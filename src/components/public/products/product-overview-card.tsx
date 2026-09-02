@@ -191,6 +191,12 @@ export function ProductOverviewCard({
               </ul>
             )}
           </DetailRow>
+          {/* Where it happens keeps the muted glyph, and deliberately: a place
+              is neither a time, a person nor a piece of knowledge, so it is the
+              one fact in this grid with no family — and a fact with no family
+              stays muted rather than borrowing one. (The signup panel's
+              region-lock strip is wit, but it answers a different question:
+              whether the product is sold where you live.) */}
           <DetailRow
             icon={product.is_remote && location?.kind !== "muni" ? Globe : MapPin}
             label={
@@ -214,6 +220,10 @@ export function ProductOverviewCard({
           {whoItsFor !== null && (
             <DetailRow
               icon={whoItsFor.icon}
+              // Who a product is for is a fact about *people* — harmony's word,
+              // the same family the seat meter fills in when it says how many
+              // of them still fit.
+              iconClassName="text-yty-harmony-soft"
               label={whoItsFor.label}
               railFrom2xl={railFrom2xl}
             >
@@ -222,6 +232,11 @@ export function ProductOverviewCard({
           )}
           <DetailRow
             icon={Languages}
+            // The language a session is delivered in is what decides whether a
+            // child can follow it — an eligibility fact, which is wit's, the
+            // same colour the audience chip and the region-lock strip answer
+            // "is this for us?" in. Wit ink is always soft.
+            iconClassName="text-yty-wit-soft"
             label={t("info.language")}
             railFrom2xl={railFrom2xl}
           >

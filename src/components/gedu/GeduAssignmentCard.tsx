@@ -322,7 +322,14 @@ export function GeduAssignmentCard({
                     punctuation between two translated strings rather than copy of
                     its own, so it has no business in the message files. */}
                 <span className="inline-flex items-center gap-1 tabular-nums before:mr-1 before:text-muted-foreground/50 before:content-['·']">
-                  <Users className="h-3.5 w-3.5" aria-hidden />
+                  {/* People are harmony — the same family the group workspace's
+                      roster labels and every other headcount glyph wear, so a
+                      gedu reads "how many children" in one colour wherever the
+                      number appears. Ink only: a count is a fact, not a fill. */}
+                  <Users
+                    className="h-3.5 w-3.5 text-yty-harmony-soft"
+                    aria-hidden
+                  />
                   {d("participantCount", { count: groupParticipantCount })}
                 </span>
               </p>
@@ -402,7 +409,18 @@ export function GeduAssignmentCard({
               endedOn !== null && "text-muted-foreground/70",
             )}
           >
-            <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            {/* Time is wit — the same glyph treatment the family product
+                page's schedule row wears, so one fact keeps one colour across
+                the two surfaces that state it. A finished run drops it back to
+                the row's own muted tone rather than dimming the brand hue,
+                which the shading rule bans. */}
+            <CalendarClock
+              className={cn(
+                "mt-0.5 h-4 w-4 shrink-0",
+                endedOn === null && "text-yty-wit-soft",
+              )}
+              aria-hidden
+            />
             <span className="min-w-0">
               {scheduleLines.length > 0 ? (
                 scheduleLines.map((line) => (

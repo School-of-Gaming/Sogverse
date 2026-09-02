@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowRight } from "lucide-react";
+import { BrandSpectrumRule } from "@/components/ui/brand-spectrum-rule";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
@@ -30,8 +31,13 @@ export function ProgrammeCta() {
           amber→violet wash is sanctioned *there* and the exemption list is
           closed — a brand hue mixed down into a surface is no longer that hue,
           and the two sanctioned keeps are the hero band and the home closing
-          CTA, both in the home page body. The card's own lift carries it here. */}
-      <Card className="mx-auto max-w-3xl bg-muted">
+          CTA, both in the home page body.
+          Flat six-family draft, P10 — owner to review; the gradient alternative
+          is home's kept construct, and this is the direct comparison: the same
+          card, at the bottom of the other first-contact page, washed there and
+          ruled here. The two /about marketing cards draw the same rule. */}
+      <Card className="mx-auto max-w-3xl overflow-hidden bg-muted">
+        <BrandSpectrumRule />
         <CardContent className="flex flex-col items-center py-12 text-center">
           <h2 className="text-2xl font-semibold sm:text-3xl">{t("heading")}</h2>
           <p className="mt-4 max-w-xl text-muted-foreground">{t("body")}</p>

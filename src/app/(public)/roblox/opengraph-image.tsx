@@ -68,6 +68,21 @@ export default async function Image() {
             justifyContent: "center",
           }}
         >
+          {/* Set on the pinned H1 recipe — Poppins 600, no tracking. The
+              negative letter-spacing this line used to carry was the pre-pass
+              `tracking-tight` idiom the design pass dropped from display-scale
+              headings; the page's own hero lost it in the same pass.
+
+              **Amber is the only brand hue this headline can take, and both
+              other candidates are closed rather than unconsidered.** Violet,
+              the second lead, is 2.91:1 on this ground — under the 3:1
+              large-text floor, with no soft variant to fall back on — so the
+              hero's amber/violet beat pair cannot survive at card scale. And a
+              tertiary on the third beat is closed by the partner rule, not by
+              contrast: that beat is Roblox's name, the accent belongs on what
+              the reader would make, and tinting a partner's name is restyling
+              it. Neutral on both outer beats is the ruled answer for an
+              emphasis tier that needs no meaning. */}
           <div
             style={{
               display: "flex",
@@ -75,7 +90,6 @@ export default async function Image() {
               fontFamily: OG_FONT_FAMILY,
               fontSize: "72px",
               fontWeight: 600,
-              letterSpacing: "-1.5px",
               color: DARK_THEME.foreground,
             }}
           >

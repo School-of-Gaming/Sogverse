@@ -71,12 +71,23 @@ export function SeatAvailabilityBar({
             text, degrading to an ellipsis, never the chip spilling out of the
             card. */}
         <span className="flex min-w-0 items-center gap-1">
-          <Users className="h-3 w-3 shrink-0" aria-hidden />
+          {/* The community fact wears one family top to bottom: the meter below
+              fills harmony-strong, so its glyph here is harmony-soft and the
+              count beside it stays muted — glyph carries the family, prose
+              stays prose. */}
+          <Users className="h-3 w-3 shrink-0 text-yty-harmony-soft" aria-hidden />
           <span className="truncate tabular-nums">{remainingLabel}</span>
         </span>
         {isFull && waitlistEnabled && (
+          /* Harmony, not amber. The chip is a *label* on the community fact —
+             every seat is taken, and there is still a queue you can ask to
+             stand in — not a control, so the act family has no claim on it;
+             the seat row's glyph and the meter it sits on say the same word.
+             (The panel's actual waitlist button stays in the neutral emphasis
+             tier: it is a lesser action than a signup, and a second coloured
+             fill there would compete with the reading column's jump button.) */
           <StatusChip
-            tone="primary"
+            tone="harmony"
             icon={Hourglass}
             className="ml-auto shrink-0"
           >

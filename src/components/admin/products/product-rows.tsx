@@ -180,12 +180,21 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                 <p className="truncate text-sm text-muted-foreground">
                   {tr?.short_description ?? ""}
                 </p>
+                {/* The meta run is scanned rather than read, so its glyphs
+                    carry the same two families the details page tones: **when**
+                    is wit (the date range and the cadence), **who** is harmony
+                    (the age range and the seats). One map across both admin
+                    product surfaces, so an admin learns it once. Place stays
+                    neutral, and the two status chips at the end keep their
+                    functional tones — a pending hint is the amber its own status
+                    chip wears, a missing fee is destructive, and money is not a
+                    brand family. */}
                 <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
                   {/* A product with no gamer audience carries no age range;
                       the chip goes rather than showing an invented one. */}
                   {p.min_age !== null && p.max_age !== null && (
                     <span className="inline-flex items-center gap-1">
-                      <Users className="h-3 w-3" />
+                      <Users className="h-3 w-3 text-yty-harmony-soft" />
                       {t("list.ageRange", {
                         min: p.min_age,
                         max: p.max_age,
@@ -194,13 +203,13 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                   )}
                   {dateChip && (
                     <span className="inline-flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
+                      <Calendar className="h-3 w-3 text-yty-wit-soft" />
                       {dateChip}
                     </span>
                   )}
                   {scheduleLine && (
                     <span className="inline-flex items-center gap-1">
-                      <CalendarClock className="h-3 w-3" />
+                      <CalendarClock className="h-3 w-3 text-yty-wit-soft" />
                       {scheduleLine}
                     </span>
                   )}
@@ -212,7 +221,7 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                   )}
                   {p.seat_count !== null && (
                     <span className="inline-flex items-center gap-1">
-                      <Ticket className="h-3 w-3" />
+                      <Ticket className="h-3 w-3 text-yty-harmony-soft" />
                       {t("list.seats", { count: p.seat_count })}
                     </span>
                   )}

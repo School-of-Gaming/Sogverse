@@ -324,8 +324,13 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
         )}
       </div>
 
-      <div className="mt-10 flex items-start gap-2.5 rounded-md bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-        <Info className="mt-0.5 h-4 w-4 shrink-0" />
+      {/* One info construct, everywhere: full-value `border-info` on a neutral
+          `bg-muted` ground, wit-soft glyph. This note carried the words of an
+          info callout in none of its clothes — no edge, a half-strength ground
+          and a muted glyph — which is exactly the info-surface disagreement the
+          review caught. */}
+      <div className="mt-10 flex items-start gap-2.5 rounded-md border border-info bg-muted px-4 py-3 text-sm text-muted-foreground">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft" />
         <p>{t("waitlistNote")}</p>
       </div>
 

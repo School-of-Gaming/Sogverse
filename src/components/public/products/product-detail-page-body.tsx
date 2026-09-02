@@ -447,6 +447,20 @@ export function ProductDetailPageBody({
           <Button
             type="button"
             size="lg"
+            // **The same fill the panel's own button wears**, branching on the
+            // same enum for the same reason: booking a camp or an event is
+            // adventure, and valor is that word (P10 — the act monopoly yields
+            // where the action *is* the family's word). This is not a second
+            // grammar fill in the view; it is the panel's button reached early,
+            // naming the same verb, so painting it amber while the button it
+            // scrolls to is orange would give one action two colours. Literal
+            // per branch — Tailwind scans source.
+            variant={
+              product.product_type === "camp" ||
+              product.product_type === "event"
+                ? "valor"
+                : "default"
+            }
             // Full width at phone width: it is the only action in the reading
             // column, and a thumb should not have to find it. Natural width from
             // `sm`, where a full-width button starts reading as a banner.

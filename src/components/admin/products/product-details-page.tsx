@@ -5,12 +5,11 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowLeft,
   Calendar,
+  CalendarClock,
   Check,
-  Clock,
   Coins,
   Copy,
   FileCheck,
-  Globe2,
   Landmark,
   Link2,
   MapPin,
@@ -18,6 +17,7 @@ import {
   Shapes,
   Sparkles,
   Tag,
+  Ticket,
   Wallet,
   ExternalLink,
 } from "lucide-react";
@@ -252,7 +252,13 @@ function HeaderCard({
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <ProductStatusChip status={statusKey} />
-            <Badge variant={isVisible ? "default" : "secondary"}>
+            {/* Neutral in both states, because the amber fill it used to wear
+                sat directly beside the status chip's own amber fill for a
+                running product — two identical pills, two unrelated facts, in
+                the one row an admin scans first. Amber is the act colour and a
+                listing is a state, so the visibility mark converges on the list
+                row's own treatment: quiet, and readable as a pair. */}
+            <Badge variant={isVisible ? "outline" : "secondary"}>
               {isVisible ? listedLabel : unlistedLabel}
             </Badge>
           </div>
@@ -402,17 +408,32 @@ function OperationalFacts({
         )}
 
         {termDates && (
-          <Fact icon={Calendar} label={t("detailsPage.fields.termDates")}>
+          <Fact
+            icon={Calendar}
+            label={t("detailsPage.fields.termDates")}
+            tone="when"
+          >
             {termDates}
           </Fact>
         )}
 
-        <Fact icon={Clock} label={t("detailsPage.fields.seats")}>
+        {/* The seats glyph is the list row's ticket rather than the clock it
+            used to be: one fact wears one glyph on both admin surfaces, and a
+            clock beside a capacity would have put the wrong grammar family's
+            shape on a people fact. */}
+        <Fact icon={Ticket} label={t("detailsPage.fields.seats")} tone="people">
           {seatsLine}
           {waitlistSuffix}
         </Fact>
 
-        <Fact icon={Globe2} label={t("detailsPage.fields.registrationOpensAt")}>
+        {/* A globe cannot say *when* registration opens, and this row says
+            nothing else — so it takes the calendar-clock the schedule rows use
+            and the time family with it. */}
+        <Fact
+          icon={CalendarClock}
+          label={t("detailsPage.fields.registrationOpensAt")}
+          tone="when"
+        >
           {formatDate(product.registration_opens_at, uiLocale, {
             dateStyle: "medium",
             timeStyle: "short",
@@ -559,21 +580,58 @@ function OperationalFacts({
   );
 }
 
+/**
+ * The two kinds of fact on this card that are worth finding *before* they are
+ * read, and the family each one speaks.
+ *
+ * The card is a dozen labelled cells in two columns, and an admin arrives at it
+ * with one of a few questions — when does this run, how many fit, is the money
+ * filled in. Two of those are brand families with a settled word: **when** is
+ * wit (the knowledge family, which owns time everywhere in the app), **how many
+ * people** is harmony. Toning their glyphs turns the icon column into an index
+ * an admin can sweep without reading a label.
+ *
+ * **Everything else stays neutral, deliberately.** Money is not a brand family
+ * and keeps its status tones (a missing fee is destructive, a set one is plain);
+ * place, category, tag and the consent list are one-off facts a colour would not
+ * help anyone find faster. Admin surfaces get less colour than family ones by
+ * standing rule, and a card where every glyph is coloured is a card where the
+ * colour has stopped saying anything.
+ *
+ * Ink only, never a fill: this is the label strength of the axis, and wit's ink
+ * is always the soft variant — the strong one cannot carry a glyph this size on
+ * this ground.
+ */
+const FACT_TONE = {
+  /** A date, a term, a registration window — time is wit. */
+  when: "text-yty-wit-soft",
+  /** Seats, capacity, headcount — people are harmony. */
+  people: "text-yty-harmony-soft",
+} as const;
+
 function Fact({
   icon: Icon,
   label,
+  tone,
   className,
   children,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
+  /** Which grammar family this fact belongs to; neutral when omitted. */
+  tone?: keyof typeof FACT_TONE;
   /** Grid placement for a fact that wants more than its one cell. */
   className?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className={cn("flex gap-3", className)}>
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+      <Icon
+        className={cn(
+          "mt-0.5 h-4 w-4 shrink-0",
+          tone === undefined ? "text-muted-foreground" : FACT_TONE[tone],
+        )}
+      />
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {label}

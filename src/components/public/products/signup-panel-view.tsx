@@ -427,6 +427,29 @@ function SignupBody(props: SignupPanelViewProps) {
   const isWaitlist = state.kind === "full_waitlist";
   const seatBar = seatBarFor(state);
 
+  // **Booking a camp is adventure, so the button says so in valor** — the act
+  // monopoly yields where the action *is* the family's word (P10). A camp or an
+  // event is the one thing this shop sells that a family calls an adventure;
+  // clubs are the standing weekly arrangement and keep the amber default, which
+  // is also what stops the fill becoming the shop's ordinary CTA colour.
+  //
+  // The reading column's jump button branches identically on the same enum, and
+  // has to: it names this button's own verb and scrolls to it, so the two are
+  // one action drawn twice, not two grammar fills in one view. Literal per
+  // branch, never composed — Tailwind scans source.
+  //
+  // The waitlist keeps the neutral emphasis tier. Joining a waitlist is asking
+  // for a place among people and harmony is that word — but it is spoken here
+  // by the seat bar directly above the button (harmony meter, harmony waitlist
+  // chip), where the community fact lives; a fill would promote the panel's
+  // *lesser* action to full CTA weight and put a second coloured fill in the
+  // same document as the amber jump button.
+  const ctaVariant = isWaitlist
+    ? ("secondary" as const)
+    : props.productType === "camp" || props.productType === "event"
+      ? ("valor" as const)
+      : ("default" as const);
+
   return (
     <PanelShell productType={props.productType}>
       {seatBar !== null && <SeatAvailabilityBar {...seatBar} />}
@@ -446,7 +469,7 @@ function SignupBody(props: SignupPanelViewProps) {
         onSubmit={isWaitlist ? props.onJoinWaitlist : props.onSubmit}
         ctaLabelActive={isWaitlist ? t("ctaWaitlist") : activeLabel}
         active={active}
-        variant={isWaitlist ? "secondary" : "default"}
+        variant={ctaVariant}
       />
       {/* The countdown outlives its own countdown. At the target instant it
           switches to `done`, which keeps the four cells exactly where they are
@@ -475,7 +498,12 @@ interface FormOrAuthProps extends SignupPanelViewProps {
    */
   ctaLabelActive: string;
   active: boolean;
-  variant?: "default" | "secondary";
+  /**
+   * The CTA's fill. Chosen by the panel and passed down as a literal per
+   * branch (see `SignupBody`) — never composed, so Tailwind's source scan and
+   * the button recipe both see every class that can ship.
+   */
+  variant?: "default" | "secondary" | "valor";
 }
 
 // ---------- The panel's grammar ----------
@@ -729,6 +757,13 @@ function WrongCountryOverlay({
 function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
+    /* The info construct's edge, at full value, with the wit-soft glyph — the
+       same clothes the refusal and the confirmation wear. The *ground* is what
+       separates the three: only the refusal fills, because it replaces the form
+       and is the whole of what the panel has to say, while this is a section
+       inside a working form and must not out-shout it. That volume tier is
+       deliberate and pinned by a test; it is not the borderless-callout
+       mismatch this pass converged elsewhere. */
     <div className="rounded-md border border-info p-4">
       <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
         <MapPin className="h-4 w-4 shrink-0 text-yty-wit-soft" />
@@ -806,6 +841,9 @@ function RegionEligibleSection({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
+    /* The info construct's edge and glyph, in the quiet tier — see the ask
+       section above for why the ground is the one thing the three region-lock
+       surfaces are allowed to differ in. */
     <div className="rounded-md border border-info p-4">
       <p className="flex items-start gap-2 text-sm text-foreground">
         <MapPinCheck className="mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft" />

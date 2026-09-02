@@ -111,14 +111,27 @@ export function PurchaseConfirmationView({
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-col items-center text-center">
-          {/* Icon medallion: the shading rule's one standing exemption (owner,
-              2026-09-01) — a brand colour lighting a glyph, not a colour
-              painted as a card's ground. */}
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+          {/* The ruled accent tile — tint ground, full-value family edge, soft
+              glyph — and the shading rule's one standing exemption (owner,
+              2026-09-01): a brand colour lighting a glyph, not a colour painted
+              as a card's ground.
+              Two outcomes, two families, because they are two different facts.
+              A confirmed seat is the thing achieved — "You're all set!" — and
+              achievement is glow's own word, the same family every mechanical
+              confirmation in the app already speaks. A waitlist place is not an
+              achievement but a fact about what happens next ("we'll let you
+              know if a seat opens"), and time ahead is wit. */}
+          <div
+            className={`flex h-14 w-14 items-center justify-center rounded-full border ${
+              isWaitlist
+                ? "border-yty-wit-strong bg-yty-wit-strong/10"
+                : "border-yty-glow-strong bg-yty-glow-strong/10"
+            }`}
+          >
             {isWaitlist ? (
-              <Hourglass className="h-7 w-7 text-primary" />
+              <Hourglass className="h-7 w-7 text-yty-wit-soft" />
             ) : (
-              <CheckCircle2 className="h-8 w-8 text-primary" />
+              <CheckCircle2 className="h-8 w-8 text-yty-glow-soft" />
             )}
           </div>
           <h1 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -410,16 +423,21 @@ export function PurchaseConfirmationNotice({
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-col items-center text-center">
-          {/* Icon medallion: the shading rule's one standing exemption (owner,
-              2026-09-01) — a brand colour lighting a glyph, not a colour
-              painted as a card's ground. */}
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+          {/* The same ruled accent tile as the confirmed view above, in wit for
+              all three states — and deliberately one family across them, since
+              the medallion does not change what it means as the state moves.
+              Every one of the three is a fact about time or about what we know:
+              the signup is still being finalized, it is taking longer than
+              expected, or this seat was already taken. None of them is an
+              achievement (so not glow) and none is an error (so not
+              destructive) — the payment succeeded in all three. */}
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-yty-wit-strong bg-yty-wit-strong/10">
             {isFinalizing ? (
-              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+              <Loader2 className="h-7 w-7 animate-spin text-yty-wit-soft" />
             ) : kind === "timedOut" ? (
-              <Clock className="h-7 w-7 text-primary" />
+              <Clock className="h-7 w-7 text-yty-wit-soft" />
             ) : (
-              <Info className="h-7 w-7 text-primary" />
+              <Info className="h-7 w-7 text-yty-wit-soft" />
             )}
           </div>
           <h1 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">

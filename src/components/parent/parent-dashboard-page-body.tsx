@@ -115,6 +115,44 @@ export type ParentEnrollmentAction =
  */
 const MAX_NAMED_PILL_ENTRIES = 3;
 
+/**
+ * **The page's heading colour, under the ruled grammar.**
+ *
+ * A coloured heading here names a *person*, and the colour is their **role** —
+ * the standing direction to reinforce the role families wherever a role is
+ * understood, even where nothing labels it (direction 25). This page is a list
+ * of people, so it is where that direction lands most plainly: a child's
+ * section is headed by their name in the gamer family's amber, the parent's own
+ * by their name in the parent family's harmony. The gamer's own dashboard
+ * greets them in that same amber, so a child and their parent — who read these
+ * two pages side by side on one phone — meet one colour for one person.
+ *
+ * The empty **Gamers** heading takes the gamer ink too: it is the section about
+ * the children a parent does not have yet, and the moment the first is added
+ * that heading becomes their name without the colour moving.
+ *
+ * **A section word is a different question, and the grammar answers it rather
+ * than a role**: Help is knowledge, which is wit's word. **Billing stays
+ * neutral on purpose** — the grammar has no word for money (amber is the act,
+ * and a bill is not one), and inventing a family for it would leave the page
+ * with a decorative colour on the one section where colour means least.
+ *
+ * Ink takes the soft variant where a family has one, the mechanism the element
+ * cards were signed off on; amber has no split. Measured on the page ground:
+ * amber 9.58:1, harmony-soft 7.70:1, wit-soft 8.10:1, all clear of the 4.5:1
+ * body bar.
+ *
+ * Classes are literal strings because Tailwind scans source text.
+ */
+const HEADING_INK = {
+  /** A gamer's section — role colour: the gamer family is amber. */
+  gamer: "text-primary",
+  /** The parent's own section — role colour: the parent family is harmony. */
+  self: "text-yty-harmony-soft",
+  /** Help & feedback — knowledge is wit's word. */
+  help: "text-yty-wit-soft",
+} as const;
+
 /** The section id one child's block scrolls to. */
 function gamerSectionId(gamer: ParentDashboardParticipant): string {
   return `gamer-${gamer.id}`;
@@ -389,7 +427,7 @@ export function ParentDashboardPageBody({
             <div className="mx-auto max-w-3xl space-y-6">
               <h2
                 id={`${EMPTY_GAMERS_SECTION_ID}-heading`}
-                className="text-3xl font-semibold"
+                className={`text-3xl font-semibold ${HEADING_INK.gamer}`}
               >
                 {t("myGamers")}
               </h2>
@@ -423,9 +461,13 @@ export function ParentDashboardPageBody({
                     <Avatar className="h-10 w-10 shrink-0">
                       <Identicon id={gamer.id} size={40} />
                     </Avatar>
+                    {/* The name in the gamer family's amber — the role colour,
+                        on the one page where a parent reads several people's
+                        sections in a row and the only thing separating them is
+                        whose they are. See `HEADING_INK`. */}
                     <h2
                       id={`${gamerSectionId(gamer)}-heading`}
-                      className="min-w-0 break-words text-3xl font-semibold"
+                      className={`min-w-0 break-words text-3xl font-semibold ${HEADING_INK.gamer}`}
                     >
                       {gamer.firstName}
                     </h2>
@@ -557,9 +599,12 @@ export function ParentDashboardPageBody({
                 <Avatar className="h-10 w-10 shrink-0">
                   <Identicon id={self.id} size={40} />
                 </Avatar>
+                {/* Harmony, because this section is the reader themselves and
+                    the parent family is harmony — the other half of the role
+                    colour the children's headings carry. See `HEADING_INK`. */}
                 <h2
                   id={`${SELF_SECTION_ID}-heading`}
-                  className="min-w-0 break-words text-3xl font-semibold"
+                  className={`min-w-0 break-words text-3xl font-semibold ${HEADING_INK.self}`}
                 >
                   {self.firstName}
                 </h2>
@@ -601,6 +646,9 @@ export function ParentDashboardPageBody({
           className="scroll-mt-32"
         >
           <div className="mx-auto max-w-3xl space-y-6">
+            {/* The one heading on the page that stays neutral, and it is a
+                decision rather than an omission: the grammar has no word for
+                money. See `HEADING_INK`. */}
             <h2 id="billing-heading" className="text-3xl font-semibold">
               {t("billing")}
             </h2>
@@ -628,7 +676,12 @@ export function ParentDashboardPageBody({
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 id="help-heading" className="text-3xl font-semibold">
+            {/* Wit: knowledge is what this section is for, and asking us
+                something is the family's own word. See `HEADING_INK`. */}
+            <h2
+              id="help-heading"
+              className={`text-3xl font-semibold ${HEADING_INK.help}`}
+            >
               {h("heading")}
             </h2>
             {helpForm}

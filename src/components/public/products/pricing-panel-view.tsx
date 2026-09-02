@@ -125,8 +125,11 @@ function OptionRow({
               clicks through to a page that would otherwise look like a
               mistake. Rendered from data present on first paint, so it never
               arrives late and pushes the CTA down. */}
+          {/* Wit, not amber: this line is a date ahead — when the money will
+              move — and time ahead is wit's word. Amber is the act family, and
+              there is nothing to act on here; the CTA below is the act. */}
           {firstChargeDate !== null && (
-            <p className="mt-1.5 text-xs font-medium text-primary">
+            <p className="mt-1.5 text-xs font-medium text-yty-wit-soft">
               {t("firstChargeOn", { date: firstChargeDate })}
             </p>
           )}

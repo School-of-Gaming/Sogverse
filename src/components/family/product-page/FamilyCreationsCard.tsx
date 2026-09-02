@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveWebUrl } from "@/lib/navigation/web-url";
 import type { FamilyProductPageAudience } from "./FamilyProductPageBody";
+import { FAMILY_PRODUCT_TONES } from "./product-page-tones";
 import type { FamilyCreation } from "./types";
 
 /**
@@ -94,7 +95,10 @@ export function FamilyCreationsCard({
   return (
     <Card className="mt-5">
       <CardContent className="p-4 sm:p-5">
-        <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        {/* Glow: what a term of playing has made is growth, and the label is
+            the page's second family-carrying micro-mark beside the harmony one
+            over the gedu chips. The tone module owns both strings. */}
+        <h2 className={FAMILY_PRODUCT_TONES.creationsLabel}>
           {t("creationsHeading", { count: creations.length })}
         </h2>
         {/* Under the heading rather than over it: the heading is what a reader

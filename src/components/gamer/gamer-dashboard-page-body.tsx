@@ -33,6 +33,44 @@ import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type"
 const GREETING_TYPE = "font-sans text-3xl font-semibold leading-[1.2] md:text-4xl";
 
 /**
+ * **The page's heading colour, under the ruled grammar.**
+ *
+ * - **The greeting is amber because the reader is a gamer**, not because a
+ *   greeting is an act. The gamer family is amber, and this line names the one
+ *   person the page belongs to — the same colour their parent reads their name
+ *   in on the section heading over their cards (direction 25: reinforce the
+ *   role colours wherever a role is understood, label or no label). It was
+ *   already drawn in amber before the grammar existed; what changed is that the
+ *   amber now means something and is written down.
+ * - **Every activity heading takes valor, and every one takes the same valor.**
+ *   What a child is signed up for is where they go and what they do, which is
+ *   adventure's word. It is deliberately *one* family across Clubs, Camps and
+ *   Events rather than a family each: colouring by product type is an
+ *   admin-only tool (direction 15), because almost every family only ever holds
+ *   clubs and a child who learned "camps are orange" would have learned
+ *   something about our catalogue rather than about their week. Valor also had
+ *   no presence at all on the family-facing surfaces, and the ensemble rule
+ *   spends free colour on the families heard least.
+ * - **Help is wit**, knowledge being what the section is for — the same word,
+ *   in the same class, as the parent dashboard's Help heading.
+ *
+ * Ink takes the soft variant where a family has one (the element cards'
+ * mechanism); amber has no split. Measured on the page ground: amber 9.58:1,
+ * valor-soft 8.81:1, wit-soft 8.10:1, all clear of the 4.5:1 body bar — and the
+ * headings are large text besides.
+ *
+ * Classes are literal strings because Tailwind scans source text.
+ */
+const HEADING_INK = {
+  /** The greeting — role colour: the gamer family is amber. */
+  greeting: "text-primary",
+  /** Clubs, camps and events alike — adventure is valor's word. */
+  activity: "text-yty-valor-soft",
+  /** Help — knowledge is wit's word. */
+  help: "text-yty-wit-soft",
+} as const;
+
+/**
  * The gamer dashboard's page body — everything below the route's data shell.
  *
  * One card per enrollment, in the same grammar the parent's page uses, so a
@@ -130,7 +168,7 @@ export function GamerDashboardPageBody({
               break-words is a safety net for longer translations —
               and for the name too, which is the longest thing that can land in
               this line and the one part of it no translator controls. */}
-          <h2 className={`${GREETING_TYPE} text-primary break-words`}>
+          <h2 className={`${GREETING_TYPE} ${HEADING_INK.greeting} break-words`}>
             {t("welcomeNamed", { name: firstName })}
           </h2>
           <p className="text-muted-foreground">{t("subtitle")}</p>
@@ -153,9 +191,12 @@ export function GamerDashboardPageBody({
               className="scroll-mt-32"
             >
               <div className="mx-auto max-w-3xl space-y-6">
+                {/* Valor on every one of these headings, whichever noun it is
+                    — see `HEADING_INK` for why the family is the same across
+                    all three. */}
                 <h2
                   id={`${ACTIVITY_HEADING_KEY[group.type]}-heading`}
-                  className="text-3xl font-semibold"
+                  className={`text-3xl font-semibold ${HEADING_INK.activity}`}
                 >
                   {s(ACTIVITY_HEADING_KEY[group.type])}
                 </h2>
@@ -214,7 +255,10 @@ export function GamerDashboardPageBody({
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 id="help-heading" className="text-3xl font-semibold">
+            <h2
+              id="help-heading"
+              className={`text-3xl font-semibold ${HEADING_INK.help}`}
+            >
               {h("gamerHeading")}
             </h2>
             {helpForm}

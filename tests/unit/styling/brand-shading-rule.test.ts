@@ -79,18 +79,28 @@ const ARBITRARY_TINT = new RegExp(
 const EXEMPT: readonly { file: string; classes: readonly string[]; why: string }[] = [
   {
     file: "src/app/(public)/roblox/page.tsx",
-    classes: ["bg-primary/10"],
-    why: "Chip-scale icon medallion: a brand colour lighting a glyph, not a colour painted as a card's ground. The card behind it stays neutral, which is the constraint the exemption came with.",
+    classes: [
+      "bg-yty-harmony-strong/10",
+      "bg-yty-glow-strong/10",
+      "bg-yty-valor-strong/10",
+      "bg-yty-wit-strong/10",
+    ],
+    why: "The programme page's six 'why join' reasons draw the ruled accent tile — icon-sized tint, full-value family edge, soft glyph — on neutral cards, one family per reason's meaning. Same exemption as the Yty map's, a further consumer of the one recipe; the amber-only medallion these replaced retired with P10.",
   },
   {
     file: "src/components/about/about-section.tsx",
-    classes: ["bg-primary/10"],
-    why: "Chip-scale icon medallion behind each value's glyph; the card it sits on is neutral.",
+    classes: [
+      "bg-yty-harmony-strong/10",
+      "bg-yty-glow-strong/10",
+      "bg-yty-valor-strong/10",
+      "bg-yty-wit-strong/10",
+    ],
+    why: "The four 'things we care about' values draw the ruled accent tile — icon-sized tint, full-value family edge, soft glyph — on neutral cards, one family per value's meaning. Same exemption as the Yty map's; the amber-only medallion they shared retired with P10.",
   },
   {
     file: "src/components/public/products/purchase-confirmation-view.tsx",
-    classes: ["bg-primary/10"],
-    why: "Chip-scale icon medallions on the confirmation and waitlist outcome states — the glyph's accent disc, not the panel's ground.",
+    classes: ["bg-yty-glow-strong/10", "bg-yty-wit-strong/10"],
+    why: "The confirmation's two medallions draw the ruled accent tile on a neutral page: glow where a seat is confirmed (the thing achieved) and wit where the state is a fact about time — a waitlist place, a signup still finalizing. Two families here rather than four because only two facts are ever stated.",
   },
   {
     file: "src/components/home/home-page-body.tsx",
