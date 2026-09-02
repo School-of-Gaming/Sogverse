@@ -146,8 +146,8 @@ export function FamilySessionFeedItem({
         // the chip's height or its `-bottom-*` offset ever moves. The gedu row
         // reserves the same space from the same numbers.
         editor !== null && "pb-8 sm:pb-8",
-        // The next session's edge — a state mark rather than furniture, so
-        // under the draft it carries the time family at full value.
+        // The next session's edge — a state mark rather than furniture, so it
+        // carries the time family at full value.
         entry.kind === "future" && prominent && tones.nextCard,
       )}
     >
@@ -181,10 +181,10 @@ export function FamilySessionFeedItem({
             variant="outline"
             className={cn(
               "shrink-0 text-[10px] uppercase tracking-wide",
-              // Liveness is glow and time is wit, so under the draft a session
-              // running right now swaps family rather than merely brightening
-              // — and the lit chip is the one the enrollment card lights, so a
-              // family meets one Live mark whichever page they are on.
+              // Liveness is glow and time is wit, so a session running right
+              // now swaps family rather than merely brightening — and the lit
+              // chip is the one the enrollment card lights, so a family meets
+              // one Live mark whichever page they are on.
               live ? tones.liveTag : tones.futureTag,
             )}
           >

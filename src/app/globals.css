@@ -180,12 +180,13 @@
      **Strong fills, borders, rings and glows; soft carries text and glyphs.**
      That split is a contrast result, not a preference, and it is script-
      verified rather than eyeballed: `node scripts/yty-contrast.mjs` prints
-     every pairing against both grounds — the page (#121212) and the card
-     (#1a1a1a), which is where these pairings actually sit and, being the
-     lighter of the two, is the binding one. The result that constrains it:
-     wit-strong is 3.81:1 on the card (4.10:1 on the page), which clears 3:1
-     for an icon or large text and misses 4.5:1 for body copy. It is also why
-     the recipe's `wit` button fills soft while the other three fill strong. */
+     every pairing against the three grounds these pairings actually sit on —
+     the page (#121212), the card (#1a1a1a) and muted (#262626), which, being
+     the lightest, is the binding one. The result that constrains it:
+     wit-strong bottoms out at 3.31:1 on muted (3.81 card, 4.10 page), which
+     clears 3:1 for an icon or large text and misses 4.5:1 for body copy. It
+     is also why the recipe's `wit` button fills soft while the others fill
+     strong. */
   --color-yty-harmony-strong: #F55B9A;
   --color-yty-harmony-soft: #FA7FA3;
   --color-yty-glow-strong: #1AB061;

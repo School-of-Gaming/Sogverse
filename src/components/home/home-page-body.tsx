@@ -109,7 +109,9 @@ const FEATURE_ACCENTS: Record<FeatureKey, FeatureAccent> = {
 const HERO_TITLE_TYPE = "font-sans text-3xl font-semibold leading-[1.1] md:text-[56px]";
 const SECTION_HEADING_TYPE =
   "text-3xl font-semibold leading-[1.2] tracking-tight sm:text-4xl";
-const CTA_HEADING_TYPE = "text-2xl font-semibold leading-[1.2] sm:text-3xl";
+// On the pinned H3 scale: 24–28px / 600 / 1.3 (the codified Poppins scale in
+// the root CLAUDE.md — sm:text-3xl at leading-[1.2] sat just off it).
+const CTA_HEADING_TYPE = "text-2xl font-semibold leading-[1.3] sm:text-[28px]";
 
 /**
  * The three numbered circles, in order.

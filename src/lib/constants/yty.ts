@@ -12,10 +12,11 @@ import { Heart, Sun, Sword, Brain } from "lucide-react";
  * construct nobody draws.
  *
  * **Which variant feeds which slot is decided by `scripts/yty-contrast.mjs`,
- * not by eye.** Every pairing is measured against both grounds — the page
- * (`#121212`) and the card (`#1a1a1a`) these pairings are actually drawn on.
- * The card is the lighter one, so its numbers are the binding ones and are the
- * ones quoted here:
+ * not by eye.** Every pairing is measured against the three grounds these
+ * pairings are actually drawn on — the page (`#121212`), the card (`#1a1a1a`)
+ * and muted (`#262626`). Muted is the lightest, so its numbers are the binding
+ * ones; the card figures quoted below stand for the card-drawn slots they
+ * describe:
  *
  * - **`accent` takes the soft variant, on all four elements.** The accent class
  *   carries body-size text as well as icons — the About page's elements section

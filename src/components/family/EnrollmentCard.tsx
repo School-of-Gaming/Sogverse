@@ -76,6 +76,12 @@ const TONES = {
   /** The openable card's hover and focus feedback. */
   openable:
     "hover:border-foreground/30 hover:shadow-lg focus-within:border-foreground/30 focus-within:shadow-lg",
+  /**
+   * The lit card's variant of the same feedback: shadow only. Its border is
+   * transparent under the ignition ring, and a hover border here would paint
+   * a competing edge beside the glow.
+   */
+  openableLit: "hover:shadow-lg focus-within:shadow-lg",
   /** The live card's edge — transparent, because the ignition ring paints it. */
   live: "border-transparent",
   /** The ignition ring's gradient. */
@@ -508,7 +514,12 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
         aria-busy={leaving}
         className={cn(
           "group relative overflow-hidden transition-[border-color,box-shadow,opacity]",
-          opensAPage && TONES.openable,
+          // A lit card takes only the shadow half of the hover feedback: its
+          // border is transparent under the ignition ring, and letting the
+          // gray hover class repaint it would draw a competing 1px outline
+          // beside the glow — a second edge next to the state edge, which is
+          // what the hover ruling exists to prevent. The shadow still lifts.
+          opensAPage && (live ? TONES.openableLit : TONES.openable),
           live && TONES.live,
           // The awaiting tone: the same lit-card treatment in the "we are
           // telling you something" colour rather than the act one, because this

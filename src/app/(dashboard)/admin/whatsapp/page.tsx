@@ -223,7 +223,7 @@ function ChatThread({
                     className={cn(
                       "max-w-[70%] rounded-lg px-3 py-2 text-sm",
                       msg.status === WHATSAPP_MESSAGE_STATUS.FAILED
-                        ? "bg-destructive/15 text-destructive"
+                        ? "bg-muted text-destructive"
                         : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
                           ? "bg-muted/50 text-muted-foreground"
                           : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
@@ -241,8 +241,10 @@ function ChatThread({
                     <div
                       className={cn(
                         "mt-1 flex items-center justify-end gap-1 text-[10px]",
+                        // Quiet furniture: the failure is already said twice
+                        // in full destructive (the body ink, the error line).
                         msg.status === WHATSAPP_MESSAGE_STATUS.FAILED
-                          ? "text-destructive/70"
+                          ? "text-muted-foreground"
                           : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
                             ? "text-muted-foreground"
                             : msg.direction === WHATSAPP_DIRECTION.OUTBOUND

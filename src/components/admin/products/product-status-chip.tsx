@@ -23,7 +23,10 @@ const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
   pending: "bg-muted text-primary",
   running: "bg-primary text-primary-foreground",
   completed: "bg-muted text-muted-foreground",
-  cancelled: "bg-destructive/20 text-destructive",
+  // Same shape as its siblings: destructive is a functional token rather than
+  // a brand one, so the tint ban does not reach it — but a lone tinted ground
+  // in a map of muted ones was an accident of the sweep, not a decision.
+  cancelled: "bg-muted text-destructive",
   expired: "bg-muted text-muted-foreground",
 };
 

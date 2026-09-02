@@ -465,17 +465,20 @@ export function SessionFeedItem({
         <SessionDateLine labels={labels} />
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {entry.kind === "future" && (
-            // The live tag is the same shared `sessionBadge` copy the family
-            // feed reads, in a filled tone rather than an outline one: a
-            // session happening right now is the one thing on this feed worth
-            // finding from across the room. "Next session" on a club that is
-            // running would be technically true and read as a mistake.
+            // The live tag wears liveness's own family — glow — in the exact
+            // classes the enrollment card, the family feed and the gedu
+            // assignment card use, because "Live" is one fact and the law says
+            // one fact renders in one colour wherever it appears (the census
+            // that produced the rule found "live" in two colours, and this
+            // site was one of them). The waiting states stay wit: time ahead
+            // is wit's territory, and the family split is what separates a
+            // running session from a scheduled one at a glance.
             <Badge
               variant="outline"
               className={cn(
                 "text-[10px] uppercase tracking-wide",
                 live
-                  ? "border-info bg-muted text-yty-wit-soft"
+                  ? "border-yty-glow-strong bg-muted text-yty-glow-soft"
                   : "border-info text-yty-wit-soft",
               )}
             >

@@ -2158,28 +2158,31 @@ const BUTTON_TIER_ROWS: readonly ButtonStateRow[] = [
 ];
 
 /**
- * The grammar fills. Each note is the family's word, because the word is the
- * whole test for whether a button may take the colour at all.
+ * The grammar fills. Each note is the family's word and a sample action,
+ * because the word is the whole test for whether a button may take the colour
+ * at all. The contrast numbers behind these pairings (and why wit alone fills
+ * soft) live in `button.tsx`'s recipe docs — the caption shows, the code
+ * comments tell.
  */
 const BUTTON_GRAMMAR_ROWS: readonly ButtonStateRow[] = [
   {
     variant: "valor",
-    note: "Adventure — “Book the camp”. Dark ink at 6.69:1",
+    note: "Adventure — “Book the camp”",
     hoverClassName: "ring-2 ring-foreground",
   },
   {
     variant: "harmony",
-    note: "People — “Invite a friend”. Dark ink at 6.11:1",
+    note: "People — “Invite a friend”",
     hoverClassName: "ring-2 ring-foreground",
   },
   {
     variant: "glow",
-    note: "Growth — “Claim the badge”. Dark ink at 6.63:1",
+    note: "Growth — “Claim the badge”",
     hoverClassName: "ring-2 ring-foreground",
   },
   {
     variant: "wit",
-    note: "Knowledge — “See the schedule”. Fills soft: strong is 4.10:1 and fails body. Dark ink at 8.10:1",
+    note: "Knowledge — “See the schedule”",
     hoverClassName: "ring-2 ring-foreground",
   },
 ];
@@ -2701,10 +2704,11 @@ export default function AdminUIComponentsPage() {
         </SubSection>
 
         {/* The four Yty-Elements, each an authored strong/soft pair. Strong
-            fills, borders, rings and glows; soft carries text and glyphs on
-            this ground — wit-strong is 3.81:1 on a card, which clears 3:1 for
-            an icon and misses 4.5:1 for body copy, and using soft for ink
-            uniformly is what keeps the four one family. */}
+            fills, borders, rings and glows; soft carries text and glyphs —
+            wit-strong bottoms out at 3.31:1 on muted, the lightest of the
+            app's three grounds and the binding one, clearing 3:1 for an icon
+            and missing 4.5:1 for body copy; using soft for ink uniformly is
+            what keeps the four one family. */}
         <SubSection title="Yty elements">
           <DemoCaption>Strong beside soft</DemoCaption>
           <div className="flex flex-wrap gap-4">

@@ -247,8 +247,13 @@ export function GeduAssignmentCard({
           // Neutral hover on purpose: the amber lift was authored blind (the
           // pre-fix layer bug never rendered it) and fights the live card's
           // state edge the moment both draw. Hover is feedback, not state —
-          // the gray idiom carries it (owner ruling, 2026-09-01).
-          "hover:border-foreground/30 hover:shadow-lg focus-within:border-foreground/30 focus-within:shadow-lg",
+          // the gray idiom carries it (owner ruling, 2026-09-01). A lit card
+          // takes only the shadow half: its border is transparent under the
+          // ignition ring, and a hover border would paint a competing edge
+          // beside the glow.
+          live
+            ? "hover:shadow-lg focus-within:shadow-lg"
+            : "hover:border-foreground/30 hover:shadow-lg focus-within:border-foreground/30 focus-within:shadow-lg",
           // Liveness is glow, and it is painted rather than laid out — see the
           // ignition ring below. The card keeps a 1px border class in both
           // states and swaps only its colour: with border-box sizing, dropping
