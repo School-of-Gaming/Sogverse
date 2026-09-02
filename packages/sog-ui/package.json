@@ -1,0 +1,33 @@
+{
+  "name": "@sog/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "School of Gaming's UI language as a package, with the demo app that documents it.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme.css": "./src/tokens/theme.css"
+  },
+  "scripts": {
+    "dev": "next dev demo --turbopack -p 3001",
+    "build": "next build demo",
+    "start": "next start demo -p 3001",
+    "type-check": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p demo/tsconfig.json",
+    "tokens": "node src/tokens/generate.ts"
+  },
+  "peerDependencies": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20.19.32",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "next": "16.2.12",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+/* The package's generated theme. Everything the demo paints with comes from
+   here, which is the same import a consumer writes as `@sog/ui/theme.css`. */
+@import "../../src/tokens/theme.css";
+
+/* Tailwind's automatic source detection starts from the directory of this file
+   and would miss nothing here today, but the demo is about to grow scenes and
+   fixtures beside `app/`. Naming the demo root keeps the scan honest as it does,
+   and keeps the answer from depending on which directory the CLI was run from. */
+@source "../";
+
+body {
+  font-family: var(--font-sans);
+}

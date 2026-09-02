@@ -60,6 +60,20 @@ Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based rou
 
 **Rule: user-facing copy calls a role's dashboard "My SOG" — "dashboard" is internal vocabulary.** The role dashboards (`/parent`, `/gamer`, `/gedu`) are named "My SOG" to the people using them, in page titles, back links, buttons and emails alike. "Dashboard" is what we call them among ourselves and in the code; a translated string that says it has leaked an implementation word into the product. The brand name itself stays "My SOG" rather than being translated wholesale — locales localise the surrounding words and the possessive, not the mark. The one exception is the **admin** dashboard, which is genuinely an admin panel and is called one: admin sidebar entries and admin page titles keep saying "Dashboard".
 
+### SOG-UI owns the UI
+
+**Rule: every UI opinion belongs to SOG-UI, the UI language package at `packages/sog-ui/`,
+and Sogverse follows it one construct at a time, as each is adopted.** Read the package's
+`CLAUDE.md` before any UI work; it does not auto-load when working under `src/`, so this
+pointer is the one UI rule this file keeps. What is adopted so far, and in what order the
+rest follows, is `packages/sog-ui/docs/adoption.md`. For a construct not yet adopted, the
+rule printed below for it still governs Sogverse's code exactly as written; the adoption
+that retires the construct deletes its rule from this file in the same change. No new UI
+rule is added here: a new opinion goes to SOG-UI, and the construct joins the adoption
+order. The UI sections below (layout and scrolling, loading and disabled state, button
+order, styling, the UI component reference and preview scenes) are that transitional
+state, and the day this file holds none of them, the sweep is done.
+
 ### Key Conventions
 - App routes are grouped: `(auth)`, `(dashboard)`, `(public)`, plus `api/`
 - Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
@@ -345,6 +359,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Voice — scheduled group rooms | `src/components/voice/` |
 | Voice — instant rooms | `src/components/voice/instant/` |
 | Discord bot | `src/app/api/discord/` |
+| SOG-UI — the UI language package and its demo | `packages/sog-ui/` |
 | Database / migrations | `supabase/` |
 | Testing conventions | `tests/` |
 
