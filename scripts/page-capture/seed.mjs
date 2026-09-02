@@ -5,10 +5,20 @@
  *                                      [--live-started 15] [--out seed-state.json]
  *
  * Creates a parent (with a PIN), two gamers linked to them, a certified gedu,
- * an admin, and one temporary club whose group carries a written-up history:
- * three past sessions with the gedu's family-facing report, their private note
- * and attendance marks, one session **in progress right now** so the voice room
- * is joinable while the capture runs, and one future session.
+ * an admin, and **two** temporary clubs, so a family dashboard shows the two
+ * states a card can be in side by side rather than one of them at a time:
+ *
+ * - a **live club**, whose group carries a written-up history — three past
+ *   sessions with the gedu's family-facing report, their private note and
+ *   attendance marks, one session **in progress right now** so the voice room
+ *   is joinable while the capture runs, and one future session;
+ * - an **upcoming club**, which has not started: its first session is a few
+ *   days out, there is nothing behind it and nothing written on it, which is
+ *   exactly what a club a family has just signed up for looks like.
+ *
+ * Both carry the same two gamers and the same gedu, because the point of the
+ * second club is the *card beside the first one* — a second fleet would give
+ * two dashboards with one card each, which is the picture we already had.
  *
  * Everything it writes is prefixed `TEMP-capture-<runId>`, so a second seed can
  * run beside a first fleet without either noticing the other. It finishes by
@@ -158,6 +168,26 @@ const SESSIONS = {
 const START_DATE = addDays(TODAY, -35);
 const END_DATE = addDays(TODAY, 42);
 
+/**
+ * The second club: entirely ahead of today.
+ *
+ * Its first session is the day the club *starts*, four days out — one slot on
+ * that date's weekday, and a start date on that date, so the earliest session
+ * the schedule can materialize is the first one. Four days is far enough that
+ * the weekday cannot collide with today's (any offset that is not a multiple
+ * of seven is a different weekday), so nothing about this club can wander into
+ * the live club's window.
+ *
+ * The wall clock is a fixed, unremarkable after-school hour rather than
+ * anything derived from `now`: this slot is never meant to be open, and a time
+ * computed from the clock is a time that can accidentally be.
+ */
+const UPCOMING_FIRST_SESSION = addDays(TODAY, 4);
+const UPCOMING_START_DATE = UPCOMING_FIRST_SESSION;
+const UPCOMING_END_DATE = addDays(TODAY, 60);
+const UPCOMING_SLOT_START_TIME = "17:00:00";
+const UPCOMING_SLOT_MINUTES = 60;
+
 // ---------------------------------------------------------------------------
 // The written-up history. Markdown, because the session report and gedu note
 // are markdown-backed fields and a capture wants to see them rendered.
@@ -214,7 +244,11 @@ async function main() {
   console.log(`\nPage-capture seed → staging (${ref})`);
   console.log(`Run id: ${RUN_ID}`);
   console.log(`Today in ${TIMEZONE}: ${TODAY} (weekday ${weekdayOf(TODAY)})`);
-  console.log(`Live session window opens ${SLOT_START_TIME} for ${LIVE_MINUTES} min\n`);
+  console.log(`Live session window opens ${SLOT_START_TIME} for ${LIVE_MINUTES} min`);
+  console.log(
+    `Upcoming club's first session: ${UPCOMING_FIRST_SESSION} ` +
+      `(weekday ${weekdayOf(UPCOMING_FIRST_SESSION)}) at ${UPCOMING_SLOT_START_TIME}\n`,
+  );
 
   try {
     // -- People ------------------------------------------------------------
@@ -267,7 +301,10 @@ async function main() {
         p_date_of_birth: g.dob,
         p_minecraft_username: `${g.firstName}Builds`,
       });
-      gamers.push({ id, email, firstName: g.firstName });
+      // `participationIds` is keyed by product id: a gamer now holds a seat on
+      // every club this seed builds, and the routes below need to name a
+      // specific one of them.
+      gamers.push({ id, email, firstName: g.firstName, participationIds: {} });
       log.ok(`gamer   ${g.firstName} (${email})`);
     }
 
@@ -295,93 +332,90 @@ async function main() {
     await asAdmin.rpc("set_gedu_criminal_record_check", { p_gedu_id: gedu.id, p_passed: true });
     log.ok("gedu certified + criminal record check recorded");
 
-    // -- The product --------------------------------------------------------
-    log.step("Creating the temp club");
-    const productName = `${TAG} — redstone club`;
-    const productId = await asAdmin.rpc("create_product", {
-      p_product_type: "consumer_club",
-      // `free` on purpose, and it does two things: `admin_enroll_participant`
-      // refuses a *paid* consumer club outright (its seat cannot exist without
-      // a Stripe subscription), and a no-charge product with exactly one group
-      // places its enrolments automatically — so the roster fills with no
-      // second call.
-      p_billing_mode: "free",
-      p_translations: [
-        {
-          locale: "en",
-          name: productName,
-          short_description: "A temporary club created for a screenshot pass. Safe to delete.",
-          long_description:
-            "This club exists only so a capture run has a realistic page to " +
-            "photograph: a written-up history, a live session and a roster.\n\n" +
-            "It is created and destroyed by `scripts/page-capture`.",
-        },
-        {
-          locale: "fi",
-          name: productName,
-          short_description: "Väliaikainen kerho kuvakaappauksia varten. Voi poistaa.",
-          long_description: "Tämän kerhon luo ja poistaa `scripts/page-capture`.",
-        },
-      ],
-      p_topic: "minecraft_java",
-      p_spoken_language_code: "en",
-      p_is_remote: true,
-      p_timezone: TIMEZONE,
-      p_registration_opens_at: new Date(Date.now() - 30 * 86_400_000).toISOString(),
-      p_for_gamers: true,
-      p_for_parents: false,
-      p_min_age: 7,
-      p_max_age: 16,
-      p_status: "running",
-      p_is_visible: true,
-      p_waitlist_enabled: true,
-      p_start_date: START_DATE,
-      p_end_date: END_DATE,
-      p_seat_count: 12,
-      p_schedule_slots: [
+    // -- The live club ------------------------------------------------------
+    log.step("Creating the live club");
+    const live = await createClub(asAdmin, {
+      name: `${TAG} — redstone club`,
+      summary: "A temporary club created for a screenshot pass. Safe to delete.",
+      detail:
+        "This club exists only so a capture run has a realistic page to " +
+        "photograph: a written-up history, a live session and a roster.\n\n" +
+        "It is created and destroyed by `scripts/page-capture`.",
+      // Stored `running`, because it demonstrably is: the history behind it is
+      // real and today's session is under way.
+      status: "running",
+      startDate: START_DATE,
+      endDate: END_DATE,
+      slots: [
         {
           weekday: weekdayOf(TODAY),
           start_time: SLOT_START_TIME,
           duration_minutes: LIVE_MINUTES,
         },
       ],
+      groupSuffix: "group A",
+      geduId: gedu.id,
     });
-    SEEDED.productIds.push(productId);
-    log.ok(`product ${productId}`);
+    const { productId, groupId, productName } = live;
 
-    // -- The group, with the gedu on it -------------------------------------
-    const groupResult = await asAdmin.rpc("apply_group_changes", {
-      p_product_id: productId,
-      p_added_groups: [{ tempId: "g1", name: `${TAG} group A`, geduIds: [gedu.id] }],
+    // -- The upcoming club --------------------------------------------------
+    //
+    // Same family, same gedu, same two gamers — the difference is entirely in
+    // the calendar. Stored `pending` rather than `running` because that is what
+    // it is: `effectiveStatus` upgrades a pending product to running of its own
+    // accord once the start date arrives, so writing `running` on a club that
+    // has not started would be a state the product itself would never produce.
+    log.step("Creating the upcoming club");
+    const upcoming = await createClub(asAdmin, {
+      name: `${TAG} — creative club`,
+      summary: "A temporary club that has not started yet. Safe to delete.",
+      detail:
+        "This club exists so a capture run has a second card beside the live " +
+        "one: a club a family is signed up for whose first session is still " +
+        "ahead of them.\n\n" +
+        "It is created and destroyed by `scripts/page-capture`.",
+      status: "pending",
+      startDate: UPCOMING_START_DATE,
+      endDate: UPCOMING_END_DATE,
+      slots: [
+        {
+          weekday: weekdayOf(UPCOMING_FIRST_SESSION),
+          start_time: UPCOMING_SLOT_START_TIME,
+          duration_minutes: UPCOMING_SLOT_MINUTES,
+        },
+      ],
+      groupSuffix: "group B",
+      geduId: gedu.id,
     });
-    const groupId = groupResult.tempMap.g1;
-    log.ok(`group ${groupId} (gedu assigned)`);
 
     // -- Enrolment ----------------------------------------------------------
+    //
+    // Both gamers into both clubs. The dashboards are the reason the second
+    // club exists, and a dashboard only shows a club the child has a seat on.
     log.step("Enrolling the gamers");
-    for (const gamer of gamers) {
-      const result = await asAdmin.rpc("admin_enroll_participant", {
-        p_product_id: productId,
-        p_participant_id: gamer.id,
-      });
-      gamer.participationId = result.participation_id ?? result.id ?? null;
-      log.ok(`${gamer.firstName} → participation ${gamer.participationId ?? "(id not returned)"}`);
-    }
+    for (const club of [live, upcoming]) {
+      for (const gamer of gamers) {
+        await asAdmin.rpc("admin_enroll_participant", {
+          p_product_id: club.productId,
+          p_participant_id: gamer.id,
+        });
+      }
 
-    // The RPC's return shape is not something to guess at. Read the rows back
-    // and take the ids from the table, so a changed payload key surfaces as a
-    // missing route rather than a silently wrong one.
-    const participations = await asAdmin.select(
-      "participations",
-      `product_id=eq.${productId}&select=id,participant_id,group_id,status`,
-    );
-    for (const gamer of gamers) {
-      const row = participations.find((p) => p.participant_id === gamer.id);
-      if (!row) throw new Error(`no participation row for ${gamer.firstName}`);
-      if (!row.group_id) throw new Error(`${gamer.firstName} was not placed in a group`);
-      gamer.participationId = row.id;
+      // The RPC's return shape is not something to guess at. Read the rows back
+      // and take the ids from the table, so a changed payload key surfaces as a
+      // missing route rather than a silently wrong one.
+      const participations = await asAdmin.select(
+        "participations",
+        `product_id=eq.${club.productId}&select=id,participant_id,group_id,status`,
+      );
+      for (const gamer of gamers) {
+        const row = participations.find((p) => p.participant_id === gamer.id);
+        if (!row) throw new Error(`no participation row for ${gamer.firstName} on ${club.productName}`);
+        if (!row.group_id) throw new Error(`${gamer.firstName} was not placed in a group on ${club.productName}`);
+        gamer.participationIds[club.productId] = row.id;
+      }
+      log.ok(`${club.productName}: ${participations.length} participations, all placed`);
     }
-    log.ok(`${participations.length} participations, all placed`);
 
     // -- The written-up history ---------------------------------------------
     //
@@ -458,15 +492,35 @@ async function main() {
           id: g.id,
           email: g.email,
           firstName: g.firstName,
-          participationId: g.participationId,
+          /** The seat on the live club — the one every existing route names. */
+          participationId: g.participationIds[productId],
+          upcomingParticipationId: g.participationIds[upcoming.productId],
         })),
       },
+      /**
+       * The live club. Left under the singular key it has always had rather
+       * than folded into a list beside the second one: every route below and
+       * every page entry that resolves one names *this* club, and renaming the
+       * key would make a shot from this run incomparable with one from the
+       * last for no gain.
+       */
       product: {
         id: productId,
         name: productName,
         type: "consumer_club",
         groupId,
         adminSection: "consumer-clubs",
+      },
+      /** The second club, which has not started. No sessions, nothing written. */
+      upcomingProduct: {
+        id: upcoming.productId,
+        name: upcoming.productName,
+        type: "consumer_club",
+        groupId: upcoming.groupId,
+        adminSection: "consumer-clubs",
+        firstSessionDate: UPCOMING_FIRST_SESSION,
+        slotStartTime: UPCOMING_SLOT_START_TIME,
+        durationMinutes: UPCOMING_SLOT_MINUTES,
       },
       sessions: {
         slotStartTime: SLOT_START_TIME,
@@ -478,15 +532,24 @@ async function main() {
       },
       routes: {
         publicProduct: `/shop/${productId}`,
-        parentProduct: `/parent/clubs/${gamers[0].participationId}`,
-        parentProductSibling: `/parent/clubs/${gamers[1].participationId}`,
+        parentProduct: `/parent/clubs/${gamers[0].participationIds[productId]}`,
+        parentProductSibling: `/parent/clubs/${gamers[1].participationIds[productId]}`,
         parentGamer: `/parent/gamers/${gamers[0].id}`,
-        gamerProduct: `/gamer/clubs/${gamers[0].participationId}`,
+        gamerProduct: `/gamer/clubs/${gamers[0].participationIds[productId]}`,
         geduProduct: `/gedu/clubs/${productId}`,
         adminProduct: `/admin/consumer-clubs/${productId}`,
         adminProductGroup: `/admin/consumer-clubs/${productId}/groups/${groupId}`,
         adminUser: `/admin/users/${gedu.id}`,
         voiceRoom: `/voice/group/${groupId}`,
+        // The upcoming club. Not photographed by the default page list — the
+        // second club earns its keep as a *card* on the dashboards, and its own
+        // pages are the same pages the live club's already are, minus the
+        // history. These are here for a human following the fixture by hand.
+        upcomingPublicProduct: `/shop/${upcoming.productId}`,
+        upcomingParentProduct: `/parent/clubs/${gamers[0].participationIds[upcoming.productId]}`,
+        upcomingGamerProduct: `/gamer/clubs/${gamers[0].participationIds[upcoming.productId]}`,
+        upcomingGeduProduct: `/gedu/clubs/${upcoming.productId}`,
+        upcomingAdminProduct: `/admin/consumer-clubs/${upcoming.productId}`,
       },
       /** Everything cleanup deletes, listed rather than rediscovered. */
       cleanup: {
@@ -500,20 +563,93 @@ async function main() {
     log.step("Done");
     console.log(`  state → ${OUT}`);
     console.log(`  parent login: ${parent.email} / ${PASSWORD}  (PIN ${PIN})`);
+    console.log(`  live club:     ${productName}`);
+    console.log(`  upcoming club: ${upcoming.productName} (first session ${UPCOMING_FIRST_SESSION})`);
     console.log(`  live session runs until ~${state.sessions.liveEndsAt}`);
     console.log(`\n  Next: node scripts/page-capture/capture.mjs --base-url http://localhost:3002`);
     console.log(`  Then: node scripts/page-capture/cleanup.mjs\n`);
   } catch (err) {
     console.error(`\n  Seed failed: ${err.message}`);
-    if (created.authUsers.length > 0 || created.productIds.length > 0) {
+    if (SEEDED.authUserIds.length > 0 || SEEDED.productIds.length > 0) {
       console.error(
-        `\n  Partial fleet left behind. Auth users: ${created.authUsers.join(", ") || "none"}; ` +
-          `products: ${created.productIds.join(", ") || "none"}.\n` +
-          `  Delete them with:  node scripts/page-capture/cleanup.mjs --users ${created.authUsers.join(",")} --products ${created.productIds.join(",")}\n`,
+        `\n  Partial fleet left behind. Auth users: ${SEEDED.authUserIds.join(", ") || "none"}; ` +
+          `products: ${SEEDED.productIds.join(", ") || "none"}.\n` +
+          `  Delete them with:  node scripts/page-capture/cleanup.mjs --users ${SEEDED.authUserIds.join(",")} --products ${SEEDED.productIds.join(",")}\n`,
       );
     }
     process.exitCode = 1;
   }
+}
+
+/**
+ * Create one temp club, give it a single group and put the gedu on it.
+ *
+ * Both clubs this seed builds are the same product: free, remote, visible, for
+ * gamers, one group. They differ in their name, their lifecycle status and
+ * their calendar, and those are exactly the arguments — everything else is
+ * stated once here so the two cannot drift apart in some detail nobody meant
+ * to vary, which is the whole risk of a fixture that exists to be *compared*
+ * against itself.
+ *
+ * The product id is recorded on `SEEDED` the moment it exists, before the group
+ * write that follows it, so a failure in between still leaves a fleet the
+ * recovery command can name.
+ *
+ * Two properties are load-bearing and neither is obvious:
+ *
+ * - **`free`** does two things. `admin_enroll_participant` refuses a *paid*
+ *   consumer club outright (its seat cannot exist without a Stripe
+ *   subscription), and a no-charge product with exactly one group places its
+ *   enrolments automatically — so the roster fills with no second call.
+ * - **one group**, for the same reason: a product with two would drop every
+ *   enrolment into the unassigned inbox instead of a roster.
+ */
+async function createClub(asAdmin, { name, summary, detail, status, startDate, endDate, slots, groupSuffix, geduId }) {
+  const productId = await asAdmin.rpc("create_product", {
+    p_product_type: "consumer_club",
+    p_billing_mode: "free",
+    p_translations: [
+      {
+        locale: "en",
+        name,
+        short_description: summary,
+        long_description: detail,
+      },
+      {
+        locale: "fi",
+        name,
+        short_description: "Väliaikainen kerho kuvakaappauksia varten. Voi poistaa.",
+        long_description: "Tämän kerhon luo ja poistaa `scripts/page-capture`.",
+      },
+    ],
+    p_topic: "minecraft_java",
+    p_spoken_language_code: "en",
+    p_is_remote: true,
+    p_timezone: TIMEZONE,
+    p_registration_opens_at: new Date(Date.now() - 30 * 86_400_000).toISOString(),
+    p_for_gamers: true,
+    p_for_parents: false,
+    p_min_age: 7,
+    p_max_age: 16,
+    p_status: status,
+    p_is_visible: true,
+    p_waitlist_enabled: true,
+    p_start_date: startDate,
+    p_end_date: endDate,
+    p_seat_count: 12,
+    p_schedule_slots: slots,
+  });
+  SEEDED.productIds.push(productId);
+  log.ok(`product ${productId} — ${name}`);
+
+  const groupResult = await asAdmin.rpc("apply_group_changes", {
+    p_product_id: productId,
+    p_added_groups: [{ tempId: "g1", name: `${TAG} ${groupSuffix}`, geduIds: [geduId] }],
+  });
+  const groupId = groupResult.tempMap.g1;
+  log.ok(`group ${groupId} (gedu assigned)`);
+
+  return { productId, groupId, productName: name };
 }
 
 /** Create the auth user and record it, so a mid-run failure can name what it left. */

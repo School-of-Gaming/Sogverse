@@ -27,7 +27,7 @@ same thing as the second form with one command instead of two.
 
 | Script | What it does |
 |---|---|
-| `seed.mjs` | Builds the fleet and the temp club on staging. Writes `seed-state.json`. |
+| `seed.mjs` | Builds the fleet and the two temp clubs on staging. Writes `seed-state.json`. |
 | `capture.mjs` | Reads `seed-state.json`, drives Playwright, writes PNGs + `manifest.json`. |
 | `cleanup.mjs` | Deletes everything one seed made, then reads the database back to prove it. |
 | `serve.mjs` | Starts a dev server, if you do not already have one. |
@@ -49,7 +49,7 @@ that happen near a family's real data is a flag someone eventually types.
 
 ## What the seed builds
 
-Five accounts and one club, all prefixed `TEMP-capture-<runId>` so repeated runs
+Five accounts and two clubs, all prefixed `TEMP-capture-<runId>` so repeated runs
 never collide:
 
 - a **parent**, with a PIN already set,
@@ -57,11 +57,27 @@ never collide:
   are entered by switching down from the parent, exactly as a family does it),
 - a certified **gedu**, with a criminal-record check recorded,
 - an **admin**,
-- a free **consumer club**, remote, visible, with one group the gedu is assigned
-  to and both gamers placed in it.
+- two free **consumer clubs**, remote, visible, each with one group the gedu is
+  assigned to and both gamers placed in it.
 
-The club's group carries a written-up history, which is the part that makes the
-family and gedu pages worth photographing at all:
+The two clubs are the same product in two different moments, because a family
+dashboard shows one card per enrolment and the interesting picture is two cards
+beside each other rather than one at a time:
+
+| Club | Stored status | Its calendar |
+|---|---|---|
+| **live** — `… — redstone club` | `running` | started 5 weeks ago, runs 6 more; a session is under way *right now* |
+| **upcoming** — `… — creative club` | `pending` | starts in 4 days and runs 8 weeks; nothing behind it, nothing written on it |
+
+The upcoming club is stored `pending` rather than `running` because that is what
+it is: the effective status a family sees is derived, and it upgrades itself to
+running the day the club starts. Writing `running` on a club that has not begun
+would be a state the product itself could never produce.
+
+The **live** club's group carries a written-up history, which is the part that
+makes the family and gedu pages worth photographing at all. The upcoming club
+has none by design — an enrolment with nothing behind it yet is a real state,
+and the card that shows it is the reason the club exists:
 
 | Session | What is on it |
 |---|---|
@@ -70,6 +86,11 @@ family and gedu pages worth photographing at all:
 | 1 week ago | the same |
 | **today, in progress** | report + attendance, **and the voice room is joinable** |
 | in 7 days | nothing — an unwritten upcoming session is what one really looks like |
+
+The default page list photographs the **live** club's own pages and both
+dashboards. The upcoming club's product, workspace and admin pages are the same
+pages minus the history, so they are not shot — `seed-state.json` names them
+under `routes.upcoming*` for anyone following the fixture by hand.
 
 ### How "in progress right now" works
 
@@ -80,6 +101,14 @@ seed writes **one** slot, on today's weekday, starting a few minutes ago
 session is therefore under way while the tool runs, and every other session —
 7, 14, 21 days back, 7 days forward — lands on that same weekday and reuses that
 same slot.
+
+The upcoming club is the same mechanism read backwards. Its one slot sits on the
+weekday of a date four days out, at a fixed after-school hour, and its start date
+*is* that date — so the earliest session the schedule can materialize is its
+first one, and there is nothing before it. Four days is not a multiple of seven,
+so that weekday cannot be today's, and its clock face is a constant rather than
+anything derived from `now`: a slot that is never meant to be open should not be
+computed from the time of day it might accidentally be open at.
 
 The practical consequence: **the live session expires.** With the defaults you
 have about 75 minutes from the seed to capture the voice room. Past that, re-seed
@@ -101,7 +130,7 @@ The service-role key does four things, each because nothing else can:
   `docs/runbooks/create-admin-account.md`; `create_gamer` and `register_gedu`
   are the only promotion RPCs the database has, and neither makes an admin,
 - stamp `email_verified_at`,
-- delete the product at cleanup — there is no `delete_product`.
+- delete the products at cleanup — there is no `delete_product`.
 
 One deliberate departure from that runbook: these accounts are created **with a
 password**. The runbook has a real admin set their own through the reset mail,
@@ -147,7 +176,12 @@ A page that fails is a **warning in the manifest**, never the end of the run.
 
 ### The voice room
 
-`voice-room-gedu` opens the live session's room and shoots the joined call.
+`voice-room-gedu` and `voice-room-gamer` open the live session's room and shoot
+the joined call. It is one URL and two viewers: `/voice/group/[id]` does no
+membership check of its own, so the same page renders the gedu's moderator
+controls and the child's participant view, and a design pass over the room needs
+both.
+
 Chromium is launched with `--use-fake-ui-for-media-stream` and
 `--use-fake-device-for-media-stream` (always, not just for that page — they are
 inert elsewhere, and a room that silently fails behind a permission prompt is a

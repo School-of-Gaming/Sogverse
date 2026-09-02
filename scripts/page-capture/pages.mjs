@@ -39,7 +39,7 @@ export const PAGES = [
     slug: "public-product",
     route: (s) => s.routes.publicProduct,
     as: "public",
-    notes: "The temp club's public page.",
+    notes: "The live temp club's public page.",
   },
   { slug: "public-about", route: "/about", as: "public" },
   { slug: "public-roblox", route: "/roblox", as: "public" },
@@ -57,12 +57,22 @@ export const PAGES = [
     as: "parent",
     notes: "PIN-exempt, so it is reached without unlocking.",
   },
-  { slug: "parent-dashboard", route: "/parent", as: "parent" },
+  {
+    slug: "parent-dashboard",
+    route: "/parent",
+    as: "parent",
+    notes:
+      "Two cards per child: the live club, ringed and mid-session, and the " +
+      "upcoming one whose first session is days away.",
+  },
   {
     slug: "parent-club",
     route: (s) => s.routes.parentProduct,
     as: "parent",
-    notes: "The family product page: past sessions with the gedu's reports, plus the live one.",
+    notes:
+      "The family product page for the LIVE club: past sessions with the " +
+      "gedu's reports, plus the one in progress. The upcoming club's copy of " +
+      "this page is the same page with an empty feed, so it is not shot.",
   },
   {
     slug: "parent-gamer-profile",
@@ -73,11 +83,17 @@ export const PAGES = [
   { slug: "parent-settings", route: "/settings", as: "parent" },
 
   // -- Gamer ----------------------------------------------------------------
-  { slug: "gamer-dashboard", route: "/gamer", as: "gamer" },
+  {
+    slug: "gamer-dashboard",
+    route: "/gamer",
+    as: "gamer",
+    notes: "The child's copy of the same two cards — live club and upcoming club.",
+  },
   {
     slug: "gamer-club",
     route: (s) => s.routes.gamerProduct,
     as: "gamer",
+    notes: "The LIVE club, as the child sees it.",
   },
 
   // -- Gedu -----------------------------------------------------------------
@@ -87,8 +103,8 @@ export const PAGES = [
     route: (s) => s.routes.geduProduct,
     as: "gedu",
     notes:
-      "The group workspace and its session feed — the write-up surface. " +
-      "The seeded history is what makes this page worth photographing.",
+      "The LIVE club's group workspace and its session feed — the write-up " +
+      "surface. The seeded history is what makes this page worth photographing.",
   },
   { slug: "gedu-contract", route: "/gedu/contract", as: "gedu" },
 
@@ -126,6 +142,13 @@ export const PAGES = [
   //
   // Viewport-mode rather than full-page: the room is a fixed-height app shell,
   // and a full-page shot of one would add nothing but empty ground below it.
+  //
+  // One route, two viewers, and the difference between the shots is the whole
+  // reason both are here: `/voice/group/[id]` does no membership check of its
+  // own — the token endpoint decides who gets in and who gets moderator rights
+  // — so the same URL renders the moderator's controls for the gedu and the
+  // participant's for the child. A design pass over the room has to see both,
+  // and neither costs more than the other.
   {
     slug: "voice-room-gedu",
     route: (s) => s.routes.voiceRoom,
@@ -133,5 +156,15 @@ export const PAGES = [
     fullPage: false,
     voice: true,
     notes: "Joined room, moderator view. Depends on the live session window and Daily keys.",
+  },
+  {
+    slug: "voice-room-gamer",
+    route: (s) => s.routes.voiceRoom,
+    as: "gamer",
+    fullPage: false,
+    voice: true,
+    notes:
+      "The same live room as the child sees it — participant, not moderator. " +
+      "A family reaches it from the live card on their dashboard.",
   },
 ];
