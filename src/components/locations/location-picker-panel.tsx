@@ -506,10 +506,15 @@ function PickRow({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm",
+        // The selection treatment the app uses everywhere: a full-value amber
+        // edge over a neutral lift, so the picked row reads as picked *as a
+        // whole* rather than only in its ink. The unselected edge is
+        // transparent rather than absent, so selecting a row cannot shift the
+        // list under the cursor.
+        "flex w-full items-center gap-2 rounded-md border px-2 py-1.5 text-left text-sm",
         selected
-          ? "bg-muted text-primary"
-          : "hover:bg-accent hover:text-accent-foreground",
+          ? "border-primary bg-accent"
+          : "border-transparent hover:bg-accent hover:text-accent-foreground",
       )}
     >
       <RowLabel name={name} detail={detail} />

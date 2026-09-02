@@ -45,7 +45,10 @@ export function NeedsAttentionPanel({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-xl">{t("title")}</CardTitle>
-        <span className="rounded-full bg-muted px-3 py-1 text-sm font-semibold text-warning">
+        {/* A chip whose ground is a neutral lift has only its edge and its ink
+            to carry the tone, so the warning family arrives at full value on
+            both — the same edge the queue's own error blocks wear. */}
+        <span className="rounded-full border border-warning bg-muted px-3 py-1 text-sm font-semibold text-warning">
           {products.length}
         </span>
       </CardHeader>

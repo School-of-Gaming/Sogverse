@@ -56,7 +56,10 @@ export function TopicInfoCard({ topic }: { topic: ProductTopic }) {
             {t("topicInfo.heading", { name: meta.label })}
           </h2>
           {info.pegi !== undefined && (
-            <Badge variant="secondary" className="shrink-0">
+            /* A PEGI rating answers "is this for my child?" — eligibility is
+               wit's word, the same colour this question wears on the WhoChip
+               and the region-lock strip. */
+            <Badge variant="secondary" className="shrink-0 bg-muted text-yty-wit-soft">
               {t("topicInfo.pegi", { age: info.pegi })}
             </Badge>
           )}

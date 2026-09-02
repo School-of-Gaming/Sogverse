@@ -93,6 +93,14 @@ const TONES = {
     "gap-1 border-yty-glow-strong bg-muted px-2 py-0 text-[10px] uppercase tracking-wide text-yty-glow-soft",
   /** The awaiting-placement glyph in the footer. */
   awaitingGlyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
+  /**
+   * The schedule row's glyph — time ahead is wit's word, in the same class the
+   * family product page's masthead draws the same fact in. The glyph carries
+   * the family and the row's prose stays muted: that is the masthead's own
+   * split, and it is what keeps a card whose *content* is a date from reading
+   * as a coloured paragraph.
+   */
+  scheduleGlyph: "mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft",
 } as const;
 
 /**
@@ -628,7 +636,20 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               endedOn !== null && "text-muted-foreground/70",
             )}
           >
-            <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            {/* Time ahead is wit's word: the glyph carries the family and the
+                prose stays muted, which is exactly how the family product
+                page's masthead draws the same fact. A finished run is the one
+                card where it does not — the whole row steps back there, and a
+                brand glyph at authored value would be the loudest thing left on
+                it — so the glyph takes the row's quiet grey rather than a dimmed
+                wit, which the shading rule forbids outright. */}
+            <CalendarClock
+              className={cn(
+                TONES.scheduleGlyph,
+                endedOn !== null && "text-muted-foreground/70",
+              )}
+              aria-hidden
+            />
             <span className="min-w-0">
               {scheduleLines.length > 0 ? (
                 scheduleLines.map((line) => (

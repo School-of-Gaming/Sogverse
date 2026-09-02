@@ -164,13 +164,15 @@ function TagChip({
 /**
  * Who may hold the seat, or how old they should be — the exclusive pair. The
  * caller resolves which of the two it is; this only guarantees that both wear
- * the same secondary fill wherever they appear, so the corner keeps meaning one
- * thing.
+ * the same fill wherever they appear, so the corner keeps meaning one thing.
  */
 function WhoChip({ label, className }: { label: string; className?: string }) {
   return (
     <MediaChip
-      className={cn("bg-secondary text-secondary-foreground", className)}
+      // Eligibility is wit's word — the same question the region-lock strip
+      // answers in wit. Label tier: neutral ground, family ink (wit ink is
+      // always soft).
+      className={cn("bg-muted text-yty-wit-soft", className)}
       icon={UserRound}
     >
       {label}

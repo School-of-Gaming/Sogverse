@@ -8,14 +8,14 @@ import type { AttendanceMark } from "./types";
  * arrived at the same decision independently, which is the arrangement that
  * only stays consistent until somebody edits one of them.
  *
- * **"Present" is a small positive; "absent" is muted and neutral, never
- * destructive.** The reason is in the data, not in the design: the attendance
- * enum is currently `present | absent` and nothing more, so an absence a parent
- * arranged in advance (a holiday, an appointment, an ill child kept at home) is
- * stored identically to a child who simply never turned up. A red or
- * warning-toned mark would have the product editorialise a distinction it cannot
- * actually make — and on the family surface it would do so to the parent who
- * arranged the absence themselves.
+ * **"Present" is a small positive; "absent" is warning-toned, never
+ * destructive.** The warning stops short of red because of the data, not the
+ * design: the attendance enum is currently `present | absent` and nothing more,
+ * so an absence a parent arranged in advance (a holiday, an appointment, an ill
+ * child kept at home) is stored identically to a child who simply never turned
+ * up. A destructive mark would have the product editorialise a distinction it
+ * cannot actually make — and on the family surface it would do so to the parent
+ * who arranged the absence themselves.
  *
  * **`unmarked` is not a third kind of answer**, it is the absence of one: a gap
  * in the register, which the gedu's sheet shows as still asking for something
@@ -50,7 +50,15 @@ export const ATTENDANCE_TONE: Record<AttendanceMarkState, AttendanceTone> = {
   // most of the chip's area and is what makes the mark readable at a glance. A
   // low-alpha edge is a hue mixed toward the page, which is neither the family
   // colour nor a neutral.
-  present: { text: "text-success", border: "border-success" },
+  //
+  // The ink is the other half of the glow idiom the live tag beside these marks
+  // already draws on both feeds — full-value edge, soft ink — and it is the ink
+  // the approved deck drew present in. The edge keeps the *semantic* token
+  // rather than naming glow directly: `--success` converged onto glow, so
+  // `border-success` is glow-strong at the same value, and saying "success" is
+  // what makes a future retune of that status reach this mark. Soft ink also
+  // buys contrast on the ground these chips sit on: 7.14:1, from 5.35:1.
+  present: { text: "text-yty-glow-soft", border: "border-success" },
   // Warning, not muted: absent and unmarked sat one shade of grey apart and
   // could not be told apart at a glance (owner ruling, 2026-08-25). Warning is
   // still deliberately short of destructive — an absence is a fact to notice,

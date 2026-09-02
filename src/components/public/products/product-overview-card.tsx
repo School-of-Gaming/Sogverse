@@ -173,6 +173,9 @@ export function ProductOverviewCard({
         >
           <DetailRow
             icon={Clock}
+            // Time ahead is wit's word — the same glyph the family product
+            // page's masthead schedule wears. Wit ink is always soft.
+            iconClassName="text-yty-wit-soft"
             label={t("info.schedule")}
             railFrom2xl={railFrom2xl}
           >
@@ -248,20 +251,29 @@ export function ProductOverviewCard({
  */
 function DetailRow({
   icon: Icon,
+  iconClassName,
   label,
   children,
   railFrom2xl,
 }: {
   icon: React.ComponentType<{ className?: string }>;
+  /**
+   * Overrides the glyph's default muted ink, for a fact whose family owns a
+   * colour. Ink only by convention: the sizing and the two positions stay in
+   * here, so a call site cannot change the row's geometry.
+   */
+  iconClassName?: string;
   label: string;
   children: React.ReactNode;
   railFrom2xl?: boolean;
 }) {
+  const tone = iconClassName ?? "text-muted-foreground";
   return (
     <div className={cn("flex gap-3", railFrom2xl && "2xl:block")}>
       <Icon
         className={cn(
-          "mt-0.5 h-4 w-4 shrink-0 text-muted-foreground",
+          "mt-0.5 h-4 w-4 shrink-0",
+          tone,
           railFrom2xl && "2xl:mt-0 2xl:hidden",
         )}
       />
@@ -274,7 +286,7 @@ function DetailRow({
           )}
         >
           {railFrom2xl === true && (
-            <Icon className="hidden h-3 w-3 shrink-0 2xl:block" />
+            <Icon className={cn("hidden h-3 w-3 shrink-0 2xl:block", tone)} />
           )}
           {label}
         </dt>

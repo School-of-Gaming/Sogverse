@@ -34,12 +34,22 @@ import {
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
 import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@/types";
 
-/** Status → semantic badge classes (no raw Tailwind colors — see CLAUDE.md). */
+/**
+ * A participation's place in its lifecycle → badge classes, exhaustively.
+ *
+ * One hue stepped by construct, not a family per step: a lifecycle is one fact
+ * moving, so a colour change between steps would read as a change of *kind*.
+ * Amber is the hue because participating is the act the surface is about — the
+ * pre-active steps take the label tier (neutral ground, full-value amber ink),
+ * active takes the act tier (solid fill, dark ink), and the finished step drops
+ * out of the hue entirely. The two pre-active steps share a treatment
+ * deliberately; their labels are what tell them apart.
+ */
 const STATUS_BADGE_STYLES: Record<ParticipationStatus, string> = {
-  active: "bg-success text-success-foreground",
-  waitlisted: "bg-warning text-warning-foreground",
-  reserving: "bg-muted text-muted-foreground",
-  completed: "bg-secondary text-secondary-foreground",
+  reserving: "bg-muted text-primary",
+  waitlisted: "bg-muted text-primary",
+  active: "bg-primary text-primary-foreground",
+  completed: "bg-muted text-muted-foreground",
 };
 
 /**

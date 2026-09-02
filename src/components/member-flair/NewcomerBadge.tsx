@@ -43,11 +43,11 @@ export function NewcomerBadge({
     <span
       title={t("newcomerTooltip", { days })}
       className={cn(
-        // A badge that has a ground carries its tone in the ground and the ink,
-        // so the edge is neutral furniture; and the ground itself is a neutral
-        // token, because a brand hue mixed down into a surface is no longer
-        // that hue.
-        "inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-muted px-1.5 py-0 text-[10px] font-medium leading-4 text-success",
+        // The ground is a neutral lift, because a brand hue mixed down into a
+        // surface is no longer that hue — which leaves nothing but the ink to
+        // carry the tone, so the edge takes the family at full value. Glow is
+        // the family: a newcomer is a member growing into a group.
+        "inline-flex shrink-0 items-center gap-1 rounded-full border border-success bg-muted px-1.5 py-0 text-[10px] font-medium leading-4 text-success",
         className,
       )}
     >

@@ -320,6 +320,72 @@ or sequenced, then P7 last of the code packages. P8 runs last (its guards assert
 the end state). Then the branch-level code review (worktree-flow phase 4, delegated),
 then phase 5 landing on the owner's explicit word only.
 
+### P9 — The grammar dispersal (2026-09-02, owner-ordered after the wiring review)
+
+The spec above had a blind spot it could not see by construction: it captured the
+corrections a grep could enumerate (alpha-shaded values) and the whole-page scene
+promotions, but not constructs sitting at a **legal value with the wrong meaning** —
+invisible to any value census, because a violet chip is a legal violet and wrong
+only for what it says. Those decisions lived on the deleted review decks; their
+rulings survive in the record. A forensic audit (approved drafts at the review-close
+commit vs the shipped branch, cross-checked against the capture run's pixels)
+built the gap list; the record's directions 10, 21, 25, 26, 28, 32 and 36 supplied
+every destination. Converted, each with a comment naming the meaning:
+
+- **Violet dispersal** (violet = the world, nothing else): the WhoChip audience
+  chip and the PEGI badge went to the eligibility label tier (`bg-muted` +
+  wit-soft ink — the same question the region-lock strip already answers in wit);
+  the WhatsApp read receipt went wit (a receipt is information); Badge's
+  `secondary` variant retired its violet fill for the neutral label tier
+  (`bg-muted text-foreground`), mirroring the button recipe's ruled replacement.
+  Surviving violet: the three display-title chunks (home, /roblox, call-ended),
+  the sanctioned gradient tails, and the style guide's token swatches — all world
+  or documentation.
+- **The participation lifecycle joined the ruled one-hue stepping** (admin user
+  page): active = solid amber, pre-active steps muted + amber ink, completed
+  muted — mirroring the product status chip. The status-map enumeration found no
+  other unconverged lifecycle; the gedu fee divergence the census once flagged
+  had already healed (both sites destructive for a missing fee).
+- **The Yty accent tile's ruled full-value edge reached its other two render
+  sites** (/about element cards, the voice zone tiles — the zone presentation
+  type gained a border slot); the home page already had it. The tint guard's
+  justification comment now describes all three truthfully.
+- **Attendance "present" ink stepped to glow-soft** over its full-value `success`
+  edge — the glow idiom the live tag beside it already wears on both feeds, the
+  form the approved deck exhibit drew, and a contrast gain (5.35 → 7.14:1); the
+  edge keeps its semantic status name so a future retune reaches it. Absent stays
+  warning (the 2026-08-25 ruling); the tone file's header no longer contradicts
+  its own entries.
+- **Time-is-wit under-sweep**: the enrollment card's schedule glyph and the
+  public product overview's Schedule glyph took wit-soft, matching the family
+  product page's masthead (a finished run's card still dims the glyph with the
+  row — an authored-value wit glyph on a greyed card would out-shout it, and a
+  dimmed wit would violate the shading rule).
+- **Community facts are harmony**: the seat-availability meter's normal fill went
+  harmony-strong (glow is reserved for progress/liveness; the scarce warning
+  state stays — functional urgency, not grammar).
+- **Direction 36 stragglers**: NewcomerBadge took the no-ground branch's
+  `border-success`; the needs-attention count chip gained `border-warning`; the
+  schools StatusPill gained per-state edges; the location picker's selected row
+  took the ruled `border-primary bg-accent` its ~23 siblings already had.
+
+**Escalations left with the owner (P9 applied none of these):** grammar-fill
+button placements — still zero in the app; the delegated usage doctrine needs one
+owner call first (when the grammar word *is* the primary CTA, does the fill
+replace amber, or does the act monopoly win?), and the valor "Book the camp"
+example additionally brushes direction 15's admin-only type-pairing ruling.
+Candidate sites are listed in the wiring report. — The role-colour reinforcement
+sweep (direction 25's standing directive; direction 15 makes the grammar's
+establishment conditional on it) still has no family-facing site: every candidate
+found (gedu chips on the family product page, select-profile tiles, chat sender
+names, the report attribution chip) collides with another ruling or is a visible
+design decision; proposed sites are in the report. — The /roblox closing CTA and
+the /about mission washes were neutralized by the closed sanctioned-keeps list;
+/roblox's is the identical construct to home's kept wash on the other
+first-contact page and was never put to the owner. — The JoinVoiceButton's
+"Opens …" label is the same time fact as the schedule rows and a candidate for
+the wit glyph treatment, left because a button speaks act grammar.
+
 ## Acceptance criteria
 
 - The Yty tokens render the exact brand hues (script-verified round-trip), every consumer

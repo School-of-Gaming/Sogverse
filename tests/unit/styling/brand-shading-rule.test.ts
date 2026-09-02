@@ -110,7 +110,7 @@ const EXEMPT: readonly { file: string; classes: readonly string[]; why: string }
       "bg-yty-valor-strong/10",
       "bg-yty-wit-strong/10",
     ],
-    why: "The Yty accent tile, ruled in full: a tint ground under a full-value family edge and a soft glyph. It is the chip-scale icon-accent exemption in its canonical form — the tint lights one glyph, and the card carrying the tile stays neutral.",
+    why: "The Yty accent tile, ruled in full: a tint ground inside a full-value family edge, under a soft glyph. It is the chip-scale icon-accent exemption in its canonical form, and every consumer of the map draws all three parts — the About element cards and the four Yty voice zones alike. The tint lights one glyph and nothing else: no surface this map feeds washes the ground behind the tile.",
   },
   {
     file: "src/components/home/home-page-body.tsx",

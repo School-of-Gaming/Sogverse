@@ -21,7 +21,7 @@ export interface SeatAvailabilityBarProps {
  *
  * The bar tracks seats *remaining*: an empty club starts full and drains toward
  * empty as it fills — so the visual maps to "how much room is left," not "how
- * full it is." Color escalates with scarcity (green → yellow at ≤2 left). At
+ * full it is." Color escalates with scarcity (harmony → warning at ≤2 left). At
  * zero there's no fill to color, so fullness is communicated by the right-side
  * indicator instead.
  *
@@ -50,9 +50,12 @@ export function SeatAvailabilityBar({
   const isFull = left === 0;
   const pct = seatCount > 0 ? (left / seatCount) * 100 : 0;
 
-  // No red: at 0 left the bar has no fill to color, so scarcity tops out at
-  // yellow (≤2 seats), and fullness is shown by the indicator below instead.
-  const barColor = left <= 2 ? "bg-warning" : "bg-success";
+  // Room in a club is a community fact — how many other children fit — so the
+  // normal state is harmony's. Scarcity is functional urgency rather than
+  // grammar, so it keeps the warning token; and at 0 left there is no fill to
+  // colour, so the escalation tops out there and fullness is shown by the
+  // indicator below instead.
+  const barColor = left <= 2 ? "bg-warning" : "bg-yty-harmony-strong";
 
   const remainingLabel = t("remaining", { count: left, total: seatCount });
 

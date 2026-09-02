@@ -55,7 +55,7 @@ function groupMessagesByDate(messages: WhatsAppMessage[], todayLabel: string, ye
 // pending  → spinner (waiting for Meta to accept)
 // sent     → ✓      (Meta confirmed dispatch)
 // delivered → ✓✓    (reached recipient's phone)
-// read     → ✓✓ purple (recipient opened)
+// read     → ✓✓ wit (recipient opened)
 
 function StatusIndicator({ status }: { status: string }) {
   if (status === WHATSAPP_MESSAGE_STATUS.PENDING) {
@@ -68,7 +68,9 @@ function StatusIndicator({ status }: { status: string }) {
     return <CheckCheck className="h-3 w-3" />;
   }
   if (status === WHATSAPP_MESSAGE_STATUS.READ) {
-    return <CheckCheck className="h-3 w-3 text-secondary" />;
+    // A read receipt is information about the message — wit's word. Wit ink is
+    // always soft.
+    return <CheckCheck className="h-3 w-3 text-yty-wit-soft" />;
   }
   return null;
 }

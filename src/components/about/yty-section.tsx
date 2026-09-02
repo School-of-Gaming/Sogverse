@@ -51,7 +51,13 @@ export function YtySection({ id }: YtySectionProps) {
             <Card key={el.id} className={`border-2 ${el.color.border}`}>
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${el.color.bg}`}>
+                  {/* The ruled accent tile in full: tint ground, full-value
+                      family edge, soft glyph. The edge is the element's own
+                      colour at authored strength (owner, 2026-09-01: "the
+                      border is colored. I want the icon's border to have
+                      color") — the card's 2px family edge above is a separate
+                      construct and says nothing about this one. */}
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-lg border ${el.color.bg} ${el.color.border}`}>
                     <el.icon className={`h-6 w-6 ${el.color.accent}`} />
                   </div>
                   <div>

@@ -164,24 +164,36 @@ export const VOICE_ZONE_ICONS: Record<VoiceZoneIcon, LucideIcon> = {
   sailboat: Sailboat,
 };
 
-/** A custom-zone color, expressed as five literal class strings (never built by
+/** A custom-zone color, expressed as six literal class strings (never built by
  *  string templating, so Tailwind's source scanner can see every utility):
- *  - `tile`  — soft-tint background for the zone-card icon tile (`bg-zone-X/15`)
- *  - `glyph` — the icon color (`text-zone-X`), readable on the dark ground
- *  - `ring`  — the picker's selection ring (`ring-zone-X`)
- *  - `glow`  — the active-zone treatment: the shared `.zone-glow` class (the
- *              inset-shadow geometry, defined once in globals.css) plus an
- *              arbitrary-property class binding this color into `--glow-color`,
- *              so the color spills in from the border and fades toward center
- *  - `solid` — the full-saturation fill (`bg-zone-X`) the picker shows as a
- *              vibrant swatch (the card uses the soft `tile` tint instead) */
+ *  - `tile`   — soft-tint background for the zone-card icon tile (`bg-zone-X/15`)
+ *  - `border` — the icon tile's edge. The Yty zones draw the ruled accent tile
+ *               (tint ground, full-value family edge, soft glyph), so theirs is
+ *               the element's own colour; lobby and the custom palette take the
+ *               neutral `border-border`, because their colour is a moderator's
+ *               label rather than a brand family and a second edge colour per
+ *               zone would compete with the active card's own coloured border
+ *  - `glyph`  — the icon color (`text-zone-X`), readable on the dark ground
+ *  - `ring`   — the picker's selection ring (`ring-zone-X`)
+ *  - `glow`   — the active-zone treatment: the shared `.zone-glow` class (the
+ *               inset-shadow geometry, defined once in globals.css) plus an
+ *               arbitrary-property class binding this color into `--glow-color`,
+ *               so the color spills in from the border and fades toward center
+ *  - `solid`  — the full-saturation fill (`bg-zone-X`) the picker shows as a
+ *               vibrant swatch (the card uses the soft `tile` tint instead) */
 export interface ZoneColorClasses {
   tile: string;
+  border: string;
   glyph: string;
   ring: string;
   glow: string;
   solid: string;
 }
+
+/** The neutral tile edge every non-Yty zone takes. A literal the scanner sees
+ *  once, then referenced — the ban is on *computed* class names, not on naming
+ *  a literal that sixteen entries share. */
+const NEUTRAL_ZONE_BORDER = "border-border";
 
 /** Ordered color keys — source of truth for the valid set and picker order.
  *  A vibrant warm→cool rainbow that fills the picker's 2 rows of 8. See the
@@ -206,22 +218,22 @@ export type VoiceZoneColor = (typeof VOICE_ZONE_COLOR_KEYS)[number];
 // pairs the shared `.zone-glow` class (geometry — defined once in globals.css)
 // with an arbitrary-property class that binds this color into `--glow-color`.
 export const VOICE_ZONE_COLORS: Record<VoiceZoneColor, ZoneColorClasses> = {
-  red: { tile: "bg-zone-red/15", glyph: "text-zone-red", ring: "ring-zone-red", glow: "zone-glow [--glow-color:var(--color-zone-red)]", solid: "bg-zone-red" },
-  orange: { tile: "bg-zone-orange/15", glyph: "text-zone-orange", ring: "ring-zone-orange", glow: "zone-glow [--glow-color:var(--color-zone-orange)]", solid: "bg-zone-orange" },
-  amber: { tile: "bg-zone-amber/15", glyph: "text-zone-amber", ring: "ring-zone-amber", glow: "zone-glow [--glow-color:var(--color-zone-amber)]", solid: "bg-zone-amber" },
-  yellow: { tile: "bg-zone-yellow/15", glyph: "text-zone-yellow", ring: "ring-zone-yellow", glow: "zone-glow [--glow-color:var(--color-zone-yellow)]", solid: "bg-zone-yellow" },
-  lime: { tile: "bg-zone-lime/15", glyph: "text-zone-lime", ring: "ring-zone-lime", glow: "zone-glow [--glow-color:var(--color-zone-lime)]", solid: "bg-zone-lime" },
-  green: { tile: "bg-zone-green/15", glyph: "text-zone-green", ring: "ring-zone-green", glow: "zone-glow [--glow-color:var(--color-zone-green)]", solid: "bg-zone-green" },
-  emerald: { tile: "bg-zone-emerald/15", glyph: "text-zone-emerald", ring: "ring-zone-emerald", glow: "zone-glow [--glow-color:var(--color-zone-emerald)]", solid: "bg-zone-emerald" },
-  teal: { tile: "bg-zone-teal/15", glyph: "text-zone-teal", ring: "ring-zone-teal", glow: "zone-glow [--glow-color:var(--color-zone-teal)]", solid: "bg-zone-teal" },
-  cyan: { tile: "bg-zone-cyan/15", glyph: "text-zone-cyan", ring: "ring-zone-cyan", glow: "zone-glow [--glow-color:var(--color-zone-cyan)]", solid: "bg-zone-cyan" },
-  sky: { tile: "bg-zone-sky/15", glyph: "text-zone-sky", ring: "ring-zone-sky", glow: "zone-glow [--glow-color:var(--color-zone-sky)]", solid: "bg-zone-sky" },
-  blue: { tile: "bg-zone-blue/15", glyph: "text-zone-blue", ring: "ring-zone-blue", glow: "zone-glow [--glow-color:var(--color-zone-blue)]", solid: "bg-zone-blue" },
-  indigo: { tile: "bg-zone-indigo/15", glyph: "text-zone-indigo", ring: "ring-zone-indigo", glow: "zone-glow [--glow-color:var(--color-zone-indigo)]", solid: "bg-zone-indigo" },
-  violet: { tile: "bg-zone-violet/15", glyph: "text-zone-violet", ring: "ring-zone-violet", glow: "zone-glow [--glow-color:var(--color-zone-violet)]", solid: "bg-zone-violet" },
-  purple: { tile: "bg-zone-purple/15", glyph: "text-zone-purple", ring: "ring-zone-purple", glow: "zone-glow [--glow-color:var(--color-zone-purple)]", solid: "bg-zone-purple" },
-  fuchsia: { tile: "bg-zone-fuchsia/15", glyph: "text-zone-fuchsia", ring: "ring-zone-fuchsia", glow: "zone-glow [--glow-color:var(--color-zone-fuchsia)]", solid: "bg-zone-fuchsia" },
-  pink: { tile: "bg-zone-pink/15", glyph: "text-zone-pink", ring: "ring-zone-pink", glow: "zone-glow [--glow-color:var(--color-zone-pink)]", solid: "bg-zone-pink" },
+  red: { tile: "bg-zone-red/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-red", ring: "ring-zone-red", glow: "zone-glow [--glow-color:var(--color-zone-red)]", solid: "bg-zone-red" },
+  orange: { tile: "bg-zone-orange/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-orange", ring: "ring-zone-orange", glow: "zone-glow [--glow-color:var(--color-zone-orange)]", solid: "bg-zone-orange" },
+  amber: { tile: "bg-zone-amber/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-amber", ring: "ring-zone-amber", glow: "zone-glow [--glow-color:var(--color-zone-amber)]", solid: "bg-zone-amber" },
+  yellow: { tile: "bg-zone-yellow/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-yellow", ring: "ring-zone-yellow", glow: "zone-glow [--glow-color:var(--color-zone-yellow)]", solid: "bg-zone-yellow" },
+  lime: { tile: "bg-zone-lime/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-lime", ring: "ring-zone-lime", glow: "zone-glow [--glow-color:var(--color-zone-lime)]", solid: "bg-zone-lime" },
+  green: { tile: "bg-zone-green/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-green", ring: "ring-zone-green", glow: "zone-glow [--glow-color:var(--color-zone-green)]", solid: "bg-zone-green" },
+  emerald: { tile: "bg-zone-emerald/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-emerald", ring: "ring-zone-emerald", glow: "zone-glow [--glow-color:var(--color-zone-emerald)]", solid: "bg-zone-emerald" },
+  teal: { tile: "bg-zone-teal/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-teal", ring: "ring-zone-teal", glow: "zone-glow [--glow-color:var(--color-zone-teal)]", solid: "bg-zone-teal" },
+  cyan: { tile: "bg-zone-cyan/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-cyan", ring: "ring-zone-cyan", glow: "zone-glow [--glow-color:var(--color-zone-cyan)]", solid: "bg-zone-cyan" },
+  sky: { tile: "bg-zone-sky/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-sky", ring: "ring-zone-sky", glow: "zone-glow [--glow-color:var(--color-zone-sky)]", solid: "bg-zone-sky" },
+  blue: { tile: "bg-zone-blue/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-blue", ring: "ring-zone-blue", glow: "zone-glow [--glow-color:var(--color-zone-blue)]", solid: "bg-zone-blue" },
+  indigo: { tile: "bg-zone-indigo/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-indigo", ring: "ring-zone-indigo", glow: "zone-glow [--glow-color:var(--color-zone-indigo)]", solid: "bg-zone-indigo" },
+  violet: { tile: "bg-zone-violet/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-violet", ring: "ring-zone-violet", glow: "zone-glow [--glow-color:var(--color-zone-violet)]", solid: "bg-zone-violet" },
+  purple: { tile: "bg-zone-purple/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-purple", ring: "ring-zone-purple", glow: "zone-glow [--glow-color:var(--color-zone-purple)]", solid: "bg-zone-purple" },
+  fuchsia: { tile: "bg-zone-fuchsia/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-fuchsia", ring: "ring-zone-fuchsia", glow: "zone-glow [--glow-color:var(--color-zone-fuchsia)]", solid: "bg-zone-fuchsia" },
+  pink: { tile: "bg-zone-pink/15", border: NEUTRAL_ZONE_BORDER, glyph: "text-zone-pink", ring: "ring-zone-pink", glow: "zone-glow [--glow-color:var(--color-zone-pink)]", solid: "bg-zone-pink" },
 };
 
 /** Type guard: is this free-text key a valid icon? Body is a literal `hasOwn`
@@ -293,6 +305,10 @@ export const LOBBY_PRESENTATION: VirtualZonePresentation = {
   icon: Home,
   color: {
     tile: "bg-foreground/10",
+    // Neutral, like the custom palette: the lobby's identity is the calm home
+    // base, and an edge in the theme foreground would out-shout every zone
+    // under it.
+    border: NEUTRAL_ZONE_BORDER,
     glyph: "text-foreground",
     ring: "ring-foreground",
     glow: "zone-glow [--glow-color:var(--color-foreground)]",
@@ -328,9 +344,11 @@ const YTY_ZONE_SOLID: Record<YtyElementId, string> = {
  *  The strong/soft split is the one the contrast script settled and the Yty
  *  element map applies: **soft carries text and glyphs on the dark ground,
  *  strong fills, borders, rings and glows.** The zone card is exactly that
- *  division — a 10% tint behind a soft glyph, with a strong ring and a strong
- *  colour spilling in from the active card's border — so the glyph and tile come
- *  straight off the element map and nothing here re-decides them. */
+ *  division — a 10% tint behind a soft glyph, inside a full-value family edge,
+ *  with a strong ring and a strong colour spilling in from the active card's
+ *  border — so the tile's three classes come straight off the element map and
+ *  nothing here re-decides them. The tile is the ruled Yty accent tile, drawn
+ *  here exactly as the About page's element cards draw it. */
 export const YTY_PRESENTATIONS: VirtualZonePresentation[] = YTY_ELEMENTS.map(
   (e) => ({
     id: `yty-${e.id}`,
@@ -338,6 +356,7 @@ export const YTY_PRESENTATIONS: VirtualZonePresentation[] = YTY_ELEMENTS.map(
     icon: e.icon,
     color: {
       tile: e.color.bg,
+      border: e.color.border,
       glyph: e.color.accent,
       // Literal tokens (not `ring-yty-${id}`/`shadow-[...${id}...]` templates) so
       // Tailwind's source scanner generates the utilities — a dynamic class name

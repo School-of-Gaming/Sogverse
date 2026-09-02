@@ -487,10 +487,14 @@ function StatusPill({ hasClubs, t }: { hasClubs: boolean; t: Translate }) {
   return (
     <span
       className={cn(
-        "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium",
+        // Neither state has a tone-carrying ground — the lift is neutral in
+        // both — so the edge carries the tone alongside the ink: amber where
+        // there is something to act on, and the neutral furniture edge where
+        // there is not.
+        "shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium",
         hasClubs
-          ? "bg-muted text-primary"
-          : "bg-muted text-muted-foreground",
+          ? "border-primary bg-muted text-primary"
+          : "border-border bg-muted text-muted-foreground",
       )}
     >
       {hasClubs ? t("status.available") : t("status.noClubs")}

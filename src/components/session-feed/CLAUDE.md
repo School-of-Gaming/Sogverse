@@ -449,10 +449,12 @@ that itself, because it does not know which thumbnail that was.
   content and the clamp exists for a work queue. Whether a report *exists* is a trimmed
   test on both sides of the stack: the dashboard's SQL twin uses `btrim` with an explicit
   whitespace list so a report of one newline is "no report" to badge and feed alike.
-- **Attendance tones are tokens, not glyphs.** Present is a small success-toned positive,
-  absent is warning-toned (owner ruling, 2026-08-25: muted left absent and unmarked one
-  shade of grey apart and unreadable at a glance) — but never destructive, because the
-  data cannot yet distinguish a planned absence from a no-show, and an absence is a fact
-  to notice rather than a fault to punish. Each surface picks its own glyphs: the gedu's three-state set
+- **Attendance tones are tokens, not glyphs.** Present is a small positive drawn in the
+  glow idiom — a full-value `success` edge under soft glow ink, exactly like the live tag
+  beside it on both feeds — absent is warning-toned (owner ruling, 2026-08-25: muted left
+  absent and unmarked one shade of grey apart and unreadable at a glance) — but never
+  destructive, because the data cannot yet distinguish a planned absence from a no-show,
+  and an absence is a fact to notice rather than a fault to punish. Each surface picks its
+  own glyphs: the gedu's three-state set
   spends the dash on "unmarked", the family's two-state set uses it for "absent". When a
   `planned_absent` enum value lands, the tone decision extends here, once.

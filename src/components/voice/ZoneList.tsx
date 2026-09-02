@@ -332,7 +332,11 @@ function ZoneCard({
       )}
     >
       <div className="flex items-center gap-2">
-        <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", zone.color.tile)}>
+        {/* The icon tile carries an edge as well as its tint: on a Yty zone
+            that is the ruled accent tile in full — tint ground, full-value
+            family edge, soft glyph — and every other zone takes the neutral
+            edge, so no tile is a colour with no shape. */}
+        <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg border", zone.color.tile, zone.color.border)}>
           <Icon className={cn("h-5 w-5", zone.color.glyph)} />
         </span>
         {/* One of the two places Space Mono is spent (the other is
