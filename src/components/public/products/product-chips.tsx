@@ -3,6 +3,7 @@
 import { Brain, Rocket, Sprout, UserRound, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { PRODUCT_FACT_TONES } from "./product-fact-tones";
 import type { ProductTag } from "./product-tag";
 
 // ---------- The product chip vocabulary ----------
@@ -169,10 +170,11 @@ function TagChip({
 function WhoChip({ label, className }: { label: string; className?: string }) {
   return (
     <MediaChip
-      // Eligibility is wit's word — the same question the region-lock strip
-      // answers in wit. Label tier: neutral ground, family ink (wit ink is
-      // always soft).
-      className={cn("bg-muted text-yty-wit-soft", className)}
+      // Eligibility is wit's word, from the shared fact map — the same tone the
+      // overview card's audience glyph and the admin row's age range now take,
+      // so one question is one colour wherever it is answered. Label tier:
+      // neutral ground, family ink (wit ink is always soft).
+      className={cn("bg-muted", PRODUCT_FACT_TONES.eligibility, className)}
       icon={UserRound}
     >
       {label}

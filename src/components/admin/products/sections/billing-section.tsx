@@ -113,9 +113,16 @@ export function BillingSection({
         </Field>
       )}
 
+      {/* The `InfoCallout` construct, hand-drawn because these two carry a
+          headline over a hint rather than the primitive's single string: the
+          same full-value `border-info` edge on a solid `bg-muted` ground with a
+          wit-soft glyph. The prose stays muted here — the callout is two lines
+          with a bold headline of its own, and the family is doing its work on
+          the edge and the glyph. Widen the primitive and both collapse into it;
+          until then the classes are the primitive's, verbatim. */}
       {showExternalInfo && (
-        <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <div className="flex items-start gap-2 rounded-md border border-info bg-muted px-3 py-2 text-sm">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft" />
           <div>
             <div className="font-medium">{t("labels.paidByMunicipality")}</div>
             <div className="text-xs text-muted-foreground">
@@ -145,8 +152,8 @@ export function BillingSection({
       {/* Read-only by design: the treatment follows from the product type, and
           an admin who could pick it is an admin who could pick the wrong one. */}
       {isPaid && (
-        <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
-          <Percent className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <div className="flex items-start gap-2 rounded-md border border-info bg-muted px-3 py-2 text-sm">
+          <Percent className="mt-0.5 h-4 w-4 shrink-0 text-yty-wit-soft" />
           <div className="space-y-1">
             <div className="font-medium">
               {t(`vat.headline.${vat.treatment}`, { rate: vatRate })}

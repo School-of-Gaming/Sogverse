@@ -48,6 +48,13 @@ const SKELETON_LABEL: Record<TileSize, string> = {
  * included. It does not repaint on hover either: an identity is not hover
  * feedback, and colour spent behind a cursor never reaches a family on a phone.
  *
+ * **The add-a-gamer tile beside these is the deliberate exception, and it keeps
+ * its muted-to-foreground hover**: it names an action rather than a person, so
+ * there is no identity for it to carry at rest and the hover lift is ordinary
+ * affordance feedback in the neutral idiom — the same gray idiom every dashed
+ * add affordance in the app wears. A sweep making it match its siblings would be
+ * giving a button a role colour.
+ *
  * Classes are literal strings because Tailwind scans source text.
  */
 const ROLE_INK: Record<FamilyMember["role"], string> = {

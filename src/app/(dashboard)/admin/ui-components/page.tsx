@@ -25,6 +25,10 @@ import { Button, type ButtonProps } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BrandSpectrumRule } from "@/components/ui/brand-spectrum-rule";
+// The wash comes from the page that owns it: the comparison below has to be the
+// card that ships, and the shading guard's exemption is keyed to that file.
+import { HOME_CTA_WASH } from "@/components/home/home-page-body";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -2644,6 +2648,46 @@ function TypeFacesDemo() {
   );
 }
 
+/**
+ * The two ways a marketing card carries brand colour, side by side.
+ *
+ * `BrandSpectrumRule` earns a section on both counts: three surfaces draw it, and
+ * it is a draft the owner has not ruled on yet — which is exactly what this
+ * comparison is for. The wash is quoted from the home page's own constant rather
+ * than retyped, so what is on the right is literally the card that ships.
+ */
+function BrandSpectrumRuleDemo() {
+  return (
+    <Section title="Brand spectrum rule">
+      <DemoCaption>
+        Wash or rule &mdash; the open call, from one screen
+      </DemoCaption>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className={HOME_CTA_WASH}>
+          <CardHeader>
+            <CardTitle className="text-lg">The kept wash</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Amber to violet across the card, on home&rsquo;s closing CTA. One of
+            the two sanctioned keeps, and the only place a brand gradient still
+            washes a surface.
+          </CardContent>
+        </Card>
+        <Card className="overflow-hidden bg-muted">
+          <BrandSpectrumRule />
+          <CardHeader>
+            <CardTitle className="text-lg">The flat rule</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Six families at authored value, a neutral ground under them. Drawn on
+            the About page&rsquo;s Yty overview card and its mission card.
+          </CardContent>
+        </Card>
+      </div>
+    </Section>
+  );
+}
+
 export default function AdminUIComponentsPage() {
   return (
     <div className="space-y-8">
@@ -2723,6 +2767,8 @@ export default function AdminUIComponentsPage() {
           </div>
         </SubSection>
       </Section>
+
+      <BrandSpectrumRuleDemo />
 
       <ProductTypePaletteDemo />
 

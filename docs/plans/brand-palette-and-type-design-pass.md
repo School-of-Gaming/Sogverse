@@ -346,14 +346,15 @@ every destination. Converted, each with a comment naming the meaning:
   muted — mirroring the product status chip. The status-map enumeration found no
   other unconverged lifecycle; the gedu fee divergence the census once flagged
   had already healed (both sites destructive for a missing fee).
-- **The Yty accent tile's ruled full-value edge reached its other two render
-  sites** (/about element cards, the voice zone tiles — the zone presentation
-  type gained a border slot); the home page already had it. The tint guard's
-  justification comment now describes all three truthfully.
+- **The Yty accent tile's ruled full-value edge reached the element map's two
+  render sites** (/about element cards, the voice zone tiles — the zone
+  presentation type gained a border slot); the home page draws the same
+  construct from its own local accent map and already had it. The tint guard's
+  justification comment now describes the sites truthfully.
 - **Attendance "present" ink stepped to glow-soft** over its full-value `success`
-  edge — the glow idiom the live tag beside it already wears on both feeds, the
-  form the approved deck exhibit drew, and a contrast gain (5.35 → 7.14:1); the
-  edge keeps its semantic status name so a future retune reaches it. Absent stays
+  edge — the grounds are the approved deck exhibit, the contrast gain
+  (5.35 → 7.14:1), and consistency with the soft-ink idiom the live tag beside
+  it already wears on both feeds. Absent stays
   warning (the 2026-08-25 ruling); the tone file's header no longer contradicts
   its own entries.
 - **Time-is-wit under-sweep**: the enrollment card's schedule glyph and the
@@ -430,7 +431,29 @@ What this direction settles:
 Executed as fleet slices A–D (public marketing / shop+product / My SOG /
 gedu+admin), each slice's conversions annotated in code with the meaning.
 
-## Acceptance criteria
+**Review round 2 (2026-09-02, the plan session's combined P9/P10 review —
+all accepted findings applied):** the capture tool hardened (base-url pinned to
+local hosts before any sign-in; the fleet password is 192-bit crypto entropy
+decoupled from the printed run id; the credential-bearing state file is confined
+to the tool's gitignored directory from every flag; the README's service-role
+accounting now names all seven service-client writes; the Playwright import
+goes through the declared @playwright/test). The eligibility fact unified on
+wit in one shared map (`product-fact-tones.ts`) read by the overview card, the
+WhoChip and the admin product rows — seats and headcounts stay harmony; the
+gedu dashboard's headings joined the family dashboards' map (activities valor,
+help wit, Tools deliberately neutral); the admin InfoCallout and the billing
+callouts took the one ruled info construct, and its warn variant's amber leak
+became `border-warning`; the lifecycle stepping's first step got its ruled
+outline back in both maps (`border-primary bg-muted text-primary`, transparent
+borders on the other steps so geometry holds); the attendance comment's
+justification dropped the retune argument; the chip-ground question was
+resolved into the border doctrine (the split's "ground" meant a tonal fill,
+which the tint ban abolished — on the universal muted ground a status/family
+chip wears its full-value family edge, as the landed corpus already drew) and
+the NewcomerBadge/needs-attention edges stand under it; the spectrum rule got
+its style-guide section rendering wash-beside-rule from one screen (the wash
+literal now exported from the home body so the demo cannot drift); and the
+element-card edge and add-tile exceptions are documented at their sites.
 
 - The Yty tokens render the exact brand hues (script-verified round-trip), every consumer
   surface updated, no raw Tailwind colour values remaining in the Yty tokens.

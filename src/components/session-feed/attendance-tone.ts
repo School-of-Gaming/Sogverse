@@ -51,13 +51,15 @@ export const ATTENDANCE_TONE: Record<AttendanceMarkState, AttendanceTone> = {
   // low-alpha edge is a hue mixed toward the page, which is neither the family
   // colour nor a neutral.
   //
-  // The ink is the other half of the glow idiom the live tag beside these marks
-  // already draws on both feeds — full-value edge, soft ink — and it is the ink
-  // the approved deck drew present in. The edge keeps the *semantic* token
-  // rather than naming glow directly: `--success` converged onto glow, so
-  // `border-success` is glow-strong at the same value, and saying "success" is
-  // what makes a future retune of that status reach this mark. Soft ink also
-  // buys contrast on the ground these chips sit on: 7.14:1, from 5.35:1.
+  // Soft ink, on three grounds. It is what the approved deck drew present in;
+  // it is the other half of the glow idiom the live tag beside these marks
+  // already draws on both feeds — full-value edge, soft ink — so the two glow
+  // marks on one card read as one treatment; and it buys contrast on the ground
+  // these chips sit on, 7.14:1 from 5.35:1.
+  //
+  // `border-success` rather than a glow class is not a third reason, only a
+  // spelling: `--success` converged onto glow, so the edge is glow-strong at the
+  // same value either way.
   present: { text: "text-yty-glow-soft", border: "border-success" },
   // Warning, not muted: absent and unmarked sat one shade of grey apart and
   // could not be told apart at a glance (owner ruling, 2026-08-25). Warning is

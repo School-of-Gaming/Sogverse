@@ -56,6 +56,10 @@ export function YtySection({ id }: YtySectionProps) {
         <p className="mt-2 text-center text-muted-foreground">{t("elements.subheading")}</p>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {YTY_ELEMENTS.map((el) => (
+            // The 2px family edge is the ruled construct these cards were signed
+            // off with (direction 26, "the Yty element cards"), not resting card
+            // furniture the neutral-edge rule would sweep: the card *is* the
+            // element, and the edge is what names which one.
             <Card key={el.id} className={`border-2 ${el.color.border}`}>
               <CardHeader>
                 <div className="flex items-center gap-4">

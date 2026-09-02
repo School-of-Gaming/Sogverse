@@ -287,16 +287,27 @@ function HomeHowItWorksSection() {
   );
 }
 
+/**
+ * The closing CTA card's amber→violet wash — the second of the two sanctioned
+ * keeps (the hero band is the first): a pre-existing identity moment the owner
+ * ruled kept exactly as it is, not a licence for new washes.
+ *
+ * It is a named constant rather than an inline class string for one reason: the
+ * style guide draws this wash beside the flat six-family rule proposed to
+ * replace it, and a comparison the owner rules from has to be *this* card's
+ * colour rather than a copy of it that is free to drift. It is also the only
+ * form in which the style guide can quote it — the shading guard's exemption
+ * list is keyed per file, and these classes are exempt here.
+ */
+export const HOME_CTA_WASH = "bg-gradient-to-r from-primary/10 to-secondary/10";
+
 function HomeCtaSection() {
   const t = useTranslations('home');
   const c = useTranslations('common');
 
   return (
     <section className="container mx-auto px-4 py-24">
-      {/* The amber→violet wash is the second of the two sanctioned keeps (the
-          hero band is the first): a pre-existing identity moment the owner
-          ruled kept exactly as it is, not a licence for new washes. */}
-      <Card className="mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10">
+      <Card className={`mx-auto max-w-3xl ${HOME_CTA_WASH}`}>
         <CardContent className="flex flex-col items-center py-12 text-center">
           <h2 className={CTA_HEADING_TYPE}>
             {t('cta.heading')}

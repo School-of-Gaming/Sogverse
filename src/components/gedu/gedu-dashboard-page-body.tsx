@@ -15,6 +15,46 @@ import {
 import { UncertifiedToolsNotice } from "./uncertified-notice";
 
 /**
+ * The section headings' ink — the third of the three My SOG dashboards, drawn
+ * from the same map the parent's and the gamer's are.
+ *
+ * The treatment is universal by construction, not by coincidence: a heading
+ * takes the family whose word it names, and a heading naming nothing the grammar
+ * has a word for stays neutral. What differs here is only which headings exist.
+ *
+ * - **The activity nouns take valor, and all of them take the same valor** —
+ *   Clubs, Camps, Events are where a gedu goes and what they do, which is
+ *   adventure's word. One family across the three rather than a family each, for
+ *   the reason the gamer dashboard states: colouring by product type is an
+ *   admin-only tool (direction 15), and a gedu who learned "camps are orange"
+ *   would have learned something about the catalogue rather than about their
+ *   week. It is also the same colour the child in that club reads over the same
+ *   noun on their own page.
+ * - **Help is wit**, knowledge being what the section is for — the same word, in
+ *   the identical class, as both family dashboards' Help heading. That it is
+ *   also the gedu role's own colour is a coincidence of one hue serving two
+ *   jobs, not a role mark: nothing on this page names a role, and the heading
+ *   would be wit on a page for anybody.
+ * - **Tools stays neutral, deliberately.** Spinning up a room and putting a
+ *   child back into their Minecraft account are neither an adventure, a person,
+ *   a piece of knowledge nor growth — the grammar has no word for a utility, and
+ *   inventing one would spend colour on the section where it means least. Same
+ *   call, for the same reason, as the parent dashboard's Billing.
+ *
+ * Ink takes the soft variant where a family has one (the element cards'
+ * mechanism). Measured on the page ground: valor-soft 8.81:1, wit-soft 8.10:1,
+ * both clear of the 4.5:1 body bar — and these headings are large text besides.
+ *
+ * Classes are literal strings because Tailwind scans source text.
+ */
+const HEADING_INK = {
+  /** Clubs, camps and events alike — adventure is valor's word. */
+  activity: "text-yty-valor-soft",
+  /** Help & feedback — knowledge is wit's word. */
+  help: "text-yty-wit-soft",
+} as const;
+
+/**
  * The gedu dashboard's page body — everything below the route's data shell.
  *
  * It lives apart from `app/(dashboard)/gedu/page.tsx` so the page is only a
@@ -225,7 +265,7 @@ export function GeduDashboardPageBody({
               <div className="mx-auto max-w-5xl space-y-6">
                 <h2
                   id={`${ACTIVITY_HEADING_KEY[group.type]}-heading`}
-                  className="text-3xl font-semibold"
+                  className={`text-3xl font-semibold ${HEADING_INK.activity}`}
                 >
                   {t(ACTIVITY_HEADING_KEY[group.type])}
                 </h2>
@@ -258,6 +298,9 @@ export function GeduDashboardPageBody({
           className="scroll-mt-32"
         >
           <div className="mx-auto max-w-5xl space-y-6">
+            {/* Neutral, and it is the one heading on this page that is — see
+                `HEADING_INK`: the grammar has no word for a utility, and the
+                parent dashboard's Billing heading makes the same call. */}
             <h2 id="tools-heading" className="text-3xl font-semibold">
               {t("tools")}
             </h2>
@@ -296,7 +339,10 @@ export function GeduDashboardPageBody({
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-5xl space-y-6">
-            <h2 id="help-heading" className="text-3xl font-semibold">
+            <h2
+              id="help-heading"
+              className={`text-3xl font-semibold ${HEADING_INK.help}`}
+            >
               {h("heading")}
             </h2>
             {helpForm}

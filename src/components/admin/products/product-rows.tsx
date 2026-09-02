@@ -25,6 +25,7 @@ import {
   joinScheduleGroups,
   type ProductScheduleSummary,
 } from "@/components/public/products/format-product-schedule";
+import { PRODUCT_FACT_TONES } from "@/components/public/products/product-fact-tones";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import { productWhereLine } from "./product-where-line";
 import type { ProductWithDetails } from "@/services/products";
@@ -181,20 +182,26 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                   {tr?.short_description ?? ""}
                 </p>
                 {/* The meta run is scanned rather than read, so its glyphs
-                    carry the same two families the details page tones: **when**
-                    is wit (the date range and the cadence), **who** is harmony
-                    (the age range and the seats). One map across both admin
-                    product surfaces, so an admin learns it once. Place stays
-                    neutral, and the two status chips at the end keep their
-                    functional tones — a pending hint is the amber its own status
-                    chip wears, a missing fee is destructive, and money is not a
-                    brand family. */}
+                    carry the families the fact itself owns: **when** is wit (the
+                    date range and the cadence), **who may hold a seat** is wit
+                    too (the age range — an eligibility fact, from the shared
+                    map the shop's chip and the overview card read), and **how
+                    many people fit** is harmony (the seat count). The age range
+                    was harmony until the split showed up beside the shop's own
+                    wit chip for the same fact; eligibility and headcount are two
+                    different questions and now wear two different colours.
+                    Place stays neutral, and the two status chips at the end keep
+                    their functional tones — a pending hint is the amber its own
+                    status chip wears, a missing fee is destructive, and money is
+                    not a brand family. */}
                 <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
                   {/* A product with no gamer audience carries no age range;
                       the chip goes rather than showing an invented one. */}
                   {p.min_age !== null && p.max_age !== null && (
                     <span className="inline-flex items-center gap-1">
-                      <Users className="h-3 w-3 text-yty-harmony-soft" />
+                      <Users
+                        className={`h-3 w-3 ${PRODUCT_FACT_TONES.eligibility}`}
+                      />
                       {t("list.ageRange", {
                         min: p.min_age,
                         max: p.max_age,

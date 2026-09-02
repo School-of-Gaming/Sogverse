@@ -39,15 +39,21 @@ import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@
  *
  * One hue stepped by construct, not a family per step: a lifecycle is one fact
  * moving, so a colour change between steps would read as a change of *kind*.
- * Amber is the hue because participating is the act the surface is about — the
- * pre-active steps take the label tier (neutral ground, full-value amber ink),
- * active takes the act tier (solid fill, dark ink), and the finished step drops
- * out of the hue entirely. The two pre-active steps share a treatment
- * deliberately; their labels are what tell them apart.
+ * Amber is the hue because participating is the act the surface is about, and
+ * the steps are stepped by **construct**: the two pre-active ones take the
+ * outline — a full-value amber edge over a neutral ground under full-value amber
+ * ink — active takes the act tier's solid fill, and the finished step drops out
+ * of the hue entirely. Only the tint under the outline was overruled, never the
+ * outline itself; without it the first step was the *label* tier and said
+ * "a different kind of thing" rather than "not started yet". The two pre-active
+ * steps share a treatment deliberately; their labels are what tell them apart.
+ *
+ * The badge primitive draws a 1px edge on every variant, so colouring it here
+ * moves no geometry — the steps that carry no edge inherit the transparent one.
  */
 const STATUS_BADGE_STYLES: Record<ParticipationStatus, string> = {
-  reserving: "bg-muted text-primary",
-  waitlisted: "bg-muted text-primary",
+  reserving: "border-primary bg-muted text-primary",
+  waitlisted: "border-primary bg-muted text-primary",
   active: "bg-primary text-primary-foreground",
   completed: "bg-muted text-muted-foreground",
 };

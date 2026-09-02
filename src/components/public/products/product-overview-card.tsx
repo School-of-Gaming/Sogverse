@@ -9,6 +9,7 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/utils";
 import type { ProductBrowseRow } from "@/types";
 import { formatProductLocation } from "./format-product-location";
+import { PRODUCT_FACT_TONES } from "./product-fact-tones";
 import { audienceLabelKey } from "./product-audience";
 import { formatClubTermDates } from "./format-product-term-dates";
 import {
@@ -220,10 +221,13 @@ export function ProductOverviewCard({
           {whoItsFor !== null && (
             <DetailRow
               icon={whoItsFor.icon}
-              // Who a product is for is a fact about *people* — harmony's word,
-              // the same family the seat meter fills in when it says how many
-              // of them still fit.
-              iconClassName="text-yty-harmony-soft"
+              // Who a product is for is an *eligibility* fact — wit's word, from
+              // the shared fact map, and the same tone the card's own chip wears
+              // in the corner of the hero above. It read as harmony (people)
+              // until the two were seen on one page saying one thing in two
+              // colours; a headcount is the people fact, and the seat meter
+              // keeps harmony for it.
+              iconClassName={PRODUCT_FACT_TONES.eligibility}
               label={whoItsFor.label}
               railFrom2xl={railFrom2xl}
             >
@@ -233,10 +237,10 @@ export function ProductOverviewCard({
           <DetailRow
             icon={Languages}
             // The language a session is delivered in is what decides whether a
-            // child can follow it — an eligibility fact, which is wit's, the
-            // same colour the audience chip and the region-lock strip answer
-            // "is this for us?" in. Wit ink is always soft.
-            iconClassName="text-yty-wit-soft"
+            // child can follow it — an eligibility fact, so it reads the same
+            // map entry the audience row above does, and answers "is this for
+            // us?" in the colour the region-lock strip answers it in.
+            iconClassName={PRODUCT_FACT_TONES.eligibility}
             label={t("info.language")}
             railFrom2xl={railFrom2xl}
           >
