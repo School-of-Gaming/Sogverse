@@ -88,11 +88,12 @@ as the token source.
    arrangements, all taking their content as props.
 6. **Templates.** Page-shaped compositions in the demo from real chrome and fixtures,
    built early enough that composition is judged before twenty pages depend on the seam.
-   Sogverse may consume the library for new work from here.
-7. **The sweep.** One PR per construct, each with the lint rule banning the raw path and
-   the call-site conversion it forces. The admin style guide's primitive sections retire
-   into the demo as each component lands; Sogverse's preview scenes retire as each page
-   body thins to composition only.
+7. **The sweep**, in the order `adoption.md` sets: the theme first, then Heading, then
+   Button, then the rest of the missing middle. One PR per construct, each with the lint
+   rule banning the raw path and the call-site conversion it forces. The admin style
+   guide's primitive sections retire into the demo as each component lands; Sogverse's
+   preview scenes retire as each page body thins to composition only. Steps 4 to 7
+   interleave: a component is built, shown, adopted and locked before the next begins.
 8. **Lockdown.** The seam lint: Sogverse's source contains no utility class; it composes
    and never paints. The root `CLAUDE.md` carries no UI rule of its own.
 9. **Completion.** The reference branch and its tag are deleted, this file is deleted, the

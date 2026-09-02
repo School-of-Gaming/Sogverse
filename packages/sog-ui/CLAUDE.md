@@ -14,9 +14,10 @@ follow a brand change is in the wrong place.
 
 **SOG-UI owns every UI opinion, and the two `CLAUDE.md` files never disagree.** The root
 file governs the monorepo: lint, type-check, commits, branching, testing, the database, the
-services. This file governs the UI. A UI rule still printed in the root file is SOG-UI's
-rule awaiting relocation and binds as if written here; a rule about the UI is never added
-to the root file.
+services. This file governs the UI. Sogverse follows the library one construct at a time,
+as each is adopted (`docs/adoption.md`); for a construct not yet adopted, the root file's
+existing rule for it still governs Sogverse's code, and the adoption that retires the
+construct deletes that rule. A rule about the UI is never added to the root file.
 
 **If something has a state, SOG-UI owns the system that handles it.** A button's committing
 state across a redirect, a loading affordance, an element that must not move under a
@@ -196,4 +197,5 @@ document or branch it was copied from.
 
 This file is present tense and declares what SOG-UI is. Its history, the story of why it
 exists and what it learned, is `docs/origins-2026-09.md`; the work still open to complete
-it is `docs/rollout.md`, deleted when nothing is left. Neither holds a rule.
+it is `docs/rollout.md`, and the order in which Sogverse adopts it is `docs/adoption.md`,
+both deleted when nothing is left. None of the three holds a rule.
