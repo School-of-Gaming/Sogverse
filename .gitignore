@@ -97,3 +97,10 @@ logs
 minecraft-edu-plan.json
 minecraft-edu-accounts.csv
 deleted-accounts-*.json
+
+# Working artifact of scripts/page-capture/. It describes one throwaway staging
+# fleet — ids, addresses and the password the run signs in with — and it is
+# deleted by cleanup.mjs when that fleet is torn down. Committing one would
+# publish a live staging credential and point a later reader at accounts that
+# no longer exist.
+scripts/page-capture/seed-state.json

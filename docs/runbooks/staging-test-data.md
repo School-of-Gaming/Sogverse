@@ -1,5 +1,14 @@
 # Creating staging test data through real RPCs
 
+> **For a screenshot pass, don't do this by hand — run `scripts/page-capture/`.**
+> It scripts this whole procedure for one specific shape: a throwaway fleet
+> (parent with a PIN, two gamers, certified gedu, admin) plus a temp club whose
+> group carries written-up past sessions, a session **in progress right now** so
+> the voice room is joinable, and one upcoming session — then drives a browser
+> over every role's pages and deletes the fleet again. The tool is the *how*;
+> what follows is the *why*, and the rules below still govern anything it does
+> not cover. Its README is `scripts/page-capture/README.md`.
+
 To create test data on **staging** through the real admin RPCs — so every RAISE, CHECK
 and RLS policy applies — run them via psql (connection: `remote-supabase-psql.md`) with
 transaction-local claims impersonating an admin. **Never hand-INSERT product-shaped
