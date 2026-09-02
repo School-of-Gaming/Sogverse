@@ -1,38 +1,26 @@
 /**
  * Contrast, measured rather than assumed.
  *
- * The brand's hues were tuned for a white page and this library ships one theme
- * and it is dark, so every pairing it ships has to be measured against the
- * grounds it actually sits on. `PAIRINGS` is that list: each entry names a
- * foreground token, a ground token, the threshold it is held to, and why that
- * threshold and not the other one. A unit test walks the whole list, so a hue
- * cannot be retuned without the pairing it breaks failing out loud.
+ * **A consumer trusts this library to have proven every pairing it offers.** A
+ * colour offered for text on a ground is safe on that ground; a pairing that is
+ * not in `PAIRINGS` is not available, and no surface may invent one. The proof
+ * is the test: it walks this whole list and fails if a single entry stops
+ * clearing the threshold it is held to, so a retuned hue cannot pass quietly.
  *
- * WCAG AA is **4.5:1 for body-size text** and **3:1 for large text and
- * non-text glyphs**. Which one applies is a property of the usage, not of the
- * colour, which is why a pairing has to say what it is for. 1.4.11 is the same
- * 3:1 floor read as a boundary rather than as a mark: a focus ring and a form
- * control's resting edge are both held to it.
+ * `PAIRINGS` is therefore the complete ledger of what the library ships, not a
+ * sample of it. A pairing left out of the list is not an unmeasured pairing, it
+ * is a pairing the library does not offer.
  *
- * `PAIRINGS` is what the library ships and clears. `KNOWN_SHORTFALLS` beside it
- * is what the library ships and does *not* clear — an inherited value awaiting
- * an owner decision — measured at the same thresholds and asserted to still be
- * failing, so a retune that fixes one forces its entry to move rather than
- * leaving a stale note behind. Between the two lists, every foreground/ground
- * pair the library ships is measured; neither is a place a pairing can be
- * quietly omitted from.
+ * WCAG AA is **4.5:1 for body-size text** and **3:1 for large text and non-text
+ * glyphs**. Which one applies is a property of the usage, not of the colour,
+ * which is why every entry says what it is for: the same hue can be safe as a
+ * mark and unsafe as a sentence.
  *
- * The math is WCAG 2.x, ported from the design pass's audit script.
+ * The math is WCAG 2.x, computed here from the authored hexes so that no ratio
+ * is ever typed by hand.
  */
 
-import {
-  BRAND,
-  NEUTRALS,
-  STATUS,
-  YTY_FAMILIES,
-  type Hex,
-  type YtyFamilyId,
-} from "./brand";
+import { BRAND, NEUTRALS, YTY_FAMILIES, type Hex, type YtyFamilyId } from "./brand";
 
 export type Rgb = readonly [number, number, number];
 
@@ -59,21 +47,6 @@ export function contrastRatio(a: string, b: string): number {
   const lb = relativeLuminance(hexToRgb(b));
   const [hi, lo] = la > lb ? [la, lb] : [lb, la];
   return (hi + 0.05) / (lo + 0.05);
-}
-
-/**
- * `over` composited on `under` at the given alpha (simple source-over).
- *
- * Exported for the contexts that cannot do alpha at all — an email client, a
- * canvas — where a tint has to be flattened against the ground it sits on
- * before it is written down. Composite over the wrong ground and the tint is a
- * visible rectangle rather than a wash.
- */
-export function composite(over: string, under: string, alpha: number): Hex {
-  const a = hexToRgb(over);
-  const b = hexToRgb(under);
-  const channels = a.map((c, i) => Math.round(c * alpha + b[i] * (1 - alpha)));
-  return `#${channels.map((c) => c.toString(16).padStart(2, "0")).join("").toUpperCase()}`;
 }
 
 /** The two AA floors. A pairing states which it is held to and why. */
@@ -104,15 +77,17 @@ export type Pairing = {
   readonly why: string;
 };
 
-/** The three grounds the palette sits on. Muted is the lightest, so it is the binding one. */
+/** The two grounds a page is built from. The card is the lighter one, so it binds. */
 const GROUNDS = [
   { token: "background", hex: NEUTRALS.background.hex, label: "the page" },
   { token: "card", hex: NEUTRALS.card.hex, label: "a card" },
-  { token: "muted", hex: NEUTRALS.muted.hex, label: "the muted ground" },
 ] as const;
 
 const INK: PairingSide = { token: "background", hex: NEUTRALS.background.hex };
-const WHITE: PairingSide = { token: "secondary-foreground", hex: BRAND.secondary.foreground };
+const WHITE: PairingSide = {
+  token: "secondary-foreground",
+  hex: BRAND.secondary.foreground,
+};
 
 const YTY_IDS = [
   "harmony",
@@ -122,8 +97,52 @@ const YTY_IDS = [
 ] as const satisfies readonly YtyFamilyId[];
 
 /**
- * Every Yty family's **soft** variant as text, on all three grounds. Soft is
- * what carries text and glyphs in this palette; strong is for fills and edges.
+ * The app's own text tokens, on both grounds a page is built from.
+ *
+ * Body size, so the body floor: these are the pairings a whole paragraph is set
+ * in, and secondary text on the lighter ground is where the set comes closest
+ * to that floor.
+ */
+const appTextOnGrounds: Pairing[] = (
+  [
+    ["foreground", NEUTRALS.foreground.hex, "Body copy"],
+    [
+      "muted-foreground",
+      NEUTRALS.mutedForeground.hex,
+      "Secondary text, captions and metadata",
+    ],
+  ] as const
+).flatMap(([token, hex, label]) =>
+  GROUNDS.map((ground) => ({
+    id: `${token}-on-${ground.token}`,
+    foreground: { token, hex },
+    background: { token: ground.token, hex: ground.hex },
+    threshold: THRESHOLDS.bodyText,
+    why: `${label} on ${ground.label}.`,
+  })),
+);
+
+/** The two signature colours, each under the ink it carries. */
+const brandPairings: Pairing[] = [
+  {
+    id: "ink-on-primary",
+    foreground: INK,
+    background: { token: "primary", hex: BRAND.primary.hex },
+    threshold: THRESHOLDS.bodyText,
+    why: "Dark ink on the amber fill — the primary call to action. Its label is body size, so it takes the body floor.",
+  },
+  {
+    id: "white-on-secondary",
+    foreground: WHITE,
+    background: { token: "secondary", hex: BRAND.secondary.hex },
+    threshold: THRESHOLDS.bodyText,
+    why: "White on the violet fill, a body-size label. Violet is a dark colour, so only a light label reads on it — the exact mirror of amber, which takes only a dark one.",
+  },
+];
+
+/**
+ * Every Yty family's **soft** variant as text, on both grounds. Soft is what
+ * carries text and glyphs in this palette; strong is for fills and edges.
  */
 const softAsText: Pairing[] = YTY_IDS.flatMap((id) =>
   GROUNDS.map((ground) => ({
@@ -131,17 +150,16 @@ const softAsText: Pairing[] = YTY_IDS.flatMap((id) =>
     foreground: { token: `yty-${id}-soft`, hex: YTY_FAMILIES[id].soft },
     background: { token: ground.token, hex: ground.hex },
     threshold: THRESHOLDS.bodyText,
-    why: `${YTY_FAMILIES[id].name}'s soft variant set as body text on ${ground.label}.`,
+    why: `${YTY_FAMILIES[id].name}'s soft variant set as body text on ${ground.label}, so it takes the body floor.`,
   })),
 );
 
 /**
- * The fills a grammar-coloured button draws, each under dark ink.
+ * The fills a family-coloured button draws, each under dark ink.
  *
- * Three families fill **strong**; wit fills **soft**, because wit-strong is
- * 4.10:1 against dark ink and misses the body floor a 16px CTA label sits
- * under. That substitution is the one asymmetry in the recipe and it is a
- * measurement, not a preference.
+ * Three families fill **strong**; wit fills **soft**, because wit-strong misses
+ * the body floor a button label sits under. That substitution is the one
+ * asymmetry in the recipe, and it is a measurement rather than a preference.
  */
 const FILL_RECIPE = [
   { family: "valor", variant: "strong" },
@@ -161,138 +179,7 @@ const fillUnderInk: Pairing[] = FILL_RECIPE.map(({ family, variant }) => ({
     hex: YTY_FAMILIES[family][variant],
   },
   threshold: THRESHOLDS.bodyText,
-  why: `Dark ink on a ${YTY_FAMILIES[family].name} fill — a grammar-coloured button's 16px label.`,
-}));
-
-/**
- * Wit-strong on each ground, at the glyph threshold and not the body one.
- *
- * This is the pairing that shapes the whole strong/soft doctrine: wit-strong
- * clears 3:1 on all three grounds and clears 4.5:1 on none of them, so it may
- * draw a mark, an edge or a swatch and may never be set as text. `--info` *is*
- * wit-strong, so an info-toned label spells wit-soft while an info border and
- * an info fill stand.
- */
-const witStrongAsGlyph: Pairing[] = GROUNDS.map((ground) => ({
-  id: `yty-wit-strong-on-${ground.token}`,
-  foreground: { token: "yty-wit-strong", hex: YTY_FAMILIES.wit.strong },
-  background: { token: ground.token, hex: ground.hex },
-  threshold: THRESHOLDS.largeTextAndGlyphs,
-  why: `Wit-strong as a glyph or edge on ${ground.label}. It clears 3:1 here and misses 4.5:1 on every ground, which is why wit's text always takes soft.`,
-}));
-
-/**
- * The app's own text tokens, on all three grounds a page is built from.
- *
- * Muted is included and is the binding one: it is the lightest surface in the
- * set, so it is where secondary text comes closest to its floor, and leaving it
- * out would mean the alert, banner and label-chip ground was the one ground
- * nothing checked.
- */
-const appTextOnGrounds: Pairing[] = (
-  [
-    ["foreground", NEUTRALS.foreground.hex, "Body copy"],
-    ["muted-foreground", NEUTRALS.mutedForeground.hex, "Secondary text, captions and metadata"],
-  ] as const
-).flatMap(([token, hex, label]) =>
-  GROUNDS.map((ground) => ({
-    id: `${token}-on-${ground.token}`,
-    foreground: { token, hex },
-    background: { token: ground.token, hex: ground.hex },
-    threshold: THRESHOLDS.bodyText,
-    why: `${label} on ${ground.label}.`,
-  })),
-);
-
-/** The two signature colours, each under the ink it carries — and amber as text, which the dark ground makes safe. */
-const brandPairings: Pairing[] = [
-  {
-    id: "ink-on-primary",
-    foreground: INK,
-    background: { token: "primary", hex: BRAND.primary.hex },
-    threshold: THRESHOLDS.bodyText,
-    why: "Dark ink on the amber fill — the primary CTA, and the pairing the whole act grammar rests on.",
-  },
-  {
-    id: "primary-on-background",
-    foreground: { token: "primary", hex: BRAND.primary.hex },
-    background: { token: "background", hex: NEUTRALS.background.hex },
-    threshold: THRESHOLDS.bodyText,
-    why: "Amber set as text — a link, an inline act. The Guidebook rules this unsafe because it fails on white; on the dark ground it is the palette's highest-contrast colour.",
-  },
-  {
-    id: "white-on-secondary",
-    foreground: WHITE,
-    background: { token: "secondary", hex: BRAND.secondary.hex },
-    threshold: THRESHOLDS.bodyText,
-    why: "White on the violet fill. Violet is a dark colour, so only a light label reads on it — the exact mirror of amber, which takes only a dark one.",
-  },
-];
-
-/**
- * Each status hue as the mark that states it, on the page ground.
- *
- * The glyph threshold, uniformly, because `info` binds the set at 4.10:1 and
- * because a status is never carried by hue alone: a mark comes with a glyph and
- * a label, and the label is the app's own foreground at body size.
- */
-const statusMarks: Pairing[] = (["success", "info", "warning", "destructive"] as const).map(
-  (id) => ({
-    id: `${id}-on-background`,
-    foreground: { token: id, hex: STATUS[id].hex },
-    background: { token: "background", hex: NEUTRALS.background.hex },
-    threshold: THRESHOLDS.largeTextAndGlyphs,
-    why: `The ${STATUS[id].name.toLowerCase()} mark on the page ground. A status never travels by hue alone, so this is a glyph beside a label rather than the label itself.`,
-  }),
-);
-
-/** Each status fill under the foreground token it ships with. */
-const statusFills: Pairing[] = [
-  {
-    id: "success-foreground-on-success",
-    foreground: { token: "success-foreground", hex: STATUS.success.foreground },
-    background: { token: "success", hex: STATUS.success.hex },
-    threshold: THRESHOLDS.bodyText,
-    why: "Dark ink on the success fill. White here measures 2.83:1 and clears neither floor, which is why this foreground is ink and not the white the reference branch carried.",
-  },
-  {
-    id: "info-foreground-on-info",
-    foreground: { token: "info-foreground", hex: STATUS.info.foreground },
-    background: { token: "info", hex: STATUS.info.hex },
-    threshold: THRESHOLDS.bodyText,
-    why: "White on the info fill, a hair over the body floor.",
-  },
-  {
-    id: "warning-foreground-on-warning",
-    foreground: { token: "warning-foreground", hex: STATUS.warning.foreground },
-    background: { token: "warning", hex: STATUS.warning.hex },
-    threshold: THRESHOLDS.bodyText,
-    why: "Dark ink on the warning fill.",
-  },
-  {
-    id: "destructive-foreground-on-destructive",
-    foreground: { token: "destructive-foreground", hex: STATUS.destructive.foreground },
-    background: { token: "destructive", hex: STATUS.destructive.hex },
-    threshold: THRESHOLDS.largeTextAndGlyphs,
-    why: "White on the destructive fill — 3.76:1, which clears the glyph floor and MISSES the 4.5:1 a body-size button label sits under. Inherited from a value the design pass ruled untouched; recorded at the threshold it actually meets rather than at the one we would like it to.",
-  },
-];
-
-/**
- * The focus ring against each ground it can be drawn on.
- *
- * A focus indicator is a WCAG 1.4.11 boundary — it is the thing that tells a
- * keyboard user where they are, and it carries no text — so it is held to 3:1
- * and not to the body floor. It is amber, which is the palette's brightest
- * colour, so it clears with room; the measurement is here because a later
- * retune of the ring hue is exactly the change that would break it silently.
- */
-const ringOnGrounds: Pairing[] = GROUNDS.map((ground) => ({
-  id: `ring-on-${ground.token}`,
-  foreground: { token: "ring", hex: NEUTRALS.ring.hex },
-  background: { token: ground.token, hex: ground.hex },
-  threshold: THRESHOLDS.largeTextAndGlyphs,
-  why: `The focus ring on ${ground.label}. A focus indicator is a 1.4.11 boundary, so it takes the 3:1 floor rather than the body one.`,
+  why: `Dark ink on a ${YTY_FAMILIES[family].name} fill — a family-coloured button's label, at body size and so at the body floor.`,
 }));
 
 /** Every foreground/ground pair the library ships, each with the threshold it is held to. */
@@ -301,53 +188,9 @@ export const PAIRINGS: readonly Pairing[] = [
   ...brandPairings,
   ...softAsText,
   ...fillUnderInk,
-  ...witStrongAsGlyph,
-  ...ringOnGrounds,
-  ...statusMarks,
-  ...statusFills,
 ];
-
-/**
- * Pairings the library ships and does **not** clear.
- *
- * A shortfall is not an omission and must not be one: leaving `input` out of
- * `PAIRINGS` would have made the list read as complete while the one boundary a
- * form is built from went unmeasured. So it is recorded here instead, at the
- * threshold it is genuinely held to, with the number it genuinely measures — and
- * the test asserts each entry still *fails*, so the day the hue is retuned the
- * entry has to be moved into `PAIRINGS` rather than left behind as a stale note.
- */
-export type Shortfall = Pairing & {
-  /** The measured ratio at the time of writing, so the prose and the math can be compared. */
-  readonly measured: number;
-};
-
-export const KNOWN_SHORTFALLS: readonly Shortfall[] = GROUNDS.map((ground) => ({
-  id: `input-on-${ground.token}`,
-  foreground: { token: "input", hex: NEUTRALS.input.hex },
-  background: { token: ground.token, hex: ground.hex },
-  threshold: THRESHOLDS.largeTextAndGlyphs,
-  measured: contrastRatio(NEUTRALS.input.hex, ground.hex),
-  why: `A form control's resting edge on ${ground.label} — the textbook 1.4.11 case, held to 3:1 and missing it. The value is inherited from the app's own --input and awaits an owner decision; recorded as a shortfall rather than omitted, because omitting it is how an unmeasured boundary passes for a measured one.`,
-}));
 
 /** The measured ratio for a pairing. Computed on every call — never stored, never rounded into the data. */
 export function measure(pairing: Pairing): number {
   return contrastRatio(pairing.foreground.hex, pairing.background.hex);
-}
-
-/** True when a pairing clears the threshold it is held to. */
-export function passes(pairing: Pairing): boolean {
-  return measure(pairing) >= pairing.threshold;
-}
-
-/**
- * Every pairing that involves a given token, on either side. This is what lets
- * a swatch show its own measurements without any surface restating a number.
- */
-export function pairingsFor(token: string): Pairing[] {
-  return PAIRINGS.filter(
-    (pairing) =>
-      pairing.foreground.token === token || pairing.background.token === token,
-  );
 }

@@ -13,14 +13,9 @@
   --color-background: #121212;
   --color-foreground: #EDEDED;
   --color-card: #1A1A1A;
-  --color-muted: #262626;
   --color-muted-foreground: #A6A6A6;
-  --color-accent: #212121;
   --color-border: #333333;
-  --color-input: #333333;
-  --color-ring: #FAA901;
   --color-card-foreground: #EDEDED;
-  --color-accent-foreground: #EDEDED;
 
   /* The signature pair. A fill and its foreground are one decision — amber is light and takes only a dark label, violet is dark and takes only a light one. */
   --color-primary: #FAA901;
@@ -37,22 +32,6 @@
   --color-yty-valor-soft: #FF993D;
   --color-yty-wit-strong: #3A71DE;
   --color-yty-wit-soft: #4DB3F5;
-
-  /* Status. success is glow-strong and info is wit-strong, so the palette carries one green and one blue with one meaning each. The Guidebook states no status semantics; the whole set is ours. */
-  --color-success: #1AB061;
-  --color-success-foreground: #121212;
-  --color-info: #3A71DE;
-  --color-info-foreground: #FFFFFF;
-  --color-warning: #E2761B;
-  --color-warning-foreground: #121212;
-  --color-destructive: #EF4444;
-  --color-destructive-foreground: #FFFFFF;
-
-  /* Corner radius. */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
 
   /* Faces. The package owns the names; the consumer loads the files and defines the var() each token points at, on <html> and never on <body>. */
   --font-sans: var(--font-poppins), system-ui, sans-serif;

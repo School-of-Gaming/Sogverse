@@ -68,11 +68,13 @@ as the token source.
 
 1. **Foundations: colour and faces.** Typed sources, generated theme, contrast proof in
    tests, the demo's first floor. Landed: `925cff5f`, `395418ab`, plus the review fixes.
-2. **Foundations, continued.** The mark and logo variants with their rules; the vocabulary
-   glossary (marks as constants, translatable terms with per-locale forms); the
-   fact-to-tone table for roles, product kinds and Yty elements; the spacing scale; the
-   viewer context (locale, zone, now) and the `Intl` formatters; a provisional/approved
-   status on every harvested value, shown in the demo.
+2. **Foundations grow only with consumers.** The mark and logo variants arrive with the
+   first chrome that renders them; the vocabulary glossary with the first component that
+   renders a brand term; the fact-to-tone table with the first component that takes a
+   fact; the spacing scale with the first layout primitive; the viewer context and the
+   `Intl` formatters with the first component that shows a date, time or amount. None of
+   them is defined ahead of that, and the foundations floor of the demo shows only what
+   exists.
 3. **The UI rules move in.** The root `CLAUDE.md`'s UI sections (layout and scrolling,
    loading and disabled state, button order, styling, the UI reference and preview-scene
    rules) relocate into the package's `CLAUDE.md` as each mechanism lands; the root keeps
@@ -102,18 +104,18 @@ as the token source.
   it whole.
 - Every rule in the package's `CLAUDE.md` is either impossible to violate through the API
   or fails lint or a test; none is prose only.
-- The demo shows every component in every state, every template, and marks nothing as
-  provisional.
+- The demo shows every component in every state and every template, and shows nothing the
+  library does not ship.
 - `npm run lint`, `npm run type-check` and the unit suite are clean, and the package is
   held to the same gates as the app.
 
 ## Owner decisions open
 
-- The destructive red's white label measures 3.76:1 against the 4.5:1 body floor.
-- The form-control resting edge measures 1.48:1 against the 3:1 boundary floor; recorded
-  as a known shortfall the tests hold until ruled.
-- The Guidebook's amber hover (a 10% darkening) against the design pass's ring-not-shade
-  ruling.
+- Amber on hover: the Guidebook darkens it about 10%; the reference branch shaded no fill
+  on hover and used a ring. Decided when the first button lands, not before.
+- Two measurements from the inputs to weigh when their components arrive, not before: a
+  destructive red whose white label measured 3.76:1 against the 4.5:1 body floor, and a
+  form-control edge that measured 1.48:1 against the 3:1 boundary floor.
 
 ## Follow-ups (die with this file unless the owner names them)
 

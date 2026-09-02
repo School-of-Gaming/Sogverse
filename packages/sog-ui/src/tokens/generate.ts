@@ -17,14 +17,7 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import {
-  BRAND,
-  NEUTRALS,
-  RADIUS_SCALE,
-  STATUS,
-  YTY_FAMILIES,
-  type NeutralId,
-} from "./brand.ts";
+import { BRAND, NEUTRALS, YTY_FAMILIES, type NeutralId } from "./brand.ts";
 import { FACES, TYPE_SCALE } from "./typography.ts";
 
 /** CSS pixels → rem at the 16px root, with no trailing zeros. */
@@ -41,18 +34,13 @@ function kebab(name: string): string {
 /**
  * The surfaces that ship a `-foreground` companion token.
  *
- * Not the whole surface set, and the difference is naming rather than use: the
- * page ground and the muted ground are filled every bit as much as these two,
- * but the token their text reads from already ships under its own name
- * (`--color-foreground`, `--color-muted-foreground`), so a companion would be a
- * second name for a declaration that is already there. Card and accent are the
- * two grounds with no such name of their own, which is the whole reason this
- * list is shorter than `SURFACE_IDS`.
+ * Not every surface, and the difference is naming rather than use: the page
+ * ground is filled every bit as much as the card, but the token its text reads
+ * from already ships under its own name (`--color-foreground`), so a companion
+ * would be a second name for a declaration that is already there. The card is
+ * the ground with no such name of its own.
  */
-const SURFACES_WITH_FOREGROUND = [
-  "card",
-  "accent",
-] as const satisfies readonly NeutralId[];
+const SURFACES_WITH_FOREGROUND = ["card"] as const satisfies readonly NeutralId[];
 
 function declaration(name: string, value: string): string {
   return `  ${name}: ${value};`;
@@ -90,19 +78,6 @@ function ytyLines(): string[] {
     declaration(`--color-yty-${id}-strong`, family.strong),
     declaration(`--color-yty-${id}-soft`, family.soft),
   ]);
-}
-
-function statusLines(): string[] {
-  return Object.entries(STATUS).flatMap(([id, status]) => [
-    declaration(`--color-${id}`, status.hex),
-    declaration(`--color-${id}-foreground`, status.foreground),
-  ]);
-}
-
-function radiusLines(): string[] {
-  return RADIUS_SCALE.map((step) =>
-    declaration(`--radius-${step.id}`, remFromPx(step.px)),
-  );
 }
 
 function faceLines(): string[] {
@@ -162,13 +137,6 @@ export function renderTheme(): string {
       "The four Yty-Element families. Strong fills, borders, rings and glows; soft carries text and glyphs. That split is a contrast result — see src/tokens/contrast.ts.",
       ytyLines(),
     ),
-    "",
-    section(
-      "Status. success is glow-strong and info is wit-strong, so the palette carries one green and one blue with one meaning each. The Guidebook states no status semantics; the whole set is ours.",
-      statusLines(),
-    ),
-    "",
-    section("Corner radius.", radiusLines()),
     "",
     section(
       "Faces. The package owns the names; the consumer loads the files and defines the var() each token points at, on <html> and never on <body>.",

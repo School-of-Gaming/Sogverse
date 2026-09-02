@@ -46,6 +46,15 @@ hand-rolled div in a Sogverse page, and fails lint.
 
 ## Foundations
 
+**Nothing is defined before it is needed.** A foundation entry earns its place in one of
+two ways: something in the library consumes it now, or it is the brand's identity outright
+(a hue, a face, a mark). A scale, a token, a table or a rule defined ahead of any consumer
+rots unnoticed and is then consumed by surprise, at which point it is an opinion nobody
+formed. So a radius arrives with the first cornered component, a spacing step with the
+first layout primitive, a status colour with the first alert, a glossary entry with the
+first component that renders the term. What the library has an opinion about grows with
+what the library ships.
+
 **Colour is defined once, in TypeScript, and the CSS is generated from it.** The typed
 source is importable by everything that cannot read CSS: emails, canvas, OG images, the
 identicon. A generator emits the Tailwind 4 theme, the generated file is committed beside

@@ -12,13 +12,37 @@
  * the page still looks styled, which is the failure mode that hides best. The
  * demo's layout is the reference implementation of that contract.
  *
- * As in `brand.ts`, the `role` and `usage` strings are Guidebook quotations kept
- * as documentation data for the demo. They are never product copy and no
- * component renders one, and every entry carries a `source` so a reader can tell
- * a Guidebook value from one we had to invent.
+ * **`FACES` is the exhaustive list.** Four faces are loaded and no other is: a
+ * face that is not here is not available to the UI, whether or not it exists in
+ * the brand's art. The logo's lettering, campaign display faces and anything
+ * retired are drawn, not typed, and the UI never recreates them.
+ *
+ * ## The type rules that are opinions
+ *
+ * The two that are values are exported below, because a check can hold a number.
+ * The rest are held here:
+ *
+ * - **Headings are sentence case.** Never ALL CAPS, never Title Case Every
+ *   Word: caps read as shouting and undercut the calm register the brand speaks
+ *   in.
+ * - **Caps are permitted on furniture** — the small, tracked markers a reader
+ *   scans as structure rather than reads as prose: eyebrows, pills, field
+ *   labels, table headers. The test is voice against furniture, not the HTML
+ *   tag.
+ * - **Caps and letterspacing travel as a pair.** A marker that goes sentence
+ *   case drops its tracking in the same edit, because tracked lowercase reads
+ *   as a rendering fault.
+ * - **Emphasis is bold, not italic**, in UI and body alike. Italics are for
+ *   genuine titles and the rare editorial flourish.
+ * - **Two or three weights per piece, no more.** The family offers many; using
+ *   many is how a layout starts to look nervous.
+ *
+ * **What is deliberately absent:** the brand's formatting standards — dates,
+ * timestamps, ranges, durations, zero-cent prices — are not encoded here. The
+ * product renders dates and times per locale and per viewer timezone, and no
+ * clock format moves until that question is answered whole. Encoding one of
+ * them here is how a deferral gets overridden by accident.
  */
-
-import type { Source } from "./brand";
 
 /**
  * A face the theme names.
@@ -29,7 +53,7 @@ import type { Source } from "./brand";
  * cursive face" and never for a family.
  */
 export type Face = {
-  /** The family, as the Guidebook names it. */
+  /** The family, by its own name. */
   readonly name: string;
   /** The semantic token the theme declares — what a `font-*` utility reads. */
   readonly token: `--font-${string}`;
@@ -37,24 +61,25 @@ export type Face = {
   readonly variable: `--font-${string}`;
   /** The fallback stack, always the UA's own — never a second webfont. */
   readonly fallback: string;
-  /** Weights the reference consumer loads. A weight not listed is synthesised by the browser, not drawn. */
+  /** Weights the consumer loads. A weight not listed is synthesised by the browser, not drawn. */
   readonly weights: readonly number[];
-  /** Subsets the reference consumer requests. `latin-ext` is not optional: the product ships Finnish, Swedish and French. */
+  /** Subsets the consumer requests. `latin-ext` is not optional: the product ships Finnish, Swedish and French. */
   readonly subsets: readonly string[];
-  /** The Guidebook's one-line statement of the face's job. */
-  readonly role: string;
-  /** Where it may and may not be set. */
-  readonly usage: string;
-  /**
-   * `required` faces have no acceptable fallback: forget one and the page is
-   * silently unstyled. The rest degrade to a real UA stack, so a consumer that
-   * has no placement for them can leave them undefined.
-   */
-  readonly required: boolean;
-  readonly source: Source;
 };
 
 export const FACES = {
+  /**
+   * The app face: body copy and every heading. A geometric, rounded, warm sans
+   * that reads as trustworthy to a parent and approachable to a child.
+   *
+   * There is no display face beside it — a heading that wants personality gets
+   * the scale, not another family. It is also the one face with no acceptable
+   * fallback: leave its variable undefined and the page is silently unstyled,
+   * where the other three degrade to a real UA stack a consumer can live with.
+   *
+   * Not a variable font, so each weight is a separate file and has to be asked
+   * for by name.
+   */
   sans: {
     name: "Poppins",
     token: "--font-sans",
@@ -62,12 +87,14 @@ export const FACES = {
     fallback: "system-ui, sans-serif",
     weights: [400, 500, 600, 700],
     subsets: ["latin", "latin-ext"],
-    role: "Poppins is the workhorse. Headings and body copy on the website and in most contexts. A geometric, rounded, warm sans that reads as trustworthy to parents and approachable to children.",
-    usage:
-      "Body copy and every heading. There is no display face beside it — a heading that wants personality gets the scale, not another family.",
-    required: true,
-    source: "Guidebook",
   },
+  /**
+   * The editorial voice: a humanist serif for editorial headlines, pull quotes
+   * and long-form pieces written in a person's voice.
+   *
+   * A seasoning, not a staple. Never set UI or a long passage of body text in
+   * it on screen. The theme carries the name and waits for a placement.
+   */
   serif: {
     name: "Crimson Pro",
     token: "--font-serif",
@@ -75,12 +102,17 @@ export const FACES = {
     fallback: "Georgia, serif",
     weights: [400, 600],
     subsets: ["latin", "latin-ext"],
-    role: "Crimson Pro is the serif accent. A humanist serif kept for special use: editorial headlines, pull quotes, the Princi-Pal's long-form pieces.",
-    usage:
-      "A seasoning, not a staple. Never set long UI or body text in it on screen. Named by the Guidebook and unplaced in the product so far, so the theme carries the name and waits for a placement.",
-    required: false,
-    source: "Guidebook",
   },
+  /**
+   * The world voice: the typewriter-monospace face of Sogverse itself, spent
+   * where the platform names one of its own places — in-world UI, quest and
+   * story artwork, campaign posters.
+   *
+   * Read narrowly, and kept out of plain copy addressed to a parent, where the
+   * app face carries trust better. Deliberately not called `--font-mono`, which
+   * owns Tailwind's own utility and is spent on machine text — a room code, an
+   * id, an inline code span — that must not silently become branded.
+   */
   brandMono: {
     name: "Space Mono",
     token: "--font-brand-mono",
@@ -88,12 +120,13 @@ export const FACES = {
     fallback: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
     weights: [400, 700],
     subsets: ["latin", "latin-ext"],
-    role: "Space Mono is the world. The typewriter-monospace face of Sogverse itself: in-platform UI, campaign posters, quest and story artwork, anything meant to feel like it comes from inside the game world.",
-    usage:
-      "Read narrowly: the platform naming one of its own places. Keep it out of plain parent-facing copy, where Poppins carries trust better. Deliberately not called `--font-mono`, which owns Tailwind's own utility and is spent on machine text — a room code, an id, an inline code span — that must not silently become branded.",
-    required: false,
-    source: "Guidebook",
   },
+  /**
+   * Handwriting, for a signature and nothing else — a name typed into a signing
+   * field, rendered the way it would be signed. Anything longer than a name is
+   * unreadable in it, which is what keeps the scope closed rather than merely
+   * narrow.
+   */
   cursive: {
     name: "Dancing Script",
     token: "--font-cursive",
@@ -101,60 +134,10 @@ export const FACES = {
     fallback: "cursive",
     weights: [600],
     subsets: ["latin", "latin-ext"],
-    role: "Handwriting, for a signature and nothing else — a name typed into a signing field, rendered the way it would be signed.",
-    usage:
-      "Anything longer than a name is unreadable in it, which is what keeps the scope closed rather than merely narrow. Not a Guidebook face: an owner exception, 2026-09-01, recorded in docs/brand-guidebook-deviations.md.",
-    required: false,
-    source: "owner ruling",
   },
 } as const satisfies Record<string, Face>;
 
 export type FaceId = keyof typeof FACES;
-
-/**
- * Faces the brand owns that the UI may not set.
- *
- * Recorded because "not in the theme" and "not a brand face" are different
- * facts, and a reader looking for the logo's lettering deserves to find out why
- * it is absent rather than to conclude it was forgotten.
- */
-export const NON_UI_FACES = [
-  {
-    name: "Lazydog",
-    kind: "campaign",
-    usage: "Cartoonish, playful, speech-bubble contexts. Gamer-facing campaign art only, never the website.",
-  },
-  {
-    name: "Shlop",
-    kind: "campaign",
-    usage: "Spooky content — Halloween camps and the like. Campaign art only.",
-  },
-  {
-    name: "True Typewriter",
-    kind: "campaign",
-    usage: "Mystery and adventure atmosphere. Campaign art only.",
-  },
-  {
-    name: "The “SOG” monogram",
-    kind: "locked",
-    usage: "A custom gamified display face that exists only inside the logo. Do not recreate it for headlines; its scarcity is what makes the badge feel special.",
-  },
-  {
-    name: "The condensed sans in “SCHOOL OF GAMING”",
-    kind: "locked",
-    usage: "Lives only in the lockup.",
-  },
-  {
-    name: "Work Sans",
-    kind: "retired",
-    usage: "Used by earlier versions of the Guidebook and retired. The files may still sit in the Brand Kit folder; build nothing new on them.",
-  },
-  {
-    name: "Plus Jakarta Sans",
-    kind: "retired",
-    usage: "Appeared in earlier notes and is not used — close enough to Poppins that keeping both adds confusion without adding range.",
-  },
-] as const;
 
 // ------------------------------------------------------------- the scale
 
@@ -167,129 +150,102 @@ export type TypeStep = {
   readonly face: FaceId;
   /** The size the library ships, in CSS pixels. */
   readonly px: number;
-  /**
-   * The Guidebook gives several steps as a range rather than a number. The
-   * shipped `px` is the bottom of it; the range is kept so a surface with room
-   * knows how far up it may go without leaving the scale.
-   */
-  readonly range: readonly [number, number] | null;
   /** The narrow-viewport size, where a step has one. `null` means the step does not restep. */
   readonly mobilePx: number | null;
-  /** Where the mobile step came from. `null` wherever there is no mobile step. */
-  readonly mobileSource: Source | null;
   readonly weight: number;
   readonly lineHeight: number;
-  readonly use: string;
-  readonly source: Source;
 };
 
 /**
- * The working type scale, from the Guidebook's own table.
+ * The working type scale.
  *
- * **The Guidebook has no mobile step** — seven rows, no responsive row, and the
- * ranges never say which end belongs to which viewport. H1's mobile step is the
- * design pass's ruling: 48px is a hero size and the 360px floor cannot carry it,
- * so the step down to 30px is pinned here rather than re-decided per page. Every
- * other step ships one size at every width.
+ * Seven steps and no more: hero, three headings, two body sizes and the button
+ * label. A surface that wants a size the scale does not have is asking for a
+ * step, which is a decision made here, not an arbitrary value written into a
+ * page.
+ *
+ * **Only H1 resteps for a narrow viewport.** A hero size cannot fit the mobile
+ * floor, so its narrow step is pinned here rather than re-decided per page;
+ * every other step ships one size at every width, because a heading that
+ * changes size at a breakpoint costs more in inconsistency than it buys in fit.
  */
 export const TYPE_SCALE = [
+  /** Hero headlines. */
   {
     id: "h1",
     cssName: "--text-h1",
     label: "H1",
     face: "sans",
     px: 48,
-    range: [48, 56],
     mobilePx: 30,
-    mobileSource: "design pass",
     weight: 600,
     lineHeight: 1.1,
-    use: "Hero headlines",
-    source: "Guidebook",
   },
+  /** Section titles. */
   {
     id: "h2",
     cssName: "--text-h2",
     label: "H2",
     face: "sans",
     px: 36,
-    range: [36, 40],
     mobilePx: null,
-    mobileSource: null,
     weight: 600,
     lineHeight: 1.2,
-    use: "Section titles",
-    source: "Guidebook",
   },
+  /** Card and sub-section titles. */
   {
     id: "h3",
     cssName: "--text-h3",
     label: "H3",
     face: "sans",
     px: 24,
-    range: [24, 28],
     mobilePx: null,
-    mobileSource: null,
     weight: 600,
     lineHeight: 1.3,
-    use: "Card and sub-section titles",
-    source: "Guidebook",
   },
+  /** Small headings, set at body weight so they read as a lead rather than a shout. */
   {
     id: "h4",
     cssName: "--text-h4",
     label: "H4",
     face: "sans",
     px: 18,
-    range: [18, 20],
     mobilePx: null,
-    mobileSource: null,
     weight: 400,
     lineHeight: 1.4,
-    use: "Small headings",
-    source: "Guidebook",
   },
+  /** Main body copy, with the loosest line height in the scale because it is the one people read. */
   {
     id: "body-l",
     cssName: "--text-body-l",
     label: "Body L",
     face: "sans",
     px: 18,
-    range: null,
     mobilePx: null,
-    mobileSource: null,
     weight: 400,
     lineHeight: 1.7,
-    use: "Main body copy",
-    source: "Guidebook",
   },
+  /** Captions, labels and navigation. */
   {
     id: "body-s",
     cssName: "--text-body-s",
     label: "Body S",
     face: "sans",
     px: 14,
-    range: null,
     mobilePx: null,
-    mobileSource: null,
     weight: 400,
     lineHeight: 1.5,
-    use: "Captions, labels, nav",
-    source: "Guidebook",
   },
+  /** Button labels. Line height 1, because a label is one line inside a box that sets its own height. */
   {
     id: "cta",
     cssName: "--text-cta",
     label: "CTA",
     face: "sans",
     px: 16,
-    range: null,
     mobilePx: null,
-    mobileSource: null,
     weight: 600,
     lineHeight: 1,
-    use: "Button labels",
-    source: "Guidebook",
   },
 ] as const satisfies readonly TypeStep[];
 
@@ -298,72 +254,20 @@ export type TypeStepId = (typeof TYPE_SCALE)[number]["id"];
 // -------------------------------------------------------------- type rules
 
 /**
- * The type rules that are values, so a check can hold them rather than a
- * reviewer remembering them. Each carries the value, the sentence it came from,
- * and where it came from — because three of the seven are ours and not the
- * brand's.
+ * The cap on a reading column, in characters.
  *
- * **What is deliberately absent:** the Guidebook's formatting standards — dates,
- * timestamps, ranges, durations, zero-cent prices — are not encoded here. They
- * are escalated whole to the Guidebook's author (five entries in
- * `docs/brand-guidebook-deviations.md`), because the app renders dates and times
- * per locale and per viewer timezone and no clock format moves until that is
- * answered. Encoding one of them as a rule below would be how a deferral gets
- * overridden by accident.
+ * Body copy runs to about this many characters on a wide viewport and no
+ * further: past it the eye loses the start of the next line, and a paragraph
+ * that spans a whole desktop window is read once and skimmed after. A layout
+ * primitive spends this; a page never types the number.
  */
-export const TYPE_RULES = {
-  headingCase: {
-    value: "sentence",
-    statement:
-      "Headings are sentence case. Never ALL CAPS, never Title Case Every Word. ALL CAPS reads as shouting and undercuts the calm register.",
-    source: "Guidebook",
-  },
-  /**
-   * The reading that reconciles A.3's ban with B.2's own bold-caps topic pill:
-   * headings are voice and stay sentence case, furniture — eyebrows, pills,
-   * field labels, table headers — may be caps. Recorded as "Uppercase labels"
-   * in `docs/brand-guidebook-deviations.md`.
-   */
-  capsOnFurniture: {
-    value: true,
-    statement:
-      "Caps are permitted on furniture — the small, tracked markers a reader scans as structure rather than reads as prose. The Guidebook's own topic pill is bold caps.",
-    source: "owner ruling",
-  },
-  emphasis: {
-    value: "bold",
-    statement:
-      "Emphasis is bold, not italic, in UI and body. Reserve italics for genuine titles and the rare editorial flourish.",
-    source: "Guidebook",
-  },
-  bodyLineLength: {
-    value: 70,
-    statement:
-      "Body line length caps around 70 characters on desktop for readability.",
-    source: "Guidebook",
-  },
-  weightsPerPiece: {
-    value: 3,
-    statement:
-      "Two or three weights per piece, no more. The family gives you many; using many is how a layout starts to look nervous.",
-    source: "Guidebook",
-  },
-  /** No tracking or letterspacing rule appears anywhere in the Guidebook; this one is ours. */
-  trackingFollowsCaps: {
-    value: true,
-    statement:
-      "Caps and letterspacing travel as a pair: a marker that goes sentence case drops its tracking in the same edit, because tracked lowercase reads as a rendering fault.",
-    source: "design pass",
-  },
-  mobileFloor: {
-    value: 360,
-    statement:
-      "360 CSS px is the design floor. Anything narrower must degrade gracefully; no layout decision is weighed against it.",
-    source: "design pass",
-  },
-} as const satisfies Record<
-  string,
-  { value: string | number | boolean; statement: string; source: Source }
->;
+export const BODY_LINE_LENGTH_CH = 70;
 
-export type TypeRuleId = keyof typeof TYPE_RULES;
+/**
+ * The narrow design floor, in CSS pixels.
+ *
+ * A narrow layout is designed and judged at this width. Anything narrower must
+ * degrade gracefully — no horizontal document scroll, nothing clipped into
+ * uselessness — but no layout decision is weighed against it.
+ */
+export const MOBILE_FLOOR_PX = 360;
