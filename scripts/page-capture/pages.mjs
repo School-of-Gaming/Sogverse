@@ -23,8 +23,9 @@
 /**
  * 1440×900 is the desktop the gedu and admin surfaces are designed for; 360×800
  * is the mobile design floor the parent and gamer surfaces are designed at.
- * Both are shot for every page regardless of which audience owns it — a
- * narrow admin page still has to not break, and that is worth a picture.
+ * Both are shot for public, family and gedu pages. **Admin pages shoot desktop
+ * only** (owner ruling, 2026-09-02): admin is desktop-default by the layout
+ * rules, and its mobile layout is not a review surface.
  */
 export const VIEWPORTS = {
   desktop: { width: 1440, height: 900, deviceScaleFactor: 1 },
@@ -109,32 +110,35 @@ export const PAGES = [
   { slug: "gedu-contract", route: "/gedu/contract", as: "gedu" },
 
   // -- Admin ----------------------------------------------------------------
-  { slug: "admin-dashboard", route: "/admin", as: "admin" },
-  { slug: "admin-users", route: "/admin/users", as: "admin" },
+  //
+  // Desktop only (owner ruling, 2026-09-02) — admin is a desktop surface and
+  // its narrow layout is not reviewed from screenshots. The admin copy of the
+  // group workspace is deliberately absent: it renders the same body the gedu
+  // workspace shot already shows (owner: sufficiently covered by the gedu and
+  // gamer shots).
+  { slug: "admin-dashboard", route: "/admin", as: "admin", viewports: ["desktop"] },
+  { slug: "admin-users", route: "/admin/users", as: "admin", viewports: ["desktop"] },
   {
     slug: "admin-user-detail",
     route: (s) => s.routes.adminUser,
     as: "admin",
+    viewports: ["desktop"],
     notes: "The seeded gedu, showing the certification and record-check controls.",
   },
-  { slug: "admin-clubs", route: "/admin/consumer-clubs", as: "admin" },
+  { slug: "admin-clubs", route: "/admin/consumer-clubs", as: "admin", viewports: ["desktop"] },
   {
     slug: "admin-club-detail",
     route: (s) => s.routes.adminProduct,
     as: "admin",
+    viewports: ["desktop"],
   },
-  {
-    slug: "admin-club-group",
-    route: (s) => s.routes.adminProductGroup,
-    as: "admin",
-    notes: "The admin's copy of the same group workspace body the gedu sees.",
-  },
-  { slug: "admin-sites", route: "/admin/sites", as: "admin" },
-  { slug: "admin-tools", route: "/admin/tools", as: "admin" },
+  { slug: "admin-sites", route: "/admin/sites", as: "admin", viewports: ["desktop"] },
+  { slug: "admin-tools", route: "/admin/tools", as: "admin", viewports: ["desktop"] },
   {
     slug: "admin-ui-components",
     route: "/admin/ui-components",
     as: "admin",
+    viewports: ["desktop"],
     notes: "The living style guide — the one page that shows every variant at once.",
   },
 
