@@ -5,6 +5,7 @@
 services/*/node_modules
 services/*/dist
 services/*/.auth-cache
+packages/*/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -19,6 +20,11 @@ services/*/.auth-cache
 # next.js
 /.next/
 /out/
+# The SOG-UI demo is a Next app of its own, run with Next's directory
+# argument, so its build output lands beside the app rather than at the root.
+# Its next-env.d.ts needs no entry: the bare `next-env.d.ts` under "typescript"
+# below already matches at every depth, and the root does not commit its own.
+packages/*/demo/.next/
 
 # production
 /build

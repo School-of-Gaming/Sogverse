@@ -41,7 +41,11 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    files: ["src/**/*.{ts,tsx}"],
+    // The library ships no user-visible string literal: every word a component
+    // renders arrives as a prop, so Sogverse localises and SOG-UI presents.
+    // `packages/*/demo/**` is deliberately NOT listed — literal English is legal
+    // in the demo by configuration, never by a disable comment at the top of a file.
+    files: ["src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
     plugins: { i18next },
     rules: {
       "i18next/no-literal-string": ["error", {
@@ -235,6 +239,11 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "services/*/dist/**",
+    // The demo app is a Next app of its own: its build output and the
+    // next-env.d.ts Next writes for it are generated, exactly like the root
+    // entries above.
+    "packages/*/demo/.next/**",
+    "packages/*/demo/next-env.d.ts",
   ]),
 ]);
 
