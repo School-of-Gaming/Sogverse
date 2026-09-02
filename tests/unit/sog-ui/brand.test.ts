@@ -6,6 +6,7 @@ import {
   NEUTRALS,
   RADIUS_SCALE,
   STATUS,
+  SURFACE_IDS,
   TONE_TO_FAMILY,
   TONES,
   YTY_FAMILIES,
@@ -44,6 +45,12 @@ const allHexes: [string, string][] = [
 ];
 
 describe("brand colours", () => {
+  // Vitest's `it.each([])` registers nothing and the suite passes green, so every
+  // table here is floored: an emptied list must fail rather than quietly vanish.
+  it("has a hex from every family, pair and status to check", () => {
+    expect(allHexes.length).toBeGreaterThanOrEqual(20);
+  });
+
   it.each(allHexes)(
     "%s is an uppercase six-digit hex",
     (_label, hex) => {
@@ -77,10 +84,27 @@ describe("brand colours", () => {
     expect(new Set(families).size).toBe(families.length);
   });
 
-  it("names the token each neutral's text reads from", () => {
-    for (const [id, neutral] of Object.entries(NEUTRALS)) {
+  it("names the token each surface's text reads from", () => {
+    expect(SURFACE_IDS.length).toBeGreaterThan(0);
+    for (const id of SURFACE_IDS) {
       expect(NEUTRALS, `${id}.on names a token that does not exist`).toHaveProperty(
-        neutral.on,
+        NEUTRALS[id].on,
+      );
+    }
+  });
+
+  /**
+   * `on` is the surface contract — the token that reads *on* this ground — so a
+   * neutral that is drawn rather than filled must not carry one. An edge, a ring
+   * or a text colour with an `on` reads as though something sits upon it, which
+   * is a claim about the token that is simply not true.
+   */
+  it("gives no non-surface an `on`", () => {
+    const surfaces: readonly string[] = SURFACE_IDS;
+    for (const [id, neutral] of Object.entries(NEUTRALS)) {
+      if (surfaces.includes(id)) continue;
+      expect(neutral, `${id} is not a surface but carries an "on"`).not.toHaveProperty(
+        "on",
       );
     }
   });

@@ -72,11 +72,18 @@ export const TONES = [
 /**
  * The ground, the ink on it, and the greys between.
  *
- * `on` names the token that reads *on* this one, so a surface and its text are
- * one decision rather than two. The Guidebook's neutrals are drawn for a white
- * page — off-white cards, light-grey borders, mid-grey secondary text — and
- * each of ours is the same job read against the dark ground; `guidebook` names
- * the swatch it corresponds to so the inversion is legible rather than lost.
+ * **`on` belongs to a surface and to nothing else.** It names the token that
+ * reads *on* this one, so a ground and its text are one decision rather than
+ * two — which means it is only meaningful for the four neutrals a component
+ * actually fills (see `SURFACE_IDS` below). An edge, a ring and a text colour
+ * are drawn *on* something rather than drawn *upon*, so they carry no `on`:
+ * giving one an `on` would answer a question nobody asked of it, and would make
+ * the field read as decoration rather than as the contract it is.
+ *
+ * The Guidebook's neutrals are drawn for a white page — off-white cards,
+ * light-grey borders, mid-grey secondary text — and each of ours is the same job
+ * read against the dark ground; `guidebook` names the swatch it corresponds to
+ * so the inversion is legible rather than lost.
  */
 export const NEUTRALS = {
   background: {
@@ -92,7 +99,6 @@ export const NEUTRALS = {
   foreground: {
     name: "Ink",
     hex: "#EDEDED",
-    on: "background",
     role: "Primary text on the dark ground.",
     guidebook: { swatch: "White #FFFFFF", role: "Primary background." },
     source: "design pass",
@@ -120,7 +126,6 @@ export const NEUTRALS = {
   mutedForeground: {
     name: "Muted ink",
     hex: "#A6A6A6",
-    on: "background",
     role: "Secondary text, captions, metadata.",
     guidebook: { swatch: "Mid grey #9E9E9E", role: "Secondary text, captions, metadata." },
     deviation: null,
@@ -138,7 +143,6 @@ export const NEUTRALS = {
   border: {
     name: "Border",
     hex: "#333333",
-    on: "foreground",
     role: "Borders, dividers, disabled states. Furniture edges are neutral; colour arrives on an edge only where the border is the construct.",
     guidebook: { swatch: "Light grey #EBEBEB", role: "Borders, dividers, disabled states." },
     deviation: null,
@@ -147,7 +151,6 @@ export const NEUTRALS = {
   input: {
     name: "Input",
     hex: "#333333",
-    on: "foreground",
     role: "A form control's resting edge. Its own token rather than an alias, because validation moves it and furniture edges do not.",
     guidebook: null,
     deviation: null,
@@ -156,7 +159,6 @@ export const NEUTRALS = {
   ring: {
     name: "Ring",
     hex: "#FAA901",
-    on: "background",
     role: "The focus ring. Amber, because focus is the act about to happen. The Guidebook gives no focus or keyboard-state guidance at all, so the hue is ours.",
     guidebook: null,
     deviation: null,
@@ -165,6 +167,26 @@ export const NEUTRALS = {
 } as const;
 
 export type NeutralId = keyof typeof NEUTRALS;
+
+/**
+ * The neutrals a component **fills** — a ground with text on it — and so the
+ * exact set that carries an `on`.
+ *
+ * This is the list, rather than a convention about which entries happen to have
+ * the field: a test walks it both ways, so a surface without an `on` and a
+ * non-surface that grows one both fail out loud. `accent` is here because a
+ * hover lift and a selected row are grounds that carry their row's text;
+ * `muted` is here because it is the alert, banner and label-chip ground, which
+ * is also why it is the binding one for every contrast measurement.
+ */
+export const SURFACE_IDS = [
+  "background",
+  "card",
+  "muted",
+  "accent",
+] as const satisfies readonly NeutralId[];
+
+export type SurfaceId = (typeof SURFACE_IDS)[number];
 
 // ------------------------------------------------------------- brand pair
 
@@ -339,6 +361,12 @@ export const STATUS = {
     role: "Deletion, irreversible actions and form validation.",
     source: "design pass",
     /**
+     * Where the hex comes from, so it is authored rather than merely inherited:
+     * `#EF4444` is Tailwind's red-500. The reference branch spells the same
+     * colour as `--destructive: 0 84% 60%`, which renders `#EF4343` and is
+     * itself a hand-rounding of red-500 — so the two are the same intent one
+     * digit apart, and the round number is the one worth keeping.
+     *
      * White on this red measures 3.76:1 — over the 3:1 glyph floor, under the
      * 4.5:1 body floor a button label sits at. The design pass ruled
      * destructive's classes untouched, so the value is carried rather than

@@ -30,6 +30,12 @@ const DEMO_LAYOUT = join(
 );
 
 describe("faces", () => {
+  // Vitest's `it.each([])` registers nothing and the suite passes green, so both
+  // tables here are floored: an emptied list must fail rather than vanish.
+  it("has every face to check", () => {
+    expect(Object.keys(FACES).length).toBeGreaterThanOrEqual(4);
+  });
+
   it.each(Object.entries(FACES))(
     "%s names a --font- token and a --font- variable",
     (_id, face) => {
@@ -58,6 +64,13 @@ describe("faces", () => {
 });
 
 describe("the type scale", () => {
+  // The Guidebook's table is seven rows and the scale ships all seven, so this is
+  // an equality rather than a floor: a step added or dropped is a change to the
+  // scale itself and has to be decided here as well as in the source.
+  it("ships the Guidebook's seven steps", () => {
+    expect(TYPE_SCALE).toHaveLength(7);
+  });
+
   it.each(TYPE_SCALE.map((step) => [step.id, step] as const))(
     "%s has a positive size and a weight its face actually loads",
     (_id, step) => {

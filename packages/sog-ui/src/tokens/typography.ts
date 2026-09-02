@@ -302,6 +302,14 @@ export type TypeStepId = (typeof TYPE_SCALE)[number]["id"];
  * reviewer remembering them. Each carries the value, the sentence it came from,
  * and where it came from — because three of the seven are ours and not the
  * brand's.
+ *
+ * **What is deliberately absent:** the Guidebook's formatting standards — dates,
+ * timestamps, ranges, durations, zero-cent prices — are not encoded here. They
+ * are escalated whole to the Guidebook's author (five entries in
+ * `docs/brand-guidebook-deviations.md`), because the app renders dates and times
+ * per locale and per viewer timezone and no clock format moves until that is
+ * answered. Encoding one of them as a rule below would be how a deferral gets
+ * overridden by accident.
  */
 export const TYPE_RULES = {
   headingCase: {
@@ -359,14 +367,3 @@ export const TYPE_RULES = {
 >;
 
 export type TypeRuleId = keyof typeof TYPE_RULES;
-
-/**
- * §9's formatting standards — dates, timestamps, ranges, durations, zero-cent
- * prices — are **not** encoded here. They are escalated whole to the
- * Guidebook's author (five entries in `docs/brand-guidebook-deviations.md`),
- * because the app renders dates and times per locale and per viewer timezone
- * and no clock format moves until that is answered. Encoding one of them as a
- * token would be how a deferral gets overridden by accident.
- */
-export const FORMATTING_STANDARDS_STATUS =
-  "Escalated whole — see docs/brand-guidebook-deviations.md";

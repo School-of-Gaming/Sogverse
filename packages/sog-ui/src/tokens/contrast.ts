@@ -10,7 +10,17 @@
  *
  * WCAG AA is **4.5:1 for body-size text** and **3:1 for large text and
  * non-text glyphs**. Which one applies is a property of the usage, not of the
- * colour, which is why a pairing has to say what it is for.
+ * colour, which is why a pairing has to say what it is for. 1.4.11 is the same
+ * 3:1 floor read as a boundary rather than as a mark: a focus ring and a form
+ * control's resting edge are both held to it.
+ *
+ * `PAIRINGS` is what the library ships and clears. `KNOWN_SHORTFALLS` beside it
+ * is what the library ships and does *not* clear — an inherited value awaiting
+ * an owner decision — measured at the same thresholds and asserted to still be
+ * failing, so a retune that fixes one forces its entry to move rather than
+ * leaving a stale note behind. Between the two lists, every foreground/ground
+ * pair the library ships is measured; neither is a place a pairing can be
+ * quietly omitted from.
  *
  * The math is WCAG 2.x, ported from the design pass's audit script.
  */
@@ -171,14 +181,21 @@ const witStrongAsGlyph: Pairing[] = GROUNDS.map((ground) => ({
   why: `Wit-strong as a glyph or edge on ${ground.label}. It clears 3:1 here and misses 4.5:1 on every ground, which is why wit's text always takes soft.`,
 }));
 
-/** The app's own text tokens, on the two grounds a page is built from. */
+/**
+ * The app's own text tokens, on all three grounds a page is built from.
+ *
+ * Muted is included and is the binding one: it is the lightest surface in the
+ * set, so it is where secondary text comes closest to its floor, and leaving it
+ * out would mean the alert, banner and label-chip ground was the one ground
+ * nothing checked.
+ */
 const appTextOnGrounds: Pairing[] = (
   [
     ["foreground", NEUTRALS.foreground.hex, "Body copy"],
     ["muted-foreground", NEUTRALS.mutedForeground.hex, "Secondary text, captions and metadata"],
   ] as const
 ).flatMap(([token, hex, label]) =>
-  GROUNDS.slice(0, 2).map((ground) => ({
+  GROUNDS.map((ground) => ({
     id: `${token}-on-${ground.token}`,
     foreground: { token, hex },
     background: { token: ground.token, hex: ground.hex },
@@ -261,6 +278,23 @@ const statusFills: Pairing[] = [
   },
 ];
 
+/**
+ * The focus ring against each ground it can be drawn on.
+ *
+ * A focus indicator is a WCAG 1.4.11 boundary — it is the thing that tells a
+ * keyboard user where they are, and it carries no text — so it is held to 3:1
+ * and not to the body floor. It is amber, which is the palette's brightest
+ * colour, so it clears with room; the measurement is here because a later
+ * retune of the ring hue is exactly the change that would break it silently.
+ */
+const ringOnGrounds: Pairing[] = GROUNDS.map((ground) => ({
+  id: `ring-on-${ground.token}`,
+  foreground: { token: "ring", hex: NEUTRALS.ring.hex },
+  background: { token: ground.token, hex: ground.hex },
+  threshold: THRESHOLDS.largeTextAndGlyphs,
+  why: `The focus ring on ${ground.label}. A focus indicator is a 1.4.11 boundary, so it takes the 3:1 floor rather than the body one.`,
+}));
+
 /** Every foreground/ground pair the library ships, each with the threshold it is held to. */
 export const PAIRINGS: readonly Pairing[] = [
   ...appTextOnGrounds,
@@ -268,9 +302,34 @@ export const PAIRINGS: readonly Pairing[] = [
   ...softAsText,
   ...fillUnderInk,
   ...witStrongAsGlyph,
+  ...ringOnGrounds,
   ...statusMarks,
   ...statusFills,
 ];
+
+/**
+ * Pairings the library ships and does **not** clear.
+ *
+ * A shortfall is not an omission and must not be one: leaving `input` out of
+ * `PAIRINGS` would have made the list read as complete while the one boundary a
+ * form is built from went unmeasured. So it is recorded here instead, at the
+ * threshold it is genuinely held to, with the number it genuinely measures — and
+ * the test asserts each entry still *fails*, so the day the hue is retuned the
+ * entry has to be moved into `PAIRINGS` rather than left behind as a stale note.
+ */
+export type Shortfall = Pairing & {
+  /** The measured ratio at the time of writing, so the prose and the math can be compared. */
+  readonly measured: number;
+};
+
+export const KNOWN_SHORTFALLS: readonly Shortfall[] = GROUNDS.map((ground) => ({
+  id: `input-on-${ground.token}`,
+  foreground: { token: "input", hex: NEUTRALS.input.hex },
+  background: { token: ground.token, hex: ground.hex },
+  threshold: THRESHOLDS.largeTextAndGlyphs,
+  measured: contrastRatio(NEUTRALS.input.hex, ground.hex),
+  why: `A form control's resting edge on ${ground.label} — the textbook 1.4.11 case, held to 3:1 and missing it. The value is inherited from the app's own --input and awaits an owner decision; recorded as a shortfall rather than omitted, because omitting it is how an unmeasured boundary passes for a measured one.`,
+}));
 
 /** The measured ratio for a pairing. Computed on every call — never stored, never rounded into the data. */
 export function measure(pairing: Pairing): number {

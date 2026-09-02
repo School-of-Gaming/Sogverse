@@ -39,9 +39,15 @@ function kebab(name: string): string {
 }
 
 /**
- * The neutral surfaces that ship a `-foreground` companion, because a component
- * fills them *and* puts text on them. The other neutrals are read from, not
- * filled, so a companion token would be a name nothing could use.
+ * The surfaces that ship a `-foreground` companion token.
+ *
+ * Not the whole surface set, and the difference is naming rather than use: the
+ * page ground and the muted ground are filled every bit as much as these two,
+ * but the token their text reads from already ships under its own name
+ * (`--color-foreground`, `--color-muted-foreground`), so a companion would be a
+ * second name for a declaration that is already there. Card and accent are the
+ * two grounds with no such name of their own, which is the whole reason this
+ * list is shorter than `SURFACE_IDS`.
  */
 const SURFACES_WITH_FOREGROUND = [
   "card",

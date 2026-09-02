@@ -5,6 +5,28 @@ import security from "eslint-plugin-security";
 import i18next from "eslint-plugin-i18next";
 import eslintComments from "@eslint-community/eslint-plugin-eslint-comments";
 
+/**
+ * `.ts`/`.tsx` in a relative import specifier, banned in Sogverse's own source.
+ *
+ * The root tsconfig sets `allowImportingTsExtensions` because the UI package's
+ * token generator is run directly by Node, whose ESM resolver needs the real
+ * extension. That option is program-wide, so it silently legalises the spelling
+ * everywhere the root program reaches — and a `./foo.ts` import in a Next route
+ * is a bundler-specific accident waiting to happen, not a style question.
+ *
+ * Held in a const because two config blocks below need it: a later block that
+ * sets `no-restricted-imports` replaces the rule outright rather than merging
+ * with it, so the family-surface block has to carry these patterns too.
+ */
+const noTsExtensionImports = [
+  {
+    group: ["./*.ts", "./**/*.ts", "../*.ts", "../**/*.ts",
+            "./*.tsx", "./**/*.tsx", "../*.tsx", "../**/*.tsx"],
+    message:
+      "Import without the extension. The `.ts`/`.tsx` spelling is allowed only for the UI package's Node-run token generator, which is why allowImportingTsExtensions is set at the root.",
+  },
+];
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -78,6 +100,12 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: noTsExtensionImports }],
+    },
+  },
+  {
     // The family-surface privacy line, made mechanical. Family components may
     // never import gedu workspace code: the staff note, the roster and the
     // completeness ladder must stay structurally unreachable from anything a
@@ -100,6 +128,10 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": ["error", {
         patterns: [
+          // Restated rather than inherited: this block replaces the rule set by
+          // the `src/**` block above, so dropping them here would quietly exempt
+          // every family surface from the extension ban.
+          ...noTsExtensionImports,
           {
             // Both halves of the staff workspace: the gedu tree, and the
             // role-agnostic group workspace the gedu and admin shells both
@@ -229,6 +261,44 @@ const eslintConfig = defineConfig([
             "No radius literals in an email. Import RADIUS from @/lib/constants/radius, which mirrors the app's --radius scale.",
         },
       ],
+    },
+  },
+  // The same guard, one tier down, for the UI package's own source. The package
+  // states the rule in prose — "Nothing outside the foundations tier spells a
+  // hex" — and prose is exactly what the email templates drifted past. A hex
+  // typed into a primitive compiles, renders and cannot disagree with anything,
+  // so it is caught here at the point of typing.
+  //
+  // Scoped to `packages/*/src/**` and not to `packages/*/demo/**`: the demo is a
+  // consumer, and a consumer spelling a colour is a different (and separately
+  // visible) mistake from the library doing it.
+  {
+    files: ["packages/*/src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        {
+          // Same selector as the email rule above, and String.raw for the same
+          // reason: a selector is a JS string literal esquery then parses, so an
+          // escaped `\b` written in a plain string reaches it as a backspace.
+          selector: String.raw`Literal[value=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
+          message:
+            "No colour literals outside the brand source. Import the token from src/tokens/brand.ts, which is the one place a colour is spelled.",
+        },
+        {
+          selector: String.raw`TemplateElement[value.raw=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
+          message:
+            "No colour literals outside the brand source. Import the token from src/tokens/brand.ts, which is the one place a colour is spelled.",
+        },
+      ],
+    },
+  },
+  {
+    // The one exemption, and the reason the rule above is worth having: the
+    // brand source is where every hex in the package is authored, so it is the
+    // single file the ban cannot apply to.
+    files: ["packages/*/src/tokens/brand.ts"],
+    rules: {
+      "no-restricted-syntax": "off",
     },
   },
   // Override default ignores of eslint-config-next.
