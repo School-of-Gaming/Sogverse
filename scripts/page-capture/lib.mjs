@@ -1,18 +1,25 @@
 /**
- * Shared plumbing for the page-capture tool: environment, the staging guard,
- * and the two ways this tool talks to Supabase (the service-role key, and a
- * real signed-in user's JWT).
+ * Shared plumbing for the page-capture tool: environment, the three guards, and
+ * the two ways this tool talks to Supabase (the service-role key, and a real
+ * signed-in user's JWT).
  *
- * Everything that could write to a database lives behind `assertStaging()`.
- * It is imported by `seed.mjs` and `cleanup.mjs` alike so there is exactly one
- * copy of the check — a second copy is a second thing to get wrong.
+ * All three trust decisions live here together, on purpose — *which database may
+ * be written to* (`assertStaging`), *which server the fleet's password may be
+ * typed at* (`assertCaptureOrigin`), and *where the file holding that password
+ * may be written* (`resolveStatePath`). Each is imported by every script that
+ * needs it so there is exactly one copy of each check; a second copy is a second
+ * thing to get wrong, and keeping them in one file is what lets a reader see the
+ * whole trust boundary at once. None of the three has an override flag.
  */
 
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
+/** This tool's own directory — the only place its state file may live. */
+export const TOOL_DIR = path.dirname(fileURLToPath(import.meta.url));
+
+const HERE = TOOL_DIR;
 
 /** `scripts/page-capture/` → the repo (or worktree) root two levels up. */
 export const REPO_ROOT = path.resolve(HERE, "..", "..");
@@ -98,6 +105,99 @@ export function assertStaging() {
 export function fail(message) {
   console.error(`\n  REFUSING TO RUN\n  ${message}\n`);
   process.exit(1);
+}
+
+/**
+ * The hosts `capture.mjs` is allowed to point a browser at.
+ *
+ * Hardcoded and loopback-only, for the same reason the project allowlist above
+ * is hardcoded: the capture types the fleet's shared password into a login form
+ * at whatever `--base-url` names, so that flag decides who receives a working
+ * staging credential. A typo, a pasted URL from a chat message or a copied
+ * command line is all it takes to hand it to a stranger's server, and the person
+ * running it would see a perfectly ordinary sign-in failure afterwards.
+ *
+ * If this tool is ever wanted against a deployed staging preview, that origin is
+ * added here as a literal — never as a flag, an environment variable or a
+ * pattern. A hostname suffix match ("ends with .vercel.app") is not an allowlist:
+ * anyone can register a name that satisfies it.
+ */
+export const CAPTURE_ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
+
+/**
+ * Resolve `--base-url` and refuse anything that is not a local dev server.
+ *
+ * Any port is fine — the tool's own `serve.mjs` defaults to 3002 and everyone
+ * has a different one running — but the host and the scheme are not negotiable.
+ */
+export function assertCaptureOrigin(baseUrl) {
+  let parsed;
+  try {
+    parsed = new URL(baseUrl);
+  } catch {
+    fail(
+      `--base-url is not a URL: ${baseUrl}\n` +
+        `  Expected something like  http://localhost:3002`,
+    );
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    fail(
+      `--base-url must be http or https, not "${parsed.protocol}" (${baseUrl}).`,
+    );
+  }
+
+  if (!CAPTURE_ALLOWED_HOSTS.includes(parsed.hostname)) {
+    fail(
+      `--base-url points at "${parsed.hostname}", which is not a local dev server\n` +
+        `  (allowed: ${CAPTURE_ALLOWED_HOSTS.join(", ")}, on any port).\n` +
+        `  This capture signs in with the seeded fleet's real staging password, so it\n` +
+        `  only ever types it into a server running on this machine. There is no\n` +
+        `  override flag: point it at your own dev server, or start one with\n` +
+        `    node scripts/page-capture/serve.mjs --port 3002`,
+    );
+  }
+
+  return `${parsed.origin}${parsed.pathname}`.replace(/\/$/, "");
+}
+
+/**
+ * Resolve a `--state` / `--out` state-file path, confined to this directory.
+ *
+ * `seed-state.json` holds the fleet's shared password and the parent's PIN in
+ * plain text, and this directory is the one place the repo's `.gitignore`
+ * accounts for it. A flag that can walk out of here — `--state ../../creds.json`,
+ * or an absolute path into a synced folder — turns a screenshot run into a
+ * credential written somewhere nobody is watching, and the tool would report
+ * nothing wrong because it works perfectly.
+ *
+ * So the flag names a **file in this directory**, and nothing else: the value is
+ * resolved against this directory rather than the working directory (so a bare
+ * name means the same thing from any cwd), and anything that lands outside is
+ * refused rather than silently re-anchored — a path that quietly became a
+ * different path is the failure this is meant to make visible.
+ */
+export function resolveStatePath(flagName, value) {
+  const raw = value ?? "seed-state.json";
+  const resolved = path.resolve(TOOL_DIR, raw);
+  const relative = path.relative(TOOL_DIR, resolved);
+
+  const escapes =
+    relative === "" || relative.startsWith("..") || path.isAbsolute(relative);
+  const nested = !escapes && relative.includes(path.sep);
+
+  if (escapes || nested) {
+    fail(
+      `The seed state carries the fleet's password and the parent's PIN, so it may\n` +
+        `  only be written inside the tool's own (gitignored) directory:\n` +
+        `    ${TOOL_DIR}\n` +
+        `  --${flagName} ${raw}\n` +
+        `  resolves to ${resolved}, which is ${escapes ? "outside it" : "in a subdirectory"}.\n` +
+        `  Pass a bare file name (--${flagName} other-run.json), or omit the flag.`,
+    );
+  }
+
+  return resolved;
 }
 
 // ---------------------------------------------------------------------------
@@ -254,6 +354,12 @@ export function hasFlag(name) {
  * chronologically, random tail so two runs in the same minute cannot collide.
  * Every account, product and group this tool creates carries it, which is what
  * lets a second seed run happily beside a first fleet.
+ *
+ * **This is an identifier, not a secret, and nothing may be derived from it.**
+ * It is printed, stamped on every seeded product name and embedded in every
+ * seeded address, so anyone who can see a fleet can read it — and `Math.random`
+ * is a collision-avoidance tail here, never entropy. The fleet password used to
+ * be built from this string; it is now drawn from `crypto.randomBytes` instead.
  */
 export function makeRunId(now = new Date()) {
   const p = (n) => String(n).padStart(2, "0");

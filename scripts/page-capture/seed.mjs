@@ -25,20 +25,32 @@
  * writing `seed-state.json` — every id, address and resolved route the capture
  * and cleanup scripts need. Nothing else in this tool talks to the database.
  *
- * ## Why the seeding goes through RPCs rather than INSERTs
+ * ## Which writes go through a user's token, and which through service_role
  *
- * Every write here that has an RPC uses it, called with a **real signed-in
- * user's token** — the admin's for product and enrolment work, the gedu's for
- * the session write-ups. That is not ceremony: the admin RPCs guard on
- * `assert_admin()`, which reads `auth.uid()`, so the service-role key cannot
- * call them at all. It also means the fixture is built through the same CHECKs,
- * RAISEs and RLS the admin UI meets, so a seed that succeeds is a seed the
- * product could have produced.
+ * The product, group and enrolment work is called with the **admin's** token and
+ * the session write-ups with the **gedu's**, and that is not ceremony: those
+ * RPCs guard on `assert_admin()` / the caller's role, which read `auth.uid()`,
+ * so the service-role key cannot call them at all. It also stamps `updated_by` /
+ * `recorded_by` with the right person, and it means the fixture is built through
+ * the same CHECKs, RAISEs and RLS the admin UI meets.
  *
- * The service-role key is used for exactly three things, each of which has no
- * RPC and no other way in: creating auth users, promoting a profile's role
- * (which is what `docs/runbooks/create-admin-account.md` prescribes by hand),
- * and stamping `email_verified_at`.
+ * The **service client** does the rest, and it is a larger surface than "a few
+ * writes with no RPC" — worth stating plainly, because a security story that
+ * undercounts its own privileged calls is worse than none:
+ *
+ * - three RPCs whose grants are `service_role`-only, so a user token cannot
+ *   reach them however privileged the user is — `register_gedu` (the gedu's own
+ *   registration, which the app calls from a server route), `create_gamer` (the
+ *   same, from the parent's create-gamer route) and `set_pin_for_user` (the PIN
+ *   is bcrypt-hashed by `crypt()` inside Postgres, so there is nothing a script
+ *   could compute and write directly even if it wanted to);
+ * - the auth admin API, to create the users at all;
+ * - two direct table writes with no RPC behind them: promoting a profile's role
+ *   (the by-hand step in `docs/runbooks/create-admin-account.md`) and stamping
+ *   `email_verified_at`.
+ *
+ * `cleanup.mjs` adds one more: deleting the products, because the database
+ * offers no `delete_product`.
  *
  * ## The live session
  *
@@ -51,8 +63,8 @@
  * slot. One slot, five sessions, no arithmetic anywhere else.
  */
 
+import { randomBytes } from "node:crypto";
 import { writeFileSync } from "node:fs";
-import path from "node:path";
 import {
   argOf,
   assertStaging,
@@ -60,7 +72,7 @@ import {
   loadEnvLocal,
   log,
   makeRunId,
-  REPO_ROOT,
+  resolveStatePath,
   signIn,
   supabaseClient,
 } from "./lib.mjs";
@@ -73,14 +85,27 @@ const TAG = `TEMP-capture-${RUN_ID}`;
 const PIN = argOf("pin", "1357");
 const LIVE_MINUTES = Number(argOf("live-minutes", "90"));
 const LIVE_STARTED_MINUTES_AGO = Number(argOf("live-started", "15"));
-const OUT = path.resolve(argOf("out", path.join(REPO_ROOT, "scripts/page-capture/seed-state.json")));
+const OUT = resolveStatePath("out", argOf("out"));
 
 /**
- * One password for the whole fleet. These accounts exist for the length of one
- * capture run against staging and are deleted by `cleanup.mjs`; a per-account
- * secret would be four values to thread into Playwright for no gain.
+ * One password for the whole fleet, and 192 bits of it.
+ *
+ * One password because these accounts exist for the length of one capture run
+ * and are deleted by `cleanup.mjs`; a per-account secret would be four values to
+ * thread into Playwright for no gain. But the *value* is drawn from
+ * `crypto.randomBytes` and shares nothing with `RUN_ID` — which is the fix for
+ * what this used to be. The run id is printed in the seed's own output, carried
+ * in every account address and stamped on every product name this run creates,
+ * so a password derived from it was a password anyone who could see a fleet
+ * could reconstruct: a minute stamp is guessable outright, and `Math.random` is
+ * not a CSPRNG and never has been. The run id stays readable because it is an
+ * identifier and is meant to be read; the credential is now independent of it.
+ *
+ * The fixed affixes are not entropy — they are there so the value satisfies any
+ * password policy on upper, lower, digit and symbol regardless of which
+ * characters base64url happens to draw.
  */
-const PASSWORD = `Capture-${RUN_ID}!`;
+const PASSWORD = `Cap7-${randomBytes(24).toString("base64url")}!`;
 
 /** Products are authored in Helsinki, so the schedule is reasoned about there. */
 const TIMEZONE = "Europe/Helsinki";

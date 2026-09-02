@@ -33,7 +33,6 @@
  */
 
 import { existsSync, readFileSync, unlinkSync } from "node:fs";
-import path from "node:path";
 import {
   argOf,
   assertStaging,
@@ -41,16 +40,14 @@ import {
   hasFlag,
   loadEnvLocal,
   log,
-  REPO_ROOT,
+  resolveStatePath,
   supabaseClient,
 } from "./lib.mjs";
 
 loadEnvLocal();
 const { url, serviceKey, ref } = assertStaging();
 
-const STATE_PATH = path.resolve(
-  argOf("state", path.join(REPO_ROOT, "scripts/page-capture/seed-state.json")),
-);
+const STATE_PATH = resolveStatePath("state", argOf("state"));
 const KEEP_STATE = hasFlag("keep-state");
 
 const service = supabaseClient({ url, key: serviceKey });

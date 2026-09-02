@@ -24,13 +24,19 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { argOf, hasFlag } from "./lib.mjs";
+import { argOf, assertCaptureOrigin, hasFlag, resolveStatePath } from "./lib.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const KEEP = hasFlag("keep");
 
-/** Pass these straight through to `capture.mjs` rather than re-declaring them. */
-const PASS_THROUGH = ["base-url", "only", "viewport", "out", "state"];
+/**
+ * Pass these straight through to `capture.mjs` rather than re-declaring them.
+ *
+ * `state` is deliberately not among them: it means different things to the two
+ * scripts and it is the one flag here that is guarded, so it is resolved once
+ * below and handed to each child already absolute.
+ */
+const PASS_THROUGH = ["base-url", "only", "viewport", "out"];
 
 function run(script, args) {
   const result = spawnSync(process.execPath, [path.join(HERE, script), ...args], {
@@ -55,10 +61,24 @@ for (const flag of ["pin", "live-minutes", "live-started"]) {
 // by `--out`: for the seed it is where the state lands, for the capture it is
 // where the pictures land. Translating it here is what keeps a `--state` on
 // this command from seeding one path and reading another.
-const statePath = argOf("state");
+//
+// It is also resolved here rather than three times over. Each child re-checks it
+// — the guard belongs to whichever script actually opens the file, and they are
+// run directly at least as often as they are run through this one — but doing it
+// first means a refusal arrives before the seed writes a fleet to staging that
+// the capture would then decline to read.
+const statePath = argOf("state") === undefined ? undefined : resolveStatePath("state", argOf("state"));
 if (statePath !== undefined) seedArgs.push("--out", statePath);
+if (statePath !== undefined) captureArgs.push("--state", statePath);
 
 const cleanupArgs = statePath === undefined ? [] : ["--state", statePath];
+
+// Same reasoning, for the same reason: `capture.mjs` refuses a non-local
+// `--base-url`, but it does not get to say so until after this command has
+// already built a fleet on staging. Checking here costs one call and turns that
+// into a refusal before anything is created. The value is still passed through
+// untouched — this is the guard, not a rewrite of the flag.
+if (argOf("base-url") !== undefined) assertCaptureOrigin(argOf("base-url"));
 
 const seedStatus = run("seed.mjs", seedArgs);
 if (seedStatus !== 0) {

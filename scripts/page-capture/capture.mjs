@@ -11,6 +11,15 @@
  * state. What comes out is a directory of PNGs plus a `manifest.json` naming
  * every one of them.
  *
+ * ## It only ever signs in against a local server
+ *
+ * Logging in through the real UI means the fleet's staging password is *typed
+ * into a form* at whatever `--base-url` names, so that flag decides who receives
+ * a working credential. It is checked against a hardcoded loopback allowlist in
+ * `lib.mjs` before the browser is launched — any port, `localhost`/`127.0.0.1`
+ * only, no override flag — beside the guard that decides which database the seed
+ * may write to. Both flags hand out the same trust and are refused the same way.
+ *
  * The tool ends there, deliberately. Comparing two runs, building a before/after
  * page, deciding what to show a reviewer — none of that lives here, because it
  * differs per feature and a screenshot directory plus a manifest is the part
@@ -37,14 +46,21 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { chromium } from "playwright";
-import { argOf, hasFlag, log, REPO_ROOT } from "./lib.mjs";
+// `@playwright/test` rather than `playwright`: the test package is what the
+// manifest declares, and it re-exports the same browser types. Importing the
+// bare `playwright` worked only because it resolves transitively today — the
+// kind of dependency that disappears the first time the tree is deduped, in a
+// script nobody runs in CI.
+import { chromium } from "@playwright/test";
+import { argOf, assertCaptureOrigin, hasFlag, log, resolveStatePath } from "./lib.mjs";
 import { PAGES, VIEWPORTS } from "./pages.mjs";
 
-const BASE_URL = (argOf("base-url", "http://localhost:3002") ?? "").replace(/\/$/, "");
-const STATE_PATH = path.resolve(
-  argOf("state", path.join(REPO_ROOT, "scripts/page-capture/seed-state.json")),
-);
+/**
+ * Guarded before anything else in the file runs, because everything else in the
+ * file eventually types the fleet's staging password into whatever this names.
+ */
+const BASE_URL = assertCaptureOrigin(argOf("base-url", "http://localhost:3002"));
+const STATE_PATH = resolveStatePath("state", argOf("state"));
 const ONLY = (argOf("only", "") ?? "")
   .split(",")
   .map((s) => s.trim())

@@ -1,0 +1,7 @@
+# The tool's guards confine its state file to this directory (see lib.mjs), but
+# `--state` / `--out` may still name it something other than the default, and the
+# repo-root .gitignore only knows the default name. Every one of those files
+# carries the seeded fleet's password and the parent's PIN in plain text, so the
+# rule here is by location rather than by name: nothing this tool writes is
+# tracked. The tool itself is .mjs and .md — a .json in here is always output.
+*.json

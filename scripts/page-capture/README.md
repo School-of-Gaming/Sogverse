@@ -33,19 +33,51 @@ same thing as the second form with one command instead of two.
 | `serve.mjs` | Starts a dev server, if you do not already have one. |
 | `run.mjs` | seed → capture → cleanup, in one command. |
 | `pages.mjs` | **The list of surfaces.** This is the file you edit for a review. |
-| `lib.mjs` | Environment, the staging guard, Supabase over `fetch`. |
+| `lib.mjs` | Environment, the three guards, Supabase over `fetch`. |
 
-## It only ever runs against staging
+## The three guards
 
-`lib.mjs` holds a hardcoded allowlist of Supabase project refs, and both
-`seed.mjs` and `cleanup.mjs` call the same guard before doing anything. It reads
-the project ref **twice** — from `SUPABASE_PROJECT_REF` and from the host of
-`NEXT_PUBLIC_SUPABASE_URL` — and refuses to run unless the two agree *and* the
-answer is on the list. Production is not on the list.
+Every trust decision this tool makes lives in `lib.mjs`, together, so the whole
+boundary can be read in one place. **None of the three has an override flag**,
+and none should: each of them exists because a single mistyped argument would
+otherwise do real damage quietly, and a flag that lets that happen is a flag
+someone eventually types.
 
-There is no override flag, and there should not be one: this tool invents
-accounts, enrols them into a club and then deletes them, and a flag that lets
-that happen near a family's real data is a flag someone eventually types.
+### It only ever writes to staging
+
+A hardcoded allowlist of Supabase project refs, checked by `seed.mjs` and
+`cleanup.mjs` alike before either does anything. It reads the project ref
+**twice** — from `SUPABASE_PROJECT_REF` and from the host of
+`NEXT_PUBLIC_SUPABASE_URL` — and refuses unless the two agree *and* the answer is
+on the list. Production is not on the list. This tool invents accounts, enrols
+them into a club and then deletes them, none of which has any business happening
+near a family's real data.
+
+### It only ever signs in against a local server
+
+The capture logs in through the real UI, which means it **types the fleet's
+staging password into a form** at whatever `--base-url` names. So that flag
+decides who receives a working credential, and it is checked against a hardcoded
+loopback allowlist — `localhost` or `127.0.0.1`, any port, `http` or `https` —
+before the browser is launched. A pasted URL, a typo or a copied command line is
+all it would otherwise take to hand the password to a stranger's server, and the
+person running it would see nothing but an ordinary sign-in failure afterwards.
+
+If the tool is ever wanted against a deployed staging preview, that origin is
+added to the allowlist in `lib.mjs` as a literal — never as a flag, an
+environment variable or a suffix pattern, since anyone can register a hostname
+that ends the right way.
+
+### The state file cannot leave this directory
+
+`seed-state.json` holds the fleet's password and the parent's PIN in plain text,
+and this directory is the one path the repo's `.gitignore` accounts for. So
+`--out` (seed) and `--state` (capture, cleanup, run) name **a file in this
+directory** and nothing else: the value is resolved against the tool's own
+directory rather than the working directory, so a bare name means the same thing
+from any cwd, and anything that lands outside — `../../creds.json`, an absolute
+path into a synced folder — is refused rather than silently re-anchored. A path
+that quietly became a different path is exactly the failure worth making visible.
 
 ## What the seed builds
 
@@ -114,34 +146,46 @@ The practical consequence: **the live session expires.** With the defaults you
 have about 75 minutes from the seed to capture the voice room. Past that, re-seed
 or pass a longer `--live-minutes`.
 
-### Which writes go through RPCs
+### Which writes go through a user's token, and which through service_role
 
-Every write that has an RPC uses it, called with a **real signed-in user's
-token** — the admin's for the product, group and enrolment work, the gedu's for
-the session write-ups (so the feed is attributed to the gedu, which is what a
-screenshot shows). That is not ceremony: the admin RPCs guard on
-`assert_admin()`, which reads `auth.uid()`, so the service-role key cannot call
-them at all.
+The product, group and enrolment work is called with the **admin's** token and
+the session write-ups with the **gedu's** (so the feed is attributed to the
+gedu, which is what a screenshot shows). That is not ceremony: those RPCs guard
+on `assert_admin()` and on the caller's role, both of which read `auth.uid()`,
+so the service-role key cannot call them at all.
 
-The service-role key does four things, each because nothing else can:
+The **service client** does the rest, and it is a wider surface than "the few
+writes with no RPC" — worth stating exactly, because a security story that
+undercounts its own privileged calls is worse than not telling one:
 
-- create auth users (`/auth/v1/admin/users`),
-- promote a profile's role — the by-hand step in
-  `docs/runbooks/create-admin-account.md`; `create_gamer` and `register_gedu`
-  are the only promotion RPCs the database has, and neither makes an admin,
-- stamp `email_verified_at`,
-- delete the products at cleanup — there is no `delete_product`.
+| Through the service client | Why nothing else can |
+|---|---|
+| `register_gedu` | granted to `service_role` only; the app calls it from a server route |
+| `create_gamer` | the same, from the parent's create-gamer route |
+| `set_pin_for_user` | the same; the PIN is bcrypt-hashed by `crypt()` inside Postgres, so a script has nothing it could write directly |
+| create auth users (`/auth/v1/admin/users`) | the auth admin API is service-role by definition |
+| promote a profile's role | no RPC — the by-hand step in `docs/runbooks/create-admin-account.md`; `create_gamer` and `register_gedu` are the only promotion RPCs the database has, and neither makes an admin |
+| stamp `email_verified_at` | no RPC |
+| delete the products, at cleanup | no `delete_product` |
+
+So three of those are RPCs the tool *has* to call as `service_role` rather than
+writes it chose not to route through one — the grant is the constraint, not the
+absence of a function.
 
 One deliberate departure from that runbook: these accounts are created **with a
 password**. The runbook has a real admin set their own through the reset mail,
 which is right for a person; these are logged into by a script minutes later and
-deleted at the end of the run.
+deleted at the end of the run. The password is 24 random bytes from
+`crypto.randomBytes`, sharing nothing with the run id — the run id is printed,
+carried in every seeded address and stamped on every product name, so a
+credential derived from it would be one that anyone who could see a fleet could
+reconstruct.
 
 ## Capturing
 
 ```
---base-url    default http://localhost:3002
---state       default scripts/page-capture/seed-state.json
+--base-url    default http://localhost:3002 (localhost / 127.0.0.1 only — see the guards)
+--state       default seed-state.json, and always inside scripts/page-capture/
 --out         default a timestamped dir under the OS temp area (never in the repo)
 --only        comma-separated slugs from pages.mjs
 --viewport    desktop | mobile (default: both)
@@ -239,9 +283,10 @@ node scripts/page-capture/cleanup.mjs --users <id,id> --products <id,id>
   `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_REF` — read by the scripts
   themselves; nothing is ever hardcoded. Plus `DAILY_API_KEY` and
   `NEXT_PUBLIC_DAILY_DOMAIN` on the server being captured, for the voice room.
-- **`playwright` and `sharp`**, already project dependencies. From a git
-  worktree, `node_modules` resolves upward from the main checkout, so there is
-  nothing to install.
+- **`@playwright/test`**, already a declared devDependency — which is why the
+  capture imports the browser from it rather than from the bare `playwright`
+  package the manifest does not name. From a git worktree, `node_modules`
+  resolves upward from the main checkout, so there is nothing to install.
 - Playwright's bundled Chromium. The machine's own Chrome is not used — it has
   no debug port.
 
