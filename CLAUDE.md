@@ -345,6 +345,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Voice — scheduled group rooms | `src/components/voice/` |
 | Voice — instant rooms | `src/components/voice/instant/` |
 | Discord bot | `src/app/api/discord/` |
+| SOG-UI — the UI language package and its demo | `packages/sog-ui/` |
 | Database / migrations | `supabase/` |
 | Testing conventions | `tests/` |
 
