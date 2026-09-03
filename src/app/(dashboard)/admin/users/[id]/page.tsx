@@ -143,8 +143,18 @@ export default async function AdminUserDetailPage({
 
   // A display choice, not a data invariant: every account is born `customer`,
   // so one promoted to admin after registering through a tagged link still
-  // carries its code — this page just doesn't surface it there.
-  const showReferralCode = (isCustomer || isGedu) && Boolean(profile.referral_code);
+  // carries its attribution — this page just doesn't surface it there.
+  // Shown when at least one of the three fields survived; an account that
+  // arrived with only a campaign shows only a campaign, rather than two empty
+  // rows saying nothing.
+  const utmRows = (
+    [
+      ["source", profile.utm_source],
+      ["medium", profile.utm_medium],
+      ["campaign", profile.utm_campaign],
+    ] as const
+  ).filter((row): row is readonly [(typeof row)[0], string] => row[1] !== null);
+  const showUtm = (isCustomer || isGedu) && utmRows.length > 0;
 
   const [
     linkedGamers,
@@ -295,25 +305,36 @@ export default async function AdminUserDetailPage({
               <span className="text-sm text-muted-foreground">
                 {t('joined')} {profile.created_at ? formatDate(profile.created_at, locale, { dateStyle: "medium", timeZone }) : t('unknown')}
               </span>
-              {/* Where this account came from — the marketing link's `?ref=`
-                  code, captured once at registration. Read-only on purpose:
-                  the column has no UPDATE grant, so an admin cannot edit it
-                  through the app either (see src/lib/referral.ts). Shown for
-                  parents and educators only — gamer rows are NULL by
-                  construction, and the value is omitted entirely rather than
-                  shown as an empty row, since the large majority of accounts
-                  will never carry one. */}
-              {showReferralCode && (
-                <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {t('referralCode')}
-                  {/* Code-chip treatment matching the instant voice room's
-                      compact RoomLinkChip, so codes read as codes site-wide. */}
-                  <span className="rounded-md border border-border bg-muted/50 px-2 py-0.5 font-mono font-semibold tracking-wider">
-                    {profile.referral_code}
-                  </span>
-                </span>
-              )}
             </div>
+            {/* Where this account came from — the marketing link's UTM values,
+                captured once at registration. Read-only on purpose: the columns
+                have no UPDATE grant, so an admin cannot edit them through the
+                app either (see src/lib/utm.ts). Shown for parents and educators
+                only — gamer rows are NULL by construction — and the whole block
+                is omitted rather than shown empty, since the large majority of
+                accounts will never carry any of it. */}
+            {showUtm && (
+              <div className="mt-3 border-t border-border pt-3">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('utm.heading')}
+                </h3>
+                <dl className="mt-2 flex flex-col gap-1.5">
+                  {utmRows.map(([field, value]) => (
+                    <div key={field} className="flex items-center gap-2 text-sm">
+                      <dt className="text-muted-foreground">{t(`utm.${field}`)}</dt>
+                      {/* Value-chip treatment matching the instant voice room's
+                          compact RoomLinkChip, so machine-authored values read
+                          as machine-authored site-wide. `break-all` because a
+                          UTM value can be an expanded ad name of up to 200
+                          characters with no break opportunity in it. */}
+                      <dd className="break-all rounded-md border border-border bg-muted/50 px-2 py-0.5 font-mono font-semibold">
+                        {value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

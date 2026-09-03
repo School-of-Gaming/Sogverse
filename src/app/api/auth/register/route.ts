@@ -8,7 +8,7 @@ import { detectLocaleFromHeader } from "@/lib/constants/locales";
 import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
-import { sanitiseReferralCode } from "@/lib/referral";
+import { buildUtmMetadata } from "@/lib/utm";
 import { getOrigin } from "@/lib/url";
 import {
   REGISTER_WEAK_PASSWORD,
@@ -67,20 +67,21 @@ export const POST = defineRoute({
       lastName,
       homeLocationId,
       locale: requestedLocale,
-      referralCode,
+      utm,
       marketingConsent,
     } = body;
 
-    // The schema takes this as a plain string and leaves the format rule here,
+    // The schema takes these as plain strings and leaves the format rule here,
     // deliberately — see the contract. A malformed value degrades to null and
-    // the account is created without a code.
-    const sanitisedReferralCode = sanitiseReferralCode(referralCode);
+    // the account is created without that field; the three are independent, so
+    // a junk `utm_source` does not cost a well-formed `utm_campaign`.
+    const utmMetadata = buildUtmMetadata(utm);
 
     const admin = createAdminClient();
 
     // The metadata shape is exactly what the browser `signUp()` sent before, and
     // it has to stay that way: `handle_new_user` reads `first_name`,
-    // `last_name` and `referral_code` out of it to build the profile row.
+    // `last_name` and the three `utm_*` keys out of it to build the profile row.
     // `display_name` is not read by the trigger — it is the label the Supabase
     // Auth dashboard shows for the user — and `role` is not read either, since
     // the trigger hardcodes `customer`. Both are kept because the dashboard and
@@ -101,12 +102,10 @@ export const POST = defineRoute({
           last_name: lastName,
           display_name: composedDisplayName,
           role: "customer",
-          // Omitted entirely when absent, so the column simply stays null. The
-          // trigger re-sanitises whatever arrives, so a junk value costs this
-          // registration nothing.
-          ...(sanitisedReferralCode !== null
-            ? { referral_code: sanitisedReferralCode }
-            : {}),
+          // Each field omitted entirely when absent, so its column simply stays
+          // null. The trigger re-sanitises whatever arrives, so a junk value
+          // costs this registration nothing.
+          ...utmMetadata,
         },
       });
 

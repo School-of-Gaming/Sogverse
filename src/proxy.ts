@@ -5,11 +5,7 @@ import type { Database } from "@/types/database.types";
 import { ROUTES } from "@/lib/constants";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
-import {
-  REFERRAL_CODE_HEADER,
-  REFERRAL_QUERY_PARAM,
-  sanitiseReferralCode,
-} from "@/lib/referral";
+import { UTM_HEADER, readUtmFromSearchParams, serialiseUtm } from "@/lib/utm";
 
 // Paths a LOCKED customer session may still reach (so the parent-PIN gate
 // doesn't trap them). `/api/*` is owned by requireRole(); auth routes are the
@@ -153,32 +149,29 @@ export async function proxy(request: NextRequest) {
   request.headers.set("x-nonce", nonce);
   request.headers.set("Content-Security-Policy", cspHeader);
 
-  // Referral attribution: `?ref=<code>` on the landing URL, sanitised here and
-  // handed to the root layout, which seeds it into a client context provider so
-  // it survives the whole visit as client-side navigation. See src/lib/referral.ts
-  // for the constraints this feature is built to — the value never reaches the
-  // user's device, at any point.
+  // UTM attribution: `utm_source` / `utm_medium` / `utm_campaign` on the landing
+  // URL, sanitised here and handed to the root layout, which seeds them into a
+  // client context provider so they survive the whole visit as client-side
+  // navigation. See src/lib/utm.ts for the constraints this feature is built to
+  // — including why reading the query string here is itself the moment ePrivacy
+  // engages, whatever we do with the value afterwards.
   //
   // **Delete unconditionally, then set conditionally.** A browser can send its
-  // own `x-referral-code:` header, and an incoming request header reaches the
-  // layout untouched on any request the proxy does not overwrite it on — so a
-  // bare conditional `set` would leave a forgeable path. The harm is small
-  // (anyone can type `?ref=` themselves, and the profile-creation trigger
-  // re-sanitises regardless), but this is the difference between "the value
-  // always came through our own sanitiser" being true and merely being intended.
+  // own `x-utm:` header, and an incoming request header reaches the layout
+  // untouched on any request the proxy does not overwrite it on — so a bare
+  // conditional `set` would leave a forgeable path. The harm is small (anyone
+  // can type `?utm_campaign=` themselves, and the layout and the
+  // profile-creation trigger both re-sanitise regardless), but this is the
+  // difference between "the value always came through our own sanitiser" being
+  // true and merely being intended.
   //
   // This runs above every branch and early return, like the two sets above, so
-  // no path bypasses it. `.getAll()` rather than `.get()`: a repeated
-  // `?ref=a&ref=b` is not a code and must resolve to absent, and `.get()` would
-  // silently hand back the first value. (A `typeof x === "string"` check — the
-  // idiom the register *page* uses on its `searchParams` — is dead code here:
-  // `URLSearchParams.get()` can never return an array.)
-  request.headers.delete(REFERRAL_CODE_HEADER);
-  const referralValues = request.nextUrl.searchParams.getAll(REFERRAL_QUERY_PARAM);
-  const referralCode =
-    referralValues.length === 1 ? sanitiseReferralCode(referralValues[0]) : null;
-  if (referralCode !== null) {
-    request.headers.set(REFERRAL_CODE_HEADER, referralCode);
+  // no path bypasses it. The repeated-param rule and the sanitiser both live in
+  // the module, so this file holds no copy of either.
+  request.headers.delete(UTM_HEADER);
+  const utm = serialiseUtm(readUtmFromSearchParams(request.nextUrl.searchParams));
+  if (utm !== null) {
+    request.headers.set(UTM_HEADER, utm);
   }
 
   const { pathname } = request.nextUrl;

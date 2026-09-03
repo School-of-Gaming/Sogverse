@@ -7,7 +7,8 @@ import { AuthProvider } from "./auth-provider";
 import { LocaleProvider } from "./locale-provider";
 import { TimezoneProvider } from "./timezone-provider";
 import { NowProvider } from "./now-provider";
-import { ReferralProvider } from "./referral-provider";
+import { UtmProvider } from "./utm-provider";
+import type { UtmAttribution } from "@/lib/utm";
 import type { AuthenticatedUser, Profile } from "@/types";
 import {
   DEFAULT_TIMEZONE,
@@ -32,12 +33,13 @@ interface ProvidersProps {
    */
   initialNow: Date;
   /**
-   * The sanitised `?ref=` code from this request's `x-referral-code` header, or
-   * null. Seeds `ReferralProvider` once and is never re-synced — the root layout
-   * re-runs mid-session (a locale change calls `router.refresh()`) against a URL
-   * that no longer carries the param. See `src/providers/referral-provider.tsx`.
+   * The sanitised UTM attribution from this request's `x-utm` header — three
+   * fields, each a value or null. Seeds `UtmProvider` once and is never
+   * re-synced — the root layout re-runs mid-session (a locale change calls
+   * `router.refresh()`) against a URL that no longer carries the params. See
+   * `src/providers/utm-provider.tsx`.
    */
-  initialReferralCode: string | null;
+  initialUtm: UtmAttribution;
   /**
    * What this request's `Accept-Language` header negotiated to, or `"none"`
    * when the browser asked only for languages we don't ship. Read from the
@@ -47,8 +49,8 @@ interface ProvidersProps {
    *
    * Not `initial*`, unlike its neighbours: those seed mutable client state that
    * legitimately diverges from the server's value afterwards (the timezone
-   * provider re-detects, the clock ticks, the referral code has to survive a
-   * refresh that no longer carries the param). This is a stable per-request
+   * provider re-detects, the clock ticks, the UTM attribution has to survive a
+   * refresh that no longer carries the params). This is a stable per-request
    * fact with nothing to diverge from — a locale change calls `router.refresh()`,
    * which re-runs the root layout against the same request headers and computes
    * the same value again.
@@ -64,7 +66,7 @@ export function Providers({
   initialLocale,
   initialTimezone,
   initialNow,
-  initialReferralCode,
+  initialUtm,
   detectedLocale,
   messages,
 }: ProvidersProps) {
@@ -78,9 +80,9 @@ export function Providers({
           <LocaleProvider detectedLocale={detectedLocale}>
             <TimezoneProvider initialTimezone={initialTimezone}>
               <NowProvider initialNow={initialNow}>
-                <ReferralProvider initialReferralCode={initialReferralCode}>
+                <UtmProvider initialUtm={initialUtm}>
                   {children}
-                </ReferralProvider>
+                </UtmProvider>
               </NowProvider>
             </TimezoneProvider>
           </LocaleProvider>
@@ -96,4 +98,4 @@ export { AuthProvider } from "./auth-provider";
 export { LocaleProvider, useLocaleControl } from "./locale-provider";
 export { TimezoneProvider, useTimezone } from "./timezone-provider";
 export { NowProvider, useNow } from "./now-provider";
-export { ReferralProvider, useReferralCode } from "./referral-provider";
+export { UtmProvider, useUtm } from "./utm-provider";

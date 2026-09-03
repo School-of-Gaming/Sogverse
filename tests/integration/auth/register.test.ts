@@ -188,7 +188,8 @@ describe("POST /api/auth/register", () => {
     );
   });
 
-  // The trigger reads first_name/last_name (and referral_code) straight out of
+  // The trigger reads first_name/last_name (and the three utm_* keys) straight
+  // out of
   // this bag, so the shape is a contract with the database, not a detail. The
   // two inert keys are kept because the Supabase Auth dashboard shows
   // display_name and because a reader of the metadata should see what they saw
@@ -259,23 +260,46 @@ describe("POST /api/auth/register", () => {
     spy.mockRestore();
   });
 
-  // -- Referral attribution --
+  // -- UTM attribution --
 
-  it("passes a valid referral code through to the signup metadata", async () => {
-    await POST(registerRequest({ ...validBody, referralCode: "Paris-Nord" }));
+  it("passes valid utm values through to the signup metadata", async () => {
+    await POST(
+      registerRequest({
+        ...validBody,
+        utm: { source: "Lynx", medium: "email", campaign: "lynx-summer-a" },
+      }),
+    );
 
-    expect(signupMetadata().referral_code).toBe("paris-nord");
+    const metadata = signupMetadata();
+    expect(metadata.utm_source).toBe("Lynx");
+    expect(metadata.utm_medium).toBe("email");
+    expect(metadata.utm_campaign).toBe("lynx-summer-a");
   });
 
-  it("registers successfully with no key at all when the code is malformed", async () => {
+  it("registers successfully with no key at all when a value is malformed", async () => {
     // A 400 here would let whoever authored the marketing link break somebody
-    // else's registration.
+    // else's registration. The fields are independent, so the well-formed
+    // campaign beside the refused source still lands.
     const response = await POST(
-      registerRequest({ ...validBody, referralCode: "=SUM(A1)" }),
+      registerRequest({
+        ...validBody,
+        utm: { source: "=SUM(A1)", campaign: "lynx-summer-a" },
+      }),
     );
 
     expect(response.status).toBe(200);
-    expect(signupMetadata()).not.toHaveProperty("referral_code");
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_source");
+    expect(metadata.utm_campaign).toBe("lynx-summer-a");
+  });
+
+  it("sends no utm keys at all when the parent arrived without any", async () => {
+    await POST(registerRequest(validBody));
+
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_source");
+    expect(metadata).not.toHaveProperty("utm_medium");
+    expect(metadata).not.toHaveProperty("utm_campaign");
   });
 
   // -- Marketing consent --

@@ -19,7 +19,7 @@ import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib
 import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
-import { useAuth, useReferralCode } from "@/providers";
+import { useAuth, useUtm } from "@/providers";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -82,9 +82,9 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const locale = useLocale();
   const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
-  // Where this visit came from, if a marketing link carried `?ref=`. Held in
+  // Where this visit came from, if a marketing link carried UTM params. Held in
   // memory by the root provider since the landing page; never on this device.
-  const referralCode = useReferralCode();
+  const utm = useUtm();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -132,14 +132,18 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           // stored preference yet — it is created by this very request — so the
           // locale the form is being read in is the best answer anyone has.
           locale,
-          // Marketing provenance, written by the handle_new_user trigger to
-          // profiles.referral_code and never updatable afterwards. It travels
-          // in the body (and from there into signup metadata) rather than as a
-          // later profile write, because a client write would need
-          // GRANT UPDATE(referral_code) TO authenticated, handing every user the
-          // permanent ability to rewrite their own attribution; the grant is the
-          // thing we are refusing, and the trigger is what lets us.
-          referralCode: referralCode ?? undefined,
+          // Marketing provenance, written by the handle_new_user trigger to the
+          // three profiles.utm_* columns and never updatable afterwards. It
+          // travels in the body (and from there into signup metadata) rather
+          // than as a later profile write, because a client write would need
+          // GRANT UPDATE on those columns TO authenticated, handing every user
+          // the permanent ability to rewrite their own attribution; the grant is
+          // the thing we are refusing, and the trigger is what lets us.
+          utm: {
+            source: utm.source ?? undefined,
+            medium: utm.medium ?? undefined,
+            campaign: utm.campaign ?? undefined,
+          },
           // Always an explicit boolean, never omitted. The schema takes it as
           // optional so an older client that predates the box can still
           // register — but a form that *shows* the question has an answer

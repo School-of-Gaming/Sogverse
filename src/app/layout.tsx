@@ -10,7 +10,7 @@ import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
-import { REFERRAL_CODE_HEADER } from "@/lib/referral";
+import { UTM_HEADER, parseUtmHeader } from "@/lib/utm";
 import { BRAND_LOCKUP, toDetectedLocale } from "@/lib/constants";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
@@ -117,15 +117,17 @@ export default async function RootLayout({
   // first client render — keeps SSR HTML and the first hydration render in
   // lockstep. Client-side tick takes over after mount.
   const initialNow = new Date();
-  // The `?ref=` code for this visit, already sanitised (and, on any request that
-  // did not carry one, already deleted) by the proxy — a layout cannot receive
-  // `searchParams`, and `useSearchParams()` in a root-level client provider
-  // would put the whole app under a Suspense boundary whose *fallback* is what
-  // gets prerendered. This `headers()` call is free: the layout is fully dynamic
-  // already (it reads cookies and loads the user's profile) with no PPR or
-  // component caching enabled, so it adds no cost and no Suspense requirement.
+  // The UTM attribution for this visit, already sanitised (and, on any request
+  // that did not carry one, already deleted) by the proxy — a layout cannot
+  // receive `searchParams`, and `useSearchParams()` in a root-level client
+  // provider would put the whole app under a Suspense boundary whose *fallback*
+  // is what gets prerendered. This `headers()` call is free: the layout is fully
+  // dynamic already (it reads cookies and loads the user's profile) with no PPR
+  // or component caching enabled, so it adds no cost and no Suspense
+  // requirement. The parse re-sanitises every field, so the values reaching the
+  // provider came through our own sanitiser whatever the header said.
   const requestHeaders = await headers();
-  const initialReferralCode = requestHeaders.get(REFERRAL_CODE_HEADER);
+  const initialUtm = parseUtmHeader(requestHeaders.get(UTM_HEADER));
   // What this browser *asked* for, read straight from Accept-Language and
   // deliberately bypassing both the `locale` cookie and `profiles.locale` —
   // those carry the answer the user has already given us, and this is the
@@ -164,7 +166,7 @@ export default async function RootLayout({
           initialLocale={locale}
           initialTimezone={initialTimezone}
           initialNow={initialNow}
-          initialReferralCode={initialReferralCode}
+          initialUtm={initialUtm}
           detectedLocale={detectedLocale}
           messages={clientMessages}
         >

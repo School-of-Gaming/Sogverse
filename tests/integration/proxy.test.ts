@@ -480,79 +480,107 @@ describe("proxy", () => {
     });
   });
 
-  // --- Referral attribution (?ref= → x-referral-code) ---
+  // --- UTM attribution (utm_* params -> x-utm) ---
   //
   // The proxy mutates the request headers in place and hands the same request to
   // NextResponse.next(), which is how the root layout sees them — so reading the
   // header back off the request object after the call is reading exactly what
   // the layout would get.
 
-  describe("referral code header", () => {
-    function referralHeaderAfter(request: NextRequest) {
-      return request.headers.get("x-referral-code");
+  describe("utm attribution header", () => {
+    function utmHeaderAfter(request: NextRequest) {
+      return request.headers.get("x-utm");
     }
 
-    it("emits the sanitised code for a ?ref= on the request", async () => {
+    it("emits the sanitised fields for utm params on the request", async () => {
       mockNoUser();
-      const request = createNextRequest("/shop?ref=Paris-Nord");
+      const request = createNextRequest(
+        "/shop?utm_source=Lynx&utm_medium=email&utm_campaign=lynx-summer-a",
+      );
       await proxy(request);
-      expect(referralHeaderAfter(request)).toBe("paris-nord");
+      expect(utmHeaderAfter(request)).toBe(
+        "source=Lynx&medium=email&campaign=lynx-summer-a",
+      );
     });
 
-    it("emits nothing when there is no ?ref= at all", async () => {
+    it("emits only the fields that were present", async () => {
+      mockNoUser();
+      const request = createNextRequest("/shop?utm_campaign=lynx-summer-a");
+      await proxy(request);
+      expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
+    });
+
+    it("emits nothing when there are no utm params at all", async () => {
       mockNoUser();
       const request = createNextRequest("/shop");
       await proxy(request);
-      expect(referralHeaderAfter(request)).toBeNull();
+      expect(utmHeaderAfter(request)).toBeNull();
     });
 
-    it("collapses a repeated ?ref= to absent rather than taking the first", async () => {
-      // `?ref=a&ref=b` is not a code. Reading it with `.get()` would silently
-      // store the first value, which is how `?ref=good&ref=<junk>` would become
-      // an attribution nobody authored.
+    it("collapses a repeated param to absent rather than taking the first", async () => {
+      // `?utm_campaign=a&utm_campaign=b` is not a campaign. Reading it with
+      // `.get()` would silently store the first value, which is how
+      // `?utm_campaign=good&utm_campaign=<junk>` would become an attribution
+      // nobody authored. The fields are independent, so the well-formed source
+      // beside it still comes through.
       mockNoUser();
-      const request = createNextRequest("/shop?ref=paris-nord&ref=lyon-sud");
+      const request = createNextRequest(
+        "/shop?utm_source=lynx&utm_campaign=good&utm_campaign=junk",
+      );
       await proxy(request);
-      expect(referralHeaderAfter(request)).toBeNull();
+      expect(utmHeaderAfter(request)).toBe("source=lynx");
     });
 
-    it("emits nothing for a malformed code", async () => {
+    it("emits nothing for a malformed value", async () => {
       mockNoUser();
-      const request = createNextRequest("/shop?ref=%3DSUM(A1)");
+      const request = createNextRequest("/shop?utm_campaign=%3DSUM(A1)");
       await proxy(request);
-      expect(referralHeaderAfter(request)).toBeNull();
+      expect(utmHeaderAfter(request)).toBeNull();
     });
 
-    it("deletes a browser-supplied x-referral-code header", async () => {
+    it("percent-encodes a value no raw header could carry", async () => {
+      // A Meta macro expands to an ad's own name — spaces and accents included
+      // — and the header has to stay ASCII whatever the value was.
+      mockNoUser();
+      const request = createNextRequest(
+        "/shop?utm_campaign=" + encodeURIComponent("Rentrée scolaire"),
+      );
+      await proxy(request);
+      const header = utmHeaderAfter(request);
+      expect(header).toBe("campaign=Rentr%C3%A9e+scolaire");
+      expect(header).toMatch(/^[\x20-\x7E]*$/);
+    });
+
+    it("deletes a browser-supplied x-utm header", async () => {
       // The delete is unconditional and the set is conditional, so a header the
       // client sent itself can never reach the layout unsanitised. Asserting the
       // *deletion* rather than merely "we did not emit one" is the point: a
       // conditional set alone would leave this value in place.
       mockNoUser();
       const request = createNextRequest("/shop", undefined, {
-        "x-referral-code": "forged-by-the-client",
+        "x-utm": "campaign=forged-by-the-client",
       });
       await proxy(request);
-      expect(referralHeaderAfter(request)).toBeNull();
+      expect(utmHeaderAfter(request)).toBeNull();
     });
 
-    it("overwrites a browser-supplied header with the sanitised param", async () => {
+    it("overwrites a browser-supplied header with the sanitised params", async () => {
       mockNoUser();
-      const request = createNextRequest("/shop?ref=paris-nord", undefined, {
-        "x-referral-code": "forged-by-the-client",
+      const request = createNextRequest("/shop?utm_campaign=lynx-summer-a", undefined, {
+        "x-utm": "campaign=forged-by-the-client",
       });
       await proxy(request);
-      expect(referralHeaderAfter(request)).toBe("paris-nord");
+      expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
     });
 
     it("is set above every branch, so a redirecting request still carries it", async () => {
       // The seed runs before the auth, PIN and role branches — including the
       // ones that return early — so no path bypasses it.
       mockUser("admin");
-      const request = createNextRequest("/parent?ref=paris-nord");
+      const request = createNextRequest("/parent?utm_campaign=lynx-summer-a");
       const response = await proxy(request);
       expect(response.status).toBe(307);
-      expect(referralHeaderAfter(request)).toBe("paris-nord");
+      expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
     });
   });
 
