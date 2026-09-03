@@ -2238,7 +2238,21 @@
         "resend": "Renvoyer l’e-mail de vérification",
         "resendSent": "Envoyé. Demandez à {name} de regarder dans sa boîte de réception.",
         "resendRateLimited": "Cela fait beaucoup d’e-mails pour un seul joueur. Veuillez réessayer plus tard.",
-        "resendFailed": "Impossible d’envoyer l’e-mail. Veuillez réessayer."
+        "resendFailed": "Impossible d’envoyer l’e-mail. Veuillez réessayer.",
+        "change": {
+          "username": {
+            "title": "Changer l’identifiant",
+            "description": "Choisissez un nouvel identifiant pour {name}. Le mot de passe reste le même, et l’ancien identifiant cesse de fonctionner immédiatement.",
+            "submit": "Enregistrer l’identifiant",
+            "saved": "Identifiant mis à jour. Lisez le nouveau à votre joueur."
+          },
+          "email": {
+            "title": "Changer cette adresse",
+            "description": "Nous envoyons un lien à la nouvelle adresse. Tant que {name} ne l’a pas ouvert, l’adresse reste non vérifiée et l’ancien mot de passe cesse de fonctionner — le lien sert à en choisir un nouveau.",
+            "submit": "Enregistrer l’adresse",
+            "saved": "Adresse mise à jour. Nous avons écrit à la nouvelle."
+          }
+        }
       }
     },
     "switchToGamer": {

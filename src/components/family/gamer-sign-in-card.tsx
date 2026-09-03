@@ -26,6 +26,8 @@ import type { GamerSignIn } from "@/types";
 import { GamerSignInRadios } from "./gamer-sign-in-radios";
 import {
   findGamerCredentialProblem,
+  findGamerEmailProblem,
+  findGamerUsernameProblem,
   GamerCredentialFields,
   GAMER_PASSWORD_MIN_LENGTH,
   type GamerCredentialProblem,
@@ -315,6 +317,15 @@ export function GamerSignInCard({
           </form>
         )}
 
+        {signIn === "username" && !modeChanged && (
+          <ChangeIdentifierForm
+            field="username"
+            gamerId={gamerId}
+            firstName={firstName}
+            currentValue={currentUsername ?? ""}
+          />
+        )}
+
         {/* The address, its state, and the one action either state allows. The
             state is a fact about a mailbox the parent does not read, so it is
             stated in words rather than left to be inferred from the presence of
@@ -353,7 +364,162 @@ export function GamerSignInCard({
             )}
           </div>
         )}
+
+        {signIn === "email" && !modeChanged && (
+          <ChangeIdentifierForm
+            field="email"
+            gamerId={gamerId}
+            firstName={firstName}
+            currentValue={email ?? ""}
+          />
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Replacing the one value a child's current mode is addressed by: their username
+ * or their mailbox.
+ *
+ * **One component for both, because they are one thing.** Each is a single text
+ * field carrying the account's whole identity in its mode, each is written by
+ * sending that field alone (the route reads the stored mode and takes it), each
+ * has exactly one refusal the parent can act on — the value is already spoken
+ * for — and each is the only way out of a mistyped one. Two copies of that would
+ * be two places for the 409 mapping to drift.
+ *
+ * **Standing and open, not behind a disclosure**, matching the new-password form
+ * above it: these are the affordances a parent comes to this card *for*, and a
+ * value that cannot be corrected without first finding a button to press is the
+ * gap this closed.
+ *
+ * **The field starts empty with the current value as its placeholder.** Prefilled
+ * text would have the parent editing a string in place, which is how a one-
+ * character slip becomes a silent overwrite; empty means every save is a value
+ * somebody typed on purpose, and the placeholder still says what is there now.
+ */
+function ChangeIdentifierForm({
+  field,
+  gamerId,
+  firstName,
+  currentValue,
+}: {
+  field: "username" | "email";
+  gamerId: string;
+  firstName: string;
+  /** What the account holds today — shown as the placeholder, never as a value. */
+  currentValue: string;
+}) {
+  const t = useTranslations("parent.gamerDetail.signIn");
+  const s = useTranslations("gamerSignIn");
+  const c = useTranslations("common");
+  const updateGamer = useUpdateGamer();
+
+  const [value, setValue] = useState("");
+  const [problem, setProblem] = useState<GamerCredentialProblem | null>(null);
+  const [outcome, setOutcome] = useState<"saved" | "failed" | null>(null);
+  // Live before any render after the click, cleared on every outcome: the parent
+  // stays on this card whatever happens, and a second attempt after a taken
+  // value is exactly what they will want to do.
+  const [saving, setSaving] = useState(false);
+
+  const isUsername = field === "username";
+  const inputId = isUsername ? "gamer-change-username" : "gamer-change-email";
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (saving) return;
+
+    const found = isUsername
+      ? findGamerUsernameProblem(value)
+      : findGamerEmailProblem(value);
+    setProblem(found);
+    if (found) return;
+
+    setOutcome(null);
+    setSaving(true);
+    try {
+      // One key, and only the one this mode is addressed by. The route reads the
+      // account's stored mode and refuses the other, so sending both would be
+      // sending one it is going to reject.
+      await updateGamer.mutateAsync({
+        gamerId,
+        updates: isUsername
+          ? { username: normalizeGamerUsername(value) }
+          : { email: value.trim() },
+      });
+      // The mutation invalidates the reads the card is drawn from, so the new
+      // value — and, for an address, the verification state the write cleared —
+      // arrive as a redraw rather than as something this form has to restate.
+      setValue("");
+      setOutcome("saved");
+    } catch (caught) {
+      const code = caught instanceof ApiError ? caught.code : undefined;
+      if (code === GAMER_USERNAME_TAKEN) {
+        setProblem({ field: "username", key: "usernameTaken" });
+      } else if (code === GAMER_EMAIL_TAKEN) {
+        setProblem({ field: "email", key: "emailTaken" });
+      } else {
+        setOutcome("failed");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 border-t pt-6">
+      <div className="space-y-1">
+        <h2 className="font-medium">{t(`change.${field}.title`)}</h2>
+        <p className="text-sm text-muted-foreground">
+          {t(`change.${field}.description`, { name: firstName })}
+        </p>
+      </div>
+      <Field
+        label={isUsername ? s("usernameLabel") : c("email")}
+        htmlFor={inputId}
+        hint={isUsername ? s("usernameHint") : s("emailHint")}
+      >
+        {({ hintId }) => (
+          <Input
+            id={inputId}
+            type={isUsername ? "text" : "email"}
+            value={value}
+            // Folded on the way in for a username, so what the parent reads back
+            // to their child is the string the account will actually hold.
+            onChange={(event) =>
+              setValue(
+                isUsername
+                  ? normalizeGamerUsername(event.target.value)
+                  : event.target.value,
+              )
+            }
+            placeholder={currentValue}
+            disabled={saving}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            maxLength={isUsername ? 20 : undefined}
+            aria-describedby={hintId}
+            aria-invalid={problem !== null || undefined}
+          />
+        )}
+      </Field>
+      {problem && (
+        <p className="text-sm text-destructive">
+          {s(problem.key, { count: GAMER_PASSWORD_MIN_LENGTH })}
+        </p>
+      )}
+      {outcome === "saved" && (
+        <p className="text-sm text-success">{t(`change.${field}.saved`)}</p>
+      )}
+      {outcome === "failed" && (
+        <p className="text-sm text-destructive">{t("saveFailed")}</p>
+      )}
+      <Button type="submit" disabled={saving}>
+        {saving ? c("saving") : t(`change.${field}.submit`)}
+      </Button>
+    </form>
   );
 }

@@ -2238,7 +2238,21 @@
         "resend": "Lähetä vahvistusviesti uudelleen",
         "resendSent": "Lähetetty. Pyydä pelaajaa {name} tarkistamaan postilaatikkonsa.",
         "resendRateLimited": "Tämä on paljon viestejä yhdelle pelaajalle. Yritä hetken kuluttua uudelleen.",
-        "resendFailed": "Viestin lähettäminen epäonnistui. Yritä uudelleen."
+        "resendFailed": "Viestin lähettäminen epäonnistui. Yritä uudelleen.",
+        "change": {
+          "username": {
+            "title": "Vaihda käyttäjätunnus",
+            "description": "Valitse pelaajalle {name} uusi käyttäjätunnus. Salasana pysyy samana, ja vanha käyttäjätunnus lakkaa toimimasta heti.",
+            "submit": "Tallenna käyttäjätunnus",
+            "saved": "Käyttäjätunnus päivitetty. Lue uusi tunnus ääneen pelaajallesi."
+          },
+          "email": {
+            "title": "Vaihda sähköpostiosoite",
+            "description": "Lähetämme uuteen osoitteeseen linkin. Ennen kuin {name} avaa sen, osoite on vahvistamaton ja vanha salasana lakkaa toimimasta – linkillä hän valitsee uuden.",
+            "submit": "Tallenna osoite",
+            "saved": "Osoite päivitetty. Lähetimme viestin uuteen osoitteeseen."
+          }
+        }
       }
     },
     "switchToGamer": {

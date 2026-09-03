@@ -2924,7 +2924,21 @@
         "resend": "Resend the verification email",
         "resendSent": "Sent. Ask {name} to check their inbox.",
         "resendRateLimited": "That is a lot of emails for one gamer. Please try again in a while.",
-        "resendFailed": "We couldn’t send the email. Please try again."
+        "resendFailed": "We couldn’t send the email. Please try again.",
+        "change": {
+          "username": {
+            "title": "Change the username",
+            "description": "Pick a new username for {name}. Their password stays the same, and the old username stops working straight away.",
+            "submit": "Save the username",
+            "saved": "Username updated. Read the new one out to your gamer."
+          },
+          "email": {
+            "title": "Change this address",
+            "description": "We email the new address a link. Until {name} opens it the address counts as unverified, and their old password stops working — the link is how they set a new one.",
+            "submit": "Save the address",
+            "saved": "Address updated. We have emailed the new one."
+          }
+        }
       }
     },
     "switchToGamer": {

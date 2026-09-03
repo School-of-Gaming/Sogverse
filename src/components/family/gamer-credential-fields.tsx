@@ -64,6 +64,45 @@ export interface GamerCredentialProblem {
  */
 const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * The three rules, one per field.
+ *
+ * Exported one at a time as well as together, because the surfaces that change
+ * *one* credential on an account that already has a mode — a new username, a new
+ * address, a new password — ask about exactly one field and would otherwise have
+ * to fake the other two to reach the rule they want.
+ */
+export function findGamerUsernameProblem(
+  raw: string,
+): GamerCredentialProblem | null {
+  const username = normalizeGamerUsername(raw);
+  if (username.length === 0) {
+    return { field: "username", key: "usernameRequired" };
+  }
+  if (!GAMER_USERNAME_PATTERN.test(username)) {
+    return { field: "username", key: "usernameInvalid" };
+  }
+  return null;
+}
+
+export function findGamerPasswordProblem(
+  password: string,
+): GamerCredentialProblem | null {
+  if (password.length < GAMER_PASSWORD_MIN_LENGTH) {
+    return { field: "password", key: "passwordTooShort" };
+  }
+  return null;
+}
+
+export function findGamerEmailProblem(
+  raw: string,
+): GamerCredentialProblem | null {
+  const email = raw.trim();
+  if (email.length === 0) return { field: "email", key: "emailRequired" };
+  if (!EMAIL_SHAPE.test(email)) return { field: "email", key: "emailInvalid" };
+  return null;
+}
+
 /** What the mode's fields have to satisfy, or `null` when they do. */
 export function findGamerCredentialProblem(input: {
   signIn: GamerSignIn;
@@ -72,26 +111,12 @@ export function findGamerCredentialProblem(input: {
   email: string;
 }): GamerCredentialProblem | null {
   if (input.signIn === "username") {
-    const username = normalizeGamerUsername(input.username);
-    if (username.length === 0) {
-      return { field: "username", key: "usernameRequired" };
-    }
-    if (!GAMER_USERNAME_PATTERN.test(username)) {
-      return { field: "username", key: "usernameInvalid" };
-    }
-    if (input.password.length < GAMER_PASSWORD_MIN_LENGTH) {
-      return { field: "password", key: "passwordTooShort" };
-    }
-    return null;
+    return (
+      findGamerUsernameProblem(input.username) ??
+      findGamerPasswordProblem(input.password)
+    );
   }
-
-  if (input.signIn === "email") {
-    const email = input.email.trim();
-    if (email.length === 0) return { field: "email", key: "emailRequired" };
-    if (!EMAIL_SHAPE.test(email)) return { field: "email", key: "emailInvalid" };
-    return null;
-  }
-
+  if (input.signIn === "email") return findGamerEmailProblem(input.email);
   return null;
 }
 
