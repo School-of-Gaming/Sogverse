@@ -4023,12 +4023,16 @@ CREATE TABLE public.profiles (
     first_name text NOT NULL,
     last_name text DEFAULT ''::text NOT NULL,
     home_location_id uuid,
-    referral_code text,
     email_verified_at timestamp with time zone,
+    utm_source text,
+    utm_medium text,
+    utm_campaign text,
     CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
     CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text)),
-    CONSTRAINT profiles_referral_code_format CHECK (((referral_code IS NULL) OR (referral_code ~ '^[a-z0-9_-]{1,64}$'::text)))
+    CONSTRAINT profiles_utm_campaign_format CHECK (((utm_campaign IS NULL) OR ((btrim(utm_campaign) <> ''::text) AND (char_length(btrim(utm_campaign)) <= 200) AND (utm_campaign !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_campaign), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)]))))),
+    CONSTRAINT profiles_utm_medium_format CHECK (((utm_medium IS NULL) OR ((btrim(utm_medium) <> ''::text) AND (char_length(btrim(utm_medium)) <= 200) AND (utm_medium !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_medium), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)]))))),
+    CONSTRAINT profiles_utm_source_format CHECK (((utm_source IS NULL) OR ((btrim(utm_source) <> ''::text) AND (char_length(btrim(utm_source)) <= 200) AND (utm_source !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_source), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)])))))
 );
 
 
@@ -4061,17 +4065,31 @@ COMMENT ON COLUMN public.profiles.home_location_id IS 'Optional municipality-lev
 
 
 --
--- Name: COLUMN profiles.referral_code; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.profiles.referral_code IS 'Optional marketing provenance: the short code from the ?ref= param on the link this account arrived through, or NULL (the large majority). Written once by handle_new_user() from the signup metadata and never updatable — there is deliberately no UPDATE grant, at any level, for any role but service_role. Labels only: it grants nothing, is never used for profiling or to decide what anyone is shown or charged, and gamer rows always hold NULL.';
-
-
---
 -- Name: COLUMN profiles.email_verified_at; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.profiles.email_verified_at IS 'When the address in profiles.email was last proven to reach this account''s owner, or NULL for "not verified" — the resting state for gamer rows, whose synthetic <token>@gamer.sogverse.internal address no inbox answers. Written only by service_role (the route that validates a signed verification link); there is deliberately no UPDATE grant at any level for authenticated or anon, because a marker its own subject can set proves nothing. Reset to NULL by trg_reset_email_verification whenever profiles.email changes — the value is a claim about one address, not about the account.';
+
+
+--
+-- Name: COLUMN profiles.utm_source; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.utm_source IS 'Optional marketing provenance: the utm_source from the link this account arrived through, or NULL (the large majority). Written once by handle_new_user() from the signup metadata and never updatable — there is deliberately no UPDATE grant, at any level, for any role but service_role. Case is preserved, because Vercel reports UTM values case-sensitively. Labels only: it grants nothing, is never used for profiling or to decide what anyone is shown or charged, and gamer rows always hold NULL.';
+
+
+--
+-- Name: COLUMN profiles.utm_medium; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.utm_medium IS 'Optional marketing provenance: the utm_medium from the link this account arrived through, or NULL. Same rules as utm_source — write-once, no UPDATE grant, case preserved, NULL on every gamer row.';
+
+
+--
+-- Name: COLUMN profiles.utm_campaign; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.utm_campaign IS 'Optional marketing provenance: the utm_campaign from the link this account arrived through, or NULL. Same rules as utm_source. This is the single "utm parameter" a partner data export reports on, and campaigns issued to or for a partner are prefixed with the partner''s slug and a hyphen (lynx-summer-a, rblx-launch) — a naming convention, not a constraint, and one that cannot be retrofitted because the value is immutable once written.';
 
 
 --
@@ -4811,12 +4829,16 @@ COMMENT ON FUNCTION public.group_session_date_is_writable(p_group_id uuid, p_ses
 CREATE FUNCTION public.handle_new_user() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
-    AS $_$
+    AS $$
 DECLARE
   profile_first_name   TEXT;
   profile_last_name    TEXT;
-  profile_referral_raw TEXT;
-  profile_referral     TEXT;
+  utm_source_raw       TEXT;
+  utm_medium_raw       TEXT;
+  utm_campaign_raw     TEXT;
+  utm_source_value     TEXT;
+  utm_medium_value     TEXT;
+  utm_campaign_value   TEXT;
 BEGIN
   profile_first_name := COALESCE(
     NULLIF(NEW.raw_user_meta_data->>'first_name', ''),
@@ -4828,24 +4850,58 @@ BEGIN
     ''
   );
 
-  -- Sanitise here, in the body, rather than letting the CHECK decide: a
-  -- malformed code must cost this family nothing at all, so it degrades to NULL
-  -- and the signup succeeds. Normalise first, then test the normalised value.
-  profile_referral_raw := NEW.raw_user_meta_data->>'referral_code';
-  profile_referral := CASE
-    WHEN lower(btrim(profile_referral_raw)) ~ '^[a-z0-9_-]{1,64}$'
-      THEN lower(btrim(profile_referral_raw))
+  -- Sanitise here, in the body, rather than letting the CHECKs decide: a
+  -- malformed value must cost this family nothing at all, so it degrades to
+  -- NULL and the signup succeeds. Trim first, then test the trimmed value —
+  -- and store the trimmed value, so what the CHECK sees is what was tested.
+  -- An absent key arrives NULL, `btrim(NULL)` is NULL, and every comparison
+  -- below is then NULL, so the CASE falls through to ELSE without a special
+  -- case for it.
+  utm_source_raw   := NEW.raw_user_meta_data->>'utm_source';
+  utm_medium_raw   := NEW.raw_user_meta_data->>'utm_medium';
+  utm_campaign_raw := NEW.raw_user_meta_data->>'utm_campaign';
+
+  utm_source_value := CASE
+    WHEN btrim(utm_source_raw) <> ''
+     AND char_length(btrim(utm_source_raw)) <= 200
+     AND utm_source_raw !~ '[[:cntrl:]]'
+     AND left(btrim(utm_source_raw), 1) NOT IN ('=', '+', '-', '@', chr(9), chr(13))
+      THEN btrim(utm_source_raw)
     ELSE NULL
   END;
 
-  INSERT INTO public.profiles (id, email, role, first_name, last_name, referral_code)
-  VALUES (NEW.id, NEW.email, 'customer', profile_first_name, profile_last_name, profile_referral);
+  utm_medium_value := CASE
+    WHEN btrim(utm_medium_raw) <> ''
+     AND char_length(btrim(utm_medium_raw)) <= 200
+     AND utm_medium_raw !~ '[[:cntrl:]]'
+     AND left(btrim(utm_medium_raw), 1) NOT IN ('=', '+', '-', '@', chr(9), chr(13))
+      THEN btrim(utm_medium_raw)
+    ELSE NULL
+  END;
+
+  utm_campaign_value := CASE
+    WHEN btrim(utm_campaign_raw) <> ''
+     AND char_length(btrim(utm_campaign_raw)) <= 200
+     AND utm_campaign_raw !~ '[[:cntrl:]]'
+     AND left(btrim(utm_campaign_raw), 1) NOT IN ('=', '+', '-', '@', chr(9), chr(13))
+      THEN btrim(utm_campaign_raw)
+    ELSE NULL
+  END;
+
+  INSERT INTO public.profiles (
+    id, email, role, first_name, last_name,
+    utm_source, utm_medium, utm_campaign
+  )
+  VALUES (
+    NEW.id, NEW.email, 'customer', profile_first_name, profile_last_name,
+    utm_source_value, utm_medium_value, utm_campaign_value
+  );
 
   INSERT INTO public.customer_profiles (user_id) VALUES (NEW.id);
 
   RETURN NEW;
 END;
-$_$;
+$$;
 
 
 --
@@ -9740,7 +9796,9 @@ CREATE VIEW public.user_search_index WITH (security_invoker='true') AS
     p.phone,
     p.currency,
     p.home_location_id,
-    p.referral_code,
+    p.utm_source,
+    p.utm_medium,
+    p.utm_campaign,
     p.locale,
     p.spoken_languages,
     p.created_at,
@@ -9762,7 +9820,7 @@ COMMENT ON VIEW public.user_search_index IS 'Profiles as the admin user search m
 -- Name: COLUMN user_search_index.search_blob; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.user_search_index.search_blob IS 'Every string a person can be found by — name, email, phone, and each game handle — space-joined. Derived, never written, and never selected: the search filters on it and reads the profile columns beside it, so it does not cross the wire. referral_code and email_verified_at are deliberately absent: one labels where a family came from and the other is a date, and neither is a name anyone should be findable by. The phone is the stored digits (E.164 without the +), which is why a needle reduced to its trailing digits matches a number typed either nationally or internationally without the search knowing any dialling rules.';
+COMMENT ON COLUMN public.user_search_index.search_blob IS 'Every string a person can be found by — name, email, phone, and each game handle — space-joined. Derived, never written, and never selected: the search filters on it and reads the profile columns beside it, so it does not cross the wire. The three utm_* columns and email_verified_at are deliberately absent: those label where a family came from and when they verified, and neither is a name anyone should be findable by. The phone is the stored digits (E.164 without the +), which is why a needle reduced to its trailing digits matches a number typed either nationally or internationally without the search knowing any dialling rules.';
 
 
 --
