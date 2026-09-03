@@ -89,12 +89,14 @@ interface IdorCase {
 }
 
 /**
- * `authenticated` holds column-level UPDATE on `profiles` rather than a
- * table-level grant, so it is invisible to `_list_table_grants` and has to be
- * named here explicitly. The column-grant audit (spine check 4) pins which
- * columns those are; this pins that they are still only the caller's own.
+ * `authenticated` holds column-level UPDATE on these rather than a table-level
+ * grant, so they are invisible to `_list_table_grants` and have to be named here
+ * explicitly. The column-grant audit (spine check 4) pins which columns those
+ * are; this pins that they are still only the caller's own. `gamer_profiles`
+ * joined `profiles` here in 00235, when its table-wide UPDATE was traded for
+ * two column grants so the new `sign_in` column would sit outside them.
  */
-const COLUMN_GRANT_ONLY_TABLES = ["profiles"];
+const COLUMN_GRANT_ONLY_TABLES = ["profiles", "gamer_profiles"];
 
 const CASES: Record<string, IdorCase> = {
   products: {

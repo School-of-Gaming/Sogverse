@@ -22,6 +22,13 @@ import type { GamerCreation } from "@/services/member-flair/member-flair.contrac
 // Enums
 export type UserRole = Database["public"]["Enums"]["user_role"];
 export type GenderType = Database["public"]["Enums"]["gender_type"];
+/**
+ * How a child reaches their own account, chosen by their parent: `parent` is
+ * switch-only (a synthetic address, no password), `username` is a handle plus a
+ * password behind a `<username>@gamer.sogverse.internal` auth email, and `email`
+ * is the child's real mailbox with a password they set after verifying it.
+ */
+export type GamerSignIn = Database["public"]["Enums"]["gamer_sign_in"];
 export type LocationType = Database["public"]["Enums"]["location_type"];
 
 /**

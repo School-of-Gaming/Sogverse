@@ -5,9 +5,10 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
- * Parent-PIN RPCs (00075/00076) against real Postgres. Verifies the
- * auth.uid()-scoping, 4-digit guard, and that the admin-only setter is not
- * reachable by authenticated users. Seed PIN state is reset around each test.
+ * Parent-PIN RPCs (00075/00076, plus verify_pin_for_any from 00235) against
+ * real Postgres. Verifies the auth.uid()-scoping, the 4-digit guard, and that
+ * the two service-role-only functions are not reachable by authenticated users.
+ * Seed PIN state is reset around each test.
  */
 describe("Parent PIN RPCs", () => {
   let admin: SupabaseClient<Database>;
@@ -74,5 +75,115 @@ describe("Parent PIN RPCs", () => {
       p_pin: "1234",
     });
     expect(error).not.toBeNull();
+  });
+
+  /**
+   * `verify_pin_for_any` (00235) — the account-switch gate's check. A child in
+   * a gamer session leaving it pays their PARENT's PIN, and a child may be
+   * linked to more than one parent, so the question is "does this match ANY of
+   * these" rather than "does this match theirs".
+   *
+   * Three answers, not two, and the third is the point: `not_set` says the
+   * family has no PIN at all, which the route answers by sending them to set
+   * one rather than by telling a child their PIN was wrong.
+   */
+  describe("verify_pin_for_any", () => {
+    const FAMILY = [TEST_IDS.CUSTOMER, TEST_IDS.CUSTOMER_2];
+
+    it("answers not_set when nobody in the set holds a PIN", async () => {
+      // clearPins() ran in beforeEach, so neither has one.
+      const { data, error } = await admin.rpc("verify_pin_for_any", {
+        p_user_ids: FAMILY,
+        p_pin: "1234",
+      });
+      expect(error).toBeNull();
+      expect(data).toBe("not_set");
+    });
+
+    it("answers valid when the PIN matches ANY member of the set", async () => {
+      // Only the SECOND user holds the PIN, which is what makes this about the
+      // set rather than about the first id happening to match.
+      await admin.rpc("set_pin_for_user", {
+        p_user_id: TEST_IDS.CUSTOMER_2,
+        p_pin: "4321",
+      });
+
+      const { data, error } = await admin.rpc("verify_pin_for_any", {
+        p_user_ids: FAMILY,
+        p_pin: "4321",
+      });
+      expect(error).toBeNull();
+      expect(data).toBe("valid");
+    });
+
+    it("answers invalid for a wrong PIN when somebody in the set has one", async () => {
+      await admin.rpc("set_pin_for_user", {
+        p_user_id: TEST_IDS.CUSTOMER,
+        p_pin: "1234",
+      });
+
+      const { data } = await admin.rpc("verify_pin_for_any", {
+        p_user_ids: FAMILY,
+        p_pin: "9999",
+      });
+      expect(data).toBe("invalid");
+    });
+
+    it("answers invalid — never an error — for a malformed PIN", async () => {
+      // It sits on a credential path, so a mistyped digit must not become a 500
+      // the client has to special-case.
+      await admin.rpc("set_pin_for_user", {
+        p_user_id: TEST_IDS.CUSTOMER,
+        p_pin: "1234",
+      });
+
+      for (const pin of ["12", "abcd", "12345", ""]) {
+        const { data, error } = await admin.rpc("verify_pin_for_any", {
+          p_user_ids: FAMILY,
+          p_pin: pin,
+        });
+        expect(error, `p_pin ${JSON.stringify(pin)} must not raise`).toBeNull();
+        expect(data).toBe("invalid");
+      }
+    });
+
+    it("asks about the family before it asks about the input", async () => {
+      // `not_set` is a fact about the FAMILY and must not depend on what was
+      // typed: a malformed PIN against a family with no PIN is still not_set,
+      // or the route would send a child to retype instead of sending the parent
+      // to set one.
+      const { data } = await admin.rpc("verify_pin_for_any", {
+        p_user_ids: FAMILY,
+        p_pin: "nope",
+      });
+      expect(data).toBe("not_set");
+    });
+
+    it("answers not_set for an empty set rather than raising", async () => {
+      const { data, error } = await admin.rpc("verify_pin_for_any", {
+        p_user_ids: [],
+        p_pin: "1234",
+      });
+      expect(error).toBeNull();
+      expect(data).toBe("not_set");
+    });
+
+    it("is service-role only — an authenticated caller is refused", async () => {
+      // No argument is checked against auth.uid(), so reachable by
+      // `authenticated` this would be a PIN oracle pointable at any family.
+      // Entitlement to ask about these users is the switch route's to establish.
+      await admin.rpc("set_pin_for_user", {
+        p_user_id: TEST_IDS.CUSTOMER,
+        p_pin: "1234",
+      });
+
+      for (const client of [customer, gamer]) {
+        const { error } = await client.rpc("verify_pin_for_any", {
+          p_user_ids: FAMILY,
+          p_pin: "1234",
+        });
+        expect(error).not.toBeNull();
+      }
+    });
   });
 });

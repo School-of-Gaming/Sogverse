@@ -673,16 +673,19 @@ export type Database = {
         Row: {
           date_of_birth: string
           gender: Database["public"]["Enums"]["gender_type"] | null
+          sign_in: Database["public"]["Enums"]["gamer_sign_in"]
           user_id: string
         }
         Insert: {
           date_of_birth: string
           gender?: Database["public"]["Enums"]["gender_type"] | null
+          sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
           user_id: string
         }
         Update: {
           date_of_birth?: string
           gender?: Database["public"]["Enums"]["gender_type"] | null
+          sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
           user_id?: string
         }
         Relationships: [
@@ -2600,6 +2603,7 @@ export type Database = {
           p_parent_id: string
           p_roblox_user_id?: number
           p_roblox_username?: string
+          p_sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
         }
         Returns: undefined
       }
@@ -2935,6 +2939,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      request_gamer_verification_email: {
+        Args: { p_gamer_id: string }
+        Returns: boolean
+      }
       request_my_verification_email: { Args: never; Returns: boolean }
       respond_seat_offer: {
         Args: {
@@ -3097,6 +3105,10 @@ export type Database = {
         Returns: string
       }
       verify_my_pin: { Args: { p_pin: string }; Returns: boolean }
+      verify_pin_for_any: {
+        Args: { p_pin: string; p_user_ids: string[] }
+        Returns: string
+      }
     }
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
@@ -3107,6 +3119,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "expired"
+      gamer_sign_in: "parent" | "username" | "email"
       gender_type: "boy" | "girl" | "non_binary"
       location_type: "country" | "region" | "municipality" | "district" | "site"
       marketing_consent_type: "school_of_gaming" | "lynx_educate"
@@ -3149,12 +3162,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3178,11 +3191,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3203,11 +3216,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3228,11 +3241,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3245,11 +3258,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3270,6 +3283,7 @@ export const Constants = {
         "cancelled",
         "expired",
       ],
+      gamer_sign_in: ["parent", "username", "email"],
       gender_type: ["boy", "girl", "non_binary"],
       location_type: ["country", "region", "municipality", "district", "site"],
       marketing_consent_type: ["school_of_gaming", "lynx_educate"],
