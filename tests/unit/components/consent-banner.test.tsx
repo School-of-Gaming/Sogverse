@@ -1,20 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-// The banner asks *where* it is before it asks anything else, so the route has
-// to be steerable per test — the global setup mock pins it at "/".
-const mockNav = { pathname: "/" };
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    refresh: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    prefetch: vi.fn(),
-  }),
-  usePathname: () => mockNav.pathname,
-  useSearchParams: () => new URLSearchParams(),
-}));
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { ConsentBanner, ConsentProvider, useConsent } from "@/components/consent";
@@ -93,7 +78,6 @@ let reload: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   clearCookies();
-  mockNav.pathname = "/";
   reload = vi.fn();
   Object.defineProperty(window, "location", {
     configurable: true,
@@ -114,29 +98,6 @@ describe("ConsentBanner", () => {
 
     render(<Harness initial={GRANTED_BOTH} />);
     expect(screen.queryByRole("region")).toBeNull();
-  });
-
-  // A child signs in through their parent's account, so the answer is not
-  // theirs to give — and nothing optional runs on their surface anyway. The
-  // strip is withheld rather than shown-and-ignored, because a question put to
-  // someone who cannot answer it only teaches them to dismiss it.
-  it.each(["/gamer", "/gamer/clubs/abc"])(
-    "does not ask on %s, even with no answer stored",
-    (pathname) => {
-      mockNav.pathname = pathname;
-
-      render(<Harness initial={null} />);
-
-      expect(screen.queryByRole("region")).toBeNull();
-    },
-  );
-
-  it("still asks on a parent surface", () => {
-    mockNav.pathname = "/parent";
-
-    render(<Harness initial={null} />);
-
-    expect(screen.queryByRole("region")).not.toBeNull();
   });
 
   it("offers exactly three answers, negative first and fullest last", () => {

@@ -32,7 +32,7 @@ The consent banner is rendered from the **root layout**, outside every route-gro
 
 It is deliberately **non-modal** — no backdrop, no focus trap, no scroll lock — and a `region` with an accessible name, so a reader can go on reading the page and answer whenever they like. Whether it shows is decided **on the server**, from the `sog_consent` cookie parsed in the root layout and seeded into the provider, so the first client render agrees with the SSR HTML and nothing appears or disappears at hydration. Its `z-50` matches the dialog portals', and the strip wins nothing by that: it is rendered as a sibling of `children` rather than portaled, so it is always earlier in the body than a runtime portal and an open dialog paints above it.
 
-**It never renders under `/gamer`.** Consent to analytics and advertising is the parent's to give, and a child signing in through their parent's account is not the person to ask; nothing optional runs on a gamer surface anyway. That list is the banner's own and is deliberately shorter than the one the marketing pixels use — a login form or a staff page is a fine place to ask the question and a poor place to load an ad-platform script.
+**It asks on every surface, the gamer one included.** The pixels keep their own exclusion list, so a child's surface never loads an ad-platform script whatever was answered; a gate on the question itself would withhold no script, and was removed as complexity without coverage.
 
 ## The account menu
 
