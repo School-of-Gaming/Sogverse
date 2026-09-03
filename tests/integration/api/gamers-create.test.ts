@@ -594,6 +594,31 @@ describe("POST /api/gamers/create — the sign-in modes", () => {
     expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
   });
 
+  it("normalises the address before it becomes the account", async () => {
+    // GoTrue lowercases on the way in, so a parent typing capitals must produce
+    // the row GoTrue will actually hold — not a second spelling of it that every
+    // later comparison then has to fold for itself.
+    const response = await POST(
+      createRequest({ ...base, signIn: "email", email: "  Aino@Example.COM " }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockCreateUser.mock.calls[0][0].email).toBe("aino@example.com");
+  });
+
+  it("refuses an address in our own synthetic domain, creating nothing", async () => {
+    // `@gamer.sogverse.internal` is the namespace the other two modes live in: a
+    // random handle, or a username-derived one whose uniqueness IS the username's.
+    // An address typed into this field that landed there would promise a mailbox
+    // nobody can read — or claim a handle that belongs to another child.
+    const response = await POST(
+      createRequest({ ...base, signIn: "email", email: "AINO@gamer.sogverse.internal" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
+  });
+
   it("`email`: the real address, NO password, and the welcome mail", async () => {
     const response = await POST(
       createRequest({ ...base, signIn: "email", email: "aino@example.com" }),

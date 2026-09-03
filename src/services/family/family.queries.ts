@@ -57,8 +57,14 @@ function familyQueryOptions(enabled: boolean | undefined, seed?: FamilySeed) {
  * seed React Query's cache so the profile selector and the parent dashboard's
  * child sections paint populated on the first frame instead of flashing
  * skeletons — the same prefetch-and-hydrate shape the participation reads use.
- * Omit it for client-only mounts (dialogs, the admin style guide). The hook
- * still refetches on mount to revalidate.
+ * Omit it for client-only mounts (dialogs, the admin style guide).
+ *
+ * **A seed is not a first guess that a refetch will correct.** The client's
+ * global `staleTime` is a minute, so seeded data is fresh data: nothing
+ * refetches on mount, and whatever the seed says stands until something
+ * invalidates the key or the minute runs out. A page therefore seeds a value it
+ * is sure of, or seeds nothing — a pessimistic seed (an empty household, an
+ * unknown provenance) is pinned for the minute, not repaired by the next read.
  *
  * `enabled` exists for callers that mount on every page for every role — the
  * header's account menu — where the read has to be held back rather than

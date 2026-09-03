@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
-import { sessionProvenanceFromAmr } from "@/lib/session-provenance";
+import { cookies } from "next/headers";
+import { readSessionProvenance } from "@/lib/auth";
 import type { SessionProvenance } from "@/lib/session-provenance";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ROUTES } from "@/lib/constants";
@@ -56,10 +57,29 @@ export default async function SelectProfilePage() {
 
   // "Continue as me" target: the viewer's own dashboard.
   const selfDashboardPath = ROLE_DASHBOARD_PATHS[role];
-  const [initialFamily, initialSessionProvenance] = await Promise.all([
+  const [resolvedFamily, initialSessionProvenance] = await Promise.all([
     getInitialFamily(userWithProfile.user.id, role),
     getSessionProvenance(),
   ]);
+
+  /**
+   * **A seed is a claim that the first frame is right, and it is held for a
+   * minute.** React Query treats seeded data as fresh (the client's global
+   * `staleTime`), so a seed missing the provenance does not merely paint a
+   * pessimistic first frame — it pins one. A gamer would sit in front of tiles
+   * that are on screen, named, and out of service for the whole minute, with
+   * nothing scheduled to fix them.
+   *
+   * So the two halves are seeded together or not at all. A customer is the one
+   * exception, and not a hedge: their gate is `none` whatever the provenance
+   * turns out to be, so there is nothing for the missing half to decide.
+   * Everyone else falls back to the honest path — no seed, and the client's own
+   * fetch lands the list and the provenance in the same answer.
+   */
+  const initialFamily =
+    initialSessionProvenance !== undefined || role === "customer"
+      ? resolvedFamily
+      : undefined;
 
   return (
     <>
@@ -87,8 +107,12 @@ export default async function SelectProfilePage() {
  * dashboard. Uses the admin client because this page serves gamers too, and a
  * gamer must see siblings that RLS hides (see `resolveFamilyWithAdmin`).
  * Identity comes from the `getClaims()`-verified `getUserWithProfile()` above,
- * never request input. Returns `[]` on any failure; the client `useFamily`
- * refetches on mount, so the selector still renders.
+ * never request input.
+ *
+ * `undefined` on any failure, never `[]`: an empty list is a *claim* that the
+ * household is empty, and a seeded claim is held as fresh for a minute rather
+ * than corrected by the next fetch. Absence puts the selector on its skeleton
+ * and lets the client's own read answer.
  */
 /**
  * The provenance of the viewer's own session, seeded beside the list so the
@@ -99,17 +123,22 @@ export default async function SelectProfilePage() {
  * Unseeded, `useSessionProvenance()` is `null` on the first frame and every tile
  * is correctly but pointlessly out of service until the client refetch lands.
  *
- * It is read the same way the API route's gate reads it: off the `amr` claim of
- * the locally-verified access token, which costs no round trip. `undefined` on
- * any failure, which puts the surface back on the honest "wait for the fetch"
- * path rather than inventing an answer.
+ * It is read exactly the way the API route's gate reads it — the same
+ * `readSessionProvenance`, over the locally-verified claims and the switch
+ * route's marker cookie — so the seed and the gate can never disagree.
+ * `undefined` on any failure, which puts the surface back on the honest "wait
+ * for the fetch" path rather than inventing an answer.
  */
 async function getSessionProvenance(): Promise<SessionProvenance | undefined> {
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getClaims();
-    if (!data?.claims) return undefined;
-    return sessionProvenanceFromAmr(data.claims.amr);
+    const claims = data?.claims;
+    if (!claims?.sub || !claims.session_id) return undefined;
+    return await readSessionProvenance({
+      claims: { sub: claims.sub, session_id: claims.session_id, amr: claims.amr },
+      cookies: await cookies(),
+    });
   } catch {
     return undefined;
   }
@@ -118,10 +147,10 @@ async function getSessionProvenance(): Promise<SessionProvenance | undefined> {
 async function getInitialFamily(
   userId: string,
   role: "customer" | "gamer",
-): Promise<FamilyMember[]> {
+): Promise<FamilyMember[] | undefined> {
   try {
     return await resolveFamilyWithAdmin(createAdminClient(), userId, role);
   } catch {
-    return [];
+    return undefined;
   }
 }

@@ -992,6 +992,42 @@ describe("PATCH /api/gamers/[id]", () => {
       );
     });
 
+    it("→ email: normalises the address before it becomes the account", async () => {
+      // GoTrue lowercases on the way in, so a parent typing capitals must
+      // produce the row GoTrue will actually hold. The verification token is
+      // signed over the stored address, so a second spelling would mint a link
+      // that could never verify.
+      currentSignIn = "username";
+      const { emailUpdate } = mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "  Aino@Example.COM ",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(200);
+      expect(authWrite().email).toBe("aino@example.com");
+      expect(emailUpdate.update).toHaveBeenCalledWith({ email: "aino@example.com" });
+    });
+
+    it("→ email: refuses an address in our own synthetic domain", async () => {
+      // The domain is ours and no family types it. Landing there would promise a
+      // mailbox nobody can read, or claim a username-mode handle that belongs to
+      // another child — and the schema refuses before anything is written.
+      currentSignIn = "username";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "AINO@gamer.sogverse.internal",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+    });
+
     it("→ email: refuses without an address", async () => {
       currentSignIn = "parent";
       mockCredentialChange();
@@ -1071,6 +1107,70 @@ describe("PATCH /api/gamers/[id]", () => {
 
       expect(response.status).toBe(409);
       expect(data.code).toBe("EMAIL_TAKEN");
+    });
+
+    it("withdraws the credential when the sign-in mode cannot be recorded", async () => {
+      // The invariant: a credential that opens a gamer account exists only where
+      // `gamer_profiles.sign_in` says one does. The mode is written last —
+      // it is the record of the auth writes rather than a part of them — so its
+      // failure is the one that leaves a working username and password the
+      // platform believes does not exist. That is exactly what the switch gate
+      // is built to rule out: the child could sign in on any machine, and the
+      // platform would classify that session by a mode that is a lie.
+      currentSignIn = "parent";
+      mockCredentialChange();
+      const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      // Everything succeeds except the mode write, which is the last of the
+      // three and the only one under test here.
+      const profiles = {
+        ...mockTargetProfile("gamer"),
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      };
+      mockAdminFrom.mockImplementation((table: string) => {
+        if (table !== "gamer_profiles") return profiles;
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi
+                .fn()
+                .mockResolvedValue({ data: { sign_in: "parent" }, error: null }),
+            }),
+          }),
+          update: (...args: unknown[]) => {
+            mockSignInUpdate(...args);
+            return {
+              eq: vi
+                .fn()
+                .mockResolvedValue({ data: null, error: { message: "row locked" } }),
+            };
+          },
+        };
+      });
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "username",
+        username: "aino",
+        password: "a good password",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(500);
+
+      // Two auth writes: the credential, then the compensation that takes it
+      // away again. The second carries a password nobody holds and no address —
+      // the address is deliberately left where it landed, because moving it back
+      // is another write that can fail the same way.
+      const writes = mockAdminAuthAdmin.updateUserById.mock.calls.map(([, p]) => p);
+      expect(writes).toHaveLength(2);
+      expect(writes[0]).toMatchObject({ password: "a good password" });
+      expect(Object.keys(writes[1])).toEqual(["password"]);
+      expect(writes[1].password).not.toBe("a good password");
+      expect(String(writes[1].password)).toHaveLength(64);
+
+      spy.mockRestore();
     });
 
     it("fails loudly when auth.users moved and auth.identities did not", async () => {

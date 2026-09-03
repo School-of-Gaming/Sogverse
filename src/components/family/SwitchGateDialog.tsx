@@ -50,6 +50,16 @@ interface SwitchGateBodyProps {
   onCommit: (credentials: SwitchAccountCredentials) => Promise<void>;
   /** Cancel / Close. Never called while committing — the buttons are disabled. */
   onClose: () => void;
+  /**
+   * Opens straight on the no-PIN message instead of the pad.
+   *
+   * The one seam this body has, and it exists for the style guide: that state is
+   * otherwise reachable only by typing four digits into a box, so a reader
+   * comparing the gate's states would have to be *told* what the fourth box
+   * becomes rather than shown it. Production passes nothing — the state is the
+   * route's answer to a commit, never a caller's opinion.
+   */
+  initialPinNotSet?: boolean;
 }
 
 /**
@@ -85,6 +95,7 @@ export function SwitchGateBody({
   onCommittingChange,
   onCommit,
   onClose,
+  initialPinNotSet = false,
 }: SwitchGateBodyProps) {
   const t = useTranslations("family");
   const c = useTranslations("common");
@@ -97,7 +108,7 @@ export function SwitchGateBody({
    * question — `pin_is_set()` is `auth.uid()`-scoped and would answer about the
    * child (see `src/services/pin/CLAUDE.md`).
    */
-  const [pinNotSet, setPinNotSet] = useState(false);
+  const [pinNotSet, setPinNotSet] = useState(initialPinNotSet);
   const [error, setError] = useState<string | null>(null);
 
   /** The code on a refusal, or undefined for anything that is not one. */

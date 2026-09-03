@@ -211,7 +211,7 @@
         },
         "gamerAccounts": {
           "question": "Comment mon enfant se connecte-t-il, et qu’est-ce que le code PIN parent ?",
-          "answer": "C’est vous qui choisissez, pour chaque enfant, comment il se connecte, depuis Mon SOG. Par défaut, un compte joueur n’a pas d’identifiants à lui : il porte une adresse interne Sogverse plutôt qu’une véritable adresse e-mail, et votre enfant entre dans Sogverse en basculant vers son profil depuis votre compte. Si vous préférez, vous pouvez lui donner un identifiant et un mot de passe, ou sa propre adresse e-mail — qu’il vérifie avant de définir un mot de passe par le parcours de réinitialisation habituel. Quel que soit votre choix, la connexion d’un enfant n’ouvre que son propre compte : elle n’ouvre jamais le vôtre ni celui d’un frère ou d’une sœur sans le mot de passe de ce compte, et un enfant entré en basculant depuis votre compte a besoin de votre code PIN parent pour basculer ailleurs. Pour accéder au côté parent, il faut un code PIN à quatre chiffres que vous seul connaissez : un mot de passe enregistré dans le navigateur ne suffit donc pas à acheter quoi que ce soit ni à modifier le compte d’un enfant, et la session se reverrouille dès que vous basculez vers le profil d’un enfant ou que vous vous déconnectez. Si vous oubliez le code PIN, nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs — un enfant qui appuie sur « Vous avez oublié votre code PIN ? » vous envoie simplement un e-mail."
+          "answer": "C’est vous qui choisissez, pour chaque enfant, comment il se connecte, depuis Mon SOG. Par défaut, un compte joueur n’a pas d’identifiants à lui : il porte une adresse interne Sogverse plutôt qu’une véritable adresse e-mail, et votre enfant entre dans Sogverse en basculant vers son profil depuis votre compte. Si vous préférez, vous pouvez lui donner un identifiant et un mot de passe, ou sa propre adresse e-mail — qu’il vérifie avant de définir un mot de passe par le parcours de réinitialisation habituel. Quel que soit votre choix, la connexion d’un enfant n’ouvre que son propre compte : un enfant connecté avec son propre identifiant ou sa propre adresse e-mail ne peut atteindre le vôtre ou celui d’un frère ou d’une sœur qu’en tapant le mot de passe de ce compte, et un enfant entré en basculant depuis votre compte a besoin de votre code PIN parent pour basculer ailleurs. Pour accéder au côté parent, il faut un code PIN à quatre chiffres que vous seul connaissez : un mot de passe enregistré dans le navigateur ne suffit donc pas à acheter quoi que ce soit ni à modifier le compte d’un enfant, et la session se reverrouille dès que vous basculez vers le profil d’un enfant ou que vous vous déconnectez. Si vous oubliez le code PIN, nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs — un enfant qui appuie sur « Vous avez oublié votre code PIN ? » vous envoie simplement un e-mail."
         },
         "childData": {
           "question": "Que conservez-vous au sujet de mon enfant ?",
@@ -1386,7 +1386,7 @@
       "passwordDescription": "Ce compte a son propre mot de passe. Saisis-le pour basculer.",
       "passwordInvalid": "Ce mot de passe n’est pas correct. Réessaie.",
       "submit": "Basculer",
-      "unreachable": "Se connecte via un parent"
+      "unreachable": "Se connecte depuis le compte d’un parent"
     },
     "addGamerForm": {
       "title": "Ajouter un joueur",
@@ -3951,6 +3951,7 @@
     "usernameInvalid": "Utilisez de 3 à 20 lettres ou chiffres, sans espaces.",
     "usernameTaken": "Cet identifiant est déjà pris. Essayez-en un autre.",
     "passwordHint": "Au moins {count} caractères. Lisez-le à votre joueur — vous pourrez le changer ici plus tard.",
+    "passwordHintOnGamerPage": "Au moins {count} caractères. Lisez-le à votre joueur — vous pourrez le changer plus tard depuis sa page sur Mon SOG.",
     "passwordTooShort": "Le mot de passe doit contenir au moins {count} caractères.",
     "emailHint": "Le lien de vérification sera envoyé à cette adresse, qui doit donc être accessible à votre joueur.",
     "emailPlaceholder": "lily@exemple.com",

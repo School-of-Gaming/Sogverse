@@ -28,8 +28,12 @@ vi.mock("next/headers", () => ({
 // pin-session reads the secret lazily; set it before importing requireRole.
 process.env.PIN_COOKIE_SECRET = "auth-test-pin-secret";
 
-import { requireRole } from "@/lib/auth";
-import { pinTokenFor } from "@/lib/pin-session";
+import { readSessionProvenance, requireRole } from "@/lib/auth";
+import {
+  FAMILY_SESSION_COOKIE_NAME,
+  mintFamilySessionToken,
+  pinTokenFor,
+} from "@/lib/pin-session";
 
 /**
  * Narrow requireRole's union result to its error branch. instanceof is the
@@ -156,6 +160,81 @@ describe("requireRole parent-PIN gate", () => {
 
     const res = await requireRole(["customer", "gamer"]);
     expect(res).not.toBeInstanceOf(NextResponse);
+  });
+});
+
+/**
+ * The one place a session is classified, and the reason it is a function rather
+ * than a claim read: `family` means "the switch route minted a marker for THIS
+ * session", and nothing about the token can say that. A password-recovery
+ * session carries `otp` in its `amr` exactly as a switch-created one does, so a
+ * caller that trusted the claim — or merely checked the cookie's presence —
+ * would hand a child a PIN-only path into their parent's account.
+ */
+describe("readSessionProvenance", () => {
+  const CLAIMS = { sub: "g1", session_id: "s1", amr: [{ method: "otp" }] };
+
+  function cookieHolding(value: string | undefined) {
+    return {
+      get: (name: string) =>
+        name === FAMILY_SESSION_COOKIE_NAME && value !== undefined
+          ? { value }
+          : undefined,
+    };
+  }
+
+  it("is `family` for a session the switch route marked", async () => {
+    const marker = await mintFamilySessionToken("g1", "s1");
+    expect(
+      await readSessionProvenance({ claims: CLAIMS, cookies: cookieHolding(marker) }),
+    ).toBe("family");
+  });
+
+  it("is `own` for an otp session with no marker", async () => {
+    // The recovery case: the same `amr`, and no mint. It costs the target's
+    // password rather than four digits.
+    expect(
+      await readSessionProvenance({
+        claims: CLAIMS,
+        cookies: cookieHolding(undefined),
+      }),
+    ).toBe("own");
+  });
+
+  it("is `own` when the marker belongs to a session that has been replaced", async () => {
+    const marker = await mintFamilySessionToken("g1", "previous-session");
+    expect(
+      await readSessionProvenance({ claims: CLAIMS, cookies: cookieHolding(marker) }),
+    ).toBe("own");
+  });
+
+  it("is `own` when the marker belongs to somebody else", async () => {
+    const marker = await mintFamilySessionToken("g2", "s1");
+    expect(
+      await readSessionProvenance({ claims: CLAIMS, cookies: cookieHolding(marker) }),
+    ).toBe("own");
+  });
+
+  it("is `own` for a forged marker", async () => {
+    expect(
+      await readSessionProvenance({
+        claims: CLAIMS,
+        cookies: cookieHolding("f".repeat(64)),
+      }),
+    ).toBe("own");
+  });
+
+  it("is `own` for a password session even holding a valid marker", async () => {
+    // Unreachable today — a password sign-in mints a new session id and only the
+    // switch route mints markers — and asserted anyway, because it is the guard
+    // against a future mint site looser than that one.
+    const marker = await mintFamilySessionToken("g1", "s1");
+    expect(
+      await readSessionProvenance({
+        claims: { ...CLAIMS, amr: [{ method: "password" }] },
+        cookies: cookieHolding(marker),
+      }),
+    ).toBe("own");
   });
 });
 

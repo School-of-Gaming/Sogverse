@@ -1,10 +1,15 @@
-// The unlock cookie this route mints on one path is an HMAC over
-// PIN_COOKIE_SECRET, read lazily at mint time — set before the route imports.
+// Both cookies this route mints are HMACs over PIN_COOKIE_SECRET, read lazily
+// at mint time — set before the route imports.
 process.env.PIN_COOKIE_SECRET = "route-test-switch-account-secret";
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/auth/switch-account/route";
 import { NextResponse } from "next/server";
+import {
+  FAMILY_SESSION_COOKIE_NAME,
+  PIN_COOKIE_NAME,
+  mintFamilySessionToken,
+} from "@/lib/pin-session";
 import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
 
 /**
@@ -20,9 +25,13 @@ import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
  *    themselves pays the TARGET's password, and the session they get is itself a
  *    password session.
  *
- * Two properties are asserted over and over on purpose, because they are the
+ * Three properties are asserted over and over on purpose, because they are the
  * ones a refactor breaks quietly: **a failed gate never signs the caller out**,
- * and **the unlock cookie is minted on exactly one path**.
+ * **the unlock cookie is minted on exactly one path**, and **every session the
+ * OTP path creates carries the family-session marker while every session the
+ * password path creates does not**. The third is what the gate above reads:
+ * nothing in a token can separate a switch from a password recovery, so the
+ * classification is this route's own signature on a session it built.
  */
 
 // --- Mocks ---
@@ -68,8 +77,9 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
-// The route clears the parent-PIN unlock cookie on most paths, and mints it on
-// exactly one.
+// Two cookies pass through here: the parent-PIN unlock cookie, cleared on most
+// paths and minted on exactly one, and the family-session marker, minted on
+// every OTP switch and deleted on every password switch.
 const mockCookieDelete = vi.fn();
 const mockCookieSet = vi.fn();
 vi.mock("next/headers", () => ({
@@ -115,30 +125,48 @@ function mockAuthenticated(
   });
 }
 
+/**
+ * A target as the route meets it. `email` is deliberately NOT part of the
+ * profile row the route reads: it asks GoTrue for every target's address,
+ * gamers included, because `profiles.email` is a copy and a copy is the wrong
+ * thing to open a session against. So this field feeds `getUserById`.
+ */
 type TargetProfile = { id: string; role: string; email: string | null } | null;
 
 /**
  * Configure the admin client to dispatch `from()` calls to per-table mock
- * builders. The profile lookup always responds the same way, but the
- * parent_gamer chain varies between tests (eq+eq+maybeSingle for direct link
- * checks, in() for sibling checks, eq() for the caller's parent list), so each
- * test passes a builder for it. `gamerSignIn` feeds the one `gamer_profiles`
- * read the own-session path makes.
+ * builders, and to answer the address lookup. The profile lookup always
+ * responds the same way, but the parent_gamer chain varies between tests
+ * (eq+eq+maybeSingle for direct link checks, in() for sibling checks, eq() for
+ * the caller's parent list), so each test passes a builder for it.
+ * `gamerSignIn` feeds the one `gamer_profiles` read the own-session path makes.
  */
 function setupAdminFrom(args: {
   target: TargetProfile;
   parentGamerBuilder?: () => Record<string, unknown>;
   gamerSignIn?: "parent" | "username" | "email" | null;
 }) {
+  const target = args.target;
   const profileChain = {
     select: vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
+        // Only the two columns the route selects. Handing it an `email` here
+        // would let a regression that reads the profile copy pass this file.
         maybeSingle: vi.fn().mockResolvedValue(
-          args.target ? mockSupabaseSuccess(args.target) : mockSupabaseSuccess(null),
+          target
+            ? mockSupabaseSuccess({ id: target.id, role: target.role })
+            : mockSupabaseSuccess(null),
         ),
       }),
     }),
   };
+
+  if (target) {
+    mockAdminGetUserById.mockResolvedValue({
+      data: { user: { id: target.id, email: target.email } },
+      error: null,
+    });
+  }
 
   const gamerProfileChain = {
     select: vi.fn().mockReturnValue({
@@ -226,7 +254,11 @@ function siblingLookup(rows: Array<{ parent_id: string; gamer_id: string }>) {
   });
 }
 
-function mockHappyPathSession(email: string) {
+/**
+ * The OTP switch succeeding: a link is minted and redeemed. The address it is
+ * minted for comes from `setupAdminFrom`, which is where GoTrue's answer lives.
+ */
+function mockHappyPathSession() {
   mockAdminGenerateLink.mockResolvedValue({
     data: { properties: { email_otp: "123456" } },
     error: null,
@@ -235,14 +267,11 @@ function mockHappyPathSession(email: string) {
     data: { session: { access_token: "new-token" } },
     error: null,
   });
-  if (email.includes("@gamer.sogverse.internal")) {
-    // Synthetic email — getUserById not called
-    return;
-  }
-  mockAdminGetUserById.mockResolvedValue({
-    data: { user: { id: "target", email } },
-    error: null,
-  });
+}
+
+/** The value the family marker must carry: bound to the NEW session, not the caller's. */
+function familyMarkerFor(userId: string) {
+  return mintFamilySessionToken(userId, "new-session");
 }
 
 const PARENT_A = "parent-a";
@@ -350,7 +379,7 @@ describe("POST /api/auth/switch-account", () => {
         target: { id: GAMER_A1, role: "gamer", email: "alphaone@gamer.sogverse.internal" },
         parentGamerBuilder: linkLookup(true),
       });
-      mockHappyPathSession("alphaone@gamer.sogverse.internal");
+      mockHappyPathSession();
 
       const response = await POST(createRequest({ userId: GAMER_A1 }));
       const data = await response.json();
@@ -366,8 +395,37 @@ describe("POST /api/auth/switch-account", () => {
       // child is the gesture this route exists for.
       expect(mockAdminRpc).not.toHaveBeenCalled();
       // Switching INTO a gamer always re-locks.
-      expect(mockCookieDelete).toHaveBeenCalled();
-      expect(mockCookieSet).not.toHaveBeenCalled();
+      expect(mockCookieDelete).toHaveBeenCalledWith(PIN_COOKIE_NAME);
+      expect(mockCookieSet).not.toHaveBeenCalledWith(
+        PIN_COOKIE_NAME,
+        expect.anything(),
+        expect.anything(),
+      );
+      // ...and the child's new session is marked as one this route handed over,
+      // which is what makes their way back out cost a parent's PIN. Bound to
+      // the NEW session's id and to the CHILD, so nothing else can present it.
+      expect(mockCookieSet).toHaveBeenCalledWith(
+        FAMILY_SESSION_COOKIE_NAME,
+        await familyMarkerFor(GAMER_A1),
+        expect.objectContaining({ httpOnly: true }),
+      );
+    });
+
+    it("asks GoTrue for the gamer's address rather than trusting the profile copy", async () => {
+      mockAuthenticated("customer", PARENT_A);
+      setupAdminFrom({
+        target: { id: GAMER_A1, role: "gamer", email: "alphaone@gamer.sogverse.internal" },
+        parentGamerBuilder: linkLookup(true),
+      });
+      mockHappyPathSession();
+
+      await POST(createRequest({ userId: GAMER_A1 }));
+
+      // `profiles.email` is a copy the credential edit writes second, so a
+      // failure between the two auth writes and it leaves the profile naming an
+      // address the account no longer answers to — and the magic link would be
+      // minted for a mailbox that cannot be signed into.
+      expect(mockAdminGetUserById).toHaveBeenCalledWith(GAMER_A1);
     });
 
     it("forbids parent from switching to a different parent's gamer", async () => {
@@ -453,7 +511,7 @@ describe("POST /api/auth/switch-account", () => {
         ]),
       });
       mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
-      mockHappyPathSession("alphatwo@gamer.sogverse.internal");
+      mockHappyPathSession();
 
       const response = await POST(createRequest({ userId: GAMER_A2, pin: "1234" }));
       expect(response.status).toBe(200);
@@ -471,7 +529,7 @@ describe("POST /api/auth/switch-account", () => {
         target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
         parentGamerBuilder: linkLookupWithParents(true, [PARENT_A, PARENT_B]),
       });
-      mockHappyPathSession("parent-a@example.com");
+      mockHappyPathSession();
     }
 
     it("refuses with PIN_REQUIRED when no PIN was sent", async () => {
@@ -539,11 +597,29 @@ describe("POST /api/auth/switch-account", () => {
       // rather than being asked for the same four digits twice in one gesture.
       // The token is bound to the NEW session's id, read off its own claims.
       expect(mockCookieSet).toHaveBeenCalledWith(
-        "sog_pin_verified",
+        PIN_COOKIE_NAME,
         expect.any(String),
         expect.objectContaining({ httpOnly: true }),
       );
       expect(mockCookieDelete).not.toHaveBeenCalled();
+    });
+
+    it("marks the parent's new session as one this route handed over", async () => {
+      familySessionToParent();
+      mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
+
+      await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
+
+      // The marker goes on EVERY session the OTP path creates, without a
+      // per-target condition — a condition is a thing that can be got wrong in
+      // the one place where getting it wrong hands out the cheaper gate. On a
+      // parent target it is inert (only a gamer caller is ever charged for
+      // leaving), so narrowing it would buy nothing.
+      expect(mockCookieSet).toHaveBeenCalledWith(
+        FAMILY_SESSION_COOKIE_NAME,
+        await familyMarkerFor(PARENT_A),
+        expect.objectContaining({ httpOnly: true }),
+      );
     });
 
     it("switches to a sibling on a valid PIN, and CLEARS the unlock cookie", async () => {
@@ -556,14 +632,25 @@ describe("POST /api/auth/switch-account", () => {
         ]),
       });
       mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
-      mockHappyPathSession("alphatwo@gamer.sogverse.internal");
+      mockHappyPathSession();
 
       const response = await POST(createRequest({ userId: GAMER_A2, pin: "1234" }));
 
       expect(response.status).toBe(200);
       // Entering a gamer never unlocks anything.
-      expect(mockCookieSet).not.toHaveBeenCalled();
-      expect(mockCookieDelete).toHaveBeenCalled();
+      expect(mockCookieSet).not.toHaveBeenCalledWith(
+        PIN_COOKIE_NAME,
+        expect.anything(),
+        expect.anything(),
+      );
+      expect(mockCookieDelete).toHaveBeenCalledWith(PIN_COOKIE_NAME);
+      // The sibling's session is still one this route handed over, so leaving
+      // it costs a PIN in turn.
+      expect(mockCookieSet).toHaveBeenCalledWith(
+        FAMILY_SESSION_COOKIE_NAME,
+        await familyMarkerFor(GAMER_A2),
+        expect.objectContaining({ httpOnly: true }),
+      );
     });
   });
 
@@ -652,7 +739,21 @@ describe("POST /api/auth/switch-account", () => {
       await POST(createRequest({ userId: PARENT_A, password: "correct horse" }));
 
       expect(mockCookieSet).not.toHaveBeenCalled();
-      expect(mockCookieDelete).toHaveBeenCalled();
+      expect(mockCookieDelete).toHaveBeenCalledWith(PIN_COOKIE_NAME);
+    });
+
+    it("deletes the family marker, so this session is an own session", async () => {
+      ownSessionToParent();
+
+      await POST(createRequest({ userId: PARENT_A, password: "correct horse" }));
+
+      // The person at the keyboard typed the target's own credential, so the
+      // session that results is theirs — and the browser must not carry into it
+      // a marker minted for the session this one replaced. Left behind, it would
+      // make the next switch out cost four digits instead of a password, which
+      // is the whole thing this path exists to refuse.
+      expect(mockCookieDelete).toHaveBeenCalledWith(FAMILY_SESSION_COOKIE_NAME);
+      expect(mockCookieSet).not.toHaveBeenCalled();
     });
 
     it("revokes the caller's old session by its own access token", async () => {
@@ -768,7 +869,7 @@ describe("POST /api/auth/switch-account", () => {
       expect(mockSignOut).toHaveBeenCalledOnce();
     });
 
-    it("returns 500 when target gamer has no email (misconfigured)", async () => {
+    it("returns 500 when GoTrue holds no address for the target gamer", async () => {
       mockAuthenticated("customer", PARENT_A);
       setupAdminFrom({
         target: { id: GAMER_A1, role: "gamer", email: null },
@@ -808,16 +909,19 @@ describe("POST /api/auth/switch-account", () => {
         parentGamerBuilder: linkLookupWithParents(true, [PARENT_A]),
       });
       mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
-      mockHappyPathSession("parent-a@example.com");
+      mockHappyPathSession();
       mockGetClaims.mockResolvedValue({ data: { claims: {} }, error: null });
 
       const response = await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
 
       expect(response.status).toBe(200);
-      // Worse UX, never a weaker gate: the parent types the PIN again at the
-      // unlock screen rather than the route minting a token it cannot bind.
+      // Worse UX, never a weaker gate, and it holds for both cookies: neither
+      // can be bound without a session id, so neither is minted. The parent
+      // types the PIN again at the unlock screen, and the unmarked session reads
+      // as `own` — the STRONGER of the two switch gates.
       expect(mockCookieSet).not.toHaveBeenCalled();
-      expect(mockCookieDelete).toHaveBeenCalled();
+      expect(mockCookieDelete).toHaveBeenCalledWith(PIN_COOKIE_NAME);
+      expect(mockCookieDelete).toHaveBeenCalledWith(FAMILY_SESSION_COOKIE_NAME);
     });
   });
 

@@ -259,7 +259,7 @@
         },
         "gamerAccounts": {
           "question": "chay’ ’el puqwI’, ’ej nuq ’oH vav PIN’e’?",
-          "answer": "chay’ ’el puqlI’ ’e’ DawIv, Hoch puqvaD, jIH SOGDaq. motlh ’elmeH ngoq Daj ghajbe’ toy’wI’ account: Sogverse qoD Daq ghaj — jabbI’ID Daq teH ghajbe’ — ’ej accountlIjvo’ profileDaj DawIvDI’, Sogverse ’el puqlI’. DaneHchugh, pong pegh mu’ je DanoblaH, pagh jabbI’ID DaqDaj — ’olDI’ puq, pegh mu’ wIv. DawIvbogh Hoch: puq ’elmeH ngoq accountDaj neH poSmoH — accountlIj qoj loDnI’ be’nI’ account poSmoHbe’ accountvetlh pegh mu’ Hutlhchugh, ’ej accountlIjvo’ ’elpu’bogh puq: latlh DaqDaq wIvmeH vav PINlIj poQ. vav Daq ’elmeH loS mI’ PIN poQlu’, ’ej SoH neH Sov: vaj Hal qawwI’Daq polta’bogh mu’ pegh: je’meH qoj puq account choHmeH lI’be’. puq profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’. PIN DalIjchugh, accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj ”PIN DalIj’a’?” qIptaHvIS puq, jabbI’ID neH DangeHmoH."
+          "answer": "chay’ ’el puqlI’ ’e’ DawIv, Hoch puqvaD, jIH SOGDaq. motlh ’elmeH ngoq Daj ghajbe’ toy’wI’ account: Sogverse qoD Daq ghaj — jabbI’ID Daq teH ghajbe’ — ’ej accountlIjvo’ profileDaj DawIvDI’, Sogverse ’el puqlI’. DaneHchugh, pong pegh mu’ je DanoblaH, pagh jabbI’ID DaqDaj — ’olDI’ puq, pegh mu’ wIv. DawIvbogh Hoch: puq ’elmeH ngoq accountDaj neH poSmoH — ponglIj mu’lIj joq lo’taH’bogh puq: accountlIj qoj loDnI’ be’nI’ account pegh mu’ lo’taHvIS neH ’ol laH; ’ej accountlIjvo’ ’elpu’bogh puq: latlh DaqDaq wIvmeH vav PINlIj poQ. vav Daq ’elmeH loS mI’ PIN poQlu’, ’ej SoH neH Sov: vaj Hal qawwI’Daq polta’bogh mu’ pegh: je’meH qoj puq account choHmeH lI’be’. puq profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’. PIN DalIjchugh, accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj ”PIN DalIj’a’?” qIptaHvIS puq, jabbI’ID neH DangeHmoH."
         },
         "childData": {
           "question": "nuq De’ puqwI’vo’ bopol?",
@@ -1434,7 +1434,7 @@
       "passwordDescription": "mu’ pegh ghaj accountvam. yIghItlh ’ej yIchoH.",
       "passwordInvalid": "lughbe’ mu’ pegh. yInIDqa’!",
       "submit": "yIchoH",
-      "unreachable": "vav lojmIt lo’"
+      "unreachable": "vav accountvo’ chel"
     },
     "addGamerForm": {
       "title": "QujwI’ chu’ chel",
@@ -3105,6 +3105,7 @@
     "usernameInvalid": "wej – cha’maH ghItlh mI’ joq yIlo’. pe’vIl yIlo’Qo’.",
     "usernameTaken": "pongvam lo’lu’. latlh yInuD!",
     "passwordHint": "{count} Hap law’ law’. QujwI’lIjvaD yIjatlh – naDev DachoHlaH.",
+    "passwordHintOnGamerPage": "{count} Hap law’ law’. QujwI’lIjvaD yIjatlh – wa’leS My SOGDaj Daq DachoHlaH.",
     "passwordTooShort": "{count} Hap law’ law’ poQ mu’mey.",
     "emailHint": "naDev ngeHlu’ ngu’meH lInk. laDlaH QujwI’lIj ’e’ poQ.",
     "emailPlaceholder": "mara@example.com",

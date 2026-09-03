@@ -20,20 +20,34 @@ the UI section below is Gate A.
 
 **Gate B — leaving a gamer session.** A child switching *out* of their own
 account into anyone else's pays a credential, and which one depends on how their
-session was created (`src/lib/session-provenance.ts`, read off the JWT's `amr`
-claim and carried on the guard's `user.session`):
+session was created (`src/lib/session-provenance.ts`, resolved server-side by
+`readSessionProvenance()` in `src/lib/auth.ts` and carried on the guard's
+`user.session`):
 
-- a **family session** — the parent switched the child in, so the token records
-  `otp` and no password — costs **a linked parent's PIN**. This is the household
-  case: the child is on the family's device and the parent is nearby, so the PIN
-  is accepted friction. Any of the child's parents' PINs opens it, because a
-  child may be linked to more than one.
-- an **own session** — the child signed in with a username or an email of their
-  own, so the token records `password` — costs **the target account's own
+- a **family session** — the switch route created it, and said so by minting a
+  signed marker cookie against the new session's id — costs **a linked parent's
+  PIN**. This is the household case: the child is on the family's device and the
+  parent is nearby, so the PIN is accepted friction. Any of the child's parents'
+  PINs opens it, because a child may be linked to more than one.
+- an **own session** — anything else, including a session opened by typing a
+  username or an email of the child's own — costs **the target account's own
   password**, and never a PIN. The reason is the threat this gate is actually
   about: a child may sign in on a school computer and forget to sign out, and a
   four-digit PIN with no rate limit is not what should stand between that machine
   and the parent's account.
+
+**Rule: `family` is a marker the switch route minted, never an inference from
+the token — and `own` is the default.** The obvious signal is the JWT's `amr`: a
+switch-created session records `otp` and a typed sign-in records `password`, so
+"no password method" looks like it means "switched in". It does not. A
+password-**recovery** session records `otp` too, so a child in email mode who
+requests their own reset link, opens it and abandons the form would hold a
+session classified as switched-in — a PIN-only path into the parent's account,
+opened by a link the child can ask for themselves. Nothing in the token
+separates the two; only the mint site does. So an unclassifiable session is
+charged the *stronger* gate, and `amr` survives only as a redundant second
+condition (a token saying a password was typed is `own` whatever cookie it
+carries).
 
 **Rule: parent → gamer stays one click and is never gated.** Handing the device
 to a child is the gesture the switcher exists for, and a *locked* parent must be
@@ -71,11 +85,12 @@ for capabilities** — the page gate is UX.
 ## Gate B lives entirely in the account-switch route, and can live nowhere else
 
 **Rule: `POST /api/auth/switch-account` is the only place a switch PIN is
-verified, and the only place outside the PIN routes that mints the unlock
-cookie.** Both follow from one fact: the check happens while the caller is still
-the child, and the cookie has to be bound to a session that does not exist yet.
-Nothing before the route has the caller's session to read the provenance from,
-and nothing after it exists early enough to see the new session's id.
+verified, the only place outside the PIN routes that mints the unlock cookie,
+and the only place the family-session marker is minted at all.** All three
+follow from one fact: the check happens while the caller is still the child, and
+the cookies have to be bound to a session that does not exist yet. Nothing
+before the route has the caller's session to read the provenance from, and
+nothing after it exists early enough to see the new session's id.
 
 What the route does, in order: resolve the target, run the family-membership
 matrix, *then* charge the gate. Membership first is load-bearing — otherwise the
@@ -91,8 +106,9 @@ route would test PINs against families the caller is not in.
   fixes, so the family is sent to set a PIN rather than told a child got theirs
   wrong. A missing PIN in the body is 403 `PIN_REQUIRED`.
 - **Own session.** The route signs in **as the target** with their password, so
-  the session it produces is itself a password session — an OTP-created one would
-  be a family session, and the next switch out of it would cost only a PIN. A
+  the session it produces is itself an own session — it mints no marker and
+  deletes any the browser was carrying, because a session opened by typing a
+  credential must not inherit the classification of the one it replaced. A
   wrong password is 403 `PASSWORD_INVALID`, uniform with an account that holds no
   password at all so it cannot be read as an oracle. A sibling in sign-in mode
   `parent` holds no password by construction and is refused 403
@@ -110,6 +126,16 @@ in one gesture is friction with nothing behind it. On the second, the whole poin
 is that a school computer pays for both: the password that got here, and then the
 PIN at the unlock gate. Switching into a *gamer* always clears the cookie.
 
+**Rule: the family marker is minted on EVERY session the OTP path creates, with
+no per-target condition.** A gamer target, a parent target, a parent dropping to
+a child — all of them. The rule is kept that simple deliberately: the only
+alternative is a condition, and a condition is a thing that can be got wrong in
+the one place where getting it wrong hands out the cheaper gate. On a parent
+target it is inert anyway (only a gamer caller is ever charged for leaving), so
+narrowing it would buy nothing. When the new session carries no `session_id`
+there is nothing to bind either cookie to, so neither is minted and the marker
+is deleted — the session then reads as `own`, which is the stronger gate.
+
 **Rule: a family may not acquire a gamer before it has a PIN.** `create_gamer`
 refuses a parent with no PIN as its first statement (SQLSTATE `P0025`), and the
 creation route turns that one refusal into a 403 `PIN_REQUIRED` the parent can
@@ -122,7 +148,23 @@ asking it gets the answer for their own account, which has no `customer_profiles
 row at all. Anything that needs to know whether a *family* holds a PIN asks
 `verify_pin_for_any`, which takes the parents explicitly.
 
-## The unlock cookie
+## Two signed cookies, and they answer different questions
+
+`src/lib/pin-session.ts` holds both, as HMACs over `PIN_COOKIE_SECRET` bound to
+the same `(userId, session_id)` pair. `sog_pin_verified` says **this parent has
+entered their PIN**; `sog_family_session` says **the switch route created this
+session**. They are kept apart by their signed payload prefixes (the inventory
+lives in `src/lib/email-verification.ts`), so neither can ever be presented as
+the other.
+
+The marker's expiry runs the opposite way to the unlock cookie's, and
+deliberately. Dropping the unlock cookie on a browser quit re-locks the parent,
+which is free security; dropping the marker would re-classify a switched-in
+child as self-authenticated and ask for a password the family may not have, so a
+browser restart at home would become a dead end. It therefore carries a long
+`maxAge`, and the `session_id` binding is what actually expires it.
+
+### The unlock cookie
 
 `sog_pin_verified` holds an HMAC (`PIN_COOKIE_SECRET`) over `(userId,
 session_id)` — see `src/lib/pin-session.ts`. It is unforgeable, bound to the

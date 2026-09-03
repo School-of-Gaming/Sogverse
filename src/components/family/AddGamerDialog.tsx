@@ -431,6 +431,20 @@ export function AddGamerFormCard({
                   : null
               }
               idPrefix={CREDENTIAL_FIELD_ID_PREFIX}
+              // The child does not exist yet and this dialog can be opened from
+              // anywhere, so "change it here later" would name a box that is
+              // about to close.
+              passwordChangeableFrom="gamerPage"
+              // Page two is reached by clicking Next, which leaves focus on a
+              // submit button whose label has just changed underneath it. The
+              // first field of the page the parent asked for is where they
+              // meant to be — page one's first name field does the same.
+              //
+              // Not when the card was *seeded* onto this page: the style guide
+              // renders three of these at once, and a card that opens already on
+              // page two never had a click to follow. Grabbing focus there would
+              // be three cards fighting over it and a page that scrolls itself.
+              autoFocusFirstField={initial?.step !== "credentials"}
             />
           ) : (
             <>

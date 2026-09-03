@@ -23,8 +23,23 @@ import { Button } from "@/components/ui/button";
  * One outcome, not two. The route's uniform 200 is its enumeration defence, so
  * "sent" is the honest reading of every answer it can give; only a network or
  * HTTP-level failure is distinguishable, and that gets the retry sentence.
+ *
+ * **`children` is why this component owns the way out of the page.** The
+ * outcome sentence has to be the last thing in the block or it pushes whatever
+ * follows it down the viewport when it arrives — the shift the layout rules
+ * forbid, and the page's quiet "Sign in" link was exactly what got pushed. So
+ * anything that belongs under the button is handed in here and rendered above
+ * the sentence, and the reveal lands in the slack at the bottom where it costs
+ * nothing (root `CLAUDE.md`, "Layout & Scrolling").
  */
-export function RequestPasswordLinkButton({ email }: { email: string }) {
+export function RequestPasswordLinkButton({
+  email,
+  children,
+}: {
+  email: string;
+  /** What sits between the button and the outcome — the page's escape hatch. */
+  children?: React.ReactNode;
+}) {
   const t = useTranslations("verifyEmail");
   const c = useTranslations("common");
   // Live before any render after the click (root `CLAUDE.md`, "Loading &
@@ -51,13 +66,13 @@ export function RequestPasswordLinkButton({ email }: { email: string }) {
   };
 
   return (
-    // The sentence sits BELOW the button, which is where a reveal costs nothing:
-    // this block is the last thing on the page, so a line appearing under it
-    // pushes nothing that was already painted.
-    <div className="flex flex-col items-center gap-2">
+    // The sentence is LAST, under everything the page put here: a reveal at the
+    // end of a block pushes nothing that was already painted.
+    <div className="flex flex-col items-center gap-4">
       <Button variant="outline" onClick={send} disabled={sending}>
         {sending ? c("sending") : t("gamerSendPasswordLink")}
       </Button>
+      {children}
       {outcome === "sent" && (
         <p className="text-sm text-success">{t("gamerPasswordLinkSent")}</p>
       )}

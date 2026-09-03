@@ -118,17 +118,20 @@ export default async function VerifyEmailPage({
             revisit is the opposite case: the mail may be long gone, so the page
             offers another copy, with the way in underneath it as a quiet link
             (a button plus an escape hatch is not a two-answer pair and is not
-            reversed — root `CLAUDE.md`, "Button Order"). */}
+            reversed — root `CLAUDE.md`, "Button Order").
+
+            The link goes *into* the button component rather than beside it, so
+            the "Sent." sentence lands below both: a reveal above the link would
+            push it down the moment the mail went out. */}
         {!firstVerification && (
-          <div className="flex flex-col items-center gap-4">
-            <RequestPasswordLinkButton email={email} />
+          <RequestPasswordLinkButton email={email}>
             <Link
               href={ROUTES.login}
               className="text-sm text-muted-foreground hover:text-primary"
             >
               {c("signIn")}
             </Link>
-          </div>
+          </RequestPasswordLinkButton>
         )}
       </div>
     );

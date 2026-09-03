@@ -6,6 +6,8 @@ process.env.PIN_COOKIE_SECRET = "unit-test-pin-secret";
 import {
   pinTokenFor,
   isPinTokenValid,
+  mintFamilySessionToken,
+  isFamilySessionTokenValid,
   createPinResetToken,
   verifyPinResetToken,
   parseResetTokenUserId,
@@ -45,6 +47,66 @@ describe("pin-session unlock token", () => {
 
   it("rejects a garbage value", async () => {
     expect(await isPinTokenValid("not-a-real-token", USER, SESSION)).toBe(false);
+  });
+});
+
+/**
+ * The switch route's signature on a session it created. Everything asserted
+ * here is the unlock token's shape re-checked on a second payload, and that is
+ * the point: the marker decides which credential leaving a gamer session costs,
+ * so it has to be as unforgeable and as tightly bound as the cookie that
+ * unlocks a parent.
+ */
+describe("family-session marker", () => {
+  it("is deterministic for the same (user, session)", async () => {
+    const a = await mintFamilySessionToken(USER, SESSION);
+    const b = await mintFamilySessionToken(USER, SESSION);
+    expect(a).toBe(b);
+    expect(a).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("validates the matching marker", async () => {
+    const marker = await mintFamilySessionToken(USER, SESSION);
+    expect(await isFamilySessionTokenValid(marker, USER, SESSION)).toBe(true);
+  });
+
+  it("rejects a missing marker", async () => {
+    expect(await isFamilySessionTokenValid(undefined, USER, SESSION)).toBe(false);
+    expect(await isFamilySessionTokenValid(null, USER, SESSION)).toBe(false);
+    expect(await isFamilySessionTokenValid("", USER, SESSION)).toBe(false);
+  });
+
+  it("rejects a marker bound to a different user", async () => {
+    const marker = await mintFamilySessionToken(
+      "22222222-2222-2222-2222-222222222222",
+      SESSION,
+    );
+    expect(await isFamilySessionTokenValid(marker, USER, SESSION)).toBe(false);
+  });
+
+  it("rejects a marker left behind by the session this one replaced", async () => {
+    // The property the whole model rests on: a stale marker cannot classify the
+    // session that came after it, so signing out and signing in with a password
+    // cannot inherit a family classification.
+    const marker = await mintFamilySessionToken(USER, "previous-session");
+    expect(await isFamilySessionTokenValid(marker, USER, SESSION)).toBe(false);
+  });
+
+  it("is a different payload class from the unlock token", async () => {
+    // The two cookies sign different prefixes under one secret, so neither can
+    // be presented as the other — swapping them would be a way to mark a
+    // session family by unlocking it, or vice versa.
+    const unlock = await pinTokenFor(USER, SESSION);
+    const marker = await mintFamilySessionToken(USER, SESSION);
+    expect(marker).not.toBe(unlock);
+    expect(await isFamilySessionTokenValid(unlock, USER, SESSION)).toBe(false);
+    expect(await isPinTokenValid(marker, USER, SESSION)).toBe(false);
+  });
+
+  it("rejects a garbage value", async () => {
+    expect(await isFamilySessionTokenValid("not-a-real-marker", USER, SESSION)).toBe(
+      false,
+    );
   });
 });
 

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Constants } from "@/types";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import {
+  GAMER_EMAIL_DOMAIN,
   GAMER_USERNAME_PATTERN,
   normalizeGamerUsername,
 } from "@/lib/gamer-sign-in";
@@ -46,6 +47,34 @@ export const gamerUsernameValue = z
   .transform(normalizeGamerUsername)
   .refine((value) => GAMER_USERNAME_PATTERN.test(value), {
     message: "Username must be 3–20 letters or numbers",
+  });
+
+/**
+ * A real mailbox a parent gave for their child, normalised and fenced off from
+ * our own domain.
+ *
+ * **Normalised for the same reason the username is.** The address becomes the
+ * account's login and the thing the verification token is signed over, and
+ * GoTrue lowercases on the way in — so a parent typing `"Aino@Example.com "`
+ * must produce the row GoTrue will actually hold, not a second spelling of it
+ * that every later comparison then has to fold for itself.
+ *
+ * **And it refuses our synthetic domain outright.** `@gamer.sogverse.internal`
+ * is the namespace the other two modes live in: a random handle for a
+ * switch-only child, and a username-derived one where GoTrue's uniqueness on
+ * the address IS the uniqueness of the username. An address typed into the
+ * `email` field that lands in that namespace would put a mailbox nobody can
+ * read where a real one is promised — a child stamped verified for a void, or,
+ * worse, a parent claiming a handle that belongs to somebody else's child. The
+ * domain is ours and no family types it.
+ */
+export const gamerEmailValue = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .pipe(z.string().email())
+  .refine((value) => !value.endsWith(GAMER_EMAIL_DOMAIN), {
+    message: `${GAMER_EMAIL_DOMAIN} is our own internal domain — use the child's real email address`,
   });
 
 /**
@@ -137,7 +166,7 @@ export const createGamerBody = z
      */
     signIn: gamerSignInValue.default("parent"),
     username: gamerUsernameValue.optional(),
-    email: z.string().email().optional(),
+    email: gamerEmailValue.optional(),
     password: accountPasswordValue.optional(),
   })
   .refine(signInFieldsAreConsistent, { message: SIGN_IN_FIELDS_MESSAGE });
@@ -166,7 +195,7 @@ export const updateGamerBody = z
     robloxUsername: robloxUsernameValue.optional(),
     signIn: gamerSignInValue.optional(),
     username: gamerUsernameValue.optional(),
-    email: z.string().email().optional(),
+    email: gamerEmailValue.optional(),
   })
   .refine(
     (body) =>

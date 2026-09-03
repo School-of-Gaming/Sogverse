@@ -376,17 +376,33 @@ async function sendOffer({
 
   // The parent's mail goes first, and a child's copy only follows a parent's
   // that went: a copy saying "we have written to your parent" must not be the
-  // one mail that arrives.
+  // one mail that arrives. That ordering is load-bearing for the skip below,
+  // which is why this counts what has actually left rather than assuming.
+  let sent = 0;
   for (const recipient of recipients) {
     const locale = recipient.locale;
     const productName = resolveTranslation(product.product_translations, locale)?.name;
     if (!productName) {
-      console.error("[seat-offer email] nothing to name — skipping the send", {
+      // The two recipients resolve the name in DIFFERENT locales, so a product
+      // missing one translation can name itself for the parent and not for the
+      // child — which makes this a per-recipient failure, not a per-send one.
+      // It used to `return` unconditionally, abandoning the child's copy after
+      // the parent's had already gone out while logging it as "skipping the
+      // send", which read as though nothing had been mailed at all.
+      console.error("[seat-offer email] nothing to name — skipping this recipient", {
         productId,
         participantId,
-        hasProductName: false,
+        recipientKind: recipient.kind,
+        locale,
+        anySent: sent > 0,
       });
-      return;
+      // Nothing has left yet, so there is nothing for a child's copy to be the
+      // follow-up to — and a copy saying "we have written to your parent" must
+      // not be the only mail that arrives. Give up on the whole send. Once
+      // something HAS gone out, skipping this one recipient is the honest
+      // remainder.
+      if (sent === 0) return;
+      continue;
     }
     const deadline = formatDeadline(sentAt, locale, product.timezone);
     const t = await getEmailTranslator(locale);
@@ -410,6 +426,7 @@ async function sendOffer({
         // Product mail TO a person, like the parent's: replies go to support.
         replyToEmail: SUPPORT_EMAIL,
       });
+      sent++;
       continue;
     }
 
@@ -438,6 +455,7 @@ async function sendOffer({
       // the unattended sending address.
       replyToEmail: SUPPORT_EMAIL,
     });
+    sent++;
   }
 }
 

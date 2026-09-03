@@ -4,7 +4,14 @@ import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { PIN_COOKIE_NAME, pinCookieOptions, pinTokenFor } from "@/lib/pin-session";
+import {
+  FAMILY_SESSION_COOKIE_NAME,
+  PIN_COOKIE_NAME,
+  familySessionCookieOptions,
+  mintFamilySessionToken,
+  pinCookieOptions,
+  pinTokenFor,
+} from "@/lib/pin-session";
 import {
   switchAccountBody,
   switchAccountResponse,
@@ -48,11 +55,21 @@ import {
  *    walk away from it; a four-digit PIN with no rate limit is not what should
  *    stand between that machine and the parent's account.
  *
- * **This route is the only place a switch PIN is verified, and the only place
- * the unlock cookie is minted outside the PIN routes.** Both follow from the
- * same fact: the check happens while the caller is still the child, and the
- * cookie has to be bound to a session that does not exist yet. Nothing else is
- * positioned to do either.
+ * **This route is the only place a switch PIN is verified, the only place the
+ * unlock cookie is minted outside the PIN routes, and the only place the
+ * family-session marker is minted at all.** All three follow from the same
+ * fact: the check happens while the caller is still the child, and the cookies
+ * have to be bound to a session that does not exist yet. Nothing else is
+ * positioned to do any of them.
+ *
+ * **The marker is what makes the gate above knowable.** Every session the OTP
+ * path creates is a session this route handed over, and it says so by signing
+ * `FAMILY_SESSION_COOKIE_NAME` against the new session's id; the password path
+ * deletes it, because the person at the keyboard typed the target's own
+ * credential. Nothing in a token can draw that line — a password-recovery
+ * session records `otp` in `amr` exactly as a switch does — so the
+ * classification is this route's own signature rather than an inference (see
+ * `src/lib/session-provenance.ts`).
  *
  * The PIN is checked against `verify_pin_for_any` over the caller's linked
  * parents — a child may have more than one, and any of their PINs opens the
@@ -81,7 +98,7 @@ export const POST = defineRoute({
 
     const { data: target, error: targetError } = await admin
       .from("profiles")
-      .select("id, role, email")
+      .select("id, role")
       .eq("id", userId)
       .maybeSingle();
 
@@ -142,7 +159,10 @@ export const POST = defineRoute({
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type ServerClient = Awaited<ReturnType<typeof createClient>>;
-type TargetProfile = { id: string; role: string | null; email: string | null };
+// The address is deliberately NOT here: it is asked of GoTrue per switch (see
+// resolveTargetEmail), so carrying the profile copy would only invite a caller
+// to reach for the stale one.
+type TargetProfile = { id: string; role: string | null };
 
 /** A 403 naming which gate was not satisfied. */
 function gateRefusal(code: SwitchAccountErrorCode, message: string): NextResponse {
@@ -210,8 +230,16 @@ async function verifyParentPin(args: {
 /**
  * The original switch: mint a magic-link OTP for the target server-side, drop
  * the caller's session, and redeem the OTP so the new cookies land in the
- * response. The session it creates records `otp` in its `amr`, which is what
- * makes it a *family* session — every subsequent switch out of it costs a PIN.
+ * response.
+ *
+ * **Every session this path creates is a family session, and this is where that
+ * is recorded.** The marker cookie is signed against the new session's id on
+ * every OTP switch without exception — a gamer target, a parent target, a
+ * parent dropping to a child. The rule is kept that simple deliberately: the
+ * only alternative is a per-target condition, and a condition is a thing that
+ * can be got wrong in the one place where getting it wrong hands out the
+ * cheaper gate. On a parent target it is inert anyway (only a gamer caller is
+ * ever charged for leaving), so narrowing it buys nothing.
  *
  * `mintUnlockCookie` is only ever true here, and only bites when the target is a
  * customer: the parent this lands on is unlocked for the life of the new
@@ -261,24 +289,34 @@ async function switchByOtp(args: {
 
   const cookieStore = await cookies();
 
-  if (mintUnlockCookie && target.role === "customer") {
-    // The unlock token is bound to (userId, session_id), so it can only be
-    // minted once the new session exists — which is why this is here and not in
-    // the PIN routes. The session id comes from the new client's own claims
-    // rather than from anything the request carried.
-    const { data: claimsData } = await freshClient.auth.getClaims();
-    const sessionId = claimsData?.claims.session_id;
-    if (sessionId) {
-      cookieStore.set(
-        PIN_COOKIE_NAME,
-        await pinTokenFor(target.id, sessionId),
-        pinCookieOptions(),
-      );
-      return { success: true };
-    }
-    // No session id means no token to mint. The parent lands on the unlock gate
-    // and types the PIN again — worse UX, never a weaker gate.
+  // Both cookies are bound to (userId, session_id), so neither can be minted
+  // until the new session exists — which is why this is here and not in the PIN
+  // routes. The session id comes from the new client's own claims rather than
+  // from anything the request carried.
+  const { data: claimsData } = await freshClient.auth.getClaims();
+  const sessionId = claimsData?.claims.session_id;
+
+  if (sessionId) {
+    cookieStore.set(
+      FAMILY_SESSION_COOKIE_NAME,
+      await mintFamilySessionToken(target.id, sessionId),
+      familySessionCookieOptions(),
+    );
+  } else {
+    // Unmarked reads as `own`, which is the stronger gate: whoever holds this
+    // session is asked for a password rather than four digits. Worse for a
+    // family that then cannot leave the account, never weaker.
     console.error("switch-account: new session carried no session_id");
+    cookieStore.delete(FAMILY_SESSION_COOKIE_NAME);
+  }
+
+  if (mintUnlockCookie && target.role === "customer" && sessionId) {
+    cookieStore.set(
+      PIN_COOKIE_NAME,
+      await pinTokenFor(target.id, sessionId),
+      pinCookieOptions(),
+    );
+    return { success: true };
   }
 
   // Clear the parent-PIN unlock cookie: the new session has a different
@@ -310,9 +348,13 @@ async function switchByOtp(args: {
  * server-side session is revoked afterwards by its own access token, which is
  * the same thing `signOut()` would have done.
  *
- * **The unlock cookie is never minted here.** A parent reached from a school
- * computer lands on the unlock gate and pays for both: the password that got
- * here, and then the PIN. That is the point of the whole path.
+ * **The unlock cookie is never minted here, and the family marker is deleted.**
+ * A parent reached from a school computer lands on the unlock gate and pays for
+ * both: the password that got here, and then the PIN. That is the point of the
+ * whole path. Deleting the marker is what keeps the next switch out of this
+ * session at the same price — a session opened by typing a credential is an own
+ * session, and the browser must not carry into it a marker minted for the
+ * session this one replaced.
  */
 async function switchByPassword(args: {
   admin: AdminClient;
@@ -386,39 +428,39 @@ async function switchByPassword(args: {
   }
 
   // Never minted on this path — see the doc comment. A parent reached from an
-  // own session lands locked, and clearing keeps the cookie jar honest.
-  (await cookies()).delete(PIN_COOKIE_NAME);
+  // own session lands locked, and clearing keeps the cookie jar honest. The
+  // family marker goes with it: this session was opened by typing a credential,
+  // so it is an own session and must not inherit the previous one's marker.
+  const cookieStore = await cookies();
+  cookieStore.delete(PIN_COOKIE_NAME);
+  cookieStore.delete(FAMILY_SESSION_COOKIE_NAME);
 
   return { success: true };
 }
 
 /**
- * The address GoTrue knows this account by.
+ * The address GoTrue knows this account by — asked of GoTrue, for every role.
  *
- * A gamer's is on their profile row like any other role's — synthetic in two of
- * the three sign-in modes, a real mailbox in the third — so it is read straight
- * from there. A customer's comes from `auth.users` through the admin lookup: a
- * parent may have changed it there, and the cookie session is not what we trust
- * for it.
+ * `profiles.email` is a copy, and a copy is the wrong thing to open a session
+ * against. A trigger writes it on INSERT and thereafter it is kept in step by
+ * whichever route moved the address; the gamer credential edit writes
+ * `auth.users` first and `profiles` second, so a failure between the two leaves
+ * the profile naming an address the account no longer answers to. Both calls
+ * this feeds — `generateLink` and `signInWithPassword` — key on the address, so
+ * a stale copy is not cosmetic drift: it is a 500 on one path and an
+ * unexplainable wrong-password on the other. A gamer used to be read from the
+ * profile row because a synthetic handle looked like ours to own; it is
+ * GoTrue's, like everyone else's, and one admin lookup per switch is a cheap
+ * price for asking the system of record.
  */
 async function resolveTargetEmail(
   admin: AdminClient,
   target: TargetProfile,
 ): Promise<string> {
-  if (target.role === "gamer") {
-    if (!target.email) {
-      throw new ApiError(
-        `gamer ${target.id} has no email on its profile`,
-        500,
-      );
-    }
-    return target.email;
-  }
-
   const { data: authUser, error: authError } =
     await admin.auth.admin.getUserById(target.id);
   if (authError || !authUser.user.email) {
-    console.error("switch-account: parent email lookup failed", authError);
+    console.error("switch-account: target email lookup failed", authError);
     throw new ApiError("could not resolve the target account's email", 500);
   }
   return authUser.user.email;

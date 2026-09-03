@@ -509,7 +509,7 @@ function SwitchGateDemo() {
           </div>
         </SubSection>
 
-        <SubSection title="No parent PIN — enter any four digits">
+        <SubSection title="No parent PIN">
           <div className="rounded-lg border border-border bg-card p-6 space-y-4">
             <SwitchGateBody
               target={GATE_TARGET}
@@ -518,6 +518,7 @@ function SwitchGateDemo() {
               onCommittingChange={setCommitting}
               onCommit={refusesWith(SWITCH_PIN_NOT_SET)}
               onClose={() => {}}
+              initialPinNotSet
             />
           </div>
         </SubSection>

@@ -86,10 +86,23 @@ export function GamerSignInCard({
   const [newEmail, setNewEmail] = useState("");
   const [problem, setProblem] = useState<GamerCredentialProblem | null>(null);
   const [modeOutcome, setModeOutcome] = useState<"saved" | "failed" | null>(null);
-  // Live before any render after the click, and cleared on every outcome: the
+  // Live before any render after the click, and cleared on every *failure*: the
   // parent stays on this page whatever happens, and a second attempt after a
   // taken username is exactly what they will want to do.
   const [savingMode, setSavingMode] = useState(false);
+  /**
+   * The mode a save has already written, held until the prop says so.
+   *
+   * The request resolving is not the end of the click. `signIn` is a prop off a
+   * query the mutation invalidated, so for one round trip after a successful
+   * save the card is still drawn around the *old* mode: the fields are on
+   * screen, cleared, and the button would be live again — a second click would
+   * validate three empty strings and tell the parent their own username is
+   * required. Holding this until `signIn` catches up is what carries the
+   * disabled state through to the redraw the click actually caused (root
+   * `CLAUDE.md`, "Loading & Disabled State").
+   */
+  const [committedMode, setCommittedMode] = useState<GamerSignIn | null>(null);
 
   const [newPassword, setNewPassword] = useState("");
   const [passwordOutcome, setPasswordOutcome] = useState<
@@ -105,10 +118,14 @@ export function GamerSignInCard({
   const currentUsername =
     signIn === "username" ? gamerUsernameFromEmail(email) : null;
   const modeChanged = draft !== signIn;
+  /** Written, not yet redrawn — see `committedMode`. */
+  const awaitingModeRefetch = committedMode !== null && committedMode !== signIn;
+  /** One flag for the whole click, from the submit to the prop that answers it. */
+  const modeBusy = savingMode || awaitingModeRefetch;
 
   const handleSaveMode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (savingMode || !modeChanged) return;
+    if (modeBusy || !modeChanged) return;
 
     const found = findGamerCredentialProblem({
       signIn: draft,
@@ -143,6 +160,7 @@ export function GamerSignInCard({
       setPassword("");
       setNewEmail("");
       setModeOutcome("saved");
+      setCommittedMode(draft);
     } catch (caught) {
       const code = caught instanceof ApiError ? caught.code : undefined;
       if (code === GAMER_USERNAME_TAKEN) {
@@ -227,7 +245,7 @@ export function GamerSignInCard({
                   setProblem(null);
                   setModeOutcome(null);
                 }}
-                disabled={savingMode}
+                disabled={modeBusy}
                 labelId={labelId}
                 name="gamer-sign-in-mode"
               />
@@ -246,7 +264,8 @@ export function GamerSignInCard({
               onPasswordChange={setPassword}
               email={newEmail}
               onEmailChange={setNewEmail}
-              disabled={savingMode}
+              disabled={modeBusy}
+              passwordChangeableFrom="thisPage"
               problem={
                 problem
                   ? {
@@ -259,15 +278,19 @@ export function GamerSignInCard({
             />
           )}
 
-          {modeOutcome === "saved" && (
+          {/* Not while the write is still settling: the card is drawn around
+              the old mode until the prop lands, so a "Saved" line beside a
+              button that still says "Saving…" would be two answers to one
+              click. It appears with the redraw that makes it true. */}
+          {modeOutcome === "saved" && !awaitingModeRefetch && (
             <p className="text-sm text-success">{t("saved")}</p>
           )}
           {modeOutcome === "failed" && (
             <p className="text-sm text-destructive">{t("saveFailed")}</p>
           )}
 
-          <Button type="submit" disabled={!modeChanged || savingMode}>
-            {savingMode ? c("saving") : c("saveChanges")}
+          <Button type="submit" disabled={!modeChanged || modeBusy}>
+            {modeBusy ? c("saving") : c("saveChanges")}
           </Button>
         </form>
 
@@ -419,17 +442,37 @@ function ChangeIdentifierForm({
   const [value, setValue] = useState("");
   const [problem, setProblem] = useState<GamerCredentialProblem | null>(null);
   const [outcome, setOutcome] = useState<"saved" | "failed" | null>(null);
-  // Live before any render after the click, cleared on every outcome: the parent
-  // stays on this card whatever happens, and a second attempt after a taken
-  // value is exactly what they will want to do.
+  // Live before any render after the click, cleared on every *failure*: the
+  // parent stays on this card whatever happens, and a second attempt after a
+  // taken value is exactly what they will want to do.
   const [saving, setSaving] = useState(false);
+  /**
+   * The value a save has already written, held until `currentValue` says so.
+   *
+   * Same window the mode form has: the request resolving leaves the field
+   * cleared and the placeholder still showing the *old* value, for as long as
+   * the invalidated read takes to come back. A button live in that window
+   * validates an empty string and tells the parent a username is required.
+   */
+  const [committedValue, setCommittedValue] = useState<string | null>(null);
 
   const isUsername = field === "username";
   const inputId = isUsername ? "gamer-change-username" : "gamer-change-email";
+  /**
+   * Written, not yet redrawn — see `committedValue`. Compared case-insensitively
+   * because the address that comes back is the one GoTrue stored, which is
+   * folded; a case-sensitive test would leave the form disabled forever the
+   * first time a parent typed a capital letter.
+   */
+  const awaitingRefetch =
+    committedValue !== null &&
+    committedValue.toLowerCase() !== currentValue.toLowerCase();
+  /** One flag for the whole click, from the submit to the prop that answers it. */
+  const busy = saving || awaitingRefetch;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (saving) return;
+    if (busy) return;
 
     const found = isUsername
       ? findGamerUsernameProblem(value)
@@ -443,17 +486,19 @@ function ChangeIdentifierForm({
       // One key, and only the one this mode is addressed by. The route reads the
       // account's stored mode and refuses the other, so sending both would be
       // sending one it is going to reject.
+      const written = isUsername
+        ? normalizeGamerUsername(value)
+        : value.trim();
       await updateGamer.mutateAsync({
         gamerId,
-        updates: isUsername
-          ? { username: normalizeGamerUsername(value) }
-          : { email: value.trim() },
+        updates: isUsername ? { username: written } : { email: written },
       });
       // The mutation invalidates the reads the card is drawn from, so the new
       // value — and, for an address, the verification state the write cleared —
       // arrive as a redraw rather than as something this form has to restate.
       setValue("");
       setOutcome("saved");
+      setCommittedValue(written);
     } catch (caught) {
       const code = caught instanceof ApiError ? caught.code : undefined;
       if (code === GAMER_USERNAME_TAKEN) {
@@ -496,7 +541,7 @@ function ChangeIdentifierForm({
               )
             }
             placeholder={currentValue}
-            disabled={saving}
+            disabled={busy}
             autoComplete="off"
             autoCapitalize="none"
             spellCheck={false}
@@ -511,14 +556,16 @@ function ChangeIdentifierForm({
           {s(problem.key, { count: GAMER_PASSWORD_MIN_LENGTH })}
         </p>
       )}
-      {outcome === "saved" && (
+      {/* Held back until the new value is the one the placeholder shows — the
+          same reasoning as the mode form's line above. */}
+      {outcome === "saved" && !awaitingRefetch && (
         <p className="text-sm text-success">{t(`change.${field}.saved`)}</p>
       )}
       {outcome === "failed" && (
         <p className="text-sm text-destructive">{t("saveFailed")}</p>
       )}
-      <Button type="submit" disabled={saving}>
-        {saving ? c("saving") : t(`change.${field}.submit`)}
+      <Button type="submit" disabled={busy}>
+        {busy ? c("saving") : t(`change.${field}.submit`)}
       </Button>
     </form>
   );

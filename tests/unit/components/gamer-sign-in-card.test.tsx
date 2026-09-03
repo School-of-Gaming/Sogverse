@@ -88,6 +88,26 @@ function renderCard(props: {
         fireEvent.submit(form);
       }),
     button: (label: string) => screen.getByRole("button", { name: label }),
+    /**
+     * Redraws the card with the props an invalidated read would come back
+     * with — the moment `signIn`/`email` catch up with a write already sent.
+     * A plain `renderCard` call cannot stand in for this: it mounts a fresh
+     * card, where a save's own committed-value bookkeeping starts over.
+     */
+    rerenderWith(next: Partial<typeof props>) {
+      const merged = { ...props, ...next };
+      view.rerender(
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <GamerSignInCard
+            gamerId={GAMER_ID}
+            firstName="Lily"
+            signIn={merged.signIn}
+            email={merged.email ?? null}
+            emailVerifiedAt={merged.emailVerifiedAt ?? null}
+          />
+        </NextIntlClientProvider>,
+      );
+    },
   };
 }
 
@@ -117,6 +137,13 @@ describe("changing a username-mode child's username", () => {
     await view.submitAround("gamer-change-username");
 
     expect(sentUpdates()).toEqual({ username: "lily2016" });
+
+    // The write landed, but `currentValue` is still derived from the old
+    // `email` prop until the invalidated read comes back — the "saved" line
+    // waits for that redraw rather than the request.
+    expect(screen.queryByText(COPY.change.username.saved)).toBeNull();
+
+    view.rerenderWith({ email: "lily2016@gamer.sogverse.internal" });
     expect(screen.getByText(COPY.change.username.saved)).toBeTruthy();
   });
 
@@ -175,6 +202,12 @@ describe("changing an email-mode child's address", () => {
     await view.submitAround("gamer-change-email");
 
     expect(sentUpdates()).toEqual({ email: "lily@example.test" });
+
+    // Same window as the username form: "saved" waits for `currentValue` to
+    // catch up with the write, not for the request to resolve.
+    expect(screen.queryByText(COPY.change.email.saved)).toBeNull();
+
+    view.rerenderWith({ email: "lily@example.test" });
     expect(screen.getByText(COPY.change.email.saved)).toBeTruthy();
   });
 
@@ -311,5 +344,30 @@ describe("the mode form itself", () => {
       password: "a-long-enough-password",
       email: undefined,
     });
+  });
+
+  // The mutation resolving is not the end of the click: `signIn` is a prop off
+  // a query the write only invalidated, so the redraw that clears the fields
+  // and the redraw that carries the new `signIn` are two different renders.
+  // A button live in between would let a second click validate three empty
+  // strings and tell the parent their own username is required.
+  it("stays disabled after a successful save until the signIn prop catches up", async () => {
+    const view = renderCard({ signIn: "parent" });
+
+    fireEvent.click(
+      view.container.querySelector<HTMLInputElement>(
+        'input[name="gamer-sign-in-mode"][value="username"]',
+      )!,
+    );
+
+    view.fill("gamer-mode-username", "lily2015");
+    view.fill("gamer-mode-password", "a-long-enough-password");
+    await view.submitAround("gamer-mode-username");
+
+    // The mock resolves, but this test never re-renders the card with a new
+    // `signIn` prop — the same window the real refetch has not filled yet.
+    const button = view.button(messages.common.saving);
+    expect(button.hasAttribute("disabled")).toBe(true);
+    expect(screen.queryByText(COPY.saved)).toBeNull();
   });
 });

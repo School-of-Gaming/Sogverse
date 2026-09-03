@@ -132,6 +132,19 @@ export function findGamerCredentialProblem(input: {
  *
  * `idPrefix` keeps two instances (the dialog's and the settings card's, which
  * never coexist today) from minting the same `id`.
+ *
+ * **`passwordChangeableFrom` is the one sentence the two surfaces cannot
+ * share.** The settings card *is* the child's page, so it promises the parent
+ * they can change the password here; the add-gamer dialog can be opened from
+ * anywhere and is about a child who does not exist yet, so "here" would point at
+ * a dialog that is closing. A required prop rather than a default, because
+ * getting it wrong is invisible from the call site.
+ *
+ * **`autoFocusFirstField` is the dialog's alone.** There, this component is a
+ * page the parent reached by clicking Next, and focus is sitting on a submit
+ * button that now says something else. In the card the fields are revealed by a
+ * radio the parent has just picked, and pulling focus out of the radio group
+ * would take their arrow keys with it.
  */
 export function GamerCredentialFields({
   signIn,
@@ -144,6 +157,8 @@ export function GamerCredentialFields({
   disabled = false,
   problem,
   idPrefix,
+  passwordChangeableFrom,
+  autoFocusFirstField = false,
 }: {
   signIn: GamerSignIn;
   username: string;
@@ -156,9 +171,19 @@ export function GamerCredentialFields({
   /** The one thing currently wrong, already translated, or null. */
   problem: { field: GamerCredentialProblem["field"]; message: string } | null;
   idPrefix: string;
+  /** Where the password hint promises the parent they can change it later. */
+  passwordChangeableFrom: "thisPage" | "gamerPage";
+  /** Whether the mode's first field takes focus on mount. */
+  autoFocusFirstField?: boolean;
 }) {
   const t = useTranslations("gamerSignIn");
   const c = useTranslations("common");
+  const passwordHint = t(
+    passwordChangeableFrom === "gamerPage"
+      ? "passwordHintOnGamerPage"
+      : "passwordHint",
+    { count: GAMER_PASSWORD_MIN_LENGTH },
+  );
 
   if (signIn === "username") {
     return (
@@ -179,6 +204,7 @@ export function GamerCredentialFields({
               onChange={(e) => onUsernameChange(normalizeGamerUsername(e.target.value))}
               placeholder={t("usernamePlaceholder")}
               disabled={disabled}
+              autoFocus={autoFocusFirstField}
               autoComplete="off"
               autoCapitalize="none"
               spellCheck={false}
@@ -195,7 +221,7 @@ export function GamerCredentialFields({
         <Field
           label={c("password")}
           htmlFor={`${idPrefix}-password`}
-          hint={t("passwordHint", { count: GAMER_PASSWORD_MIN_LENGTH })}
+          hint={passwordHint}
         >
           {({ hintId }) => (
             <PasswordInput
@@ -233,6 +259,7 @@ export function GamerCredentialFields({
               onChange={(e) => onEmailChange(e.target.value)}
               placeholder={t("emailPlaceholder")}
               disabled={disabled}
+              autoFocus={autoFocusFirstField}
               autoComplete="off"
               aria-describedby={hintId}
               aria-invalid={problem?.field === "email" || undefined}

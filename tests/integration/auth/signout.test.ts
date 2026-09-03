@@ -3,10 +3,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // The sign-out route is deliberately session-mutating-public: clearing a session
 // must work even when the session is already unusable, so requiring a valid one
 // would strand exactly the callers who need it. What this file pins is that the
-// route really does all three parts of a sign-out — drop the Supabase session,
-// drop the parent-PIN unlock cookie, and hand back a redirect the browser
-// follows as a full-page GET — because a partial sign-out leaves the browser's
-// in-memory Supabase client believing it is still signed in.
+// route really does all four parts of a sign-out — drop the Supabase session,
+// drop the parent-PIN unlock cookie, drop the switch route's family-session
+// marker, and hand back a redirect the browser follows as a full-page GET —
+// because a partial sign-out leaves the browser's in-memory Supabase client
+// believing it is still signed in.
 
 const mockSignOut = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
@@ -19,7 +20,7 @@ vi.mock("next/headers", () => ({
 }));
 
 import { POST } from "@/app/api/auth/signout/route";
-import { PIN_COOKIE_NAME } from "@/lib/pin-session";
+import { FAMILY_SESSION_COOKIE_NAME, PIN_COOKIE_NAME } from "@/lib/pin-session";
 
 function signoutRequest(url = "http://localhost:3000/api/auth/signout") {
   return new Request(url, { method: "POST" });
@@ -48,6 +49,15 @@ describe("POST /api/auth/signout", () => {
     await POST(signoutRequest());
 
     expect(mockCookieDelete).toHaveBeenCalledWith(PIN_COOKIE_NAME);
+  });
+
+  it("drops the family-session marker so the next session starts unmarked", async () => {
+    // The marker is bound to a session_id that is gone by now, so it could not
+    // validate for whatever comes next either way — dropping it is what keeps
+    // the cookie jar honest rather than what makes the next session `own`.
+    await POST(signoutRequest());
+
+    expect(mockCookieDelete).toHaveBeenCalledWith(FAMILY_SESSION_COOKIE_NAME);
   });
 
   it("answers a 303 to the site root, which the browser follows as a GET", async () => {

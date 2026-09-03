@@ -1,24 +1,6 @@
 /**
- * Where a session came from, read off the JWT's `amr` claim.
- *
- * GoTrue records one entry in `amr` (Authentication Methods References) per
- * authentication event that built the session — an array of
- * `{ method, timestamp }` — and the method names are the ones the flow used.
- * Two of them matter here, and both were confirmed against production tokens:
- *
- *  - a session created by the account-switch route, which mints a magic-link OTP
- *    server-side and redeems it, records **`otp`**;
- *  - a session created by signing in with an email and a password records
- *    **`password`**.
- *
- * So the question "did the person at this keyboard type this account's own
- * password?" is answerable from the token alone, with no server state and no
- * extra round trip:
- *
- *  - **`own`** — some method is `password`. The session was opened by whoever
- *    holds this account's credential.
- *  - **`family`** — no method is `password`. The session was handed over from
- *    another family member's session, which is what an account switch is.
+ * Where a session came from: opened by whoever holds this account's own
+ * credential, or handed over from another family member's session.
  *
  * WHY IT DECIDES ANYTHING. Leaving a gamer session costs a credential, and which
  * credential depends on this: a family session is inside the home, so a parent's
@@ -27,18 +9,35 @@
  * not what should stand between that machine and the parent's account. There the
  * price is the target account's own password.
  *
- * THE CONSERVATIVE DIRECTION IS `family`, and it is what an unknown method gets.
- * A session we cannot classify is treated as switched-in rather than
- * self-authenticated, which asks for the PIN rather than waiving a gate.
+ * THE SIGNAL IS A MARKER THE SWITCH ROUTE MINTS, NOT SOMETHING READ OFF THE
+ * TOKEN. The account-switch route signs a cookie bound to `(userId,
+ * session_id)` on every session its OTP path creates
+ * (`FAMILY_SESSION_COOKIE_NAME` in `src/lib/pin-session.ts`), and that marker is
+ * the whole of what makes a session `family`. It is the switch route's signature
+ * on a session it built, rather than an inference about how a session looks.
  *
- * A RECOVERY SESSION COUNTS AS `family`, and that is a real consequence worth
- * naming: clicking a password-reset link opens a session whose `amr` carries
- * `otp` (or `recovery`), not `password`. That would be a way into the PIN-gated
- * path without typing a password — except that the reset form signs its own
- * session out immediately after setting the password, so no such session
- * survives the page that created it. This module is only correct while that
- * remains true; if the reset flow ever leaves the user signed in, this
- * derivation has to learn about the recovery method explicitly.
+ * The inference is what this used to be, and it was wrong in the one direction
+ * that costs something. The JWT's `amr` records `otp` for a switch-created
+ * session and `password` for a typed sign-in, so "no password method" reads like
+ * "switched in" — except that a password-RECOVERY session records `otp` too.
+ * A child in email mode who requests their own reset link, opens it and
+ * abandons the form would then hold a session classified as switched-in, i.e. a
+ * PIN-only path into the parent's account, opened by a link the child can ask
+ * for themselves. No claim in the token separates the two cases; only the mint
+ * site does, which is why the marker is the primary signal.
+ *
+ * THE CONSERVATIVE DIRECTION IS NOW `own`, and that is the point of the change.
+ * A session we cannot positively identify as a switch is charged the target's
+ * password rather than four digits — the *stronger* gate, so an unclassifiable
+ * session can never be the cheap way in. (The old derivation defaulted to
+ * `family`, which was fail-open toward the weaker gate.)
+ *
+ * `amr` survives as a second, redundant condition: a session whose token says a
+ * password was typed is `own` even if it somehow carries a valid marker. The
+ * binding to `session_id` already makes that combination unreachable — a
+ * password sign-in produces a new session id, and only the switch route mints
+ * markers — so this is a guard against a future path that mints one more
+ * loosely, not against anything reachable today.
  */
 
 export type SessionProvenance = "own" | "family";
@@ -50,15 +49,30 @@ function isPasswordMethod(entry: unknown): boolean {
 }
 
 /**
- * Derive the provenance of a session from the `amr` claim of its access token.
+ * Whether the token says this session was opened by typing a password.
  *
  * Takes `unknown` because that is honestly what a claim is: the value is
  * whatever the token carried, and a token minted by an older GoTrue may carry
- * nothing at all. Anything that is not an array of entries naming `password`
- * answers `family`.
+ * nothing at all.
  */
-export function sessionProvenanceFromAmr(amr: unknown): SessionProvenance {
-  if (!Array.isArray(amr)) return "family";
+export function amrNamesPassword(amr: unknown): boolean {
+  if (!Array.isArray(amr)) return false;
   const entries: unknown[] = amr;
-  return entries.some(isPasswordMethod) ? "own" : "family";
+  return entries.some(isPasswordMethod);
+}
+
+/**
+ * Classify a session from the switch route's marker plus the token's `amr`.
+ *
+ * `familyMarkerValid` is the caller's verdict on the marker cookie — validated
+ * against the *current* session's `(userId, session_id)`, never merely present.
+ * Server callers get it from `readSessionProvenance()` in `src/lib/auth.ts`
+ * rather than assembling it themselves.
+ */
+export function sessionProvenance(args: {
+  amr: unknown;
+  familyMarkerValid: boolean;
+}): SessionProvenance {
+  if (!args.familyMarkerValid) return "own";
+  return amrNamesPassword(args.amr) ? "own" : "family";
 }

@@ -680,7 +680,15 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
         <SwitchGateDialog
           open
           onOpenChange={(next) => {
-            if (!next) setGated(null);
+            if (next) return;
+            setGated(null);
+            // The row that opened this gate went with the panel — opening the
+            // gate closes the menu — so there is nothing for the dialog to hand
+            // focus back to and it lands on <body>, restarting the next Tab at
+            // the top of the page. The trigger always exists, and it is where
+            // the reader was two clicks ago. Only on a close: a committed switch
+            // is already unloading the document.
+            triggerRef.current?.focus();
           }}
           target={gated.member}
           mode={gated.mode}

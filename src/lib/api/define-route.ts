@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import type { z } from "zod";
-import { requireRole, type GatedUser } from "@/lib/auth";
-import { sessionProvenanceFromAmr } from "@/lib/session-provenance";
+import { cookies } from "next/headers";
+import {
+  readSessionProvenance,
+  requireRole,
+  type GatedUser,
+} from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ApiError } from "@/lib/api/api-error";
 import { parseBodyValue, parseJsonBody } from "@/lib/api/json-body.server";
@@ -408,7 +412,10 @@ async function requireSession(): Promise<
       // so a handler reads `user.session` without caring which posture it is on.
       session: {
         id: claims.session_id,
-        provenance: sessionProvenanceFromAmr(claims.amr),
+        provenance: await readSessionProvenance({
+          claims,
+          cookies: await cookies(),
+        }),
       },
     },
     supabase,

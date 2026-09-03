@@ -50,7 +50,16 @@ import type { GamerSignIn } from "@/types";
  * has no login at all, and `email` deliberately hands password-setting to the
  * child after they have proved the address is theirs.
  *
- * THE TWO WRITES ARE ORDERED, AND THE ORDER IS THE SAME ONE THE HAND OPERATION
+ * THE INVARIANT ACROSS ALL THREE: a credential that opens a gamer account
+ * exists only where `gamer_profiles.sign_in` says one does. They cannot be one
+ * transaction — two are GoTrue's and one is ours — so ordering plus a
+ * compensation carries it instead: the mode is written LAST, because it is the
+ * record of the other two rather than a part of them, and a failure there
+ * withdraws the credential it failed to record rather than leaving a working
+ * username and password the platform believes does not exist. See
+ * `compensateUnrecordedCredential`.
+ *
+ * THE TWO AUTH-SIDE WRITES ARE ORDERED, AND THE ORDER IS THE SAME ONE THE HAND OPERATION
  * USES (`scripts/correct-user-email.ts`). Auth goes first, because it is the
  * only write that enforces uniqueness and therefore the only one that can
  * legitimately fail — a refusal there leaves `profiles` untouched and nothing to
@@ -343,10 +352,80 @@ async function applyCredentialChange(args: {
       .from("gamer_profiles")
       .update({ sign_in: nextMode })
       .eq("user_id", gamerId);
-    if (signInError) throw signInError;
+    if (signInError) {
+      await compensateUnrecordedCredential({
+        admin,
+        gamerId,
+        currentMode,
+        nextMode,
+        signInError,
+      });
+    }
   }
 
   return { welcomeGamer };
+}
+
+/**
+ * The last write failed, so the credential that was just set is one nothing
+ * records. Take it away again.
+ *
+ * **The invariant this defends:** a credential that opens a gamer account
+ * exists only where `gamer_profiles.sign_in` says one does. The three writes
+ * behind a mode change cannot be one transaction — two of them are GoTrue's and
+ * one is ours — so the ordering does the work instead, and this is what happens
+ * when the ordering runs out. Auth is written first because it is the only one
+ * that can legitimately refuse (uniqueness), `profiles.email` follows it, and
+ * the mode is written last because it is the *record* of the other two rather
+ * than a part of them.
+ *
+ * Last means the failure it can suffer is the worst-shaped one: every earlier
+ * write has committed, so the account is already answering to a username and a
+ * password the parent has just chosen, while the platform still believes the
+ * child is switch-only or on a mailbox. A working credential nobody has
+ * recorded is precisely what the switch gate is built to rule out — a child
+ * holding one could sign in on any machine, and the platform would classify
+ * that session by a mode that is a lie.
+ *
+ * So the password is scrambled back to a value nobody holds, which restores the
+ * one property that matters: whatever `sign_in` says, no credential anyone
+ * knows will open this account. The address is deliberately left where it
+ * landed — moving it back is another write that can fail the same way, and an
+ * unreachable account under an unexpected address is a repair, not a breach.
+ * The parent is answered with a 500 and re-runs the edit.
+ *
+ * Every failure past this point is logged loudly on purpose: it names a row
+ * that needs a human, and there is no automatic path back to a consistent
+ * state.
+ */
+async function compensateUnrecordedCredential(args: {
+  admin: AdminClient;
+  gamerId: string;
+  currentMode: GamerSignIn;
+  nextMode: GamerSignIn;
+  signInError: unknown;
+}): Promise<never> {
+  const { admin, gamerId, currentMode, nextMode, signInError } = args;
+  console.error(
+    `gamer ${gamerId}: gamer_profiles.sign_in write failed moving ${currentMode} -> ${nextMode}; scrambling the password so no unrecorded credential survives`,
+    signInError,
+  );
+
+  const { error: scrambleError } = await admin.auth.admin.updateUserById(
+    gamerId,
+    { password: scrambledPassword() },
+  );
+  if (scrambleError) {
+    console.error(
+      `gamer ${gamerId}: THE COMPENSATION ALSO FAILED — this account may hold a working credential that gamer_profiles.sign_in does not record, and needs to be reset by hand`,
+      scrambleError,
+    );
+  }
+
+  throw new ApiError(
+    `gamer ${gamerId}: sign-in mode could not be recorded, so the credential was withdrawn`,
+    500,
+  );
 }
 
 /**
@@ -419,7 +498,22 @@ async function writeAuthCredentials(args: {
     .from("profiles")
     .update({ email: newEmail })
     .eq("id", gamerId);
-  if (profileError) throw profileError;
+  if (profileError) {
+    // The same shape as the identity mismatch above, and for the same reason.
+    // Auth has already moved by the time this runs, so a raw rethrow would
+    // report "a write failed" when what actually happened is that the account
+    // now authenticates as one address while every read in the app names
+    // another — the divergence the switch route's GoTrue lookup exists to
+    // survive. Said specifically, so the log names which of the two is stale.
+    console.error(
+      "gamer update: profiles.email write failed after the auth move",
+      profileError,
+    );
+    throw new ApiError(
+      `gamer ${gamerId}: auth.users moved to ${newEmail} but profiles.email did not — the account authenticates as an address the app does not know`,
+      500,
+    );
+  }
 }
 
 /**

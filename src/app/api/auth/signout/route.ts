@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { PIN_COOKIE_NAME } from "@/lib/pin-session";
+import { FAMILY_SESSION_COOKIE_NAME, PIN_COOKIE_NAME } from "@/lib/pin-session";
 
 // Sign-out handler. The SSR Supabase client clears the session cookies via
 // its setAll callback before we return the redirect. The browser follows the
@@ -16,7 +16,12 @@ import { PIN_COOKIE_NAME } from "@/lib/pin-session";
 export async function POST(request: Request) {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  // Drop the parent-PIN unlock cookie so the next session starts locked.
-  (await cookies()).delete(PIN_COOKIE_NAME);
+  // Drop both session markers so the next session starts locked and unmarked:
+  // the parent-PIN unlock cookie, and the switch route s family-session marker.
+  // Both are bound to a session_id that is now gone, so neither would validate
+  // anyway — dropping them is what keeps the cookie jar honest.
+  const cookieStore = await cookies();
+  cookieStore.delete(PIN_COOKIE_NAME);
+  cookieStore.delete(FAMILY_SESSION_COOKIE_NAME);
   return NextResponse.redirect(new URL("/", request.url), { status: 303 });
 }

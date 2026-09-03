@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
 import {
-  sessionProvenanceFromAmr,
+  FAMILY_SESSION_COOKIE_NAME,
+  PIN_COOKIE_NAME,
+  isFamilySessionTokenValid,
+  isPinTokenValid,
+} from "@/lib/pin-session";
+import {
+  sessionProvenance,
   type SessionProvenance,
 } from "@/lib/session-provenance";
 // Imported from the service file (not the @/services/gedu barrel) so this
@@ -17,7 +22,7 @@ import type { AuthenticatedUser, Profile, UserRole } from "@/types";
  * Both fields come off the verified JWT, and both are put here so no route has
  * to re-read claims to get them: `id` is the `session_id` the PIN unlock cookie
  * is bound to, and `provenance` is whether this session was opened with this
- * account's own password or handed over from another family member's
+ * account's own credential or handed over from another family member's
  * (`src/lib/session-provenance.ts`). The switch route reads both; nothing else
  * has to know how either is derived.
  */
@@ -28,6 +33,41 @@ export interface GatedSession {
 
 /** The caller a gate hands back: their identity plus the session they hold. */
 export type GatedUser = AuthenticatedUser & { session: GatedSession };
+
+/**
+ * Read a shape a cookie store satisfies. Structural rather than Next's
+ * `ReadonlyRequestCookies` so a test — or a caller holding a plain map — can
+ * pass one without constructing a request.
+ */
+export interface CookieReader {
+  get(name: string): { value: string } | undefined;
+}
+
+/**
+ * Where this session came from, from the verified claims plus the switch
+ * route's marker cookie.
+ *
+ * Exported because two gates and at least one server component need the same
+ * answer and none of them should re-derive it: the marker is only meaningful
+ * once validated against *this* session's `(sub, session_id)`, and a caller
+ * that merely checks the cookie's presence has reintroduced the hole the marker
+ * was minted to close.
+ */
+export async function readSessionProvenance(args: {
+  claims: { sub: string; session_id: string; amr?: unknown };
+  cookies: CookieReader;
+}): Promise<SessionProvenance> {
+  const { claims, cookies: cookieStore } = args;
+  const marker = cookieStore.get(FAMILY_SESSION_COOKIE_NAME)?.value;
+  return sessionProvenance({
+    amr: claims.amr,
+    familyMarkerValid: await isFamilySessionTokenValid(
+      marker,
+      claims.sub,
+      claims.session_id,
+    ),
+  });
+}
 
 type AuthSuccess<R extends UserRole> = {
   user: GatedUser;
@@ -158,7 +198,11 @@ export async function requireRole<const R extends UserRole>(
     email: claims.email,
     session: {
       id: claims.session_id,
-      provenance: sessionProvenanceFromAmr(claims.amr),
+      // The same cookie store the PIN gate above read, asked a second question.
+      provenance: await readSessionProvenance({
+        claims,
+        cookies: await cookies(),
+      }),
     },
   };
   return { user, profile, supabase };

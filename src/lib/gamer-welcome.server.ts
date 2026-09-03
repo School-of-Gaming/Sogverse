@@ -35,6 +35,11 @@ import { getOrigin } from "@/lib/url";
  * message into a void — the kind of no-op that looks like a working feature
  * until somebody asks why no mail arrived. Refusing loudly is the honest answer
  * to a caller that got the mode wrong.
+ *
+ * **And it refuses an address GoTrue does not agree with.** The token is bound
+ * to `profiles.email` because that is what the click is checked against, so the
+ * two copies of the address have to be the same one before a link is worth
+ * minting — see the check itself for what a mismatch would otherwise buy.
  */
 export async function sendGamerWelcomeEmail(args: {
   request: Request;
@@ -59,6 +64,28 @@ export async function sendGamerWelcomeEmail(args: {
   if (!gamer.email || isSyntheticGamerEmail(gamer.email)) {
     throw new Error(
       `gamer ${gamerId} has no real address to welcome — nothing was sent`,
+    );
+  }
+
+  // GoTrue has to agree, and a disagreement stops the mail rather than being
+  // papered over. The verification link is checked back against
+  // `profiles.email`, so a token minted while the two disagree would let a
+  // click stamp `email_verified_at` for an address the account no longer
+  // authenticates as — a "verified" mailbox that cannot sign in, which is worse
+  // than no mail at all. The credential write moves `auth.users` first and
+  // `profiles` second, so this is exactly the window a failure between them
+  // opens; refusing loudly is what turns it into an operator's problem instead
+  // of a family's.
+  const { data: authUser, error: authLookupError } =
+    await admin.auth.admin.getUserById(gamerId);
+  if (authLookupError || !authUser.user.email) {
+    throw new Error(
+      `gamer ${gamerId}: could not read the address GoTrue holds — nothing was sent`,
+    );
+  }
+  if (authUser.user.email.toLowerCase() !== gamer.email.toLowerCase()) {
+    throw new Error(
+      `gamer ${gamerId}: profiles.email and auth.users disagree — nothing was sent, and the two must be reconciled before a verification link can mean anything`,
     );
   }
 

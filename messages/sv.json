@@ -211,7 +211,7 @@
         },
         "gamerAccounts": {
           "question": "Hur loggar mitt barn in, och vad är föräldra-PIN-koden?",
-          "answer": "Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, och ditt barn kommer in i Sogverse genom att växla till sin profil från ditt konto. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet. Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: den öppnar aldrig ditt eller ett syskons utan det kontots lösenord, och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans. För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut. Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig."
+          "answer": "Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, och ditt barn kommer in i Sogverse genom att växla till sin profil från ditt konto. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet. Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: ett barn som loggade in med sitt eget användarnamn eller sin egen e-postadress kan bara nå ditt eller ett syskons konto genom att skriva det kontots lösenord, och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans. För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut. Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig."
         },
         "childData": {
           "question": "Vad sparar ni om mitt barn?",
@@ -1386,7 +1386,7 @@
       "passwordDescription": "Det här kontot har ett eget lösenord. Skriv in det för att byta.",
       "passwordInvalid": "Lösenordet stämmer inte. Försök igen.",
       "submit": "Byt",
-      "unreachable": "Loggar in via en förälder"
+      "unreachable": "Loggar in från en förälders konto"
     },
     "addGamerForm": {
       "title": "Lägg till en gamer",
@@ -3951,6 +3951,7 @@
     "usernameInvalid": "Använd 3 till 20 bokstäver eller siffror, utan mellanslag.",
     "usernameTaken": "Användarnamnet är upptaget. Prova ett annat.",
     "passwordHint": "Minst {count} tecken. Läs upp det för din gamer – du kan ändra det här senare.",
+    "passwordHintOnGamerPage": "Minst {count} tecken. Läs upp det för din gamer – du kan ändra det senare från deras sida på Min SOG.",
     "passwordTooShort": "Lösenordet måste vara minst {count} tecken.",
     "emailHint": "Verifieringslänken skickas hit, så det måste vara en adress din gamer kan öppna.",
     "emailPlaceholder": "saga@example.com",

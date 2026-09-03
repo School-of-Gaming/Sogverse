@@ -207,7 +207,7 @@
         },
         "gamerAccounts": {
           "question": "How does my child sign in, and what is the parent PIN?",
-          "answer": "You choose how your child signs in, for each child, from My SOG. By default a gamer account has no login of its own: it carries an internal Sogverse address rather than a real email address, and your child enters Sogverse by switching to their profile from your account. If you prefer, you can give them a username and a password, or their own email address — which they verify before setting a password through the normal reset flow. Whichever you choose, a child’s sign-in opens only their own account: it never opens yours or a sibling’s without that account’s password, and a child who came in by switching from your account needs your parent PIN to switch anywhere else. Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or change a child’s account, and the session locks again the moment you switch to a child’s profile or sign out. If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email."
+          "answer": "You choose how your child signs in, for each child, from My SOG. By default a gamer account has no login of its own: it carries an internal Sogverse address rather than a real email address, and your child enters Sogverse by switching to their profile from your account. If you prefer, you can give them a username and a password, or their own email address — which they verify before setting a password through the normal reset flow. Whichever you choose, a child’s sign-in opens only their own account: a child who signed in with their own username or email can reach your account or a sibling’s only by typing that account’s password, and a child who got in by switching from your account needs your parent PIN to switch anywhere else. Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or change a child’s account, and the session locks again the moment you switch to a child’s profile or sign out. If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email."
         },
         "childData": {
           "question": "What do you store about my child?",
@@ -1386,7 +1386,7 @@
       "passwordDescription": "This account has a password of its own. Type it to switch.",
       "passwordInvalid": "That password is not right. Try again.",
       "submit": "Switch",
-      "unreachable": "Signs in via a parent"
+      "unreachable": "Signs in from a parent’s account"
     },
     "addGamerForm": {
       "title": "Add a gamer",
@@ -3951,6 +3951,7 @@
     "usernameInvalid": "Use 3 to 20 letters or numbers, with no spaces.",
     "usernameTaken": "That username is taken. Try another one.",
     "passwordHint": "At least {count} characters. Read it out to your gamer — you can change it here later.",
+    "passwordHintOnGamerPage": "At least {count} characters. Read it out to your gamer — you can change it later from their page in My SOG.",
     "passwordTooShort": "The password needs at least {count} characters.",
     "emailHint": "The verification link goes here, so it has to be an address your gamer can open.",
     "emailPlaceholder": "lily@example.com",

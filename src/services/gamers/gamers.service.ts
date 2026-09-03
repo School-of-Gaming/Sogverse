@@ -10,7 +10,7 @@ import type {
 import { isGamerProfile } from "@/types";
 import { ApiError } from "@/lib/api/api-error";
 import { readErrorMessage } from "@/lib/api/json-response";
-import { walkPages } from "@/lib/supabase/paging";
+import { chunkKeys } from "@/lib/supabase/paging";
 
 /**
  * What a parent may change about one of their gamers, one field at a time.
@@ -118,32 +118,46 @@ export class GamerService {
   }
 
   /**
-   * Every gamer's sign-in mode, as `{ user_id, sign_in }` rows.
+   * The sign-in mode of each named gamer, as `{ user_id, sign_in }` rows.
    *
    * For the admin users list, which prints a different identity line per mode —
    * a mailbox, a username, or nothing at all — and cannot ask per row without
    * turning one list into a query per child. One read alongside the profiles
    * read it is already doing answers the whole page.
    *
-   * **Walked, for the same reason the certification read is.** The list decides
-   * what to print from the presence of a row here, so a read truncated at
-   * PostgREST's `max_rows` would silently reprint every child past the cut as
-   * switch-only — indistinguishable on screen from the truth, with nothing to
-   * say the answer was cut short. Ordered by the table's primary key, which is
-   * the total order a paged walk needs.
+   * **Keyed, not walked, and the ids come from the page.** The caller is
+   * already holding the users it is about to render — a page of them, or a
+   * search result — so asking about every gamer on the platform to print a line
+   * beside a couple of dozen is a read whose cost grows with the table while
+   * the page it feeds does not. Keyed also removes the truncation trap that
+   * made the walk necessary: `gamer_profiles` is one row per user, so a chunk
+   * asking for N ids can come back with at most N rows, and
+   * `KEY_LOOKUP_CHUNK_SIZE` is comfortably under `max_rows` — a short page here
+   * means the id had no row, which is exactly the answer the list wants.
+   *
+   * Ids that are not gamers cost nothing: this is a lookup, and a missing row
+   * is simply absent from the map the caller builds.
    *
    * Admin RLS (`admin_full_access_gamer_profiles`) is what permits the
    * cross-user read; a parent calling this gets only their own children, which
    * is correct rather than a limitation.
    */
-  async getGamerSignIns(): Promise<Pick<GamerProfile, "user_id" | "sign_in">[]> {
-    return walkPages("getGamerSignIns", (from, to) =>
-      this.supabase
+  async getGamerSignIns(
+    userIds: readonly string[],
+  ): Promise<Pick<GamerProfile, "user_id" | "sign_in">[]> {
+    if (userIds.length === 0) return [];
+
+    const rows: Pick<GamerProfile, "user_id" | "sign_in">[] = [];
+    for (const batch of chunkKeys(userIds)) {
+      const { data, error } = await this.supabase
         .from("gamer_profiles")
-        .select("user_id,sign_in", { count: "exact" })
-        .order("user_id")
-        .range(from, to),
-    );
+        .select("user_id,sign_in")
+        .in("user_id", batch);
+
+      if (error) throw error;
+      rows.push(...data);
+    }
+    return rows;
   }
 
   /**
