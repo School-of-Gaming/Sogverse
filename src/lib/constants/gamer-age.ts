@@ -38,11 +38,15 @@ export interface AgeBand {
  * shop by broad age groups rather than a single year, so the filter groups the
  * product range into these coarse bands. A product matches a selected band when
  * its [min_age, max_age] overlaps the band (see `filterProducts`).
+ *
+ * They are written out rather than derived from the product range, because the
+ * groupings are a judgment about how parents shop — so the top band has to be
+ * moved by hand when that range changes.
  */
 export const PRODUCT_AGE_BANDS: readonly AgeBand[] = [
   { min: 7, max: 9 },
   { min: 10, max: 12 },
-  { min: 13, max: 16 },
+  { min: 13, max: 17 },
 ];
 
 /** Find the offered band matching an exact [min, max], or null if none does. */
