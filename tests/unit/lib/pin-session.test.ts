@@ -6,8 +6,10 @@ process.env.PIN_COOKIE_SECRET = "unit-test-pin-secret";
 import {
   pinTokenFor,
   isPinTokenValid,
+  pinCookieOptions,
   mintFamilySessionToken,
   isFamilySessionTokenValid,
+  familySessionCookieOptions,
   createPinResetToken,
   verifyPinResetToken,
   parseResetTokenUserId,
@@ -107,6 +109,45 @@ describe("family-session marker", () => {
     expect(await isFamilySessionTokenValid("not-a-real-marker", USER, SESSION)).toBe(
       false,
     );
+  });
+});
+
+/**
+ * The two cookies' expiries run opposite ways, and each direction is the safe
+ * one for the question that cookie answers — so the pair is pinned here rather
+ * than left to whichever mint site is being edited.
+ *
+ * The unlock cookie is a SESSION cookie: dropping it when the browser quits
+ * re-locks the parent, which is free security. The marker is the reverse — a
+ * dropped marker re-classifies a switched-in child as self-authenticated and
+ * asks their family for a password they may not have, turning a browser restart
+ * at home into a dead end. Its long `maxAge` is therefore load-bearing, and the
+ * `session_id` binding is what actually expires it.
+ */
+describe("cookie options", () => {
+  it("gives the family marker a year and the unlock cookie no expiry at all", () => {
+    expect(familySessionCookieOptions().maxAge).toBe(365 * 24 * 60 * 60);
+    expect("maxAge" in pinCookieOptions()).toBe(false);
+    expect("expires" in pinCookieOptions()).toBe(false);
+  });
+
+  it("keeps both HttpOnly, lax and site-wide", () => {
+    // Everything else a mint site could quietly relax. `secure` follows
+    // NODE_ENV, so it is asserted against that rather than against a literal.
+    const secure = process.env.NODE_ENV === "production";
+    expect(pinCookieOptions()).toEqual({
+      httpOnly: true,
+      secure,
+      sameSite: "lax",
+      path: "/",
+    });
+    expect(familySessionCookieOptions()).toEqual({
+      httpOnly: true,
+      secure,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 365 * 24 * 60 * 60,
+    });
   });
 });
 

@@ -114,6 +114,17 @@ export default async function SelectProfilePage() {
  * than corrected by the next fetch. Absence puts the selector on its skeleton
  * and lets the client's own read answer.
  */
+async function getInitialFamily(
+  userId: string,
+  role: "customer" | "gamer",
+): Promise<FamilyMember[] | undefined> {
+  try {
+    return await resolveFamilyWithAdmin(createAdminClient(), userId, role);
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * The provenance of the viewer's own session, seeded beside the list so the
  * tiles paint with their gate already decided.
@@ -125,31 +136,23 @@ export default async function SelectProfilePage() {
  *
  * It is read exactly the way the API route's gate reads it — the same
  * `readSessionProvenance`, over the locally-verified claims and the switch
- * route's marker cookie — so the seed and the gate can never disagree.
- * `undefined` on any failure, which puts the surface back on the honest "wait
- * for the fetch" path rather than inventing an answer.
+ * route's marker cookie — so the seed and the gate can never disagree. That
+ * includes a token carrying no `session_id`: the reader owns that case and
+ * answers `own`, so this must not pre-empt it with a guard of its own, which
+ * would seed nothing where the gate would have seeded the stronger answer.
+ * `undefined` on a genuine failure, which puts the surface back on the honest
+ * "wait for the fetch" path rather than inventing an answer.
  */
 async function getSessionProvenance(): Promise<SessionProvenance | undefined> {
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getClaims();
     const claims = data?.claims;
-    if (!claims?.sub || !claims.session_id) return undefined;
+    if (!claims?.sub) return undefined;
     return await readSessionProvenance({
-      claims: { sub: claims.sub, session_id: claims.session_id, amr: claims.amr },
+      claims,
       cookies: await cookies(),
     });
-  } catch {
-    return undefined;
-  }
-}
-
-async function getInitialFamily(
-  userId: string,
-  role: "customer" | "gamer",
-): Promise<FamilyMember[] | undefined> {
-  try {
-    return await resolveFamilyWithAdmin(createAdminClient(), userId, role);
   } catch {
     return undefined;
   }

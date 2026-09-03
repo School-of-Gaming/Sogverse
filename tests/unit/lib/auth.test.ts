@@ -224,6 +224,37 @@ describe("readSessionProvenance", () => {
     ).toBe("own");
   });
 
+  it("is `own` for a token carrying no session_id", async () => {
+    // The guard lives here rather than in each caller so the API gates and the
+    // server component that seeds the profile grid cannot answer the same
+    // session differently. A marker binds a session id; with no id there is
+    // nothing to validate one against, so the answer is the stronger gate.
+    const marker = await mintFamilySessionToken("g1", "s1");
+    expect(
+      await readSessionProvenance({
+        claims: { sub: "g1", amr: [{ method: "otp" }] },
+        cookies: cookieHolding(marker),
+      }),
+    ).toBe("own");
+  });
+
+  it("is `own` when the marker cannot be validated at all", async () => {
+    // This runs on every gated request, so a missing PIN_COOKIE_SECRET would
+    // otherwise turn one misconfiguration into a 500 on every request a marked
+    // session makes. It answers the stronger gate instead — the failure is
+    // loud in the logs and cannot hand anybody the cheaper one.
+    const marker = await mintFamilySessionToken("g1", "s1");
+    const secret = process.env.PIN_COOKIE_SECRET;
+    delete process.env.PIN_COOKIE_SECRET;
+    try {
+      expect(
+        await readSessionProvenance({ claims: CLAIMS, cookies: cookieHolding(marker) }),
+      ).toBe("own");
+    } finally {
+      process.env.PIN_COOKIE_SECRET = secret;
+    }
+  });
+
   it("is `own` for a password session even holding a valid marker", async () => {
     // Unreachable today — a password sign-in mints a new session id and only the
     // switch route mints markers — and asserted anyway, because it is the guard

@@ -136,6 +136,21 @@ narrowing it would buy nothing. When the new session carries no `session_id`
 there is nothing to bind either cookie to, so neither is minted and the marker
 is deleted — the session then reads as `own`, which is the stronger gate.
 
+**Rule: the window between redeeming the OTP and minting the marker must not
+throw and must not touch the network.** Redeeming has already written the
+target's cookies into the mutable store, so by that point the switch has
+happened: a throw in the window returns a 500 on a successful but unmarked
+switch, and a network call that fails transiently silently classifies a
+switched-in child as `own`. So the new session's id is read out of the access
+token the redemption itself returned — decoded, not verified, because we minted
+that token and it is the one this response is about to set — rather than by
+asking the client for its claims, which verifies against the project's JWKS. An
+unreadable token lands in the same branch as a missing `session_id`. The one
+thing the window may refuse on is a token naming an account other than the
+resolved target: both cookies bind that target, so a mismatch means the id and
+the account came from different sessions, and it is asserted rather than
+resolved by binding whatever the token said.
+
 **Rule: a family may not acquire a gamer before it has a PIN.** `create_gamer`
 refuses a parent with no PIN as its first statement (SQLSTATE `P0025`), and the
 creation route turns that one refusal into a 403 `PIN_REQUIRED` the parent can

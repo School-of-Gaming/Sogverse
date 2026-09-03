@@ -25,6 +25,13 @@ import type { AuthenticatedUser, Profile, UserRole } from "@/types";
  * account's own credential or handed over from another family member's
  * (`src/lib/session-provenance.ts`). The switch route reads both; nothing else
  * has to know how either is derived.
+ *
+ * `id` is not optional because `session_id` is a required claim on every access
+ * token GoTrue issues. A token somehow missing it is not refused upstream, and
+ * that is deliberate: both readers of it already fail closed on their own — the
+ * unlock HMAC cannot reproduce over an absent id so the parent stays locked, and
+ * the provenance reader answers `own`, the stronger switch gate. Neither reader
+ * may be changed to trust an absent id without changing that.
  */
 export interface GatedSession {
   id: string;
@@ -44,6 +51,13 @@ export interface CookieReader {
 }
 
 /**
+ * Logged at most once per process. A missing `PIN_COOKIE_SECRET` is a
+ * deployment fault that reproduces on every single gated request, so the first
+ * occurrence is the whole of the signal and the rest is noise in the logs.
+ */
+let markerValidationFailureLogged = false;
+
+/**
  * Where this session came from, from the verified claims plus the switch
  * route's marker cookie.
  *
@@ -52,21 +66,44 @@ export interface CookieReader {
  * once validated against *this* session's `(sub, session_id)`, and a caller
  * that merely checks the cookie's presence has reintroduced the hole the marker
  * was minted to close.
+ *
+ * **`session_id` is optional here, and its absence is answered `own`.** The
+ * marker is bound to a session id, so with no id there is nothing a marker
+ * could be validated against — and the guard lives here rather than in each
+ * caller so the API gates and the server components that seed the profile grid
+ * cannot answer the same session differently.
+ *
+ * **A marker that cannot be validated at all is also `own`.** This runs on
+ * every gated request, so a missing `PIN_COOKIE_SECRET` would otherwise turn
+ * one misconfiguration into a 500 on every request a marked session makes.
+ * Answering the stronger gate keeps the platform usable and cannot hand
+ * anybody the cheaper one.
  */
 export async function readSessionProvenance(args: {
-  claims: { sub: string; session_id: string; amr?: unknown };
+  claims: { sub: string; session_id?: string; amr?: unknown };
   cookies: CookieReader;
 }): Promise<SessionProvenance> {
   const { claims, cookies: cookieStore } = args;
+  const sessionId = claims.session_id;
+  if (!sessionId) return "own";
+
   const marker = cookieStore.get(FAMILY_SESSION_COOKIE_NAME)?.value;
-  return sessionProvenance({
-    amr: claims.amr,
-    familyMarkerValid: await isFamilySessionTokenValid(
+
+  let familyMarkerValid = false;
+  try {
+    familyMarkerValid = await isFamilySessionTokenValid(
       marker,
       claims.sub,
-      claims.session_id,
-    ),
-  });
+      sessionId,
+    );
+  } catch (error) {
+    if (!markerValidationFailureLogged) {
+      markerValidationFailureLogged = true;
+      console.error("readSessionProvenance: marker validation failed", error);
+    }
+  }
+
+  return sessionProvenance({ amr: claims.amr, familyMarkerValid });
 }
 
 type AuthSuccess<R extends UserRole> = {

@@ -59,14 +59,26 @@ describe("sessionProvenance", () => {
     ).toBe("own");
   });
 
-  it("falls to `own` for anything it cannot read", () => {
-    // The conservative direction, and it is the point of the marker model: an
+  it("keeps a marked session `family` through any `amr` it cannot read", () => {
+    // The marker is the whole classification and `amr` is only allowed to veto
+    // it, so an `amr` that says nothing legible must leave the verdict alone.
+    // Asserted against the marker-holder because that is the only caller a
+    // misread could move: with no marker the answer is `own` before `amr` is
+    // ever looked at, so a loop there would pass however `amrNamesPassword`
+    // behaved.
+    for (const amr of [undefined, null, [], "password", [null], [{ method: 42 }]]) {
+      expect(sessionProvenance({ amr, familyMarkerValid: true })).toBe("family");
+    }
+  });
+
+  it("falls to `own` with no marker, whatever the token says", () => {
+    // The conservative direction, and the point of the marker model: an
     // unclassifiable session is charged the target's password rather than four
     // digits, so it can never be the cheap way in. The old derivation defaulted
     // to `family`, which was fail-open toward the weaker gate.
-    for (const amr of [undefined, null, [], "password", [null], [{ method: 42 }]]) {
-      expect(sessionProvenance({ amr, familyMarkerValid: false })).toBe("own");
-    }
+    expect(sessionProvenance({ amr: undefined, familyMarkerValid: false })).toBe(
+      "own",
+    );
   });
 });
 

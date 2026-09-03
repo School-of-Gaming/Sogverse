@@ -78,13 +78,15 @@ describe("mapping the update failure to copy", () => {
   /**
    * **The recovery session does not survive its own success.**
    *
-   * A session minted by `verifyOtp({ type: "recovery" })` carries `otp` in its
-   * `amr` claim and no `password` method — and the switch gate reads exactly
-   * that claim to decide how a session was made, treating one with no password
-   * method as a *family* session, which may reach a linked account on a PIN
-   * alone. Leaving it live would therefore hand that standing to whoever worked
-   * through the inbox. Signing it out is what keeps the classification honest,
-   * and it costs the user a sign-in they were being sent to do anyway.
+   * The password on this account has just been changed by whoever was working
+   * through its inbox, and a live session opened by a link should not outlive
+   * the page that moved the credential — on a machine we know nothing about,
+   * that session is the one thing the password change did not close. Ending it
+   * costs the user a sign-in they were being sent to do anyway.
+   *
+   * Not a provenance guard: a recovery session carries no marker from the
+   * switch route, so it is already an `own` session and pays the target's
+   * password to switch (`src/lib/session-provenance.ts`).
    */
   it("signs the recovery session out before pointing at the login page", async () => {
     mockSupabaseClient.auth.updateUser.mockResolvedValue({ error: null });

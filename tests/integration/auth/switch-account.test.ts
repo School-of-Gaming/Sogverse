@@ -9,6 +9,7 @@ import {
   FAMILY_SESSION_COOKIE_NAME,
   PIN_COOKIE_NAME,
   mintFamilySessionToken,
+  pinTokenFor,
 } from "@/lib/pin-session";
 import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
 
@@ -255,24 +256,80 @@ function siblingLookup(rows: Array<{ parent_id: string; gamer_id: string }>) {
 }
 
 /**
+ * An access token shaped the way GoTrue's is: three dot-separated segments
+ * whose middle one is base64url JSON. The route reads the new session's id out
+ * of this rather than asking the client for its claims — that would be a
+ * JWKS-verifying call inside the window between the switch happening and the
+ * marker being minted, where a transient failure downgrades a switched-in
+ * child to `own`. Unpadded on purpose: real tokens are, so this exercises the
+ * route's padding restore.
+ */
+function accessTokenFor(claims: Record<string, unknown>): string {
+  const payload = btoa(JSON.stringify(claims))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  return `header.${payload}.signature`;
+}
+
+/**
  * The OTP switch succeeding: a link is minted and redeemed. The address it is
  * minted for comes from `setupAdminFrom`, which is where GoTrue's answer lives.
+ * The redeemed session names the target and carries the id both cookies are
+ * bound to — the two facts the route reads back out of the token.
  */
-function mockHappyPathSession() {
+function mockHappyPathSession(targetId: string, sessionId = "new-session") {
   mockAdminGenerateLink.mockResolvedValue({
     data: { properties: { email_otp: "123456" } },
     error: null,
   });
   mockVerifyOtp.mockResolvedValue({
-    data: { session: { access_token: "new-token" } },
+    data: {
+      session: {
+        access_token: accessTokenFor({ sub: targetId, session_id: sessionId }),
+      },
+    },
     error: null,
   });
 }
 
 /** The value the family marker must carry: bound to the NEW session, not the caller's. */
-function familyMarkerFor(userId: string) {
-  return mintFamilySessionToken(userId, "new-session");
+function familyMarkerFor(userId: string, sessionId = "new-session") {
+  return mintFamilySessionToken(userId, sessionId);
 }
+
+// The exact attributes each cookie must be minted with — asserted whole rather
+// than sampled, because every one of them is a way to weaken the cookie by
+// accident. `secure` follows NODE_ENV (true only in production), so it is
+// derived here rather than written as a literal.
+const COOKIE_SECURE = process.env.NODE_ENV === "production";
+
+/**
+ * A year, and it is the marker's whole expiry story: dropping it would
+ * re-classify a switched-in child as self-authenticated and ask their family
+ * for a password they may not have, so it has to outlive a browser restart and
+ * the `session_id` binding is what actually expires it.
+ */
+const FAMILY_MARKER_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: COOKIE_SECURE,
+  sameSite: "lax",
+  path: "/",
+  maxAge: 365 * 24 * 60 * 60,
+};
+
+/**
+ * The unlock cookie runs the opposite way — no `maxAge` at all, so quitting the
+ * browser re-locks the parent. Asserting the exact object is what keeps a
+ * future edit from "harmonising" the two and quietly making a parent's unlock
+ * survive for a year.
+ */
+const UNLOCK_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: COOKIE_SECURE,
+  sameSite: "lax",
+  path: "/",
+};
 
 const PARENT_A = "parent-a";
 const PARENT_B = "parent-b";
@@ -286,8 +343,12 @@ describe("POST /api/auth/switch-account", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSignOut.mockResolvedValue({ error: null });
+    // Answers, so a route that asked would pass rather than crash — and every
+    // OTP test asserts it was not asked. The id comes out of the token
+    // `verifyOtp` returned; this call is the network hop that must not happen
+    // between the switch landing and the marker being minted.
     mockGetClaims.mockResolvedValue({
-      data: { claims: { session_id: "new-session" } },
+      data: { claims: { sub: "someone-else", session_id: "claims-session" } },
       error: null,
     });
     mockGetSession.mockResolvedValue({
@@ -379,7 +440,7 @@ describe("POST /api/auth/switch-account", () => {
         target: { id: GAMER_A1, role: "gamer", email: "alphaone@gamer.sogverse.internal" },
         parentGamerBuilder: linkLookup(true),
       });
-      mockHappyPathSession();
+      mockHappyPathSession(GAMER_A1);
 
       const response = await POST(createRequest({ userId: GAMER_A1 }));
       const data = await response.json();
@@ -407,7 +468,7 @@ describe("POST /api/auth/switch-account", () => {
       expect(mockCookieSet).toHaveBeenCalledWith(
         FAMILY_SESSION_COOKIE_NAME,
         await familyMarkerFor(GAMER_A1),
-        expect.objectContaining({ httpOnly: true }),
+        FAMILY_MARKER_COOKIE_OPTIONS,
       );
     });
 
@@ -417,7 +478,7 @@ describe("POST /api/auth/switch-account", () => {
         target: { id: GAMER_A1, role: "gamer", email: "alphaone@gamer.sogverse.internal" },
         parentGamerBuilder: linkLookup(true),
       });
-      mockHappyPathSession();
+      mockHappyPathSession(GAMER_A1);
 
       await POST(createRequest({ userId: GAMER_A1 }));
 
@@ -511,7 +572,7 @@ describe("POST /api/auth/switch-account", () => {
         ]),
       });
       mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
-      mockHappyPathSession();
+      mockHappyPathSession(GAMER_A2);
 
       const response = await POST(createRequest({ userId: GAMER_A2, pin: "1234" }));
       expect(response.status).toBe(200);
@@ -529,7 +590,7 @@ describe("POST /api/auth/switch-account", () => {
         target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
         parentGamerBuilder: linkLookupWithParents(true, [PARENT_A, PARENT_B]),
       });
-      mockHappyPathSession();
+      mockHappyPathSession(PARENT_A);
     }
 
     it("refuses with PIN_REQUIRED when no PIN was sent", async () => {
@@ -595,11 +656,13 @@ describe("POST /api/auth/switch-account", () => {
       expect(mockSignOut).toHaveBeenCalledOnce();
       // The PIN was just checked one step earlier, so the parent lands unlocked
       // rather than being asked for the same four digits twice in one gesture.
-      // The token is bound to the NEW session's id, read off its own claims.
+      // The token is bound to the NEW session's id, read out of the access
+      // token `verifyOtp` returned — and it is minted with no expiry, so
+      // quitting the browser re-locks them.
       expect(mockCookieSet).toHaveBeenCalledWith(
         PIN_COOKIE_NAME,
-        expect.any(String),
-        expect.objectContaining({ httpOnly: true }),
+        await pinTokenFor(PARENT_A, "new-session"),
+        UNLOCK_COOKIE_OPTIONS,
       );
       expect(mockCookieDelete).not.toHaveBeenCalled();
     });
@@ -618,7 +681,7 @@ describe("POST /api/auth/switch-account", () => {
       expect(mockCookieSet).toHaveBeenCalledWith(
         FAMILY_SESSION_COOKIE_NAME,
         await familyMarkerFor(PARENT_A),
-        expect.objectContaining({ httpOnly: true }),
+        FAMILY_MARKER_COOKIE_OPTIONS,
       );
     });
 
@@ -632,7 +695,7 @@ describe("POST /api/auth/switch-account", () => {
         ]),
       });
       mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
-      mockHappyPathSession();
+      mockHappyPathSession(GAMER_A2);
 
       const response = await POST(createRequest({ userId: GAMER_A2, pin: "1234" }));
 
@@ -649,7 +712,7 @@ describe("POST /api/auth/switch-account", () => {
       expect(mockCookieSet).toHaveBeenCalledWith(
         FAMILY_SESSION_COOKIE_NAME,
         await familyMarkerFor(GAMER_A2),
-        expect.objectContaining({ httpOnly: true }),
+        FAMILY_MARKER_COOKIE_OPTIONS,
       );
     });
   });
@@ -833,6 +896,22 @@ describe("POST /api/auth/switch-account", () => {
   // -------------------------------------------------------------------------
 
   describe("session mutation failures", () => {
+    /**
+     * A gamer leaving their own account for a linked parent, PIN accepted — the
+     * shape every "what if the new session is wrong" case below starts from,
+     * because it is the one switch that mints BOTH cookies and so has the most
+     * to lose from a session id read wrongly.
+     */
+    function switchToParentOnAValidPin() {
+      mockAuthenticated("gamer", GAMER_A1, "family");
+      setupAdminFrom({
+        target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
+        parentGamerBuilder: linkLookupWithParents(true, [PARENT_A]),
+      });
+      mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
+      mockHappyPathSession(PARENT_A);
+    }
+
     it("returns 500 when generateLink fails — does NOT sign out the caller", async () => {
       mockAuthenticated("customer", PARENT_A);
       setupAdminFrom({
@@ -903,14 +982,11 @@ describe("POST /api/auth/switch-account", () => {
     });
 
     it("leaves the parent locked when the new session carries no session_id", async () => {
-      mockAuthenticated("gamer", GAMER_A1, "family");
-      setupAdminFrom({
-        target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
-        parentGamerBuilder: linkLookupWithParents(true, [PARENT_A]),
+      switchToParentOnAValidPin();
+      mockVerifyOtp.mockResolvedValue({
+        data: { session: { access_token: accessTokenFor({ sub: PARENT_A }) } },
+        error: null,
       });
-      mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
-      mockHappyPathSession();
-      mockGetClaims.mockResolvedValue({ data: { claims: {} }, error: null });
 
       const response = await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
 
@@ -922,6 +998,84 @@ describe("POST /api/auth/switch-account", () => {
       expect(mockCookieSet).not.toHaveBeenCalled();
       expect(mockCookieDelete).toHaveBeenCalledWith(PIN_COOKIE_NAME);
       expect(mockCookieDelete).toHaveBeenCalledWith(FAMILY_SESSION_COOKIE_NAME);
+    });
+
+    it("binds both cookies to the id in the token verifyOtp returned, without asking for claims", async () => {
+      switchToParentOnAValidPin();
+      // A different id from the one the mocked `getClaims` would answer, so the
+      // assertions below can only pass by reading the token.
+      mockVerifyOtp.mockResolvedValue({
+        data: {
+          session: {
+            access_token: accessTokenFor({
+              sub: PARENT_A,
+              session_id: "session-from-the-token",
+            }),
+          },
+        },
+        error: null,
+      });
+
+      const response = await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
+
+      expect(response.status).toBe(200);
+      expect(mockCookieSet).toHaveBeenCalledWith(
+        FAMILY_SESSION_COOKIE_NAME,
+        await familyMarkerFor(PARENT_A, "session-from-the-token"),
+        FAMILY_MARKER_COOKIE_OPTIONS,
+      );
+      // The point of reading the token rather than the claims: `getClaims`
+      // verifies against the project's JWKS, which can reach the network. A
+      // transient failure there, in the window after `verifyOtp` has already
+      // written the target's cookies, would silently hand a switched-in child
+      // an unmarked session — the switch succeeds and the classification is
+      // lost. Nothing in this window may leave the process.
+      expect(mockGetClaims).not.toHaveBeenCalled();
+    });
+
+    it("still succeeds, unmarked, when the new session's token cannot be read", async () => {
+      switchToParentOnAValidPin();
+      mockVerifyOtp.mockResolvedValue({
+        data: { session: { access_token: "not-a-jwt" } },
+        error: null,
+      });
+
+      const response = await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
+
+      // A 500 here would be the worst of both: the switch has already happened
+      // (the target's cookies are in the store), so the caller would be handed
+      // an error for a session they are now holding. The same landing as a
+      // missing session id — unmarked, locked, and therefore on the stronger
+      // gate — is the honest answer.
+      expect(response.status).toBe(200);
+      expect(mockCookieSet).not.toHaveBeenCalled();
+      expect(mockCookieDelete).toHaveBeenCalledWith(FAMILY_SESSION_COOKIE_NAME);
+    });
+
+    it("refuses when the new session names an account other than the target", async () => {
+      switchToParentOnAValidPin();
+      mockVerifyOtp.mockResolvedValue({
+        data: {
+          session: {
+            access_token: accessTokenFor({
+              sub: GAMER_B1,
+              session_id: "new-session",
+            }),
+          },
+        },
+        error: null,
+      });
+
+      const response = await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
+
+      // Both cookies bind the target we resolved while the id binding them comes
+      // from the new session's token, so the two are only one binding if the
+      // token names that same account. Unreachable in practice, and refused
+      // rather than papered over by binding whatever `sub` came back: a marker
+      // written against a mismatch would say a session belongs to somebody it
+      // does not.
+      expect(response.status).toBe(500);
+      expect(mockCookieSet).not.toHaveBeenCalled();
     });
   });
 

@@ -276,7 +276,7 @@ async function switchByOtp(args: {
   await supabase.auth.signOut();
 
   const freshClient = await createClient();
-  const { error: verifyError } = await freshClient.auth.verifyOtp({
+  const { data: verified, error: verifyError } = await freshClient.auth.verifyOtp({
     email: targetEmail,
     token: otp,
     type: "magiclink",
@@ -291,10 +291,42 @@ async function switchByOtp(args: {
 
   // Both cookies are bound to (userId, session_id), so neither can be minted
   // until the new session exists — which is why this is here and not in the PIN
-  // routes. The session id comes from the new client's own claims rather than
-  // from anything the request carried.
-  const { data: claimsData } = await freshClient.auth.getClaims();
-  const sessionId = claimsData?.claims.session_id;
+  // routes.
+  //
+  // **From here to the mint, nothing may throw and nothing may leave the
+  // process.** `verifyOtp` has already written the target's cookies into the
+  // mutable store, so this window is one where the switch has happened: a throw
+  // in it returns a 500 carrying a successful but unmarked switch, and a
+  // network call in it can fail transiently and silently classify a switched-in
+  // child as `own`. That rules out asking the client for its claims — that is a
+  // JWKS-verifying call — so the id is read straight out of the access token
+  // the call above just handed back, decoded and not verified. Verification
+  // would be theatre: we minted this token one line ago and it is the token
+  // this very response is about to set.
+  let newSession: { sub: string; sessionId: string } | undefined;
+  try {
+    const claims = decodeAccessTokenPayload(verified.session?.access_token);
+    if (typeof claims?.sub === "string" && typeof claims.session_id === "string") {
+      newSession = { sub: claims.sub, sessionId: claims.session_id };
+    }
+  } catch (error) {
+    console.error("switch-account: new session token could not be read", error);
+  }
+
+  // Both cookies bind `target.id`, while the id binding them comes from the new
+  // session's own token — so the two are only one binding if the token names the
+  // account we resolved. Asserted rather than taken from the token: binding to
+  // whatever `sub` came back would make a mismatch invisible, and a session
+  // belonging to somebody other than the target is not a session to hand a
+  // marker to at all.
+  if (newSession && newSession.sub !== target.id) {
+    console.error(
+      "switch-account: the new session names an account other than the target",
+    );
+    throw new ApiError("could not establish the target session", 500);
+  }
+
+  const sessionId = newSession?.sessionId;
 
   if (sessionId) {
     cookieStore.set(
@@ -305,7 +337,9 @@ async function switchByOtp(args: {
   } else {
     // Unmarked reads as `own`, which is the stronger gate: whoever holds this
     // session is asked for a password rather than four digits. Worse for a
-    // family that then cannot leave the account, never weaker.
+    // family that then cannot leave the account, never weaker. This is where a
+    // token we could not read lands too, which is why reading it is allowed to
+    // fail but not to throw.
     console.error("switch-account: new session carried no session_id");
     cookieStore.delete(FAMILY_SESSION_COOKIE_NAME);
   }
@@ -436,6 +470,45 @@ async function switchByPassword(args: {
   cookieStore.delete(FAMILY_SESSION_COOKIE_NAME);
 
   return { success: true };
+}
+
+/**
+ * The claims carried by an access token, read without verifying the signature.
+ *
+ * **Not verifying is the point, not a shortcut.** The one call site hands this
+ * the token GoTrue returned to *this* request, for the session this response is
+ * about to hand the browser — there is no third party in between whose word we
+ * would be taking. Verifying it would mean a JWKS-backed check inside the
+ * window between the switch happening and the marker being minted, where a
+ * transient network failure would silently downgrade a switched-in child's
+ * classification. Nothing here decides an authorization: the caller asserts the
+ * token's `sub` against the target it already resolved rather than trusting it.
+ *
+ * Throws on a malformed token (bad base64, bad JSON) — the caller catches, and
+ * treats an unreadable token exactly as it treats a missing session id. Written
+ * inline rather than pulled from a JWT library: this is a base64url decode and
+ * a `JSON.parse`, and a dependency whose reason for existing is signature
+ * verification would invite somebody to turn that on.
+ */
+function decodeAccessTokenPayload(
+  accessToken: string | undefined,
+): Record<string, unknown> | undefined {
+  const payload = accessToken?.split(".")[1];
+  if (!payload) return undefined;
+
+  const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+  // atob yields one char per byte; the claims are UTF-8, so re-decode them as
+  // such rather than reading the bytes as latin1.
+  const bytes = Uint8Array.from(atob(padded), (char) => char.charCodeAt(0));
+  const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+
+  return isClaimsObject(parsed) ? parsed : undefined;
+}
+
+/** A decoded payload we can read claims off at all — a JSON object, not a scalar. */
+function isClaimsObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 /**
