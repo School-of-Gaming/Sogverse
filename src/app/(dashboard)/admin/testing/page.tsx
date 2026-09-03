@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { CalendarFeedCard } from "@/components/admin/testing/calendar-feed/calendar-feed-card";
+import { CalendarInvitationsCard } from "@/components/admin/testing/calendar-invitations/calendar-invitations-card";
 import { useAuth } from "@/providers";
 import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
@@ -513,6 +514,8 @@ export default function TestingPage() {
       </Card>
 
       <CalendarFeedCard />
+
+      <CalendarInvitationsCard />
 
       {/* The preview is a dialog rather than a second panel under the form:
           the mail is 720px of reading and the form is what the page is for, so

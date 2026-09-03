@@ -1196,6 +1196,55 @@
         "resetSandbox": "Palauta oletus",
         "resetConfirmTitle": "Palautetaanko hiekkalaatikkoperhe oletukseen?",
         "resetConfirmBody": "Oletusperhe palaa ja muokkauksesi hylätään."
+      },
+      "calendarInvitations": {
+        "title": "Kalenterikutsut",
+        "description": "Lähetä yksi hiekkalaatikkopaikka oikeana kalenterikutsuna, päivitä se ja peru se, ja katso mitä kalenterisovellus tekee kullakin kerralla.",
+        "participationHeading": "Paikka",
+        "participationLabel": "Mikä paikka",
+        "participationHint": "Näiden paikkojen perhettä muokataan yllä olevassa kalenterisyötekortissa; kutsut lähetetään sen osallistumisille.",
+        "noParticipations": "Hiekkalaatikkoperheellä ei ole vielä aktiivisia paikkoja.",
+        "seatLine": "{gamer} – {product}",
+        "recipientHeading": "Vastaanottaja",
+        "recipientLabel": "Lähetä osoitteeseen",
+        "recipientPlaceholder": "sinä@esimerkki.fi",
+        "optionsHeading": "Asetukset",
+        "shapeLabel": "Muoto",
+        "shapeOptions": {
+          "series": "Yksi viikkosääntö vuoroa kohti",
+          "occurrences": "Yksi tapahtuma kertaa kohti"
+        },
+        "shapeHint": "Pidä muoto samana kutsun ja sen päivityksen välillä, tai sovellus poistaa vanhan merkinnän ja luo uuden.",
+        "reminderLabel": "Muistutus",
+        "reminderOptions": {
+          "15": "15 minuuttia ennen",
+          "60": "Tunti ennen",
+          "1440": "Vuorokausi ennen",
+          "none": "Ei muistutusta"
+        },
+        "methodLabel": "Kokemus",
+        "methodOptions": {
+          "request": "Kutsu, johon vastataan",
+          "publish": "Lisää kalenteriin, ei vastausta"
+        },
+        "statusHeading": "Tila",
+        "statusNone": "Ei vielä lähetetty.",
+        "statusSent": "Kutsu lähetetty osoitteeseen {recipient}, versio {sequence}, {when}.",
+        "statusCancelled": "Peruttu {when}. Uusi lähetys aloittaa uuden kalenterimerkinnän.",
+        "preview": "Esikatselu",
+        "send": "Lähetä kutsu",
+        "sendUpdate": "Lähetä päivitys",
+        "sendCancellation": "Lähetä peruutus",
+        "working": "Käsitellään",
+        "confirmCancelTitle": "Lähetetäänkö peruutus?",
+        "confirmCancelDescription": "Tämä lähettää peruutuksen valitusta paikasta. Merkintä katoaa vastaanottajan kalenterista, ja seuraava lähetys aloittaa uuden merkinnän.",
+        "previewedNotSent": "Muodostettu. Mitään ei lähetetty.",
+        "sentSuccess": "Lähetetty. Viestin tunnus {messageId}.",
+        "smtpNotConfigured": "Postivälitystä ei ole määritetty. Aseta BREVO_SMTP_LOGIN ja BREVO_SMTP_KEY ja yritä uudelleen.",
+        "rawHeading": "Viesti ja sen kalenteriosa",
+        "calendarPartLabel": "Kalenteriosa",
+        "mailLabel": "Muodostettu viesti",
+        "subjectLabel": "Aihe"
       }
     },
     "whatsapp": {
@@ -1814,6 +1863,25 @@
     "typeLine": "Tyyppi: {type}",
     "languageLine": "Kieli: {language}",
     "durationLine": "Kesto: {minutes} minuuttia"
+  },
+  "calendarInvitation": {
+    "greeting": "Hei {name},",
+    "subject": {
+      "send": "Kalenterikutsu: {product} pelaajalle {gamer}",
+      "update": "Aikataulu muuttui: {product} pelaajalle {gamer}",
+      "cancel": "Peruttu: {product} pelaajalle {gamer}"
+    },
+    "heading": {
+      "send": "Kalenterikutsusi",
+      "update": "Aikataulu on muuttunut",
+      "cancel": "Tämä kalenterimerkintä on peruttu"
+    },
+    "body": {
+      "send": "Pelaajan {gamer} kerrat kohteessa {product} ovat tämän viestin liitteenä kalenterikutsuna. Kun hyväksyt kutsun, kerrat ilmestyvät kalenteriisi.",
+      "update": "Kohteen {product} aikataulu on muuttunut. Tämän viestin liitteenä oleva kutsu korvaa merkinnän, joka sinulla jo on pelaajalle {gamer} — mitään ei tarvitse poistaa ensin.",
+      "cancel": "Pelaajalla {gamer} ei ole enää paikkaa kohteessa {product}. Tämän viestin liitteenä oleva peruutus poistaa merkinnän kalenteristasi."
+    },
+    "updatesNote": "Jos aikataulu muuttuu myöhemmin, School of Gaming lähettää päivityksen ja tämä sama merkintä muuttuu kalenterissasi. Sinun ei tarvitse koskaan päätellä, kumpi kahdesta merkinnästä on ajan tasalla."
   },
   "activityCard": {
     "endedOn": "Päättyi {date}",

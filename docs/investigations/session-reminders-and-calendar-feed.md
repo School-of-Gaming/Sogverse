@@ -183,6 +183,15 @@ at real clients rather than by reasoning about them.
   states `METHOD:PUBLISH` at all (some readers treat a document that does as an
   iTIP message rather than as a subscription).
 
+**A second design sits beside it on the same page.** The card below the feed card mails
+one seat as a real calendar *invitation* — an iTIP `REQUEST`, then an update at a higher
+sequence, then a cancellation — so the two designs can be tried against the same clients
+with the same sandbox family. It is the comparison this investigation's open questions
+need, not a replacement for anything here: an invitation asks a family to accept
+something and requires us to remember what we have already said, where a feed asks
+nothing and remembers nothing. `calendar-invitations.md` records what was verified about
+it, what it lets an owner compare, and what a real build of it would need.
+
 ### Handing a feed to a calendar app
 
 Three vendor gestures, and none of them takes a plain `https://` address. The

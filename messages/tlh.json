@@ -1244,6 +1244,55 @@
         "resetSandbox": "yIchoHHa’",
         "resetConfirmTitle": "ngeb qorDu’ DachoHHa’’a’?",
         "resetConfirmBody": "cheghpu’ ngeb qorDu’, ’ej chIllu’ DachoHpu’bogh."
+      },
+      "calendarInvitations": {
+        "title": "jajmey rI’mey",
+        "description": "wa’ ngeb quS jajmey rI’ yIngeH, ghIq yIchoH ’ej yIqIl; jajmey De’wI’ Qu’ yIbej.",
+        "participationHeading": "quS",
+        "participationLabel": "nuq quS",
+        "participationHint": "Dung jajmey teywI’ ghItlhDaq qorDu’ DachoH; quSmeyDaj rI’mey ngeHlu’.",
+        "noParticipations": "quSmey vumtaHbogh ghajbe’ ngeb qorDu’.",
+        "seatLine": "{gamer} – {product}",
+        "recipientHeading": "HevwI’",
+        "recipientLabel": "ngeHmeH Daq",
+        "recipientPlaceholder": "SoH@ngebDaq.gg",
+        "optionsHeading": "wIvmey",
+        "shapeLabel": "Segh",
+        "shapeOptions": {
+          "series": "wa’ Hogh chut, vuD Hoch",
+          "occurrences": "wa’ wanI’, qaSbogh Hoch"
+        },
+        "shapeHint": "rI’ choH je Segh yIrurmoH; Segh choHlu’chugh, ghItlh ngo’ Qaw’ De’wI’ ’ej chu’ chenmoH.",
+        "reminderLabel": "qawmoHwI’",
+        "reminderOptions": {
+          "15": "15 tup nIH",
+          "60": "wa’ rep nIH",
+          "1440": "wa’ jaj nIH",
+          "none": "qawmoHwI’ pagh"
+        },
+        "methodLabel": "wanI’",
+        "methodOptions": {
+          "request": "rI’, jang HevwI’",
+          "publish": "jajmeyDaq chel neH, jangbe’"
+        },
+        "statusHeading": "Dotlh",
+        "statusNone": "ngeHbe’lu’ba’.",
+        "statusSent": "{recipient}Daq ngeHlu’ rI’, choH {sequence}, {when}.",
+        "statusCancelled": "{when} qIllu’. ngeH latlh chu’ ghItlh chenmoH.",
+        "preview": "bejwI’",
+        "send": "rI’ yIngeH",
+        "sendUpdate": "choH yIngeH",
+        "sendCancellation": "qIl yIngeH",
+        "working": "vumtaH",
+        "confirmCancelTitle": "qIl DangeH’a’?",
+        "confirmCancelDescription": "wIvbogh quS qIl ngeHlu’. HevwI’ jajmeyvo’ ngab ghItlh, ’ej ngeH latlh chu’ ghItlh chenmoH.",
+        "previewedNotSent": "chenmoHlu’. ngeHbe’lu’.",
+        "sentSuccess": "ngeHlu’. QIn per {messageId}.",
+        "smtpNotConfigured": "QIn ngeHwI’ nabbe’lu’. BREVO_SMTP_LOGIN BREVO_SMTP_KEY je yIchel, ghIq yInID.",
+        "rawHeading": "QIn jajmey Hom je",
+        "calendarPartLabel": "jajmey Hom",
+        "mailLabel": "chenmoHlu’bogh QIn",
+        "subjectLabel": "ngoDvam"
       }
     },
     "whatsapp": {
@@ -1858,6 +1907,25 @@
     "typeLine": "Segh: {type}",
     "languageLine": "Hol: {language}",
     "durationLine": "poH: {minutes} tup"
+  },
+  "calendarInvitation": {
+    "greeting": "nuqneH, {name}!",
+    "subject": {
+      "send": "jajmey rI’: {gamer} {product}Daj",
+      "update": "choHlu’pu’ poH: {gamer} {product}Daj",
+      "cancel": "qIlpu’: {gamer} {product}Daj"
+    },
+    "heading": {
+      "send": "jajmey rI’lIj",
+      "update": "choHpu’ poH",
+      "cancel": "qIlpu’ jajmey ghItlh"
+    },
+    "body": {
+      "send": "{product} qaStaHvIS {gamer} SuvtaHghachmey lI’lu’; jajmey rI’ ’oH. DalajDI’ jajmeylIjDaq chomey.",
+      "update": "choHpu’ {product} poH. jajmey rI’ chu’ lI’lu’; {gamer} ghItlh qaSpu’bogh chIlmoHbe’ ’ach choHmoH. wa’Dich Qaw’nISbe’.",
+      "cancel": "{product}Daq quS ghajbe’choH {gamer}. qIlmeH ghItlh lI’lu’; jajmeylIjvo’ teq ghItlh."
+    },
+    "updatesNote": "poH choHlu’chugh, choH ngeH School of Gaming, ’ej jajmeylIjDaq choH ghItlhvam. cha’ ghItlhmey Sammo’ bIQubnISbe’."
   },
   "activityCard": {
     "endedOn": "{date} rIntaH",

@@ -110,14 +110,79 @@ describe("the seeded sandbox family", () => {
 
   /**
    * The fixture ids are literals rather than generated, so the same person
-   * keeps the same identity across reloads and screenshots. Two calls a moment
-   * apart proving equal is what would fail the day somebody reaches for a UUID
-   * generator at module load.
+   * keeps the same identity across reloads and screenshots — and an identicon
+   * derived from those bytes keeps the same face.
+   *
+   * Pinned against copies of the source's own literals rather than against a
+   * second call: two calls in one process agree perfectly well when a UUID
+   * generator runs once at module load, which is the exact mistake this test
+   * exists to catch. Changing a seeded id is therefore a deliberate edit in two
+   * places, which is the intended cost.
    */
-  it("hands out the same ids every time", () => {
-    expect(defaultSandboxDefinition(NOW).gamers).toEqual(
-      defaultSandboxDefinition(NOW).gamers,
-    );
+  it("hands out the ids its source pins, not generated ones", () => {
+    const seeded = defaultSandboxDefinition(NOW);
+    expect(seeded.gamers.map((gamer) => gamer.id)).toEqual([
+      "0f2b8a1c-6d33-4e0a-9c15-2a7f4b6d1e83",
+      "7c41d9e2-58b0-4a6f-8d23-91e0c5b74f6a",
+    ]);
+    expect(seeded.products.map((product) => product.id)).toEqual([
+      "b3e07a54-1f92-4c88-a0d6-3e5b91427cd1",
+      "5a9c2f18-84e6-4b31-9f7a-c26d08b53e94",
+      "e81f4d67-2c05-49ba-b3e8-70a19f6c2d45",
+    ]);
+    expect(seeded.participations.map((seat) => seat.id)).toEqual([
+      "36d5b0c9-7e14-4af2-8b60-95c3e270d18f",
+      "9b6e73a0-4d28-4157-ae93-1c80f5b62a37",
+      "c40a8e15-93b7-4d6c-82f1-5e7a06d34b92",
+      "1e75c3b8-0a49-4e2d-97f6-84b1d05a7c63",
+    ]);
+  });
+});
+
+describe("the sandbox schema", () => {
+  it("refuses a date that is shaped right but is not a real day", () => {
+    const document = definition();
+    document.products[0].startDate = "2026-13-45";
+    const parsed = sandboxDefinitionSchema.safeParse(document);
+    expect(parsed.success).toBe(false);
+  });
+
+  it("accepts a leap day in a leap year", () => {
+    const document = definition();
+    document.products[0].startDate = "2028-02-29";
+    expect(sandboxDefinitionSchema.safeParse(document).success).toBe(true);
+  });
+
+  /**
+   * Two seats sharing an id become two VEVENTs under one UID, and a calendar
+   * client resolves that by dropping one — so the document is refused at the
+   * save rather than the session vanishing where nobody can see it.
+   */
+  it("refuses a duplicate gamer id", () => {
+    const document = definition();
+    document.gamers.push({ ...document.gamers[0] });
+    expect(sandboxDefinitionSchema.safeParse(document).success).toBe(false);
+  });
+
+  it("refuses a duplicate product id", () => {
+    const document = definition();
+    document.products.push({ ...document.products[0] });
+    expect(sandboxDefinitionSchema.safeParse(document).success).toBe(false);
+  });
+
+  it("refuses a duplicate seat id", () => {
+    const document = definition();
+    document.participations.push({ ...document.participations[0] });
+    expect(sandboxDefinitionSchema.safeParse(document).success).toBe(false);
+  });
+
+  it("accepts the same id in two different lists", () => {
+    // Nothing looks a gamer up in the product map, so the ids are three
+    // independent namespaces and a collision across them is not a defect.
+    const document = definition();
+    document.products[0].id = document.gamers[0].id;
+    document.participations[0].productId = document.gamers[0].id;
+    expect(sandboxDefinitionSchema.safeParse(document).success).toBe(true);
   });
 });
 

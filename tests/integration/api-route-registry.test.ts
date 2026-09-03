@@ -154,6 +154,7 @@ const TESTS = {
   billingPortal: "tests/integration/api/billing-portal.test.ts",
   callback: "tests/integration/auth/callback.test.ts",
   calendarFeed: "tests/integration/api/calendar-feed.test.ts",
+  calendarInvitations: "tests/integration/api/calendar-invitations.test.ts",
   chatImageRead: "tests/integration/api/chat-image-read.test.ts",
   chatImageUpload: "tests/integration/api/chat-image-upload.test.ts",
   checkout: "tests/integration/api/checkout-products-create.test.ts",
@@ -253,6 +254,23 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "calendarFeedSandboxActionBody" },
         test: TESTS.calendarFeed,
+      },
+    },
+  },
+
+  // The invitation half of the same exploration: it renders one sandbox seat as
+  // an iTIP message and mails it over Brevo's SMTP relay. Same client discipline
+  // as the sandbox route it reads and writes through — the caller's own session,
+  // the table's `is_admin() AND owner_id = auth.uid()` policy behind it, no
+  // service-role import. Every address it can reach is one an admin typed, and
+  // every name it can send is invented, because the seats come from the sandbox
+  // document rather than from any real family.
+  "src/app/api/admin/calendar-invitations/route.ts": {
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "calendarInvitationBody" },
+        test: TESTS.calendarInvitations,
       },
     },
   },

@@ -137,14 +137,16 @@ export default async function RootLayout({
   const detectedLocale = toDetectedLocale(
     requestHeaders.get("accept-language"),
   );
-  // Strip server-only namespaces (email, metadata, calendarFeed) from the
-  // client bundle. Server components access full messages via
-  // getTranslations() directly; `calendarFeed` is written into an `.ics`
-  // document by a route handler and reaches no screen this app renders.
+  // Strip server-only namespaces (email, metadata, calendarFeed,
+  // calendarInvitation) from the client bundle. Server components access full
+  // messages via getTranslations() directly; `calendarFeed` is written into an
+  // `.ics` document by a route handler and `calendarInvitation` into the mail
+  // that carries one, so neither reaches a screen this app renders.
   const {
     email: _email,
     metadata: _metadata,
     calendarFeed: _calendarFeed,
+    calendarInvitation: _calendarInvitation,
     ...clientMessages
   } = (await getMessages()) as Record<string, unknown>;
 

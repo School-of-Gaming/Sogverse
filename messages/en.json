@@ -1196,6 +1196,55 @@
         "resetSandbox": "Reset to default",
         "resetConfirmTitle": "Reset the sandbox family?",
         "resetConfirmBody": "The seeded family comes back and your edits are discarded."
+      },
+      "calendarInvitations": {
+        "title": "Calendar invitations",
+        "description": "Mail one sandbox seat as a real calendar invitation, then update it and cancel it, and see what a calendar client does with each.",
+        "participationHeading": "Seat",
+        "participationLabel": "Which seat",
+        "participationHint": "The family behind these seats is edited in the calendar feed card above; invitations are sent for its participations.",
+        "noParticipations": "The sandbox family holds no active seats yet.",
+        "seatLine": "{gamer} – {product}",
+        "recipientHeading": "Recipient",
+        "recipientLabel": "Send to",
+        "recipientPlaceholder": "you@example.com",
+        "optionsHeading": "Options",
+        "shapeLabel": "Shape",
+        "shapeOptions": {
+          "series": "One weekly rule per slot",
+          "occurrences": "One event per session"
+        },
+        "shapeHint": "Keep the shape the same between an invitation and its update, or the client deletes the old entry and creates a new one.",
+        "reminderLabel": "Reminder",
+        "reminderOptions": {
+          "15": "15 minutes before",
+          "60": "One hour before",
+          "1440": "One day before",
+          "none": "No reminder"
+        },
+        "methodLabel": "Experience",
+        "methodOptions": {
+          "request": "Invitation with an RSVP",
+          "publish": "Add to calendar, no RSVP"
+        },
+        "statusHeading": "Status",
+        "statusNone": "Not sent yet.",
+        "statusSent": "Invitation sent to {recipient}, revision {sequence}, at {when}.",
+        "statusCancelled": "Cancelled at {when}. Sending again starts a new calendar entry.",
+        "preview": "Preview",
+        "send": "Send invitation",
+        "sendUpdate": "Send update",
+        "sendCancellation": "Send cancellation",
+        "working": "Working",
+        "confirmCancelTitle": "Send a cancellation?",
+        "confirmCancelDescription": "This mails a cancellation for the selected seat. The entry disappears from the recipient’s calendar, and sending again afterwards starts a new one.",
+        "previewedNotSent": "Rendered. Nothing was sent.",
+        "sentSuccess": "Sent. Message id {messageId}.",
+        "smtpNotConfigured": "The mail relay is not set up. Set BREVO_SMTP_LOGIN and BREVO_SMTP_KEY, then try again.",
+        "rawHeading": "The mail and its calendar part",
+        "calendarPartLabel": "Calendar part",
+        "mailLabel": "Rendered mail",
+        "subjectLabel": "Subject"
       }
     },
     "whatsapp": {
@@ -1814,6 +1863,25 @@
     "typeLine": "Type: {type}",
     "languageLine": "Language: {language}",
     "durationLine": "Duration: {minutes} minutes"
+  },
+  "calendarInvitation": {
+    "greeting": "Hi {name},",
+    "subject": {
+      "send": "Calendar invitation: {product} for {gamer}",
+      "update": "Updated schedule: {product} for {gamer}",
+      "cancel": "Cancelled: {product} for {gamer}"
+    },
+    "heading": {
+      "send": "Your calendar invitation",
+      "update": "The schedule has changed",
+      "cancel": "This calendar entry has been cancelled"
+    },
+    "body": {
+      "send": "{gamer}'s sessions for {product} are attached to this mail as a calendar invitation. Accept it and they appear in your calendar.",
+      "update": "The schedule for {product} has changed. The invitation attached to this mail replaces the entry you already have for {gamer} — there is nothing to delete first.",
+      "cancel": "{gamer} no longer has a seat on {product}. The cancellation attached to this mail removes the entry from your calendar."
+    },
+    "updatesNote": "If the schedule changes later, School of Gaming sends an update and this same entry changes in your calendar. You will never have to work out which of two entries is the current one."
   },
   "activityCard": {
     "endedOn": "Ended {date}",

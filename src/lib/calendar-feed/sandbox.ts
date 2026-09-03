@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import { sandboxInvitationsSchema } from "@/lib/calendar-invitations/bookkeeping";
 import type { FeedSeat } from "./events";
 
 /**
@@ -60,8 +61,29 @@ export const SANDBOX_PARTICIPATION_STATUSES = ["active", "waitlisted"] as const;
 
 const shortText = z.string().trim().min(1).max(SANDBOX_LIMITS.nameLength);
 const uuid = z.string().uuid();
-/** A bare calendar date, the shape `products.start_date` carries. */
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+/**
+ * A bare calendar date, the shape `products.start_date` carries.
+ *
+ * The regex is only the shape, so the refine is what makes it a *date*: a round
+ * trip through UTC midnight rejects `2026-13-45` and `2026-02-30` alike — an
+ * impossible field makes the string unparseable, and an engine that normalized
+ * it instead would print a different day back. Without the refine such a value
+ * saves fine and then throws inside the occurrence walk, where the caller is a
+ * calendar client that can only report that the subscription broke.
+ */
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine(isRealCalendarDate, "Not a real calendar date");
+
+function isRealCalendarDate(value: string): boolean {
+  const instant = new Date(`${value}T00:00:00Z`);
+  // `2026-13-45` does not parse at all, so it is `Invalid Date` and printing it
+  // back would throw rather than answer — checked first for that reason.
+  if (Number.isNaN(instant.getTime())) return false;
+  return instant.toISOString().slice(0, 10) === value;
+}
+
 /** A 24-hour wall clock, the shape the slot editor writes. */
 const wallClock = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 
@@ -105,18 +127,59 @@ export const sandboxParticipationSchema = z.object({
   cancelsAt: z.string().datetime({ offset: true }).nullable(),
 });
 
-export const sandboxDefinitionSchema = z.object({
-  parent: z.object({
-    firstName: shortText,
-    /** The locale the feed's own words are written in, as a profile's would be. */
-    locale: z.enum(SUPPORTED_LOCALES),
-  }),
-  gamers: z.array(sandboxGamerSchema).max(SANDBOX_LIMITS.gamers),
-  products: z.array(sandboxProductSchema).max(SANDBOX_LIMITS.products),
-  participations: z
-    .array(sandboxParticipationSchema)
-    .max(SANDBOX_LIMITS.participations),
-});
+/**
+ * Flags a repeated id inside one list, on the entry that repeats it.
+ *
+ * Ids are what every lookup in this document is keyed by, and a duplicate seat
+ * id is the sharpest of the three: two seats sharing an id become two `VEVENT`s
+ * under one `UID`, which a calendar client resolves by overwriting one with the
+ * other — so a session silently disappears rather than failing anywhere a
+ * reader could see it.
+ */
+function rejectDuplicateIds(
+  entries: readonly { id: string }[],
+  key: "gamers" | "products" | "participations",
+  context: z.RefinementCtx,
+) {
+  const seen = new Set<string>();
+  entries.forEach((entry, index) => {
+    if (seen.has(entry.id)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [key, index, "id"],
+        message: "This id is already used by another entry in the same list",
+      });
+    }
+    seen.add(entry.id);
+  });
+}
+
+export const sandboxDefinitionSchema = z
+  .object({
+    parent: z.object({
+      firstName: shortText,
+      /** The locale the feed's own words are written in, as a profile's would be. */
+      locale: z.enum(SUPPORTED_LOCALES),
+    }),
+    gamers: z.array(sandboxGamerSchema).max(SANDBOX_LIMITS.gamers),
+    products: z.array(sandboxProductSchema).max(SANDBOX_LIMITS.products),
+    participations: z
+      .array(sandboxParticipationSchema)
+      .max(SANDBOX_LIMITS.participations),
+    /**
+     * What the calendar-invitation tool has already said about these seats,
+     * keyed by participation id. Owned by `src/lib/calendar-invitations/`,
+     * which is where the shape and the transitions live; it rides in this
+     * document because that module has no row of its own. Optional, so a
+     * document written before that tool existed still parses.
+     */
+    invitations: sandboxInvitationsSchema.optional(),
+  })
+  .superRefine((document, context) => {
+    rejectDuplicateIds(document.gamers, "gamers", context);
+    rejectDuplicateIds(document.products, "products", context);
+    rejectDuplicateIds(document.participations, "participations", context);
+  });
 
 export type SandboxDefinition = z.infer<typeof sandboxDefinitionSchema>;
 export type SandboxGamer = z.infer<typeof sandboxGamerSchema>;

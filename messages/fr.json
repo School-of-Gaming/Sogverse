@@ -1196,6 +1196,55 @@
         "resetSandbox": "Rétablir la valeur par défaut",
         "resetConfirmTitle": "Rétablir la famille de test ?",
         "resetConfirmBody": "La famille par défaut revient et vos modifications sont perdues."
+      },
+      "calendarInvitations": {
+        "title": "Invitations au calendrier",
+        "description": "Envoyez une place de test comme véritable invitation, puis mettez-la à jour et annulez-la, et observez ce qu’une application de calendrier fait de chacune.",
+        "participationHeading": "Place",
+        "participationLabel": "Quelle place",
+        "participationHint": "La famille derrière ces places se modifie dans la carte du flux de calendrier ci-dessus ; les invitations sont envoyées pour ses participations.",
+        "noParticipations": "La famille de test n’a encore aucune place active.",
+        "seatLine": "{gamer} – {product}",
+        "recipientHeading": "Destinataire",
+        "recipientLabel": "Envoyer à",
+        "recipientPlaceholder": "vous@exemple.fr",
+        "optionsHeading": "Options",
+        "shapeLabel": "Forme",
+        "shapeOptions": {
+          "series": "Une règle hebdomadaire par créneau",
+          "occurrences": "Un événement par séance"
+        },
+        "shapeHint": "Gardez la même forme entre une invitation et sa mise à jour, sinon l’application supprime l’ancienne entrée et en crée une nouvelle.",
+        "reminderLabel": "Rappel",
+        "reminderOptions": {
+          "15": "15 minutes avant",
+          "60": "Une heure avant",
+          "1440": "Un jour avant",
+          "none": "Aucun rappel"
+        },
+        "methodLabel": "Expérience",
+        "methodOptions": {
+          "request": "Invitation avec réponse",
+          "publish": "Ajout au calendrier, sans réponse"
+        },
+        "statusHeading": "État",
+        "statusNone": "Pas encore envoyée.",
+        "statusSent": "Invitation envoyée à {recipient}, révision {sequence}, {when}.",
+        "statusCancelled": "Annulée le {when}. Un nouvel envoi crée une nouvelle entrée de calendrier.",
+        "preview": "Aperçu",
+        "send": "Envoyer l’invitation",
+        "sendUpdate": "Envoyer la mise à jour",
+        "sendCancellation": "Envoyer l’annulation",
+        "working": "En cours",
+        "confirmCancelTitle": "Envoyer une annulation ?",
+        "confirmCancelDescription": "Ceci envoie une annulation pour la place sélectionnée. L’entrée disparaît du calendrier du destinataire, et un envoi ultérieur en crée une nouvelle.",
+        "previewedNotSent": "Rendu. Rien n’a été envoyé.",
+        "sentSuccess": "Envoyé. Identifiant du message {messageId}.",
+        "smtpNotConfigured": "Le relais de messagerie n’est pas configuré. Définissez BREVO_SMTP_LOGIN et BREVO_SMTP_KEY, puis réessayez.",
+        "rawHeading": "Le message et sa partie calendrier",
+        "calendarPartLabel": "Partie calendrier",
+        "mailLabel": "Message rendu",
+        "subjectLabel": "Objet"
       }
     },
     "whatsapp": {
@@ -1814,6 +1863,25 @@
     "typeLine": "Type : {type}",
     "languageLine": "Langue : {language}",
     "durationLine": "Durée : {minutes} minutes"
+  },
+  "calendarInvitation": {
+    "greeting": "Bonjour {name},",
+    "subject": {
+      "send": "Invitation au calendrier : {product} pour {gamer}",
+      "update": "Horaire modifié : {product} pour {gamer}",
+      "cancel": "Annulé : {product} pour {gamer}"
+    },
+    "heading": {
+      "send": "Votre invitation au calendrier",
+      "update": "L’horaire a changé",
+      "cancel": "Cette entrée de calendrier a été annulée"
+    },
+    "body": {
+      "send": "Les séances de {gamer} pour {product} sont jointes à ce message sous forme d’invitation. Acceptez-la et elles apparaîtront dans votre calendrier.",
+      "update": "L’horaire de {product} a changé. L’invitation jointe à ce message remplace l’entrée que vous avez déjà pour {gamer} — il n’y a rien à supprimer avant.",
+      "cancel": "{gamer} n’a plus de place sur {product}. L’annulation jointe à ce message retire l’entrée de votre calendrier."
+    },
+    "updatesNote": "Si l’horaire change plus tard, School of Gaming envoie une mise à jour et cette même entrée change dans votre calendrier. Vous n’aurez jamais à deviner laquelle de deux entrées fait foi."
   },
   "activityCard": {
     "endedOn": "Terminé le {date}",
