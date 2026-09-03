@@ -2809,8 +2809,8 @@
           "Det finns två saker att säga ja eller nej till:"
         ],
         "bullets": [
-          "Analys – Vercels, och bara om du väljer den. Den räknar besök och mäter hur snabbt sidorna laddas. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
-          "Marknadsföring – Meta-pixeln och TikTok-pixeln, och bara om du väljer dem. De får veta att du besökt School of Gaming och om du skapade ett konto, så att Meta och TikTok kan visa dig våra annonser hos sig. Att stänga av marknadsföring raderar de cookies de lämnat i din webbläsare, men vi kan inte radera det de redan har – det kan du be dem om i dina egna Meta- och TikTok-inställningar, där Meta kallar det \"aktivitet utanför Metas teknik\"."
+          "Analys – Vercels, och bara om du väljer den. Den räknar besök, mäter hur snabbt sidorna laddas och tar emot några anonyma händelser om hur webbplatsen används: hur någon tar sig till sin My SOG och när språket byts. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
+          "Marknadsföring – Meta-pixeln och TikTok-pixeln, och bara om du väljer dem. De får veta att du besökt School of Gaming och om du skapade ett konto, så att Meta och TikTok kan visa dig våra annonser hos sig. Om du säger ja till marknadsföring och sedan skapar ett konto sätter vi en enda kortlivad egen cookie – fem minuter, inget namn, ingen adress, bara ordet \"registration\" – vars enda uppgift är att berätta för pixlarna på nästa sida att ett konto skapades. Att stänga av marknadsföring raderar de cookies pixlarna lämnat i din webbläsare, men vi kan inte radera det Meta och TikTok redan har – det kan du be dem om i dina egna inställningar där, där Meta kallar det \"aktivitet utanför Metas teknik\"."
         ]
       },
       "voice": {
@@ -3867,7 +3867,7 @@
   },
   "consent": {
     "heading": "Ett ord om cookies",
-    "body": "Analys visar oss hur många som besöker sidan och hur snabbt sidorna laddas. Den kan inte se vem du är, och den går aldrig till annonsörer. Marknadsföring berättar för Meta och TikTok att du har besökt oss och om du skapade ett konto, så att de kan visa dig våra annonser hos sig. Ingenting startar förrän du väljer, och du kan ändra dig när som helst via länken längst ner på sidan.",
+    "body": "Analys visar oss hur många som besöker sidan och hur snabbt sidorna laddas. Den kan inte se vem du är, och den går aldrig till annonsörer. Marknadsföring berättar för Meta och TikTok att du har besökt oss och om du skapade ett konto, så att de kan visa dig våra annonser hos sig. Inget utöver de nödvändiga cookiesarna startar förrän du väljer, och du kan ändra dig när som helst via länken längst ner på sidan.",
     "privacyLink": "Så använder vi cookies",
     "rejectAll": "Neka alla",
     "analyticsOnly": "Endast analys",

@@ -41,6 +41,7 @@ test.describe("Security Headers", () => {
     const connectSrc = /(?:^|; )connect-src ([^;]*)/.exec(csp)?.[1] ?? "";
 
     expect(imgSrc).toContain("https://www.facebook.com");
+    expect(imgSrc).toContain("https://analytics.tiktok.com");
     expect(connectSrc).toContain("https://www.facebook.com");
     expect(connectSrc).toContain("https://analytics.tiktok.com");
   });

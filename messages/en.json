@@ -3495,8 +3495,8 @@
           "There are two things to say yes or no to:"
         ],
         "bullets": [
-          "Analytics — Vercel’s, and only if you choose it. It counts visits and measures how quickly pages load. It can’t see who you are, and we never hand it to advertisers.",
-          "Marketing — the Meta Pixel and the TikTok Pixel, and only if you choose them. They learn that you visited School of Gaming and whether you created an account, so Meta and TikTok can show you our ads on their own platforms. Switching marketing off deletes the cookies they left in your browser, but we can’t delete what they already hold — you can ask them to, in your own Meta and TikTok settings, where Meta calls it \"activity off Meta technologies\"."
+          "Analytics — Vercel’s, and only if you choose it. It counts visits, measures how quickly pages load, and receives a few anonymous events about how the site is used: how someone reached their My SOG, when someone changes the language. It can’t see who you are, and we never hand it to advertisers.",
+          "Marketing — the Meta Pixel and the TikTok Pixel, and only if you choose them. They learn that you visited School of Gaming and whether you created an account, so Meta and TikTok can show you our ads on their own platforms. If you say yes to marketing and then create an account, we set one short-lived cookie of our own — five minutes, no name, no address, nothing but the word \"registration\" — whose only job is to tell the pixels on the next page that an account was created. Switching marketing off deletes the cookies the pixels left in your browser, but we can’t delete what Meta and TikTok already hold — you can ask them to, in your own settings there, where Meta calls it \"activity off Meta technologies\"."
         ]
       },
       "voice": {
@@ -3867,7 +3867,7 @@
   },
   "consent": {
     "heading": "A quick word about cookies",
-    "body": "Analytics tells us how many people visit and how fast pages load. It can’t see who you are, and it never goes to advertisers. Marketing tells Meta and TikTok that you visited and whether you signed up, so they can show you our ads there. Nothing runs until you choose, and you can change your mind any time from the link in our footer.",
+    "body": "Analytics tells us how many people visit and how fast pages load. It can’t see who you are, and it never goes to advertisers. Marketing tells Meta and TikTok that you visited and whether you signed up, so they can show you our ads there. Nothing beyond the necessary cookies runs until you choose, and you can change your mind any time from the link in our footer.",
     "privacyLink": "How we use cookies",
     "rejectAll": "Reject all",
     "analyticsOnly": "Analytics only",

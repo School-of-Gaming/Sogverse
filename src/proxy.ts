@@ -134,11 +134,13 @@ function buildCspHeader(nonce: string): string {
     // shown (settings, rosters, the admin panel, the voice room).
     // tr.rbxcdn.com serves the Roblox avatar bust render — the thumbnails API hands back that one
     // host for every completed render, so it is named rather than wildcarded across *.rbxcdn.com.
-    // www.facebook.com is the Meta Pixel's own transport: fbevents.js reports
-    // by requesting /tr/ as an image, and `strict-dynamic` does not reach
-    // img-src, so this is needed in production too — removing it silently stops
-    // the pixel in the one environment where it matters.
-    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com`,
+    // www.facebook.com and analytics.tiktok.com are the two pixels' own
+    // transports: fbevents.js reports by requesting /tr/ as an image, and
+    // TikTok's events.js falls back to an image beacon where fetch is
+    // unavailable or blocked. `strict-dynamic` does not reach img-src, so both
+    // are needed in production too — removing either silently stops a pixel in
+    // the one environment where it matters.
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com https://analytics.tiktok.com`,
     "font-src 'self'",
     // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting.
     // www.facebook.com and analytics.tiktok.com are where the two pixels in
@@ -178,6 +180,15 @@ export async function proxy(request: NextRequest) {
   // profile-creation trigger both re-sanitise regardless), but this is the
   // difference between "the value always came through our own sanitiser" being
   // true and merely being intended.
+  //
+  // **A value over the byte budget is dropped, not truncated**, and the budget
+  // lives in the module with the rest of the rules — `serialiseUtm` answers
+  // null past `UTM_HEADER_MAX_LENGTH`, so it arrives here as the same "nothing
+  // to send" the no-attribution case produces and needs no branch of its own.
+  // The point of enforcing it at all is that a header a stranger controls
+  // through the query string must not be able to push a request past a hop's
+  // own per-header ceiling: that turns into a 502 nobody chose, where dropping
+  // the attribution costs one visit's marketing data.
   //
   // This runs above every branch and early return, like the two sets above, so
   // no path bypasses it. The repeated-param rule and the sanitiser both live in

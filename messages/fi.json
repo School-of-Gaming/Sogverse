@@ -2809,8 +2809,8 @@
           "Kahteen asiaan voit vastata kyllä tai ei:"
         ],
         "bullets": [
-          "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit ja mittaa, kuinka nopeasti sivut latautuvat. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
-          "Markkinointi – Meta-pikseli ja TikTok-pikseli, ja vain jos valitset ne. Ne saavat tietää, että kävit School of Gamingin sivustolla ja loitko tilin, jotta Meta ja TikTok voivat näyttää sinulle mainoksiamme omissa palveluissaan. Markkinoinnin poistaminen käytöstä poistaa niiden selaimeesi jättämät evästeet, mutta emme voi poistaa sitä, mitä niillä jo on – sen voit pyytää poistettavaksi omista Meta- ja TikTok-asetuksistasi, joissa Meta kutsuu sitä nimellä \"Meta-teknologioiden ulkopuolinen toiminta\"."
+          "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit, mittaa sivujen latausnopeuden ja vastaanottaa muutamia nimettömiä tapahtumia siitä, miten sivustoa käytetään: miten oma My SOG avataan ja milloin kieltä vaihdetaan. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
+          "Markkinointi – Meta-pikseli ja TikTok-pikseli, ja vain jos valitset ne. Ne saavat tietää, että kävit School of Gamingin sivustolla ja loitko tilin, jotta Meta ja TikTok voivat näyttää sinulle mainoksiamme omissa palveluissaan. Jos hyväksyt markkinoinnin ja luot sen jälkeen tilin, asetamme yhden lyhytikäisen oman evästeen – viisi minuuttia, ei nimeä, ei osoitetta, vain sana \"registration\" – jonka ainoa tehtävä on kertoa seuraavan sivun pikseleille, että tili luotiin. Markkinoinnin poistaminen käytöstä poistaa pikselien selaimeesi jättämät evästeet, mutta emme voi poistaa sitä, mitä Metalla ja TikTokilla jo on – sen voit pyytää poistettavaksi omista asetuksistasi niissä, joissa Meta kutsuu sitä nimellä \"Meta-teknologioiden ulkopuolinen toiminta\"."
         ]
       },
       "voice": {
@@ -3867,7 +3867,7 @@
   },
   "consent": {
     "heading": "Pari sanaa evästeistä",
-    "body": "Analytiikka kertoo meille, kuinka moni sivustolla käy ja kuinka nopeasti sivut latautuvat. Se ei näe, kuka olet, eikä se päädy koskaan mainostajille. Markkinointi kertoo Metalle ja TikTokille käynnistäsi ja siitä, loitko tilin, jotta ne voivat näyttää sinulle mainoksiamme omissa palveluissaan. Mikään ei käynnisty ennen kuin valitset, ja voit muuttaa mieltäsi milloin tahansa sivun alalaidan linkistä.",
+    "body": "Analytiikka kertoo meille, kuinka moni sivustolla käy ja kuinka nopeasti sivut latautuvat. Se ei näe, kuka olet, eikä se päädy koskaan mainostajille. Markkinointi kertoo Metalle ja TikTokille käynnistäsi ja siitä, loitko tilin, jotta ne voivat näyttää sinulle mainoksiamme omissa palveluissaan. Välttämättömien evästeiden lisäksi mikään ei käynnisty ennen kuin valitset, ja voit muuttaa mieltäsi milloin tahansa sivun alalaidan linkistä.",
     "privacyLink": "Näin käytämme evästeitä",
     "rejectAll": "Hylkää kaikki",
     "analyticsOnly": "Vain analytiikka",

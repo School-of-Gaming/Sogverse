@@ -83,7 +83,8 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
   // Where this visit came from, if a marketing link carried UTM params. Held in
-  // memory by the root provider since the landing page; never on this device.
+  // memory by the root provider since the landing page, so it survives browsing
+  // the whole site as client-side navigation.
   const utm = useUtm();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

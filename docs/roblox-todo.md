@@ -554,9 +554,16 @@ time is rationed, spend it here rather than on the banner.**
   smaller and still worth doing: the copy describes *one* short code, and there are now
   three UTM fields, so the sentence should be re-read against what is actually stored. It
   is also written in the register a parent reads, which is why it says "a short code"
-  rather than naming the columns — keep that.
+  rather than naming the columns — keep that. *(Done — 2026-09-03. The bullet now names
+  the campaign tag and its three parts, says it is stored once at account creation, and
+  keeps the parent's register; `en`, `fi`, `sv`, `fr`.)*
 - **`privacy.sections.cookies` answers the wrong question.** It says Vercel's analytics is
   "cookie-free", which is true and irrelevant — Art 5(3) does not care about the mechanism.
+  *(Done — 2026-09-03. The section was rewritten as "Cookies, analytics and advertising":
+  strictly necessary cookies first, then the two purposes a visitor actually consents to,
+  each naming what runs and what it learns. "Cookie-free" is gone from the Vercel bullet
+  under `providers` too, and the answer is now collected by a consent banner rather than
+  asserted by the copy.)*
 - **The `?ref=` note under "/roblox CTAs and events are deliberately inert" goes stale** if
   the rename happens. It is still correct today, and its underlying point (soft navigation
   keeps the value alive, a hard load destroys it) holds for any payload name. *(Done — the

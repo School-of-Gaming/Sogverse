@@ -4,30 +4,69 @@ import Script from "next/script";
 import { usePathname } from "next/navigation";
 import {
   CONVERSION_COOKIE_NAME,
+  matchesPathPrefix,
   REGISTRATION_CONVERSION,
 } from "@/lib/consent";
+import { ROUTES } from "@/lib/constants";
 import { useConsent } from "./consent-provider";
 
 /**
- * Route prefixes no ad-platform script is ever loaded on.
+ * Route prefixes no ad-platform script is ever loaded on, for two different
+ * reasons.
  *
- * `/gamer` is the reason the list exists: a child's own surface never loads a
- * Meta or TikTok script, whatever the account holder has consented to, because
- * the consent belongs to the parent and the browsing does not. `/gedu` and
- * `/admin` are staff at work, and `/preview` is an admin-only fixture render —
- * measuring any of the three would only pollute the numbers.
+ * **Whose browsing it is.** `/gamer` is the reason the list exists: a child's
+ * own surface never loads a Meta or TikTok script, whatever the account holder
+ * has consented to, because the consent belongs to the parent and the browsing
+ * does not. `/gedu` and `/admin` are staff at work, and `/preview` is an
+ * admin-only fixture render — measuring any of the three would only pollute the
+ * numbers.
  *
- * Public, auth and parent surfaces are what remain, which is exactly the set a
- * campaign can plausibly have sent someone to.
+ * **What is being typed.** The credential surfaces carry an email address, a
+ * password, a reset token or a whole account's settings in their fields and
+ * their URLs, and an ad-platform script on such a page is one dashboard toggle
+ * away from reading them. Keeping the pixel off the page is the only version of
+ * that guarantee that does not depend on somebody's account settings staying
+ * the way we left them. **Nothing is lost by it**: the registration conversion
+ * is not reported from the form at all — the register route hands it over in a
+ * short-lived marker cookie, and the pixels on the *next* page read it — so the
+ * one event these surfaces could produce arrives without them.
+ *
+ * `/preview` has no `ROUTES` entry, so it is the one literal here.
  */
-const PIXEL_FREE_PREFIXES = ["/gamer", "/gedu", "/admin", "/preview"];
+const PIXEL_FREE_PREFIXES = [
+  ROUTES.gamer.dashboard,
+  ROUTES.gedu.dashboard,
+  ROUTES.admin.dashboard,
+  "/preview",
+  ROUTES.login,
+  // `/register` already covers `/register-gedu` under a prefix test; both are
+  // named so the list reads as the set it means and survives either moving.
+  ROUTES.register,
+  ROUTES.registerGedu,
+  ROUTES.forgotPassword,
+  ROUTES.resetPassword,
+  ROUTES.verifyEmail,
+  ROUTES.settings,
+];
 
 /**
  * The Meta Pixel's official base snippet, with the queueing stub that makes an
  * `fbq(…)` call safe before the real library has finished loading.
+ *
+ * **`fbq('set','autoConfig',false,…)` comes before `init`, and it is the whole
+ * of what makes our privacy copy true.** Left at its default, the pixel takes
+ * its behaviour from the Meta Ads dashboard, where Automatic Advanced Matching
+ * and automatic events can be switched on by anyone with access to the ad
+ * account: the library then scrapes form fields and button clicks on the page
+ * and hashes what it finds — email addresses, phone numbers, names — into every
+ * event. We tell families that Meta learns they visited and whether they created
+ * an account, and nothing else; a setting in somebody else's dashboard must not
+ * be able to make that sentence false, so it is turned off here, in the page,
+ * before the pixel is initialised. It has to precede `init` because that is when
+ * the library reads the flag.
  */
 function metaPixelSnippet(pixelId: string): string {
-  return `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');fbq('track','PageView');`;
+  return `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('set','autoConfig',false,'${pixelId}');fbq('init','${pixelId}');fbq('track','PageView');`;
 }
 
 /**
@@ -92,7 +131,7 @@ export function MarketingPixels({ nonce }: MarketingPixelsProps) {
 
   const allowed =
     consent?.marketing === true &&
-    !PIXEL_FREE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+    !matchesPathPrefix(pathname, PIXEL_FREE_PREFIXES);
 
   if (!allowed) return null;
   if (!metaPixelId && !tiktokPixelId) return null;

@@ -2809,8 +2809,8 @@
           "Deux choses appellent un oui ou un non :"
         ],
         "bullets": [
-          "Les statistiques — celles de Vercel, et seulement si vous les acceptez. Elles comptent les visites et mesurent la vitesse d’affichage des pages. Elles ne peuvent pas savoir qui vous êtes, et nous ne les transmettons jamais à des annonceurs.",
-          "Le marketing — le pixel Meta et le pixel TikTok, et seulement si vous les acceptez. Ils apprennent que vous avez visité School of Gaming et si vous y avez créé un compte, afin que Meta et TikTok puissent vous montrer nos publicités chez eux. Désactiver le marketing supprime les cookies qu’ils ont laissés dans votre navigateur, mais nous ne pouvons pas supprimer ce qu’ils détiennent déjà — vous pouvez le leur demander depuis vos propres paramètres Meta et TikTok, où Meta appelle cela « activité en dehors des technologies Meta »."
+          "Les statistiques — celles de Vercel, et seulement si vous les acceptez. Elles comptent les visites, mesurent la vitesse d’affichage des pages et reçoivent quelques événements anonymes sur l’usage du site : comment on accède à son My SOG, quand la langue est changée. Elles ne peuvent pas savoir qui vous êtes, et nous ne les transmettons jamais à des annonceurs.",
+          "Le marketing — le pixel Meta et le pixel TikTok, et seulement si vous les acceptez. Ils apprennent que vous avez visité School of Gaming et si vous y avez créé un compte, afin que Meta et TikTok puissent vous montrer nos publicités chez eux. Si vous acceptez le marketing puis créez un compte, nous déposons un seul cookie éphémère qui nous appartient — cinq minutes, aucun nom, aucune adresse, rien que le mot « registration » — dont l’unique rôle est d’indiquer aux pixels de la page suivante qu’un compte a été créé. Désactiver le marketing supprime les cookies que les pixels ont laissés dans votre navigateur, mais nous ne pouvons pas supprimer ce que Meta et TikTok détiennent déjà — vous pouvez le leur demander depuis vos propres paramètres chez eux, où Meta appelle cela « activité en dehors des technologies Meta »."
         ]
       },
       "voice": {
@@ -3867,7 +3867,7 @@
   },
   "consent": {
     "heading": "Un mot sur les cookies",
-    "body": "Les statistiques nous indiquent combien de personnes nous rendent visite et à quelle vitesse les pages s’affichent. Elles ne peuvent pas savoir qui vous êtes et ne sont jamais transmises à des annonceurs. Le marketing indique à Meta et TikTok que vous avez visité notre site et si vous y avez créé un compte, afin qu’ils puissent vous y montrer nos publicités. Rien ne démarre tant que vous n’avez pas choisi, et vous pouvez changer d’avis à tout moment depuis le lien en bas de page.",
+    "body": "Les statistiques nous indiquent combien de personnes nous rendent visite et à quelle vitesse les pages s’affichent. Elles ne peuvent pas savoir qui vous êtes et ne sont jamais transmises à des annonceurs. Le marketing indique à Meta et TikTok que vous avez visité notre site et si vous y avez créé un compte, afin qu’ils puissent vous y montrer nos publicités. Rien d’autre que les cookies nécessaires ne démarre tant que vous n’avez pas choisi, et vous pouvez changer d’avis à tout moment depuis le lien en bas de page.",
     "privacyLink": "Comment nous utilisons les cookies",
     "rejectAll": "Tout refuser",
     "analyticsOnly": "Statistiques uniquement",

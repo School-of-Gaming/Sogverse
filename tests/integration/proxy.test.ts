@@ -538,6 +538,22 @@ describe("proxy", () => {
       expect(utmHeaderAfter(request)).toBeNull();
     });
 
+    it("sets no header at all when the encoded value blows the budget", async () => {
+      // Each field is 200 code points — inside the per-field cap — and each of
+      // those characters encodes to 12 bytes, so the three together serialise
+      // to roughly 7,200. A request header a stranger controls through the
+      // query string must not be able to push the request past a hop's own
+      // ceiling, and the attribution is dropped whole rather than truncated: a
+      // truncated campaign is a different campaign.
+      mockNoUser();
+      const wide = encodeURIComponent("𝔸".repeat(200));
+      const request = createNextRequest(
+        `/shop?utm_source=${wide}&utm_medium=${wide}&utm_campaign=${wide}`,
+      );
+      await proxy(request);
+      expect(utmHeaderAfter(request)).toBeNull();
+    });
+
     it("percent-encodes a value no raw header could carry", async () => {
       // A Meta macro expands to an ad's own name — spaces and accents included
       // — and the header has to stay ASCII whatever the value was.

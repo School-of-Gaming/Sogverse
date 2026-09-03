@@ -62,8 +62,35 @@ export const CONVERSION_COOKIE_MAX_AGE_SECONDS = 300;
  * taken away again. Not ours, which is exactly why they are named here: a
  * script that has already run keeps whatever it wrote until something removes
  * it.
+ *
+ * `_fbp` and `_fbc` are Meta's browser and click identifiers; `_ttp` is
+ * TikTok's, and `_tt_enable_cookie` is the flag its library reads to decide
+ * whether it may write `_ttp` at all — leaving that one behind is how a
+ * withdrawal quietly re-arms itself on the next visit.
  */
-export const PIXEL_COOKIE_NAMES = ["_fbp", "_fbc", "_ttp"] as const;
+export const PIXEL_COOKIE_NAMES = [
+  "_fbp",
+  "_fbc",
+  "_ttp",
+  "_tt_enable_cookie",
+] as const;
+
+/**
+ * Whether `pathname` sits under any of `prefixes`.
+ *
+ * A plain prefix test, not an exact-or-slash one, and deliberately: this only
+ * ever decides whether an optional third-party script is *withheld*, so a
+ * prefix that catches one route too many withholds a pixel that would have been
+ * allowed, and a stricter test that catches one too few loads a script on a
+ * surface somebody meant to keep clear. Between those two, over-matching is the
+ * error to make.
+ */
+export function matchesPathPrefix(
+  pathname: string,
+  prefixes: readonly string[],
+): boolean {
+  return prefixes.some((prefix) => pathname.startsWith(prefix));
+}
 
 /** The three buttons, in the order the banner offers them. */
 export type ConsentChoice =

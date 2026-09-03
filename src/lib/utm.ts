@@ -15,6 +15,12 @@
  * Whoever reads this data filters for the values they issued, so junk rows are
  * noise they never query.
  *
+ * **The transport has a byte budget and drops rather than truncates.** The
+ * serialised `x-utm` value is capped at `UTM_HEADER_MAX_LENGTH`; over that, the
+ * proxy sets no header and the visit carries no attribution. See that constant
+ * for why a per-field cap is not enough on its own and why dropping is the only
+ * safe answer.
+ *
  * **The partner convention: a campaign issued to or for a partner is prefixed
  * with the partner's slug and a hyphen** — `lynx-summer-a`, `rblx-launch`. This
  * cannot be retrofitted, because the value is immutable on a profile once
@@ -101,6 +107,30 @@ export const UTM_QUERY_PARAMS = {
  */
 export const UTM_HEADER = "x-utm";
 
+/**
+ * The most bytes the serialised header value may run to before the proxy
+ * declines to set it at all.
+ *
+ * Three sanitised fields cap at 200 code points each, but percent-encoding is
+ * what actually decides the length: a campaign of 200 astral-plane characters
+ * expands to roughly 2,400 bytes on its own, and three of those would push one
+ * header past the ~4 KB per-header ceiling every proxy and serverless runtime
+ * in the path enforces in its own way — some by rejecting the request, some by
+ * truncating the value, some by dropping the header. A request that 502s
+ * because of a query string a stranger controls is a denial-of-service with no
+ * upside, so the budget is enforced here, where we can choose what happens.
+ *
+ * **Over budget means the header is not set — attribution is dropped, never
+ * truncated.** A truncated campaign is a *different* campaign, and would
+ * attribute a family to an outreach that did not bring them, which is the same
+ * reasoning that makes `sanitiseUtmValue` refuse rather than shorten.
+ *
+ * 2048 is comfortably above anything a real link produces (a long Meta ad name
+ * expands to a few hundred bytes) and comfortably below every ceiling in the
+ * path.
+ */
+export const UTM_HEADER_MAX_LENGTH = 2048;
+
 /** The three fields, each present or explicitly absent. */
 export interface UtmAttribution {
   source: string | null;
@@ -134,10 +164,16 @@ const UTM_CONTROL_CHARACTER = /\p{Cc}/u;
  * refused outright rather than escaped: these values reach Lynx in a CSV export
  * **we do not control**, so there is no downstream escaping we can rely on, and
  * an unattributed account is strictly better than a payload in a partner's
- * spreadsheet. Tab and carriage return are on the list for the same reason —
- * they are stripped by `String.trim()` here, but the trigger's `btrim` strips
- * spaces only, so a tab-led value is a shape the SQL copy of this rule really
- * does have to refuse.
+ * spreadsheet.
+ *
+ * Tab and carriage return are on the list as belt and braces, not because
+ * anything needs them: both are control characters, so the rule above already
+ * refuses a value containing one anywhere, on both sides — `[[:cntrl:]]` in the
+ * trigger and the three column CHECKs, `\p{Cc}` here. The SQL copy names them in
+ * its own lead-character list for the same redundant-by-design reason. Neither
+ * entry is reachable, and both are kept because a lead-character rule that
+ * silently depends on a *different* rule catching two of its members is one
+ * edit away from being wrong.
  *
  * The accepted cost: a campaign genuinely named `-summer` cannot be stored. Name
  * it `summer` instead.
@@ -171,12 +207,19 @@ const UTM_MAX_LENGTH = 200;
  * that did not bring them.
  *
  * The same four rules are mirrored in the profile-creation trigger and, as a
- * backstop, in the three column CHECKs. Two deliberate divergences, both
- * fail-closed here: the trigger's `btrim` strips spaces only, where
- * `String.trim()` strips the full Unicode whitespace set, so a tab-padded value
- * degrades to NULL in the database instead of being accepted; and the length
- * comparison below counts code points, matching `char_length()`, rather than
- * UTF-16 code units.
+ * backstop, in the three column CHECKs. Three deliberate divergences, every one
+ * of them fail-closed on the database side:
+ *
+ *  1. The trigger's `btrim` strips spaces only, where `String.trim()` strips the
+ *     full Unicode whitespace set — so a tab-padded value degrades to NULL in
+ *     the database instead of being accepted.
+ *  2. The trigger tests `[[:cntrl:]]` against the **untrimmed** raw value, where
+ *     this tests the trimmed one. Unreachable through the app, since a value
+ *     carrying a control character anywhere is refused here before it could
+ *     reach a route: it only matters for a hypothetical direct write, and it
+ *     refuses more than this does.
+ *  3. The length comparison below counts code points, matching `char_length()`,
+ *     rather than UTF-16 code units.
  *
  * Pure string and regex work only, no Node APIs — the proxy runs this and is not
  * a Node runtime.
@@ -222,6 +265,14 @@ export function readUtmFromSearchParams(params: URLSearchParams): UtmAttribution
  * The `x-utm` header value for an attribution, or `null` when there is nothing
  * to send. Only the fields that survived appear, so a header that is present is
  * always a header carrying something.
+ *
+ * Returns `null` too when the encoded value would exceed
+ * {@link UTM_HEADER_MAX_LENGTH} — the whole attribution is dropped rather than
+ * cut down, for the reason stated there. The check lives here rather than at
+ * the one call site so no future caller can serialise past the budget.
+ *
+ * The length is measured on the percent-encoded string, which is ASCII by
+ * construction, so code units, code points and bytes are all the same number.
  */
 export function serialiseUtm(utm: UtmAttribution): string | null {
   if (!hasUtmAttribution(utm)) return null;
@@ -230,7 +281,8 @@ export function serialiseUtm(utm: UtmAttribution): string | null {
   if (utm.source !== null) params.set("source", utm.source);
   if (utm.medium !== null) params.set("medium", utm.medium);
   if (utm.campaign !== null) params.set("campaign", utm.campaign);
-  return params.toString();
+  const encoded = params.toString();
+  return encoded.length > UTM_HEADER_MAX_LENGTH ? null : encoded;
 }
 
 /**
@@ -274,14 +326,25 @@ export function buildUtmMetadata(utm: {
  * cannot reach here — but running the sanitiser again is what makes "the value
  * always came through our own sanitiser" a fact about this code rather than a
  * fact about the call order of two files.
+ *
+ * `.getAll()` and a repeated key nulls that field, exactly as on the query-string
+ * side. Serialising never produces a repeat, so this only ever fires on a value
+ * that did not come from `serialiseUtm` — which is the case the re-sanitise
+ * exists for, and it should behave the same way at both ends rather than
+ * quietly taking the first entry here and refusing it there.
  */
 export function parseUtmHeader(raw: string | null | undefined): UtmAttribution {
   if (typeof raw !== "string" || raw.length === 0) return NO_UTM_ATTRIBUTION;
 
   const params = new URLSearchParams(raw);
+  const readOne = (key: string): string | null => {
+    const values = params.getAll(key);
+    return values.length === 1 ? sanitiseUtmValue(values[0]) : null;
+  };
+
   return {
-    source: sanitiseUtmValue(params.get("source")),
-    medium: sanitiseUtmValue(params.get("medium")),
-    campaign: sanitiseUtmValue(params.get("campaign")),
+    source: readOne("source"),
+    medium: readOne("medium"),
+    campaign: readOne("campaign"),
   };
 }

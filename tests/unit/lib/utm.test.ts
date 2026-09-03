@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   NO_UTM_ATTRIBUTION,
   UTM_HEADER,
+  UTM_HEADER_MAX_LENGTH,
   UTM_QUERY_PARAMS,
   buildUtmMetadata,
   hasUtmAttribution,
@@ -186,6 +187,45 @@ describe("the x-utm header round trip", () => {
 
   it("has no header value at all when nothing survived", () => {
     expect(serialiseUtm(NO_UTM_ATTRIBUTION)).toBeNull();
+  });
+
+  // The budget is on the *encoded* value, which is what the per-field cap
+  // cannot see: three fields of 200 code points are well inside their own
+  // limit, and percent-encoding astral-plane characters multiplies each one by
+  // roughly twelve. A header a stranger controls through the query string must
+  // not be able to push a request past a hop's own ceiling.
+  it("drops the whole attribution rather than truncating an over-long header", () => {
+    // 200 code points each, every one encoding to 12 bytes — comfortably legal
+    // per field, and ~7,200 bytes once the three are serialised together.
+    const wide = "𝔸".repeat(200);
+    const utm = { source: wide, medium: wide, campaign: wide };
+
+    expect(sanitiseUtmValue(wide)).toBe(wide);
+    expect(serialiseUtm(utm)).toBeNull();
+  });
+
+  it("keeps a header that fits the budget", () => {
+    const utm = {
+      source: "lynx",
+      medium: "email",
+      campaign: "a".repeat(200),
+    };
+
+    const serialised = serialiseUtm(utm);
+    expect(serialised).not.toBeNull();
+    expect(serialised!.length).toBeLessThanOrEqual(UTM_HEADER_MAX_LENGTH);
+    expect(parseUtmHeader(serialised)).toEqual(utm);
+  });
+
+  // Serialising never produces a repeat, so this only fires on a value that did
+  // not come from serialiseUtm — which is the case the re-sanitise exists for,
+  // and it has to answer the same way the query-string side does.
+  it("nulls a repeated field on the header side too", () => {
+    expect(parseUtmHeader("campaign=good&campaign=bad&source=lynx")).toEqual({
+      source: "lynx",
+      medium: null,
+      campaign: null,
+    });
   });
 
   it("re-sanitises on parse rather than trusting the string it was handed", () => {

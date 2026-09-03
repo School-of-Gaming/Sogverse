@@ -271,11 +271,10 @@ describe("POST /api/auth/register", () => {
   });
 
   // The trigger reads first_name/last_name (and the three utm_* keys) straight
-  // out of
-  // this bag, so the shape is a contract with the database, not a detail. The
-  // two inert keys are kept because the Supabase Auth dashboard shows
-  // display_name and because a reader of the metadata should see what they saw
-  // before this moved off the browser.
+  // out of this bag, so the shape is a contract with the database, not a
+  // detail. The two inert keys are kept because the Supabase Auth dashboard
+  // shows display_name and because a reader of the metadata should see what
+  // they saw before this moved off the browser.
   it("sends the same signup metadata the browser used to send", async () => {
     await POST(registerRequest(validBody));
 
