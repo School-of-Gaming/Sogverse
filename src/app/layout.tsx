@@ -10,10 +10,14 @@ import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
-import { REFERRAL_CODE_HEADER } from "@/lib/referral";
+import { UTM_HEADER, parseUtmHeader } from "@/lib/utm";
 import { BRAND_LOCKUP, toDetectedLocale } from "@/lib/constants";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
+import { getServerConsent } from "@/lib/consent.server";
+import {
+  AnalyticsScripts,
+  ConsentBanner,
+  MarketingPixels,
+} from "@/components/consent";
 import "./globals.css";
 
 // The brand's workhorse face, and the one every page's body and headings are
@@ -117,15 +121,17 @@ export default async function RootLayout({
   // first client render — keeps SSR HTML and the first hydration render in
   // lockstep. Client-side tick takes over after mount.
   const initialNow = new Date();
-  // The `?ref=` code for this visit, already sanitised (and, on any request that
-  // did not carry one, already deleted) by the proxy — a layout cannot receive
-  // `searchParams`, and `useSearchParams()` in a root-level client provider
-  // would put the whole app under a Suspense boundary whose *fallback* is what
-  // gets prerendered. This `headers()` call is free: the layout is fully dynamic
-  // already (it reads cookies and loads the user's profile) with no PPR or
-  // component caching enabled, so it adds no cost and no Suspense requirement.
+  // The UTM attribution for this visit, already sanitised (and, on any request
+  // that did not carry one, already deleted) by the proxy — a layout cannot
+  // receive `searchParams`, and `useSearchParams()` in a root-level client
+  // provider would put the whole app under a Suspense boundary whose *fallback*
+  // is what gets prerendered. This `headers()` call is free: the layout is fully
+  // dynamic already (it reads cookies and loads the user's profile) with no PPR
+  // or component caching enabled, so it adds no cost and no Suspense
+  // requirement. The parse re-sanitises every field, so the values reaching the
+  // provider came through our own sanitiser whatever the header said.
   const requestHeaders = await headers();
-  const initialReferralCode = requestHeaders.get(REFERRAL_CODE_HEADER);
+  const initialUtm = parseUtmHeader(requestHeaders.get(UTM_HEADER));
   // What this browser *asked* for, read straight from Accept-Language and
   // deliberately bypassing both the `locale` cookie and `profiles.locale` —
   // those carry the answer the user has already given us, and this is the
@@ -137,6 +143,18 @@ export default async function RootLayout({
   const detectedLocale = toDetectedLocale(
     requestHeaders.get("accept-language"),
   );
+  // What this visitor has agreed to run, read from the same cookie the browser
+  // provider writes. Resolved on the server so the SSR HTML and the first
+  // client render carry the same set of optional scripts — a client-only read
+  // would mount (or unmount) a third-party script at hydration.
+  const initialConsent = await getServerConsent();
+  // The proxy's per-request CSP nonce. Production `script-src` is
+  // `'nonce-…' 'strict-dynamic'`, so this is what lets the pixels' inline
+  // snippets run at all; every other script on the page is nonced by Next's
+  // own SSR pipeline, which reads the same header. Empty string on the
+  // impossible path where the header is missing: that yields an un-nonced
+  // script the policy blocks, which is the safe direction to fail in.
+  const nonce = requestHeaders.get("x-nonce") ?? "";
   // Strip server-only namespaces (email, metadata) from the client bundle.
   // Server components access full messages via getTranslations() directly.
   const { email: _email, metadata: _metadata, ...clientMessages } =
@@ -164,7 +182,8 @@ export default async function RootLayout({
           initialLocale={locale}
           initialTimezone={initialTimezone}
           initialNow={initialNow}
-          initialReferralCode={initialReferralCode}
+          initialUtm={initialUtm}
+          initialConsent={initialConsent}
           detectedLocale={detectedLocale}
           messages={clientMessages}
         >
@@ -177,9 +196,23 @@ export default async function RootLayout({
               an offset to clear them. The document is the single scroll
               container; no inner element should set h-screen overflow-auto. */}
           {children}
+          {/* Everything downstream of the consent question, and all of it
+              inside `Providers` because each piece reads the consent context
+              (and the banner also translates its own words).
+
+              In the layout tree rather than a portal, deliberately: dialogs
+              portal into `document.body` at runtime and share the banner's
+              `z-50`, so a banner appended after them would paint over an open
+              dialog. As a sibling of `children` it is always earlier in the
+              body than any portal, which is what keeps the stacking right
+              without either side hardcoding a higher number.
+
+              The banner is `position: fixed`, so it overlays the page and
+              nothing already painted moves when it appears or goes. */}
+          <ConsentBanner />
+          <AnalyticsScripts />
+          <MarketingPixels nonce={nonce} />
         </Providers>
-        <SpeedInsights />
-        <Analytics />
       </body>
     </html>
   );

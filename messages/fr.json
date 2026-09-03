@@ -943,7 +943,6 @@
       "userNotFound": "Utilisateur introuvable.",
       "joined": "Inscrit le",
       "unknown": "Inconnu",
-      "referralCode": "Code de provenance",
       "linkedGamers": "Joueurs associés",
       "linkedParents": "Parents associés",
       "unnamedGamer": "Joueur sans nom",
@@ -974,7 +973,14 @@
         "description": "Définissez ou corrigez les noms d’utilisateur de jeu de ce compte. L’enregistrement vérifie le nom auprès de la plateforme."
       },
       "marketing": {
-        "title": "Préférences marketing",
+        "title": "Marketing",
+        "attribution": "Attribution",
+        "utm": {
+          "source": "Source",
+          "medium": "Support",
+          "campaign": "Campagne"
+        },
+        "preferences": "Préférences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
         "granted": "Accordé",
@@ -1444,7 +1450,8 @@
     "privacy": "Politique de confidentialité",
     "terms": "Conditions générales",
     "antiBullying": "Lutte contre le harcèlement",
-    "attributions": "Crédits et licences"
+    "attributions": "Crédits et licences",
+    "privacyChoices": "Choix de confidentialité"
   },
   "gamer": {
     "welcomeNamed": "Bienvenue, {name} !",
@@ -2748,8 +2755,8 @@
           "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement. Nous enregistrons aussi votre nom de famille sur son compte, parce que votre enfant fait partie de votre compte ; les Gedus et les autres joueurs ne le voient jamais. Le compte lui-même porte une adresse interne Sogverse plutôt qu’un véritable e-mail.",
           "Facultativement, le nom d’utilisateur de votre enfant dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant de compte que le jeu lui attribue, pour que nous puissions le reconnaître dans le jeu et pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
           "Ce que nos animateurs notent au fil des sessions — présences, comptes rendus de session et courtes notes qui nous aident à accompagner votre enfant dans le groupe.",
-          "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies et statistiques » ci-dessous).",
-          "Si vous êtes arrivé par un lien partagé par une école, un club ou une organisation partenaire, un code court indiquant lequel — pour que nous sachions quelles actions touchent réellement les familles, et que nous puissions dire à nos partenaires si la leur a fonctionné."
+          "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies, statistiques et publicité » ci-dessous).",
+          "L’étiquette de campagne — source, support et campagne — portée par le lien à l’origine de votre visite. Nous l’enregistrons une fois, à la création du compte, pour savoir, avec nos partenaires, quelles actions touchent réellement les familles."
         ]
       },
       "childrensPrivacy": {
@@ -2757,7 +2764,7 @@
         "paragraphs": [
           "La plupart des personnes qui utilisent Sogverse sont des enfants : leur sécurité et leur vie privée sont donc notre priorité absolue.",
           "Un enfant ne peut jamais créer son propre compte. Seul un parent ou un tuteur crée le compte d’un enfant, choisit ce qui est partagé et donne son autorisation en son nom. C’est ainsi que nous respectons nos obligations vis-à-vis des enfants au regard du droit de la protection des données.",
-          "Ce que nous conservons au sujet d’un enfant est présenté ci-dessus sous « Les informations que nous collectons », et nous ne collectons rien sur un enfant au-delà de ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne montrons jamais de publicité aux enfants et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Les sessions en direct sont animées par nos animateurs formés (nous les appelons les Gedus).",
+          "Ce que nous conservons au sujet d’un enfant est présenté ci-dessus sous « Les informations que nous collectons », et nous ne collectons rien sur un enfant au-delà de ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne montrons jamais de publicité aux enfants et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Lorsque votre enfant est connecté en tant que joueur, rien de sa navigation n’est transmis à une plateforme publicitaire, même si le marketing est activé sur l’appareil. Les sessions en direct sont animées par nos animateurs formés (nous les appelons les Gedus).",
           "Si vous souhaitez consulter, modifier ou supprimer les informations de votre enfant, écrivez simplement à {supportEmail} et nous nous en occuperons."
         ]
       },
@@ -2785,7 +2792,8 @@
           "Parce qu’un parent a donné son autorisation au nom de son enfant (le consentement).",
           "Pour respecter nos obligations légales, comme la conservation des pièces comptables relatives aux paiements.",
           "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en balance avec votre vie privée.",
-          "Pour notre intérêt légitime à savoir lesquelles de nos actions touchent les familles — toujours mis en balance avec votre vie privée, et vous pouvez nous demander d’arrêter à tout moment."
+          "Pour notre intérêt légitime à savoir lesquelles de nos actions touchent les familles — toujours mis en balance avec votre vie privée, et vous pouvez nous demander d’arrêter à tout moment.",
+          "Votre consentement, pour les cookies de statistiques et de marketing — vous pouvez le retirer à tout moment depuis Choix de confidentialité, en bas de chaque page."
         ]
       },
       "providers": {
@@ -2798,18 +2806,24 @@
           "Stripe — traite les paiements. Les données de votre carte vont directement à Stripe ; nous ne les voyons jamais.",
           "Brevo — envoie nos e-mails, comme les reçus et les rappels.",
           "Daily.co — assure les sessions audio et vidéo en direct.",
-          "Vercel — héberge le site et fournit des statistiques d’utilisation anonymes et sans cookies.",
+          "Vercel — héberge le site et fournit des statistiques d’utilisation anonymes.",
           "Meta (WhatsApp) — utilisé pour envoyer certains messages et rappels aux familles qui préfèrent WhatsApp.",
           "Roblox — reçoit l’identifiant de compte Roblox de votre enfant, pour que nous puissions vérifier le compte et afficher son avatar.",
-          "Mojang (Microsoft) — reçoit le nom d’utilisateur Minecraft de votre enfant, pour que nous puissions vérifier le compte."
+          "Mojang (Microsoft) — reçoit le nom d’utilisateur Minecraft de votre enfant, pour que nous puissions vérifier le compte.",
+          "Meta (publicités Facebook et Instagram) — apprend, via le pixel Meta, que vous avez visité le site et si vous y avez créé un compte, pour que nous puissions y diffuser nos publicités. Uniquement si vous autorisez les cookies marketing.",
+          "TikTok — apprend, via le pixel TikTok, que vous avez visité le site et si vous y avez créé un compte, pour que nous puissions diffuser nos publicités sur TikTok. Uniquement si vous autorisez les cookies marketing."
         ]
       },
       "cookies": {
-        "heading": "Cookies et statistiques",
+        "heading": "Cookies, statistiques et publicité",
         "paragraphs": [
-          "Nous n’utilisons ni cookies publicitaires ni cookies de suivi, et nous ne vous suivons pas à la trace sur Internet.",
-          "Nous utilisons un petit nombre de cookies nécessaires pour vous maintenir connecté en toute sécurité — le site ne peut pas fonctionner sans eux, ils ne nécessitent donc pas votre consentement.",
-          "Pour comprendre des choses comme le nombre de visiteurs ou le type d’appareil utilisé (téléphone ou ordinateur), nous utilisons les statistiques de Vercel. Elles respectent la vie privée : pas de cookies, et aucune identification personnelle."
+          "Quelques cookies sont simplement la façon dont le site fonctionne : ils maintiennent votre session ouverte, retiennent que vous avez saisi votre code parent, conservent votre langue et votre fuseau horaire, et enregistrent le choix que vous faites en matière de cookies. Ceux-là ne nécessitent pas votre consentement — sans eux, il n’y a pas de site auquel consentir.",
+          "Tout le reste vous attend. Lors de votre première visite, nous vous posons la question, et rien d’autre que ces cookies nécessaires ne démarre tant que vous n’avez pas répondu. Vous pouvez changer d’avis quand vous le souhaitez depuis Choix de confidentialité, en bas de chaque page : désactiver quelque chose prend effet immédiatement, et ne change rien à ce que nous avons fait pendant que c’était actif.",
+          "Deux choses appellent un oui ou un non :"
+        ],
+        "bullets": [
+          "Les statistiques — celles de Vercel, et seulement si vous les acceptez. Elles comptent les visites, mesurent la vitesse d’affichage des pages et reçoivent quelques événements anonymes sur l’usage du site : comment on accède à son My SOG, quand la langue est changée. Elles ne peuvent pas savoir qui vous êtes, et nous ne les transmettons jamais à des annonceurs.",
+          "Le marketing — le pixel Meta et le pixel TikTok, et seulement si vous les acceptez. Ils apprennent que vous avez visité School of Gaming et si vous y avez créé un compte, afin que Meta et TikTok puissent vous montrer nos publicités chez eux. Aucun des deux pixels ne se charge pendant que votre enfant est connecté en tant que joueur. Si vous acceptez le marketing puis créez un compte, nous déposons un seul cookie éphémère qui nous appartient — cinq minutes, aucun nom, aucune adresse, rien que le mot « registration » — dont l’unique rôle est d’indiquer aux pixels de la page suivante qu’un compte a été créé. Désactiver le marketing supprime les cookies que les pixels ont laissés dans votre navigateur, mais nous ne pouvons pas supprimer ce que Meta et TikTok détiennent déjà — vous pouvez le leur demander depuis vos propres paramètres chez eux, où Meta appelle cela « activité en dehors des technologies Meta »."
         ]
       },
       "voice": {
@@ -3105,7 +3119,7 @@
       "empty": "Les premiers événements sont en cours de programmation. Revenez bientôt pour découvrir ce qui arrive.",
       "previous": "Événements précédents",
       "next": "Événements suivants",
-      "browseShop": "Voir tous les événements dans la boutique"
+      "browseShop": "Voir la boutique"
     },
     "parents": {
       "eyebrow": "Pour les parents",
@@ -3863,5 +3877,12 @@
       "next": "Image suivante",
       "close": "Fermer"
     }
+  },
+  "consent": {
+    "heading": "Votre vie privée, votre choix",
+    "body": "Les statistiques nous indiquent combien de personnes nous rendent visite et à quelle vitesse les pages s’affichent. Elles ne peuvent pas savoir qui vous êtes et ne sont jamais transmises à des annonceurs. Le marketing indique aux régies publicitaires où nous diffusons nos annonces que vous avez visité notre site et si vous y avez créé un compte, afin qu’elles puissent vous y montrer nos publicités. Il n’est jamais actif pendant que votre enfant est connecté en tant que joueur. Rien d’autre que les cookies nécessaires ne démarre tant que vous n’avez pas choisi, et vous pouvez changer d’avis à tout moment en bas de page — le détail se trouve dans notre <link>politique de confidentialité</link>.",
+    "rejectAll": "Tout refuser",
+    "analyticsOnly": "Statistiques uniquement",
+    "analyticsAndMarketing": "Statistiques et marketing"
   }
 }

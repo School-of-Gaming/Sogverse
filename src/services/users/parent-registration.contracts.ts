@@ -3,6 +3,32 @@ import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 
 /**
+ * Marketing provenance as it travels in a registration body: the three UTM
+ * fields this visit arrived with, each present or absent.
+ *
+ * **Plain optional strings on purpose — no format rule here.** This is a
+ * deliberate exception to the usual "the body schema is the validation"
+ * discipline, and it exists because of who supplies the values: not the person
+ * filling in the form, who never typed them and cannot see them, but whoever
+ * authored the link they clicked. A format rule on the schema would turn a
+ * malformed marketing param into a 400 that blocks a legitimate registration.
+ * Each route runs the values through the shared sanitiser instead, where a bad
+ * one becomes NULL and the registration succeeds.
+ *
+ * **Defined once and imported by the educator schema too**, rather than written
+ * out in both places. Both registration routes hand these to the same signup
+ * trigger under the same three metadata keys, so a second copy is a shape that
+ * can drift while both ends still type-check.
+ */
+export const registrationUtmBody = z.object({
+  source: z.string().optional(),
+  medium: z.string().optional(),
+  campaign: z.string().optional(),
+});
+
+export type RegistrationUtmBody = z.infer<typeof registrationUtmBody>;
+
+/**
  * Request body for public parent self-registration (`POST /api/auth/register`).
  * Shared by the route (which validates with it) and the register form.
  *
@@ -37,15 +63,12 @@ export const registerParentBody = z.object({
    */
   locale: z.enum(SUPPORTED_LOCALES).optional(),
   /**
-   * Marketing provenance: the `?ref=` code this visit arrived with, if any.
+   * Marketing provenance: the UTM values this visit arrived with, if any.
    *
-   * A plain optional string, for exactly the reason the gedu schema's is — the
-   * parent never typed it and cannot see it, so a format rule here would turn
-   * whoever authored the marketing link into someone who can block a
-   * registration. The handler runs it through the shared sanitiser, where a bad
-   * value becomes NULL and the signup succeeds.
+   * See `registrationUtmBody` — the same shape the educator registration takes,
+   * and the reason it is defined once.
    */
-  referralCode: z.string().optional(),
+  utm: registrationUtmBody.optional(),
   /**
    * Whether the parent ticked the optional School of Gaming marketing box.
    *

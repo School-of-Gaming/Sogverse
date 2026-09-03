@@ -47,6 +47,8 @@ import {
   type PersonChipListPerson,
 } from "@/components/ui/person-chip";
 import { GamerFlairDialog, NewcomerBadge } from "@/components/member-flair";
+import { ConsentBannerView } from "@/components/consent";
+import type { ConsentChoice } from "@/lib/consent";
 import {
   HelpFeedbackCardView,
   type HelpFeedbackAudience,
@@ -3020,6 +3022,52 @@ export default function AdminUIComponentsPage() {
         </p>
         <GeduContractSettingsCardDemo />
       </Section>
+
+      <Section title="Cookie consent strip">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Rendered inline here; on the site it is fixed to the bottom of the
+          viewport, over the page, so its arrival moves nothing. Clicking an
+          answer disables all three buttons and remounts the strip, which is
+          how the live one behaves &mdash; the commit is never handed back.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          All three buttons are one variant and one size on purpose: refusing
+          has to be exactly as easy and exactly as visible as accepting.
+        </p>
+        <ConsentBannerDemo />
+      </Section>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Cookie consent strip                                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The strip driven by nothing but local state — no provider, so no cookie is
+ * written and nothing on this page starts reporting to anybody.
+ *
+ * The remount key is what keeps it usable: the view's committing flag is
+ * deliberately never cleared (every real outcome ends the component's life), so
+ * without a fresh mount the second click in a design session would land on
+ * three disabled buttons.
+ */
+function ConsentBannerDemo() {
+  const [answers, setAnswers] = useState(0);
+  const [choice, setChoice] = useState<ConsentChoice | null>(null);
+
+  return (
+    <div className="space-y-3">
+      <ConsentBannerView
+        key={answers}
+        placement="inline"
+        onChoose={(next) => {
+          setChoice(next);
+          setAnswers((count) => count + 1);
+        }}
+      />
+      <DemoCaption>{choice ?? "no answer yet"}</DemoCaption>
     </div>
   );
 }

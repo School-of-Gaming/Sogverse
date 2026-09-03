@@ -14,9 +14,10 @@ import type { ReactNode } from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
-import { UserMarketingConsentsCard } from "@/components/admin/user-marketing-consents-card";
+import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createMockProfile } from "../../mocks/supabase";
+import type { UtmAttribution } from "@/lib/utm";
 import type { MarketingConsent, MarketingConsentType, Profile } from "@/types";
 
 /**
@@ -446,10 +447,64 @@ describe("who gets the marketing preferences group", () => {
 
 // --- The admin block ------------------------------------------------------
 
+/** What the overwhelming majority of accounts carry: nothing. */
+const NO_ATTRIBUTION: UtmAttribution = {
+  source: null,
+  medium: null,
+  campaign: null,
+};
+
+const ATTRIBUTION_LABELS = messages.admin.users.marketing.utm;
+
 describe("the admin marketing block", () => {
+  // The admin details-page rule, made a test: every stored property is visible
+  // on the details page. An attribution block that hid its empty fields made
+  // "this account has no medium" and "this page does not show mediums" look
+  // identical, which is the audit this card exists to allow failing silently.
+  it("shows all three attribution fields, empty ones included", () => {
+    forCustomer.data = [];
+    renderIntl(
+      <UserMarketingCard
+        attribution={{ source: "lynx", medium: null, campaign: "lynx-summer-a" }}
+        customerId={CUSTOMER_ID}
+      />,
+    );
+
+    expect(screen.getByText(ATTRIBUTION_LABELS.source)).toBeTruthy();
+    expect(screen.getByText(ATTRIBUTION_LABELS.medium)).toBeTruthy();
+    expect(screen.getByText(ATTRIBUTION_LABELS.campaign)).toBeTruthy();
+    expect(screen.getByText("lynx")).toBeTruthy();
+    expect(screen.getByText("lynx-summer-a")).toBeTruthy();
+    // The one field this account never carried says so, rather than vanishing.
+    expect(screen.getByText(messages.common.notSet)).toBeTruthy();
+  });
+
+  // A gedu can arrive through a campaign link and can hold no marketing
+  // consent, so their card is the attribution block alone. An empty pair of
+  // tiles would report a question we never asked them as an answer they never
+  // gave.
+  it("shows attribution but no preferences when there is no customer", () => {
+    forCustomer.data = [];
+    renderIntl(
+      <UserMarketingCard
+        attribution={{ source: "lynx", medium: null, campaign: null }}
+        customerId={null}
+      />,
+    );
+
+    expect(screen.getByText(ATTRIBUTION_LABELS.source)).toBeTruthy();
+    expect(
+      screen.queryByText(messages.admin.users.marketing.preferences),
+    ).toBeNull();
+    expect(
+      screen.queryByText(messages.admin.users.marketing.schoolOfGaming),
+    ).toBeNull();
+    expect(screen.queryByText(NOT_GRANTED)).toBeNull();
+  });
+
   it("reports both consents as not granted for a customer with no rows", () => {
     forCustomer.data = [];
-    renderIntl(<UserMarketingConsentsCard customerId={CUSTOMER_ID} />);
+    renderIntl(<UserMarketingCard attribution={NO_ATTRIBUTION} customerId={CUSTOMER_ID} />);
 
     expect(screen.getAllByText(NOT_GRANTED)).toHaveLength(2);
     expect(screen.queryByText(GRANTED)).toBeNull();
@@ -468,7 +523,7 @@ describe("the admin marketing block", () => {
       consentRow("school_of_gaming", true, "2026-04-09T10:15:00.000Z"),
       consentRow("lynx_educate", false, "2026-04-09T10:15:00.000Z"),
     ];
-    renderIntl(<UserMarketingConsentsCard customerId={CUSTOMER_ID} />);
+    renderIntl(<UserMarketingCard attribution={NO_ATTRIBUTION} customerId={CUSTOMER_ID} />);
 
     expect(screen.getByText(GRANTED)).toBeTruthy();
     expect(screen.getByText(NOT_GRANTED)).toBeTruthy();
@@ -480,7 +535,7 @@ describe("the admin marketing block", () => {
 
   it("states nothing at all until the read lands", () => {
     forCustomer.data = undefined;
-    renderIntl(<UserMarketingConsentsCard customerId={CUSTOMER_ID} />);
+    renderIntl(<UserMarketingCard attribution={NO_ATTRIBUTION} customerId={CUSTOMER_ID} />);
 
     // Saying "not granted" and correcting it a round trip later would be the
     // card stating a fact it did not have. The labels are already on screen.

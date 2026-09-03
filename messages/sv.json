@@ -943,7 +943,6 @@
       "userNotFound": "Användaren hittades inte.",
       "joined": "Gick med",
       "unknown": "Okänd",
-      "referralCode": "Hänvisningskod",
       "linkedGamers": "Kopplade spelare",
       "linkedParents": "Kopplade föräldrar",
       "unnamedGamer": "Namnlös spelare",
@@ -974,7 +973,14 @@
         "description": "Ange eller korrigera kontots spelanvändarnamn. Sparandet kontrollerar namnet hos plattformen."
       },
       "marketing": {
-        "title": "Marknadsföringsinställningar",
+        "title": "Marknadsföring",
+        "attribution": "Ursprung",
+        "utm": {
+          "source": "Källa",
+          "medium": "Medium",
+          "campaign": "Kampanj"
+        },
+        "preferences": "Inställningar",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
         "granted": "Godkänt",
@@ -1444,7 +1450,8 @@
     "privacy": "Integritetspolicy",
     "terms": "Användarvillkor",
     "antiBullying": "Mot mobbning",
-    "attributions": "Källor och licenser"
+    "attributions": "Källor och licenser",
+    "privacyChoices": "Integritetsval"
   },
   "gamer": {
     "welcomeNamed": "Välkommen, {name}!",
@@ -2748,8 +2755,8 @@
           "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt. Vi lagrar också ditt efternamn på barnets konto, eftersom barnet hör till ditt konto. Geduer och andra spelare ser det aldrig. Själva kontot har en intern Sogverse-adress i stället för en riktig e-postadress.",
           "Eventuellt barnets användarnamn i de spel som barnets klubbar använder – i dag Minecraft och Roblox – och det konto-id som spelet ger barnet, så att vi känner igen barnet i spelet och så att barnet kan ansluta till vår Minecraft-server under träffarna.",
           "Våra spelfostrares anteckningar från träffarna – närvaro, träffrapporter och korta noteringar som hjälper oss att stötta ditt barn i gruppen.",
-          "Allmän, anonym information om hur webbplatsen används (se \"Cookies och analys\" nedan).",
-          "En kort kod som visar vilken skola, klubb eller samarbetspartner som delade länken du kom hit via – så att vi vet vilken information som faktiskt når familjer, och kan berätta för våra partner om deras länk fungerade."
+          "Allmän, anonym information om hur webbplatsen används (se \"Cookies, analys och annonsering\" nedan).",
+          "Kampanjkoden – källa, medium och kampanj – som fanns i länken ditt besök kom från. Vi sparar den en gång, när kontot skapas, så att vi och våra partner vet vilken information som faktiskt når familjer."
         ]
       },
       "childrensPrivacy": {
@@ -2757,7 +2764,7 @@
         "paragraphs": [
           "De flesta som använder Sogverse är barn, så deras trygghet och integritet är vår högsta prioritet.",
           "Ett barn kan aldrig skapa ett eget konto. Endast en förälder eller vårdnadshavare skapar barnets konto, väljer vad som delas och ger tillstånd å barnets vägnar. Så uppfyller vi våra skyldigheter enligt dataskyddslagstiftningen när det gäller barn.",
-          "Vad vi lagrar om ett barn står ovan under \"Vilka uppgifter vi samlar in\", och vi samlar inte in något om ett barn utöver det vi behöver för att driva våra klubbar, läger och evenemang. Vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Geduer).",
+          "Vad vi lagrar om ett barn står ovan under \"Vilka uppgifter vi samlar in\", och vi samlar inte in något om ett barn utöver det vi behöver för att driva våra klubbar, läger och evenemang. Vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. När ditt barn är inloggat som spelare skickas ingenting om barnets surfande till en annonsplattform, även om marknadsföring är påslagen på enheten. Träffarna leds av våra utbildade spelfostrare (vi kallar dem Geduer).",
           "Om du när som helst vill se, ändra eller radera ditt barns uppgifter är det bara att mejla {supportEmail}, så ordnar vi det."
         ]
       },
@@ -2785,7 +2792,8 @@
           "Eftersom en förälder har gett tillstånd å barnets vägnar (samtycke).",
           "För att uppfylla våra lagstadgade skyldigheter, till exempel att spara bokföringsuppgifter för betalningar.",
           "För vårt berättigade intresse av att hålla webbplatsen säker och välfungerande – alltid avvägt mot din integritet.",
-          "För vårt berättigade intresse av att veta vilka av våra insatser som når familjer – alltid avvägt mot din integritet, och du kan när som helst be oss sluta."
+          "För vårt berättigade intresse av att veta vilka av våra insatser som når familjer – alltid avvägt mot din integritet, och du kan när som helst be oss sluta.",
+          "Ditt samtycke, för cookies för analys och marknadsföring – som du kan återkalla när som helst via Integritetsval längst ner på varje sida."
         ]
       },
       "providers": {
@@ -2798,18 +2806,24 @@
           "Stripe – hanterar betalningar. Dina kortuppgifter går direkt till Stripe, och vi ser dem aldrig.",
           "Brevo – skickar våra e-postmeddelanden, till exempel kvitton och påminnelser.",
           "Daily.co – möjliggör de direktsända röst- och videoträffarna.",
-          "Vercel – är värd för webbplatsen och tillhandahåller anonym, cookiefri användningsstatistik.",
+          "Vercel – är värd för webbplatsen och tillhandahåller anonym användningsstatistik.",
           "Meta (WhatsApp) – för att skicka vissa meddelanden och påminnelser till familjer som hellre använder WhatsApp.",
           "Roblox – tar emot ditt barns Roblox-konto-id, så att vi kan bekräfta kontot och visa barnets avatarbild.",
-          "Mojang (Microsoft) – tar emot ditt barns Minecraft-användarnamn, så att vi kan bekräfta kontot."
+          "Mojang (Microsoft) – tar emot ditt barns Minecraft-användarnamn, så att vi kan bekräfta kontot.",
+          "Meta (annonser på Facebook och Instagram) – får via Meta-pixeln veta att du besökt oss och om du skapade ett konto, så att vi kan visa våra annonser där. Bara om du tillåter cookies för marknadsföring.",
+          "TikTok – får via TikTok-pixeln veta att du besökt oss och om du skapade ett konto, så att vi kan visa våra annonser på TikTok. Bara om du tillåter cookies för marknadsföring."
         ]
       },
       "cookies": {
-        "heading": "Cookies och analys",
+        "heading": "Cookies, analys och annonsering",
         "paragraphs": [
-          "Vi använder inga reklam- eller spårningscookies, och vi följer dig inte runt på internet.",
-          "Vi använder ett fåtal nödvändiga cookies för att hålla dig säkert inloggad – webbplatsen fungerar inte utan dem, så de kräver inte ditt samtycke.",
-          "För att förstå sådant som hur många som besöker oss och om de använder telefon eller dator använder vi Vercels analys. Den är integritetsvänlig: inga cookies och ingen personlig identifiering."
+          "Några cookies är helt enkelt hur webbplatsen fungerar: de håller dig inloggad, kommer ihåg att du angett din föräldra-PIN, sparar ditt språk och din tidszon och lagrar det cookieval du gör. De kräver inte ditt samtycke – utan dem finns det ingen webbplats att samtycka till.",
+          "Allt annat väntar på dig. Första gången du besöker oss frågar vi, och inget utöver de nödvändiga cookiesarna startar förrän du svarar. Du kan ändra dig när som helst via Integritetsval längst ner på varje sida: att stänga av något gäller direkt, och ändrar inte det vi redan gjort medan det var på.",
+          "Det finns två saker att säga ja eller nej till:"
+        ],
+        "bullets": [
+          "Analys – Vercels, och bara om du väljer den. Den räknar besök, mäter hur snabbt sidorna laddas och tar emot några anonyma händelser om hur webbplatsen används: hur någon tar sig till sin My SOG och när språket byts. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
+          "Marknadsföring – Meta-pixeln och TikTok-pixeln, och bara om du väljer dem. De får veta att du besökt School of Gaming och om du skapade ett konto, så att Meta och TikTok kan visa dig våra annonser hos sig. Ingen av pixlarna laddas medan ditt barn är inloggat som spelare. Om du säger ja till marknadsföring och sedan skapar ett konto sätter vi en enda kortlivad egen cookie – fem minuter, inget namn, ingen adress, bara ordet \"registration\" – vars enda uppgift är att berätta för pixlarna på nästa sida att ett konto skapades. Att stänga av marknadsföring raderar de cookies pixlarna lämnat i din webbläsare, men vi kan inte radera det Meta och TikTok redan har – det kan du be dem om i dina egna inställningar där, där Meta kallar det \"aktivitet utanför Metas teknik\"."
         ]
       },
       "voice": {
@@ -3105,7 +3119,7 @@
       "empty": "De första evenemangen planeras just nu. Titta in snart och se vad som är på gång.",
       "previous": "Föregående evenemang",
       "next": "Nästa evenemang",
-      "browseShop": "Se alla evenemang i butiken"
+      "browseShop": "Utforska butiken"
     },
     "parents": {
       "eyebrow": "För föräldrar",
@@ -3863,5 +3877,12 @@
       "next": "Nästa bild",
       "close": "Stäng"
     }
+  },
+  "consent": {
+    "heading": "Din integritet, ditt val",
+    "body": "Analys visar oss hur många som besöker sidan och hur snabbt sidorna laddas. Den kan inte se vem du är, och den går aldrig till annonsörer. Marknadsföring berättar för de annonsplattformar vi annonserar på att du har besökt oss och om du skapade ett konto, så att de kan visa dig våra annonser där. Den är aldrig på medan ditt barn är inloggat som spelare. Inget utöver de nödvändiga cookiesarna startar förrän du väljer, och du kan ändra dig när som helst längst ner på sidan – detaljerna finns i vår <link>integritetspolicy</link>.",
+    "rejectAll": "Neka alla",
+    "analyticsOnly": "Endast analys",
+    "analyticsAndMarketing": "Analys och marknadsföring"
   }
 }

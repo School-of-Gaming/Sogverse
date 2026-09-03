@@ -943,7 +943,6 @@
       "userNotFound": "User not found.",
       "joined": "Joined",
       "unknown": "Unknown",
-      "referralCode": "Referral code",
       "linkedGamers": "Linked Gamers",
       "linkedParents": "Linked Parents",
       "unnamedGamer": "Unnamed Gamer",
@@ -974,7 +973,14 @@
         "description": "Set or correct this account's game usernames. Saving checks the name with the platform."
       },
       "marketing": {
-        "title": "Marketing preferences",
+        "title": "Marketing",
+        "attribution": "Attribution",
+        "utm": {
+          "source": "Source",
+          "medium": "Medium",
+          "campaign": "Campaign"
+        },
+        "preferences": "Preferences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
         "granted": "Granted",
@@ -1444,7 +1450,8 @@
     "privacy": "Privacy Policy",
     "terms": "Terms & Conditions",
     "antiBullying": "Anti-Bullying",
-    "attributions": "Attributions"
+    "attributions": "Attributions",
+    "privacyChoices": "Privacy choices"
   },
   "gamer": {
     "welcomeNamed": "Welcome, {name}!",
@@ -2179,7 +2186,7 @@
       "empty": "The first events are being scheduled now. Check back shortly to see what is coming up.",
       "previous": "Previous events",
       "next": "Next events",
-      "browseShop": "Browse all events in the shop"
+      "browseShop": "Browse the shop"
     },
     "parents": {
       "eyebrow": "For parents",
@@ -3434,8 +3441,8 @@
           "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly. We store your family surname on their account too, because your child is part of your account; Gedus and other gamers never see it. Their account itself uses an internal Sogverse address rather than a real email.",
           "Optionally, your child’s username in the games their clubs use — today that’s Minecraft and Roblox — and the account id that game gives them, so we can recognise them in the game and so they can connect to our Minecraft server during sessions.",
           "Session records our Game Educators write — attendance, session reports, and short notes that help us support your child in the group.",
-          "Basic, anonymous information about how the site is used (see \"Cookies and analytics\" below).",
-          "If you came to us through a link shared by a school, club or partner organisation, a short code telling us which one — so we know which outreach actually reaches families, and can tell our partners whether theirs worked."
+          "Basic, anonymous information about how the site is used (see \"Cookies, analytics and advertising\" below).",
+          "The campaign tag — source, medium and campaign — carried by the link your visit came from. We store it once, when the account is created, so that we and our partners know which outreach actually reaches families."
         ]
       },
       "childrensPrivacy": {
@@ -3443,7 +3450,7 @@
         "paragraphs": [
           "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
           "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
-          "What we hold about a child is set out above under \"The information we collect\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. Live sessions are run by our trained Game Educators (we call them Gedus).",
+          "What we hold about a child is set out above under \"The information we collect\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. When your child is signed in as a gamer, nothing about their browsing is sent to an advertising platform, even if marketing is switched on for the device. Live sessions are run by our trained Game Educators (we call them Gedus).",
           "If you ever want to see, change, or delete your child’s information, just email {supportEmail} and we’ll take care of it."
         ]
       },
@@ -3471,7 +3478,8 @@
           "Because a parent has given permission on their child’s behalf (consent).",
           "To meet our legal duties, such as keeping accounting records for payments.",
           "For our legitimate interest in keeping the site secure and working well — always balanced against your privacy.",
-          "For our legitimate interest in understanding which of our outreach efforts reach families — always balanced against your privacy, and you can ask us to stop at any time."
+          "For our legitimate interest in understanding which of our outreach efforts reach families — always balanced against your privacy, and you can ask us to stop at any time.",
+          "Your consent, for the analytics and marketing cookies — which you can withdraw at any time from Privacy choices at the bottom of every page."
         ]
       },
       "providers": {
@@ -3484,18 +3492,24 @@
           "Stripe — processes payments. Your card details go straight to Stripe; we never see them.",
           "Brevo — sends our emails, such as receipts and reminders.",
           "Daily.co — powers the live voice and video sessions.",
-          "Vercel — hosts the website and provides anonymous, cookie-free usage statistics.",
+          "Vercel — hosts the website and provides anonymous usage statistics.",
           "Meta (WhatsApp) — used to send some messages and reminders to families who prefer WhatsApp.",
           "Roblox — receives your child’s Roblox account id, so we can confirm the account and show their avatar picture.",
-          "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account."
+          "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account.",
+          "Meta (Facebook and Instagram ads) — learns, through the Meta Pixel, that you visited and whether you created an account, so we can show our ads there. Only if you allow marketing cookies.",
+          "TikTok — learns, through the TikTok Pixel, that you visited and whether you created an account, so we can show our ads on TikTok. Only if you allow marketing cookies."
         ]
       },
       "cookies": {
-        "heading": "Cookies and analytics",
+        "heading": "Cookies, analytics and advertising",
         "paragraphs": [
-          "We don’t use advertising or tracking cookies, and we don’t follow you around the internet.",
-          "We use a small number of necessary cookies to keep you securely logged in — the site can’t work without these, so they don’t need your consent.",
-          "To understand things like how many people visit and whether they’re using a phone or a computer, we use Vercel’s analytics. It’s privacy-friendly: no cookies, and it doesn’t identify you personally."
+          "A few cookies are simply how the site works: they keep you signed in, remember that you entered your parent PIN, hold your language and timezone, and store the cookie choice you make. These don’t need your consent — without them there is no site to consent to.",
+          "Everything else waits for you. The first time you visit we ask, and nothing beyond those necessary cookies runs until you answer. You can change your mind whenever you like from Privacy choices at the bottom of every page: switching something off takes effect straight away, and it doesn’t change anything we already did while it was on.",
+          "There are two things to say yes or no to:"
+        ],
+        "bullets": [
+          "Analytics — Vercel’s, and only if you choose it. It counts visits, measures how quickly pages load, and receives a few anonymous events about how the site is used: how someone reached their My SOG, when someone changes the language. It can’t see who you are, and we never hand it to advertisers.",
+          "Marketing — the Meta Pixel and the TikTok Pixel, and only if you choose them. They learn that you visited School of Gaming and whether you created an account, so Meta and TikTok can show you our ads on their own platforms. Neither pixel loads while your child is signed in as a gamer. If you say yes to marketing and then create an account, we set one short-lived cookie of our own — five minutes, no name, no address, nothing but the word \"registration\" — whose only job is to tell the pixels on the next page that an account was created. Switching marketing off deletes the cookies the pixels left in your browser, but we can’t delete what Meta and TikTok already hold — you can ask them to, in your own settings there, where Meta calls it \"activity off Meta technologies\"."
         ]
       },
       "voice": {
@@ -3863,5 +3877,12 @@
       "next": "Next image",
       "close": "Close"
     }
+  },
+  "consent": {
+    "heading": "Your privacy, your choice",
+    "body": "Analytics tells us how many people visit and how fast pages load. It can’t see who you are, and it never goes to advertisers. Marketing tells the advertising platforms we run ads on that you visited and whether you signed up, so they can show you our ads there. It is never on while your child is signed in as a gamer. Nothing beyond the necessary cookies runs until you choose, and you can change your mind any time from the footer — the details are in our <link>privacy policy</link>.",
+    "rejectAll": "Reject all",
+    "analyticsOnly": "Analytics only",
+    "analyticsAndMarketing": "Analytics and marketing"
   }
 }

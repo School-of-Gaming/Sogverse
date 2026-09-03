@@ -991,7 +991,6 @@
       "userNotFound": "lo’wI’ tu’be’lu’.",
       "joined": "muv",
       "unknown": "Sovbe’lu’",
-      "referralCode": "ghum ngoq",
       "linkedGamers": "toy’wI’pu’ jonlu’",
       "linkedParents": "vav/SoSmey jonlu’",
       "unnamedGamer": "pong Hutlh toy’wI’",
@@ -1022,7 +1021,14 @@
         "description": "QujwI’ pong yIchoH ghap yIcher. bIpolDI’ pong chel Qu’qoq."
       },
       "marketing": {
-        "title": "QIn chaw’mey",
+        "title": "ghum",
+        "attribution": "He",
+        "utm": {
+          "source": "mung",
+          "medium": "Duj",
+          "campaign": "veS"
+        },
+        "preferences": "chaw’mey",
         "schoolOfGaming": "noH Quj yejHaD",
         "lynxEducate": "Lynx Educate",
         "granted": "chaw’lu’",
@@ -1488,7 +1494,8 @@
     "copyright": "© {year} noH Quj yejHaD. Hoch batlh.",
     "contact": {
       "email": "QIn: {email}"
-    }
+    },
+    "privacyChoices": "pegh wIvmey"
   },
   "gamer": {
     "welcomeNamed": "nuqneH, {name}!",
@@ -2825,7 +2832,7 @@
       "empty": "jajmey wa’DIch DaH wIqech. tugh yIleghqa’, ’ej nuq ghoS yISov.",
       "previous": "jajmey ret yIcha’",
       "next": "jajmey veb yIcha’",
-      "browseShop": "ngevwI’Daq Hoch jajmey tIlegh"
+      "browseShop": "ngevwI’ yIlegh"
     },
     "parents": {
       "eyebrow": "vavpu’ SoSpu’vaD",
@@ -3017,5 +3024,12 @@
       "next": "mIllogh veb yIlegh",
       "close": "yISoQmoH"
     }
+  },
+  "consent": {
+    "heading": "peghlIj, wIvlIj",
+    "body": "toghwI’ chabHommey: arlogh nuSuchlu’ ’ej nom So’lu’ ghItlhmey ’e’ maSov. SoH DaSovbe’, ’ej ngevwI’pu’vaD pagh wInob. ngevmeH chabHommey: mIlloghmeymaj lu’angbogh ngevwI’pu’vaD nuSuchpu’ ’ej qa’ DachenmoHpu’ ’e’ luSov. QujwI’ ’el puqlI’DI’, pagh qaS. chabHommey poQlu’bogh neH qaS DawIvpa’, ’ej bIngDaq reH DachoHlaH – <link>Privacy Policy</link> yIlaD.",
+    "rejectAll": "Hoch yIlaj Qo’",
+    "analyticsOnly": "toghwI’ neH",
+    "analyticsAndMarketing": "toghwI’ ngevwI’ je"
   }
 }

@@ -5,11 +5,7 @@ import type { Database } from "@/types/database.types";
 import { ROUTES } from "@/lib/constants";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
-import {
-  REFERRAL_CODE_HEADER,
-  REFERRAL_QUERY_PARAM,
-  sanitiseReferralCode,
-} from "@/lib/referral";
+import { UTM_HEADER, readUtmFromSearchParams, serialiseUtm } from "@/lib/utm";
 
 // Paths a LOCKED customer session may still reach (so the parent-PIN gate
 // doesn't trap them). `/api/*` is owned by requireRole(); auth routes are the
@@ -123,19 +119,35 @@ function buildCspHeader(nonce: string): string {
 
   return [
     "default-src 'self'",
+    // Production needs no vendor host here: the pixels' inline snippets carry
+    // the nonce, and `strict-dynamic` lets a script that ran with the nonce
+    // insert the libraries it needs. Development has neither, so the two pixel
+    // hosts have to be named — connect.facebook.net serves fbevents.js and
+    // analytics.tiktok.com serves the TikTok events library, both inserted by
+    // the snippets in `MarketingPixels`.
     isProd
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co",
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://connect.facebook.net https://analytics.tiktok.com",
     "style-src 'self' 'unsafe-inline'",
     // mc-heads.net renders the Minecraft skin body, which the shared game-account
     // row derives straight from a username — so it loads anywhere an identity is
     // shown (settings, rosters, the admin panel, the voice room).
     // tr.rbxcdn.com serves the Roblox avatar bust render — the thumbnails API hands back that one
     // host for every completed render, so it is named rather than wildcarded across *.rbxcdn.com.
-    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com`,
+    // www.facebook.com and analytics.tiktok.com are the two pixels' own
+    // transports: fbevents.js reports by requesting /tr/ as an image, and
+    // TikTok's events.js falls back to an image beacon where fetch is
+    // unavailable or blocked. `strict-dynamic` does not reach img-src, so both
+    // are needed in production too — removing either silently stops a pixel in
+    // the one environment where it matters.
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com https://analytics.tiktok.com`,
     "font-src 'self'",
-    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io",
+    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting.
+    // www.facebook.com and analytics.tiktok.com are where the two pixels in
+    // `MarketingPixels` send events once their libraries have loaded — the
+    // fetch/beacon path beside the image one above. Also not covered by
+    // `strict-dynamic`, so both branches need them.
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com https://analytics.tiktok.com",
     "frame-src 'self' https://*.daily.co https://*.stripe.com",
     // blob: workers used by Daily.co for WebRTC media processing
     "worker-src 'self' blob:",
@@ -153,32 +165,38 @@ export async function proxy(request: NextRequest) {
   request.headers.set("x-nonce", nonce);
   request.headers.set("Content-Security-Policy", cspHeader);
 
-  // Referral attribution: `?ref=<code>` on the landing URL, sanitised here and
-  // handed to the root layout, which seeds it into a client context provider so
-  // it survives the whole visit as client-side navigation. See src/lib/referral.ts
-  // for the constraints this feature is built to — the value never reaches the
-  // user's device, at any point.
+  // UTM attribution: `utm_source` / `utm_medium` / `utm_campaign` on the landing
+  // URL, sanitised here and handed to the root layout, which seeds them into a
+  // client context provider so they survive the whole visit as client-side
+  // navigation. See src/lib/utm.ts for the constraints this feature is built to
+  // — including why reading the query string here is itself the moment ePrivacy
+  // engages, whatever we do with the value afterwards.
   //
   // **Delete unconditionally, then set conditionally.** A browser can send its
-  // own `x-referral-code:` header, and an incoming request header reaches the
-  // layout untouched on any request the proxy does not overwrite it on — so a
-  // bare conditional `set` would leave a forgeable path. The harm is small
-  // (anyone can type `?ref=` themselves, and the profile-creation trigger
-  // re-sanitises regardless), but this is the difference between "the value
-  // always came through our own sanitiser" being true and merely being intended.
+  // own `x-utm:` header, and an incoming request header reaches the layout
+  // untouched on any request the proxy does not overwrite it on — so a bare
+  // conditional `set` would leave a forgeable path. The harm is small (anyone
+  // can type `?utm_campaign=` themselves, and the layout and the
+  // profile-creation trigger both re-sanitise regardless), but this is the
+  // difference between "the value always came through our own sanitiser" being
+  // true and merely being intended.
+  //
+  // **A value over the byte budget is dropped, not truncated**, and the budget
+  // lives in the module with the rest of the rules — `serialiseUtm` answers
+  // null past `UTM_HEADER_MAX_LENGTH`, so it arrives here as the same "nothing
+  // to send" the no-attribution case produces and needs no branch of its own.
+  // The point of enforcing it at all is that a header a stranger controls
+  // through the query string must not be able to push a request past a hop's
+  // own per-header ceiling: that turns into a 502 nobody chose, where dropping
+  // the attribution costs one visit's marketing data.
   //
   // This runs above every branch and early return, like the two sets above, so
-  // no path bypasses it. `.getAll()` rather than `.get()`: a repeated
-  // `?ref=a&ref=b` is not a code and must resolve to absent, and `.get()` would
-  // silently hand back the first value. (A `typeof x === "string"` check — the
-  // idiom the register *page* uses on its `searchParams` — is dead code here:
-  // `URLSearchParams.get()` can never return an array.)
-  request.headers.delete(REFERRAL_CODE_HEADER);
-  const referralValues = request.nextUrl.searchParams.getAll(REFERRAL_QUERY_PARAM);
-  const referralCode =
-    referralValues.length === 1 ? sanitiseReferralCode(referralValues[0]) : null;
-  if (referralCode !== null) {
-    request.headers.set(REFERRAL_CODE_HEADER, referralCode);
+  // no path bypasses it. The repeated-param rule and the sanitiser both live in
+  // the module, so this file holds no copy of either.
+  request.headers.delete(UTM_HEADER);
+  const utm = serialiseUtm(readUtmFromSearchParams(request.nextUrl.searchParams));
+  if (utm !== null) {
+    request.headers.set(UTM_HEADER, utm);
   }
 
   const { pathname } = request.nextUrl;
