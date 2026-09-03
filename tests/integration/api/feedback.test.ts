@@ -73,9 +73,27 @@ function setupHappyPath(accepted = true) {
   });
 }
 
-function setupGamerParentLookup(parentEmail: string) {
+/**
+ * The gamer case's reads: the parent link, the parent's address, and the
+ * gamer's own sign-in mode. The mode defaults to switch-only, which is what
+ * every gamer is created with and what keeps the child's handle out of the
+ * mail.
+ */
+function setupGamerParentLookup(
+  parentEmail: string,
+  gamerProfile: { sign_in: string } | null = { sign_in: "parent" },
+) {
   mockRpc.mockResolvedValue({ data: true, error: null });
   mockFrom.mockImplementation((table: string) => {
+    if (table === "gamer_profiles") {
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: () => Promise.resolve({ data: gamerProfile, error: null }),
+          }),
+        }),
+      };
+    }
     if (table === "parent_gamer") {
       return {
         select: () => ({
@@ -237,6 +255,65 @@ describe("POST /api/feedback", () => {
         replyToEmail: "parent@test.local",
       })
     );
+  });
+
+  // -- A gamer's own verified mailbox --
+  //
+  // Reply-To is one address and stays the parent's; a gamer who holds a
+  // verified real address of their own is named in the staff note instead, so
+  // the admin can include both. The gate is both facts together, and the two
+  // negative cases are the ones that matter: a real address the child has not
+  // verified may be a stranger's, and a username sign-in's handle is not a
+  // mailbox at all.
+
+  it("names a gamer's verified own address in the note and keeps the parent as reply-to", async () => {
+    mockAuthenticatedAs("gamer", {
+      email: "aino@example.test",
+      email_verified_at: "2026-08-01T10:00:00Z",
+      first_name: "Aino",
+    });
+    setupGamerParentLookup("parent@test.local", { sign_in: "email" });
+
+    await POST(createRequest(validBody));
+
+    const sent = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(sent.replyToEmail).toBe("parent@test.local");
+    expect(sent.htmlContent).toContain("verified email address of their own");
+    // Defused, so a client cannot linkify it: the address is present but never
+    // as one unbroken token.
+    expect(sent.htmlContent).toContain("aino@example");
+    expect(sent.htmlContent).not.toContain('href="mailto:');
+  });
+
+  it("leaves a gamer's real address out entirely until it is verified", async () => {
+    mockAuthenticatedAs("gamer", {
+      email: "aino@example.test",
+      email_verified_at: null,
+      first_name: "Aino",
+    });
+    setupGamerParentLookup("parent@test.local", { sign_in: "email" });
+
+    await POST(createRequest(validBody));
+
+    const sent = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(sent.replyToEmail).toBe("parent@test.local");
+    expect(sent.htmlContent).not.toContain("aino@example");
+    expect(sent.htmlContent).not.toContain("verified email address of their own");
+  });
+
+  it("never names a username sign-in's handle, verified stamp or not", async () => {
+    mockAuthenticatedAs("gamer", {
+      email: "aino@gamer.sogverse.internal",
+      email_verified_at: "2026-08-01T10:00:00Z",
+      first_name: "Aino",
+    });
+    setupGamerParentLookup("parent@test.local", { sign_in: "username" });
+
+    await POST(createRequest(validBody));
+
+    const sent = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(sent.htmlContent).not.toContain("sogverse.internal");
+    expect(sent.htmlContent).not.toContain("verified email address of their own");
   });
 
   it("should HTML-escape message content", async () => {

@@ -130,7 +130,23 @@ function mockAuthenticatedCustomer() {
  * they are the same row).
  */
 function mockReadsForConfirmationEmail(
-  { participantFirstName = "Aino" }: { participantFirstName?: string } = {},
+  {
+    participantFirstName = "Aino",
+    gamer = {},
+  }: {
+    participantFirstName?: string;
+    /**
+     * Overrides on the child's profile row. The default is the switch-only
+     * sign-in every gamer is created with — no address of their own, so the
+     * mail goes to the parent alone.
+     */
+    gamer?: Partial<{
+      email: string | null;
+      locale: string | null;
+      email_verified_at: string | null;
+      gamer_profiles: { sign_in: string } | null;
+    }>;
+  } = {},
 ) {
   mockFrom.mockImplementation((table: string) => {
     if (table === "products") {
@@ -161,13 +177,18 @@ function mockReadsForConfirmationEmail(
                   id: CUSTOMER_ID,
                   first_name: "Marja",
                   email: "parent@example.test",
+                  email_verified_at: "2026-01-01T00:00:00Z",
                   locale: "en",
+                  gamer_profiles: null,
                 },
                 {
                   id: GAMER_ID,
                   first_name: participantFirstName,
                   email: null,
+                  email_verified_at: null,
                   locale: null,
+                  gamer_profiles: { sign_in: "parent" },
+                  ...gamer,
                 },
               ],
               error: null,
@@ -590,6 +611,58 @@ describe("POST /api/participations/waitlist", () => {
     expect(sent.replyToEmail).toBe("help@sog.gg");
     expect(sent.subject).toContain("waitlist");
     expect(sent.subject).toContain("Aino");
+  });
+
+  /**
+   * A child with a verified mailbox of their own gets a copy beside the
+   * parent's: second person, no price, their own My SOG root. The two negative
+   * cases are the gate's two halves — the mode without the stamp, and the
+   * switch-only default — and each must leave the parent's mail as the only one.
+   */
+  it("sends a verified child their own copy, after the parent's", async () => {
+    mockAuthenticatedCustomer();
+    joinsWaitlist();
+    mockReadsForConfirmationEmail({
+      gamer: {
+        email: "aino@example.test",
+        locale: "en",
+        email_verified_at: "2026-08-01T10:00:00Z",
+        gamer_profiles: { sign_in: "email" },
+      },
+    });
+
+    await POST(createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }));
+    await settleDeferred();
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(2);
+    const [parent, child] = mockSendTransactionalEmail.mock.calls.map(([options]) => options);
+    expect(parent.toEmail).toBe("parent@example.test");
+    expect(parent.htmlContent).toContain("https://test.sogverse.local/parent");
+
+    expect(child.toEmail).toBe("aino@example.test");
+    expect(child.subject).toBe("You are on the waitlist for Test Club");
+    expect(child.htmlContent).toContain("https://test.sogverse.local/gamer");
+    expect(child.htmlContent).not.toContain("/parent");
+    expect(child.htmlContent).not.toContain("Price");
+    expect(child.replyToEmail).toBe("help@sog.gg");
+  });
+
+  it("mails the parent alone while the child's real address is unverified", async () => {
+    mockAuthenticatedCustomer();
+    joinsWaitlist();
+    mockReadsForConfirmationEmail({
+      gamer: {
+        email: "aino@example.test",
+        email_verified_at: null,
+        gamer_profiles: { sign_in: "email" },
+      },
+    });
+
+    await POST(createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }));
+    await settleDeferred();
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+    expect(mockSendTransactionalEmail.mock.calls[0][0].toEmail).toBe("parent@example.test");
   });
 
   // The card in My SOG reads the position live; a number frozen into an inbox

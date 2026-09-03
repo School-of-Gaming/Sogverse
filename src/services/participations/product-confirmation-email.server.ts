@@ -5,7 +5,6 @@ import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import {
   detectLocaleFromHeader,
-  isSupportedLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import {
@@ -14,6 +13,7 @@ import {
   type ProductConfirmationMode,
 } from "@/lib/email-templates/product-confirmation";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
+import { resolveFamilyRecipients } from "@/lib/email/family-recipients.server";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { getOrigin } from "@/lib/url";
 import { formatCurrencyFromCents } from "@/lib/utils";
@@ -32,6 +32,12 @@ import type { AppSupabaseClient } from "@/types";
  * test the confirmation page makes on the participation row, and deriving it
  * once stops the page and the mail from ever disagreeing about whose signup
  * this was.
+ *
+ * **A child with a verified mailbox of their own gets a copy beside the
+ * parent's** — decided by the shared family-recipient resolver, never here.
+ * The copy is the same template in its child variant: second person, no price
+ * line and no billing bullet (paying is the parent's), and the button at the
+ * child's own My SOG root.
  *
  * **It takes ids and reads everything itself, including the recipient's own
  * address and locale.** Two of the three call sites are holding that profile
@@ -124,7 +130,10 @@ async function send({
       .single(),
     client
       .from("profiles")
-      .select("id, first_name, email, locale")
+      // The verification stamp and the sign-in mode decide whether the child
+      // gets a copy of their own; `gamer_profiles` is one-to-one off
+      // `profiles`, so the embed is an object or null (null for the payer).
+      .select("id, first_name, email, email_verified_at, locale, gamer_profiles(sign_in)")
       .in("id", [customerId, participantId]),
   ]);
 
@@ -139,64 +148,94 @@ async function send({
   // state the database permits, and there is nothing to report to anyone.
   if (!customer?.email) return;
 
-  // Stored preference → what the browser asked for → English. Same chain every
-  // other send in the app walks.
-  const locale: SupportedLocale = isSupportedLocale(customer.locale)
-    ? customer.locale
-    : detectLocaleFromHeader(request.headers.get("Accept-Language"));
-
   const product = productResult.data;
-  const productName = resolveTranslation(
-    product.product_translations,
-    locale,
-  )?.name;
   const participantName = participant?.first_name.trim();
 
-  // Both are guaranteed by the schema — a product has at least one translation
-  // row, and `profiles.first_name` is NOT NULL — so this is a shape the data
-  // model says cannot arrive. If it does, a mail whose subject line names an
-  // empty product or an empty person is worse than no mail, so stop and say so.
-  if (!productName || !participantName) {
+  // Guaranteed by the schema — `profiles.first_name` is NOT NULL — so this is a
+  // shape the data model says cannot arrive. If it does, a mail whose subject
+  // line names an empty person is worse than no mail, so stop and say so.
+  if (!participant || !participantName) {
     console.error(
       "[product-confirmation email] nothing to name — skipping the send",
-      { productId, participantId, hasProductName: Boolean(productName) },
+      { productId, participantId },
     );
     return;
   }
 
-  const params = {
-    participantName,
-    // The same test the confirmation page makes on the row: participant equals
-    // customer means the payer took the seat themselves, and every sentence
-    // naming them moves into the second person.
-    isSelfSeat: participantId === customerId,
-    productName,
-    productType: product.product_type,
-    mode,
-    priceAmount: await resolvePriceAmount(client, {
-      productId,
-      mode,
-      currency,
-      locale,
-    }),
-    // The TRUSTED origin, never the raw Host header — this link goes in an
-    // email, and a spoofed Host would send a family somewhere we do not own.
-    dashboardUrl: `${getOrigin(request)}${ROUTES.customer.dashboard}`,
-  };
+  // The same test the confirmation page makes on the row: participant equals
+  // customer means the payer took the seat themselves, and every sentence
+  // naming them moves into the second person.
+  const isSelfSeat = participantId === customerId;
 
-  const t = await getEmailTranslator(locale);
-
-  await sendTransactionalEmail({
-    fromEmail: SENDER_EMAIL,
-    fromName: SENDER_NAME,
-    toEmail: customer.email,
-    subject: productConfirmationSubject(t, params),
-    htmlContent: buildProductConfirmationEmail(t, locale, params),
-    // Product mail to a person: someone replying to this has a question about
-    // their signup, so the reply goes to the monitored support inbox rather than
-    // the unattended sending address.
-    replyToEmail: SUPPORT_EMAIL,
+  // Stored preference → what the browser asked for → English, per recipient —
+  // the same chain every other send in the app walks, applied to the parent
+  // and to the child separately, because they need not share a locale.
+  const recipients = resolveFamilyRecipients({
+    parents: [
+      { email: customer.email, firstName: customer.first_name, locale: customer.locale },
+    ],
+    gamer: isSelfSeat
+      ? null
+      : {
+          email: participant.email,
+          firstName: participantName,
+          locale: participant.locale,
+          signIn: participant.gamer_profiles?.sign_in ?? null,
+          emailVerifiedAt: participant.email_verified_at,
+        },
+    fallbackLocale: detectLocaleFromHeader(request.headers.get("Accept-Language")),
   });
+
+  // The TRUSTED origin, never the raw Host header — this link goes in an
+  // email, and a spoofed Host would send a family somewhere we do not own.
+  const origin = getOrigin(request);
+
+  // The parent's mail goes first; the child's copy only follows a parent's
+  // that went.
+  for (const recipient of recipients) {
+    const locale = recipient.locale;
+    const productName = resolveTranslation(product.product_translations, locale)?.name;
+
+    // A product has at least one translation row, so an empty name here is the
+    // same impossible shape as an empty person above.
+    if (!productName) {
+      console.error(
+        "[product-confirmation email] nothing to name — skipping the send",
+        { productId, participantId, hasProductName: false },
+      );
+      return;
+    }
+
+    const gamerCopy = recipient.kind === "gamer";
+    const params = {
+      participantName,
+      isSelfSeat,
+      productName,
+      productType: product.product_type,
+      mode,
+      // The child's copy states no price, so it never reads one.
+      priceAmount: gamerCopy
+        ? null
+        : await resolvePriceAmount(client, { productId, mode, currency, locale }),
+      // The reader's own My SOG root: a `/parent` link bounces a signed-in child.
+      dashboardUrl: `${origin}${gamerCopy ? ROUTES.gamer.dashboard : ROUTES.customer.dashboard}`,
+      gamerCopy,
+    };
+
+    const t = await getEmailTranslator(locale);
+
+    await sendTransactionalEmail({
+      fromEmail: SENDER_EMAIL,
+      fromName: SENDER_NAME,
+      toEmail: recipient.email,
+      subject: productConfirmationSubject(t, params),
+      htmlContent: buildProductConfirmationEmail(t, locale, params),
+      // Product mail to a person: someone replying to this has a question about
+      // their signup, so the reply goes to the monitored support inbox rather than
+      // the unattended sending address.
+      replyToEmail: SUPPORT_EMAIL,
+    });
+  }
 }
 
 /**

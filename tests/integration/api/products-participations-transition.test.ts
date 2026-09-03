@@ -80,6 +80,30 @@ async function settleDeferred(): Promise<void> {
   await Promise.all(deferred);
 }
 
+/** The columns on the child's profile row that decide whether they get a copy. */
+interface GamerContactOverrides {
+  email?: string;
+  email_verified_at?: string | null;
+  locale?: string | null;
+  gamer_profiles?: { sign_in: string } | null;
+}
+
+/**
+ * Overrides on the child's profile row, applied by the stub below. Empty by
+ * default — the switch-only sign-in every gamer is created with, under which
+ * the child's profile address is a platform-internal handle and no copy goes
+ * to them. A test that wants the child's own copy swaps in a verified real
+ * address; `beforeEach` clears it again.
+ */
+let gamerOverrides: GamerContactOverrides = {};
+
+const VERIFIED_GAMER: GamerContactOverrides = {
+  email: "aino@example.test",
+  email_verified_at: "2026-08-01T10:00:00Z",
+  locale: "en",
+  gamer_profiles: { sign_in: "email" },
+};
+
 /** The two reads the seat-offer mail makes through the service-role client. */
 function adminTableStub(table: string) {
   if (table === "products") {
@@ -110,14 +134,19 @@ function adminTableStub(table: string) {
             first_name: "Marja",
             last_name: "Virtanen",
             email: "marja@example.com",
+            email_verified_at: "2026-01-01T00:00:00Z",
             locale: "en",
+            gamer_profiles: null,
           },
           {
             id: GAMER_ID,
             first_name: "Aino",
             last_name: null,
             email: "aino@gamer.sogverse.internal",
+            email_verified_at: null,
             locale: null,
+            gamer_profiles: { sign_in: "parent" },
+            ...gamerOverrides,
           },
         ],
         error: null,
@@ -225,6 +254,7 @@ describe("PATCH /api/admin/products/[id]/participations/[participationId]", () =
     mockAdminRpc.mockResolvedValue(freshOffer());
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "m1" });
     deferred.length = 0;
+    gamerOverrides = {};
     vi.spyOn(console, "info").mockImplementation(() => undefined);
   });
 
@@ -475,6 +505,47 @@ describe("PATCH /api/admin/products/[id]/participations/[participationId]", () =
     expect(sent.htmlContent).toContain(
       "https://test.sogverse.local/seat-offer?token=",
     );
+  });
+
+  /**
+   * A child with a verified mailbox of their own gets a copy of the offer
+   * beside the parent's — and the copy is the whole reason the child's mail is
+   * a separate template: only the parent may answer, so the token stays in
+   * the parent's mail alone.
+   */
+  it("sends a verified child their own copy, with no token in it", async () => {
+    mockAuthenticatedAdmin();
+    gamerOverrides = VERIFIED_GAMER;
+
+    await PATCH(patchRequest(invite), { params });
+    await settleDeferred();
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(2);
+    const [parent, child] = mockSendTransactionalEmail.mock.calls.map(([options]) => options);
+
+    // The parent's first, unchanged, token and all.
+    expect(parent.toEmail).toBe("marja@example.com");
+    expect(parent.htmlContent).toContain("/seat-offer?token=");
+
+    // The child's: their own address, their own root, and nothing that answers.
+    expect(child.toEmail).toBe("aino@example.test");
+    expect(child.subject).toContain("Minecraft 101");
+    expect(child.htmlContent).toContain("https://test.sogverse.local/gamer");
+    expect(child.htmlContent).not.toContain("token=");
+    expect(child.htmlContent).not.toContain("/seat-offer");
+    expect(child.htmlContent).not.toContain("/parent");
+    expect(child.replyToEmail).toBe("help@sog.gg");
+  });
+
+  it("mails the parent alone for a child whose real address is not yet verified", async () => {
+    mockAuthenticatedAdmin();
+    gamerOverrides = { ...VERIFIED_GAMER, email_verified_at: null };
+
+    await PATCH(patchRequest(invite), { params });
+    await settleDeferred();
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+    expect(mockSendTransactionalEmail.mock.calls[0][0].toEmail).toBe("marja@example.com");
   });
 
   /**

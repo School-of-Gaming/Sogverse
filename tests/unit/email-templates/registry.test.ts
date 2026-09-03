@@ -42,6 +42,7 @@ describe("templateRegistry render()", () => {
       mode: "subscription",
       priceAmount: "€40.00",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      gamerCopy: false,
     };
 
     it("names the participant when the seat is a child's", () => {
@@ -135,6 +136,23 @@ describe("templateRegistry render()", () => {
     });
 
     /**
+     * The child's own copy is the third reader, and its subject has to agree
+     * with its body the same way: second person in both, the child's name in
+     * neither line of the inbox row.
+     */
+    it("takes the second person in the subject on the child's own copy", () => {
+      const { subject, html } = templateRegistry.productConfirmation.render(
+        { ...signup, isSelfSeat: false, gamerCopy: true, priceAmount: null },
+        t,
+        "en",
+      );
+
+      expect(subject).toBe("You are enrolled in Minecraft 101");
+      expect(html).toContain("You’re enrolled in");
+      expect(html).not.toContain("is enrolled in");
+    });
+
+    /**
      * The testing form hands every field over as a string. This is where the
      * seat select becomes the boolean the schema demands, and where the price
      * is cleared on the two modes that state no amount — so a test send of a
@@ -146,9 +164,23 @@ describe("templateRegistry render()", () => {
 
       it("expands the seat select into a boolean", () => {
         if (!resolve) throw new Error("productConfirmation has no resolveParams");
-        expect(resolve({ seat: "self", mode: "subscription" })).toMatchObject({ isSelfSeat: true });
-        expect(resolve({ seat: "child", mode: "subscription" })).toMatchObject({ isSelfSeat: false });
-        expect(resolve({ mode: "subscription" })).toMatchObject({ isSelfSeat: false });
+        expect(resolve({ seat: "self", mode: "subscription" })).toMatchObject({ isSelfSeat: true, gamerCopy: false });
+        expect(resolve({ seat: "child", mode: "subscription" })).toMatchObject({ isSelfSeat: false, gamerCopy: false });
+        expect(resolve({ mode: "subscription" })).toMatchObject({ isSelfSeat: false, gamerCopy: false });
+      });
+
+      /**
+       * The child's copy states no price whatever the mode — the live send
+       * never reads one for it — so the select's third option clears the price
+       * even on a paid mode, where the other two options keep it.
+       */
+      it("expands the child's-copy option into the flag and clears the price", () => {
+        if (!resolve) throw new Error("productConfirmation has no resolveParams");
+        expect(resolve({ seat: "gamer", mode: "subscription", priceAmount: "€40.00" })).toMatchObject({
+          isSelfSeat: false,
+          gamerCopy: true,
+          priceAmount: null,
+        });
       });
 
       it("keeps the price on the paid modes and clears it on the rest", () => {
@@ -479,6 +511,8 @@ describe("every template renders in every locale", () => {
       userRole: "customer",
       userEmail: "marja@example.com",
       message: "Great product!",
+      parentEmail: null,
+      gamerEmail: null,
     },
     welcomeParent: {
       firstName: "Marja",
@@ -501,9 +535,21 @@ describe("every template renders in every locale", () => {
       mode: "upfront",
       priceAmount: "€40.00",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      gamerCopy: false,
     },
     verifyEmail: {
       firstName: "Marja",
+      verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
+    },
+    seatOfferGamer: {
+      gamerName: "Aino",
+      productName: "Minecraft 101",
+      deadline: "Sunday, 31 August at 14:20 GMT+3",
+      dashboardUrl: "https://sogverse.sog.gg/gamer",
+    },
+    gamerWelcome: {
+      gamerFirstName: "Aino",
+      parentFirstName: "Marja",
       verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
     },
     seatOffer: {
@@ -551,7 +597,16 @@ describe("every template renders in every locale", () => {
    * guard below; a template with no entry is swept once, as its own fixture.
    */
   const TEMPLATE_VARIANTS: Record<string, Record<string, string | boolean | null>[]> = {
-    sessionReport: [{ copy: "family" }, { copy: "staff" }],
+    // Three copies: the family's, the child's own (the one render that reads
+    // the child-addressed intro key) and the staff copy behind its banner.
+    sessionReport: [{ copy: "family" }, { copy: "gamer" }, { copy: "staff" }],
+    // The child's copy is the only render that reads its greeting key.
+    productConfirmation: [{ gamerCopy: false }, { gamerCopy: true, priceAmount: null }],
+    // The gamer case's two notes are keys nothing else reaches.
+    feedback: [
+      {},
+      { userRole: "gamer", parentEmail: "marja@example.com", gamerEmail: "aino@example.com" },
+    ],
     // The offer speaks in two voices, and each has its own heading, opening and
     // subject — four keys per locale that only the self variant reaches.
     seatOffer: [{ isSelfSeat: false }, { isSelfSeat: true }],

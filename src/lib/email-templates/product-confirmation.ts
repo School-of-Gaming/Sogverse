@@ -64,8 +64,17 @@ interface ProductConfirmationEmailOptions {
    * Null on the modes that state no amount (`free`, `external`, `waitlist`).
    */
   priceAmount: string | null;
-  /** App-generated My SOG link. */
+  /** App-generated My SOG link — the parent's root, or the child's on their copy. */
   dashboardUrl: string;
+  /**
+   * The child's own copy, sent beside the parent's when the child holds a
+   * verified mailbox of their own. It speaks to the reader the way a self seat
+   * does — the reader *is* the participant — and drops everything only a
+   * parent can act on: the price line and the billing bullet. `isSelfSeat` is
+   * ignored under it, because the child's copy of an adult's own seat does
+   * not exist.
+   */
+  gamerCopy?: boolean;
 }
 
 /**
@@ -91,17 +100,21 @@ export function productConfirmationSubject(
     productName,
     productType,
     mode,
+    gamerCopy = false,
   }: Pick<
     ProductConfirmationEmailOptions,
-    "participantName" | "isSelfSeat" | "productName" | "productType" | "mode"
+    "participantName" | "isSelfSeat" | "productName" | "productType" | "mode" | "gamerCopy"
   >,
 ): string {
+  // The child reading their own copy is the participant, so the subject takes
+  // the second person exactly as a self seat does.
+  const secondPerson = isSelfSeat || gamerCopy;
   if (mode === "waitlist") {
-    return isSelfSeat
+    return secondPerson
       ? t("productConfirmation.waitlist.subjectSelf", { productName })
       : t("productConfirmation.waitlist.subject", { participantName, productName });
   }
-  return isSelfSeat
+  return secondPerson
     ? t(`productConfirmation.self.subject.${productType}`, { productName })
     : t(`productConfirmation.subject.${productType}`, { participantName, productName });
 }
@@ -117,21 +130,26 @@ export function buildProductConfirmationEmail(
     mode,
     priceAmount,
     dashboardUrl,
+    gamerCopy = false,
   }: ProductConfirmationEmailOptions,
 ): string {
   const isWaitlist = mode === "waitlist";
   const name = styledName(participantName);
   const product = styledProductName(productName);
+  // The reader is the participant on a self seat and on the child's own copy,
+  // and every sentence naming the participant moves to the second person on
+  // both — by swapping whole keys, as the self seat already does.
+  const secondPerson = isSelfSeat || gamerCopy;
 
   const title = isWaitlist
     ? t("productConfirmation.waitlist.heading")
     : t("productConfirmation.heading");
 
   const subheading = isWaitlist
-    ? isSelfSeat
+    ? secondPerson
       ? t("productConfirmation.self.waitlist.subheading", { productName: product })
       : t("productConfirmation.waitlist.subheading", { participantName: name, productName: product })
-    : isSelfSeat
+    : secondPerson
       ? t(`productConfirmation.self.subheading.${productType}`, { productName: product })
       : t(`productConfirmation.subheading.${productType}`, { participantName: name, productName: product });
 
@@ -141,20 +159,32 @@ export function buildProductConfirmationEmail(
   // version of who we invoice, which is our arrangement with the municipality
   // and not a thing a parent has any use for. So the list is the placement
   // sentence alone, and the price line above carries the fact by itself.
+  //
+  // The child's copy drops the billing bullet on every mode for a different
+  // reason: paying is the parent's, and a sentence about being billed monthly
+  // is addressed to somebody who is not the reader.
   const nextItems = isWaitlist
     ? [t("productConfirmation.waitlist.next1"), t("productConfirmation.waitlist.next2")]
     : [
-        isSelfSeat
+        secondPerson
           ? t("productConfirmation.next.placementSelf")
           : t("productConfirmation.next.placement", { participantName: name }),
-        ...(mode === "external" ? [] : [t(`productConfirmation.next.${mode}`)]),
+        ...(mode === "external" || gamerCopy ? [] : [t(`productConfirmation.next.${mode}`)]),
       ];
+
+  // The child's copy is the one variant that greets the reader by name: the
+  // second-person sentences under it name nobody, and a mail to a child that
+  // never says who it is for reads as one that was meant for their parent.
+  const greeting = gamerCopy
+    ? paragraph(t("productConfirmation.gamer.greeting", { participantName: name }))
+    : "";
 
   const content = `
     ${heading(title)}
+    ${greeting}
     ${paragraph(subheading)}
     ${paragraph(`${t(`productConfirmation.typeLabel.${productType}`)}: ${product}`)}
-    ${priceLine(t, mode, priceAmount)}
+    ${gamerCopy ? "" : priceLine(t, mode, priceAmount)}
     ${sectionLabel(t("productConfirmation.nextTitle"))}
     ${bulletList(nextItems)}
     ${ctaButton({ href: dashboardUrl, label: t("productConfirmation.dashboardButton") })}

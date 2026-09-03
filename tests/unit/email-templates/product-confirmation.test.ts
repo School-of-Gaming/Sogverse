@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { buildProductConfirmationEmail } from "@/lib/email-templates/product-confirmation";
+import {
+  buildProductConfirmationEmail,
+  productConfirmationSubject,
+} from "@/lib/email-templates/product-confirmation";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 
@@ -185,6 +188,66 @@ describe("buildProductConfirmationEmail", () => {
       });
       expect(html).toContain("You’re on the waitlist for");
       expect(html).not.toContain("Marja");
+    });
+  });
+
+  /**
+   * The child's own copy: the reader is the participant, so it takes the self
+   * seat's second person — and it drops everything only a parent can act on.
+   * The negative assertions are the load-bearing half: a child told they will
+   * be billed monthly has been sent their parent's mail under another name.
+   */
+  describe("the child's own copy", () => {
+    const GAMER_DASHBOARD_URL = "https://sogverse.sog.gg/gamer";
+    const child = {
+      ...base,
+      gamerCopy: true,
+      priceAmount: null,
+      dashboardUrl: GAMER_DASHBOARD_URL,
+    } as const;
+
+    it("greets the child by name and speaks in the second person", () => {
+      const html = buildProductConfirmationEmail(t, "en", child);
+      expect(html).toContain("Aino");
+      expect(html).toContain("Hi ");
+      expect(html).toContain("You’re enrolled in");
+      expect(html).not.toContain("is enrolled in");
+      expect(html).toContain("We’ll place you in a group");
+    });
+
+    it("states no price and no billing line on any mode", () => {
+      for (const mode of ["subscription", "upfront", "free", "external"] as const) {
+        const html = buildProductConfirmationEmail(t, "en", { ...child, mode });
+        expect(html).not.toContain("Price");
+        expect(html).not.toContain("billed every month");
+        expect(html).not.toContain("nothing more to pay");
+        expect(html).not.toContain("nothing to pay");
+      }
+    });
+
+    it("ignores a price it is handed rather than printing one", () => {
+      const html = buildProductConfirmationEmail(t, "en", { ...child, priceAmount: "€40.00" });
+      expect(html).not.toContain("€40.00");
+    });
+
+    it("links the child's own My SOG root", () => {
+      const html = buildProductConfirmationEmail(t, "en", child);
+      expect(html).toContain(`href="${GAMER_DASHBOARD_URL}"`);
+      expect(html).not.toContain("/parent");
+    });
+
+    it("takes the second person on the waitlist and keeps the live-position pointer", () => {
+      const html = buildProductConfirmationEmail(t, "en", { ...child, mode: "waitlist" });
+      expect(html).toContain("You’re on the waitlist for");
+      expect(html).toContain("where you stand in My SOG");
+      expect(html).not.toContain("is on the waitlist for");
+    });
+
+    it("subjects the copy in the second person, whatever the seat flag says", () => {
+      expect(productConfirmationSubject(t, child)).toBe("You are enrolled in Minecraft 101");
+      expect(productConfirmationSubject(t, { ...child, mode: "waitlist" })).toBe(
+        "You are on the waitlist for Minecraft 101",
+      );
     });
   });
 });

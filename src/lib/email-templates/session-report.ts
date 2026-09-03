@@ -58,6 +58,18 @@ import type { EmailTranslator } from "./translator";
  * families, and each family's mail was its own, addressed to them alone. It is
  * a variant of the one template rather than a template of its own, because
  * everything below the banner is deliberately the same mail the families read.
+ *
+ * **A child with a verified mailbox of their own gets a third variant: their
+ * copy.** The route sends it beside the parent's, never instead of it, and
+ * only when the child's sign-in is their real email *and* that address has
+ * been verified — the recipient rule lives with the route, not here. What
+ * changes in the mail is the one framing sentence: the parent's copy is
+ * written *to the parent about the child* ("here is X's report from Aino's
+ * session"), and read by Aino that sentence is about somebody else, so the
+ * child's copy greets them and says "your session". The report, the facts, the
+ * photos and the closing are the same bytes, and the button goes to the
+ * child's own page in My SOG — the caller passes that URL, because a `/parent`
+ * link bounces a signed-in child off it.
  */
 
 export interface SessionReportEmailOptions {
@@ -94,6 +106,13 @@ export interface SessionReportEmailOptions {
    * Absent means the family mail, which is what every send but one is.
    */
   staffCopy?: boolean;
+  /**
+   * Render the copy that goes to the child themselves — the same mail with its
+   * framing sentence addressed to the child rather than to their parent about
+   * them. Only ever set for a child whose verified real email is the
+   * recipient; a family mail and a staff copy leave it unset.
+   */
+  gamerCopy?: boolean;
 }
 
 export function sessionReportSubject(
@@ -117,13 +136,14 @@ export function buildSessionReportEmail(
     productUrl,
     photos = [],
     staffCopy = false,
+    gamerCopy = false,
   }: SessionReportEmailOptions,
 ): string {
   // The banner carries its own leading break, so the family mail's content is
   // byte-for-byte what it was before the variant existed.
   const content = `${staffCopy ? staffCopyBanner(t) : ""}
     ${paragraph(
-      t("sessionReport.intro", {
+      t(gamerCopy ? "sessionReport.gamerIntro" : "sessionReport.intro", {
         geduName: styledName(geduName),
         gamerName: styledName(gamerName),
         productName: styledProductName(productName),

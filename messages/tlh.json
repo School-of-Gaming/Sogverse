@@ -123,7 +123,7 @@
       },
       "keepChildrenSafe": {
         "title": "moQ DIvI’ Daq puqpu’ yISuq",
-        "description": "Sogverse pat: pegh QInmey ngeHmeH mIw tu’lu’be’. ghom DaqmeyDaq jatlh toy’wI’pu’, ’ej ja’chuqtaHvIS Hoch pa’ QInmey lulegh ’ej polbe’lu’. Hoch toy’wI’ account vav account tlhej boqlu’, ’ej vav accountDaq ’el puq — pegh mu’mey Daj Hutlh. qIp ’ej tlhejHa’: not wIchaw’."
+        "description": "Sogverse pat: pegh QInmey ngeHmeH mIw tu’lu’be’. ghom DaqmeyDaq jatlh toy’wI’pu’, ’ej ja’chuqtaHvIS Hoch pa’ QInmey lulegh ’ej polbe’lu’. Hoch toy’wI’ account chenmoH vav, ’ej vav account tlhej boqlu’; chay’ ’el puq ’e’ wIv vav — vav account neH, pagh pong pegh mu’ je, pagh jabbI’ID Daq ’ol pegh mu’ je. qIp ’ej tlhejHa’: not wIchaw’."
       },
       "familyInTheLoop": {
         "title": "qorDu’ Qu’ SoH",
@@ -218,7 +218,7 @@
         },
         "howToStart": {
           "question": "chay’ jIQaplaH?",
-          "answer": "vav account yIchenmoH. jIH SOGvo’ toy’wI’ puqlI’ yIchel. ngevwI’ yInuD ’ej yIchel! chelmeH nagh beQ tlhob: ’Iv pa’? ’ej toy’wI’ Daghajbe’taHchugh, DachelmeH ra’. bIchelpu’DI’, may’ wa’DIchDaj taghpa’ Gedu ghajbogh ghomDaq puqlI’ wIlan, ’ej cha’maj jIH SOGDaq ghom’a’ nargh. accountlIjvo’ may’mey muv puqlI’ — profileDaj DawIv — vaj mu’ pegh Daj poQbe’ not."
+          "answer": "vav account yIchenmoH. jIH SOGvo’ toy’wI’ puqlI’ yIchel. ngevwI’ yInuD ’ej yIchel! chelmeH nagh beQ tlhob: ’Iv pa’? ’ej toy’wI’ Daghajbe’taHchugh, DachelmeH ra’. bIchelpu’DI’, may’ wa’DIchDaj taghpa’ Gedu ghajbogh ghomDaq puqlI’ wIlan, ’ej cha’maj jIH SOGDaq ghom’a’ nargh. accountlIjvo’ may’mey muv puqlI’ — profileDaj DawIv — jIH SOGDaq ’elmeH ngoq Daj DanobtaHbe’chugh."
         },
         "isItASchool": {
           "question": "ghojmoHmeH yejHaD ’oH’a’?",
@@ -258,11 +258,11 @@
         },
         "gamerAccounts": {
           "question": "chay’ ’el puqwI’, ’ej nuq ’oH vav PIN’e’?",
-          "answer": "’elmeH ngoq Daj ghajbe’ puqlI’. toy’wI’ account ghaj Sogverse qoD Daq — puqlI’ jabbI’ID Daq teH ghajbe’. vav accountlIj tlhej boqlu’, ’ej accountlIjvo’ profileDaj DawIvDI’, Sogverse ’el puqlI’ — vaj mu’ pegh chIllaHbogh qoj HIjlaHbogh ghajbe’. vav Daq ’elmeH loS mI’ PIN poQlu’, ’ej SoH neH Sov: vaj Hal qawwI’Daq polta’bogh mu’ pegh: je’meH qoj puq account choHmeH lI’be’. puq profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’. PIN DalIjchugh, accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj ”PIN DalIj’a’?” qIptaHvIS puq, jabbI’ID neH DangeHmoH."
+          "answer": "chay’ ’el puqlI’ ’e’ DawIv, Hoch puqvaD, jIH SOGDaq. motlh ’elmeH ngoq Daj ghajbe’ toy’wI’ account: Sogverse qoD Daq ghaj — jabbI’ID Daq teH ghajbe’ — ’ej accountlIjvo’ profileDaj DawIvDI’, Sogverse ’el puqlI’. DaneHchugh, pong pegh mu’ je DanoblaH, pagh jabbI’ID DaqDaj — ’olDI’ puq, pegh mu’ wIv. DawIvbogh Hoch: puq ’elmeH ngoq accountDaj neH poSmoH — accountlIj qoj loDnI’ be’nI’ account poSmoHbe’ accountvetlh pegh mu’ Hutlhchugh, ’ej accountlIjvo’ ’elpu’bogh puq: latlh DaqDaq wIvmeH vav PINlIj poQ. vav Daq ’elmeH loS mI’ PIN poQlu’, ’ej SoH neH Sov: vaj Hal qawwI’Daq polta’bogh mu’ pegh: je’meH qoj puq account choHmeH lI’be’. puq profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’. PIN DalIjchugh, accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj ”PIN DalIj’a’?” qIptaHvIS puq, jabbI’ID neH DangeHmoH."
         },
         "childData": {
           "question": "nuq De’ puqwI’vo’ bopol?",
-          "answer": "pong wa’DIch, boghtaHvIS maS DIS je — jaj wItlhobbe’ — ’ej DaneHchugh loD be’ ghap, ’ej qorDu’lI’ pong Qav, qorDu’lI’ ’ay’ ghaHmo’ puqlI’. Gedu tetlhDaq ghogh pa’Daq je pong wa’DIch neH cha’lu’. account ghaj Sogverse qoD Daq — jabbI’ID Daq teH ghajbe’. DaneHchugh, ghom’a’Daj Qujmey pongDaj wIpol je — DaHjaj Minecraft Roblox je — ’ej Quj nobbogh mI’, may’Daq wIngu’meH. pongDaj retlhDaq mIllogh: mIllogh teH ’oHbe’, account mI’vo’ chenbogh Segh ’oH. latlh: ghom’a’ vumlaHmeH poQbogh De’ wIpol — muvpu’bogh ghom’a’mey, raghmey, wanI’mey; pawwI’ ngu’ghachmey; Gedupu’Daj qonbogh may’ De’mey ngajbogh qonta’mey je; ’ej may’ De’Daq Gedu chelbogh mIlloghmey. mIlloghmeyvetlh may’ luDel, wa’ puq luDelbe’: ghom qorDu’ Hoch luleghlaH ghom HalDaq, ’ej may’ De’ tlhej jabbI’ID luHev. puqlI’ De’ DaleghmeH, DaghItlhqa’meH, qoj DaQaw’meH: {supportEmail} Daq yIngeH. account DaghajtaHvIS De’lIj wIpol; account DaSoQmoHchugh, wIQaw’ qoj pong wIteq — ’ach chut poQchugh, poH nI’ De’ puS wIpol, Suomngan Huch chut poQmo’ Huch qonta’vaD."
+          "answer": "pong wa’DIch, boghtaHvIS maS DIS je — jaj wItlhobbe’ — ’ej DaneHchugh loD be’ ghap, ’ej qorDu’lI’ pong Qav, qorDu’lI’ ’ay’ ghaHmo’ puqlI’. Gedu tetlhDaq ghogh pa’Daq je pong wa’DIch neH cha’lu’. account ghaj Sogverse qoD Daq — jabbI’ID Daq teH ghajbe’, DaqDaj DanobtaHbe’chugh. DaneHchugh, ghom’a’Daj Qujmey pongDaj wIpol je — DaHjaj Minecraft Roblox je — ’ej Quj nobbogh mI’, may’Daq wIngu’meH. pongDaj retlhDaq mIllogh: mIllogh teH ’oHbe’, account mI’vo’ chenbogh Segh ’oH. latlh: ghom’a’ vumlaHmeH poQbogh De’ wIpol — muvpu’bogh ghom’a’mey, raghmey, wanI’mey; pawwI’ ngu’ghachmey; Gedupu’Daj qonbogh may’ De’mey ngajbogh qonta’mey je; ’ej may’ De’Daq Gedu chelbogh mIlloghmey. mIlloghmeyvetlh may’ luDel, wa’ puq luDelbe’: ghom qorDu’ Hoch luleghlaH ghom HalDaq, ’ej may’ De’ tlhej jabbI’ID luHev. puqlI’ De’ DaleghmeH, DaghItlhqa’meH, qoj DaQaw’meH: {supportEmail} Daq yIngeH. account DaghajtaHvIS De’lIj wIpol; account DaSoQmoHchugh, wIQaw’ qoj pong wIteq — ’ach chut poQchugh, poH nI’ De’ puS wIpol, Suomngan Huch chut poQmo’ Huch qonta’vaD."
         },
         "becomeGedu": {
           "question": "chay’ Gedu vImoj?",
@@ -2257,7 +2257,7 @@
       "items": {
         "parentPin": {
           "question": "nuq ’oH vav PIN’e’, ’ej vIlIjchugh?",
-          "answer": "vav accountlIj DaDIchDaq Dalo’DI’ DawIvbogh loS mI’ ngoq ’oH vav PIN’e’. Qu’ Hoch jonbe’ — Sogverse vav Daq naQ jon: wa’logh yIpoSmoH, ’ej toy’wI’ profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’ — vaj Hal qawwI’Daq polta’bogh mu’ pegh mob: je’meH qoj puq account choHmeH lI’be’. DalIjchugh, PIN jIHDaq ”PIN DalIj’a’?” yIqIp: accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj qIptaHvIS puq, jabbI’ID neH DangeHmoH. cha’maH loS rep yIntaH He, ’ej wa’logh neH Qap. PIN DaqawtaHchugh, ngoQmeyDaq DachoHlaH je."
+          "answer": "vav accountlIj DaDIchDaq Dalo’DI’ DawIvbogh loS mI’ ngoq ’oH vav PIN’e’. Qu’ Hoch jonbe’ — Sogverse vav Daq naQ jon: wa’logh yIpoSmoH, ’ej toy’wI’ profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’ — vaj Hal qawwI’Daq polta’bogh mu’ pegh mob: je’meH qoj puq account choHmeH lI’be’. He chegh je jon PIN’vam: accountlIjvo’ Sogverse ’elpu’bogh puq: profilelIj qoj loDnI’ be’nI’ profile wIvmeH PIN poQ. DalIjchugh, PIN jIHDaq ”PIN DalIj’a’?” yIqIp: accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj qIptaHvIS puq, jabbI’ID neH DangeHmoH. cha’maH loS rep yIntaH He, ’ej wa’logh neH Qap. PIN DaqawtaHchugh, ngoQmeyDaq DachoHlaH je."
         },
         "sessionReports": {
           "question": "may’mey chay’ qaSpu’ vISov’a’?",
@@ -2595,7 +2595,8 @@
       "replyToLabel": "jangmeH QIn",
       "sent": "ngeHlu’",
       "message": "QIn",
-      "gamerNote": "QIn’vam toy’wI’ account vo’. jangmey vav/SoS naDev ({parentEmail}) ghoS."
+      "gamerNote": "QIn’vam toy’wI’ account vo’. jangmey vav/SoS naDev ({parentEmail}) ghoS.",
+      "gamerOwnEmailNote": "toy’wI’vam jabbI’ID Daq ’ol je ghaj ({gamerEmail}) — bIjangchugh yIchel."
     },
     "welcomeParent": {
       "subject": "School of Gamingvo’ nuqneH!",
@@ -2678,6 +2679,9 @@
         "next1": "quS poSDI’, QInHom wIngeH.",
         "next2": "reH My SOG-Daq loS DaqlIj DaleghlaH."
       },
+      "gamer": {
+        "greeting": "nuqneH {participantName}!"
+      },
       "dashboardButton": "My SOG yIghoS"
     },
     "verifyEmail": {
@@ -2687,10 +2691,19 @@
       "button": "QIn DaqlIj yIchel",
       "ignore": "Datlhobbe’chugh, QIn yIleghQo’. pagh choHlu’."
     },
+    "gamerWelcome": {
+      "subject": "School of Gaming patlhlIj DaSuqpu’",
+      "heading": "patlhlIj DaSuqpu’",
+      "body": "nuqneH {gamerName}! School of Gaming patlhlIj chenmoHpu’ {parentName}. QIn Daqvam yIchel, vaj SoHvaD patlh.",
+      "button": "QIn Daqwij vIchel",
+      "afterVerifying": "QIn Daq Dachelta’DI’, latlh QIn wIngeH: mu’wIj Sub DawIvmeH Duv qeng. ghIq bIjol laH.",
+      "ignore": "QInvam DapIHbe’chugh, yIleghQo’. pagh qaS."
+    },
     "sessionReport": {
       "subject": "poH ja’ghItlh – {productName}, {sessionDate}",
       "title": "poH ja’ghItlh",
       "intro": "nuqneH! {productName} poH {gamerName} ghompu’. {geduName} ja’ghItlh ghItlhpu’.",
+      "gamerIntro": "nuqneH {gamerName}! {productName} poHlIj ghompu’. {geduName} ja’ghItlh ghItlhpu’ — SoHvaD.",
       "groupLabel": "ghom",
       "dateLabel": "jaj",
       "timeLabel": "poH",
@@ -2717,6 +2730,14 @@
       "self": {
         "subject": "quS poSchoHpu’ – {productName}",
         "opening": "quS poSDI’ SoH wIja’ ’e’ wIper. DaH poSchoHpu’: maHvaD bIghoSlaH – {productName}."
+      },
+      "gamer": {
+        "subject": "SoHvaD quS poSchoHpu’ – {productName}",
+        "opening": "nuqneH {gamerName}! quS poSDI’ wIja’ ’e’ wIper, ’ej DaH poSchoHpu’: SoHvaD quS tu’lu’ – {productName}. vavlI’vaD QIn wIngeHta’.",
+        "parentDecides": "quS Suq pagh Suqbe’ ’e’ wuq vavlI’ — jangmeH leQmey QInDajDaq tu’lu’, QInvamDaq tu’lu’be’. bIghoS DaneHchugh, DaH vavlI’vaD yIja’!",
+        "deadlineLabel": "jang vavlI’ poH",
+        "deadlineBody": "{deadline}. ghIq latlh qorDu’vaD jaH quS.",
+        "dashboardButton": "My SOG yIpoSmoH"
       }
     },
     "seatOfferStaff": {

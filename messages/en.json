@@ -130,7 +130,7 @@
       },
       "keepChildrenSafe": {
         "title": "Keep children safe online",
-        "description": "The Sogverse platform has no direct-message feature: conversation happens in shared group spaces, and chat during a call goes to the whole room and is never stored. Every gamer account is linked to a parent account, and a child signs in through it rather than holding a password of their own. Zero tolerance for bullying and toxicity."
+        "description": "The Sogverse platform has no direct-message feature: conversation happens in shared group spaces, and chat during a call goes to the whole room and is never stored. Every gamer account is created by a parent and linked to their account, and the parent chooses how the child signs in — through the parent account alone, or with a username or a verified email address and a password of their own. Zero tolerance for bullying and toxicity."
       },
       "familyInTheLoop": {
         "title": "Family in the loop",
@@ -206,15 +206,15 @@
         },
         "gamerAccounts": {
           "question": "How does my child sign in, and what is the parent PIN?",
-          "answer": "Your child has no login of their own. A gamer account carries an internal Sogverse address rather than your child’s real email address, it is linked to your parent account, and your child enters Sogverse by switching to their profile from yours — there is no password for them to lose or share. Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or change a child’s account, and the session locks again the moment you switch to a child’s profile or sign out. If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email."
+          "answer": "You choose how your child signs in, for each child, from My SOG. By default a gamer account has no login of its own: it carries an internal Sogverse address rather than a real email address, and your child enters Sogverse by switching to their profile from your account. If you prefer, you can give them a username and a password, or their own email address — which they verify before setting a password through the normal reset flow. Whichever you choose, a child’s sign-in opens only their own account: it never opens yours or a sibling’s without that account’s password, and a child who came in by switching from your account needs your parent PIN to switch anywhere else. Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or change a child’s account, and the session locks again the moment you switch to a child’s profile or sign out. If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email."
         },
         "childData": {
           "question": "What do you store about my child?",
-          "answer": "Their first name, their birth month and year — we do not ask for the day — and optionally their gender, plus your family surname, because your child is part of your family; a Gedu’s roster and the voice room show your child’s first name only. Their account carries an internal Sogverse address rather than a real email address, and optionally we hold their username in the games their clubs use — today Minecraft and Roblox — and the id that game gives them, so we can recognise them in a session. Their profile picture is not a photo: the image beside their name is a pattern generated from their account id. Alongside that we keep what running a club requires — which clubs, camps and events they are signed up for, their attendance, the session reports and short staff notes their Gedus write, and the photos a Gedu attaches to a report. Those photos are of the session rather than of one child: every family in that group sees them on the group’s page and receives them with the report by email. To see, correct or delete anything we hold about your child, email {supportEmail}. We keep your information for as long as you have an account and delete or anonymise it if you close one, except where the law requires us to keep certain records longer, as Finnish accounting law does for payment records."
+          "answer": "Their first name, their birth month and year — we do not ask for the day — and optionally their gender, plus your family surname, because your child is part of your family; a Gedu’s roster and the voice room show your child’s first name only. Their account carries an internal Sogverse address rather than a real email address unless you chose to give them their own, and optionally we hold their username in the games their clubs use — today Minecraft and Roblox — and the id that game gives them, so we can recognise them in a session. Their profile picture is not a photo: the image beside their name is a pattern generated from their account id. Alongside that we keep what running a club requires — which clubs, camps and events they are signed up for, their attendance, the session reports and short staff notes their Gedus write, and the photos a Gedu attaches to a report. Those photos are of the session rather than of one child: every family in that group sees them on the group’s page and receives them with the report by email. To see, correct or delete anything we hold about your child, email {supportEmail}. We keep your information for as long as you have an account and delete or anonymise it if you close one, except where the law requires us to keep certain records longer, as Finnish accounting law does for payment records."
         },
         "howToStart": {
           "question": "How do I get started?",
-          "answer": "Create a parent account, add your child as a gamer from My SOG, then browse the shop and enrol them — the signup panel asks who the seat is for, and prompts you to add a gamer if you have not yet. Once you have signed up we place your child in a group with a Gedu before their first session, and the club then appears on My SOG for both of you. They join sessions through your account — you switch to their profile — so they never need a password of their own."
+          "answer": "Create a parent account, add your child as a gamer from My SOG, then browse the shop and enrol them — the signup panel asks who the seat is for, and prompts you to add a gamer if you have not yet. Once you have signed up we place your child in a group with a Gedu before their first session, and the club then appears on My SOG for both of you. They join sessions through your account — you switch to their profile — unless you choose to give them a sign-in of their own from My SOG."
         },
         "becomeGedu": {
           "question": "How do I become a Game Educator?",
@@ -2899,7 +2899,7 @@
       "items": {
         "parentPin": {
           "question": "What is the parent PIN, and what if I forget it?",
-          "answer": "Your parent PIN is a four-digit code you set the first time you use your parent account. It gates the parent side of Sogverse rather than each separate action: you unlock once, and the session locks again the moment you switch to a gamer profile or sign out — so a password saved in the browser is not enough on its own to buy anything or change a child’s account. If you forget it, tap “Forgot your PIN?” on the PIN screen: we email a reset link to the address on your account and nowhere else, so a child pressing it simply sends you an email. The link lasts 24 hours and works once. You can also change a PIN you still know from Settings."
+          "answer": "Your parent PIN is a four-digit code you set the first time you use your parent account. It gates the parent side of Sogverse rather than each separate action: you unlock once, and the session locks again the moment you switch to a gamer profile or sign out — so a password saved in the browser is not enough on its own to buy anything or change a child’s account. The same PIN gates the way back: a child who entered Sogverse by switching from your account needs it to switch to your profile or to a sibling’s. If you forget it, tap “Forgot your PIN?” on the PIN screen: we email a reset link to the address on your account and nowhere else, so a child pressing it simply sends you an email. The link lasts 24 hours and works once. You can also change a PIN you still know from Settings."
         },
         "sessionReports": {
           "question": "Will I hear how sessions went?",
@@ -3237,7 +3237,8 @@
       "replyToLabel": "Reply to",
       "sent": "Sent",
       "message": "Message",
-      "gamerNote": "This message is from a gamer account. Replies go to their parent ({parentEmail})."
+      "gamerNote": "This message is from a gamer account. Replies go to their parent ({parentEmail}).",
+      "gamerOwnEmailNote": "This gamer also has a verified email address of their own ({gamerEmail}) — include it if you write back."
     },
     "welcomeParent": {
       "subject": "Welcome to School of Gaming",
@@ -3320,6 +3321,9 @@
         "next1": "We’ll email you the moment a seat opens.",
         "next2": "You can see where you stand in My SOG at any time."
       },
+      "gamer": {
+        "greeting": "Hi {participantName}!"
+      },
       "dashboardButton": "Go to My SOG"
     },
     "verifyEmail": {
@@ -3329,10 +3333,19 @@
       "button": "Verify your email address",
       "ignore": "If you didn’t ask for this, you can safely ignore this email. Nothing will change."
     },
+    "gamerWelcome": {
+      "subject": "Your School of Gaming account is ready",
+      "heading": "Your account is ready",
+      "body": "Hi {gamerName}, {parentName} set up a School of Gaming account for you. Confirm this email address and the account is yours.",
+      "button": "Verify my email",
+      "afterVerifying": "Once you have confirmed it, we will send you one more email with a link to choose your password. After that you can sign in on your own.",
+      "ignore": "If you were not expecting this email, you can ignore it. Nothing will happen."
+    },
     "sessionReport": {
       "subject": "Session report – {productName}, {sessionDate}",
       "title": "Session report",
       "intro": "Hi! Here’s {geduName}’s report from {gamerName}’s {productName} session.",
+      "gamerIntro": "Hi {gamerName}! Here’s {geduName}’s report from your {productName} session.",
       "groupLabel": "Group",
       "dateLabel": "Date",
       "timeLabel": "Time",
@@ -3359,6 +3372,14 @@
       "self": {
         "subject": "A seat has opened in {productName}",
         "opening": "We promised to write the moment a seat opened. It has: you can join us — {productName}."
+      },
+      "gamer": {
+        "subject": "A seat has opened for you in {productName}",
+        "opening": "Hi {gamerName}! We promised to write the moment a seat opened, and it has: there is a seat for you in {productName}. We have just emailed your parent about it.",
+        "parentDecides": "Your parent decides whether to take it — the buttons to answer are in their email, not in this one. If you would like to go, now is a good moment to tell them.",
+        "deadlineLabel": "Your parent can answer until",
+        "deadlineBody": "{deadline}. After that, the seat goes to the next family in line.",
+        "dashboardButton": "Open My SOG"
       }
     },
     "seatOfferStaff": {
@@ -3392,7 +3413,7 @@
     "intro": {
       "heading": "The short version",
       "paragraphs": [
-        "School of Gaming exists to give children a safe, fun place to learn through gaming. This page lists the main things we hold about your child, and why — in plain language instead of legal jargon, so you can check it for yourself. A gamer account carries an internal Sogverse address rather than a real email, and it exists only inside your own account.",
+        "School of Gaming exists to give children a safe, fun place to learn through gaming. This page lists the main things we hold about your child, and why — in plain language instead of legal jargon, so you can check it for yourself. A gamer account exists only inside your own account, and it carries an internal Sogverse address rather than a real email unless you choose to give your child their own.",
         "In short: we only collect what we need to run our clubs, camps, and events. We never sell your information or your child’s. Only a parent can create a child’s account, and we never advertise to children. You can ask us to show, correct, or delete your information at any time by emailing {supportEmail}."
       ]
     },
@@ -3419,7 +3440,7 @@
           "Your language and currency preferences — so the site shows up the way you expect.",
           "Your password, which we store only in a scrambled (hashed) form — we can never see it.",
           "Payment details are handled directly in Stripe. We never see or store your full card number.",
-          "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly. We store your family surname on their account too, because your child is part of your account; Gedus and other gamers never see it. Their account itself uses an internal Sogverse address rather than a real email.",
+          "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly. We store your family surname on their account too, because your child is part of your account; Gedus and other gamers never see it. Their account itself uses an internal Sogverse address rather than a real email, unless you choose to give them a sign-in with their own email address; we then hold that address and, once they have verified it, send them their own copy of the emails we send you about their clubs, camps and events.",
           "Optionally, your child’s username in the games their clubs use — today that’s Minecraft and Roblox — and the account id that game gives them, so we can recognise them in the game and so they can connect to our Minecraft server during sessions.",
           "Session records our Game Educators write — attendance, session reports, and short notes that help us support your child in the group.",
           "Basic, anonymous information about how the site is used (see \"Cookies and analytics\" below).",
@@ -3615,7 +3636,7 @@
       "privacy": {
         "heading": "Your family’s privacy",
         "paragraphs": [
-          "We handle your family’s information in line with Finnish and EU data-protection law, and we hold as little of your child’s as we can: a gamer account is created by you, carries an internal Sogverse address rather than your child’s own email, and is never used to advertise to them. Our <linkPrivacy>Privacy Policy</linkPrivacy> explains exactly what we collect and why."
+          "We handle your family’s information in line with Finnish and EU data-protection law, and we hold as little of your child’s as we can: a gamer account is created by you, carries an internal Sogverse address rather than your child’s own email unless you choose to give them one, and is never used to advertise to them. Our <linkPrivacy>Privacy Policy</linkPrivacy> explains exactly what we collect and why."
         ]
       },
       "changes": {

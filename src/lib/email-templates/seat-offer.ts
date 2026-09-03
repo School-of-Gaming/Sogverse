@@ -114,3 +114,67 @@ export function seatOfferSubject(
     ? t("seatOffer.self.subject", { productName })
     : t("seatOffer.child.subject", { participantName, productName });
 }
+
+export interface SeatOfferGamerEmailOptions {
+  /** The child, by first name — the mail greets them. */
+  gamerName: string;
+  productName: string;
+  /** The same absolute, zone-named deadline the parent's mail states. */
+  deadline: string;
+  /**
+   * App-generated My SOG link — the child's own dashboard, never a product
+   * page: an offered seat is still a waitlist place, and a waitlist place has
+   * no page of its own to land on.
+   */
+  dashboardUrl: string;
+}
+
+/**
+ * The seat offer as the child reads it, sent beside the parent's mail when the
+ * child holds a verified mailbox of their own.
+ *
+ * **It carries no buttons and no token, by construction.** Only the parent may
+ * accept or decline, and the links that do so carry a signed credential; this
+ * builder's options have nowhere to put one, so a caller cannot hand the
+ * child's copy the parent's answer by mistake. What it says instead is the
+ * fact and who decides: a seat has opened, their parent has been written to,
+ * and the answer is the parent's to give. The deadline is stated the same way
+ * the parent's mail states it — absolutely, in a panel — so a child who wants
+ * to go knows how long there is to ask.
+ *
+ * The one link is My SOG at the child's root, `primary` because it is the
+ * mail's only action, and because it lands the child on their own card rather
+ * than on a page that knows only what a token carries.
+ */
+export function buildSeatOfferGamerEmail(
+  t: EmailTranslator,
+  locale: string,
+  { gamerName, productName, deadline, dashboardUrl }: SeatOfferGamerEmailOptions,
+): string {
+  const content = `
+    ${heading(t("seatOffer.heading"))}
+    ${paragraph(
+      t("seatOffer.gamer.opening", {
+        gamerName: styledName(gamerName),
+        productName: styledProductName(productName),
+      }),
+    )}
+    ${paragraph(t("seatOffer.gamer.parentDecides"))}
+    ${calloutPanel({
+      label: t("seatOffer.gamer.deadlineLabel"),
+      // Unescaped for the same reason as the parent mail's: every path here
+      // produces it with `Intl`, from a timestamp and a zone.
+      paragraphs: [t("seatOffer.gamer.deadlineBody", { deadline })],
+    })}
+    ${ctaButton({ href: dashboardUrl, label: t("seatOffer.gamer.dashboardButton") })}
+  `;
+  return wrapInLayout({ title: t("seatOffer.heading"), content, locale, t });
+}
+
+/** The child's subject: about the reader, so it names the product and not them. */
+export function seatOfferGamerSubject(
+  t: EmailTranslator,
+  { productName }: Pick<SeatOfferGamerEmailOptions, "productName">,
+): string {
+  return t("seatOffer.gamer.subject", { productName });
+}

@@ -15,6 +15,14 @@ interface FeedbackEmailOptions {
   sentAt: string;
   isGamer?: boolean;
   parentEmail?: string;
+  /**
+   * The gamer's own address, present only when they hold a verified mailbox
+   * (the real-email sign-in, verified). Brevo's Reply-To is one address and
+   * stays the parent's, so this goes in the staff-facing note instead — the
+   * admin answering can then include both. Never set for an unverified
+   * address: a mistyped one belongs to a stranger.
+   */
+  gamerEmail?: string;
 }
 
 /**
@@ -60,6 +68,20 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
       </tr>`
     : "";
 
+  // A second line under the first, only when the gamer has a verified address
+  // of their own. Same style and the same defusing: this address is a child's,
+  // and a client linking it on our behalf is the worst place for an invented
+  // link to appear.
+  const gamerOwnEmailNote = opts.isGamer && opts.parentEmail && opts.gamerEmail
+    ? `<tr>
+        <td style="padding:4px 0 0;color:${DARK_THEME.mutedFg};font-size:13px;font-style:italic;">
+          ${t("feedback.gamerOwnEmailNote", {
+            gamerEmail: defuseAutolinks(escapeHtml(opts.gamerEmail)),
+          })}
+        </td>
+      </tr>`
+    : "";
+
   // The same box the seat-offer staff mail states its facts in — one helper, so
   // a correction to how a staff mail reads reaches both. The label column is
   // narrower than the default because these four labels are single words and
@@ -98,6 +120,7 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
         </td>
       </tr>
       ${gamerNote}
+      ${gamerOwnEmailNote}
     </table>`;
 
   return wrapInLayout({ title: t("feedback.heading"), content, locale, t });

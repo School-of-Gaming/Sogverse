@@ -276,6 +276,10 @@ describe("POST /api/admin/send-test-email", () => {
       userRole: "customer",
       userEmail: "jane@example.com",
       message: "Great product!",
+      // The gamer case's two notes, absent here — posted as null, the way the
+      // testing page's resolver turns an emptied field into "none".
+      parentEmail: null,
+      gamerEmail: null,
     },
   };
 
@@ -373,6 +377,7 @@ describe("POST /api/admin/send-test-email", () => {
       mode: "subscription",
       priceAmount: "€40.00",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      gamerCopy: false,
       ...params,
     },
   });

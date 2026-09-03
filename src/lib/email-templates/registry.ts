@@ -8,7 +8,13 @@ import {
   PRODUCT_CONFIRMATION_MODES,
 } from "./product-confirmation";
 import { buildVerifyEmailEmail } from "./verify-email";
-import { buildSeatOfferEmail, seatOfferSubject } from "./seat-offer";
+import { buildGamerWelcomeEmail } from "./gamer-welcome";
+import {
+  buildSeatOfferEmail,
+  buildSeatOfferGamerEmail,
+  seatOfferGamerSubject,
+  seatOfferSubject,
+} from "./seat-offer";
 import {
   buildSeatOfferStaffEmail,
   seatOfferStaffSubject,
@@ -176,6 +182,17 @@ const SEAT_OPTIONS = [
 ];
 
 /**
+ * The signup mail has a third reader the seat offer's form does not: the
+ * child's own copy, sent beside the parent's when the child holds a verified
+ * mailbox. Second person like the self seat, minus everything only a parent
+ * can act on — so it is a select option here and a flag on the builder.
+ */
+const PRODUCT_CONFIRMATION_SEAT_OPTIONS = [
+  ...SEAT_OPTIONS,
+  { label: "The child's own copy (second person, no billing)", value: "gamer" },
+];
+
+/**
  * Both derived from their source tuples rather than hand-listed, so a new
  * product type from codegen — or a new confirmation mode — shows up in the
  * testing form without anyone remembering to add it. The labels are the raw
@@ -202,11 +219,31 @@ const PRODUCT_CONFIRMATION_MODE_OPTIONS = PRODUCT_CONFIRMATION_MODES.map((value)
  */
 function resolveProductConfirmation(params: Record<string, string>): TemplateParams {
   const { seat, priceAmount, ...rest } = params;
-  const statesPrice = rest.mode === "subscription" || rest.mode === "upfront";
+  const gamerCopy = seat === "gamer";
+  // The child's copy states no price whatever the mode, exactly as the live
+  // send never reads one for it.
+  const statesPrice =
+    !gamerCopy && (rest.mode === "subscription" || rest.mode === "upfront");
   return {
     ...rest,
     isSelfSeat: seat === "self",
+    gamerCopy,
     priceAmount: statesPrice ? priceAmount : null,
+  };
+}
+
+/**
+ * The help-and-feedback form's two optional addresses. Both are the gamer
+ * case's — the parent a reply goes to, and the child's own verified address
+ * when they hold one — and an untouched text input posts its placeholder, so
+ * "none" has to be typed as an empty field, which becomes null here.
+ */
+function resolveFeedback(params: Record<string, string>): TemplateParams {
+  const { parentEmail, gamerEmail, ...rest } = params;
+  return {
+    ...rest,
+    parentEmail: parentEmail.trim() || null,
+    gamerEmail: gamerEmail.trim() || null,
   };
 }
 
@@ -241,24 +278,27 @@ const VIEWER_TIMEZONE_OPTIONS = [
 ];
 
 /**
- * Which of the two mails one send produces. The live route sends both — a
- * family's, and one copy to the sender with the admins in CC — and they differ
- * in three places, none of which is visible unless the testing UI can ask for
- * the other mail: the copy opens with the staff banner, it carries the GROUP's
+ * Which of the mails one send produces. The live route sends a family's mail,
+ * a copy to the child themselves when the child holds a verified mailbox of
+ * their own, and one copy to the sender with the admins in CC — and they
+ * differ in places none of which is visible unless the testing UI can ask for
+ * the other mail: the staff copy opens with the banner and carries the GROUP's
  * name where a family's mail carries the child's (so the intro reads as a
- * record of what the group was sent), and its button points at the sender's own
- * workspace rather than at a family's enrollment page.
+ * record of what the group was sent), the child's copy addresses its framing
+ * sentence to the child, and each button points at its reader's own surface —
+ * the family page, the child's page under `/gamer`, or the sender's workspace.
  *
- * The first two follow this select. The third stays the tester's to type: the
- * `productUrl` field is a family-page link, and a workspace URL cannot be
- * derived here — the live route picks between the gedu workspace and the admin
- * product page from the sender's role, which this form has no notion of. Change
- * it by hand when the link is what you are checking.
+ * The copy and the name follow this select. The link stays the tester's to
+ * type: the `productUrl` field is a family-page link, and neither the `/gamer`
+ * twin nor a workspace URL can be derived here — the live route picks the root
+ * from the recipient and the workspace from the sender's role, which this form
+ * has no notion of. Change it by hand when the link is what you are checking.
  */
-const SESSION_REPORT_COPIES = ["family", "staff"] as const;
+const SESSION_REPORT_COPIES = ["family", "gamer", "staff"] as const;
 
 const SESSION_REPORT_COPY_LABELS: Record<(typeof SESSION_REPORT_COPIES)[number], string> = {
   family: "The family mail (what a parent receives)",
+  gamer: "The child's own copy (a gamer with a verified email)",
   staff: "The Gedu and Admin copy (sender, admins in CC)",
 };
 
@@ -303,6 +343,7 @@ function resolveSessionReport(
     // is a record of what the group was mailed, not one child's report.
     gamerName: staffCopy ? rest.groupName : rest.gamerName,
     staffCopy,
+    gamerCopy: copy === "gamer",
     sessionDate: formatDate(sample.startsAt, locale, {
       timeZone: viewerTimezone,
       dateStyle: "full",
@@ -319,11 +360,19 @@ const passwordResetParamsSchema = z.object({
   resetLink: z.string().url(),
 });
 
+/**
+ * The two addresses are nullable rather than optional for the same reason the
+ * session report's `copy` is required: an optional key's `undefined` does not
+ * fit the registry's param bag. Both only mean anything on a gamer's message
+ * — the builder ignores them for every other role.
+ */
 const feedbackParamsSchema = z.object({
   userName: z.string().min(1),
   userRole: z.enum(Constants.public.Enums.user_role),
   userEmail: z.string().email(),
   message: z.string().min(1),
+  parentEmail: z.string().email().nullable(),
+  gamerEmail: z.string().email().nullable(),
 });
 
 const welcomeParentParamsSchema = z.object({
@@ -357,10 +406,17 @@ const productConfirmationParamsSchema = z.object({
   mode: z.enum(PRODUCT_CONFIRMATION_MODES),
   priceAmount: z.string().nullable(),
   dashboardUrl: z.string().url(),
+  gamerCopy: z.boolean(),
 });
 
 const verifyEmailParamsSchema = z.object({
   firstName: z.string().min(1),
+  verificationUrl: z.string().url(),
+});
+
+const gamerWelcomeParamsSchema = z.object({
+  gamerFirstName: z.string().min(1),
+  parentFirstName: z.string().min(1),
   verificationUrl: z.string().url(),
 });
 
@@ -378,6 +434,18 @@ const seatOfferParamsSchema = z.object({
   deadline: z.string().min(1),
   acceptUrl: z.string().url(),
   declineUrl: z.string().url(),
+  dashboardUrl: z.string().url(),
+});
+
+/**
+ * The child's copy of a seat offer. No accept or decline URL, and no field
+ * that could carry one: the token is the parent's, and this schema is the
+ * mechanical half of the rule that it never reaches the child's mail.
+ */
+const seatOfferGamerParamsSchema = z.object({
+  gamerName: z.string().min(1),
+  productName: z.string().min(1),
+  deadline: z.string().min(1),
   dashboardUrl: z.string().url(),
 });
 
@@ -503,13 +571,24 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       // send actually carries — a help request rather than a compliment, since
       // that is the half of the form the mail's copy was rewritten for.
       { key: "message", label: "Message", placeholder: "How do I move my child to a different club?" },
+      // The gamer case's two notes. Both post their placeholder untouched, so
+      // clear them to render the mail as it goes for every other role.
+      { key: "parentEmail", label: "Parent email (gamer only, empty for none)", placeholder: "marja@example.com" },
+      { key: "gamerEmail", label: "Gamer's own verified email (empty for none)", placeholder: "aino@example.com" },
     ],
     schema: feedbackParamsSchema,
     build: (p, t, locale) => buildFeedbackEmail(t, locale, {
-      ...p,
+      userName: p.userName,
+      userRole: p.userRole,
+      userEmail: p.userEmail,
+      message: p.message,
       sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
+      isGamer: p.userRole === "gamer",
+      parentEmail: p.parentEmail ?? undefined,
+      gamerEmail: p.gamerEmail ?? undefined,
     }),
     subject: (p, t) => t("feedback.subject", { displayName: p.userName, role: t(ROLE_LABEL_KEYS[p.userRole]) }),
+    resolveParams: resolveFeedback,
     // The live route resolves the reply-to first and passes it in as
     // `userEmail` (a gamer's resolves to their linked parent's), so this param
     // already *is* the address the real mail replies to.
@@ -544,7 +623,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Product Confirmation",
     fields: [
       { key: "participantName", label: "Participant Name", placeholder: "Aino" },
-      { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
+      { key: "seat", label: "Whose seat, or whose copy", type: "select", options: PRODUCT_CONFIRMATION_SEAT_OPTIONS },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "productType", label: "Product Type", type: "select", options: PRODUCT_TYPE_OPTIONS },
       { key: "mode", label: "Outcome", type: "select", options: PRODUCT_CONFIRMATION_MODE_OPTIONS },
@@ -669,5 +748,42 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       buildSessionReportEmail(t, locale, resolveSessionReport(p, locale, context)),
     subject: (p, t, locale, context) =>
       sessionReportSubject(t, resolveSessionReport(p, locale, context)),
+  }),
+  gamerWelcome: defineTemplate({
+    label: "Welcome (Gamer)",
+    fields: [
+      { key: "gamerFirstName", label: "Gamer First Name", placeholder: "Aino" },
+      { key: "parentFirstName", label: "Parent First Name", placeholder: "Marja" },
+      {
+        key: "verificationUrl",
+        label: "Verification URL",
+        placeholder: "https://sogverse.sog.gg/verify-email?token=abc123",
+      },
+    ],
+    schema: gamerWelcomeParamsSchema,
+    build: (p, t, locale) => buildGamerWelcomeEmail(t, locale, p),
+    subject: (_p, t) => t("gamerWelcome.subject"),
+  }),
+  /**
+   * The child's copy of a seat offer — its own entry rather than a select on
+   * the parent's, because it takes a different, smaller param set: no accept
+   * or decline URL exists for it to carry, which is the point of the variant.
+   */
+  seatOfferGamer: defineTemplate({
+    label: "Seat Offer (Gamer's own copy)",
+    fields: [
+      { key: "gamerName", label: "Gamer Name", placeholder: "Aino" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      {
+        key: "deadline",
+        label: "Deadline (formatted)",
+        // The same string the parent's mail states — one deadline, two readers.
+        placeholder: "Monday, August 31 at 14:20 GMT+3",
+      },
+      { key: "dashboardUrl", label: "My SOG URL (gamer root)", placeholder: "https://sogverse.sog.gg/gamer" },
+    ],
+    schema: seatOfferGamerParamsSchema,
+    build: (p, t, locale) => buildSeatOfferGamerEmail(t, locale, p),
+    subject: (p, t) => seatOfferGamerSubject(t, p),
   }),
 };

@@ -127,8 +127,12 @@ interface ParticipationFixture {
   participant: {
     first_name: string;
     email: string;
+    /** The proof a real address is the child's; null under every other sign-in. */
+    email_verified_at: string | null;
     role: string;
     locale: string | null;
+    /** One-to-one off `profiles`, so an object or null (an adult has none). */
+    gamer_profiles: { sign_in: string } | null;
   };
 }
 
@@ -153,7 +157,7 @@ interface ParentLinkFixture {
   id: string;
   gamer_id: string;
   created_at: string | null;
-  parent: { email: string; locale: string | null };
+  parent: { first_name: string; email: string; locale: string | null };
 }
 
 /** Two children and an adult on their own seat — the three mailable shapes. */
@@ -165,8 +169,10 @@ const PARTICIPATIONS: ParticipationFixture[] = [
     participant: {
       first_name: "Aino",
       email: "aino@gamer.sogverse.internal",
+      email_verified_at: null,
       role: "gamer",
       locale: null,
+      gamer_profiles: { sign_in: "parent" },
     },
   },
   {
@@ -176,8 +182,10 @@ const PARTICIPATIONS: ParticipationFixture[] = [
     participant: {
       first_name: "Väinö",
       email: "vaino@gamer.sogverse.internal",
+      email_verified_at: null,
       role: "gamer",
       locale: null,
+      gamer_profiles: { sign_in: "parent" },
     },
   },
   {
@@ -187,18 +195,35 @@ const PARTICIPATIONS: ParticipationFixture[] = [
     participant: {
       first_name: "Sylvie",
       email: "sylvie@test.local",
+      email_verified_at: "2026-01-01T00:00:00Z",
       role: "customer",
       locale: "en",
+      gamer_profiles: null,
     },
   },
 ];
+
+/**
+ * Aino again, holding a verified mailbox of her own: the real-email sign-in
+ * AND the stamp. The one shape that earns a child their own copy.
+ */
+const VERIFIED_CHILD: ParticipationFixture = {
+  ...PARTICIPATIONS[0],
+  participant: {
+    ...PARTICIPATIONS[0].participant,
+    email: "aino@example.test",
+    email_verified_at: "2026-08-01T10:00:00Z",
+    locale: "en",
+    gamer_profiles: { sign_in: "email" },
+  },
+};
 
 const PARENT_LINKS: ParentLinkFixture[] = [
   {
     id: "a0000000-0000-4000-8000-000000000001",
     gamer_id: PEOPLE.aino,
     created_at: "2026-01-05T09:00:00Z",
-    parent: { email: "aino-parent@test.local", locale: "fi" },
+    parent: { first_name: "Marja", email: "aino-parent@test.local", locale: "fi" },
   },
   // A second link on the same child, created later: the route must pick the
   // earlier one, exactly as the roster RPC's ORDER BY does.
@@ -206,14 +231,14 @@ const PARENT_LINKS: ParentLinkFixture[] = [
     id: "a0000000-0000-4000-8000-000000000002",
     gamer_id: PEOPLE.aino,
     created_at: "2026-03-05T09:00:00Z",
-    parent: { email: "aino-second-parent@test.local", locale: "en" },
+    parent: { first_name: "Pekka", email: "aino-second-parent@test.local", locale: "en" },
   },
   {
     id: "a0000000-0000-4000-8000-000000000003",
     gamer_id: PEOPLE.vaino,
     created_at: "2026-02-05T09:00:00Z",
     // No locale on file, so this mail must come out in the default locale.
-    parent: { email: "vaino-parent@test.local", locale: null },
+    parent: { first_name: "Liisa", email: "vaino-parent@test.local", locale: null },
   },
 ];
 
@@ -795,8 +820,10 @@ describe("POST /api/gedu/sessions/email-report", () => {
           participant: {
             first_name: "Orvokki",
             email: "orvokki@gamer.sogverse.internal",
+            email_verified_at: null,
             role: "gamer",
             locale: null,
+            gamer_profiles: { sign_in: "parent" },
           },
         },
       ],
@@ -841,6 +868,119 @@ describe("POST /api/gedu/sessions/email-report", () => {
     // known, so the empty roster makes no dependent read.
     expect(parentLinkLookups).toEqual([]);
     expect(familyMails()).toHaveLength(0);
+    expect(staffCopies()).toHaveLength(1);
+  });
+
+  // -- The child's own copy --
+  //
+  // A child who holds a verified mailbox of their own gets their own copy of
+  // the report, beside the parent's and never instead of it. The gate is both
+  // facts together — the real-email sign-in AND the verification stamp — and
+  // the cases below are each one way of having only one of them.
+
+  it("sends a verified email-mode child their own copy, beside the parent's", async () => {
+    setupAdminClient({
+      participations: [VERIFIED_CHILD, PARTICIPATIONS[1], PARTICIPATIONS[2]],
+    });
+
+    const response = await POST(createRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    // Three seats, four mails: the tally counts seats through the parent's
+    // mail, and the child's copy is not a fourth family.
+    expect(data).toEqual({ sent: 3, failed: 0, skipped: 0 });
+    expect(familyMails()).toHaveLength(4);
+
+    const child = mailTo("aino@example.test");
+    // Their own root — a `/parent` link bounces a signed-in child — and their
+    // own framing sentence; no CC, no BCC, reply to support like the parent's.
+    expect(child.htmlContent).toContain(`${ORIGIN}/gamer/clubs/${SEATS.aino}`);
+    expect(child.htmlContent).not.toContain(`${ORIGIN}/parent/clubs/`);
+    expect(child.htmlContent).toContain("report from your ");
+    expect(child.htmlContent).not.toContain(`border:1px solid ${STATUS_TINT.infoBorder}`);
+    expect(child.cc).toBeUndefined();
+    expect(child.bcc).toBeUndefined();
+    expect(child.replyToEmail).toBe("help@sog.gg");
+
+    // The parent's mail is exactly what it was.
+    const parent = mailTo("aino-parent@test.local");
+    expect(parent.htmlContent).toContain(`${ORIGIN}/parent/clubs/${SEATS.aino}`);
+    expect(parent.htmlContent).not.toContain("report from your ");
+  });
+
+  it("writes the child's copy in the child's locale, not the parent's", async () => {
+    setupAdminClient({ participations: [VERIFIED_CHILD] });
+
+    await POST(createRequest());
+
+    // The parent reads Finnish; the child has English on file.
+    expect(mailTo("aino-parent@test.local").subject).toContain("Raportti kerrasta");
+    expect(mailTo("aino@example.test").subject).toContain("Session report");
+    expect(mailTo("aino@example.test").subject).toContain("Minecraft Club");
+  });
+
+  it.each([
+    [
+      "switch-only sign-in",
+      { email: "aino@gamer.sogverse.internal", email_verified_at: null, gamer_profiles: { sign_in: "parent" } },
+    ],
+    [
+      "username sign-in",
+      { email: "aino@gamer.sogverse.internal", email_verified_at: null, gamer_profiles: { sign_in: "username" } },
+    ],
+    [
+      "real email, not yet verified",
+      { email: "aino@example.test", email_verified_at: null, gamer_profiles: { sign_in: "email" } },
+    ],
+    [
+      "a stamp left behind after switching back to the parent sign-in",
+      { email: "aino@gamer.sogverse.internal", email_verified_at: "2026-08-01T10:00:00Z", gamer_profiles: { sign_in: "parent" } },
+    ],
+  ])("mails the parent alone for a child with a %s", async (_label, participant) => {
+    setupAdminClient({
+      participations: [
+        { ...VERIFIED_CHILD, participant: { ...VERIFIED_CHILD.participant, ...participant } },
+      ],
+    });
+
+    const response = await POST(createRequest());
+    const data = await response.json();
+
+    expect(data).toEqual({ sent: 1, failed: 0, skipped: 0 });
+    expect(familyMails().map((mail) => mail.toEmail)).toEqual(["aino-parent@test.local"]);
+    expect(
+      sentMails().some((sent) => String(sent.toEmail).includes("sogverse.internal")),
+    ).toBe(false);
+  });
+
+  it("writes to nobody for a verified child with no parent — never to a child alone", async () => {
+    setupAdminClient({ participations: [VERIFIED_CHILD], parentLinks: [] });
+
+    const response = await POST(createRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual({ sent: 0, failed: 0, skipped: 1 });
+    expect(familyMails()).toHaveLength(0);
+  });
+
+  it("neither counts nor retries over a child's copy that throws", async () => {
+    setupAdminClient({ participations: [VERIFIED_CHILD] });
+    mockSendTransactionalEmail.mockImplementation((options: SentMail) =>
+      options.toEmail === "aino@example.test"
+        ? Promise.reject(new Error("mailbox full"))
+        : Promise.resolve({ messageId: "msg-1" }),
+    );
+
+    const response = await POST(createRequest());
+    const data = await response.json();
+
+    // The parent's mail is the outcome and it went; the copy's failure is
+    // logged and changes nothing — not the tally, not the claim.
+    expect(response.status).toBe(200);
+    expect(data).toEqual({ sent: 1, failed: 0, skipped: 0 });
+    expect(release.patch).toBeNull();
     expect(staffCopies()).toHaveLength(1);
   });
 

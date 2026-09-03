@@ -12,6 +12,7 @@ import {
   isSupportedLocale,
 } from "@/lib/constants/locales";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import { gamerHoldsOwnMailbox } from "@/lib/email/family-recipients.server";
 
 const feedbackSchema = z.object({
   message: z
@@ -80,6 +81,7 @@ export const POST = defineRoute({
     let replyToEmail = userEmail;
     let isGamer = false;
     let parentEmail: string | undefined;
+    let gamerEmail: string | undefined;
 
     if (role === "gamer") {
       isGamer = true;
@@ -101,6 +103,27 @@ export const POST = defineRoute({
           replyToEmail = parentProfile.email;
           parentEmail = parentProfile.email;
         }
+      }
+
+      // Reply-To stays the parent's — Brevo takes one address, and we never
+      // answer a child alone — but a gamer who holds a verified mailbox of
+      // their own is named in the staff-facing note so the admin can include
+      // both. The gate is the shared one: the real-email sign-in AND the
+      // verification stamp, because an unverified address may be a stranger's.
+      // Same service-role read as the parent lookup, and for the same reason.
+      const { data: gamerProfile } = await adminClient
+        .from("gamer_profiles")
+        .select("sign_in")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (
+        gamerHoldsOwnMailbox({
+          signIn: gamerProfile?.sign_in ?? null,
+          emailVerifiedAt: profile.email_verified_at,
+        })
+      ) {
+        gamerEmail = profile.email;
       }
     }
 
@@ -124,6 +147,7 @@ export const POST = defineRoute({
       }),
       isGamer,
       parentEmail,
+      gamerEmail,
     });
 
     await sendTransactionalEmail({
@@ -141,10 +165,12 @@ export const POST = defineRoute({
       // reply back to ourselves.
       //
       // For a gamer this is their parent's address *when the link above
-      // resolves*. A gamer with no linked parent leaves their own synthetic
-      // handle here, which would bounce — accepted, because every gamer is
-      // created through a parent, so an unlinked one is a broken row rather
-      // than a state to design a reply-to for.
+      // resolves* — whatever sign-in the child holds, because we never answer
+      // a child alone. A gamer with no linked parent leaves their own profile
+      // address here, which under the switch-only and username sign-ins is a
+      // platform-internal handle that would bounce — accepted, because every
+      // gamer is created through a parent, so an unlinked one is a broken row
+      // rather than a state to design a reply-to for.
       replyToEmail: replyToEmail || undefined,
     });
 

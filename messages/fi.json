@@ -130,7 +130,7 @@
       },
       "keepChildrenSafe": {
         "title": "Pidetään lapset turvassa verkossa",
-        "description": "Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Jokainen pelaajatili on liitetty vanhemman tiliin, ja lapsi kirjautuu sisään sen kautta eikä omalla salasanallaan. Nollatoleranssi kiusaamiselle ja toksisuudelle."
+        "description": "Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Jokaisen pelaajatilin luo vanhempi, tili on liitetty vanhemman tiliin, ja vanhempi valitsee, miten lapsi kirjautuu sisään: pelkästään vanhemman tilin kautta tai omalla käyttäjänimellä tai vahvistetulla sähköpostiosoitteella ja omalla salasanalla. Nollatoleranssi kiusaamiselle ja toksisuudelle."
       },
       "familyInTheLoop": {
         "title": "Perhe mukana",
@@ -170,7 +170,7 @@
         },
         "howToStart": {
           "question": "Miten pääsen alkuun?",
-          "answer": "Luo vanhemman tili, lisää lapsesi pelaajaksi Oma SOG -sivulla ja selaa sitten kauppaa ja ilmoita hänet mukaan – ilmoittautumispaneeli kysyy, kenelle paikka tulee, ja kehottaa lisäämään pelaajan, jos et ole vielä tehnyt sitä. Ilmoittautumisen jälkeen sijoitamme lapsesi ryhmään Gedun kanssa ennen hänen ensimmäistä kertaansa, ja kerho ilmestyy sen jälkeen Oma SOG -sivulle teille molemmille. Hän liittyy kerroille sinun tilisi kautta – vaihdat hänen profiiliinsa – joten hän ei tarvitse koskaan omaa salasanaa."
+          "answer": "Luo vanhemman tili, lisää lapsesi pelaajaksi Oma SOG -sivulla ja selaa sitten kauppaa ja ilmoita hänet mukaan – ilmoittautumispaneeli kysyy, kenelle paikka tulee, ja kehottaa lisäämään pelaajan, jos et ole vielä tehnyt sitä. Ilmoittautumisen jälkeen sijoitamme lapsesi ryhmään Gedun kanssa ennen hänen ensimmäistä kertaansa, ja kerho ilmestyy sen jälkeen Oma SOG -sivulle teille molemmille. Hän liittyy kerroille sinun tilisi kautta – vaihdat hänen profiiliinsa – ellet anna hänelle Oma SOG -sivulla omaa kirjautumista."
         },
         "isItASchool": {
           "question": "Onko tämä koulua?",
@@ -210,11 +210,11 @@
         },
         "gamerAccounts": {
           "question": "Miten lapseni kirjautuu sisään, ja mikä vanhemman PIN on?",
-          "answer": "Lapsellasi ei ole omaa kirjautumista. Pelaajatilillä on sisäinen Sogverse-osoite eikä lapsesi oikeaa sähköpostiosoitetta, tili on liitetty vanhemman tiliisi, ja lapsesi tulee Sogverseen vaihtamalla sinun profiilistasi omaan profiiliinsa – salasanaa, jonka voisi hukata tai jakaa, ei ole. Vanhemman puolelle pääsee nelinumeroisella PIN-koodilla, jonka vain sinä tiedät, joten selaimeen tallennettu salasana ei riitä ostamiseen eikä lapsen tilin muuttamiseen, ja istunto lukittuu uudelleen heti, kun vaihdat lapsen profiiliin tai kirjaudut ulos. Jos unohdat PIN-koodin, lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle – jos lapsi painaa ”Unohditko PIN-koodin?”, hän vain lähettää sinulle sähköpostia."
+          "answer": "Valitset Oma SOG -sivulla jokaiselle lapselle erikseen, miten hän kirjautuu sisään. Oletuksena pelaajatilillä ei ole omaa kirjautumista: sillä on sisäinen Sogverse-osoite eikä oikeaa sähköpostiosoitetta, ja lapsesi tulee Sogverseen vaihtamalla sinun tililtäsi omaan profiiliinsa. Halutessasi voit antaa hänelle käyttäjänimen ja salasanan tai hänen oman sähköpostiosoitteensa, jonka hän vahvistaa ennen kuin asettaa salasanan tavallisen palautuspolun kautta. Valitsitpa minkä tahansa, lapsen kirjautuminen avaa vain hänen oman tilinsä: se ei koskaan avaa sinun tai sisaruksen tiliä ilman kyseisen tilin salasanaa, ja lapsi, joka tuli sisään vaihtamalla sinun tililtäsi, tarvitsee vanhemman PIN-koodisi vaihtaakseen mihinkään muualle. Vanhemman puolelle pääsee nelinumeroisella PIN-koodilla, jonka vain sinä tiedät, joten selaimeen tallennettu salasana ei riitä ostamiseen eikä lapsen tilin muuttamiseen, ja istunto lukittuu uudelleen heti, kun vaihdat lapsen profiiliin tai kirjaudut ulos. Jos unohdat PIN-koodin, lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle – jos lapsi painaa ”Unohditko PIN-koodin?”, hän vain lähettää sinulle sähköpostia."
         },
         "childData": {
           "question": "Mitä tietoja lapsestani säilytätte?",
-          "answer": "Etunimen, syntymäkuukauden ja -vuoden – päivää emme kysy – sekä halutessasi sukupuolen ja lisäksi perheenne sukunimen, koska lapsesi kuuluu perheeseesi; Gedun ryhmälistalla ja äänihuoneessa näkyy vain lapsesi etunimi. Tilillä on sisäinen Sogverse-osoite oikean sähköpostiosoitteen sijaan, ja halutessasi säilytämme myös hänen käyttäjänimensä niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet kerralla. Profiilikuva ei ole valokuva: nimen vieressä oleva kuva on tilitunnisteesta muodostettu kuvio. Sen lisäksi säilytämme sen, mitä kerhon pyörittäminen vaatii: mihin kerhoihin, leireille ja tapahtumiin hän on ilmoittautunut, hänen läsnäolonsa, Gedujen kirjoittamat kertaraportit ja lyhyet henkilökunnan muistiinpanot sekä kuvat, joita Gedu liittää raporttiin. Kuvat ovat kerrasta eivätkä yhdestä lapsesta: ryhmän jokainen perhe näkee ne ryhmän sivulla ja saa ne raportin mukana sähköpostitse. Jos haluat nähdä, korjata tai poistaa lapsestasi säilyttämiämme tietoja, lähetä sähköpostia osoitteeseen {supportEmail}. Säilytämme tietojasi niin kauan kuin sinulla on tili, ja poistamme tai anonymisoimme ne, jos suljet tilin – paitsi siltä osin kuin laki vaatii säilyttämään tiettyjä tietoja pidempään, kuten Suomen kirjanpitolaki vaatii maksutietojen osalta."
+          "answer": "Etunimen, syntymäkuukauden ja -vuoden – päivää emme kysy – sekä halutessasi sukupuolen ja lisäksi perheenne sukunimen, koska lapsesi kuuluu perheeseesi; Gedun ryhmälistalla ja äänihuoneessa näkyy vain lapsesi etunimi. Tilillä on sisäinen Sogverse-osoite oikean sähköpostiosoitteen sijaan, ellet ole antanut hänelle omaa osoitetta, ja halutessasi säilytämme myös hänen käyttäjänimensä niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet kerralla. Profiilikuva ei ole valokuva: nimen vieressä oleva kuva on tilitunnisteesta muodostettu kuvio. Sen lisäksi säilytämme sen, mitä kerhon pyörittäminen vaatii: mihin kerhoihin, leireille ja tapahtumiin hän on ilmoittautunut, hänen läsnäolonsa, Gedujen kirjoittamat kertaraportit ja lyhyet henkilökunnan muistiinpanot sekä kuvat, joita Gedu liittää raporttiin. Kuvat ovat kerrasta eivätkä yhdestä lapsesta: ryhmän jokainen perhe näkee ne ryhmän sivulla ja saa ne raportin mukana sähköpostitse. Jos haluat nähdä, korjata tai poistaa lapsestasi säilyttämiämme tietoja, lähetä sähköpostia osoitteeseen {supportEmail}. Säilytämme tietojasi niin kauan kuin sinulla on tili, ja poistamme tai anonymisoimme ne, jos suljet tilin – paitsi siltä osin kuin laki vaatii säilyttämään tiettyjä tietoja pidempään, kuten Suomen kirjanpitolaki vaatii maksutietojen osalta."
         },
         "becomeGedu": {
           "question": "Miten minusta tulee pelikasvattaja?",
@@ -2213,7 +2213,7 @@
       "items": {
         "parentPin": {
           "question": "Mikä vanhemman PIN on, ja mitä jos unohdan sen?",
-          "answer": "Vanhemman PIN on nelinumeroinen koodi, jonka asetat, kun käytät vanhemman tiliäsi ensimmäisen kerran. Se suojaa Sogversen vanhemman puolta kokonaisuutena, ei jokaista yksittäistä toimintoa: avaat lukituksen kerran, ja istunto lukittuu uudelleen heti, kun vaihdat pelaajaprofiiliin tai kirjaudut ulos – niinpä selaimeen tallennettu salasana ei yksin riitä ostamiseen eikä lapsen tilin muuttamiseen. Jos unohdat koodin, napauta PIN-näkymässä ”Unohditko PIN-koodin?”: lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle, joten jos lapsi painaa sitä, hän vain lähettää sinulle sähköpostia. Linkki on voimassa 24 tuntia ja toimii kerran. Voit myös vaihtaa muistamasi PIN-koodin Asetuksissa."
+          "answer": "Vanhemman PIN on nelinumeroinen koodi, jonka asetat, kun käytät vanhemman tiliäsi ensimmäisen kerran. Se suojaa Sogversen vanhemman puolta kokonaisuutena, ei jokaista yksittäistä toimintoa: avaat lukituksen kerran, ja istunto lukittuu uudelleen heti, kun vaihdat pelaajaprofiiliin tai kirjaudut ulos – niinpä selaimeen tallennettu salasana ei yksin riitä ostamiseen eikä lapsen tilin muuttamiseen. Sama PIN suojaa myös paluun: lapsi, joka tuli Sogverseen vaihtamalla sinun tililtäsi, tarvitsee sen vaihtaakseen sinun profiiliisi tai sisaruksen profiiliin. Jos unohdat koodin, napauta PIN-näkymässä ”Unohditko PIN-koodin?”: lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle, joten jos lapsi painaa sitä, hän vain lähettää sinulle sähköpostia. Linkki on voimassa 24 tuntia ja toimii kerran. Voit myös vaihtaa muistamasi PIN-koodin Asetuksissa."
         },
         "sessionReports": {
           "question": "Kuulenko, miten kerrat sujuivat?",
@@ -2551,7 +2551,8 @@
       "replyToLabel": "Vastausosoite",
       "sent": "Lähetetty",
       "message": "Viesti",
-      "gamerNote": "Tämä viesti on pelaajatililtä. Vastaukset ohjautuvat hänen vanhemmalleen ({parentEmail})."
+      "gamerNote": "Tämä viesti on pelaajatililtä. Vastaukset ohjautuvat hänen vanhemmalleen ({parentEmail}).",
+      "gamerOwnEmailNote": "Pelaajalla on myös oma vahvistettu sähköpostiosoite ({gamerEmail}) – lisää se mukaan, jos vastaat."
     },
     "welcomeParent": {
       "subject": "Tervetuloa School of Gamingiin",
@@ -2634,6 +2635,9 @@
         "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
         "next2": "Näet jonotustilanteesi milloin tahansa Oma SOG -sivulla."
       },
+      "gamer": {
+        "greeting": "Hei {participantName}!"
+      },
       "dashboardButton": "Siirry Oma SOG -sivulle"
     },
     "verifyEmail": {
@@ -2643,10 +2647,19 @@
       "button": "Vahvista sähköpostiosoitteesi",
       "ignore": "Jos et pyytänyt tätä viestiä, voit jättää sen huomiotta. Tiliisi ei tehdä muutoksia."
     },
+    "gamerWelcome": {
+      "subject": "School of Gaming -tilisi on valmis",
+      "heading": "Tilisi on valmis",
+      "body": "Hei {gamerName}, {parentName} loi sinulle School of Gaming -tilin. Vahvista tämä sähköpostiosoite, niin tili on sinun.",
+      "button": "Vahvista sähköpostiosoitteeni",
+      "afterVerifying": "Kun olet vahvistanut osoitteen, lähetämme sinulle vielä yhden viestin, jossa on linkki salasanan valintaa varten. Sen jälkeen voit kirjautua sisään itse.",
+      "ignore": "Jos et odottanut tätä viestiä, voit jättää sen huomiotta. Mitään ei tapahdu."
+    },
     "sessionReport": {
       "subject": "Raportti kerrasta – {productName}, {sessionDate}",
       "title": "Raportti kerrasta",
       "intro": "Hei! {productName} kokoontui jälleen, ja {geduName} kirjoitti kerrasta raportin. Mukana oli {gamerName}.",
+      "gamerIntro": "Hei {gamerName}! {productName} kokoontui jälleen, ja {geduName} kirjoitti kerrasta raportin. Tässä se on.",
       "groupLabel": "Ryhmä",
       "dateLabel": "Päivä",
       "timeLabel": "Aika",
@@ -2673,6 +2686,14 @@
       "self": {
         "subject": "Paikka vapautui – {productName}",
         "opening": "Lupasimme ilmoittaa heti, kun paikka vapautuu. Nyt niin kävi: pääset mukaan – {productName}."
+      },
+      "gamer": {
+        "subject": "Sinulle vapautui paikka – {productName}",
+        "opening": "Hei {gamerName}! Lupasimme ilmoittaa heti, kun paikka vapautuu, ja nyt niin kävi: sinulle on paikka – {productName}. Lähetimme siitä juuri sähköpostia vanhemmallesi.",
+        "parentDecides": "Vanhempasi päättää, otetaanko paikka vastaan – vastauspainikkeet ovat hänen viestissään, eivät tässä. Jos haluat mukaan, nyt on hyvä hetki kertoa siitä hänelle.",
+        "deadlineLabel": "Vanhempasi voi vastata viimeistään",
+        "deadlineBody": "{deadline}. Sen jälkeen paikka siirtyy jonossa seuraavalle perheelle.",
+        "dashboardButton": "Avaa Oma SOG"
       }
     },
     "seatOfferStaff": {
@@ -2706,7 +2727,7 @@
     "intro": {
       "heading": "Lyhyesti",
       "paragraphs": [
-        "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Tällä sivulla kerromme tärkeimmät tiedot, joita lapsestasi säilytämme, ja miksi – selkeällä kielellä ilman juridista jargonia, jotta voit tarkistaa asian itse. Pelaajatilillä on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ja tili on olemassa vain oman tilisi sisällä.",
+        "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Tällä sivulla kerromme tärkeimmät tiedot, joita lapsestasi säilytämme, ja miksi – selkeällä kielellä ilman juridista jargonia, jotta voit tarkistaa asian itse. Pelaajatili on olemassa vain oman tilisi sisällä, ja sillä on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ellet anna lapsellesi omaa osoitetta.",
         "Lyhyesti: keräämme vain ne tiedot, joita tarvitsemme kerhojen, leirien ja tapahtumien järjestämiseen. Emme koskaan myy sinun emmekä lapsesi tietoja. Vain vanhempi voi luoda lapselle käyttäjätilin, emmekä koskaan mainosta lapsille. Voit milloin tahansa pyytää meitä näyttämään, korjaamaan tai poistamaan tietosi lähettämällä viestin osoitteeseen {supportEmail}."
       ]
     },
@@ -2733,7 +2754,7 @@
           "Kieli- ja valuuttavalintasi – jotta sivusto näkyy sinulle odottamallasi tavalla.",
           "Salasanasi, jonka tallennamme vain salatussa (tiivistetyssä) muodossa – emme voi koskaan nähdä sitä.",
           "Maksutiedot käsitellään suoraan Stripessä. Emme koskaan näe emmekä tallenna koko korttinumeroasi.",
-          "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan.",
+          "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ellet anna lapselle kirjautumista hänen omalla sähköpostiosoitteellaan; silloin säilytämme sen osoitteen ja lähetämme hänelle, kun hän on vahvistanut sen, oman kopion viesteistä, jotka lähetämme sinulle hänen kerhoistaan, leireistään ja tapahtumistaan.",
           "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet pelissä ja jotta hän voi liittyä Minecraft-palvelimellemme tapaamisten aikana.",
           "Pelikasvattajiemme kirjoittamat merkinnät tapaamisista – läsnäolot, tapaamisraportit ja lyhyet muistiinpanot, jotka auttavat meitä tukemaan lastasi ryhmässä.",
           "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet ja analytiikka\" jäljempänä).",
@@ -2929,7 +2950,7 @@
       "privacy": {
         "heading": "Perheesi yksityisyys",
         "paragraphs": [
-          "Käsittelemme perheesi tietoja Suomen ja EU:n tietosuojalainsäädännön mukaisesti, ja säilytämme lapsestasi niin vähän tietoa kuin pystymme: pelaajatilin luot sinä, sillä on Sogversen sisäinen osoite lapsesi oman sähköpostiosoitteen sijaan, eikä sitä käytetä koskaan mainontaan lapselle. <linkPrivacy>Tietosuojaselosteemme</linkPrivacy> kertoo tarkalleen, mitä keräämme ja miksi."
+          "Käsittelemme perheesi tietoja Suomen ja EU:n tietosuojalainsäädännön mukaisesti, ja säilytämme lapsestasi niin vähän tietoa kuin pystymme: pelaajatilin luot sinä, sillä on Sogversen sisäinen osoite lapsesi oman sähköpostiosoitteen sijaan, ellet anna hänelle omaa, eikä sitä käytetä koskaan mainontaan lapselle. <linkPrivacy>Tietosuojaselosteemme</linkPrivacy> kertoo tarkalleen, mitä keräämme ja miksi."
         ]
       },
       "changes": {
