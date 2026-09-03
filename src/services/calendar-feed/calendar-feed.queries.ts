@@ -30,26 +30,16 @@ export function useCalendarFeedLookup() {
 }
 
 /**
- * Load one feed URL's events and its raw document together.
+ * Load one feed URL's events and the `.ics` document they serialize to.
  *
- * Both in one mutation because the card shows them together and they are two
- * renderings of one computation: fetching them separately would let the table
- * and the `.ics` below it describe two different polls.
+ * One request, because the route answers with both in one response: two fetches
+ * would be two computations, and the card's table and the raw document beneath
+ * it would be free to describe different ones.
  */
 export function useCalendarFeedPreview() {
-  return useMutation<
-    { preview: CalendarFeedPreviewResponse; raw: string },
-    Error,
-    { jsonUrl: string; icsUrl: string }
-  >({
+  return useMutation<CalendarFeedPreviewResponse, Error, string>({
     mutationKey: calendarFeedKeys.previews(),
-    mutationFn: async ({ jsonUrl, icsUrl }) => {
-      const service = new CalendarFeedService(getClient());
-      const [preview, raw] = await Promise.all([
-        service.preview(jsonUrl),
-        service.previewRaw(icsUrl),
-      ]);
-      return { preview, raw };
-    },
+    mutationFn: (jsonUrl) =>
+      new CalendarFeedService(getClient()).preview(jsonUrl),
   });
 }

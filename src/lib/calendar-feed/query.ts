@@ -28,6 +28,7 @@ function buildFeedParticipationsQuery(supabase: Client, customerId: string) {
       `
         id,
         participant_id,
+        group_id,
         product:products!inner(
           id, product_type, timezone, start_date, end_date, is_remote,
           spoken_language_code,

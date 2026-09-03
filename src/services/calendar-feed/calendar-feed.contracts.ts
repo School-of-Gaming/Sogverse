@@ -6,11 +6,11 @@ import { Constants } from "@/types";
  *
  * The admin mint route parses its body with `calendarFeedLookupBody` and the
  * service parses its answer with `calendarFeedLookupResponse`; the feed route's
- * `?format=json` rendering is `calendarFeedPreviewResponse`, which the admin
- * card's preview table reads. That last one is a contract even though only one
- * client exists, because it is the *same computation* the `.ics` is built from:
- * a table that could drift from the document it claims to preview would be
- * worse than no table.
+ * `?format=json` rendering is `calendarFeedPreviewResponse`, which is the admin
+ * card's whole preview — the events as data *and* the document they serialize
+ * to. That last one is a contract even though only one client exists, because
+ * carrying both in one response is what makes the table and the `.ics` beneath
+ * it two renderings of one poll rather than of two.
  */
 
 const productType = z.enum(Constants.public.Enums.product_type);
@@ -81,6 +81,8 @@ export const calendarFeedPreviewEvent = z.object({
 export type CalendarFeedPreviewEvent = z.infer<typeof calendarFeedPreviewEvent>;
 
 export const calendarFeedPreviewResponse = z.object({
+  /** The `.ics` document these very events serialize to, verbatim. */
+  ics: z.string(),
   events: z.array(calendarFeedPreviewEvent),
 });
 

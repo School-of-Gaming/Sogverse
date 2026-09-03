@@ -25,7 +25,7 @@ describe("calendar feed options", () => {
     const options = parse(
       "alarm=15&title=gamer-product&mode=rrule&tz=tzid&weeks=26" +
         `&scope=gamer:${GAMER}&calname=Sogverse+trial&color=off` +
-        "&refresh=24h&details=full&busy=busy",
+        "&refresh=24h&details=full&busy=busy&method=none",
     );
     expect(options).toEqual({
       alarm: "15",
@@ -39,6 +39,7 @@ describe("calendar feed options", () => {
       refresh: "24h",
       details: "full",
       busy: "busy",
+      method: "none",
     });
   });
 
@@ -51,7 +52,8 @@ describe("calendar feed options", () => {
   it("falls back to the default for an unrecognised value rather than failing", () => {
     const options = parse(
       "alarm=90&title=shouting&mode=daily&tz=local&weeks=7" +
-        "&scope=everyone&color=rainbow&refresh=never&details=some&busy=maybe",
+        "&scope=everyone&color=rainbow&refresh=never&details=some&busy=maybe" +
+        "&method=broadcast",
     );
     expect(options).toEqual({ ...CALENDAR_FEED_DEFAULTS });
   });
@@ -74,6 +76,17 @@ describe("calendar feed options", () => {
     );
   });
 
+  /**
+   * The default states `METHOD:PUBLISH`, so the option only ever has anything
+   * to say when it is turned off — which is why the parser has to keep the
+   * `none` it is given rather than treating it as an absent value.
+   */
+  it("keeps the method option's non-default value", () => {
+    expect(parse("").method).toBe("publish");
+    expect(parse("method=none").method).toBe("none");
+    expect(parse("method=request").method).toBe("publish");
+  });
+
   it("accepts only the two shapes of scope", () => {
     expect(parse("scope=family").scope).toBe("family");
     expect(parse(`scope=gamer:${GAMER}`).scope).toBe(`gamer:${GAMER}`);
@@ -91,9 +104,10 @@ describe("calendar feed query building", () => {
       ...CALENDAR_FEED_DEFAULTS,
       mode: "rrule",
       alarm: "none",
+      method: "none",
     });
     expect(new URLSearchParams(query)).toEqual(
-      new URLSearchParams("alarm=none&mode=rrule"),
+      new URLSearchParams("alarm=none&mode=rrule&method=none"),
     );
   });
 

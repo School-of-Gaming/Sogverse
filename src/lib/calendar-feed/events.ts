@@ -79,15 +79,17 @@ interface FeedSlot extends SlotShape {
   /**
    * Which slot on its weekday this is, counting from zero in start-time order.
    *
-   * Part of a discrete event's UID. Nearly every product has one slot per
-   * weekday, so this is nearly always `0` — which means the UID survives the
-   * commonest schedule edit there is, somebody fixing the time of day. It
-   * exists for the rarer product with two sessions on one day, where a
-   * date-only UID would collapse both into one event in the client.
+   * Part of every UID this module writes, discrete and recurring alike, and
+   * paired there with the weekday rather than with a position in the product's
+   * whole slot list. Nearly every product has one slot per weekday, so this is
+   * nearly always `0` — which means the UID survives the commonest schedule
+   * edits there are: somebody fixing the time of day, and somebody adding a
+   * session on another weekday, which a list position would re-key every later
+   * slot on (and a client answers a re-key by deleting the event and creating
+   * it again). It exists for the rarer product with two sessions on one day,
+   * where a weekday-only UID would collapse both into one event in the client.
    */
   ordinalOnWeekday: number;
-  /** Position in the product's whole slot list — a recurring event's UID. */
-  index: number;
 }
 
 /** The product's slots in a deterministic order, with their UID components. */
@@ -98,7 +100,7 @@ function orderedSlots(
     (a, b) => a.weekday - b.weekday || a.start_time.localeCompare(b.start_time),
   );
   const seenOnWeekday = new Map<number, number>();
-  return sorted.map((slot, index) => {
+  return sorted.map((slot) => {
     const ordinal = seenOnWeekday.get(slot.weekday) ?? 0;
     seenOnWeekday.set(slot.weekday, ordinal + 1);
     return {
@@ -106,7 +108,6 @@ function orderedSlots(
       startTime: slot.start_time,
       durationMinutes: slot.duration_minutes,
       ordinalOnWeekday: ordinal,
-      index,
     };
   });
 }
@@ -199,6 +200,10 @@ function locationFor(
 
 function urlFor(context: TextContext, row: FeedParticipationRow): string | null {
   if (context.options.details !== "full") return null;
+  // An unplaced seat has no page to point at — the family product page is
+  // keyed on the group and renders not-found without one, which is why the
+  // dashboard's rollup deliberately emits no link for such a seat either.
+  if (row.group_id === null) return null;
   // The parent's own page for this seat — the `customer` root, because the
   // subscriber is the paying parent. Absolute, and its origin comes from the
   // request rather than the Host header; see the route.
@@ -298,7 +303,7 @@ export function buildCalendarFeedEvents(
 
         events.push({
           ...shared,
-          uid: `${row.id}-slot-${slot.index}@sogverse`,
+          uid: `${row.id}-slot-${slot.weekday}-${slot.ordinalOnWeekday}@sogverse`,
           start: first.start,
           end: first.end,
           description,

@@ -1160,6 +1160,11 @@
           "busy": "Qu’taH ’e’ cha’",
           "free": "leSpoH ’e’ cha’"
         },
+        "methodLabel": "METHOD Degh",
+        "methodOptions": {
+          "publish": "METHOD:PUBLISH yIghItlh",
+          "none": "yIghItlhQo’"
+        },
         "refreshLabel": "chu’choHmeH mIw",
         "refreshOptions": {
           "off": "pagh",

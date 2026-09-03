@@ -1112,6 +1112,11 @@
           "busy": "Shows as busy",
           "free": "Shows as free"
         },
+        "methodLabel": "Method property",
+        "methodOptions": {
+          "publish": "State METHOD:PUBLISH",
+          "none": "Leave it out"
+        },
         "refreshLabel": "Refresh hint",
         "refreshOptions": {
           "off": "None",

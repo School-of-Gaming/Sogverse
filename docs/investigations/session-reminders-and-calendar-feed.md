@@ -168,4 +168,6 @@ decision: nothing above is settled by it.
   subscribed several ways at once: alarm (none/15/60/1440 minutes), title
   composition, discrete `VEVENT`s versus one weekly `RRULE`, UTC instants versus
   `TZID` wall clocks, horizon, whole-family versus one gamer, calendar name,
-  colour, refresh hint, detail level, and free-versus-busy.
+  colour, refresh hint, detail level, free-versus-busy, and whether the document
+  states `METHOD:PUBLISH` at all (some readers treat a document that does as an
+  iTIP message rather than as a subscription).

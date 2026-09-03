@@ -1112,6 +1112,11 @@
           "busy": "Näkyy varattuna",
           "free": "Näkyy vapaana"
         },
+        "methodLabel": "METHOD-kenttä",
+        "methodOptions": {
+          "publish": "Merkitään METHOD:PUBLISH",
+          "none": "Jätetään pois"
+        },
         "refreshLabel": "Päivitysvihje",
         "refreshOptions": {
           "off": "Ei mitään",

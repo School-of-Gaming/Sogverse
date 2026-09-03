@@ -25,7 +25,10 @@ function baseEvent(overrides: Partial<IcsEvent> = {}): IcsEvent {
   };
 }
 
-function build(events: IcsEvent[], extra: { color?: string | null } = {}) {
+function build(
+  events: IcsEvent[],
+  extra: { color?: string | null; method?: string | null } = {},
+) {
   return buildIcsCalendar({
     calendarName: "School of Gaming",
     dtstamp: DTSTAMP,
@@ -119,8 +122,20 @@ describe("ics calendar document", () => {
     expect(lines).toContain("VERSION:2.0");
     expect(lines).toContain("PRODID:-//School of Gaming//Sogverse//EN");
     expect(lines).toContain("CALSCALE:GREGORIAN");
-    expect(lines).toContain("METHOD:PUBLISH");
     expect(lines).toContain("X-WR-CALNAME:School of Gaming");
+  });
+
+  /**
+   * `METHOD` is the caller's decision rather than the writer's: some readers
+   * treat a document that states it as an iTIP message rather than as a
+   * subscription, which is one of the things the feed exploration compares.
+   */
+  it("states METHOD only when the caller asks for one", () => {
+    expect(logicalLines(build([baseEvent()], { method: "PUBLISH" }))).toContain(
+      "METHOD:PUBLISH",
+    );
+    expect(build([baseEvent()], { method: null })).not.toContain("METHOD:");
+    expect(build([baseEvent()])).not.toContain("METHOD:");
   });
 
   /**

@@ -39,9 +39,11 @@ import type { CalendarFeedEvent } from "@/lib/calendar-feed/events";
  * - **`Cache-Control: private, no-store`**, so no shared cache ever holds one
  *   family's schedule under a URL another request might reach.
  *
- * `?format=json` renders the same computed events as JSON. It is the admin
- * card's preview table, and it is the same call rather than a second one on
- * purpose: a preview that could disagree with the document is worse than none.
+ * `?format=json` answers with the same computed events as data **and** the
+ * document those very events serialize to, in one response. It is the admin
+ * card's whole preview, and it is one request rather than two on purpose: two
+ * polls are two computations, and a table that could disagree with the `.ics`
+ * printed beneath it is worse than no table at all.
  *
  * This route is hand-written rather than wrapped in `defineRoute`: the wrapper
  * covers the postures that authenticate through the shared role gate, and a
@@ -84,26 +86,37 @@ export async function GET(
     now,
   });
 
+  // Serialized before the branch, so the JSON rendering carries the very
+  // document the `.ics` rendering would have served — same events, same poll,
+  // same `DTSTAMP`.
+  const ics = buildIcsCalendar({
+    calendarName: options.calname,
+    color: options.color === "on" ? BRAND.primary : null,
+    refreshDuration: refreshDuration(options),
+    method: options.method === "publish" ? "PUBLISH" : null,
+    dtstamp: now,
+    events: events.map((event) => toIcsEvent(event, options)),
+  });
+
   if (url.searchParams.get("format") === "json") {
     // The same family schedule behind the same credential, so it gets the same
     // cache directive as the document — a different serialisation is not a
     // different secret.
-    return NextResponse.json(toPreview(events), {
+    return NextResponse.json(toPreview(events, ics), {
       headers: { "Cache-Control": "private, no-store" },
     });
   }
 
-  return icsResponse(buildIcsCalendar({
-    calendarName: options.calname,
-    color: options.color === "on" ? BRAND.primary : null,
-    refreshDuration: refreshDuration(options),
-    dtstamp: now,
-    events: events.map((event) => toIcsEvent(event, options)),
-  }));
+  return icsResponse(ics);
 }
 
 function notFound(): Response {
-  return NextResponse.json({ error: "Not found" }, { status: 404 });
+  // Same directive as the success paths: whether a token resolves is itself
+  // something no shared cache should be answering on our behalf.
+  return NextResponse.json(
+    { error: "Not found" },
+    { status: 404, headers: { "Cache-Control": "private, no-store" } },
+  );
 }
 
 function icsResponse(body: string): Response {
@@ -162,8 +175,10 @@ function toIcsEvent(
 
 function toPreview(
   events: readonly CalendarFeedEvent[],
+  ics: string,
 ): CalendarFeedPreviewResponse {
   return {
+    ics,
     events: events.map((event) => ({
       uid: event.uid,
       start: event.start.toISOString(),

@@ -1112,6 +1112,11 @@
           "busy": "Affiché comme occupé",
           "free": "Affiché comme libre"
         },
+        "methodLabel": "Propriété Method",
+        "methodOptions": {
+          "publish": "Indiquer METHOD:PUBLISH",
+          "none": "Ne pas l'indiquer"
+        },
         "refreshLabel": "Fréquence de rafraîchissement",
         "refreshOptions": {
           "off": "Aucune",

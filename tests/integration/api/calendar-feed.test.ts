@@ -44,9 +44,12 @@ const CUSTOMER_ROW = {
   locale: "en",
 };
 
+const GROUP_ID = "55555555-5555-5555-5555-555555555555";
+
 const PARTICIPATION_ROW = {
   id: PARTICIPATION_ID,
   participant_id: PARTICIPANT_ID,
+  group_id: GROUP_ID,
   product: {
     id: "44444444-4444-4444-4444-444444444444",
     product_type: "consumer_club",
@@ -72,12 +75,18 @@ interface ChainResult {
 
 /**
  * A PostgREST-shaped builder: every filter returns the same node, the node is
- * awaitable (a list read), and `maybeSingle` resolves the same fixture.
+ * awaitable (a list read), and `maybeSingle` resolves the fixture.
  * Annotated up front so the self-reference type-checks.
+ *
+ * `eq` is the one filter the fixture actually honours, and only on a single-row
+ * read: a row whose own value contradicts an `eq` resolves to `null`, the way
+ * the database would. Without that, a narrowing filter such as
+ * `.eq("role", "customer")` would be unpinned — every test would pass with it
+ * deleted from the route.
  */
 interface Chain {
   select: () => Chain;
-  eq: () => Chain;
+  eq: (column: string, value: unknown) => Chain;
   ilike: () => Chain;
   in: () => Chain;
   maybeSingle: () => Promise<ChainResult>;
@@ -87,13 +96,30 @@ interface Chain {
   ) => Promise<unknown>;
 }
 
+/** A single-row fixture, as opposed to a list read or an absent row. */
+function isRow(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function chain(result: ChainResult): Chain {
+  const filters: [string, unknown][] = [];
+  const single = (): ChainResult => {
+    const row = result.data;
+    if (!isRow(row)) return result;
+    const excluded = filters.some(
+      ([column, value]) => column in row && row[column] !== value,
+    );
+    return excluded ? { data: null, error: result.error } : result;
+  };
   const node: Chain = {
     select: () => node,
-    eq: () => node,
+    eq: (column, value) => {
+      filters.push([column, value]);
+      return node;
+    },
     ilike: () => node,
     in: () => node,
-    maybeSingle: () => Promise.resolve(result),
+    maybeSingle: () => Promise.resolve(single()),
     then: (onFulfilled, onRejected) =>
       Promise.resolve(result).then(onFulfilled, onRejected),
   };
@@ -131,6 +157,10 @@ describe("GET /api/calendar/feed/[token]", () => {
   it("returns 404 for a token that does not verify", async () => {
     const response = await feedRequest("not-a-token");
     expect(response.status).toBe(404);
+    // Whether a token resolves is itself something no shared cache should be
+    // answering on our behalf, so the refusal carries the same directive as
+    // the document does.
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
 
   it("returns 404 for a valid signature over an unknown customer", async () => {
@@ -199,12 +229,49 @@ describe("GET /api/calendar/feed/[token]", () => {
     expect(body.match(/BEGIN:VEVENT/g)).toHaveLength(1);
   });
 
-  it("renders the same events as JSON on request", async () => {
+  it("keys a recurring event's UID on the weekday rather than a list position", async () => {
+    const token = await createCalendarFeedToken(CUSTOMER_ID);
+    const body = await (await feedRequest(token, "?mode=rrule")).text();
+    // Weekday 0 (Monday), first slot on it. A position in the product's whole
+    // slot list would re-key this the day somebody adds a Sunday session, and a
+    // client answers a re-key by deleting the event and creating it again.
+    expect(body).toContain(`UID:${PARTICIPATION_ID}-slot-0-0@sogverse`);
+  });
+
+  /**
+   * `details=full` links each event at the family's own page for the seat — and
+   * that page is keyed on the group, so an unplaced seat has nothing to point
+   * at. A link to a not-found page is worse than no link, which is why the
+   * dashboard's rollup drops its anchor for the same rows.
+   */
+  it("links a placed seat under details=full, and an unplaced one not at all", async () => {
+    const token = await createCalendarFeedToken(CUSTOMER_ID);
+    const placed = await (await feedRequest(token, "?details=full")).text();
+    expect(placed).toContain("URL:https://test.sogverse.local/");
+
+    mockAdminFrom.mockImplementation(
+      tables({
+        participations: {
+          data: [{ ...PARTICIPATION_ROW, group_id: null }],
+          error: null,
+        },
+      }),
+    );
+    const unplaced = await (await feedRequest(token, "?details=full")).text();
+    expect(unplaced).toContain("BEGIN:VEVENT");
+    expect(unplaced).not.toContain("URL:");
+  });
+
+  it("renders the same events as JSON on request, with the document beside them", async () => {
     const token = await createCalendarFeedToken(CUSTOMER_ID);
     const response = await feedRequest(token, "?format=json");
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    // One request answers the admin card's whole preview: the events as data
+    // and the very document they serialize to, so the two cannot disagree.
+    expect(typeof data.ics).toBe("string");
+    expect(data.ics.startsWith("BEGIN:VCALENDAR")).toBe(true);
     expect(Array.isArray(data.events)).toBe(true);
     expect(data.events.length).toBeGreaterThan(0);
     expect(data.events[0]).toMatchObject({
@@ -230,6 +297,14 @@ describe("GET /api/calendar/feed/[token]", () => {
       )
     ).json();
     expect(other.events).toEqual([]);
+  });
+
+  it("states METHOD:PUBLISH by default, and omits it when asked to", async () => {
+    const token = await createCalendarFeedToken(CUSTOMER_ID);
+    expect(await (await feedRequest(token)).text()).toContain("METHOD:PUBLISH");
+    expect(
+      await (await feedRequest(token, "?method=none")).text(),
+    ).not.toContain("METHOD:");
   });
 
   it("keeps working on an option value it does not recognise", async () => {
@@ -337,6 +412,20 @@ describe("POST /api/admin/calendar-feed", () => {
         productType: "consumer_club",
       },
     ]);
+  });
+
+  /**
+   * The lookup is narrowed to customers, and this is what pins that narrowing:
+   * a feed is defined as the seats a parent pays for, so minting one over any
+   * other role's id would be minting a credential for a family that does not
+   * exist.
+   */
+  it("does not resolve a profile that is not a customer", async () => {
+    mockAdminCaller({
+      profiles: { data: { ...CUSTOMER_ROW, role: "gedu" }, error: null },
+    });
+    const response = await POST(mintRequest({ customer: CUSTOMER_ID }));
+    expect(response.status).toBe(404);
   });
 
   it("answers 404 with a message naming the value that resolved to nothing", async () => {

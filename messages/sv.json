@@ -1112,6 +1112,11 @@
           "busy": "Visas som upptagen",
           "free": "Visas som ledig"
         },
+        "methodLabel": "METHOD-egenskap",
+        "methodOptions": {
+          "publish": "Ange METHOD:PUBLISH",
+          "none": "Utelämna den"
+        },
         "refreshLabel": "Uppdateringstips",
         "refreshOptions": {
           "off": "Ingen",

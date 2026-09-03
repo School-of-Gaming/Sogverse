@@ -36,7 +36,12 @@ export class CalendarFeedService {
   }
 
   /**
-   * The events a feed URL currently carries, as data.
+   * Everything a feed URL currently carries: its events as data, and the `.ics`
+   * document they serialize to.
+   *
+   * One request, because the route answers with both — polling twice would poll
+   * two different computations and let the card's table describe a document
+   * other than the one printed under it.
    *
    * The URL is passed in whole rather than assembled here: the card owns the
    * option state and has already built the exact URL an admin is about to hand
@@ -51,16 +56,5 @@ export class CalendarFeedService {
       );
     }
     return parseJsonResponse(response, calendarFeedPreviewResponse);
-  }
-
-  /** The raw `.ics` document the same URL serves, as text. */
-  async previewRaw(feedUrl: string): Promise<string> {
-    const response = await fetch(feedUrl);
-    if (!response.ok) {
-      throw new Error(
-        await readErrorMessage(response, "Could not load the feed"),
-      );
-    }
-    return response.text();
   }
 }

@@ -123,6 +123,15 @@ export interface IcsCalendarInput {
   color?: string | null;
   /** An ISO 8601 duration for `REFRESH-INTERVAL`/`X-PUBLISHED-TTL`, or null. */
   refreshDuration?: string | null;
+  /**
+   * The `METHOD` value, or null to emit none.
+   *
+   * `PUBLISH` is what a published calendar conventionally states, and it is
+   * also what makes some readers treat the document as an iTIP message rather
+   * than a subscription — so which one a feed wants is a question for the
+   * clients rather than for this writer, and the caller answers it.
+   */
+  method?: string | null;
   /** One `DTSTAMP` for the whole document — this poll's instant. */
   dtstamp: Date;
   events: readonly IcsEvent[];
@@ -231,9 +240,10 @@ export function buildIcsCalendar(input: IcsCalendarInput): string {
     "VERSION:2.0",
     property("PRODID", ICS_PRODID),
     "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    property("X-WR-CALNAME", escapeText(input.calendarName)),
   ];
+
+  if (input.method) lines.push(property("METHOD", input.method));
+  lines.push(property("X-WR-CALNAME", escapeText(input.calendarName)));
 
   if (input.color) lines.push(property("X-APPLE-CALENDAR-COLOR", input.color));
   if (input.refreshDuration) {

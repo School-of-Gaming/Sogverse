@@ -21,6 +21,7 @@ import {
   CALNAME_MAX_LENGTH,
   COLOR_VALUES,
   DETAILS_VALUES,
+  METHOD_VALUES,
   MODE_VALUES,
   REFRESH_VALUES,
   TITLE_VALUES,
@@ -276,10 +277,9 @@ export function CalendarFeedCard() {
   function handlePreview() {
     if (urls === null) return;
     setPreviewing(true);
-    preview.mutate(
-      { jsonUrl: urls.json, icsUrl: urls.https },
-      { onSettled: () => setPreviewing(false) },
-    );
+    // One request: the JSON rendering carries the document as well as the
+    // events, so the table and the raw `.ics` below it are one poll.
+    preview.mutate(urls.json, { onSettled: () => setPreviewing(false) });
   }
 
   return (
@@ -295,7 +295,11 @@ export function CalendarFeedCard() {
         {/* --- 1. Customer --- */}
         <div className="space-y-4">
           <Field label={t("customerLabel")} htmlFor="calendar-feed-customer">
-            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            {/* Plain `flex-col`, not the button row's `flex-col-reverse`: this
+                is a field and its action rather than two buttons answering one
+                question, and reversing it would stack the button above the
+                input it acts on. */}
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 id="calendar-feed-customer"
                 value={customer}
@@ -497,6 +501,24 @@ export function CalendarFeedCard() {
               </select>
             </Field>
 
+            <Field label={t("methodLabel")} htmlFor="calendar-feed-method">
+              <select
+                id="calendar-feed-method"
+                className={selectClass}
+                value={options.method}
+                onChange={(event) => {
+                  const value = findOption(METHOD_VALUES, event.target.value);
+                  if (value) setOption("method", value);
+                }}
+              >
+                {METHOD_VALUES.map((value) => (
+                  <option key={value} value={value}>
+                    {t(`methodOptions.${value}`)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
             <Field label={t("refreshLabel")} htmlFor="calendar-feed-refresh">
               <select
                 id="calendar-feed-refresh"
@@ -545,29 +567,30 @@ export function CalendarFeedCard() {
         </div>
 
         {/* --- 3. Feed URL ---
-            The box holds its height whether or not there is a URL in it, so
-            resolving a customer fills a space that was already there instead of
-            pushing the preview below it down the page. */}
+            The box appears with its addresses in it the moment a customer
+            resolves, holding no space open before then. That reflow is the
+            direct result of the admin's own click on Look up — the summary
+            above it arrives in the same commit and is unreserved for the same
+            reason — and an empty bordered box beside nothing would be a hole
+            reserved for content that has never been asked for yet. */}
         <div className="space-y-3">
           <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {t("feedUrlHeading")}
           </h3>
-          <div className="min-h-36 space-y-4 rounded-md border border-border p-4">
-            {urls && (
-              <>
-                <UrlRow
-                  id="calendar-feed-https"
-                  label={t("webUrlLabel")}
-                  value={urls.https}
-                />
-                <UrlRow
-                  id="calendar-feed-webcal"
-                  label={t("subscriptionUrlLabel")}
-                  value={urls.webcal}
-                />
-              </>
-            )}
-          </div>
+          {urls && (
+            <div className="space-y-4 rounded-md border border-border p-4">
+              <UrlRow
+                id="calendar-feed-https"
+                label={t("webUrlLabel")}
+                value={urls.https}
+              />
+              <UrlRow
+                id="calendar-feed-webcal"
+                label={t("subscriptionUrlLabel")}
+                value={urls.webcal}
+              />
+            </div>
+          )}
         </div>
 
         {/* --- 4. Preview --- */}
@@ -600,13 +623,13 @@ export function CalendarFeedCard() {
             {previewing ? (
               <PreviewSkeleton />
             ) : preview.data && browserContext ? (
-              preview.data.preview.events.length === 0 ? (
+              preview.data.events.length === 0 ? (
                 <p className="p-4 text-sm text-muted-foreground">
                   {t("noEvents")}
                 </p>
               ) : (
                 <PreviewTable
-                  events={preview.data.preview.events}
+                  events={preview.data.events}
                   locale={locale}
                   timeZone={browserContext.timeZone}
                 />
@@ -623,10 +646,10 @@ export function CalendarFeedCard() {
               </summary>
               <div className="space-y-2 border-t border-border p-4">
                 <div className="flex justify-end">
-                  <CopyButton value={preview.data.raw} />
+                  <CopyButton value={preview.data.ics} />
                 </div>
                 <pre className="max-h-96 overflow-auto rounded bg-muted p-3 font-mono text-xs">
-                  {preview.data.raw}
+                  {preview.data.ics}
                 </pre>
               </div>
             </details>

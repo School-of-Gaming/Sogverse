@@ -26,6 +26,7 @@ export const COLOR_VALUES = ["on", "off"] as const;
 export const REFRESH_VALUES = ["off", "1h", "6h", "24h"] as const;
 export const DETAILS_VALUES = ["none", "basic", "full"] as const;
 export const BUSY_VALUES = ["busy", "free"] as const;
+export const METHOD_VALUES = ["publish", "none"] as const;
 
 /** How long a calendar name may be before the parameter is ignored. */
 export const CALNAME_MAX_LENGTH = 60;
@@ -52,6 +53,7 @@ export const CALENDAR_FEED_DEFAULTS = {
   refresh: "1h",
   details: "basic",
   busy: "free",
+  method: "publish",
 } as const;
 
 /**
@@ -84,6 +86,17 @@ export const calendarFeedOptionsSchema = z.object({
   refresh: z.enum(REFRESH_VALUES).catch(CALENDAR_FEED_DEFAULTS.refresh),
   details: z.enum(DETAILS_VALUES).catch(CALENDAR_FEED_DEFAULTS.details),
   busy: z.enum(BUSY_VALUES).catch(CALENDAR_FEED_DEFAULTS.busy),
+  /**
+   * Whether the document states `METHOD:PUBLISH`.
+   *
+   * A knob rather than a constant because clients disagree about what the
+   * property means for a *subscription*: it is what an iTIP message uses to say
+   * what it is doing, and a subscribed calendar is not an iTIP message, so some
+   * readers treat a document carrying it as an invitation rather than a feed.
+   * Which of them do is the kind of thing this exploration exists to find out by
+   * subscribing two URLs and looking.
+   */
+  method: z.enum(METHOD_VALUES).catch(CALENDAR_FEED_DEFAULTS.method),
 });
 
 export type CalendarFeedOptions = z.infer<typeof calendarFeedOptionsSchema>;
@@ -107,6 +120,7 @@ export const CALENDAR_FEED_OPTION_KEYS = [
   "refresh",
   "details",
   "busy",
+  "method",
 ] as const satisfies readonly (keyof CalendarFeedOptions)[];
 
 /**
