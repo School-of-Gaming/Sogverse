@@ -1211,10 +1211,12 @@
         "optionsHeading": "Asetukset",
         "shapeLabel": "Muoto",
         "shapeOptions": {
-          "series": "Yksi viikkosääntö vuoroa kohti",
-          "occurrences": "Yksi tapahtuma kertaa kohti"
+          "series": "Yksi viikkosääntö koko aikataululle",
+          "occurrences": "Jokainen kerta lueteltuna päivämäärän mukaan"
         },
-        "shapeHint": "Pidä muoto samana kutsun ja sen päivityksen välillä, tai päivitys saapuu uusilla tunnisteilla ja kalenterissa jo olevat merkinnät jäävät sinne, kunnes ne perutaan.",
+        "shapeHint": "Kummassakin muodossa lähetetään yksi kalenterimerkintä paikkaa kohti, ja se kattaa kaikki kerrat. Sääntö on tiivis ja pätee myös kahdentoista viikon aikaikkunan jälkeen, mutta se voi ilmaista vain kerrat, jotka alkavat samaan aikaan ja kestävät yhtä kauan. Luettelo ilmaisee jokaisen jäljellä olevan kerran päivämäärän mukaan kellonajoista riippumatta ja päättyy aikaikkunan rajaan.",
+        "shapeOptionUnavailable": "{option} – ei käytettävissä: näiden kertojen ajat tai kestot poikkeavat toisistaan",
+        "periodEntriesHint": "Kerrat eivät ole yhtä pitkiä, joten poikkeavat kerrat kirjoitetaan jaksomerkintöinä. Kalenterisovellusten tuki niille vaihtelee, joten tarkista, että kaikki kerrat tulivat perille.",
         "reminderLabel": "Muistutus",
         "reminderOptions": {
           "15": "15 minuuttia ennen",

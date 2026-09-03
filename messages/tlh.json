@@ -1259,10 +1259,12 @@
         "optionsHeading": "wIvmey",
         "shapeLabel": "Segh",
         "shapeOptions": {
-          "series": "wa’ Hogh chut, vuD Hoch",
-          "occurrences": "wa’ wanI’, qaSbogh Hoch"
+          "series": "wa’ Hogh chut, Hoch qaSwI’vaD",
+          "occurrences": "Hoch qaSwI’, jajDaj tu’lu’bogh"
         },
-        "shapeHint": "rI’ choH je Segh yIrurmoH; Segh choHlu’chugh, per chu’ lo’ choH ’ej jajmeyDaq ratlhtaH ghItlhmey ngo’ qIllu’pa’.",
+        "shapeHint": "cha’ Seghmey: wa’ ghItlh neH ngeHlu’, Hoch qaSwI’ ngaSbogh. chut mach ’ej wa’maH cha’ Hogh veH Haw’; ’ach rap poH rap ’ay’ je ghajbogh qaSwI’mey neH ja’laH. tetlh Hoch jaj ja’, poH pImchugh je, ’ach veHDaq mev.",
+        "shapeOptionUnavailable": "{option} – lo’laHbe’: rap poH rap ’ay’ je Hutlh qaSwI’vam",
+        "periodEntriesHint": "rap tIq Hutlh qaSwI’mey, vaj poH ’ay’ ghItlhlu’. qonwI’ law’ luyajbe’ — Hoch qaSwI’ pawpu’’a’? yInuD.",
         "reminderLabel": "qawmoHwI’",
         "reminderOptions": {
           "15": "15 tup nIH",

@@ -4,10 +4,7 @@ import {
   type CalendarFeedEvent,
   type FeedSeat,
 } from "@/lib/calendar-feed/events";
-import {
-  CALENDAR_FEED_DEFAULTS,
-  type CalendarFeedOptions,
-} from "@/lib/calendar-feed/options";
+import { CALENDAR_FEED_DEFAULTS } from "@/lib/calendar-feed/options";
 import {
   ICS_PRODID,
   escapeText,
@@ -17,7 +14,9 @@ import {
 } from "@/lib/calendar-feed/ics";
 import type { CalendarFeedTranslator } from "@/lib/calendar-feed/translator";
 import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
+import { earlierBoundary, endDateToCutoff } from "@/lib/session-occurrence";
 import {
+  canStateAsRule,
   reminderMinutes,
   type InvitationMethod,
   type InvitationReminder,
@@ -27,15 +26,26 @@ import {
 /**
  * One participation as an iTIP calendar message.
  *
+ * **One seat is one calendar object.** A message carries a single `VEVENT`
+ * under a single `UID`, and that object states the product's *entire* schedule
+ * — a camp on Monday, Wednesday and Friday for four weeks is twelve sessions in
+ * one invitation, accepted in one gesture and cancelled in one. RFC 5546 gives
+ * an iTIP message one calendar object to describe; a message stating several
+ * was read by clients as its first component and nothing else. The two shapes
+ * are two notations for that one object's schedule, not two ways of splitting
+ * it up — which is also what makes the shape safe to change between an
+ * invitation and its update, since the `UID` does not move.
+ *
  * **Why this is not the feed writer.** A feed is a document a client polls and
  * takes wholesale; an invitation is a *message* addressed to somebody, and
  * three properties the feed has no use for are the whole of what makes it one:
  * `ORGANIZER` and `ATTENDEE` say who is asking whom, and `SEQUENCE` says which
- * revision this is. The shared writer's event type cannot express any of them,
- * and that file is not this change's to widen — so the serialisation here is a
- * second, smaller writer built out of the shared one's *exported* primitives.
- * The escaping, the octet-counted folding and both timestamp forms are
- * imported, so the two writers cannot disagree about the parts that are hard.
+ * revision this is. The shared writer's event type cannot express any of them —
+ * nor `RDATE`, nor a `DURATION` in place of a `DTEND` — and that file is not
+ * this change's to widen, so the serialisation here is a second, smaller writer
+ * built out of the shared one's *exported* primitives. The escaping, the
+ * octet-counted folding and both timestamp forms are imported, so the two
+ * writers cannot disagree about the parts that are hard.
  *
  * What had to be copied rather than imported is the `Europe/Helsinki`
  * `VTIMEZONE` block and the sentence a document states about a zone it cannot
@@ -50,6 +60,9 @@ import {
  */
 
 const CRLF = "\r\n";
+
+/** RFC 5545 `BYDAY` codes, indexed by the schema's 0=Monday weekday. */
+const BYDAY = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"] as const;
 
 /** The zone the copied `VTIMEZONE` describes. Every product we run is in it. */
 const KNOWN_TIMEZONE = "Europe/Helsinki";
@@ -140,7 +153,7 @@ export interface InvitationAttendee {
 export interface BuildInvitationArgs {
   /** The seat the message is about, in the pipeline's neutral shape. */
   seat: FeedSeat;
-  /** The stored base `UID`. Every `VEVENT` here is a suffix of it. */
+  /** The stored `UID` — the object's identity, used verbatim. */
   baseUid: string;
   sequence: number;
   method: InvitationMethod;
@@ -153,88 +166,160 @@ export interface BuildInvitationArgs {
 }
 
 /**
- * The feed options this message expands its sessions under.
+ * The sessions this message states: every occurrence still ahead of `now`,
+ * soonest first.
  *
- * Fixed rather than exposed, because they are not what is being compared here:
- * the feed card already offers every one of them, and an invitation adds its
- * own three questions (shape, reminder, RSVP-or-not) on top of a schedule that
- * has to stay recognisable between a send and its update. `details: "basic"`
- * gives the description its gamer and type lines and no link, which is why no
- * origin is needed; the scope is the whole family because the seat handed in is
- * already the only one.
- */
-function feedOptions(shape: InvitationShape): CalendarFeedOptions {
-  return {
-    ...CALENDAR_FEED_DEFAULTS,
-    mode: shape === "series" ? "rrule" : "discrete",
-  };
-}
-
-/**
- * The sessions this message states.
+ * **Always the discrete walk, whichever shape is asked for.** A rule is not a
+ * different set of sessions, it is a shorter way of writing this one — so both
+ * shapes agree about which sessions the object covers, and only one expansion
+ * has to be right. Filtering to what is still ahead is what an invitation adds
+ * over a subscription: the feed deliberately carries a week of look-back so the
+ * current week reads complete, and inviting somebody to a session that already
+ * happened would put an RSVP prompt on it.
  *
- * Discrete mode is filtered to what is still ahead: the feed deliberately
- * carries a week of look-back so the current week reads complete in a
- * subscription, but inviting somebody to a session that already happened is a
- * different thing entirely, and a client would put an RSVP prompt on it.
+ * The feed options are fixed rather than exposed, because they are not what is
+ * being compared here: the feed card already offers every one of them, and an
+ * invitation adds its own three questions (shape, reminder, RSVP-or-not) on top
+ * of a schedule that has to stay recognisable between a send and its update.
+ * `details: "basic"` gives the description its gamer and type lines and no
+ * link, which is why no origin is needed; the scope is the whole family because
+ * the seat handed in is already the only one.
  */
-function invitationEvents(args: BuildInvitationArgs): CalendarFeedEvent[] {
+function futureOccurrences(args: BuildInvitationArgs): CalendarFeedEvent[] {
   const events = buildCalendarFeedEvents({
     seats: [args.seat],
-    options: feedOptions(args.shape),
+    options: { ...CALENDAR_FEED_DEFAULTS, mode: "discrete" },
     translate: args.translate,
     locale: args.locale,
     // Unused: `details: "basic"` emits no `URL`, so nothing here is absolute.
     origin: "",
     now: args.now,
   });
-  if (args.shape === "series") return events;
   return events.filter((event) => event.start.getTime() >= args.now.getTime());
 }
 
 /**
- * A `VEVENT`'s own `UID`, suffixed off the stored base.
+ * An RFC 5545 duration, in whole minutes.
  *
- * The shared expansion already writes a per-slot or per-date UID and those
- * suffixes are exactly the discriminator wanted here — but its prefix is the
- * participation id, and an invitation's identity has to survive a cancellation
- * (which retires the whole conversation and starts a new one on the same seat).
- * So the suffix is lifted off the expansion's UID and re-hung on the stored
- * base, which is the part bookkeeping owns.
+ * Minutes rather than an hours-and-minutes split because there is nothing to
+ * gain from the split — a parser reads `PT300M` and `PT5H` identically — and
+ * one unit is one thing that can be wrong. Slot durations are whole minutes by
+ * schema, so the rounding never bites; it is there because the value arrives as
+ * a difference between two instants.
  */
-function eventUid(
-  baseUid: string,
-  participationId: string,
-  feedUid: string,
-): string {
-  const withoutDomain = feedUid.replace(/@sogverse$/, "");
-  const prefix = `${participationId}-`;
-  const suffix = withoutDomain.startsWith(prefix)
-    ? withoutDomain.slice(prefix.length)
-    : withoutDomain;
-  return `${suffix}-${baseUid}`;
+function isoDuration(milliseconds: number): string {
+  return `PT${Math.round(milliseconds / 60_000)}M`;
+}
+
+/** How long an occurrence runs, in milliseconds. */
+function durationOf(event: CalendarFeedEvent): number {
+  return event.end.getTime() - event.start.getTime();
 }
 
 /**
- * One event's `DTSTART`/`DTEND` pair.
+ * The instant the run stops, or `null` for an open-ended one.
  *
- * A series is stated as a wall clock in the product's own zone, because a
- * weekly rule hung off a UTC instant drifts an hour across a DST transition
- * while the schedule it describes does not move. A discrete occurrence is an
- * absolute instant, which is unambiguous and needs no `VTIMEZONE` at all.
+ * A cancelling subscription's paid-through instant bounds the rule exactly as a
+ * product's own end date does — a family winding down should not be invited to
+ * sessions past what they paid for — so `UNTIL` takes the earlier of the two,
+ * which is the same clamp the shared expansion applies to the explicit list.
  */
-function timeLines(event: CalendarFeedEvent, zoned: boolean): string[] {
-  if (!zoned) {
-    return [
-      property("DTSTART", formatUtcTimestamp(event.start)),
-      property("DTEND", formatUtcTimestamp(event.end)),
-    ];
-  }
-  const params = `;TZID=${event.timezone}`;
+function runEndOf(seat: FeedSeat): Date | null {
+  return earlierBoundary(
+    endDateToCutoff(seat.endDate, seat.timezone),
+    seat.cancelsAt,
+  );
+}
+
+/**
+ * The schedule as a weekly rule.
+ *
+ * `BYDAY` names every weekday the product runs on, in RFC order, and `DTSTART`
+ * is the first session still ahead — which may be mid-week, in which case the
+ * rule's own first week is clipped by `DTSTART` exactly as RFC 5545 requires
+ * and nothing before it is generated. `UNTIL` is absent for an open-ended run:
+ * that is the one thing this shape can say and the explicit list cannot, since
+ * a list stops at the horizon we happened to enumerate.
+ *
+ * The caller has already established that a rule can state this schedule at
+ * all; `BYDAY` is deduplicated because two slots on one weekday can only reach
+ * here by being the same clock face, which is one rule day, not two.
+ */
+function ruleLines(args: BuildInvitationArgs, first: CalendarFeedEvent): string[] {
+  const weekdays = [...new Set(args.seat.slots.map((slot) => slot.weekday))]
+    .sort((a, b) => a - b)
+    .map((weekday) => BYDAY[weekday]);
+  const runEnd = runEndOf(args.seat);
+
   return [
-    property("DTSTART", formatZonedTimestamp(event.start, event.timezone), params),
-    property("DTEND", formatZonedTimestamp(event.end, event.timezone), params),
+    property(
+      "DTSTART",
+      formatZonedTimestamp(first.start, first.timezone),
+      `;TZID=${first.timezone}`,
+    ),
+    property("DURATION", isoDuration(durationOf(first))),
+    property(
+      "RRULE",
+      `FREQ=WEEKLY;BYDAY=${weekdays.join(",")}` +
+        (runEnd === null ? "" : `;UNTIL=${formatUtcTimestamp(runEnd)}`),
+    ),
   ];
+}
+
+/** What an explicit date list had to reach for to state this schedule. */
+interface ExplicitList {
+  lines: string[];
+  /** Whether any occurrence had to be written as an `RDATE;VALUE=PERIOD`. */
+  usesPeriodRdates: boolean;
+}
+
+/**
+ * The schedule as an explicit list of dates.
+ *
+ * `DTSTART` is the first session still ahead and every later one is an `RDATE`
+ * in the product's own zone, as a local wall clock rather than an instant: the
+ * list has to survive a DST transition inside the run, and a wall clock is what
+ * the schedule actually promises. Differing *start times* across slots cost
+ * nothing here — that is this shape's whole advantage over a rule.
+ *
+ * Differing **lengths** are the one thing the format handles badly. RFC 5545
+ * §3.8.5.2 lets `RDATE` properties carry different value types, so an
+ * occurrence whose length is not the `DURATION` is written as a period —
+ * `<start>/<duration>` — and only those are; every occurrence that matches the
+ * base duration stays in the plain date-time list, so a client that ignores
+ * period entries still receives all of those rather than none of them. Client
+ * support for periods is weak, which is what `usesPeriodRdates` exists to warn
+ * about rather than to hide.
+ */
+function explicitListLines(
+  first: CalendarFeedEvent,
+  rest: readonly CalendarFeedEvent[],
+): ExplicitList {
+  const zone = first.timezone;
+  const params = `;TZID=${zone}`;
+  const baseDuration = durationOf(first);
+
+  const plain: string[] = [];
+  const periods: string[] = [];
+  for (const event of rest) {
+    const stamp = formatZonedTimestamp(event.start, zone);
+    if (durationOf(event) === baseDuration) {
+      plain.push(stamp);
+      continue;
+    }
+    periods.push(`${stamp}/${isoDuration(durationOf(event))}`);
+  }
+
+  const lines = [
+    property("DTSTART", formatZonedTimestamp(first.start, zone), params),
+    property("DURATION", isoDuration(baseDuration)),
+  ];
+  if (plain.length > 0) lines.push(property("RDATE", plain.join(","), params));
+  if (periods.length > 0) {
+    lines.push(property("RDATE", periods.join(","), `;VALUE=PERIOD${params}`));
+  }
+
+  return { lines, usesPeriodRdates: periods.length > 0 };
 }
 
 function alarmLines(minutes: number, description: string): string[] {
@@ -247,34 +332,39 @@ function alarmLines(minutes: number, description: string): string[] {
   ];
 }
 
+/**
+ * The one `VEVENT`, whichever notation states its schedule.
+ *
+ * Everything outside the schedule lines is read off the first occurrence,
+ * because the summary, the description and the location are properties of the
+ * seat rather than of a session: the expansion writes the same three onto every
+ * occurrence it produces for one seat.
+ */
 function eventLines(
-  event: CalendarFeedEvent,
   args: BuildInvitationArgs,
+  first: CalendarFeedEvent,
+  schedule: readonly string[],
   dtstamp: Date,
 ): string[] {
   const cancelled = args.method === "CANCEL";
+
   // An invitation is an appointment somebody is being asked to keep, so it
   // occupies the time. The feed offers free-versus-busy as a knob because a
   // subscribed calendar of somebody else's children is arguably neither.
   const lines: string[] = [
     "BEGIN:VEVENT",
-    property(
-      "UID",
-      eventUid(args.baseUid, args.seat.participationId, event.uid),
-    ),
+    property("UID", args.baseUid),
     property("DTSTAMP", formatUtcTimestamp(dtstamp)),
     `SEQUENCE:${args.sequence}`,
-    ...timeLines(event, args.shape === "series"),
+    ...schedule,
+    property("SUMMARY", escapeText(first.summary)),
   ];
 
-  if (event.rrule !== null) lines.push(property("RRULE", event.rrule));
-
-  lines.push(property("SUMMARY", escapeText(event.summary)));
-  if (event.description !== null) {
-    lines.push(property("DESCRIPTION", escapeText(event.description)));
+  if (first.description !== null) {
+    lines.push(property("DESCRIPTION", escapeText(first.description)));
   }
-  if (event.location !== null) {
-    lines.push(property("LOCATION", escapeText(event.location)));
+  if (first.location !== null) {
+    lines.push(property("LOCATION", escapeText(first.location)));
   }
 
   // Every method names an organizer: RFC 5546 requires one of a `PUBLISH` too,
@@ -301,9 +391,10 @@ function eventLines(
   const minutes = reminderMinutes(args.reminder);
   // A cancellation carries no alarm: the event is being withdrawn, and a
   // reminder attached to it is a notification about something that is not
-  // happening.
+  // happening. One alarm on one object fires before each of its occurrences,
+  // which is what the offsets have always meant.
   if (minutes !== null && !cancelled) {
-    lines.push(...alarmLines(minutes, event.summary));
+    lines.push(...alarmLines(minutes, first.summary));
   }
 
   lines.push("END:VEVENT");
@@ -314,16 +405,42 @@ export interface InvitationCalendar {
   /** The serialized document, exactly as the recipient receives it. */
   ics: string;
   /**
-   * How many `VEVENT`s it carries.
+   * How many sessions the one object covers.
    *
    * Returned beside the document rather than counted back out of it, because a
-   * message stating no events at all is one the caller has to refuse before it
-   * mails anything: an empty `VCALENDAR` says nothing to a client, and sending
-   * one would still open a conversation the recipient's calendar has no entry
-   * for.
+   * message covering no sessions at all is one the caller has to refuse before
+   * it mails anything: an empty `VCALENDAR` says nothing to a client, and
+   * sending one would still open a conversation the recipient's calendar has no
+   * entry for.
+   *
+   * It counts the occurrences the shared expansion found **inside its horizon**,
+   * which is what the refusal needs and is not a claim about a rule's reach: an
+   * open-ended club stated as a rule covers sessions forever, and this number
+   * only says the run has not already finished.
    */
-  eventCount: number;
+  occurrenceCount: number;
+  /**
+   * Whether the schedule needed `RDATE;VALUE=PERIOD` entries to state at all.
+   *
+   * Surfaced rather than absorbed because client support for period entries is
+   * weak, and the admin comparing clients is the person who needs to know that
+   * this particular document is exercising it.
+   */
+  usesPeriodRdates: boolean;
 }
+
+/**
+ * A built message, or the one schedule this builder can refuse to state.
+ *
+ * A refusal rather than a thrown error, and rather than a silent fall back to
+ * the other shape: which shape was asked for is part of what the admin is
+ * comparing, so quietly sending the other one would answer a question they did
+ * not ask. The caller is the one that knows what status code "a rule cannot say
+ * this" deserves.
+ */
+export type InvitationBuildResult =
+  | { ok: true; calendar: InvitationCalendar }
+  | { ok: false; reason: "rule-cannot-express-schedule" };
 
 /**
  * Serialize the whole message, CRLF-terminated throughout.
@@ -332,38 +449,84 @@ export interface InvitationCalendar {
  * makes the document an iTIP message rather than a calendar that happens to
  * contain events — and it has to agree with how the mail part is typed, which
  * is why the transport takes the same value rather than deriving one.
+ *
+ * Both shapes state their times as a wall clock in the product's own zone, so
+ * the document always names a `TZID` and always owes the reader either the
+ * transition rules for it or a note saying why it has none.
  */
 export function buildInvitationCalendar(
   args: BuildInvitationArgs,
-): InvitationCalendar {
-  const events = invitationEvents(args);
+): InvitationBuildResult {
+  const occurrences = futureOccurrences(args);
 
-  const lines: string[] = [
+  // Checked before the shape is: a seat whose run is already over cannot be
+  // stated in *either* notation, and "there is nothing left to invite anybody
+  // to" is the more accurate thing to tell the admin than "a rule cannot say
+  // this". Guarded on the length rather than on the element, because indexed
+  // access is typed as always-present here.
+  if (occurrences.length === 0) {
+    return {
+      ok: true,
+      calendar: {
+        ics: emptyCalendar(args),
+        occurrenceCount: 0,
+        usesPeriodRdates: false,
+      },
+    };
+  }
+
+  if (args.shape === "series" && !canStateAsRule(args.seat.slots)) {
+    return { ok: false, reason: "rule-cannot-express-schedule" };
+  }
+
+  const first = occurrences[0];
+  const explicit =
+    args.shape === "series" ? null : explicitListLines(first, occurrences.slice(1));
+  const schedule = explicit === null ? ruleLines(args, first) : explicit.lines;
+
+  const lines = [
+    ...preambleLines(args),
+    ...zoneLines(first.timezone),
+    ...eventLines(args, first, schedule, args.now),
+    "END:VCALENDAR",
+  ];
+
+  return {
+    ok: true,
+    calendar: {
+      ics: `${lines.join(CRLF)}${CRLF}`,
+      occurrenceCount: occurrences.length,
+      usesPeriodRdates: explicit?.usesPeriodRdates ?? false,
+    },
+  };
+}
+
+function preambleLines(args: BuildInvitationArgs): string[] {
+  return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     property("PRODID", ICS_PRODID),
     "CALSCALE:GREGORIAN",
     property("METHOD", args.method),
   ];
+}
 
-  // Only a series references a zone by name; a discrete occurrence is an
-  // absolute instant, so there is nothing for a `VTIMEZONE` or a note to be
-  // about.
-  if (args.shape === "series") {
-    const zones = [...new Set(events.map((event) => event.timezone))].sort();
-    for (const zone of zones.filter((zone) => zone !== KNOWN_TIMEZONE)) {
-      lines.push(property("X-SOGVERSE-NOTE", escapeText(unknownZoneNote(zone))));
-    }
-    if (zones.includes(KNOWN_TIMEZONE)) lines.push(...HELSINKI_VTIMEZONE);
+/** The `VTIMEZONE` for the one zone this writer describes, or the note. */
+function zoneLines(zone: string): string[] {
+  if (zone !== KNOWN_TIMEZONE) {
+    return [property("X-SOGVERSE-NOTE", escapeText(unknownZoneNote(zone)))];
   }
+  return [...HELSINKI_VTIMEZONE];
+}
 
-  for (const event of events) {
-    lines.push(...eventLines(event, args, args.now));
-  }
-
-  lines.push("END:VCALENDAR");
-  return {
-    ics: `${lines.join(CRLF)}${CRLF}`,
-    eventCount: events.length,
-  };
+/**
+ * The document a seat with nothing ahead of it produces.
+ *
+ * It carries no zone block either: there is no `TZID` in it to describe.
+ * Serialized rather than skipped so the caller's refusal has the same shape as
+ * every other answer, and so a preview shows the admin exactly what would have
+ * been sent — which is nothing at all.
+ */
+function emptyCalendar(args: BuildInvitationArgs): string {
+  return `${[...preambleLines(args), "END:VCALENDAR"].join(CRLF)}${CRLF}`;
 }

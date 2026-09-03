@@ -189,7 +189,7 @@ export const POST = defineRoute({
     const method = body.action === "cancel" ? "CANCEL" : methodFor(body.method);
     const locale = definition.parent.locale;
 
-    const calendar = buildInvitationCalendar({
+    const built = buildInvitationCalendar({
       seat,
       baseUid: record.uid,
       sequence: record.sequence,
@@ -202,12 +202,26 @@ export const POST = defineRoute({
       now,
     });
 
+    // A weekly rule carries one clock face, so it cannot state a schedule whose
+    // sessions start at different times or run for different lengths. Refused
+    // rather than quietly sent in the other notation: which of the two a client
+    // is handed is exactly what the admin is comparing. The card disables the
+    // option off the same predicate, so a request reaching here was built
+    // somewhere other than the card.
+    if (!built.ok) {
+      throw new ApiError(
+        "A weekly rule cannot state this seat's schedule: its sessions do not all start at the same time and run for the same length. Send it as an explicit list of dates instead.",
+        409,
+      );
+    }
+    const calendar = built.calendar;
+
     // Checked before the preview returns as well as before the send, because a
     // preview is the same request one flag apart and has to answer the same
     // way: a seat whose product has no sessions left ahead of it renders an
     // empty `VCALENDAR`, which says nothing to a client and would still consume
     // a `UID` and a sequence for an entry nobody's calendar ever grows.
-    if (calendar.eventCount === 0) {
+    if (calendar.occurrenceCount === 0) {
       throw new ApiError(
         "That seat has no sessions left to invite anybody to — its product's run is already over.",
         409,
@@ -231,6 +245,7 @@ export const POST = defineRoute({
         subject: mail.subject,
         html: mail.html,
         ical: calendar.ics,
+        usesPeriodRdates: calendar.usesPeriodRdates,
         messageId: null,
         bookkeeping: null,
       };
@@ -268,6 +283,7 @@ export const POST = defineRoute({
       subject: mail.subject,
       html: mail.html,
       ical: calendar.ics,
+      usesPeriodRdates: calendar.usesPeriodRdates,
       messageId,
       bookkeeping: record,
     };

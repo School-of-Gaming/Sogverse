@@ -218,6 +218,10 @@ describe("POST /api/admin/calendar-invitations", () => {
     expect(sent.ical.method).toBe("REQUEST");
     expect(sent.ical.content).toContain("METHOD:REQUEST");
     expect(sent.text.length).toBeGreaterThan(0);
+    // Aino's seat is on the two-session club, and it travels as one calendar
+    // object: RFC 5546 gives a message one to describe, and a client handed
+    // several reads the first and ignores the rest.
+    expect(sent.ical.content.match(/BEGIN:VEVENT/g)).toHaveLength(1);
 
     expect(data.messageId).toBe("<relay-id@brevo>");
     expect(data.bookkeeping.sequence).toBe(0);
@@ -396,6 +400,54 @@ describe("POST /api/admin/calendar-invitations", () => {
     expect(data.error).toContain("no sessions left");
     expect(mockSend).not.toHaveBeenCalled();
     expect(writes).toHaveLength(0);
+  });
+
+  /**
+   * A weekly rule carries one clock face, so a club whose two sessions start at
+   * different times has no rule form at all. The card disables the option off
+   * the same predicate the builder refuses with, so this is the request that
+   * arrives when something other than the card built it — and it must not reach
+   * the relay, because a message the admin did not ask for is worse than none.
+   */
+  it("refuses the rule shape for a schedule a rule cannot state", async () => {
+    const document = definition();
+    const differing: SandboxDefinition = {
+      ...document,
+      products: document.products.map((product) => ({
+        ...product,
+        slots: product.slots.map((slot, index) =>
+          index === 1 ? { ...slot, startTime: "17:30" } : slot,
+        ),
+      })),
+    };
+    const { writes } = mockCaller(differing);
+
+    const response = await POST(
+      invitationRequest({
+        action: "send",
+        participationId: firstSeatId(differing),
+        shape: "series",
+      }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(data.error).toContain("weekly rule cannot state");
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(writes).toHaveLength(0);
+
+    // The same seat as an explicit list is fine: that is what the message says
+    // to do, and it is the half of the pair this schedule can have.
+    const listed = await POST(
+      invitationRequest({
+        action: "send",
+        participationId: firstSeatId(differing),
+        shape: "occurrences",
+      }),
+    );
+
+    expect(listed.status).toBe(200);
+    expect(mockSend).toHaveBeenCalledTimes(1);
   });
 
   it("refuses an update with no open invitation", async () => {

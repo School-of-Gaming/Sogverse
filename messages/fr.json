@@ -1211,10 +1211,12 @@
         "optionsHeading": "Options",
         "shapeLabel": "Forme",
         "shapeOptions": {
-          "series": "Une règle hebdomadaire par créneau",
-          "occurrences": "Un événement par séance"
+          "series": "Une règle hebdomadaire pour tout le calendrier",
+          "occurrences": "Chaque séance indiquée par sa date"
         },
-        "shapeHint": "Gardez la même forme entre une invitation et sa mise à jour, sinon la mise à jour arrive sous de nouveaux identifiants et les entrées déjà présentes dans le calendrier y restent jusqu’à leur annulation.",
+        "shapeHint": "Les deux formes envoient une seule entrée d’agenda par place, couvrant toutes les séances. La règle est compacte et garde son sens au-delà de l’horizon de douze semaines, mais elle ne peut décrire que des séances qui commencent toutes à la même heure et durent aussi longtemps. La liste indique chaque séance restante par sa date, quelles que soient les heures, et s’arrête à l’horizon.",
+        "shapeOptionUnavailable": "{option} – indisponible : ces séances diffèrent par l’heure ou par la durée",
+        "periodEntriesHint": "Ces séances n’ont pas toutes la même durée : celles qui diffèrent sont écrites en entrées de type période. La prise en charge par les agendas est inégale — vérifiez que toutes les séances sont bien arrivées.",
         "reminderLabel": "Rappel",
         "reminderOptions": {
           "15": "15 minutes avant",

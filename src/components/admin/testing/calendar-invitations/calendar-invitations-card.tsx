@@ -19,6 +19,7 @@ import {
   INVITATION_METHOD_OPTIONS,
   INVITATION_REMINDERS,
   INVITATION_SHAPES,
+  canStateAsRule,
   type InvitationMethodOption,
   type InvitationReminder,
   type InvitationShape,
@@ -125,6 +126,39 @@ export function CalendarInvitationsCard() {
   const record = definition?.invitations?.[selectedId];
   const hasOpenInvitation = record !== undefined && record.lastMethod !== "CANCEL";
 
+  /**
+   * Whether a weekly rule could state the selected seat's schedule.
+   *
+   * Answered here from the document the card already holds, through the same
+   * predicate the builder refuses with, so the option this card offers and the
+   * request the route accepts cannot come apart. A seat that is not in the
+   * document yet (the read has not landed) is treated as statable: the option
+   * list must not flicker while a small indexed read resolves, and the route
+   * still refuses if it turns out otherwise.
+   */
+  const ruleAvailable = useMemo(() => {
+    if (definition === null || selectedId === "") return true;
+    const seat = definition.participations.find(
+      (participation) => participation.id === selectedId,
+    );
+    const product = definition.products.find(
+      (candidate) => candidate.id === seat?.productId,
+    );
+    if (product === undefined) return true;
+    return canStateAsRule(product.slots);
+  }, [definition, selectedId]);
+
+  /**
+   * The shape the actions actually send.
+   *
+   * A seat whose sessions differ in time or length has no rule form, and the
+   * select shows that option disabled — so the value it would otherwise be
+   * holding falls through to the list, rather than sending a request the route
+   * is going to refuse.
+   */
+  const effectiveShape: InvitationShape =
+    shape === "series" && !ruleAvailable ? "occurrences" : shape;
+
   const errorMessage =
     send.error === null
       ? null
@@ -144,7 +178,7 @@ export function CalendarInvitationsCard() {
         action: action === "preview" ? "send" : action,
         participationId: selectedId,
         to,
-        shape,
+        shape: effectiveShape,
         reminder,
         method,
         preview,
@@ -224,12 +258,24 @@ export function CalendarInvitationsCard() {
           <SectionHeading>{t("optionsHeading")}</SectionHeading>
           {/* Admin surfaces are desktop-default, so the knobs use the width. */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {/* The unavailable rule says so in its own option label rather
+                than in a sentence that appears beside the select: the label is
+                already on screen at its final size, so a seat whose schedule a
+                rule cannot state changes what the list says without moving
+                anything below it. */}
             <EnumField
               id="invitation-shape"
               label={t("shapeLabel")}
-              value={shape}
+              value={effectiveShape}
               values={INVITATION_SHAPES}
-              optionLabel={(value) => t(`shapeOptions.${value}`)}
+              optionLabel={(value) =>
+                value === "series" && !ruleAvailable
+                  ? t("shapeOptionUnavailable", {
+                      option: t(`shapeOptions.${value}`),
+                    })
+                  : t(`shapeOptions.${value}`)
+              }
+              optionDisabled={(value) => value === "series" && !ruleAvailable}
               onPick={setShape}
             />
             <EnumField
@@ -366,6 +412,15 @@ export function CalendarInvitationsCard() {
           </div>
         )}
 
+        {/* A property of the document that came back, so it lands with it, at
+            the end of the card where a late arrival grows the card downward
+            and nothing already painted moves. */}
+        {result !== null && result.usesPeriodRdates && (
+          <div className="rounded-md bg-warning/10 p-3 text-sm text-warning">
+            {t("periodEntriesHint")}
+          </div>
+        )}
+
         {result !== null && (
           <details className="rounded-md border border-border">
             <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
@@ -432,6 +487,7 @@ function EnumField<V extends string>({
   value,
   values,
   optionLabel,
+  optionDisabled,
   onPick,
 }: {
   id: string;
@@ -439,6 +495,8 @@ function EnumField<V extends string>({
   value: V;
   values: readonly V[];
   optionLabel: (value: V) => string;
+  /** Which values this field currently cannot offer. All of them, by default. */
+  optionDisabled?: (value: V) => boolean;
   onPick: (value: V) => void;
 }) {
   return (
@@ -453,7 +511,11 @@ function EnumField<V extends string>({
         }}
       >
         {values.map((option) => (
-          <option key={option} value={option}>
+          <option
+            key={option}
+            value={option}
+            disabled={optionDisabled?.(option) ?? false}
+          >
             {optionLabel(option)}
           </option>
         ))}

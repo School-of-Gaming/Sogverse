@@ -1211,10 +1211,12 @@
         "optionsHeading": "Alternativ",
         "shapeLabel": "Form",
         "shapeOptions": {
-          "series": "En veckoregel per pass",
-          "occurrences": "En händelse per tillfälle"
+          "series": "En veckoregel för hela schemat",
+          "occurrences": "Varje tillfälle listat med datum"
         },
-        "shapeHint": "Behåll samma form mellan en inbjudan och dess uppdatering, annars kommer uppdateringen med nya id:n och posterna som redan ligger i kalendern blir kvar tills de avbokas.",
+        "shapeHint": "Båda formerna skickar en enda kalenderpost per plats, och den täcker alla tillfällen. Regeln är kompakt och gäller även bortom horisonten på tolv veckor, men den kan bara beskriva tillfällen som alla börjar vid samma tid och är lika långa. Listan anger varje återstående tillfälle med datum, oavsett tider, och slutar vid horisonten.",
+        "shapeOptionUnavailable": "{option} – inte tillgänglig: de här tillfällena skiljer sig i tid eller längd",
+        "periodEntriesHint": "Tillfällena är inte lika långa, så de som avviker skrivs som periodposter. Kalenderprogrammens stöd för dem varierar — kontrollera att alla tillfällen kom fram.",
         "reminderLabel": "Påminnelse",
         "reminderOptions": {
           "15": "15 minuter innan",

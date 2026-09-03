@@ -33,6 +33,36 @@ failure looks like, and in what the family has to do:
 | Reminders | Ours, in the document | Overridden by the client on two of three platforms |
 | A reply | Impossible | Arrives at an inbox we do not have |
 
+## Decided by the owner: one seat is one calendar object
+
+**Owner's decision, 2026-09.** An invitation for one product and one gamer is a single
+`VEVENT` under a single `UID`, carrying the product's entire schedule. A camp on Monday,
+Wednesday and Friday for four weeks is one invitation containing all twelve sessions.
+
+The tool previously emitted one `VEVENT` per slot in series mode and one per session in
+occurrences mode, several `UID`s inside one iTIP message. RFC 5546 gives a message one
+calendar object to describe, and clients handle a message that breaks that by reading the
+first component and ignoring the rest — so a two-slot club was arriving as one of its two
+sessions. The decision settles the question this doc previously listed as open, and the
+rest of the design follows from it:
+
+- The `UID` is the participation's, with no per-slot or per-date suffix.
+- A cancellation withdraws the whole run; there is no way to cancel one session yet.
+- **The shape is no longer part of a `UID`'s identity**, so it is safe to change between
+  an invitation and its update — the same object arrives in a different notation and the
+  client applies it in place. That retires the trap this doc used to describe, where a
+  shape switched by accident stranded a set of entries nobody would think to cancel in the
+  right shape.
+- **A rule cannot always be offered.** `RRULE` carries one clock face, so `series` is
+  available only when every slot starts at the same time and runs the same length. The
+  builder returns a typed refusal, the route answers 409, and the card disables the option
+  off the same predicate so the offer and the refusal cannot drift apart.
+
+**Still to come: `RECURRENCE-ID`.** Cancelling or moving one session out of the object is
+how iTIP handles a holiday, a snow day or a single rescheduled meeting, and nothing here
+emits one. It is the natural next step and a prerequisite for the holiday-aware expansion
+below to be worth anything on this side.
+
 ## What was verified (2026-09)
 
 - **Brevo's REST send API cannot type a calendar part.** Its attachment field takes a
@@ -64,9 +94,11 @@ in the editor above, send an update below, and watch one calendar entry move.
   `UID` and raises the `SEQUENCE`; the cancellation raises it again and states
   `STATUS:CANCELLED`. Watching a real client apply each is the only way to answer whether
   in-place updating works well enough to build on.
-- **Shape** — one weekly `RRULE` per slot, or one event per session in the horizon. This
-  is where clients disagree most: rule expansion is where a badly-behaved client
-  duplicates or drops occurrences.
+- **Shape** — the one object's schedule as a weekly `RRULE`, or as an explicit `RDATE`
+  list of every remaining session in the horizon. This is where clients disagree most:
+  rule expansion is where a badly-behaved client duplicates or drops occurrences, and an
+  explicit list is the control it is measured against. A schedule whose sessions differ in
+  time or length has no rule form; the tool refuses it and the card disables the option.
 - **Reminder** — none, 15 minutes, an hour, a day, so the claim above can be re-checked
   per client rather than taken on trust.
 - **Experience** — `REQUEST`, a real invitation with an RSVP, versus `PUBLISH`, the same
@@ -110,15 +142,23 @@ None of this exists today, and each item is substantial on its own:
   which re-seeds the family and would otherwise leave a `UID` and `SEQUENCE` pointing at a
   conversation about a household that no longer exists. A real build gives this its own
   table, at which point the two halves stop having to be careful of each other.
-- **The shape is part of a `UID`'s identity.** A series states one event per slot and
-  occurrences states one per session, so changing the shape between an invitation and its
-  update produces a different set of UIDs. A `REQUEST` under UIDs a client has never seen
-  is a *new* invitation and says nothing about any other: the client adds the new entries
-  and the ones already on the calendar stay there until they are cancelled. Cancelling
-  them means sending a cancellation under the shape they were sent in, since that is what
-  reproduces their UIDs — so a shape switched by accident leaves a set of entries whose
-  removal nobody will think to ask for in the right shape. Worth seeing once deliberately
-  and never by accident.
+- **Neither shape can state every schedule, and each fails differently.** A rule is
+  unavailable outright when the sessions differ in time or length, which is refused rather
+  than silently substituted. An explicit list stops at the twelve-week horizon, so an
+  open-ended club sent that way carries three months of sessions and no more — a real
+  build would have to re-send periodically or use the rule. And sessions of *differing
+  lengths* force `RDATE;VALUE=PERIOD` entries: RFC 5545 §3.8.5.2 permits them, but client
+  support is weak and untested by us, so only the occurrences that actually differ are
+  written that way (the rest stay in the plain date-time list, so a client that ignores
+  periods still receives those) and the card says when the document used any.
+
+- **One `VALARM` on one object.** The reminder now fires before each occurrence of the
+  single event rather than being restated per session — which is the correct shape, and
+  also means the Apple-honours-it / Google-and-Outlook-replace-it finding above is now
+  being tested against one alarm rather than a dozen identical ones.
+
+- **A single session cannot be cancelled or moved.** No `RECURRENCE-ID` is emitted, so a
+  holiday or a one-off reschedule is a whole-object update.
 - **The calendar writer is a second, smaller one.** `ORGANIZER`, `ATTENDEE` and `SEQUENCE`
   are three properties the feed's writer has no use for and cannot express, so the
   invitation module serialises its own events out of that writer's exported primitives.

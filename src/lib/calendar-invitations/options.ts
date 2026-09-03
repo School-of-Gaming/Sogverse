@@ -9,21 +9,64 @@
  */
 
 /**
- * How the whole run is stated.
+ * How the one calendar object writes its schedule.
  *
- * `series` is one `VEVENT` per weekly slot carrying an `RRULE` — the compact
- * form, and the one a client can keep in step with a schedule change by
- * re-sending a single event. `occurrences` is one `VEVENT` per session in the
- * horizon, which is what a client that expands rules badly is compared against.
+ * Both shapes emit exactly **one** `VEVENT` under **one** `UID` — a seat is one
+ * thing on a family's calendar, and RFC 5546 gives an iTIP message one calendar
+ * object to describe. What differs is how that object states the sessions:
  *
- * **The shape is part of a UID's identity and must not change between an
- * invitation and its update.** A series states two events for a two-slot club;
- * the same club as occurrences states two dozen. A client answers a changed set
- * of UIDs by deleting what it had and creating what it was sent, which is
- * exactly the in-place update this tool exists to watch happen.
+ * - `series` — an `RRULE`. The compact form, and the only one whose meaning
+ *   extends past the horizon we enumerate, so it is the shape an open-ended
+ *   club wants. A rule carries **one** clock face, so it can only state a
+ *   schedule whose slots all start at the same time and run the same length;
+ *   `canStateAsRule` below is that test, and the builder refuses the shape when
+ *   it fails.
+ * - `occurrences` — `RDATE`, every remaining session in the horizon listed by
+ *   date. It can state any schedule, including slots at different times of day,
+ *   and it is what a client that expands rules badly is compared against. Its
+ *   weakness is the opposite one: it stops at the horizon, and mixed session
+ *   *lengths* force `VALUE=PERIOD` entries, which clients support unevenly.
+ *
+ * **The shape is not part of the object's identity, and changing it between an
+ * invitation and its update is safe** — one participation is one `UID` either
+ * way, so an update re-states the same object in a different notation and a
+ * client applies it in place. That is the whole reason the object is one.
  */
 export const INVITATION_SHAPES = ["series", "occurrences"] as const;
 export type InvitationShape = (typeof INVITATION_SHAPES)[number];
+
+/**
+ * Whether a weekly `RRULE` can state this schedule at all.
+ *
+ * A rule has one `DTSTART` and one `DURATION`, and `BYDAY` only says *which
+ * weekdays* — so a club at 16:30 on Tuesday and 17:30 on Thursday, or a camp
+ * whose Friday runs an hour shorter, is not something a single rule can
+ * express. There is no partial answer: the alternative is the explicit list.
+ *
+ * **Both ends read this one function** — the builder refuses the shape with it,
+ * and the card disables the option with it against the sandbox document it
+ * already holds — so the offer and the refusal cannot come to disagree. It
+ * takes the two fields that decide the answer rather than a slot type, which is
+ * what lets the browser call it without importing the schedule schema.
+ *
+ * An empty schedule is vacuously statable: it has no sessions at all, and
+ * "there is nothing to invite anybody to" is the more accurate refusal, which
+ * the occurrence count reaches first.
+ */
+export function canStateAsRule(
+  slots: readonly { startTime: string; durationMinutes: number }[],
+): boolean {
+  // Guarded on the length rather than on the element: indexed access is typed
+  // as always-present here, so an `=== undefined` check would read as a test
+  // the compiler has already refused to make.
+  if (slots.length === 0) return true;
+  const first = slots[0];
+  return slots.every(
+    (slot) =>
+      slot.startTime === first.startTime &&
+      slot.durationMinutes === first.durationMinutes,
+  );
+}
 
 /** Minutes before the start a single `VALARM` fires, or no alarm at all. */
 export const INVITATION_REMINDERS = ["none", "15", "60", "1440"] as const;

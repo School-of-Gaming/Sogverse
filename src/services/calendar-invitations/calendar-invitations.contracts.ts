@@ -51,6 +51,16 @@ export const calendarInvitationResponse = z.object({
   html: z.string(),
   /** The calendar part verbatim — the same bytes the recipient receives. */
   ical: z.string(),
+  /**
+   * Whether the schedule needed `RDATE;VALUE=PERIOD` entries to state at all.
+   *
+   * On the wire rather than derived from the document by the card, because it
+   * is a fact the builder established while writing: sessions of differing
+   * lengths have no plainer notation. Client support for period entries is
+   * weak, so the card says so rather than letting the admin discover it from a
+   * calendar that silently dropped half the dates.
+   */
+  usesPeriodRdates: z.boolean(),
   /** The relay's id for the sent message, or `null` for a preview. */
   messageId: z.string().nullable(),
   /** The seat's record after this action, or `null` for a preview. */

@@ -1211,10 +1211,12 @@
         "optionsHeading": "Options",
         "shapeLabel": "Shape",
         "shapeOptions": {
-          "series": "One weekly rule per slot",
-          "occurrences": "One event per session"
+          "series": "One weekly rule for the whole schedule",
+          "occurrences": "Every session listed by date"
         },
-        "shapeHint": "Keep the shape the same between an invitation and its update, or the update arrives under new ids and the entries already on the calendar stay there until they are cancelled.",
+        "shapeHint": "Either shape sends one calendar entry per seat, covering every session. A rule is compact and keeps its meaning past the twelve-week horizon, but it can only state sessions that all start at the same time and run for the same length. A list states every remaining session by date, whatever their times, and stops at the horizon.",
+        "shapeOptionUnavailable": "{option} – unavailable: these sessions differ in time or length",
+        "periodEntriesHint": "These sessions are not all the same length, so the ones that differ are written as period entries. Client support for those is uneven — check that every session arrived.",
         "reminderLabel": "Reminder",
         "reminderOptions": {
           "15": "15 minutes before",
