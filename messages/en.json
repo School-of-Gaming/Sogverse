@@ -1058,13 +1058,88 @@
       "emailSentSuccess": "Email sent! Message ID: {messageId}",
       "failedToSendRequest": "Failed to send request",
       "preview": "Preview",
-      "previewDesktop": "Preview desktop",
-      "previewMobile": "Preview mobile",
       "previewError": "Could not render this template: {message}",
       "previewWidth": {
         "label": "Preview width",
         "desktop": "Desktop",
         "mobile": "Mobile"
+      },
+      "calendarFeed": {
+        "title": "Calendar feed",
+        "description": "Mint a subscribed ICS feed for one family, then open it in a real calendar app.",
+        "customerLabel": "Customer",
+        "customerPlaceholder": "parent@example.com or a user id",
+        "lookUp": "Look up",
+        "lookingUp": "Looking up",
+        "noParticipations": "This customer holds no active seats, so the feed is empty.",
+        "seatLine": "{gamer} — {product} ({type})",
+        "optionsHeading": "Options",
+        "modeLabel": "Recurrence",
+        "modeOptions": {
+          "discrete": "One event per session",
+          "rrule": "One weekly rule per slot"
+        },
+        "titleLabel": "Event title",
+        "titleOptions": {
+          "product": "Product",
+          "product-gamer": "Product then gamer",
+          "gamer-product": "Gamer then product"
+        },
+        "alarmLabel": "Reminder",
+        "alarmOptions": {
+          "15": "15 minutes before",
+          "60": "One hour before",
+          "1440": "One day before",
+          "none": "No reminder"
+        },
+        "tzLabel": "Times",
+        "tzOptions": {
+          "utc": "UTC instants",
+          "tzid": "Product timezone"
+        },
+        "weeksLabel": "Horizon",
+        "weeksOption": "{weeks} weeks ahead",
+        "scopeLabel": "Scope",
+        "scopeFamily": "Whole family",
+        "detailsLabel": "Detail",
+        "detailsOptions": {
+          "none": "Title only",
+          "basic": "Title, gamer and place",
+          "full": "Everything, with a link"
+        },
+        "busyLabel": "Busy or free",
+        "busyOptions": {
+          "busy": "Shows as busy",
+          "free": "Shows as free"
+        },
+        "refreshLabel": "Refresh hint",
+        "refreshOptions": {
+          "off": "None",
+          "1h": "Every hour",
+          "6h": "Every 6 hours",
+          "24h": "Every 24 hours"
+        },
+        "colorLabel": "Calendar colour",
+        "colorOptions": {
+          "on": "Brand colour",
+          "off": "None"
+        },
+        "calnameLabel": "Calendar name",
+        "feedUrlHeading": "Feed address",
+        "webUrlLabel": "Web address",
+        "subscriptionUrlLabel": "Subscription address",
+        "copy": "Copy",
+        "copied": "Copied",
+        "previewHeading": "Preview",
+        "loadPreview": "Load preview",
+        "loadingPreview": "Loading",
+        "noEvents": "No sessions in this horizon.",
+        "rawHeading": "Raw calendar file",
+        "columnWhen": "When",
+        "columnSummary": "Summary",
+        "columnGamer": "Gamer",
+        "columnProduct": "Product",
+        "recurring": "repeats weekly"
       }
     },
     "whatsapp": {
@@ -1676,6 +1751,13 @@
     "municipality_club": "Club",
     "camp": "Camp",
     "event": "Event"
+  },
+  "calendarFeed": {
+    "online": "Online",
+    "gamerLine": "Gamer: {name}",
+    "typeLine": "Type: {type}",
+    "languageLine": "Language: {language}",
+    "durationLine": "Duration: {minutes} minutes"
   },
   "activityCard": {
     "endedOn": "Ended {date}",

@@ -140,3 +140,32 @@ mechanism, and a look at Brevo quota headroom.
   for; clients already provide the knob.
 - **Sequencing** — the one-shot camp/event `.ics` is small enough to ship first as a
   probe of demand.
+
+## Exploration built (2026-09)
+
+A working feed exists to try in real clients, so the open questions above can be
+answered by looking rather than by reasoning. It is an exploration, not a
+decision: nothing above is settled by it.
+
+- **Where it is.** `GET /api/calendar/feed/[token]` emits the calendar (and the
+  same computed events as JSON for the preview); `src/lib/calendar-feed/` holds
+  the token, the option parsing, the reads, the occurrence walk and a
+  hand-rolled RFC 5545 writer. The cockpit is a card on `/admin/testing`, which
+  mints a URL for any customer, exposes every option and shows both the event
+  table and the raw document before anything is sent anywhere.
+- **The token is a stand-in.** It is an HMAC over the customer id, domain-
+  separated under the shared PIN secret. That is deliberately *not* the design
+  above: a stored, revocable per-customer secret is still the answer, and this
+  buys a real `webcal://` URL today without a migration. Whatever graduates
+  replaces the module rather than growing a TTL onto it.
+- **Inherited limits.** The expansion is the shared holiday-blind walker, so a
+  holiday-skipped session still appears — the unification named above is
+  untouched and remains the prerequisite. Nothing emits `EXDATE`.
+- **The canceling clamp is implemented**, through an explicitly-filtered
+  service-role read of the subscription rows rather than the `auth.uid()`-scoped
+  RPC the dashboard uses.
+- **What can be compared**, all as query parameters so one family can be
+  subscribed several ways at once: alarm (none/15/60/1440 minutes), title
+  composition, discrete `VEVENT`s versus one weekly `RRULE`, UTC instants versus
+  `TZID` wall clocks, horizon, whole-family versus one gamer, calendar name,
+  colour, refresh hint, detail level, and free-versus-busy.

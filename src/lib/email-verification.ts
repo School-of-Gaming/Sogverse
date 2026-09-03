@@ -44,8 +44,9 @@
 // collide: its verifier derives both components from the caller's own JWT
 // rather than the token, and a UUID can never begin with a prefix string. The
 // fourth payload class is the seat offer (`seat-offer:`, in
-// `seat-offer-token.ts`), which followed this rule. Any FIFTH must carry its
-// own prefix too; do not add another bare one.
+// `seat-offer-token.ts`), and the fifth is the subscribed calendar feed
+// (`ics-feed:`, in `calendar-feed/token.ts`); both followed this rule. Any
+// SIXTH must carry its own prefix too; do not add another bare one.
 //
 // The changed-address reset watches `profiles.email` (a DB trigger), which is
 // the only email this app ever changes. An auth-side change that bypassed

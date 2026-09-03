@@ -1058,13 +1058,88 @@
       "emailSentSuccess": "E-post skickat! Meddelande-ID: {messageId}",
       "failedToSendRequest": "Kunde inte skicka förfrågan",
       "preview": "Förhandsgranskning",
-      "previewDesktop": "Förhandsgranska på dator",
-      "previewMobile": "Förhandsgranska på mobil",
       "previewError": "Kunde inte rendera mallen: {message}",
       "previewWidth": {
         "label": "Förhandsgranskningens bredd",
         "desktop": "Dator",
         "mobile": "Mobil"
+      },
+      "calendarFeed": {
+        "title": "Kalenderflöde",
+        "description": "Skapa ett ICS-flöde att prenumerera på för en familj och öppna det i en riktig kalenderapp.",
+        "customerLabel": "Kund",
+        "customerPlaceholder": "foralder@example.com eller ett användar-id",
+        "lookUp": "Sök",
+        "lookingUp": "Söker",
+        "noParticipations": "Kunden har inga aktiva platser, så flödet är tomt.",
+        "seatLine": "{gamer} — {product} ({type})",
+        "optionsHeading": "Alternativ",
+        "modeLabel": "Upprepning",
+        "modeOptions": {
+          "discrete": "En händelse per tillfälle",
+          "rrule": "En veckoregel per tid"
+        },
+        "titleLabel": "Händelsens titel",
+        "titleOptions": {
+          "product": "Produkt",
+          "product-gamer": "Produkt och sedan spelare",
+          "gamer-product": "Spelare och sedan produkt"
+        },
+        "alarmLabel": "Påminnelse",
+        "alarmOptions": {
+          "15": "15 minuter innan",
+          "60": "En timme innan",
+          "1440": "Ett dygn innan",
+          "none": "Ingen påminnelse"
+        },
+        "tzLabel": "Tider",
+        "tzOptions": {
+          "utc": "Som UTC-tidpunkter",
+          "tzid": "I produktens tidszon"
+        },
+        "weeksLabel": "Tidshorisont",
+        "weeksOption": "{weeks} veckor framåt",
+        "scopeLabel": "Omfattning",
+        "scopeFamily": "Hela familjen",
+        "detailsLabel": "Detaljer",
+        "detailsOptions": {
+          "none": "Endast titel",
+          "basic": "Titel, spelare och plats",
+          "full": "Allt, med länk"
+        },
+        "busyLabel": "Upptagen eller ledig",
+        "busyOptions": {
+          "busy": "Visas som upptagen",
+          "free": "Visas som ledig"
+        },
+        "refreshLabel": "Uppdateringstips",
+        "refreshOptions": {
+          "off": "Ingen",
+          "1h": "Varje timme",
+          "6h": "Var sjätte timme",
+          "24h": "Var tjugofjärde timme"
+        },
+        "colorLabel": "Kalenterfärg",
+        "colorOptions": {
+          "on": "Varumärkesfärg",
+          "off": "Ingen"
+        },
+        "calnameLabel": "Kalenderns namn",
+        "feedUrlHeading": "Flödets adress",
+        "webUrlLabel": "Webbadress",
+        "subscriptionUrlLabel": "Prenumerationsadress",
+        "copy": "Kopiera",
+        "copied": "Kopierat",
+        "previewHeading": "Förhandsgranskning",
+        "loadPreview": "Ladda förhandsgranskning",
+        "loadingPreview": "Laddar",
+        "noEvents": "Inga tillfällen inom den här horisonten.",
+        "rawHeading": "Rå kalenderfil",
+        "columnWhen": "När",
+        "columnSummary": "Sammanfattning",
+        "columnGamer": "Spelare",
+        "columnProduct": "Produkt",
+        "recurring": "upprepas varje vecka"
       }
     },
     "whatsapp": {
@@ -1676,6 +1751,13 @@
     "municipality_club": "Klubb",
     "camp": "Läger",
     "event": "Evenemang"
+  },
+  "calendarFeed": {
+    "online": "Online",
+    "gamerLine": "Spelare: {name}",
+    "typeLine": "Typ: {type}",
+    "languageLine": "Språk: {language}",
+    "durationLine": "Längd: {minutes} minuter"
   },
   "activityCard": {
     "endedOn": "Avslutades {date}",

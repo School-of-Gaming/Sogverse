@@ -1058,13 +1058,88 @@
       "emailSentSuccess": "E-mail envoyé ! ID du message : {messageId}",
       "failedToSendRequest": "Échec de l’envoi de la requête",
       "preview": "Aperçu",
-      "previewDesktop": "Aperçu sur ordinateur",
-      "previewMobile": "Aperçu sur mobile",
       "previewError": "Impossible de faire le rendu de ce modèle : {message}",
       "previewWidth": {
         "label": "Largeur de l’aperçu",
         "desktop": "Ordinateur",
         "mobile": "Mobile"
+      },
+      "calendarFeed": {
+        "title": "Flux de calendrier",
+        "description": "Créez un flux ICS auquel s’abonner pour une famille, puis ouvrez-le dans une vraie application de calendrier.",
+        "customerLabel": "Client",
+        "customerPlaceholder": "parent@exemple.com ou un identifiant utilisateur",
+        "lookUp": "Rechercher",
+        "lookingUp": "Recherche en cours",
+        "noParticipations": "Ce client n’a aucune place active : le flux est donc vide.",
+        "seatLine": "{gamer} — {product} ({type})",
+        "optionsHeading": "Options",
+        "modeLabel": "Récurrence",
+        "modeOptions": {
+          "discrete": "Un événement par séance",
+          "rrule": "Une règle hebdomadaire par créneau"
+        },
+        "titleLabel": "Titre de l’événement",
+        "titleOptions": {
+          "product": "Produit",
+          "product-gamer": "Produit puis joueur",
+          "gamer-product": "Joueur puis produit"
+        },
+        "alarmLabel": "Rappel",
+        "alarmOptions": {
+          "15": "15 minutes avant",
+          "60": "Une heure avant",
+          "1440": "Un jour avant",
+          "none": "Aucun rappel"
+        },
+        "tzLabel": "Horaires",
+        "tzOptions": {
+          "utc": "Instants UTC",
+          "tzid": "Fuseau horaire du produit"
+        },
+        "weeksLabel": "Horizon",
+        "weeksOption": "{weeks} semaines à venir",
+        "scopeLabel": "Portée",
+        "scopeFamily": "Toute la famille",
+        "detailsLabel": "Détails",
+        "detailsOptions": {
+          "none": "Titre seul",
+          "basic": "Titre, joueur et lieu",
+          "full": "Tout, avec un lien"
+        },
+        "busyLabel": "Occupé ou libre",
+        "busyOptions": {
+          "busy": "Affiché comme occupé",
+          "free": "Affiché comme libre"
+        },
+        "refreshLabel": "Fréquence de rafraîchissement",
+        "refreshOptions": {
+          "off": "Aucune",
+          "1h": "Toutes les heures",
+          "6h": "Toutes les 6 heures",
+          "24h": "Toutes les 24 heures"
+        },
+        "colorLabel": "Couleur du calendrier",
+        "colorOptions": {
+          "on": "Couleur de la marque",
+          "off": "Aucune"
+        },
+        "calnameLabel": "Nom du calendrier",
+        "feedUrlHeading": "Adresse du flux",
+        "webUrlLabel": "Adresse web",
+        "subscriptionUrlLabel": "Adresse d’abonnement",
+        "copy": "Copier",
+        "copied": "Copié",
+        "previewHeading": "Aperçu",
+        "loadPreview": "Charger l’aperçu",
+        "loadingPreview": "Chargement",
+        "noEvents": "Aucune séance sur cet horizon.",
+        "rawHeading": "Fichier de calendrier brut",
+        "columnWhen": "Quand",
+        "columnSummary": "Résumé",
+        "columnGamer": "Joueur",
+        "columnProduct": "Produit",
+        "recurring": "se répète chaque semaine"
       }
     },
     "whatsapp": {
@@ -1676,6 +1751,13 @@
     "municipality_club": "Club",
     "camp": "Stage",
     "event": "Événement"
+  },
+  "calendarFeed": {
+    "online": "En ligne",
+    "gamerLine": "Joueur : {name}",
+    "typeLine": "Type : {type}",
+    "languageLine": "Langue : {language}",
+    "durationLine": "Durée : {minutes} minutes"
   },
   "activityCard": {
     "endedOn": "Terminé le {date}",

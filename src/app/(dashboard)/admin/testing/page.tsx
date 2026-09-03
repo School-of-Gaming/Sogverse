@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Mail, Monitor, Smartphone } from "lucide-react";
+import { Mail, MonitorPlay } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { CalendarFeedCard } from "@/components/admin/testing/calendar-feed-card";
 import { useAuth } from "@/providers";
 import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
@@ -132,8 +133,9 @@ export default function TestingPage() {
   const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   // Which viewport the already-rendered document is shown in, not which
-  // document it is: the button that opens the dialog picks it and the toggle in
-  // the dialog header changes it, neither of them re-rendering the mail.
+  // document it is: the toggle in the dialog header changes it without
+  // re-rendering the mail, and it is kept across opens so a reader checking
+  // the mobile layout of several templates is not flipped back each time.
   const [previewWidth, setPreviewWidth] = useState<PreviewWidth>("desktop");
   // Which render is allowed to paint. Two can be in flight at once — close the
   // dialog, change the locale, reopen it before the first locale's message
@@ -162,8 +164,7 @@ export default function TestingPage() {
    * this is a chunk fetch rather than a round trip: nothing is drawn while it
    * is in flight, inside a box that is already its final size.
    */
-  function openPreview(width: PreviewWidth) {
-    setPreviewWidth(width);
+  function openPreview() {
     setPreview(null);
     setPreviewError(null);
     setPreviewOpen(true);
@@ -488,31 +489,20 @@ export default function TestingPage() {
             {/* The action row, authored DOM-order [secondary…, affirmative]:
                 the send is the answer this form exists to give, so it is the
                 last child — rightmost in a row, and topmost once the row
-                stacks. The two preview buttons are template-mode only, exactly
-                as the preview always was: free-form mode's body is the typed
+                stacks. The preview button is template-mode only, exactly as
+                the preview always was: free-form mode's body is the typed
                 text with its line breaks, which the textarea above already
                 shows, while a registered template is the case where what you
-                asked for and what arrives are two different documents. */}
+                asked for and what arrives are two different documents. One
+                button, not one per viewport: the dialog carries its own
+                desktop/mobile toggle, so a second opener would only duplicate
+                it. */}
             <div className="flex flex-col-reverse gap-2 sm:flex-row">
               {mode === "template" && (
-                <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => openPreview("desktop")}
-                  >
-                    <Monitor />
-                    {t('previewDesktop')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => openPreview("mobile")}
-                  >
-                    <Smartphone />
-                    {t('previewMobile')}
-                  </Button>
-                </>
+                <Button type="button" variant="outline" onClick={openPreview}>
+                  <MonitorPlay />
+                  {t('preview')}
+                </Button>
               )}
               <Button type="submit" disabled={sending}>
                 {sending ? c('sending') : t('sendTestEmail')}
@@ -521,6 +511,8 @@ export default function TestingPage() {
           </form>
         </CardContent>
       </Card>
+
+      <CalendarFeedCard />
 
       {/* The preview is a dialog rather than a second panel under the form:
           the mail is 720px of reading and the form is what the page is for, so

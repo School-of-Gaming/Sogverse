@@ -1106,13 +1106,88 @@
       "emailSentSuccess": "QIn ngeHlu’! De’ ID: {messageId}",
       "failedToSendRequest": "tlhob ngeH Dabe’lu’",
       "preview": "QIn bejwI’",
-      "previewDesktop": "De’wI’ tInDaq QIn yIbej",
-      "previewMobile": "De’wI’ machDaq QIn yIbej",
       "previewError": "De’ tIng chenmoHlaHbe’lu’: {message}",
       "previewWidth": {
         "label": "QIn leghmeH Daq",
         "desktop": "De’wI’ tIn",
         "mobile": "De’wI’ mach"
+      },
+      "calendarFeed": {
+        "title": "jajmey teywI’",
+        "description": "wa’ qorDu’vaD jajmey teywI’ yIchenmoH, ghIq jajmey De’wI’Daq yIpoSmoH.",
+        "customerLabel": "je’wI’",
+        "customerPlaceholder": "vav@example.com pagh lo’wI’ mI’",
+        "lookUp": "yInej",
+        "lookingUp": "nejtaH",
+        "noParticipations": "je’wI’vam Daqmey tu’lu’be’, vaj chIm teywI’.",
+        "seatLine": "{gamer} — {product} ({type})",
+        "optionsHeading": "wIvmey",
+        "modeLabel": "qaSchoHmeH mIw",
+        "modeOptions": {
+          "discrete": "qaSDI’ Hoch, wa’ wanI’",
+          "rrule": "poH Hoch, wa’ Hogh chut"
+        },
+        "titleLabel": "wanI’ pong",
+        "titleOptions": {
+          "product": "ngev",
+          "product-gamer": "ngev ghIq SuvwI’",
+          "gamer-product": "SuvwI’ ghIq ngev"
+        },
+        "alarmLabel": "qawmoHwI’",
+        "alarmOptions": {
+          "15": "wa’maH vagh tup nung",
+          "60": "wa’ rep nung",
+          "1440": "wa’ jaj nung",
+          "none": "qawmoHwI’ pagh"
+        },
+        "tzLabel": "poHmey",
+        "tzOptions": {
+          "utc": "UTC poHmey",
+          "tzid": "ngev poH Daq"
+        },
+        "weeksLabel": "leng Hoch",
+        "weeksOption": "{weeks} Hoghmey vaD",
+        "scopeLabel": "’ar",
+        "scopeFamily": "qorDu’ naQ",
+        "detailsLabel": "De’",
+        "detailsOptions": {
+          "none": "pong neH",
+          "basic": "pong, SuvwI’, Daq je",
+          "full": "Hoch, ghoch je"
+        },
+        "busyLabel": "Qu’taH pagh leSpoH",
+        "busyOptions": {
+          "busy": "Qu’taH ’e’ cha’",
+          "free": "leSpoH ’e’ cha’"
+        },
+        "refreshLabel": "chu’choHmeH mIw",
+        "refreshOptions": {
+          "off": "pagh",
+          "1h": "Hoch rep",
+          "6h": "jav repmey Hoch",
+          "24h": "cha’maH loS repmey Hoch"
+        },
+        "colorLabel": "jajmey teywI’ rItlh",
+        "colorOptions": {
+          "on": "SoQ rItlh",
+          "off": "pagh"
+        },
+        "calnameLabel": "jajmey teywI’ pong",
+        "feedUrlHeading": "teywI’ Daq",
+        "webUrlLabel": "web Daq",
+        "subscriptionUrlLabel": "muvmeH Daq",
+        "copy": "yIvel",
+        "copied": "vellu’",
+        "previewHeading": "bejwI’",
+        "loadPreview": "bejwI’ yISuq",
+        "loadingPreview": "SuqtaH",
+        "noEvents": "poHvamDaq qaSbe’ vay’.",
+        "rawHeading": "jajmey teywI’ De’ Hom",
+        "columnWhen": "ghorgh",
+        "columnSummary": "ngoQ",
+        "columnGamer": "SuvwI’",
+        "columnProduct": "ngev",
+        "recurring": "Hoch Hogh qaS"
       }
     },
     "whatsapp": {
@@ -1720,6 +1795,13 @@
     "municipality_club": "ghom’a’",
     "camp": "wa’leSvam",
     "event": "Soqbogh"
+  },
+  "calendarFeed": {
+    "online": "Hop Daq",
+    "gamerLine": "SuvwI’: {name}",
+    "typeLine": "Segh: {type}",
+    "languageLine": "Hol: {language}",
+    "durationLine": "poH: {minutes} tup"
   },
   "activityCard": {
     "endedOn": "{date} rIntaH",

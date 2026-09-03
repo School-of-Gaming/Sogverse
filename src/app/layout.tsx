@@ -137,10 +137,16 @@ export default async function RootLayout({
   const detectedLocale = toDetectedLocale(
     requestHeaders.get("accept-language"),
   );
-  // Strip server-only namespaces (email, metadata) from the client bundle.
-  // Server components access full messages via getTranslations() directly.
-  const { email: _email, metadata: _metadata, ...clientMessages } =
-    (await getMessages()) as Record<string, unknown>;
+  // Strip server-only namespaces (email, metadata, calendarFeed) from the
+  // client bundle. Server components access full messages via
+  // getTranslations() directly; `calendarFeed` is written into an `.ics`
+  // document by a route handler and reaches no screen this app renders.
+  const {
+    email: _email,
+    metadata: _metadata,
+    calendarFeed: _calendarFeed,
+    ...clientMessages
+  } = (await getMessages()) as Record<string, unknown>;
 
   // Every next/font variable class goes on <html> — that is, on `:root` — never
   // on <body>. globals.css declares its font tokens inside `@theme`, which emits

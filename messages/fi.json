@@ -1058,13 +1058,88 @@
       "emailSentSuccess": "Sähköposti lähetetty! Viestin tunnus: {messageId}",
       "failedToSendRequest": "Pyynnön lähettäminen epäonnistui",
       "preview": "Esikatselu",
-      "previewDesktop": "Esikatsele työpöydällä",
-      "previewMobile": "Esikatsele mobiilissa",
       "previewError": "Mallin hahmontaminen epäonnistui: {message}",
       "previewWidth": {
         "label": "Esikatselun leveys",
         "desktop": "Työpöytä",
         "mobile": "Mobiili"
+      },
+      "calendarFeed": {
+        "title": "Kalenterisyöte",
+        "description": "Luo yhdelle perheelle tilattava ICS-syöte ja avaa se oikeassa kalenterisovelluksessa.",
+        "customerLabel": "Asiakas",
+        "customerPlaceholder": "vanhempi@example.com tai käyttäjätunniste",
+        "lookUp": "Hae",
+        "lookingUp": "Haetaan",
+        "noParticipations": "Asiakkaalla ei ole aktiivisia paikkoja, joten syöte on tyhjä.",
+        "seatLine": "{gamer} — {product} ({type})",
+        "optionsHeading": "Asetukset",
+        "modeLabel": "Toisto",
+        "modeOptions": {
+          "discrete": "Yksi tapahtuma jokaisesta kerrasta",
+          "rrule": "Yksi viikkosääntö jokaisesta ajasta"
+        },
+        "titleLabel": "Tapahtuman nimi",
+        "titleOptions": {
+          "product": "Tuote",
+          "product-gamer": "Tuote ja sitten pelaaja",
+          "gamer-product": "Pelaaja ja sitten tuote"
+        },
+        "alarmLabel": "Muistutus",
+        "alarmOptions": {
+          "15": "15 minuuttia ennen",
+          "60": "Tunti ennen",
+          "1440": "Vuorokausi ennen",
+          "none": "Ei muistutusta"
+        },
+        "tzLabel": "Kellonajat",
+        "tzOptions": {
+          "utc": "UTC-hetkinä",
+          "tzid": "Tuotteen aikavyöhykkeellä"
+        },
+        "weeksLabel": "Aikaväli",
+        "weeksOption": "{weeks} viikkoa eteenpäin",
+        "scopeLabel": "Laajuus",
+        "scopeFamily": "Koko perhe",
+        "detailsLabel": "Tiedot",
+        "detailsOptions": {
+          "none": "Vain otsikko",
+          "basic": "Otsikko, pelaaja ja paikka",
+          "full": "Kaikki tiedot ja linkki"
+        },
+        "busyLabel": "Varattu vai vapaa",
+        "busyOptions": {
+          "busy": "Näkyy varattuna",
+          "free": "Näkyy vapaana"
+        },
+        "refreshLabel": "Päivitysvihje",
+        "refreshOptions": {
+          "off": "Ei mitään",
+          "1h": "Tunnin välein",
+          "6h": "Kuuden tunnin välein",
+          "24h": "Vuorokauden välein"
+        },
+        "colorLabel": "Kalenterin väri",
+        "colorOptions": {
+          "on": "Brändiväri",
+          "off": "Ei väriä"
+        },
+        "calnameLabel": "Kalenterin nimi",
+        "feedUrlHeading": "Syötteen osoite",
+        "webUrlLabel": "Verkko-osoite",
+        "subscriptionUrlLabel": "Tilausosoite",
+        "copy": "Kopioi",
+        "copied": "Kopioitu",
+        "previewHeading": "Esikatselu",
+        "loadPreview": "Lataa esikatselu",
+        "loadingPreview": "Ladataan",
+        "noEvents": "Tällä aikavälillä ei ole kertoja.",
+        "rawHeading": "Kalenteritiedosto sellaisenaan",
+        "columnWhen": "Milloin",
+        "columnSummary": "Kuvaus",
+        "columnGamer": "Pelaaja",
+        "columnProduct": "Tuote",
+        "recurring": "toistuu viikoittain"
       }
     },
     "whatsapp": {
@@ -1676,6 +1751,13 @@
     "municipality_club": "Kerho",
     "camp": "Leiri",
     "event": "Tapahtuma"
+  },
+  "calendarFeed": {
+    "online": "Verkossa",
+    "gamerLine": "Pelaaja: {name}",
+    "typeLine": "Tyyppi: {type}",
+    "languageLine": "Kieli: {language}",
+    "durationLine": "Kesto: {minutes} minuuttia"
   },
   "activityCard": {
     "endedOn": "Päättyi {date}",
