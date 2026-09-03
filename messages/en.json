@@ -101,7 +101,8 @@
     "roleParent": "Parent",
     "roleGamer": "Gamer",
     "roleGedu": "Gedu",
-    "gedus": "Gedus"
+    "gedus": "Gedus",
+    "next": "Next"
   },
   "about": {
     "pageTitle": "About us",
@@ -1000,7 +1001,8 @@
         "uncertifyAction": "Remove certification",
         "saving": "Saving…",
         "error": "Couldn’t update certification. Please try again."
-      }
+      },
+      "usernameLabel": "Username"
     },
     "locations": {
       "editName": "Edit {name}",
@@ -1087,12 +1089,14 @@
       "emailPlaceholder": "you@example.com",
       "passwordPlaceholder": "Enter your password",
       "errors": {
-        "identifierRequired": "Please enter your email.",
+        "identifierRequired": "Please enter your email or username.",
         "passwordTooShort": "Password must be at least {count} characters.",
-        "invalidCredentials": "The email or password you entered is incorrect.",
+        "invalidCredentials": "The email, username or password you entered is incorrect.",
         "emailNotConfirmed": "Please confirm your email address before signing in.",
         "tooManyAttempts": "Too many sign-in attempts. Please wait a moment and try again."
-      }
+      },
+      "identifierLabel": "Email or username",
+      "identifierPlaceholder": "you@example.com or a username"
     },
     "needHelp": "Need help? Contact <link>{email}</link>",
     "register": {
@@ -1372,6 +1376,17 @@
     "switchToParentToAddGamer": {
       "title": "Switch to {name}’s profile to add a gamer?",
       "oneWayWarning": "You’ll be signed out of your gamer account."
+    },
+    "switchGate": {
+      "pinTitle": "Ask a parent to enter their PIN",
+      "pinDescription": "A parent’s PIN is needed to switch to {name}.",
+      "pinNotSetTitle": "No parent PIN yet",
+      "pinNotSetDescription": "A parent needs to set a PIN from their own My SOG first. Then you can switch accounts.",
+      "passwordTitle": "Enter {name}’s password",
+      "passwordDescription": "This account has a password of its own. Type it to switch.",
+      "passwordInvalid": "That password is not right. Try again.",
+      "submit": "Switch",
+      "unreachable": "Signs in via a parent"
     },
     "addGamerForm": {
       "title": "Add a gamer",
@@ -2889,6 +2904,27 @@
       "roblox": {
         "title": "Roblox account",
         "description": "Link a Roblox username for in-game features."
+      },
+      "signIn": {
+        "title": "Sign-in",
+        "current": {
+          "parent": "{name} signs in through your account.",
+          "username": "{name} signs in with a username and password.",
+          "email": "{name} signs in with their own email address."
+        },
+        "currentUsername": "{name} signs in with the username {username}.",
+        "saved": "Sign-in updated.",
+        "saveFailed": "Couldn’t save this change. Please try again.",
+        "newPasswordTitle": "Set a new password",
+        "newPasswordDescription": "Choose a new password and read it out to {name}. It replaces the old one straight away.",
+        "newPasswordSubmit": "Set password",
+        "newPasswordSaved": "New password set.",
+        "verified": "This address has been verified.",
+        "notVerified": "{name} has not opened the verification link yet.",
+        "resend": "Resend the verification email",
+        "resendSent": "Sent. Ask {name} to check their inbox.",
+        "resendRateLimited": "That is a lot of emails for one gamer. Please try again in a while.",
+        "resendFailed": "We couldn’t send the email. Please try again."
       }
     },
     "switchToGamer": {
@@ -2948,7 +2984,9 @@
       "title": "Marketing preferences",
       "schoolOfGaming": "School of Gaming may send me news and offers by email.",
       "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers."
-    }
+    },
+    "usernameLabel": "Username",
+    "gamerPasswordFromParent": "Your parent can set a new password for you from their My SOG."
   },
   "tools": {
     "uncertified": {
@@ -2986,7 +3024,13 @@
     "goToDashboard": "Go to My SOG",
     "invalidTitle": "This link no longer works",
     "invalidDescription": "A verification link stops working once the email address on the account changes. Open your settings and send yourself a fresh one.",
-    "goToSettings": "Go to settings"
+    "goToSettings": "Go to settings",
+    "gamerVerifiedTitle": "Your email is verified",
+    "gamerPasswordLinkSentDescription": "We have sent you one more email. Open it and choose a password — that is how you sign in from now on.",
+    "gamerPasswordLinkAgainDescription": "You can sign in with your email and your password. Forgotten it? Ask for a new link and choose a new one.",
+    "gamerSendPasswordLink": "Send me a password link",
+    "gamerPasswordLinkSent": "Sent. Have a look in your email.",
+    "gamerPasswordLinkFailed": "That did not work. Try again."
   },
   "voice": {
     "participants": "Participants",
@@ -3872,5 +3916,32 @@
       "next": "Next image",
       "close": "Close"
     }
+  },
+  "gamerSignIn": {
+    "question": "How will {name} sign in?",
+    "fallbackName": "your gamer",
+    "option": {
+      "parent": "Through your account",
+      "username": "With a username and password",
+      "email": "With their own email"
+    },
+    "optionHint": {
+      "parent": "You switch to them from your own account. They get no password and no email address of their own.",
+      "username": "You choose both; they sign in without needing you. No email needed.",
+      "email": "We email them a link to verify the address and set their own password."
+    },
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "lily2015",
+    "usernameHint": "Letters and numbers only, 3 to 20 characters.",
+    "usernameRequired": "Choose a username.",
+    "usernameInvalid": "Use 3 to 20 letters or numbers, with no spaces.",
+    "usernameTaken": "That username is taken. Try another one.",
+    "passwordHint": "At least {count} characters. Read it out to your gamer — you can change it here later.",
+    "passwordTooShort": "The password needs at least {count} characters.",
+    "emailHint": "The verification link goes here, so it has to be an address your gamer can open.",
+    "emailPlaceholder": "lily@example.com",
+    "emailRequired": "Enter an email address.",
+    "emailInvalid": "That does not look like an email address.",
+    "emailTaken": "That email address already has an account."
   }
 }

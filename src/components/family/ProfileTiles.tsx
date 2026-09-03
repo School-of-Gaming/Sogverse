@@ -58,6 +58,7 @@ type ProfileTileLinkProps = ProfileTileCommonProps & {
   disabled?: never;
   clickable?: never;
   isLoading?: never;
+  note?: never;
 };
 
 /**
@@ -82,6 +83,15 @@ type ProfileTileButtonProps = ProfileTileCommonProps & {
   clickable?: boolean;
   /** Renders a dimming spinner overlay while this tile's action is in flight. */
   isLoading?: boolean;
+  /**
+   * A short line under the name, for a tile that is on screen but cannot be
+   * taken — today, a sibling who signs in from a parent's account and so has no
+   * password an own session could type. It is rendered from the start rather
+   * than arriving later: the family list and the session's provenance land in
+   * the same response, so there is no frame where the tile exists without its
+   * answer, and nothing below it moves.
+   */
+  note?: string;
 };
 
 type ProfileTileProps = ProfileTileLinkProps | ProfileTileButtonProps;
@@ -90,6 +100,7 @@ export function ProfileTile(props: ProfileTileProps) {
   const { member, size = "default", isActive = false } = props;
   const isLink = "href" in props && props.href !== undefined;
   const isLoading = !isLink && (props.isLoading ?? false);
+  const note = isLink ? undefined : props.note;
   const isClickable = isLink
     ? true
     : (props.clickable ?? !(props.disabled ?? false));
@@ -128,6 +139,13 @@ export function ProfileTile(props: ProfileTileProps) {
       >
         {member.first_name}
       </span>
+      {note && (
+        // Allowed to wrap, unlike the name above it: this is a sentence rather
+        // than a label, and a tile is far too narrow to hold one on a line.
+        <span className="max-w-[7rem] text-center text-[11px] leading-tight text-muted-foreground">
+          {note}
+        </span>
+      )}
     </>
   );
 

@@ -75,8 +75,41 @@ describe("mapping the update failure to copy", () => {
     expect(screen.queryByText(COPY.samePassword)).toBeNull();
   });
 
+  /**
+   * **The recovery session does not survive its own success.**
+   *
+   * A session minted by `verifyOtp({ type: "recovery" })` carries `otp` in its
+   * `amr` claim and no `password` method — and the switch gate reads exactly
+   * that claim to decide how a session was made, treating one with no password
+   * method as a *family* session, which may reach a linked account on a PIN
+   * alone. Leaving it live would therefore hand that standing to whoever worked
+   * through the inbox. Signing it out is what keeps the classification honest,
+   * and it costs the user a sign-in they were being sent to do anyway.
+   */
+  it("signs the recovery session out before pointing at the login page", async () => {
+    mockSupabaseClient.auth.updateUser.mockResolvedValue({ error: null });
+    mockSupabaseClient.auth.signOut.mockResolvedValue({ error: null });
+    renderForm();
+
+    await submitPassword("a-long-enough-password");
+
+    expect(mockSupabaseClient.auth.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves the session alone when the update itself failed", async () => {
+    mockSupabaseClient.auth.updateUser.mockResolvedValue({
+      error: { code: "same_password", message: "New password should be different" },
+    });
+    renderForm();
+
+    await submitPassword("a-long-enough-password");
+
+    expect(mockSupabaseClient.auth.signOut).not.toHaveBeenCalled();
+  });
+
   it("swaps to the success card when the update goes through", async () => {
     mockSupabaseClient.auth.updateUser.mockResolvedValue({ error: null });
+    mockSupabaseClient.auth.signOut.mockResolvedValue({ error: null });
     renderForm();
 
     await submitPassword("hunter2hunter2");

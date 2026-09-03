@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GameAccountCard } from "@/components/game-account";
+import { GamerSignInCard } from "@/components/family";
 import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
 import { useMinecraftAccount } from "@/services/minecraft";
 import { useRobloxAccount } from "@/services/roblox";
@@ -24,11 +25,20 @@ export default function GamerDetailsPage() {
   const c = useTranslations('common');
   const { id } = useParams<{ id: string }>();
   const timeZone = useTimezone();
-  const { data: gamers, isLoading } = useMyGamers();
+  const { data: gamers, isLoading: gamersLoading } = useMyGamers();
   const { data: mcAccount } = useMinecraftAccount(id);
   const { data: robloxAccount } = useRobloxAccount(id);
-  const { data: gamerProfile } = useGamerProfile(id);
+  // The child's own row: their age, their gender, and how they sign in. Two of
+  // the three decide what this page *contains* — the Sign-in card's whole body
+  // follows from the mode — so the page waits for it rather than letting a card
+  // insert itself into the middle of the page a beat after the rest has
+  // painted (root `CLAUDE.md`, "Layout & Scrolling"). It is a primary-key read
+  // of one row, issued in the same render as the list, so the wait is the
+  // longer of two round trips rather than two in sequence.
+  const { data: gamerProfile, isPending: profilePending } = useGamerProfile(id);
   const updateGamer = useUpdateGamer();
+
+  const isLoading = gamersLoading || profilePending;
 
   const gamer = gamers?.find((g) => g.id === id);
 
@@ -204,6 +214,20 @@ export default function GamerDetailsPage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Between the profile and the game identities: who this account is comes
+          first, how they get into it second, and what they are called in a game
+          after both. The card is absent only when the row it describes could not
+          be read — a mode nobody can see is better than a mode we guessed. */}
+      {gamerProfile && (
+        <GamerSignInCard
+          gamerId={gamer.id}
+          firstName={gamer.first_name}
+          signIn={gamerProfile.sign_in}
+          email={gamer.email}
+          emailVerifiedAt={gamer.email_verified_at}
+        />
+      )}
 
       <GameAccountCard
         platform="minecraft"

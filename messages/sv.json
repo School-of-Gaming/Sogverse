@@ -101,7 +101,8 @@
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
     "roleGedu": "Gedu",
-    "gedus": "Geduer"
+    "gedus": "Geduer",
+    "next": "Nästa"
   },
   "about": {
     "pageTitle": "Om oss",
@@ -1000,7 +1001,8 @@
         "uncertifyAction": "Ta bort certifiering",
         "saving": "Sparar…",
         "error": "Det gick inte att uppdatera certifieringen. Försök igen."
-      }
+      },
+      "usernameLabel": "Användarnamn"
     },
     "locations": {
       "editName": "Redigera {name}",
@@ -1087,12 +1089,14 @@
       "emailPlaceholder": "du@example.com",
       "passwordPlaceholder": "Ange ditt lösenord",
       "errors": {
-        "identifierRequired": "Ange din e-postadress.",
+        "identifierRequired": "Ange din e-postadress eller ditt användarnamn.",
         "passwordTooShort": "Lösenordet måste vara minst {count} tecken långt.",
-        "invalidCredentials": "E-postadressen eller lösenordet du angav är felaktigt.",
+        "invalidCredentials": "E-postadressen, användarnamnet eller lösenordet du angav är felaktigt.",
         "emailNotConfirmed": "Bekräfta din e-postadress innan du loggar in.",
         "tooManyAttempts": "För många inloggningsförsök. Vänta en stund och försök igen."
-      }
+      },
+      "identifierLabel": "E-postadress eller användarnamn",
+      "identifierPlaceholder": "du@example.com eller ett användarnamn"
     },
     "needHelp": "Behöver du hjälp? Kontakta <link>{email}</link>",
     "register": {
@@ -1372,6 +1376,17 @@
     "switchToParentToAddGamer": {
       "title": "Byt till {name}s profil för att lägga till en gamer?",
       "oneWayWarning": "Du loggas ut från ditt gamer-konto."
+    },
+    "switchGate": {
+      "pinTitle": "Be en förälder att ange sin PIN-kod",
+      "pinDescription": "En förälders PIN-kod behövs för att byta till {name}.",
+      "pinNotSetTitle": "Ingen föräldra-PIN ännu",
+      "pinNotSetDescription": "En förälder måste först skapa en PIN-kod från sin Min SOG. Sedan kan du byta konto.",
+      "passwordTitle": "Ange lösenordet för {name}",
+      "passwordDescription": "Det här kontot har ett eget lösenord. Skriv in det för att byta.",
+      "passwordInvalid": "Lösenordet stämmer inte. Försök igen.",
+      "submit": "Byt",
+      "unreachable": "Loggar in via en förälder"
     },
     "addGamerForm": {
       "title": "Lägg till en gamer",
@@ -2203,6 +2218,27 @@
       "roblox": {
         "title": "Roblox-konto",
         "description": "Koppla ett Roblox-användarnamn för funktioner i spelet."
+      },
+      "signIn": {
+        "title": "Inloggning",
+        "current": {
+          "parent": "{name} loggar in via ditt konto.",
+          "username": "{name} loggar in med användarnamn och lösenord.",
+          "email": "{name} loggar in med sin egen e-postadress."
+        },
+        "currentUsername": "{name} loggar in med användarnamnet {username}.",
+        "saved": "Inloggningen är uppdaterad.",
+        "saveFailed": "Det gick inte att spara ändringen. Försök igen.",
+        "newPasswordTitle": "Ange ett nytt lösenord",
+        "newPasswordDescription": "Välj ett nytt lösenord och läs upp det för {name}. Det ersätter det gamla direkt.",
+        "newPasswordSubmit": "Spara lösenordet",
+        "newPasswordSaved": "Nytt lösenord sparat.",
+        "verified": "Adressen är verifierad.",
+        "notVerified": "{name} har inte öppnat verifieringslänken än.",
+        "resend": "Skicka verifieringsmejlet igen",
+        "resendSent": "Skickat. Be {name} titta i sin inkorg.",
+        "resendRateLimited": "Det är många mejl till en och samma gamer. Försök igen om en stund.",
+        "resendFailed": "Det gick inte att skicka mejlet. Försök igen."
       }
     },
     "switchToGamer": {
@@ -2262,7 +2298,9 @@
       "title": "Marknadsföringsinställningar",
       "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
       "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden."
-    }
+    },
+    "usernameLabel": "Användarnamn",
+    "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från sin Min SOG."
   },
   "tools": {
     "uncertified": {
@@ -2300,7 +2338,13 @@
     "goToDashboard": "Gå till Min SOG",
     "invalidTitle": "Den här länken fungerar inte längre",
     "invalidDescription": "En verifieringslänk slutar fungera så snart kontots e-postadress ändras. Öppna dina inställningar och skicka en ny till dig själv.",
-    "goToSettings": "Gå till inställningar"
+    "goToSettings": "Gå till inställningar",
+    "gamerVerifiedTitle": "Din e-postadress är verifierad",
+    "gamerPasswordLinkSentDescription": "Vi har skickat ett mejl till. Öppna det och välj ett lösenord – så loggar du in i fortsättningen.",
+    "gamerPasswordLinkAgainDescription": "Du kan logga in med din e-postadress och ditt lösenord. Glömt det? Be om en ny länk och välj ett nytt.",
+    "gamerSendPasswordLink": "Skicka mig en lösenordslänk",
+    "gamerPasswordLinkSent": "Skickat. Titta i din e-post.",
+    "gamerPasswordLinkFailed": "Det gick inte. Försök igen."
   },
   "voice": {
     "participants": "Deltagare",
@@ -3872,5 +3916,32 @@
       "next": "Nästa bild",
       "close": "Stäng"
     }
+  },
+  "gamerSignIn": {
+    "question": "Hur ska {name} logga in?",
+    "fallbackName": "din gamer",
+    "option": {
+      "parent": "Via ditt konto",
+      "username": "Med användarnamn och lösenord",
+      "email": "Med en egen e-postadress"
+    },
+    "optionHint": {
+      "parent": "Du växlar till dem från ditt eget konto. De får varken eget lösenord eller egen e-postadress.",
+      "username": "Du väljer båda; de loggar in utan din hjälp. Ingen e-postadress behövs.",
+      "email": "Vi mejlar dem en länk för att verifiera adressen och välja ett eget lösenord."
+    },
+    "usernameLabel": "Användarnamn",
+    "usernamePlaceholder": "saga2015",
+    "usernameHint": "Endast bokstäver och siffror, 3 till 20 tecken.",
+    "usernameRequired": "Välj ett användarnamn.",
+    "usernameInvalid": "Använd 3 till 20 bokstäver eller siffror, utan mellanslag.",
+    "usernameTaken": "Användarnamnet är upptaget. Prova ett annat.",
+    "passwordHint": "Minst {count} tecken. Läs upp det för din gamer – du kan ändra det här senare.",
+    "passwordTooShort": "Lösenordet måste vara minst {count} tecken.",
+    "emailHint": "Verifieringslänken skickas hit, så det måste vara en adress din gamer kan öppna.",
+    "emailPlaceholder": "saga@example.com",
+    "emailRequired": "Ange en e-postadress.",
+    "emailInvalid": "Det ser inte ut som en e-postadress.",
+    "emailTaken": "Den e-postadressen har redan ett konto."
   }
 }

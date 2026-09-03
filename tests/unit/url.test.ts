@@ -94,4 +94,25 @@ describe("getOrigin", () => {
       /NEXT_PUBLIC_SITE_URL/,
     );
   });
+
+  /**
+   * A server component has `headers()` and no Request, so bare `Headers` is
+   * accepted too. Both directions are pinned because only the Host is ever read,
+   * and the two forms must therefore be interchangeable — including in the
+   * refusal, which is the half that would be silently lost if a `Headers`
+   * argument fell through to some other branch.
+   */
+  it("reads a bare Headers exactly as it reads a Request's", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
+    expect(getOrigin(new Headers({ host: "sogverse.sog.gg" }))).toBe(
+      "https://sogverse.sog.gg",
+    );
+  });
+
+  it("refuses an untrusted Host on bare Headers too", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
+    expect(getOrigin(new Headers({ host: "evil.com" }))).toBe(
+      "https://sogverse.sog.gg",
+    );
+  });
 });

@@ -58,6 +58,14 @@ import {
   type ParticipantRowData,
 } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
+import { SwitchGateBody } from "@/components/family/SwitchGateDialog";
+import {
+  SwitchAccountError,
+  SWITCH_PIN_INVALID,
+  SWITCH_PIN_NOT_SET,
+  SWITCH_PASSWORD_INVALID,
+  type SwitchAccountErrorCode,
+} from "@/services/family";
 import { UserRow } from "@/components/admin/user-row";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
 import {
@@ -440,6 +448,109 @@ function SwitchProfileDialogDemo() {
         title="Switch to Aino's profile to join Minecraft Club?"
         oneWayWarning="You'll be signed out of your parent account."
       />
+    </Section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Switch Gate Demo                                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A real, generated UUID even though this body draws no identicon: the same
+ * fixture person is worth being able to hand to a tile demo unchanged, and a
+ * readable stand-in would render a degenerate avatar the moment one did.
+ */
+const GATE_TARGET = {
+  id: "3b41f7dc-0b4a-4a2b-9a2e-9b0f1b7c6d21",
+  role: "customer" as const,
+  first_name: "Riikka",
+};
+
+/** An inert commit that always refuses, with the code the box is showing off. */
+function refusesWith(code: SwitchAccountErrorCode) {
+  return () =>
+    Promise.reject(new SwitchAccountError("demo refusal", 403, code));
+}
+
+/**
+ * The credential a child pays to leave their own account, in every state it
+ * has. Four boxes rather than four buttons opening one dialog: the states are
+ * only worth anything next to each other, and the box below is exactly the card
+ * `DialogContent` draws, so nothing about the chrome is being guessed at.
+ *
+ * Every commit here is inert — it refuses without touching the network — so the
+ * boxes can be typed into freely. The wrong-PIN shake, the wrong-password line
+ * and the switch to the no-PIN message are all real behaviour, driven by the
+ * refusal code each box is given.
+ */
+function SwitchGateDemo() {
+  const [committing, setCommitting] = useState(false);
+
+  return (
+    <Section title="Switch Gate">
+      <p className="text-sm text-muted-foreground">
+        What a gamer pays to leave their own account: a linked parent&rsquo;s PIN
+        when a parent switched them in, the target account&rsquo;s own password
+        when they signed in themselves.
+      </p>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SubSection title="Parent PIN — a wrong one shakes and clears">
+          <div className="rounded-lg border border-border bg-card p-6 space-y-4">
+            <SwitchGateBody
+              target={GATE_TARGET}
+              mode="pin"
+              committing={committing}
+              onCommittingChange={setCommitting}
+              onCommit={refusesWith(SWITCH_PIN_INVALID)}
+              onClose={() => {}}
+            />
+          </div>
+        </SubSection>
+
+        <SubSection title="No parent PIN — enter any four digits">
+          <div className="rounded-lg border border-border bg-card p-6 space-y-4">
+            <SwitchGateBody
+              target={GATE_TARGET}
+              mode="pin"
+              committing={committing}
+              onCommittingChange={setCommitting}
+              onCommit={refusesWith(SWITCH_PIN_NOT_SET)}
+              onClose={() => {}}
+            />
+          </div>
+        </SubSection>
+
+        <SubSection title="Target password — a wrong one says so">
+          <div className="rounded-lg border border-border bg-card p-6 space-y-4">
+            <SwitchGateBody
+              target={GATE_TARGET}
+              mode="password"
+              committing={committing}
+              onCommittingChange={setCommitting}
+              onCommit={refusesWith(SWITCH_PASSWORD_INVALID)}
+              onClose={() => {}}
+            />
+          </div>
+        </SubSection>
+
+        <SubSection title="Committing — held through the navigation">
+          <div className="rounded-lg border border-border bg-card p-6 space-y-4">
+            {/* `committing` is pinned true here rather than reached by a click:
+                on the real success path it is never cleared, because the
+                document is already unloading. */}
+            <SwitchGateBody
+              target={GATE_TARGET}
+              mode="password"
+              committing
+              onCommittingChange={() => {}}
+              onCommit={() => new Promise<void>(() => {})}
+              onClose={() => {}}
+            />
+          </div>
+        </SubSection>
+      </div>
     </Section>
   );
 }
@@ -2596,6 +2707,8 @@ export default function AdminUIComponentsPage() {
 
       <SwitchProfileDialogDemo />
 
+      <SwitchGateDemo />
+
       <Section title="Voice Room">
         <SubSection title="Zone list (mock data, moderator view)">
           <p className="text-sm text-muted-foreground mb-3">
@@ -3990,15 +4103,45 @@ function inertCreateGamer(): Promise<{ gamerId: string }> {
   );
 }
 
+/**
+ * The card's three pages, side by side and all three live.
+ *
+ * The form has one shape a parent meets by default and two it only reaches by
+ * choosing a sign-in mode and pressing Next, and the whole question about them
+ * is comparative: does the second page look like it belongs to the first, and do
+ * the two credential pages look like each other. States reached by driving one
+ * card through the flow would have to be compared from memory, so all three are
+ * rendered at once and each is seeded straight into its page through the card's
+ * `initial` prop.
+ *
+ * **No `Dialog` around them.** A dialog is a portal, so three of them would
+ * stack in `document.body` on top of one another rather than sitting in a row —
+ * and `DialogContent` needs no portal to render, which is the whole reason the
+ * card is separable from it. The height cap goes with the dialog: `90vh` is
+ * about a viewport, and these are three columns on a page.
+ */
 function AddGamerDialogDemo() {
-  const [open, setOpen] = useState(false);
+  const dismiss = () => {};
 
   return (
-    <div className="rounded-lg border p-4">
-      <Button onClick={() => setOpen(true)}>Open the add-gamer dialog</Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <AddGamerFormCard onOpenChange={setOpen} onCreate={inertCreateGamer} />
-      </Dialog>
+    <div className="grid items-start gap-4 lg:grid-cols-3">
+      <AddGamerFormCard
+        onOpenChange={dismiss}
+        onCreate={inertCreateGamer}
+        className="max-h-none"
+      />
+      <AddGamerFormCard
+        onOpenChange={dismiss}
+        onCreate={inertCreateGamer}
+        className="max-h-none"
+        initial={{ firstName: "Lily", signIn: "username", step: "credentials" }}
+      />
+      <AddGamerFormCard
+        onOpenChange={dismiss}
+        onCreate={inertCreateGamer}
+        className="max-h-none"
+        initial={{ firstName: "Lily", signIn: "email", step: "credentials" }}
+      />
     </div>
   );
 }
@@ -4055,11 +4198,12 @@ function GameAccountDemo() {
             gender buttons are three across at every width, which is what pays
             for the two rows fitting on a phone. */}
         <p className="text-sm text-muted-foreground">
-          The real dialog, inert: it resolves after a beat and writes nothing.
-          The PIN gate in front of it is skipped &mdash; it is a conditional on
-          one query with nothing of its own to look at. Both game rows are the
-          real thing and both commits run the real lookup; only the submit is
-          defanged.
+          The real card, inert: the submit resolves after a beat and writes
+          nothing. The PIN gate in front of it is skipped &mdash; it is a
+          conditional on one query with nothing of its own to look at. Both game
+          rows are the real thing and both commits run the real lookup, the
+          radios switch the footer between Add gamer and Next, and every field
+          validates.
         </p>
         <AddGamerDialogDemo />
       </SubSection>

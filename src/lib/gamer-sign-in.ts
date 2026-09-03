@@ -122,3 +122,29 @@ export function identifierToLoginEmail(identifier: string): string {
   if (trimmed.includes("@")) return trimmed;
   return usernameToSyntheticEmail(trimmed);
 }
+
+/**
+ * The username inside a synthetic address, or null if there is none.
+ *
+ * A username-mode child's username lives nowhere but the local part of their
+ * address — that is what makes GoTrue's uniqueness on the address *be*
+ * uniqueness on the username — so every surface that shows one reads it back out
+ * of here rather than off a column that does not exist.
+ *
+ * **The mode is the caller's to check, not this function's.** A random handle is
+ * `g` plus sixteen hex characters, which satisfies the username pattern exactly
+ * as a chosen name does — the two shapes share one namespace on purpose (see
+ * {@link randomSyntheticGamerEmail}) and no string test can separate them. So
+ * this answers "what would the username be", and every call site asks it only of
+ * an account it already knows to be in `username` mode. Null is for a real
+ * mailbox, and for anything that could not have been typed by a parent.
+ */
+export function gamerUsernameFromEmail(
+  email: string | null | undefined,
+): string | null {
+  if (!isSyntheticGamerEmail(email) || typeof email !== "string") return null;
+  const username = email
+    .slice(0, email.length - GAMER_EMAIL_DOMAIN.length)
+    .toLowerCase();
+  return GAMER_USERNAME_PATTERN.test(username) ? username : null;
+}

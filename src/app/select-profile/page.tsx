@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { getUserWithProfile } from "@/lib/supabase/server";
+import { createClient, getUserWithProfile } from "@/lib/supabase/server";
+import { sessionProvenanceFromAmr } from "@/lib/session-provenance";
+import type { SessionProvenance } from "@/lib/session-provenance";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ROUTES } from "@/lib/constants";
 import { ROLE_DASHBOARD_PATHS, type UserRole } from "@/lib/constants/roles";
@@ -54,7 +56,10 @@ export default async function SelectProfilePage() {
 
   // "Continue as me" target: the viewer's own dashboard.
   const selfDashboardPath = ROLE_DASHBOARD_PATHS[role];
-  const initialFamily = await getInitialFamily(userWithProfile.user.id, role);
+  const [initialFamily, initialSessionProvenance] = await Promise.all([
+    getInitialFamily(userWithProfile.user.id, role),
+    getSessionProvenance(),
+  ]);
 
   return (
     <>
@@ -66,7 +71,11 @@ export default async function SelectProfilePage() {
           py-12 keeps the centering true; the body content is small enough
           (title + one row of tiles) that it never reaches the header zone. */}
       <main className="-mt-[var(--header-height)] flex min-h-screen items-center justify-center px-4 py-12 sm:py-16">
-        <SelectProfileView selfDashboardPath={selfDashboardPath} initialFamily={initialFamily} />
+        <SelectProfileView
+          selfDashboardPath={selfDashboardPath}
+          initialFamily={initialFamily}
+          initialSessionProvenance={initialSessionProvenance}
+        />
       </main>
     </>
   );
@@ -81,6 +90,31 @@ export default async function SelectProfilePage() {
  * never request input. Returns `[]` on any failure; the client `useFamily`
  * refetches on mount, so the selector still renders.
  */
+/**
+ * The provenance of the viewer's own session, seeded beside the list so the
+ * tiles paint with their gate already decided.
+ *
+ * This page serves gamers, and a gamer pays a credential to leave their own
+ * account — which one depends on this (`src/services/pin/CLAUDE.md`, Gate B).
+ * Unseeded, `useSessionProvenance()` is `null` on the first frame and every tile
+ * is correctly but pointlessly out of service until the client refetch lands.
+ *
+ * It is read the same way the API route's gate reads it: off the `amr` claim of
+ * the locally-verified access token, which costs no round trip. `undefined` on
+ * any failure, which puts the surface back on the honest "wait for the fetch"
+ * path rather than inventing an answer.
+ */
+async function getSessionProvenance(): Promise<SessionProvenance | undefined> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getClaims();
+    if (!data?.claims) return undefined;
+    return sessionProvenanceFromAmr(data.claims.amr);
+  } catch {
+    return undefined;
+  }
+}
+
 async function getInitialFamily(
   userId: string,
   role: "customer" | "gamer",

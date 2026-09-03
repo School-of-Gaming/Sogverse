@@ -101,7 +101,8 @@
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
     "roleGedu": "Gedu",
-    "gedus": "Gedut"
+    "gedus": "Gedut",
+    "next": "Seuraava"
   },
   "about": {
     "pageTitle": "Tietoa meistä",
@@ -1000,7 +1001,8 @@
         "uncertifyAction": "Poista hyväksyntä",
         "saving": "Tallennetaan…",
         "error": "Hyväksynnän päivitys epäonnistui. Yritä uudelleen."
-      }
+      },
+      "usernameLabel": "Käyttäjätunnus"
     },
     "locations": {
       "editName": "Muokkaa: {name}",
@@ -1087,12 +1089,14 @@
       "emailPlaceholder": "sinä@example.com",
       "passwordPlaceholder": "Syötä salasanasi",
       "errors": {
-        "identifierRequired": "Syötä sähköpostiosoite.",
+        "identifierRequired": "Syötä sähköpostiosoite tai käyttäjätunnus.",
         "passwordTooShort": "Salasanan on oltava vähintään {count} merkkiä pitkä.",
-        "invalidCredentials": "Antamasi sähköpostiosoite tai salasana on virheellinen.",
+        "invalidCredentials": "Antamasi sähköpostiosoite, käyttäjätunnus tai salasana on virheellinen.",
         "emailNotConfirmed": "Vahvista sähköpostiosoitteesi ennen kirjautumista.",
         "tooManyAttempts": "Liian monta kirjautumisyritystä. Odota hetki ja yritä uudelleen."
-      }
+      },
+      "identifierLabel": "Sähköpostiosoite tai käyttäjätunnus",
+      "identifierPlaceholder": "sinä@example.com tai käyttäjätunnus"
     },
     "needHelp": "Tarvitsetko apua? Ota yhteyttä osoitteeseen <link>{email}</link>",
     "register": {
@@ -1372,6 +1376,17 @@
     "switchToParentToAddGamer": {
       "title": "Vaihda käyttäjän {name} profiiliin pelaajan lisäämistä varten?",
       "oneWayWarning": "Sinut kirjataan ulos pelaajan tililtä."
+    },
+    "switchGate": {
+      "pinTitle": "Pyydä vanhempaa syöttämään PIN-koodi",
+      "pinDescription": "Vanhemman PIN-koodi tarvitaan, jotta voit vaihtaa käyttäjän {name} profiiliin.",
+      "pinNotSetTitle": "PIN-koodia ei ole vielä asetettu",
+      "pinNotSetDescription": "Vanhemman pitää ensin asettaa PIN-koodi Oma SOG -sivullaan. Sen jälkeen voit vaihtaa tiliä.",
+      "passwordTitle": "Syötä käyttäjän {name} salasana",
+      "passwordDescription": "Tällä tilillä on oma salasana. Kirjoita se, niin pääset tilille.",
+      "passwordInvalid": "Salasana ei ole oikein. Yritä uudelleen.",
+      "submit": "Vaihda",
+      "unreachable": "Kirjautuu vanhemman kautta"
     },
     "addGamerForm": {
       "title": "Lisää pelaaja",
@@ -2203,6 +2218,27 @@
       "roblox": {
         "title": "Roblox-tili",
         "description": "Linkitä Roblox-käyttäjänimi pelinsisäisiä ominaisuuksia varten."
+      },
+      "signIn": {
+        "title": "Kirjautuminen",
+        "current": {
+          "parent": "{name} kirjautuu sisään sinun tilisi kautta.",
+          "username": "{name} kirjautuu sisään käyttäjätunnuksella ja salasanalla.",
+          "email": "{name} kirjautuu sisään omalla sähköpostiosoitteellaan."
+        },
+        "currentUsername": "{name} kirjautuu sisään käyttäjätunnuksella {username}.",
+        "saved": "Kirjautumistapa päivitetty.",
+        "saveFailed": "Muutoksen tallentaminen epäonnistui. Yritä uudelleen.",
+        "newPasswordTitle": "Aseta uusi salasana",
+        "newPasswordDescription": "Valitse uusi salasana ja lue se ääneen pelaajalle {name}. Se korvaa vanhan heti.",
+        "newPasswordSubmit": "Aseta salasana",
+        "newPasswordSaved": "Uusi salasana asetettu.",
+        "verified": "Osoite on vahvistettu.",
+        "notVerified": "{name} ei ole vielä avannut vahvistuslinkkiä.",
+        "resend": "Lähetä vahvistusviesti uudelleen",
+        "resendSent": "Lähetetty. Pyydä pelaajaa {name} tarkistamaan postilaatikkonsa.",
+        "resendRateLimited": "Tämä on paljon viestejä yhdelle pelaajalle. Yritä hetken kuluttua uudelleen.",
+        "resendFailed": "Viestin lähettäminen epäonnistui. Yritä uudelleen."
       }
     },
     "switchToGamer": {
@@ -2262,7 +2298,9 @@
       "title": "Markkinointiasetukset",
       "schoolOfGaming": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
       "lynxEducate": "Yhteystietoni saa jakaa luotetun kumppanimme <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia ja tarjouksia."
-    }
+    },
+    "usernameLabel": "Käyttäjätunnus",
+    "gamerPasswordFromParent": "Vanhempasi voi asettaa sinulle uuden salasanan omasta Oma SOG -näkymästään."
   },
   "tools": {
     "uncertified": {
@@ -2300,7 +2338,13 @@
     "goToDashboard": "Siirry Oma SOG -sivulle",
     "invalidTitle": "Tämä linkki ei enää toimi",
     "invalidDescription": "Vahvistuslinkki lakkaa toimimasta, kun tilin sähköpostiosoite vaihtuu. Avaa asetukset ja lähetä itsellesi uusi linkki.",
-    "goToSettings": "Siirry asetuksiin"
+    "goToSettings": "Siirry asetuksiin",
+    "gamerVerifiedTitle": "Sähköpostiosoitteesi on vahvistettu",
+    "gamerPasswordLinkSentDescription": "Lähetimme sinulle vielä yhden sähköpostin. Avaa se ja valitse salasana – niin kirjaudut jatkossa sisään.",
+    "gamerPasswordLinkAgainDescription": "Voit kirjautua sisään sähköpostiosoitteellasi ja salasanallasi. Unohditko sen? Pyydä uusi linkki ja valitse uusi salasana.",
+    "gamerSendPasswordLink": "Lähetä minulle salasanalinkki",
+    "gamerPasswordLinkSent": "Lähetetty. Katso sähköpostisi.",
+    "gamerPasswordLinkFailed": "Se ei onnistunut. Yritä uudelleen."
   },
   "voice": {
     "participants": "Osallistujat",
@@ -3872,5 +3916,32 @@
       "next": "Seuraava kuva",
       "close": "Sulje"
     }
+  },
+  "gamerSignIn": {
+    "question": "Miten {name} kirjautuu sisään?",
+    "fallbackName": "pelaajasi",
+    "option": {
+      "parent": "Sinun tilisi kautta",
+      "username": "Käyttäjätunnuksella ja salasanalla",
+      "email": "Omalla sähköpostiosoitteella"
+    },
+    "optionHint": {
+      "parent": "Vaihdat hänen tililleen omalta tililtäsi. Hän ei saa omaa salasanaa eikä omaa sähköpostiosoitetta.",
+      "username": "Valitset molemmat itse, ja hän kirjautuu ilman sinua. Sähköpostiosoitetta ei tarvita.",
+      "email": "Lähetämme hänelle sähköpostilla linkin, jolla hän vahvistaa osoitteen ja valitsee oman salasanansa."
+    },
+    "usernameLabel": "Käyttäjätunnus",
+    "usernamePlaceholder": "lilja2015",
+    "usernameHint": "Vain kirjaimia ja numeroita, 3–20 merkkiä.",
+    "usernameRequired": "Valitse käyttäjätunnus.",
+    "usernameInvalid": "Käytä 3–20 kirjainta tai numeroa ilman välilyöntejä.",
+    "usernameTaken": "Käyttäjätunnus on jo varattu. Kokeile toista.",
+    "passwordHint": "Vähintään {count} merkkiä. Lue se ääneen pelaajallesi – voit vaihtaa sen täällä myöhemmin.",
+    "passwordTooShort": "Salasanassa on oltava vähintään {count} merkkiä.",
+    "emailHint": "Vahvistuslinkki lähetetään tähän osoitteeseen, joten pelaajasi on päästävä lukemaan se.",
+    "emailPlaceholder": "lilja@example.com",
+    "emailRequired": "Syötä sähköpostiosoite.",
+    "emailInvalid": "Tämä ei näytä sähköpostiosoitteelta.",
+    "emailTaken": "Tällä sähköpostiosoitteella on jo tili."
   }
 }

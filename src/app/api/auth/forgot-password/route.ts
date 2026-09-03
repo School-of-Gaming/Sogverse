@@ -33,7 +33,10 @@ export const POST = defineRoute({
         await request.json().catch(() => null),
       );
       if (parsed.success) {
-        await sendPasswordResetEmail({ email: parsed.data.email, request });
+        await sendPasswordResetEmail({
+          email: parsed.data.email,
+          requestHeaders: request.headers,
+        });
       }
     } catch (error) {
       // Still 200, for the same reason a malformed body is: a 500 from the

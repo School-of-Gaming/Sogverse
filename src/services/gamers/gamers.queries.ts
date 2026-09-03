@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import {
@@ -23,6 +24,7 @@ export const gamerKeys = {
   links: (parentId: string) => [...gamerKeys.all, "links", parentId] as const,
   gamerProfile: (gamerId: string) =>
     [...gamerKeys.all, "gamer-profile", gamerId] as const,
+  signIns: () => [...gamerKeys.all, "sign-ins"] as const,
 };
 
 // Defaults to enabled so dashboard call sites (which are already gated to
@@ -139,6 +141,38 @@ export function useSendGamerVerificationEmail() {
     mutationFn: (gamerId: string) =>
       service.sendGamerVerificationEmail(gamerId),
   });
+}
+
+/**
+ * Every gamer's sign-in mode, keyed by user id, for a surface rendering many
+ * children at once.
+ *
+ * A `Map` rather than the rows, because every caller looks a child up by id;
+ * memoised so a re-render does not hand a new identity to whatever renders from
+ * it. `isPending` is exposed because the admin list holds its skeleton until
+ * this has answered — the identity line under a child's name is decided by the
+ * mode, so a mode arriving late would insert a line between rows already
+ * painted.
+ *
+ * Read under the caller's own RLS: an admin gets every child, a parent gets
+ * theirs. No key of its own beyond the gamer root, so the create and edit
+ * writes that already invalidate `gamerKeys.all` refresh it for free.
+ */
+export function useGamerSignIns() {
+  const supabase = getClient();
+  const service = new GamerService(supabase);
+
+  const { data, isPending, isError } = useQuery({
+    queryKey: gamerKeys.signIns(),
+    queryFn: () => service.getGamerSignIns(),
+  });
+
+  const map = useMemo(
+    () => new Map((data ?? []).map((row) => [row.user_id, row.sign_in])),
+    [data],
+  );
+
+  return useMemo(() => ({ map, isPending, isError }), [map, isPending, isError]);
 }
 
 /**

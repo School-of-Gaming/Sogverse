@@ -17,8 +17,14 @@ export {
   SWITCH_TARGET_UNREACHABLE,
   type SwitchAccountErrorCode,
 } from "./family.contracts";
-export { familyKeys, useFamily, useSessionProvenance } from "./family.queries";
+export {
+  familyKeys,
+  useFamily,
+  useSessionProvenance,
+  type FamilySeed,
+} from "./family.queries";
 export {
   commitAccountSwitch,
   type CommitAccountSwitchOptions,
 } from "./switch-account";
+export { switchGateFor, type SwitchGate } from "./switch-gate";

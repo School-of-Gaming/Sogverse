@@ -37,9 +37,15 @@ import { getOrigin } from "@/lib/url";
  */
 export async function sendPasswordResetEmail(args: {
   email: string;
-  request: Request;
+  /**
+   * The incoming request's headers. Both things this needs from the request —
+   * the trusted origin and the language hint — are headers, and one of the two
+   * callers is a server *component*, which has `headers()` and no Request at
+   * all. Taking the narrower thing is what lets both hand over the same value.
+   */
+  requestHeaders: Headers;
 }): Promise<void> {
-  const { email, request } = args;
+  const { email, requestHeaders } = args;
 
   if (isSyntheticGamerEmail(email)) {
     // Not an error and not a bug: a username-mode child's password is reset by
@@ -50,7 +56,7 @@ export async function sendPasswordResetEmail(args: {
   // Trusted origin, never the raw Host/request URL — the reset link goes into
   // an email and carries a recovery token, so a spoofed Host would turn it
   // into an account-takeover phishing link.
-  const origin = getOrigin(request);
+  const origin = getOrigin(requestHeaders);
   const adminClient = createAdminClient();
 
   // Fetch locale preference and generate the reset link in parallel.
@@ -72,7 +78,7 @@ export async function sendPasswordResetEmail(args: {
   const pref = profileResult.data?.locale;
   const locale = isSupportedLocale(pref)
     ? pref
-    : detectLocaleFromHeader(request.headers.get("Accept-Language"));
+    : detectLocaleFromHeader(requestHeaders.get("Accept-Language"));
 
   const t = await getEmailTranslator(locale);
 

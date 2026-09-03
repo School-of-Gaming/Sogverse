@@ -5,7 +5,7 @@ import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
-import type { AppSupabaseClient } from "@/types";
+import type { AppSupabaseClient, GamerSignIn } from "@/types";
 
 /**
  * The signed-in gedu's contract acceptances, and the moment they were read.
@@ -59,8 +59,46 @@ async function readGeduContractSeed(
  * The accepted cost, stated plainly: a gedu's settings visit blocks on this read
  * before the first byte.
  */
+/**
+ * How this gamer signs in, resolved before the first byte.
+ *
+ * Three things on this page key on it — whether the Email field exists at all,
+ * whether the verify line and button do, and whether the password-reset button
+ * does — so a value that arrived a round trip after the page would insert a
+ * whole field into the middle of a form somebody was already reading. Reading it
+ * here is what keeps that from being a shift (root `CLAUDE.md`, "Layout &
+ * Scrolling"): the body paints once, in its final shape.
+ *
+ * **A failed or missing read answers `parent`, and that is the conservative
+ * answer rather than a fallback that pretends.** `parent` is the mode that shows
+ * no address, no verification state and no password affordance — exactly what
+ * every gamer's settings page showed before the modes existed — so the worst
+ * this can do is withhold something, never invent a credential.
+ */
+async function readGamerSignIn(
+  supabase: AppSupabaseClient,
+  gamerId: string,
+): Promise<GamerSignIn> {
+  const { data } = await supabase
+    .from("gamer_profiles")
+    .select("sign_in")
+    .eq("user_id", gamerId)
+    .maybeSingle();
+  return data?.sign_in ?? "parent";
+}
+
 export default async function SettingsPage() {
   const userWithProfile = await getUserWithProfile();
+
+  if (userWithProfile?.profile?.role === "gamer") {
+    // The child's own row, read with the child's own client: the
+    // `gamers_read_own_gamer_profile` policy scopes it, so Postgres is the gate
+    // and there is no service-role bypass on this path.
+    const supabase = await createClient();
+    const gamerSignIn = await readGamerSignIn(supabase, userWithProfile.user.id);
+    return <SettingsSectionContent gamerSignIn={gamerSignIn} />;
+  }
+
   if (userWithProfile?.profile?.role !== "gedu") {
     return <SettingsSectionContent />;
   }

@@ -13,24 +13,40 @@ export const familyKeys = {
 /**
  * What the family key holds.
  *
- * The route always names the session's provenance, but a server component
- * seeding this cache has only the member list — the shape of the seed is what
- * makes `session_provenance` nullable here and not on the wire. `null` therefore
- * means "not known yet", which is exactly what a consumer gating on it should
- * wait for rather than guess at.
+ * The route always names the session's provenance; a server component seeding
+ * this cache may or may not, which is what makes `session_provenance` nullable
+ * here and not on the wire. `null` therefore means "not known yet", which is
+ * exactly what a consumer gating on it should wait for rather than guess at.
  */
 type CachedFamily = {
   family: FamilyMember[];
   session_provenance: SessionProvenance | null;
 };
 
-function familyQueryOptions(enabled: boolean | undefined, initialData?: FamilyMember[]) {
+/** What a server component may hand this cache before the first fetch lands. */
+export interface FamilySeed {
+  family: FamilyMember[];
+  /**
+   * Omitted where the seeding page has no reason to derive it — the parent
+   * dashboard, whose viewer is a customer and therefore never gated. A page
+   * whose viewer *can* be gated has to seed this, or its first frame renders
+   * with the gate undecided and every switch out of service until the refetch
+   * lands. Deriving it costs no round trip: it comes off the same verified JWT
+   * the page's own auth check already read.
+   */
+  sessionProvenance?: SessionProvenance;
+}
+
+function familyQueryOptions(enabled: boolean | undefined, seed?: FamilySeed) {
   return {
     queryKey: familyKeys.list(),
     queryFn: async (): Promise<CachedFamily> =>
       (await new FamilyService().getFamily()) satisfies FamilyListResponse,
-    initialData: initialData
-      ? ({ family: initialData, session_provenance: null } as CachedFamily)
+    initialData: seed
+      ? ({
+          family: seed.family,
+          session_provenance: seed.sessionProvenance ?? null,
+        } as CachedFamily)
       : undefined,
     enabled,
   };
@@ -54,7 +70,7 @@ function familyQueryOptions(enabled: boolean | undefined, initialData?: FamilyMe
  * request rather than two.
  */
 export function useFamily(options?: {
-  initialData?: FamilyMember[];
+  initialData?: FamilySeed;
   enabled?: boolean;
 }) {
   return useQuery({
@@ -68,11 +84,11 @@ export function useFamily(options?: {
  * viewer typed this account's own password, `family` if the session was handed
  * over by an account switch.
  *
- * `null` while the answer is not in yet — including the frame a server-seeded
- * family list paints, which carries members but no provenance. A switch gate
- * must wait for a value rather than assume one: assuming `family` would prompt
- * for a PIN the route will refuse, and assuming `own` would ask a child for a
- * password nobody set.
+ * `null` while the answer is not in yet — which now means a genuinely unseeded
+ * mount, since a page that seeds the list for a viewer who can be gated seeds
+ * the provenance with it. A switch gate must wait for a value rather than
+ * assume one: assuming `family` would prompt for a PIN the route will refuse,
+ * and assuming `own` would ask a child for a password nobody set.
  */
 export function useSessionProvenance(options?: { enabled?: boolean }) {
   return useQuery({

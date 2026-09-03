@@ -258,6 +258,29 @@ create/enter/forgot UI shared by the gate and the Add Gamer dialog.
 loading-state rule) — a fast double-tap must not fire twice across the nav or
 view swap that success triggers.
 
+**Gate B's prompt is not a PIN screen and does not live here.** It sits with the
+switcher (`src/components/family/`), because it collects *either* credential —
+four digits or a password — and which one is a fact about the caller's session
+rather than about PINs. It composes the pad from the pieces above rather than
+taking `PinUnlockFlow` whole: that flow drives customer-gated routes (verify,
+create, forgot), and none of the three is reachable from a gamer session. Two
+things follow, and both are the model showing through. **A wrong PIN is answered
+in the pad's own language** — flash, shake, clear, no error text — because the
+child can simply try again, while `PIN_NOT_SET` replaces the prompt with a
+message, since no amount of careful typing fixes a family that holds no PIN.
+And **there is no "forgot PIN" link on it**: that route is customer-gated, so a
+child could never complete it, and the way out is to sign out and sign in as the
+parent.
+
+**Rule: the client decides which credential to ask for through one shared helper
+(`switchGateFor`), and that helper is a restatement of what the route enforces.**
+It exists so a surface can ask for the right thing up front instead of firing a
+switch in order to be told; the route stays the boundary. Because it is a
+restatement it can drift, so a change to the route's three-way split is
+unfinished until the helper matches — and the helper answers `unknown` while the
+session's provenance has not landed, which every call site must render as *wait*
+rather than as *no gate*.
+
 Screens:
 
 - **`/parent/unlock`** (`UnlockGate`) — the gate. Branches on `pin_is_set`

@@ -23,4 +23,5 @@ export {
   useUpdateGamerProfile,
   useSendGamerVerificationEmail,
   useGamerProfile,
+  useGamerSignIns,
 } from "./gamers.queries";

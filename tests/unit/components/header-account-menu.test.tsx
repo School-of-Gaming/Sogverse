@@ -40,6 +40,7 @@ const FAMILY = [
 ];
 
 const mockUseFamily = vi.hoisted(() => vi.fn());
+const mockUseProvenance = vi.hoisted(() => vi.fn());
 const mockSwitchAccount = vi.hoisted(() => vi.fn());
 
 /**
@@ -54,6 +55,11 @@ vi.mock("@/services/family/family.service", () => ({
 }));
 vi.mock("@/services/family/family.queries", () => ({
   useFamily: (options?: { enabled?: boolean }) => mockUseFamily(options),
+  // Mocked beside the list because it reads the same cache entry. The gate
+  // helper itself is deliberately NOT mocked — the rule it encodes is what the
+  // rows below are asserting, so a stub here would assert nothing.
+  useSessionProvenance: (options?: { enabled?: boolean }) =>
+    mockUseProvenance(options),
   familyKeys: { all: ["family"], list: () => ["family", "list"] },
 }));
 
@@ -262,6 +268,10 @@ beforeEach(() => {
   mockTrack.mockClear();
   mockUseFamily.mockReset();
   mockUseFamily.mockReturnValue({ data: FAMILY, isError: false });
+  mockUseProvenance.mockReset();
+  // A parent's session, which is the default the existing cases assume: their
+  // gate is `none` whatever this says, and it is a customer viewing.
+  mockUseProvenance.mockReturnValue({ data: "family", isError: false });
   scrollIntoView.mockClear();
   window.location.href = "http://localhost/";
   // A failed switch logs the server's own words; keep them out of the run.
@@ -589,12 +599,20 @@ describe("AccountMenu — switching to another member", () => {
   });
 
   it("sends a gamer switching into their parent to the parent dashboard", async () => {
+    // A gamer always pays a credential to leave their own account, so the
+    // commit here comes out of the gate rather than out of the click — the
+    // destination it lands on is what this case is about, and that is
+    // unchanged.
+    mockUseProvenance.mockReturnValue({ data: "family", isError: false });
     renderMenu(GAMER);
     openMenu();
 
     fireEvent.click(row("Riikka" + PARENT_ROLE));
+    for (const digit of "1234") {
+      fireEvent.click(screen.getByRole("button", { name: digit }));
+    }
 
-    expect(mockSwitchAccount).toHaveBeenCalledWith(IDS.parent, {});
+    expect(mockSwitchAccount).toHaveBeenCalledWith(IDS.parent, { pin: "1234" });
     await waitFor(() => expect(window.location.href).toBe("/parent"));
   });
 
@@ -767,6 +785,124 @@ describe("AccountMenu — sign out", () => {
     expect(row(SIGN_OUT).hasAttribute("disabled")).toBe(true);
     // A member row's spinner is a different thing — it must not appear here.
     expect(hasSpinner(row("Aino"))).toBe(false);
+  });
+});
+
+/**
+ * The gate a child pays to leave their own account, as the menu renders it.
+ *
+ * The decision itself is `switchGateFor`, unit-tested exhaustively elsewhere.
+ * What is pinned here is the menu's half: that a gated row opens the credential
+ * dialog instead of firing a switch, that a sibling with no password of their
+ * own is listed and explained rather than hidden or silently broken, and that a
+ * parent's rows are untouched by any of it.
+ */
+describe("AccountMenu — the gamer switch gate", () => {
+  /** The household as a gamer viewer meets it, with sign-in modes attached. */
+  function household(zoeSignIn: "parent" | "username") {
+    return [
+      { ...FAMILY[0], sign_in: zoeSignIn },
+      { ...FAMILY[1], sign_in: null },
+      { ...FAMILY[2], sign_in: "username" as const },
+    ];
+  }
+
+  function asGamer(
+    provenance: "own" | "family" | null,
+    zoeSignIn: "parent" | "username" = "username",
+  ) {
+    mockUseFamily.mockReturnValue({
+      data: household(zoeSignIn),
+      isError: false,
+    });
+    mockUseProvenance.mockReturnValue({ data: provenance, isError: false });
+    renderMenu(GAMER);
+    openMenu();
+  }
+
+  /** The gate dialog, which portals to the body rather than into the panel. */
+  function gateTitle(text: string) {
+    return screen.queryByText(text);
+  }
+
+  it("asks a switched-in child for a parent's PIN instead of committing", () => {
+    asGamer("family");
+
+    fireEvent.click(row(`Riikka${PARENT_ROLE}`));
+
+    // Nothing was sent: the credential is collected first, so the child never
+    // meets a refusal they did not cause.
+    expect(mockSwitchAccount).not.toHaveBeenCalled();
+    expect(gateTitle(messages.family.switchGate.pinTitle)).not.toBeNull();
+    // The panel closes behind the modal — a set of rows the keyboard can no
+    // longer reach is worse than no rows.
+    expect(menuIsOpen()).toBe(false);
+  });
+
+  it("asks the same PIN for a sibling, whatever sign-in that sibling holds", () => {
+    asGamer("family", "parent");
+
+    fireEvent.click(row("Zoe"));
+
+    expect(mockSwitchAccount).not.toHaveBeenCalled();
+    expect(gateTitle(messages.family.switchGate.pinTitle)).not.toBeNull();
+  });
+
+  it("asks a self-authenticated child for the target's own password", () => {
+    asGamer("own");
+
+    fireEvent.click(row(`Riikka${PARENT_ROLE}`));
+
+    expect(mockSwitchAccount).not.toHaveBeenCalled();
+    expect(
+      gateTitle(
+        messages.family.switchGate.passwordTitle.replace("{name}", "Riikka"),
+      ),
+    ).not.toBeNull();
+    expect(gateTitle(messages.family.switchGate.pinTitle)).toBeNull();
+  });
+
+  it("lists a sibling who signs in from a parent, says why, and does not offer them", () => {
+    asGamer("own", "parent");
+
+    // Listed — the family is the family. The note rides under the name because
+    // the trailing cluster never shrinks and would squeeze the name out.
+    const zoe = row(`Zoe${messages.family.switchGate.unreachable}`);
+    expect(zoe.getAttribute("aria-disabled")).toBe("true");
+    // Announced unavailable rather than `disabled`, so the keyboard can still
+    // land on it and hear the explanation.
+    expect(zoe.hasAttribute("disabled")).toBe(false);
+    // No chevron: the chevron marks a switch, and this row is not one.
+    expect(zoe.querySelector(".lucide-chevron-right")).toBeNull();
+
+    fireEvent.click(zoe);
+
+    expect(mockSwitchAccount).not.toHaveBeenCalled();
+    expect(gateTitle(messages.family.switchGate.passwordTitle.replace("{name}", "Zoe"))).toBeNull();
+  });
+
+  it("takes every row out of service while the provenance is still unknown", () => {
+    asGamer(null);
+
+    // Waiting, not guessing: one guess prompts for four digits the route will
+    // refuse, the other asks a child for a password nobody set.
+    expect(row(`Riikka${PARENT_ROLE}`).hasAttribute("disabled")).toBe(true);
+    expect(row("Zoe").hasAttribute("disabled")).toBe(true);
+
+    fireEvent.click(row(`Riikka${PARENT_ROLE}`));
+    expect(mockSwitchAccount).not.toHaveBeenCalled();
+  });
+
+  it("leaves a parent's rows exactly as they were — one click, no gate", async () => {
+    renderMenu(PARENT);
+    openMenu();
+
+    fireEvent.click(row("Aino"));
+
+    await waitFor(() => {
+      expect(mockSwitchAccount).toHaveBeenCalledWith(IDS.gamerAino, {});
+    });
+    expect(gateTitle(messages.family.switchGate.pinTitle)).toBeNull();
   });
 });
 

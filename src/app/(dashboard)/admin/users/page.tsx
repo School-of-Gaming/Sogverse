@@ -11,6 +11,7 @@ import {
   GEDU_CONTRACT_CURRENT_VERSION,
 } from "@/components/gedu/contract/documents";
 import { useUsers, useSearchUsers, useParentGamerLinks } from "@/services/users";
+import { useGamerSignIns } from "@/services/gamers";
 import {
   useGeduCertificationMap,
   useGeduContractAcceptanceMap,
@@ -28,6 +29,12 @@ export default function AdminUsersPage() {
   const { data: parentGamerLinks } = useParentGamerLinks();
   const certification = useGeduCertificationMap();
   const acceptances = useGeduContractAcceptanceMap();
+  // How each child signs in. Unlike the two standing reads above — whose marks
+  // land in a right-packed group where a late arrival costs nothing — this one
+  // decides whether a *line* exists under a name, and a line appearing under one
+  // row pushes every row below it. So the list waits for it (see `isLoading`),
+  // which is what keeps the rows in the places they first painted in.
+  const gamerSignIns = useGamerSignIns();
 
   /**
    * The two warning marks are a **block**, and it stays silent until both reads
@@ -77,7 +84,8 @@ export default function AdminUsersPage() {
 
   const isSearchActive = searchQuery.length >= 2;
   const baseUsers = isSearchActive ? searchResults?.results : allUsers;
-  const isLoading = isSearchActive ? isSearching : isLoadingAll;
+  const isLoading =
+    (isSearchActive ? isSearching : isLoadingAll) || gamerSignIns.isPending;
 
   // Search is capped server-side, so a full page of hits and a complete answer
   // look identical without this. Rendered *below* whichever branch is showing:
@@ -249,6 +257,10 @@ export default function AdminUsersPage() {
                       standingWarnings={
                         geduStandingWarnings.get(user.id) ?? null
                       }
+                      // The whole map, not this row's entry: the row also draws
+                      // the parent's children underneath, and each of those has
+                      // a mode of its own to look up.
+                      gamerSignIns={gamerSignIns.map}
                     />
                   ))}
                 </div>

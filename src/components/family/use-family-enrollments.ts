@@ -126,7 +126,9 @@ export function useFamilyEnrollments(
   const { data: family } = useFamily(
     options.initialFamily === null
       ? undefined
-      : { initialData: options.initialFamily },
+      : // No provenance: the parent dashboard's viewer is a customer, whose
+        // switches are never gated, so there is nothing here to decide.
+        { initialData: { family: options.initialFamily } },
   );
   const now = useNow();
   const locale = resolveLocale(useLocale());

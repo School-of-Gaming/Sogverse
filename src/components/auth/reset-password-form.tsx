@@ -139,6 +139,20 @@ export function ResetPasswordForm() {
       return;
     }
 
+    // **Sign the recovery session out before pointing at the login page.**
+    //
+    // A session minted by `verifyOtp({ type: "recovery" })` carries `otp` in its
+    // JWT's `amr` claim and no `password` method, and that claim is what the
+    // switch gate reads to decide how a session was made
+    // (`src/lib/session-provenance.ts`): a session with no password method is a
+    // *family* session, which may switch to a linked account on a PIN alone. So
+    // a recovery session left live is one that would be treated as if a parent
+    // had handed the device over — on an account whose password was just
+    // changed, quite possibly by somebody working through an inbox. Ending it
+    // here keeps the classification honest, and costs the user one sign-in they
+    // were being sent to do anyway.
+    await supabase.auth.signOut();
+
     // Success swaps to the success card (unmounts the form); leave `committing`
     // set so the button never re-enables on the way out.
     setSuccess(true);
