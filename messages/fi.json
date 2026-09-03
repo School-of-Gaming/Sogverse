@@ -1214,7 +1214,7 @@
           "series": "Yksi viikkosääntö vuoroa kohti",
           "occurrences": "Yksi tapahtuma kertaa kohti"
         },
-        "shapeHint": "Pidä muoto samana kutsun ja sen päivityksen välillä, tai sovellus poistaa vanhan merkinnän ja luo uuden.",
+        "shapeHint": "Pidä muoto samana kutsun ja sen päivityksen välillä, tai päivitys saapuu uusilla tunnisteilla ja kalenterissa jo olevat merkinnät jäävät sinne, kunnes ne perutaan.",
         "reminderLabel": "Muistutus",
         "reminderOptions": {
           "15": "15 minuuttia ennen",
@@ -1877,9 +1877,10 @@
       "cancel": "Tämä kalenterimerkintä on peruttu"
     },
     "body": {
-      "send": "Pelaajan {gamer} kerrat kohteessa {product} ovat tämän viestin liitteenä kalenterikutsuna. Kun hyväksyt kutsun, kerrat ilmestyvät kalenteriisi.",
-      "update": "Kohteen {product} aikataulu on muuttunut. Tämän viestin liitteenä oleva kutsu korvaa merkinnän, joka sinulla jo on pelaajalle {gamer} — mitään ei tarvitse poistaa ensin.",
-      "cancel": "Pelaajalla {gamer} ei ole enää paikkaa kohteessa {product}. Tämän viestin liitteenä oleva peruutus poistaa merkinnän kalenteristasi."
+      "send": "Pelaajan {gamer} kerrat kohteessa {product} ovat tässä viestissä kalenterikutsuna. Kun hyväksyt kutsun, kerrat ilmestyvät kalenteriisi.",
+      "sendPublish": "Pelaajan {gamer} kerrat kohteessa {product} ovat tässä viestissä kalenterimerkintänä. Kun lisäät merkinnän, kerrat ilmestyvät kalenteriisi.",
+      "update": "Kohteen {product} aikataulu on muuttunut. Tässä viestissä oleva kutsu korvaa merkinnän, joka sinulla jo on pelaajalle {gamer} — mitään ei tarvitse poistaa ensin.",
+      "cancel": "Pelaajalla {gamer} ei ole enää paikkaa kohteessa {product}. Tässä viestissä oleva peruutus poistaa merkinnän kalenteristasi."
     },
     "updatesNote": "Jos aikataulu muuttuu myöhemmin, School of Gaming lähettää päivityksen ja tämä sama merkintä muuttuu kalenterissasi. Sinun ei tarvitse koskaan päätellä, kumpi kahdesta merkinnästä on ajan tasalla."
   },

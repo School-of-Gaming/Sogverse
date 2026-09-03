@@ -44,7 +44,11 @@ export const invitationRecordSchema = z.object({
   /** What the last message stated, so a cancelled seat is recognisable. */
   lastMethod: z.enum(INVITATION_METHODS),
   lastSentAt: z.string().datetime({ offset: true }),
-  /** Who it went to. A different address is a different conversation. */
+  /**
+   * Who it went to. A send to a different address is a different conversation
+   * and starts one; an update or a cancellation re-addressed mid-thread is the
+   * admin re-aiming this tool, and it keeps the thread it is revising.
+   */
   recipient: z.string(),
 });
 
@@ -89,13 +93,18 @@ export interface ApplyInvitationActionArgs {
  * The three transitions, and why each is what it is:
  *
  * - **send** starts a conversation at sequence 0 — or, when one is already
- *   open, *repeats* it at the same sequence. A re-send is the case where a mail
- *   was lost or filed somewhere the reader could not find it, and raising the
- *   sequence for a message that says nothing new would train the client to
- *   expect a revision that never arrives. After a cancellation the seat is
- *   over, so a send there is a new conversation with a new `UID`: re-using the
- *   cancelled one asks a client to resurrect an event it has been told to
- *   delete, which some clients refuse outright.
+ *   open *with the same recipient*, *repeats* it at the same sequence. A
+ *   re-send is the case where a mail was lost or filed somewhere the reader
+ *   could not find it, and raising the sequence for a message that says nothing
+ *   new would train the client to expect a revision that never arrives. A
+ *   different address is a different conversation, and continuing the old one
+ *   into it would hand the new recipient a `SEQUENCE` that describes messages
+ *   they never received — so a changed address starts over at sequence 0 under
+ *   a new `UID`, which is also what leaves the first recipient's entry alone.
+ *   After a cancellation the seat is over, so a send there is a new
+ *   conversation with a new `UID` too: re-using the cancelled one asks a client
+ *   to resurrect an event it has been told to delete, which some clients refuse
+ *   outright.
  * - **update** raises the sequence and re-states the whole event. That is the
  *   entire mechanism being tested.
  * - **cancel** raises the sequence too, because a cancellation is just another
@@ -112,7 +121,10 @@ export function applyInvitationAction(
   const lastSentAt = now.toISOString();
 
   if (action === "send") {
-    const continuing = existing !== undefined && existing.lastMethod !== "CANCEL";
+    const continuing =
+      existing !== undefined &&
+      existing.lastMethod !== "CANCEL" &&
+      existing.recipient === recipient;
     return {
       uid: continuing ? existing.uid : freshUid,
       sequence: continuing ? existing.sequence : 0,

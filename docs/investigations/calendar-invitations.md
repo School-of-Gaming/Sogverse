@@ -112,9 +112,13 @@ None of this exists today, and each item is substantial on its own:
   table, at which point the two halves stop having to be careful of each other.
 - **The shape is part of a `UID`'s identity.** A series states one event per slot and
   occurrences states one per session, so changing the shape between an invitation and its
-  update produces a different set of UIDs — which a client answers by deleting what it had
-  and creating what it was sent. That is worth seeing once deliberately and never by
-  accident.
+  update produces a different set of UIDs. A `REQUEST` under UIDs a client has never seen
+  is a *new* invitation and says nothing about any other: the client adds the new entries
+  and the ones already on the calendar stay there until they are cancelled. Cancelling
+  them means sending a cancellation under the shape they were sent in, since that is what
+  reproduces their UIDs — so a shape switched by accident leaves a set of entries whose
+  removal nobody will think to ask for in the right shape. Worth seeing once deliberately
+  and never by accident.
 - **The calendar writer is a second, smaller one.** `ORGANIZER`, `ATTENDEE` and `SEQUENCE`
   are three properties the feed's writer has no use for and cannot express, so the
   invitation module serialises its own events out of that writer's exported primitives.

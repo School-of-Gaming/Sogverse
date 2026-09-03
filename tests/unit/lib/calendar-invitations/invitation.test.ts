@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { FeedSeat } from "@/lib/calendar-feed/events";
 import { getCalendarFeedTranslator } from "@/lib/calendar-feed/translator";
-import { buildInvitationCalendar } from "@/lib/calendar-invitations/invitation";
+import {
+  buildInvitationCalendar,
+  type InvitationCalendar,
+} from "@/lib/calendar-invitations/invitation";
 import type { InvitationMethod, InvitationReminder, InvitationShape } from "@/lib/calendar-invitations/options";
 
 /**
@@ -51,6 +54,12 @@ interface BuildOverrides {
 }
 
 async function build(overrides: BuildOverrides = {}): Promise<string> {
+  return (await buildCalendar(overrides)).ics;
+}
+
+async function buildCalendar(
+  overrides: BuildOverrides = {},
+): Promise<InvitationCalendar> {
   return buildInvitationCalendar({
     seat: overrides.seat ?? seat(),
     baseUid: overrides.baseUid ?? "base-uid@sogverse",
@@ -104,15 +113,19 @@ describe("the three methods", () => {
   });
 
   /**
-   * The deliberately RSVP-less experience. Naming an organizer and an attendee
-   * is exactly what would turn it back into a question.
+   * The deliberately RSVP-less experience. The `ATTENDEE` is the property that
+   * carries the RSVP, so that is the one a `PUBLISH` drops — the `ORGANIZER`
+   * stays, because RFC 5546 requires one and because it says who the entry came
+   * from, which a reader wants either way.
    */
-  it("states PUBLISH with neither an organizer nor an attendee", async () => {
+  it("states PUBLISH with an organizer and no attendee", async () => {
     const document = await build({ method: "PUBLISH" });
     const content = lines(document);
 
     expect(content).toContain("METHOD:PUBLISH");
-    expect(countOf(document, "ORGANIZER")).toBe(0);
+    expect(content).toContain(
+      "ORGANIZER;CN=School of Gaming:mailto:sogverse@sog.gg",
+    );
     expect(countOf(document, "ATTENDEE")).toBe(0);
   });
 });
@@ -174,6 +187,43 @@ describe("shape", () => {
     ).toBe(true);
     expect(content).toContain("RRULE:FREQ=WEEKLY;BYDAY=MO");
     expect(countOf(document, "BEGIN:VEVENT")).toBe(1);
+  });
+
+  /**
+   * The sandbox offers four zones and this writer ships transition rules for
+   * one of them. A `TZID` naming any of the other three is legal and every
+   * mainstream client resolves it from its own database — but a document that
+   * says nothing about the gap reads as one that has no gap, so it says so.
+   */
+  it("notes a zone it cannot describe instead of emitting a VTIMEZONE", async () => {
+    const document = await build({
+      shape: "series",
+      seat: seat({ timezone: "Europe/Stockholm" }),
+    });
+    const content = lines(document);
+
+    expect(countOf(document, "BEGIN:VTIMEZONE")).toBe(0);
+    expect(
+      content.some(
+        (line) =>
+          line.startsWith("X-SOGVERSE-NOTE:") &&
+          line.includes("Europe/Stockholm"),
+      ),
+    ).toBe(true);
+    // The event still states the zone: the note explains the omission, it does
+    // not stand in for the reference.
+    expect(
+      content.some((line) => line.startsWith("DTSTART;TZID=Europe/Stockholm:")),
+    ).toBe(true);
+  });
+
+  it("emits the VTIMEZONE, and no note, for the zone it does describe", async () => {
+    const document = await build({ shape: "series" });
+    const content = lines(document);
+
+    expect(content).toContain("BEGIN:VTIMEZONE");
+    expect(content).toContain("TZID:Europe/Helsinki");
+    expect(countOf(document, "X-SOGVERSE-NOTE")).toBe(0);
   });
 
   /**
@@ -268,6 +318,31 @@ describe("escaping", () => {
     );
 
     expect(attendee).toContain('CN="Sanna the boss, parent"');
+  });
+});
+
+describe("the event count", () => {
+  /**
+   * The count is what the caller refuses on: a seat whose run is already over
+   * expands to nothing, and an empty `VCALENDAR` says nothing to a client while
+   * still consuming a `UID` and a sequence for an entry that never appears.
+   */
+  it("counts the events the document carries", async () => {
+    const oneSlot = await buildCalendar({ shape: "series" });
+    expect(oneSlot.eventCount).toBe(1);
+
+    const perSession = await buildCalendar({ shape: "occurrences" });
+    expect(perSession.eventCount).toBeGreaterThan(1);
+  });
+
+  it("is zero for a run that is already over", async () => {
+    const finished = await buildCalendar({
+      shape: "occurrences",
+      seat: seat({ startDate: "2025-01-06", endDate: "2025-02-28" }),
+    });
+
+    expect(finished.eventCount).toBe(0);
+    expect(finished.ics).not.toContain("BEGIN:VEVENT");
   });
 });
 

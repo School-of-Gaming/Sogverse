@@ -1262,7 +1262,7 @@
           "series": "wa’ Hogh chut, vuD Hoch",
           "occurrences": "wa’ wanI’, qaSbogh Hoch"
         },
-        "shapeHint": "rI’ choH je Segh yIrurmoH; Segh choHlu’chugh, ghItlh ngo’ Qaw’ De’wI’ ’ej chu’ chenmoH.",
+        "shapeHint": "rI’ choH je Segh yIrurmoH; Segh choHlu’chugh, per chu’ lo’ choH ’ej jajmeyDaq ratlhtaH ghItlhmey ngo’ qIllu’pa’.",
         "reminderLabel": "qawmoHwI’",
         "reminderOptions": {
           "15": "15 tup nIH",
@@ -1921,9 +1921,10 @@
       "cancel": "qIlpu’ jajmey ghItlh"
     },
     "body": {
-      "send": "{product} qaStaHvIS {gamer} SuvtaHghachmey lI’lu’; jajmey rI’ ’oH. DalajDI’ jajmeylIjDaq chomey.",
-      "update": "choHpu’ {product} poH. jajmey rI’ chu’ lI’lu’; {gamer} ghItlh qaSpu’bogh chIlmoHbe’ ’ach choHmoH. wa’Dich Qaw’nISbe’.",
-      "cancel": "{product}Daq quS ghajbe’choH {gamer}. qIlmeH ghItlh lI’lu’; jajmeylIjvo’ teq ghItlh."
+      "send": "QInvamDaq tu’lu’ {product} qaStaHvIS {gamer} SuvtaHghachmey; jajmey rI’ ’oH. DalajDI’ jajmeylIjDaq chomey.",
+      "sendPublish": "QInvamDaq tu’lu’ {product} qaStaHvIS {gamer} SuvtaHghachmey; jajmey ghItlh ’oH. DachelDI’ jajmeylIjDaq chomey.",
+      "update": "choHpu’ {product} poH. QInvamDaq tu’lu’ jajmey rI’ chu’; {gamer} ghItlh qaSpu’bogh chIlmoHbe’ ’ach choHmoH. wa’Dich Qaw’nISbe’.",
+      "cancel": "{product}Daq quS ghajbe’choH {gamer}. QInvamDaq tu’lu’ qIlmeH ghItlh; jajmeylIjvo’ teq ghItlh."
     },
     "updatesNote": "poH choHlu’chugh, choH ngeH School of Gaming, ’ej jajmeylIjDaq choH ghItlhvam. cha’ ghItlhmey Sammo’ bIQubnISbe’."
   },

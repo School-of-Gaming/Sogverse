@@ -1214,7 +1214,7 @@
           "series": "Une règle hebdomadaire par créneau",
           "occurrences": "Un événement par séance"
         },
-        "shapeHint": "Gardez la même forme entre une invitation et sa mise à jour, sinon l’application supprime l’ancienne entrée et en crée une nouvelle.",
+        "shapeHint": "Gardez la même forme entre une invitation et sa mise à jour, sinon la mise à jour arrive sous de nouveaux identifiants et les entrées déjà présentes dans le calendrier y restent jusqu’à leur annulation.",
         "reminderLabel": "Rappel",
         "reminderOptions": {
           "15": "15 minutes avant",
@@ -1877,9 +1877,10 @@
       "cancel": "Cette entrée de calendrier a été annulée"
     },
     "body": {
-      "send": "Les séances de {gamer} pour {product} sont jointes à ce message sous forme d’invitation. Acceptez-la et elles apparaîtront dans votre calendrier.",
-      "update": "L’horaire de {product} a changé. L’invitation jointe à ce message remplace l’entrée que vous avez déjà pour {gamer} — il n’y a rien à supprimer avant.",
-      "cancel": "{gamer} n’a plus de place sur {product}. L’annulation jointe à ce message retire l’entrée de votre calendrier."
+      "send": "Les séances de {gamer} pour {product} se trouvent dans ce message sous forme d’invitation. Acceptez-la et elles apparaîtront dans votre calendrier.",
+      "sendPublish": "Les séances de {gamer} pour {product} se trouvent dans ce message sous forme d’entrée de calendrier. Ajoutez-la et elles apparaîtront dans votre calendrier.",
+      "update": "L’horaire de {product} a changé. L’invitation qui se trouve dans ce message remplace l’entrée que vous avez déjà pour {gamer} — il n’y a rien à supprimer avant.",
+      "cancel": "{gamer} n’a plus de place sur {product}. L’annulation qui se trouve dans ce message retire l’entrée de votre calendrier."
     },
     "updatesNote": "Si l’horaire change plus tard, School of Gaming envoie une mise à jour et cette même entrée change dans votre calendrier. Vous n’aurez jamais à deviner laquelle de deux entrées fait foi."
   },

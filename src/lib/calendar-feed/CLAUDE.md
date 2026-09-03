@@ -25,6 +25,12 @@ stop recognising must keep the subscription working — the feed degrades to the
 default rather than answering 400 and going dark in an app the parent cannot see
 the error in.
 
+**The stored sandbox document carries an `invitations` key this module does not
+own.** The sibling calendar-invitations module keeps its per-seat bookkeeping
+there, so the row has two writers and each preserves the other's half: a family
+save carries the stored invitations forward untouched. See that module's own
+`CLAUDE.md` before touching the document's shape.
+
 **The token in the path is the whole of the authorization**, so an unverifiable
 one answers 404 rather than 401 for every reason at once: a bad signature, an
 unknown customer, an unknown sandbox, a stored document that no longer parses.

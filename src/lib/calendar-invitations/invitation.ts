@@ -37,10 +37,11 @@ import {
  * The escaping, the octet-counted folding and both timestamp forms are
  * imported, so the two writers cannot disagree about the parts that are hard.
  *
- * The one thing that had to be copied rather than imported is the
- * `Europe/Helsinki` `VTIMEZONE` block, which the shared writer holds privately.
- * It is copied verbatim below and marked; the right fix, when the feed module
- * is next open for editing, is to export it there and delete the copy.
+ * What had to be copied rather than imported is the `Europe/Helsinki`
+ * `VTIMEZONE` block and the sentence a document states about a zone it cannot
+ * describe, both of which the shared writer holds privately. They are copied
+ * verbatim below and marked; the right fix, when the feed module is next open
+ * for editing, is to export them there and delete the copies.
  *
  * **The occurrence expansion is shared, not reimplemented.** The sessions this
  * message states come from the same walk the feed runs, over the same neutral
@@ -52,6 +53,19 @@ const CRLF = "\r\n";
 
 /** The zone the copied `VTIMEZONE` describes. Every product we run is in it. */
 const KNOWN_TIMEZONE = "Europe/Helsinki";
+
+/**
+ * What a document says about a zone it states but cannot describe.
+ *
+ * Worded and emitted exactly as the feed writer does, and for the same reason:
+ * a `TZID` naming a zone the document carries no transition rules for is legal
+ * and every mainstream client resolves it out of its own database, but a
+ * document that says nothing about the gap reads as one that has no gap. The
+ * sandbox offers four zones and this exploration ships rules for one of them.
+ */
+function unknownZoneNote(zone: string): string {
+  return `No VTIMEZONE is emitted for ${zone}: this exploration ships transition rules for ${KNOWN_TIMEZONE} only, so the TZID reference relies on the client's own timezone database.`;
+}
 
 /**
  * Copied verbatim from the feed's `.ics` writer, which holds it privately.
@@ -263,12 +277,15 @@ function eventLines(
     lines.push(property("LOCATION", escapeText(event.location)));
   }
 
-  // `PUBLISH` is the deliberately RSVP-less experience: an object a reader adds
-  // to their calendar with nobody asking them anything. Naming an organizer and
-  // an attendee is precisely what would turn it back into a question.
+  // Every method names an organizer: RFC 5546 requires one of a `PUBLISH` too,
+  // and it is the wrong property to drop anyway — it says who the entry came
+  // from, which a reader wants whether or not they are being asked anything.
+  // The `ATTENDEE` is what carries RSVP semantics, so that is the one a
+  // `PUBLISH` leaves off: an object a reader adds to their calendar with nobody
+  // asking them to answer.
+  lines.push(calendarUser("ORGANIZER", SENDER_NAME, SENDER_EMAIL));
   if (args.method !== "PUBLISH") {
     lines.push(
-      calendarUser("ORGANIZER", SENDER_NAME, SENDER_EMAIL),
       calendarUser(
         "ATTENDEE",
         args.attendee.name,
@@ -293,6 +310,21 @@ function eventLines(
   return lines;
 }
 
+export interface InvitationCalendar {
+  /** The serialized document, exactly as the recipient receives it. */
+  ics: string;
+  /**
+   * How many `VEVENT`s it carries.
+   *
+   * Returned beside the document rather than counted back out of it, because a
+   * message stating no events at all is one the caller has to refuse before it
+   * mails anything: an empty `VCALENDAR` says nothing to a client, and sending
+   * one would still open a conversation the recipient's calendar has no entry
+   * for.
+   */
+  eventCount: number;
+}
+
 /**
  * Serialize the whole message, CRLF-terminated throughout.
  *
@@ -301,7 +333,9 @@ function eventLines(
  * contain events — and it has to agree with how the mail part is typed, which
  * is why the transport takes the same value rather than deriving one.
  */
-export function buildInvitationCalendar(args: BuildInvitationArgs): string {
+export function buildInvitationCalendar(
+  args: BuildInvitationArgs,
+): InvitationCalendar {
   const events = invitationEvents(args);
 
   const lines: string[] = [
@@ -312,8 +346,15 @@ export function buildInvitationCalendar(args: BuildInvitationArgs): string {
     property("METHOD", args.method),
   ];
 
-  if (args.shape === "series" && events.some((e) => e.timezone === KNOWN_TIMEZONE)) {
-    lines.push(...HELSINKI_VTIMEZONE);
+  // Only a series references a zone by name; a discrete occurrence is an
+  // absolute instant, so there is nothing for a `VTIMEZONE` or a note to be
+  // about.
+  if (args.shape === "series") {
+    const zones = [...new Set(events.map((event) => event.timezone))].sort();
+    for (const zone of zones.filter((zone) => zone !== KNOWN_TIMEZONE)) {
+      lines.push(property("X-SOGVERSE-NOTE", escapeText(unknownZoneNote(zone))));
+    }
+    if (zones.includes(KNOWN_TIMEZONE)) lines.push(...HELSINKI_VTIMEZONE);
   }
 
   for (const event of events) {
@@ -321,5 +362,8 @@ export function buildInvitationCalendar(args: BuildInvitationArgs): string {
   }
 
   lines.push("END:VCALENDAR");
-  return `${lines.join(CRLF)}${CRLF}`;
+  return {
+    ics: `${lines.join(CRLF)}${CRLF}`,
+    eventCount: events.length,
+  };
 }

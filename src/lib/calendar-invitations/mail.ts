@@ -9,7 +9,7 @@ import {
   styledName,
   styledProductName,
 } from "@/lib/email-templates/utils";
-import type { InvitationAction } from "./options";
+import type { InvitationAction, InvitationMethod } from "./options";
 
 /**
  * The mail an invitation travels in.
@@ -42,6 +42,15 @@ export async function getCalendarInvitationTranslator(
 
 export interface InvitationMailArgs {
   action: InvitationAction;
+  /**
+   * The `METHOD` the calendar part states, which the words have to agree with.
+   *
+   * One sentence in this mail tells the reader what to do with the entry, and
+   * an RSVP-less `PUBLISH` gives them nothing to accept — so a mail that says
+   * "accept it" beside a calendar part carrying no attendee is instructing the
+   * reader to press a button their client will not offer.
+   */
+  method: InvitationMethod;
   locale: SupportedLocale;
   /** The parent the mail is addressed to, for the greeting. */
   parentName: string;
@@ -73,7 +82,7 @@ export interface InvitationMailContent {
 export async function buildInvitationMail(
   args: InvitationMailArgs,
 ): Promise<InvitationMailContent> {
-  const { action, locale, parentName, gamerName, productName } = args;
+  const { action, method, locale, parentName, gamerName, productName } = args;
   const t = await getCalendarInvitationTranslator(locale);
   const email = await getEmailTranslator(locale);
 
@@ -81,7 +90,12 @@ export async function buildInvitationMail(
   const subject = t(`subject.${action}`, values);
   const title = t(`heading.${action}`);
   const greeting = t("greeting", { name: parentName });
-  const body = t(`body.${action}`, {
+  // Only the first send has a sentence that depends on the method: an update
+  // and a cancellation describe what the message does to an entry that already
+  // exists, which is the same either way.
+  const bodyKey =
+    action === "send" && method === "PUBLISH" ? "sendPublish" : action;
+  const body = t(`body.${bodyKey}`, {
     gamer: gamerName,
     product: productName,
   });
@@ -90,7 +104,7 @@ export async function buildInvitationMail(
   // something that no longer applies.
   const note = action === "cancel" ? null : t("updatesNote");
 
-  const styled = t(`body.${action}`, {
+  const styled = t(`body.${bodyKey}`, {
     gamer: styledName(gamerName),
     product: styledProductName(productName),
   });

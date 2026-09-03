@@ -35,6 +35,44 @@ export function SectionHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Two labels in one grid cell, so a button that swaps one for the other keeps
+ * the width of the longer of them.
+ *
+ * A button's own label is the thing most likely to change under a user's
+ * cursor — "Copy" becoming "Copied", "Send" becoming "Working" — and a button
+ * that resizes mid-click drags every sibling in its row along with it. Stacking
+ * both labels in the same cell makes the width a property of the pair rather
+ * than of whichever one is showing.
+ */
+export function SwappableLabel({
+  label,
+  alternate,
+  showingAlternate,
+}: {
+  label: string;
+  alternate: string;
+  showingAlternate: boolean;
+}) {
+  return (
+    <span className="grid">
+      <span
+        className={cn("col-start-1 row-start-1", showingAlternate && "invisible")}
+      >
+        {label}
+      </span>
+      <span
+        className={cn(
+          "col-start-1 row-start-1",
+          !showingAlternate && "invisible",
+        )}
+      >
+        {alternate}
+      </span>
+    </span>
+  );
+}
+
 /** A copy button whose width does not change when its label does. */
 export function CopyButton({ value }: { value: string }) {
   const t = useTranslations("admin.testing.calendarFeed");
@@ -59,17 +97,13 @@ export function CopyButton({ value }: { value: string }) {
         );
       }}
     >
-      {/* Both labels occupy one grid cell, so the button is always as wide as
-          the longer of them and confirming a copy never nudges the input beside
-          it. */}
-      <span className="grid">
-        <span className={cn("col-start-1 row-start-1", copied && "invisible")}>
-          {t("copy")}
-        </span>
-        <span className={cn("col-start-1 row-start-1", !copied && "invisible")}>
-          {t("copied")}
-        </span>
-      </span>
+      {/* The button is always as wide as the longer label, so confirming a copy
+          never nudges the input beside it. */}
+      <SwappableLabel
+        label={t("copy")}
+        alternate={t("copied")}
+        showingAlternate={copied}
+      />
     </Button>
   );
 }

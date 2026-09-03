@@ -18,6 +18,7 @@ import {
   SmtpNotConfiguredError,
   sendCalendarInvitationMail,
 } from "@/lib/calendar-invitations/transport.server";
+import { SUPPORT_EMAIL } from "@/lib/constants";
 import {
   calendarInvitationBody,
   calendarInvitationResponse,
@@ -188,7 +189,7 @@ export const POST = defineRoute({
     const method = body.action === "cancel" ? "CANCEL" : methodFor(body.method);
     const locale = definition.parent.locale;
 
-    const ical = buildInvitationCalendar({
+    const calendar = buildInvitationCalendar({
       seat,
       baseUid: record.uid,
       sequence: record.sequence,
@@ -201,8 +202,21 @@ export const POST = defineRoute({
       now,
     });
 
+    // Checked before the preview returns as well as before the send, because a
+    // preview is the same request one flag apart and has to answer the same
+    // way: a seat whose product has no sessions left ahead of it renders an
+    // empty `VCALENDAR`, which says nothing to a client and would still consume
+    // a `UID` and a sequence for an entry nobody's calendar ever grows.
+    if (calendar.eventCount === 0) {
+      throw new ApiError(
+        "That seat has no sessions left to invite anybody to — its product's run is already over.",
+        409,
+      );
+    }
+
     const mail = await buildInvitationMail({
       action: body.action,
+      method,
       locale,
       parentName: definition.parent.firstName,
       // The adapter already dropped any seat whose gamer is missing, so the
@@ -216,7 +230,7 @@ export const POST = defineRoute({
       return {
         subject: mail.subject,
         html: mail.html,
-        ical,
+        ical: calendar.ics,
         messageId: null,
         bookkeeping: null,
       };
@@ -229,7 +243,11 @@ export const POST = defineRoute({
         subject: mail.subject,
         html: mail.html,
         text: mail.text,
-        ical: { method, content: ical },
+        ical: { method, content: calendar.ics },
+        // A product send, so replies go to the support inbox: this mail is
+        // addressed to a family, and a human answering it must not land in the
+        // sending address's inbox, which nobody reads.
+        replyTo: SUPPORT_EMAIL,
       }));
     } catch (error) {
       if (error instanceof SmtpNotConfiguredError) {
@@ -249,7 +267,7 @@ export const POST = defineRoute({
     return {
       subject: mail.subject,
       html: mail.html,
-      ical,
+      ical: calendar.ics,
       messageId,
       bookkeeping: record,
     };

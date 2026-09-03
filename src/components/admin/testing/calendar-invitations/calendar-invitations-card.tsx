@@ -30,7 +30,11 @@ import {
   type CalendarInvitationResponse,
 } from "@/services/calendar-invitations";
 import { useAuth } from "@/providers";
-import { SectionHeading, selectClass } from "../calendar-feed/shared";
+import {
+  SectionHeading,
+  SwappableLabel,
+  selectClass,
+} from "../calendar-feed/shared";
 
 /**
  * The calendar-invitation card: the second of the two designs under comparison.
@@ -98,6 +102,8 @@ export function CalendarInvitationsCard() {
   const [result, setResult] = useState<CalendarInvitationResponse | null>(null);
 
   const definition = sandbox.data?.definition ?? null;
+  /** Whether the sandbox read has answered — a failed read has not. */
+  const loaded = sandbox.data !== undefined;
 
   const seats: readonly SeatChoice[] = useMemo(() => {
     if (definition === null) return [];
@@ -170,7 +176,14 @@ export function CalendarInvitationsCard() {
           <p className="text-sm text-muted-foreground">
             {t("participationHint")}
           </p>
-          {seats.length === 0 ? (
+          {/* The select is rendered empty until the read lands, rather than
+              standing something else in its place: this is a small indexed
+              read of one row, so it arrives in a frame or two, and a field that
+              is already its final size means nothing below it moves when the
+              seats appear. The "no seats" line waits for data — before it
+              arrives there is nothing to say that about, and saying it early
+              would be replacing a sentence with a control. */}
+          {loaded && seats.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {t("noParticipations")}
             </p>
@@ -285,7 +298,11 @@ export function CalendarInvitationsCard() {
             disabled={busy || selectedId === ""}
             onClick={() => run("preview", true)}
           >
-            {committing === "preview" ? t("working") : t("preview")}
+            <SwappableLabel
+              label={t("preview")}
+              alternate={t("working")}
+              showingAlternate={committing === "preview"}
+            />
           </Button>
           <Button
             type="button"
@@ -293,7 +310,11 @@ export function CalendarInvitationsCard() {
             disabled={busy || !hasOpenInvitation}
             onClick={() => setConfirmingCancel(true)}
           >
-            {committing === "cancel" ? t("working") : t("sendCancellation")}
+            <SwappableLabel
+              label={t("sendCancellation")}
+              alternate={t("working")}
+              showingAlternate={committing === "cancel"}
+            />
           </Button>
           <Button
             type="button"
@@ -301,18 +322,37 @@ export function CalendarInvitationsCard() {
             disabled={busy || !hasOpenInvitation}
             onClick={() => run("update", false)}
           >
-            {committing === "update" ? t("working") : t("sendUpdate")}
+            <SwappableLabel
+              label={t("sendUpdate")}
+              alternate={t("working")}
+              showingAlternate={committing === "update"}
+            />
           </Button>
           <Button
             type="button"
             disabled={busy || selectedId === ""}
             onClick={() => run("send", false)}
           >
-            {committing === "send" ? t("working") : t("send")}
+            <SwappableLabel
+              label={t("send")}
+              alternate={t("working")}
+              showingAlternate={committing === "send"}
+            />
           </Button>
         </div>
 
-        {/* --- 5. What came back --- */}
+        {/* --- 5. What came back ---
+            The sandbox read's failure banner sits down here rather than in the
+            seat section it reads as belonging to, for the same reason the feed
+            card puts its own at the end: it arrives on a round trip's own
+            schedule, and a banner inserted above the recipient, the options and
+            the actions would push all three down the viewport. At the end it
+            grows the card downward and nothing painted moves. */}
+        {sandbox.error !== null && (
+          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            {sandbox.error.message}
+          </div>
+        )}
         {errorMessage !== null && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             {errorMessage}

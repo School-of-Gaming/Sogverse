@@ -55,6 +55,28 @@ describe("applyInvitationAction", () => {
     expect(again?.sequence).toBe(0);
   });
 
+  /**
+   * A second address has never been told anything, so continuing the first
+   * conversation into it would hand the new recipient a `SEQUENCE` describing
+   * messages they never received — and would leave the first recipient holding
+   * an entry nothing will ever revise.
+   */
+  it("starts over when the same seat is sent to a different address", () => {
+    const first = send(undefined);
+    const elsewhere = applyInvitationAction({
+      existing: first ?? undefined,
+      action: "send",
+      method: "request",
+      recipient: "someone-else@example.test",
+      now: LATER,
+      freshUid: SECOND_FRESH,
+    });
+
+    expect(elsewhere?.uid).toBe(SECOND_FRESH);
+    expect(elsewhere?.sequence).toBe(0);
+    expect(elsewhere?.recipient).toBe("someone-else@example.test");
+  });
+
   it("raises the sequence for an update and keeps the uid", () => {
     const first = send(undefined);
     const updated = applyInvitationAction({

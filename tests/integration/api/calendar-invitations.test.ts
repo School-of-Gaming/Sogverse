@@ -293,6 +293,111 @@ describe("POST /api/admin/calendar-invitations", () => {
     expect(data.bookkeeping.lastMethod).toBe("CANCEL");
   });
 
+  /**
+   * `PUBLISH` is a different message, not a different mail about the same one:
+   * the calendar part is typed as one all the way to the relay, and the mail's
+   * one instruction has to agree with it — a reader with no attendee line has
+   * nothing to accept, so the words say to add it instead.
+   */
+  it("types a publish send as PUBLISH and says so in the body", async () => {
+    const document = definition();
+    mockCaller(document);
+
+    const response = await POST(
+      invitationRequest({
+        action: "send",
+        participationId: firstSeatId(document),
+        method: "publish",
+        preview: true,
+      }),
+    );
+    const data = await response.json();
+
+    expect(data.ical).toContain("METHOD:PUBLISH");
+    expect(data.html).toContain("Add it and they appear in your calendar");
+    expect(data.html).not.toContain("Accept it and they appear");
+
+    // And the same message on the send path, where the part is typed for the
+    // relay: the transport hands this value straight to nodemailer's
+    // `icalEvent`, which is what makes it an invitation rather than a file.
+    await POST(
+      invitationRequest({
+        action: "send",
+        participationId: firstSeatId(document),
+        method: "publish",
+      }),
+    );
+    expect(mockSend.mock.calls[0][0].ical.method).toBe("PUBLISH");
+  });
+
+  /** The request mail keeps the sentence a `REQUEST` earns. */
+  it("tells a request recipient to accept the invitation", async () => {
+    const document = definition();
+    mockCaller(document);
+
+    const response = await POST(
+      invitationRequest({
+        action: "send",
+        participationId: firstSeatId(document),
+        preview: true,
+      }),
+    );
+    const data = await response.json();
+
+    expect(data.html).toContain("Accept it and they appear in your calendar");
+  });
+
+  /**
+   * A human answering a mail about their child's sessions must reach a person,
+   * and nobody reads the sending address's inbox.
+   */
+  it("points replies at the support inbox", async () => {
+    const document = definition();
+    mockCaller(document);
+
+    await POST(
+      invitationRequest({
+        action: "send",
+        participationId: firstSeatId(document),
+      }),
+    );
+
+    expect(mockSend.mock.calls[0][0].replyTo).toBe("help@sog.gg");
+  });
+
+  /**
+   * A seat whose product has already finished expands to no sessions at all,
+   * and an empty `VCALENDAR` is a message with nothing in it: the client shows
+   * the recipient nothing, while the send would still open a conversation and
+   * record a sequence for an entry that never appears anywhere.
+   */
+  it("refuses a seat with no sessions left, and sends nothing", async () => {
+    const document = definition();
+    const finished: SandboxDefinition = {
+      ...document,
+      products: document.products.map((product) => ({
+        ...product,
+        startDate: "2019-01-07",
+        endDate: "2019-01-11",
+      })),
+    };
+    const { writes } = mockCaller(finished);
+
+    const response = await POST(
+      invitationRequest({
+        action: "send",
+        participationId: firstSeatId(finished),
+        shape: "occurrences",
+      }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(data.error).toContain("no sessions left");
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(writes).toHaveLength(0);
+  });
+
   it("refuses an update with no open invitation", async () => {
     const document = definition();
     mockCaller(document);
