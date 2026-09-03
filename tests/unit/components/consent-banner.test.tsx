@@ -164,7 +164,10 @@ describe("ConsentBanner", () => {
     const body = links[0].closest("p");
     expect(body).not.toBeNull();
     const sentence = body?.textContent ?? "";
-    expect(sentence).toContain("Nothing beyond the necessary cookies");
+    // The mechanism sentence, which is the one line of this copy that is a
+    // promise rather than an explanation: nothing optional exists on the page
+    // before an answer.
+    expect(sentence).toContain("Only necessary cookies run until you choose");
     expect(sentence.endsWith(`${links[0].textContent}.`)).toBe(true);
   });
 

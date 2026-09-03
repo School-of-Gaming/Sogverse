@@ -80,7 +80,7 @@ export function ConsentBannerView({
       aria-labelledby={headingId}
       className={
         placement === "fixed"
-          ? "fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card shadow-lg"
+          ? "fixed inset-x-0 bottom-0 z-50 max-h-[100dvh] overflow-y-auto border-t border-border bg-card pb-[env(safe-area-inset-bottom)] shadow-lg"
           : "border border-border bg-card"
       }
     >
@@ -113,12 +113,19 @@ export function ConsentBannerView({
         {/* `[negative, affirmative]` in the DOM, reversed in a stack: the
             fullest answer is last, so it is rightmost in the row and topmost on
             a phone. Identical variant and size across all three is what keeps
-            "reversed" from meaning "preferred". */}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            "reversed" from meaning "preferred".
+
+            Width is decided by the widest locale, not the English: three
+            French labels in Poppins outrun a 640px row, so the row waits
+            until `md` and may wrap, and the buttons drop the base style's
+            `whitespace-nowrap` so a label can never push the strip past the
+            viewport on a phone — it wraps inside its own button instead. */}
+        <div className="flex flex-col-reverse gap-2 md:flex-row md:flex-wrap md:justify-end">
           <Button
             type="button"
             variant="outline"
             size="sm"
+            className="h-auto min-h-8 whitespace-normal"
             disabled={committing}
             onClick={() => commit("reject_all")}
           >
@@ -128,6 +135,7 @@ export function ConsentBannerView({
             type="button"
             variant="outline"
             size="sm"
+            className="h-auto min-h-8 whitespace-normal"
             disabled={committing}
             onClick={() => commit("analytics_only")}
           >
@@ -137,6 +145,7 @@ export function ConsentBannerView({
             type="button"
             variant="outline"
             size="sm"
+            className="h-auto min-h-8 whitespace-normal"
             disabled={committing}
             onClick={() => commit("analytics_and_marketing")}
           >

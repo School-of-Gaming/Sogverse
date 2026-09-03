@@ -3867,7 +3867,7 @@
   },
   "consent": {
     "heading": "Your privacy, your choice",
-    "body": "Analytics tells us how many people visit and how fast pages load. It can’t see who you are, and it never goes to advertisers. Marketing tells the advertising platforms we run ads on that you visited and whether you signed up, so they can show you our ads there. Nothing beyond the necessary cookies runs until you choose, and you can change your mind any time from the footer — the details are in our <link>privacy policy</link>.",
+    "body": "Analytics counts visits and page speed and can’t see who you are. Marketing tells the platforms we advertise on that you visited and whether you signed up. Only necessary cookies run until you choose. Details, and how to change your mind, are in our <link>privacy policy</link>.",
     "rejectAll": "Reject all",
     "analyticsOnly": "Analytics only",
     "analyticsAndMarketing": "Analytics and marketing"

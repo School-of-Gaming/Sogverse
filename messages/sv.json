@@ -3867,7 +3867,7 @@
   },
   "consent": {
     "heading": "Din integritet, ditt val",
-    "body": "Analys visar oss hur många som besöker sidan och hur snabbt sidorna laddas. Den kan inte se vem du är, och den går aldrig till annonsörer. Marknadsföring berättar för de annonsplattformar vi annonserar på att du har besökt oss och om du skapade ett konto, så att de kan visa dig våra annonser där. Inget utöver de nödvändiga cookiesarna startar förrän du väljer, och du kan ändra dig när som helst längst ner på sidan – detaljerna finns i vår <link>integritetspolicy</link>.",
+    "body": "Analys räknar besök och sidladdningstid och kan inte se vem du är. Marknadsföring berättar för plattformarna vi annonserar på att du besökt oss och om du skapade ett konto. Innan du väljer körs bara nödvändiga cookies. Detaljerna och hur du ändrar dig finns i vår <link>integritetspolicy</link>.",
     "rejectAll": "Neka alla",
     "analyticsOnly": "Endast analys",
     "analyticsAndMarketing": "Analys och marknadsföring"
