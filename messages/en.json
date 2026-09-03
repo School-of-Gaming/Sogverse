@@ -3437,7 +3437,7 @@
         "paragraphs": [
           "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
           "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
-          "What we hold about a child is set out above under \"The information we collect\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. Live sessions are run by our trained Game Educators (we call them Gedus).",
+          "What we hold about a child is set out above under \"The information we collect\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. When your child is signed in as a gamer, nothing about their browsing is sent to an advertising platform, even if marketing is switched on for the device. Live sessions are run by our trained Game Educators (we call them Gedus).",
           "If you ever want to see, change, or delete your child’s information, just email {supportEmail} and we’ll take care of it."
         ]
       },
@@ -3496,7 +3496,7 @@
         ],
         "bullets": [
           "Analytics — Vercel’s, and only if you choose it. It counts visits, measures how quickly pages load, and receives a few anonymous events about how the site is used: how someone reached their My SOG, when someone changes the language. It can’t see who you are, and we never hand it to advertisers.",
-          "Marketing — the Meta Pixel and the TikTok Pixel, and only if you choose them. They learn that you visited School of Gaming and whether you created an account, so Meta and TikTok can show you our ads on their own platforms. If you say yes to marketing and then create an account, we set one short-lived cookie of our own — five minutes, no name, no address, nothing but the word \"registration\" — whose only job is to tell the pixels on the next page that an account was created. Switching marketing off deletes the cookies the pixels left in your browser, but we can’t delete what Meta and TikTok already hold — you can ask them to, in your own settings there, where Meta calls it \"activity off Meta technologies\"."
+          "Marketing — the Meta Pixel and the TikTok Pixel, and only if you choose them. They learn that you visited School of Gaming and whether you created an account, so Meta and TikTok can show you our ads on their own platforms. Neither pixel loads while your child is signed in as a gamer. If you say yes to marketing and then create an account, we set one short-lived cookie of our own — five minutes, no name, no address, nothing but the word \"registration\" — whose only job is to tell the pixels on the next page that an account was created. Switching marketing off deletes the cookies the pixels left in your browser, but we can’t delete what Meta and TikTok already hold — you can ask them to, in your own settings there, where Meta calls it \"activity off Meta technologies\"."
         ]
       },
       "voice": {
@@ -3867,7 +3867,7 @@
   },
   "consent": {
     "heading": "Your privacy, your choice",
-    "body": "Analytics tells us how many people visit and how fast pages load. It can’t see who you are, and it never goes to advertisers. Marketing tells the advertising platforms we run ads on that you visited and whether you signed up, so they can show you our ads there. Nothing beyond the necessary cookies runs until you choose, and you can change your mind any time from the footer — the details are in our <link>privacy policy</link>.",
+    "body": "Analytics tells us how many people visit and how fast pages load. It can’t see who you are, and it never goes to advertisers. Marketing tells the advertising platforms we run ads on that you visited and whether you signed up, so they can show you our ads there. It is never on while your child is signed in as a gamer. Nothing beyond the necessary cookies runs until you choose, and you can change your mind any time from the footer — the details are in our <link>privacy policy</link>.",
     "rejectAll": "Reject all",
     "analyticsOnly": "Analytics only",
     "analyticsAndMarketing": "Analytics and marketing"

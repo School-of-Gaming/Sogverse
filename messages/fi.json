@@ -2751,7 +2751,7 @@
         "paragraphs": [
           "Suurin osa Sogversen käyttäjistä on lapsia, joten heidän turvallisuutensa ja yksityisyytensä on meille tärkeintä.",
           "Lapsi ei voi koskaan luoda omaa tiliään itse. Vain vanhempi tai huoltaja luo lapsen tilin, päättää mitä tietoja jaetaan ja antaa luvan lapsen puolesta. Näin täytämme lapsia koskevat velvollisuutemme tietosuojalainsäädännön mukaan.",
-          "Kerromme edellä kohdassa \"Mitä tietoja keräämme\", mitä lapsesta säilytämme. Emme kerää lapsesta muuta kuin sen, mitä kerhojen, leirien ja tapahtumien järjestäminen vaatii. Emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
+          "Kerromme edellä kohdassa \"Mitä tietoja keräämme\", mitä lapsesta säilytämme. Emme kerää lapsesta muuta kuin sen, mitä kerhojen, leirien ja tapahtumien järjestäminen vaatii. Emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Kun lapsesi on kirjautuneena pelaajana, mitään hänen selailustaan ei lähetetä mainosalustoille, vaikka markkinointi olisi laitteella päällä. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
           "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen {supportEmail}, niin hoidamme asian."
         ]
       },
@@ -2810,7 +2810,7 @@
         ],
         "bullets": [
           "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit, mittaa sivujen latausnopeuden ja vastaanottaa muutamia nimettömiä tapahtumia siitä, miten sivustoa käytetään: miten oma My SOG avataan ja milloin kieltä vaihdetaan. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
-          "Markkinointi – Meta-pikseli ja TikTok-pikseli, ja vain jos valitset ne. Ne saavat tietää, että kävit School of Gamingin sivustolla ja loitko tilin, jotta Meta ja TikTok voivat näyttää sinulle mainoksiamme omissa palveluissaan. Jos hyväksyt markkinoinnin ja luot sen jälkeen tilin, asetamme yhden lyhytikäisen oman evästeen – viisi minuuttia, ei nimeä, ei osoitetta, vain sana \"registration\" – jonka ainoa tehtävä on kertoa seuraavan sivun pikseleille, että tili luotiin. Markkinoinnin poistaminen käytöstä poistaa pikselien selaimeesi jättämät evästeet, mutta emme voi poistaa sitä, mitä Metalla ja TikTokilla jo on – sen voit pyytää poistettavaksi omista asetuksistasi niissä, joissa Meta kutsuu sitä nimellä \"Meta-teknologioiden ulkopuolinen toiminta\"."
+          "Markkinointi – Meta-pikseli ja TikTok-pikseli, ja vain jos valitset ne. Ne saavat tietää, että kävit School of Gamingin sivustolla ja loitko tilin, jotta Meta ja TikTok voivat näyttää sinulle mainoksiamme omissa palveluissaan. Kumpikaan pikseli ei lataudu, kun lapsesi on kirjautuneena pelaajana. Jos hyväksyt markkinoinnin ja luot sen jälkeen tilin, asetamme yhden lyhytikäisen oman evästeen – viisi minuuttia, ei nimeä, ei osoitetta, vain sana \"registration\" – jonka ainoa tehtävä on kertoa seuraavan sivun pikseleille, että tili luotiin. Markkinoinnin poistaminen käytöstä poistaa pikselien selaimeesi jättämät evästeet, mutta emme voi poistaa sitä, mitä Metalla ja TikTokilla jo on – sen voit pyytää poistettavaksi omista asetuksistasi niissä, joissa Meta kutsuu sitä nimellä \"Meta-teknologioiden ulkopuolinen toiminta\"."
         ]
       },
       "voice": {
@@ -3867,7 +3867,7 @@
   },
   "consent": {
     "heading": "Yksityisyytesi, sinun valintasi",
-    "body": "Analytiikka kertoo meille, kuinka moni sivustolla käy ja kuinka nopeasti sivut latautuvat. Se ei näe, kuka olet, eikä se päädy koskaan mainostajille. Markkinointi kertoo mainosalustoille, joilla mainostamme, käynnistäsi ja siitä, loitko tilin, jotta ne voivat näyttää sinulle mainoksiamme. Välttämättömien evästeiden lisäksi mikään ei käynnisty ennen kuin valitset, ja voit muuttaa mieltäsi milloin tahansa sivun alalaidasta – tarkemmat tiedot löydät <link>tietosuojaselosteestamme</link>.",
+    "body": "Analytiikka kertoo meille, kuinka moni sivustolla käy ja kuinka nopeasti sivut latautuvat. Se ei näe, kuka olet, eikä se päädy koskaan mainostajille. Markkinointi kertoo mainosalustoille, joilla mainostamme, käynnistäsi ja siitä, loitko tilin, jotta ne voivat näyttää sinulle mainoksiamme. Se ei ole koskaan päällä, kun lapsesi on kirjautuneena pelaajana. Välttämättömien evästeiden lisäksi mikään ei käynnisty ennen kuin valitset, ja voit muuttaa mieltäsi milloin tahansa sivun alalaidasta – tarkemmat tiedot löydät <link>tietosuojaselosteestamme</link>.",
     "rejectAll": "Hylkää kaikki",
     "analyticsOnly": "Vain analytiikka",
     "analyticsAndMarketing": "Analytiikka ja markkinointi"
