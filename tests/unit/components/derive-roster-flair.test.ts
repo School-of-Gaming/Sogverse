@@ -6,16 +6,21 @@ import {
 
 /**
  * ============================================================================
- * A group feed's roster becomes the workspace rail's staff overlay.
+ * A group feed's roster becomes the workspace rail's per-member overlay.
  * ============================================================================
  *
  * Two shells make this turn — the gedu's workspace and the admin group details
  * page — which is why it is one function rather than two copies. Both of its
  * rules fail *silently* when they fail: a missed clubs gate badges every child
  * on a camp, and a null written into a map instead of left out reads as a
- * present value to every consumer downstream (the row's `hasNote`, the dialog's
+ * present value to every consumer downstream (the row's lit marker, the dialog's
  * seed, the badge's own window check). Neither shows up as an error, and neither
  * needs a React tree to test.
+ *
+ * The creations map has a third way to fail silently that the others do not: it
+ * arrives as `[]` rather than as a null, so "left out" has to be decided on
+ * *length*. Written in as an empty array, every member of every group would read
+ * as having a creation, because the owed derivation reads the map's key set.
  */
 
 /** Real generated UUIDs: the ids here are the same ones an identicon is drawn from. */
@@ -41,9 +46,22 @@ function member(
     group_joined_at: null,
     note: null,
     note_updated_by_first_name: null,
+    // Never null on the wire: a list has a real empty value where a note does
+    // not, so the RPC emits `[]` and this default says the same thing.
+    creations: [],
     ...flair,
   };
 }
+
+/** Two creations, and the shape every list below is built from. */
+const CASTLE = {
+  title: "Lohikäärmeen linna",
+  url: "https://www.planetminecraft.com/project/lohikaarmeen-linna/",
+} as const;
+const TOWER = {
+  title: "Clock tower",
+  url: "shared world: /warp aino-tower",
+} as const;
 
 const ROSTER: readonly RosterFlairSource[] = [
   member(IDS.siiri, {
@@ -51,7 +69,10 @@ const ROSTER: readonly RosterFlairSource[] = [
     note: STORED_NOTE,
     note_updated_by_first_name: "Sanna",
   }),
-  member(IDS.oskar),
+  // Creations and nothing else — deliberately not one of the two members
+  // carrying a note, because the row's marker is lit by either and a roster
+  // where the same people had both could never show that.
+  member(IDS.oskar, { creations: [CASTLE, TOWER] }),
   member(IDS.emil, { group_joined_at: JOINED_RECENTLY }),
 ];
 
@@ -87,6 +108,7 @@ describe("deriveRosterFlairMaps — absence is how none is spelled", () => {
     expect(Object.keys(maps.newcomers)).toEqual([IDS.siiri, IDS.emil]);
     expect(Object.keys(maps.notes)).toEqual([IDS.siiri]);
     expect(Object.keys(maps.noteEditors)).toEqual([IDS.siiri]);
+    expect(Object.keys(maps.creations)).toEqual([IDS.oskar]);
   });
 
   it("keeps a note whose last editor is gone", () => {
@@ -101,11 +123,50 @@ describe("deriveRosterFlairMaps — absence is how none is spelled", () => {
     expect(Object.keys(maps.noteEditors)).toEqual([]);
   });
 
-  it("answers three empty maps for an empty roster", () => {
+  it("answers four empty maps for an empty roster", () => {
     expect(deriveRosterFlairMaps([], true)).toEqual({
       newcomers: {},
       notes: {},
       noteEditors: {},
+      creations: {},
     });
+  });
+});
+
+describe("deriveRosterFlairMaps — creations", () => {
+  it("carries a member's list in the order it arrived", () => {
+    // Array order *is* display order — there is no position column and no
+    // reorder affordance — so a map that re-sorted or de-duplicated would be
+    // rearranging somebody's work.
+    const maps = deriveRosterFlairMaps(ROSTER, true);
+
+    expect(maps.creations[IDS.oskar]).toEqual([CASTLE, TOWER]);
+  });
+
+  it("leaves an empty list out rather than writing it in", () => {
+    // The RPC emits `[]` where a note is null, and this is where the two
+    // absences are made to mean the same thing. Written in, every member of
+    // every group would have a key — and the key set is exactly what the owed
+    // derivation reads as "who has a creation".
+    const maps = deriveRosterFlairMaps(
+      [
+        member(IDS.siiri, { creations: [] }),
+        member(IDS.oskar, { creations: [CASTLE] }),
+      ],
+      true,
+    );
+
+    expect(Object.keys(maps.creations)).toEqual([IDS.oskar]);
+    expect(maps.creations[IDS.siiri]).toBeUndefined();
+  });
+
+  it("is untouched by the clubs-only gate", () => {
+    // The gate is the newcomer badge's alone. A creation is as real on a camp as
+    // in a club — and the requirement that made creations owed work in the first
+    // place lands on short runs.
+    const maps = deriveRosterFlairMaps(ROSTER, false);
+
+    expect(maps.newcomers).toEqual({});
+    expect(maps.creations[IDS.oskar]).toEqual([CASTLE, TOWER]);
   });
 });

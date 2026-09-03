@@ -49,12 +49,19 @@ export function Header() {
   // stripped from the client bundle and this is a client component.
   const d = useTranslations("dashboardSections");
 
-  // The storefront is a single Shop entry; every browseable product type —
-  // clubs, camps and events — is reached from within it via the in-page
-  // category selector, so the nav never grows a per-type link.
+  // Two links, identical in both auth states — the nav deliberately does not
+  // change with auth. The storefront is a single Shop entry; every browseable
+  // product type — clubs, camps and events — is reached from within it via the
+  // in-page category selector, so the nav never grows a per-type link.
+  //
+  // **Do not add a third link without redoing the per-locale width arithmetic.**
+  // A measured three-link row (About, Shop, Help) overflowed 360px in every
+  // locale but English — French by 41px — which is what retired the public Help
+  // page's nav entry rather than shrinking anything. Two links clear it in every
+  // locale, French tightest at ~6px of slack.
   const navLinks = [
+    { href: ROUTES.about, label: t("nav.about") },
     { href: ROUTES.shop, label: t("nav.shop") },
-    { href: ROUTES.help, label: t("nav.help") },
   ];
 
   const isHome = pathname === ROUTES.home;

@@ -25,6 +25,7 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
+import { resolveWebUrl } from "@/lib/navigation/web-url";
 import { decimalToCents } from "@/lib/utils";
 import type {
   CreateProductInput,
@@ -97,27 +98,18 @@ function err(
 
 /**
  * Whether a string is a link we are willing to store and later render as an
- * `href` — parseable **and** on the web.
+ * `href` — parseable **and** on the web. Both fields it guards end up as the
+ * `href` of an anchor an admin or a gedu clicks, and nothing legitimate is
+ * lost: a lesson-plan drive link is `https://`.
  *
- * The scheme check is the part doing the security work. `new URL()` alone
- * accepts `javascript:alert(1)`, `data:text/html,…` and `vbscript:…` as
- * perfectly valid URLs, and both fields it guards end up as the `href` of an
- * anchor an admin or a gedu clicks — so parseability on its own is a stored-XSS
- * hole with an extra step. Nothing legitimate is lost: a lesson-plan drive link
- * is `https://`.
- *
- * An allow-list, deliberately, rather than a block-list of the schemes we happen
- * to know are dangerous — the browser knows more schemes than we do, and the
- * next one is not going to announce itself.
+ * The predicate itself is the shared navigation helper, which is where the
+ * reasoning for the scheme allow-list lives. One copy, because "may this string
+ * become an href" is one question however many surfaces ask it — this form
+ * refuses a value on the way *in*, and the family product page runs the same
+ * test on the way *out* over a field deliberately stored without validation.
  */
 function isWebUrl(value: string): boolean {
-  let parsed: URL;
-  try {
-    parsed = new URL(value.trim());
-  } catch {
-    return false;
-  }
-  return parsed.protocol === "http:" || parsed.protocol === "https:";
+  return resolveWebUrl(value) !== null;
 }
 
 /**
@@ -530,6 +522,16 @@ function buildSharedFields(
     // cannot leave a lock behind a field nobody can see.
     region_lock_country: config.regionLockable ? state.regionLockCountry : null,
     spoken_language_code: spokenLanguageCode,
+    // Round-tripped from state on every save, the same shape the audience pair
+    // above uses and for the same reason sharpened: `update_product` assigns
+    // this column on every call and its parameter defaults to **false**, so an
+    // omitted answer would not preserve the flag — it would clear it. Sending
+    // state's answer every time, `false` included, is what makes unflagging a
+    // product something an admin did rather than something the payload forgot.
+    //
+    // Not gated by any type config: the obligation comes from a sponsor's
+    // contract, and the database has no per-type rule for a gate to mirror.
+    requires_gamer_creations: state.requiresGamerCreations,
     // The catalogue entry, on every save including the `null` that means no
     // picture — the route writes the column unconditionally, so an omission
     // and a removal would be the same request. The served path is derived from
@@ -859,6 +861,9 @@ export function existingFormState(
     regionLockCountry: isSeededCountry(product.region_lock_country)
       ? product.region_lock_country
       : null,
+    // Straight through: a NOT NULL boolean column and a boolean field, with no
+    // empty state between them to translate.
+    requiresGamerCreations: product.requires_gamer_creations,
     spokenLanguageCode: product.spoken_language_code,
     isRemote: product.is_remote,
     locationId: product.location_id,

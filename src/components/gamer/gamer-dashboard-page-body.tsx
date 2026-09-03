@@ -1,22 +1,21 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
 import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
+import { GamerHelpFaq } from "@/components/help/help-faq";
 import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type";
-import { YTY_ELEMENTS } from "@/lib/constants/yty";
 
 /**
  * The gamer dashboard's page body — everything below the route's data shell.
  *
- * The Yty grid is untouched; the session list is what
- * changed, and it changed the same way the parent's did. One card per
- * enrollment, in the same grammar, so a child and their parent are looking at
- * the same object described the same way — which matters here more than it looks
- * like it does, because the two of them are frequently looking at it *together*,
- * on one phone, working out whether tonight is a club night.
+ * One card per enrollment, in the same grammar the parent's page uses, so a
+ * child and their parent are looking at the same object described the same way
+ * — which matters here more than it looks like it does, because the two of them
+ * are frequently looking at it *together*, on one phone, working out whether
+ * tonight is a club night.
  *
  * What is different from the parent's page, and why:
  *
@@ -39,19 +38,32 @@ import { YTY_ELEMENTS } from "@/lib/constants/yty";
  *   badges are parent-only by construction. A waitlist place shows its number
  *   in the footer and offers no way to leave the queue: that is a decision
  *   with a cost, and it is not this account's to make.
+ * - **The last section is Help, and there is no Yty section.** Yty's four
+ *   elements used to be tiled here as a decorative grid that did nothing; the
+ *   feature behind it does nothing today either, and the explanation of what
+ *   Yty *is* now lives on `/about`, which a child reaches from the header on
+ *   every page. What a child on this page actually lacked was any way to ask
+ *   for help at all, so the slot the grid occupied is where that went.
  */
 export function GamerDashboardPageBody({
   firstName,
   enrollments,
+  helpForm,
 }: {
   /** The child's own first name, for the greeting. */
   firstName: string;
   /** This gamer's enrollments, already sorted soonest-session-first. */
   enrollments: readonly FamilyEnrollmentSummary[];
+  /**
+   * The ask-for-help-or-send-feedback form, in its child-facing wording. A node
+   * so the shell owns the POST behind it and a preview scene can hand over an
+   * inert one — a scene must never gain a live submit that emails every admin.
+   */
+  helpForm: React.ReactNode;
 }) {
   const t = useTranslations("gamer");
   const s = useTranslations("dashboardSections");
-  const yty = useTranslations("yty");
+  const h = useTranslations("helpSection");
 
   /**
    * The sections the page is made of: one per noun this gamer actually has, or
@@ -70,7 +82,9 @@ export function GamerDashboardPageBody({
       id: ACTIVITY_HEADING_KEY[group.type],
       label: s(ACTIVITY_HEADING_KEY[group.type]),
     })),
-    { id: "yty", label: s("yty") },
+    // Last, and at most the fourth chip: three activity nouns plus this one is
+    // the widest this bar gets, and it fits the 360px budget in every locale.
+    { id: "help", label: s("help") },
   ];
 
   return (
@@ -102,7 +116,7 @@ export function GamerDashboardPageBody({
         <DashboardSectionPill sections={sections} ariaLabel={s("pageTitle")} />
 
         {/* The type nouns are subgroups of one thing — what this gamer is signed
-            up for — so they sit close together, and Yty gets the wide gap. */}
+            up for — so they sit close together, and Help gets the wide gap. */}
         <div className="space-y-10">
           {activitySections.map((group) => (
             <section
@@ -157,38 +171,31 @@ export function GamerDashboardPageBody({
           ))}
         </div>
 
-        {/* Last section gets viewport-height min so clicking its pill can
+        {/* Help — the form and the gamer FAQ, and deliberately **no support
+            address anywhere in it**: a gamer account has no mailbox of its own,
+            and the form already resolves a reply to the linked parent. The
+            adult roles' form carries the address in its lead paragraph; the
+            child-facing copy of that same paragraph does not, which is the one
+            difference between the three sections and lives in the copy rather
+            than in a prop on the form.
+
+            The heading is written to a child while the pill chip above stays
+            the short shared word.
+
+            Last section gets viewport-height min so clicking its pill can
             actually scroll it to the top — without this the page bottoms out
             mid-scroll and the heading stays in the middle of the viewport. */}
         <section
-          id="yty"
-          aria-labelledby="yty-heading"
+          id="help"
+          aria-labelledby="help-heading"
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 id="yty-heading" className="text-3xl font-bold">
-              {s("yty")}
+            <h2 id="help-heading" className="text-3xl font-bold">
+              {h("gamerHeading")}
             </h2>
-            <div className="grid grid-cols-2 gap-4">
-              {YTY_ELEMENTS.map((el) => (
-                <Card
-                  key={el.id}
-                  className={`bg-gradient-to-br ${el.color.bgGradient}`}
-                >
-                  <CardHeader className="text-center pb-2">
-                    <el.icon className={`mx-auto h-8 w-8 ${el.color.accent}`} />
-                    <CardTitle className="text-base">
-                      {yty(`elements.${el.id}.name`)}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-center pt-0">
-                    <p className="text-xs text-muted-foreground">
-                      {yty(`elements.${el.id}.description`)}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {helpForm}
+            <GamerHelpFaq />
           </div>
         </section>
       </div>

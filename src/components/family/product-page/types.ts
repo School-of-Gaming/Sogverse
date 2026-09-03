@@ -168,6 +168,41 @@ export interface FamilyProductSite {
   publicNote: string | null;
 }
 
+/**
+ * One thing this participant made during the group's run — a published game, a
+ * project, a world — as the family reads it.
+ *
+ * **Staff-authored, family-visible, and the only such field on this page that
+ * carries a link.** The justification for the exception (the link *is* the
+ * content; a title with nothing to open is a description of something the
+ * family cannot reach) is written where the wire shape is declared, in the
+ * family feed's contracts.
+ *
+ * **The url is raw text and may be anything at all.** Staff are trusted and the
+ * column is stored without validation, so this type promises a string and not a
+ * URL: the render side parses it and builds an anchor only for http(s),
+ * degrading anything else — a `javascript:` value above all — to the title in
+ * plain text. That is why `title` is required rather than optional; it is the
+ * label the degrade path needs.
+ *
+ * **Declared here rather than imported from the feed contracts**, like every
+ * other shape in this module: the page body takes structural props so a fixture
+ * and the live query satisfy it alike, and the compiler checks the wire shape
+ * against this one where the data shell hands it over. The *rules* of a
+ * creation (the caps, the non-blank fields) are a single database CHECK and
+ * live in one place on the service side; what a component needs is two strings.
+ *
+ * **A flat list for one participant, and never a map keyed by participant** —
+ * the same type-level privacy move the attendance mark makes. Another child's
+ * work has nowhere to live on this page.
+ */
+export interface FamilyCreation {
+  /** Short staff-authored label. Always present; the degrade path's text. */
+  title: string;
+  /** Raw stored text, *expected* to be a URL and not guaranteed to be one. */
+  url: string;
+}
+
 /** One gedu, as a first-name chip. The id seeds their identicon. */
 export interface FamilyProductGedu {
   /** Real UUID — the identicon is hashed out of its hex bytes. */

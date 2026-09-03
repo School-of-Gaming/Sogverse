@@ -92,6 +92,13 @@ export const POST = defineRoute({
       // to NULL. Safe only because the contract demands the field: a caller
       // that forgot it never reaches this line.
       p_region_lock_country: body.region_lock_country ?? undefined,
+      // Unconditional, never `?? undefined`. Unlike the tag and the region lock
+      // above, clearing this flag is NOT an omission: the parameter defaults to
+      // FALSE because the column is NOT NULL, so omitting it would unflag the
+      // product silently on an edit made for some other reason. The boolean
+      // travels on every save, and the contract demands the field so it cannot
+      // fail to.
+      p_requires_gamer_creations: body.requires_gamer_creations,
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
       p_timezone: body.timezone,

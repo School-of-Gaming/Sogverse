@@ -9,12 +9,14 @@ import {
   entryCompleteness,
   entryIsComplete,
   entryNeedsAttention,
+  entryOwesCreations,
   isEditableEntry,
   isPlannableEntry,
   planDraftFromEditorState,
   planEditorStateFromEntry,
   rosterScopedMarks,
 } from "@/components/gedu/session-feed/entry-state";
+import type { CreationsObligation } from "@/components/gedu/session-feed/entry-state";
 import type {
   FutureSessionFeedEntry,
   NoRecordSessionFeedEntry,
@@ -167,6 +169,26 @@ function future(
 const BEFORE_START = new Date("2026-03-02T09:00:00.000Z");
 const MID_SESSION = new Date("2026-03-02T15:00:00.000Z");
 const AFTER_END = new Date("2026-03-02T18:00:00.000Z");
+
+/**
+ * The fourth condition's input, on a flagged run whose final session is the
+ * entry the cases below name `"final"`.
+ *
+ * `null` — no obligation — is the default everywhere else in this file and the
+ * common case in the product: an unflagged product has no creations condition at
+ * all, which is why every existing case here goes on passing untouched.
+ */
+function obligation(
+  withCreations: readonly string[],
+  finalEntryId: string | null = "final",
+): CreationsObligation {
+  return { finalEntryId, withCreations: new Set(withCreations) };
+}
+
+/** Everybody on {@link ROSTER} has supplied one. */
+const ALL_CREATED = obligation(["a", "b", "c"]);
+/** Elias has not — the case the whole condition exists for. */
+const ONE_MISSING = obligation(["a", "b"]);
 
 /**
  * Editability is **not** the epoch's business, and this is where the two
@@ -655,6 +677,165 @@ describe("countEntriesNeedingAttention", () => {
 
   it("is zero for an empty feed", () => {
     expect(countEntriesNeedingAttention([], ROSTER)).toBe(0);
+  });
+
+  it("counts the final session once, however many members owe a creation", () => {
+    // The badge's unit does not change: it counts SESSIONS needing attention.
+    // A run where nobody supplied anything is one outstanding session, not one
+    // per child — which is the property the SQL twin gets for free by attaching
+    // its fourth condition to an occurrence rather than to a member.
+    const entries: SessionFeedEntry[] = [
+      sentPast("final"),
+      sentPast("earlier"),
+    ];
+
+    expect(
+      countEntriesNeedingAttention(entries, ROSTER, obligation([])),
+    ).toBe(1);
+  });
+});
+
+/**
+ * ============================================================================
+ * The fourth condition: the final session of a run that requires creations.
+ * ============================================================================
+ *
+ * This half of the derivation has a **twin in SQL** — the gedu dashboard's
+ * assignment-summaries RPC, whose `attention_count` asks the same four questions
+ * of the same occurrence — and the two must agree or the badge counts a session
+ * the card calls finished. Every property asserted below is one the SQL side
+ * also has, and the comments name which:
+ *
+ * - it fires on **exactly one occurrence** of a run (SQL: an equality against
+ *   the final-occurrence lateral);
+ * - it is measured over the **current roster** (SQL: an EXISTS over active
+ *   participations, exactly as the attendance condition is);
+ * - an **open-ended** run never owes (SQL: the lateral answers NULL and the
+ *   equality never holds);
+ * - it never fires **before the epoch** (SQL: the occurrence set is floored
+ *   there), which on this side is the `owed` flag it sits behind.
+ */
+describe("entryOwesCreations", () => {
+  it("is false with no obligation at all — the common product", () => {
+    // An unflagged product passes `null`, and that is the whole of the flag's
+    // reach into this module: there is no second boolean to keep in step.
+    expect(entryOwesCreations(sentPast("final"), ROSTER, null)).toBe(false);
+  });
+
+  it("is false on an open-ended run, which has no final session", () => {
+    // Documented behaviour rather than an error: a consumer club with no end
+    // date can be flagged and simply never owes.
+    expect(
+      entryOwesCreations(sentPast("final"), ROSTER, obligation([], null)),
+    ).toBe(false);
+  });
+
+  it("fires on the final session only, not on the ones before it", () => {
+    expect(entryOwesCreations(sentPast("final"), ROSTER, ONE_MISSING)).toBe(
+      true,
+    );
+    expect(entryOwesCreations(sentPast("week-3"), ROSTER, ONE_MISSING)).toBe(
+      false,
+    );
+  });
+
+  it("is false once every current roster member has one", () => {
+    expect(entryOwesCreations(sentPast("final"), ROSTER, ALL_CREATED)).toBe(
+      false,
+    );
+  });
+
+  it("is measured over the current roster, so leaving clears the debt", () => {
+    // Elias is the one with nothing. Take him off the roster and the run is
+    // square — the same reading the attendance condition already makes, and the
+    // same one the SQL's EXISTS over *active* participations makes.
+    const withoutElias = ROSTER.filter((gamer) => gamer.id !== "c");
+
+    expect(entryOwesCreations(sentPast("final"), ROSTER, ONE_MISSING)).toBe(
+      true,
+    );
+    expect(
+      entryOwesCreations(sentPast("final"), withoutElias, ONE_MISSING),
+    ).toBe(false);
+  });
+
+  it("reopens when somebody joins after the final session", () => {
+    // The other direction of the same rule, and it is chosen with eyes open:
+    // nobody has yet said what this member made, so the run is not finished.
+    const grown = [...ROSTER, { id: "d", firstName: "Hilda" }];
+
+    expect(entryOwesCreations(sentPast("final"), ROSTER, ALL_CREATED)).toBe(
+      false,
+    );
+    expect(entryOwesCreations(sentPast("final"), grown, ALL_CREATED)).toBe(true);
+  });
+
+  it("owes nothing on an empty roster", () => {
+    expect(entryOwesCreations(sentPast("final"), [], obligation([]))).toBe(
+      false,
+    );
+  });
+});
+
+describe("entryCompleteness — the creations condition", () => {
+  it("holds the check back on a session that is otherwise finished", () => {
+    // Marked off, written up and sent — and still not done, because this is the
+    // last session of a run that owes a creation from everybody in it.
+    expect(entryCompleteness(sentPast("final"), ROSTER, ONE_MISSING)).toBe(
+      "needs_attention",
+    );
+    expect(entryCompleteness(sentPast("final"), ROSTER, ALL_CREATED)).toBe(
+      "complete",
+    );
+  });
+
+  it("supplying the missing creation completes the session", () => {
+    // The acceptance criterion, stated as the transition it describes: the same
+    // entry, the same roster, one more creation.
+    const entry = sentPast("final");
+
+    expect(entryNeedsAttention(entry, ROSTER, ONE_MISSING)).toBe(true);
+    expect(entryIsComplete(entry, ROSTER, ALL_CREATED)).toBe(true);
+  });
+
+  it("leaves every other session of the run alone", () => {
+    expect(entryCompleteness(sentPast("week-3"), ROSTER, ONE_MISSING)).toBe(
+      "complete",
+    );
+  });
+
+  it("does not rescue a session that is missing one of the other three", () => {
+    // The four conditions are joined by OR on the SQL side and by conjunction
+    // here; a run with every creation in still owes its register.
+    expect(
+      entryCompleteness(
+        past("final", { report: "# Last week", reportEmailedAt: EMAILED_AT }),
+        ROSTER,
+        ALL_CREATED,
+      ),
+    ).toBe("needs_attention");
+  });
+
+  it("ignores creations on a session nothing is owed for", () => {
+    // The same asymmetry the emailed test already has, and for the same reason:
+    // the SQL's occurrence set is floored at the enforcement epoch, so a
+    // pre-epoch final session is not in it. Flagging one here would strip the
+    // green check off history with no way to earn it back except by going and
+    // filling in creations for a term that finished before the platform asked.
+    expect(
+      entryCompleteness(
+        unowedPast("final", {
+          attendance: ALL_MARKED,
+          report: "# From memory",
+        }),
+        ROSTER,
+        ONE_MISSING,
+      ),
+    ).toBe("complete");
+  });
+
+  it("never flags an empty roster, creations or not", () => {
+    expect(entryCompleteness(past("final"), [], ONE_MISSING)).toBeNull();
   });
 });
 

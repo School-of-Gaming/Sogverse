@@ -20,7 +20,6 @@
       "gamerDashboard": "Mon SOG",
       "gamerDashboardDescription": "Vos clubs, stages et événements dans Sogverse",
       "voiceSession": "Session vocale",
-      "help": "Aide",
       "shop": "Boutique",
       "schools": "Clubs municipaux",
       "unlockPin": "Saisir le code PIN",
@@ -105,6 +104,8 @@
     "gedus": "Gedus"
   },
   "about": {
+    "pageTitle": "À propos",
+    "sectionNav": "Sur cette page",
     "hero": {
       "title": "À propos de <primary>School of Gaming</primary>",
       "subtitle": "Du temps d’écran au temps qui fait grandir. Nous réunissons les enfants, des animateurs professionnels et les jeux qu’ils adorent déjà — Minecraft, Roblox, Fortnite et bien d’autres — pour créer des moments où les liens se nouent, les compétences se forgent, et le plaisir est au rendez-vous."
@@ -147,6 +148,79 @@
       "heading": "Pour les parents",
       "paragraph1": "Accompagner son enfant dans le jeu vidéo, ça s’apprend aussi. Le monde du gaming évolue vite, et personne ne peut tout suivre. On est là pour ça : vous tenir au courant, vous expliquer ce qui se passe, et faire en sorte que vous vous sentiez à l’aise avec ce que vit votre enfant.",
       "paragraph2": "Côté pratique, vous gardez la main sur tout : comptes, inscriptions, dépenses. Votre enfant joue dans un environnement sécurisé, encadré par des professionnels qui s’investissent vraiment."
+    },
+    "faq": {
+      "heading": "Questions fréquentes",
+      "items": {
+        "whatIsSogverse": {
+          "question": "Qu’est-ce que Sogverse ?",
+          "answer": "<p>Sogverse est la plateforme de School of Gaming pour des clubs, des stages et des événements sur Minecraft, Roblox, Fortnite et bien d’autres jeux. Ils sont encadrés par des animateurs professionnels — les Gedus, comme tout le monde les appelle ici.</p>"
+        },
+        "productTypes": {
+          "question": "Quelle est la différence entre les clubs, les stages et les événements ?",
+          "answer": "<p>Les clubs se retrouvent selon un rythme régulier. Les stages se déroulent sur plusieurs jours pendant les vacances scolaires. Les événements sont des rendez-vous ponctuels.</p>"
+        },
+        "whoLeads": {
+          "question": "Qui encadre les séances, et comment les Gedus sont-ils vérifiés ?",
+          "answer": "<p>Chaque séance est animée par un Gedu — un animateur qui est lui-même joueur et qui sait accompagner les enfants dans le jeu comme en dehors.</p><p>Nous exigeons de chaque Gedu qu’il nous présente un extrait de casier judiciaire pour le travail auprès d’enfants avant de le certifier — le rikosrekisteriote finlandais, qu’il demande lui-même au Centre finlandais des registres judiciaires et qui doit dater de moins de six mois au moment où il nous le montre — et qu’il lise et accepte le contrat qui encadre son travail. Nous ne conservons aucune copie de l’extrait et n’en enregistrons rien, seulement qu’un extrait acceptable a été présenté et à quelle date.</p><p>S’inscrire comme Gedu n’ouvre aucun groupe en soi : tant qu’un administrateur n’a pas certifié le compte, un Gedu ne peut pas être affecté à un groupe ni utiliser les outils Gedu.</p>"
+        },
+        "safety": {
+          "question": "Des inconnus peuvent-ils parler à mon enfant, et quelque chose est-il enregistré ?",
+          "answer": "<p>Non — la salle vocale d’un club n’est pas une salle publique que n’importe qui peut trouver. Elle n’existe que pendant le créneau de la séance de ce groupe : elle ouvre cinq minutes avant le début de la séance et ferme cinq minutes après la fin, et les seules personnes qui peuvent y entrer sont les membres de ce groupe, un animateur qui travaille sur ce club et les administrateurs de School of Gaming ; cette vérification est faite par notre serveur à chaque connexion, si bien qu’un enfant sans place dans ce groupe n’a aucun moyen d’entrer.</p><p>Il n’existe aucune fonction de message privé nulle part sur la plateforme : le chat d’une séance s’adresse à toute la salle, jamais à un enfant en particulier, et il transporte des images autant que des mots. Il vit dans la salle, ouverte pendant ce même créneau — c’est là que votre enfant le lit, et une fois la salle fermée il n’y a aucun moyen de le rouvrir. Nous le conservons en revanche : les Gedus qui animent ce club et les administrateurs de School of Gaming peuvent revenir sur ce qui a été dit, et c’est précisément ce qui rend la modération possible. Supprimer un message laisse une marque à sa place plutôt que de l’effacer.</p><p>La séance elle-même n’est pas enregistrée. Rien dans l’application n’enregistre, ne transcrit ni ne stocke le son ou l’image d’une séance, et la salle ne comporte aucune commande d’enregistrement.</p><p>Seuls le Gedu et les administrateurs disposent des commandes de modération, et elles vont loin : couper un micro ou le verrouiller, éteindre une caméra ou la verrouiller, couper quelqu’un dans le chat, déplacer quelqu’un dans un espace à part, et parler à tous les espaces à la fois. Le chat dans le jeu est autre chose, géré par les jeux eux-mêmes — sur le serveur Minecraft de School of Gaming, nos Gedus peuvent couper le micro d’un joueur, l’expulser et le bannir.</p>"
+        },
+        "howToStart": {
+          "question": "Comment commencer ?",
+          "answer": "<p>Créez un compte parent, ajoutez votre enfant comme joueur depuis Mon SOG, puis parcourez la boutique et inscrivez-le — le panneau d’inscription demande à qui la place est destinée, et vous invite à ajouter un joueur si vous ne l’avez pas encore fait.</p><p>Une fois l’inscription faite, nous plaçons votre enfant dans un groupe avec un Gedu avant sa première séance, et le club apparaît ensuite sur Mon SOG pour vous deux.</p><p>Il rejoint les séances via votre compte — vous basculez vers son profil — et n’a donc jamais besoin d’un mot de passe à lui.</p>"
+        },
+        "isItASchool": {
+          "question": "Est-ce que c’est de l’école ?",
+          "answer": "<p>Non. Le jeu vidéo est un loisir comme un autre, et c’est ainsi que nous le proposons : un animateur est là pour guider et aider, pas pour noter. Rien dans Sogverse ne donne une note à un enfant, ne donne de devoirs ni n’organise d’examen.</p><p>Ce que votre enfant obtient, c’est un groupe à lui, un Gedu qui le connaît, et un compte rendu écrit après chaque séance, pour que vous voyiez ce qu’il a fait et comment cela s’est passé.</p>"
+        },
+        "ages": {
+          "question": "À quels âges cela s’adresse-t-il ?",
+          "answer": "<p>Chaque club, stage et événement a sa propre tranche d’âge, indiquée sur sa page et sur sa carte dans la boutique — et la boutique propose un filtre par âge pour vous aider à trouver ce qui convient à votre enfant. Sur l’ensemble de la plateforme, ces tranches vont de 7 à 17 ans.</p><p>Les jeux, eux, ont leurs propres classifications, et celle de chaque jeu figure sur la page du club, du stage ou de l’événement construit autour de lui. Nous ne proposons jamais de jeu classé 18+. En Finlande, nous suivons les recommandations nationales, qui permettent à un enfant de jouer à un jeu classé jusqu’à trois ans au-dessus de son âge lorsqu’un parent est présent et d’accord.</p><p>Où que vous soyez, la classification du jeu et la tranche d’âge de l’activité figurent toutes deux sur la page avant l’inscription, et en inscrivant votre enfant, vous confirmez qu’elles vous conviennent.</p>"
+        },
+        "games": {
+          "question": "Quels jeux proposez-vous, et mon enfant doit-il posséder le jeu ?",
+          "answer": "<p>Nos clubs, stages et événements se déroulent sur Minecraft (éditions Java, Bedrock et Education), Roblox Studio, Fortnite, Rocket League et Pokémon GO, aux côtés de séances consacrées à l’esport, à la programmation, à l’IA et à la création de jeux — la page de chaque club, stage et événement nomme le jeu autour duquel il est construit et dit clairement ce dont vous avez besoin.</p><p>Fortnite, Rocket League, Pokémon GO et Roblox Studio sont gratuits à télécharger ; votre enfant a besoin d’un compte gratuit pour y jouer.</p><p>Minecraft Java et Minecraft Bedrock sont des jeux payants que votre famille achète une fois auprès de l’éditeur — le prix n’est pas compris dans le nôtre, et l’édition compte, donc la page vous dit laquelle et où l’obtenir. Pour Minecraft Education, il n’y a rien à acheter ni de compte scolaire à préparer : School of Gaming fournit les comptes utilisés pendant la séance, et votre enfant télécharge seulement le jeu, gratuitement.</p>"
+        },
+        "equipment": {
+          "question": "De quel matériel mon enfant a-t-il besoin ?",
+          "answer": "<p>Cela dépend du jeu, et chaque club, stage et événement le précise sur sa propre page.</p><p>Minecraft Java demande un ordinateur — Windows, Mac ou Linux — et l’édition console, téléphone et tablette ne fonctionnera pas. Roblox Studio tourne uniquement sur PC Windows et sur Mac : ni tablette, ni Chromebook, ni téléphone, ni console. Minecraft Bedrock tourne sur consoles, téléphones, tablettes et PC Windows, et Rocket League sur PC Windows, PlayStation, Xbox et Nintendo Switch. Pokémon GO demande un téléphone ou une tablette avec GPS et connexion mobile, puisqu’on y joue dehors.</p><p>Les séances en ligne, elles, se déroulent dans le navigateur, en audio : votre enfant a donc aussi besoin d’un micro — l’écran de séance propose un sélecteur de micro et une barre de test en direct, pour qu’il vérifie que c’est bien le bon avant de parler.</p>"
+        },
+        "billing": {
+          "question": "Combien cela coûte-t-il, et comment fonctionne la facturation ?",
+          "answer": "<p>Les prix sont fixés par club, stage et événement, et chacun affiche son propre prix sur sa page, en euros et TTC.</p><p>Le mode de paiement dépend de ce à quoi vous inscrivez votre enfant : un club est un abonnement mensuel, facturé chaque mois sans engagement ; un stage ou un événement est un paiement unique effectué à l’inscription, sans rien de plus à régler ; et un club municipal est payé par la commune, il n’y a donc rien à nous verser. La place de chaque enfant dans chaque club est un abonnement mensuel distinct, au nom de l’enfant et du club : une famille avec deux enfants dans deux clubs voit donc quatre lignes. Si vous inscrivez votre enfant avant le début d’un club, rien n’est prélevé ce jour-là : la page vous indique la date de votre premier paiement avant que vous ne vous engagiez.</p><p>Vos cartes enregistrées, vos factures et vos abonnements se trouvent tous dans la carte Paiement et facturation de Mon SOG, qui ouvre la page de facturation sécurisée de Stripe.</p>"
+        },
+        "cancellation": {
+          "question": "Puis-je résilier, et quelle est votre politique de remboursement ?",
+          "answer": "<p>Un club fonctionne comme un abonnement mensuel sans engagement, et vous pouvez le résilier quand vous le souhaitez, sans frais, depuis la carte Paiement et facturation de Mon SOG, qui ouvre la page de facturation sécurisée de Stripe. Votre enfant garde sa place jusqu’à la fin de la période déjà payée — la page du club indique la date de sa dernière séance pendant que l’adhésion se termine.</p><p>Chaque club est également couvert par une garantie satisfait ou remboursé de 30 jours : si le club ne convient finalement pas à votre enfant, écrivez à {supportEmail} dans les 30 jours suivant sa première séance et nous vous remboursons tout ce que vous avez versé pour ce club — sans formulaire et sans justification à donner.</p><p>Les stages, eux, se réservent et se paient en une fois, et fonctionnent donc autrement : une annulation 14 jours ou plus avant le début du stage donne droit à un remboursement intégral ; entre 7 et 14 jours avant, nous remboursons déduction faite de 50 € de frais de dossier ; à moins de 7 jours, nous ne pouvons pas rembourser, car la place a été réservée et préparée pour votre enfant — sauf urgence médicale ou circonstance réellement indépendante de votre volonté. Si votre enfant ne peut pas venir pour cause de maladie, envoyez-nous un certificat médical à {supportEmail} et nous vous remboursons.</p>"
+        },
+        "severalChildren": {
+          "question": "J’ai plusieurs enfants — comment fonctionnent les comptes et les paiements ?",
+          "answer": "<p>Vous avez un seul compte parent, et vous créez un compte joueur pour chaque enfant depuis Mon SOG — prénom, mois et année de naissance, et éventuellement le genre. Un enfant ne crée jamais de compte lui-même, et votre compte peut accueillir jusqu’à sept joueurs.</p><p>Les paiements, c’est vous qui les gérez : la place de chaque enfant dans chaque club est une ligne distincte, que vous pouvez donc consulter et résilier séparément, et vous les retrouvez toutes depuis la carte Paiement et facturation de Mon SOG.</p><p>Il n’y a pas de forfait famille à acheter ni de compte séparé à créer pour chaque enfant.</p>"
+        },
+        "languages": {
+          "question": "Dans quelle langue les séances se déroulent-elles ?",
+          "answer": "<p>Ce sont deux réglages différents, et ils n’ont pas à coïncider.</p><p>Chaque club, stage et événement se déroule dans une seule langue — finnois, suédois, anglais ou français — indiquée sur sa page et utilisable comme filtre dans la boutique.</p><p>Séparément, la langue dans laquelle vous lisez Sogverse est votre propre choix, depuis le sélecteur dans l’en-tête du site. La changer change l’application, pas la langue dans laquelle se déroulent les séances de votre enfant : un parent finnophone peut donc lire le site en finnois et inscrire son enfant dans un club en anglais.</p>"
+        },
+        "municipalityClubs": {
+          "question": "Qu’est-ce qu’un club municipal, et comment le rejoindre ?",
+          "answer": "<p>Un club municipal est un club que nous menons avec une commune finlandaise. Selon la commune, il se retrouve soit en ligne depuis la maison, soit sur place dans l’école de votre enfant, et un animateur professionnel l’encadre dans les deux cas.</p><p>C’est la commune qui le finance : il n’y a donc rien à nous verser au moment de l’inscription — certaines communes demandent aux familles une petite participation, dont elles vous informeront. Vous n’avez besoin ni de code ni de recommandation : cherchez votre commune sur notre page des clubs municipaux et, si nous y sommes présents, ses clubs y sont listés et vous inscrivez votre enfant directement, sans étape de paiement.</p><p>Les places sont limitées et les clubs ont souvent une liste d’attente : si votre enfant arrête de venir, dites-le-nous pour que sa place puisse être proposée au joueur suivant. Nous menons aussi des clubs ouverts à tous, qu’un joueur peut rejoindre où qu’il habite.</p>"
+        },
+        "gamerAccounts": {
+          "question": "Comment mon enfant se connecte-t-il, et qu’est-ce que le code PIN parent ?",
+          "answer": "<p>Votre enfant n’a pas d’identifiants à lui. Un compte joueur porte une adresse interne Sogverse plutôt que la véritable adresse e-mail de votre enfant, il est rattaché à votre compte parent, et votre enfant entre dans Sogverse en basculant vers son profil depuis le vôtre — il n’a donc aucun mot de passe à perdre ou à partager.</p><p>Pour accéder au côté parent, il faut un code PIN à quatre chiffres que vous seul connaissez : un mot de passe enregistré dans le navigateur ne suffit donc pas à acheter quoi que ce soit ni à modifier le compte d’un enfant, et la session se reverrouille dès que vous basculez vers le profil d’un enfant ou que vous vous déconnectez.</p><p>Si vous oubliez le code PIN, nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs — un enfant qui appuie sur « Vous avez oublié votre code PIN ? » vous envoie simplement un e-mail.</p>"
+        },
+        "childData": {
+          "question": "Que conservez-vous au sujet de mon enfant ?",
+          "answer": "<p>Au sujet de votre enfant :</p><list><item>Son prénom, son mois et son année de naissance — nous ne demandons pas le jour — et éventuellement son genre.</item><item>Votre nom de famille, puisque votre enfant fait partie de votre famille. Il n’est montré à personne hors de votre famille : la liste du groupe côté Gedu et la salle vocale affichent son prénom, son âge et tout pseudo de jeu que vous avez ajouté.</item><item>Une adresse interne Sogverse sur son compte, plutôt qu’une véritable adresse e-mail.</item><item>Éventuellement son pseudo dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant que ce jeu lui attribue, afin de le reconnaître pendant une séance. L’image de son personnage est chargée depuis les serveurs du jeu, si bien que le pseudo parvient à Minecraft ou à Roblox chaque fois qu’une liste est affichée.</item><item>Une photo de profil qui n’en est pas une : sans compte de jeu lié, l’image à côté de son nom est un motif généré à partir de l’identifiant de son compte.</item></list><p>À cela s’ajoute ce que faire tourner un club exige : les clubs, stages et événements auxquels il est inscrit, ses présences, les comptes rendus de séance et les courtes notes internes que ses Gedus rédigent, le chat de ses séances et les images qui y sont postées, ce qu’il réalise et qu’un Gedu rattache à son groupe, les consentements enregistrés pour sa place, et les photos qu’un Gedu joint à un compte rendu. La modération d’un Gedu est également consignée — un enfant déplacé dans un espace à part, ou coupé dans le chat, en laisse une trace. Les photos du compte rendu sont celles de la séance et non celles d’un enfant en particulier — toutes les familles du groupe les voient sur la page du groupe et les reçoivent par e-mail avec le compte rendu.</p><p>Pour consulter, corriger ou supprimer ce que nous conservons au sujet de votre enfant, écrivez à {supportEmail}. Nous conservons vos informations tant que vous avez un compte et les supprimons ou les anonymisons si vous le fermez, sauf lorsque la loi nous impose de garder certains registres plus longtemps, comme le fait la loi comptable finlandaise pour les données de paiement.</p>"
+        },
+        "becomeGedu": {
+          "question": "Comment devenir animateur ?",
+          "answer": "<p>Créez un compte Gedu sur notre page d’inscription des animateurs : elle demande votre nom et votre e-mail, un mot de passe, et éventuellement votre numéro de téléphone, les langues que vous parlez, les zones où vous pouvez animer sur place, et votre pseudo Minecraft ou Roblox. Vous pouvez vous connecter immédiatement.</p><p>Avant qu’un administrateur ne certifie votre compte, nous vous demandons deux choses : lire et accepter le contrat qui encadrerait votre travail, et nous présenter un extrait de casier judiciaire pour le travail auprès d’enfants (rikosrekisteriote), que vous demandez vous-même au Centre finlandais des registres judiciaires et qui doit dater de moins de six mois — nous n’en conservons aucune copie.</p><p>C’est la certification qui ouvre le reste : jusque-là, vous ne pouvez pas être affecté à un groupe ni utiliser les outils Gedu.</p>"
+        }
+      }
     }
   },
   "admin": {
@@ -331,6 +405,10 @@
           "free": "Gratuit",
           "external_contract": "Contrat externe (commune)"
         },
+        "requiresGamerCreations": {
+          "required": "Obligatoire",
+          "notRequired": "Non obligatoire"
+        },
         "fields": {
           "publicUrl": "Lien public",
           "topic": "Thème",
@@ -351,6 +429,7 @@
           "tag": "Conçu pour",
           "regionLock": "Restriction par pays",
           "requiredConsents": "Consentements obligatoires",
+          "requiresGamerCreations": "Créations des joueurs",
           "visibility": "Visibilité"
         },
         "copyLink": "Copier le lien public",
@@ -406,6 +485,7 @@
         "longDescription": "Description longue",
         "topic": "Thème",
         "materialUrl": "URL du matériel pédagogique",
+        "requiresGamerCreations": "Chaque joueur doit avoir un lien vers sa création",
         "seatAudience": "Qui peut occuper une place",
         "tag": "Conçu pour",
         "regionLock": "Restriction par pays",
@@ -540,6 +620,7 @@
         "longDescription": "Facultatif. La présentation complète, affichée uniquement sur la page de détail du produit. Titres, listes, mises en valeur et liens sont disponibles.",
         "topicHint": "Ce dont parle ce produit. Les familles le voient comme filtre « Univers » dans la boutique et sur la carte d’info de la page produit.",
         "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
+        "requiresGamerCreationsHint": "Pour les produits dont un contrat l’exige. La dernière séance reste signalée comme nécessitant une action tant que chaque joueur du groupe n’a pas de création enregistrée. Les familles ne voient aucune différence.",
         "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son joueur participent ensemble — la boutique l'affiche « Pour les familles ».",
         "forGamersHint": "Un parent inscrit son joueur et le joueur occupe la place. Nécessite une tranche d’âge.",
         "forParentsHint": "Un parent occupe une place pour lui-même et y participe. Pas de tranche d’âge — l’âge décrit les enfants, pas les adultes.",
@@ -1244,20 +1325,6 @@
       }
     }
   },
-  "feedback": {
-    "title": "Retours",
-    "subtitle": "Partagez votre avis avec nous",
-    "sendFeedback": "Envoyer un retour",
-    "feedbackDescription": "Nous serions ravis de recevoir vos retours, suggestions ou signalements de bugs.",
-    "gamerReplyNote": "Ton Gedu pourra en reparler avec toi lors de ta prochaine session.",
-    "message": "Message",
-    "placeholder": "Partagez votre avis, vos suggestions, ou signalez un bug...",
-    "charactersNeeded": "Encore {count} caractères requis",
-    "submitFeedback": "Envoyer le retour",
-    "thankYou": "Merci pour votre retour ! Nous vous sommes reconnaissants d’avoir pris le temps de partager votre avis.",
-    "failedToSubmit": "Échec de l’envoi du retour.",
-    "failedToSubmitRetry": "Échec de l’envoi du retour. Veuillez réessayer."
-  },
   "dashboardSections": {
     "pageTitle": "Mon SOG",
     "myGamers": "Mes joueurs",
@@ -1268,9 +1335,33 @@
     "myGroupsEmptyStateGedu": "Dès qu’un groupe vous est attribué, il apparaîtra ici avec sa prochaine séance.",
     "billing": "Facturation",
     "help": "Aide",
-    "yty": "Yty",
     "tools": "Outils",
     "loadingAssignments": "Chargement de vos clubs, stages et événements."
+  },
+  "helpSection": {
+    "heading": "Aide et retours",
+    "gamerHeading": "Besoin d’aide ?",
+    "faqHeading": "Questions fréquentes",
+    "form": {
+      "messageLabel": "Message",
+      "charactersNeeded": "Encore {count} caractères requis",
+      "submit": "Envoyer le message",
+      "adult": {
+        "description": "Demandez-nous de l’aide, ou envoyez-nous une suggestion ou un signalement de bug — chaque message arrive à l’équipe School of Gaming. Nous vous aidons volontiers, du choix du bon club aux questions sur la façon dont tout cela fonctionne, ou vous pouvez nous écrire à <link>{email}</link>.",
+        "placeholder": "Comment pouvons-nous vous aider ?",
+        "thankYou": "Merci — votre message nous est bien parvenu, et nous sommes contents que vous nous ayez écrit.",
+        "failed": "Nous n’avons pas pu envoyer votre message. Veuillez réessayer.",
+        "tooManyRequests": "Vous nous avez déjà envoyé plusieurs messages. Veuillez réessayer un peu plus tard."
+      },
+      "gamer": {
+        "description": "Tu bloques sur quelque chose, ou tu as une idée pour nous ? Écris-la ici, on la lira.",
+        "replyNote": "Ton Gedu pourra en reparler avec toi lors de ta prochaine session.",
+        "placeholder": "Sur quoi as-tu besoin d’aide ?",
+        "thankYou": "Merci — on a bien reçu ton message.",
+        "failed": "Nous n’avons pas pu envoyer ton message. Réessaie.",
+        "tooManyRequests": "Tu nous as déjà envoyé plusieurs messages. Réessaie un peu plus tard."
+      }
+    }
   },
   "family": {
     "addGamer": "Ajouter un joueur",
@@ -1322,6 +1413,8 @@
     "siteLabel": "Où",
     "aboutHeading": "À propos du groupe",
     "siteNoteHeading": "À {site}",
+    "creationsHeading": "{count, plural, one {Création} other {Créations}}",
+    "creationOpensInNewTab": "(s’ouvre dans un nouvel onglet)",
     "feedHeading": "Séances",
     "attendancePresent": "Présent",
     "attendanceNotPresent": "Pas présent",
@@ -1335,7 +1428,10 @@
     "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}.",
     "loadingPage": "Chargement des séances de ce groupe.",
     "notFoundTitle": "Rien à afficher ici",
-    "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Mon SOG rassemble toutes vos inscriptions."
+    "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Mon SOG rassemble toutes vos inscriptions.",
+    "creationsIntro": "{count, plural, one {Quand {name} termine quelque chose dans ce groupe — un jeu, un monde, un projet — son Gedu en met le lien ici, pour que vous voyiez ce que tout ce temps de jeu a produit. Ouvrez-le ensemble et laissez {name} vous faire visiter.} other {Quand {name} termine quelque chose dans ce groupe — un jeu, un monde, un projet — son Gedu en met le lien ici, pour que vous voyiez ce que tout ce temps de jeu a produit. Ouvrez-les ensemble et laissez {name} vous faire visiter.}}",
+    "creationsIntroSelf": "{count, plural, one {Quand vous terminez quelque chose dans ce groupe, votre Gedu en met le lien ici — du travail achevé, qui mérite qu’on y revienne et qu’on le partage.} other {Quand vous terminez quelque chose dans ce groupe, votre Gedu en met le lien ici — du travail achevé, qui mérite qu’on y revienne et qu’on le partage.}}",
+    "creationsIntroGamer": "{count, plural, one {Quand tu termines quelque chose dans ce groupe, ton Gedu en met le lien ici — pour que tu puisses y revenir et le montrer. C’est toi qui as fait ça.} other {Quand tu termines quelque chose dans ce groupe, ton Gedu en met le lien ici — pour que tu puisses y revenir et les montrer. C’est toi qui as fait tout ça.}}"
   },
   "selectProfile": {
     "title": "Qui entre dans Sogverse ?"
@@ -1354,7 +1450,27 @@
     "welcomeNamed": "Bienvenue, {name} !",
     "fallbackName": "joueur",
     "subtitle": "Envie de jouer et d’apprendre ?",
-    "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les stages avec toi, et choisissez-en un ensemble."
+    "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les stages avec toi, et choisissez-en un ensemble.",
+    "helpFaq": {
+      "items": {
+        "joiningSession": {
+          "question": "Comment je rejoins ma séance quand elle commence ?",
+          "answer": "<p>Voilà comment ça se passe :</p><steps><step>Ouvre Mon SOG et retrouve ton club.</step><step>Regarde le bouton dessus. Jusqu’à peu avant ta séance, il reste verrouillé et t’indique le jour et l’heure d’ouverture.</step><step>Cinq minutes avant le début de ta séance, ce bouton devient « Rejoindre la salle vocale ».</step><step>Appuie dessus. Tu y es.</step></steps><p>Il n’y a rien à installer et aucun code à taper.</p><p>Si ton club dit plutôt que tu es inscrit et que nous te cherchons un Gedu et un groupe, il n’y a pas encore de bouton dessus. Tu es bien inscrit — nous ne t’avons simplement pas encore mis dans un groupe. Cela arrive avant ta première séance, et ton Gedu sera là le moment venu.</p>"
+        },
+        "cannotBeHeard": {
+          "question": "Personne ne m’entend — qu’est-ce que je vérifie ?",
+          "answer": "<p>Vérifie ceci dans l’ordre. C’est presque toujours le premier point.</p><steps><step>Ton bouton de micro est-il rouge ? C’est que tu es coupé. Appuie dessus pour réactiver le micro.</step><step>Le bouton affiche-t-il un cadenas ? Ton Gedu a verrouillé ton micro un moment. Il le déverrouillera.</step><step>Appuie sur la petite flèche à côté du bouton de micro. Elle ouvre les paramètres du micro, où tu peux choisir le bon micro dans la liste.</step><step>Parle maintenant, et cherche la barre sous la liste. S’il n’y a aucune barre, ton micro est éteint et non pas silencieux — reviens à l’étape 1. Si la barre est là mais ne bouge jamais, autre chose sur ton appareil occupe ton micro.</step></steps><p>Si tu vois un message rouge disant que nous n’arrivons pas à joindre ton micro : ferme les autres applications et onglets qui l’utilisent, autorise le micro dans les paramètres de ton navigateur, puis appuie sur Recharger.</p><p>Toujours rien ? Dis-le à ton Gedu pendant la séance — il peut t’aider.</p>"
+        },
+        "cannotHearOthers": {
+          "question": "Je n’entends personne — qu’est-ce que je vérifie ?",
+          "answer": "<p>Vérifie ceci dans l’ordre :</p><steps><step>Monte le volume de ton appareil et vérifie que ton casque est bien branché.</step><step>Regarde les zones. Tu n’entends que les personnes dans la même zone que toi : si tout le monde est ailleurs, appuie sur leur zone pour les rejoindre.</step><step>Si ton Gedu t’a déplacé dans une zone exprès, reste là. Il viendra te rechercher.</step></steps><p>Si les autres sont dans ta zone, que le volume est monté et que c’est toujours silencieux, dis-le à ton Gedu — à voix haute, ou écris-le dans le chat si ta salle en a un. Il voit qui est dans la salle et peut t’aider.</p>"
+        },
+        "someoneIsMean": {
+          "question": "Et si quelqu’un est méchant avec moi pendant une séance ?",
+          "answer": "<p>Dis-le à ton Gedu ou à un parent. Tu n’as jamais à gérer la méchanceté tout seul, et le dire à un adulte, ce n’est pas rapporter.</p><p>Ton Gedu le prendra toujours au sérieux et t’aidera à tirer au clair ce qui s’est passé. Être méchant avec les autres ou enfreindre les règles du club a des conséquences. Tout le monde a le droit de se sentir en sécurité et bienvenu dans le club.</p>"
+        }
+      }
+    }
   },
   "gedu": {
     "coverage": {
@@ -1445,7 +1561,12 @@
       "photoErrorCapReached": "Ce compte rendu est déjà complet. Supprimez une photo pour en ajouter une autre.",
       "photoErrorNotAllowed": "Vous ne pouvez pas ajouter de photos à cette séance.",
       "photoErrorUploadFailed": "Cette photo n’a pas été envoyée. Réessayez.",
-      "photoErrorRemoveFailed": "Cette photo n’a pas pu être supprimée. Elle est toujours sur le compte rendu : réessayez."
+      "photoErrorRemoveFailed": "Cette photo n’a pas pu être supprimée. Elle est toujours sur le compte rendu : réessayez.",
+      "creationsTitle": "Créations",
+      "creationsAddedCount": "{added} sur {total} ajoutées",
+      "creationsHint": "C’est la dernière séance du cycle, et elle n’est terminée que lorsque chacun a une création. Ouvrez un nom pour en ajouter une.",
+      "creationsMemberDone": "{name} — création ajoutée",
+      "creationsMemberMissing": "{name} — création manquante"
     },
     "groupNotes": {
       "heading": "À propos du groupe",
@@ -1532,6 +1653,34 @@
         "body": "Avant de pouvoir être certifié, vous présentez un extrait de casier judiciaire pour le travail auprès d’enfants. Vous le demandez vous-même au Centre finlandais des registres judiciaires.",
         "action": "Voir comment faire"
       }
+    },
+    "helpFaq": {
+      "items": {
+        "certification": {
+          "question": "Que signifie la certification, et que ne puis-je pas faire avant ?",
+          "answer": "<p>La certification, c’est un administrateur qui confirme que votre compte est prêt pour travailler auprès d’enfants. Deux choses la précèdent : accepter votre contrat de Gedu, et présenter un extrait de casier judiciaire pour le travail auprès d’enfants (rikosrekisteriote) datant de moins de six mois. Vous demandez cet extrait vous-même au Centre finlandais des registres judiciaires. Nous n’en conservons aucune copie et n’en enregistrons rien — seulement qu’un extrait acceptable a été présenté, et à quelle date. Votre page de contrat indique où en sont l’un et l’autre.</p><p>Tant que vous n’êtes pas certifié, vous ne pouvez pas être affecté à un groupe, et votre section Outils reste fermée : vous ne pouvez pas ouvrir de salle vocale immédiate, ni réinitialiser des mots de passe Minecraft Education. Vous ne pouvez pas non plus envoyer un compte rendu de séance aux familles par e-mail, ni y ajouter des photos.</p><p>Tout le reste est ouvert dès maintenant : la connexion, Mon SOG, votre profil et vos zones d’intervention, et la lecture et l’acceptation du contrat. Aide et retours reste accessible que vous soyez certifié ou non — utilisez le formulaire ci-dessus si vous attendez et souhaitez savoir où vous en êtes.</p>"
+        },
+        "groupAssignment": {
+          "question": "Comment suis-je affecté à un groupe ?",
+          "answer": "<p>C’est un administrateur qui vous affecte. Les affectations se font depuis le panneau des groupes d’un club, d’un stage ou d’un événement, côté administration — vous ne pouvez pas vous affecter vous-même, et il n’y a aucune demande à envoyer — et vous pouvez avoir un groupe par club, stage ou événement.</p><p>Deux choses déterminent si vous apparaissez parmi les options : votre compte doit être certifié, et l’administrateur qui choisit un Gedu voit les langues que vous parlez à côté de votre nom et peut filtrer dessus. Tenir à jour vos langues parlées dans vos paramètres est donc ce qui vous met devant les bons groupes. Vos zones d’intervention servent à autre chose — vous trouver comme remplaçant quand un autre Gedu ne peut pas assurer une séance — elles méritent donc aussi d’être à jour.</p><p>Aucun e-mail n’est envoyé lors d’une affectation — le groupe et sa prochaine séance apparaissent sur votre Mon SOG la fois suivante où vous l’ouvrez.</p>"
+        },
+        "takingAttendance": {
+          "question": "Comment relever les présences ?",
+          "answer": "<p>Depuis votre Mon SOG :</p><steps><step>Ouvrez le club, le stage ou l’événement que vous animez. Toutes ses séances sont listées sur sa page.</step><step>Repérez la séance et appuyez sur Modifier.</step><step>Les présences arrivent en premier dans l’éditeur : une ligne par joueur, chacune avec Présent et Absent.</step><step>Renseignez chaque joueur de la liste, puis appuyez sur Enregistrer.</step></steps><p>Une ligne commence non renseignée, et non renseigné est un véritable troisième état, pas un « absent » silencieux. Appuyer sur une réponse déjà choisie l’efface, donc une erreur de doigt ne coûte rien, et le compteur au-dessus de la liste indique combien du groupe vous avez déjà renseigné.</p><p>Vous pouvez enregistrer une liste à moitié remplie et la terminer plus tard — rien de ce que vous avez déjà renseigné n’est perdu. Il n’y a délibérément pas de « tout marquer présent » : le relevé est aussi votre confirmation que la séance a eu lieu, et c’est sur lui que vous êtes payé. L’enregistrer ne termine pourtant pas la séance à lui seul — le compte rendu et son envoi aux familles sont le reste.</p>"
+        },
+        "attendanceAlert": {
+          "question": "Pourquoi mon club affiche-t-il encore une marque jaune « à traiter » ?",
+          "answer": "<p>Parce qu’il manque encore quelque chose à cette séance. Quand une séance terminée est signalée, il s’agit de l’un de ces quatre points :</p><steps><step>Chaque joueur de la liste actuelle du groupe est renseigné, présent ou absent.</step><step>Un compte rendu de séance a été rédigé. Le texte que vous avez écrit à l’avance dans le plan en tient lieu, alors reprenez-le pour dire ce qui s’est réellement passé.</step><step>Ce compte rendu a été envoyé aux familles.</step><step>Sur la dernière séance d’un cycle qui exige des créations, chaque membre en a une.</step></steps><p>Le premier point est de loin la raison la plus fréquente. Renseigner ceux qui sont venus ne fait que la moitié du relevé — ceux qui ne sont pas venus doivent être marqués Absent, sinon leurs lignes restent vides et la séance reste signalée.</p><p>Une autre chose rouvre une séance que vous aviez déjà terminée : un joueur qui rejoint le groupe après coup. Personne n’a encore dit s’il était là, donc sa ligne revient non renseignée et vous attend.</p>"
+        },
+        "safeguardingConcern": {
+          "question": "J’ai une inquiétude pour la protection d’un enfant en pleine séance — que faire ?",
+          "answer": "<p>Traitez d’abord la situation immédiate dans la salle — vous disposez des commandes de modération : couper un micro, le verrouiller, ou déplacer quelqu’un dans un espace privé à l’écart du groupe. Ensuite, consignez-le le jour même, tant que c’est frais.</p><p>Chaque séance dispose d’une note interne, réservée aux Gedus et aux administrateurs, que les familles ne voient jamais ; c’est là que doivent figurer un incident, du harcèlement ou une inquiétude au sujet d’un joueur. Il existe aussi une note par joueur sur la liste du groupe, qui suit cet enfant dans ce groupe, de séance en séance, et qui est elle aussi réservée aux Gedus et aux administrateurs. Ni l’une ni l’autre n’est visible par une famille.</p><p>Une note est une consignation, pas une alerte : personne n’est prévenu par elle, donc tout ce qui est urgent, ou tout ce qui demande quelqu’un au-delà du groupe, part également au bureau à {supportEmail}.</p>"
+        },
+        "gamerCannotConnect": {
+          "question": "Un joueur n’arrive pas à se connecter et la séance a commencé — que puis-je faire ?",
+          "answer": "<p>Deux choses que vous pouvez faire dans le produit, et une que vous ne pouvez pas.</p><p>Comparez qui est réellement dans la salle avec votre liste de groupe — la liste des participants n’affiche que les personnes connectées à cet instant, donc un nom qui en est absent est un joueur qui n’a pas réussi à entrer, et rien ne vous le signale ; c’est vous qui le lisez dans la liste.</p><p>Pour joindre la famille, ouvrez la liste du groupe dans l’espace de groupe : chaque ligne porte l’e-mail de contact de la famille, que vous copiez d’un appui, et une commande au-dessus de la liste permet de tout copier. Vous écrivez depuis votre propre messagerie — il n’y a pas de message vers une famille dans l’application, pas de SMS, et pas de numéro de téléphone sur la liste.</p><p>Ce que vous ne pouvez pas faire, c’est le faire entrer vous-même : l’entrée est décidée par notre serveur, à la demande du joueur, et il lui faut une place active dans ce groupe avec le créneau de la séance ouvert. S’il a bien une place et n’arrive toujours pas à entrer, la solution la plus rapide est en général de son côté — autoriser le micro dans le navigateur, fermer ce qui l’utilise, recharger. Si c’est quelque chose que nous devons corriger, écrivez au bureau à {supportEmail}.</p>"
+        }
+      }
     }
   },
   "productType": {
@@ -1570,11 +1719,22 @@
   "memberFlair": {
     "newcomer": "Nouveau",
     "newcomerTooltip": "Nouveau dans ce groupe — {days, plural, =0 {aujourd’hui} one {il y a # jour} other {il y a # jours}}",
-    "openNote": "Note pour les Gedus au sujet de {name}",
-    "noteTitle": "Note au sujet de {name}",
-    "notePrivacy": "Cette note est visible uniquement par les Gedus et les admins. Elle reste attachée à ce groupe, d’une séance à l’autre.",
+    "openMember": "Note et création au sujet de {name}",
+    "openMemberCreationOwed": "Note et création au sujet de {name} — une création manque encore",
+    "memberTitle": "À propos de {name}",
+    "noteAudience": "Gedus et admins",
+    "noteLabel": "Note privée",
+    "noteHint": "Visible uniquement par les Gedus et les admins. Elle reste attachée à ce groupe, d’une séance à l’autre.",
     "notePlaceholder": "Notes au sujet de {name} dans ce groupe.",
-    "noteLastEdited": "Dernière modification par {name}"
+    "noteLastEdited": "Dernière modification par {name}",
+    "creationAudience": "Visible par les familles",
+    "creationLabel": "Création",
+    "creationHint": "Quelque chose que {name} a réalisé dans ce groupe. Sa famille le voit sur sa propre page.",
+    "creationTitleLabel": "Titre de la création",
+    "creationTitlePlaceholder": "Ce qui a été réalisé",
+    "creationUrlLabel": "Lien de la création",
+    "creationUrlPlaceholder": "Lien vers la création",
+    "creationIncomplete": "Une création a besoin d’un titre et d’un lien."
   },
   "richText": {
     "bold": "Gras",
@@ -1593,49 +1753,14 @@
   },
   "header": {
     "nav": {
-      "home": "Accueil",
       "shop": "Boutique",
-      "help": "Aide",
       "yty": "Yty",
-      "about": "À propos"
+      "about": "À propos",
+      "faq": "FAQ"
     },
     "accountMenu": "Menu du compte – {name}",
     "continueToAccount": "Continuer vers votre compte",
     "switchTo": "Changer de profil"
-  },
-  "help": {
-    "title": "Aide",
-    "intro": "Réponses aux questions fréquentes sur School of Gaming.",
-    "contact": {
-      "heading": "Besoin d’un coup de main ?",
-      "body": "Écrivez-nous quand vous voulez — nous sommes ravis de vous aider, du choix du bon club aux questions sur le fonctionnement de School of Gaming.",
-      "emailLabel": "Écrivez-nous à"
-    },
-    "faq": {
-      "heading": "Questions fréquentes",
-      "items": {
-        "whatIsSogverse": {
-          "q": "Qu’est-ce que Sogverse ?",
-          "a": "Sogverse est la plateforme de School of Gaming dédiée aux clubs, stages et événements encadrés par des animateurs professionnels, sur Minecraft, Roblox, Fortnite et bien d’autres. Du temps d’écran au temps qui fait grandir."
-        },
-        "productTypes": {
-          "q": "Quelle est la différence entre les clubs, les stages et les événements ?",
-          "a": "Les clubs se retrouvent selon un rythme régulier. Les stages se déroulent sur plusieurs jours pendant les vacances scolaires. Les événements sont des rendez-vous ponctuels."
-        },
-        "whoLeads": {
-          "q": "Qui anime les sessions ?",
-          "a": "Chaque session est animée par un Gedu — un animateur de jeu qui est lui-même joueur et sait accompagner les enfants dans le jeu comme en dehors."
-        },
-        "safety": {
-          "q": "Est-ce sans danger pour mon enfant ?",
-          "a": "C’est ainsi qu’il a été conçu. La plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés. Le chat dans les jeux est une autre affaire, géré par les jeux eux-mêmes — sur notre propre serveur Minecraft, nos Gedus disposent d’outils de modération, dont la mise en sourdine et le signalement. Un compte joueur porte une adresse interne Sogverse plutôt que le véritable e-mail de votre enfant, il est rattaché à votre compte parent, et votre enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Les achats et les inscriptions demandent votre code PIN parent. Et nous appliquons une tolérance zéro face au harcèlement."
-        },
-        "howToStart": {
-          "q": "Comment commencer ?",
-          "a": "Créez un compte parent, parcourez notre offre et inscrivez votre enfant. Pour les sessions, il se connecte via votre compte : vous basculez sur son profil, il n’a donc jamais besoin d’un mot de passe à lui."
-        }
-      }
-    }
   },
   "schools": {
     "hero": {
@@ -1936,7 +2061,8 @@
   "home": {
     "hero": {
       "title": "Du temps d’écran<br></br><primary>au temps qui</primary><br></br>fait<br></br><secondary>grandir</secondary>",
-      "subtitle": "Nos clubs, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis — sur Minecraft, Roblox, Fortnite et bien d’autres. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter."
+      "subtitle": "Nos clubs, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis — sur Minecraft, Roblox, Fortnite et bien d’autres. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter.",
+      "aboutCta": "En savoir plus sur nous"
     },
     "features": {
       "heading": "Le jeu vidéo, un vrai loisir",
@@ -2049,39 +2175,6 @@
         "error": "Une erreur est survenue et votre réponse n’a pas été enregistrée. Réessayez ou écrivez-nous à {supportEmail}."
       }
     },
-    "help": {
-      "contact": {
-        "heading": "Besoin d’un coup de main ?",
-        "body": "Nous sommes là pour vous aider, de l’arrivée à votre stage aux questions sur la plateforme. Écrivez-nous quand vous voulez — nous répondons généralement sous 24 heures.",
-        "emailLabel": "Écrivez-nous à"
-      },
-      "minecraft": {
-        "heading": "Préparez-vous pour Minecraft Java",
-        "intro": "Les stages et les clubs se déroulent sur le serveur Minecraft Java de SOG. Parcourez ces étapes avec votre enfant avant le début du stage pour qu’il puisse se connecter tout de suite.",
-        "steps": {
-          "install": {
-            "title": "Installez Minecraft Java Edition",
-            "body": "Achetez et installez Minecraft Java Edition sur minecraft.net. Les versions Bedrock et Pocket Edition ne fonctionnent pas avec notre serveur."
-          },
-          "signIn": {
-            "title": "Connectez-vous avec un compte Microsoft",
-            "body": "Lancez le jeu une première fois et connectez-vous. Choisissez un nom d’utilisateur — votre enfant l’indiquera à son Gedu afin d’être ajouté."
-          },
-          "addServer": {
-            "title": "Ajoutez le serveur SOG",
-            "body": "Dans Multijoueur → Ajouter un serveur, collez l’adresse correspondant à votre stage et enregistrez-la pour qu’elle soit prête le jour J :"
-          },
-          "joinAtCampTime": {
-            "title": "Connectez-vous au début du stage",
-            "body": "Cliquez sur le serveur SOG dans la liste, puis sur Rejoindre. Le Gedu guidera tout le monde ensuite. Besoin d’aide ? Écrivez-nous à l’adresse ci-dessus."
-          }
-        },
-        "servers": {
-          "fi": "Stages en finnois :",
-          "en": "Stages en anglais :"
-        }
-      }
-    },
     "billing": {
       "manage": {
         "title": "Paiement et facturation",
@@ -2127,6 +2220,26 @@
     "switchToGamer": {
       "title": "Passer au profil de {name} pour rejoindre {productName} ?",
       "oneWayWarning": "Vous serez déconnecté de votre compte parent."
+    },
+    "helpFaq": {
+      "items": {
+        "parentPin": {
+          "question": "Qu’est-ce que le code PIN parent, et que faire si je l’oublie ?",
+          "answer": "<p>Votre code PIN parent est un code à quatre chiffres que vous définissez la première fois que vous utilisez votre compte parent. Il protège l’ensemble du côté parent de Sogverse plutôt que chaque action prise séparément : vous déverrouillez une fois, et la session se reverrouille dès que vous basculez vers un profil joueur ou que vous vous déconnectez — un mot de passe enregistré dans le navigateur ne suffit donc pas à lui seul pour acheter quoi que ce soit ou modifier le compte d’un enfant.</p><p>Si vous l’oubliez, appuyez sur « Vous avez oublié votre code PIN ? » sur l’écran du code PIN : nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs, si bien qu’un enfant qui appuie dessus vous envoie simplement un e-mail. Le lien reste valable 24 heures et ne fonctionne qu’une fois.</p><p>Vous pouvez aussi changer un code PIN dont vous vous souvenez encore depuis les Paramètres.</p>"
+        },
+        "sessionReports": {
+          "question": "Saurai-je comment se sont passées les séances ?",
+          "answer": "<p>Oui. Après une séance, l’animateur de votre enfant en rédige un compte rendu — ce sur quoi le groupe a travaillé, comment cela s’est passé, et les moments qui méritent d’être retenus — souvent avec des photos.</p><p>Il apparaît sur la page de ce club, de ce stage ou de cet événement dans Mon SOG, sous Séances, aux côtés de tous les comptes rendus précédents et des séances encore à venir, et votre enfant voit les mêmes comptes rendus dans son propre Mon SOG. Quand le Gedu envoie le compte rendu, il arrive aussi par e-mail, adressé à vous seul — chaque famille reçoit son propre e-mail et aucune famille ne voit celui d’une autre.</p><p>Vous verrez également sur cette page la présence relevée pour votre enfant à chaque séance ; votre enfant ne voit pas les présences, et aucune famille ne voit jamais celles d’un autre enfant.</p>"
+        },
+        "missedSessions": {
+          "question": "Que se passe-t-il si nous manquons une séance, ou si nous rejoignons un club en cours de route ?",
+          "answer": "<p>Un club reste ouvert aux nouveaux joueurs tant qu’il tourne : vous pouvez donc le rejoindre en cours de trimestre — la page du club indique quel jour et à quelle heure il se réunit chaque semaine, sur quelle période il court et combien de places restent. Une fois votre enfant inscrit, sa propre page de club donne la date de la prochaine séance.</p><p>Les stages et les événements, c’est différent : un stage ferme aux nouvelles inscriptions la veille de son début, parce que le groupe démarre ensemble, et un événement ferme une fois sa séance terminée.</p><p>Un club est facturé comme un mois complet à partir du jour de l’inscription : rejoindre en milieu de mois ne réduit donc pas le paiement de ce mois-là ; si un club n’a pas encore commencé, rien n’est prélevé le jour de l’inscription et la page vous indique la date de votre premier paiement.</p><p>Si votre enfant manque une séance isolée, il n’y a rien à faire — sa place n’est pas affectée. Son Gedu relève la présence à chaque séance et vous verrez ce relevé sur la page du club. Une séance manquée n’est ni rattrapée ni remboursée ; dans un club municipal, des absences répétées et non signalées peuvent libérer la place pour la famille suivante sur la liste d’attente, ce que vous acceptez au moment de l’inscription.</p>"
+        },
+        "sessionTimes": {
+          "question": "À quelle heure ont lieu les séances dans notre fuseau horaire ?",
+          "answer": "<p>Dans le vôtre. Les horaires des séances sont saisis en heure finlandaise et vous sont montrés convertis automatiquement dans le fuseau de votre appareil, partout où ils apparaissent — sur la page d’un club, sur sa carte et dans votre Mon SOG.</p><p>Lorsque votre fuseau diffère de celui du club, un court repère de fuseau accompagne l’heure pour que la conversion soit visible ; lorsque vous êtes dans le même fuseau que le club, il n’y a rien à convertir et aucun repère.</p><p>Comme la conversion est réelle, un club qui se tient deux jours de semaine finlandais peut tomber chez vous d’autres jours, et le planning que vous voyez est groupé selon vos jours à vous, pas les nôtres. Les dates de début et de fin d’un stage sont de simples dates de calendrier et ne se décalent pas.</p>"
+        }
+      }
     }
   },
   "settings": {
@@ -2324,12 +2437,6 @@
       "fuchsia": "Fuchsia",
       "pink": "Rose"
     },
-    "chat": {
-      "title": "Chat",
-      "placeholder": "Écrivez un message…",
-      "send": "Envoyer",
-      "empty": "Aucun message pour l’instant"
-    },
     "instant": {
       "joinFailed": "Impossible de rejoindre la salle. Veuillez réessayer.",
       "share": {
@@ -2382,8 +2489,7 @@
   },
   "voiceButton": {
     "joinVoice": "Rejoindre la salle vocale",
-    "locked": "Ouvre le {date} à {time}",
-    "awaitingMatch": "Mise en relation avec un Gedu"
+    "locked": "Ouvre le {date} à {time}"
   },
   "yty": {
     "hero": {
@@ -2449,14 +2555,15 @@
       "button": "Réinitialiser le code PIN"
     },
     "feedback": {
-      "subject": "Retour de {displayName} ({role})",
-      "heading": "Nouveau retour reçu",
+      "subject": "Aide ou retour de {displayName} ({role})",
+      "heading": "Nouveau message d’aide ou de retour",
+      "intro": "Quelqu’un a demandé de l’aide ou envoyé un retour. Répondez à cet e-mail pour lui écrire — votre réponse ira à l’adresse ci-dessous.",
       "from": "De",
       "role": "Rôle",
-      "emailLabel": "E-mail",
+      "replyToLabel": "Répondre à",
       "sent": "Envoyé",
       "message": "Message",
-      "gamerNote": "Ce retour provient d’un compte joueur. Les réponses seront adressées à son parent ({parentEmail})."
+      "gamerNote": "Ce message provient d’un compte joueur. Les réponses seront adressées à son parent ({parentEmail})."
     },
     "welcomeParent": {
       "subject": "Bienvenue chez School of Gaming",
@@ -3011,49 +3118,49 @@
       "items": {
         "programme": {
           "question": "Qu’est-ce que le Programme ?",
-          "answer": "Un programme gratuit de création de jeux où les jeunes apprennent à construire sur Roblox, animé par Lynx Educate et School of Gaming, en collaboration avec Roblox. Il se déroule en ligne comme en présentiel partout en France, et se conclut par la publication du jeu ou de l’objet créé par votre enfant."
+          "answer": "<p>Un programme gratuit de création de jeux où les jeunes apprennent à construire sur Roblox, animé par Lynx Educate et School of Gaming, en collaboration avec Roblox.</p><p>Il se déroule en ligne comme en présentiel partout en France, et se conclut par la publication du jeu ou de l’objet créé par votre enfant.</p>"
         },
         "eligibility": {
           "question": "Qui peut participer ?",
-          "answer": "Les jeunes de 13 à 17 ans résidant en France, inscrits par un parent ou un représentant légal."
+          "answer": "<p>Les jeunes de 13 à 17 ans résidant en France, inscrits par un parent ou un représentant légal.</p>"
         },
         "cost": {
           "question": "Est-ce que c’est payant ?",
-          "answer": "Non, le Programme est 100 % gratuit pour les familles inscrites !"
+          "answer": "<p>Non, le Programme est 100 % gratuit pour les familles inscrites !</p>"
         },
         "experience": {
           "question": "Mon enfant doit-il déjà connaître Roblox ?",
-          "answer": "Aucune expérience préalable n’est nécessaire — les sessions sont conçues pour apprendre la création de jeux, des bases jusqu’à la publication."
+          "answer": "<p>Aucune expérience préalable n’est nécessaire — les sessions sont conçues pour apprendre la création de jeux, des bases jusqu’à la publication.</p>"
         },
         "where": {
           "question": "Où se déroulent les sessions ?",
-          "answer": "Les sessions en présentiel ont lieu à Paris, Lille, Strasbourg et Bordeaux. Les sessions en ligne sont ouvertes aux familles partout en France. Leur durée va de 60 minutes à 9 semaines.",
+          "answer": "<p>Les sessions en présentiel ont lieu à Paris, Lille, Strasbourg et Bordeaux. Les sessions en ligne sont ouvertes aux familles partout en France.</p><p>Leur durée va de 60 minutes à 9 semaines.</p>",
           "answer2": "Consultez chaque événement pour le détail."
         },
         "language": {
           "question": "Dans quelle langue se déroulent les sessions ?",
-          "answer": "Les sessions se déroulent en français."
+          "answer": "<p>Les sessions se déroulent en français.</p>"
         },
         "equipment": {
           "question": "De quel matériel mon enfant a-t-il besoin ?",
-          "answer": "Un ordinateur (Windows ou Mac) connecté à Internet, ainsi qu’un accès à Roblox Studio.",
+          "answer": "<p>Un ordinateur (Windows ou Mac) connecté à Internet, ainsi qu’un accès à Roblox Studio.</p>",
           "answer2": "Pour les événements en ligne, les jeunes se connectent avec leur propre ordinateur, Roblox Studio installé. Pour les événements en présentiel, les ordinateurs et le matériel sont fournis sur place."
         },
         "dataSharing": {
           "question": "Les informations de mon enfant sont-elles transmises à Roblox ?",
-          "answer": "Certaines informations de compte sont transmises à Lynx Educate et à Roblox pour assurer le déroulement du Programme et en évaluer l’efficacité. Le détail complet figure dans notre <linkPrivacy>politique de confidentialité</linkPrivacy>."
+          "answer": "<p>Certaines informations de compte sont transmises à Lynx Educate et à Roblox pour assurer le déroulement du Programme et en évaluer l’efficacité. Le détail complet figure dans notre <linkPrivacy>politique de confidentialité</linkPrivacy>.</p>"
         },
         "media": {
           "question": "Mon enfant sera-t-il photographié ou filmé ?",
-          "answer": "Les sessions peuvent être photographiées pour nos archives internes. L’utilisation des images à des fins de communication externe relève entièrement de votre choix, exprimé à l’inscription et modifiable à tout moment."
+          "answer": "<p>Les sessions peuvent être photographiées pour nos archives internes. L’utilisation des images à des fins de communication externe relève entièrement de votre choix, exprimé à l’inscription et modifiable à tout moment.</p>"
         },
         "facilitators": {
           "question": "Qui anime les sessions, et comment les animateurs sont-ils vérifiés ?",
-          "answer": "Les animateurs sont formés et vérifiés par School of Gaming, conformément à notre <linkSafeguarding>politique de protection de l’enfance</linkSafeguarding> commune."
+          "answer": "<p>Les animateurs sont formés et vérifiés par School of Gaming, conformément à notre <linkSafeguarding>politique de protection de l’enfance</linkSafeguarding> commune.</p>"
         },
         "contact": {
           "question": "Qui contacter en cas de question ?",
-          "answer": "Écrivez-nous à <linkEmail>{email}</linkEmail> pour toute question ou préoccupation."
+          "answer": "<p>Écrivez-nous à <linkEmail>{email}</linkEmail> pour toute question ou préoccupation.</p>"
         }
       }
     },
@@ -3672,6 +3779,89 @@
     },
     "bundles": {
       "robloxProgramme": "Documents du Programme Roblox"
+    }
+  },
+  "chat": {
+    "log": "Messages du chat",
+    "empty": "Rien n’a encore été dit.",
+    "unavailable": "Le chat n’est pas disponible pour le moment.",
+    "unread": "{count, plural, one {# nouveau message} other {# nouveaux messages}}",
+    "jumpToLatest": "Aller au message le plus récent",
+    "composer": {
+      "label": "Écrire un message",
+      "placeholder": "Écrivez un message",
+      "send": "Envoyer",
+      "addImage": "Ajouter une image",
+      "staged": "Images prêtes à être envoyées",
+      "removeImage": "Retirer {name}",
+      "imagesRefused": "Vous pouvez envoyer {count} images à la fois : les autres n’ont pas été retenues.",
+      "lockNotice": "Le chat est verrouillé pour vous en ce moment. Vous pouvez toujours tout lire ici.",
+      "mentionList": "Mentionner quelqu’un"
+    },
+    "editor": {
+      "label": "Modifier votre message",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "reply": {
+      "action": "Répondre",
+      "banner": "Réponse à {name}",
+      "cancel": "Annuler la réponse",
+      "jump": "Afficher le message de {name}",
+      "image": "une image",
+      "removed": "un message supprimé"
+    },
+    "message": {
+      "actions": "Plus d’actions",
+      "edited": "modifié",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "hide": "Retirer pour tout le monde",
+      "restore": "Remettre",
+      "sending": "Envoi",
+      "failed": "Non envoyé",
+      "retry": "Réessayer",
+      "mentionsYou": "Vous mentionne"
+    },
+    "tombstone": {
+      "text": "Ce message a été retiré.",
+      "staffOnly": "Les Gedus et les admins peuvent encore le lire."
+    },
+    "reactions": {
+      "add": "Ajouter une réaction",
+      "toggle": "{name}, {count}",
+      "thumbs_up": "Pouce levé",
+      "heart": "Cœur",
+      "laugh": "Rire",
+      "surprised": "Surprise",
+      "celebrate": "Fête",
+      "thinking": "Réflexion"
+    },
+    "moderation": {
+      "lock": "Verrouiller le chat pour {name}",
+      "unlock": "Déverrouiller le chat pour {name}",
+      "lockChat": "Verrouiller le chat",
+      "unlockChat": "Déverrouiller le chat",
+      "lockedTag": "Chat verrouillé",
+      "deleteTitle": "Supprimer ce message ?",
+      "deleteBody": "Tout le monde verra qu’un message a été retiré, et les Gedus et les admins en conservent une copie.",
+      "deleteConfirm": "Supprimer",
+      "hideTitle": "Retirer ce message pour tout le monde ?",
+      "hideBody": "Tout le monde verra qu’un message a été retiré, et les Gedus et les admins en conservent une copie.",
+      "hideConfirm": "Retirer"
+    },
+    "typing": {
+      "one": "{name} écrit",
+      "two": "{first} et {second} écrivent",
+      "many": "Plusieurs personnes écrivent"
+    },
+    "images": {
+      "row": "Images",
+      "open": "Ouvrir l’image {index} sur {count}",
+      "viewer": "Image {index} sur {count}",
+      "previous": "Image précédente",
+      "next": "Image suivante",
+      "close": "Fermer"
     }
   }
 }

@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
@@ -274,6 +275,27 @@ export function IdentitySection({
           onChange={(e) => setState({ ...state, materialUrl: e.target.value })}
         />
       </Field>
+
+      {/*
+        Beside the lesson-material link, and last in the section, because the
+        two are this form's only staff-facing fields: every other section
+        answers a question a family meets — who may buy a seat, where, when,
+        what it costs, what they agree to, where it is listed — while these two
+        say how the people running the product work. The flag itself changes
+        nothing a family sees.
+
+        The shared bordered row rather than a hand-built label: the border is
+        what says where an admin may click, and this is a standalone question
+        rather than a checkbox inside a field group.
+      */}
+      <CheckboxRow
+        checked={state.requiresGamerCreations}
+        onCheckedChange={(requiresGamerCreations) =>
+          setState({ ...state, requiresGamerCreations })
+        }
+        label={t("labels.requiresGamerCreations")}
+        hint={t("hints.requiresGamerCreationsHint")}
+      />
     </FormSection>
   );
 }

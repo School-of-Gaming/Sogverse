@@ -21,7 +21,10 @@ import {
   useSetSiteNotes,
   type GeduGroupFeed,
 } from "@/services/gedu-sessions";
-import { useSetGamerGroupNote } from "@/services/member-flair";
+import {
+  useSetGamerGroupCreations,
+  useSetGamerGroupNote,
+} from "@/services/member-flair";
 import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
 import {
   useRobloxRenders,
@@ -63,11 +66,12 @@ import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
  * when a gedu fixes a game username, and a roster that does not refresh after
  * its own edit is worse than a slightly indirect one.
  *
- * **The staff flair rides that same copy and costs no third read.** Newcomer
- * stamps and Gedu notes are fields on the feed's roster rows, so this page never
- * asks `get_group_staff_overlay` — that RPC exists for the voice room, which
- * owns no roster document at all. What the shell does instead is fold those
- * fields into the one flair object the body takes, against the page's own clock.
+ * **The per-member overlay rides that same copy and costs no third read.**
+ * Newcomer stamps, Gedu notes and creations are all fields on the feed's roster
+ * rows, so this page never asks `get_group_staff_overlay` — that RPC exists for
+ * the voice room, which owns no roster document at all. What the shell does
+ * instead is fold those fields into the one flair object the body takes, against
+ * the page's own clock.
  *
  * **Both reads are usually already answered before this renders.** The route's
  * server half runs the same pair and hydrates them into the cache, so a direct
@@ -189,10 +193,12 @@ function Workspace({
   // returns. The dispatch happens inside the save handler instead.
   const updateMinecraft = useUpdateGroupMemberMinecraft(groupId);
   const updateRoblox = useUpdateGroupMemberRoblox(groupId);
-  // The one write behind the roster's staff flair. It invalidates all four
-  // documents that carry the same note — this page's feed among them — so the
-  // rail relights its own button without anything here refetching by hand.
+  // The two writes behind the roster's per-member dialog. Both invalidate the
+  // same four documents that carry a member's flair — this page's feed among
+  // them — so the rail relights its own button without anything here refetching
+  // by hand, and neither can drift into refreshing a different set.
   const setGamerNote = useSetGamerGroupNote(groupId);
+  const setGamerCreations = useSetGamerGroupCreations(groupId);
 
   /**
    * The account ids whose Roblox figure this roster needs — verified rows only,
@@ -312,7 +318,7 @@ function Workspace({
   );
 
   /**
-   * The roster's staff-only overlay, built from **the same roster copy the rail
+   * The roster's per-member overlay, built from **the same roster copy the rail
    * renders** — the feed's, not the assignment document's.
    *
    * That is the whole reason both readers carry the three flair fields: the
@@ -321,7 +327,7 @@ function Workspace({
    *
    * **Absence is how "none" is spelled.** A NULL from the RPC is left out of the
    * map rather than written in as a null, because every consumer downstream —
-   * the row's `hasNote`, the dialog's seed, the badge's own window check — reads
+   * the row's lit marker, the dialog's seed, the badge's own window check — reads
    * a missing key as the answer rather than as a gap.
    *
    * The turn itself — the clubs-only gate, and absence being how "none" is
@@ -354,6 +360,9 @@ function Workspace({
     ...flairMaps,
     onSaveNote: async (participantId, text) => {
       await setGamerNote.mutateAsync({ participantId, note: text });
+    },
+    onSaveCreations: async (participantId, creations) => {
+      await setGamerCreations.mutateAsync({ participantId, creations });
     },
   };
 

@@ -7,6 +7,11 @@ export { Constants } from "./database.types";
 
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database, Json } from "./database.types";
+// The one definition of a creation entry (00227), imported rather than restated
+// because the hand-written document interfaces below have to carry the same
+// shape the zod contracts do. Re-exported further down with the rest of the
+// member-flair types.
+import type { GamerCreation } from "@/services/member-flair/member-flair.contracts";
 
 // ---------------------------------------------------------------------------
 // Convenience type aliases
@@ -427,6 +432,42 @@ export type {
 } from "@/services/member-flair/member-flair.contracts";
 
 // ---------------------------------------------------------------------------
+// gamer creations (00227) — the things a member made during a group's run, as a
+// list of {title, url}. The private note's structural twin, with one difference
+// that decides nothing here and everything downstream: the gamer's own family
+// reads this list, where the note is staff-only forever.
+// ---------------------------------------------------------------------------
+
+// gamer_group_creations — one row per (group, member), and the same access
+// arrangement as gamer_group_notes above: no Data API role holds a grant, RLS is
+// on with no policy at all, every read rides a document RPC and every write goes
+// through `set_gamer_group_creations`. So these aliases exist for the
+// service-role side (db tests, admin tooling), not for browser queries.
+//
+// `creations` types as `Json` — the generator cannot see the CHECK that makes it
+// an array of {title, url}. The structured shape is the zod contract the service
+// and the db tests parse through.
+//
+// No Update alias: the write RPC upserts, and an empty list deletes the row
+// rather than storing [], so nothing in the app makes a bare UPDATE statement
+// for one to name.
+export type GamerGroupCreations = Database["public"]["Tables"]["gamer_group_creations"]["Row"];
+export type GamerGroupCreationsInsert =
+  Database["public"]["Tables"]["gamer_group_creations"]["Insert"];
+
+// set_gamer_group_creations returns JSONB and every widened reader emits the
+// list as JSONB too, so the generated types are `Json` throughout. The
+// structured shapes are the zod contracts the service and the db tests both
+// parse through — `GamerCreation` is the entry the four widened documents all
+// carry, and its rules are the table's CHECK. Re-exported here so consumers keep
+// importing their types from "@/types".
+export type {
+  GamerCreation,
+  GamerCreationList,
+  GamerGroupCreationsResult,
+} from "@/services/member-flair/member-flair.contracts";
+
+// ---------------------------------------------------------------------------
 // voice zones (00103) — the persisted half of the discrete-zone voice model.
 // See src/components/voice/CLAUDE.md for the discrete-zone voice model.
 // Lobby + the 4 Yty zones stay virtual/hardcoded on the client; only these
@@ -449,6 +490,15 @@ export type VoiceZoneUpdate = Database["public"]["Tables"]["voice_zones"]["Updat
 // the token endpoint bakes into each joiner's Daily `canReceive`.
 export type VoicePrivateZoneOccupant = Database["public"]["Tables"]["voice_private_zone_occupants"]["Row"];
 export type VoicePrivateZoneOccupantInsert = Database["public"]["Tables"]["voice_private_zone_occupants"]["Insert"];
+
+// chat (00228/00229) — persisted messaging in the scheduled voice rooms. Rows
+// only; the transport-free UI shapes (`ChatMessage`, `ChatAccount`) live in
+// src/components/chat/ and are deliberately not these.
+export type ChatChannelType = Database["public"]["Enums"]["chat_channel_type"];
+export type ChatChannel = Database["public"]["Tables"]["chat_channels"]["Row"];
+export type ChatMessageRow = Database["public"]["Tables"]["chat_messages"]["Row"];
+export type ChatReactionRow = Database["public"]["Tables"]["chat_reactions"]["Row"];
+export type ChatChannelLockRow = Database["public"]["Tables"]["chat_channel_locks"]["Row"];
 
 // get_product_groups_with_details — returns JSONB, so the generated type is
 // `Json`. The structured shape is derived from the productGroupsSnapshot zod
@@ -541,6 +591,16 @@ export interface GeduAssignedProductRosterEntry {
    * no editor line.
    */
   note_updated_by_first_name: string | null;
+  /**
+   * What this member made during the group's run (00227), in the order staff
+   * arranged them. Always an array — `[]` is what "no creations" looks like, and
+   * the absence of a row is what produces it.
+   *
+   * The one field on this row that is **not** staff-only: the member's own
+   * family reads the same list on their product page. It rides the staff roster
+   * because the roster row is where the per-gamer dialog is opened from.
+   */
+  creations: GamerCreation[];
 }
 
 export interface GeduAssignedProductGroupGedu {
@@ -572,6 +632,12 @@ export interface GeduAssignedProductShell {
   start_date: string | null;
   end_date: string | null;
   is_remote: boolean;
+  /**
+   * Does this product contractually require a creation from every member
+   * (00227)? Staff-facing only, and carried in parity with the gedu group
+   * feed's product shell — the page composes both documents.
+   */
+  requires_gamer_creations: boolean;
   translations: Array<{
     locale: string;
     name: string;

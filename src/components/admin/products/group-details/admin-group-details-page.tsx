@@ -34,7 +34,10 @@ import {
 } from "@/services/admin-sessions";
 import { useGeduGroupFeed, type GeduGroupFeed } from "@/services/gedu-sessions";
 import { useProductGroups } from "@/services/groups";
-import { useSetGamerGroupNote } from "@/services/member-flair";
+import {
+  useSetGamerGroupCreations,
+  useSetGamerGroupNote,
+} from "@/services/member-flair";
 import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
 import {
   useProductAdmin,
@@ -65,7 +68,7 @@ interface AdminGroupDetailsPageProps {
  * **One body, two shells.** The page under the chrome is `GroupWorkspace`, the
  * same component `/gedu/clubs|camps|events/[id]` renders: the same masthead,
  * the same standing notes, the same reference rail with its roster, its
- * newcomer badges and its note buttons, and the same session timeline with its
+ * newcomer badges and its per-gamer dialogs, and the same session timeline with its
  * registers and its Send. Nothing here is an
  * admin-styled copy of any of it. The admin's view of a group used to be a
  * re-composition at the foot of the product page — a group selector in front of
@@ -352,10 +355,11 @@ function Workspace({
   // row keyed to an adult seat is refused for gedu and admin alike.
   const updateMinecraft = useUpdateGroupMemberMinecraft(groupId);
   const updateRoblox = useUpdateGroupMemberRoblox(groupId);
-  // The one write behind the roster's staff flair. It invalidates the feed —
-  // this page's roster copy — along with every other document carrying the same
-  // note, so an edit here relights the button on the gedu's page too.
+  // The two writes behind the roster's per-member dialog. Both invalidate the
+  // feed — this page's roster copy — along with every other document carrying a
+  // member's flair, so an edit here relights the button on the gedu's page too.
   const setGamerNote = useSetGamerGroupNote(groupId);
+  const setGamerCreations = useSetGamerGroupCreations(groupId);
 
   /**
    * The account ids whose Roblox figure this roster needs — verified rows only,
@@ -437,6 +441,11 @@ function Workspace({
         start_date: sessions.product.start_date,
         end_date: sessions.product.end_date,
         is_remote: sessions.product.is_remote,
+        // The feed's copy rather than the admin row's: the two shells are in
+        // deliberate parity on the gedu side, and taking the flag from the same
+        // document the roster's creations come from is what keeps the
+        // client-side owed derivation reading one consistent picture.
+        requires_gamer_creations: feed.product.requires_gamer_creations,
         translations: feed.product.translations,
         schedule_slots: sessions.product.schedule_slots,
       },
@@ -457,11 +466,19 @@ function Workspace({
         roster: candidate.id === groupId ? feed.roster : null,
       })),
     }),
-    [product, sessions, feed.product.translations, feed.roster, groupId, gedusByGroup],
+    [
+      product,
+      sessions,
+      feed.product.translations,
+      feed.product.requires_gamer_creations,
+      feed.roster,
+      groupId,
+      gedusByGroup,
+    ],
   );
 
   /**
-   * The roster's staff-only overlay, built from **the same roster copy the rail
+   * The roster's per-member overlay, built from **the same roster copy the rail
    * renders** — the feed's.
    *
    * **The turn is the gedu shell's**, imported rather than reproduced: the
@@ -491,6 +508,9 @@ function Workspace({
     ...flairMaps,
     onSaveNote: async (participantId, text) => {
       await setGamerNote.mutateAsync({ participantId, note: text });
+    },
+    onSaveCreations: async (participantId, creations) => {
+      await setGamerCreations.mutateAsync({ participantId, creations });
     },
   };
 

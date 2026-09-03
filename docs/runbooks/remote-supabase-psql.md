@@ -27,11 +27,21 @@ on this one.
   # prod: same host/port, user postgres.yoqkelsopqsksqrkrorx, password from SUPABASE_PROD_DB_PASSWORD
   ```
 
-- **Raw REST calls (storage, PostgREST via curl): the keys are new-format**
-  (`sb_secret_…` / `sb_publishable_…`, both projects), not legacy JWTs. Send them as
-  `-H "apikey: $KEY"` — `Authorization: Bearer` fails with `403 "Invalid Compact JWS"`
-  (the server tries to parse the key as a JWT). App code is unaffected; only
-  hand-crafted calls hit this. Verified against prod storage batch-delete 2026-08-19.
+- **The keys are new-format** (`sb_secret_…` / `sb_publishable_…`, both projects), not
+  legacy JWTs. **Reach the REST and Auth APIs through `supabase-js`, not curl.** A
+  hand-rolled call to `/rest/v1/` or `/auth/v1/` is rejected whatever header shape you
+  try — `apikey` alone, `Authorization: Bearer` alone, or both — while the *same key*
+  through `createClient(url, key)` authenticates first time. Don't read the rejection as
+  a bad or revoked key and go hunting for a replacement; that is the trap, and it costs
+  an hour. A one-off script under `scripts/` run with `npx tsx` is the cheap path.
+  (Storage batch-delete over curl with `-H "apikey: $KEY"` worked 2026-08-19 and is not
+  re-verified since; treat curl as fine for storage and wrong for REST/Auth.)
+- **Read `sb-error-code` before theorising.** The gateway names the reason in that
+  response header and distinguishes the cases that look identical from the status line:
+  `UNAUTHORIZED_INVALID_API_KEY` is the wrong key for the project, whereas
+  `UNAUTHORIZED_INVALID_API_KEY_TYPE` is a valid key rejected for how it was presented —
+  the signature of the curl trap above. `sb-project-ref` on the same response confirms
+  which project answered. The body is empty, so the headers are the only signal.
 - For prod incident forensics (the `auth` schema tables, Vercel logs) see
   `prod-incident-investigation.md`; for IO/perf/storage investigation see
   `supabase-db-inspection.md`.

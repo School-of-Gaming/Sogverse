@@ -8,12 +8,16 @@ import {
   buildGamerDashboardFixture,
   type GamerDashboardScenario,
 } from "@/components/gamer/mock-dashboard-fixtures";
+import { InertHelpFeedbackCard } from "@/components/preview/inert-help-feedback-card";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 
 /**
  * The gamer dashboard as a child meets it: the greeting by name, their
- * enrollments under the type nouns, and the Yty grid.
+ * enrollments under the type nouns, and the Help section that ends the page.
+ *
+ * The help form is the real one with its submit inert — a scene must never gain
+ * a live submit that emails every admin.
  *
  * The fixture is built once from the first `useNow()` value and held in state,
  * for the same reason the parent and gedu scenes hold theirs — see
@@ -35,6 +39,7 @@ export function GamerDashboardScene({
     <GamerDashboardPageBody
       firstName={GAMER_DASHBOARD_FIRST_NAME}
       enrollments={enrollments}
+      helpForm={<InertHelpFeedbackCard audience="gamer" />}
     />
   );
 }

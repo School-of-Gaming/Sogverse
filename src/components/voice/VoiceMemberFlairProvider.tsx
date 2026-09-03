@@ -1,11 +1,12 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import type { GamerCreation } from "@/types";
 
 /**
- * The staff-only overlay a voice room draws on top of its participant rows —
- * newcomer stamps and Gedu notes — supplied by whoever renders the room rather
- * than by the room itself.
+ * The staff-supplied overlay a voice room draws on top of its participant rows —
+ * newcomer stamps, Gedu notes and the creations beside them — supplied by
+ * whoever renders the room rather than by the room itself.
  *
  * **A context rather than props, for the same reason the flair is not on
  * `ParticipantRowData`.** Everything a participant row knows about a peer
@@ -52,15 +53,31 @@ export interface VoiceMemberFlair {
   /**
    * The Gedu note per participant `userId`, for those who have one.
    *
-   * A row needs only "is there one" — the lit state of its note button. The
-   * text is here because the dialog the button opens is mounted by the page,
-   * not by the row, and it has to seed its draft from somewhere.
+   * A row needs only "is there one" — the lit state of its button. The text is
+   * here because the dialog the button opens is mounted by the page, not by the
+   * row, and it has to seed its draft from somewhere.
    */
   notes: Readonly<Record<string, string>>;
   /** Who last wrote each note, keyed as `notes` is. */
   noteEditors?: Readonly<Record<string, string>>;
-  /** Open a member's note. Only ever called for a `userId` in {@link members}. */
-  onOpenNote: (userId: string, name: string) => void;
+  /**
+   * What each member has made in this group, for those who have anything.
+   *
+   * **The one entry here that is not staff-only**, and it rides this channel
+   * anyway: the per-gamer dialog is identical in every mount, the room included,
+   * so a Gedu can add a creation during the session it was made in. What keeps
+   * the privacy line intact is unchanged — the map reaches the room through a
+   * staff-scoped read a child's client never makes, and a member's own family
+   * reads the same list through their own document.
+   *
+   * A member with none has **no key**, exactly as with the notes above.
+   */
+  creations: Readonly<Record<string, readonly GamerCreation[]>>;
+  /**
+   * Open a member's per-gamer dialog. Only ever called for a `userId` in
+   * {@link members}.
+   */
+  onOpenFlair: (userId: string, name: string) => void;
 }
 
 const VoiceMemberFlairContext = createContext<VoiceMemberFlair | null>(null);

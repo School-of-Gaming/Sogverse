@@ -1,296 +1,476 @@
 # SOGGA Feature Gap Analysis
 
-> **Likely stale — treat with suspicion (flagged 2026-08-28).** This is a June 2026
-> snapshot, written when Sogverse was months younger; some gaps may since be closed and
-> the priorities may no longer hold. Kept at `docs/` top level deliberately — the owner
-> may delete it rather than maintain it. Verify any item against current code before
-> acting on it.
+> **Status: re-verified against `dev` on 2026-09-03.** Originally a June 2026 snapshot.
+> Every item was checked against the schema, routes and services; items that Sogverse now
+> handles (or has deliberately replaced with something judged complete) have been
+> deleted. What remains is either partial or an open gap. Kept at `docs/` top level
+> deliberately — the owner may delete it rather than maintain it.
 
-Features and capabilities present in the legacy SOGGA platform (Gamers' Arena) that are **not present in Sogverse** and **not replaced by a Sogverse equivalent**. Each item is rated for business priority and estimated technical complexity if rebuilt for Sogverse using its modern stack (Next.js 16, Supabase, Stripe, TypeScript).
+Features present in the legacy SOGGA platform (Gamers' Arena) that Sogverse does **not
+yet** cover, or covers only in part. Each item states what Sogverse has today, what is
+still missing, and a business priority plus estimated complexity to close the remainder
+on the Sogverse stack (Next.js 16, Supabase, Stripe, TypeScript).
 
 **Priority labels:** `Critical` | `High` | `Medium` | `Low`
 **Complexity labels:** `Low` | `Medium` | `High` | `Very High`
+
+Removed on 2026-09-03 as handled: waiting list and seat offers, municipality-funded
+products, participant notes, per-session attendance, criminal record check tracking,
+per-club operating fees.
 
 ---
 
 ## Geographic Hierarchy
 
-### 2. Custom Fields System
+### 2. Custom Fields System — `Gap`
 
-**Description:** Dynamic custom fields that can be attached at the Country, Municipality, School, or Club level. Fields are defined by admins and rendered dynamically in registration and admin forms. Supports text inputs and select dropdowns. Answers are stored as JSON metadata on participant records.
+**SOGGA had:** Admin-defined dynamic fields attached at the Country, Municipality, School
+or Club level, rendered in registration and admin forms (text and select), with answers
+stored as JSON on participant records.
+
+**Sogverse has:** Nothing dynamic. The signup panel's fields are fixed at compile time and
+participations carry no answers column. The nearest admin-configurable per-product form
+element is the required-consent set (`product_required_consents` + `consent_documents`),
+which is a boolean against a known document, not a free-form field.
 
 **Priority:** `Medium`
-**Complexity:** `Medium` — A `custom_fields` table with a polymorphic association (entity type + entity ID), a JSON answers column on enrollments/registrations, and dynamic form rendering components. Needs a small admin UI for field definition.
+**Complexity:** `Medium` — A `custom_fields` table with a polymorphic association, a JSON
+answers column on participations, dynamic form rendering, and a small admin UI.
 
 ---
 
 ## Registration & Onboarding
 
-### 3. Public Municipality Registration Wizard
+### 3. Public Municipality Registration Wizard — `Partial`
 
-**Description:** A public-facing 4-step registration form (no login required) where parents register children into municipality-funded clubs. Steps: select country/municipality/school/club (cascading dropdowns) > enter parent + child info > answer custom fields > confirmation. Handles waiting list overflow automatically when clubs are full. Sends Finnish-language confirmation or waiting-list emails. Creates parent and gamer user accounts as a side effect.
+**SOGGA had:** A public, no-login 4-step form registering children into
+municipality-funded clubs: cascading country/municipality/school/club selection, parent +
+child info, custom fields, confirmation — creating parent and gamer accounts as a side
+effect.
 
-**Priority:** `Critical`
-**Complexity:** `High` — Multi-step public form with cascading data fetching, input validation (phone, email, birthdate), waiting list logic, automatic user account creation, email notifications, and custom field rendering. Requires a public API that bypasses auth.
+**Sogverse has:** Public discovery of municipality clubs under `/schools` with the
+country → municipality → school cascade, the `municipality_club` product type with the
+`external_contract` billing mode and a no-Stripe checkout branch, automatic waitlisting
+when full, and localised confirmation / waitlist emails. Enrolment itself is
+**account-first**: a stranger on a product page is sent to `/register` and returned to
+the product afterwards, and every enrolment write is gated to the `customer` role.
+
+**Still missing:** A no-login flow that creates the accounts as a side effect of
+enrolling. `docs/investigations/municipal-enrolment-platforms.md` records that Finnish
+municipalities run enrolment in their own Lyyti / Hellewi tenants, so the answer may be
+an integration rather than a rebuilt wizard — nothing is decided.
+
+**Priority:** `High` (down from Critical — the funded-product and waitlist halves landed)
+**Complexity:** `Medium` — Either a public enrol-and-register route on top of the existing
+signup panel, or an inbound integration; the account-creation and waitlist logic already
+exists.
 
 ---
 
 ## Lessons & Attendance
 
-### 5. Lesson Scheduling & Management
+### 5. Lesson Scheduling & Management — `Partial`
 
-**Description:** Individual lesson instances are created within club groups, each with a date, time, status code, notes, and optional assignment codes. Lessons can be created one-by-one or batch-created for an entire club period (e.g., generate all lessons for a semester). Lessons have their own status workflow and can track substitutions when a different educator covers a session.
+**SOGGA had:** Materialised lesson rows per club group with date, time, status, notes and
+assignment codes; batch creation for a whole period; a per-lesson status workflow; and
+substitution tracking when another educator covers.
+
+**Sogverse has:** Sessions projected from a group's recurring schedule slots and holiday
+calendars, materialised lazily as `group_sessions` when a gedu first writes to one.
+Batch creation is replaced by design — the projection *is* the semester. Per-session
+staff writes (report, photos, attendance) exist.
+
+**Still missing:** A per-session status, cancelling or rescheduling a single occurrence,
+and substitution tracking. `did_not_run` / `needs_substitute` columns were added in
+migration 00138 and deliberately dropped in 00151; `cancel_session`,
+`reschedule_session` and `assign_substitute` are reserved names only. `ROADMAP.md`
+plans **Auto substitution** as a cover-request flow (WhatsApp / Discord / email /
+in-app, admin-approved) rather than SOGGA's manual reassignment.
 
 **Priority:** `High`
-**Complexity:** `High` — A `lessons` table linked to groups, batch creation logic (generate lessons from meeting times + date range), per-lesson CRUD, status code management, substitution tracking, and a calendar/list UI for educators. This is a substantial feature with its own data model.
+**Complexity:** `Medium` — An occurrence-override shape on `group_sessions` (cancelled,
+moved, covered-by), the projection honouring it, and gedu/admin controls. The data
+model and the feed already exist.
 
 ---
 
-### 6. Lesson Attendance Tracking
+### 7. Lesson Rewards — `Gap`
 
-**Description:** Per-participant attendance entries for each lesson. Educators mark each gamer as present, absent, or other status codes per lesson. Attendance data feeds into invoicing calculations and reporting. The UI shows a participant list per lesson with status dropdowns.
+**SOGGA had:** Reward codes with amounts attached to lessons, distributed to participants
+on completion, feeding the attribute scores of the achievement system.
 
-**Priority:** `High`
-**Complexity:** `Medium` — A `lesson_entries` junction table (lesson + participant + status), a UI for marking attendance per lesson, and queries for attendance aggregation. Depends on lesson management (item 5).
-
----
-
-### 7. Lesson Rewards
-
-**Description:** Lessons can have reward codes with amounts attached. When a lesson is completed, rewards are distributed to participants. Rewards use the code domain system for reward types (e.g., attribute points for the achievement/level system).
+**Sogverse has:** Nothing granted on session completion. See item 14 — there is no points
+ledger to grant into.
 
 **Priority:** `Medium`
-**Complexity:** `Low` — A `lesson_rewards` table and distribution logic, but tightly coupled to the achievement system (item 12). Simple if achievements exist; less useful standalone.
+**Complexity:** `Low` once item 14 exists — a per-session reward definition and a grant on
+completion. Not useful standalone.
 
 ---
 
 ## Educator (GEDU) Management
 
-### 8. GEDU Profile System
+### 8. GEDU Profile System — `Partial`
 
-**Description:** Detailed educator profiles beyond basic user info. Tracks languages spoken, geographic locations/municipalities served, qualifications (certifications), skills/content types, attendance types (in-person, remote), and a separate invoicing email. All attributes are managed via the code domain system and have dedicated admin UI with add/remove operations.
+**SOGGA had:** Languages, municipalities served, qualifications, skills / content types,
+attendance types (in-person, remote) and a separate invoicing email, all admin-managed.
+
+**Sogverse has:** Spoken languages (`profiles.spoken_languages`) and geographic coverage
+(`gedu_locations`), both collected at `/register-gedu` and editable by the gedu in
+settings. `gedu_profiles` carries certification and the criminal-record-check audit
+trios and nothing else. Note the vocabulary: "certified" here means an admin vouched for
+the person, not a held credential.
+
+**Still missing:** Qualifications / certifications, skills / content types, attendance
+types, a separate invoicing email, and any admin surface for editing a gedu's languages
+or coverage.
 
 **Priority:** `High`
-**Complexity:** `Medium` — A `gedu_profiles` extension table plus several junction tables (gedu_languages, gedu_locations, gedu_qualifications, gedu_skills). Admin UI for managing these attributes. Sogverse already has a `gamer_profiles` extension pattern to follow.
+**Complexity:** `Medium` — Junction tables for qualifications and skills, an
+attendance-type column, an invoicing email on `gedu_profiles`, and an admin editor on the
+user detail page.
 
 ---
 
-### 9. Substitute Educator Search
+### 9. Substitute Educator Search — `Gap`
 
-**Description:** Advanced search tool for finding substitute educators. Filters by weekday, time window, languages, qualifications, skills/content types, attendance types, and locations/municipalities. Returns educators available for a specific time slot. Used when a regular educator can't cover a session.
+**SOGGA had:** A filtered search for educators available in a weekday / time window,
+by languages, qualifications, skills, attendance types and municipalities.
+
+**Sogverse has:** The group-assignment gedu picker filters on name + email text and a
+single spoken-language chip, and flags uncertified gedus. `gedu_locations` exists for
+exactly this (the locations service names substitute matching as its purpose) but
+nothing reads it for that yet.
+
+**Still missing:** Availability by weekday / time window, location and attribute filters.
+The attributes themselves depend on item 8. `ROADMAP.md` schedules **Auto substitution**
+as a broadcast-and-approve cover request, which may make the search moot.
 
 **Priority:** `Medium`
-**Complexity:** `Medium` — A search API that queries across GEDU profile junction tables with AND/OR filtering. Depends on GEDU profiles (item 8) existing first. The multi-filter UI uses react-select multi-selects.
-
----
-
-### 10. Criminal Record Check Tracking
-
-**Description:** Records whether an educator has completed a criminal record check, stored as metadata on the user record. Required for working with children in Finland.
-
-**Priority:** `High`
-**Complexity:** `Low` — A date/status field on the GEDU profile. Minimal UI (a date picker + status indicator on the user detail page).
+**Complexity:** `Medium` — An availability query over schedule slots plus the profile
+junctions, and a multi-filter picker. Or none of it, if the cover-request flow ships
+first.
 
 ---
 
 ## Invoicing & Financial Reporting
 
-### 11. GEDU Invoicing System
+### 11. GEDU Invoicing System — `Gap`
 
-**Description:** Period-based invoicing for educators. Invoicing periods are created monthly (or custom ranges). Each lesson generates invoicing line items linked to a GEDU, club, and pricing tier. Line items have a status workflow: Unhandled > Processed/Rejected > Invoiced. Educators can view their own invoicing data; admins manage statuses. The UI includes period selection, line item tables, amount summaries, and status controls.
+**SOGGA had:** Monthly (or custom) invoicing periods, per-lesson line items linked to
+gedu, club and pricing tier, a status workflow (Unhandled → Processed / Rejected →
+Invoiced), gedu self-service views and admin management.
 
-**Priority:** `Critical`
-**Complexity:** `Very High` — Multiple tables (invoicing periods, invoicing lines, club pricing), a status state machine, business rules for line generation from lessons, period management, role-based views (GEDU sees own data, admin sees all), and financial reporting UI. This is one of the most complex SOGGA features.
+**Sogverse has:** Both inputs and no consumer — per-session gedu fees on `products`
+(`primary_gedu_fee_cents`, `assistant_gedu_fee_cents`) and per-session attendance
+(`session_attendance`). No period, line-item or status objects, no routes, no UI.
+**Educators are still marking sessions done in SOGGA to get paid**: the in-repo gedu
+handbook (`src/data/gedu-docs/`) instructs it, and describes the Truster collective
+invoicing that follows.
+
+**Priority:** `Critical` — SOGGA cannot be retired until this lands. `ROADMAP.md`
+schedules **Gedu invoicing** for September 2026.
+**Complexity:** `Very High` — Periods, line generation from materialised sessions +
+fees, a status state machine, gedu and admin views, and the CFO's reporting.
 
 ---
 
-### 12. Municipality Invoicing
+### 12. Municipality Invoicing — `Gap`
 
-**Description:** Separate invoicing track for billing municipalities. Tracks invoicing data per municipality with contact info, invoicing metadata, and per-lesson line items. Admins can set invoicing status per municipality and generate reports filtered by country, municipality, date range, year, and educator.
+**SOGGA had:** A separate invoicing track per municipality with contact info, per-lesson
+line items, status, and filtered reports.
 
-**Priority:** `Critical`
-**Complexity:** `High` — A `muni_invoicing` table linked to lessons and municipalities, invoicing status management, and admin reporting UI with multi-dimensional filtering. Depends on geographic hierarchy (item 1) and lesson management (item 5).
+**Sogverse has:** The product side only — `municipality_club` products with
+`billing_mode = 'external_contract'` and a `municipality_fee_cents` per session, all
+invoiced **off-platform** today (`docs/architecture/products.md`). The `locations`
+hierarchy carries no municipality contact or invoicing fields. The on-platform shape is
+pre-specified: a future `billing_mode = 'municipality_account'`, with code branching on
+`billing_mode` rather than on product type.
+
+**Priority:** `Critical` — `ROADMAP.md` schedules **Muni Invoicing** for September 2026.
+**Complexity:** `High` — Municipality invoicing details, line items derived from
+sessions × municipality fee, a status per municipality-period, and admin reporting.
+Shares its period and line machinery with item 11.
 
 ---
 
-### 13. Reporting Suite
+### 13. Reporting Suite — `Gap`
 
-**Description:** Four distinct report views for financial and operational data:
+**SOGGA had:** Municipality invoicing report, municipality summary, Truster per-gedu
+payment report with CSV / JSON export, and a gedu invoicing status overview.
 
-- **Municipality Invoicing Report** — Filter by country, municipality, date range, year, GEDU. Shows invoicing lines with clubs, participants, amounts, and statuses.
-- **Municipality Summary Report** — Aggregated financial summaries across municipalities for a given period.
-- **Truster Report** — Payment gateway data per GEDU per period, with CSV and JSON export.
-- **GEDU Invoicing Status Report** — Overview of all invoicing periods with status indicators, date ranges, and amounts.
+**Sogverse has:** No reports page and no CSV / JSON export anywhere. The admin dashboard
+deliberately dropped revenue and growth reporting because customer money lives in Stripe,
+which owns the reporting an accountant uses. That covers **incoming** money only; SOGGA's
+four reports were all about **outgoing** money (gedu fees, municipality billing), which
+Stripe never sees.
 
 **Priority:** `High`
-**Complexity:** `High` — Complex SQL queries with multi-table joins, date-range filtering, aggregation, role-based data scoping, and export functionality (CSV/JSON). Each report is a distinct page with its own filter controls and data tables. Depends on invoicing systems (items 11, 12).
+**Complexity:** `High` — Depends entirely on items 11 and 12; each report is a filtered
+aggregate over their tables plus an export route.
 
 ---
 
 ## Gamification & Engagement
 
-### 14. Achievement System
+### 14. Achievement System — `Gap`
 
-**Description:** A full achievement/progression system. Achievements have complex unlock conditions defined with a regex-based DSL supporting variable comparisons (>, >=, ==), AND/OR logic, and manual unlocks (by GEDU or parent). Each achievement has multi-language translations (EN, FI, ES), image, and reward items. Gamers have four attribute scores (Harmony, Glow, Valor, Common Sense) that accumulate from rewards. A level is derived from the square root of each attribute score.
+**SOGGA had:** Achievements with a condition DSL, translations, images and rewards; four
+attribute scores per gamer; a level derived from each score; a gamer profile with
+progress bars, a radar chart, an achievement grid and unlock notifications.
 
-The gamer profile UI shows:
-- Total level with progress bar
-- Four attribute levels with individual progress bars
-- A 4-axis radar chart visualization
-- Achievement grid with progress bars and unlock status
-- Modal notifications for new unlocks with carousel navigation
+**Sogverse has:** Vocabulary only. The Four Yty-Elements (harmony, glow, valor, wit —
+SOGGA's "Common Sense" is now Wit), Yty-Points, Quests, Achievement Badges and the metal
+tiers exist as the Yty constants module and the `yty` messages namespace, rendered on the
+public `/about` page. No `achievements`, `badges`, `quests` or points tables; nothing is
+awarded or stored; the gamer dashboard explicitly has no Yty section. `ROADMAP.md` names
+this in as many words ("the product carries the vocabulary without the mechanics behind
+it") and schedules **Gamer Yty** for November 2026, with Yty-Points balances, Achievement
+Badges and Quests unscheduled behind it.
 
 **Priority:** `Medium`
-**Complexity:** `Very High` — Achievement definitions table with translations, reward items, unlock condition parser/evaluator, four attribute scores on gamer profiles, level calculation logic, progress tracking, radar chart component, achievement grid UI, and notification system. The condition evaluation engine is the hardest part.
+**Complexity:** `Very High` — Points ledger, achievement definitions with translations
+and a condition evaluator, level derivation, the profile UI and unlock notifications.
+Drop the regex DSL; conditions can be typed rows.
 
 ---
 
-### 15. Gamers Gym / Activity Generator
+### 15. Gamers Gym / Activity Generator — `Gap`
 
-**Description:** A database of activities (name, description, image) that educators can use during sessions. The activity generator is a carousel/slot-machine UI that spins through activities and lands on a random one — used to pick icebreaker or warm-up activities during club sessions. Admins manage the activity library via a data grid.
+**SOGGA had:** A library of session activities (name, description, image) with a random
+pick carousel for educators, and admin CRUD.
+
+**Sogverse has:** Nothing. Beware the false friend: `src/lib/activity-type.ts` and the
+`activityCard` namespace are the club / camp / event type taxonomy, unrelated.
 
 **Priority:** `Low`
-**Complexity:** `Low` — An `activities` table with CRUD, and a fun carousel component with animation. Small, self-contained feature.
+**Complexity:** `Low` — An `activities` table with admin CRUD and a random-pick component.
 
 ---
 
 ## Configuration & Data Management
 
-### 16. Code / Code Domain System
+### 16. Code / Code Domain System — `Gap` (deliberately replaced)
 
-**Description:** A system-wide configurable enumeration framework. Code domains are categories (e.g., CLUB_STATUS, LESSON_STATUS, GENDER, GROUP_TYPE, CURRENCY). Each domain contains ordered codes with name and index. Used throughout the app for dropdown values, status fields, type classifications, and filter options. Admins can create, edit, reorder, and delete codes and domains.
+**SOGGA had:** Admin-editable runtime enumerations (status codes, types, currencies)
+used for dropdowns and classifications across the app.
 
-**Priority:** `Medium`
-**Complexity:** `Medium` — Two tables (`code_domains`, `codes`) with a parent-child relationship, admin CRUD UI, and a pattern for referencing codes from other models. Sogverse currently hardcodes enums in TypeScript and PostgreSQL; this system makes them admin-configurable at runtime. The value depends on whether runtime configurability is needed vs. compile-time enums.
+**Sogverse has:** Postgres enums flowing through codegen (`billing_mode`, `product_type`,
+`product_status`, `participation_status`, `product_topic`, `product_tag`,
+`spoken_language`, `user_role` and others) with labels in `messages/`, plus TS const
+tuples for locales. `docs/investigations/enum-candidates.md` records the bar a value must
+clear to be an enum and the disqualifier: anything that is genuinely data with admin CRUD
+is a table instead — `locations`, `product_images`, `holiday_calendars`, `postal_codes`.
+
+**Still open:** Only the question of whether any enum will ever need runtime editing. No
+current need; treat this item as closed unless one appears.
+
+**Priority:** `Low` (down from Medium)
+**Complexity:** `Medium` if ever wanted.
 
 ---
 
-### 17. Club Instructions
+### 17. Club Instructions — `Partial`
 
-**Description:** Configurable instruction documents attached to clubs, categorized by type (via code domain). Admins create and manage instructions that can be associated with clubs. Used to provide standardized guidelines for educators running specific types of sessions.
+**SOGGA had:** An admin-managed library of typed instruction documents attached
+many-to-many to clubs.
+
+**Sogverse has:** Four narrower staff-note fields: a per-product staff-only material link
+(`product_staff_details.material_url`), a per-group gedu note (`product_groups.gedu_note`),
+per-venue staff notes (`site_staff_details`) and per-member group notes. The gedu
+handbooks in `src/data/gedu-docs/` are static repo files feeding the Gedu Guru bot, not
+attached to products and not admin-editable.
+
+**Still missing:** A reusable, typed instruction document that many clubs share.
 
 **Priority:** `Low`
-**Complexity:** `Low` — A `club_instructions` table with name and type, a many-to-many with clubs/products, and a simple admin data grid.
+**Complexity:** `Low` — An `instructions` table with a type, a junction to products, and a
+panel in the group workspace.
 
 ---
 
-### 18. Club Pricing Configuration
+### 19. Entities Management — `Gap`
 
-**Description:** Per-club pricing with currency support. Each club can have pricing tiers defined with amount and currency code. Used in invoicing calculations to determine line item amounts. Separate from subscription pricing — this is the operational cost/rate for running a club.
+**SOGGA had:** Organisation records (companies, sponsors) associated with clubs.
 
-**Priority:** `High`
-**Complexity:** `Low` — A `club_pricing` table linked to products/clubs with amount and currency fields. The data model is simple; the complexity is in how it integrates with invoicing (item 11).
-
----
-
-### 19. Entities Management
-
-**Description:** Business entity records (organizations, companies) that can be associated with clubs. Entities have basic info and club relationships. Used for tracking which organization operates or sponsors a club.
+**Sogverse has:** No organisation table. The `locations` hierarchy is country → region →
+municipality → district → site; a school is a `site` row (a venue), and `/schools` is
+derived from where clubs run. The only product ↔ organisation link is the
+`marketing_consent_type` enum naming one partner (Lynx Educate). Municipality billing,
+the business reason SOGGA had entities, is item 12.
 
 **Priority:** `Low`
-**Complexity:** `Low` — An `entities` table with CRUD and a junction table to products. Simple admin UI.
+**Complexity:** `Low` — An `organisations` table and a junction to products. Reconsider
+once item 12 decides whether a municipality's invoicing details live on the location or
+on an organisation.
 
 ---
 
 ## Communication & CRM
 
-### 20. ActiveCampaign CRM Integration
+### 20. ActiveCampaign CRM Integration — `Gap`
 
-**Description:** Bi-directional integration with ActiveCampaign for marketing automation. Creates contacts on registration, manages season-based tags (municipality season, active, waiting list, cancelled), syncs contact info (name, email, phone), and updates tags on status changes (enrollment, cancellation, waiting list moves). Feature-flagged via environment variable.
+**SOGGA had:** Contact creation on registration, season and status tags, contact sync,
+tag updates on enrolment / cancellation / waitlist moves.
+
+**Sogverse has:** A consent ledger with no sync target — `marketing_consents` (current
+state) and `marketing_consent_events` (append-only history) per consent type, captured in
+signup, registration and account settings, shown on the admin user page. Brevo is used
+for transactional email only; the client has one export and touches no contact or list
+endpoint.
+
+**Still missing:** Any downstream marketing platform, and status tagging.
 
 **Priority:** `Medium`
-**Complexity:** `Medium` — API client for ActiveCampaign REST API, contact CRUD, tag management, and hooks into registration/enrollment/cancellation flows. The integration points are spread across multiple features, so it touches many code paths.
+**Complexity:** `Medium` — A Brevo contacts / lists sync driven off the consent events
+would be the natural fit, plus hooks on enrolment and cancellation.
 
 ---
 
-### 21. Webflow Webhook Integration
+### 21. Webflow Webhook Integration — `Gap`
 
-**Description:** Webhook receiver for events from a Webflow-hosted marketing website. Processes incoming data from the external site (likely form submissions or CMS changes).
+**SOGGA had:** A webhook receiver for events from the Webflow marketing site.
+
+**Sogverse has:** Inbound webhooks for Stripe, WhatsApp and Discord interactions only. The
+public site is now Sogverse itself, so the need may be gone.
 
 **Priority:** `Low`
-**Complexity:** `Low` — A single webhook API route with payload validation and processing logic.
+**Complexity:** `Low` — One route, if a marketing-site event ever needs receiving.
 
 ---
 
-### 22. Welcome Email Tracking & Bulk Send
+### 22. Welcome Email Tracking & Bulk Send — `Gap`
 
-**Description:** Per-participant tracking of whether a welcome email has been sent, with a toggle in the participant management UI. Admins can trigger bulk welcome emails for all participants in a club, sending personalized emails with club details, meeting times, and instructions.
+**SOGGA had:** A per-participant "welcome email sent" flag with an admin toggle, and a
+bulk send of a club-details welcome mail to a whole club.
+
+**Sogverse has:** The pattern, but not this instance. Enrolment confirmation (including
+the waitlist variant) is sent automatically per signup; the account welcome mail is sent
+once at registration; a tracked, exactly-once bulk send to every family in a group exists
+for session reports (`group_sessions.report_emailed_at`).
+
+**Still missing:** An admin-triggered club welcome / details mail and its sent-flag.
 
 **Priority:** `Medium`
-**Complexity:** `Low` — A boolean flag on enrollments, a bulk send API endpoint that iterates participants and sends templated emails, and a toggle + button in the admin UI.
+**Complexity:** `Low` — A template, a `welcome_emailed_at` on the group or participation,
+and a claim-then-send route in the session-report shape.
 
 ---
 
 ## Discord Integration
 
-### 23. Discord Bot & Community Features
+### 23. Discord Bot & Community Features — `Partial`
 
-**Description:** A Discord.js bot with slash commands for managing virtual classrooms and voice lobbies:
-- `/setup room set/unset` — Configure a Discord channel as a classroom with message templates
-- `/setup lobby set/unset` — Designate a voice channel as a lobby
-- `/room open <club>` — Open a classroom for a specific club (with autocomplete)
-- `/room close` — Close the active classroom
+**SOGGA had:** A Discord.js bot with classroom and lobby setup commands, `/room open` /
+`/room close` per club, OAuth account linking, role assignment on subscription change,
+guild member search and nickname caching.
 
-Also includes Discord OAuth2 account linking (connect platform account to Discord), automatic Discord role assignment/removal on subscription changes, guild member search, and nickname caching. Each club can be associated with a Discord guild and role.
+**Sogverse has:** A single stateless interactions webhook (`src/app/api/discord/`) with
+three staff commands: `/geduguru` and `/happinappi` (Gemini assistants over the gedu
+docs) and `/reset-password` (Minecraft Education). Voice moved to Daily.co. No account
+linking, no role sync, no per-club guild or classroom.
+
+**Still missing:** Everything community-shaped. `ROADMAP.md` moves the other way — Gedu
+Guru and support tickets are to be handled natively in Sogverse — so the missing pieces
+are not planned.
 
 **Priority:** `Low`
-**Complexity:** `High` — A separate Discord.js bot process, OAuth2 flow, role management API calls, and database models for classroom/lobby configuration. Sogverse replaced Discord voice with Daily.co, so this is only relevant if a Discord community presence is still desired alongside the platform.
+**Complexity:** `High` if ever wanted; treat as closed unless a Discord community
+presence is decided on.
 
 ---
 
 ## Operational Tools
 
-### 24. Scheduled Jobs System
+### 24. Scheduled Jobs System — `Gap` (deliberately replaced)
 
-**Description:** A persistent job scheduler using node-schedule. Jobs are stored in the database with a name, function reference, cron expression or one-time date, and metadata. On server startup, all active jobs are loaded and scheduled. Supports job functions like automated Chargebee subscription cancellation (with email notification, participation cancellation, Discord role removal, and CRM updates). Admins can create scheduled actions via API.
+**SOGGA had:** DB-stored cron / one-time jobs with a function registry; the flagship job
+was automated subscription cancellation with email, participation cancel, role removal
+and CRM updates.
+
+**Sogverse has:** No live scheduled jobs of any kind — `pg_cron` is installed with every
+job since unscheduled, `vercel.json` has no crons, and there are no edge functions. The
+replacement is **lazy observation**: seat-offer expiry is claimed exactly-once by a sweep
+RPC when an admin opens a surface that cares, and verification requests self-prune inside
+their own RPC. Subscription cancellation is delegated to Stripe (`cancel_at_period_end`
+via the webhook, self-served through the Customer Portal).
+
+**Still open:** Any feature that genuinely needs a timer — session reminders
+(`docs/investigations/session-reminders-and-calendar-feed.md`) and chat retention
+(`TODO.md`) both name the constraint. The first such feature has to bring the runbook and
+alerting `pg_cron` would need.
 
 **Priority:** `Medium`
-**Complexity:** `Medium` — Sogverse already uses pg_cron for the weekly enrollment charge job. A more general-purpose job system would need a `scheduled_jobs` table, a registry of job functions, and either pg_cron entries or an external scheduler. The question is whether pg_cron plus Supabase Edge Functions covers the use cases, or if a dedicated job queue is needed.
+**Complexity:** `Medium` — Decided per feature; no general job system is wanted.
 
 ---
 
-### 25. Audit / Information Logging
+### 25. Audit / Information Logging — `Partial`
 
-**Description:** A structured logging system that records events with type (INFO, ERROR), scope (login, municipalityRegistration, activecampaign, etc.), optional user ID, and description. Stored in an `informationLog` database table for audit trail and debugging. Used throughout the API for tracking registrations, user creation, participation changes, and error conditions.
+**SOGGA had:** A structured `informationLog` table (type, scope, user, description)
+written throughout the API.
+
+**Sogverse has:** No event-log table and no logging wrapper. A handful of admin
+participation routes emit structured JSON lines to Vercel's log aggregation (add / remove
+gamer, waitlist transition) with the design stated inline: hosted logs, no DB write.
+Separately, DB-enforced stamped-by columns exist where they matter (`certified_by`,
+`criminal_record_check_by`, `report_emailed_by`, `hidden_by`, `locked_by`) and
+`marketing_consent_events` is a real append-only log for one domain. No Sentry or
+equivalent.
+
+**Still missing:** Any queryable cross-cutting audit trail, and consistent log calls
+outside those routes.
 
 **Priority:** `Medium`
-**Complexity:** `Low` — A single `information_logs` table with an insert-only RPC. The work is in adding log calls to existing code paths. Could also be implemented via Supabase's built-in audit logging or a lightweight wrapper.
+**Complexity:** `Low` — An insert-only `audit_events` table and a `logAudit()` helper
+called from the guarded write paths; or a decision that hosted logs are enough.
 
 ---
 
-### 26. Club Calendar View
+### 26. Club Calendar View — `Partial`
 
-**Description:** A calendar-organized view of all clubs grouped by weekday (Monday through Sunday, plus unscheduled). Features a powerful multi-dimensional filtering system using react-select multi-selects: filter by status, type, municipality, educator, and attendance type simultaneously. Includes a text search box. Each club is an expandable accordion showing full details. This is the primary operational view for admins and educators to see the weekly schedule at a glance.
+**SOGGA had:** All clubs grouped by weekday (plus unscheduled) with multi-select filters
+for status, type, municipality, educator and attendance type, a text search, and
+expandable club details.
+
+**Sogverse has:** Two halves that nothing joins. The admin dashboard's week view groups a
+concrete week by weekday with a product-type filter only and no unscheduled bucket. The
+club list pages (`/admin/consumer-clubs`, `/admin/municipality-clubs`) have a flat list
+with day, educator, spoken language / municipality filters and a debounced text search.
+A standalone session calendar component exists with zero production consumers, which
+`TODO.md` already flags as rewire-or-delete.
+
+**Still missing:** Weekday grouping and multi-dimensional filtering on the same surface,
+status and attendance-type axes (absent from the wire contract, not just the UI), and an
+unscheduled bucket.
 
 **Priority:** `High`
-**Complexity:** `Medium` — A page that fetches all products/groups, organizes them by `day_of_week`, and renders filterable accordion lists. Sogverse has group listing pages but they're flat lists without weekday grouping or multi-dimensional filtering. The filter state management is the main UI complexity.
-
----
-
-### 27. Participant Notes
-
-**Description:** Free-text notes that admins and educators can attach to individual participants within a club. Editable inline in the participant management UI. Used for tracking special needs, behavioral notes, or communication history.
-
-**Priority:** `Medium`
-**Complexity:** `Low` — A `notes` text column on enrollments (or a separate notes table), with an inline text editor in the group detail UI.
+**Complexity:** `Medium` — Extend the club list's filter bar with the missing axes and
+give it a by-weekday layout, or feed the week view the club filters.
 
 ---
 
 ## Search & Discovery
 
-### 29. Advanced Multi-Entity Search
+### 29. Advanced Multi-Entity Search — `Partial`
 
-**Description:** Dedicated search pages for each entity type with role-specific result cards:
-- **GEDU Search** — Find educators by name/email, shows languages, billing method, Discord info, active status
-- **Gamer Search** — Find gamers with subscription plan details, club memberships, parent info, municipality gamer status
-- **Parent Search** — Find parents with linked gamers, subscriptions, Discord info
-- **User Search** — Cross-role user search showing role-specific fields
-- **Club Search** — Advanced club filtering by attendance type, municipality, content type, meeting day, type, language, status, and educator
+**SOGGA had:** Dedicated search pages per entity (gedu, gamer, parent, user, club) with
+entity-specific filters and result cards.
 
-Sogverse has basic admin user listing but lacks dedicated search pages with entity-specific filters and result cards.
+**Sogverse has:** One strong unified user search on `/admin/users` over a generated
+search blob (name, email, phone, Minecraft and Roblox usernames), multi-word AND
+matching, role chips, a capped page with the true match count, and gedu standing marks
+on rows; gamers nest under their parents. Product lists are split per type with a name
+search, and the two club types add the filter bar described in item 26. Groups have no
+list of their own.
 
-**Priority:** `High`
-**Complexity:** `Medium` — Search API endpoints with multi-field filtering, and dedicated search pages per entity type with result card components. The data model queries are moderately complex (joins across users, profiles, enrollments, groups, products).
+**Still missing:** Entity-specific result cards (subscription plan, club memberships,
+billing method, municipality-gamer status), club filtering by attendance type, topic,
+status or tag, a cross-product group search, and any global search.
+
+**Priority:** `Medium` (down from High — the user search covers the common case)
+**Complexity:** `Medium` — Richer row cards from existing joins, and the club filter
+axes from item 26.
 
 ---
 
@@ -298,7 +478,7 @@ Sogverse has basic admin user listing but lacks dedicated search pages with enti
 
 | Priority | Items |
 |----------|-------|
-| **Critical** | Municipality Registration, GEDU Invoicing, Municipality Invoicing |
-| **High** | Lesson Management, Attendance Tracking, GEDU Profiles, Criminal Record Check, Reporting Suite, Club Pricing, Club Calendar View, Multi-Entity Search |
-| **Medium** | Custom Fields, Lesson Rewards, Substitute Search, Achievement System, Code Domain System, ActiveCampaign CRM, Welcome Emails, Scheduled Jobs, Audit Logging, Participant Notes |
-| **Low** | Activity Generator, Club Instructions, Entities, Webflow Webhooks, Discord Bot |
+| **Critical** | GEDU Invoicing (11), Municipality Invoicing (12) |
+| **High** | Municipality Registration (3), Lesson Management (5), GEDU Profiles (8), Reporting Suite (13), Club Calendar View (26) |
+| **Medium** | Custom Fields (2), Lesson Rewards (7), Substitute Search (9), Achievement System (14), ActiveCampaign CRM (20), Welcome Emails (22), Scheduled Jobs (24), Audit Logging (25), Multi-Entity Search (29) |
+| **Low** | Activity Generator (15), Code Domain System (16), Club Instructions (17), Entities (19), Webflow Webhooks (21), Discord Bot (23) |

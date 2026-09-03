@@ -1,0 +1,213 @@
+"use client";
+
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
+import { deriveChatComposerCapabilities } from "./capabilities";
+import { ChatComposer } from "./ChatComposer";
+import { ChatMessageList, type ChatLogHandlers } from "./ChatMessageList";
+import { ChatReplyStrip } from "./ChatReply";
+import type { ChatSendDraft } from "./composer-staging";
+import type { ChatAccount, ChatMessage } from "./types";
+
+/**
+ * Everything a surface has to answer for the chat it is showing.
+ *
+ * `onReply` is deliberately absent: which message is being answered is state
+ * about *looking at* a chat, so the view owns it and nothing outside is asked.
+ */
+export type ChatViewHandlers = Omit<ChatLogHandlers, "onReply"> & {
+  /**
+   * One press of Send, already fanned out: one draft per staged picture, then
+   * the words. The surface turns each into a message — optimistically, which is
+   * what the pending and failed bubbles are for.
+   */
+  onSend: (drafts: ChatSendDraft[]) => void;
+};
+
+/**
+ * The whole chat surface: the log, who is writing, and the composer.
+ *
+ * **Transport-free by construction.** It takes messages and hands back
+ * intentions; it opens no socket, holds no query and knows nothing about where
+ * its rows came from. That is what lets the preview scene drive it from local
+ * fixtures and the voice room drive it from a live subscription, with the same
+ * component and no branch inside it — and it is what makes the design signed
+ * off in fixtures the design that ships.
+ *
+ * What it *does* own is the state that is purely about looking at a chat:
+ * which message is being replied to. Nothing outside a chat surface has a use
+ * for that, and threading it through a page would only give a second copy the
+ * chance to disagree.
+ *
+ * **It also owns the surface's budget.** The height its container grants is the
+ * height of the *whole* thing — log, reply strip and composer in one column —
+ * and nothing inside may take more. A chat is placed somewhere with only that
+ * space to spend *(owner ruling)*, so every interaction is paid for out of the
+ * log: a reply strip appearing, a composer growing to five lines. What is below
+ * the chat on the page belongs to somebody else and never moves.
+ */
+export function ChatView({
+  messages,
+  accounts,
+  viewer,
+  lockedAccountIds,
+  typingAccountIds,
+  heightClassName,
+  timeZone,
+  handlers,
+  className,
+}: {
+  /** Oldest first — the render order. Nothing here sorts. */
+  messages: readonly ChatMessage[];
+  accounts: readonly ChatAccount[];
+  viewer: ChatAccount;
+  /** Who a moderator has locked out of this chat. */
+  lockedAccountIds: ReadonlySet<string>;
+  /** Who is typing right now. The viewer is ignored if they appear. */
+  typingAccountIds: readonly string[];
+  /**
+   * The fixed height of the **whole surface**, as a class the container
+   * chooses: the log, the reply strip while one is up, and the composer at
+   * whatever size the draft in it has reached. Geometry belongs to whatever
+   * embeds the chat — a voice-room panel and a future full-page surface want
+   * different boxes around the same behaviour — and whatever it grants is all
+   * the chat ever occupies. Everything inside is paid for out of the log.
+   *
+   * (The typing indicator is the one thing drawn outside this box, and it takes
+   * no space of its own: it is absolutely positioned into the *embedding
+   * container's* bottom padding. See the indicator's own header.)
+   */
+  heightClassName?: string;
+  /** The viewer's own IANA zone — every clock face renders in it. */
+  timeZone: string;
+  handlers: ChatViewHandlers;
+  className?: string;
+}) {
+  const [replyToId, setReplyToId] = useState<string | null>(null);
+  // One press of Send, counted. The log cannot tell the viewer's own arrival
+  // from anybody else's, and the two want opposite scroll behaviour — so the
+  // view, which knows which of the two just happened, says so.
+  const [outboundToken, setOutboundToken] = useState(0);
+
+  const byId = new Map(accounts.map((account) => [account.id, account]));
+  const viewerLocked = lockedAccountIds.has(viewer.id);
+  // Everyone the viewer can name, derived once and handed to *both* places a
+  // mention can be written: the composer and the in-place editor. One array is
+  // the point — the order is what settles two accounts sharing a name, so a
+  // second list built somewhere else could resolve the same word to a different
+  // person depending on whether it was typed into a new message or an edit.
+  const mentionable = accounts.filter((account) => account.id !== viewer.id);
+  const replyingTo =
+    replyToId === null
+      ? null
+      : (messages.find((message) => message.id === replyToId) ?? null);
+
+  const typingNames = typingAccountIds
+    .filter((id) => id !== viewer.id)
+    .map((id) => byId.get(id)?.name)
+    .filter((name): name is string => name !== undefined);
+
+  const logHandlers: ChatLogHandlers = {
+    ...handlers,
+    onReply: (messageId) => setReplyToId(messageId),
+  };
+
+  return (
+    <div className={cn("relative", className)}>
+      {/* **One fixed-height column for the entire surface.** The log is the
+          only flexible child (`flex-1 min-h-0`); the reply strip and the
+          composer are `shrink-0` and sit at the bottom of it. So everything
+          that appears or grows takes its space *from the log* and the outer box
+          never changes size: starting a reply, adding a fifth line to a draft,
+          staging a row of thumbnails. A chat is placed somewhere with only this
+          much space granted, and whatever happens inside it happens in there
+          *(owner ruling)* — so nothing below the chat on the page can be moved
+          by anything a person does in it.
+
+          The log is glued to its own bottom, so what a reader at the bottom
+          sees is the conversation sliding up to make room, never the page
+          changing shape. */}
+      <div className={cn("flex flex-col", heightClassName ?? "h-80 sm:h-96")}>
+        <ChatMessageList
+          messages={messages}
+          accounts={byId}
+          mentionable={mentionable}
+          viewer={viewer}
+          viewerLocked={viewerLocked}
+          lockedAccountIds={lockedAccountIds}
+          timeZone={timeZone}
+          handlers={logHandlers}
+          outboundToken={outboundToken}
+          heightClassName="h-full"
+          className="min-h-0 flex-1"
+        />
+        {replyingTo !== null && (
+          <ChatReplyStrip
+            message={replyingTo}
+            sender={byId.get(replyingTo.senderId) ?? null}
+            onCancel={() => setReplyToId(null)}
+            className="mt-1 shrink-0"
+          />
+        )}
+
+        <ChatComposer
+          capabilities={deriveChatComposerCapabilities({
+            viewer,
+            locked: viewerLocked,
+          })}
+          accounts={mentionable}
+          replyingTo={replyingTo}
+          onSend={(drafts) => {
+            handlers.onSend(drafts);
+            setReplyToId(null);
+            setOutboundToken((token) => token + 1);
+          }}
+          className="mt-2 shrink-0"
+        />
+      </div>
+
+      <ChatTypingIndicator names={typingNames} />
+    </div>
+  );
+}
+
+/**
+ * Who is writing — overlaid on the embedding container's own bottom padding,
+ * below the composer. The fourth cut of this component, and the stable one.
+ *
+ * An indicator arrives and leaves on somebody else's schedule — the one kind
+ * of change the layout rule forbids outright — so it cannot take space in
+ * flow. The cuts before this one each traded that away differently: over the
+ * log's last line it made exactly the line a reader was mid-way through
+ * unreadable; as a reserved in-flow line (between log and composer, then
+ * below the composer) the line read as a padding mistake whenever nobody was
+ * typing. Absolutely positioned just past the surface's bottom edge, it lands
+ * in the container's bottom padding: space that already exists, holds no
+ * content to cover, and is not read as a slot when empty (owner rulings,
+ * 2026-09-01).
+ *
+ * **The contract this buys: whatever embeds the chat must leave at least one
+ * text line of bottom padding under it.** A `CardContent` does; a future
+ * flush-to-the-edge embedding would clip the label and needs its own padding.
+ */
+function ChatTypingIndicator({ names }: { names: readonly string[] }) {
+  const t = useTranslations("chat.typing");
+  const label =
+    names.length === 0
+      ? null
+      : names.length === 1
+        ? t("one", { name: names[0] })
+        : names.length === 2
+          ? t("two", { first: names[0], second: names[1] })
+          : t("many");
+
+  return (
+    <p
+      aria-live="polite"
+      className="pointer-events-none absolute inset-x-1 top-full mt-1 truncate text-xs italic leading-4 text-muted-foreground"
+    >
+      {label}
+    </p>
+  );
+}

@@ -20,7 +20,6 @@
       "gamerDashboard": "Min SOG",
       "gamerDashboardDescription": "Dina klubbar, läger och evenemang i Sogverse",
       "voiceSession": "Röstsession",
-      "help": "Hjälp",
       "shop": "Butik",
       "schools": "Kommunklubbar",
       "unlockPin": "Ange PIN",
@@ -105,6 +104,8 @@
     "gedus": "Geduer"
   },
   "about": {
+    "pageTitle": "Om oss",
+    "sectionNav": "På den här sidan",
     "hero": {
       "title": "Om <primary>School of Gaming</primary>",
       "subtitle": "Där skärmtid blir kvalitetstid. Vi sammanför barn, professionella spelfostrare och spelen som barnen redan älskar — Minecraft, Roblox, Fortnite och fler — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
@@ -147,6 +148,79 @@
       "heading": "För föräldrar",
       "paragraph1": "Spelfostran för föräldrar är en lika viktig del av det vi gör som själva klubbarna. Vi vill hjälpa föräldrar att hänga med i den ständigt föränderliga spelvärlden så att de kan stötta sina barn med tillförsikt.",
       "paragraph2": "Du har kontrollen — du hanterar konton, anmälningar och utgifter — medan ditt barn njuter av en trygg miljö ledd av professionella som bryr sig."
+    },
+    "faq": {
+      "heading": "Vanliga frågor",
+      "items": {
+        "whatIsSogverse": {
+          "question": "Vad är Sogverse?",
+          "answer": "<p>Sogverse är School of Gamings plattform för klubbar, läger och evenemang i Minecraft, Roblox, Fortnite och mer. De leds av professionella spelfostrare — Geduer, som alla här kallar dem.</p>"
+        },
+        "productTypes": {
+          "question": "Vad är skillnaden mellan klubbar, läger och evenemang?",
+          "answer": "<p>Klubbar träffas regelbundet. Läger pågår under flera dagar under skolloven. Evenemang är enstaka tillfällen.</p>"
+        },
+        "whoLeads": {
+          "question": "Vem leder tillfällena, och hur kontrolleras Geduer?",
+          "answer": "<p>Varje tillfälle hålls av en Gedu — en spelfostrare som själv är spelare och som vet hur man stöttar barn både i spelet och utanför.</p><p>Vi kräver att varje Gedu visar oss ett straffregisterutdrag för arbete med barn innan vi certifierar hen — det finländska rikosrekisteriote, som hen själv beställer från Rättsregistercentralen och som får vara högst sex månader gammalt när hen visar det för oss — och att hen läser och godkänner avtalet hen arbetar under. Vi behåller ingen kopia av utdraget och antecknar ingenting ur det, bara att ett godtagbart utdrag har visats och när.</p><p>Att registrera sig öppnar ingen grupp i sig: tills en administratör har certifierat kontot kan en Gedu inte tilldelas en grupp och inte använda Gedu-verktygen.</p>"
+        },
+        "safety": {
+          "question": "Kan främlingar prata med mitt barn, och spelas något in?",
+          "answer": "<p>Nej — en klubbs röstrum är inget offentligt rum som vem som helst kan hitta. Det finns bara under gruppens tillfälle, öppnar fem minuter innan tillfället börjar och stänger fem minuter efter att det slutar, och de enda som kan komma in är gruppens medlemmar, en spelfostrare som arbetar med den klubben, och administratörer på School of Gaming; den kontrollen körs på vår server varje gång någon ansluter, så ett barn utan plats i den gruppen har ingen väg in.</p><p>Det finns ingen funktion för direktmeddelanden någonstans på plattformen: chatten under ett tillfälle går till hela rummet, aldrig till ett enskilt barn i enrum, och den bär bilder lika väl som ord. Den lever i rummet, som är öppet under samma tid — det är där ditt barn läser den, och när rummet har stängt går den inte att öppna igen. Vi sparar den däremot: Geduerna som håller i klubben och administratörerna på School of Gaming kan gå tillbaka till vad som sagts, och det är just det som gör det möjligt att moderera. Att ta bort ett meddelande lämnar en markering i dess ställe i stället för att radera det.</p><p>Själva tillfället spelas inte in. Ingenting i appen spelar in, transkriberar eller lagrar ljudet eller bilden från ett tillfälle, och rummet har inga inspelningskontroller.</p><p>Bara Gedun och administratörerna har moderatorkontrollerna, och de räcker långt: att tysta en mikrofon eller låsa den, stänga av en kamera eller låsa den, tysta någon i chatten, flytta någon till ett eget utrymme, och tala till alla utrymmen på en gång. Chatt inne i spelet är en annan sak och sköts av spelen själva — på School of Gamings egen Minecraft-server kan våra Geduer tysta, sparka ut och stänga av en spelare.</p>"
+        },
+        "howToStart": {
+          "question": "Hur kommer jag igång?",
+          "answer": "<p>Skapa ett föräldrakonto, lägg till ditt barn som spelare från Min SOG, och bläddra sedan i butiken och anmäl hen — anmälningspanelen frågar vem platsen är till för, och uppmanar dig att lägga till en spelare om du inte har gjort det än.</p><p>När du har anmält placerar vi ditt barn i en grupp med en Gedu före hens första tillfälle, och klubben dyker sedan upp på Min SOG för er båda.</p><p>Hen går med i tillfällena via ditt konto — du växlar till hens profil — så hen behöver aldrig ett eget lösenord.</p>"
+        },
+        "isItASchool": {
+          "question": "Är det här skola?",
+          "answer": "<p>Nej. Spelande är en hobby som vilken annan som helst, och så driver vi det: en spelfostrare finns där för att vägleda och hjälpa, inte för att sätta betyg. Ingenting i Sogverse ger ett barn ett omdöme, delar ut läxor eller håller prov.</p><p>Det ditt barn får är en egen grupp, en Gedu som känner hen, och en skriven rapport efter varje tillfälle så att du kan se vad de arbetade med och hur det gick.</p>"
+        },
+        "ages": {
+          "question": "Vilka åldrar är det här för?",
+          "answer": "<p>Varje klubb, läger och evenemang har sitt eget åldersintervall, som visas på sidan och på kortet i butiken — och butiken har ett åldersfilter som hjälper dig hitta det som passar ditt barn. På hela plattformen sträcker sig intervallen från 7 till 17 år.</p><p>Spelen har sina egna åldersgränser, och varje spels gräns visas på sidan för den klubb, det läger eller det evenemang som byggts kring det. Vi kör aldrig ett spel med 18-årsgräns. I Finland följer vi den nationella vägledningen om åldersgränser, som låter ett barn spela ett spel med en gräns upp till tre år över sin egen ålder när en förälder är närvarande och tycker att det är okej.</p><p>Var du än bor står både spelets åldersgräns och verksamhetens eget åldersintervall på sidan innan du anmäler dig, och när du anmäler ditt barn bekräftar du att du är införstådd med dem.</p>"
+        },
+        "games": {
+          "question": "Vilka spel kör ni, och måste mitt barn äga spelet?",
+          "answer": "<p>Våra klubbar, läger och evenemang körs i Minecraft (Java-, Bedrock- och Education-utgåvorna), Roblox Studio, Fortnite, Rocket League och Pokémon GO, vid sidan av tillfällen om e-sport, programmering, AI och spelskapande — varje klubb-, läger- och evenemangssida namnger spelet den är byggd kring och säger rakt ut vad du behöver.</p><p>Fortnite, Rocket League, Pokémon GO och Roblox Studio är gratis att ladda ner; ditt barn behöver ett kostnadsfritt konto för dem.</p><p>Minecraft Java och Minecraft Bedrock är betalspel som din familj köper en gång av utgivaren — priset ingår inte i vårt, och utgåvan spelar roll, så sidan talar om vilken det gäller och var du får tag på den. För Minecraft Education finns det ingenting att köpa och inget skolkonto att ordna: School of Gaming tillhandahåller kontona som används under tillfället, och ditt barn laddar bara ner själva spelet, kostnadsfritt.</p>"
+        },
+        "equipment": {
+          "question": "Vilken utrustning behöver mitt barn?",
+          "answer": "<p>Det beror på spelet, och varje klubb, läger och evenemang skriver ut det på sin egen sida.</p><p>Minecraft Java kräver en dator — Windows, Mac eller Linux — och utgåvan för konsol, telefon och surfplatta fungerar inte. Roblox Studio körs bara på Windows-datorer och Mac: inte på surfplatta, Chromebook, telefon eller konsol. Minecraft Bedrock körs på konsoler, telefoner, surfplattor och Windows-datorer, och Rocket League på Windows-datorer, PlayStation, Xbox och Nintendo Switch. Pokémon GO kräver en telefon eller surfplatta med GPS och mobildata, eftersom det spelas utomhus.</p><p>Tillfällena på nätet körs i webbläsaren, över röst, så ditt barn behöver också en mikrofon — i vyn för tillfället finns en mikrofonväljare och en levande testmätare, så att hen kan kontrollera att rätt mikrofon är vald innan hen talar.</p>"
+        },
+        "billing": {
+          "question": "Vad kostar det, och hur fungerar faktureringen?",
+          "answer": "<p>Priserna sätts per klubb, läger och evenemang, och var och en visar sitt eget pris på sin sida, i euro och inklusive moms.</p><p>Hur du betalar beror på vad du anmäler dig till: en klubb är en månadsprenumeration som faktureras varje månad utan bindningstid; ett läger eller ett evenemang är en engångsbetalning vid anmälan, utan något mer att betala; och en kommunklubb betalas av kommunen, så det finns ingenting att betala till oss. Varje barns plats i varje klubb är en egen månadsprenumeration, uppkallad efter barnet och klubben, så en familj med två barn i två klubbar ser fyra rader. Om du anmäler dig innan en klubb har startat dras ingenting den dagen: sidan talar om datumet för din första betalning innan du binder dig.</p><p>Dina sparade kort, fakturor och prenumerationer finns alla i kortet Betalning och fakturering på Min SOG, som öppnar Stripes egen säkra faktureringssida.</p>"
+        },
+        "cancellation": {
+          "question": "Kan jag säga upp, och hur ser er återbetalningspolicy ut?",
+          "answer": "<p>En klubb löper som en månadsprenumeration utan bindningstid, och du kan säga upp den när du vill, kostnadsfritt, från kortet Betalning och fakturering på Min SOG, som öppnar Stripes säkra faktureringssida. Ditt barn behåller sin plats till slutet av den period du redan har betalat för — klubbsidan visar datumet för hens sista tillfälle medan medlemskapet löper ut.</p><p>Varje klubb har dessutom 30 dagars nöjd-kund-garanti: om det visar sig att den inte passar ditt barn, mejla {supportEmail} inom 30 dagar från hens första tillfälle så betalar vi tillbaka allt du har betalat för den klubben — inget formulär och ingen anledning att uppge.</p><p>Läger bokas och betalas som en engångssumma och fungerar därför annorlunda: säger du upp 14 dagar eller mer innan lägret börjar får du full återbetalning; mellan 7 och 14 dagar innan betalar vi tillbaka minus en administrativ avgift på 50 euro; mindre än 7 dagar innan kan vi inte betala tillbaka, eftersom platsen har hållits och förberetts för ditt barn — om det inte handlar om ett akut sjukdomsfall eller något annat som verkligen ligger utanför din kontroll. Om ditt barn inte kan delta på grund av sjukdom, skicka oss ett läkarintyg på {supportEmail} så betalar vi tillbaka.</p>"
+        },
+        "severalChildren": {
+          "question": "Jag har flera barn — hur fungerar konton och betalningar?",
+          "answer": "<p>Du har ett föräldrakonto, och du skapar ett spelarkonto för varje barn från Min SOG — förnamn, födelsemånad och födelseår, och valfritt kön. Ett barn skapar aldrig ett eget konto, och ditt konto rymmer upp till sju spelare.</p><p>Betalningarna är dina att sköta: varje barns plats i varje klubb är en egen rad, så du kan se och säga upp dem en i taget, och du når dem alla från kortet Betalning och fakturering på Min SOG.</p><p>Det finns inget familjepaket att köpa och inget separat konto att sätta upp per barn.</p>"
+        },
+        "languages": {
+          "question": "På vilket språk hålls tillfällena?",
+          "answer": "<p>Det är två olika inställningar, och de behöver inte stämma överens.</p><p>Varje klubb, läger och evenemang hålls på ett språk — finska, svenska, engelska eller franska — som visas på sidan och går att filtrera på i butiken.</p><p>Vilket språk du läser Sogverse på är däremot ditt eget val, från väljaren i sidhuvudet. Att ändra det ändrar appen, inte språket som ditt barns tillfällen hålls på, så en finskspråkig förälder kan läsa webbplatsen på finska och anmäla sitt barn till en engelskspråkig klubb.</p>"
+        },
+        "municipalityClubs": {
+          "question": "Vad är en kommunklubb, och hur går vi med i en?",
+          "answer": "<p>En kommunklubb är en klubb som vi driver tillsammans med en finländsk kommun. Beroende på kommunen träffas den antingen på nätet hemifrån eller på plats i ditt barns skola, och en professionell spelfostrare leder den i båda fallen.</p><p>Kommunen betalar för den, så det finns ingenting att betala till oss när du anmäler — vissa kommuner tar ut en liten egen avgift av familjerna, och det berättar de i så fall om. Du behöver ingen kod och ingen hänvisning: sök efter din kommun på vår sida för kommunklubbar, och om vi har nått dit listas kommunens klubbar där och du anmäler ditt barn direkt, utan betalningssteg.</p><p>Platserna är begränsade och klubbarna har ofta kö, så om ditt barn slutar komma, säg gärna till så att platsen kan erbjudas till nästa spelare. Vi driver också klubbar som är öppna för alla, och dem kan en spelare gå med i oavsett var hen bor.</p>"
+        },
+        "gamerAccounts": {
+          "question": "Hur loggar mitt barn in, och vad är föräldra-PIN-koden?",
+          "answer": "<p>Ditt barn har ingen egen inloggning. Ett spelarkonto bär en intern Sogverse-adress i stället för ditt barns riktiga e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din — det finns inget lösenord för hen att tappa bort eller dela.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
+        },
+        "childData": {
+          "question": "Vad sparar ni om mitt barn?",
+          "answer": "<p>Om ditt barn:</p><list><item>Förnamnet, födelsemånaden och födelseåret — vi frågar inte efter dagen — och valfritt kön.</item><item>Ert efternamn, eftersom ditt barn är en del av din familj. Det visas för ingen utanför er familj: en Gedus deltagarlista och röstrummet visar ditt barns förnamn, hens ålder och eventuellt användarnamn i spel som du lagt till.</item><item>En intern Sogverse-adress på kontot i stället för en riktig e-postadress.</item><item>Valfritt hens användarnamn i de spel som hens klubbar använder — i dag Minecraft och Roblox — och det id spelet ger hen, så att vi känner igen hen under ett tillfälle. Bilden på spelfiguren hämtas från spelets egna servrar, så användarnamnet når Minecraft eller Roblox varje gång en deltagarlista ritas upp.</item><item>En profilbild som inte är ett foto: utan ett kopplat spelkonto är bilden bredvid namnet ett mönster som genereras ur konto-id:t.</item></list><p>Vid sidan av det sparar vi det som krävs för att driva en klubb: vilka klubbar, läger och evenemang hen är anmäld till, hens närvaro, de rapporter och korta personalanteckningar som hens Geduer skriver, chatten från hens tillfällen och eventuella bilder som lagts upp i den, det hen gör som en Gedu länkar till gruppen, de samtycken som noterats för hens plats, och de foton en Gedu bifogar en rapport. Även en Gedus moderering noteras — flyttas ett barn till ett eget utrymme eller tystas i chatten lämnar det ett spår. Rapportens foton är av tillfället och inte av ett enskilt barn — varje familj i gruppen ser dem på gruppens sida och får dem med rapporten per mejl.</p><p>Vill du se, rätta eller radera något vi har om ditt barn, mejla {supportEmail}. Vi sparar dina uppgifter så länge du har ett konto och raderar eller anonymiserar dem om du avslutar det, utom där lagen kräver att vi behåller vissa uppgifter längre, som den finländska bokföringslagen gör för betalningsuppgifter.</p>"
+        },
+        "becomeGedu": {
+          "question": "Hur blir jag spelfostrare?",
+          "answer": "<p>Registrera ett Gedu-konto på vår anmälningssida för spelfostrare: den frågar efter ditt namn och din e-postadress, ett lösenord, och valfritt ditt telefonnummer, vilka språk du talar, vilka områden du kan arbeta i på plats, och ditt användarnamn i Minecraft eller Roblox. Du kan logga in direkt.</p><p>Innan en administratör certifierar ditt konto ber vi dig om två saker: att du läser och godkänner avtalet du skulle arbeta under, och att du visar oss ett straffregisterutdrag för arbete med barn (rikosrekisteriote), som du själv beställer från Rättsregistercentralen och som får vara högst sex månader gammalt — vi behåller ingen kopia av det.</p><p>Certifieringen är det som öppnar resten: fram till dess kan du inte tilldelas en grupp och inte använda Gedu-verktygen.</p>"
+        }
+      }
     }
   },
   "admin": {
@@ -331,6 +405,10 @@
           "free": "Gratis",
           "external_contract": "Externt avtal (kommun)"
         },
+        "requiresGamerCreations": {
+          "required": "Krävs",
+          "notRequired": "Krävs inte"
+        },
         "fields": {
           "publicUrl": "Publik länk",
           "topic": "Ämne",
@@ -351,6 +429,7 @@
           "tag": "Utformad för",
           "regionLock": "Landsbegränsning",
           "requiredConsents": "Obligatoriska samtycken",
+          "requiresGamerCreations": "Spelarnas skapelser",
           "visibility": "Synlighet"
         },
         "copyLink": "Kopiera den publika länken",
@@ -406,6 +485,7 @@
         "longDescription": "Lång beskrivning",
         "topic": "Ämne",
         "materialUrl": "URL till lektionsmaterial",
+        "requiresGamerCreations": "Varje spelare behöver en länk till sin skapelse",
         "seatAudience": "Vem kan ta en plats",
         "tag": "Utformad för",
         "regionLock": "Landsbegränsning",
@@ -540,6 +620,7 @@
         "longDescription": "Valfritt. Hela presentationen, som visas endast på produktens detaljsida. Rubriker, listor, betoning och länkar är tillgängliga.",
         "topicHint": "Vad produkten handlar om. Familjer ser det som Ämne-filtret i butiken och på produktsidans infokort.",
         "materialUrlHint": "Valfritt. Endast för Geduer — familjer ser aldrig detta.",
+        "requiresGamerCreationsHint": "För produkter där ett avtal kräver det. Det sista tillfället är markerat som att det behöver åtgärd tills varje spelare i gruppen har en skapelse registrerad. Familjer ser ingen skillnad.",
         "seatAudienceHint": "Välj minst ett. Väljer du båda blir det en produkt som en förälder och hens spelare deltar i tillsammans – i butiken märks den ”För familjer”.",
         "forGamersHint": "En förälder anmäler sin spelare och spelaren tar platsen. Kräver ett åldersintervall.",
         "forParentsHint": "En förälder tar en plats åt sig själv och deltar. Inget åldersintervall – ålder beskriver barn, inte vuxna.",
@@ -1244,20 +1325,6 @@
       }
     }
   },
-  "feedback": {
-    "title": "Feedback",
-    "subtitle": "Dela dina tankar med oss",
-    "sendFeedback": "Skicka feedback",
-    "feedbackDescription": "Vi vill gärna höra din feedback, dina förslag eller felrapporter.",
-    "gamerReplyNote": "Din Gedu kan följa upp med dig under nästa session.",
-    "message": "Meddelande",
-    "placeholder": "Dela dina tankar, förslag eller rapportera ett fel...",
-    "charactersNeeded": "{count} tecken till behövs",
-    "submitFeedback": "Skicka feedback",
-    "thankYou": "Tack för din feedback! Vi uppskattar att du tog dig tid att dela dina tankar.",
-    "failedToSubmit": "Kunde inte skicka feedback.",
-    "failedToSubmitRetry": "Kunde inte skicka feedback. Försök igen."
-  },
   "dashboardSections": {
     "pageTitle": "Min SOG",
     "myGamers": "Mina spelare",
@@ -1268,9 +1335,33 @@
     "myGroupsEmptyStateGedu": "När du tilldelas en grupp visas den här tillsammans med sitt nästa tillfälle.",
     "billing": "Fakturering",
     "help": "Hjälp",
-    "yty": "Yty",
     "tools": "Verktyg",
     "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
+  },
+  "helpSection": {
+    "heading": "Hjälp och feedback",
+    "gamerHeading": "Behöver du hjälp?",
+    "faqHeading": "Vanliga frågor",
+    "form": {
+      "messageLabel": "Meddelande",
+      "charactersNeeded": "{count} tecken till behövs",
+      "submit": "Skicka meddelande",
+      "adult": {
+        "description": "Be oss om hjälp, eller skicka ett förslag eller en felanmälan — varje meddelande når teamet på School of Gaming. Vi hjälper gärna till med allt från att välja rätt klubb till frågor om hur det hela fungerar, eller så kan du mejla oss på <link>{email}</link>.",
+        "placeholder": "Vad kan vi hjälpa till med?",
+        "thankYou": "Tack — ditt meddelande är hos oss, och vi är glada att du hörde av dig.",
+        "failed": "Vi kunde inte skicka ditt meddelande. Försök igen.",
+        "tooManyRequests": "Du har redan skickat flera meddelanden. Försök igen om en stund."
+      },
+      "gamer": {
+        "description": "Har du fastnat på något, eller fått en idé till oss? Skriv den här så läser vi den.",
+        "replyNote": "Din Gedu kan följa upp med dig under nästa session.",
+        "placeholder": "Vad behöver du hjälp med?",
+        "thankYou": "Tack — vi har fått ditt meddelande.",
+        "failed": "Vi kunde inte skicka ditt meddelande. Försök igen.",
+        "tooManyRequests": "Du har redan skickat några meddelanden. Försök igen om en stund."
+      }
+    }
   },
   "family": {
     "addGamer": "Lägg till gamer",
@@ -1322,6 +1413,8 @@
     "siteLabel": "Var",
     "aboutHeading": "Om gruppen",
     "siteNoteHeading": "På {site}",
+    "creationsHeading": "{count, plural, one {Skapelse} other {Skapelser}}",
+    "creationOpensInNewTab": "(öppnas i en ny flik)",
     "feedHeading": "Tillfällen",
     "attendancePresent": "Närvarande",
     "attendanceNotPresent": "Inte närvarande",
@@ -1335,7 +1428,10 @@
     "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}.",
     "loadingPage": "Laddar gruppens tillfällen.",
     "notFoundTitle": "Inget att visa här",
-    "notFoundBody": "Vi kunde inte öppna den här sidan. På Min SOG finns allt du är anmäld till."
+    "notFoundBody": "Vi kunde inte öppna den här sidan. På Min SOG finns allt du är anmäld till.",
+    "creationsIntro": "{count, plural, one {När {name} bygger klart något i den här gruppen – ett spel, en värld, ett projekt – lägger Gedun länken här, så att du får se vad allt spelande har blivit till. Öppna den tillsammans och låt {name} visa dig runt.} other {När {name} bygger klart något i den här gruppen – ett spel, en värld, ett projekt – lägger Gedun länken här, så att du får se vad allt spelande har blivit till. Öppna dem tillsammans och låt {name} visa dig runt.}}",
+    "creationsIntroSelf": "{count, plural, one {När du bygger klart något i den här gruppen lägger Gedun länken här – färdigt arbete, värt att återvända till och värt att dela.} other {När du bygger klart något i den här gruppen lägger Gedun länken här – färdigt arbete, värt att återvända till och värt att dela.}}",
+    "creationsIntroGamer": "{count, plural, one {När du bygger klart något i den här gruppen lägger Gedun länken här – så kan du komma tillbaka till det och visa upp det. Det här har du gjort.} other {När du bygger klart något i den här gruppen lägger Gedun länken här – så kan du komma tillbaka till dem och visa upp dem. Allt det här har du gjort.}}"
   },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"
@@ -1354,7 +1450,27 @@
     "welcomeNamed": "Välkommen, {name}!",
     "fallbackName": "spelare",
     "subtitle": "Redo att spela och lära dig?",
-    "emptyDashboard": "Inget här än. Be en förälder titta på klubbarna och lägren tillsammans med dig, så väljer ni något ihop."
+    "emptyDashboard": "Inget här än. Be en förälder titta på klubbarna och lägren tillsammans med dig, så väljer ni något ihop.",
+    "helpFaq": {
+      "items": {
+        "joiningSession": {
+          "question": "Hur går jag med i mitt tillfälle när det börjar?",
+          "answer": "<p>Så här går det till:</p><steps><step>Öppna Min SOG och leta upp din klubb.</step><step>Titta på knappen på den. Fram till strax före ditt tillfälle är den låst, och den talar om vilken dag och vilken tid den öppnar.</step><step>Fem minuter innan ditt tillfälle börjar ändras knappen till ”Gå med i röstrum”.</step><step>Tryck på den. Nu är du inne.</step></steps><p>Det finns ingenting att installera och ingen kod att skriva.</p><p>Om din klubb i stället säger att du är anmäld och att vi letar upp en Gedu och en grupp åt dig, finns det ingen knapp på den än. Du är med — vi har bara inte satt dig i en grupp. Det sker före ditt första tillfälle, och din Gedu är där när det gör det.</p>"
+        },
+        "cannotBeHeard": {
+          "question": "Ingen hör mig — vad kollar jag?",
+          "answer": "<p>Kolla det här i tur och ordning. Det är nästan alltid det första.</p><steps><step>Är din mikrofonknapp röd? Då är du avstängd. Tryck på den för att slå på mikrofonen.</step><step>Visar knappen ett hänglås? Din Gedu har låst din mikrofon en stund. Hen låser upp den.</step><step>Tryck på den lilla pilen bredvid mikrofonknappen. Den öppnar dina mikrofoninställningar, där du kan välja rätt mikrofon i listan.</step><step>Prata nu och leta efter stapeln under listan. Syns ingen stapel alls är din mikrofon avstängd snarare än tyst — gå tillbaka till steg 1. Finns stapeln men rör sig aldrig har något annat på din enhet tagit mikrofonen.</step></steps><p>Ser du ett rött meddelande om att vi inte når din mikrofon: stäng andra appar och flikar som använder den, tillåt mikrofonen i webbläsarens inställningar och tryck på Ladda om.</p><p>Hörs du fortfarande inte? Säg det till din Gedu under tillfället — hen kan hjälpa till.</p>"
+        },
+        "cannotHearOthers": {
+          "question": "Jag hör ingen — vad kollar jag?",
+          "answer": "<p>Kolla det här i tur och ordning:</p><steps><step>Höj volymen på din enhet och kolla att hörlurarna sitter i ordentligt.</step><step>Titta på zonerna. Du hör bara dem som är i samma zon som du, så om alla andra är någon annanstans trycker du på deras zon för att flytta dit.</step><step>Har din Gedu flyttat dig till en zon med flit, stanna där. Hen hämtar tillbaka dig.</step></steps><p>Är de andra i din zon, volymen uppe och det ändå är tyst — säg det till din Gedu, högt eller i chatten om ditt rum har en. Hen ser vilka som är i rummet och kan hjälpa till.</p>"
+        },
+        "someoneIsMean": {
+          "question": "Vad gör jag om någon är elak mot mig under ett tillfälle?",
+          "answer": "<p>Säg det till din Gedu eller till en förälder. Du ska aldrig behöva hantera elakheter på egen hand, och att berätta för en vuxen är inte att skvallra.</p><p>Din Gedu tar det alltid på allvar och hjälper till att reda ut vad som hände. Att vara elak mot andra eller bryta mot klubbens regler får följder. Alla har rätt att känna sig trygga och välkomna i klubben.</p>"
+        }
+      }
+    }
   },
   "gedu": {
     "coverage": {
@@ -1445,7 +1561,12 @@
       "photoErrorCapReached": "Den här rapporten är redan full. Ta bort en bild för att lägga till en ny.",
       "photoErrorNotAllowed": "Du kan inte lägga till bilder på det här tillfället.",
       "photoErrorUploadFailed": "Bilden laddades inte upp. Försök igen.",
-      "photoErrorRemoveFailed": "Bilden kunde inte tas bort. Den finns kvar i rapporten — försök igen."
+      "photoErrorRemoveFailed": "Bilden kunde inte tas bort. Den finns kvar i rapporten — försök igen.",
+      "creationsTitle": "Skapelser",
+      "creationsAddedCount": "{added} av {total} tillagda",
+      "creationsHint": "Det här är omgångens sista tillfälle, så det är inte klart förrän alla har en skapelse. Öppna ett namn för att lägga till en.",
+      "creationsMemberDone": "{name} – skapelse tillagd",
+      "creationsMemberMissing": "{name} – skapelse saknas"
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -1532,6 +1653,34 @@
         "body": "Innan du kan certifieras uppvisar du ett straffregisterutdrag för arbete med barn. Du beställer det själv från Rättsregistercentralen.",
         "action": "Läs hur det går till"
       }
+    },
+    "helpFaq": {
+      "items": {
+        "certification": {
+          "question": "Vad innebär certifiering, och vad kan jag inte göra fram till dess?",
+          "answer": "<p>Certifiering är att en administratör bekräftar att ditt konto är redo att arbeta med barn. Två saker kommer före den: att godkänna ditt Gedu-avtal, och att uppvisa ett straffregisterutdrag för arbete med barn (rikosrekisteriote) som är högst sex månader gammalt. Utdraget beställer du själv från Rättsregistercentralen. Vi behåller ingen kopia av det och antecknar ingenting ur det — bara att ett godtagbart utdrag har visats, och när. Din avtalssida visar hur det står till med båda.</p><p>Tills du är certifierad kan du inte tilldelas en grupp, och din Verktyg-sektion förblir stängd: du kan inte starta ett direkt röstrum, och du kan inte återställa lösenord för Minecraft Education. Du kan inte heller mejla en rapport om ett tillfälle till familjerna eller lägga till bilder i en.</p><p>Allt annat är öppet redan nu: att logga in, Min SOG, din profil och dina områden, och att läsa och godkänna avtalet. Hjälp och feedback finns här oavsett om du är certifierad eller inte — använd formuläret ovan om du väntar och vill veta var du står.</p>"
+        },
+        "groupAssignment": {
+          "question": "Hur blir jag tilldelad en grupp?",
+          "answer": "<p>En administratör tilldelar dig. Tilldelningar görs från gruppanelen för en klubb, ett läger eller ett evenemang på administratörssidan — du kan inte tilldela dig själv, och det finns ingen ansökan att skicka in — och du kan ha en grupp per klubb, läger eller evenemang.</p><p>Två saker avgör om du dyker upp som ett alternativ: ditt konto måste vara certifierat, och administratören som väljer en Gedu ser vilka språk du talar bredvid ditt namn och kan filtrera på dem, så att hålla dina talade språk aktuella i inställningarna är det som placerar dig framför rätt grupper. Dina områden är till för något annat — att hitta dig som vikarie när en annan Gedu inte kan ta ett tillfälle — så de är också värda att hålla aktuella.</p><p>Det kommer inget mejl när en tilldelning görs — gruppen och dess nästa tillfälle dyker upp på ditt Min SOG nästa gång du öppnar det.</p>"
+        },
+        "takingAttendance": {
+          "question": "Hur markerar jag närvaro?",
+          "answer": "<p>Från din Min SOG:</p><steps><step>Öppna klubben, lägret eller evenemanget du håller i. Alla dess tillfällen finns listade på sidan.</step><step>Leta upp tillfället och tryck på Redigera.</step><step>Närvaron ligger först i redigeraren: en rad per spelare, var och en med Närvarande och Frånvarande.</step><step>Markera varje spelare i listan och tryck sedan på Spara.</step></steps><p>En rad börjar omarkerad, och omarkerad är ett verkligt tredje tillstånd och inte ett tyst ”frånvarande”. Att trycka på ett svar du redan valt tar bort markeringen, så en feltryckning kostar ingenting, och räknaren ovanför listan visar hur många i gruppen du har markerat hittills.</p><p>Du kan spara en halvmarkerad lista och avsluta senare — ingenting du redan markerat går förlorat. Det finns med flit ingen ”markera alla närvarande”: närvarolistan är också din bekräftelse på att tillfället hölls, och det är den du får betalt för. Att spara den avslutar dock inte tillfället i sig — rapporten och att skicka den till familjerna är resten.</p>"
+        },
+        "attendanceAlert": {
+          "question": "Varför visar min klubb fortfarande en gul ”behöver åtgärd”-markering?",
+          "answer": "<p>Därför att tillfället fortfarande saknar något. När ett avslutat tillfälle är flaggat handlar det om en av dessa fyra:</p><steps><step>Varje spelare på gruppens nuvarande lista är markerad, närvarande eller frånvarande.</step><step>En rapport om tillfället är skriven. Text du skrivit i planen i förväg räknas som en, så skriv om den till vad som faktiskt hände.</step><step>Den rapporten är skickad till familjerna.</step><step>På sista tillfället i en omgång som kräver skapelser har varje medlem en.</step></steps><p>Det första är överlägset vanligast. Att markera dem som kom är bara halva listan — de som inte kom måste markeras Frånvarande, annars står deras rader omarkerade och tillfället förblir flaggat.</p><p>En sak till öppnar ett tillfälle du redan avslutat: en spelare som går med i gruppen efteråt. Ingen har ännu sagt om hen var där, så raden kommer tillbaka omarkerad och väntar på dig.</p>"
+        },
+        "safeguardingConcern": {
+          "question": "Jag har en oro för ett barns trygghet mitt i ett tillfälle — vad gör jag?",
+          "answer": "<p>Ta hand om den akuta situationen i rummet först — du har moderatorkontrollerna: tysta en mikrofon, lås den, eller flytta någon till ett eget utrymme bort från gruppen. Skriv sedan ner det samma dag, medan det är färskt.</p><p>Varje tillfälle har en personalanteckning, märkt för Geduer och administratörer, som familjer aldrig ser; det är där en incident, mobbning eller en oro för en spelare hör hemma. Det finns också en anteckning per spelare på gruppens deltagarlista, som följer med det barnet i den gruppen, tillfälle för tillfälle, och som likaså bara Geduer och administratörer ser. Ingen av dem är synlig för någon familj.</p><p>En anteckning är en notering, inte ett larm: ingen blir uppringd av den, så allt som är brådskande, eller allt som behöver någon utanför gruppen, går även till kontoret på {supportEmail}.</p>"
+        },
+        "gamerCannotConnect": {
+          "question": "En spelare kan inte ansluta och tillfället har börjat — vad kan jag göra?",
+          "answer": "<p>Två saker kan du göra inne i produkten, och en kan du inte.</p><p>Stäm av vilka som faktiskt är i rummet mot din deltagarlista — deltagarlistan i samtalet visar bara de som är anslutna just nu, så ett namn som saknas där är en spelare som inte har tagit sig in, och ingenting markerar det åt dig; du läser av det ur listan.</p><p>För att nå familjen, öppna gruppens deltagarlista i gruppytan: varje rad har familjens kontaktmejl, som du kopierar med en tryckning, och ovanför listan finns en kontroll för att kopiera alla. Du skickar från din egen mejl — det finns inget meddelande till en familj inne i appen, inget sms och inget telefonnummer på listan.</p><p>Det du inte kan göra är att släppa in hen själv: tillträdet avgörs av vår server på spelarens egen begäran, och hen behöver en aktiv plats i den gruppen med tillfällets tidsfönster öppet. Om hen har en plats och ändå inte kommer in sitter den snabbaste lösningen oftast hos hen — tillåt mikrofonen i webbläsaren, stäng det som annars använder den, ladda om. Är det något vi behöver åtgärda, mejla kontoret på {supportEmail}.</p>"
+        }
+      }
     }
   },
   "productType": {
@@ -1570,11 +1719,22 @@
   "memberFlair": {
     "newcomer": "Ny",
     "newcomerTooltip": "Ny i den här gruppen — gick med {days, plural, =0 {i dag} one {för # dag sedan} other {för # dagar sedan}}",
-    "openNote": "Gedu-anteckning om {name}",
-    "noteTitle": "Anteckning om {name}",
-    "notePrivacy": "Bara Geduer och administratörer ser den här anteckningen. Den stannar i den här gruppen, från gång till gång.",
+    "openMember": "Anteckning och skapelse om {name}",
+    "openMemberCreationOwed": "Anteckning och skapelse om {name} — en skapelse saknas fortfarande",
+    "memberTitle": "Om {name}",
+    "noteAudience": "Geduer och administratörer",
+    "noteLabel": "Privat anteckning",
+    "noteHint": "Bara Geduer och administratörer ser det här. Det stannar i den här gruppen, från gång till gång.",
     "notePlaceholder": "Anteckningar om {name} i den här gruppen.",
-    "noteLastEdited": "Senast redigerad av {name}"
+    "noteLastEdited": "Senast redigerad av {name}",
+    "creationAudience": "Familjer ser det här",
+    "creationLabel": "Skapelse",
+    "creationHint": "Något som {name} har gjort i den här gruppen. Familjen ser det på sin egen sida.",
+    "creationTitleLabel": "Titel för skapelsen",
+    "creationTitlePlaceholder": "Vad de gjorde",
+    "creationUrlLabel": "Länk till skapelsen",
+    "creationUrlPlaceholder": "Länk till den",
+    "creationIncomplete": "En skapelse behöver både en titel och en länk."
   },
   "richText": {
     "bold": "Fet stil",
@@ -1593,49 +1753,14 @@
   },
   "header": {
     "nav": {
-      "home": "Hem",
       "shop": "Butik",
-      "help": "Hjälp",
       "yty": "Yty",
-      "about": "Om oss"
+      "about": "Om oss",
+      "faq": "FAQ"
     },
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",
     "switchTo": "Byt profil"
-  },
-  "help": {
-    "title": "Hjälp",
-    "intro": "Svar på vanliga frågor om School of Gaming.",
-    "contact": {
-      "heading": "Behöver du hjälp?",
-      "body": "Hör av dig när som helst — vi hjälper dig gärna med allt från att välja rätt klubb till frågor om hur School of Gaming fungerar.",
-      "emailLabel": "Mejla oss på"
-    },
-    "faq": {
-      "heading": "Vanliga frågor",
-      "items": {
-        "whatIsSogverse": {
-          "q": "Vad är Sogverse?",
-          "a": "Sogverse är School of Gamings plattform för klubbar, läger och evenemang ledda av professionella spelfostrare — i Minecraft, Roblox, Fortnite och mer. Där skärmtid blir kvalitetstid."
-        },
-        "productTypes": {
-          "q": "Vad är skillnaden mellan klubbar, läger och evenemang?",
-          "a": "Klubbar träffas regelbundet. Läger pågår under flera dagar under skolloven. Evenemang är enstaka tillfällen."
-        },
-        "whoLeads": {
-          "q": "Vem leder träffarna?",
-          "a": "Varje träff leds av en Gedu — en spelfostrare som själv är gamer och vet hur man stöttar barn i spelet och utanför."
-        },
-        "safety": {
-          "q": "Är det säkert för mitt barn?",
-          "a": "Det är byggt för att vara det. Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Chatten inne i spelen är en annan sak och sköts av spelen själva – på vår egen Minecraft-server har våra Geduer moderationsverktyg för den, bland annat att tysta och rapportera. Ett spelarkonto har en intern Sogverse-adress i stället för ditt barns riktiga e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn loggar in via det kontot i stället för med ett eget lösenord. Köp och anmälningar kräver din föräldra-PIN. Och vi har nolltolerans mot mobbning."
-        },
-        "howToStart": {
-          "q": "Hur kommer jag igång?",
-          "a": "Skapa ett föräldrakonto, bläddra bland utbudet och anmäl ditt barn. Till träffarna går hen in via ditt konto: du växlar till barnets profil, så hen behöver inget eget lösenord."
-        }
-      }
-    }
   },
   "schools": {
     "hero": {
@@ -1936,7 +2061,8 @@
   "home": {
     "hero": {
       "title": "Där<br></br><primary>skärmtid</primary><br></br>blir<br></br><secondary>kvalitetstid</secondary>",
-      "subtitle": "Våra skickligt utformade klubbar främjar hälsosamt spelande som hobby — i Minecraft, Roblox, Fortnite och mer. Professionella spelfostrare gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar."
+      "subtitle": "Våra skickligt utformade klubbar främjar hälsosamt spelande som hobby — i Minecraft, Roblox, Fortnite och mer. Professionella spelfostrare gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar.",
+      "aboutCta": "Läs mer om oss"
     },
     "features": {
       "heading": "Gör spelande till en fantastisk hobby",
@@ -2049,39 +2175,6 @@
         "error": "Något gick fel och ditt svar sparades inte. Försök igen eller skriv till oss på {supportEmail}."
       }
     },
-    "help": {
-      "contact": {
-        "heading": "Behöver du hjälp?",
-        "body": "Vi hjälper dig gärna med allt från att komma in på lägret till frågor om plattformen. Mejla oss när som helst — vi svarar oftast inom en dag.",
-        "emailLabel": "Mejla oss på"
-      },
-      "minecraft": {
-        "heading": "Förbered Minecraft Java",
-        "intro": "Läger och klubbar körs på SOG:s Minecraft Java-server. Gå igenom de här stegen med ditt barn innan lägret börjar så att hen kan ansluta direkt.",
-        "steps": {
-          "install": {
-            "title": "Installera Minecraft Java Edition",
-            "body": "Köp och installera Minecraft Java Edition från minecraft.net. Bedrock och Pocket Edition fungerar inte på vår server."
-          },
-          "signIn": {
-            "title": "Logga in med ett Microsoft-konto",
-            "body": "Starta spelet en gång och logga in. Välj ett användarnamn — ditt barn berättar det för Gedun så att hen kan läggas till."
-          },
-          "addServer": {
-            "title": "Lägg till SOG-servern",
-            "body": "Välj Multiplayer → Add Server och klistra in adressen som matchar lägret. Spara den så att den är redo när lägret börjar:"
-          },
-          "joinAtCampTime": {
-            "title": "Anslut när lägret börjar",
-            "body": "Klicka på SOG-servern i listan och tryck Join. Gedun guidar er vidare därifrån. Behöver du hjälp? Mejla oss ovan."
-          }
-        },
-        "servers": {
-          "fi": "Finskspråkiga läger:",
-          "en": "Engelskspråkiga läger:"
-        }
-      }
-    },
     "billing": {
       "manage": {
         "title": "Betalning och fakturering",
@@ -2127,6 +2220,26 @@
     "switchToGamer": {
       "title": "Byt till {name}s profil för att gå med i {productName}?",
       "oneWayWarning": "Du loggas ut från ditt föräldrakonto."
+    },
+    "helpFaq": {
+      "items": {
+        "parentPin": {
+          "question": "Vad är föräldra-PIN-koden, och vad gör jag om jag glömmer den?",
+          "answer": "<p>Din föräldra-PIN är en fyrsiffrig kod som du väljer första gången du använder ditt föräldrakonto. Den skyddar hela föräldrasidan av Sogverse snarare än varje enskild åtgärd: du låser upp en gång, och sessionen låses igen i samma stund som du växlar till en spelarprofil eller loggar ut — så ett lösenord sparat i webbläsaren räcker inte i sig för att köpa något eller ändra ett barns konto.</p><p>Om du glömmer den, tryck på ”Glömt din PIN?” på PIN-skärmen: vi mejlar en återställningslänk till adressen på ditt konto och ingen annanstans, så ett barn som trycker på den skickar helt enkelt ett mejl till dig. Länken gäller i 24 timmar och fungerar en gång.</p><p>Du kan också byta en PIN du fortfarande minns under Inställningar.</p>"
+        },
+        "sessionReports": {
+          "question": "Får jag veta hur tillfällena gick?",
+          "answer": "<p>Ja. Efter ett tillfälle skriver ditt barns spelfostrare en rapport om det — vad gruppen arbetade med, hur det gick, och ögonblicken värda att minnas — ofta med bilder.</p><p>Den visas på den klubbens, det lägrets eller det evenemangets sida på Min SOG, under Tillfällen, tillsammans med alla tidigare rapporter och de tillfällen som återstår, och ditt barn ser samma rapporter på sitt eget Min SOG. När Gedun skickar rapporten kommer den också med e-post, adresserad till dig ensam — varje familj får sitt eget separata mejl och ingen familj ser någon annans.</p><p>På samma sida ser du också ditt eget barns närvaromarkering för varje tillfälle; ditt barn ser inte närvaron, och ingen familj ser någonsin ett annat barns.</p>"
+        },
+        "missedSessions": {
+          "question": "Vad händer om vi missar ett tillfälle, eller går med i en klubb mitt i?",
+          "answer": "<p>En klubb står öppen för nya spelare medan den pågår, så du kan gå med mitt i en termin — klubbsidan visar vilken dag och vilken tid den träffas varje vecka, vilken termin den löper över och hur många platser som är kvar. När ditt barn är anmält talar hens egen klubbsida om datumet för nästa tillfälle.</p><p>Läger och evenemang är annorlunda: ett läger stänger för nya anmälningar dagen innan det börjar, eftersom gruppen startar tillsammans, och ett evenemang stänger när dess tillfälle är över.</p><p>En klubb faktureras som en hel månad från den dag du anmäler dig, så att gå med mitt i månaden minskar inte den månadens betalning; om en klubb ännu inte har startat dras ingenting den dag du anmäler dig, och sidan talar om datumet för din första betalning.</p><p>Om ditt barn missar ett enstaka tillfälle finns det ingenting att göra — platsen påverkas inte. Hens Gedu markerar närvaro för varje tillfälle och du ser markeringen på klubbsidan. Ett missat tillfälle tas inte igen och återbetalas inte; i en kommunklubb kan upprepad oanmäld frånvaro öppna platsen för nästa familj i kön, vilket du godkänner när du anmäler dig.</p>"
+        },
+        "sessionTimes": {
+          "question": "Vilken tid hålls tillfällena i vår tidszon?",
+          "answer": "<p>I er egen. Tiderna för tillfällena skrivs in i finländsk tid och visas för dig omräknade till din egen enhets tidszon automatiskt, överallt där de förekommer — på en klubbs sida, på dess kort och på ditt Min SOG.</p><p>När din tidszon skiljer sig från klubbens står en kort tidszonsmarkering bredvid tiden så att omräkningen syns; när du är i samma zon som klubben finns ingenting att räkna om och ingen markering.</p><p>Eftersom omräkningen är verklig kan en klubb som går två finländska vardagar hamna på andra veckodagar hos dig, och schemat du ser är grupperat efter dina veckodagar, inte våra. Ett lägers start- och slutdatum är vanliga kalenderdatum och flyttar sig inte.</p>"
+        }
+      }
     }
   },
   "settings": {
@@ -2324,12 +2437,6 @@
       "fuchsia": "Fuchsia",
       "pink": "Rosa"
     },
-    "chat": {
-      "title": "Chatt",
-      "placeholder": "Skriv ett meddelande…",
-      "send": "Skicka",
-      "empty": "Inga meddelanden än"
-    },
     "instant": {
       "joinFailed": "Kunde inte gå med i rummet. Försök igen.",
       "share": {
@@ -2382,8 +2489,7 @@
   },
   "voiceButton": {
     "joinVoice": "Gå med i röstrum",
-    "locked": "Öppnar {date} kl. {time}",
-    "awaitingMatch": "Hittar en Gedu"
+    "locked": "Öppnar {date} kl. {time}"
   },
   "yty": {
     "hero": {
@@ -2449,14 +2555,15 @@
       "button": "Återställ PIN-kod"
     },
     "feedback": {
-      "subject": "Feedback från {displayName} ({role})",
-      "heading": "Ny feedback mottagen",
+      "subject": "Hjälp eller feedback från {displayName} ({role})",
+      "heading": "Nytt meddelande om hjälp eller feedback",
+      "intro": "Någon har bett om hjälp eller skickat feedback. Svara på det här mejlet för att svara personen – ditt svar går till adressen nedan.",
       "from": "Från",
       "role": "Roll",
-      "emailLabel": "E-post",
+      "replyToLabel": "Svarsadress",
       "sent": "Skickat",
       "message": "Meddelande",
-      "gamerNote": "Denna feedback kommer från ett spelarkonto. Svar skickas till deras förälder ({parentEmail})."
+      "gamerNote": "Det här meddelandet kommer från ett spelarkonto. Svar går till deras förälder ({parentEmail})."
     },
     "welcomeParent": {
       "subject": "Välkommen till School of Gaming",
@@ -3011,49 +3118,49 @@
       "items": {
         "programme": {
           "question": "Vad är Programmet?",
-          "answer": "Ett gratis speldesignprogram där unga lär sig bygga i Roblox, som drivs av Lynx Educate och School of Gaming i samarbete med Roblox. Det genomförs både online och på plats runt om i Frankrike, och avslutas med att ditt barn publicerar sitt eget spel eller föremål."
+          "answer": "<p>Ett gratis speldesignprogram där unga lär sig bygga i Roblox, som drivs av Lynx Educate och School of Gaming i samarbete med Roblox.</p><p>Det genomförs både online och på plats runt om i Frankrike, och avslutas med att ditt barn publicerar sitt eget spel eller föremål.</p>"
         },
         "eligibility": {
           "question": "Vem kan vara med?",
-          "answer": "Unga i Frankrike i åldern 13–17 år, anmälda av en förälder eller vårdnadshavare."
+          "answer": "<p>Unga i Frankrike i åldern 13–17 år, anmälda av en förälder eller vårdnadshavare.</p>"
         },
         "cost": {
           "question": "Kostar det något?",
-          "answer": "Nej, Programmet är 100 % gratis för anmälda familjer!"
+          "answer": "<p>Nej, Programmet är 100 % gratis för anmälda familjer!</p>"
         },
         "experience": {
           "question": "Behöver mitt barn redan kunna Roblox?",
-          "answer": "Ingen tidigare erfarenhet behövs — träffarna är upplagda för att lära ut spelbyggande från grunderna hela vägen till publicering."
+          "answer": "<p>Ingen tidigare erfarenhet behövs — träffarna är upplagda för att lära ut spelbyggande från grunderna hela vägen till publicering.</p>"
         },
         "where": {
           "question": "Var hålls träffarna?",
-          "answer": "Träffar på plats hålls i Paris, Lille, Strasbourg och Bordeaux. Träffar online är öppna för familjer var som helst i Frankrike. Längden varierar från 60 minuter till 9 veckor.",
+          "answer": "<p>Träffar på plats hålls i Paris, Lille, Strasbourg och Bordeaux. Träffar online är öppna för familjer var som helst i Frankrike.</p><p>Längden varierar från 60 minuter till 9 veckor.</p>",
           "answer2": "Se det enskilda evenemanget för detaljer."
         },
         "language": {
           "question": "Vilket språk hålls träffarna på?",
-          "answer": "Träffarna hålls på franska."
+          "answer": "<p>Träffarna hålls på franska.</p>"
         },
         "equipment": {
           "question": "Vilken utrustning behöver mitt barn?",
-          "answer": "En dator (Windows eller Mac) med internetuppkoppling, samt tillgång till Roblox Studio.",
+          "answer": "<p>En dator (Windows eller Mac) med internetuppkoppling, samt tillgång till Roblox Studio.</p>",
           "answer2": "Till evenemang online ansluter deltagarna med sin egen dator med Roblox Studio installerat. Vid evenemang på plats finns datorer och utrustning tillgängliga i lokalen."
         },
         "dataSharing": {
           "question": "Delas mitt barns uppgifter med Roblox?",
-          "answer": "Vissa kontouppgifter delas med Lynx Educate och Roblox för att genomföra Programmet och för att utvärdera Programmets effekt. Alla detaljer finns i vår <linkPrivacy>integritetspolicy</linkPrivacy>."
+          "answer": "<p>Vissa kontouppgifter delas med Lynx Educate och Roblox för att genomföra Programmet och för att utvärdera Programmets effekt. Alla detaljer finns i vår <linkPrivacy>integritetspolicy</linkPrivacy>.</p>"
         },
         "media": {
           "question": "Kommer mitt barn att fotograferas eller filmas?",
-          "answer": "Träffarna kan fotograferas för interna anteckningar. Om materialet används externt i marknadsföring är helt ditt val vid anmälan, och du kan ändra det när som helst."
+          "answer": "<p>Träffarna kan fotograferas för interna anteckningar. Om materialet används externt i marknadsföring är helt ditt val vid anmälan, och du kan ändra det när som helst.</p>"
         },
         "facilitators": {
           "question": "Vem håller i träffarna, och hur kontrolleras de?",
-          "answer": "Spelfostrarna är utbildade och kontrollerade av School of Gaming enligt vår gemensamma <linkSafeguarding>barnskyddspolicy</linkSafeguarding>."
+          "answer": "<p>Spelfostrarna är utbildade och kontrollerade av School of Gaming enligt vår gemensamma <linkSafeguarding>barnskyddspolicy</linkSafeguarding>.</p>"
         },
         "contact": {
           "question": "Vem kontaktar jag med frågor?",
-          "answer": "Skriv till <linkEmail>{email}</linkEmail> med frågor eller funderingar."
+          "answer": "<p>Skriv till <linkEmail>{email}</linkEmail> med frågor eller funderingar.</p>"
         }
       }
     },
@@ -3672,6 +3779,89 @@
     },
     "bundles": {
       "robloxProgramme": "Dokument för Roblox-programmet"
+    }
+  },
+  "chat": {
+    "log": "Chattmeddelanden",
+    "empty": "Inget sagt än.",
+    "unavailable": "Chatten är inte tillgänglig just nu.",
+    "unread": "{count, plural, one {# nytt meddelande} other {# nya meddelanden}}",
+    "jumpToLatest": "Hoppa till det senaste meddelandet",
+    "composer": {
+      "label": "Skriv ett meddelande",
+      "placeholder": "Skriv ett meddelande",
+      "send": "Skicka",
+      "addImage": "Lägg till en bild",
+      "staged": "Bilder redo att skickas",
+      "removeImage": "Ta bort {name}",
+      "imagesRefused": "Du kan skicka {count} bilder åt gången, så resten togs inte med.",
+      "lockNotice": "Chatten är låst för dig just nu. Du kan fortfarande läsa allt här.",
+      "mentionList": "Nämn någon"
+    },
+    "editor": {
+      "label": "Redigera ditt meddelande",
+      "save": "Spara",
+      "cancel": "Avbryt"
+    },
+    "reply": {
+      "action": "Svara",
+      "banner": "Svarar {name}",
+      "cancel": "Sluta svara",
+      "jump": "Visa meddelandet från {name}",
+      "image": "en bild",
+      "removed": "ett borttaget meddelande"
+    },
+    "message": {
+      "actions": "Fler åtgärder",
+      "edited": "redigerat",
+      "edit": "Redigera",
+      "delete": "Radera",
+      "hide": "Ta bort för alla",
+      "restore": "Lägg tillbaka",
+      "sending": "Skickar",
+      "failed": "Inte skickat",
+      "retry": "Försök igen",
+      "mentionsYou": "Nämner dig"
+    },
+    "tombstone": {
+      "text": "Det här meddelandet togs bort.",
+      "staffOnly": "Geduer och administratörer kan fortfarande läsa det."
+    },
+    "reactions": {
+      "add": "Lägg till en reaktion",
+      "toggle": "{name}, {count}",
+      "thumbs_up": "Tummen upp",
+      "heart": "Hjärta",
+      "laugh": "Skratt",
+      "surprised": "Överraskad",
+      "celebrate": "Firande",
+      "thinking": "Fundersam"
+    },
+    "moderation": {
+      "lock": "Lås chatten för {name}",
+      "unlock": "Lås upp chatten för {name}",
+      "lockChat": "Lås chatten",
+      "unlockChat": "Lås upp chatten",
+      "lockedTag": "Chatten låst",
+      "deleteTitle": "Radera det här meddelandet?",
+      "deleteBody": "Alla ser att ett meddelande togs bort, och Geduer och administratörer behåller en kopia av det.",
+      "deleteConfirm": "Radera",
+      "hideTitle": "Ta bort det här meddelandet för alla?",
+      "hideBody": "Alla ser att ett meddelande togs bort, och Geduer och administratörer behåller en kopia av det.",
+      "hideConfirm": "Ta bort"
+    },
+    "typing": {
+      "one": "{name} skriver",
+      "two": "{first} och {second} skriver",
+      "many": "Flera personer skriver"
+    },
+    "images": {
+      "row": "Bilder",
+      "open": "Öppna bild {index} av {count}",
+      "viewer": "Bild {index} av {count}",
+      "previous": "Föregående bild",
+      "next": "Nästa bild",
+      "close": "Stäng"
     }
   }
 }

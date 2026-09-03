@@ -40,6 +40,7 @@ function dashboardHtml(gamers: readonly ParentDashboardParticipant[]): string {
           <ParentDashboardPageBody
             gamers={gamers}
             billingCard={<div />}
+            helpForm={<div />}
             onAddGamer={() => {}}
           />
         </NowProvider>

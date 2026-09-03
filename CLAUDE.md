@@ -56,7 +56,23 @@ Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based rou
 
 **Rule: admins are trusted — including trusted to act only through the admin UI.** An admin hand-crafting API or RPC calls is neither a threat model nor a supported workflow, so "an admin could reach an invalid state via the raw API" is not a defect worth building UI or validation for. The database's own guarantees (CHECKs, constraints, grants) still stand behind everything — a state the UI cannot produce must fail loudly at the schema if it somehow arises, never corrupt silently — but the loud failure *is* the accepted handling, not a gap.
 
+**Rule: an admin must be able to see every stored product property on the product details page — opening the edit form is not the read path.** The edit form is a write surface; making an admin open it to answer "is this flag set?" means a read costs a form that can be accidentally submitted, and a property nobody can see on the details page is a property nobody audits.
+
 **Rule: user-facing copy calls a role's dashboard "My SOG" — "dashboard" is internal vocabulary.** The role dashboards (`/parent`, `/gamer`, `/gedu`) are named "My SOG" to the people using them, in page titles, back links, buttons and emails alike. "Dashboard" is what we call them among ourselves and in the code; a translated string that says it has leaked an implementation word into the product. The brand name itself stays "My SOG" rather than being translated wholesale — locales localise the surrounding words and the possessive, not the mark. The one exception is the **admin** dashboard, which is genuinely an admin panel and is called one: admin sidebar entries and admin page titles keep saying "Dashboard".
+
+### SOG-UI owns the UI
+
+**Rule: every UI opinion belongs to SOG-UI, the UI language package at `packages/sog-ui/`,
+and Sogverse follows it one construct at a time, as each is adopted.** Read the package's
+`CLAUDE.md` before any UI work; it does not auto-load when working under `src/`, so this
+pointer is the one UI rule this file keeps. What is adopted so far, and in what order the
+rest follows, is `packages/sog-ui/docs/adoption.md`. For a construct not yet adopted, the
+rule printed below for it still governs Sogverse's code exactly as written; the adoption
+that retires the construct deletes its rule from this file in the same change. No new UI
+rule is added here: a new opinion goes to SOG-UI, and the construct joins the adoption
+order. The UI sections below (layout and scrolling, loading and disabled state, button
+order, styling, the UI component reference and preview scenes) are that transitional
+state, and the day this file holds none of them, the sweep is done.
 
 ### Key Conventions
 - App routes are grouped: `(auth)`, `(dashboard)`, `(public)`, plus `api/`
@@ -183,7 +199,7 @@ The pattern stays inline per screen — **do not extract it into a shared `useCo
 
 **Rule: the two names are a progression, and it runs the same way `Game Educator` → `Gedu` does — the platform name is never used cold, and is learned by being inside the product.** A family who has not met us is told "School of Gaming", because that is the only one of the two names that means anything to them yet; the product is what teaches them the other one, on the page they log into, in the mail that welcomes them, in the switcher that asks who is entering it. "Sogverse" is not internal-only vocabulary and not a secret — it is the second word a reader learns, and it costs one sentence of introduction to teach, which is precisely why a stranger is never handed it first. (`src/i18n/CLAUDE.md` states the role name's half of the same shape, and the two rules are meant to be read together.)
 
-**Corollary: the platform name may appear cold only where the copy is introducing it.** The gloss is a real construct and it belongs on the surfaces whose job is to explain us: a public FAQ entry that asks what Sogverse is and answers that Sogverse is School of Gaming's platform is the pattern, and a welcome mail naming the platform the reader has just been given an account on is the same move a paragraph long. What the rule forbids is the word arriving *before* its own gloss — the public help page used to open with "common questions about Sogverse" and only explain the word four FAQ items further down, which is the one moment on that page a reader cannot decode it. It opens with the brand now, and the gloss further down does the teaching.
+**Corollary: the platform name may appear cold only where the copy is introducing it.** The gloss is a real construct and it belongs on the surfaces whose job is to explain us: a public FAQ entry that asks what Sogverse is and answers that Sogverse is School of Gaming's platform is the pattern, and a welcome mail naming the platform the reader has just been given an account on is the same move a paragraph long. What the rule forbids is the word arriving *before* its own gloss. The public About page is the pattern in place: it opens with the brand, and its first FAQ item is the one that asks what Sogverse is and answers with the gloss — so the word is introduced at the first moment a reader meets it, rather than several items after.
 
 **Corollary: which name a sentence takes follows what the sentence is about, not who is reading it.** Inside the product, copy about *us* still says School of Gaming — a promise that a child's safety is at the heart of everything we do, a note that we invoice the municipality directly, a copyright line naming who holds the copyright. Copy about the *thing* still says Sogverse wherever the reader has met it — what a family logs into, what stores an account, what answers a Minecraft server's join check. A signed-in reader does not turn every sentence into platform copy, and a stranger does not turn every sentence into brand copy; the subject of the sentence decides, and the reader only decides whether the word needs introducing.
 
@@ -196,7 +212,7 @@ The pattern stays inline per screen — **do not extract it into a shared `useCo
 This is a deliberate shift, and it has now landed. Four parts are finished:
 
 - **The *lockups*** — every string carrying both names leads with the brand.
-- **The cold uses in `messages/`**, which have been swept. Everything a stranger could meet with the platform word un-introduced now says the brand instead: the public help page's opening line and its contact card, the public Gedu registration title, and the transactional-email copyright footer, which names the company that holds the copyright and so matches the site footer exactly.
+- **The cold uses in `messages/`**, which have been swept. Everything a stranger could meet with the platform word un-introduced now says the brand instead: the public About page's opening line, the contact-card copy under the `helpSection` namespace (the public help page it was written for is gone; the wording survives verbatim on the dashboards' contact card), the public Gedu registration title, and the transactional-email copyright footer, which names the company that holds the copyright and so matches the site footer exactly.
 - **Every document title and `og:site_name`.** The sub-page template (`src/app/layout.tsx`) is `"%s | School of Gaming"` and the site name on a shared link is the brand, on every page, signed in or not. A tab title is read while scanning a row of tabs, and what a parent is scanning for is the name they were given by a school or another parent — a recognition context even when the page behind the tab is their own dashboard. The root title keeps the lockup, because that is the one title with room for both. This also retires the product pages' hand-built absolute `… | School of Gaming` title: it existed only to step around a template that said something else, and the template now says the same words, so a product page passes a plain name and inherits it.
 - **The account possessive: it is with the brand.** "Your School of Gaming account", "your School of Gaming password", "your School of Gaming parent PIN" — the account is a relationship with the company, and the platform is what the account lets you into. That is what settles the pair: a possessive on an account artifact names who you have the relationship with, so the credential belongs to the brand and Sogverse is the door it opens. The company is also who *acts* on an account — we received the request, we will send the link, we will not change your password — which is the same sentence-subject test the corollary above already applies. The verification mail, the password- and PIN-reset mails and the auth pages' descriptions now all read the same way, in all five locales; the sweep is complete, so a new account/credential string follows the brand without a fresh decision. **The login card is the shape in miniature:** it welcomes you on behalf of the brand ("Welcome to School of Gaming") and puts the form directly under it. It used to carry a sub-line reading "Sign in to your account" beneath that title; the key is gone, because a heading over an email field, a password field and a Sign in button does not need a second line restating what the form plainly is.
 
@@ -339,9 +355,11 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
 | Family product page (a family's club/camp/event page) | `src/components/family/product-page/` |
+| Chat components | `src/components/chat/` |
 | Voice — scheduled group rooms | `src/components/voice/` |
 | Voice — instant rooms | `src/components/voice/instant/` |
 | Discord bot | `src/app/api/discord/` |
+| SOG-UI — the UI language package and its demo | `packages/sog-ui/` |
 | Database / migrations | `supabase/` |
 | Testing conventions | `tests/` |
 

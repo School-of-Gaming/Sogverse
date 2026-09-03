@@ -40,13 +40,28 @@
  * -> verify. Release before delete, always: it frees the seats synchronously,
  * so you can confirm you have capacity for the new pool *before* the
  * irreversible step.
+ *
+ * ## Additive passes
+ *
+ * `plan --add` extends the live pool instead of replacing it — no release, no
+ * delete, and every name already in the tenant is excluded from the draw. It
+ * also creates gedu pool logins (SOGGeduNN on the gedu domain), which take the
+ * same student licence by an explicit group add rather than by department.
+ *
+ *   node scripts/minecraft-edu-accounts.mjs plan --add --gedu-from 26 \
+ *        --gedu-to 46 --en 240
+ *   node scripts/minecraft-edu-accounts.mjs create --apply
+ *   node scripts/minecraft-edu-accounts.mjs verify
  */
+
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 const DOMAIN = "gamer.sog.gg";
+/** Shared gedu pool logins (SOGGeduNN) — same student licence, other domain. */
+const GEDU_DOMAIN = "gedu.sog.gg";
 const STUDENT_SKU = "18250162-5d87-4436-a834-d795c15c80f3"; // M365EDU_A3_STUUSEBNFT
 const MINECRAFT_PLAN = "4c246bbc-f513-4311-beff-eba54c353256";
 const STATIC_STUDENT_GRP = "2de2fefa-95ec-44d4-93b1-23ab41ca9293";
@@ -96,17 +111,43 @@ const FI_NOUN = [
   ["käärme", "snake"], ["höyry", "steam"], ["yö", "night"], ["päivä", "day"],
   ["sää", "weather"], ["närhi", "jay"], ["härkä", "bull"], ["käpy", "pine cone"],
 ];
-const EN_ADJ = ["brave", "swift", "mighty", "clever", "bold", "cosmic", "turbo", "mega",
-  "super", "epic", "wild", "lucky", "snappy", "zippy", "plucky", "dapper", "jazzy",
-  "breezy", "frosty", "blazing", "sparky", "whizzy", "nimble", "fearless", "golden",
-  "silver", "silent", "mystic", "stealthy", "rapid", "royal", "noble", "fierce",
-  "crimson", "arctic", "solar", "lunar", "atomic", "sonic", "hyper"];
-const EN_NOUN = ["badger", "otter", "fox", "hedgehog", "squirrel", "robin", "magpie",
-  "falcon", "kestrel", "osprey", "dragon", "griffin", "phoenix", "wizard", "knight",
-  "comet", "meteor", "rocket", "thunder", "boulder", "acorn", "conker", "puffin",
-  "dolphin", "narwhal", "panther", "tiger", "wolf", "bear", "lynx", "raven", "owl",
-  "wren", "stoat", "heron", "curlew", "pike", "salmon", "stag", "hare", "kite",
-  "merlin", "harrier", "bramble"];
+// Widened for the 2026 additive pass: English only, and large enough that a
+// 240-name draw reuses no single word more than a few times. Same safety rule
+// as the Finnish lists — nothing about looks, body, or being silly or stupid.
+const EN_ADJ = [
+  "brave", "swift", "mighty", "clever", "bold", "cosmic", "turbo", "mega",
+  "super", "epic", "wild", "lucky", "snappy", "zippy", "plucky", "dapper",
+  "jazzy", "breezy", "frosty", "blazing", "sparky", "whizzy", "nimble", "fearless",
+  "golden", "silver", "silent", "mystic", "stealthy", "rapid", "royal", "noble",
+  "fierce", "crimson", "arctic", "solar", "lunar", "atomic", "sonic", "hyper",
+  "amber", "ancient", "azure", "bright", "cobalt", "coral", "crystal", "daring",
+  "dazzling", "electric", "emerald", "eternal", "flying", "galactic", "gallant", "gleaming",
+  "glowing", "granite", "heroic", "hidden", "iron", "jade", "keen", "laser",
+  "lightning", "loyal", "magic", "magnetic", "midnight", "neon", "nova", "ocean",
+  "onyx", "phantom", "pixel", "plasma", "polar", "prime", "quantum", "quick",
+  "radiant", "retro", "roaming", "rocket", "ruby", "sapphire", "scarlet", "secret",
+  "shadow", "sharp", "shining", "sky", "spark", "steady", "stellar", "storm",
+  "thunder", "titan", "topaz", "ultra", "valiant", "vivid", "wise", "zephyr",
+];
+const EN_NOUN = [
+  "badger", "otter", "fox", "hedgehog", "squirrel", "robin", "magpie", "falcon",
+  "kestrel", "osprey", "dragon", "griffin", "phoenix", "wizard", "knight", "comet",
+  "meteor", "rocket", "thunder", "boulder", "acorn", "conker", "puffin", "dolphin",
+  "narwhal", "panther", "tiger", "wolf", "bear", "lynx", "raven", "owl",
+  "wren", "stoat", "heron", "curlew", "pike", "salmon", "stag", "hare",
+  "kite", "merlin", "harrier", "bramble", "arrow", "beacon", "blade", "blaze",
+  "bolt", "breeze", "cobra", "compass", "condor", "coral", "crane", "cyclone",
+  "drake", "eagle", "ember", "fang", "flame", "flare", "galaxy", "glacier",
+  "hawk", "hunter", "jaguar", "koala", "kraken", "lantern", "leopard", "lion",
+  "mammoth", "ninja", "nova", "ocelot", "orbit", "panda", "pegasus", "pilot",
+  "pioneer", "pulse", "python", "quest", "quill", "raccoon", "ranger", "raptor",
+  "reef", "ripple", "river", "rover", "sable", "sabre", "scout", "seeker",
+  "sentry", "serpent", "shark", "shield", "sparrow", "sphinx", "spirit", "stallion",
+  "star", "stingray", "storm", "summit", "swan", "talon", "tempest", "torch",
+  "tornado", "trail", "tundra", "turtle", "unicorn", "valley", "viper", "voyager",
+  "walrus", "warden", "wave", "whale", "wildcat", "wombat", "wraith", "yeti",
+  "zebra",
+];
 
 // -------------------------------------------------------------------- helpers
 function arg(name, fallback) {
@@ -238,14 +279,17 @@ async function seats() {
   };
 }
 
+const USER_SELECT =
+  "id,userPrincipalName,displayName,givenName,surname,department," +
+  "usageLocation,accountEnabled,licenseAssignmentStates";
+
+/** Every user in the tenant. The additive plan needs both domains at once. */
+const allUsers = () => paged(`/users?$select=${USER_SELECT}&$top=999`);
+
 const gamerAccounts = () =>
-  paged(
-    "/users?$select=id,userPrincipalName,displayName,givenName,surname,department," +
-      "usageLocation,accountEnabled,licenseAssignmentStates&$top=999"
-  ).then((us) =>
+  allUsers().then((us) =>
     us.filter((u) => (u.userPrincipalName ?? "").toLowerCase().endsWith(`@${DOMAIN}`))
   );
-
 const isLicensed = (u) =>
   (u.licenseAssignmentStates ?? []).some(
     (s) =>
@@ -256,6 +300,7 @@ const isLicensed = (u) =>
 
 function writeCsv(file, rows) {
   const head = [
+    "Tyyppi / Type",
     "Kayttajatunnus / Username", "Salasana / Password", "Nimi pelissa / Name in game",
     "Kieli / Language", "Merkitys / Meaning (EN)", "Lisenssi / Licence",
     "Kerho / Club", "Kerholainen / Student",
@@ -264,10 +309,13 @@ function writeCsv(file, rows) {
     /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
   const lines = [head.map(esc).join(",")];
   for (const r of rows) {
+    const gedu = r.kind === "gedu";
     lines.push(
       [
+        gedu ? "Gedu" : "Gamer",
         r.upn, r.password, r.ingame,
-        r.lang === "fi" ? "suomi" : "English",
+        // A gedu pool login has no language: its name is a number, not a word.
+        gedu ? "" : r.lang === "fi" ? "suomi" : "English",
         r.meaning ?? "",
         r.licensed === false ? "PUUTTUU / MISSING" : "OK - Minecraft Education",
         "", "",
@@ -275,8 +323,9 @@ function writeCsv(file, rows) {
     );
   }
   // BOM so Excel renders the umlauts; Google Sheets ignores it.
-  writeFileSync(file, "﻿" + lines.join("\r\n") + "\r\n", "utf8");
+  writeFileSync(file, "\uFEFF" + lines.join("\r\n") + "\r\n", "utf8");
 }
+
 
 // --------------------------------------------------------------------- verbs
 async function audit() {
@@ -312,16 +361,157 @@ function buildPool(adjs, nouns) {
     const [af, am] = Array.isArray(a) ? a : [a, ""];
     for (const n of nouns) {
       const [nf, nm] = Array.isArray(n) ? n : [n, ""];
+      // Several words sit in both lists (storm, thunder, nova, rocket, coral),
+      // so the cross product contains StormStorm. Drop the diagonal.
+      if (af === nf) continue;
       const local = `${asciiFi(af)}.${asciiFi(nf)}`;
       if (local.length <= MAX_LOCAL) {
-        out.push({ local, ingame: cap(af) + cap(nf), meaning: `${am} ${nm}`.trim() });
+        out.push({
+          local,
+          ingame: cap(af) + cap(nf),
+          meaning: `${am} ${nm}`.trim(),
+          adj: af,
+          noun: nf,
+        });
       }
     }
   }
   return out;
 }
 
+/**
+ * Additive pass: extend the live pool instead of replacing it.
+ *
+ * The reset flow above may generate whatever it likes, because `delete` has
+ * just emptied the domain. An additive pass has no such luxury — every name
+ * already in the tenant is taken, on BOTH halves of the uniqueness rule, so
+ * the live directory is the exclusion list. Two knobs matter:
+ *
+ *   --gedu-from/--gedu-to  a range of SOGGeduNN shared logins on the gedu
+ *                          domain, licensed by explicit group membership.
+ *   --en                   how many gamer accounts to draw.
+ *
+ * `--max-use` caps how often any single word may appear across the draw. A
+ * child who is CosmicWolf while four others are CosmicSomething has been
+ * handed a name that does not feel like theirs, and the whole point of the
+ * word lists is that it should.
+ */
+async function planAdd() {
+  const nEn = Number(arg("en", "0"));
+  const geduFrom = Number(arg("gedu-from", "0"));
+  const geduTo = Number(arg("gedu-to", "-1"));
+  const maxUse = Number(arg("max-use", "3"));
+
+  const live = await allUsers();
+  const takenUpn = new Set(
+    live.map((u) => (u.userPrincipalName ?? "").toLowerCase())
+  );
+  const takenName = new Set(
+    live.map((u) => (u.displayName ?? "").toLowerCase())
+  );
+
+  const rows = [];
+
+  for (let n = geduFrom; n <= geduTo; n++) {
+    const local = `SOGGedu${n}`;
+    const upn = `${local}@${GEDU_DOMAIN}`;
+    if (takenUpn.has(upn.toLowerCase())) {
+      console.error(`ABORT: ${upn} already exists`);
+      process.exit(1);
+    }
+    rows.push({
+      kind: "gedu",
+      upn,
+      local,
+      ingame: local,
+      meaning: "",
+      lang: "",
+      password: genPassword(),
+    });
+  }
+
+  const free = buildPool(EN_ADJ, EN_NOUN).filter(
+    (c) =>
+      !takenUpn.has(`${c.local}@${DOMAIN}`) &&
+      !takenName.has(c.ingame.toLowerCase())
+  );
+  for (let i = free.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [free[i], free[j]] = [free[j], free[i]];
+  }
+
+  const adjUse = new Map();
+  const nounUse = new Map();
+  const picked = [];
+  for (const c of free) {
+    if (picked.length === nEn) break;
+    const a = adjUse.get(c.adj) ?? 0;
+    const n = nounUse.get(c.noun) ?? 0;
+    if (a >= maxUse || n >= maxUse) continue;
+    adjUse.set(c.adj, a + 1);
+    nounUse.set(c.noun, n + 1);
+    picked.push(c);
+  }
+  if (picked.length < nEn) {
+    console.error(
+      `need ${nEn} gamer names, drew only ${picked.length} ` +
+        `(${free.length} free combinations, max ${maxUse} uses per word).\n` +
+        `Raise --max-use or widen the word lists.`
+    );
+    process.exit(1);
+  }
+  for (const c of picked) {
+    rows.push({
+      kind: "gamer",
+      upn: `${c.local}@${DOMAIN}`,
+      local: c.local,
+      ingame: c.ingame,
+      meaning: c.meaning,
+      lang: "en",
+      password: genPassword(),
+    });
+  }
+
+  if (new Set(rows.map((r) => r.upn.toLowerCase())).size !== rows.length) {
+    console.error("UPN collision inside the plan");
+    process.exit(1);
+  }
+  if (new Set(rows.map((r) => r.ingame.toLowerCase())).size !== rows.length) {
+    console.error("in-game name collision inside the plan");
+    process.exit(1);
+  }
+
+  writeFileSync(PLAN_FILE, JSON.stringify(rows, null, 1), "utf8");
+  const csv = arg("csv", "minecraft-edu-accounts.csv");
+  writeCsv(csv, rows);
+
+  const nGedu = rows.length - picked.length;
+  const s = await seats();
+  console.log(`planned ${rows.length} accounts: ${nGedu} gedu + ${picked.length} gamer`);
+  console.log(`  free English combinations : ${free.length}`);
+  console.log(`  distinct adjectives drawn : ${adjUse.size}/${EN_ADJ.length}`);
+  console.log(`  distinct nouns drawn      : ${nounUse.size}/${EN_NOUN.length}`);
+  console.log(`  max uses of any one word  : ${maxUse}`);
+  console.log(`  plan -> ${PLAN_FILE}`);
+  console.log(`  csv  -> ${csv}`);
+  console.log(
+    `\nA3 student seats: ${s.used}/${s.total} used, ${s.free} free; this plan needs ${rows.length}`
+  );
+  if (rows.length > s.free) {
+    console.log(`  WARNING: short by ${rows.length - s.free} seats`);
+  }
+  console.log(`\nsamples:`);
+  for (const r of rows.filter((r) => r.kind === "gedu").slice(0, 3)) {
+    console.log(`   ${r.upn.padEnd(32)} -> ${r.ingame}   [static group]`);
+  }
+  for (const r of rows.filter((r) => r.kind === "gamer").slice(0, 12)) {
+    console.log(`   ${r.upn.padEnd(32)} -> ${r.ingame}`);
+  }
+  console.log(`\nNothing was written to Azure. Next: create --apply`);
+}
+
 function plan() {
+  if (has("add")) return planAdd();
   const nFi = Number(arg("fi", "500"));
   const nEn = Number(arg("en", "100"));
   const pick = (poolList, count, lang) => {
@@ -432,14 +622,35 @@ async function create() {
     process.exit(1);
   }
   const rows = JSON.parse(readFileSync(PLAN_FILE, "utf8"));
+
+  // An additive plan is drawn against a directory that keeps changing, and
+  // `create` may be re-run after a partial failure. Re-check every name against
+  // the live tenant rather than trusting the plan: Graph answers a duplicate
+  // UPN with a 400 that reads like a validation error, which is an expensive
+  // way to discover you are creating the same pool twice.
+  const live = new Set(
+    (await allUsers()).map((u) => (u.userPrincipalName ?? "").toLowerCase())
+  );
+  const clash = rows.filter((r) => live.has(r.upn.toLowerCase()));
+  if (clash.length) {
+    console.error(`ABORT: ${clash.length} planned accounts already exist, e.g.`);
+    for (const c of clash.slice(0, 5)) console.error(`   ${c.upn}`);
+    process.exit(1);
+  }
+
   const s = await seats();
-  console.log(`would create ${rows.length} accounts; ${s.free} seats free`);
+  const nGedu = rows.filter((r) => r.kind === "gedu").length;
+  console.log(
+    `would create ${rows.length} accounts (${nGedu} gedu, ` +
+      `${rows.length - nGedu} gamer); ${s.free} seats free`
+  );
   if (rows.length > s.free) {
     console.log(`  WARNING: short by ${rows.length - s.free} seats`);
   }
   if (!APPLY) return console.log(`\n(dry run — pass --apply to write)`);
 
   const res = await pool(rows, async (r) => {
+    const gedu = r.kind === "gedu";
     const { status, body } = await graph("POST", "/users", {
       accountEnabled: true,
       // displayName and givenName carry the SAME whole name, and surname is
@@ -450,19 +661,29 @@ async function create() {
       mailNickname: r.local,
       userPrincipalName: r.upn,
       usageLocation: USAGE_LOCATION,
-      // The whole licensing mechanism: this value puts the account in the
-      // Dynamic Gamers group, which carries the A3 student licence.
-      department: GAMER_DEPARTMENT,
+      // Two licensing paths, one licence. A gamer account carries the value the
+      // Dynamic Gamers rule matches. A gedu pool login is added to the static
+      // group below instead and deliberately carries NO department, so the
+      // dynamic group goes on meaning exactly "the gamer pool".
+      ...(gedu ? {} : { department: GAMER_DEPARTMENT }),
       passwordProfile: {
         // A shared class login keeps the password it is given — the point is
-        // reading it out to the room.
+        // reading it out to the room. That covers the gedu pool logins too:
+        // SOGGeduNN names a seat in a room, not a person.
         forceChangePasswordNextSignIn: false,
         password: r.password,
       },
     });
-    if (status === 200 || status === 201) r.id = body.id;
-    return { status, r, body };
+    if (status !== 200 && status !== 201) return { status, r, body };
+    r.id = body.id;
+    if (!gedu) return { status, r, body };
+    const g = await graph("POST", `/groups/${STATIC_STUDENT_GRP}/members/$ref`, {
+      "@odata.id": `${GRAPH}/directoryObjects/${body.id}`,
+    });
+    r.grouped = g.status === 204 || g.status === 200;
+    return { status, r, body, group: g };
   });
+
   const ok = res.filter((x) => x.status === 200 || x.status === 201).length;
   console.log(`created ok=${ok} fail=${rows.length - ok}`);
   for (const x of res.filter((y) => y.status !== 200 && y.status !== 201).slice(0, 8)) {
@@ -470,17 +691,38 @@ async function create() {
       `   ${x.r.upn} -> ${x.status} ${String(x.body?.error?.message ?? "").slice(0, 120)}`
     );
   }
+  // A gedu account whose group add failed exists and is UNLICENSED — the one
+  // failure mode this flow has that the gamer path does not, because its
+  // licence is a second write rather than a property of the first.
+  const ungrouped = res.filter((x) => x.r.kind === "gedu" && x.r.id && !x.r.grouped);
+  if (ungrouped.length) {
+    console.log(`\nGROUP ADD FAILED for ${ungrouped.length} gedu accounts (they exist, unlicensed):`);
+    for (const x of ungrouped.slice(0, 10)) {
+      console.log(
+        `   ${x.r.upn} -> ${x.group?.status} ` +
+          `${String(x.group?.body?.error?.message ?? "").slice(0, 100)}`
+      );
+    }
+  }
   writeFileSync(PLAN_FILE, JSON.stringify(rows, null, 1), "utf8");
   console.log(`\nLicensing is asynchronous — run \`verify\` in a minute or two.`);
 }
 
+
 async function verify() {
-  const us = await gamerAccounts();
-  const byUpn = new Map(us.map((u) => [u.userPrincipalName.toLowerCase(), u]));
+  const us = await allUsers();
+  const byUpn = new Map(us.map((u) => [(u.userPrincipalName ?? "").toLowerCase(), u]));
   const rows = existsSync(PLAN_FILE) ? JSON.parse(readFileSync(PLAN_FILE, "utf8")) : [];
   const check = rows.length
     ? rows
-    : us.map((u) => ({ upn: u.userPrincipalName, ingame: u.displayName, lang: "fi" }));
+    : us
+        .filter((u) => (u.userPrincipalName ?? "").toLowerCase().endsWith(`@${DOMAIN}`))
+        .map((u) => ({
+          kind: "gamer",
+          upn: u.userPrincipalName,
+          ingame: u.displayName,
+          lang: "fi",
+        }));
 
   let good = 0;
   const bad = [];
@@ -492,6 +734,12 @@ async function verify() {
     else bad.push(r.upn);
   }
   console.log(`licensed & enabled: ${good}/${check.length}`);
+  for (const k of ["gedu", "gamer"]) {
+    const set = check.filter((r) => (r.kind ?? "gamer") === k);
+    if (set.length) {
+      console.log(`   ${k.padEnd(6)}: ${set.filter((r) => r.licensed).length}/${set.length}`);
+    }
+  }
   if (bad.length) {
     console.log(`problems (first 15):`);
     for (const u of bad.slice(0, 15)) console.log(`   ${u}`);
@@ -505,6 +753,7 @@ async function verify() {
     console.log(`csv -> ${csv}`);
   }
 }
+
 
 // ---------------------------------------------------------------------- main
 const VERBS = { audit, plan, release, delete: del, create, verify };

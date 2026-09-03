@@ -52,6 +52,17 @@ than remembered:
   service entire**, which is the likelier leak: it exports the staff document shapes, and
   a family module reaching for one would compile, parse and render it.
 
+**Rule: creations are the one staff-authored field on this page that a family may read
+*and* click, and the exception is scoped to them alone.** A gedu writes them, the gamer's
+own family reads them, and nothing else crosses: the requirement flag and the owed state
+that ride the same table on the staff side have no field on this document and never reach
+here. What makes the link safe is stated with the wire shape and enforced at the render:
+only staff can write the value, only the participant's own family can read it, and a
+value that does not parse as http(s) becomes text rather than an anchor. Session reports
+stay link-free — a write-up sent to one family is this platform pointing them somewhere it
+does not control — and a creation is the deliberate exception because the link *is* the
+content.
+
 **Rule: the attendance vocabulary is the one thing that crosses the zone, and it crosses
 through a named allow-list.** `attendanceStatus`, `AttendanceStatus` and
 `SUPPORTED_ATTENDANCE_STATUSES` are permitted names because they are a *vocabulary*
@@ -120,6 +131,60 @@ live with the shared session-feed machinery.
 pre-epoch occurrence from a recent unwritten one because the enforcement epoch decides
 what a gedu is owed for. To a family both are the same thing — a session that ran with
 nothing written down — so the epoch never reaches here.
+
+## What they made
+
+**Rule: the creations card renders only when there is something in it, and sits between
+the standing notes and the feed.** Almost every enrollment has none, so an empty card
+would be the state most families met; and the list rides the same document as the rest of
+the page, so it is present or absent in the first frame rather than appearing under
+somebody's cursor. Its place in the order follows the page's own reading order — when and
+where, what is always true here, what this child has made, what happened week by week.
+Below the feed it would sit behind an unbounded history; above the notes it would displace
+the standing context every page has with a card most pages do not.
+
+**Rule: a title becomes a link only when its stored value parses as http(s); otherwise it
+renders as the title in plain text.** The field is stored raw and unvalidated because
+staff are trusted, which puts the whole of the safety on this side — a `javascript:` value
+reaching an `href` on a parent's browser is stored XSS. The parse is the shared navigation
+helper rather than a local check, the anchor is handed the parser's own serialization
+rather than the stored string, and the degrade is to a label rather than to an anchor with
+a blank `href`, which is not inert but resolves to the current page. The title is required
+for exactly this reason: it is what the degrade path has to say.
+
+**Rule: one heading, for all three audiences.** The heading is the bare noun on a parent's
+page, on a parent's own seat and on the child's own — the same decision the gedus label
+takes, and for the same two reasons: the masthead has already said whose page this is, and
+a possessive built around a name has to inflect that name in half the locales we ship. It
+is also the word the gedu who typed it sees, so a family and their gedu have one word for
+one thing — which is why the noun is pluralized against the count rather than fixed
+plural: the staff editor authors one creation, so a fixed "Creations" over a single entry
+would be the one place those two words came apart. A gamer coming back to their own work
+is the point of the card, not a side effect of sharing a body.
+
+**Rule: the line under that heading is the one piece of copy on this card keyed to who is
+reading, and its job is to decode the card for a parent meeting it cold.** A bare noun
+over a link is a filing label, and the question a parent actually arrives with is what
+this thing is and why it is on their child's page — so the line answers that rather than
+admiring the contents. It carries four things in order: **who put the link here** (their
+gedu, when the child finished something), **what it is** (a game, a world, a project —
+several kinds and no single title, because naming one would teach a family that the club
+*is* that one game), **why it matters** (this is what all that playing has made) and
+**what to do with it** (open it together and be shown around). Anything that drops one of
+the four is back to being a caption.
+
+A parent is told this about their child, by name; the child, and a parent in a seat of
+their own, are told it in the **second person** — a page that says "something Sanna made"
+to Sanna reads as a page about a stranger who shares her name, which is the rule the
+masthead's attribution already follows. The gamer's variant ends on the sentence the card
+exists to let them read about themselves; the adult in their own seat gets no
+come-and-look invitation, because there is nobody to be shown around by. Three variants
+rather than two, because French addresses a child and an adult differently and one
+second-person string cannot serve both. **The name is only ever a nominative subject**,
+like every name-carrying string on this page: nothing is possessed, declined or suffixed,
+so no locale has to inflect a name it has never seen — which is why the locales that
+cannot put a name in an object slot without a case ending restructure the sentence around
+it instead of translating it clause for clause.
 
 ## Membership grants the group's history
 

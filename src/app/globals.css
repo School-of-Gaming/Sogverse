@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Tailwind 4 anchors its automatic content scan on the nearest package.json, which
+   for this file is the repo root, so without this line every class the UI package
+   and its demo write is compiled into Sogverse's stylesheet against a theme that
+   cannot resolve the package's tokens. */
+@source not "../../packages";
+
 /* Layout — single source of truth for the sticky header's height.
    Consumed by the header itself, the dashboard sidebar's sticky offset,
    the home hero's bleed-under-header trick, and hash-anchor scroll

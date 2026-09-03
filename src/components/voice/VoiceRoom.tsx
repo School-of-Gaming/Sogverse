@@ -9,12 +9,62 @@ import { useVoiceRoom } from "./VoiceRoomProvider";
 import { VoiceControls } from "./VoiceControls";
 import { ZoneList } from "./ZoneList";
 import { ScreenShareDisplay } from "./ScreenShareDisplay";
-import { ChatPanel } from "./ChatPanel";
+import { Card, CardContent } from "@/components/ui/card";
 import { ParticipantList } from "./ParticipantList";
+import type { ParticipantChatControls } from "./ParticipantRow";
+
+/**
+ * The fixed height the room grants the whole chat surface — log, reply strip
+ * and composer together.
+ *
+ * **Stated here rather than left to the chat's own default**, because the
+ * geometry is the room's decision: this page scrolls, carries a fixed control
+ * dock over its foot and puts the participant list directly under the panel, so
+ * how much of the viewport chat is allowed is a fact about *this* embedding. It
+ * happens to match the design's default today; a later room-layout change moves
+ * it here rather than silently inheriting whatever the component decides next.
+ */
+const CHAT_HEIGHT = "h-80 sm:h-96";
 
 interface VoiceRoomProps {
   /** Optional title shown in the card header. Defaults to the localized "Voice room" string. */
   title?: string;
+  /**
+   * The chat surface, supplied by whoever mounted the room.
+   *
+   * **A slot rather than a component the room reaches for.** Chat is persisted
+   * now, so it needs a channel, a query and a subscription — none of which the
+   * room has any business holding — and the three surfaces that render this
+   * layout want three different answers: the scheduled route passes the live
+   * container, the preview scenes pass the same components over fixtures, and
+   * an instant room passes nothing at all, because a signed-out guest is
+   * deliberately nobody the database can authorize.
+   *
+   * **A function of the height, so the grant cannot be forgotten.** The chat
+   * surface has exactly one height and never grows, and it is this room that
+   * decides how much of the viewport it gets — handing the class *to* the slot
+   * is what makes that a fact rather than an instruction in a comment. The card
+   * around it supplies the bottom padding the typing indicator overlays; pass
+   * nothing and no card is drawn.
+   */
+  chat?: (heightClassName: string) => ReactNode;
+  /**
+   * The chat lock offered against each person in the room, from whoever
+   * supplied the `chat` slot above.
+   *
+   * **The second half of the same seam, and it goes to the rail rather than to
+   * the panel.** A moderator watching a room should be able to lift a lock
+   * beside somebody's name, without first finding a message that person wrote —
+   * but the lock state and the intention behind it belong to the chat surface,
+   * not to this room. So the room threads what it is handed down to the
+   * participant list and derives nothing: chat state never enters the voice
+   * room's *context*, and this prop is what makes it unnecessary for it to.
+   *
+   * Omitted by an instant room, which has no chat, and by any caller whose
+   * viewer is offered no moderation — in both cases the rail's menus render
+   * exactly as they did before chat existed.
+   */
+  participantChatControls?: ParticipantChatControls;
   /**
    * Optional control rendered at the right-hand end of the title row. Instant
    * rooms put the room-link chip here, so a moderator can hand the link out
@@ -44,6 +94,8 @@ const DOCK_HEIGHT_ESTIMATE = "8rem";
 export function VoiceRoom({
   title,
   titleAccessory,
+  chat,
+  participantChatControls,
   onLeave,
   leaveLabel,
 }: VoiceRoomProps) {
@@ -157,11 +209,19 @@ export function VoiceRoom({
         <ZoneList />
       </section>
 
-      {/* Ephemeral in-call chat, between the voice room and the participants */}
-      <ChatPanel />
+      {/* Persisted in-call chat, between the voice room and the participants —
+          and only where somebody supplied one. The card's own `p-6 pt-0` is
+          what pays for the typing indicator, which is drawn just past the
+          surface's bottom edge into that padding. */}
+      {chat !== undefined && (
+        <Card>
+          <CardContent className="pt-6">{chat(CHAT_HEIGHT)}</CardContent>
+        </Card>
+      )}
 
-      {/* Participant list (always visible below the voice room card) */}
-      <ParticipantList />
+      {/* Participant list (always visible below the voice room card), carrying
+          whatever chat moderation the room's chat handed it. */}
+      <ParticipantList participantChatControls={participantChatControls} />
 
       {/* Fixed control dock — pinned to the bottom of the viewport (position:
           fixed: the same overlapping-fixed idea as the home-page section pill,

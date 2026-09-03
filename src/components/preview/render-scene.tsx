@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { isAdminDashboardScenario } from "@/components/admin/dashboard/mock-dashboard-fixtures";
+import { isChatSceneScenario } from "@/components/chat/mock-chat-fixtures";
 import { isFamilyProductScenario } from "@/components/family/product-page/mock-fixtures";
 import { isGamerDashboardScenario } from "@/components/gamer/mock-dashboard-fixtures";
 import { isGeduContractScenario } from "@/components/gedu/contract/mock-contract-fixtures";
@@ -21,6 +22,7 @@ import {
 import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
+import { ChatScene } from "./scenes/chat-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
 import { GeduContractScene } from "./scenes/gedu-contract-scene";
@@ -117,6 +119,14 @@ const SCENE_RENDERERS: Record<
   "gedu-product": (scenario) => {
     if (!isGroupWorkspaceScenario(scenario)) notFound();
     return <GeduProductPageScene scenario={scenario} />;
+  },
+  chat: (scenario) => {
+    // Checked and not handed on, like the shop grid above: there is one chat
+    // scenario, so the scene body branches on nothing — but the check still
+    // belongs here, so a slug the registry does not declare 404s rather than
+    // rendering the session chat under a made-up name.
+    if (!isChatSceneScenario(scenario)) notFound();
+    return <ChatScene />;
   },
   "voice-room": (scenario) => {
     if (!isVoiceRoomScenario(scenario)) notFound();

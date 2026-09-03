@@ -5,7 +5,8 @@ import { getUserWithProfile } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ROUTES } from "@/lib/constants";
 import { ROLE_DASHBOARD_PATHS, type UserRole } from "@/lib/constants/roles";
-import { SelectProfileHeader, SelectProfileView } from "@/components/select-profile";
+import { Header } from "@/components/layout";
+import { SelectProfileView } from "@/components/select-profile";
 import { resolveFamilyWithAdmin } from "@/services/family/family.server";
 import type { FamilyMember } from "@/services/family";
 
@@ -26,10 +27,15 @@ export async function generateMetadata(): Promise<Metadata> {
  *   2. In-session switcher for parents *and* gamers, reached by clicking the
  *      header avatar — lets a gamer hop to a sibling or back to the parent.
  *
- * Lives at the top of the app tree (not inside any (group)) so it doesn't
- * inherit the standard `(public)` / `(dashboard)` chrome. The route renders
- * its own minimal header (no nav, non-clickable mark, locale picker, inert
- * avatar) — the same chrome-replacement pattern the `(voice)` group uses.
+ * Lives at the top of the app tree (not inside any (group)) so it composes
+ * its own chrome: the standard `Header` plus a centered main, no footer. It
+ * renders the *standard* header deliberately — a simplified picker-only
+ * header existed once and drifted out of sync with the real one (an outdated
+ * typed mark), and nothing the simplification protected against is real:
+ * no route forces a return to this picker, and a locked parent who clicks
+ * away is caught by the parent-PIN gate everywhere, which is the actual
+ * boundary. Same conclusion the `(voice)` group reached when it retired its
+ * own bespoke header.
  *
  * Routing: the proxy already bounces unauthenticated visitors to /login. Here
  * we additionally short-circuit admins/gedus to their own dashboards — the
@@ -52,7 +58,7 @@ export default async function SelectProfilePage() {
 
   return (
     <>
-      <SelectProfileHeader />
+      <Header />
       {/* Pull main up under the sticky header so the centering math runs
           against the full viewport, not viewport-minus-header. Same trick
           the home hero uses (`src/app/(public)/page.tsx`) — visual center

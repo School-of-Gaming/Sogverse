@@ -96,6 +96,22 @@ const productDataBase = z.object({
       message: "Not a country products can be locked to",
     })
     .nullable(),
+  // Does every member owe a creation — a link to the thing they made — by the
+  // time this product ends? An admin decision, deliberately not derived from
+  // `topic`: not every Roblox-Studio product is Roblox-sponsored, so a contract
+  // obligation is stated rather than inferred. Staff-facing in every direction:
+  // no family document carries the column, and the flag changes signals rather
+  // than the authoring surface.
+  //
+  // Required and never optional, and the update half is the load-bearing one
+  // once more — but for the *opposite* reason to `tag` and `region_lock_country`
+  // above. Those are required-nullable because null is their legal empty; this
+  // column is NOT NULL, so its RPC parameter defaults to `false` rather than to
+  // null, and an omitted field would reach a function that assigns every
+  // editable column and quietly unflag the product. A plain boolean is
+  // therefore the whole shape: `false` is the explicit "owes nothing", and
+  // there is no null for it to mean.
+  requires_gamer_creations: z.boolean(),
   spoken_language_code: z.enum(Constants.public.Enums.spoken_language),
   // The catalogue entry this product's picture comes from, or null for a
   // product with no picture.

@@ -29,6 +29,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
+import { FaqAccordion } from "@/components/ui/faq-accordion";
+import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -44,7 +46,11 @@ import {
   PersonChipList,
   type PersonChipListPerson,
 } from "@/components/ui/person-chip";
-import { GamerNoteDialog, NewcomerBadge } from "@/components/member-flair";
+import { GamerFlairDialog, NewcomerBadge } from "@/components/member-flair";
+import {
+  HelpFeedbackCardView,
+  type HelpFeedbackAudience,
+} from "@/components/help/help-feedback-card-view";
 import { MinecraftPasswordResetCardView } from "@/components/tools/minecraft-password-reset-card-view";
 import type { MinecraftPasswordResetResult } from "@/services/minecraft-education/minecraft-education.contracts";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
@@ -85,7 +91,12 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { GeduContractAcceptance, UserRole, VoiceZone } from "@/types";
+import type {
+  GamerCreation,
+  GeduContractAcceptance,
+  UserRole,
+  VoiceZone,
+} from "@/types";
 import {
   LocationPickerPanel,
   type LocationChainSummary,
@@ -991,8 +1002,6 @@ function VoiceZonesDemo() {
     muteParticipant: noop,
     lockParticipant: noop,
     getAnalyser: () => null,
-    messages: [],
-    sendChatMessage: noop,
     join: asyncNoop,
     leave: asyncNoop,
   };
@@ -1129,37 +1138,57 @@ function NewcomerBadgeDemo() {
 const NEWCOMER_BADGE_STOPS = [0, 8, 16, 24];
 
 /**
- * The note editor itself — an overlay, so the style guide is its home: it opens
- * above whatever summoned it and the page behind it contributes nothing to how
- * it reads.
+ * The per-gamer dialog itself — an overlay, so the style guide is its home: it
+ * opens above whatever summoned it and the page behind it contributes nothing to
+ * how it reads.
  *
- * Live against local state, including the one behaviour worth checking here:
- * saving an empty note is a real action that retires the note rather than a
- * no-op.
+ * **What has to be judged here is the two-audience split.** The creation on top
+ * is read by the member's own family; the private note under it is staff working
+ * memory. Getting those the wrong way round is the only real risk the dialog
+ * carries, so the bordered block and the padlocked one have to read as opposites
+ * at a glance, with the audience stated in words in each — and one page is where
+ * they are compared, because a reviewer sees both halves in one screenshot.
+ *
+ * Both halves are live against local state, including the two behaviours worth
+ * checking here: saving an empty note is a real action that retires it rather
+ * than a no-op, and **one creation field filled without the other** refuses the
+ * save with a line under it, which is what keeps the database's CHECK a backstop
+ * rather than a routine error path. Emptying both fields is the third, and is
+ * how a creation is cleared.
  */
-function GamerNoteDialogDemo() {
+function GamerFlairDialogDemo() {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(
     "Quiet in big groups — pair her rather than letting her pick a partner. Has warmed up a lot since autumn.",
   );
+  // One entry, because one is what the editor authors — the wire shape is still
+  // an array, and a demo seeding two would be showing a state no Gedu can reach.
+  const [creations, setCreations] = useState<readonly GamerCreation[]>([
+    {
+      title: "Underwater dome with the working airlock",
+      url: "https://www.planetminecraft.com/project/siiri-dome/",
+    },
+  ]);
 
   return (
     <div className="space-y-2">
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        Open the note about Siiri
+        Open the dialog about Siiri
       </Button>
       <p className="text-xs text-muted-foreground">
-        {note === ""
-          ? "No note — the dialog opens on the add flow."
-          : "Has a note."}
+        {note === "" && creations.length === 0
+          ? "Nothing recorded — the dialog opens on the add flow, and the roster button is dimmed."
+          : `${note === "" ? "No note" : "Has a note"}, ${creations.length} creation${creations.length === 1 ? "" : "s"}.`}
       </p>
-      <GamerNoteDialog
+      <GamerFlairDialog
         open={open}
         onOpenChange={setOpen}
         name="Siiri"
         note={note}
         lastEditedBy="Sanna"
-        onSave={setNote}
+        creations={creations}
+        onSaveNote={setNote}
+        onSaveCreations={setCreations}
       />
     </div>
   );
@@ -1999,7 +2028,10 @@ function SessionPhotosDemo() {
           one gets no arrows at all. Escape, the backdrop, the margins beside
           the picture, the picture itself and the corner button all close it;
           the three controls do not, which is why pressing next is never also a
-          request to leave.
+          request to leave. The overlay itself is the shared{" "}
+          <strong>FullscreenImageViewer</strong> &mdash; the chat log opens the
+          same one over a send&rsquo;s burst of images, in its own words &mdash;
+          and what is drawn here is the session feed&rsquo;s set going into it.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button
@@ -2373,11 +2405,15 @@ export default function AdminUIComponentsPage() {
         </div>
       </Section>
 
-      <Section title="Member flair — newcomer badge & Gedu notes">
+      <Section title="Member flair — newcomer badge & the per-gamer dialog">
         <p className="max-w-prose text-sm text-muted-foreground">
-          Staff-only marks a Gedu reads off a roster before they read a name.
-          Neither ever reaches a family surface: the data behind them comes from
-          staff-scoped reads, so a parent&rsquo;s page has nothing to pass.
+          The marks a Gedu reads off a roster before they read a name, and the
+          dialog behind them. The badge never reaches a family surface: the data
+          behind it comes from staff-scoped reads, so a parent&rsquo;s page has
+          nothing to pass. The dialog is where that stops being the whole story
+          — the note in it is staff-only for ever, and the creations under it are
+          read by the member&rsquo;s own family, which is why each half states
+          its audience above the fields.
         </p>
         <p className="max-w-prose text-sm text-muted-foreground">
           The glyph and the note marker are both picked here — three options can
@@ -2393,8 +2429,139 @@ export default function AdminUIComponentsPage() {
         <SubSection title="The newcomer badge">
           <NewcomerBadgeDemo />
         </SubSection>
-        <SubSection title="The note editor">
-          <GamerNoteDialogDemo />
+        <SubSection title="The per-gamer dialog">
+          <GamerFlairDialogDemo />
+        </SubSection>
+      </Section>
+
+      <Section title="FAQ accordion">
+        <p className="text-sm text-muted-foreground">
+          Every FAQ on the site is drawn as this list. The caller resolves its
+          own strings and composes each answer, so an answer can be one
+          paragraph, several, a numbered run of steps, a bulleted set, or carry
+          a link. Given no items the component renders nothing at all — there is
+          no empty state to show, which is why that case is pinned in a unit
+          test instead of demoed here.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The block shapes below are built by calling the shared answer tags
+          rather than by hand-writing an <code>ol</code> or a <code>ul</code>:
+          those tags are what the real FAQs render through, so a demo that
+          re-typed their classes would be the first thing to drift.
+        </p>
+        <SubSection title="A list of questions">
+          <div className="max-w-3xl">
+            <FaqAccordion
+              items={[
+                {
+                  key: "plain",
+                  question: "What is the difference between clubs, camps and events?",
+                  answer: (
+                    <p>
+                      Clubs meet on a recurring schedule. Camps run across
+                      multiple days during school breaks. Events are one-off
+                      get-togethers.
+                    </p>
+                  ),
+                },
+                {
+                  key: "two-paragraphs",
+                  question: "What equipment does my child need?",
+                  answer: (
+                    <>
+                      <p>
+                        A computer that runs the game, a headset with a
+                        microphone, and a reasonably steady connection.
+                      </p>
+                      <p>
+                        Camps and events sometimes run on site, in which case the
+                        room provides the machines.
+                      </p>
+                    </>
+                  ),
+                },
+                {
+                  key: "with-steps",
+                  question: "How do I join my session when it starts?",
+                  answer: (
+                    <>
+                      {FAQ_ANSWER_TAGS.p("Here is the whole thing:")}
+                      {FAQ_ANSWER_TAGS.steps(
+                        <>
+                          {FAQ_ANSWER_TAGS.step("Open My SOG and find your club.")}
+                          {FAQ_ANSWER_TAGS.step(
+                            "Look at the button on it. Until your session is close it stays locked.",
+                          )}
+                          {FAQ_ANSWER_TAGS.step(
+                            "Five minutes before it starts, that button changes to Join voice room.",
+                          )}
+                          {FAQ_ANSWER_TAGS.step("Tap it. You are in.")}
+                        </>,
+                      )}
+                      {FAQ_ANSWER_TAGS.p("There is nothing to install and no code to type.")}
+                    </>
+                  ),
+                },
+                {
+                  key: "with-a-list",
+                  question: "What do you store about my child?",
+                  answer: (
+                    <>
+                      {FAQ_ANSWER_TAGS.p("About your child, this much:")}
+                      {FAQ_ANSWER_TAGS.list(
+                        <>
+                          {FAQ_ANSWER_TAGS.item(
+                            "Their first name, and their birth month and year.",
+                          )}
+                          {FAQ_ANSWER_TAGS.item(
+                            "An internal Sogverse address, rather than a real email address.",
+                          )}
+                          {FAQ_ANSWER_TAGS.item(
+                            "A profile picture that is a pattern generated from their account id.",
+                          )}
+                        </>,
+                      )}
+                    </>
+                  ),
+                },
+                {
+                  key: "with-a-link",
+                  question: "Who leads the sessions?",
+                  answer: (
+                    <p>
+                      Every session is hosted by a Gedu — a Game Educator who is
+                      also a gamer.{" "}
+                      <a
+                        href={ROUTES.about}
+                        className="text-primary underline underline-offset-4 hover:no-underline"
+                      >
+                        Read more about us
+                      </a>
+                      .
+                    </p>
+                  ),
+                },
+              ]}
+            />
+          </div>
+        </SubSection>
+        <SubSection title="A single question">
+          <div className="max-w-3xl">
+            <FaqAccordion
+              items={[
+                {
+                  key: "only",
+                  question: "How do I get started?",
+                  answer: (
+                    <p>
+                      Create a parent account, browse what is on offer, and enrol
+                      your child.
+                    </p>
+                  ),
+                },
+              ]}
+            />
+          </div>
         </SubSection>
       </Section>
 
@@ -2812,6 +2979,26 @@ export default function AdminUIComponentsPage() {
         <MinecraftPasswordResetDemo />
       </Section>
 
+      <Section title="Help & feedback form">
+        {/* One card, rendered unchanged in the parent, gamer and gedu Help
+            sections. Every state is here because the three preview scenes can
+            only ever show the idle one — a scene must never gain a live submit
+            that emails every admin. */}
+        <p className="text-sm text-muted-foreground -mt-2">
+          The first card of each pair is live &mdash; type into it &mdash;
+          because the textarea, the two counters and the
+          disabled-until-long-enough button are pure UI over local state. The
+          rest are the states a real submit produces, driven by props.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The refused state is the database&rsquo;s rolling-hour rate limit,
+          which the route answers with a 429. It is worded here rather than
+          shown as the route&rsquo;s own English sentence, which is written for
+          a developer reading a log.
+        </p>
+        <HelpFeedbackDemo />
+      </Section>
+
       <Section title="Gedu contract — settings card">
         <p className="text-sm text-muted-foreground -mt-2">
           The contract card on a gedu&rsquo;s settings page, in both the states
@@ -2942,6 +3129,96 @@ function MinecraftPasswordResetDemo() {
 }
 
 function noopSubmit() {}
+
+/* ------------------------------------------------------------------ */
+/*  Help & feedback form                                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The two audiences and every state a submit can leave the card in, side by
+ * side — which is the whole reason this section exists: the dashboards render
+ * the idle card and nothing else, and states compared from memory are not
+ * compared at all.
+ *
+ * The idle card of each audience holds its own message so typing works; the
+ * others are driven by props alone, because no click can reach them here.
+ */
+function HelpFeedbackDemo() {
+  return (
+    <div className="space-y-6">
+      <SubSection title="Adult — parent and gedu">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <LiveHelpFeedbackDemoCard audience="adult" />
+          <HelpFeedbackCardView
+            audience="adult"
+            message="My daughter cannot hear anyone in the club room."
+            onMessageChange={noopMessage}
+            submitting
+            succeeded={false}
+            error={null}
+            onSubmit={noopSubmit}
+          />
+          <HelpFeedbackCardView
+            audience="adult"
+            message=""
+            onMessageChange={noopMessage}
+            submitting={false}
+            succeeded
+            error={null}
+            onSubmit={noopSubmit}
+          />
+          <HelpFeedbackCardView
+            audience="adult"
+            message="My daughter cannot hear anyone in the club room."
+            onMessageChange={noopMessage}
+            submitting={false}
+            succeeded={false}
+            error="rateLimited"
+            onSubmit={noopSubmit}
+          />
+        </div>
+      </SubSection>
+
+      <SubSection title="Gamer">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <LiveHelpFeedbackDemoCard audience="gamer" />
+          <HelpFeedbackCardView
+            audience="gamer"
+            message="My mic does not work."
+            onMessageChange={noopMessage}
+            submitting={false}
+            succeeded={false}
+            error="failed"
+            onSubmit={noopSubmit}
+          />
+        </div>
+      </SubSection>
+    </div>
+  );
+}
+
+/** The card a reader can actually type into, over local state. */
+function LiveHelpFeedbackDemoCard({
+  audience,
+}: {
+  audience: HelpFeedbackAudience;
+}) {
+  const [message, setMessage] = useState("");
+
+  return (
+    <HelpFeedbackCardView
+      audience={audience}
+      message={message}
+      onMessageChange={setMessage}
+      submitting={false}
+      succeeded={false}
+      error={null}
+      onSubmit={noopSubmit}
+    />
+  );
+}
+
+function noopMessage() {}
 
 /* ------------------------------------------------------------------ */
 /*  Location Picker Demo                                               */

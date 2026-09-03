@@ -35,6 +35,16 @@ interface SessionPlanEditorProps {
    * and that it greys with the two fields beside it.
    */
   photoStrip?: ReactNode;
+  /**
+   * The final session's creations block, in the slot the record editor gives it
+   * — which here is the top of the editor, because a session that has not
+   * started has no register for it to sit under.
+   *
+   * Present on a flagged run's last session *before* that session runs, which is
+   * the whole point of it being here: the work is discoverable while there is
+   * still time to do it, rather than only once the card has gone amber.
+   */
+  creationsBlock?: ReactNode;
   onCancel: () => void;
   onSave: (draft: SessionPlanDraft) => void;
 }
@@ -77,6 +87,7 @@ export function SessionPlanEditor({
   committing,
   error,
   photoStrip,
+  creationsBlock,
   onCancel,
   onSave,
 }: SessionPlanEditorProps) {
@@ -103,6 +114,10 @@ export function SessionPlanEditor({
     // renders inside a collapsible region, which clips its overflow so the
     // open/close animation has something to reveal.
     <div className="space-y-4 pb-1 pt-4">
+      {/* The record editor puts this under the register; there is no register
+          here, so it keeps the same place in the order by leading. */}
+      {creationsBlock}
+
       <FamilyNoteBlock audienceStatedByField>
         <RichNoteField
           label={t("reportTitle")}

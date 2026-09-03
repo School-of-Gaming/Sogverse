@@ -1338,6 +1338,9 @@ function buildBaseProduct(
     // their own scenarios on the same scene (`region-*`), which render one of
     // these products and supply the lock and the viewer's country alongside it.
     region_lock_country: null,
+    // Staff-facing only: no public or family surface draws this flag, and the
+    // fixture holds it purely because the row type does.
+    requires_gamer_creations: false,
     spoken_language_code: "fi",
     location_id: locationFixture?.id ?? null,
     locations: locationFixture,

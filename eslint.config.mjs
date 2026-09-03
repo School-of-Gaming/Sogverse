@@ -5,6 +5,28 @@ import security from "eslint-plugin-security";
 import i18next from "eslint-plugin-i18next";
 import eslintComments from "@eslint-community/eslint-plugin-eslint-comments";
 
+/**
+ * `.ts`/`.tsx` in a relative import specifier, banned in Sogverse's own source.
+ *
+ * The root tsconfig sets `allowImportingTsExtensions` because the UI package's
+ * token generator is run directly by Node, whose ESM resolver needs the real
+ * extension. That option is program-wide, so it silently legalises the spelling
+ * everywhere the root program reaches — and a `./foo.ts` import in a Next route
+ * is a bundler-specific accident waiting to happen, not a style question.
+ *
+ * Held in a const because two config blocks below need it: a later block that
+ * sets `no-restricted-imports` replaces the rule outright rather than merging
+ * with it, so the family-surface block has to carry these patterns too.
+ */
+const noTsExtensionImports = [
+  {
+    group: ["./*.ts", "./**/*.ts", "../*.ts", "../**/*.ts",
+            "./*.tsx", "./**/*.tsx", "../*.tsx", "../**/*.tsx"],
+    message:
+      "Import without the extension. The `.ts`/`.tsx` spelling is allowed only for the UI package's Node-run token generator, which is why allowImportingTsExtensions is set at the root.",
+  },
+];
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -41,7 +63,11 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    files: ["src/**/*.{ts,tsx}"],
+    // The library ships no user-visible string literal: every word a component
+    // renders arrives as a prop, so Sogverse localises and SOG-UI presents.
+    // `packages/*/demo/**` is deliberately NOT listed — literal English is legal
+    // in the demo by configuration, never by a disable comment at the top of a file.
+    files: ["src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
     plugins: { i18next },
     rules: {
       "i18next/no-literal-string": ["error", {
@@ -74,6 +100,12 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: noTsExtensionImports }],
+    },
+  },
+  {
     // The family-surface privacy line, made mechanical. Family components may
     // never import gedu workspace code: the staff note, the roster and the
     // completeness ladder must stay structurally unreachable from anything a
@@ -96,6 +128,10 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": ["error", {
         patterns: [
+          // Restated rather than inherited: this block replaces the rule set by
+          // the `src/**` block above, so dropping them here would quietly exempt
+          // every family surface from the extension ban.
+          ...noTsExtensionImports,
           {
             // Both halves of the staff workspace: the gedu tree, and the
             // role-agnostic group workspace the gedu and admin shells both
@@ -133,6 +169,50 @@ const eslintConfig = defineConfig([
             ],
             message:
               "Family surfaces must not import gedu document shapes — only the shared attendance vocabulary (attendanceStatus / AttendanceStatus / SUPPORTED_ATTENDANCE_STATUSES) crosses this line, because it mirrors a database CHECK constraint.",
+          },
+          {
+            // member-flair owns two different things behind one barrel: the
+            // staff overlay document (`groupStaffOverlay` and its member
+            // shape, keyed by participant and carrying a note and a join
+            // stamp no family may see) and the creation entry vocabulary
+            // (`gamerCreation` / `gamerCreationList`) that the overlay's own
+            // `creations` field is typed with. The overlay is a staff
+            // document shape on the same terms as the gedu ones above, and it
+            // must stay off this side of the line even though the same file
+            // also defines this zone's one legitimate export.
+            //
+            // The creation vocabulary is the narrow exception, on the same
+            // terms as `attendanceStatus`: `gamerCreation` is the code-side
+            // twin of one CHECK constraint (a creation's keys, caps and
+            // blankness rule), so a second definition of what a creation
+            // entry may contain would be a second source of truth for one
+            // fact rather than a per-document choice. The family product feed
+            // contracts file imports `gamerCreationList` for exactly that
+            // reason and says so at length; `gamerCreation` is the
+            // single-entry schema it is built from, and `GamerCreation` /
+            // `GamerCreationList` are their inferred types — all four travel
+            // together as one vocabulary, the same shape attendance crosses
+            // in.
+            //
+            // **The indirect path is a known, accepted limit**: this covers
+            // the direct import specifier only, and `GroupStaffOverlay` and
+            // its member shape are re-exported from `@/types`, which is
+            // unrestricted and has to stay so — it is where every convenience
+            // alias in the app lives. The gedu entry above has exactly the
+            // same hole and is accepted on the same terms. The rule is a
+            // structural reminder at the obvious reach, not a proof: what
+            // actually keeps a staff document off a family page is that the
+            // family document has no field for it, so a component importing
+            // the type through the barrel still has nothing to put in it.
+            group: ["@/services/member-flair", "@/services/member-flair/*"],
+            allowImportNames: [
+              "gamerCreation",
+              "GamerCreation",
+              "gamerCreationList",
+              "GamerCreationList",
+            ],
+            message:
+              "Family surfaces must not import member-flair's staff overlay document shapes — only the shared creation-entry vocabulary (gamerCreation / GamerCreation / gamerCreationList / GamerCreationList) crosses this line, because it mirrors a database CHECK constraint.",
           },
         ],
       }],
@@ -183,6 +263,44 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // The same guard, one tier down, for the UI package's own source. The package
+  // states the rule in prose — "Nothing outside the foundations tier spells a
+  // hex" — and prose is exactly what the email templates drifted past. A hex
+  // typed into a primitive compiles, renders and cannot disagree with anything,
+  // so it is caught here at the point of typing.
+  //
+  // Scoped to `packages/*/src/**` and not to `packages/*/demo/**`: the demo is a
+  // consumer, and a consumer spelling a colour is a different (and separately
+  // visible) mistake from the library doing it.
+  {
+    files: ["packages/*/src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        {
+          // Same selector as the email rule above, and String.raw for the same
+          // reason: a selector is a JS string literal esquery then parses, so an
+          // escaped `\b` written in a plain string reaches it as a backspace.
+          selector: String.raw`Literal[value=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
+          message:
+            "No colour literals outside the brand source. Import the token from src/tokens/brand.ts, which is the one place a colour is spelled.",
+        },
+        {
+          selector: String.raw`TemplateElement[value.raw=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
+          message:
+            "No colour literals outside the brand source. Import the token from src/tokens/brand.ts, which is the one place a colour is spelled.",
+        },
+      ],
+    },
+  },
+  {
+    // The one exemption, and the reason the rule above is worth having: the
+    // brand source is where every hex in the package is authored, so it is the
+    // single file the ban cannot apply to.
+    files: ["packages/*/src/tokens/brand.ts"],
+    rules: {
+      "no-restricted-syntax": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
@@ -191,6 +309,11 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "services/*/dist/**",
+    // The demo app is a Next app of its own: its build output and the
+    // next-env.d.ts Next writes for it are generated, exactly like the root
+    // entries above.
+    "packages/*/demo/.next/**",
+    "packages/*/demo/next-env.d.ts",
   ]),
 ]);
 
