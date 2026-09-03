@@ -1450,7 +1450,7 @@
     "terms": "Användarvillkor",
     "antiBullying": "Mot mobbning",
     "attributions": "Källor och licenser",
-    "cookieSettings": "Cookie-inställningar"
+    "privacyChoices": "Integritetsval"
   },
   "gamer": {
     "welcomeNamed": "Välkommen, {name}!",
@@ -2780,7 +2780,7 @@
           "För att uppfylla våra lagstadgade skyldigheter, till exempel att spara bokföringsuppgifter för betalningar.",
           "För vårt berättigade intresse av att hålla webbplatsen säker och välfungerande – alltid avvägt mot din integritet.",
           "För vårt berättigade intresse av att veta vilka av våra insatser som når familjer – alltid avvägt mot din integritet, och du kan när som helst be oss sluta.",
-          "Ditt samtycke, för cookies för analys och marknadsföring – som du kan återkalla när som helst via Cookie-inställningar längst ner på varje sida."
+          "Ditt samtycke, för cookies för analys och marknadsföring – som du kan återkalla när som helst via Integritetsval längst ner på varje sida."
         ]
       },
       "providers": {
@@ -2805,7 +2805,7 @@
         "heading": "Cookies, analys och annonsering",
         "paragraphs": [
           "Några cookies är helt enkelt hur webbplatsen fungerar: de håller dig inloggad, kommer ihåg att du angett din föräldra-PIN, sparar ditt språk och din tidszon och lagrar det cookieval du gör. De kräver inte ditt samtycke – utan dem finns det ingen webbplats att samtycka till.",
-          "Allt annat väntar på dig. Första gången du besöker oss frågar vi, och inget utöver de nödvändiga cookiesarna startar förrän du svarar. Du kan ändra dig när som helst via Cookie-inställningar längst ner på varje sida: att stänga av något gäller direkt, och ändrar inte det vi redan gjort medan det var på.",
+          "Allt annat väntar på dig. Första gången du besöker oss frågar vi, och inget utöver de nödvändiga cookiesarna startar förrän du svarar. Du kan ändra dig när som helst via Integritetsval längst ner på varje sida: att stänga av något gäller direkt, och ändrar inte det vi redan gjort medan det var på.",
           "Det finns två saker att säga ja eller nej till:"
         ],
         "bullets": [
@@ -3866,9 +3866,8 @@
     }
   },
   "consent": {
-    "heading": "Ett ord om cookies",
-    "body": "Analys visar oss hur många som besöker sidan och hur snabbt sidorna laddas. Den kan inte se vem du är, och den går aldrig till annonsörer. Marknadsföring berättar för Meta och TikTok att du har besökt oss och om du skapade ett konto, så att de kan visa dig våra annonser hos sig. Inget utöver de nödvändiga cookiesarna startar förrän du väljer, och du kan ändra dig när som helst via länken längst ner på sidan.",
-    "privacyLink": "Så använder vi cookies",
+    "heading": "Din integritet, ditt val",
+    "body": "Analys visar oss hur många som besöker sidan och hur snabbt sidorna laddas. Den kan inte se vem du är, och den går aldrig till annonsörer. Marknadsföring berättar för de annonsplattformar vi annonserar på att du har besökt oss och om du skapade ett konto, så att de kan visa dig våra annonser där. Inget utöver de nödvändiga cookiesarna startar förrän du väljer, och du kan ändra dig när som helst längst ner på sidan – detaljerna finns i vår <link>integritetspolicy</link>.",
     "rejectAll": "Neka alla",
     "analyticsOnly": "Endast analys",
     "analyticsAndMarketing": "Analys och marknadsföring"

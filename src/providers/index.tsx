@@ -93,7 +93,7 @@ export function Providers({
               <NowProvider initialNow={initialNow}>
                 <UtmProvider initialUtm={initialUtm}>
                   {/* Innermost, and inside `NextIntlClientProvider` on
-                      purpose: the banner and the footer's Cookie settings link
+                      purpose: the banner and the footer's Privacy choices link
                       translate their own words, and the footer sits inside
                       `children`. */}
                   <ConsentProvider initial={initialConsent}>

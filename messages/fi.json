@@ -1450,7 +1450,7 @@
     "terms": "Käyttöehdot",
     "antiBullying": "Kiusaamisen ehkäisy",
     "attributions": "Lähteet ja lisenssit",
-    "cookieSettings": "Evästeasetukset"
+    "privacyChoices": "Yksityisyysvalinnat"
   },
   "gamer": {
     "welcomeNamed": "Tervetuloa, {name}!",
@@ -2780,7 +2780,7 @@
           "Täyttääksemme lakisääteiset velvollisuutemme, kuten maksujen kirjanpitotietojen säilyttämisen.",
           "Oikeutetun etumme perusteella, kun pidämme sivuston turvallisena ja toimivana – aina yksityisyytesi kanssa tasapainotettuna.",
           "Oikeutetun etumme perusteella, kun selvitämme, mikä viestintämme tavoittaa perheitä – aina yksityisyytesi kanssa tasapainotettuna, ja voit milloin tahansa pyytää meitä lopettamaan.",
-          "Suostumuksesi analytiikka- ja markkinointievästeisiin – voit peruuttaa sen milloin tahansa jokaisen sivun alalaidan Evästeasetukset-linkistä."
+          "Suostumuksesi analytiikka- ja markkinointievästeisiin – voit peruuttaa sen milloin tahansa jokaisen sivun alalaidan Yksityisyysvalinnat-linkistä."
         ]
       },
       "providers": {
@@ -2805,7 +2805,7 @@
         "heading": "Evästeet, analytiikka ja mainonta",
         "paragraphs": [
           "Muutama eväste on yksinkertaisesti se, miten sivusto toimii: ne pitävät sinut kirjautuneena, muistavat että syötit vanhemman PIN-koodin, säilyttävät kielesi ja aikavyöhykkeesi ja tallentavat tekemäsi evästevalinnan. Nämä eivät vaadi suostumustasi – ilman niitä ei ole sivustoa, johon suostua.",
-          "Kaikki muu odottaa sinua. Kysymme asiaa ensimmäisellä käynnilläsi, eikä välttämättömien evästeiden lisäksi käynnisty mitään ennen kuin vastaat. Voit muuttaa mieltäsi milloin tahansa jokaisen sivun alalaidan Evästeasetukset-linkistä: valinnan poistaminen astuu voimaan heti, eikä se muuta sitä, mitä teimme sen ollessa käytössä.",
+          "Kaikki muu odottaa sinua. Kysymme asiaa ensimmäisellä käynnilläsi, eikä välttämättömien evästeiden lisäksi käynnisty mitään ennen kuin vastaat. Voit muuttaa mieltäsi milloin tahansa jokaisen sivun alalaidan Yksityisyysvalinnat-linkistä: valinnan poistaminen astuu voimaan heti, eikä se muuta sitä, mitä teimme sen ollessa käytössä.",
           "Kahteen asiaan voit vastata kyllä tai ei:"
         ],
         "bullets": [
@@ -3866,9 +3866,8 @@
     }
   },
   "consent": {
-    "heading": "Pari sanaa evästeistä",
-    "body": "Analytiikka kertoo meille, kuinka moni sivustolla käy ja kuinka nopeasti sivut latautuvat. Se ei näe, kuka olet, eikä se päädy koskaan mainostajille. Markkinointi kertoo Metalle ja TikTokille käynnistäsi ja siitä, loitko tilin, jotta ne voivat näyttää sinulle mainoksiamme omissa palveluissaan. Välttämättömien evästeiden lisäksi mikään ei käynnisty ennen kuin valitset, ja voit muuttaa mieltäsi milloin tahansa sivun alalaidan linkistä.",
-    "privacyLink": "Näin käytämme evästeitä",
+    "heading": "Yksityisyytesi, sinun valintasi",
+    "body": "Analytiikka kertoo meille, kuinka moni sivustolla käy ja kuinka nopeasti sivut latautuvat. Se ei näe, kuka olet, eikä se päädy koskaan mainostajille. Markkinointi kertoo mainosalustoille, joilla mainostamme, käynnistäsi ja siitä, loitko tilin, jotta ne voivat näyttää sinulle mainoksiamme. Välttämättömien evästeiden lisäksi mikään ei käynnisty ennen kuin valitset, ja voit muuttaa mieltäsi milloin tahansa sivun alalaidasta – tarkemmat tiedot löydät <link>tietosuojaselosteestamme</link>.",
     "rejectAll": "Hylkää kaikki",
     "analyticsOnly": "Vain analytiikka",
     "analyticsAndMarketing": "Analytiikka ja markkinointi"

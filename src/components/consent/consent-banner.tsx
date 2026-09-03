@@ -30,7 +30,7 @@ const BANNER_FREE_PREFIXES = [ROUTES.gamer.dashboard];
  * The consent strip, wired to the stored answer.
  *
  * Shown while the question is open — no cookie of the current version — and
- * again whenever the footer's Cookie settings link reopens it. It is `fixed`,
+ * again whenever the footer's Privacy choices link reopens it. It is `fixed`,
  * so it appears over the page rather than pushing it: an element the reader
  * could be pointing at when the banner arrives is in the same place
  * afterwards.

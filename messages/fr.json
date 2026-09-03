@@ -1450,7 +1450,7 @@
     "terms": "Conditions générales",
     "antiBullying": "Lutte contre le harcèlement",
     "attributions": "Crédits et licences",
-    "cookieSettings": "Paramètres des cookies"
+    "privacyChoices": "Choix de confidentialité"
   },
   "gamer": {
     "welcomeNamed": "Bienvenue, {name} !",
@@ -2780,7 +2780,7 @@
           "Pour respecter nos obligations légales, comme la conservation des pièces comptables relatives aux paiements.",
           "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en balance avec votre vie privée.",
           "Pour notre intérêt légitime à savoir lesquelles de nos actions touchent les familles — toujours mis en balance avec votre vie privée, et vous pouvez nous demander d’arrêter à tout moment.",
-          "Votre consentement, pour les cookies de statistiques et de marketing — vous pouvez le retirer à tout moment depuis Paramètres des cookies, en bas de chaque page."
+          "Votre consentement, pour les cookies de statistiques et de marketing — vous pouvez le retirer à tout moment depuis Choix de confidentialité, en bas de chaque page."
         ]
       },
       "providers": {
@@ -2805,7 +2805,7 @@
         "heading": "Cookies, statistiques et publicité",
         "paragraphs": [
           "Quelques cookies sont simplement la façon dont le site fonctionne : ils maintiennent votre session ouverte, retiennent que vous avez saisi votre code parent, conservent votre langue et votre fuseau horaire, et enregistrent le choix que vous faites en matière de cookies. Ceux-là ne nécessitent pas votre consentement — sans eux, il n’y a pas de site auquel consentir.",
-          "Tout le reste vous attend. Lors de votre première visite, nous vous posons la question, et rien d’autre que ces cookies nécessaires ne démarre tant que vous n’avez pas répondu. Vous pouvez changer d’avis quand vous le souhaitez depuis Paramètres des cookies, en bas de chaque page : désactiver quelque chose prend effet immédiatement, et ne change rien à ce que nous avons fait pendant que c’était actif.",
+          "Tout le reste vous attend. Lors de votre première visite, nous vous posons la question, et rien d’autre que ces cookies nécessaires ne démarre tant que vous n’avez pas répondu. Vous pouvez changer d’avis quand vous le souhaitez depuis Choix de confidentialité, en bas de chaque page : désactiver quelque chose prend effet immédiatement, et ne change rien à ce que nous avons fait pendant que c’était actif.",
           "Deux choses appellent un oui ou un non :"
         ],
         "bullets": [
@@ -3866,9 +3866,8 @@
     }
   },
   "consent": {
-    "heading": "Un mot sur les cookies",
-    "body": "Les statistiques nous indiquent combien de personnes nous rendent visite et à quelle vitesse les pages s’affichent. Elles ne peuvent pas savoir qui vous êtes et ne sont jamais transmises à des annonceurs. Le marketing indique à Meta et TikTok que vous avez visité notre site et si vous y avez créé un compte, afin qu’ils puissent vous y montrer nos publicités. Rien d’autre que les cookies nécessaires ne démarre tant que vous n’avez pas choisi, et vous pouvez changer d’avis à tout moment depuis le lien en bas de page.",
-    "privacyLink": "Comment nous utilisons les cookies",
+    "heading": "Votre vie privée, votre choix",
+    "body": "Les statistiques nous indiquent combien de personnes nous rendent visite et à quelle vitesse les pages s’affichent. Elles ne peuvent pas savoir qui vous êtes et ne sont jamais transmises à des annonceurs. Le marketing indique aux régies publicitaires où nous diffusons nos annonces que vous avez visité notre site et si vous y avez créé un compte, afin qu’elles puissent vous y montrer nos publicités. Rien d’autre que les cookies nécessaires ne démarre tant que vous n’avez pas choisi, et vous pouvez changer d’avis à tout moment en bas de page — le détail se trouve dans notre <link>politique de confidentialité</link>.",
     "rejectAll": "Tout refuser",
     "analyticsOnly": "Statistiques uniquement",
     "analyticsAndMarketing": "Statistiques et marketing"

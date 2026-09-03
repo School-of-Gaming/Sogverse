@@ -33,7 +33,7 @@ interface ConsentContextValue {
   consent: ConsentState | null;
   /** Whether the banner is being shown again on request. */
   isOpen: boolean;
-  /** Re-ask. What the footer's Cookie settings link calls. */
+  /** Re-ask. What the footer's Privacy choices link calls. */
   open: () => void;
   /** Record an answer. Writes the cookie; see the withdrawal note below. */
   choose: (choice: ConsentChoice) => void;
@@ -105,7 +105,7 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
 /**
  * The consent context, or `null` where no provider sits above.
  *
- * The nullable form exists for the footer's Cookie settings link, which renders
+ * The nullable form exists for the footer's Privacy choices link, which renders
  * inside every route group's footer — including any render that has not been
  * wrapped yet. A link that cannot open the banner renders as nothing rather
  * than crashing the page it sits at the bottom of.

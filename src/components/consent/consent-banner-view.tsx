@@ -38,6 +38,19 @@ interface ConsentBannerViewProps {
  * be exactly as easy and exactly as visible as accepting — that is the legal
  * requirement, not a matter of taste — so no button here is styled as the one
  * we would like pressed.
+ *
+ * **The body names no advertising platform, and that is a decision, not an
+ * omission.** Meta and TikTok are identified in the privacy policy, which is
+ * where recipients belong and which carries the last-updated date that makes a
+ * change to the list visible. Adding a platform is therefore a policy edit plus
+ * a `CONSENT_VERSION` bump — a new recipient is a new consent, and an answer
+ * given to the old question is not an answer to the new one.
+ *
+ * **One block, full width, buttons in a row underneath.** An earlier shape put
+ * the buttons in a column beside the text; on a wide viewport that column was
+ * mostly empty and the strip was taller than its own content. The copy reads
+ * across the strip and the answers sit under it, right-aligned, which is also
+ * the shortest the strip can be.
  */
 export function ConsentBannerView({
   onChoose,
@@ -71,28 +84,37 @@ export function ConsentBannerView({
           : "border border-border bg-card"
       }
     >
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:gap-8">
-        <div className="space-y-1 lg:flex-1">
+      <div className="mx-auto max-w-5xl space-y-3 px-4 py-3">
+        <div className="space-y-1">
           <h2
             id={headingId}
             className="text-sm font-semibold text-foreground"
           >
             {t("heading")}
           </h2>
-          <p className="text-sm text-muted-foreground">{t("body")}</p>
-          <Link
-            href={ROUTES.privacy}
-            prefetch={false}
-            className="inline-block text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
-          >
-            {t("privacyLink")}
-          </Link>
+          {/* The policy link lives inside the sentence rather than on a row of
+              its own: a link row is a second thing to read before answering,
+              and the words that should carry the link are different words in
+              every locale — so the translator places them. */}
+          <p className="text-sm text-muted-foreground">
+            {t.rich("body", {
+              link: (chunks) => (
+                <Link
+                  href={ROUTES.privacy}
+                  prefetch={false}
+                  className="underline underline-offset-4 transition-colors hover:text-foreground"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </p>
         </div>
         {/* `[negative, affirmative]` in the DOM, reversed in a stack: the
             fullest answer is last, so it is rightmost in the row and topmost on
             a phone. Identical variant and size across all three is what keeps
             "reversed" from meaning "preferred". */}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end lg:shrink-0">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             type="button"
             variant="outline"

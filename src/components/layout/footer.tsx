@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import sogLogoFullMono from "@/assets/brand/sog-logo-full-mono.svg";
 import sogLogoSimpleMono from "@/assets/brand/sog-logo-simple-mono.svg";
 import { Copyright } from "./copyright";
-import { CookieSettingsLink } from "@/components/consent";
+import { PrivacyChoicesLink } from "@/components/consent";
 import {
   REGISTERED_TRADEMARK,
   ROUTES,
@@ -121,12 +121,13 @@ export function Footer() {
               {t('attributions')}
             </Link>
             {/* The fifth item, and the only one that is not a link: it reopens
-                the consent strip on this page instead of navigating. The
-                privacy policy and the banner's own copy both promise a way
-                back "from the link in our footer", so this is the mechanism
-                those sentences name. It renders as nothing until a
-                ConsentProvider sits above the footer. */}
-            <CookieSettingsLink />
+                the consent strip on this page instead of navigating. It says
+                the same words the strip's own heading does — the privacy
+                policy and the banner's copy both promise a way back "from the
+                footer", so this is the mechanism those sentences name. It
+                renders as nothing until a ConsentProvider sits above the
+                footer. */}
+            <PrivacyChoicesLink />
           </nav>
           <div className="w-full border-t border-border pt-4">
             <Copyright />

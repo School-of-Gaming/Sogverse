@@ -22,6 +22,12 @@ export const CONSENT_COOKIE_NAME = "sog_consent";
  * asks again. That is the point of storing it: the day the purposes change, an
  * answer given to the old question is not an answer to the new one, and
  * silently re-using it would be consent we never collected.
+ *
+ * **The advertising platforms are named in the privacy policy, not in the
+ * strip** — the policy is where recipients are identified and it is the thing
+ * carrying a last-updated date. So adding one is a policy edit *plus* a bump
+ * here: a new recipient is a new consent, and everyone who answered the old
+ * question is asked again.
  */
 export const CONSENT_VERSION = 1;
 

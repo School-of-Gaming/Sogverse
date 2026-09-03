@@ -150,6 +150,35 @@ describe("ConsentBanner", () => {
     ]);
   });
 
+  // The policy link is inside the sentence, not on a row of its own — so it is
+  // the *only* link in the strip, and the words carrying it are chosen by each
+  // locale rather than by the component.
+  it("carries the policy link inside the body sentence and nowhere else", () => {
+    render(<Harness initial={null} />);
+
+    const links = within(strip()).getAllByRole("link");
+    expect(links).toHaveLength(1);
+    expect(links[0].getAttribute("href")).toBe("/privacy");
+    // Rendered in place: the linked words sit inside the body paragraph, with
+    // the rest of the sentence around them.
+    const body = links[0].closest("p");
+    expect(body).not.toBeNull();
+    const sentence = body?.textContent ?? "";
+    expect(sentence).toContain("Nothing beyond the necessary cookies");
+    expect(sentence.endsWith(`${links[0].textContent}.`)).toBe(true);
+  });
+
+  // Naming Meta and TikTok here would make the strip a list of recipients that
+  // nothing dates or versions. The policy names them; adding one is a policy
+  // edit plus a CONSENT_VERSION bump.
+  it("names no advertising platform", () => {
+    render(<Harness initial={null} />);
+
+    const text = strip().textContent;
+    expect(text).not.toContain("Meta");
+    expect(text).not.toContain("TikTok");
+  });
+
   it("stores the chosen purposes and closes, without reloading", () => {
     render(<Harness initial={null} />);
 
