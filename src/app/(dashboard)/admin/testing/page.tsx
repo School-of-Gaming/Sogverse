@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarFeedCard } from "@/components/admin/testing/calendar-feed-card";
+import { CalendarFeedCard } from "@/components/admin/testing/calendar-feed/calendar-feed-card";
 import { useAuth } from "@/providers";
 import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";

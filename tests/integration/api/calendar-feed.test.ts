@@ -27,7 +27,20 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 import { GET } from "@/app/api/calendar/feed/[token]/route";
 import { POST } from "@/app/api/admin/calendar-feed/route";
-import { createCalendarFeedToken, verifyCalendarFeedToken } from "@/lib/calendar-feed/token";
+import {
+  GET as SANDBOX_GET,
+  POST as SANDBOX_POST,
+  PUT as SANDBOX_PUT,
+} from "@/app/api/admin/calendar-feed/sandbox/route";
+import {
+  createCalendarFeedToken,
+  createSandboxFeedToken,
+  verifyCalendarFeedToken,
+} from "@/lib/calendar-feed/token";
+import {
+  defaultSandboxDefinition,
+  type SandboxDefinition,
+} from "@/lib/calendar-feed/sandbox";
 
 // --- Fixtures ---
 
@@ -392,7 +405,10 @@ describe("POST /api/admin/calendar-feed", () => {
     expect(response.status).toBe(200);
     expect(data.customerId).toBe(CUSTOMER_ID);
     expect(data.customerName).toBe("Riikka Virtanen");
-    expect(await verifyCalendarFeedToken(data.token)).toBe(CUSTOMER_ID);
+    expect(await verifyCalendarFeedToken(data.token)).toEqual({
+      kind: "customer",
+      customerId: CUSTOMER_ID,
+    });
   });
 
   it("lists the seats and the gamers the feed covers", async () => {
@@ -435,5 +451,286 @@ describe("POST /api/admin/calendar-feed", () => {
 
     expect(response.status).toBe(404);
     expect(data.error).toContain("nobody@example.test");
+  });
+});
+
+// --- The sandbox family ---
+//
+// The second source behind the same feed route: a fake household stored as one
+// row, so an admin can edit it and watch a subscribed calendar catch up.
+
+const SANDBOX_ID = "66666666-6666-6666-6666-666666666666";
+const ADMIN_ID = "77777777-7777-7777-7777-777777777777";
+
+/** A one-gamer, one-club household with sessions ahead of any poll. */
+function sandboxDefinition(): SandboxDefinition {
+  return {
+    parent: { firstName: "Sanna", locale: "en" },
+    gamers: [{ id: PARTICIPANT_ID, firstName: "Aino" }],
+    products: [
+      {
+        id: "88888888-8888-8888-8888-888888888888",
+        name: "Sandbox club",
+        productType: "consumer_club",
+        timezone: "Europe/Helsinki",
+        startDate: null,
+        endDate: null,
+        isRemote: true,
+        locationName: null,
+        spokenLanguage: "en",
+        slots: [{ weekday: 0, startTime: "16:30", durationMinutes: 90 }],
+      },
+    ],
+    participations: [
+      {
+        id: PARTICIPATION_ID,
+        gamerId: PARTICIPANT_ID,
+        productId: "88888888-8888-8888-8888-888888888888",
+        status: "active",
+        placed: true,
+        cancelsAt: null,
+      },
+    ],
+  };
+}
+
+describe("GET /api/calendar/feed/[token] — sandbox tokens", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("serves the sandbox family's sessions for a valid sandbox token", async () => {
+    mockAdminFrom.mockImplementation(
+      tables({
+        calendar_feed_sandboxes: {
+          data: { definition: sandboxDefinition() },
+          error: null,
+        },
+      }),
+    );
+    const token = await createSandboxFeedToken(SANDBOX_ID);
+    const response = await feedRequest(token);
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe(
+      "text/calendar; charset=utf-8",
+    );
+    expect(body).toContain("BEGIN:VEVENT");
+    expect(body).toContain("SUMMARY:Sandbox club – Aino");
+  });
+
+  /**
+   * The sandbox path must never reach the customer reads, or a feed with no
+   * family behind it could still answer about one.
+   */
+  it("reads only the sandbox table", async () => {
+    mockAdminFrom.mockImplementation(
+      tables({
+        calendar_feed_sandboxes: {
+          data: { definition: sandboxDefinition() },
+          error: null,
+        },
+      }),
+    );
+    await feedRequest(await createSandboxFeedToken(SANDBOX_ID));
+    expect(mockAdminFrom).toHaveBeenCalledWith("calendar_feed_sandboxes");
+    expect(mockAdminFrom).not.toHaveBeenCalledWith("profiles");
+    expect(mockAdminFrom).not.toHaveBeenCalledWith("participations");
+  });
+
+  it("returns 404 for a valid signature over an unknown sandbox id", async () => {
+    mockAdminFrom.mockImplementation(
+      tables({ calendar_feed_sandboxes: { data: null, error: null } }),
+    );
+    const response = await feedRequest(await createSandboxFeedToken(SANDBOX_ID));
+    expect(response.status).toBe(404);
+  });
+
+  /**
+   * A row written under an older shape of the schema is a stale scratchpad, not
+   * a server error — and the client on the other end of a feed can only report
+   * that the subscription broke, so it gets the same 404 a bad token does.
+   */
+  it("returns 404 for a stored document that no longer parses", async () => {
+    mockAdminFrom.mockImplementation(
+      tables({
+        calendar_feed_sandboxes: {
+          data: { definition: { parent: { firstName: "" } } },
+          error: null,
+        },
+      }),
+    );
+    const response = await feedRequest(await createSandboxFeedToken(SANDBOX_ID));
+    expect(response.status).toBe(404);
+  });
+});
+
+// --- Sandbox API ---
+
+/**
+ * The sandbox table as the route uses it: a read by owner, and an upsert that
+ * echoes the written document back the way PostgREST's `select()` would.
+ */
+function mockSandboxCaller(initial: SandboxDefinition | null) {
+  let stored = initial;
+  const writes: unknown[] = [];
+
+  const row = () =>
+    stored === null
+      ? null
+      : { id: SANDBOX_ID, definition: stored, updated_at: "2026-03-02T09:00:00Z" };
+
+  const from = () => ({
+    select: () => ({
+      eq: () => ({ maybeSingle: () => Promise.resolve({ data: row(), error: null }) }),
+    }),
+    upsert: (values: { owner_id: string; definition: SandboxDefinition }) => {
+      writes.push(values);
+      stored = values.definition;
+      return {
+        select: () => ({
+          single: () => Promise.resolve({ data: row(), error: null }),
+        }),
+      };
+    },
+  });
+
+  mockRequireRole.mockResolvedValue({
+    user: { id: ADMIN_ID },
+    profile: { role: "admin", locale: "en" },
+    supabase: { from },
+  });
+
+  return { writes };
+}
+
+function sandboxRequest(method: "PUT" | "POST", body: unknown): Request {
+  return new Request(
+    "https://test.sogverse.local/api/admin/calendar-feed/sandbox",
+    {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+}
+
+const SANDBOX_GET_REQUEST = () =>
+  new Request("https://test.sogverse.local/api/admin/calendar-feed/sandbox");
+
+describe("/api/admin/calendar-feed/sandbox", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns 403 for a non-admin", async () => {
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+    );
+    expect((await SANDBOX_GET(SANDBOX_GET_REQUEST())).status).toBe(403);
+    expect(
+      (await SANDBOX_PUT(sandboxRequest("PUT", { definition: sandboxDefinition() })))
+        .status,
+    ).toBe(403);
+    expect(
+      (await SANDBOX_POST(sandboxRequest("POST", { action: "reset" }))).status,
+    ).toBe(403);
+  });
+
+  it("returns 401 when not authenticated", async () => {
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    );
+    expect((await SANDBOX_GET(SANDBOX_GET_REQUEST())).status).toBe(401);
+  });
+
+  /**
+   * There is no empty state to design: an admin opening the card has a sandbox,
+   * always, and the seeded family is the same one Reset restores.
+   */
+  it("creates the seeded family on a first read", async () => {
+    const { writes } = mockSandboxCaller(null);
+    const response = await SANDBOX_GET(SANDBOX_GET_REQUEST());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(writes).toHaveLength(1);
+    expect(data.definition.parent.firstName).toBe("Sanna");
+    expect(data.definition.gamers.length).toBeGreaterThan(0);
+  });
+
+  it("returns the stored family without writing when one exists", async () => {
+    const { writes } = mockSandboxCaller(sandboxDefinition());
+    const data = await (await SANDBOX_GET(SANDBOX_GET_REQUEST())).json();
+
+    expect(writes).toHaveLength(0);
+    expect(data.definition.products[0].name).toBe("Sandbox club");
+  });
+
+  it("hands back a token the feed verifier reads as a sandbox token", async () => {
+    mockSandboxCaller(sandboxDefinition());
+    const data = await (await SANDBOX_GET(SANDBOX_GET_REQUEST())).json();
+    expect(await verifyCalendarFeedToken(data.token)).toEqual({
+      kind: "sandbox",
+      sandboxId: SANDBOX_ID,
+    });
+  });
+
+  it("saves a whole document, scoped to the caller", async () => {
+    const { writes } = mockSandboxCaller(sandboxDefinition());
+    const edited = sandboxDefinition();
+    edited.gamers[0].firstName = "Eino";
+
+    const response = await SANDBOX_PUT(
+      sandboxRequest("PUT", { definition: edited }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.definition.gamers[0].firstName).toBe("Eino");
+    // The owner is taken from the session, never from the body — a document
+    // that could name its own owner would be a write aimed at somebody else.
+    expect(writes[0]).toMatchObject({ owner_id: ADMIN_ID });
+  });
+
+  it("refuses a malformed document", async () => {
+    mockSandboxCaller(sandboxDefinition());
+    const response = await SANDBOX_PUT(
+      sandboxRequest("PUT", { definition: { parent: { firstName: "Sanna" } } }),
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it("refuses a document over its own limits", async () => {
+    mockSandboxCaller(sandboxDefinition());
+    const tooMany = sandboxDefinition();
+    tooMany.gamers = Array.from({ length: 20 }, (_, index) => ({
+      id: `00000000-0000-4000-8000-0000000000${String(index).padStart(2, "0")}`,
+      firstName: `Gamer ${index}`,
+    }));
+    const response = await SANDBOX_PUT(
+      sandboxRequest("PUT", { definition: tooMany }),
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it("restores the seeded family on reset", async () => {
+    mockSandboxCaller(sandboxDefinition());
+    const data = await (
+      await SANDBOX_POST(sandboxRequest("POST", { action: "reset" }))
+    ).json();
+
+    expect(data.definition.parent.firstName).toBe(
+      defaultSandboxDefinition().parent.firstName,
+    );
+  });
+
+  it("refuses an unknown action", async () => {
+    mockSandboxCaller(sandboxDefinition());
+    const response = await SANDBOX_POST(
+      sandboxRequest("POST", { action: "delete" }),
+    );
+    expect(response.status).toBe(400);
   });
 });

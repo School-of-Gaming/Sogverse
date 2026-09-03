@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+import { sandboxDefinitionSchema } from "@/lib/calendar-feed/sandbox";
 
 /**
  * Wire shapes for the calendar-feed exploration — both ends of both calls.
@@ -88,4 +89,49 @@ export const calendarFeedPreviewResponse = z.object({
 
 export type CalendarFeedPreviewResponse = z.infer<
   typeof calendarFeedPreviewResponse
+>;
+
+/**
+ * The caller's own sandbox family, and the feed URL it stands behind.
+ *
+ * `definition` is the stored document parsed through the same schema the feed
+ * route parses it with — the column guarantees only that it holds an object, so
+ * the schema is the shape, and both ends of this call agree on it because both
+ * import it.
+ */
+export const calendarFeedSandboxResponse = z.object({
+  definition: sandboxDefinitionSchema,
+  /** The signed token that goes in this sandbox's feed URL path. */
+  token: z.string(),
+  /**
+   * When the document was last saved. What the card shows to explain why a
+   * subscribed calendar has not caught up yet: the vendor polls on its own
+   * schedule, so a save and its appearance are two different moments.
+   */
+  updatedAt: z.string(),
+});
+
+export type CalendarFeedSandboxResponse = z.infer<
+  typeof calendarFeedSandboxResponse
+>;
+
+/** A whole document, replaced. The editor holds a draft and saves all of it. */
+export const calendarFeedSandboxSaveBody = z.object({
+  definition: sandboxDefinitionSchema,
+});
+
+export type CalendarFeedSandboxSaveBody = z.infer<
+  typeof calendarFeedSandboxSaveBody
+>;
+
+/**
+ * Restoring the seeded family. A named action rather than a bare POST, so the
+ * route reads as what it does and a second action later needs no new endpoint.
+ */
+export const calendarFeedSandboxActionBody = z.object({
+  action: z.literal("reset"),
+});
+
+export type CalendarFeedSandboxActionBody = z.infer<
+  typeof calendarFeedSandboxActionBody
 >;

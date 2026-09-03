@@ -1,6 +1,10 @@
 import type { QueryData, SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { DEFAULT_LOCALE, resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { localizedLocationName } from "@/lib/locations/localized-name";
+import type { FeedSeat } from "./events";
+import { sandboxDefinitionSchema, type SandboxDefinition } from "./sandbox";
 
 /**
  * The reads behind the subscribed calendar feed.
@@ -148,4 +152,77 @@ export async function loadCancelingSubscriptionEnds(
     }
   }
   return ends;
+}
+
+/**
+ * The sandbox family a token names, or `null` when there is no such row or the
+ * stored document no longer parses.
+ *
+ * A read by primary key on a table nothing else touches — the token is the
+ * authorization, exactly as it is on the customer path, and the service-role
+ * client is here for the same reason: the caller is a calendar app with no
+ * session at all.
+ *
+ * An unparseable document answers `null` rather than throwing. The column
+ * guarantees only that it holds an object, and a sandbox row written under an
+ * older shape of the schema is a stale scratchpad, not a server error — the
+ * route's 404 tells the client the same thing it tells a bad token, and the
+ * admin's card fixes it by saving again.
+ */
+export async function loadFeedSandbox(
+  supabase: Client,
+  sandboxId: string,
+): Promise<SandboxDefinition | null> {
+  const { data, error } = await supabase
+    .from("calendar_feed_sandboxes")
+    .select("definition")
+    .eq("id", sandboxId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (data === null) return null;
+
+  const parsed = sandboxDefinitionSchema.safeParse(data.definition);
+  return parsed.success ? parsed.data : null;
+}
+
+/**
+ * The database's answer, as the seats the expansion consumes.
+ *
+ * This is where every locale-dependent choice a row carries gets made — which
+ * of a product's translations names it, and which of a location's names a
+ * reader sees — so that nothing downstream has to know a database row exists.
+ * The sandbox's own mapper is the sibling of this one, and the two meeting at
+ * `FeedSeat` is what keeps one pipeline behind two sources.
+ */
+export function toFeedSeats(
+  rows: readonly FeedParticipationRow[],
+  cancelEnds: ReadonlyMap<string, Date>,
+  locale: SupportedLocale,
+): FeedSeat[] {
+  return rows.map((row) => {
+    const { product } = row;
+    const site = product.location;
+    return {
+      participationId: row.id,
+      participantId: row.participant_id,
+      gamerName: row.participant.first_name,
+      isPlaced: row.group_id !== null,
+      productType: product.product_type,
+      productName:
+        resolveTranslation(product.product_translations, locale)?.name ?? "",
+      timezone: product.timezone,
+      startDate: product.start_date,
+      endDate: product.end_date,
+      isRemote: product.is_remote,
+      locationName: site === null ? null : localizedLocationName(site, locale),
+      spokenLanguageCode: product.spoken_language_code,
+      slots: product.schedule_slots.map((slot) => ({
+        weekday: slot.weekday,
+        startTime: slot.start_time,
+        durationMinutes: slot.duration_minutes,
+      })),
+      cancelsAt: cancelEnds.get(row.id) ?? null,
+    };
+  });
 }

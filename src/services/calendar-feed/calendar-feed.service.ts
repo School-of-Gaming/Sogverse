@@ -1,11 +1,16 @@
 import type { AppSupabaseClient } from "@/types";
 import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
+import type { SandboxDefinition } from "@/lib/calendar-feed/sandbox";
 import {
   calendarFeedLookupResponse,
   calendarFeedPreviewResponse,
+  calendarFeedSandboxResponse,
   type CalendarFeedLookupResponse,
   type CalendarFeedPreviewResponse,
+  type CalendarFeedSandboxResponse,
 } from "./calendar-feed.contracts";
+
+const SANDBOX_URL = "/api/admin/calendar-feed/sandbox";
 
 /**
  * The calendar-feed exploration's client side.
@@ -56,5 +61,52 @@ export class CalendarFeedService {
       );
     }
     return parseJsonResponse(response, calendarFeedPreviewResponse);
+  }
+
+  /**
+   * The caller's own sandbox family, created from the seeded default if this is
+   * their first visit — so the card never has an empty state to render.
+   */
+  async loadSandbox(): Promise<CalendarFeedSandboxResponse> {
+    const response = await fetch(SANDBOX_URL);
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Could not load the sandbox family"),
+      );
+    }
+    return parseJsonResponse(response, calendarFeedSandboxResponse);
+  }
+
+  /** Replace the whole document. The editor holds a draft and saves all of it. */
+  async saveSandbox(
+    definition: SandboxDefinition,
+  ): Promise<CalendarFeedSandboxResponse> {
+    return this.writeSandbox(
+      { method: "PUT", body: { definition } },
+      "Could not save the sandbox family",
+    );
+  }
+
+  /** Restore the seeded family, discarding whatever was stored. */
+  async resetSandbox(): Promise<CalendarFeedSandboxResponse> {
+    return this.writeSandbox(
+      { method: "POST", body: { action: "reset" } },
+      "Could not reset the sandbox family",
+    );
+  }
+
+  private async writeSandbox(
+    request: { method: "PUT" | "POST"; body: unknown },
+    fallbackMessage: string,
+  ): Promise<CalendarFeedSandboxResponse> {
+    const response = await fetch(SANDBOX_URL, {
+      method: request.method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request.body),
+    });
+    if (!response.ok) {
+      throw new Error(await readErrorMessage(response, fallbackMessage));
+    }
+    return parseJsonResponse(response, calendarFeedSandboxResponse);
   }
 }

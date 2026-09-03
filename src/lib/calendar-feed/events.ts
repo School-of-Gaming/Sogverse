@@ -1,7 +1,5 @@
 import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { localizedLocationName } from "@/lib/locations/localized-name";
 import {
   MAX_PAST_OCCURRENCES_PER_SLOT,
   earlierBoundary,
@@ -19,11 +17,17 @@ import {
   type CalendarFeedOptions,
 } from "./options";
 import type { CalendarFeedTranslator } from "./translator";
-import type { FeedParticipationRow } from "./query";
 import type { ProductType } from "@/types";
 
 /**
  * Turning a family's seats into calendar events.
+ *
+ * **This module knows nothing about where a seat came from.** Two sources feed
+ * it — a real customer's rows, read from the database, and an admin's sandbox
+ * family, read from a JSON document — and each maps into `FeedSeat` before it
+ * gets here. That is what makes the two paths one pipeline: the expansion, the
+ * titles, the descriptions and the `.ics` writer are literally the same code,
+ * so a sandbox cannot demonstrate behaviour a real feed does not have.
  *
  * **The expansion is holiday-blind, deliberately and as an inherited limit.**
  * It uses the shared walker in `src/lib/session-occurrence.ts`, which is the
@@ -36,6 +40,46 @@ import type { ProductType } from "@/types";
  * Apple, Google and Outlook do with an alarm, a rule, a zone) rather than the
  * occurrence question. Nothing here emits `EXDATE`.
  */
+
+/**
+ * One seat the feed covers, in the neutral shape both sources map into.
+ *
+ * Everything locale-dependent is already resolved: the product's name and the
+ * location's name are the strings a reader will see, chosen by whoever did the
+ * mapping. A source that has no such choice to make (the sandbox stores one
+ * name per product) simply passes what it has.
+ */
+export interface FeedSeat {
+  /** The seat's own id — what a UID and a family page URL are keyed on. */
+  participationId: string;
+  /** The seat-holder, for the per-gamer scope filter. */
+  participantId: string;
+  gamerName: string;
+  /**
+   * Whether a group has been assigned. An unplaced seat has no family page to
+   * link at, so it carries no `URL` even under `details=full`.
+   */
+  isPlaced: boolean;
+  productType: ProductType;
+  /** Already resolved for the reader's locale. */
+  productName: string;
+  /** The product's own zone — the zone a TZID-stated event is a wall clock in. */
+  timezone: string;
+  /** Bare `YYYY-MM-DD` run boundaries, or `null` for an open-ended run. */
+  startDate: string | null;
+  endDate: string | null;
+  isRemote: boolean;
+  /** Already localized; `null` when the product names no place. */
+  locationName: string | null;
+  spokenLanguageCode: string;
+  slots: readonly SlotShape[];
+  /**
+   * The paid-through instant of a canceling subscription, or `null`. Nothing
+   * after it is enumerated: a family whose subscription is winding down should
+   * not see sessions their calendar says they are going to.
+   */
+  cancelsAt: Date | null;
+}
 
 /**
  * One computed session, in the neutral shape both serialisations consume — the
@@ -93,11 +137,9 @@ interface FeedSlot extends SlotShape {
 }
 
 /** The product's slots in a deterministic order, with their UID components. */
-function orderedSlots(
-  slots: readonly { weekday: number; start_time: string; duration_minutes: number }[],
-): FeedSlot[] {
+function orderedSlots(slots: readonly SlotShape[]): FeedSlot[] {
   const sorted = [...slots].sort(
-    (a, b) => a.weekday - b.weekday || a.start_time.localeCompare(b.start_time),
+    (a, b) => a.weekday - b.weekday || a.startTime.localeCompare(b.startTime),
   );
   const seenOnWeekday = new Map<number, number>();
   return sorted.map((slot) => {
@@ -105,8 +147,8 @@ function orderedSlots(
     seenOnWeekday.set(slot.weekday, ordinal + 1);
     return {
       weekday: slot.weekday,
-      startTime: slot.start_time,
-      durationMinutes: slot.duration_minutes,
+      startTime: slot.startTime,
+      durationMinutes: slot.durationMinutes,
       ordinalOnWeekday: ordinal,
     };
   });
@@ -160,22 +202,21 @@ interface TextContext {
 
 function descriptionFor(
   context: TextContext,
-  row: FeedParticipationRow,
-  gamerName: string,
+  seat: FeedSeat,
   durationMinutes: number,
 ): string | null {
   const { options, translate, locale } = context;
   if (options.details === "none") return null;
 
-  const typeNoun = translate.productType(row.product.product_type);
+  const typeNoun = translate.productType(seat.productType);
   const lines = [
-    translate.feed("gamerLine", { name: gamerName }),
+    translate.feed("gamerLine", { name: seat.gamerName }),
     translate.feed("typeLine", { type: typeNoun }),
   ];
   if (options.details === "full") {
     lines.push(
       translate.feed("languageLine", {
-        language: spokenLanguageName(row.product.spoken_language_code, locale),
+        language: spokenLanguageName(seat.spokenLanguageCode, locale),
       }),
       translate.feed("durationLine", { minutes: durationMinutes }),
     );
@@ -183,37 +224,31 @@ function descriptionFor(
   return lines.join("\n");
 }
 
-function locationFor(
-  context: TextContext,
-  row: FeedParticipationRow,
-): string | null {
-  const { options, translate, locale } = context;
+function locationFor(context: TextContext, seat: FeedSeat): string | null {
+  const { options, translate } = context;
   if (options.details === "none") return null;
-  // Gated on `is_remote` rather than on whether the join found a row, exactly
-  // as the dashboard is: a remote municipality club carries a location too (the
+  // Gated on `isRemote` rather than on whether a place is named, exactly as the
+  // dashboard is: a remote municipality club carries a location too (the
   // municipality that commissioned it), and that is an administrative fact, not
   // a building anyone travels to.
-  if (row.product.is_remote) return translate.feed("online");
-  const site = row.product.location;
-  return site === null ? null : localizedLocationName(site, locale);
+  if (seat.isRemote) return translate.feed("online");
+  return seat.locationName;
 }
 
-function urlFor(context: TextContext, row: FeedParticipationRow): string | null {
+function urlFor(context: TextContext, seat: FeedSeat): string | null {
   if (context.options.details !== "full") return null;
   // An unplaced seat has no page to point at — the family product page is
   // keyed on the group and renders not-found without one, which is why the
   // dashboard's rollup deliberately emits no link for such a seat either.
-  if (row.group_id === null) return null;
+  if (!seat.isPlaced) return null;
   // The parent's own page for this seat — the `customer` root, because the
   // subscriber is the paying parent. Absolute, and its origin comes from the
   // request rather than the Host header; see the route.
-  return `${context.origin}${ROUTES.customer.enrollment(row.product.product_type, row.id)}`;
+  return `${context.origin}${ROUTES.customer.enrollment(seat.productType, seat.participationId)}`;
 }
 
 export interface BuildCalendarFeedEventsArgs {
-  rows: readonly FeedParticipationRow[];
-  /** Paid-through instants for canceling subscriptions, keyed by participation. */
-  cancelEnds: ReadonlyMap<string, Date>;
+  seats: readonly FeedSeat[];
   options: CalendarFeedOptions;
   translate: CalendarFeedTranslator;
   locale: SupportedLocale;
@@ -235,55 +270,46 @@ export interface BuildCalendarFeedEventsArgs {
 export function buildCalendarFeedEvents(
   args: BuildCalendarFeedEventsArgs,
 ): CalendarFeedEvent[] {
-  const { rows, cancelEnds, options, translate, locale, origin, now } = args;
+  const { seats, options, translate, locale, origin, now } = args;
   const context: TextContext = { options, translate, locale, origin };
 
   const onlyParticipant = scopedParticipantId(options);
   const scoped =
     onlyParticipant === null
-      ? rows
-      : rows.filter((row) => row.participant_id === onlyParticipant);
+      ? seats
+      : seats.filter((seat) => seat.participantId === onlyParticipant);
 
   const events: CalendarFeedEvent[] = [];
 
-  for (const row of scoped) {
-    const { product } = row;
-    const slots = orderedSlots(product.schedule_slots);
+  for (const seat of scoped) {
+    const slots = orderedSlots(seat.slots);
     if (slots.length === 0) continue;
 
-    const gamerName = row.participant.first_name;
-    const productName =
-      resolveTranslation(product.product_translations, locale)?.name ?? "";
-    const summary = summaryFor(options, productName, gamerName);
+    const summary = summaryFor(options, seat.productName, seat.gamerName);
 
-    const startBoundary = startDateToCutoff(product.start_date, product.timezone);
+    const startBoundary = startDateToCutoff(seat.startDate, seat.timezone);
     const runEnd = earlierBoundary(
-      endDateToCutoff(product.end_date, product.timezone),
-      cancelEnds.get(row.id) ?? null,
+      endDateToCutoff(seat.endDate, seat.timezone),
+      seat.cancelsAt,
     );
 
     const shared = {
       summary,
-      location: locationFor(context, row),
-      url: urlFor(context, row),
-      timezone: product.timezone,
-      gamerName,
-      productName,
-      productType: product.product_type,
+      location: locationFor(context, seat),
+      url: urlFor(context, seat),
+      timezone: seat.timezone,
+      gamerName: seat.gamerName,
+      productName: seat.productName,
+      productType: seat.productType,
     };
 
     for (const slot of slots) {
-      const description = descriptionFor(
-        context,
-        row,
-        gamerName,
-        slot.durationMinutes,
-      );
+      const description = descriptionFor(context, seat, slot.durationMinutes);
 
       if (options.mode === "rrule") {
         const anchor = enumerateRowOccurrences({
           slots: [slot],
-          timezone: product.timezone,
+          timezone: seat.timezone,
           // Anchor the rule on the run's own first session, not on today's:
           // an RRULE whose DTSTART is next week describes a different series
           // from the one the family bought.
@@ -303,7 +329,7 @@ export function buildCalendarFeedEvents(
 
         events.push({
           ...shared,
-          uid: `${row.id}-slot-${slot.weekday}-${slot.ordinalOnWeekday}@sogverse`,
+          uid: `${seat.participationId}-slot-${slot.weekday}-${slot.ordinalOnWeekday}@sogverse`,
           start: first.start,
           end: first.end,
           description,
@@ -324,7 +350,7 @@ export function buildCalendarFeedEvents(
 
       const future = enumerateRowOccurrences({
         slots: [slot],
-        timezone: product.timezone,
+        timezone: seat.timezone,
         now,
         startBoundary,
         endBoundary: earlierBoundary(runEnd, horizon),
@@ -334,7 +360,7 @@ export function buildCalendarFeedEvents(
       });
       const past = enumeratePastRowOccurrences({
         slots: [slot],
-        timezone: product.timezone,
+        timezone: seat.timezone,
         now,
         floor: laterBoundary(startBoundary, lookback),
         endBoundary: runEnd,
@@ -348,10 +374,10 @@ export function buildCalendarFeedEvents(
       for (const occurrence of [...past, ...future]) {
         if (seen.has(occurrence.start.getTime())) continue;
         seen.add(occurrence.start.getTime());
-        const date = productLocalDate(occurrence.start, product.timezone);
+        const date = productLocalDate(occurrence.start, seat.timezone);
         events.push({
           ...shared,
-          uid: `${row.id}-${date}-${slot.ordinalOnWeekday}@sogverse`,
+          uid: `${seat.participationId}-${date}-${slot.ordinalOnWeekday}@sogverse`,
           start: occurrence.start,
           end: occurrence.end,
           description,

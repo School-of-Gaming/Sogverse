@@ -141,23 +141,34 @@ mechanism, and a look at Brevo quota headroom.
 - **Sequencing** — the one-shot camp/event `.ics` is small enough to ship first as a
   probe of demand.
 
-## Exploration built (2026-09)
+## The verification tool that exists (2026-09)
 
-A working feed exists to try in real clients, so the open questions above can be
-answered by looking rather than by reasoning. It is an exploration, not a
-decision: nothing above is settled by it.
+**The feed design is still an open investigation.** Nothing above is settled, and
+nothing below settles it. What has been built is a standing admin tool for
+verifying a feed in isolation, so the open questions can be answered by looking
+at real clients rather than by reasoning about them.
 
-- **Where it is.** `GET /api/calendar/feed/[token]` emits the calendar (and the
-  same computed events as JSON for the preview); `src/lib/calendar-feed/` holds
-  the token, the option parsing, the reads, the occurrence walk and a
-  hand-rolled RFC 5545 writer. The cockpit is a card on `/admin/testing`, which
-  mints a URL for any customer, exposes every option and shows both the event
-  table and the raw document before anything is sent anywhere.
-- **The token is a stand-in.** It is an HMAC over the customer id, domain-
-  separated under the shared PIN secret. That is deliberately *not* the design
-  above: a stored, revocable per-customer secret is still the answer, and this
-  buys a real `webcal://` URL today without a migration. Whatever graduates
-  replaces the module rather than growing a TTL onto it.
+- **Where it is.** One route emits the calendar for a signed token, and the same
+  route answers with the computed events as JSON for the preview. The module at
+  `src/lib/calendar-feed/` holds the token, the option parsing, the reads, the
+  occurrence walk and a hand-rolled RFC 5545 writer, and owns its own
+  `CLAUDE.md`. The cockpit is a card on `/admin/testing`.
+- **Two sources, one pipeline.** The card serves either a real customer or a
+  **sandbox family** — a fake household, stored as one row per admin in
+  `calendar_feed_sandboxes` and edited in place on the card. The sandbox exists
+  because the question that matters is what a client does when the data
+  *changes*, and the poll that would answer it arrives from a vendor's servers
+  minutes to hours later, with no session and no browser; the edited family has
+  to be in the database for that request to find it. Both sources map into one
+  neutral seat shape before the expansion, so a sandbox demonstrates the same
+  code a real feed runs.
+- **The token is adequate for a sandbox and a stand-in for a family.** Both kinds
+  are HMACs domain-separated under the shared PIN secret, with distinct prefixes
+  so neither can ever answer as the other. A sandbox feed discloses an invented
+  household, so the signature is the whole answer there and stays. A real
+  family's feed is a child's weekly whereabouts behind a URL polled forever, and
+  the stored, revocable per-customer secret named above is still what has to be
+  built before any parent is given one.
 - **Inherited limits.** The expansion is the shared holiday-blind walker, so a
   holiday-skipped session still appears — the unification named above is
   untouched and remains the prerequisite. Nothing emits `EXDATE`.
@@ -171,3 +182,25 @@ decision: nothing above is settled by it.
   colour, refresh hint, detail level, free-versus-busy, and whether the document
   states `METHOD:PUBLISH` at all (some readers treat a document that does as an
   iTIP message rather than as a subscription).
+
+### Handing a feed to a calendar app
+
+Three vendor gestures, and none of them takes a plain `https://` address. The
+card offers them as three buttons — Apple Calendar, Google Calendar, Outlook —
+with the raw address behind a quiet link for everything else.
+
+- **Apple Calendar** takes the feed address under the `webcal://` scheme. That
+  scheme is not a transport; the client fetches the same HTTPS address behind it.
+  It is what tells the operating system this is a subscription rather than one
+  static file to download once.
+- **Google Calendar** takes an add-by-URL screen whose parameter must carry the
+  `webcal://` form — an `https://` value is rejected outright.
+- **Outlook.com** takes an add-from-web screen carrying the address and a name.
+  A Microsoft 365 account uses the same path on its work host, which is
+  deliberately not offered as a fourth button.
+
+Two facts decide every one of them. A nested URL must be percent-encoded, or the
+feed's own first `&` is read as the host's next parameter and the rest is lost.
+And the feed has to be reachable over HTTPS from the public internet, because
+the vendors' servers are what fetch it — a localhost address produces a link
+that opens and then fails on their side.

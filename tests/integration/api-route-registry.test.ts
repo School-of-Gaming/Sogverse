@@ -232,6 +232,31 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // The admin's own sandbox family — the fake household the feed route serves
+  // behind a sandbox token. Every handler runs on the caller's session client:
+  // the table's one policy answers to `is_admin() AND owner_id = auth.uid()`,
+  // so the database makes the role decision this route's gate makes and then
+  // the ownership decision the gate cannot. No service-role import.
+  "src/app/api/admin/calendar-feed/sandbox/route.ts": {
+    handlers: {
+      GET: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.calendarFeed,
+      },
+      PUT: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "calendarFeedSandboxSaveBody" },
+        test: TESTS.calendarFeed,
+      },
+      POST: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "calendarFeedSandboxActionBody" },
+        test: TESTS.calendarFeed,
+      },
+    },
+  },
+
   "src/app/api/admin/locations/[id]/route.ts": {
     handlers: {
       PATCH: {
@@ -603,13 +628,13 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/calendar/feed/[token]/route.ts": {
     adminClient:
-      "a calendar app polls this with no session and no way to be given one, so there is no caller to act as; every family-enumeration path in src/services is auth.uid()-scoped and unusable here. The reads are filtered explicitly on the customer id the signed token resolved to, and that filter lives in the query module rather than in the handler",
+      "a calendar app polls this with no session and no way to be given one, so there is no caller to act as; every family-enumeration path in src/services is auth.uid()-scoped and unusable here, and the admin sandbox table's own policy answers only to the admin who owns the row. The reads are filtered explicitly on the id the signed token resolved to — a customer id or a sandbox id — and that filter lives in the query module rather than in the handler",
     handlers: {
       GET: {
         posture: {
           kind: "signed-token",
           reason:
-            "a subscribed ICS feed is fetched forever by a calendar client that holds no cookie, so the signed token in the path IS the authorization. An unverifiable token answers 404 rather than 401, because distinguishing a bad signature from an unknown customer would itself disclose that a given id is one of our customers",
+            "a subscribed ICS feed is fetched forever by a calendar client that holds no cookie, so the signed token in the path IS the authorization. A token names one of two subjects, domain-separated by its payload prefix so neither can ever answer as the other: a customer, whose feed discloses a child's weekly whereabouts, or an admin's sandbox family, which is invented and discloses nothing. An unverifiable token answers 404 rather than 401 — for a bad signature, an unknown customer and an unknown sandbox alike — because distinguishing them would itself disclose that a given id is one of our customers",
         },
         body: { kind: "none" },
         test: TESTS.calendarFeed,

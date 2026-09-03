@@ -115,6 +115,13 @@ describe("Access Control", () => {
       // removes entries on the admin's own session client, which is why all
       // four privileges are here rather than behind an RPC.
       ["product_images", new Set(["INSERT", "UPDATE", "DELETE"])],
+      // An admin's own calendar-feed sandbox: the fake family behind a feed URL
+      // (00236). Admin-only end to end through one FOR ALL policy that checks
+      // both halves — is_admin() AND owner_id = auth.uid() — so an admin holds
+      // all four privileges over their own row and none over anybody else's.
+      // Written from the admin's own session client rather than through an RPC,
+      // which is why the grants are here.
+      ["calendar_feed_sandboxes", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["schedule_slots", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_prices", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["holiday_calendars", new Set(["INSERT", "UPDATE", "DELETE"])],
