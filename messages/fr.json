@@ -943,12 +943,6 @@
       "userNotFound": "Utilisateur introuvable.",
       "joined": "Inscrit le",
       "unknown": "Inconnu",
-      "utm": {
-        "heading": "Attribution marketing",
-        "source": "Source",
-        "medium": "Support",
-        "campaign": "Campagne"
-      },
       "linkedGamers": "Joueurs associés",
       "linkedParents": "Parents associés",
       "unnamedGamer": "Joueur sans nom",
@@ -979,7 +973,14 @@
         "description": "Définissez ou corrigez les noms d’utilisateur de jeu de ce compte. L’enregistrement vérifie le nom auprès de la plateforme."
       },
       "marketing": {
-        "title": "Préférences marketing",
+        "title": "Marketing",
+        "attribution": "Attribution",
+        "utm": {
+          "source": "Source",
+          "medium": "Support",
+          "campaign": "Campagne"
+        },
+        "preferences": "Préférences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
         "granted": "Accordé",

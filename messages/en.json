@@ -943,12 +943,6 @@
       "userNotFound": "User not found.",
       "joined": "Joined",
       "unknown": "Unknown",
-      "utm": {
-        "heading": "Marketing attribution",
-        "source": "Source",
-        "medium": "Medium",
-        "campaign": "Campaign"
-      },
       "linkedGamers": "Linked Gamers",
       "linkedParents": "Linked Parents",
       "unnamedGamer": "Unnamed Gamer",
@@ -979,7 +973,14 @@
         "description": "Set or correct this account's game usernames. Saving checks the name with the platform."
       },
       "marketing": {
-        "title": "Marketing preferences",
+        "title": "Marketing",
+        "attribution": "Attribution",
+        "utm": {
+          "source": "Source",
+          "medium": "Medium",
+          "campaign": "Campaign"
+        },
+        "preferences": "Preferences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
         "granted": "Granted",

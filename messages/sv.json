@@ -943,12 +943,6 @@
       "userNotFound": "Användaren hittades inte.",
       "joined": "Gick med",
       "unknown": "Okänd",
-      "utm": {
-        "heading": "Marknadsföringskälla",
-        "source": "Källa",
-        "medium": "Medium",
-        "campaign": "Kampanj"
-      },
       "linkedGamers": "Kopplade spelare",
       "linkedParents": "Kopplade föräldrar",
       "unnamedGamer": "Namnlös spelare",
@@ -979,7 +973,14 @@
         "description": "Ange eller korrigera kontots spelanvändarnamn. Sparandet kontrollerar namnet hos plattformen."
       },
       "marketing": {
-        "title": "Marknadsföringsinställningar",
+        "title": "Marknadsföring",
+        "attribution": "Ursprung",
+        "utm": {
+          "source": "Källa",
+          "medium": "Medium",
+          "campaign": "Kampanj"
+        },
+        "preferences": "Inställningar",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
         "granted": "Godkänt",

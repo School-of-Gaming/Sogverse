@@ -943,12 +943,6 @@
       "userNotFound": "Käyttäjää ei löytynyt.",
       "joined": "Liittynyt",
       "unknown": "Tuntematon",
-      "utm": {
-        "heading": "Markkinoinnin lähdetiedot",
-        "source": "Lähde",
-        "medium": "Media",
-        "campaign": "Kampanja"
-      },
       "linkedGamers": "Liitetyt pelaajat",
       "linkedParents": "Liitetyt vanhemmat",
       "unnamedGamer": "Nimetön pelaaja",
@@ -979,7 +973,14 @@
         "description": "Aseta tai korjaa tämän tilin pelikäyttäjänimet. Tallennus tarkistaa nimen pelialustalta."
       },
       "marketing": {
-        "title": "Markkinointiasetukset",
+        "title": "Markkinointi",
+        "attribution": "Lähdetiedot",
+        "utm": {
+          "source": "Lähde",
+          "medium": "Media",
+          "campaign": "Kampanja"
+        },
+        "preferences": "Asetukset",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
         "granted": "Sallittu",

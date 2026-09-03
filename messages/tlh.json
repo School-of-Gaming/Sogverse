@@ -991,12 +991,6 @@
       "userNotFound": "lo’wI’ tu’be’lu’.",
       "joined": "muv",
       "unknown": "Sovbe’lu’",
-      "utm": {
-        "heading": "ghum He",
-        "source": "mung",
-        "medium": "Duj",
-        "campaign": "veS"
-      },
       "linkedGamers": "toy’wI’pu’ jonlu’",
       "linkedParents": "vav/SoSmey jonlu’",
       "unnamedGamer": "pong Hutlh toy’wI’",
@@ -1027,7 +1021,14 @@
         "description": "QujwI’ pong yIchoH ghap yIcher. bIpolDI’ pong chel Qu’qoq."
       },
       "marketing": {
-        "title": "QIn chaw’mey",
+        "title": "ghum",
+        "attribution": "He",
+        "utm": {
+          "source": "mung",
+          "medium": "Duj",
+          "campaign": "veS"
+        },
+        "preferences": "chaw’mey",
         "schoolOfGaming": "noH Quj yejHaD",
         "lynxEducate": "Lynx Educate",
         "granted": "chaw’lu’",

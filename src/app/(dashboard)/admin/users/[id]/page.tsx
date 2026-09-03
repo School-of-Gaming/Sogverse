@@ -13,7 +13,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
-import { UserMarketingConsentsCard } from "@/components/admin/user-marketing-consents-card";
+import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { cn, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -141,20 +141,18 @@ export default async function AdminUserDetailPage({
   // is also what the write route refuses as a target.
   const showGameAccounts = isGamer || isGedu;
 
+  // Where this account came from, handed to the marketing card as the server
+  // read it — nulls included, because that card shows all three fields whether
+  // they carry anything or not.
+  //
   // A display choice, not a data invariant: every account is born `customer`,
   // so one promoted to admin after registering through a tagged link still
   // carries its attribution — this page just doesn't surface it there.
-  // Shown when at least one of the three fields survived; an account that
-  // arrived with only a campaign shows only a campaign, rather than two empty
-  // rows saying nothing.
-  const utmRows = (
-    [
-      ["source", profile.utm_source],
-      ["medium", profile.utm_medium],
-      ["campaign", profile.utm_campaign],
-    ] as const
-  ).filter((row): row is readonly [(typeof row)[0], string] => row[1] !== null);
-  const showUtm = (isCustomer || isGedu) && utmRows.length > 0;
+  const attribution = {
+    source: profile.utm_source,
+    medium: profile.utm_medium,
+    campaign: profile.utm_campaign,
+  };
 
   const [
     linkedGamers,
@@ -306,35 +304,11 @@ export default async function AdminUserDetailPage({
                 {t('joined')} {profile.created_at ? formatDate(profile.created_at, locale, { dateStyle: "medium", timeZone }) : t('unknown')}
               </span>
             </div>
-            {/* Where this account came from — the marketing link's UTM values,
-                captured once at registration. Read-only on purpose: the columns
-                have no UPDATE grant, so an admin cannot edit them through the
-                app either (see src/lib/utm.ts). Shown for parents and educators
-                only — gamer rows are NULL by construction — and the whole block
-                is omitted rather than shown empty, since the large majority of
-                accounts will never carry any of it. */}
-            {showUtm && (
-              <div className="mt-3 border-t border-border pt-3">
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t('utm.heading')}
-                </h3>
-                <dl className="mt-2 flex flex-col gap-1.5">
-                  {utmRows.map(([field, value]) => (
-                    <div key={field} className="flex items-center gap-2 text-sm">
-                      <dt className="text-muted-foreground">{t(`utm.${field}`)}</dt>
-                      {/* Value-chip treatment matching the instant voice room's
-                          compact RoomLinkChip, so machine-authored values read
-                          as machine-authored site-wide. `break-all` because a
-                          UTM value can be an expanded ad name of up to 200
-                          characters with no break opportunity in it. */}
-                      <dd className="break-all rounded-md border border-border bg-muted/50 px-2 py-0.5 font-mono font-semibold">
-                        {value}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            )}
+            {/* The account's UTM attribution used to sit here, inside the
+                identity summary. It has moved into the Marketing card at the
+                foot of the page, which is now the page's one section about
+                marketing: where the account came from, and what its holder has
+                agreed to since. */}
           </div>
         </CardContent>
       </Card>
@@ -487,14 +461,26 @@ export default async function AdminUserDetailPage({
       {/* Coverage areas, for substitute matching. */}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
 
-      {/* Last on the page, and the position is load-bearing: this is the only
-          block here whose data is fetched client-side after first paint, so at
-          the end of the run its arrival is paid for out of the page's own slack
-          and nothing already painted moves. A later tidy-up that files it beside
-          the summary card on aesthetic grounds would reintroduce that shift
-          silently. Customers only — gamers and gedus hold no marketing consents
-          at all. */}
-      {isCustomer && <UserMarketingConsentsCard customerId={userId} />}
+      {/* Everything about marketing, in one card: where the account came from,
+          and what its holder has agreed to since.
+
+          Last on the page, and the position is load-bearing: the consent half
+          is the only data on this page fetched client-side after first paint,
+          so at the end of the run its arrival is paid for out of the page's own
+          slack and nothing already painted moves. A later tidy-up that files it
+          beside the summary card on aesthetic grounds would reintroduce that
+          shift silently.
+
+          Parents and educators, because those are the two roles that can carry
+          an attribution — a gamer's three columns are NULL by construction.
+          Only a customer can hold a marketing consent, so `customerId` is null
+          for an educator and their card is the attribution block alone. */}
+      {(isCustomer || isGedu) && (
+        <UserMarketingCard
+          attribution={attribution}
+          customerId={isCustomer ? userId : null}
+        />
+      )}
     </div>
   );
 }
