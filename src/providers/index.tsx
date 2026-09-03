@@ -8,6 +8,8 @@ import { LocaleProvider } from "./locale-provider";
 import { TimezoneProvider } from "./timezone-provider";
 import { NowProvider } from "./now-provider";
 import { UtmProvider } from "./utm-provider";
+import { ConsentProvider } from "@/components/consent";
+import type { ConsentState } from "@/lib/consent";
 import type { UtmAttribution } from "@/lib/utm";
 import type { AuthenticatedUser, Profile } from "@/types";
 import {
@@ -41,6 +43,14 @@ interface ProvidersProps {
    */
   initialUtm: UtmAttribution;
   /**
+   * The server's parse of the `sog_consent` cookie, or `null` when the visitor
+   * has not answered a question of the current version. Seeds `ConsentProvider`
+   * so the server render and the first client render agree about which optional
+   * scripts exist — anything else would mount or unmount a third-party script
+   * at hydration. Never re-synced: the provider is the only writer.
+   */
+  initialConsent: ConsentState | null;
+  /**
    * What this request's `Accept-Language` header negotiated to, or `"none"`
    * when the browser asked only for languages we don't ship. Read from the
    * header alone — the `locale` cookie and `profiles.locale` are deliberately
@@ -67,6 +77,7 @@ export function Providers({
   initialTimezone,
   initialNow,
   initialUtm,
+  initialConsent,
   detectedLocale,
   messages,
 }: ProvidersProps) {
@@ -81,7 +92,13 @@ export function Providers({
             <TimezoneProvider initialTimezone={initialTimezone}>
               <NowProvider initialNow={initialNow}>
                 <UtmProvider initialUtm={initialUtm}>
-                  {children}
+                  {/* Innermost, and inside `NextIntlClientProvider` on
+                      purpose: the banner and the footer's Cookie settings link
+                      translate their own words, and the footer sits inside
+                      `children`. */}
+                  <ConsentProvider initial={initialConsent}>
+                    {children}
+                  </ConsentProvider>
                 </UtmProvider>
               </NowProvider>
             </TimezoneProvider>
@@ -99,3 +116,7 @@ export { LocaleProvider, useLocaleControl } from "./locale-provider";
 export { TimezoneProvider, useTimezone } from "./timezone-provider";
 export { NowProvider, useNow } from "./now-provider";
 export { UtmProvider, useUtm } from "./utm-provider";
+// Re-exported here so a consumer asking for "the providers" finds it beside
+// its neighbours. It is *defined* in `@/components/consent`, next to the
+// banner and the gated scripts it serves, because those three are one feature.
+export { ConsentProvider, useConsent } from "@/components/consent";

@@ -943,7 +943,12 @@
       "userNotFound": "Käyttäjää ei löytynyt.",
       "joined": "Liittynyt",
       "unknown": "Tuntematon",
-      "referralCode": "Viittauskoodi",
+      "utm": {
+        "heading": "Markkinoinnin lähdetiedot",
+        "source": "Lähde",
+        "medium": "Media",
+        "campaign": "Kampanja"
+      },
       "linkedGamers": "Liitetyt pelaajat",
       "linkedParents": "Liitetyt vanhemmat",
       "unnamedGamer": "Nimetön pelaaja",
@@ -1444,7 +1449,8 @@
     "privacy": "Tietosuojaseloste",
     "terms": "Käyttöehdot",
     "antiBullying": "Kiusaamisen ehkäisy",
-    "attributions": "Lähteet ja lisenssit"
+    "attributions": "Lähteet ja lisenssit",
+    "cookieSettings": "Evästeasetukset"
   },
   "gamer": {
     "welcomeNamed": "Tervetuloa, {name}!",
@@ -2736,8 +2742,8 @@
           "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan.",
           "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet pelissä ja jotta hän voi liittyä Minecraft-palvelimellemme tapaamisten aikana.",
           "Pelikasvattajiemme kirjoittamat merkinnät tapaamisista – läsnäolot, tapaamisraportit ja lyhyet muistiinpanot, jotka auttavat meitä tukemaan lastasi ryhmässä.",
-          "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet ja analytiikka\" jäljempänä).",
-          "Lyhyen koodin, joka kertoo, minkä koulun, kerhon tai kumppanin jakaman linkin kautta tulit sivustollemme – jotta tiedämme, mikä viestintä tavoittaa perheitä, ja voimme kertoa kumppaneillemme, toimiko heidän linkkinsä."
+          "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet, analytiikka ja mainonta\" jäljempänä).",
+          "Kampanjatunnisteen – lähteen, välineen ja kampanjan – jonka käyntisi aloittanut linkki kantoi mukanaan. Tallennamme sen kerran, tilin luonnin yhteydessä, jotta me ja kumppanimme tiedämme, mikä viestintä tavoittaa perheitä."
         ]
       },
       "childrensPrivacy": {
@@ -2773,7 +2779,8 @@
           "Koska vanhempi on antanut luvan lapsensa puolesta (suostumus).",
           "Täyttääksemme lakisääteiset velvollisuutemme, kuten maksujen kirjanpitotietojen säilyttämisen.",
           "Oikeutetun etumme perusteella, kun pidämme sivuston turvallisena ja toimivana – aina yksityisyytesi kanssa tasapainotettuna.",
-          "Oikeutetun etumme perusteella, kun selvitämme, mikä viestintämme tavoittaa perheitä – aina yksityisyytesi kanssa tasapainotettuna, ja voit milloin tahansa pyytää meitä lopettamaan."
+          "Oikeutetun etumme perusteella, kun selvitämme, mikä viestintämme tavoittaa perheitä – aina yksityisyytesi kanssa tasapainotettuna, ja voit milloin tahansa pyytää meitä lopettamaan.",
+          "Suostumuksesi analytiikka- ja markkinointievästeisiin – voit peruuttaa sen milloin tahansa jokaisen sivun alalaidan Evästeasetukset-linkistä."
         ]
       },
       "providers": {
@@ -2786,18 +2793,24 @@
           "Stripe – käsittelee maksut. Korttitietosi menevät suoraan Stripelle, emmekä me näe niitä.",
           "Brevo – lähettää sähköpostimme, kuten kuitit ja muistutukset.",
           "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset.",
-          "Vercel – ylläpitää sivustoa ja tarjoaa nimettömät, evästeettömät käyttötilastot.",
+          "Vercel – ylläpitää sivustoa ja tarjoaa nimettömät käyttötilastot.",
           "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia.",
           "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin ja näyttää hänen hahmokuvansa.",
-          "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin."
+          "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin.",
+          "Meta (Facebook- ja Instagram-mainokset) – saa Meta-pikselin kautta tiedon käynnistäsi ja siitä, loitko tilin, jotta voimme näyttää mainoksiamme siellä. Vain jos sallit markkinointievästeet.",
+          "TikTok – saa TikTok-pikselin kautta tiedon käynnistäsi ja siitä, loitko tilin, jotta voimme näyttää mainoksiamme TikTokissa. Vain jos sallit markkinointievästeet."
         ]
       },
       "cookies": {
-        "heading": "Evästeet ja analytiikka",
+        "heading": "Evästeet, analytiikka ja mainonta",
         "paragraphs": [
-          "Emme käytä mainos- tai seurantaevästeitä emmekä seuraa sinua ympäri internetiä.",
-          "Käytämme muutamaa välttämätöntä evästettä, jotta pysyt turvallisesti kirjautuneena – sivusto ei toimi ilman niitä, joten ne eivät vaadi suostumustasi.",
-          "Ymmärtääksemme esimerkiksi sen, kuinka moni vierailee sivustolla ja käyttääkö hän puhelinta vai tietokonetta, käytämme Vercelin analytiikkaa. Se on yksityisyysystävällistä: ei evästeitä eikä henkilökohtaista tunnistamista."
+          "Muutama eväste on yksinkertaisesti se, miten sivusto toimii: ne pitävät sinut kirjautuneena, muistavat että syötit vanhemman PIN-koodin, säilyttävät kielesi ja aikavyöhykkeesi ja tallentavat tekemäsi evästevalinnan. Nämä eivät vaadi suostumustasi – ilman niitä ei ole sivustoa, johon suostua.",
+          "Kaikki muu odottaa sinua. Kysymme asiaa ensimmäisellä käynnilläsi, eikä välttämättömien evästeiden lisäksi käynnisty mitään ennen kuin vastaat. Voit muuttaa mieltäsi milloin tahansa jokaisen sivun alalaidan Evästeasetukset-linkistä: valinnan poistaminen astuu voimaan heti, eikä se muuta sitä, mitä teimme sen ollessa käytössä.",
+          "Kahteen asiaan voit vastata kyllä tai ei:"
+        ],
+        "bullets": [
+          "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit ja mittaa, kuinka nopeasti sivut latautuvat. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
+          "Markkinointi – Meta-pikseli ja TikTok-pikseli, ja vain jos valitset ne. Ne saavat tietää, että kävit School of Gamingin sivustolla ja loitko tilin, jotta Meta ja TikTok voivat näyttää sinulle mainoksiamme omissa palveluissaan. Markkinoinnin poistaminen käytöstä poistaa niiden selaimeesi jättämät evästeet, mutta emme voi poistaa sitä, mitä niillä jo on – sen voit pyytää poistettavaksi omista Meta- ja TikTok-asetuksistasi, joissa Meta kutsuu sitä nimellä \"Meta-teknologioiden ulkopuolinen toiminta\"."
         ]
       },
       "voice": {
@@ -3851,5 +3864,13 @@
       "next": "Seuraava kuva",
       "close": "Sulje"
     }
+  },
+  "consent": {
+    "heading": "Pari sanaa evästeistä",
+    "body": "Analytiikka kertoo meille, kuinka moni sivustolla käy ja kuinka nopeasti sivut latautuvat. Se ei näe, kuka olet, eikä se päädy koskaan mainostajille. Markkinointi kertoo Metalle ja TikTokille käynnistäsi ja siitä, loitko tilin, jotta ne voivat näyttää sinulle mainoksiamme omissa palveluissaan. Mikään ei käynnisty ennen kuin valitset, ja voit muuttaa mieltäsi milloin tahansa sivun alalaidan linkistä.",
+    "privacyLink": "Näin käytämme evästeitä",
+    "rejectAll": "Hylkää kaikki",
+    "analyticsOnly": "Vain analytiikka",
+    "analyticsAndMarketing": "Analytiikka ja markkinointi"
   }
 }

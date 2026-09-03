@@ -73,6 +73,11 @@ vi.mock("@/lib/brevo", () => ({
 import { POST } from "@/app/api/auth/register/route";
 import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
 import { verifyEmailVerificationToken } from "@/lib/email-verification";
+import {
+  CONSENT_COOKIE_NAME,
+  CONVERSION_COOKIE_NAME,
+  REGISTRATION_CONVERSION,
+} from "@/lib/consent";
 import { asObject } from "../../helpers/json";
 
 const NEW_USER_ID = "88888888-8888-4888-8888-888888888888";
@@ -91,6 +96,29 @@ function registerRequest(body: unknown, rawBody?: string): Request {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: rawBody ?? JSON.stringify(body),
+  });
+}
+
+/** A registration arriving with a given `sog_consent` cookie already set. */
+function registerRequestWithConsent(consent: {
+  analytics: boolean;
+  marketing: boolean;
+}): Request {
+  const value = encodeURIComponent(
+    JSON.stringify({
+      v: 1,
+      at: "2026-09-03T10:15:00.000Z",
+      analytics: consent.analytics,
+      marketing: consent.marketing,
+    }),
+  );
+  return new Request("http://localhost:3000/api/auth/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      cookie: `locale=en; ${CONSENT_COOKIE_NAME}=${value}`,
+    },
+    body: JSON.stringify(validBody),
   });
 }
 
@@ -185,6 +213,60 @@ describe("POST /api/auth/register", () => {
         password: "a-long-enough-password",
         email_confirm: true,
       }),
+    );
+  });
+
+  // -- The registration conversion marker --
+  //
+  // The one cookie this route sets, and the only thing on the surface that is
+  // *deliberately* readable by a page script — the marketing pixels read it on
+  // the next page, report the conversion and delete it. Whether it is written
+  // is decided here, on the server, from the consent the request already
+  // carried: a marker written for someone who refused marketing is a
+  // conversion report waiting for the day a client-side gate slips.
+
+  it("sets the conversion marker when the request carried marketing consent", async () => {
+    const response = await POST(
+      registerRequestWithConsent({ analytics: true, marketing: true }),
+    );
+
+    expect(response.status).toBe(200);
+    const setCookie = response.headers.get("set-cookie") ?? "";
+    expect(setCookie).toContain(
+      `${CONVERSION_COOKIE_NAME}=${REGISTRATION_CONVERSION}`,
+    );
+    expect(setCookie).toContain("Path=/");
+    expect(setCookie).toContain("Max-Age=300");
+    expect(setCookie).toMatch(/SameSite=lax/i);
+    // These mock requests carry no Host, so getOrigin falls back to the https
+    // NEXT_PUBLIC_SITE_URL set at the top of this file — the
+    // production-representative branch, where the flag has to be on.
+    expect(setCookie).toContain("Secure");
+    // NOT HttpOnly, and that is the feature: the pixel script has to read it.
+    // Which is also why it carries one fixed word and no identifier at all.
+    expect(setCookie).not.toMatch(/HttpOnly/i);
+    // The body is unchanged by any of this.
+    expect(await response.json()).toEqual({ userId: NEW_USER_ID });
+  });
+
+  it.each([
+    ["analytics only", { analytics: true, marketing: false }],
+    ["a full refusal", { analytics: false, marketing: false }],
+  ])("sets no conversion marker for %s", async (_label, consent) => {
+    const response = await POST(registerRequestWithConsent(consent));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("set-cookie") ?? "").not.toContain(
+      CONVERSION_COOKIE_NAME,
+    );
+  });
+
+  it("sets no conversion marker when no consent has been given at all", async () => {
+    const response = await POST(registerRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("set-cookie") ?? "").not.toContain(
+      CONVERSION_COOKIE_NAME,
     );
   });
 

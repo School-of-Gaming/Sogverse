@@ -119,19 +119,33 @@ function buildCspHeader(nonce: string): string {
 
   return [
     "default-src 'self'",
+    // Production needs no vendor host here: the pixels' inline snippets carry
+    // the nonce, and `strict-dynamic` lets a script that ran with the nonce
+    // insert the libraries it needs. Development has neither, so the two pixel
+    // hosts have to be named — connect.facebook.net serves fbevents.js and
+    // analytics.tiktok.com serves the TikTok events library, both inserted by
+    // the snippets in `MarketingPixels`.
     isProd
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co",
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://connect.facebook.net https://analytics.tiktok.com",
     "style-src 'self' 'unsafe-inline'",
     // mc-heads.net renders the Minecraft skin body, which the shared game-account
     // row derives straight from a username — so it loads anywhere an identity is
     // shown (settings, rosters, the admin panel, the voice room).
     // tr.rbxcdn.com serves the Roblox avatar bust render — the thumbnails API hands back that one
     // host for every completed render, so it is named rather than wildcarded across *.rbxcdn.com.
-    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com`,
+    // www.facebook.com is the Meta Pixel's own transport: fbevents.js reports
+    // by requesting /tr/ as an image, and `strict-dynamic` does not reach
+    // img-src, so this is needed in production too — removing it silently stops
+    // the pixel in the one environment where it matters.
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com`,
     "font-src 'self'",
-    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io",
+    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting.
+    // www.facebook.com and analytics.tiktok.com are where the two pixels in
+    // `MarketingPixels` send events once their libraries have loaded — the
+    // fetch/beacon path beside the image one above. Also not covered by
+    // `strict-dynamic`, so both branches need them.
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com https://analytics.tiktok.com",
     "frame-src 'self' https://*.daily.co https://*.stripe.com",
     // blob: workers used by Daily.co for WebRTC media processing
     "worker-src 'self' blob:",

@@ -991,7 +991,12 @@
       "userNotFound": "lo’wI’ tu’be’lu’.",
       "joined": "muv",
       "unknown": "Sovbe’lu’",
-      "referralCode": "ghum ngoq",
+      "utm": {
+        "heading": "ghum He",
+        "source": "mung",
+        "medium": "Duj",
+        "campaign": "veS"
+      },
       "linkedGamers": "toy’wI’pu’ jonlu’",
       "linkedParents": "vav/SoSmey jonlu’",
       "unnamedGamer": "pong Hutlh toy’wI’",
@@ -1488,7 +1493,8 @@
     "copyright": "© {year} noH Quj yejHaD. Hoch batlh.",
     "contact": {
       "email": "QIn: {email}"
-    }
+    },
+    "cookieSettings": "chabHom ngoQmey"
   },
   "gamer": {
     "welcomeNamed": "nuqneH, {name}!",
@@ -3005,5 +3011,13 @@
       "next": "mIllogh veb yIlegh",
       "close": "yISoQmoH"
     }
+  },
+  "consent": {
+    "heading": "chabHommey: puS mu’mey",
+    "body": "toghwI’ chabHommey: arlogh nuSuchlu’ ’ej nom So’lu’ ghItlhmey ’e’ maSov. SoH DaSovbe’, ’ej ngevwI’pu’vaD pagh wInob. ngevmeH chabHommey: Metvo’ TikTokvo’ je nuSuchpu’ ’ej qa’ DachenmoHpu’ ’e’ luSov, vaj mIlloghmeymaj Du’ang. DawIvpa’ pagh qaS, ’ej reH DachoHlaH.",
+    "privacyLink": "chabHommey wIlo’bogh",
+    "rejectAll": "Hoch yIlaj Qo’",
+    "analyticsOnly": "toghwI’ neH",
+    "analyticsAndMarketing": "toghwI’ ngevwI’ je"
   }
 }

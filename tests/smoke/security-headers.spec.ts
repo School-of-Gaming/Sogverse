@@ -24,6 +24,27 @@ test.describe("Security Headers", () => {
     expect(csp).toContain("frame-ancestors 'self'");
   });
 
+  // The two directives `strict-dynamic` does not reach. In production the
+  // pixels' scripts are admitted by the nonce, so nothing in `script-src` names
+  // a vendor — which makes it easy to read the policy as "the pixels need no
+  // hosts at all" and tidy these away. They are where the pixels actually send:
+  // fbevents.js reports by requesting facebook.com/tr/ as an image and by
+  // fetch, and TikTok's library posts to analytics.tiktok.com. Removing either
+  // stops marketing measurement silently, and only in production.
+  test("names the marketing pixels' own hosts in img-src and connect-src", async ({
+    request,
+  }) => {
+    const response = await request.get("/");
+    const csp = response.headers()["content-security-policy"];
+
+    const imgSrc = /(?:^|; )img-src ([^;]*)/.exec(csp)?.[1] ?? "";
+    const connectSrc = /(?:^|; )connect-src ([^;]*)/.exec(csp)?.[1] ?? "";
+
+    expect(imgSrc).toContain("https://www.facebook.com");
+    expect(connectSrc).toContain("https://www.facebook.com");
+    expect(connectSrc).toContain("https://analytics.tiktok.com");
+  });
+
   test("each request should receive a unique CSP nonce", async ({ request }) => {
     const res1 = await request.get("/");
     const res2 = await request.get("/");
