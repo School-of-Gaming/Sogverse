@@ -1106,8 +1106,8 @@
       "emailSentSuccess": "QIn ngeHlu’! De’ ID: {messageId}",
       "failedToSendRequest": "tlhob ngeH Dabe’lu’",
       "preview": "QIn bejwI’",
-      "previewDescription": "ngeHbe’lu’ — naDev neH QIn Dalegh. De’wI’vamvo’ mIlloghmey Suqlu’, vaj Hoch mIlloghmey Dalegh; ’ach ngeHlu’chugh, mIlloghmeyvam Hutlh QIn.",
-      "refreshPreview": "QIn yIchu’qa’",
+      "previewDesktop": "De’wI’ tInDaq QIn yIbej",
+      "previewMobile": "De’wI’ machDaq QIn yIbej",
       "previewError": "De’ tIng chenmoHlaHbe’lu’: {message}",
       "previewWidth": {
         "label": "QIn leghmeH Daq",

@@ -1058,8 +1058,8 @@
       "emailSentSuccess": "Sähköposti lähetetty! Viestin tunnus: {messageId}",
       "failedToSendRequest": "Pyynnön lähettäminen epäonnistui",
       "preview": "Esikatselu",
-      "previewDescription": "Näin viesti näkyy. Se piirretään selaimeesi, eikä sitä lähetetä, ja kuvat haetaan tältä palvelimelta – niinpä esikatselussa näkyvät myös ne kuvat, jotka kehityskoneelta lähetetystä viestistä jäävät pois.",
-      "refreshPreview": "Päivitä esikatselu",
+      "previewDesktop": "Esikatsele työpöydällä",
+      "previewMobile": "Esikatsele mobiilissa",
       "previewError": "Mallin hahmontaminen epäonnistui: {message}",
       "previewWidth": {
         "label": "Esikatselun leveys",
