@@ -162,6 +162,8 @@ const TESTS = {
   forgotPassword: "tests/integration/auth/forgot-password.test.ts",
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
   gamersUpdate: "tests/integration/api/gamers-update.test.ts",
+  gamersVerificationSend:
+    "tests/integration/api/gamers-verification-send.test.ts",
   geduGamerMinecraft: "tests/integration/api/gedu-gamer-minecraft.test.ts",
   geduGamerRoblox: "tests/integration/api/gedu-gamer-roblox.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
@@ -430,7 +432,6 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   },
 
   "src/app/api/auth/forgot-password/route.ts": {
-    adminClient: "Auth Admin API (recovery link generation)",
     handlers: {
       POST: {
         posture: {
@@ -543,11 +544,13 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       POST: {
         posture: {
           kind: "role-gated",
-          // Every role with a real inbox. `gamer` is excluded deliberately: a
-          // gamer's address is the synthetic `@gamer.sogverse.internal` one the
-          // account was created with, so there is nobody to write to and
-          // nothing a stamp on it would mean.
-          roles: ["customer", "gedu", "admin"],
+          // Every role, because the real question is about the ADDRESS rather
+          // than the role and the handler is where it can be asked: a gamer
+          // holds a real inbox only in sign-in mode `email`, which lives one
+          // table over. The other two modes carry a synthetic
+          // `@gamer.sogverse.internal` handle with nobody to write to and
+          // nothing a stamp on it would mean, and the handler answers those 403.
+          roles: ["customer", "gamer", "gedu", "admin"],
         },
         body: { kind: "none" },
         test: TESTS.verifyEmailSend,
@@ -578,7 +581,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["customer", "gamer"],
           allowUnverified: true,
         },
-        body: { kind: "json", schema: "inline: switchAccountBody" },
+        body: { kind: "json", schema: "switchAccountBody" },
         test: TESTS.switchAccount,
       },
     },
@@ -724,6 +727,18 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: { kind: "role-gated", roles: ["customer"] },
         body: { kind: "json", schema: "createGamerBody" },
         test: TESTS.gamersCreate,
+      },
+    },
+  },
+
+  "src/app/api/gamers/[id]/verification/send/route.ts": {
+    adminClient:
+      "reads the child's sign-in mode and the parent's first name for the mail, and the shared sender reads the child's own address — none of which the parent's own client is granted, while the two things that decide entitlement (the parent_gamer link and the rate-limit RPC's is_parent_of guard) both run on the caller's client",
+    handlers: {
+      POST: {
+        posture: { kind: "role-gated", roles: ["customer"] },
+        body: { kind: "none" },
+        test: TESTS.gamersVerificationSend,
       },
     },
   },
@@ -1190,6 +1205,10 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
   "src/lib/supabase/admin.ts": "the client factory itself",
   "src/lib/pin-session-server.ts":
     "resolves a PIN-reset token to a user id with no session in hand; shared by the reset page and the reset route",
+  "src/lib/password-reset.server.ts":
+    "mints the recovery link and mails it, for a caller who by definition cannot sign in — and for the verify page, acting on a token it just validated rather than on a session. The route that used to hold this import now delegates to it",
+  "src/lib/gamer-welcome.server.ts":
+    "reads a CHILD's stored address and locale to mail them the link that verifies it; the child holds no session yet (that is what the mail is for) and the parent's own client is not granted that row's address",
   "src/lib/email-verification.server.ts":
     "redeems an emailed verification token, which authorizes itself — the reader may hold no session or somebody else's, and `email_verified_at` has no write grant outside the service role",
   "src/lib/seat-offer.server.ts":

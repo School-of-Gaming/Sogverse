@@ -6,9 +6,6 @@ import {
   formatCurrencyFromCents,
   formatDate,
   formatDateOnly,
-  generateGamerEmail,
-  extractUsernameFromGamerEmail,
-  isGamerEmail,
   capitalize,
 } from "@/lib/utils";
 
@@ -121,48 +118,6 @@ describe("computeAge", () => {
     vi.setSystemTime(new Date("2026-01-01T02:00:00Z"));
     expect(computeAge("2016-01-01", "UTC")).toBe(10);
     expect(computeAge("2016-01-01", "America/Los_Angeles")).toBe(9);
-  });
-});
-
-describe("gamer email utilities", () => {
-  describe("generateGamerEmail", () => {
-    it("generates synthetic email from username", () => {
-      expect(generateGamerEmail("testuser")).toBe(
-        "testuser@gamer.sogverse.internal"
-      );
-    });
-
-    it("converts username to lowercase", () => {
-      expect(generateGamerEmail("TestUser")).toBe(
-        "testuser@gamer.sogverse.internal"
-      );
-    });
-  });
-
-  describe("extractUsernameFromGamerEmail", () => {
-    it("extracts username from valid gamer email", () => {
-      expect(
-        extractUsernameFromGamerEmail("testuser@gamer.sogverse.internal")
-      ).toBe("testuser");
-    });
-
-    it("returns null for non-gamer emails", () => {
-      expect(extractUsernameFromGamerEmail("test@example.com")).toBeNull();
-    });
-
-    it("returns null for invalid emails", () => {
-      expect(extractUsernameFromGamerEmail("not-an-email")).toBeNull();
-    });
-  });
-
-  describe("isGamerEmail", () => {
-    it("returns true for gamer emails", () => {
-      expect(isGamerEmail("test@gamer.sogverse.internal")).toBe(true);
-    });
-
-    it("returns false for regular emails", () => {
-      expect(isGamerEmail("test@example.com")).toBe(false);
-    });
   });
 });
 

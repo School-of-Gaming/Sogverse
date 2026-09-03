@@ -114,7 +114,30 @@ export function useUpdateGamer() {
       // The stored rows only — never the Roblox root, which would drag every
       // mounted avatar lookup into a refetch against a per-IP rate limit.
       queryClient.invalidateQueries({ queryKey: robloxKeys.accounts() });
+      // The family list carries each child's sign-in mode, and an edit here is
+      // one of the two things that can change it (the other is creation, which
+      // already invalidates this key). The switcher reads that mode to decide
+      // whether a sibling is reachable at all, so a stale one is a tile that
+      // offers a credential the account no longer has.
+      queryClient.invalidateQueries({ queryKey: familyKeys.list() });
     },
+  });
+}
+
+/**
+ * Re-send the verification mail to a child who signs in with a real address.
+ *
+ * No cache to invalidate — nothing about the parent's view changes until the
+ * child clicks the link — so this exists as a hook purely so the button gets the
+ * same pending/error handling every other write on the page has.
+ */
+export function useSendGamerVerificationEmail() {
+  const supabase = getClient();
+  const service = new GamerService(supabase);
+
+  return useMutation({
+    mutationFn: (gamerId: string) =>
+      service.sendGamerVerificationEmail(gamerId),
   });
 }
 

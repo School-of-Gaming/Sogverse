@@ -18,9 +18,24 @@ import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
  * makes them measure the name rather than the whitespace around it (`" A"` is
  * not a two-character first name).
  */
+/**
+ * The password policy for an account on this platform, stated once.
+ *
+ * Exported because a gamer in `username` mode holds a password the parent
+ * chooses, and it is the same kind of credential guarding the same kind of
+ * account — a child's password being held to a weaker bar than their parent's
+ * would be a decision nobody made. GoTrue's own policy still stands behind it
+ * (the provider refuses a breached or too-short password whatever we accept),
+ * so this is the bar the form can state before the round trip, not the whole
+ * of it.
+ */
+export const accountPasswordValue = z
+  .string()
+  .min(8, "Password must be at least 8 characters");
+
 export const registerParentBody = z.object({
   email: z.string().email(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: accountPasswordValue,
   firstName: z.string().trim().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX),
   lastName: z.string().trim().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX),
   /**

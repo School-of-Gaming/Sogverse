@@ -581,7 +581,7 @@ describe("AccountMenu — switching to another member", () => {
 
     fireEvent.click(row("Aino"));
 
-    expect(mockSwitchAccount).toHaveBeenCalledWith(IDS.gamerAino);
+    expect(mockSwitchAccount).toHaveBeenCalledWith(IDS.gamerAino, {});
     // A full-page navigation, never a router.push: the browser Supabase client
     // is seeded from cookies at construction and only a document reload
     // rebuilds it.
@@ -594,7 +594,7 @@ describe("AccountMenu — switching to another member", () => {
 
     fireEvent.click(row("Riikka" + PARENT_ROLE));
 
-    expect(mockSwitchAccount).toHaveBeenCalledWith(IDS.parent);
+    expect(mockSwitchAccount).toHaveBeenCalledWith(IDS.parent, {});
     await waitFor(() => expect(window.location.href).toBe("/parent"));
   });
 

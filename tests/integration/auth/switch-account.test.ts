@@ -1,7 +1,29 @@
+// The unlock cookie this route mints on one path is an HMAC over
+// PIN_COOKIE_SECRET, read lazily at mint time — set before the route imports.
+process.env.PIN_COOKIE_SECRET = "route-test-switch-account-secret";
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/auth/switch-account/route";
 import { NextResponse } from "next/server";
 import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
+
+/**
+ * The switch route has two independent authorizations and this file exercises
+ * both, because passing one and skipping the other is exactly the bug shape
+ * that would ship silently.
+ *
+ * 1. **Who may be reached** — the family-membership matrix. Unchanged by the
+ *    gate work, and still the thing that makes a target id in the body harmless.
+ * 2. **What it costs** — the gate, keyed on the caller's role and the provenance
+ *    of their session. A parent pays nothing. A gamer in a switched-in (family)
+ *    session pays a linked parent's PIN. A gamer in a session they signed into
+ *    themselves pays the TARGET's password, and the session they get is itself a
+ *    password session.
+ *
+ * Two properties are asserted over and over on purpose, because they are the
+ * ones a refactor breaks quietly: **a failed gate never signs the caller out**,
+ * and **the unlock cookie is minted on exactly one path**.
+ */
 
 // --- Mocks ---
 
@@ -11,15 +33,19 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockAdminFrom = vi.fn();
+const mockAdminRpc = vi.fn();
 const mockAdminGenerateLink = vi.fn();
 const mockAdminGetUserById = vi.fn();
+const mockAdminSignOut = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: (...args: unknown[]) => mockAdminFrom(...args),
+    rpc: (...args: unknown[]) => mockAdminRpc(...args),
     auth: {
       admin: {
         generateLink: (...args: unknown[]) => mockAdminGenerateLink(...args),
         getUserById: (...args: unknown[]) => mockAdminGetUserById(...args),
+        signOut: (...args: unknown[]) => mockAdminSignOut(...args),
       },
     },
   })),
@@ -27,19 +53,30 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 const mockSignOut = vi.fn();
 const mockVerifyOtp = vi.fn();
+const mockSignInWithPassword = vi.fn();
+const mockGetClaims = vi.fn();
+const mockGetSession = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: {
       signOut: mockSignOut,
       verifyOtp: (...args: unknown[]) => mockVerifyOtp(...args),
+      signInWithPassword: (...args: unknown[]) => mockSignInWithPassword(...args),
+      getClaims: (...args: unknown[]) => mockGetClaims(...args),
+      getSession: (...args: unknown[]) => mockGetSession(...args),
     },
   })),
 }));
 
-// The route clears the parent-PIN unlock cookie on success.
+// The route clears the parent-PIN unlock cookie on most paths, and mints it on
+// exactly one.
 const mockCookieDelete = vi.fn();
+const mockCookieSet = vi.fn();
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ delete: mockCookieDelete })),
+  cookies: vi.fn(async () => ({
+    delete: mockCookieDelete,
+    set: mockCookieSet,
+  })),
 }));
 
 // --- Helpers ---
@@ -52,11 +89,29 @@ function createRequest(body: unknown): Request {
   });
 }
 
-function mockAuthenticated(role: "customer" | "gamer", userId: string) {
+/**
+ * The gate's success shape. `provenance` is the new axis: `family` is a session
+ * this route itself created (its `amr` names `otp`), `own` is one opened by
+ * typing a password.
+ */
+function mockAuthenticated(
+  role: "customer" | "gamer",
+  userId: string,
+  provenance: "own" | "family" = "family",
+) {
   mockRequireRole.mockResolvedValue({
-    user: { id: userId },
-    profile: { id: userId, role, first_name: role === "customer" ? "Parent" : "Gamer" },
-    supabase: { auth: { signOut: mockSignOut } },
+    user: {
+      id: userId,
+      session: { id: "caller-session", provenance },
+    },
+    profile: {
+      id: userId,
+      role,
+      first_name: role === "customer" ? "Parent" : "Gamer",
+    },
+    supabase: {
+      auth: { signOut: mockSignOut, getSession: mockGetSession },
+    },
   });
 }
 
@@ -65,13 +120,15 @@ type TargetProfile = { id: string; role: string; email: string | null } | null;
 /**
  * Configure the admin client to dispatch `from()` calls to per-table mock
  * builders. The profile lookup always responds the same way, but the
- * parent_gamer chain varies between tests (eq+eq+maybeSingle for direct
- * link checks, in() for sibling checks), so we let each test pass a
- * builder for it.
+ * parent_gamer chain varies between tests (eq+eq+maybeSingle for direct link
+ * checks, in() for sibling checks, eq() for the caller's parent list), so each
+ * test passes a builder for it. `gamerSignIn` feeds the one `gamer_profiles`
+ * read the own-session path makes.
  */
 function setupAdminFrom(args: {
   target: TargetProfile;
   parentGamerBuilder?: () => Record<string, unknown>;
+  gamerSignIn?: "parent" | "username" | "email" | null;
 }) {
   const profileChain = {
     select: vi.fn().mockReturnValue({
@@ -83,8 +140,25 @@ function setupAdminFrom(args: {
     }),
   };
 
+  const gamerProfileChain = {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        maybeSingle: vi
+          .fn()
+          .mockResolvedValue(
+            mockSupabaseSuccess(
+              args.gamerSignIn === undefined || args.gamerSignIn === null
+                ? null
+                : { sign_in: args.gamerSignIn },
+            ),
+          ),
+      }),
+    }),
+  };
+
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "profiles") return profileChain;
+    if (table === "gamer_profiles") return gamerProfileChain;
     if (table === "parent_gamer") return args.parentGamerBuilder?.() ?? {};
     return {};
   });
@@ -105,11 +179,49 @@ function linkLookup(linked: boolean) {
   });
 }
 
+/**
+ * The gamer→parent shape needs both chains from one builder: the membership
+ * check (`.eq().eq().maybeSingle()`) and the PIN gate's parent list
+ * (`.eq()` resolving to rows). The `eq` mock therefore returns an object that is
+ * both thenable and further chainable.
+ */
+function linkLookupWithParents(linked: boolean, parentIds: string[]) {
+  return () => ({
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockImplementation(() => {
+        const rows = mockSupabaseSuccess(parentIds.map((id) => ({ parent_id: id })));
+        return {
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi
+              .fn()
+              .mockResolvedValue(
+                linked ? mockSupabaseSuccess({ id: "link-1" }) : mockSupabaseSuccess(null),
+              ),
+          }),
+          then: (resolve: (value: unknown) => unknown) => Promise.resolve(rows).then(resolve),
+        };
+      }),
+    }),
+  });
+}
+
 /** Sibling check: .select('parent_id, gamer_id').in('gamer_id', [...]) */
 function siblingLookup(rows: Array<{ parent_id: string; gamer_id: string }>) {
   return () => ({
-    select: vi.fn().mockReturnValue({
-      in: vi.fn().mockResolvedValue(mockSupabaseSuccess(rows)),
+    select: vi.fn().mockImplementation((columns: string) => {
+      if (columns === "parent_id") {
+        // The PIN gate's read of the caller's own parents.
+        return {
+          eq: vi
+            .fn()
+            .mockResolvedValue(
+              mockSupabaseSuccess(
+                rows.map((row) => ({ parent_id: row.parent_id })),
+              ),
+            ),
+        };
+      }
+      return { in: vi.fn().mockResolvedValue(mockSupabaseSuccess(rows)) };
     }),
   });
 }
@@ -145,6 +257,19 @@ describe("POST /api/auth/switch-account", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSignOut.mockResolvedValue({ error: null });
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { session_id: "new-session" } },
+      error: null,
+    });
+    mockGetSession.mockResolvedValue({
+      data: { session: { access_token: "caller-token" } },
+      error: null,
+    });
+    mockAdminSignOut.mockResolvedValue({ error: null });
+    mockSignInWithPassword.mockResolvedValue({
+      data: { session: { access_token: "target-token" } },
+      error: null,
+    });
   });
 
   describe("authentication & input validation", () => {
@@ -214,8 +339,12 @@ describe("POST /api/auth/switch-account", () => {
     });
   });
 
-  describe("parent → gamer", () => {
-    it("allows parent to switch to their own linked gamer", async () => {
+  // -------------------------------------------------------------------------
+  // The membership matrix — who may be reached at all
+  // -------------------------------------------------------------------------
+
+  describe("parent → gamer (ungated)", () => {
+    it("allows parent to switch to their own linked gamer with no credential", async () => {
       mockAuthenticated("customer", PARENT_A);
       setupAdminFrom({
         target: { id: GAMER_A1, role: "gamer", email: "alphaone@gamer.sogverse.internal" },
@@ -233,6 +362,12 @@ describe("POST /api/auth/switch-account", () => {
         type: "magiclink",
         email: "alphaone@gamer.sogverse.internal",
       });
+      // No PIN was asked for and none was checked: handing the device to a
+      // child is the gesture this route exists for.
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      // Switching INTO a gamer always re-locks.
+      expect(mockCookieDelete).toHaveBeenCalled();
+      expect(mockCookieSet).not.toHaveBeenCalled();
     });
 
     it("forbids parent from switching to a different parent's gamer", async () => {
@@ -273,27 +408,7 @@ describe("POST /api/auth/switch-account", () => {
     });
   });
 
-  describe("gamer → parent", () => {
-    it("allows gamer to switch to their own linked parent", async () => {
-      mockAuthenticated("gamer", GAMER_A1);
-      setupAdminFrom({
-        target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
-        parentGamerBuilder: linkLookup(true),
-      });
-      mockHappyPathSession("parent-a@example.com");
-
-      const response = await POST(createRequest({ userId: PARENT_A }));
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(mockAdminGetUserById).toHaveBeenCalledWith(PARENT_A);
-      expect(mockAdminGenerateLink).toHaveBeenCalledWith({
-        type: "magiclink",
-        email: "parent-a@example.com",
-      });
-    });
-
+  describe("membership, from a gamer session", () => {
     it("forbids gamer from switching to an unrelated parent", async () => {
       mockAuthenticated("gamer", GAMER_A1);
       setupAdminFrom({
@@ -301,26 +416,12 @@ describe("POST /api/auth/switch-account", () => {
         parentGamerBuilder: linkLookup(false),
       });
 
-      const response = await POST(createRequest({ userId: PARENT_B }));
+      const response = await POST(createRequest({ userId: PARENT_B, pin: "1234" }));
       expect(response.status).toBe(403);
       expect(mockSignOut).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("gamer → sibling", () => {
-    it("allows sibling switch when both gamers share a parent", async () => {
-      mockAuthenticated("gamer", GAMER_A1);
-      setupAdminFrom({
-        target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
-        parentGamerBuilder: siblingLookup([
-          { parent_id: PARENT_A, gamer_id: GAMER_A1 },
-          { parent_id: PARENT_A, gamer_id: GAMER_A2 },
-        ]),
-      });
-      mockHappyPathSession("alphatwo@gamer.sogverse.internal");
-
-      const response = await POST(createRequest({ userId: GAMER_A2 }));
-      expect(response.status).toBe(200);
+      // Refused on membership BEFORE the PIN is checked, so this route cannot
+      // be used to test PINs against families the caller is not in.
+      expect(mockAdminRpc).not.toHaveBeenCalled();
     });
 
     it("forbids sibling switch when gamers belong to different parents", async () => {
@@ -333,13 +434,13 @@ describe("POST /api/auth/switch-account", () => {
         ]),
       });
 
-      const response = await POST(createRequest({ userId: GAMER_B1 }));
+      const response = await POST(createRequest({ userId: GAMER_B1, pin: "1234" }));
       expect(response.status).toBe(403);
       expect(mockSignOut).not.toHaveBeenCalled();
       expect(mockAdminGenerateLink).not.toHaveBeenCalled();
     });
 
-    it("allows sibling switch even if siblings share only one of multiple parents (multi-parent family)", async () => {
+    it("allows sibling switch when siblings share only one of several parents", async () => {
       mockAuthenticated("gamer", GAMER_A1);
       setupAdminFrom({
         target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
@@ -351,12 +452,284 @@ describe("POST /api/auth/switch-account", () => {
           { parent_id: PARENT_A, gamer_id: GAMER_A2 },
         ]),
       });
+      mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
       mockHappyPathSession("alphatwo@gamer.sogverse.internal");
 
-      const response = await POST(createRequest({ userId: GAMER_A2 }));
+      const response = await POST(createRequest({ userId: GAMER_A2, pin: "1234" }));
       expect(response.status).toBe(200);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Gate A — a family session pays a linked parent's PIN
+  // -------------------------------------------------------------------------
+
+  describe("gamer, family session → the PIN gate", () => {
+    function familySessionToParent() {
+      mockAuthenticated("gamer", GAMER_A1, "family");
+      setupAdminFrom({
+        target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
+        parentGamerBuilder: linkLookupWithParents(true, [PARENT_A, PARENT_B]),
+      });
+      mockHappyPathSession("parent-a@example.com");
+    }
+
+    it("refuses with PIN_REQUIRED when no PIN was sent", async () => {
+      familySessionToParent();
+
+      const response = await POST(createRequest({ userId: PARENT_A }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.code).toBe("PIN_REQUIRED");
+      expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+    });
+
+    it("refuses with PIN_INVALID, and does NOT sign the caller out", async () => {
+      familySessionToParent();
+      mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("invalid"));
+
+      const response = await POST(createRequest({ userId: PARENT_A, pin: "9999" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.code).toBe("PIN_INVALID");
+      // The property that matters most on this path: a wrong PIN leaves the
+      // child exactly where they were rather than stranding them signed out.
+      expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminGenerateLink).not.toHaveBeenCalled();
+    });
+
+    it("refuses with PIN_NOT_SET when nobody in the family holds one", async () => {
+      familySessionToParent();
+      mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("not_set"));
+
+      const response = await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      // Distinct from PIN_INVALID on purpose: typing more carefully cannot fix
+      // this, and the family is sent to set a PIN instead.
+      expect(data.code).toBe("PIN_NOT_SET");
+      expect(mockSignOut).not.toHaveBeenCalled();
+    });
+
+    it("checks the PIN against EVERY linked parent, not just one", async () => {
+      familySessionToParent();
+      mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
+
+      await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
+
+      expect(mockAdminRpc).toHaveBeenCalledWith("verify_pin_for_any", {
+        p_user_ids: [PARENT_A, PARENT_B],
+        p_pin: "1234",
+      });
+    });
+
+    it("switches to the parent on a valid PIN, and mints the unlock cookie", async () => {
+      familySessionToParent();
+      mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
+
+      const response = await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
+
+      expect(response.status).toBe(200);
+      expect(mockSignOut).toHaveBeenCalledOnce();
+      // The PIN was just checked one step earlier, so the parent lands unlocked
+      // rather than being asked for the same four digits twice in one gesture.
+      // The token is bound to the NEW session's id, read off its own claims.
+      expect(mockCookieSet).toHaveBeenCalledWith(
+        "sog_pin_verified",
+        expect.any(String),
+        expect.objectContaining({ httpOnly: true }),
+      );
+      expect(mockCookieDelete).not.toHaveBeenCalled();
+    });
+
+    it("switches to a sibling on a valid PIN, and CLEARS the unlock cookie", async () => {
+      mockAuthenticated("gamer", GAMER_A1, "family");
+      setupAdminFrom({
+        target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
+        parentGamerBuilder: siblingLookup([
+          { parent_id: PARENT_A, gamer_id: GAMER_A1 },
+          { parent_id: PARENT_A, gamer_id: GAMER_A2 },
+        ]),
+      });
+      mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
+      mockHappyPathSession("alphatwo@gamer.sogverse.internal");
+
+      const response = await POST(createRequest({ userId: GAMER_A2, pin: "1234" }));
+
+      expect(response.status).toBe(200);
+      // Entering a gamer never unlocks anything.
+      expect(mockCookieSet).not.toHaveBeenCalled();
+      expect(mockCookieDelete).toHaveBeenCalled();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Gate B — an own session pays the TARGET's password
+  // -------------------------------------------------------------------------
+
+  describe("gamer, own session → the password gate", () => {
+    function ownSessionToParent() {
+      mockAuthenticated("gamer", GAMER_A1, "own");
+      setupAdminFrom({
+        target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
+        parentGamerBuilder: linkLookup(true),
+      });
+      mockAdminGetUserById.mockResolvedValue({
+        data: { user: { id: PARENT_A, email: "parent-a@example.com" } },
+        error: null,
+      });
+    }
+
+    it("refuses with PASSWORD_REQUIRED when none was sent — and never asks for a PIN", async () => {
+      ownSessionToParent();
+
+      const response = await POST(createRequest({ userId: PARENT_A }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.code).toBe("PASSWORD_REQUIRED");
+      // A four-digit PIN is not what should stand between a school computer and
+      // the parent's account, so this path never falls back to one.
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(mockSignOut).not.toHaveBeenCalled();
+    });
+
+    it("refuses a PIN sent instead of a password", async () => {
+      ownSessionToParent();
+
+      const response = await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.code).toBe("PASSWORD_REQUIRED");
+    });
+
+    it("refuses with PASSWORD_INVALID, leaving the caller's session untouched", async () => {
+      ownSessionToParent();
+      mockSignInWithPassword.mockResolvedValue({
+        data: { session: null },
+        error: { code: "invalid_credentials", message: "Invalid login credentials" },
+      });
+
+      const response = await POST(
+        createRequest({ userId: PARENT_A, password: "wrong" }),
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.code).toBe("PASSWORD_INVALID");
+      // The hard constraint of this path: a failed sign-in writes no cookies, so
+      // there is nothing to unwind and the child is still signed in as
+      // themselves. Nothing revoked the old session either.
+      expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminSignOut).not.toHaveBeenCalled();
+    });
+
+    it("signs in AS the parent, so the new session is itself a password session", async () => {
+      ownSessionToParent();
+
+      const response = await POST(
+        createRequest({ userId: PARENT_A, password: "correct horse" }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(mockSignInWithPassword).toHaveBeenCalledWith({
+        email: "parent-a@example.com",
+        password: "correct horse",
+      });
+      // The OTP path is not taken at all — an otp-created session would be a
+      // family session, and the next switch out of it would cost only a PIN.
+      expect(mockAdminGenerateLink).not.toHaveBeenCalled();
+    });
+
+    it("never mints the unlock cookie — the parent lands on the PIN gate too", async () => {
+      ownSessionToParent();
+
+      await POST(createRequest({ userId: PARENT_A, password: "correct horse" }));
+
+      expect(mockCookieSet).not.toHaveBeenCalled();
+      expect(mockCookieDelete).toHaveBeenCalled();
+    });
+
+    it("revokes the caller's old session by its own access token", async () => {
+      ownSessionToParent();
+
+      await POST(createRequest({ userId: PARENT_A, password: "correct horse" }));
+
+      expect(mockAdminSignOut).toHaveBeenCalledWith("caller-token", "local");
+    });
+
+    it("reaches a sibling who has a sign-in of their own", async () => {
+      mockAuthenticated("gamer", GAMER_A1, "own");
+      setupAdminFrom({
+        target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
+        parentGamerBuilder: siblingLookup([
+          { parent_id: PARENT_A, gamer_id: GAMER_A1 },
+          { parent_id: PARENT_A, gamer_id: GAMER_A2 },
+        ]),
+        gamerSignIn: "username",
+      });
+
+      const response = await POST(
+        createRequest({ userId: GAMER_A2, password: "sibling-password" }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(mockSignInWithPassword).toHaveBeenCalledWith({
+        email: "alphatwo@gamer.sogverse.internal",
+        password: "sibling-password",
+      });
+    });
+
+    it("refuses a switch-only sibling with TARGET_UNREACHABLE, not a wrong password", async () => {
+      mockAuthenticated("gamer", GAMER_A1, "own");
+      setupAdminFrom({
+        target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
+        parentGamerBuilder: siblingLookup([
+          { parent_id: PARENT_A, gamer_id: GAMER_A1 },
+          { parent_id: PARENT_A, gamer_id: GAMER_A2 },
+        ]),
+        gamerSignIn: "parent",
+      });
+
+      const response = await POST(
+        createRequest({ userId: GAMER_A2, password: "anything" }),
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      // Said plainly rather than answered as a wrong password: no password can
+      // ever be right, so the family fixes it by giving that child a sign-in.
+      expect(data.code).toBe("TARGET_UNREACHABLE");
+      expect(mockSignInWithPassword).not.toHaveBeenCalled();
+    });
+
+    it("treats a sibling with no gamer_profiles row as unreachable", async () => {
+      mockAuthenticated("gamer", GAMER_A1, "own");
+      setupAdminFrom({
+        target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
+        parentGamerBuilder: siblingLookup([
+          { parent_id: PARENT_A, gamer_id: GAMER_A1 },
+          { parent_id: PARENT_A, gamer_id: GAMER_A2 },
+        ]),
+        gamerSignIn: null,
+      });
+
+      const response = await POST(
+        createRequest({ userId: GAMER_A2, password: "anything" }),
+      );
+
+      expect((await response.json()).code).toBe("TARGET_UNREACHABLE");
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Everything that can go wrong after the gate
+  // -------------------------------------------------------------------------
 
   describe("session mutation failures", () => {
     it("returns 500 when generateLink fails — does NOT sign out the caller", async () => {
@@ -412,19 +785,39 @@ describe("POST /api/auth/switch-account", () => {
     });
 
     it("returns 500 when parent email lookup fails", async () => {
-      mockAuthenticated("gamer", GAMER_A1);
+      mockAuthenticated("gamer", GAMER_A1, "family");
       setupAdminFrom({
         target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
-        parentGamerBuilder: linkLookup(true),
+        parentGamerBuilder: linkLookupWithParents(true, [PARENT_A]),
       });
+      mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
       mockAdminGetUserById.mockResolvedValue({
         data: { user: null },
         error: { message: "User not found" },
       });
 
-      const response = await POST(createRequest({ userId: PARENT_A }));
+      const response = await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
       expect(response.status).toBe(500);
       expect(mockSignOut).not.toHaveBeenCalled();
+    });
+
+    it("leaves the parent locked when the new session carries no session_id", async () => {
+      mockAuthenticated("gamer", GAMER_A1, "family");
+      setupAdminFrom({
+        target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
+        parentGamerBuilder: linkLookupWithParents(true, [PARENT_A]),
+      });
+      mockAdminRpc.mockResolvedValue(mockSupabaseSuccess("valid"));
+      mockHappyPathSession("parent-a@example.com");
+      mockGetClaims.mockResolvedValue({ data: { claims: {} }, error: null });
+
+      const response = await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
+
+      expect(response.status).toBe(200);
+      // Worse UX, never a weaker gate: the parent types the PIN again at the
+      // unlock screen rather than the route minting a token it cannot bind.
+      expect(mockCookieSet).not.toHaveBeenCalled();
+      expect(mockCookieDelete).toHaveBeenCalled();
     });
   });
 

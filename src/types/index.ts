@@ -776,6 +776,18 @@ export interface CreateGamerInput {
   gender?: "boy" | "girl" | "non_binary" | null;
   minecraftUsername?: string;
   robloxUsername?: string;
+  /**
+   * How this child will reach their own account. Optional, and absent means
+   * `parent` — the switch-only shape every gamer had before the modes existed,
+   * which is also what the route defaults to.
+   */
+  signIn?: GamerSignIn;
+  /** Required by `username` mode, forbidden by the other two. */
+  username?: string;
+  /** Required by `email` mode, forbidden by the other two. */
+  email?: string;
+  /** Required by `username` mode, forbidden by the other two. */
+  password?: string;
 }
 
 export interface LoginCredentials {

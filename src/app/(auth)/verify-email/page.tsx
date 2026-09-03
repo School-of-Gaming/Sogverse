@@ -52,7 +52,7 @@ export default async function VerifyEmailPage({
 
   // A repeated `?token=a&token=b` is not a token. `typeof === "string"` is the
   // idiom the other token landing page uses, and it rejects that case for free.
-  const outcome = await redeemEmailVerificationToken(
+  const { outcome } = await redeemEmailVerificationToken(
     typeof token === "string" ? token : null,
   );
 

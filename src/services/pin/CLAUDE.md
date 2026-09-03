@@ -5,19 +5,44 @@ device the parent's password is usually saved/autofilled, so it's not an
 effective secret there. The PIN — which lives only in the parent's head — is the
 real boundary protecting payment/management actions from children.
 
-## The model: a locked session
+## Two gates, and they answer different questions
 
-A `customer` session is **locked** until the parent enters their PIN once. While
-locked, the session may not act as the parent **anywhere** — the boundary is the
-session's state, not any particular route. Once unlocked it stays unlocked for
-the life of that session: until the user **switches to a gamer** or **signs
-out**. There is no inactivity/TTL expiry (a deferred improvement).
+The PIN is spent in two places, and conflating them is the mistake this section
+exists to prevent.
 
-Scope: only escalation into a parent account is gated. Gamer↔gamer (sibling)
-switching is free, and admin/gedu/gamer roles are never affected.
+**Gate A — a locked parent session.** A `customer` session is **locked** until
+the parent enters their PIN once. While locked, the session may not act as the
+parent **anywhere** — the boundary is the session's state, not any particular
+route. Once unlocked it stays unlocked for the life of that session: until the
+user **switches to a gamer** or **signs out**. There is no inactivity/TTL expiry
+(a deferred improvement). Everything under "Enforcement", "The unlock cookie" and
+the UI section below is Gate A.
 
-**Rule: Every PIN check is behind a single `role === "customer"` condition.** Do
-not gate other roles, and do not gate per-route — gate the session state.
+**Gate B — leaving a gamer session.** A child switching *out* of their own
+account into anyone else's pays a credential, and which one depends on how their
+session was created (`src/lib/session-provenance.ts`, read off the JWT's `amr`
+claim and carried on the guard's `user.session`):
+
+- a **family session** — the parent switched the child in, so the token records
+  `otp` and no password — costs **a linked parent's PIN**. This is the household
+  case: the child is on the family's device and the parent is nearby, so the PIN
+  is accepted friction. Any of the child's parents' PINs opens it, because a
+  child may be linked to more than one.
+- an **own session** — the child signed in with a username or an email of their
+  own, so the token records `password` — costs **the target account's own
+  password**, and never a PIN. The reason is the threat this gate is actually
+  about: a child may sign in on a school computer and forget to sign out, and a
+  four-digit PIN with no rate limit is not what should stand between that machine
+  and the parent's account.
+
+**Rule: parent → gamer stays one click and is never gated.** Handing the device
+to a child is the gesture the switcher exists for, and a *locked* parent must be
+able to make it — which is what `allowUnverified` on the switch route is for.
+
+**Rule: Gate A is keyed on `role === "customer"`; Gate B is keyed on a gamer
+caller and their session's provenance.** Neither may grow a per-route condition:
+Gate A gates the session state, and Gate B gates the one route that can change
+which account a session belongs to.
 
 ## Enforcement: two chokepoints
 
@@ -43,6 +68,60 @@ for capabilities** — the page gate is UX.
 `requireRole("customer")`. Opening a hole requires the explicit, greppable
 `allowUnverified` flag — never bypass the gate any other way.**
 
+## Gate B lives entirely in the account-switch route, and can live nowhere else
+
+**Rule: `POST /api/auth/switch-account` is the only place a switch PIN is
+verified, and the only place outside the PIN routes that mints the unlock
+cookie.** Both follow from one fact: the check happens while the caller is still
+the child, and the cookie has to be bound to a session that does not exist yet.
+Nothing before the route has the caller's session to read the provenance from,
+and nothing after it exists early enough to see the new session's id.
+
+What the route does, in order: resolve the target, run the family-membership
+matrix, *then* charge the gate. Membership first is load-bearing — otherwise the
+route would test PINs against families the caller is not in.
+
+- **Family session.** The PIN is checked with `verify_pin_for_any` over every
+  parent this child is linked to, through the service-role client. That function
+  compares none of its arguments against `auth.uid()`, so it is service-role only
+  and what establishes the caller may ask about *these* parents is the membership
+  matrix that ran first. Three outcomes, and they are answered differently:
+  `valid` proceeds, `invalid` is a 403 `PIN_INVALID`, and `not_set` is a 403
+  `PIN_NOT_SET` — a fact about the family, which no amount of careful typing
+  fixes, so the family is sent to set a PIN rather than told a child got theirs
+  wrong. A missing PIN in the body is 403 `PIN_REQUIRED`.
+- **Own session.** The route signs in **as the target** with their password, so
+  the session it produces is itself a password session — an OTP-created one would
+  be a family session, and the next switch out of it would cost only a PIN. A
+  wrong password is 403 `PASSWORD_INVALID`, uniform with an account that holds no
+  password at all so it cannot be read as an oracle. A sibling in sign-in mode
+  `parent` holds no password by construction and is refused 403
+  `TARGET_UNREACHABLE`, said plainly rather than as a wrong password.
+
+**Rule: a failed gate must leave the caller's session untouched.** Verify before
+anything destructive — on the PIN path that means checking before the sign-out,
+and on the password path it means that the sign-in *is* the check, so a refusal
+writes no cookies and there is nothing to unwind.
+
+**Rule: the unlock cookie is minted on exactly one path — a family session
+switching to a parent — and never on the own-session path.** On the first, the
+PIN was just checked one step earlier and asking for the same four digits twice
+in one gesture is friction with nothing behind it. On the second, the whole point
+is that a school computer pays for both: the password that got here, and then the
+PIN at the unlock gate. Switching into a *gamer* always clears the cookie.
+
+**Rule: a family may not acquire a gamer before it has a PIN.** `create_gamer`
+refuses a parent with no PIN as its first statement (SQLSTATE `P0025`), and the
+creation route turns that one refusal into a 403 `PIN_REQUIRED` the parent can
+act on. Gate B is the reason: a family holding a gamer account and no PIN would
+leave that gate with nothing behind it.
+
+**Trap: `pin_is_set()` answers about the caller, so it is useless from a gamer
+session.** It is `auth.uid()`-scoped, and a child is not their parent — a child
+asking it gets the answer for their own account, which has no `customer_profiles`
+row at all. Anything that needs to know whether a *family* holds a PIN asks
+`verify_pin_for_any`, which takes the parents explicitly.
+
 ## The unlock cookie
 
 `sog_pin_verified` holds an HMAC (`PIN_COOKIE_SECRET`) over `(userId,
@@ -51,7 +130,7 @@ user (a stale cookie can't unlock another account), and bound to the auth
 `session_id` — stable across token refreshes (so the unlock holds for the
 session's life) but changing on re-login / account switch, so switching
 auto re-locks with **no server state**. It is also explicitly cleared on
-sign-out and `switch-account`.
+sign-out and on every switch but the one Gate B mints it for.
 
 **It's a session cookie** — no `maxAge`/`expires`. It survives closing a *tab*
 but is dropped when the *browser* quits (verified in Chromium), so quitting and
@@ -65,6 +144,13 @@ security, not a guarantee.
 
 - `set_my_pin(pin)` / `verify_my_pin(pin)` / `pin_is_set()` — `auth.uid()`-scoped,
   granted to `authenticated`, touch only the caller's own row.
+- `verify_pin_for_any(user_ids, pin)` — does this PIN match ANY of these users?
+  Answers `valid` / `invalid` / `not_set`, never NULL and never a raise, because
+  it sits on a credential path where a mistyped digit must not become a 500.
+  Admin-only (REVOKE'd from `authenticated`): it checks no argument against
+  `auth.uid()`, so exposed to a session it would be a PIN oracle pointable at any
+  family. Called by the switch route alone, after the membership matrix has
+  established the caller may ask about those parents.
 - `set_pin_for_user(user_id, pin)` — admin-only (REVOKE'd from `authenticated`),
   used solely by the email-reset route via the service-role client. That route
   resolves its user from a signed token rather than a session, so it genuinely
@@ -192,9 +278,11 @@ Screens:
 `resolveInternalPath()` before navigating** (root `CLAUDE.md` § Redirects) — and
 the gate itself is dropped as a target so success can't loop back.
 
-Routing into the gate needs no special-casing in `select-profile`: switching into
-a parent (or "Continue as me") clears the unlock cookie / lands on `/parent`,
-which the proxy redirects to `/parent/unlock`.
+Routing into the gate needs no special-casing in `select-profile` for a parent
+signing in or continuing as themselves: they land on `/parent`, which the proxy
+redirects to `/parent/unlock`. The one case that skips the gate is the switch
+route minting the cookie for a family session that just paid a PIN to get there —
+see Gate B above; the gate is not bypassed, it is already satisfied.
 
 There is no client-side handling of an API `403 PIN_REQUIRED`: within a live tab
 an unlocked session can't silently re-lock, and every navigation is already

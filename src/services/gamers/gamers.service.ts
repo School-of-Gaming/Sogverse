@@ -3,11 +3,13 @@ import type {
   ParentGamer,
   CreateGamerInput,
   GamerProfile,
+  GamerSignIn,
   GenderType,
   AppSupabaseClient,
 } from "@/types";
 import { isGamerProfile } from "@/types";
 import { ApiError } from "@/lib/api/api-error";
+import { readErrorMessage } from "@/lib/api/json-response";
 
 /**
  * What a parent may change about one of their gamers, one field at a time.
@@ -19,9 +21,21 @@ import { ApiError } from "@/lib/api/api-error";
  */
 export interface GamerUpdate {
   firstName?: string;
+  /**
+   * A new password for the child. Accepted only while the account is (or is
+   * becoming) in `username` mode — the route answers 400 otherwise, because a
+   * password on a switch-only or email-mode account is a credential with
+   * nothing to type it against.
+   */
   password?: string;
   minecraftUsername?: string | null;
   robloxUsername?: string | null;
+  /** Move the child to a different sign-in mode. Absent leaves the mode alone. */
+  signIn?: GamerSignIn;
+  /** A new username, which also becomes the account's synthetic address. */
+  username?: string;
+  /** A new real address, which the child then has to verify again. */
+  email?: string;
 }
 
 /**
@@ -148,6 +162,13 @@ export class GamerService {
         gender: input.gender,
         minecraftUsername: input.minecraftUsername,
         robloxUsername: input.robloxUsername,
+        // Named one at a time rather than spread, so a field the route does not
+        // take cannot arrive by accident. The credential trio is only ever the
+        // one its mode calls for; the route re-checks that pairing anyway.
+        signIn: input.signIn,
+        username: input.username,
+        email: input.email,
+        password: input.password,
       }),
     });
 
@@ -177,10 +198,37 @@ export class GamerService {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Failed to update gamer");
+      // Carries the code through, so a form can tell "that username is taken"
+      // from every other refusal and put the message on the right field.
+      throw new ApiError(
+        data.error || "Failed to update gamer",
+        response.status,
+        data.code,
+      );
     }
 
     return data.gamer;
+  }
+
+  /**
+   * Ask us to re-send the verification mail to one of this parent's children.
+   *
+   * A child in `email` mode cannot ask for themselves — they have no password
+   * until the address is verified — so the request is the parent's, about a
+   * named child. The send is the outcome here rather than a follow-on, so a
+   * failure is surfaced rather than swallowed.
+   */
+  async sendGamerVerificationEmail(gamerId: string): Promise<void> {
+    const response = await fetch(`/api/gamers/${gamerId}/verification/send`, {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new ApiError(
+        await readErrorMessage(response, "Failed to send the verification email"),
+        response.status,
+        undefined,
+      );
+    }
   }
 
   async getParentGamerLinks(parentId: string): Promise<ParentGamer[]> {

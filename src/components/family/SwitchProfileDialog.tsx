@@ -78,7 +78,7 @@ export function SwitchProfileDialog({
       // The redirect override is this surface's whole reason for passing one:
       // it carries an intent marker across the switch, so it lands somewhere
       // other than the target's own dashboard.
-      await commitAccountSwitch(target, redirectUrl);
+      await commitAccountSwitch(target, { redirectUrl });
     } catch (err) {
       setIsSwitching(false);
       // The reader gets the translated line; the server's own words (always

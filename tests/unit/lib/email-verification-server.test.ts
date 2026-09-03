@@ -22,13 +22,21 @@ process.env.PIN_COOKIE_SECRET = "unit-test-pin-secret";
 const supabase = vi.hoisted(() => {
   interface ProfileRow {
     email: string | null;
+    role?: string;
   }
 
   const state = {
     /** What the profile read answers. */
     profile: null as ProfileRow | null,
+    /** What the gamer_profiles read answers, for a gamer subject. */
+    gamerProfile: null as { sign_in: string } | null,
     /** What the conditional update answers. */
     updateError: null as { message: string } | null,
+    /**
+     * How many rows the conditional update touched. One means this call is what
+     * moved the stamp off NULL; zero means it was already set, i.e. a repeat.
+     */
+    rowsStamped: 1,
     /** Everything the module actually asked for, in order. */
     tables: [] as string[],
     selectFilters: [] as [string, unknown][],
@@ -40,7 +48,9 @@ const supabase = vi.hoisted(() => {
 
   function reset() {
     state.profile = null;
+    state.gamerProfile = null;
     state.updateError = null;
+    state.rowsStamped = 1;
     state.tables = [];
     state.selectFilters = [];
     state.updatePayloads = [];
@@ -54,14 +64,16 @@ const supabase = vi.hoisted(() => {
     return {
       from(table: string) {
         state.tables.push(table);
+        const isGamerProfiles = table === "gamer_profiles";
         return {
           select() {
             const read = {
               eq(column: string, value: unknown) {
-                state.selectFilters.push([column, value]);
+                if (!isGamerProfiles) state.selectFilters.push([column, value]);
                 return read;
               },
               single: async () => ({ data: state.profile, error: null }),
+              maybeSingle: async () => ({ data: state.gamerProfile, error: null }),
             };
             return read;
           },
@@ -72,12 +84,23 @@ const supabase = vi.hoisted(() => {
                 state.updateFilters.push([column, value]);
                 return write;
               },
-              // Terminal on purpose: the chain the module builds ends here, so a
-              // future edit that drops the NULL predicate leaves the statement
-              // un-awaitable and the isFilters assertions empty.
               is(column: string, value: unknown) {
                 state.isFilters.push([column, value]);
-                return Promise.resolve({ error: state.updateError });
+                // Terminal on purpose: the chain the module builds ends in the
+                // `select` that reports which rows it touched, so a future edit
+                // dropping either the NULL predicate or the affected-row read
+                // leaves the statement un-awaitable rather than quietly wrong.
+                return {
+                  select: () =>
+                    Promise.resolve({
+                      data: state.updateError
+                        ? null
+                        : Array.from({ length: state.rowsStamped }, () => ({
+                            id: "row",
+                          })),
+                      error: state.updateError,
+                    }),
+                };
               },
             };
             return write;
@@ -117,7 +140,8 @@ describe("redeemEmailVerificationToken — the happy path", () => {
     const result = await redeemEmailVerificationToken(token);
     const after = Date.now();
 
-    expect(result).toBe("verified");
+    expect(result.outcome).toBe("verified");
+    // A customer subject makes no `gamer_profiles` read; only a gamer does.
     expect(supabase.state.tables).toEqual(["profiles", "profiles"]);
     expect(supabase.state.selectFilters).toEqual([["id", USER]]);
     expect(supabase.state.updateFilters).toEqual([["id", USER]]);
@@ -141,11 +165,20 @@ describe("redeemEmailVerificationToken — the happy path", () => {
     supabase.state.profile = { email: EMAIL };
     const token = await createEmailVerificationToken(USER, EMAIL);
 
-    // First click.
-    expect(await redeemEmailVerificationToken(token)).toBe("verified");
-    // Second click, against a row that now carries ORIGINAL_STAMP. The write is
-    // conditioned on the column being NULL, so it matches zero rows.
-    expect(await redeemEmailVerificationToken(token)).toBe("verified");
+    // First click: this is the call that moves the stamp.
+    const first = await redeemEmailVerificationToken(token);
+    expect(first.outcome).toBe("verified");
+    expect(first.firstVerification).toBe(true);
+
+    // Second click, against a row that now carries the original stamp. The
+    // write is conditioned on the column being NULL, so it matches zero rows —
+    // and THAT is the signal anything with a side effect keys on. A child's
+    // password-reset mail must not go out again on a reload or an inbox scanner
+    // pre-fetching the link.
+    supabase.state.rowsStamped = 0;
+    const second = await redeemEmailVerificationToken(token);
+    expect(second.outcome).toBe("verified");
+    expect(second.firstVerification).toBe(false);
 
     expect(
       supabase.state.isFilters,
@@ -164,18 +197,24 @@ describe("redeemEmailVerificationToken — the happy path", () => {
 
 describe("redeemEmailVerificationToken — everything it refuses", () => {
   it("refuses a missing token without touching the database", async () => {
-    expect(await redeemEmailVerificationToken(null)).toBe("invalid");
-    expect(await redeemEmailVerificationToken(undefined)).toBe("invalid");
-    expect(await redeemEmailVerificationToken("")).toBe("invalid");
+    expect((await redeemEmailVerificationToken(null)).outcome).toBe("invalid");
+    expect((await redeemEmailVerificationToken(undefined)).outcome).toBe(
+      "invalid",
+    );
+    expect((await redeemEmailVerificationToken("")).outcome).toBe("invalid");
     expect(supabase.state.clientsCreated).toBe(0);
   });
 
   it("refuses a malformed token without touching the database", async () => {
-    expect(await redeemEmailVerificationToken("not-a-token")).toBe("invalid");
-    expect(await redeemEmailVerificationToken(`${USER}.sig.extra`)).toBe(
+    expect((await redeemEmailVerificationToken("not-a-token")).outcome).toBe(
       "invalid",
     );
-    expect(await redeemEmailVerificationToken(".deadbeef")).toBe("invalid");
+    expect(
+      (await redeemEmailVerificationToken(`${USER}.sig.extra`)).outcome,
+    ).toBe("invalid");
+    expect((await redeemEmailVerificationToken(".deadbeef")).outcome).toBe(
+      "invalid",
+    );
     expect(supabase.state.clientsCreated).toBe(0);
   });
 
@@ -188,7 +227,7 @@ describe("redeemEmailVerificationToken — everything it refuses", () => {
     supabase.state.profile = null;
     const token = await createEmailVerificationToken(USER, EMAIL);
 
-    expect(await redeemEmailVerificationToken(token)).toBe("invalid");
+    expect((await redeemEmailVerificationToken(token)).outcome).toBe("invalid");
     expect(supabase.state.updatePayloads).toEqual([]);
   });
 
@@ -196,7 +235,7 @@ describe("redeemEmailVerificationToken — everything it refuses", () => {
     supabase.state.profile = { email: null };
     const token = await createEmailVerificationToken(USER, EMAIL);
 
-    expect(await redeemEmailVerificationToken(token)).toBe("invalid");
+    expect((await redeemEmailVerificationToken(token)).outcome).toBe("invalid");
     expect(supabase.state.updatePayloads).toEqual([]);
   });
 
@@ -209,7 +248,7 @@ describe("redeemEmailVerificationToken — everything it refuses", () => {
     supabase.state.profile = { email: "somebody-else@example.com" };
     const token = await createEmailVerificationToken(USER, EMAIL);
 
-    expect(await redeemEmailVerificationToken(token)).toBe("invalid");
+    expect((await redeemEmailVerificationToken(token)).outcome).toBe("invalid");
     expect(supabase.state.updatePayloads).toEqual([]);
   });
 
@@ -218,9 +257,9 @@ describe("redeemEmailVerificationToken — everything it refuses", () => {
     const token = await createEmailVerificationToken(USER, EMAIL);
     const [userId] = token.split(".");
 
-    expect(await redeemEmailVerificationToken(`${userId}.deadbeef`)).toBe(
-      "invalid",
-    );
+    expect(
+      (await redeemEmailVerificationToken(`${userId}.deadbeef`)).outcome,
+    ).toBe("invalid");
     expect(supabase.state.updatePayloads).toEqual([]);
   });
 
@@ -230,7 +269,7 @@ describe("redeemEmailVerificationToken — everything it refuses", () => {
     const [, signature] = token.split(".");
     const forged = `22222222-2222-2222-2222-222222222222.${signature}`;
 
-    expect(await redeemEmailVerificationToken(forged)).toBe("invalid");
+    expect((await redeemEmailVerificationToken(forged)).outcome).toBe("invalid");
     expect(supabase.state.updatePayloads).toEqual([]);
   });
 
@@ -245,8 +284,59 @@ describe("redeemEmailVerificationToken — everything it refuses", () => {
     supabase.state.updateError = { message: "connection reset" };
     const token = await createEmailVerificationToken(USER, EMAIL);
 
-    expect(await redeemEmailVerificationToken(token)).toBe("invalid");
+    expect((await redeemEmailVerificationToken(token)).outcome).toBe("invalid");
     expect(supabase.state.updatePayloads).toHaveLength(1);
     expect(logged).toHaveBeenCalled();
+  });
+});
+
+/**
+ * What the result carries beyond `outcome`, which exists for one reader: a child
+ * in sign-in mode `email`, whose verification is the FIRST half of getting a
+ * usable account. The verify page needs the mode, the address and whether this
+ * click was the real one, and taking all three from here is what keeps that page
+ * from making a second lookup of its own.
+ */
+describe("redeemEmailVerificationToken — what the verify page is told", () => {
+  it("describes a gamer in email mode, so the page can send the reset link", async () => {
+    supabase.state.profile = { email: EMAIL, role: "gamer" };
+    supabase.state.gamerProfile = { sign_in: "email" };
+    const token = await createEmailVerificationToken(USER, EMAIL);
+
+    const result = await redeemEmailVerificationToken(token);
+
+    expect(result).toEqual({
+      outcome: "verified",
+      role: "gamer",
+      signIn: "email",
+      email: EMAIL,
+      firstVerification: true,
+    });
+  });
+
+  it("reports no sign-in mode for a role that has none", async () => {
+    supabase.state.profile = { email: EMAIL, role: "customer" };
+    const token = await createEmailVerificationToken(USER, EMAIL);
+
+    const result = await redeemEmailVerificationToken(token);
+
+    expect(result.role).toBe("customer");
+    expect(result.signIn).toBeNull();
+    // The mode read is skipped entirely rather than answered null by the query.
+    expect(supabase.state.tables).not.toContain("gamer_profiles");
+  });
+
+  it("describes nothing at all on an invalid link", async () => {
+    // There is no account to describe, and inventing fields for one would give
+    // the page something to act on that it has not earned.
+    const result = await redeemEmailVerificationToken("not-a-token");
+
+    expect(result).toEqual({
+      outcome: "invalid",
+      role: null,
+      signIn: null,
+      email: null,
+      firstVerification: false,
+    });
   });
 });

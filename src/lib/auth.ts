@@ -2,13 +2,35 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
+import {
+  sessionProvenanceFromAmr,
+  type SessionProvenance,
+} from "@/lib/session-provenance";
 // Imported from the service file (not the @/services/gedu barrel) so this
 // server module doesn't pull in the barrel's React Query hooks.
 import { isGeduCertified } from "@/services/gedu/gedu-profiles.service";
 import type { AuthenticatedUser, Profile, UserRole } from "@/types";
 
+/**
+ * The session behind a gated request, resolved once by the gate.
+ *
+ * Both fields come off the verified JWT, and both are put here so no route has
+ * to re-read claims to get them: `id` is the `session_id` the PIN unlock cookie
+ * is bound to, and `provenance` is whether this session was opened with this
+ * account's own password or handed over from another family member's
+ * (`src/lib/session-provenance.ts`). The switch route reads both; nothing else
+ * has to know how either is derived.
+ */
+export interface GatedSession {
+  id: string;
+  provenance: SessionProvenance;
+}
+
+/** The caller a gate hands back: their identity plus the session they hold. */
+export type GatedUser = AuthenticatedUser & { session: GatedSession };
+
 type AuthSuccess<R extends UserRole> = {
-  user: AuthenticatedUser;
+  user: GatedUser;
   profile: Omit<Profile, "role"> & { role: R };
   supabase: Awaited<ReturnType<typeof createClient>>;
 };
@@ -131,6 +153,13 @@ export async function requireRole<const R extends UserRole>(
     }
   }
 
-  const user = { id: claims.sub, email: claims.email };
+  const user: GatedUser = {
+    id: claims.sub,
+    email: claims.email,
+    session: {
+      id: claims.session_id,
+      provenance: sessionProvenanceFromAmr(claims.amr),
+    },
+  };
   return { user, profile, supabase };
 }

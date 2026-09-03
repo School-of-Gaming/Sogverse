@@ -36,6 +36,11 @@ vi.mock("@/lib/mojang", () => ({
   lookupMinecraftUser: (...args: unknown[]) => mockLookupMinecraftUser(...args),
 }));
 
+const mockSendGamerWelcomeEmail = vi.fn();
+vi.mock("@/lib/gamer-welcome.server", () => ({
+  sendGamerWelcomeEmail: (...args: unknown[]) => mockSendGamerWelcomeEmail(...args),
+}));
+
 const mockLookupRobloxProfile = vi.fn();
 vi.mock("@/lib/roblox", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/roblox")>();
@@ -525,4 +530,208 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
       expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
     },
   );
+});
+
+describe("POST /api/gamers/create — the sign-in modes", () => {
+  /**
+   * The mode decides what auth user is created, and the three shapes are
+   * genuinely different accounts rather than one account with a flag. What each
+   * case pins is the pair that has to agree: the address GoTrue is given, and
+   * whether a password goes with it.
+   */
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthenticated();
+    mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
+    mockCreateUser.mockResolvedValue({
+      data: { user: { id: "new-gamer-id" } },
+      error: null,
+    });
+    mockDeleteUser.mockResolvedValue({ error: null });
+    mockRpc.mockResolvedValue({ error: null });
+    mockSendGamerWelcomeEmail.mockResolvedValue(undefined);
+  });
+
+  const base = { firstName: "Aino", dateOfBirth: "2015-06-15" };
+
+  it("defaults to `parent`: a random handle, no password, no mail", async () => {
+    // Absent rather than sent, because a client that predates the modes — a
+    // cached bundle, a page open across a deploy — must still create the
+    // switch-only account it has always created.
+    const response = await POST(createRequest(base));
+
+    expect(response.status).toBe(200);
+    const [created] = mockCreateUser.mock.calls[0];
+    expect(created.email).toMatch(/^g[0-9a-f]{16}@gamer\.sogverse\.internal$/);
+    expect(created.password).toBeUndefined();
+    expect(mockRpc).toHaveBeenCalledWith(
+      "create_gamer",
+      expect.objectContaining({ p_sign_in: "parent" }),
+    );
+    expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
+  });
+
+  it("`username`: the handle becomes the address, and the password is set", async () => {
+    const response = await POST(
+      createRequest({
+        ...base,
+        signIn: "username",
+        username: "Aino",
+        password: "a good password",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const [created] = mockCreateUser.mock.calls[0];
+    // Normalised on the way in, so GoTrue's uniqueness on the address is what
+    // makes the username unique — one username can only ever be one account.
+    expect(created.email).toBe("aino@gamer.sogverse.internal");
+    expect(created.password).toBe("a good password");
+    expect(mockRpc).toHaveBeenCalledWith(
+      "create_gamer",
+      expect.objectContaining({ p_sign_in: "username" }),
+    );
+    expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
+  });
+
+  it("`email`: the real address, NO password, and the welcome mail", async () => {
+    const response = await POST(
+      createRequest({ ...base, signIn: "email", email: "aino@example.com" }),
+    );
+
+    expect(response.status).toBe(200);
+    const [created] = mockCreateUser.mock.calls[0];
+    expect(created.email).toBe("aino@example.com");
+    // Deliberately passwordless: the child verifies the address first and then
+    // sets a password through the ordinary reset flow.
+    expect(created.password).toBeUndefined();
+    expect(mockSendGamerWelcomeEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ gamerId: "new-gamer-id" }),
+    );
+  });
+
+  it("a failed welcome mail does not fail the creation", async () => {
+    mockSendGamerWelcomeEmail.mockRejectedValue(new Error("brevo is down"));
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await POST(
+      createRequest({ ...base, signIn: "email", email: "aino@example.com" }),
+    );
+
+    // The account is the outcome the parent asked for and it exists by now; the
+    // link can be sent again from the child's card.
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ gamerId: "new-gamer-id" });
+    spy.mockRestore();
+  });
+
+  // -- The pairing rules, refused by the schema before anything is created --
+
+  it.each([
+    ["username with no password", { signIn: "username", username: "aino" }],
+    ["username with no username", { signIn: "username", password: "a good password" }],
+    [
+      "username with an email address",
+      {
+        signIn: "username",
+        username: "aino",
+        password: "a good password",
+        email: "aino@example.com",
+      },
+    ],
+    ["email with no address", { signIn: "email" }],
+    [
+      "email with a password",
+      { signIn: "email", email: "aino@example.com", password: "a good password" },
+    ],
+    ["parent with a username", { signIn: "parent", username: "aino" }],
+    ["parent with an address", { signIn: "parent", email: "aino@example.com" }],
+    ["parent with a password", { signIn: "parent", password: "a good password" }],
+  ])("refuses %s with 400, creating nothing", async (_name, credentials) => {
+    const response = await POST(createRequest({ ...base, ...credentials }));
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
+  });
+
+  it("refuses a username that is not 3-20 letters or digits", async () => {
+    const response = await POST(
+      createRequest({
+        ...base,
+        signIn: "username",
+        username: "ai no!",
+        password: "a good password",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
+  });
+
+  it("holds the child's password to the same bar as their parent's", async () => {
+    const response = await POST(
+      createRequest({ ...base, signIn: "username", username: "aino", password: "short" }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("at least 8 characters");
+  });
+
+  // -- Refusals the parent can act on --
+
+  it("answers 409 USERNAME_TAKEN when the handle is already an address", async () => {
+    mockCreateUser.mockResolvedValue({
+      data: null,
+      error: { code: "email_exists", message: "email already registered" },
+    });
+
+    const response = await POST(
+      createRequest({
+        ...base,
+        signIn: "username",
+        username: "taken",
+        password: "a good password",
+      }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    // In username mode the address IS the username, so naming the email field
+    // would point at a form field this parent does not have.
+    expect(data.code).toBe("USERNAME_TAKEN");
+  });
+
+  it("answers 409 EMAIL_TAKEN when the address already has an account", async () => {
+    mockCreateUser.mockResolvedValue({
+      data: null,
+      error: { code: "email_exists", message: "email already registered" },
+    });
+
+    const response = await POST(
+      createRequest({ ...base, signIn: "email", email: "taken@example.com" }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(data.code).toBe("EMAIL_TAKEN");
+  });
+
+  it("answers 403 PIN_REQUIRED when the family holds no PIN, and unwinds the auth user", async () => {
+    // The gate on leaving a gamer session IS the parent's PIN, so a family may
+    // not acquire a child account before it has one. P0025 is the RPC's own
+    // SQLSTATE for exactly that refusal.
+    mockRpc.mockResolvedValue({
+      error: { code: "P0025", message: "PIN_REQUIRED" },
+    });
+
+    const response = await POST(createRequest(base));
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.code).toBe("PIN_REQUIRED");
+    // The RPC is transactional, so the database is untouched — but the auth
+    // user created a step earlier would be orphaned without this.
+    expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
+  });
 });

@@ -12,6 +12,20 @@ function dashboardFor(role: FamilyMember["role"]): string {
   return role === "customer" ? ROUTES.customer.dashboard : ROUTES.gamer.dashboard;
 }
 
+/** What one commit may carry beyond the target. */
+export interface CommitAccountSwitchOptions {
+  /** A linked parent's PIN. Required when leaving a switched-in gamer session. */
+  pin?: string;
+  /**
+   * The TARGET account's password. Required when leaving a gamer session the
+   * child signed into themselves — the resulting session is then a password
+   * session too, so the parent it may land on is still behind its own unlock.
+   */
+  password?: string;
+  /** Where to land instead of the target's dashboard. */
+  redirectUrl?: string;
+}
+
 /**
  * The commit step of an account switch: POST the switch, then leave the page.
  *
@@ -30,17 +44,26 @@ function dashboardFor(role: FamilyMember["role"]): string {
  * set on success — the returned promise resolves into a document that is
  * already unloading.
  *
- * SEAM: a follow-up piece gates a switch *initiated from a gamer session*
- * behind a parent-PIN dialog. That dialog will wrap exactly this function —
- * take the PIN, then commit the target it was handed — which is why every
- * gamer-initiated call site routes through here rather than POSTing for
- * itself. Keep it free of anything belonging to a particular caller's click.
+ * **The credentials are the caller's to collect, not this function's to
+ * prompt for.** Leaving a gamer session costs something: a linked parent's PIN
+ * from a switched-in session, or the target account's own password from a
+ * session the child signed into. Which of the two the route will demand is a
+ * fact about the caller's session (see `session-provenance.ts`), and the
+ * switcher knows it before the click — so a gate dialog collects the value and
+ * hands it here. A commit sent without the value the route wants comes back as a
+ * `SwitchAccountError` naming which one was missing, which is what lets a
+ * surface open its dialog on the refusal rather than pre-empting it.
+ *
+ * Failure is thrown, always as a `SwitchAccountError` carrying the route's code
+ * where there is one; nothing is caught here, for the same reason no state is
+ * held here.
  */
 export async function commitAccountSwitch(
   target: FamilyMember,
-  redirectUrl?: string,
+  options: CommitAccountSwitchOptions = {},
 ): Promise<void> {
-  await new FamilyService().switchAccount(target.id);
+  const { redirectUrl, ...credentials } = options;
+  await new FamilyService().switchAccount(target.id, credentials);
   // Full-page navigation so the new session cookies hydrate the root layout —
   // the browser Supabase client is seeded from cookies at construction time,
   // so only a document reload rebuilds it.
