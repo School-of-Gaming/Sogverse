@@ -128,14 +128,25 @@ function nextRecord(
   return record;
 }
 
-/** Merge one seat's record back into the stored document, leaving the rest alone. */
+/**
+ * Merge one seat's record back into the stored document, leaving the rest alone.
+ *
+ * The document it merges onto is **re-read here**, never the one the handler
+ * has been holding since the top of the request. This route owns `invitations`
+ * and nothing else; the family editor owns everything else and preserves this
+ * half in turn. Between this request's read and this write sits a mail send —
+ * a network round trip to a relay, the slowest thing in the handler — and an
+ * admin editing the family in that window would have their save overwritten by
+ * a copy of the document that predates it.
+ */
 async function storeRecord(
   supabase: AppSupabaseClient,
   ownerId: string,
-  definition: SandboxDefinition,
   participationId: string,
   record: InvitationRecord,
 ): Promise<void> {
+  const definition = await readSandbox(supabase, ownerId);
+
   const { error } = await supabase
     .from("calendar_feed_sandboxes")
     .update({
@@ -233,13 +244,7 @@ export const POST = defineRoute({
     // and a write that did not — leaves the next send repeating sequence 0,
     // which a client ignores as a message it already has. Of the two, being
     // ignored is the one that does not corrupt anything.
-    await storeRecord(
-      supabase,
-      user.id,
-      definition,
-      body.participationId,
-      record,
-    );
+    await storeRecord(supabase, user.id, body.participationId, record);
 
     return {
       subject: mail.subject,

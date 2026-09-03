@@ -63,8 +63,12 @@ function firstSeatId(document: SandboxDefinition): string {
 }
 
 /**
- * The sandbox row as this route uses it: one read by owner, and one update that
+ * The sandbox row as this route uses it: reads by owner, and one update that
  * replaces the whole document.
+ *
+ * `edit` stands in for the *other* writer of this row — the feed card's family
+ * editor — so a test can land a save partway through a request the way a second
+ * request would.
  */
 function mockCaller(stored: SandboxDefinition | null) {
   let current = stored;
@@ -96,7 +100,12 @@ function mockCaller(stored: SandboxDefinition | null) {
     supabase: { from },
   });
 
-  return { writes };
+  return {
+    writes,
+    edit: (next: SandboxDefinition) => {
+      current = next;
+    },
+  };
 }
 
 interface RequestBody {
@@ -216,6 +225,38 @@ describe("POST /api/admin/calendar-invitations", () => {
     expect(writes[0].invitations?.[seatId].sequence).toBe(0);
     // The rest of the document is carried through untouched.
     expect(writes[0].gamers).toEqual(document.gamers);
+  });
+
+  /**
+   * The row has two writers, and this one owns `invitations` alone. The mail
+   * send sits between the read and the write — a relay round trip, the slowest
+   * thing in the handler — so the record has to be merged onto the document as
+   * it stands at the moment of writing, not onto the copy this request read
+   * before the send. Otherwise a family edit saved in that window is silently
+   * rolled back by a bookkeeping write.
+   */
+  it("writes the bookkeeping onto the freshly read document", async () => {
+    const document = definition();
+    const seatId = firstSeatId(document);
+    const { writes, edit } = mockCaller(document);
+
+    // The admin saves the family on the feed card while the relay still has
+    // the mail — the only window this route leaves open.
+    const edited = definition();
+    edited.parent.firstName = "Riikka";
+    mockSend.mockImplementation(() => {
+      edit(edited);
+      return Promise.resolve({ messageId: "<relay-id@brevo>" });
+    });
+
+    const response = await POST(
+      invitationRequest({ action: "send", participationId: seatId }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(writes).toHaveLength(1);
+    expect(writes[0].parent.firstName).toBe("Riikka");
+    expect(writes[0].invitations?.[seatId].sequence).toBe(0);
   });
 
   it("raises the sequence on an update and keeps the uid", async () => {

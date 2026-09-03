@@ -102,10 +102,14 @@ None of this exists today, and each item is substantial on its own:
 
 ## Known limits of the tool as built
 
-- **Bookkeeping rides inside the sandbox document**, which the feed card's editor writes
-  whole from a draft it seeded when the card opened. A save made *after* a send therefore
-  discards the record that send wrote, and the next update starts over. Save the family
-  first, then send. A real build gives this its own table and the problem disappears.
+- **Bookkeeping rides inside the sandbox document**, so that one row has two writers and
+  each preserves the other's half: the feed card's editor writes the family and carries the
+  stored `invitations` forward untouched, and this route writes `invitations` onto a
+  document it re-reads at the moment it writes. A family edit and a send are therefore
+  independent in either order, and the only write that clears the bookkeeping is Reset,
+  which re-seeds the family and would otherwise leave a `UID` and `SEQUENCE` pointing at a
+  conversation about a household that no longer exists. A real build gives this its own
+  table, at which point the two halves stop having to be careful of each other.
 - **The shape is part of a `UID`'s identity.** A series states one event per slot and
   occurrences states one per session, so changing the shape between an invitation and its
   update produces a different set of UIDs — which a client answers by deleting what it had

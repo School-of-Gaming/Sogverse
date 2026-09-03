@@ -494,6 +494,18 @@ function sandboxDefinition(): SandboxDefinition {
   };
 }
 
+/**
+ * One seat's invitation bookkeeping, written by the *other* route that shares
+ * this row. Mid-conversation on purpose: a sequence a save must not reset.
+ */
+const INVITATION_RECORD = {
+  uid: "3f9d0c7a-2b41-4e58-9a06-1d7c8e35b204@sogverse",
+  sequence: 4,
+  lastMethod: "REQUEST",
+  lastSentAt: "2026-03-02T09:00:00.000Z",
+  recipient: "admin@example.test",
+} as const;
+
 describe("GET /api/calendar/feed/[token] — sandbox tokens", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -694,6 +706,60 @@ describe("/api/admin/calendar-feed/sandbox", () => {
     expect(writes[0]).toMatchObject({ owner_id: ADMIN_ID });
   });
 
+  /**
+   * The document has two writers. The editor owns the family, the invitation
+   * route owns `invitations`, and a save has to carry that half across — or the
+   * workflow the two tools exist for (send, edit the family, save, send the
+   * update) loses the `UID` and `SEQUENCE` the update is keyed on.
+   */
+  it("carries the stored invitation bookkeeping through a save", async () => {
+    const { writes } = mockSandboxCaller({
+      ...sandboxDefinition(),
+      invitations: { [PARTICIPATION_ID]: INVITATION_RECORD },
+    });
+    const edited = sandboxDefinition();
+    edited.gamers[0].firstName = "Eino";
+
+    const data = await (
+      await SANDBOX_PUT(sandboxRequest("PUT", { definition: edited }))
+    ).json();
+
+    expect(data.definition.gamers[0].firstName).toBe("Eino");
+    expect(writes[0]).toMatchObject({
+      definition: { invitations: { [PARTICIPATION_ID]: INVITATION_RECORD } },
+    });
+  });
+
+  /**
+   * A stored URL or an older card still sends back the whole document it was
+   * handed, bookkeeping included, so the body is accepted and then ignored: the
+   * stored half wins, whatever the draft that seeded it believed.
+   */
+  it("ignores invitation bookkeeping the body carries", async () => {
+    const { writes } = mockSandboxCaller({
+      ...sandboxDefinition(),
+      invitations: { [PARTICIPATION_ID]: INVITATION_RECORD },
+    });
+
+    const data = await (
+      await SANDBOX_PUT(
+        sandboxRequest("PUT", {
+          definition: {
+            ...sandboxDefinition(),
+            invitations: {
+              [PARTICIPATION_ID]: { ...INVITATION_RECORD, sequence: 0 },
+            },
+          },
+        }),
+      )
+    ).json();
+
+    expect(data.definition.invitations[PARTICIPATION_ID].sequence).toBe(4);
+    expect(writes[0]).toMatchObject({
+      definition: { invitations: { [PARTICIPATION_ID]: INVITATION_RECORD } },
+    });
+  });
+
   it("refuses a malformed document", async () => {
     mockSandboxCaller(sandboxDefinition());
     const response = await SANDBOX_PUT(
@@ -724,6 +790,26 @@ describe("/api/admin/calendar-feed/sandbox", () => {
     expect(data.definition.parent.firstName).toBe(
       defaultSandboxDefinition().parent.firstName,
     );
+  });
+
+  /**
+   * The one write that deliberately drops the other writer's half: the seeded
+   * seat ids come back identical, so a surviving record would re-attach a
+   * conversation about the old family to a freshly seeded seat.
+   */
+  it("clears the invitation bookkeeping on reset", async () => {
+    mockSandboxCaller({
+      ...sandboxDefinition(),
+      invitations: { [PARTICIPATION_ID]: INVITATION_RECORD },
+    });
+
+    // The mock echoes back what the upsert stored, so the response *is* the
+    // written document — there is no second place for the record to survive in.
+    const data = await (
+      await SANDBOX_POST(sandboxRequest("POST", { action: "reset" }))
+    ).json();
+
+    expect(data.definition.invitations).toBeUndefined();
   });
 
   it("refuses an unknown action", async () => {

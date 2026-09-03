@@ -20,10 +20,13 @@ import {
  * **It lives inside the admin's sandbox document**, keyed by participation id,
  * because that document is already the one row this exploration owns and a
  * table of its own would be a migration for a thing we are still deciding
- * whether to build. The cost is stated plainly rather than hidden: the sandbox
- * editor on the feed card writes the whole document from a draft it seeded when
- * the card opened, so a save made *after* a send discards bookkeeping written
- * in between. Save the family first, then send the update.
+ * whether to build. Sharing a row means the document has two writers, and each
+ * preserves the other's half: the family editor's save carries the stored
+ * `invitations` forward untouched and discards whatever its draft held of them,
+ * and the invitation route merges its record onto a document it re-reads at the
+ * moment it writes. So a family edit and a send are independent in either
+ * order; the one write that clears the bookkeeping is Reset, which says start
+ * over and means it.
  */
 
 export const invitationRecordSchema = z.object({
