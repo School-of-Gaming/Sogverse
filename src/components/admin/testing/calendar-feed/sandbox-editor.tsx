@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
   SANDBOX_LIMITS,
   SANDBOX_PARTICIPATION_STATUSES,
   SANDBOX_TIMEZONES,
+  sandboxDefinitionSchema,
   type SandboxDefinition,
   type SandboxParticipation,
   type SandboxProduct,
@@ -71,6 +72,16 @@ export function SandboxEditor({ saved, savedAtLabel }: SandboxEditorProps) {
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(snapshot);
   const busy = committing !== null;
+
+  // The same schema the route parses the body with, run against the draft so
+  // Save is dark on a document the server would refuse — an emptied name, a
+  // duration cleared to zero, a date typed halfway. Keyed on the draft object,
+  // which is replaced wholesale by every patch, so a re-render that changes
+  // nothing re-parses nothing.
+  const valid = useMemo(
+    () => sandboxDefinitionSchema.safeParse(draft).success,
+    [draft],
+  );
   const errorMessage = save.error?.message ?? reset.error?.message ?? null;
 
   function adopt(definition: SandboxDefinition) {
@@ -674,7 +685,11 @@ export function SandboxEditor({ saved, savedAtLabel }: SandboxEditorProps) {
         >
           {t("resetSandbox")}
         </Button>
-        <Button type="button" disabled={busy || !dirty} onClick={handleSave}>
+        <Button
+          type="button"
+          disabled={busy || !dirty || !valid}
+          onClick={handleSave}
+        >
           {committing === "save" ? t("savingSandbox") : t("saveSandbox")}
         </Button>
       </div>

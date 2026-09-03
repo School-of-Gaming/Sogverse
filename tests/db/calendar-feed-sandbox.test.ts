@@ -54,12 +54,34 @@ describe("calendar feed sandboxes", () => {
       .delete()
       .eq("owner_id", TEST_IDS.ADMIN);
     await admin.from("calendar_feed_sandboxes").delete().eq("id", OTHER_OWNER_ROW);
-    await admin.from("calendar_feed_sandboxes").insert({
-      id: OTHER_OWNER_ROW,
-      owner_id: TEST_IDS.CUSTOMER_2,
-      definition: DOCUMENT,
-    });
+    // Checked rather than fired and forgotten: `owner_id` is UNIQUE, and the
+    // write-IDOR suite seeds a *different* row id for this same owner. A
+    // leftover from a crashed run there makes this insert fail with 23505, and
+    // an unchecked failure would leave every denial below passing against a
+    // victim row that is not there.
+    const { error: seedError } = await admin
+      .from("calendar_feed_sandboxes")
+      .insert({
+        id: OTHER_OWNER_ROW,
+        owner_id: TEST_IDS.CUSTOMER_2,
+        definition: DOCUMENT,
+      });
+    expect(seedError, "the victim sandbox was not seeded").toBeNull();
   });
+
+  /**
+   * The victim row as the service-role client sees it — the probe every denial
+   * runs first, so an attack that "succeeded" because the row was missing fails
+   * here instead of passing vacuously.
+   */
+  async function victimRow() {
+    const { data } = await admin
+      .from("calendar_feed_sandboxes")
+      .select("id, owner_id")
+      .eq("id", OTHER_OWNER_ROW)
+      .maybeSingle();
+    return data;
+  }
 
   afterAll(async () => {
     await admin
@@ -106,6 +128,11 @@ describe("calendar feed sandboxes", () => {
      * is the whole authorization on the feed route.
      */
     it("cannot read another owner's sandbox", async () => {
+      expect(
+        await victimRow(),
+        "the victim row was never seeded — this denial would pass vacuously",
+      ).not.toBeNull();
+
       const { data } = await adminClient
         .from("calendar_feed_sandboxes")
         .select("id")
@@ -126,10 +153,14 @@ describe("calendar feed sandboxes", () => {
   describe("a non-admin", () => {
     it("reads nothing at all, own row or not", async () => {
       // Seeded through the service-role client so the row exists to be missed.
-      await admin.from("calendar_feed_sandboxes").insert({
-        owner_id: TEST_IDS.ADMIN,
-        definition: DOCUMENT,
-      });
+      const { error: seedError } = await admin
+        .from("calendar_feed_sandboxes")
+        .insert({ owner_id: TEST_IDS.ADMIN, definition: DOCUMENT });
+      expect(seedError).toBeNull();
+      expect(
+        await victimRow(),
+        "the victim row was never seeded — this denial would pass vacuously",
+      ).not.toBeNull();
 
       for (const client of [customerClient, geduClient]) {
         const { data } = await client
@@ -215,9 +246,13 @@ describe("calendar feed sandboxes", () => {
         .select("updated_at")
         .single();
 
-      expect(
-        new Date(touched?.updated_at ?? 0).getTime(),
-      ).toBeGreaterThanOrEqual(new Date(created?.updated_at ?? 0).getTime());
+      // Strictly greater, not greater-or-equal: an untouched stamp equals the
+      // one the insert wrote, so `>=` is exactly what a dropped trigger would
+      // still satisfy. The insert and the update are separate statements and
+      // therefore separate transactions, so `now()` differs between them.
+      expect(new Date(touched?.updated_at ?? 0).getTime()).toBeGreaterThan(
+        new Date(created?.updated_at ?? 0).getTime(),
+      );
     });
   });
 });

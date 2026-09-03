@@ -45,7 +45,10 @@ export function FeedPreview({
   return (
     <div className="space-y-3">
       <SectionHeading>{t("previewHeading")}</SectionHeading>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      {/* One button, so a plain right-aligned row: `flex-col-reverse` is the
+          shape a negative/affirmative *pair* takes, and there is nothing here
+          for it to reorder. */}
+      <div className="flex justify-end">
         <Button type="button" disabled={loading || !canLoad} onClick={onLoad}>
           {loading ? t("loadingPreview") : t("loadPreview")}
         </Button>
@@ -57,21 +60,34 @@ export function FeedPreview({
         </div>
       )}
 
-      <div className={cn(PREVIEW_MIN_HEIGHT, "rounded-md border border-border")}>
-        {loading ? (
-          <PreviewSkeleton />
-        ) : events && timeZone !== null ? (
-          events.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">{t("noEvents")}</p>
-          ) : (
-            <PreviewTable
-              events={events}
-              locale={locale}
-              timeZone={timeZone}
-            />
-          )
-        ) : null}
-      </div>
+      {/* No box before the first press. An empty bordered frame with a minimum
+          height is a slot held open for content that cannot coexist with the
+          nothing beside it, which reads as a rendering fault rather than as a
+          promise. It appears with the skeleton, and the click that summons it
+          is the admin's own — so the reflow is theirs. Once it is on screen the
+          minimum height is what keeps the skeleton and the first result the
+          same size. */}
+      {(loading || events !== null) && (
+        <div
+          className={cn(PREVIEW_MIN_HEIGHT, "rounded-md border border-border")}
+        >
+          {loading ? (
+            <PreviewSkeleton />
+          ) : events && timeZone !== null ? (
+            events.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground">
+                {t("noEvents")}
+              </p>
+            ) : (
+              <PreviewTable
+                events={events}
+                locale={locale}
+                timeZone={timeZone}
+              />
+            )
+          ) : null}
+        </div>
+      )}
 
       {/* The raw document arrives with the table above it, so opening this
           section is the only thing that ever moves what is below it. */}

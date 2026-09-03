@@ -51,7 +51,10 @@ async function toResponse(row: SandboxRow): Promise<CalendarFeedSandboxResponse>
   const parsed = sandboxDefinitionSchema.safeParse(row.definition);
   if (!parsed.success) {
     // A stored document written under an older shape of the schema. The admin
-    // can fix it in one press, and saying so is more use than a 500.
+    // can fix it in one press, so the message names the press — which only
+    // reaches them because `GET` discloses its own error messages. The write
+    // handlers cannot produce this: they read back a document the schema just
+    // parsed, so a 409 there would be unreachable.
     throw new ApiError(
       "This sandbox was stored in an older shape — reset it to the default to continue.",
       409,
@@ -89,6 +92,12 @@ async function save(
 export const GET = defineRoute({
   posture: "role-gated",
   roles: "admin",
+  // Admin-only developer tooling, and the only message it throws is its own
+  // curated 409 telling the admin to press Reset. Generic status text would
+  // leave them a conflict with no way out, which is the whole of what this
+  // sentence is for.
+  discloseErrorMessages:
+    "the 409 is this route's own copy naming the one press that fixes a stale sandbox document, and it is useless as generic status text",
   response: calendarFeedSandboxResponse,
   async handler({ user, supabase }): Promise<CalendarFeedSandboxResponse> {
     const { data, error } = await supabase

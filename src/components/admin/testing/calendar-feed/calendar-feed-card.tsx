@@ -232,11 +232,6 @@ export function CalendarFeedCard() {
               resolved={resolved}
             />
           )}
-          {source === "sandbox" && sandbox.error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {sandbox.error.message}
-            </div>
-          )}
         </div>
 
         {/* --- 2. Options --- */}
@@ -266,7 +261,18 @@ export function CalendarFeedCard() {
             the end means its arrival grows the card downward instead of pushing
             four settled sections down the viewport. A later tidy-up that moves
             it up beside the source switch — which reads like an improvement —
-            would reintroduce exactly that shift. */}
+            would reintroduce exactly that shift.
+
+            The failure banner sits here for the same reason and not with the
+            source switch it reads as belonging to: it arrives on the same round
+            trip's schedule, so a sandbox read that fails has to grow the card
+            downward exactly as one that succeeds does. Either outcome of that
+            one call lands in this slot, and nothing painted above it moves. */}
+        {source === "sandbox" && sandbox.error !== null && (
+          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            {sandbox.error.message}
+          </div>
+        )}
         {source === "sandbox" && sandbox.data && browser !== null && (
           <SandboxEditor
             saved={sandbox.data.definition}
