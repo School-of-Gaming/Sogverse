@@ -1870,11 +1870,13 @@
     "greeting": "Hi {name},",
     "subject": {
       "send": "Calendar invitation: {product} for {gamer}",
+      "sendPublish": "Calendar entry: {product} for {gamer}",
       "update": "Updated schedule: {product} for {gamer}",
       "cancel": "Cancelled: {product} for {gamer}"
     },
     "heading": {
       "send": "Your calendar invitation",
+      "sendPublish": "Your calendar entry",
       "update": "The schedule has changed",
       "cancel": "This calendar entry has been cancelled"
     },
@@ -1882,6 +1884,7 @@
       "send": "{gamer}'s sessions for {product} are in this mail as a calendar invitation. Accept it and they appear in your calendar.",
       "sendPublish": "{gamer}'s sessions for {product} are in this mail as a calendar entry. Add it and they appear in your calendar.",
       "update": "The schedule for {product} has changed. The invitation in this mail replaces the entry you already have for {gamer} — there is nothing to delete first.",
+      "updatePublish": "The schedule for {product} has changed. The calendar entry in this mail replaces the entry you already have for {gamer} — there is nothing to delete first.",
       "cancel": "{gamer} no longer has a seat on {product}. The cancellation in this mail removes the entry from your calendar."
     },
     "updatesNote": "If the schedule changes later, School of Gaming sends an update and this same entry changes in your calendar. You will never have to work out which of two entries is the current one."

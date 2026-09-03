@@ -1914,11 +1914,13 @@
     "greeting": "nuqneH, {name}!",
     "subject": {
       "send": "jajmey rI’: {gamer} {product}Daj",
+      "sendPublish": "jajmey ghItlh: {gamer} {product}Daj",
       "update": "choHlu’pu’ poH: {gamer} {product}Daj",
       "cancel": "qIlpu’: {gamer} {product}Daj"
     },
     "heading": {
       "send": "jajmey rI’lIj",
+      "sendPublish": "jajmey ghItlhlIj",
       "update": "choHpu’ poH",
       "cancel": "qIlpu’ jajmey ghItlh"
     },
@@ -1926,6 +1928,7 @@
       "send": "QInvamDaq tu’lu’ {product} qaStaHvIS {gamer} SuvtaHghachmey; jajmey rI’ ’oH. DalajDI’ jajmeylIjDaq chomey.",
       "sendPublish": "QInvamDaq tu’lu’ {product} qaStaHvIS {gamer} SuvtaHghachmey; jajmey ghItlh ’oH. DachelDI’ jajmeylIjDaq chomey.",
       "update": "choHpu’ {product} poH. QInvamDaq tu’lu’ jajmey rI’ chu’; {gamer} ghItlh qaSpu’bogh chIlmoHbe’ ’ach choHmoH. wa’Dich Qaw’nISbe’.",
+      "updatePublish": "choHpu’ {product} poH. QInvamDaq tu’lu’ jajmey ghItlh chu’; {gamer} ghItlh qaSpu’bogh chIlmoHbe’ ’ach choHmoH. wa’Dich Qaw’nISbe’.",
       "cancel": "{product}Daq quS ghajbe’choH {gamer}. QInvamDaq tu’lu’ qIlmeH ghItlh; jajmeylIjvo’ teq ghItlh."
     },
     "updatesNote": "poH choHlu’chugh, choH ngeH School of Gaming, ’ej jajmeylIjDaq choH ghItlhvam. cha’ ghItlhmey Sammo’ bIQubnISbe’."

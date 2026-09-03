@@ -1870,11 +1870,13 @@
     "greeting": "Hei {name},",
     "subject": {
       "send": "Kalenterikutsu: {product} pelaajalle {gamer}",
+      "sendPublish": "Kalenterimerkintä: {product} pelaajalle {gamer}",
       "update": "Aikataulu muuttui: {product} pelaajalle {gamer}",
       "cancel": "Peruttu: {product} pelaajalle {gamer}"
     },
     "heading": {
       "send": "Kalenterikutsusi",
+      "sendPublish": "Kalenterimerkintäsi",
       "update": "Aikataulu on muuttunut",
       "cancel": "Tämä kalenterimerkintä on peruttu"
     },
@@ -1882,6 +1884,7 @@
       "send": "Pelaajan {gamer} kerrat kohteessa {product} ovat tässä viestissä kalenterikutsuna. Kun hyväksyt kutsun, kerrat ilmestyvät kalenteriisi.",
       "sendPublish": "Pelaajan {gamer} kerrat kohteessa {product} ovat tässä viestissä kalenterimerkintänä. Kun lisäät merkinnän, kerrat ilmestyvät kalenteriisi.",
       "update": "Kohteen {product} aikataulu on muuttunut. Tässä viestissä oleva kutsu korvaa merkinnän, joka sinulla jo on pelaajalle {gamer} — mitään ei tarvitse poistaa ensin.",
+      "updatePublish": "Kohteen {product} aikataulu on muuttunut. Tässä viestissä oleva kalenterimerkintä korvaa merkinnän, joka sinulla jo on pelaajalle {gamer} — mitään ei tarvitse poistaa ensin.",
       "cancel": "Pelaajalla {gamer} ei ole enää paikkaa kohteessa {product}. Tässä viestissä oleva peruutus poistaa merkinnän kalenteristasi."
     },
     "updatesNote": "Jos aikataulu muuttuu myöhemmin, School of Gaming lähettää päivityksen ja tämä sama merkintä muuttuu kalenterissasi. Sinun ei tarvitse koskaan päätellä, kumpi kahdesta merkinnästä on ajan tasalla."

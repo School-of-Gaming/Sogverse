@@ -1870,11 +1870,13 @@
     "greeting": "Hej {name},",
     "subject": {
       "send": "Kalenderinbjudan: {product} för {gamer}",
+      "sendPublish": "Kalenderpost: {product} för {gamer}",
       "update": "Ändrat schema: {product} för {gamer}",
       "cancel": "Inställt: {product} för {gamer}"
     },
     "heading": {
       "send": "Din kalenderinbjudan",
+      "sendPublish": "Din kalenderpost",
       "update": "Schemat har ändrats",
       "cancel": "Den här kalenderposten har ställts in"
     },
@@ -1882,6 +1884,7 @@
       "send": "{gamer}s pass i {product} finns i det här meddelandet som en kalenderinbjudan. Acceptera den så dyker de upp i din kalender.",
       "sendPublish": "{gamer}s pass i {product} finns i det här meddelandet som en kalenderpost. Lägg till den så dyker de upp i din kalender.",
       "update": "Schemat för {product} har ändrats. Inbjudan i det här meddelandet ersätter posten du redan har för {gamer} — du behöver inte ta bort något först.",
+      "updatePublish": "Schemat för {product} har ändrats. Kalenderposten i det här meddelandet ersätter posten du redan har för {gamer} — du behöver inte ta bort något först.",
       "cancel": "{gamer} har inte längre en plats i {product}. Avbokningen i det här meddelandet tar bort posten ur din kalender."
     },
     "updatesNote": "Om schemat ändras senare skickar School of Gaming en uppdatering, och samma post ändras i din kalender. Du behöver aldrig lista ut vilken av två poster som gäller."

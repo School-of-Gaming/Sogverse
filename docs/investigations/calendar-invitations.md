@@ -1,9 +1,10 @@
 # Calendar invitations — investigation
 
 **Status: investigation, not a plan.** Researched 2026-09. Nothing here is committed
-scope, and the two designs it compares are both still open. Claims about Gmail, Apple
-Calendar, Outlook and Brevo age faster than the claims about our own code — re-verify the
-vendor behaviour before acting on any of it.
+scope and the two designs it compares are both still open; one sub-question is not — one
+seat is one calendar object, decided by the owner and recorded below. Claims about Gmail,
+Apple Calendar, Outlook and Brevo age faster than the claims about our own code —
+re-verify the vendor behaviour before acting on any of it.
 
 Read this beside `session-reminders-and-calendar-feed.md`, which holds the other half of
 the comparison. That doc's standing-tool section describes the subscribed feed; this one
@@ -39,20 +40,17 @@ failure looks like, and in what the family has to do:
 `VEVENT` under a single `UID`, carrying the product's entire schedule. A camp on Monday,
 Wednesday and Friday for four weeks is one invitation containing all twelve sessions.
 
-The tool previously emitted one `VEVENT` per slot in series mode and one per session in
-occurrences mode, several `UID`s inside one iTIP message. RFC 5546 gives a message one
-calendar object to describe, and clients handle a message that breaks that by reading the
-first component and ignoring the rest — so a two-slot club was arriving as one of its two
-sessions. The decision settles the question this doc previously listed as open, and the
-rest of the design follows from it:
+RFC 5546 gives a message one calendar object to describe, and a client handed several
+reads the first component and ignores the rest — so a two-slot club split across two
+`VEVENT`s arrives as one of its two sessions. The rest of the design follows from the
+decision:
 
 - The `UID` is the participation's, with no per-slot or per-date suffix.
 - A cancellation withdraws the whole run; there is no way to cancel one session yet.
-- **The shape is no longer part of a `UID`'s identity**, so it is safe to change between
-  an invitation and its update — the same object arrives in a different notation and the
-  client applies it in place. That retires the trap this doc used to describe, where a
-  shape switched by accident stranded a set of entries nobody would think to cancel in the
-  right shape.
+- **The shape is not part of a `UID`'s identity**, so it is safe to change between an
+  invitation and its update — the same object arrives in a different notation and the
+  client applies it in place. Nothing is stranded by a shape switched mid-thread, because
+  there is no second set of entries for it to strand.
 - **A rule cannot always be offered.** `RRULE` carries one clock face, so `series` is
   available only when every slot starts at the same time and runs the same length. The
   builder returns a typed refusal, the route answers 409, and the card disables the option
@@ -103,7 +101,10 @@ in the editor above, send an update below, and watch one calendar entry move.
   per client rather than taken on trust.
 - **Experience** — `REQUEST`, a real invitation with an RSVP, versus `PUBLISH`, the same
   sessions as a plain add-to-calendar object with nobody being asked anything. Worth
-  comparing directly: the RSVP is the half of the design we cannot currently receive.
+  comparing directly: the RSVP is the half of the design we cannot currently receive. The
+  choice is remembered per conversation, because a withdrawal has none of its own to make:
+  a published object is retracted by re-stating it as a `PUBLISH` with `STATUS:CANCELLED`,
+  never by a `CANCEL` naming an attendee it never carried.
 - **Preview**, which renders the mail and the calendar part without sending either, and
   without consuming the sequence number an update is going to need.
 
@@ -152,10 +153,10 @@ None of this exists today, and each item is substantial on its own:
   written that way (the rest stay in the plain date-time list, so a client that ignores
   periods still receives those) and the card says when the document used any.
 
-- **One `VALARM` on one object.** The reminder now fires before each occurrence of the
-  single event rather than being restated per session — which is the correct shape, and
-  also means the Apple-honours-it / Google-and-Outlook-replace-it finding above is now
-  being tested against one alarm rather than a dozen identical ones.
+- **One `VALARM` on one object.** The reminder fires before each occurrence of the single
+  event rather than being restated per session, which means the
+  Apple-honours-it / Google-and-Outlook-replace-it finding above is tested against one
+  alarm rather than a dozen identical ones.
 
 - **A single session cannot be cancelled or moved.** No `RECURRENCE-ID` is emitted, so a
   holiday or a one-off reschedule is a whole-object update.

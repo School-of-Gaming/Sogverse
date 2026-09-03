@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  INVITATION_METHOD_OPTIONS,
   INVITATION_METHODS,
   methodFor,
   type InvitationAction,
@@ -31,9 +32,10 @@ import {
 
 export const invitationRecordSchema = z.object({
   /**
-   * The base `UID` every `VEVENT` in this seat's invitation is keyed on — one
-   * per participation, generated once and never regenerated except after a
-   * cancellation. The builder suffixes it per slot or per occurrence.
+   * The one calendar object's `UID`, used verbatim — a message carries a single
+   * `VEVENT`, so there is nothing to suffix it with. It is regenerated only
+   * when the conversation starts over: after a cancellation, or on a send to a
+   * different address.
    */
   uid: z.string().min(1),
   /**
@@ -43,6 +45,26 @@ export const invitationRecordSchema = z.object({
   sequence: z.number().int().min(0),
   /** What the last message stated, so a cancelled seat is recognisable. */
   lastMethod: z.enum(INVITATION_METHODS),
+  /**
+   * Which mail experience the conversation is running as.
+   *
+   * Remembered rather than re-asked, because a withdrawal has no experience of
+   * its own to choose: RFC 5546 withdraws a published object by re-stating it
+   * as a `PUBLISH` with `STATUS:CANCELLED`, so a cancellation has to know what
+   * the thread has been rather than what the admin last touched. It is separate
+   * from `lastMethod` because that field answers a different question — whether
+   * this seat has an open conversation at all — and `CANCEL` is the value that
+   * says no.
+   *
+   * Optional, so a record stored before this field existed still parses — a
+   * document that fails to parse tells the admin to reset the whole family.
+   * Absent means `request`, which is how such a conversation would already
+   * have been withdrawn; read it through `experienceOf` rather than defaulting
+   * it here, because a zod `.default()` gives the schema an input type that
+   * differs from its output and the sandbox document is parsed and rebuilt
+   * from that one type at both ends.
+   */
+  experience: z.enum(INVITATION_METHOD_OPTIONS).optional(),
   lastSentAt: z.string().datetime({ offset: true }),
   /**
    * Who it went to. A send to a different address is a different conversation
@@ -53,6 +75,16 @@ export const invitationRecordSchema = z.object({
 });
 
 export type InvitationRecord = z.infer<typeof invitationRecordSchema>;
+
+/**
+ * The experience a stored record's conversation is running as.
+ *
+ * The one place the absent answer is read, so no caller has to remember which
+ * way a record written before the field existed should be withdrawn.
+ */
+export function experienceOf(record: InvitationRecord): InvitationMethodOption {
+  return record.experience ?? "request";
+}
 
 /**
  * Every seat's record, keyed by participation id.
@@ -129,6 +161,7 @@ export function applyInvitationAction(
       uid: continuing ? existing.uid : freshUid,
       sequence: continuing ? existing.sequence : 0,
       lastMethod: methodFor(method),
+      experience: method,
       lastSentAt,
       recipient,
     };
@@ -143,6 +176,10 @@ export function applyInvitationAction(
     uid: existing.uid,
     sequence: existing.sequence + 1,
     lastMethod: action === "cancel" ? "CANCEL" : methodFor(method),
+    // A cancellation states no experience of its own — it withdraws whatever
+    // the conversation has been, so the stored answer is carried forward rather
+    // than overwritten by whichever option the card happened to be showing.
+    experience: action === "cancel" ? experienceOf(existing) : method,
     lastSentAt,
     recipient,
   };

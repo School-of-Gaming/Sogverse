@@ -320,6 +320,12 @@ describe("POST /api/admin/calendar-invitations", () => {
     expect(data.ical).toContain("METHOD:PUBLISH");
     expect(data.html).toContain("Add it and they appear in your calendar");
     expect(data.html).not.toContain("Accept it and they appear");
+    // The subject and the heading name the object too, so neither may call an
+    // RSVP-less entry an invitation.
+    expect(data.subject).toContain("Calendar entry:");
+    expect(data.subject).not.toContain("Calendar invitation:");
+    expect(data.html).toContain("Your calendar entry");
+    expect(data.html).not.toContain("Your calendar invitation");
 
     // And the same message on the send path, where the part is typed for the
     // relay: the transport hands this value straight to nodemailer's
@@ -332,6 +338,72 @@ describe("POST /api/admin/calendar-invitations", () => {
       }),
     );
     expect(mockSend.mock.calls[0][0].ical.method).toBe("PUBLISH");
+  });
+
+  /**
+   * The update mail's body is the one sentence that names which thing in the
+   * mail replaces the entry the reader already has, so it follows the
+   * experience too — "the calendar entry", never "the invitation".
+   */
+  it("calls a publish update a calendar entry, not an invitation", async () => {
+    const document = definition();
+    const seatId = firstSeatId(document);
+    mockCaller(document);
+
+    await POST(
+      invitationRequest({
+        action: "send",
+        participationId: seatId,
+        method: "publish",
+      }),
+    );
+    const response = await POST(
+      invitationRequest({
+        action: "update",
+        participationId: seatId,
+        method: "publish",
+        preview: true,
+      }),
+    );
+    const data = await response.json();
+
+    expect(data.html).toContain("The calendar entry in this mail replaces");
+    expect(data.html).not.toContain("The invitation in this mail replaces");
+  });
+
+  /**
+   * RFC 5546 withdraws a published object by re-stating it as a `PUBLISH`
+   * carrying `STATUS:CANCELLED`. A `METHOD:CANCEL` names the `ATTENDEE` whose
+   * invitation is being retracted, and this conversation never had one — so
+   * the withdrawal is read against an invitation the client was never sent.
+   * The experience comes off the record, which is why a cancellation does not
+   * have to be told which kind of thread it is closing.
+   */
+  it("withdraws a published thread as a PUBLISH", async () => {
+    const document = definition();
+    const seatId = firstSeatId(document);
+    mockCaller(document);
+
+    await POST(
+      invitationRequest({
+        action: "send",
+        participationId: seatId,
+        method: "publish",
+      }),
+    );
+    const response = await POST(
+      invitationRequest({ action: "cancel", participationId: seatId }),
+    );
+    const data = await response.json();
+
+    expect(mockSend.mock.calls[1][0].ical.method).toBe("PUBLISH");
+    expect(data.ical).toContain("METHOD:PUBLISH");
+    expect(data.ical).toContain("STATUS:CANCELLED");
+    expect(data.ical).not.toContain("ATTENDEE");
+    // The seat still reads as closed: that question is `lastMethod`'s, and the
+    // experience is remembered beside it rather than inside it.
+    expect(data.bookkeeping.lastMethod).toBe("CANCEL");
+    expect(data.bookkeeping.experience).toBe("publish");
   });
 
   /** The request mail keeps the sentence a `REQUEST` earns. */

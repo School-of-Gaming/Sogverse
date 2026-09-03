@@ -100,3 +100,25 @@ export function reminderMinutes(reminder: InvitationReminder): number | null {
 export function methodFor(option: InvitationMethodOption): InvitationMethod {
   return option === "publish" ? "PUBLISH" : "REQUEST";
 }
+
+/**
+ * The `METHOD` any message states, given its experience and whether it
+ * withdraws the object.
+ *
+ * A `request` thread is withdrawn with `CANCEL`, the method that names the
+ * `ATTENDEE` whose invitation is being retracted. A `publish` thread has no
+ * attendee to name: RFC 5546 withdraws a published object by re-stating it as a
+ * `PUBLISH` carrying `STATUS:CANCELLED`, and a `CANCEL` there would ask a client
+ * to retract an invitation it was never sent — so it stays a `PUBLISH`.
+ *
+ * **The one place the answer is decided**, because the calendar's `METHOD`
+ * property and the type on the mail's calendar part have to be the same string:
+ * a document that says `PUBLISH` inside a part typed `CANCEL` is two messages,
+ * and a client believes whichever it reads first.
+ */
+export function methodForMessage(
+  option: InvitationMethodOption,
+  cancelling: boolean,
+): InvitationMethod {
+  return cancelling && option === "request" ? "CANCEL" : methodFor(option);
+}

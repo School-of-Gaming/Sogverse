@@ -27,9 +27,17 @@ follows that the **`UID` is the participation's**, with no per-slot or per-date 
 and that a cancellation cancels the whole run rather than one session of it.
 
 **The options are a comparison, not a configuration** — shape, reminder offset, and
-whether the message asks for an answer at all. The shape is now only *how* the one object
+whether the message asks for an answer at all. The shape is only *how* the one object
 writes its schedule, so it is safe to change between a send and its update: the `UID` does
 not move, and the client applies the new notation in place.
+
+**Which experience a conversation runs as is remembered, not re-asked.** A withdrawal has
+none of its own to state: RFC 5546 retracts a published object by re-stating it as a
+`PUBLISH` carrying `STATUS:CANCELLED`, and a `CANCEL` there would name the attendee whose
+invitation is being retracted — one the reader was never sent. So the record carries the
+experience, a cancellation reads it, and the `METHOD` is derived from that pair by one
+function both the document and the mail part's type go through, since a document saying
+one method inside a part typed as another is two messages.
 
 **Each shape is weak somewhere, and the weakness is the thing being compared.** A `series`
 is an `RRULE` — compact, and the only form whose meaning survives past the horizon we

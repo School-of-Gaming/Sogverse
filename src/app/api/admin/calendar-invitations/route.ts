@@ -8,12 +8,13 @@ import {
 } from "@/lib/calendar-feed/sandbox";
 import {
   applyInvitationAction,
+  experienceOf,
   newInvitationUid,
   type InvitationRecord,
 } from "@/lib/calendar-invitations/bookkeeping";
 import { buildInvitationCalendar } from "@/lib/calendar-invitations/invitation";
 import { buildInvitationMail } from "@/lib/calendar-invitations/mail";
-import { methodFor } from "@/lib/calendar-invitations/options";
+import { methodForMessage } from "@/lib/calendar-invitations/options";
 import {
   SmtpNotConfiguredError,
   sendCalendarInvitationMail,
@@ -186,14 +187,23 @@ export const POST = defineRoute({
       (candidate) => candidate.id === seat.participantId,
     );
 
-    const method = body.action === "cancel" ? "CANCEL" : methodFor(body.method);
+    // The experience comes off the record rather than off this request: a send
+    // and an update state the option the admin picked, and a cancellation
+    // withdraws the conversation as whatever it has been. That distinction is
+    // the whole of RFC 5546's withdrawal rule — a published object is retracted
+    // by re-stating it as a `PUBLISH` with `STATUS:CANCELLED`, never by a
+    // `CANCEL` naming an attendee it never carried.
+    const cancelling = body.action === "cancel";
+    const experience = experienceOf(record);
+    const method = methodForMessage(experience, cancelling);
     const locale = definition.parent.locale;
 
     const built = buildInvitationCalendar({
       seat,
       baseUid: record.uid,
       sequence: record.sequence,
-      method,
+      experience,
+      cancelling,
       shape: body.shape,
       reminder: body.reminder,
       attendee: { name: definition.parent.firstName, email: body.to },

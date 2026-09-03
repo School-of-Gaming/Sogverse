@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyInvitationAction,
+  experienceOf,
   invitationRecordSchema,
   sandboxInvitationsSchema,
   type InvitationRecord,
@@ -37,6 +38,7 @@ describe("applyInvitationAction", () => {
       uid: FRESH,
       sequence: 0,
       lastMethod: "REQUEST",
+      experience: "request",
       lastSentAt: NOW.toISOString(),
       recipient: "admin@example.test",
     });
@@ -178,6 +180,49 @@ describe("applyInvitationAction", () => {
       freshUid: FRESH,
     });
     expect(record?.lastMethod).toBe("PUBLISH");
+    expect(record?.experience).toBe("publish");
+  });
+
+  /**
+   * The experience is a property of the conversation, not of one message. A
+   * cancellation has none of its own to state — RFC 5546 withdraws a published
+   * object by re-stating it as a `PUBLISH` with `STATUS:CANCELLED` — so it
+   * carries the stored answer forward rather than taking whichever option the
+   * card happened to be showing. `lastMethod` keeps saying `CANCEL`, because
+   * that is the field the "is there an open conversation" question reads.
+   */
+  it("carries the publish experience through an update and a cancellation", () => {
+    const opened = applyInvitationAction({
+      existing: undefined,
+      action: "send",
+      method: "publish",
+      recipient: "admin@example.test",
+      now: NOW,
+      freshUid: FRESH,
+    });
+    const updated = applyInvitationAction({
+      existing: opened ?? undefined,
+      action: "update",
+      method: "publish",
+      recipient: "admin@example.test",
+      now: LATER,
+      freshUid: SECOND_FRESH,
+    });
+    const cancelled = applyInvitationAction({
+      existing: updated ?? undefined,
+      action: "cancel",
+      // The card's own selection at cancel time, deliberately the other one:
+      // a withdrawal states the conversation's experience, not this.
+      method: "request",
+      recipient: "admin@example.test",
+      now: LATER,
+      freshUid: SECOND_FRESH,
+    });
+
+    expect(updated?.experience).toBe("publish");
+    expect(updated?.lastMethod).toBe("PUBLISH");
+    expect(cancelled?.experience).toBe("publish");
+    expect(cancelled?.lastMethod).toBe("CANCEL");
   });
 });
 
@@ -191,6 +236,25 @@ describe("the stored shape", () => {
       "36d5b0c9-7e14-4af2-8b60-95c3e270d18f": send(undefined),
     });
     expect(parsed.success).toBe(true);
+  });
+
+  /**
+   * Records are stored inside a sandbox document that predates the experience
+   * field, and a document that fails to parse tells the admin to reset the
+   * whole family. A missing answer reads as `request`, which is how such a
+   * thread would have been withdrawn anyway.
+   */
+  it("reads a record stored without an experience as a request", () => {
+    const parsed = invitationRecordSchema.safeParse({
+      uid: FRESH,
+      sequence: 0,
+      lastMethod: "REQUEST",
+      lastSentAt: NOW.toISOString(),
+      recipient: "admin@example.test",
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(experienceOf(parsed.data)).toBe("request");
   });
 
   it("refuses a record with a negative sequence", () => {

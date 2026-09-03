@@ -45,10 +45,10 @@ export interface InvitationMailArgs {
   /**
    * The `METHOD` the calendar part states, which the words have to agree with.
    *
-   * One sentence in this mail tells the reader what to do with the entry, and
-   * an RSVP-less `PUBLISH` gives them nothing to accept — so a mail that says
-   * "accept it" beside a calendar part carrying no attendee is instructing the
-   * reader to press a button their client will not offer.
+   * The subject, the heading and the body each name what the mail carries, and
+   * an RSVP-less `PUBLISH` gives the reader nothing to accept — so words that
+   * call it an invitation, or tell them to accept it, beside a calendar part
+   * carrying no attendee name a button their client will not offer.
    */
   method: InvitationMethod;
   locale: SupportedLocale;
@@ -86,15 +86,24 @@ export async function buildInvitationMail(
   const t = await getCalendarInvitationTranslator(locale);
   const email = await getEmailTranslator(locale);
 
-  const values = { gamer: gamerName, product: productName };
-  const subject = t(`subject.${action}`, values);
-  const title = t(`heading.${action}`);
-  const greeting = t("greeting", { name: parentName });
-  // Only the first send has a sentence that depends on the method: an update
-  // and a cancellation describe what the message does to an entry that already
-  // exists, which is the same either way.
+  const publishing = method === "PUBLISH";
+  // Every sentence that names what is in the mail has to name the right thing:
+  // a `PUBLISH` object is a calendar entry, not an invitation, and a reader has
+  // no Accept button to press. The subject and the heading say so on a first
+  // send, where they announce the object; the body says so on an update too,
+  // because it is the one sentence that tells the reader which thing in the
+  // mail replaces the entry they already have. A cancellation is worded once:
+  // it withdraws an entry, whichever way that entry arrived.
+  const announceKey = publishing && action === "send" ? "sendPublish" : action;
   const bodyKey =
-    action === "send" && method === "PUBLISH" ? "sendPublish" : action;
+    publishing && (action === "send" || action === "update")
+      ? (`${action}Publish` as const)
+      : action;
+
+  const values = { gamer: gamerName, product: productName };
+  const subject = t(`subject.${announceKey}`, values);
+  const title = t(`heading.${announceKey}`);
+  const greeting = t("greeting", { name: parentName });
   const body = t(`body.${bodyKey}`, {
     gamer: gamerName,
     product: productName,

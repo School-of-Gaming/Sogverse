@@ -6,7 +6,7 @@ import {
   type InvitationCalendar,
 } from "@/lib/calendar-invitations/invitation";
 import type {
-  InvitationMethod,
+  InvitationMethodOption,
   InvitationReminder,
   InvitationShape,
 } from "@/lib/calendar-invitations/options";
@@ -27,6 +27,9 @@ const SEAT = "cccccccc-3333-4333-8333-cccccccccccc";
 /** A Monday, mid-morning, well inside the club's run. */
 const NOW = new Date("2026-03-02T09:00:00Z");
 
+/** The default seat's one slot, so a schedule can be given it twice. */
+const MONDAY_SLOT = { weekday: 0, startTime: "16:30", durationMinutes: 90 };
+
 function seat(overrides: Partial<FeedSeat> = {}): FeedSeat {
   return {
     participationId: SEAT,
@@ -41,7 +44,7 @@ function seat(overrides: Partial<FeedSeat> = {}): FeedSeat {
     isRemote: true,
     locationName: null,
     spokenLanguageCode: "en",
-    slots: [{ weekday: 0, startTime: "16:30", durationMinutes: 90 }],
+    slots: [MONDAY_SLOT],
     cancelsAt: null,
     ...overrides,
   };
@@ -76,7 +79,8 @@ interface BuildOverrides {
   seat?: FeedSeat;
   baseUid?: string;
   sequence?: number;
-  method?: InvitationMethod;
+  experience?: InvitationMethodOption;
+  cancelling?: boolean;
   shape?: InvitationShape;
   reminder?: InvitationReminder;
   attendeeName?: string;
@@ -105,7 +109,8 @@ async function buildResult(overrides: BuildOverrides = {}) {
     seat: overrides.seat ?? seat(),
     baseUid: overrides.baseUid ?? "base-uid@sogverse",
     sequence: overrides.sequence ?? 0,
-    method: overrides.method ?? "REQUEST",
+    experience: overrides.experience ?? "request",
+    cancelling: overrides.cancelling ?? false,
     shape: overrides.shape ?? "series",
     reminder: overrides.reminder ?? "none",
     attendee: {
@@ -140,6 +145,13 @@ function eventBody(document: string): string[] {
   const start = content.indexOf("BEGIN:VEVENT");
   expect(start).toBeGreaterThan(-1);
   return content.slice(start + 1, content.indexOf("END:VEVENT"));
+}
+
+/** The plain `RDATE` line's wall clocks, or none when the event lists no dates. */
+function rdateValues(document: string): string[] {
+  const prefix = "RDATE;TZID=Europe/Helsinki:";
+  const line = eventBody(document).find((entry) => entry.startsWith(prefix));
+  return line === undefined ? [] : line.slice(prefix.length).split(",");
 }
 
 /** The event's one line starting with `name`, or a failure if there are more. */
@@ -201,9 +213,9 @@ describe("one seat is one calendar object", () => {
   });
 });
 
-describe("the three methods", () => {
+describe("the methods a message states", () => {
   it("states REQUEST and asks the attendee to answer", async () => {
-    const document = await build({ method: "REQUEST" });
+    const document = await build({ experience: "request" });
     const content = lines(document);
 
     expect(content).toContain("METHOD:REQUEST");
@@ -220,7 +232,8 @@ describe("the three methods", () => {
   it("states CANCEL, cancels the one event, and still names both parties", async () => {
     const document = await build({
       seat: TWO_SLOT_CLUB,
-      method: "CANCEL",
+      experience: "request",
+      cancelling: true,
       sequence: 1,
     });
     const content = lines(document);
@@ -240,7 +253,7 @@ describe("the three methods", () => {
    * from, which a reader wants either way.
    */
   it("states PUBLISH with an organizer and no attendee", async () => {
-    const document = await build({ method: "PUBLISH" });
+    const document = await build({ experience: "publish" });
     const content = lines(document);
 
     expect(content).toContain("METHOD:PUBLISH");
@@ -248,6 +261,26 @@ describe("the three methods", () => {
       "ORGANIZER;CN=School of Gaming:mailto:sogverse@sog.gg",
     );
     expect(countOf(document, "ATTENDEE")).toBe(0);
+  });
+
+  /**
+   * RFC 5546 withdraws a published object by re-stating it as a `PUBLISH`
+   * carrying `STATUS:CANCELLED`. A `METHOD:CANCEL` would name the `ATTENDEE`
+   * whose invitation is being retracted, and this thread never had one — so a
+   * client has no invitation to match the retraction against.
+   */
+  it("withdraws a published object as a PUBLISH, still naming nobody", async () => {
+    const document = await build({
+      experience: "publish",
+      cancelling: true,
+      sequence: 1,
+    });
+    const content = lines(document);
+
+    expect(content).toContain("METHOD:PUBLISH");
+    expect(content).toContain("STATUS:CANCELLED");
+    expect(countOf(document, "ATTENDEE")).toBe(0);
+    expect(countOf(document, "ORGANIZER")).toBe(1);
   });
 });
 
@@ -347,6 +380,51 @@ describe("the occurrences shape", () => {
     // The object covers the DTSTART plus every listed date, and nothing else.
     expect(dates).toHaveLength(calendar.occurrenceCount - 1);
     for (const date of dates) expect(date).toMatch(/^\d{8}T163000$/);
+  });
+
+  /**
+   * `DTSTART` is itself the first occurrence of the object, so repeating its
+   * stamp in the list would state that session twice — the shape of the bug a
+   * duplicate in the expansion produces.
+   */
+  it("keeps the DTSTART's own stamp out of the RDATE list", async () => {
+    const fixtures = [
+      seat(),
+      TWO_SLOT_CLUB,
+      // The duplicated slot is the case that puts it there: the first session
+      // is expanded twice, so the copy lands in the list beside the `DTSTART`
+      // it already is.
+      seat({ slots: [MONDAY_SLOT, MONDAY_SLOT] }),
+    ];
+    for (const fixture of fixtures) {
+      const document = await build({ seat: fixture, shape: "occurrences" });
+      const start = only(document, "DTSTART").slice(
+        "DTSTART;TZID=Europe/Helsinki:".length,
+      );
+
+      expect(rdateValues(document)).not.toContain(start);
+    }
+  });
+
+  /**
+   * A slot the product carries twice is still one session at that instant, and
+   * one press too many of the sandbox editor's "Add slot" is all it takes to
+   * produce one. The shared expansion walks a slot at a time and dedupes only
+   * within a slot, so the builder has to do it across them: otherwise every
+   * date after the first is listed twice and the count doubles.
+   */
+  it("states a duplicated slot once, over the run's real length", async () => {
+    const once = await buildCalendar({ shape: "occurrences" });
+    const twice = await buildCalendar({
+      shape: "occurrences",
+      seat: seat({ slots: [MONDAY_SLOT, MONDAY_SLOT] }),
+    });
+
+    expect(twice.occurrenceCount).toBe(once.occurrenceCount);
+
+    const dates = rdateValues(twice.ics);
+    expect(dates).toHaveLength(once.occurrenceCount - 1);
+    expect(new Set(dates).size).toBe(dates.length);
   });
 
   /** Two slots at different times is exactly what this shape buys. */
@@ -495,7 +573,7 @@ describe("reminders", () => {
    * that is not happening.
    */
   it("drops the alarm from a cancellation", async () => {
-    const document = await build({ reminder: "60", method: "CANCEL" });
+    const document = await build({ reminder: "60", cancelling: true });
     expect(countOf(document, "BEGIN:VALARM")).toBe(0);
   });
 });

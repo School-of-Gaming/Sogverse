@@ -1870,11 +1870,13 @@
     "greeting": "Bonjour {name},",
     "subject": {
       "send": "Invitation au calendrier : {product} pour {gamer}",
+      "sendPublish": "Entrée de calendrier : {product} pour {gamer}",
       "update": "Horaire modifié : {product} pour {gamer}",
       "cancel": "Annulé : {product} pour {gamer}"
     },
     "heading": {
       "send": "Votre invitation au calendrier",
+      "sendPublish": "Votre entrée de calendrier",
       "update": "L’horaire a changé",
       "cancel": "Cette entrée de calendrier a été annulée"
     },
@@ -1882,6 +1884,7 @@
       "send": "Les séances de {gamer} pour {product} se trouvent dans ce message sous forme d’invitation. Acceptez-la et elles apparaîtront dans votre calendrier.",
       "sendPublish": "Les séances de {gamer} pour {product} se trouvent dans ce message sous forme d’entrée de calendrier. Ajoutez-la et elles apparaîtront dans votre calendrier.",
       "update": "L’horaire de {product} a changé. L’invitation qui se trouve dans ce message remplace l’entrée que vous avez déjà pour {gamer} — il n’y a rien à supprimer avant.",
+      "updatePublish": "L’horaire de {product} a changé. L’entrée de calendrier qui se trouve dans ce message remplace l’entrée que vous avez déjà pour {gamer} — il n’y a rien à supprimer avant.",
       "cancel": "{gamer} n’a plus de place sur {product}. L’annulation qui se trouve dans ce message retire l’entrée de votre calendrier."
     },
     "updatesNote": "Si l’horaire change plus tard, School of Gaming envoie une mise à jour et cette même entrée change dans votre calendrier. Vous n’aurez jamais à deviner laquelle de deux entrées fait foi."

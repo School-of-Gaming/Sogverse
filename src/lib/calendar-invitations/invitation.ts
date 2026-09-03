@@ -17,8 +17,9 @@ import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { earlierBoundary, endDateToCutoff } from "@/lib/session-occurrence";
 import {
   canStateAsRule,
+  methodForMessage,
   reminderMinutes,
-  type InvitationMethod,
+  type InvitationMethodOption,
   type InvitationReminder,
   type InvitationShape,
 } from "./options";
@@ -156,7 +157,19 @@ export interface BuildInvitationArgs {
   /** The stored `UID` — the object's identity, used verbatim. */
   baseUid: string;
   sequence: number;
-  method: InvitationMethod;
+  /** Which of the two mail experiences this conversation is running as. */
+  experience: InvitationMethodOption;
+  /**
+   * Whether this message withdraws the object rather than stating it.
+   *
+   * Carried beside the experience rather than folded into a `METHOD`, because
+   * the two only coincide for a `REQUEST`: RFC 5546 withdraws a *published*
+   * object by re-stating it as a `PUBLISH` carrying `STATUS:CANCELLED`, since a
+   * `CANCEL` names the `ATTENDEE` whose invitation is being retracted and a
+   * published object never carried one. The `METHOD` is derived from the pair,
+   * so no caller can state a withdrawal the status line disagrees with.
+   */
+  cancelling: boolean;
   shape: InvitationShape;
   reminder: InvitationReminder;
   attendee: InvitationAttendee;
@@ -167,7 +180,18 @@ export interface BuildInvitationArgs {
 
 /**
  * The sessions this message states: every occurrence still ahead of `now`,
- * soonest first.
+ * soonest first, each of them once.
+ *
+ * **Deduplicated across the whole seat, on the (start, end) instant pair.** The
+ * shared expansion walks one slot at a time and dedupes only within a slot, so a
+ * product carrying the same slot twice — one press of the sandbox editor's "Add
+ * slot" — hands back two events at one instant. One session is one session, and
+ * a duplicate corrupts everything downstream of this list: the first
+ * occurrence's own stamp reappears as an `RDATE` beside the `DTSTART` it already
+ * is, every later date is listed twice, and the count the caller refuses on is
+ * doubled. Both instants are keyed rather than the start alone, because two
+ * slots that begin together and run for different lengths are not one session
+ * and collapsing them would silently drop the longer one.
  *
  * **Always the discrete walk, whichever shape is asked for.** A rule is not a
  * different set of sessions, it is a shorter way of writing this one — so both
@@ -195,7 +219,17 @@ function futureOccurrences(args: BuildInvitationArgs): CalendarFeedEvent[] {
     origin: "",
     now: args.now,
   });
-  return events.filter((event) => event.start.getTime() >= args.now.getTime());
+
+  const seen = new Set<string>();
+  const ahead: CalendarFeedEvent[] = [];
+  for (const event of events) {
+    if (event.start.getTime() < args.now.getTime()) continue;
+    const key = `${event.start.getTime()}/${event.end.getTime()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    ahead.push(event);
+  }
+  return ahead;
 }
 
 /**
@@ -346,7 +380,7 @@ function eventLines(
   schedule: readonly string[],
   dtstamp: Date,
 ): string[] {
-  const cancelled = args.method === "CANCEL";
+  const cancelled = args.cancelling;
 
   // An invitation is an appointment somebody is being asked to keep, so it
   // occupies the time. The feed offers free-versus-busy as a knob because a
@@ -370,11 +404,14 @@ function eventLines(
   // Every method names an organizer: RFC 5546 requires one of a `PUBLISH` too,
   // and it is the wrong property to drop anyway — it says who the entry came
   // from, which a reader wants whether or not they are being asked anything.
-  // The `ATTENDEE` is what carries RSVP semantics, so that is the one a
-  // `PUBLISH` leaves off: an object a reader adds to their calendar with nobody
-  // asking them to answer.
+  // The `ATTENDEE` is what carries RSVP semantics, so that is the one the
+  // publish experience leaves off: an object a reader adds to their calendar
+  // with nobody asking them to answer. It stays off when that object is being
+  // withdrawn, too — naming an attendee only in the message that retracts an
+  // invitation nobody was sent is worse than naming none at all — which is why
+  // a published thread is withdrawn as a `PUBLISH` and not as a `CANCEL`.
   lines.push(calendarUser("ORGANIZER", SENDER_NAME, SENDER_EMAIL));
-  if (args.method !== "PUBLISH") {
+  if (args.experience === "request") {
     lines.push(
       calendarUser(
         "ATTENDEE",
@@ -448,7 +485,8 @@ export type InvitationBuildResult =
  * The `METHOD` is at the calendar level rather than per event, which is what
  * makes the document an iTIP message rather than a calendar that happens to
  * contain events — and it has to agree with how the mail part is typed, which
- * is why the transport takes the same value rather than deriving one.
+ * is why both ends derive it from the experience and the withdrawal flag
+ * through the one shared function rather than each choosing a value.
  *
  * Both shapes state their times as a wall clock in the product's own zone, so
  * the document always names a `TZID` and always owes the reader either the
@@ -507,7 +545,7 @@ function preambleLines(args: BuildInvitationArgs): string[] {
     "VERSION:2.0",
     property("PRODID", ICS_PRODID),
     "CALSCALE:GREGORIAN",
-    property("METHOD", args.method),
+    property("METHOD", methodForMessage(args.experience, args.cancelling)),
   ];
 }
 
@@ -524,8 +562,7 @@ function zoneLines(zone: string): string[] {
  *
  * It carries no zone block either: there is no `TZID` in it to describe.
  * Serialized rather than skipped so the caller's refusal has the same shape as
- * every other answer, and so a preview shows the admin exactly what would have
- * been sent — which is nothing at all.
+ * every other answer.
  */
 function emptyCalendar(args: BuildInvitationArgs): string {
   return `${[...preambleLines(args), "END:VCALENDAR"].join(CRLF)}${CRLF}`;

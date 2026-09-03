@@ -495,7 +495,7 @@ function EnumField<V extends string>({
   value: V;
   values: readonly V[];
   optionLabel: (value: V) => string;
-  /** Which values this field currently cannot offer. All of them, by default. */
+  /** Which values this field currently cannot offer. None of them, by default. */
   optionDisabled?: (value: V) => boolean;
   onPick: (value: V) => void;
 }) {
