@@ -3867,7 +3867,7 @@
   },
   "consent": {
     "heading": "Votre vie privée, votre choix",
-    "body": "Les statistiques comptent les visites et la vitesse des pages, sans savoir qui vous êtes. Le marketing indique aux plateformes où nous diffusons nos annonces votre visite et si vous y avez créé un compte. Avant votre choix, seuls les cookies nécessaires fonctionnent. Le détail et la façon de changer d’avis sont dans notre <link>politique de confidentialité</link>.",
+    "body": "Les statistiques nous indiquent combien de personnes nous rendent visite et à quelle vitesse les pages s’affichent. Elles ne peuvent pas savoir qui vous êtes et ne sont jamais transmises à des annonceurs. Le marketing indique aux régies publicitaires où nous diffusons nos annonces que vous avez visité notre site et si vous y avez créé un compte, afin qu’elles puissent vous y montrer nos publicités. Rien d’autre que les cookies nécessaires ne démarre tant que vous n’avez pas choisi, et vous pouvez changer d’avis à tout moment en bas de page — le détail se trouve dans notre <link>politique de confidentialité</link>.",
     "rejectAll": "Tout refuser",
     "analyticsOnly": "Statistiques uniquement",
     "analyticsAndMarketing": "Statistiques et marketing"

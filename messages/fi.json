@@ -3867,7 +3867,7 @@
   },
   "consent": {
     "heading": "Yksityisyytesi, sinun valintasi",
-    "body": "Analytiikka laskee käynnit ja sivujen latausnopeuden eikä näe, kuka olet. Markkinointi kertoo mainosalustoille, joilla mainostamme, käynnistäsi ja siitä, loitko tilin. Ennen kuin valitset, toimivat vain välttämättömät evästeet. Tarkemmat tiedot ja ohjeet mielen muuttamiseen löydät <link>tietosuojaselosteestamme</link>.",
+    "body": "Analytiikka kertoo meille, kuinka moni sivustolla käy ja kuinka nopeasti sivut latautuvat. Se ei näe, kuka olet, eikä se päädy koskaan mainostajille. Markkinointi kertoo mainosalustoille, joilla mainostamme, käynnistäsi ja siitä, loitko tilin, jotta ne voivat näyttää sinulle mainoksiamme. Välttämättömien evästeiden lisäksi mikään ei käynnisty ennen kuin valitset, ja voit muuttaa mieltäsi milloin tahansa sivun alalaidasta – tarkemmat tiedot löydät <link>tietosuojaselosteestamme</link>.",
     "rejectAll": "Hylkää kaikki",
     "analyticsOnly": "Vain analytiikka",
     "analyticsAndMarketing": "Analytiikka ja markkinointi"
