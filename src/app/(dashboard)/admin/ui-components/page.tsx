@@ -30,6 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
+import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -2437,9 +2438,16 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground">
           Every FAQ on the site is drawn as this list. The caller resolves its
           own strings and composes each answer, so an answer can be one
-          paragraph, several, or carry a link. Given no items the component
-          renders nothing at all — there is no empty state to show, which is why
-          that case is pinned in a unit test instead of demoed here.
+          paragraph, several, a numbered run of steps, a bulleted set, or carry
+          a link. Given no items the component renders nothing at all — there is
+          no empty state to show, which is why that case is pinned in a unit
+          test instead of demoed here.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The block shapes below are built by calling the shared answer tags
+          rather than by hand-writing an <code>ol</code> or a <code>ul</code>:
+          those tags are what the real FAQs render through, so a demo that
+          re-typed their classes would be the first thing to drift.
         </p>
         <SubSection title="A list of questions">
           <div className="max-w-3xl">
@@ -2469,6 +2477,50 @@ export default function AdminUIComponentsPage() {
                         Camps and events sometimes run on site, in which case the
                         room provides the machines.
                       </p>
+                    </>
+                  ),
+                },
+                {
+                  key: "with-steps",
+                  question: "How do I join my session when it starts?",
+                  answer: (
+                    <>
+                      {FAQ_ANSWER_TAGS.p("Here is the whole thing:")}
+                      {FAQ_ANSWER_TAGS.steps(
+                        <>
+                          {FAQ_ANSWER_TAGS.step("Open My SOG and find your club.")}
+                          {FAQ_ANSWER_TAGS.step(
+                            "Look at the button on it. Until your session is close it stays locked.",
+                          )}
+                          {FAQ_ANSWER_TAGS.step(
+                            "Five minutes before it starts, that button changes to Join voice room.",
+                          )}
+                          {FAQ_ANSWER_TAGS.step("Tap it. You are in.")}
+                        </>,
+                      )}
+                      {FAQ_ANSWER_TAGS.p("There is nothing to install and no code to type.")}
+                    </>
+                  ),
+                },
+                {
+                  key: "with-a-list",
+                  question: "What do you store about my child?",
+                  answer: (
+                    <>
+                      {FAQ_ANSWER_TAGS.p("About your child, this much:")}
+                      {FAQ_ANSWER_TAGS.list(
+                        <>
+                          {FAQ_ANSWER_TAGS.item(
+                            "Their first name, and their birth month and year.",
+                          )}
+                          {FAQ_ANSWER_TAGS.item(
+                            "An internal Sogverse address, rather than a real email address.",
+                          )}
+                          {FAQ_ANSWER_TAGS.item(
+                            "A profile picture that is a pattern generated from their account id.",
+                          )}
+                        </>,
+                      )}
                     </>
                   ),
                 },
