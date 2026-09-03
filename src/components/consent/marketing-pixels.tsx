@@ -1,53 +1,9 @@
 "use client";
 
 import Script from "next/script";
-import { usePathname } from "next/navigation";
-import {
-  CONVERSION_COOKIE_NAME,
-  matchesPathPrefix,
-  REGISTRATION_CONVERSION,
-} from "@/lib/consent";
-import { ROUTES } from "@/lib/constants";
+import { CONVERSION_COOKIE_NAME, REGISTRATION_CONVERSION } from "@/lib/consent";
+import { useAuth } from "@/providers/auth-provider";
 import { useConsent } from "./consent-provider";
-
-/**
- * Route prefixes no ad-platform script is ever loaded on, for two different
- * reasons.
- *
- * **Whose browsing it is.** `/gamer` is the reason the list exists: a child's
- * own surface never loads a Meta or TikTok script, whatever the account holder
- * has consented to, because the consent belongs to the parent and the browsing
- * does not. `/gedu` and `/admin` are staff at work, and `/preview` is an
- * admin-only fixture render — measuring any of the three would only pollute the
- * numbers.
- *
- * **What is being typed.** The credential surfaces carry an email address, a
- * password, a reset token or a whole account's settings in their fields and
- * their URLs, and an ad-platform script on such a page is one dashboard toggle
- * away from reading them. Keeping the pixel off the page is the only version of
- * that guarantee that does not depend on somebody's account settings staying
- * the way we left them. **Nothing is lost by it**: the registration conversion
- * is not reported from the form at all — the register route hands it over in a
- * short-lived marker cookie, and the pixels on the *next* page read it — so the
- * one event these surfaces could produce arrives without them.
- *
- * `/preview` has no `ROUTES` entry, so it is the one literal here.
- */
-const PIXEL_FREE_PREFIXES = [
-  ROUTES.gamer.dashboard,
-  ROUTES.gedu.dashboard,
-  ROUTES.admin.dashboard,
-  "/preview",
-  ROUTES.login,
-  // `/register` already covers `/register-gedu` under a prefix test; both are
-  // named so the list reads as the set it means and survives either moving.
-  ROUTES.register,
-  ROUTES.registerGedu,
-  ROUTES.forgotPassword,
-  ROUTES.resetPassword,
-  ROUTES.verifyEmail,
-  ROUTES.settings,
-];
 
 /**
  * The Meta Pixel's official base snippet, with the queueing stub that makes an
@@ -110,7 +66,7 @@ interface MarketingPixelsProps {
  * in front of them. All three must hold:
  *
  *   1. the visitor has said yes to marketing;
- *   2. the route is not a child's, a staff member's, or a preview fixture;
+ *   2. the visitor is not a signed-in gamer;
  *   3. the platform's id is configured at all.
  *
  * An unset `NEXT_PUBLIC_*_PIXEL_ID` means that pixel is simply off, which is
@@ -124,14 +80,20 @@ interface MarketingPixelsProps {
  */
 export function MarketingPixels({ nonce }: MarketingPixelsProps) {
   const { consent } = useConsent();
-  const pathname = usePathname();
+  const { profile, isLoading } = useAuth();
 
   const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
   const tiktokPixelId = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
 
+  // One rule, by who is signed in rather than by URL: marketing consent is on
+  // this device, and the visitor is either anonymous or not a gamer. A child's
+  // browsing never reaches an ad platform, on their own surface or on the
+  // public shop, whatever a parent once clicked on a shared device. Until the
+  // profile is known nothing mounts — the doubt is resolved in the safe
+  // direction — and the pixels on the page after registration still fire the
+  // conversion, since the new account is a customer.
   const allowed =
-    consent?.marketing === true &&
-    !matchesPathPrefix(pathname, PIXEL_FREE_PREFIXES);
+    consent?.marketing === true && !isLoading && profile?.role !== "gamer";
 
   if (!allowed) return null;
   if (!metaPixelId && !tiktokPixelId) return null;

@@ -12,10 +12,10 @@ import { useConsent } from "./consent-provider";
  * could be pointing at when the banner arrives is in the same place
  * afterwards.
  *
- * It asks on every surface, the gamer one included. The pixels keep their own
- * exclusion list (a child's surface never loads an ad-platform script, whatever
- * was answered), so a gate on the question itself would withhold no script and
- * protect nothing — it was tried and removed as complexity without coverage.
+ * It asks on every surface, the gamer one included. The pixels refuse a
+ * signed-in gamer by role, wherever they are, so a gate on the question itself
+ * would withhold no script and protect nothing — it was tried and removed as
+ * complexity without coverage.
  */
 export function ConsentBanner() {
   const { consent, isOpen, choose } = useConsent();

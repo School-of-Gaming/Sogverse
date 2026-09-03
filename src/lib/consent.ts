@@ -81,23 +81,6 @@ export const PIXEL_COOKIE_NAMES = [
   "_tt_enable_cookie",
 ] as const;
 
-/**
- * Whether `pathname` sits under any of `prefixes`.
- *
- * A plain prefix test, not an exact-or-slash one, and deliberately: this only
- * ever decides whether an optional third-party script is *withheld*, so a
- * prefix that catches one route too many withholds a pixel that would have been
- * allowed, and a stricter test that catches one too few loads a script on a
- * surface somebody meant to keep clear. Between those two, over-matching is the
- * error to make.
- */
-export function matchesPathPrefix(
-  pathname: string,
-  prefixes: readonly string[],
-): boolean {
-  return prefixes.some((prefix) => pathname.startsWith(prefix));
-}
-
 /** The three buttons, in the order the banner offers them. */
 export type ConsentChoice =
   | "reject_all"
