@@ -70,7 +70,17 @@ export const POST = defineRoute({
 
     let subject: string;
     let htmlContent: string;
+    // The plain-text body, for the template that states one. It is what a
+    // Microsoft mailbox fills a calendar entry's notes from, so it travels with
+    // the mail rather than being derived from the markup at the far end.
+    let textContent: string | undefined;
     let replyToEmail: string | undefined;
+    // Whatever the template composes beside its body. Free-form mode carries
+    // none: an attachment is a property of a template's content, not something
+    // an admin types into a box.
+    let attachments: { name: string; contentBase64: string }[] | undefined;
+    // The text of every text attachment, so the answer can show what was sent.
+    let sentAttachments: { name: string; text: string }[] | undefined;
 
     if (body.mode === "custom") {
       subject = body.subject;
@@ -106,12 +116,41 @@ export const POST = defineRoute({
       // route is the send: what leaves here is fetched by a recipient's mail
       // client, so a fixture whose art only a dev machine can reach drops it.
       // The admin page's in-browser preview is the other half of that pair.
-      const rendered = tmpl.render(paramsParsed.data, t, locale, { to: "send" });
+      // A builder may refuse the params it was given — a calendar invitation
+      // whose run has nothing left in it is the case — and that refusal is an
+      // answer about the request, not a fault of ours. It is answered the way
+      // the schema's own refusal above is: a 400 carrying the message the
+      // builder wrote for the admin to read.
+      let rendered;
+      try {
+        rendered = tmpl.render(paramsParsed.data, t, locale, { to: "send" });
+      } catch (error) {
+        return NextResponse.json(
+          { error: error instanceof Error ? error.message : String(error) },
+          { status: 400 },
+        );
+      }
       subject = rendered.subject;
       htmlContent = rendered.html;
+      textContent = rendered.text;
       // The template's own reply-to, so a test send lands the same way the live
       // mail does rather than silently defaulting to the sending address.
       replyToEmail = rendered.replyTo;
+      // The file names go through untouched: the provider infers a media type
+      // from the extension, so a name rewritten here would change how a client
+      // reads the part — an `invite.ics` under another name arrives as a file
+      // to download rather than as an invitation.
+      attachments = rendered.attachments?.map(({ name, contentBase64 }) => ({
+        name,
+        contentBase64,
+      }));
+      // Read back to the admin, not sent: a calendar document states the
+      // identifier the entry lives under, and a second message about the same
+      // entry has to repeat it. Without this the identifier a send minted was
+      // unreadable — the preview mints its own, so it could never be the one
+      // that went out. Only text attachments have anything to show.
+      sentAttachments = rendered.attachments
+        ?.flatMap(({ name, text }) => (text === undefined ? [] : [{ name, text }]));
     }
 
     const emailResult = await sendTransactionalEmail({
@@ -120,9 +159,14 @@ export const POST = defineRoute({
       toEmail: toEmails,
       subject,
       htmlContent,
+      textContent,
       replyToEmail,
+      attachments,
     });
 
-    return { messageId: emailResult.messageId };
+    return {
+      messageId: emailResult.messageId,
+      ...(sentAttachments?.length && { attachments: sentAttachments }),
+    };
   },
 });

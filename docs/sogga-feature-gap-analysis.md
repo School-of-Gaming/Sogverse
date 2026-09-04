@@ -395,10 +395,11 @@ RPC when an admin opens a surface that cares, and verification requests self-pru
 their own RPC. Subscription cancellation is delegated to Stripe (`cancel_at_period_end`
 via the webhook, self-served through the Customer Portal).
 
-**Still open:** Any feature that genuinely needs a timer — session reminders
-(`docs/investigations/session-reminders-and-calendar-feed.md`) and chat retention
-(`TODO.md`) both name the constraint. The first such feature has to bring the runbook and
-alerting `pg_cron` would need.
+**Still open:** Any feature that genuinely needs a timer — chat retention (`TODO.md`)
+names the constraint. Session reminders no longer do: the direction is a calendar
+invitation carried by the confirmation mail, whose reminders the parent's own calendar
+fires, explored in `src/lib/calendar-invitations/`. The first feature that does need a
+timer has to bring the runbook and alerting `pg_cron` would need.
 
 **Priority:** `Medium`
 **Complexity:** `Medium` — Decided per feature; no general job system is wanted.

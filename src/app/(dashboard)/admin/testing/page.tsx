@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Mail, MonitorPlay, RefreshCw } from "lucide-react";
+import { useRef, useState } from "react";
+import { Mail, MonitorPlay } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +30,7 @@ import {
   type TemplateDefinition,
   type TemplateField,
 } from "@/lib/email-templates/registry";
+import type { RenderedAttachment } from "@/lib/email-templates/attachments";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 
 const EMAIL_PROVIDERS = ["brevo", "klaviyo"] as const;
@@ -39,7 +46,7 @@ type EmailMode = (typeof EMAIL_MODES)[number];
  * two different pages and only one of them is on screen at a time. This is what
  * puts the other one there.
  *
- * `desktop` is the frame filling the card, which is wider than the mail's own
+ * `desktop` is the frame filling the dialog, which is wider than the mail's own
  * 560px table — so the mail sits centred at its authored width, exactly as an
  * inbox on a laptop shows it. `mobile` is 360 CSS px: the house mobile design
  * floor (the archetypal Android family phone) and comfortably inside the mail's
@@ -55,6 +62,16 @@ type PreviewWidth = (typeof PREVIEW_WIDTHS)[number];
 interface EmailResult {
   type: "success" | "error";
   message: string;
+  /**
+   * The text of every text attachment the send actually carried.
+   *
+   * A calendar document states the identifier its entry lives under, and a
+   * second message about that entry has to repeat it — so the identifier a send
+   * minted has to be readable *after* the send. The preview cannot stand in for
+   * it: a render mints its own, so what the preview shows was never what went
+   * out.
+   */
+  attachments?: { name: string; text: string }[];
 }
 
 const selectClass =
@@ -94,23 +111,6 @@ function templateApiParams(
   return definition.resolveParams ? definition.resolveParams(raw) : raw;
 }
 
-/**
- * What the preview is currently showing — a snapshot of the form, not a live
- * view of it.
- *
- * The distinction is the whole design of the panel below. Re-rendering on every
- * keystroke would reload the iframe and throw away wherever the reader had
- * scrolled to in the mail, which is exactly what someone editing the report
- * markdown is watching. So the snapshot is replaced on the two choices that
- * change *which* mail is on screen — the template and the locale — and on the
- * refresh button for everything else.
- */
-interface PreviewRequest {
-  template: string;
-  locale: SupportedLocale;
-  params: Record<string, string>;
-}
-
 // --- Page ---
 
 export default function TestingPage() {
@@ -136,52 +136,76 @@ export default function TestingPage() {
   const [templateParams, setTemplateParams] = useState<Record<string, string>>({});
   const [templateLocale, setTemplateLocale] = useState<SupportedLocale>(DEFAULT_LOCALE);
 
-  // Preview state
-  const [previewRequest, setPreviewRequest] = useState<PreviewRequest>(() => ({
-    template: templateKeys[0],
-    locale: DEFAULT_LOCALE,
-    params: {},
-  }));
-  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
+  // Preview state. The dialog is the whole of it: the mail is drawn when the
+  // dialog opens and shown only while it is up, so nothing typed into the form
+  // afterwards can reload the frame under a reader.
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [preview, setPreview] = useState<{
+    subject: string;
+    html: string;
+    attachments: RenderedAttachment[];
+  } | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
-  // Deliberately *not* part of the snapshot above: the width is which viewport
-  // the same rendered document is being shown in, not which document it is, so
-  // it never re-runs the render effect.
+  // Which viewport the already-rendered document is shown in, not which
+  // document it is: the toggle in the dialog header changes it without
+  // re-rendering the mail, and it is kept across opens so a reader checking
+  // the mobile layout of several templates is not flipped back each time.
   const [previewWidth, setPreviewWidth] = useState<PreviewWidth>("desktop");
+  // Which render is allowed to paint. Two can be in flight at once — close the
+  // dialog, change the locale, reopen it before the first locale's message
+  // chunk has arrived — and the one that resolves second must not be the one
+  // left on screen.
+  const previewRun = useRef(0);
 
   const selectedTemplate = templateRegistry[templateName];
 
   /**
-   * Render the snapshot with the same registry call the send route makes —
-   * but in the preview context, so a fixture whose art lives on this dev
-   * server is resolved against *this browser's* origin instead of being
-   * dropped as unreachable. The mail a recipient would get is the send's job;
-   * the mail as it was designed is this one's.
+   * Open the preview, showing the mail the form describes at this moment.
+   *
+   * Opening *is* the snapshot, which is why there is nothing to refresh: the
+   * values are read at the click and the frame is then left alone, so a reader
+   * scrolled into the middle of a long session report keeps their place for as
+   * long as the dialog is up, and gets the form's current state by reopening
+   * it.
+   *
+   * The render is the same registry call the send route makes — but in the
+   * preview context, so a fixture whose art lives on this dev server is
+   * resolved against *this browser's* origin instead of being dropped as
+   * unreachable. The mail a recipient would get is the send's job; the mail as
+   * it was designed is this one's.
    *
    * The translator is an awaited dynamic import of one locale's messages, so
    * this is a chunk fetch rather than a round trip: nothing is drawn while it
    * is in flight, inside a box that is already its final size.
    */
-  useEffect(() => {
-    // A cancellation token rather than a boolean the cleanup closes over: two
-    // requests can be in flight across a locale change, and the one that
-    // resolves second must not be the one that paints.
-    const superseded = new AbortController();
+  function openPreview() {
+    setPreview(null);
+    setPreviewError(null);
+    setPreviewOpen(true);
+
+    const run = previewRun.current + 1;
+    previewRun.current = run;
+    const definition = selectedTemplate;
+    const locale = templateLocale;
+    const params = templateParams;
+
     void (async () => {
       try {
-        const t = await getEmailTranslator(previewRequest.locale);
-        if (superseded.signal.aborted) return;
-        const definition = templateRegistry[previewRequest.template];
+        const translate = await getEmailTranslator(locale);
+        if (previewRun.current !== run) return;
         const rendered = definition.render(
-          templateApiParams(definition, previewRequest.params),
-          t,
-          previewRequest.locale,
+          templateApiParams(definition, params),
+          translate,
+          locale,
           { to: "preview", origin: window.location.origin },
         );
-        setPreview({ subject: rendered.subject, html: rendered.html });
-        setPreviewError(null);
+        setPreview({
+          subject: rendered.subject,
+          html: rendered.html,
+          attachments: rendered.attachments ?? [],
+        });
       } catch (error) {
-        if (superseded.signal.aborted) return;
+        if (previewRun.current !== run) return;
         setPreview(null);
         // The raw message, like the send result banner beside it: a zod path is
         // what tells the admin which field they mistyped, and this page is
@@ -189,10 +213,7 @@ export default function TestingPage() {
         setPreviewError(error instanceof Error ? error.message : String(error));
       }
     })();
-    return () => {
-      superseded.abort();
-    };
-  }, [previewRequest]);
+  }
 
   function handleModeChange(newMode: EmailMode) {
     setMode(newMode);
@@ -203,19 +224,6 @@ export default function TestingPage() {
     setTemplateName(name);
     setTemplateParams({});
     setResult(null);
-    // A different template is a different mail, so the snapshot follows it
-    // rather than sitting there describing the previous one. Its params are
-    // cleared above, so the preview shows what an untouched form would send.
-    setPreviewRequest({ template: name, locale: templateLocale, params: {} });
-  }
-
-  function handleTemplateLocaleChange(locale: SupportedLocale) {
-    setTemplateLocale(locale);
-    setPreviewRequest({ template: templateName, locale, params: templateParams });
-  }
-
-  function refreshPreview() {
-    setPreviewRequest({ template: templateName, locale: templateLocale, params: templateParams });
   }
 
   function updateParam(key: string, value: string) {
@@ -265,6 +273,7 @@ export default function TestingPage() {
         setResult({
           type: "success",
           message: t('emailSentSuccess', { messageId: data.messageId }),
+          attachments: data.attachments,
         });
       }
     } catch {
@@ -365,7 +374,7 @@ export default function TestingPage() {
                       value={templateLocale}
                       onChange={(e) => {
                         if (isSupportedLocale(e.target.value)) {
-                          handleTemplateLocaleChange(e.target.value);
+                          setTemplateLocale(e.target.value);
                         }
                       }}
                       className={selectClass}
@@ -483,129 +492,181 @@ export default function TestingPage() {
               </>
             )}
 
-            {/* Result banner */}
+            {/* Result banner, and under it what the send actually carried. The
+                panel is the preview dialog's, closed by default for the same
+                reason: a hundred lines of calendar source above the send button
+                would bury the one line saying the mail went. It arrives with
+                the banner rather than after it, so nothing already on screen
+                moves when it appears. */}
             {result && (
-              <div
-                className={`rounded-md p-3 text-sm ${
-                  result.type === "success"
-                    ? "bg-success/10 text-success"
-                    : "bg-destructive/10 text-destructive"
-                }`}
-              >
-                {result.message}
+              <div className="space-y-2">
+                <div
+                  className={`rounded-md p-3 text-sm ${
+                    result.type === "success"
+                      ? "bg-success/10 text-success"
+                      : "bg-destructive/10 text-destructive"
+                  }`}
+                >
+                  {result.message}
+                </div>
+                {result.attachments?.map((attachment) => (
+                  <details key={attachment.name} className="rounded-md border border-border">
+                    <summary className="cursor-pointer px-3 py-2 text-sm">
+                      {t('sentAttachment', { name: attachment.name })}
+                    </summary>
+                    <pre className="h-64 overflow-auto border-t border-border p-3 font-mono text-xs whitespace-pre-wrap">
+                      {attachment.text}
+                    </pre>
+                  </details>
+                ))}
               </div>
             )}
 
-            <Button type="submit" disabled={sending}>
-              {sending ? c('sending') : t('sendTestEmail')}
-            </Button>
+            {/* The action row, authored DOM-order [secondary…, affirmative]:
+                the send is the answer this form exists to give, so it is the
+                last child — rightmost in a row, and topmost once the row
+                stacks. The preview button is template-mode only, exactly as
+                the preview always was: free-form mode's body is the typed
+                text with its line breaks, which the textarea above already
+                shows, while a registered template is the case where what you
+                asked for and what arrives are two different documents. One
+                button, not one per viewport: the dialog carries its own
+                desktop/mobile toggle, so a second opener would only duplicate
+                it. */}
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              {mode === "template" && (
+                <Button type="button" variant="outline" onClick={openPreview}>
+                  <MonitorPlay />
+                  {t('preview')}
+                </Button>
+              )}
+              <Button type="submit" disabled={sending}>
+                {sending ? c('sending') : t('sendTestEmail')}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
 
-      {/* The preview, for template mode only: free-form mode's body is the
-          typed text with its line breaks, which the textarea above already
-          shows. A registered template is the case where what you asked for and
-          what arrives are two different documents. */}
-      {mode === "template" && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <MonitorPlay className="h-5 w-5" />
-                  <CardTitle>{t('preview')}</CardTitle>
-                </div>
-                <CardDescription>{t('previewDescription')}</CardDescription>
-              </div>
-              {/* Both controls are on screen at first paint and stay there, so
-                  this right-packed group never grows or shrinks under the
-                  reader's cursor. */}
-              <div className="flex shrink-0 items-center gap-2">
-                <div
-                  role="group"
-                  aria-label={t('previewWidth.label')}
-                  className="inline-flex rounded-md border border-input p-1"
-                >
-                  {PREVIEW_WIDTHS.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      aria-pressed={previewWidth === option}
-                      onClick={() => setPreviewWidth(option)}
-                      className={cn(
-                        "rounded px-3 py-1 text-xs transition-colors",
-                        previewWidth === option
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {t(`previewWidth.${option}`)}
-                    </button>
-                  ))}
-                </div>
-                <Button type="button" variant="outline" size="sm" onClick={refreshPreview}>
-                  <RefreshCw />
-                  {t('refreshPreview')}
-                </Button>
+      {/* The preview is a dialog rather than a second panel under the form:
+          the mail is 720px of reading and the form is what the page is for, so
+          the two do not share a scroll. `size="wide"` rather than a one-off
+          max-width class, because the cap is applied on the portal's
+          positioning wrapper as well as on the content — a class on the
+          content alone would still be squeezed by the wrapper. The mail's own
+          table is 560px, so a wide dialog shows it centred at its authored
+          width with ground either side, which is what a laptop inbox does. */}
+      <Dialog open={previewOpen} size="wide" onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-h-[90vh] space-y-3 overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center justify-between gap-4">
+              <DialogTitle>{t('preview')}</DialogTitle>
+              {/* The toggle is in here as well as on the buttons that open the
+                  dialog, so a reader can compare the two viewports without
+                  closing and reopening — and it is on screen from the moment
+                  the dialog opens, so this right-packed group never grows or
+                  shrinks under the reader's cursor. */}
+              <div
+                role="group"
+                aria-label={t('previewWidth.label')}
+                className="inline-flex shrink-0 rounded-md border border-input p-1"
+              >
+                {PREVIEW_WIDTHS.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    aria-pressed={previewWidth === option}
+                    onClick={() => setPreviewWidth(option)}
+                    className={cn(
+                      "rounded px-3 py-1 text-xs transition-colors",
+                      previewWidth === option
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {t(`previewWidth.${option}`)}
+                  </button>
+                ))}
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* The subject is half of what a template produces and the only
-                half a rendered body cannot show. Its label is always on
-                screen and the line under it holds a line's height whether or
-                not it has words in it, so the panel below never moves. */}
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                {t('subject')}
+          </DialogHeader>
+          {/* The subject is half of what a template produces and the only half
+              a rendered body cannot show. Its label is up with the dialog and
+              the line under it holds a line's height whether or not it has
+              words in it, so the frame below never moves when the render
+              lands. */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {t('subject')}
+            </p>
+            <p className="min-h-5 text-sm">{preview?.subject ?? ""}</p>
+          </div>
+          {/* Sandboxed, and `allow-same-origin` is load-bearing rather than a
+              relaxation: scripts stay off (the mail has none, and without
+              `allow-scripts` nothing in here can run), while the origin is
+              what the inherited CSP's `img-src 'self'` is matched against —
+              an opaque origin would block the very photographs this panel
+              exists to show. The box carries its final height before anything
+              is drawn in it, so neither the first render nor a refusal moves
+              what is already in the dialog. The height is viewport-relative so
+              a short screen gets a shorter frame rather than a dialog that
+              runs off it. */}
+          <div className="h-[min(720px,70vh)] overflow-hidden rounded-md border border-border bg-background">
+            {/* The caught error's own message, rendered — a signed-off
+                exception to the rule that a thrown message never reaches a
+                screen *(owner)*. This page is admin-only developer tooling
+                for composing test mail, and the message here is a zod path
+                naming the parameter that was mistyped, which is the whole of
+                what makes the line useful. A sweep replacing it with our own
+                copy would leave an admin told only that something is wrong
+                with a form of twenty fields. */}
+            {previewError ? (
+              <p className="p-4 text-sm text-destructive">
+                {t('previewError', { message: previewError })}
               </p>
-              <p className="min-h-5 text-sm">{preview?.subject ?? ""}</p>
-            </div>
-            {/* Sandboxed, and `allow-same-origin` is load-bearing rather than a
-                relaxation: scripts stay off (the mail has none, and without
-                `allow-scripts` nothing in here can run), while the origin is
-                what the inherited CSP's `img-src 'self'` is matched against —
-                an opaque origin would block the very photographs this panel
-                exists to show. The box carries its final height before
-                anything is drawn in it, so neither the first render nor a
-                refusal moves the page. */}
-            <div className="h-[720px] overflow-hidden rounded-md border border-border bg-background">
-              {/* The caught error's own message, rendered — a signed-off
-                  exception to the rule that a thrown message never reaches a
-                  screen *(owner)*. This page is admin-only developer tooling
-                  for composing test mail, and the message here is a zod path
-                  naming the parameter that was mistyped, which is the whole of
-                  what makes the line useful. A sweep replacing it with our own
-                  copy would leave an admin told only that something is wrong
-                  with a form of twenty fields. */}
-              {previewError ? (
-                <p className="p-4 text-sm text-destructive">
-                  {t('previewError', { message: previewError })}
-                </p>
-              ) : preview ? (
-                <iframe
-                  title={t('preview')}
-                  srcDoc={preview.html}
-                  sandbox="allow-same-origin"
-                  className={cn(
-                    "mx-auto block h-full border-0",
-                    // Only the element's width changes between the two, so the
-                    // frame is never remounted and the mail is never re-rendered
-                    // — the document keeps its scroll across a toggle. The ring
-                    // draws outside the box rather than inside it, so the narrow
-                    // frame is visibly a phone without the border stealing two
-                    // pixels from the viewport being demonstrated.
-                    previewWidth === "mobile"
-                      ? "w-[360px] ring-1 ring-border"
-                      : "w-full",
-                  )}
-                />
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            ) : preview ? (
+              <iframe
+                title={t('preview')}
+                srcDoc={preview.html}
+                sandbox="allow-same-origin"
+                className={cn(
+                  "mx-auto block h-full border-0",
+                  // Only the element's width changes between the two, so the
+                  // frame is never remounted and the mail is never re-rendered
+                  // — the document keeps its scroll across a toggle. The ring
+                  // draws outside the box rather than inside it, so the narrow
+                  // frame is visibly a phone without the border stealing two
+                  // pixels from the viewport being demonstrated.
+                  previewWidth === "mobile"
+                    ? "w-[360px] ring-1 ring-border"
+                    : "w-full",
+                )}
+              />
+            ) : null}
+          </div>
+          {/* What travels beside the body. It is closed by default because the
+              mail is what the dialog is for and a hundred lines of calendar
+              source above the fold would bury it — and it sits *below* the
+              frame, where opening it grows the dialog's own scroll rather than
+              moving anything already on screen. The box has a fixed height for
+              the same reason: a long attachment expanded in place would push
+              the whole document's height around under the reader.
+              Only a text attachment gets a panel, because there is nothing
+              useful to show for bytes that are not text. */}
+          {preview?.attachments
+            .filter((attachment) => attachment.text !== undefined)
+            .map((attachment) => (
+              <details key={attachment.name} className="rounded-md border border-border">
+                <summary className="cursor-pointer px-3 py-2 text-sm">
+                  {t("attachment", { name: attachment.name })}
+                </summary>
+                <pre className="h-64 overflow-auto border-t border-border p-3 font-mono text-xs whitespace-pre-wrap">
+                  {attachment.text}
+                </pre>
+              </details>
+            ))}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

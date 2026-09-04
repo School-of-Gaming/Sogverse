@@ -1064,14 +1064,14 @@
       "emailSentSuccess": "E-mail envoyé ! ID du message : {messageId}",
       "failedToSendRequest": "Échec de l’envoi de la requête",
       "preview": "Aperçu",
-      "previewDescription": "Le rendu de l’e-mail. Il est dessiné ici dans votre navigateur et n’est pas envoyé, et ses images se chargent depuis ce serveur : un aperçu montre donc les photos qu’un envoi depuis une machine de développement laisse de côté.",
-      "refreshPreview": "Actualiser l’aperçu",
       "previewError": "Impossible de faire le rendu de ce modèle : {message}",
       "previewWidth": {
         "label": "Largeur de l’aperçu",
         "desktop": "Ordinateur",
         "mobile": "Mobile"
-      }
+      },
+      "attachment": "Pièce jointe : {name}",
+      "sentAttachment": "Ce qui a été envoyé : {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",

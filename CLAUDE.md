@@ -348,6 +348,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Parent PIN | `src/services/pin/` |
 | i18n | `src/i18n/` |
 | Email templates | `src/lib/email-templates/` |
+| Calendar invitations (the mailed `.ics`) | `src/lib/calendar-invitations/` |
 | Supabase clients & paged list reads | `src/lib/supabase/` |
 | Locations | `src/services/locations/` |
 | Product image catalogue | `src/services/product-images/` |
