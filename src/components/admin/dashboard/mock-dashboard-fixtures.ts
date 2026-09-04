@@ -616,9 +616,9 @@ function quietCatalogue(): ProductSpec[] {
  * another**, because that pair is the hardest thing on this panel to get right:
  * they say almost the same sentence and are ranked and tinted differently, so
  * the only way to tell whether the difference reads is to see them adjacent. The
- * card carrying an empty group alone is the other half of that — a whole product
- * whose entire problem is muted, which is what the queue's quietest possible
- * entry looks like.
+ * card carrying an empty group alone is the other half of that — the same line
+ * with no warning line above it to lend it weight, sitting at the top of the
+ * muted band that the fee-only cards fill out below it.
  *
  * **The facts are structural here for the same reason they are on the wire.** A
  * fixture holding pre-worded English would render the preview scene through a
@@ -707,11 +707,12 @@ const PRODUCT_ISSUE_SPECS: readonly {
     issues: [{ kind: "waitlist-open-seats", values: { waiting: 4, open: 1, offers: 0 } }],
   },
   {
-    // The quietest card the queue can produce: a club that has not started yet,
-    // whose whole problem is one group with nobody teaching it and nobody in it.
-    // Every line on it is muted, which is a card shape nothing else here has —
-    // and it is the shape that made this kind worth adding, because before it
-    // existed this product was absent from the queue altogether.
+    // The empty group standing alone: a club that has not started yet, whose
+    // whole problem is one group with nobody teaching it and nobody in it. The
+    // fee-only cards below are all-muted too and rank below this one, so what
+    // this card is here for is the top of the muted band with nothing above it —
+    // the shape that made this kind worth adding, because before it existed this
+    // product was absent from the queue altogether.
     productId: "municipality-club-17",
     issues: [{ kind: "empty-group-without-gedu", values: { group: "Ryhmä" } }],
   },

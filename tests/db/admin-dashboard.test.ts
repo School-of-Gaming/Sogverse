@@ -29,7 +29,7 @@ import {
  *     gedu fee of *zero* is a volunteer session, not a missing fee
  *   - the two unstaffed-group arrays, which are disjoint: a group somebody is in
  *     is in the first, a group nobody is in is in the second, and a group
- *     somebody teaches is in neither. Until 00240 the empty one was not reported
+ *     somebody teaches is in neither. Until 00241 the empty one was not reported
  *     at all, so the cases below are what keep the two halves from collapsing
  *     back into one
  *   - a live product with nothing wrong is absent from the queue entirely
@@ -51,7 +51,7 @@ const P_WAITLIST = "00000000-0000-0000-0000-000000000623";
 const P_MUNI = "00000000-0000-0000-0000-000000000624";
 const P_CLEAN = "00000000-0000-0000-0000-000000000625";
 /**
- * The product whose ONLY problem is an empty unstaffed group (00240). Its fee is
+ * The product whose ONLY problem is an empty unstaffed group (00241). Its fee is
  * set and it has no queue, so if it is in the attention list at all, it is there
  * for the one reason this fixture exists to prove.
  */
@@ -60,7 +60,7 @@ const GROUP_EMPTY = "00000000-0000-0000-0000-000000000627";
 const P_ENDED = "00000000-0000-0000-0000-000000000628";
 /**
  * A group on P_CLEAN with an educator assigned and nobody in it. It is what
- * keeps P_CLEAN clean *for a reason* — before 00240 an empty group was ignored
+ * keeps P_CLEAN clean *for a reason* — before 00241 an empty group was ignored
  * whatever its staffing, so a fixture that left this one unassigned would go on
  * passing while saying nothing.
  */
@@ -595,7 +595,7 @@ describe("get_admin_dashboard", () => {
     });
 
     it("names an empty group with no educator, in its own array", () => {
-      // Until 00240 this group was reported nowhere: the group check skipped it
+      // Until 00241 this group was reported nowhere: the group check skipped it
       // for having no members, on the reasoning that an admin building next
       // term's groups has not made a mistake. That reasoning now sets the line's
       // rank on the page instead of hiding the group.
@@ -609,7 +609,7 @@ describe("get_admin_dashboard", () => {
     it("puts a product in the queue for an empty unstaffed group alone", () => {
       // Its fee is set, it has no cap and no queue, and nobody is enrolled on
       // it — so its presence here is the empty group and nothing else. This is
-      // the whole behaviour change: before 00240 this product was absent.
+      // the whole behaviour change: before 00241 this product was absent.
       const product = attention(P_EMPTY_GROUP);
       expect(product).toBeDefined();
       expect(product?.unassigned_count).toBe(0);
@@ -639,7 +639,7 @@ describe("get_admin_dashboard", () => {
     it("says nothing about a live product with nothing wrong", () => {
       // P_CLEAN has a fee, no queue, no unassigned seats — and one group that is
       // empty but ASSIGNED, which is the case both group arrays exclude. Since
-      // 00240 that assignment is load-bearing: an empty group with no educator
+      // 00241 that assignment is load-bearing: an empty group with no educator
       // would put this product in the queue.
       expect(attention(P_CLEAN)).toBeUndefined();
     });

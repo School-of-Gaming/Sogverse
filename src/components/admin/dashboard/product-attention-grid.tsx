@@ -47,10 +47,10 @@ interface IssuePresentation {
   icon: LucideIcon;
   /**
    * `warning` where somebody is already affected, `muted` where the cost is
-   * still only a loose end — a seat nobody was offered, a group nobody is in, a
-   * number missing from a form. All three are real and have to be fixed, but
-   * painting them the same colour as a child nobody is teaching would flatten
-   * the ranking the card just spent its ordering on.
+   * still only a loose end — a group nobody is in and nobody teaches, a gedu fee
+   * nobody has set, a municipality fee missing from a form. All three are real
+   * and have to be fixed, but painting them the same colour as a child nobody is
+   * teaching would flatten the ranking the card just spent its ordering on.
    *
    * **The split tracks the ranking rather than cutting across it**: the warning
    * kinds are a prefix of `PRODUCT_ISSUE_KINDS` and the muted ones are the rest,
@@ -62,14 +62,19 @@ interface IssuePresentation {
   tone: "warning" | "muted";
 }
 
-const ISSUE_PRESENTATION: Record<ProductIssueKind, IssuePresentation> = {
+/**
+ * Exported for the invariant test: the prefix property the doc comment above
+ * asserts is a relationship between this map and `PRODUCT_ISSUE_KINDS`, and
+ * nothing in the type system holds it, so a test has to read both.
+ */
+export const ISSUE_PRESENTATION: Record<ProductIssueKind, IssuePresentation> = {
   "unassigned-gamers": { icon: UserRoundX, tone: "warning" },
   "group-without-gedu": { icon: UserX, tone: "warning" },
   "waitlist-open-seats": { icon: Users, tone: "warning" },
-  // Deliberately the near-twin of the glyph above it: it is the same fact about
-  // the same kind of thing — this group has no educator — and the tone is what
-  // carries the difference between a group somebody is waiting in and one
-  // nobody is.
+  // Deliberately the near-twin of the `UserX` two entries up: it is the same
+  // fact about the same kind of thing — this group has no educator — and the
+  // tone is what carries the difference between a group somebody is enrolled in
+  // and one with nobody in it at all.
   "empty-group-without-gedu": { icon: UserMinus, tone: "muted" },
   "missing-gedu-fee": { icon: Coins, tone: "muted" },
   "missing-municipality-fee": { icon: Building2, tone: "muted" },

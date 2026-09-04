@@ -530,12 +530,20 @@ describe("the attention queue", () => {
       { kind: "empty-group-without-gedu", values: { group: "Tiistai C" } },
       { kind: "missing-gedu-fee" },
     ]);
-    // Three group lines on one card need three keys — and the two kinds cannot
-    // collide on a shared id, because a product may hold a populated and an
-    // empty group whose ids differ but whose infix would not.
-    expect(new Set(data.products[0].issues.map((issue) => issue.id)).size).toBe(
-      6,
-    );
+    // The ids are asserted whole rather than counted, because a count only
+    // proves they differ — it does not pin *how*. Each is product, kind and,
+    // where a kind can repeat on one card, the group it is about; that last
+    // part is what keeps three group lines from sharing a React key, and the
+    // kind infix is what keeps a populated and an empty group line legible as
+    // two different lines wherever an id is read back.
+    expect(data.products[0].issues.map((issue) => issue.id)).toEqual([
+      "club-unassigned-gamers",
+      "club-group-without-gedu-g1",
+      "club-group-without-gedu-g2",
+      "club-waitlist-open-seats",
+      "club-empty-group-without-gedu-g3",
+      "club-missing-gedu-fee",
+    ]);
   });
 
   it("keeps an empty unstaffed group out of the populated group's line", () => {

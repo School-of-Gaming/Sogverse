@@ -124,7 +124,7 @@ export const adminDashboardAttentionProduct = z.object({
   /** Groups with at least one active member and no gedu assigned. */
   groups_without_gedu: z.array(adminDashboardGroupWithoutGedu),
   /**
-   * Groups with no gedu assigned and nobody in them either (00240).
+   * Groups with no gedu assigned and nobody in them either (00241).
    *
    * A sibling key rather than a flag on the objects above, because the page
    * ranks the two differently — an empty unstaffed group is a loose end, not a
