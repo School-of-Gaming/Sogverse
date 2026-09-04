@@ -2292,12 +2292,6 @@
             "description": "{name}vaD pong chu’ yIwIv. rInbe’ mu’mey, ’ach SIbI’ Qapbe’choH pong ngo’.",
             "submit": "pong yIpol",
             "saved": "choHlu’ta’ pong. QujwI’lIjvaD chu’ yIjatlh."
-          },
-          "email": {
-            "title": "QIn Daq yIchoH",
-            "description": "Daq chu’Daq lInk wIngeH. poSmoHpa’ {name}, ngu’lu’be’ Daq, ’ej Qapbe’choH mu’mey ngo’ — lInk lo’ ’ej mu’mey chu’ wIv.",
-            "submit": "Daq yIpol",
-            "saved": "choHlu’ta’ Daq. Daq chu’Daq QIn wIngeHta’."
           }
         }
       }
@@ -3105,7 +3099,6 @@
     "usernameTaken": "pongvam lo’lu’. latlh yInuD!",
     "passwordHint": "{count} Hap law’ law’. QujwI’lIjvaD yIjatlh – naDev DachoHlaH.",
     "passwordTooShort": "{count} Hap law’ law’ poQ mu’mey.",
-    "emailHint": "naDev ngeHlu’ ngu’meH lInk. laDlaH QujwI’lIj ’e’ poQ.",
     "emailPlaceholder": "mara@example.com",
     "emailRequired": "QIn Daq yIchel!",
     "emailInvalid": "QIn Daq rurbe’ vam.",

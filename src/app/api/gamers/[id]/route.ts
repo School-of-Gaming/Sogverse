@@ -40,10 +40,19 @@ import type { GamerSignIn } from "@/types";
  *    handle built from the new username. A password is required when *entering*
  *    the mode and optional afterwards, which is what makes a parent resetting a
  *    forgotten password a one-field edit.
- *  - **→ `email`** (or an address change) — the address becomes the child's real
- *    mailbox, the password is scrambled, and the welcome mail goes out again.
- *    Both halves are the point: a new address is unproven until it is clicked,
- *    and a password set against the *old* address must not survive the move.
+ *  - **→ `email`** — the address becomes the child's real mailbox, the
+ *    password is scrambled, and the welcome mail goes out again. Both halves
+ *    are the point: a new address is unproven until it is clicked, and a
+ *    password set against the *old* address must not survive the move.
+ *
+ * AN ACCOUNT ALREADY IN `email` MODE DOES NOT TAKE A NEW ADDRESS. Changing an
+ * account's email address is not something this platform supports for any role
+ * (owner ruling), and when it does it will be one mechanism built once, for
+ * every role, rather than a form on one card. So an `email` key is only ever
+ * the address a child is *entering* the mode with, and one that arrives with no
+ * transition to make is refused — here, because this is the only layer that can
+ * see the mode the account is already in. A username is not an address in the
+ * same sense — it is a sign-in handle — so replacing one stays supported above.
  *
  * A password may be set ONLY while the account is in `username` mode. In the
  * other two it would be a credential with nothing to type it against — `parent`
@@ -316,6 +325,19 @@ async function applyCredentialChange(args: {
     if (entering && body.email === undefined) {
       return NextResponse.json(
         { error: "An email address is required for this sign-in mode." },
+        { status: 400 },
+      );
+    }
+    // The address a child already signs in with is not editable. See the
+    // route's doc comment: an address change is a platform-wide mechanism we
+    // have not built, and this is the only layer that can tell one from a child
+    // entering the mode, because it is the only one that knows the current mode.
+    if (!entering && body.email !== undefined) {
+      return NextResponse.json(
+        {
+          error:
+            "This gamer already signs in with an email address, and changing an account's address is not supported.",
+        },
         { status: 400 },
       );
     }

@@ -1039,6 +1039,41 @@ describe("PATCH /api/gamers/[id]", () => {
       expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
     });
 
+    it("within email mode: an address change is refused, not written", async () => {
+      // Changing an account's email address is not something the platform
+      // supports for any role (owner ruling), and the route is where that is
+      // enforced: it is the only layer that can tell a child *entering* the mode
+      // from one already in it. The card offers no field for this, so a body
+      // shaped like this is a caller working around the product decision.
+      currentSignIn = "email";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, { email: "new@example.com" });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+      expect(mockSignInUpdate).not.toHaveBeenCalled();
+      expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
+    });
+
+    it("within email mode: a restated signIn does not make it a transition", async () => {
+      // `signIn: "email"` on an account that is already there changes nothing,
+      // so the address beside it is still an address change and is refused the
+      // same way. The rule keys on whether the mode moves, not on the key.
+      currentSignIn = "email";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "new@example.com",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+    });
+
     it("→ email: a failed mail does not fail the mode change", async () => {
       currentSignIn = "username";
       mockCredentialChange();

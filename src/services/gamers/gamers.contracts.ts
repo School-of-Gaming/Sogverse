@@ -181,11 +181,13 @@ export type CreateGamerBody = z.infer<typeof createGamerBody>;
  *
  * The credential fields are optional in a way the create body's are not, and the
  * difference is real: an account already in `username` mode may take a new
- * password with no `signIn` key at all (a parent resetting it), and one already
- * in `email` mode may take a new address the same way. What the route refuses —
- * because only the route knows the account's current mode — is a password on an
- * account that is not in `username` mode, and a mode change that arrives without
- * the fields that mode needs.
+ * password with no `signIn` key at all (a parent resetting it), or a new
+ * username the same way. An `email` key stays syntactically legal for the same
+ * shape — it is how a child *enters* `email` mode — but an account already in
+ * that mode does not take a new address, and nothing here can tell the two
+ * apart. That rule lives where the current mode is legible: the route. So does
+ * the refusal of a password on an account that is not in `username` mode, and
+ * of a mode change that arrives without the fields that mode needs.
  */
 export const updateGamerBody = z
   .object({

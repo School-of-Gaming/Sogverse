@@ -5,7 +5,6 @@ export { GamerSignInCard } from "./gamer-sign-in-card";
 export {
   GamerCredentialFields,
   findGamerCredentialProblem,
-  findGamerEmailProblem,
   findGamerPasswordProblem,
   findGamerUsernameProblem,
   GAMER_PASSWORD_MIN_LENGTH,

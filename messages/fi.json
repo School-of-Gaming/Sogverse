@@ -2248,12 +2248,6 @@
             "description": "Valitse pelaajalle {name} uusi käyttäjätunnus. Salasana pysyy samana, ja vanha käyttäjätunnus lakkaa toimimasta heti.",
             "submit": "Tallenna käyttäjätunnus",
             "saved": "Käyttäjätunnus päivitetty. Lue uusi tunnus ääneen pelaajallesi."
-          },
-          "email": {
-            "title": "Vaihda sähköpostiosoite",
-            "description": "Lähetämme uuteen osoitteeseen linkin. Ennen kuin {name} avaa sen, osoite on vahvistamaton ja vanha salasana lakkaa toimimasta – linkillä hän valitsee uuden.",
-            "submit": "Tallenna osoite",
-            "saved": "Osoite päivitetty. Lähetimme viestin uuteen osoitteeseen."
           }
         }
       }
@@ -3958,7 +3952,6 @@
     "usernameTaken": "Käyttäjätunnus on jo varattu. Kokeile toista.",
     "passwordHint": "Vähintään {count} merkkiä. Lue se ääneen pelaajallesi – voit vaihtaa sen täällä myöhemmin.",
     "passwordTooShort": "Salasanassa on oltava vähintään {count} merkkiä.",
-    "emailHint": "Vahvistuslinkki lähetetään tähän osoitteeseen, joten pelaajasi on päästävä lukemaan se.",
     "emailPlaceholder": "lilja@example.com",
     "emailRequired": "Syötä sähköpostiosoite.",
     "emailInvalid": "Tämä ei näytä sähköpostiosoitteelta.",

@@ -67,10 +67,10 @@ const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /**
  * The three rules, one per field.
  *
- * Exported one at a time as well as together, because the surfaces that change
- * *one* credential on an account that already has a mode — a new username, a new
- * address, a new password — ask about exactly one field and would otherwise have
- * to fake the other two to reach the rule they want.
+ * The username rule is exported on its own as well as through the combined
+ * check, because the card that lets a parent correct a mistyped username asks
+ * about exactly that one field and would otherwise have to fake the other two
+ * to reach the rule it wants.
  */
 export function findGamerUsernameProblem(
   raw: string,
@@ -94,7 +94,7 @@ export function findGamerPasswordProblem(
   return null;
 }
 
-export function findGamerEmailProblem(
+function findGamerEmailProblem(
   raw: string,
 ): GamerCredentialProblem | null {
   const email = raw.trim();

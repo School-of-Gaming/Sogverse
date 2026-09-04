@@ -35,7 +35,12 @@ export interface GamerUpdate {
   signIn?: GamerSignIn;
   /** A new username, which also becomes the account's synthetic address. */
   username?: string;
-  /** A new real address, which the child then has to verify again. */
+  /**
+   * The real address a child is *entering* `email` mode with, which they then
+   * have to verify. An account already in that mode does not take a new one —
+   * the route answers 400, because changing an account's address is not
+   * something the platform supports for any role.
+   */
   email?: string;
 }
 

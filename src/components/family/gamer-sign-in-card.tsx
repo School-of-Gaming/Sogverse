@@ -26,7 +26,6 @@ import type { GamerSignIn } from "@/types";
 import { GamerSignInRadios } from "./gamer-sign-in-radios";
 import {
   findGamerCredentialProblem,
-  findGamerEmailProblem,
   findGamerUsernameProblem,
   GamerCredentialFields,
   GAMER_PASSWORD_MIN_LENGTH,
@@ -340,11 +339,10 @@ export function GamerSignInCard({
         )}
 
         {signIn === "username" && !modeChanged && (
-          <ChangeIdentifierForm
-            field="username"
+          <ChangeUsernameForm
             gamerId={gamerId}
             firstName={firstName}
-            currentValue={currentUsername ?? ""}
+            currentUsername={currentUsername ?? ""}
           />
         )}
 
@@ -386,52 +384,42 @@ export function GamerSignInCard({
             )}
           </div>
         )}
-
-        {signIn === "email" && !modeChanged && (
-          <ChangeIdentifierForm
-            field="email"
-            gamerId={gamerId}
-            firstName={firstName}
-            currentValue={email ?? ""}
-          />
-        )}
       </CardContent>
     </Card>
   );
 }
 
 /**
- * Replacing the one value a child's current mode is addressed by: their username
- * or their mailbox.
+ * Replacing the handle a username-mode child signs in with.
  *
- * **One component for both, because they are one thing.** Each is a single text
- * field carrying the account's whole identity in its mode, each is written by
- * sending that field alone (the route reads the stored mode and takes it), each
- * has exactly one refusal the parent can act on — the value is already spoken
- * for — and each is the only way out of a mistyped one. Two copies of that would
- * be two places for the 409 mapping to drift.
+ * **There is no sibling form for a mailbox** (owner ruling): changing an
+ * account's email address is not something the app supports for any role, and
+ * the day it does it will be done once, properly, for every role at the same
+ * time. A username is a sign-in handle rather than an address in product terms,
+ * so correcting a mistyped one stays here — and the route refuses an address
+ * change on an account already in `email` mode, so the rule holds whether or
+ * not a form is on screen.
  *
  * **Standing and open, not behind a disclosure**, matching the new-password form
- * above it: these are the affordances a parent comes to this card *for*, and a
- * value that cannot be corrected without first finding a button to press is the
- * gap this closed.
+ * above it: this is an affordance a parent comes to this card *for*, and a
+ * username that cannot be corrected without first finding a button to press is
+ * the gap this closed.
  *
- * **The field starts empty with the current value as its placeholder.** Prefilled
- * text would have the parent editing a string in place, which is how a one-
- * character slip becomes a silent overwrite; empty means every save is a value
- * somebody typed on purpose, and the placeholder still says what is there now.
+ * **The field starts empty with the current username as its placeholder.**
+ * Prefilled text would have the parent editing a string in place, which is how a
+ * one-character slip becomes a silent overwrite; empty means every save is a
+ * value somebody typed on purpose, and the placeholder still says what is there
+ * now.
  */
-function ChangeIdentifierForm({
-  field,
+function ChangeUsernameForm({
   gamerId,
   firstName,
-  currentValue,
+  currentUsername,
 }: {
-  field: "username" | "email";
   gamerId: string;
   firstName: string;
   /** What the account holds today — shown as the placeholder, never as a value. */
-  currentValue: string;
+  currentUsername: string;
 }) {
   const t = useTranslations("parent.gamerDetail.signIn");
   const s = useTranslations("gamerSignIn");
@@ -446,7 +434,7 @@ function ChangeIdentifierForm({
   // taken value is exactly what they will want to do.
   const [saving, setSaving] = useState(false);
   /**
-   * The value a save has already written, held until `currentValue` says so.
+   * The value a save has already written, held until `currentUsername` says so.
    *
    * Same window the mode form has: the request resolving leaves the field
    * cleared and the placeholder still showing the *old* value, for as long as
@@ -455,17 +443,16 @@ function ChangeIdentifierForm({
    */
   const [committedValue, setCommittedValue] = useState<string | null>(null);
 
-  const isUsername = field === "username";
-  const inputId = isUsername ? "gamer-change-username" : "gamer-change-email";
+  const inputId = "gamer-change-username";
   /**
    * Written, not yet redrawn — see `committedValue`. Compared case-insensitively
-   * because the address that comes back is the one GoTrue stored, which is
-   * folded; a case-sensitive test would leave the form disabled forever the
-   * first time a parent typed a capital letter.
+   * because the handle that comes back is derived from the address GoTrue
+   * stored, which is folded; a case-sensitive test would leave the form disabled
+   * forever the first time a parent typed a capital letter.
    */
   const awaitingRefetch =
     committedValue !== null &&
-    committedValue.toLowerCase() !== currentValue.toLowerCase();
+    committedValue.toLowerCase() !== currentUsername.toLowerCase();
   /** One flag for the whole click, from the submit to the prop that answers it. */
   const busy = saving || awaitingRefetch;
 
@@ -473,28 +460,21 @@ function ChangeIdentifierForm({
     event.preventDefault();
     if (busy) return;
 
-    const found = isUsername
-      ? findGamerUsernameProblem(value)
-      : findGamerEmailProblem(value);
+    const found = findGamerUsernameProblem(value);
     setProblem(found);
     if (found) return;
 
     setOutcome(null);
     setSaving(true);
     try {
-      // One key, and only the one this mode is addressed by. The route reads the
-      // account's stored mode and refuses the other, so sending both would be
-      // sending one it is going to reject.
-      const written = isUsername
-        ? normalizeGamerUsername(value)
-        : value.trim();
-      await updateGamer.mutateAsync({
-        gamerId,
-        updates: isUsername ? { username: written } : { email: written },
-      });
+      // The username alone, and no `signIn` key: the route reads the account's
+      // stored mode and takes the handle it is addressed by, so this is not a
+      // mode change and must not look like one.
+      const written = normalizeGamerUsername(value);
+      await updateGamer.mutateAsync({ gamerId, updates: { username: written } });
       // The mutation invalidates the reads the card is drawn from, so the new
-      // value — and, for an address, the verification state the write cleared —
-      // arrive as a redraw rather than as something this form has to restate.
+      // username arrives as a redraw rather than as something this form has to
+      // restate.
       setValue("");
       setOutcome("saved");
       setCommittedValue(written);
@@ -502,8 +482,6 @@ function ChangeIdentifierForm({
       const code = caught instanceof ApiError ? caught.code : undefined;
       if (code === GAMER_USERNAME_TAKEN) {
         setProblem({ field: "username", key: "usernameTaken" });
-      } else if (code === GAMER_EMAIL_TAKEN) {
-        setProblem({ field: "email", key: "emailTaken" });
       } else {
         setOutcome("failed");
       }
@@ -515,36 +493,31 @@ function ChangeIdentifierForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4 border-t pt-6">
       <div className="space-y-1">
-        <h2 className="font-medium">{t(`change.${field}.title`)}</h2>
+        <h2 className="font-medium">{t("change.username.title")}</h2>
         <p className="text-sm text-muted-foreground">
-          {t(`change.${field}.description`, { name: firstName })}
+          {t("change.username.description", { name: firstName })}
         </p>
       </div>
       <Field
-        label={isUsername ? s("usernameLabel") : c("email")}
+        label={s("usernameLabel")}
         htmlFor={inputId}
-        hint={isUsername ? s("usernameHint") : s("emailHint")}
+        hint={s("usernameHint")}
       >
         {({ hintId }) => (
           <Input
             id={inputId}
-            type={isUsername ? "text" : "email"}
             value={value}
-            // Folded on the way in for a username, so what the parent reads back
-            // to their child is the string the account will actually hold.
+            // Folded on the way in, so what the parent reads back to their child
+            // is the string the account will actually hold.
             onChange={(event) =>
-              setValue(
-                isUsername
-                  ? normalizeGamerUsername(event.target.value)
-                  : event.target.value,
-              )
+              setValue(normalizeGamerUsername(event.target.value))
             }
-            placeholder={currentValue}
+            placeholder={currentUsername}
             disabled={busy}
             autoComplete="off"
             autoCapitalize="none"
             spellCheck={false}
-            maxLength={isUsername ? 20 : undefined}
+            maxLength={20}
             aria-describedby={hintId}
             aria-invalid={problem !== null || undefined}
           />
@@ -558,13 +531,13 @@ function ChangeIdentifierForm({
       {/* Held back until the new value is the one the placeholder shows — the
           same reasoning as the mode form's line above. */}
       {outcome === "saved" && !awaitingRefetch && (
-        <p className="text-sm text-success">{t(`change.${field}.saved`)}</p>
+        <p className="text-sm text-success">{t("change.username.saved")}</p>
       )}
       {outcome === "failed" && (
         <p className="text-sm text-destructive">{t("saveFailed")}</p>
       )}
       <Button type="submit" disabled={busy}>
-        {busy ? c("saving") : t(`change.${field}.submit`)}
+        {busy ? c("saving") : t("change.username.submit")}
       </Button>
     </form>
   );

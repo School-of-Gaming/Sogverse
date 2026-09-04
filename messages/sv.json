@@ -2248,12 +2248,6 @@
             "description": "Välj ett nytt användarnamn åt {name}. Lösenordet är detsamma, och det gamla användarnamnet slutar fungera direkt.",
             "submit": "Spara användarnamnet",
             "saved": "Användarnamnet är uppdaterat. Läs upp det nya för din gamer."
-          },
-          "email": {
-            "title": "Byt e-postadress",
-            "description": "Vi mejlar en länk till den nya adressen. Tills {name} öppnar den räknas adressen som overifierad, och det gamla lösenordet slutar fungera – länken är hur ett nytt väljs.",
-            "submit": "Spara adressen",
-            "saved": "Adressen är uppdaterad. Vi har mejlat den nya."
           }
         }
       }
@@ -3958,7 +3952,6 @@
     "usernameTaken": "Användarnamnet är upptaget. Prova ett annat.",
     "passwordHint": "Minst {count} tecken. Läs upp det för din gamer – du kan ändra det här senare.",
     "passwordTooShort": "Lösenordet måste vara minst {count} tecken.",
-    "emailHint": "Verifieringslänken skickas hit, så det måste vara en adress din gamer kan öppna.",
     "emailPlaceholder": "saga@example.com",
     "emailRequired": "Ange en e-postadress.",
     "emailInvalid": "Det ser inte ut som en e-postadress.",

@@ -2248,12 +2248,6 @@
             "description": "Choisissez un nouvel identifiant pour {name}. Le mot de passe reste le même, et l’ancien identifiant cesse de fonctionner immédiatement.",
             "submit": "Enregistrer l’identifiant",
             "saved": "Identifiant mis à jour. Lisez le nouveau à votre joueur."
-          },
-          "email": {
-            "title": "Changer cette adresse",
-            "description": "Nous envoyons un lien à la nouvelle adresse. Tant que {name} ne l’a pas ouvert, l’adresse reste non vérifiée et l’ancien mot de passe cesse de fonctionner — le lien sert à en choisir un nouveau.",
-            "submit": "Enregistrer l’adresse",
-            "saved": "Adresse mise à jour. Nous avons écrit à la nouvelle."
           }
         }
       }
@@ -3958,7 +3952,6 @@
     "usernameTaken": "Cet identifiant est déjà pris. Essayez-en un autre.",
     "passwordHint": "Au moins {count} caractères. Lisez-le à votre joueur — vous pourrez le changer ici plus tard.",
     "passwordTooShort": "Le mot de passe doit contenir au moins {count} caractères.",
-    "emailHint": "Le lien de vérification sera envoyé à cette adresse, qui doit donc être accessible à votre joueur.",
     "emailPlaceholder": "lily@exemple.com",
     "emailRequired": "Saisissez une adresse e-mail.",
     "emailInvalid": "Cela ne ressemble pas à une adresse e-mail.",

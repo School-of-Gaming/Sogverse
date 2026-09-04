@@ -8,27 +8,29 @@ import type { GamerSignIn } from "@/types";
 
 /**
  * **The card a parent uses to change how one of their children signs in — and,
- * without changing anything about the mode, to replace the one value that mode
- * is addressed by.**
+ * without changing anything about the mode, to correct a username or reset a
+ * password.**
  *
- * Three standing affordances exist alongside the mode form, and each is its own
+ * Two standing affordances exist alongside the mode form, and each is its own
  * submit because each is its own decision: a new password for a username-mode
- * child, a new username, a new address. The last two are the gap this file was
- * written for — before them, a parent who mistyped their child's address could
- * only fix it by switching the account to another mode and back, which destroys
- * and re-mints a credential to correct a typo.
+ * child, and a new username. There is deliberately no third for an address:
+ * changing an account's email address is not something the app supports for any
+ * role (owner ruling), and the route refuses one on an account already in
+ * `email` mode, so the card offers no field that would ask for it.
  *
  * What is pinned:
  *
- *  - each standing write sends exactly one key. The route reads the account's
- *    stored mode and refuses the key that does not belong to it, so sending both
- *    would be sending one it is going to reject;
+ *  - the username write sends exactly that one key. The route reads the
+ *    account's stored mode and takes the handle it is addressed by, so a
+ *    `signIn` key alongside it would be proposing a mode change nobody asked
+ *    for;
  *  - the value is normalised the same way the account will store it, so what a
  *    parent reads back to their child is what the child will type;
- *  - the two 409s land on the field the parent can fix, never in the generic
- *    apology;
- *  - the address block states the verification answer in words either way, and
- *    the per-gamer send allowance gets its own sentence rather than "try again".
+ *  - a taken username lands on the field the parent can fix, never in the
+ *    generic apology;
+ *  - an email-mode child's address is a read-only fact, and the block around it
+ *    states the verification answer in words either way, with the per-gamer send
+ *    allowance getting its own sentence rather than "try again".
  */
 
 const mutateAsync = vi.fn<(args: unknown) => Promise<unknown>>();
@@ -187,6 +189,19 @@ describe("changing a username-mode child's username", () => {
     expect(screen.queryByText(COPY.saveFailed)).toBeNull();
   });
 
+  it("keeps the generic apology for every other failure", async () => {
+    mutateAsync.mockRejectedValue(new ApiError("boom", 500, undefined));
+    const view = renderCard({
+      signIn: "username",
+      email: "lily2015@gamer.sogverse.internal",
+    });
+
+    view.fill("gamer-change-username", "lily2016");
+    await view.submitAround("gamer-change-username");
+
+    expect(screen.getByText(COPY.saveFailed)).toBeTruthy();
+  });
+
   it("is not offered to a child who signs in some other way", () => {
     const view = renderCard({ signIn: "email", email: "lily@example.test" });
 
@@ -194,80 +209,31 @@ describe("changing a username-mode child's username", () => {
   });
 });
 
-describe("changing an email-mode child's address", () => {
-  it("sends the address alone, trimmed", async () => {
-    const view = renderCard({ signIn: "email", email: "old@example.test" });
-
-    view.fill("gamer-change-email", "  lily@example.test ");
-    await view.submitAround("gamer-change-email");
-
-    expect(sentUpdates()).toEqual({ email: "lily@example.test" });
-
-    // Same window as the username form: "saved" waits for `currentValue` to
-    // catch up with the write, not for the request to resolve.
-    expect(screen.queryByText(COPY.change.email.saved)).toBeNull();
-
-    view.rerenderWith({ email: "lily@example.test" });
-    expect(screen.getByText(COPY.change.email.saved)).toBeTruthy();
-  });
-
-  // The parent has to know that saving a new address costs the child their
-  // password: the route scrambles it, and the emailed link is how a new one is
-  // set. A mechanism, checkable against what the write does.
-  it("says the address is unverified and the old password stops working", () => {
-    renderCard({ signIn: "email", email: "old@example.test" });
-
-    expect(
-      screen.getByText(
-        COPY.change.email.description.replace("{name}", "Lily"),
-      ),
-    ).toBeTruthy();
-  });
-
-  it("refuses something that is not an address, before any request", async () => {
-    const view = renderCard({ signIn: "email", email: "old@example.test" });
-
-    view.fill("gamer-change-email", "lily");
-    await view.submitAround("gamer-change-email");
-
-    expect(mutateAsync).not.toHaveBeenCalled();
-    expect(screen.getByText(messages.gamerSignIn.emailInvalid)).toBeTruthy();
-  });
-
-  it("puts a taken address on the field rather than in the apology", async () => {
-    mutateAsync.mockRejectedValue(new ApiError("taken", 409, "EMAIL_TAKEN"));
-    const view = renderCard({ signIn: "email", email: "old@example.test" });
-
-    view.fill("gamer-change-email", "taken@example.test");
-    await view.submitAround("gamer-change-email");
-
-    expect(screen.getByText(messages.gamerSignIn.emailTaken)).toBeTruthy();
-    expect(screen.queryByText(COPY.saveFailed)).toBeNull();
-  });
-
-  it("keeps the generic apology for every other failure", async () => {
-    mutateAsync.mockRejectedValue(new ApiError("boom", 500, undefined));
-    const view = renderCard({ signIn: "email", email: "old@example.test" });
-
-    view.fill("gamer-change-email", "lily@example.test");
-    await view.submitAround("gamer-change-email");
-
-    expect(screen.getByText(COPY.saveFailed)).toBeTruthy();
-  });
-
-  it("is not offered to a child who signs in some other way", () => {
-    const view = renderCard({ signIn: "parent" });
+/**
+ * **There is no form for replacing an email-mode child's address** (owner
+ * ruling): changing an account's email address is not something the app supports
+ * for any role, so the card states the address as a fact and offers only the one
+ * action either verification state allows. The refusal is backed at the route,
+ * which answers 400 to an `email` key on an account already in that mode, so
+ * the rule holds whether or not this card renders a field.
+ */
+describe("an email-mode child's address", () => {
+  it("is shown as a fact, with nothing to type a new one into", () => {
+    const view = renderCard({ signIn: "email", email: "lily@example.test" });
 
     expect(view.container.querySelector("#gamer-change-email")).toBeNull();
+    // What survives: the address itself, and the button that sends the
+    // verification link again.
+    expect(screen.getByDisplayValue("lily@example.test")).toBeTruthy();
+    expect(screen.getByRole("button", { name: COPY.resend })).toBeTruthy();
   });
 });
 
 describe("a switch-only child", () => {
-  it("gets neither standing change form — there is no address or username to correct", () => {
+  it("gets no standing change form — there is no username to correct", () => {
     const view = renderCard({ signIn: "parent" });
 
     expect(view.container.querySelector("#gamer-change-username")).toBeNull();
-    expect(view.container.querySelector("#gamer-change-email")).toBeNull();
   });
 });
 
