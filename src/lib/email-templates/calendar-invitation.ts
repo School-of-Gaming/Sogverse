@@ -2,6 +2,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/locales";
 import {
   buildInvitation,
+  lastOccurrenceDate,
   type InvitationAlarm,
   type InvitationAttendee,
   type InvitationMethod,
@@ -160,11 +161,15 @@ export const CALENDAR_EXPLORER_TIMEZONES = SUPPORTED_TIMEZONES;
 /**
  * The next Monday, and four weeks after it, as `YYYY-MM-DD`.
  *
- * **Computed at module load, and only ever placeholders.** An invitation dated
- * in the past tells you nothing about how a client renders one, so the
- * suggestion moves with the calendar; a process kept alive for days holds a
- * value that is at most a few days stale, which is harmless because it is a
- * hint the admin types over. "Today" is read in the zone the baseline document
+ * **Read when a field is read, never at module load.** The registry these two
+ * are placeholders in is imported by the admin page as well as by the send
+ * route, so a value frozen at load is frozen at two different moments — a
+ * server process kept alive for days against a browser that has just fetched
+ * the bundle — and the two would disagree across a hydration.
+ *
+ * They are only ever placeholders. An invitation dated in the past tells you
+ * nothing about how a client renders one, which is why the suggestion moves
+ * with the calendar at all. "Today" is read in the zone the baseline document
  * is authored in — a bare date has no zone of its own, and reading it in UTC
  * would suggest yesterday's Monday to a Helsinki reader for two hours every
  * night. The step to Monday and the four weeks after it are UTC-pinned calendar
@@ -183,8 +188,15 @@ function upcomingMonday(weeksAhead: number): string {
   return `${target.getUTCFullYear()}-${targetMonth}-${targetDay}`;
 }
 
-export const CALENDAR_INVITATION_START_DATE = upcomingMonday(0);
-export const CALENDAR_INVITATION_UNTIL_DATE = upcomingMonday(4);
+/** The `DTSTART` date an untouched form suggests: the next Monday. */
+export function calendarInvitationStartDate(): string {
+  return upcomingMonday(0);
+}
+
+/** The date the recurrence fields suggest: four weeks after that Monday. */
+export function calendarInvitationUntilDate(): string {
+  return upcomingMonday(4);
+}
 
 /**
  * The mail's own words, and the one textarea whose emptiness is not an absence.
@@ -269,8 +281,6 @@ export interface CalendarInvitationContent {
   resolvedUid: string;
   /** The calendar document, composed once per render. */
   ics: string;
-  /** How many occurrences it states, or `null` where the rule states no end. */
-  occurrenceCount: number | null;
 }
 
 // --- Validation: plain messages, written to be read by the admin who typed the
@@ -369,8 +379,11 @@ function weekdayOf(date: string): number {
  * `RECURRENCE-ID` matching nothing — which clients answer by silently creating
  * a second entry beside the one that was meant to move, and by the time anybody
  * notices there are two. So a date off the rule's weekdays, a date before the
- * run starts, or a date already on the excluded list is refused here with the
- * line quoted back.
+ * run starts, a date past the last occurrence the rule states, or a date
+ * already on the excluded list is refused here with the line quoted back. The
+ * last of the four is walked rather than read off a field, because a `COUNT`
+ * names no end date at all and an `UNTIL` names a day the run may not pass
+ * rather than the day it stops on.
  *
  * `INTERVAL` is deliberately *not* checked: an override on an off week of a
  * fortnightly rule is a document worth being able to send, precisely because
@@ -409,11 +422,15 @@ function parseOverrides(
 
   const weekdays = new Set(recurrence.weekdays);
   const excludedDates = new Set(excluded);
+  const lastDate = lastOccurrenceDate(startDate, recurrence);
   for (const override of parsed) {
     // A plain string comparison, which is exact for `YYYY-MM-DD`: the format is
     // fixed-width and zero-padded, so lexical order is calendar order.
     if (override.date < startDate) {
       fail("Overrides", "a date on or after the start date", override.date);
+    }
+    if (lastDate !== null && override.date > lastDate) {
+      fail("Overrides", `a date on or before ${lastDate}, the rule's last occurrence`, override.date);
     }
     if (!weekdays.has(weekdayOf(override.date))) {
       fail("Overrides", "a date the rule's BYDAY covers", override.date);
@@ -437,13 +454,31 @@ function alarmOf(
     : [{ minutesBefore: Number(offset), action, anchor }];
 }
 
-function recurrenceOf(params: CalendarInvitationParams): InvitationRecurrence {
+/**
+ * The rule, with the one check neither field can make on its own.
+ *
+ * An `UNTIL` before the start states a run that ends before it begins, and the
+ * document a client is handed for it is not empty — `DTSTART` is an occurrence
+ * whatever the rule says — so nothing downstream would refuse it and the
+ * invitation would go out stating a rule that produces exactly one day. It is
+ * caught here, where the message can say which of the two dates is the problem.
+ */
+function recurrenceOf(
+  params: CalendarInvitationParams,
+  startDate: string,
+): InvitationRecurrence {
   if (params.recurrence === "none") return { kind: "none" };
+  const until = params.until.trim() === "" ? null : requireDate(params.until, "UNTIL");
+  // A plain string comparison, which is exact for `YYYY-MM-DD`: the format is
+  // fixed-width and zero-padded, so lexical order is calendar order.
+  if (until !== null && until < startDate) {
+    throw new Error(`UNTIL: the end date is before the start date, ${startDate}.`);
+  }
   return {
     kind: "weekly",
     weekdays: CALENDAR_EXPLORER_WEEKDAYS[params.weekdays],
     interval: requireWholeNumber(params.interval, "INTERVAL", 1),
-    until: params.until.trim() === "" ? null : requireDate(params.until, "UNTIL"),
+    until,
     count: optionalWholeNumber(params.count, "COUNT", 1),
   };
 }
@@ -477,8 +512,13 @@ export function resolveCalendarInvitation(
   const uid = params.uid.trim() === "" ? `${crypto.randomUUID()}@sogverse` : params.uid.trim();
   const body = params.body.trim() === "" ? CALENDAR_EXPLORER_BODY : params.body;
   const startDate = requireDate(params.startDate, "Start date");
-  const recurrence = recurrenceOf(params);
+  const recurrence = recurrenceOf(params, startDate);
   const excludedDates = parseExcludedDates(params.excludedDates);
+  const alarms = [
+    ...alarmOf(params.alert1Offset, params.alert1Action, params.alert1RelativeTo),
+    ...alarmOf(params.alert2Offset, params.alert2Action, params.alert2RelativeTo),
+    ...alarmOf(params.alert3Offset, params.alert3Action, params.alert3RelativeTo),
+  ];
 
   const built = buildInvitation({
     uid,
@@ -506,16 +546,19 @@ export function resolveCalendarInvitation(
     location: params.location,
     url: optionalUrl(params.url, "URL"),
 
-    alarms: [
-      ...alarmOf(params.alert1Offset, params.alert1Action, params.alert1RelativeTo),
-      ...alarmOf(params.alert2Offset, params.alert2Action, params.alert2RelativeTo),
-      ...alarmOf(params.alert3Offset, params.alert3Action, params.alert3RelativeTo),
-    ],
+    alarms,
     // An email alarm has to name somebody to write to, and the one address this
-    // document knows is the attendee's — which is stated whether or not the
-    // event itself carries an `ATTENDEE`, because a published entry can still
-    // ask a client to mail a reminder.
-    alarmEmail: requireEmail(params.attendeeEmail, "Attendee email"),
+    // document knows is the attendee's — which is read whether or not the event
+    // itself carries an `ATTENDEE`, because a published entry can still ask a
+    // client to mail a reminder.
+    //
+    // **Validated only where it is read**, which is the `ATTENDEE` line and an
+    // email alarm and nowhere else: a publish that writes neither never looks
+    // at the field, and refusing a send over an address no line of the document
+    // states is a refusal about nothing.
+    alarmEmail: alarms.some((alarm) => alarm.action === "email")
+      ? requireEmail(params.attendeeEmail, "Attendee email")
+      : params.attendeeEmail.trim(),
 
     showAs: params.showAs,
 
@@ -533,7 +576,6 @@ export function resolveCalendarInvitation(
     body,
     resolvedUid: uid,
     ics: built.ics,
-    occurrenceCount: built.occurrenceCount,
   };
 }
 

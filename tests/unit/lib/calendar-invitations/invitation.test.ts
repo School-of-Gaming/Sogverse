@@ -65,10 +65,7 @@ function input(overrides: Partial<InvitationInput> = {}): InvitationInput {
 }
 
 /** The document, or a thrown failure — every case here expects one to exist. */
-function build(overrides: Partial<InvitationInput> = {}): {
-  ics: string;
-  occurrenceCount: number | null;
-} {
+function build(overrides: Partial<InvitationInput> = {}): { ics: string } {
   const result = buildInvitation(input(overrides));
   if (!result.ok) throw new Error(`refused: ${result.reason}`);
   return result;
@@ -139,7 +136,7 @@ function hasLine(lines: string[], prefix: string): boolean {
 
 describe("the baseline document", () => {
   it("states one event under one identifier, and terminates every line", () => {
-    const { ics, occurrenceCount } = build();
+    const { ics } = build();
 
     expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(1);
     expect(ics.match(/^UID:/gm)).toHaveLength(1);
@@ -147,7 +144,6 @@ describe("the baseline document", () => {
     expect(lineStartingWith(ics, "DTSTAMP:")).toBe("DTSTAMP:20260907T050000Z");
     expect(ics.startsWith("BEGIN:VCALENDAR\r\n")).toBe(true);
     expect(ics.endsWith("END:VCALENDAR\r\n")).toBe(true);
-    expect(occurrenceCount).toBe(1);
   });
 
   it("writes the wall clock under a TZID, with a duration rather than an end", () => {
@@ -310,6 +306,26 @@ describe("an all-day event", () => {
     expect(lineStartingWith(eventBody(ics), "DTEND")).toBe("DTEND;VALUE=DATE:20261001");
   });
 
+  /**
+   * A DATE value has no clock face for minutes to land on, so the duration is
+   * read in the only unit it has. Three days is `DTEND` on the fourth, which is
+   * the same exclusive end one day already had — and anything short of a whole
+   * day still buys a whole one, because a DATE-valued block that ended before
+   * it started is not something a client can read.
+   */
+  it("reads the duration in whole days, and rounds a part of one up", () => {
+    const threeDays = build({ allDay: true, durationMinutes: 3 * 24 * 60 });
+    expect(lineStartingWith(eventBody(threeDays.ics), "DTSTART")).toBe(
+      "DTSTART;VALUE=DATE:20260907",
+    );
+    expect(lineStartingWith(eventBody(threeDays.ics), "DTEND")).toBe("DTEND;VALUE=DATE:20260910");
+
+    const oneMinuteOver = build({ allDay: true, durationMinutes: 24 * 60 + 1 });
+    expect(lineStartingWith(eventBody(oneMinuteOver.ics), "DTEND")).toBe(
+      "DTEND;VALUE=DATE:20260909",
+    );
+  });
+
   it("writes a DATE-valued UNTIL, which is what a DATE-valued start forces", () => {
     const { ics } = build({
       allDay: true,
@@ -340,16 +356,11 @@ describe("the weekly rule", () => {
     expect(lineStartingWith(eventBody(ics), "RRULE:")).toBe("RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR");
   });
 
-  /**
-   * The one thing a rule can say and an enumeration cannot: a run with no last
-   * day. Its occurrence count is `null` rather than a number, because there
-   * genuinely is not one.
-   */
-  it("states no end at all, and counts nothing, for an open-ended rule", () => {
-    const { ics, occurrenceCount } = weekly();
+  /** The one thing a rule can say and an enumeration cannot: a run with no last day. */
+  it("states no end at all for an open-ended rule", () => {
+    const { ics } = weekly();
     expect(lineStartingWith(eventBody(ics), "RRULE:")).not.toContain("UNTIL");
     expect(lineStartingWith(eventBody(ics), "RRULE:")).not.toContain("COUNT");
-    expect(occurrenceCount).toBeNull();
   });
 
   /**
@@ -359,26 +370,23 @@ describe("the weekly rule", () => {
    * Helsinki is 20:59:59 UTC.
    */
   it("ends at the close of the last local day, expressed in UTC", () => {
-    const { ics, occurrenceCount } = weekly({ until: "2026-10-02" });
+    const { ics } = weekly({ until: "2026-10-02" });
     expect(lineStartingWith(eventBody(ics), "RRULE:")).toBe(
       "RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR;UNTIL=20261002T205959Z",
     );
-    expect(occurrenceCount).toBe(12);
   });
 
   /** RFC 5545 forbids stating both, so the count is the one that wins. */
   it("writes COUNT instead of UNTIL when both are given", () => {
-    const { ics, occurrenceCount } = weekly({ until: "2026-10-02", count: 8 });
+    const { ics } = weekly({ until: "2026-10-02", count: 8 });
     expect(lineStartingWith(eventBody(ics), "RRULE:")).toBe(
       "RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR;COUNT=8",
     );
-    expect(occurrenceCount).toBe(8);
   });
 
   it("writes an interval only when it is not the default of one", () => {
     expect(lineStartingWith(eventBody(weekly({ interval: 2, until: "2026-10-02" }).ics), "RRULE:"))
       .toBe("RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR;INTERVAL=2;UNTIL=20261002T205959Z");
-    expect(weekly({ interval: 2, until: "2026-10-02" }).occurrenceCount).toBe(6);
     expect(lineStartingWith(eventBody(weekly().ics), "RRULE:")).not.toContain("INTERVAL");
   });
 });
@@ -400,12 +408,6 @@ describe("excluded dates", () => {
     expect(lineStartingWith(eventBody(ics), "EXDATE")).toBe(
       "EXDATE;TZID=Europe/Helsinki:20260909T160000,20260916T160000",
     );
-  });
-
-  it("takes those occurrences off the count", () => {
-    expect(
-      build({ recurrence: weekly, excludedDates: ["2026-09-09", "2026-09-16"] }).occurrenceCount,
-    ).toBe(10);
   });
 
   it("writes an all-day exclusion as a bare date", () => {
@@ -541,8 +543,15 @@ describe("an overridden occurrence", () => {
     expect(ics).not.toContain("RECURRENCE-ID");
   });
 
-  it("leaves the occurrence count alone — an exception replaces, it does not add", () => {
-    expect(overridden().occurrenceCount).toBe(build({ recurrence: weekly }).occurrenceCount);
+  /**
+   * An exception replaces an occurrence, it does not add one — so the rule the
+   * master states is the same rule with an override on the document as without,
+   * and the extra component is the only difference between the two.
+   */
+  it("leaves the rule alone", () => {
+    expect(lineStartingWith(eventBody(overridden().ics), "RRULE:")).toBe(
+      lineStartingWith(eventBody(build({ recurrence: weekly }).ics), "RRULE:"),
+    );
   });
 });
 
@@ -776,6 +785,37 @@ describe("an object with nothing in it", () => {
       ok: false,
       reason: "no-occurrences",
     });
+  });
+
+  /**
+   * `DTSTART` is an instance whether or not it satisfies the rule beside it —
+   * RFC 5545 makes it the first one — so a document whose every *rule* day is
+   * excluded still states the start and is not refused. That is what gives the
+   * refusal exactly one meaning, which is what its message claims.
+   */
+  it("counts the start even on a weekday the rule never produces", () => {
+    const tuesdays = {
+      kind: "weekly",
+      weekdays: [1],
+      interval: 1,
+      until: "2026-09-15",
+      count: null,
+    } satisfies InvitationInput["recurrence"];
+
+    // The start is Monday 7 September, on a rule that produces only Tuesdays.
+    expect(
+      buildInvitation(
+        input({ recurrence: tuesdays, excludedDates: ["2026-09-08", "2026-09-15"] }),
+      ).ok,
+    ).toBe(true);
+    expect(
+      buildInvitation(
+        input({
+          recurrence: tuesdays,
+          excludedDates: ["2026-09-07", "2026-09-08", "2026-09-15"],
+        }),
+      ),
+    ).toEqual({ ok: false, reason: "no-occurrences" });
   });
 
   it("is refused when every occurrence of the rule is excluded", () => {

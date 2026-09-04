@@ -7,7 +7,7 @@ import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import {
   CALENDAR_EXPLORER_BODY,
-  CALENDAR_INVITATION_START_DATE,
+  calendarInvitationStartDate,
 } from "@/lib/email-templates/calendar-invitation";
 
 let t: EmailTranslator;
@@ -30,7 +30,7 @@ const CALENDAR_INVITATION_FIXTURE = {
   method: "request",
   status: "confirmed",
   timezone: "Europe/Helsinki",
-  startDate: CALENDAR_INVITATION_START_DATE,
+  startDate: calendarInvitationStartDate(),
   startTime: "16:00",
   durationMinutes: "120",
   timeForm: "tzid",
@@ -647,8 +647,36 @@ describe("templateRegistry calendarInvitation", () => {
     ["until", { recurrence: "weekly", until: "31-10-2026" }, /UNTIL: expected a date as YYYY-MM-DD/],
     ["count", { recurrence: "weekly", count: "many" }, /COUNT: expected a whole number/],
     ["excludedDates", { excludedDates: "next Tuesday" }, /Excluded dates: expected a date as YYYY-MM-DD/],
+    // A run that ends before it begins. Nothing downstream refuses it — the
+    // start is an occurrence whatever the rule says — so the document would go
+    // out stating a rule that produces exactly one day.
+    [
+      "until before the start",
+      { recurrence: "weekly", until: "2020-01-06" },
+      /UNTIL: the end date is before the start date/,
+    ],
+    // A title of three spaces is not a title: SUMMARY is the only line a client
+    // has to name the entry by, so blank and whitespace arrive at the same
+    // untitled entry and are refused together.
+    ["summary", { summary: "   " }, /nothing but whitespace/],
   ])("refuses a malformed %s with a message naming it", (_field, overrides, message) => {
     expect(() => render(overrides)).toThrow(message);
+  });
+
+  /**
+   * The attendee's address is read by the `ATTENDEE` line and by an email
+   * alarm, and by nothing else — so a publish that writes neither never looks
+   * at the field, and refusing a send over an address no line of the document
+   * states is a refusal about nothing.
+   */
+  it("validates the attendee address only where the document reads it", () => {
+    const published = icsOf(render({ includeAttendee: "no", attendeeEmail: "not an address" }));
+    expect(published).toContain("BEGIN:VCALENDAR");
+    expect(published).not.toContain("ATTENDEE");
+
+    expect(() =>
+      render({ includeAttendee: "no", attendeeEmail: "not an address", alert1Action: "email" }),
+    ).toThrow(/Attendee email: expected an email address/);
   });
 
   /**
@@ -672,11 +700,21 @@ describe("templateRegistry calendarInvitation", () => {
   describe("the override lines", () => {
     /** A Monday rule, so a Monday override lands and any other weekday does not. */
     const weekly = { recurrence: "weekly", weekdays: "mon" };
-    const secondMonday = (() => {
-      const start = new Date(`${params.startDate}T00:00:00Z`);
-      start.setUTCDate(start.getUTCDate() + 7);
-      return start.toISOString().slice(0, 10);
-    })();
+
+    /**
+     * The Monday `weeks` after the start, as `YYYY-MM-DD`.
+     *
+     * UTC-pinned end to end — built from a `…Z` string and stepped and read
+     * through the UTC accessors alone — so the arithmetic never meets a
+     * daylight-saving transition, whatever zone the suite runs in.
+     */
+    function mondayAfter(weeks: number): string {
+      const day = new Date(`${params.startDate}T00:00:00Z`);
+      day.setUTCDate(day.getUTCDate() + weeks * 7);
+      return day.toISOString().slice(0, 10);
+    }
+
+    const secondMonday = mondayAfter(1);
 
     it("emits an exception component under the same identifier", () => {
       const ics = icsOf(render({ ...weekly, overrides: `${secondMonday} 14:00 90` }));
@@ -720,6 +758,27 @@ describe("templateRegistry calendarInvitation", () => {
       ],
     ])("refuses %s", (_case, overrides, message) => {
       expect(() => render(overrides)).toThrow(message);
+    });
+
+    /**
+     * The other end of the same check the start date makes, and the end no
+     * field can answer on its own: an `UNTIL` names a day the run may not pass
+     * rather than the day it stops on, and a `COUNT` names no day at all. Both
+     * rules below state three Mondays — the start and the two after it — so the
+     * third Monday after it is past the end of both, and the second is the last
+     * occurrence itself, which is a date an override may legitimately name.
+     */
+    it.each([
+      ["an UNTIL-bounded rule", { until: mondayAfter(2) }],
+      ["a COUNT-bounded rule", { count: "3" }],
+    ])("refuses an override past the last occurrence of %s", (_case, bound) => {
+      expect(() =>
+        render({ ...weekly, ...bound, overrides: `${mondayAfter(3)} 14:00` }),
+      ).toThrow(/Overrides: expected a date on or before/);
+
+      expect(icsOf(render({ ...weekly, ...bound, overrides: `${mondayAfter(2)} 14:00` }))).toContain(
+        `RECURRENCE-ID;TZID=Europe/Helsinki:${mondayAfter(2).replace(/-/g, "")}T160000`,
+      );
     });
   });
 });

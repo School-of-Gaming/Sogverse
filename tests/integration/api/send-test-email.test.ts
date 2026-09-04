@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 // The calendar invitation refuses a run with nothing left ahead of it, so its
 // fixture dates come from the template's own form placeholders — the next
 // Monday and four weeks after it — rather than from literals that would rot.
-import { CALENDAR_INVITATION_START_DATE } from "@/lib/email-templates/calendar-invitation";
+import { calendarInvitationStartDate } from "@/lib/email-templates/calendar-invitation";
 
 // --- Mocks ---
 
@@ -514,7 +514,7 @@ describe("POST /api/admin/send-test-email", () => {
       method: "request",
       status: "confirmed",
       timezone: "Europe/Helsinki",
-      startDate: CALENDAR_INVITATION_START_DATE,
+      startDate: calendarInvitationStartDate(),
       startTime: "16:00",
       durationMinutes: "120",
       timeForm: "tzid",
@@ -625,7 +625,7 @@ describe("POST /api/admin/send-test-email", () => {
     mockAuthenticatedWithRole("admin");
 
     const response = await sendCalendarInvitation({
-      excludedDates: CALENDAR_INVITATION_START_DATE,
+      excludedDates: calendarInvitationStartDate(),
     });
 
     expect(response.status).toBe(400);

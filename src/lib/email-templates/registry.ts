@@ -37,8 +37,8 @@ import {
   CALENDAR_EXPLORER_TITLE,
   CALENDAR_EXPLORER_WEEKDAY_PRESETS,
   CALENDAR_EXPLORER_YES_NO,
-  CALENDAR_INVITATION_START_DATE,
-  CALENDAR_INVITATION_UNTIL_DATE,
+  calendarInvitationStartDate,
+  calendarInvitationUntilDate,
   type CalendarExplorerAlarmOffset,
   type CalendarExplorerWeekdayPreset,
 } from "./calendar-invitation";
@@ -769,7 +769,17 @@ const CALENDAR_EXPLORER_FIELDS: TemplateField[] = [
     type: "select",
     options: literalOptions(CALENDAR_EXPLORER_TIMEZONES),
   },
-  { key: "startDate", label: "Time – DTSTART date", placeholder: CALENDAR_INVITATION_START_DATE },
+  {
+    key: "startDate",
+    label: "Time – DTSTART date",
+    // A getter, so the date is read when the field is read rather than when
+    // this module loads: the same registry is imported by the admin page and by
+    // the send route, and a value frozen at load would differ between the
+    // server's render and the browser's hydration of it.
+    get placeholder() {
+      return calendarInvitationStartDate();
+    },
+  },
   { key: "startTime", label: "Time – DTSTART time", placeholder: "16:00" },
   { key: "durationMinutes", label: "Time – DURATION (minutes)", placeholder: "120" },
   {
@@ -819,7 +829,10 @@ const CALENDAR_EXPLORER_FIELDS: TemplateField[] = [
     key: "excludedDates",
     label: "Recurrence – EXDATE, one YYYY-MM-DD per line (written at the start time)",
     type: "textarea",
-    placeholder: CALENDAR_INVITATION_UNTIL_DATE,
+    // Read-time, for the reason the start date's own getter states.
+    get placeholder() {
+      return calendarInvitationUntilDate();
+    },
   },
   {
     key: "overrides",
@@ -831,7 +844,10 @@ const CALENDAR_EXPLORER_FIELDS: TemplateField[] = [
     label:
       "Recurrence – Overrides, one YYYY-MM-DD HH:MM [minutes] per line (the weekly rule only)",
     type: "textarea",
-    placeholder: `${CALENDAR_INVITATION_UNTIL_DATE} 14:00 90`,
+    // Read-time, for the reason the start date's own getter states.
+    get placeholder() {
+      return `${calendarInvitationUntilDate()} 14:00 90`;
+    },
   },
 
   { key: "organizerName", label: "People – ORGANIZER name", placeholder: SENDER_NAME },
@@ -938,7 +954,12 @@ const calendarInvitationParamsSchema = z.object({
   partstat: z.enum(CALENDAR_EXPLORER_PARTSTATS),
   includeAttendee: z.enum(CALENDAR_EXPLORER_YES_NO),
 
-  summary: z.string().min(1),
+  // Whitespace is refused as well as emptiness, because the two arrive at the
+  // same place: `SUMMARY` is the only line a client has to name the entry by,
+  // and a value of three spaces writes one every calendar shows as untitled.
+  summary: z.string().refine((value) => value.trim() !== "", {
+    message: "a SUMMARY of nothing but whitespace writes an entry no client can name",
+  }),
   description: z.string(),
   location: z.string(),
   url: z.string(),
@@ -965,11 +986,17 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
    * what it is for: whoever opens this page to test a template should meet the
    * house style before they meet their own mail.
    *
-   * It takes no params and ignores the locale for its own copy (see the builder
-   * for why it is the one untranslated one). A registry entry rather than a
-   * page because it has to be *sent* to be worth anything — a reference for
-   * email that can only be viewed in a browser is describing a rendering nobody
-   * receives.
+   * **The one entry that takes no params at all**: a specimen sheet has nothing
+   * to be told, so the form under it is empty and the fixture that renders it
+   * is `{}`. Its copy is literal English rather than translated, which is the
+   * call `fixtures/` makes too — developer-facing instrumentation whose strings
+   * are component names and hex values (see the builder). The calendar explorer
+   * is untranslated for the opposite reason: it has no copy of its own to
+   * translate, because both of its strings are typed into the form.
+   *
+   * A registry entry rather than a page because it has to be *sent* to be worth
+   * anything — a reference for email that can only be viewed in a browser is
+   * describing a rendering nobody receives.
    */
   componentsReference: defineTemplate({
     label: "Email components (reference)",
@@ -1184,10 +1211,13 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
    * **It explores the format rather than stating a product.** What is being
    * tried is not our wording but what a calendar client *does* with an
    * `invite.ics` — which properties it renders, which it drops, which it
-   * rewrites — so every knob RFC 5545, RFC 5546 and RFC 7986 expose is a field,
-   * with defaults that compose an unremarkable baseline invitation. The way to
-   * use it is one send at a time: send the baseline, change one field, send it
-   * again, and compare what each client made of the two.
+   * rewrites — so every property all three clients honour is a field, with
+   * defaults that compose an unremarkable baseline invitation. The form is
+   * therefore shorter than the format is: the RFC 7986 additions and the rest
+   * of what was tried are gone on purpose, because a knob one client drops
+   * teaches nothing but its own absence. The way to use it is one send at a
+   * time: send the baseline, change one field, send it again, and compare what
+   * each client made of the two.
    *
    * A thread is two or three sends: leave the identifier alone for the first,
    * then type it back in with a higher revision number for the update and the

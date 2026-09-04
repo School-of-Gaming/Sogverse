@@ -70,11 +70,31 @@ all copied, so a client comparing the two components finds one difference. A pro
 that drifted between them would show up as an occurrence that mysteriously lost its RSVP.
 
 **A line has to name an occurrence the rule actually produces**, or the `RECURRENCE-ID`
-matches nothing: a date off the rule's weekdays, a date before the run starts, or a date
-already on the excluded list is refused with the line quoted back. `INTERVAL` is
+matches nothing: a date off the rule's weekdays, a date before the run starts, a date
+past the rule's last occurrence, or a date already on the excluded list is refused with
+the line quoted back. The last occurrence is *walked* rather than read off a field,
+because neither field answers the question — a `COUNT` names no date at all, and an
+`UNTIL` names a day the run may not pass rather than the day it stops on. `INTERVAL` is
 deliberately *not* checked — an override on an off week of a fortnightly rule is a
 document worth being able to send, precisely because what a client does with one is
 unobvious.
+
+**Which of the two shapes a real product's invitation takes is decided by one question:
+whether every slot runs at the same clock face.** If it does — and every product in
+production does, as of 2026-09-04 — the whole schedule is one weekly rule with several
+weekdays in its `BYDAY`, and there is no override in the document at all. If it does not,
+the invitation is that rule plus one override per session that disagrees with it. Only a
+dated camp can be in the second case: the admin form offers several days with their own
+start and end times to camps alone, and every product type but a consumer club is
+required by the schema to carry an end date. So a mixed-time schedule always has a last
+day, and the overrides that state it are always a finite list somebody could read.
+
+**The open-ended mixed case is the one shape this cannot express, and it is not creatable
+today.** A consumer club is the only product with no end date, and its form gives it one
+slot — so nothing in the product can currently ask for an unbounded run at two clock
+faces. The day something can, an override list is the wrong answer to it, because there is
+no last occurrence to stop writing overrides at: the invitation splits instead into one
+series per distinct time, each its own rule under its own identifier.
 
 ## Times, zones and the three forms
 
@@ -89,8 +109,10 @@ Three forms, and each one decides whether a zone is described at all:
 - **Wall clock with `TZID`** — the zone block travels with the document.
 - **Absolute instant (`…Z`)** — names no zone, so no block is written; there is nothing
   to resolve and no gap to warn anybody about.
-- **All-day (DATE-valued)** — no clock face and no zone either, `DTEND` on the day after
-  the last, and an override can only restate the day, because there is no time to move.
+- **All-day (DATE-valued)** — no clock face and no zone either, and `DTEND` on the day
+  after the last. The duration is read in whole days there, any part of a day counting as
+  one, because a DATE value has no clock face for minutes to land on; an override can
+  only restate its days, because there is no time to move.
 
 **UTC is the exception at both ends, and it is one decision rather than two.** A schedule
 authored in UTC has no clock face to promise — there are no transitions for one to
@@ -109,10 +131,12 @@ the point of having it: a document that only ever described the EU rule could no
 client getting a US transition wrong. Anything outside the table still gets its `TZID`
 plus a note saying no rules travel with it.
 
-**The day walk that counts occurrences is UTC-pinned end to end**, which is the only
-shape that survives a daylight-saving transition inside a run: stepping a zoned wall
-clock by 24 hours repeats or skips a calendar date once a year, and UTC has no
-transitions for the arithmetic to fall into.
+**The day walk that enumerates the rule's occurrences is UTC-pinned end to end**, which
+is the only shape that survives a daylight-saving transition inside a run: stepping a
+zoned wall clock by 24 hours repeats or skips a calendar date once a year, and UTC has no
+transitions for the arithmetic to fall into. One walk answers both questions asked of the
+rule — whether anything survives the excluded list, and which day it stops on — so the
+two can never disagree about which days the rule states.
 
 ## Presence, absence, and the baseline
 
@@ -137,7 +161,10 @@ name is dropped rather than smuggled through.
 **A document with no occurrence in it is refused rather than serialised.** An empty
 calendar says nothing to a client, and sending one would still open a conversation the
 recipient's calendar has no entry for — and the caller is the one that knows what to say
-about it.
+about it. **`DTSTART` is an occurrence in its own right** — RFC 5545 makes it the first
+instance whether or not it satisfies the rule beside it — so the refusal has exactly one
+meaning: every occurrence, the start included, is on the excluded list. A rule that ends
+before it begins is caught where the dates are read, and says so in those words.
 
 ## The template is the only caller, and it must carry a plain-text body
 

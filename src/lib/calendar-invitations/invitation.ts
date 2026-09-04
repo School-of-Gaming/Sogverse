@@ -159,10 +159,16 @@ export interface InvitationInput {
   /** The IANA zone the wall clocks below are read in. */
   timezone: string;
   timeForm: InvitationTimeForm;
-  /** A DATE-valued event: no clock face, no zone, `DTEND` on the following day. */
+  /** A DATE-valued event: no clock face, no zone, `DTEND` on the day after the last. */
   allDay: boolean;
   start: InvitationDateTime;
-  /** Ignored for an all-day event, which states a `DTEND` instead of a duration. */
+  /**
+   * How long one occurrence runs.
+   *
+   * An all-day event has no clock face for minutes to land on, so there it is
+   * read in whole days instead — any part of a day counting as one — and the
+   * `DTEND` lands that many days after the start, on the day after the last.
+   */
   durationMinutes: number;
   recurrence: InvitationRecurrence;
   /** `YYYY-MM-DD` per entry; each becomes an `EXDATE` at the start time. */
@@ -197,16 +203,7 @@ export interface InvitationInput {
 }
 
 export type InvitationResult =
-  | {
-      ok: true;
-      ics: string;
-      /**
-       * How many occurrences the document states, or `null` where it states an
-       * unbounded run — a weekly rule with neither `UNTIL` nor `COUNT` covers a
-       * number no document can name.
-       */
-      occurrenceCount: number | null;
-    }
+  | { ok: true; ics: string }
   /**
    * An object with nothing in it. A refusal rather than an empty document,
    * because a calendar describing no occurrence says nothing to a client and
@@ -338,21 +335,39 @@ function weeklyRule(
 }
 
 /**
+ * How many whole days an all-day block covers.
+ *
+ * A DATE value has no clock face for minutes to land on, so the one duration
+ * the caller states is read in the only unit the value type has: any part of a
+ * day is a day, and anything shorter than one is still one, because a
+ * DATE-valued event that ended before it started is not something a client can
+ * read. The baseline two hours is therefore the single day an all-day event
+ * otherwise means.
+ */
+function allDayLengthOf(durationMinutes: number): number {
+  return Math.max(1, Math.ceil(durationMinutes / (24 * 60)));
+}
+
+/** The DATE-valued end of a block starting on a day: the day after the last. */
+function allDayEnd(startDate: string, durationMinutes: number): string {
+  return compactDate(dayString(parseDay(startDate) + allDayLengthOf(durationMinutes) * DAY_MS));
+}
+
+/**
  * The lines that state when the object happens.
  *
  * `DTSTART` is exactly what the caller typed — never the next occurrence still
  * ahead, because an explorer that quietly moved the date would be answering a
  * question nobody asked. A timed event states a `DURATION`; an all-day event
- * states a `DTEND` on the following day, which is what a DATE-valued end means.
+ * states a `DTEND` on the day after the last one it covers, which is what a
+ * DATE-valued end means.
  */
 function scheduleLines(input: InvitationInput): string[] {
   const params = timeParams(input);
   const lines = [property("DTSTART", timeValue(input, input.start), params)];
 
   if (input.allDay) {
-    lines.push(
-      property("DTEND", compactDate(dayString(parseDay(input.start.date) + DAY_MS)), params),
-    );
+    lines.push(property("DTEND", allDayEnd(input.start.date, input.durationMinutes), params));
   } else {
     lines.push(property("DURATION", isoDuration(input.durationMinutes)));
   }
@@ -377,46 +392,93 @@ function scheduleLines(input: InvitationInput): string[] {
 }
 
 /**
- * How many occurrences the document states.
+ * The days a weekly rule produces, `DTSTART`'s own day first.
  *
  * **`DTSTART` is an occurrence in its own right** — RFC 5545 makes it the first
- * instance whether or not it satisfies the rule beside it — so it is counted
- * once, and removed again only by an `EXDATE` that names its day.
+ * instance whether or not it satisfies the rule beside it — so it is yielded
+ * unconditionally and the rule's own days follow it. Exclusions are not applied
+ * here: an `EXDATE` removes an instance the rule *produced*, so what the rule
+ * produces has to be enumerated before anything can be taken off it.
  *
- * `null` where no number exists: a weekly rule with no `UNTIL` and no `COUNT`
- * runs forever, which is the one thing that shape can say and an enumeration
- * cannot. A `COUNT` is reported as given, because that is precisely what it
- * asks the client for. Zero is what the caller refuses on.
+ * **It is a generator because one of the two shapes has no end.** A rule with
+ * neither `UNTIL` nor `COUNT` runs forever and this yields forever with it; the
+ * callers are a search for the first day that survives the excluded list and a
+ * walk to the last day a *bounded* rule states, and neither of them ever asks
+ * for a list that could not be given.
+ *
+ * The walk is UTC-pinned end to end, which is the only shape that survives a
+ * daylight-saving transition inside the run: stepping a zoned wall clock by 24
+ * hours repeats or skips a calendar date once a year, and UTC has no
+ * transitions for the arithmetic to fall into.
  */
-function occurrenceCountOf(input: InvitationInput): number | null {
-  const excluded = new Set(input.excludedDates);
-  const startCounts = excluded.has(input.start.date) ? 0 : 1;
+function* weeklyOccurrences(
+  startDate: string,
+  recurrence: Extract<InvitationRecurrence, { kind: "weekly" }>,
+): Generator<string> {
+  yield startDate;
 
-  if (input.recurrence.kind === "none") return startCounts;
-
-  const { weekdays, interval, until, count } = input.recurrence;
-  if (count !== null) return count;
-  if (until === null) return null;
-
+  const { weekdays, interval, until, count } = recurrence;
   const weekdaySet = new Set(weekdays);
-  const first = parseDay(input.start.date);
-  const last = parseDay(until);
+  if (weekdaySet.size === 0) return;
+
+  const first = parseDay(startDate);
   const firstWeek = weekStartOf(first);
-  let found = 0;
-  // The day walk is UTC-pinned, which is the only shape that survives a
-  // daylight-saving transition inside the run: stepping a zoned wall clock by
-  // 24 hours repeats or skips a calendar date once a year, and UTC has no
-  // transitions for the arithmetic to fall into.
-  for (let day = first; day <= last; day += DAY_MS) {
+  const last = until === null ? null : parseDay(until);
+  // `DTSTART` is the first of them, so the count of what the rule has produced
+  // starts at one — and the count is what bounds the run whenever it is given,
+  // because RFC 5545 forbids naming both and the `UNTIL` is therefore not
+  // written into the document at all.
+  let produced = 1;
+
+  for (let day = first + DAY_MS; ; day += DAY_MS) {
+    if (count !== null ? produced >= count : last === null || day > last) return;
     if (!weekdaySet.has(weekdayOf(day))) continue;
-    if (((weekStartOf(day) - firstWeek) / (7 * DAY_MS)) % interval !== 0) continue;
-    if (excluded.has(dayString(day))) continue;
-    found += 1;
+    if (interval > 1 && ((weekStartOf(day) - firstWeek) / (7 * DAY_MS)) % interval !== 0) {
+      continue;
+    }
+    produced += 1;
+    yield dayString(day);
   }
-  // The walk starts at `DTSTART`'s own day, so a start that satisfies the rule
-  // is already in the total; one that does not is the instance RFC 5545 adds on
-  // top of the rule, and it is added here for the same reason.
-  return weekdaySet.has(weekdayOf(first)) ? found : found + startCounts;
+}
+
+/**
+ * The last day a bounded weekly rule produces, or `null` where it has none.
+ *
+ * Walked rather than read off the rule, because neither field answers the
+ * question on its own: `UNTIL` names a day the run may not pass and is rarely
+ * the day of an occurrence, and `COUNT` names no day at all. Walking is also
+ * what keeps this answer and the search below from ever disagreeing about which
+ * days the rule states.
+ */
+export function lastOccurrenceDate(
+  startDate: string,
+  recurrence: Extract<InvitationRecurrence, { kind: "weekly" }>,
+): string | null {
+  if (recurrence.count === null && recurrence.until === null) return null;
+  let last = startDate;
+  for (const date of weeklyOccurrences(startDate, recurrence)) last = date;
+  return last;
+}
+
+/**
+ * Whether the document states any occurrence at all.
+ *
+ * **`DTSTART` is one**, so the only way to have none is for every occurrence to
+ * be on the excluded list — which is what makes the refusal below sayable in a
+ * single sentence, and what stops a rule whose end lands in the wrong place
+ * being reported as an empty calendar. A rule with no last day always has one:
+ * the excluded list is finite and the rule is not, so the search ends on the
+ * first day nobody named.
+ */
+function hasOccurrences(input: InvitationInput): boolean {
+  const excluded = new Set(input.excludedDates);
+  if (!excluded.has(input.start.date)) return true;
+  if (input.recurrence.kind === "none") return false;
+
+  for (const date of weeklyOccurrences(input.start.date, input.recurrence)) {
+    if (!excluded.has(date)) return true;
+  }
+  return false;
 }
 
 // --- The people ---
@@ -578,10 +640,16 @@ function overrideScheduleLines(
   if (input.allDay) {
     // A DATE-valued document has no clock face for an override to move, so the
     // component restates the same day and differs from the master in nothing
-    // but being an exception. It is written rather than refused because what a
-    // client does with that is itself worth seeing.
+    // but being an exception — unless the line states a length of its own,
+    // which is read in whole days here exactly as the master's is. It is
+    // written rather than refused because what a client does with that is
+    // itself worth seeing.
     lines.push(
-      property("DTEND", compactDate(dayString(parseDay(override.date) + DAY_MS)), params),
+      property(
+        "DTEND",
+        allDayEnd(override.date, override.durationMinutes ?? input.durationMinutes),
+        params,
+      ),
     );
   } else {
     lines.push(
@@ -606,8 +674,7 @@ function overrideScheduleLines(
  * read before the rule it excepts has nothing to attach itself to.
  */
 export function buildInvitation(input: InvitationInput): InvitationResult {
-  const occurrenceCount = occurrenceCountOf(input);
-  if (occurrenceCount === 0) return { ok: false, reason: "no-occurrences" };
+  if (!hasOccurrences(input)) return { ok: false, reason: "no-occurrences" };
 
   // Only a rule has occurrences for an exception to name. A single event that
   // arrived with overrides has nothing to override, so they are dropped rather
@@ -636,6 +703,5 @@ export function buildInvitation(input: InvitationInput): InvitationResult {
     // A trailing CRLF as well: a content line is terminated by one, and the
     // last line of the document is not an exception.
     ics: `${lines.join(CRLF)}${CRLF}`,
-    occurrenceCount,
   };
 }

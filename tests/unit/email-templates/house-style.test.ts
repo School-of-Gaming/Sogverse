@@ -7,7 +7,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
-import { CALENDAR_INVITATION_START_DATE } from "@/lib/email-templates/calendar-invitation";
+import { calendarInvitationStartDate } from "@/lib/email-templates/calendar-invitation";
 import { BRAND, DARK_THEME, GRADIENT, STATUS, STATUS_TINT } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 
@@ -73,7 +73,7 @@ const CALENDAR_INVITATION_FIXTURE = {
   method: "request",
   status: "confirmed",
   timezone: "Europe/Helsinki",
-  startDate: CALENDAR_INVITATION_START_DATE,
+  startDate: calendarInvitationStartDate(),
   startTime: "16:00",
   durationMinutes: "120",
   timeForm: "tzid",
