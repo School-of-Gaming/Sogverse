@@ -46,11 +46,24 @@ type Gender = "boy" | "girl" | "non_binary";
 /**
  * Which page of the form is showing.
  *
- * `credentials` exists only for the two modes that need one, and it is reached
- * by a deliberate click on Next — so the page that opens is always the page a
- * parent who wants the default never has to leave.
+ * Two pages, the same two for every parent: who the child is, then how they
+ * sign in. The sign-in question used to ride along at the bottom of page one
+ * and open a third page for the two modes that need a credential; it is a page
+ * of its own now, so the footer's affirmative is always Next on page one and
+ * always the create on page two — nothing about it is decided by a radio.
  */
-type FormStep = "details" | "credentials";
+type FormStep = "details" | "signIn";
+
+/**
+ * How the card can be seeded, which is the style guide's seam and nothing else.
+ *
+ * A union rather than three optional fields, because page two names the child:
+ * production can only reach it through page one's validation, which guarantees
+ * a first name, and this makes the same guarantee for a card that opens there.
+ */
+type InitialState =
+  | { step?: "details"; firstName?: string; signIn?: GamerSignIn }
+  | { step: "signIn"; firstName: string; signIn?: GamerSignIn };
 
 /**
  * The stem every field id on the credential page is built from. A named constant
@@ -69,11 +82,11 @@ interface AddGamerDialogProps {
 /**
  * Reusable dialog for creating a gamer linked to the current parent.
  *
- * The form asks for a first name, a birth month and year, an optional gender,
- * each platform's optional game handle, and how the child will sign in. The
- * default answer to the last one is the switch-only account every gamer used to
- * get, so the dialog is still one page and one click for a parent who wants
- * exactly what it always produced.
+ * The form asks for a first name, a birth month and year, an optional gender
+ * and each platform's optional game handle on page one, then how the child will
+ * sign in on page two. The default answer to the last one is the switch-only
+ * account every gamer used to get, so a parent who wants exactly what this
+ * dialog always produced reads page two and presses the button.
  *
  * Designed for reuse: family selector wires it now; product / club / camp /
  * event detail pages should pass `open` / `onOpenChange` to drop it in when a
@@ -212,9 +225,9 @@ function AddGamerForm({
  * passes nothing and keeps the `90vh` cap.
  *
  * `initial` is the third seam of the same kind: the style guide shows the
- * credential page beside the details page, and driving a card there by
- * simulating a parent filling the first page in would make the demo a script
- * rather than a picture. Production passes nothing.
+ * sign-in page beside the details page, and driving a card there by simulating
+ * a parent filling the first page in would make the demo a script rather than a
+ * picture. Production passes nothing.
  */
 export function AddGamerFormCard({
   onCreate,
@@ -227,11 +240,7 @@ export function AddGamerFormCard({
   onOpenChange: (open: boolean) => void;
   onCreated?: (gamerId: string) => void;
   className?: string;
-  initial?: {
-    firstName?: string;
-    signIn?: GamerSignIn;
-    step?: FormStep;
-  };
+  initial?: InitialState;
 }) {
   const t = useTranslations("family.addGamerForm");
   const s = useTranslations("gamerSignIn");
@@ -244,8 +253,8 @@ export function AddGamerFormCard({
   const [year, setYear] = useState<string>("");
   const [gender, setGender] = useState<Gender | null>(null);
   // How the child will reach their own account, and which of the form's two
-  // pages is showing. `parent` and `details` together are the form as it has
-  // always been: one page, one click, no credential.
+  // pages is showing. `parent` is the answer a parent keeps by reading page two
+  // and pressing the button: the switch-only account every gamer used to get.
   const [signIn, setSignIn] = useState<GamerSignIn>(initial?.signIn ?? "parent");
   const [step, setStep] = useState<FormStep>(initial?.step ?? "details");
   const [username, setUsername] = useState("");
@@ -278,19 +287,9 @@ export function AddGamerFormCard({
   const trimmedName = firstName.trim();
 
   /**
-   * Whether the affirmative button is a Next rather than the create.
-   *
-   * It is the only thing about the footer that the sign-in choice changes, and
-   * it changes the moment a parent picks a mode — before any click — so the
-   * button says what pressing it will do rather than discovering it afterwards.
-   */
-  const advancesToCredentials = step === "details" && signIn !== "parent";
-
-  /**
-   * Page one's rules. Unchanged from when they were the whole form — they still
-   * run before the create in the default mode, and now also before the step to
-   * page two, so a parent never fills in a credential for a child the first page
-   * was going to refuse anyway.
+   * Page one's rules. Unchanged from when they were the whole form, and they
+   * run before the step to page two, so a parent never answers a question about
+   * a child the first page was going to refuse anyway.
    */
   function findDetailsError(): string | null {
     if (trimmedName.length < DISPLAY_NAME_MIN) return t("firstNameTooShort");
@@ -361,15 +360,9 @@ export function AddGamerFormCard({
         setError(detailsError);
         return;
       }
-      // The default mode has no second page and never had one: this is still one
-      // click from an open dialog to a created child.
-      if (signIn === "parent") {
-        await create();
-        return;
-      }
       setError(null);
       setCredentialProblem(null);
-      setStep("credentials");
+      setStep("signIn");
       return;
     }
 
@@ -395,14 +388,17 @@ export function AddGamerFormCard({
       </DialogHeader>
 
       <form onSubmit={handleSubmit}>
-        {/* **The two pages swap; nothing crosses between them.** The title above
-            and the footer below are the only things that survive the swap, and
-            the title does not move — the footer does, because page two is
-            shorter than page one. That is a panel replaced by a different panel
-            on the parent's own click (root `CLAUDE.md`, "Layout & Scrolling"):
-            nothing a reader was pointing at is still on screen somewhere else,
-            so there is nothing to hold still, and reserving page one's height
-            behind page two would leave a hole rather than prevent a shift. */}
+        {/* **The two pages swap; nothing crosses between them.** The title
+            above and the footer below are the only things that survive the
+            swap, and the title does not move — the footer does, because the two
+            pages are not the same height. That is a panel replaced by a
+            different panel on the parent's own click (root `CLAUDE.md`,
+            "Layout & Scrolling"): nothing a reader was pointing at is still on
+            screen somewhere else, so there is nothing to hold still, and
+            reserving page one's height behind page two would leave a hole
+            rather than prevent a shift. Inside page two the answer is the
+            opposite one, for the opposite reason — see the box below the
+            radios. */}
         <div className="space-y-4 py-4">
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -410,42 +406,80 @@ export function AddGamerFormCard({
             </div>
           )}
 
-          {step === "credentials" ? (
-            <GamerCredentialFields
-              signIn={signIn}
-              username={username}
-              onUsernameChange={setUsername}
-              password={password}
-              onPasswordChange={setPassword}
-              email={email}
-              onEmailChange={setEmail}
-              disabled={committing}
-              problem={
-                credentialProblem
-                  ? {
-                      field: credentialProblem.field,
-                      message: s(credentialProblem.key, {
-                        count: GAMER_PASSWORD_MIN_LENGTH,
-                      }),
+          {step === "signIn" ? (
+            <>
+              {/* The question names the child rather than "your gamer": page
+                  one has already refused an empty first name, so by the time
+                  this renders there is always a name to use. */}
+              <Field label={s("question", { name: trimmedName })}>
+                {({ labelId }) => (
+                  <GamerSignInRadios
+                    value={signIn}
+                    onChange={setSignIn}
+                    disabled={committing}
+                    labelId={labelId}
+                    name="add-gamer-sign-in"
+                  />
+                )}
+              </Field>
+
+              {/* **One height for all three answers, declared here.** Clicking
+                  a radio swaps what is in this box while the radios above it
+                  and the footer below it both survive the change — the case the
+                  layout rule forbids moving — and it is also the case where
+                  reserving is right rather than a hole: the slot is used by
+                  whichever answer is selected, never held open beside content
+                  it cannot coexist with. Without it, the footer jumps under the
+                  thumb that just picked the radio.
+
+                  The number is the tallest of the three: username, measured in
+                  French — the widest hints — at 360px, where the dialog's
+                  padding leaves the box 278px wide and both field hints wrap to
+                  two lines. That comes to 244px, and the reservation is 248px:
+                  four pixels of slack, which cannot buy a line either way and
+                  only exists so a rounding difference cannot make the box
+                  *short*. The same box in French on a desktop dialog is 212px,
+                  so the widest layout carries ~36px of the reserve as slack; a
+                  second value behind a breakpoint would buy that back and cost
+                  a second number to keep true. Parent is 60px and email 122px,
+                  and both leave their slack at the bottom, against the footer.
+
+                  `min-h`, not `h`: a validation line arriving on the parent's
+                  own submit may grow the box rather than be clipped by it. */}
+              <div className="min-h-[15.5rem] space-y-4">
+                {signIn === "parent" ? (
+                  <p className="text-sm text-muted-foreground">
+                    {s("parentModeNote", { name: trimmedName })}
+                  </p>
+                ) : (
+                  <GamerCredentialFields
+                    signIn={signIn}
+                    username={username}
+                    onUsernameChange={setUsername}
+                    password={password}
+                    onPasswordChange={setPassword}
+                    email={email}
+                    onEmailChange={setEmail}
+                    disabled={committing}
+                    problem={
+                      credentialProblem
+                        ? {
+                            field: credentialProblem.field,
+                            message: s(credentialProblem.key, {
+                              count: GAMER_PASSWORD_MIN_LENGTH,
+                            }),
+                          }
+                        : null
                     }
-                  : null
-              }
-              idPrefix={CREDENTIAL_FIELD_ID_PREFIX}
-              // The child does not exist yet and this dialog can be opened from
-              // anywhere, so "change it here later" would name a box that is
-              // about to close.
-              passwordChangeableFrom="gamerPage"
-              // Page two is reached by clicking Next, which leaves focus on a
-              // submit button whose label has just changed underneath it. The
-              // first field of the page the parent asked for is where they
-              // meant to be — page one's first name field does the same.
-              //
-              // Not when the card was *seeded* onto this page: the style guide
-              // renders three of these at once, and a card that opens already on
-              // page two never had a click to follow. Grabbing focus there would
-              // be three cards fighting over it and a page that scrolls itself.
-              autoFocusFirstField={initial?.step !== "credentials"}
-            />
+                    idPrefix={CREDENTIAL_FIELD_ID_PREFIX}
+                    // The child does not exist yet and this dialog can be
+                    // opened from anywhere, so "change it here later" would
+                    // name a box that is about to close.
+                    passwordChangeableFrom="gamerPage"
+                  />
+                )}
+              </div>
+            </>
           ) : (
             <>
             <Field label={t("firstNameLabel")} htmlFor="add-gamer-first-name">
@@ -567,45 +601,29 @@ export function AddGamerFormCard({
               />
             </Field>
 
-            {/* Last on the page, and one row rather than a page of its own: the
-                default answer is the one a parent gets by reading it and moving
-                on, so it sits where the form is already finishing rather than
-                interrupting it. The question names the child once there is a
-                name to use — a form asking how "your gamer" signs in before the
-                first field is filled is asking about nobody. */}
-            <Field
-              label={s("question", { name: trimmedName || s("fallbackName") })}
-            >
-              {({ labelId }) => (
-                <GamerSignInRadios
-                  value={signIn}
-                  onChange={setSignIn}
-                  disabled={committing}
-                  labelId={labelId}
-                  name="add-gamer-sign-in"
-                />
-              )}
-            </Field>
             </>
           )}
         </div>
 
+        {/* Two fixed labels, one per page, decided by the page alone: page one
+            always advances and page two always creates, so the affirmative says
+            what pressing it will do without any radio having to change it. */}
         <DialogFooter className="gap-2">
           <Button
             type="button"
             variant="outline"
             onClick={() =>
-              step === "credentials" ? setStep("details") : onOpenChange(false)
+              step === "signIn" ? setStep("details") : onOpenChange(false)
             }
             disabled={committing}
           >
-            {step === "credentials" ? c("back") : c("cancel")}
+            {step === "signIn" ? c("back") : c("cancel")}
           </Button>
           <Button type="submit" disabled={committing}>
             {committing && <Loader2 className="animate-spin" />}
             {committing
               ? t("submitting")
-              : advancesToCredentials
+              : step === "details"
                 ? c("next")
                 : t("submit")}
           </Button>

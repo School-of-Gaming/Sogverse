@@ -140,11 +140,9 @@ export function findGamerCredentialProblem(input: {
  * a dialog that is closing. A required prop rather than a default, because
  * getting it wrong is invisible from the call site.
  *
- * **`autoFocusFirstField` is the dialog's alone.** There, this component is a
- * page the parent reached by clicking Next, and focus is sitting on a submit
- * button that now says something else. In the card the fields are revealed by a
- * radio the parent has just picked, and pulling focus out of the radio group
- * would take their arrow keys with it.
+ * **Nothing here takes focus on mount.** On both surfaces these fields are
+ * revealed by a radio the parent has just picked, and pulling focus out of the
+ * radio group would take their arrow keys with it.
  */
 export function GamerCredentialFields({
   signIn,
@@ -158,7 +156,6 @@ export function GamerCredentialFields({
   problem,
   idPrefix,
   passwordChangeableFrom,
-  autoFocusFirstField = false,
 }: {
   signIn: GamerSignIn;
   username: string;
@@ -173,8 +170,6 @@ export function GamerCredentialFields({
   idPrefix: string;
   /** Where the password hint promises the parent they can change it later. */
   passwordChangeableFrom: "thisPage" | "gamerPage";
-  /** Whether the mode's first field takes focus on mount. */
-  autoFocusFirstField?: boolean;
 }) {
   const t = useTranslations("gamerSignIn");
   const c = useTranslations("common");
@@ -204,7 +199,6 @@ export function GamerCredentialFields({
               onChange={(e) => onUsernameChange(normalizeGamerUsername(e.target.value))}
               placeholder={t("usernamePlaceholder")}
               disabled={disabled}
-              autoFocus={autoFocusFirstField}
               autoComplete="off"
               autoCapitalize="none"
               spellCheck={false}
@@ -259,7 +253,6 @@ export function GamerCredentialFields({
               onChange={(e) => onEmailChange(e.target.value)}
               placeholder={t("emailPlaceholder")}
               disabled={disabled}
-              autoFocus={autoFocusFirstField}
               autoComplete="off"
               aria-describedby={hintId}
               aria-invalid={problem?.field === "email" || undefined}

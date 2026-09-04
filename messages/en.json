@@ -3941,7 +3941,6 @@
   },
   "gamerSignIn": {
     "question": "How will {name} sign in?",
-    "fallbackName": "your gamer",
     "option": {
       "parent": "Through your account",
       "username": "With a username and password",
@@ -3952,6 +3951,7 @@
       "username": "You choose both; they sign in without needing you. No email needed.",
       "email": "We email them a link to verify the address and set their own password."
     },
+    "parentModeNote": "Nothing to fill in — {name} will sign in when you switch to them from your own account.",
     "usernameLabel": "Username",
     "usernamePlaceholder": "lily2015",
     "usernameHint": "Letters and numbers only, 3 to 20 characters.",

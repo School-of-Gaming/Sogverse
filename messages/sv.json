@@ -3941,7 +3941,6 @@
   },
   "gamerSignIn": {
     "question": "Hur ska {name} logga in?",
-    "fallbackName": "din gamer",
     "option": {
       "parent": "Via ditt konto",
       "username": "Med användarnamn och lösenord",
@@ -3952,6 +3951,7 @@
       "username": "Du väljer båda; de loggar in utan din hjälp. Ingen e-postadress behövs.",
       "email": "Vi mejlar dem en länk för att verifiera adressen och välja ett eget lösenord."
     },
+    "parentModeNote": "Inget att fylla i – {name} loggar in när du växlar till dem från ditt eget konto.",
     "usernameLabel": "Användarnamn",
     "usernamePlaceholder": "saga2015",
     "usernameHint": "Endast bokstäver och siffror, 3 till 20 tecken.",

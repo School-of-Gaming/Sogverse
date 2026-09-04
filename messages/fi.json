@@ -3941,7 +3941,6 @@
   },
   "gamerSignIn": {
     "question": "Miten {name} kirjautuu sisään?",
-    "fallbackName": "pelaajasi",
     "option": {
       "parent": "Sinun tilisi kautta",
       "username": "Käyttäjätunnuksella ja salasanalla",
@@ -3952,6 +3951,7 @@
       "username": "Valitset molemmat itse, ja hän kirjautuu ilman sinua. Sähköpostiosoitetta ei tarvita.",
       "email": "Lähetämme hänelle sähköpostilla linkin, jolla hän vahvistaa osoitteen ja valitsee oman salasanansa."
     },
+    "parentModeNote": "Ei täytettävää – {name} kirjautuu sisään, kun vaihdat hänen tililleen omalta tililtäsi.",
     "usernameLabel": "Käyttäjätunnus",
     "usernamePlaceholder": "lilja2015",
     "usernameHint": "Vain kirjaimia ja numeroita, 3–20 merkkiä.",

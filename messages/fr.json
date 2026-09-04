@@ -3941,7 +3941,6 @@
   },
   "gamerSignIn": {
     "question": "Comment {name} se connectera ?",
-    "fallbackName": "votre joueur",
     "option": {
       "parent": "Via votre compte",
       "username": "Avec un identifiant et un mot de passe",
@@ -3952,6 +3951,7 @@
       "username": "Vous choisissez les deux ; la connexion se fait sans vous. Aucune adresse e-mail nécessaire.",
       "email": "Nous envoyons un lien par e-mail pour vérifier l’adresse et choisir un mot de passe."
     },
+    "parentModeNote": "Rien à remplir — {name} se connectera lorsque vous basculerez sur son profil depuis votre compte.",
     "usernameLabel": "Identifiant",
     "usernamePlaceholder": "lily2015",
     "usernameHint": "Lettres et chiffres uniquement, de 3 à 20 caractères.",

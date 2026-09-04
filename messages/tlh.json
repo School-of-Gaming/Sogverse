@@ -3088,7 +3088,6 @@
   },
   "gamerSignIn": {
     "question": "chay’ ’el {name}?",
-    "fallbackName": "QujwI’lIj",
     "option": {
       "parent": "accountlIj Dung",
       "username": "pong mu’mey je",
@@ -3099,6 +3098,7 @@
       "username": "cha’ DawIv. SoH Hutlhchugh, ’el. QIn Daq poQbe’.",
       "email": "lInk wIngeH. Daq ngu’ ’ej mu’meyDaj wIv."
     },
+    "parentModeNote": "pagh yIghItlh. accountlIjvo’ bIchoHDI’ ’el {name}.",
     "usernameLabel": "pong",
     "usernamePlaceholder": "mara2015",
     "usernameHint": "ghItlh mI’ je neH, wej – cha’maH Hap.",

@@ -4212,27 +4212,26 @@ function inertCreateGamer(): Promise<{ gamerId: string }> {
 }
 
 /**
- * The card's three pages, side by side and all three live.
+ * Both pages side by side, with page two drawn once per answer.
  *
- * The form has one shape a parent meets by default and two it only reaches by
- * choosing a sign-in mode and pressing Next, and the whole question about them
- * is comparative: does the second page look like it belongs to the first, and do
- * the two credential pages look like each other. States reached by driving one
- * card through the flow would have to be compared from memory, so all three are
- * rendered at once and each is seeded straight into its page through the card's
- * `initial` prop.
+ * The form is two pages for every parent, and the questions about them are
+ * comparative: does page two look like it belongs to page one, and do the three
+ * answers sit in a box that does not resize as the radio moves between them.
+ * States reached by driving one card through the flow would have to be compared
+ * from memory, so all four are rendered at once and each is seeded straight into
+ * its page through the card's `initial` prop.
  *
- * **No `Dialog` around them.** A dialog is a portal, so three of them would
- * stack in `document.body` on top of one another rather than sitting in a row —
- * and `DialogContent` needs no portal to render, which is the whole reason the
- * card is separable from it. The height cap goes with the dialog: `90vh` is
- * about a viewport, and these are three columns on a page.
+ * **No `Dialog` around them.** A dialog is a portal, so four of them would stack
+ * in `document.body` on top of one another rather than sitting in a row — and
+ * `DialogContent` needs no portal to render, which is the whole reason the card
+ * is separable from it. The height cap goes with the dialog: `90vh` is about a
+ * viewport, and these are four columns on a page.
  */
 function AddGamerDialogDemo() {
   const dismiss = () => {};
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-3">
+    <div className="grid items-start gap-4 lg:grid-cols-2 2xl:grid-cols-4">
       <AddGamerFormCard
         onOpenChange={dismiss}
         onCreate={inertCreateGamer}
@@ -4242,13 +4241,19 @@ function AddGamerDialogDemo() {
         onOpenChange={dismiss}
         onCreate={inertCreateGamer}
         className="max-h-none"
-        initial={{ firstName: "Lily", signIn: "username", step: "credentials" }}
+        initial={{ firstName: "Lily", signIn: "parent", step: "signIn" }}
       />
       <AddGamerFormCard
         onOpenChange={dismiss}
         onCreate={inertCreateGamer}
         className="max-h-none"
-        initial={{ firstName: "Lily", signIn: "email", step: "credentials" }}
+        initial={{ firstName: "Lily", signIn: "username", step: "signIn" }}
+      />
+      <AddGamerFormCard
+        onOpenChange={dismiss}
+        onCreate={inertCreateGamer}
+        className="max-h-none"
+        initial={{ firstName: "Lily", signIn: "email", step: "signIn" }}
       />
     </div>
   );
@@ -4309,9 +4314,8 @@ function GameAccountDemo() {
           The real card, inert: the submit resolves after a beat and writes
           nothing. The PIN gate in front of it is skipped &mdash; it is a
           conditional on one query with nothing of its own to look at. Both game
-          rows are the real thing and both commits run the real lookup, the
-          radios switch the footer between Add gamer and Next, and every field
-          validates.
+          rows are the real thing and both commits run the real lookup, and every
+          field validates.
         </p>
         <AddGamerDialogDemo />
       </SubSection>
