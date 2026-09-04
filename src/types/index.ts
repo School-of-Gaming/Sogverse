@@ -265,14 +265,6 @@ export type CalendarHolidayInsert = Database["public"]["Tables"]["calendar_holid
 export type ProductHolidayCalendar = Database["public"]["Tables"]["product_holiday_calendars"]["Row"];
 export type ProductHolidayCalendarInsert = Database["public"]["Tables"]["product_holiday_calendars"]["Insert"];
 
-// One admin's editable fake family behind a calendar-feed URL. `definition` is
-// `Json` here and is parsed through the sandbox schema at every boundary — the
-// shape belongs to that schema, not to the column.
-export type CalendarFeedSandbox =
-  Database["public"]["Tables"]["calendar_feed_sandboxes"]["Row"];
-export type CalendarFeedSandboxInsert =
-  Database["public"]["Tables"]["calendar_feed_sandboxes"]["Insert"];
-
 // site_details (member-visible) + site_staff_details (admin + Gedu only)
 export type SiteDetails = Database["public"]["Tables"]["site_details"]["Row"];
 export type SiteDetailsInsert = Database["public"]["Tables"]["site_details"]["Insert"];

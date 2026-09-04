@@ -44,13 +44,8 @@
 // collide: its verifier derives both components from the caller's own JWT
 // rather than the token, and a UUID can never begin with a prefix string. The
 // fourth payload class is the seat offer (`seat-offer:`, in
-// `seat-offer-token.ts`), and the fifth and sixth are the two kinds of
-// subscribed calendar feed — a real family's (`ics-feed:`) and an admin's
-// sandbox family's (`ics-feed-sandbox:`), both in `calendar-feed/token.ts`.
-// Those two are prefixed against each other as well as against everything
-// here, which is the point: one verifier reads both, and only the prefix stops
-// a token minted for a fake family from answering for a real one. Any SEVENTH
-// must carry its own prefix too; do not add another bare one.
+// `seat-offer-token.ts`), which followed this rule. Any FIFTH must carry its
+// own prefix too; do not add another bare one.
 //
 // The changed-address reset watches `profiles.email` (a DB trigger), which is
 // the only email this app ever changes. An auth-side change that bypassed

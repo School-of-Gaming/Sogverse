@@ -20,8 +20,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarFeedCard } from "@/components/admin/testing/calendar-feed/calendar-feed-card";
-import { CalendarInvitationsCard } from "@/components/admin/testing/calendar-invitations/calendar-invitations-card";
 import { useAuth } from "@/providers";
 import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
@@ -32,6 +30,7 @@ import {
   type TemplateDefinition,
   type TemplateField,
 } from "@/lib/email-templates/registry";
+import type { RenderedAttachment } from "@/lib/email-templates/attachments";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 
 const EMAIL_PROVIDERS = ["brevo", "klaviyo"] as const;
@@ -131,7 +130,11 @@ export default function TestingPage() {
   // dialog opens and shown only while it is up, so nothing typed into the form
   // afterwards can reload the frame under a reader.
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
+  const [preview, setPreview] = useState<{
+    subject: string;
+    html: string;
+    attachments: RenderedAttachment[];
+  } | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   // Which viewport the already-rendered document is shown in, not which
   // document it is: the toggle in the dialog header changes it without
@@ -186,7 +189,11 @@ export default function TestingPage() {
           locale,
           { to: "preview", origin: window.location.origin },
         );
-        setPreview({ subject: rendered.subject, html: rendered.html });
+        setPreview({
+          subject: rendered.subject,
+          html: rendered.html,
+          attachments: rendered.attachments ?? [],
+        });
       } catch (error) {
         if (previewRun.current !== run) return;
         setPreview(null);
@@ -513,10 +520,6 @@ export default function TestingPage() {
         </CardContent>
       </Card>
 
-      <CalendarFeedCard />
-
-      <CalendarInvitationsCard />
-
       {/* The preview is a dialog rather than a second panel under the form:
           the mail is 720px of reading and the form is what the page is for, so
           the two do not share a scroll. `size="wide"` rather than a one-off
@@ -613,6 +616,27 @@ export default function TestingPage() {
               />
             ) : null}
           </div>
+          {/* What travels beside the body. It is closed by default because the
+              mail is what the dialog is for and a hundred lines of calendar
+              source above the fold would bury it — and it sits *below* the
+              frame, where opening it grows the dialog's own scroll rather than
+              moving anything already on screen. The box has a fixed height for
+              the same reason: a long attachment expanded in place would push
+              the whole document's height around under the reader.
+              Only a text attachment gets a panel, because there is nothing
+              useful to show for bytes that are not text. */}
+          {preview?.attachments
+            .filter((attachment) => attachment.text !== undefined)
+            .map((attachment) => (
+              <details key={attachment.name} className="rounded-md border border-border">
+                <summary className="cursor-pointer px-3 py-2 text-sm">
+                  {t("attachment", { name: attachment.name })}
+                </summary>
+                <pre className="h-64 overflow-auto border-t border-border p-3 font-mono text-xs whitespace-pre-wrap">
+                  {attachment.text}
+                </pre>
+              </details>
+            ))}
         </DialogContent>
       </Dialog>
     </div>

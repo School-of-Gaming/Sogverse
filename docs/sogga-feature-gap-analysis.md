@@ -396,7 +396,8 @@ their own RPC. Subscription cancellation is delegated to Stripe (`cancel_at_peri
 via the webhook, self-served through the Customer Portal).
 
 **Still open:** Any feature that genuinely needs a timer — session reminders
-(`docs/investigations/session-reminders-and-calendar-feed.md`) and chat retention
+(`docs/records/calendar-feed-vs-invitations-2026-09.md`, which records why the
+calendar route was preferred and reminder mail deferred) and chat retention
 (`TODO.md`) both name the constraint. The first such feature has to bring the runbook and
 alerting `pg_cron` would need.
 

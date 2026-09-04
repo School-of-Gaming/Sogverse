@@ -71,6 +71,10 @@ export const POST = defineRoute({
     let subject: string;
     let htmlContent: string;
     let replyToEmail: string | undefined;
+    // Whatever the template composes beside its body. Free-form mode carries
+    // none: an attachment is a property of a template's content, not something
+    // an admin types into a box.
+    let attachments: { name: string; contentBase64: string }[] | undefined;
 
     if (body.mode === "custom") {
       subject = body.subject;
@@ -112,6 +116,14 @@ export const POST = defineRoute({
       // The template's own reply-to, so a test send lands the same way the live
       // mail does rather than silently defaulting to the sending address.
       replyToEmail = rendered.replyTo;
+      // The file names go through untouched: the provider infers a media type
+      // from the extension, so a name rewritten here would change how a client
+      // reads the part — an `invite.ics` under another name arrives as a file
+      // to download rather than as an invitation.
+      attachments = rendered.attachments?.map(({ name, contentBase64 }) => ({
+        name,
+        contentBase64,
+      }));
     }
 
     const emailResult = await sendTransactionalEmail({
@@ -121,6 +133,7 @@ export const POST = defineRoute({
       subject,
       htmlContent,
       replyToEmail,
+      attachments,
     });
 
     return { messageId: emailResult.messageId };

@@ -5,12 +5,50 @@ import { styledName } from "@/lib/email-templates/utils";
 import { bulletList } from "@/lib/email-templates/blocks";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import {
+  CALENDAR_INVITATION_START_DATE,
+  CALENDAR_INVITATION_END_DATE,
+} from "@/lib/email-templates/calendar-invitation";
 
 let t: EmailTranslator;
 
 beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
+
+/**
+ * The calendar invitation's params.
+ *
+ * Its dates come from the template's own form placeholders rather than from
+ * literals, and that is load-bearing: the builder refuses a run with nothing
+ * left ahead of it, so a hardcoded date turns into a suite that fails on a day
+ * nobody chose. The placeholders are the next Monday and four weeks after it,
+ * which is exactly the property a fixture needs.
+ */
+const CALENDAR_INVITATION_FIXTURE = {
+  parentFirstName: "Sanna",
+  parentEmail: "sanna@example.com",
+  gamerFirstName: "Aino",
+  productName: "Minecraft building camp",
+  productType: "camp",
+  weekdays: "mon-wed-fri",
+  startDate: CALENDAR_INVITATION_START_DATE,
+  endDate: CALENDAR_INVITATION_END_DATE,
+  startTime: "16:00",
+  durationMinutes: "120",
+  timezone: "Europe/Helsinki",
+  address: "Kaisaniemenkatu 6, 00100 Helsinki",
+  arrivalInstructions: "Ring the bell marked School of Gaming and take the stairs.",
+  description: "Aino is building a harbour town, and the last session is the walk-through.",
+  geduFirstName: "Ville",
+  spokenLanguage: "fi",
+  reminder: "15",
+  method: "request",
+  shape: "rule",
+  uid: null,
+  sequence: "0",
+  dashboardUrl: "https://sogverse.sog.gg/parent",
+} satisfies Record<string, string | boolean | null>;
 
 /**
  * The seat variant reaches the reader twice — once in the body and once in the
@@ -456,6 +494,153 @@ describe("templateRegistry sessionReport", () => {
 });
 
 /**
+ * The one template that carries a file, and the half of it a unit test can
+ * settle.
+ *
+ * What no test can settle is the thing the template exists for — whether a
+ * client reads the part as an invitation and applies an update in place — so
+ * what is pinned here is everything the mail states *about* which of the three
+ * messages it is, plus the fact that the file is there at all. A mail whose
+ * subject says "invitation" over a document carrying `METHOD:CANCEL` is two
+ * wrong answers in the one line a reader meets first, and each half looks fine
+ * on its own.
+ */
+describe("templateRegistry calendarInvitation", () => {
+  const params = CALENDAR_INVITATION_FIXTURE;
+
+  function icsOf(rendered: { attachments?: { name: string; text?: string }[] }): string {
+    const invite = rendered.attachments?.find((file) => file.name === "invite.ics");
+    if (invite?.text === undefined) throw new Error("no invite.ics on the render");
+    return invite.text;
+  }
+
+  it("carries the calendar as invite.ics, decoded for the preview and encoded for the send", () => {
+    const rendered = templateRegistry.calendarInvitation.render(params, t, "en");
+    const [invite] = rendered.attachments ?? [];
+
+    expect(invite.name).toBe("invite.ics");
+    expect(invite.text).toContain("BEGIN:VCALENDAR");
+    // The two halves are the same bytes: the name and the base64 are what
+    // leaves the building, the text is only ever shown on screen.
+    expect(Buffer.from(invite.contentBase64, "base64").toString("utf8")).toBe(invite.text);
+  });
+
+  it.each([
+    ["request", "Calendar invitation: Minecraft building camp for Aino", "Your calendar invitation", "REQUEST"],
+    ["publish", "Calendar entry: Minecraft building camp for Aino", "Your calendar entry", "PUBLISH"],
+    ["cancel", "Cancelled: Minecraft building camp for Aino", "This calendar entry has been cancelled", "CANCEL"],
+  ])("says %s in the subject, the heading and the document alike", (method, subject, heading, icsMethod) => {
+    const rendered = templateRegistry.calendarInvitation.render({ ...params, method }, t, "en");
+
+    expect(rendered.subject).toBe(subject);
+    expect(rendered.html).toContain(heading);
+    expect(icsOf(rendered)).toContain(`METHOD:${icsMethod}`);
+  });
+
+  /**
+   * A withdrawal has to say so twice — at the calendar level, so a client reads
+   * the message as a retraction, and on the event, so the entry it already
+   * holds is marked cancelled. One without the other is a message a client can
+   * read as an ordinary update.
+   */
+  it("marks a cancellation both ways and asks for no answer", () => {
+    const ics = icsOf(
+      templateRegistry.calendarInvitation.render({ ...params, method: "cancel" }, t, "en"),
+    );
+    expect(ics).toContain("METHOD:CANCEL");
+    expect(ics).toContain("STATUS:CANCELLED");
+    expect(ics).not.toContain("RSVP=TRUE");
+
+    const request = icsOf(templateRegistry.calendarInvitation.render(params, t, "en"));
+    expect(request).toContain("STATUS:CONFIRMED");
+    expect(request).toContain("RSVP=TRUE");
+  });
+
+  /** A published entry names no attendee: nobody is being asked anything. */
+  it("names no attendee on a published entry", () => {
+    const ics = icsOf(
+      templateRegistry.calendarInvitation.render({ ...params, method: "publish" }, t, "en"),
+    );
+    expect(ics).toContain("ORGANIZER;CN=");
+    expect(ics).not.toContain("ATTENDEE");
+  });
+
+  /**
+   * The identifier is what makes a second message land on the first one's
+   * entry, so the form's two states are the whole of the thread mechanism: an
+   * empty field mints one, and a typed one is used exactly as typed.
+   */
+  it("mints an identifier when the form names none and uses a typed one verbatim", () => {
+    const generated = icsOf(templateRegistry.calendarInvitation.render(params, t, "en"));
+    expect(generated).toMatch(/UID:[0-9a-f-]{36}@sogverse/);
+
+    const named = icsOf(
+      templateRegistry.calendarInvitation.render(
+        { ...params, uid: "seat-42@sogverse", sequence: "3" },
+        t,
+        "en",
+      ),
+    );
+    expect(named).toContain("UID:seat-42@sogverse");
+    expect(named).toContain("SEQUENCE:3");
+  });
+
+  /**
+   * The resolver is where the form's strings become the template's nulls. Four
+   * fields mean "none" when empty, and the identifier means "mint one" when it
+   * is empty *or* still holding the word its placeholder suggests — an
+   * untouched text input posts its placeholder, so the literal has to be
+   * recognised or a generated identifier would be unreachable from the form.
+   */
+  it("reads the form's empty fields, and its untouched UID, as absences", () => {
+    const resolve = templateRegistry.calendarInvitation.resolveParams;
+    if (!resolve) throw new Error("calendarInvitation has no resolveParams");
+
+    expect(
+      resolve({
+        endDate: "  ",
+        address: "",
+        arrivalInstructions: "",
+        description: "",
+        uid: "generated",
+      }),
+    ).toMatchObject({
+      endDate: null,
+      address: null,
+      arrivalInstructions: null,
+      description: null,
+      uid: null,
+    });
+
+    expect(
+      resolve({
+        endDate: "2026-10-01",
+        address: "Kaisaniemenkatu 6",
+        arrivalInstructions: "Ring the bell.",
+        description: "A harbour town.",
+        uid: "seat-42@sogverse",
+      }),
+    ).toMatchObject({ endDate: "2026-10-01", uid: "seat-42@sogverse" });
+  });
+
+  /**
+   * A schedule with nothing left in it is refused rather than sent empty: a
+   * document describing no sessions still opens a conversation the reader's
+   * calendar has no entry for. The message is the admin's to read — the
+   * testing page shows a render error verbatim.
+   */
+  it("refuses a run that is already over", () => {
+    expect(() =>
+      templateRegistry.calendarInvitation.render(
+        { ...params, startDate: "2020-01-06", endDate: "2020-02-03" },
+        t,
+        "en",
+      ),
+    ).toThrow(/no sessions left/);
+  });
+});
+
+/**
  * Every registered template, rendered in every locale we ship.
  *
  * The failure this catches is a key added to `en.json` and forgotten in one of
@@ -540,6 +725,7 @@ describe("every template renders in every locale", () => {
       reportMarkdown: "",
       productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
     },
+    calendarInvitation: CALENDAR_INVITATION_FIXTURE,
   };
 
   /**
@@ -558,6 +744,9 @@ describe("every template renders in every locale", () => {
     // Declined and no-response are three keys apiece, in five locales, and only
     // the reason they name is ever rendered.
     seatOfferStaff: [{ reason: "declined" }, { reason: "no_response" }],
+    // Three messages, three subjects, three headings and three bodies — nine
+    // keys per locale, of which any one render reaches exactly three.
+    calendarInvitation: [{ method: "request" }, { method: "publish" }, { method: "cancel" }],
   };
 
   function variantsOf(key: string): Record<string, string | boolean | null>[] {

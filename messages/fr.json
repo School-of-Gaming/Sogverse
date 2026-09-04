@@ -1064,190 +1064,7 @@
         "desktop": "Ordinateur",
         "mobile": "Mobile"
       },
-      "calendarFeed": {
-        "title": "Flux de calendrier",
-        "description": "Testez le flux de calendrier auquel s’abonner de façon isolée : modifiez une famille de test ou pointez le même flux vers un vrai compte.",
-        "customerLabel": "Client",
-        "customerPlaceholder": "parent@exemple.com ou un identifiant utilisateur",
-        "lookUp": "Rechercher",
-        "lookingUp": "Recherche en cours",
-        "noParticipations": "Ce client n’a aucune place active : le flux est donc vide.",
-        "seatLine": "{gamer} — {product} ({type})",
-        "optionsHeading": "Options",
-        "modeLabel": "Récurrence",
-        "modeOptions": {
-          "discrete": "Un événement par séance",
-          "rrule": "Une règle hebdomadaire par créneau"
-        },
-        "titleLabel": "Titre de l’événement",
-        "titleOptions": {
-          "product": "Produit",
-          "product-gamer": "Produit puis joueur",
-          "gamer-product": "Joueur puis produit"
-        },
-        "alarmLabel": "Rappel",
-        "alarmOptions": {
-          "15": "15 minutes avant",
-          "60": "Une heure avant",
-          "1440": "Un jour avant",
-          "none": "Aucun rappel"
-        },
-        "tzLabel": "Horaires",
-        "tzOptions": {
-          "utc": "Instants UTC",
-          "tzid": "Fuseau horaire du produit"
-        },
-        "weeksLabel": "Horizon",
-        "weeksOption": "{weeks} semaines à venir",
-        "scopeLabel": "Portée",
-        "scopeFamily": "Toute la famille",
-        "detailsLabel": "Détails",
-        "detailsOptions": {
-          "none": "Titre seul",
-          "basic": "Titre, joueur et lieu",
-          "full": "Tout, avec un lien"
-        },
-        "busyLabel": "Occupé ou libre",
-        "busyOptions": {
-          "busy": "Affiché comme occupé",
-          "free": "Affiché comme libre"
-        },
-        "methodLabel": "Propriété Method",
-        "methodOptions": {
-          "publish": "Indiquer METHOD:PUBLISH",
-          "none": "Ne pas l'indiquer"
-        },
-        "refreshLabel": "Fréquence de rafraîchissement",
-        "refreshOptions": {
-          "off": "Aucune",
-          "1h": "Toutes les heures",
-          "6h": "Toutes les 6 heures",
-          "24h": "Toutes les 24 heures"
-        },
-        "colorLabel": "Couleur du calendrier",
-        "colorOptions": {
-          "on": "Couleur de la marque",
-          "off": "Aucune"
-        },
-        "calnameLabel": "Nom du calendrier",
-        "webUrlLabel": "Adresse web",
-        "copy": "Copier",
-        "copied": "Copié",
-        "previewHeading": "Aperçu",
-        "loadPreview": "Charger l’aperçu",
-        "loadingPreview": "Chargement",
-        "noEvents": "Aucune séance sur cet horizon.",
-        "rawHeading": "Fichier de calendrier brut",
-        "columnWhen": "Quand",
-        "columnSummary": "Résumé",
-        "columnGamer": "Joueur",
-        "columnProduct": "Produit",
-        "recurring": "se répète chaque semaine",
-        "sourceHeading": "Famille",
-        "sourceSandbox": "Famille de test",
-        "sourceReal": "Compte réel",
-        "subscribeHeading": "S’abonner",
-        "appleCalendar": "Apple Calendar",
-        "googleCalendar": "Google Calendar",
-        "outlook": "Outlook",
-        "otherApp": "Vous utilisez une autre application de calendrier ?",
-        "otherAppHint": "Collez cette adresse dans le champ d’abonnement par URL de votre application de calendrier.",
-        "sandboxHeading": "Famille de test",
-        "sandboxNote": "Un calendrier abonné affiche un enregistrement à sa prochaine relève, pas immédiatement. Dernier enregistrement : {savedAt}.",
-        "parentNameLabel": "Prénom du parent",
-        "parentLocaleLabel": "Langue d’interface du parent",
-        "gamersHeading": "Joueurs",
-        "gamerNameLabel": "Prénom",
-        "addGamer": "Ajouter un joueur",
-        "removeGamer": "Retirer le joueur",
-        "newGamerName": "Nouveau joueur",
-        "productsHeading": "Produits",
-        "productNameLabel": "Nom",
-        "productTypeLabel": "Type",
-        "productTimezoneLabel": "Fuseau horaire",
-        "productStartLabel": "Date de début",
-        "productEndLabel": "Date de fin",
-        "productLanguageLabel": "Langue parlée",
-        "productLocationLabel": "Lieu",
-        "productRemoteLabel": "En ligne",
-        "addProduct": "Ajouter un produit",
-        "removeProduct": "Retirer le produit",
-        "newProductName": "Nouveau club",
-        "slotsHeading": "Séances",
-        "slotWeekdayLabel": "Jour",
-        "slotStartLabel": "Heure de début",
-        "slotDurationLabel": "Minutes",
-        "addSlot": "Ajouter une séance",
-        "removeSlot": "Retirer la séance",
-        "seatsHeading": "Places",
-        "seatGamerLabel": "Joueur",
-        "seatProductLabel": "Produit",
-        "seatStatusLabel": "Statut",
-        "seatStatus": {
-          "active": "Active",
-          "waitlisted": "Sur liste d’attente"
-        },
-        "seatPlacedLabel": "Placé dans un groupe",
-        "seatCancelsAtLabel": "Fin de l’accès",
-        "addSeat": "Ajouter une place",
-        "removeSeat": "Retirer la place",
-        "saveSandbox": "Enregistrer",
-        "savingSandbox": "Enregistrement",
-        "resetSandbox": "Rétablir la valeur par défaut",
-        "resetConfirmTitle": "Rétablir la famille de test ?",
-        "resetConfirmBody": "La famille par défaut revient et vos modifications sont perdues."
-      },
-      "calendarInvitations": {
-        "title": "Invitations au calendrier",
-        "description": "Envoyez une place de test comme véritable invitation, puis mettez-la à jour et annulez-la, et observez ce qu’une application de calendrier fait de chacune.",
-        "participationHeading": "Place",
-        "participationLabel": "Quelle place",
-        "participationHint": "La famille derrière ces places se modifie dans la carte du flux de calendrier ci-dessus ; les invitations sont envoyées pour ses participations.",
-        "noParticipations": "La famille de test n’a encore aucune place active.",
-        "seatLine": "{gamer} – {product}",
-        "recipientHeading": "Destinataire",
-        "recipientLabel": "Envoyer à",
-        "recipientPlaceholder": "vous@exemple.fr",
-        "optionsHeading": "Options",
-        "shapeLabel": "Forme",
-        "shapeOptions": {
-          "series": "Une règle hebdomadaire pour tout le calendrier",
-          "occurrences": "Chaque séance indiquée par sa date"
-        },
-        "shapeHint": "Les deux formes envoient une seule entrée d’agenda par place, couvrant toutes les séances. La règle est compacte et garde son sens au-delà de l’horizon de douze semaines, mais elle ne peut décrire que des séances qui commencent toutes à la même heure et durent aussi longtemps. La liste indique chaque séance restante par sa date, quelles que soient les heures, et s’arrête à l’horizon.",
-        "shapeOptionUnavailable": "{option} – indisponible : ces séances diffèrent par l’heure ou par la durée",
-        "periodEntriesHint": "Ces séances n’ont pas toutes la même durée : celles qui diffèrent sont écrites en entrées de type période. La prise en charge par les agendas est inégale — vérifiez que toutes les séances sont bien arrivées.",
-        "reminderLabel": "Rappel",
-        "reminderOptions": {
-          "15": "15 minutes avant",
-          "60": "Une heure avant",
-          "1440": "Un jour avant",
-          "none": "Aucun rappel"
-        },
-        "methodLabel": "Expérience",
-        "methodOptions": {
-          "request": "Invitation avec réponse",
-          "publish": "Ajout au calendrier, sans réponse"
-        },
-        "statusHeading": "État",
-        "statusNone": "Pas encore envoyée.",
-        "statusSent": "Invitation envoyée à {recipient}, révision {sequence}, {when}.",
-        "statusCancelled": "Annulée le {when}. Un nouvel envoi crée une nouvelle entrée de calendrier.",
-        "preview": "Aperçu",
-        "send": "Envoyer l’invitation",
-        "sendUpdate": "Envoyer la mise à jour",
-        "sendCancellation": "Envoyer l’annulation",
-        "working": "En cours",
-        "confirmCancelTitle": "Envoyer une annulation ?",
-        "confirmCancelDescription": "Ceci envoie une annulation pour la place sélectionnée. L’entrée disparaît du calendrier du destinataire, et un envoi ultérieur en crée une nouvelle.",
-        "previewedNotSent": "Rendu. Rien n’a été envoyé.",
-        "sentSuccess": "Envoyé. Identifiant du message {messageId}.",
-        "smtpNotConfigured": "Le relais de messagerie n’est pas configuré. Définissez BREVO_SMTP_LOGIN et BREVO_SMTP_KEY, puis réessayez.",
-        "rawHeading": "Le message et sa partie calendrier",
-        "calendarPartLabel": "Partie calendrier",
-        "mailLabel": "Message rendu",
-        "subjectLabel": "Objet"
-      }
+      "attachment": "Pièce jointe : {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1858,36 +1675,6 @@
     "municipality_club": "Club",
     "camp": "Stage",
     "event": "Événement"
-  },
-  "calendarFeed": {
-    "online": "En ligne",
-    "gamerLine": "Joueur : {name}",
-    "typeLine": "Type : {type}",
-    "languageLine": "Langue : {language}",
-    "durationLine": "Durée : {minutes} minutes"
-  },
-  "calendarInvitation": {
-    "greeting": "Bonjour {name},",
-    "subject": {
-      "send": "Invitation au calendrier : {product} pour {gamer}",
-      "sendPublish": "Entrée de calendrier : {product} pour {gamer}",
-      "update": "Horaire modifié : {product} pour {gamer}",
-      "cancel": "Annulé : {product} pour {gamer}"
-    },
-    "heading": {
-      "send": "Votre invitation au calendrier",
-      "sendPublish": "Votre entrée de calendrier",
-      "update": "L’horaire a changé",
-      "cancel": "Cette entrée de calendrier a été annulée"
-    },
-    "body": {
-      "send": "Les séances de {gamer} pour {product} se trouvent dans ce message sous forme d’invitation. Acceptez-la et elles apparaîtront dans votre calendrier.",
-      "sendPublish": "Les séances de {gamer} pour {product} se trouvent dans ce message sous forme d’entrée de calendrier. Ajoutez-la et elles apparaîtront dans votre calendrier.",
-      "update": "L’horaire de {product} a changé. L’invitation qui se trouve dans ce message remplace l’entrée que vous avez déjà pour {gamer} — il n’y a rien à supprimer avant.",
-      "updatePublish": "L’horaire de {product} a changé. L’entrée de calendrier qui se trouve dans ce message remplace l’entrée que vous avez déjà pour {gamer} — il n’y a rien à supprimer avant.",
-      "cancel": "{gamer} n’a plus de place sur {product}. L’annulation qui se trouve dans ce message retire l’entrée de votre calendrier."
-    },
-    "updatesNote": "Si l’horaire change plus tard, School of Gaming envoie une mise à jour et cette même entrée change dans votre calendrier. Vous n’aurez jamais à deviner laquelle de deux entrées fait foi."
   },
   "activityCard": {
     "endedOn": "Terminé le {date}",
@@ -2906,6 +2693,42 @@
         "heading": "Une proposition de place a expiré",
         "body": "Le délai de réponse s’est écoulé sans réponse. La famille reste sur la liste d’attente et peut recevoir une nouvelle proposition, mais la place elle-même est libre dès maintenant."
       }
+    },
+    "calendarInvitation": {
+      "greeting": "Bonjour {name},",
+      "subject": {
+        "request": "Invitation d’agenda : {productName} pour {gamerName}",
+        "publish": "Événement d’agenda : {productName} pour {gamerName}",
+        "cancel": "Annulé : {productName} pour {gamerName}"
+      },
+      "heading": {
+        "request": "Votre invitation d’agenda",
+        "publish": "Votre événement d’agenda",
+        "cancel": "Cet événement d’agenda est annulé"
+      },
+      "body": {
+        "request": "L’invitation jointe à cet e-mail contient toutes les prochaines sessions de {productName} pour {gamerName}. Acceptez-la et elles apparaissent toutes dans votre propre agenda.",
+        "publish": "L’événement joint à cet e-mail contient toutes les prochaines sessions de {productName} pour {gamerName}. Ajoutez-le et elles apparaissent toutes dans votre propre agenda.",
+        "cancel": "{gamerName} n’a plus de place dans {productName}. L’annulation jointe à cet e-mail retire l’événement de votre agenda."
+      },
+      "schedule": "{days} à {time}",
+      "openEnded": "À partir du {startDate}, jusqu’à nouvel ordre",
+      "typeLabel": "Quoi",
+      "scheduleLabel": "Horaire",
+      "datesLabel": "Dates",
+      "whereLabel": "Où",
+      "languageLabel": "Langue",
+      "online": "En ligne",
+      "type": {
+        "club": "Club",
+        "camp": "Stage",
+        "event": "Événement"
+      },
+      "arrivalLabel": "Pour venir",
+      "updatesNote": "Si l’horaire change, School of Gaming envoie une mise à jour et ce même événement change dans votre agenda. Vous ne vous retrouvez jamais avec deux événements et la charge de deviner lequel fait foi.",
+      "dashboardButton": "Ouvrir dans Mon SOG",
+      "support": "Une question ? Écrivez à {email}",
+      "eventSummary": "{productName} – {gamerName}"
     }
   },
   "legal": {

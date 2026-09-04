@@ -1064,190 +1064,7 @@
         "desktop": "Dator",
         "mobile": "Mobil"
       },
-      "calendarFeed": {
-        "title": "Kalenderflöde",
-        "description": "Testa det prenumererbara kalenderflödet isolerat: redigera en sandlådefamilj eller rikta samma flöde mot ett riktigt konto.",
-        "customerLabel": "Kund",
-        "customerPlaceholder": "foralder@example.com eller ett användar-id",
-        "lookUp": "Sök",
-        "lookingUp": "Söker",
-        "noParticipations": "Kunden har inga aktiva platser, så flödet är tomt.",
-        "seatLine": "{gamer} — {product} ({type})",
-        "optionsHeading": "Alternativ",
-        "modeLabel": "Upprepning",
-        "modeOptions": {
-          "discrete": "En händelse per tillfälle",
-          "rrule": "En veckoregel per tid"
-        },
-        "titleLabel": "Händelsens titel",
-        "titleOptions": {
-          "product": "Produkt",
-          "product-gamer": "Produkt och sedan spelare",
-          "gamer-product": "Spelare och sedan produkt"
-        },
-        "alarmLabel": "Påminnelse",
-        "alarmOptions": {
-          "15": "15 minuter innan",
-          "60": "En timme innan",
-          "1440": "Ett dygn innan",
-          "none": "Ingen påminnelse"
-        },
-        "tzLabel": "Tider",
-        "tzOptions": {
-          "utc": "Som UTC-tidpunkter",
-          "tzid": "I produktens tidszon"
-        },
-        "weeksLabel": "Tidshorisont",
-        "weeksOption": "{weeks} veckor framåt",
-        "scopeLabel": "Omfattning",
-        "scopeFamily": "Hela familjen",
-        "detailsLabel": "Detaljer",
-        "detailsOptions": {
-          "none": "Endast titel",
-          "basic": "Titel, spelare och plats",
-          "full": "Allt, med länk"
-        },
-        "busyLabel": "Upptagen eller ledig",
-        "busyOptions": {
-          "busy": "Visas som upptagen",
-          "free": "Visas som ledig"
-        },
-        "methodLabel": "METHOD-egenskap",
-        "methodOptions": {
-          "publish": "Ange METHOD:PUBLISH",
-          "none": "Utelämna den"
-        },
-        "refreshLabel": "Uppdateringstips",
-        "refreshOptions": {
-          "off": "Ingen",
-          "1h": "Varje timme",
-          "6h": "Var sjätte timme",
-          "24h": "Var tjugofjärde timme"
-        },
-        "colorLabel": "Kalenterfärg",
-        "colorOptions": {
-          "on": "Varumärkesfärg",
-          "off": "Ingen"
-        },
-        "calnameLabel": "Kalenderns namn",
-        "webUrlLabel": "Webbadress",
-        "copy": "Kopiera",
-        "copied": "Kopierat",
-        "previewHeading": "Förhandsgranskning",
-        "loadPreview": "Ladda förhandsgranskning",
-        "loadingPreview": "Laddar",
-        "noEvents": "Inga tillfällen inom den här horisonten.",
-        "rawHeading": "Rå kalenderfil",
-        "columnWhen": "När",
-        "columnSummary": "Sammanfattning",
-        "columnGamer": "Spelare",
-        "columnProduct": "Produkt",
-        "recurring": "upprepas varje vecka",
-        "sourceHeading": "Familj",
-        "sourceSandbox": "Sandlådefamilj",
-        "sourceReal": "Riktigt konto",
-        "subscribeHeading": "Prenumerera",
-        "appleCalendar": "Apple Calendar",
-        "googleCalendar": "Google Calendar",
-        "outlook": "Outlook",
-        "otherApp": "Använder du en annan kalenderapp?",
-        "otherAppHint": "Klistra in den här adressen i kalenderappens fält för att prenumerera via URL.",
-        "sandboxHeading": "Sandlådefamilj",
-        "sandboxNote": "En prenumererad kalender visar en sparning först vid nästa hämtning, inte direkt. Senast sparad {savedAt}.",
-        "parentNameLabel": "Förälderns förnamn",
-        "parentLocaleLabel": "Förälderns språkversion",
-        "gamersHeading": "Spelare",
-        "gamerNameLabel": "Förnamn",
-        "addGamer": "Lägg till spelare",
-        "removeGamer": "Ta bort spelare",
-        "newGamerName": "Ny spelare",
-        "productsHeading": "Produkter",
-        "productNameLabel": "Namn",
-        "productTypeLabel": "Typ",
-        "productTimezoneLabel": "Tidszon",
-        "productStartLabel": "Startdatum",
-        "productEndLabel": "Slutdatum",
-        "productLanguageLabel": "Talat språk",
-        "productLocationLabel": "Plats",
-        "productRemoteLabel": "På distans",
-        "addProduct": "Lägg till produkt",
-        "removeProduct": "Ta bort produkt",
-        "newProductName": "Ny klubb",
-        "slotsHeading": "Tillfällen",
-        "slotWeekdayLabel": "Dag",
-        "slotStartLabel": "Starttid",
-        "slotDurationLabel": "Minuter",
-        "addSlot": "Lägg till tillfälle",
-        "removeSlot": "Ta bort tillfälle",
-        "seatsHeading": "Platser",
-        "seatGamerLabel": "Spelare",
-        "seatProductLabel": "Produkt",
-        "seatStatusLabel": "Status",
-        "seatStatus": {
-          "active": "Aktiv",
-          "waitlisted": "I kö"
-        },
-        "seatPlacedLabel": "Placerad i en grupp",
-        "seatCancelsAtLabel": "Åtkomsten upphör",
-        "addSeat": "Lägg till plats",
-        "removeSeat": "Ta bort plats",
-        "saveSandbox": "Spara",
-        "savingSandbox": "Sparar",
-        "resetSandbox": "Återställ till standard",
-        "resetConfirmTitle": "Återställa sandlådefamiljen?",
-        "resetConfirmBody": "Standardfamiljen kommer tillbaka och dina ändringar kastas."
-      },
-      "calendarInvitations": {
-        "title": "Kalenderinbjudningar",
-        "description": "Skicka en sandlådeplats som en riktig kalenderinbjudan, uppdatera den och avboka den, och se vad en kalenderapp gör med var och en.",
-        "participationHeading": "Plats",
-        "participationLabel": "Vilken plats",
-        "participationHint": "Familjen bakom platserna redigeras i kalenderflödeskortet ovan; inbjudningar skickas för dess deltaganden.",
-        "noParticipations": "Sandlådefamiljen har inga aktiva platser ännu.",
-        "seatLine": "{gamer} – {product}",
-        "recipientHeading": "Mottagare",
-        "recipientLabel": "Skicka till",
-        "recipientPlaceholder": "du@exempel.se",
-        "optionsHeading": "Alternativ",
-        "shapeLabel": "Form",
-        "shapeOptions": {
-          "series": "En veckoregel för hela schemat",
-          "occurrences": "Varje tillfälle listat med datum"
-        },
-        "shapeHint": "Båda formerna skickar en enda kalenderpost per plats, och den täcker alla tillfällen. Regeln är kompakt och gäller även bortom horisonten på tolv veckor, men den kan bara beskriva tillfällen som alla börjar vid samma tid och är lika långa. Listan anger varje återstående tillfälle med datum, oavsett tider, och slutar vid horisonten.",
-        "shapeOptionUnavailable": "{option} – inte tillgänglig: de här tillfällena skiljer sig i tid eller längd",
-        "periodEntriesHint": "Tillfällena är inte lika långa, så de som avviker skrivs som periodposter. Kalenderprogrammens stöd för dem varierar — kontrollera att alla tillfällen kom fram.",
-        "reminderLabel": "Påminnelse",
-        "reminderOptions": {
-          "15": "15 minuter innan",
-          "60": "En timme innan",
-          "1440": "En dag innan",
-          "none": "Ingen påminnelse"
-        },
-        "methodLabel": "Upplevelse",
-        "methodOptions": {
-          "request": "Inbjudan med svar",
-          "publish": "Lägg till i kalendern, utan svar"
-        },
-        "statusHeading": "Status",
-        "statusNone": "Inte skickad ännu.",
-        "statusSent": "Inbjudan skickad till {recipient}, version {sequence}, {when}.",
-        "statusCancelled": "Avbokad {when}. En ny sändning startar en ny kalenderpost.",
-        "preview": "Förhandsgranska",
-        "send": "Skicka inbjudan",
-        "sendUpdate": "Skicka uppdatering",
-        "sendCancellation": "Skicka avbokning",
-        "working": "Arbetar",
-        "confirmCancelTitle": "Skicka en avbokning?",
-        "confirmCancelDescription": "Detta skickar en avbokning för den valda platsen. Posten försvinner ur mottagarens kalender, och en ny sändning efteråt startar en ny post.",
-        "previewedNotSent": "Renderad. Ingenting skickades.",
-        "sentSuccess": "Skickat. Meddelande-id {messageId}.",
-        "smtpNotConfigured": "E-postreläet är inte konfigurerat. Sätt BREVO_SMTP_LOGIN och BREVO_SMTP_KEY och försök igen.",
-        "rawHeading": "Meddelandet och dess kalenderdel",
-        "calendarPartLabel": "Kalenderdel",
-        "mailLabel": "Renderat meddelande",
-        "subjectLabel": "Ämne"
-      }
+      "attachment": "Bilaga: {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1858,36 +1675,6 @@
     "municipality_club": "Klubb",
     "camp": "Läger",
     "event": "Evenemang"
-  },
-  "calendarFeed": {
-    "online": "Online",
-    "gamerLine": "Spelare: {name}",
-    "typeLine": "Typ: {type}",
-    "languageLine": "Språk: {language}",
-    "durationLine": "Längd: {minutes} minuter"
-  },
-  "calendarInvitation": {
-    "greeting": "Hej {name},",
-    "subject": {
-      "send": "Kalenderinbjudan: {product} för {gamer}",
-      "sendPublish": "Kalenderpost: {product} för {gamer}",
-      "update": "Ändrat schema: {product} för {gamer}",
-      "cancel": "Inställt: {product} för {gamer}"
-    },
-    "heading": {
-      "send": "Din kalenderinbjudan",
-      "sendPublish": "Din kalenderpost",
-      "update": "Schemat har ändrats",
-      "cancel": "Den här kalenderposten har ställts in"
-    },
-    "body": {
-      "send": "{gamer}s pass i {product} finns i det här meddelandet som en kalenderinbjudan. Acceptera den så dyker de upp i din kalender.",
-      "sendPublish": "{gamer}s pass i {product} finns i det här meddelandet som en kalenderpost. Lägg till den så dyker de upp i din kalender.",
-      "update": "Schemat för {product} har ändrats. Inbjudan i det här meddelandet ersätter posten du redan har för {gamer} — du behöver inte ta bort något först.",
-      "updatePublish": "Schemat för {product} har ändrats. Kalenderposten i det här meddelandet ersätter posten du redan har för {gamer} — du behöver inte ta bort något först.",
-      "cancel": "{gamer} har inte längre en plats i {product}. Avbokningen i det här meddelandet tar bort posten ur din kalender."
-    },
-    "updatesNote": "Om schemat ändras senare skickar School of Gaming en uppdatering, och samma post ändras i din kalender. Du behöver aldrig lista ut vilken av två poster som gäller."
   },
   "activityCard": {
     "endedOn": "Avslutades {date}",
@@ -2906,6 +2693,42 @@
         "heading": "Ett platserbjudande gick ut",
         "body": "Svarstiden gick ut utan svar. Familjen står kvar på väntelistan och kan erbjudas platsen igen, men själva platsen är ledig nu."
       }
+    },
+    "calendarInvitation": {
+      "greeting": "Hej {name},",
+      "subject": {
+        "request": "Kalenderinbjudan: {productName} – {gamerName}",
+        "publish": "Kalenderpost: {productName} – {gamerName}",
+        "cancel": "Inställt: {productName} – {gamerName}"
+      },
+      "heading": {
+        "request": "Din kalenderinbjudan",
+        "publish": "Din kalenderpost",
+        "cancel": "Den här kalenderposten är inställd"
+      },
+      "body": {
+        "request": "Kalenderinbjudan som bifogas det här mejlet innehåller alla kommande pass i {productName} för {gamerName}. Acceptera den, så hamnar alla passen i din egen kalender.",
+        "publish": "Kalenderposten som bifogas det här mejlet innehåller alla kommande pass i {productName} för {gamerName}. Lägg till den, så hamnar alla passen i din egen kalender.",
+        "cancel": "{gamerName} har inte längre en plats i {productName}. Avbokningen som bifogas det här mejlet tar bort posten ur din kalender."
+      },
+      "schedule": "{days} kl. {time}",
+      "openEnded": "Från {startDate}, tills vidare",
+      "typeLabel": "Vad",
+      "scheduleLabel": "Schema",
+      "datesLabel": "Datum",
+      "whereLabel": "Var",
+      "languageLabel": "Språk",
+      "online": "Online",
+      "type": {
+        "club": "Klubb",
+        "camp": "Läger",
+        "event": "Evenemang"
+      },
+      "arrivalLabel": "Hitta hit",
+      "updatesNote": "Om schemat ändras skickar School of Gaming en uppdatering, och samma post ändras i din kalender. Du får aldrig två poster och uppgiften att lista ut vilken som gäller.",
+      "dashboardButton": "Öppna i Min SOG",
+      "support": "Frågor? Skriv till {email}",
+      "eventSummary": "{productName} – {gamerName}"
     }
   },
   "legal": {

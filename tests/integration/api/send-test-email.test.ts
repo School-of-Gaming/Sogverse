@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/send-test-email/route";
 import { NextResponse } from "next/server";
+// The calendar invitation refuses a run with nothing left ahead of it, so its
+// fixture dates come from the template's own form placeholders — the next
+// Monday and four weeks after it — rather than from literals that would rot.
+import {
+  CALENDAR_INVITATION_START_DATE,
+  CALENDAR_INVITATION_END_DATE,
+} from "@/lib/email-templates/calendar-invitation";
 
 // --- Mocks ---
 
@@ -490,6 +497,65 @@ describe("POST /api/admin/send-test-email", () => {
     const [{ htmlContent }] = mockSendTransactionalEmail.mock.calls[0];
     expect(htmlContent).not.toContain("Lanterns over the Harbour");
     expect(htmlContent).not.toContain("evil.example");
+  });
+
+  /**
+   * The one template that carries a file, asserted at the boundary the file has
+   * to cross. What makes a calendar arrive as an invitation rather than as
+   * something to download is the *name* — the provider infers the media type
+   * from the extension — so the name reaching the provider unchanged is the
+   * property worth pinning, alongside the content being base64 of the document
+   * the template composed.
+   */
+  it("passes a template's attachment through to the provider", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({
+      mode: "template",
+      toEmail: "test@example.com",
+      template: "calendarInvitation",
+      params: {
+        parentFirstName: "Sanna",
+        parentEmail: "sanna@example.com",
+        gamerFirstName: "Aino",
+        productName: "Minecraft building camp",
+        productType: "camp",
+        weekdays: "mon-wed-fri",
+        startDate: CALENDAR_INVITATION_START_DATE,
+        endDate: CALENDAR_INVITATION_END_DATE,
+        startTime: "16:00",
+        durationMinutes: "120",
+        timezone: "Europe/Helsinki",
+        address: "Kaisaniemenkatu 6, 00100 Helsinki",
+        arrivalInstructions: "Ring the bell.",
+        description: "A harbour town.",
+        geduFirstName: "Ville",
+        spokenLanguage: "fi",
+        reminder: "15",
+        method: "request",
+        shape: "rule",
+        uid: null,
+        sequence: "0",
+        dashboardUrl: "https://sogverse.sog.gg/parent",
+      },
+    }));
+
+    expect(response.status).toBe(200);
+    const [{ attachments }] = mockSendTransactionalEmail.mock.calls[0];
+    expect(attachments).toHaveLength(1);
+    expect(attachments[0].name).toBe("invite.ics");
+    expect(Buffer.from(attachments[0].contentBase64, "base64").toString("utf8"))
+      .toContain("BEGIN:VCALENDAR");
+  });
+
+  /** Every other template carries none, and says so by carrying nothing. */
+  it("sends no attachments for a template that has none", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    await POST(createRequest(validTemplateBody));
+
+    const [{ attachments }] = mockSendTransactionalEmail.mock.calls[0];
+    expect(attachments).toBeUndefined();
   });
 
   it("should return 400 for missing mode field", async () => {

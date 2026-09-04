@@ -1,0 +1,22 @@
+-- The calendar-feed sandbox is retired.
+--
+-- 00236 created `public.calendar_feed_sandboxes` to hold one admin's fake
+-- family behind a subscribed-feed URL, because the question that mattered was
+-- what a calendar client does when the data changes, and the poll that would
+-- answer it arrives from a vendor's servers minutes to hours later with no
+-- session and no browser. That is why the fiction had to be a row.
+--
+-- The subscribed feed is no longer being pursued: a calendar invitation mailed
+-- as an `invite.ics` attachment through the transactional REST API renders as a
+-- full inline invitation, which answers the same need without a URL anyone has
+-- to subscribe to, without a credential polled forever, and without a fake
+-- household stored in the database. An invitation is now an ordinary email
+-- template, composed from parameters and sent from the existing email testing
+-- tool, so nothing reads this table and nothing writes it.
+--
+-- A drop rather than an emptied table: the row's only reader was the feed route,
+-- and both are gone in the same change. The trigger and the policy go with the
+-- table; the grants go with it too, since a privilege cannot outlive the object
+-- it names.
+
+DROP TABLE IF EXISTS public.calendar_feed_sandboxes;

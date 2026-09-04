@@ -1064,190 +1064,7 @@
         "desktop": "Desktop",
         "mobile": "Mobile"
       },
-      "calendarFeed": {
-        "title": "Calendar feed",
-        "description": "Verify the subscribed calendar feed in isolation: edit a sandbox family, or point the same feed at a real account.",
-        "customerLabel": "Customer",
-        "customerPlaceholder": "parent@example.com or a user id",
-        "lookUp": "Look up",
-        "lookingUp": "Looking up",
-        "noParticipations": "This customer holds no active seats, so the feed is empty.",
-        "seatLine": "{gamer} — {product} ({type})",
-        "optionsHeading": "Options",
-        "modeLabel": "Recurrence",
-        "modeOptions": {
-          "discrete": "One event per session",
-          "rrule": "One weekly rule per slot"
-        },
-        "titleLabel": "Event title",
-        "titleOptions": {
-          "product": "Product",
-          "product-gamer": "Product then gamer",
-          "gamer-product": "Gamer then product"
-        },
-        "alarmLabel": "Reminder",
-        "alarmOptions": {
-          "15": "15 minutes before",
-          "60": "One hour before",
-          "1440": "One day before",
-          "none": "No reminder"
-        },
-        "tzLabel": "Times",
-        "tzOptions": {
-          "utc": "UTC instants",
-          "tzid": "Product timezone"
-        },
-        "weeksLabel": "Horizon",
-        "weeksOption": "{weeks} weeks ahead",
-        "scopeLabel": "Scope",
-        "scopeFamily": "Whole family",
-        "detailsLabel": "Detail",
-        "detailsOptions": {
-          "none": "Title only",
-          "basic": "Title, gamer and place",
-          "full": "Everything, with a link"
-        },
-        "busyLabel": "Busy or free",
-        "busyOptions": {
-          "busy": "Shows as busy",
-          "free": "Shows as free"
-        },
-        "methodLabel": "Method property",
-        "methodOptions": {
-          "publish": "State METHOD:PUBLISH",
-          "none": "Leave it out"
-        },
-        "refreshLabel": "Refresh hint",
-        "refreshOptions": {
-          "off": "None",
-          "1h": "Every hour",
-          "6h": "Every 6 hours",
-          "24h": "Every 24 hours"
-        },
-        "colorLabel": "Calendar colour",
-        "colorOptions": {
-          "on": "Brand colour",
-          "off": "None"
-        },
-        "calnameLabel": "Calendar name",
-        "webUrlLabel": "Web address",
-        "copy": "Copy",
-        "copied": "Copied",
-        "previewHeading": "Preview",
-        "loadPreview": "Load preview",
-        "loadingPreview": "Loading",
-        "noEvents": "No sessions in this horizon.",
-        "rawHeading": "Raw calendar file",
-        "columnWhen": "When",
-        "columnSummary": "Summary",
-        "columnGamer": "Gamer",
-        "columnProduct": "Product",
-        "recurring": "repeats weekly",
-        "sourceHeading": "Family",
-        "sourceSandbox": "Sandbox family",
-        "sourceReal": "Real account",
-        "subscribeHeading": "Subscribe",
-        "appleCalendar": "Apple Calendar",
-        "googleCalendar": "Google Calendar",
-        "outlook": "Outlook",
-        "otherApp": "Using another calendar app?",
-        "otherAppHint": "Paste this into your calendar app's subscribe-from-URL field.",
-        "sandboxHeading": "Sandbox family",
-        "sandboxNote": "A subscribed calendar shows a save on its next poll, not straight away. Last saved {savedAt}.",
-        "parentNameLabel": "Parent first name",
-        "parentLocaleLabel": "Parent locale",
-        "gamersHeading": "Gamers",
-        "gamerNameLabel": "First name",
-        "addGamer": "Add gamer",
-        "removeGamer": "Remove gamer",
-        "newGamerName": "New gamer",
-        "productsHeading": "Products",
-        "productNameLabel": "Name",
-        "productTypeLabel": "Type",
-        "productTimezoneLabel": "Timezone",
-        "productStartLabel": "Start date",
-        "productEndLabel": "End date",
-        "productLanguageLabel": "Spoken language",
-        "productLocationLabel": "Place",
-        "productRemoteLabel": "Online",
-        "addProduct": "Add product",
-        "removeProduct": "Remove product",
-        "newProductName": "New club",
-        "slotsHeading": "Sessions",
-        "slotWeekdayLabel": "Day",
-        "slotStartLabel": "Start time",
-        "slotDurationLabel": "Minutes",
-        "addSlot": "Add session",
-        "removeSlot": "Remove session",
-        "seatsHeading": "Seats",
-        "seatGamerLabel": "Gamer",
-        "seatProductLabel": "Product",
-        "seatStatusLabel": "Status",
-        "seatStatus": {
-          "active": "Active",
-          "waitlisted": "Waitlisted"
-        },
-        "seatPlacedLabel": "Placed in a group",
-        "seatCancelsAtLabel": "Access ends",
-        "addSeat": "Add seat",
-        "removeSeat": "Remove seat",
-        "saveSandbox": "Save",
-        "savingSandbox": "Saving",
-        "resetSandbox": "Reset to default",
-        "resetConfirmTitle": "Reset the sandbox family?",
-        "resetConfirmBody": "The seeded family comes back and your edits are discarded."
-      },
-      "calendarInvitations": {
-        "title": "Calendar invitations",
-        "description": "Mail one sandbox seat as a real calendar invitation, then update it and cancel it, and see what a calendar client does with each.",
-        "participationHeading": "Seat",
-        "participationLabel": "Which seat",
-        "participationHint": "The family behind these seats is edited in the calendar feed card above; invitations are sent for its participations.",
-        "noParticipations": "The sandbox family holds no active seats yet.",
-        "seatLine": "{gamer} – {product}",
-        "recipientHeading": "Recipient",
-        "recipientLabel": "Send to",
-        "recipientPlaceholder": "you@example.com",
-        "optionsHeading": "Options",
-        "shapeLabel": "Shape",
-        "shapeOptions": {
-          "series": "One weekly rule for the whole schedule",
-          "occurrences": "Every session listed by date"
-        },
-        "shapeHint": "Either shape sends one calendar entry per seat, covering every session. A rule is compact and keeps its meaning past the twelve-week horizon, but it can only state sessions that all start at the same time and run for the same length. A list states every remaining session by date, whatever their times, and stops at the horizon.",
-        "shapeOptionUnavailable": "{option} – unavailable: these sessions differ in time or length",
-        "periodEntriesHint": "These sessions are not all the same length, so the ones that differ are written as period entries. Client support for those is uneven — check that every session arrived.",
-        "reminderLabel": "Reminder",
-        "reminderOptions": {
-          "15": "15 minutes before",
-          "60": "One hour before",
-          "1440": "One day before",
-          "none": "No reminder"
-        },
-        "methodLabel": "Experience",
-        "methodOptions": {
-          "request": "Invitation with an RSVP",
-          "publish": "Add to calendar, no RSVP"
-        },
-        "statusHeading": "Status",
-        "statusNone": "Not sent yet.",
-        "statusSent": "Invitation sent to {recipient}, revision {sequence}, at {when}.",
-        "statusCancelled": "Cancelled at {when}. Sending again starts a new calendar entry.",
-        "preview": "Preview",
-        "send": "Send invitation",
-        "sendUpdate": "Send update",
-        "sendCancellation": "Send cancellation",
-        "working": "Working",
-        "confirmCancelTitle": "Send a cancellation?",
-        "confirmCancelDescription": "This mails a cancellation for the selected seat. The entry disappears from the recipient’s calendar, and sending again afterwards starts a new one.",
-        "previewedNotSent": "Rendered. Nothing was sent.",
-        "sentSuccess": "Sent. Message id {messageId}.",
-        "smtpNotConfigured": "The mail relay is not set up. Set BREVO_SMTP_LOGIN and BREVO_SMTP_KEY, then try again.",
-        "rawHeading": "The mail and its calendar part",
-        "calendarPartLabel": "Calendar part",
-        "mailLabel": "Rendered mail",
-        "subjectLabel": "Subject"
-      }
+      "attachment": "Attachment: {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1858,36 +1675,6 @@
     "municipality_club": "Club",
     "camp": "Camp",
     "event": "Event"
-  },
-  "calendarFeed": {
-    "online": "Online",
-    "gamerLine": "Gamer: {name}",
-    "typeLine": "Type: {type}",
-    "languageLine": "Language: {language}",
-    "durationLine": "Duration: {minutes} minutes"
-  },
-  "calendarInvitation": {
-    "greeting": "Hi {name},",
-    "subject": {
-      "send": "Calendar invitation: {product} for {gamer}",
-      "sendPublish": "Calendar entry: {product} for {gamer}",
-      "update": "Updated schedule: {product} for {gamer}",
-      "cancel": "Cancelled: {product} for {gamer}"
-    },
-    "heading": {
-      "send": "Your calendar invitation",
-      "sendPublish": "Your calendar entry",
-      "update": "The schedule has changed",
-      "cancel": "This calendar entry has been cancelled"
-    },
-    "body": {
-      "send": "{gamer}'s sessions for {product} are in this mail as a calendar invitation. Accept it and they appear in your calendar.",
-      "sendPublish": "{gamer}'s sessions for {product} are in this mail as a calendar entry. Add it and they appear in your calendar.",
-      "update": "The schedule for {product} has changed. The invitation in this mail replaces the entry you already have for {gamer} — there is nothing to delete first.",
-      "updatePublish": "The schedule for {product} has changed. The calendar entry in this mail replaces the entry you already have for {gamer} — there is nothing to delete first.",
-      "cancel": "{gamer} no longer has a seat on {product}. The cancellation in this mail removes the entry from your calendar."
-    },
-    "updatesNote": "If the schedule changes later, School of Gaming sends an update and this same entry changes in your calendar. You will never have to work out which of two entries is the current one."
   },
   "activityCard": {
     "endedOn": "Ended {date}",
@@ -3592,6 +3379,42 @@
         "heading": "A seat offer ran out",
         "body": "The response window closed with no answer. The family is still on the waitlist and can be offered the seat again, but the seat itself is free right now."
       }
+    },
+    "calendarInvitation": {
+      "greeting": "Hi {name},",
+      "subject": {
+        "request": "Calendar invitation: {productName} for {gamerName}",
+        "publish": "Calendar entry: {productName} for {gamerName}",
+        "cancel": "Cancelled: {productName} for {gamerName}"
+      },
+      "heading": {
+        "request": "Your calendar invitation",
+        "publish": "Your calendar entry",
+        "cancel": "This calendar entry has been cancelled"
+      },
+      "body": {
+        "request": "The calendar invitation attached to this mail holds every upcoming session of {productName} for {gamerName}. Accept it and they all appear in your own calendar.",
+        "publish": "The calendar entry attached to this mail holds every upcoming session of {productName} for {gamerName}. Add it and they all appear in your own calendar.",
+        "cancel": "{gamerName} no longer has a place in {productName}. The cancellation attached to this mail removes the entry from your calendar."
+      },
+      "schedule": "{days} at {time}",
+      "openEnded": "From {startDate}, until further notice",
+      "typeLabel": "What",
+      "scheduleLabel": "Schedule",
+      "datesLabel": "Dates",
+      "whereLabel": "Where",
+      "languageLabel": "Language",
+      "online": "Online",
+      "type": {
+        "club": "Club",
+        "camp": "Camp",
+        "event": "Event"
+      },
+      "arrivalLabel": "Getting there",
+      "updatesNote": "If the schedule changes, School of Gaming sends an update and this same entry changes in your calendar. You never end up with two entries and the job of working out which one is current.",
+      "dashboardButton": "View in My SOG",
+      "support": "Questions? Write to {email}",
+      "eventSummary": "{productName} – {gamerName}"
     }
   },
   "legal": {

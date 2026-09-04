@@ -29,6 +29,19 @@ async function brevoFetch(path: string, options?: RequestInit) {
   return response.json();
 }
 
+/**
+ * A file that travels with the mail, as base64.
+ *
+ * The provider infers the media type from the file *name*, which is why the
+ * name is a required part of the value rather than a nicety: `invite.ics` is
+ * what makes a calendar arrive as an invitation a client can act on, and the
+ * same bytes under another extension arrive as a file to download.
+ */
+interface EmailAttachment {
+  name: string;
+  contentBase64: string;
+}
+
 interface SendEmailOptions {
   fromEmail: string;
   fromName: string;
@@ -38,6 +51,7 @@ interface SendEmailOptions {
   replyToEmail?: string;
   cc?: string[];
   bcc?: string[];
+  attachments?: EmailAttachment[];
 }
 
 interface SendEmailResponse {
@@ -57,6 +71,12 @@ export async function sendTransactionalEmail(options: SendEmailOptions): Promise
       ...(options.replyToEmail && { replyTo: { email: options.replyToEmail } }),
       ...(options.cc?.length && { cc: options.cc.map((email) => ({ email })) }),
       ...(options.bcc?.length && { bcc: options.bcc.map((email) => ({ email })) }),
+      ...(options.attachments?.length && {
+        attachment: options.attachments.map(({ name, contentBase64 }) => ({
+          name,
+          content: contentBase64,
+        })),
+      }),
     }),
   });
 }

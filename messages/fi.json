@@ -1064,190 +1064,7 @@
         "desktop": "Työpöytä",
         "mobile": "Mobiili"
       },
-      "calendarFeed": {
-        "title": "Kalenterisyöte",
-        "description": "Testaa tilattavaa kalenterisyötettä erillään muusta: muokkaa hiekkalaatikkoperhettä tai osoita sama syöte oikeaan tiliin.",
-        "customerLabel": "Asiakas",
-        "customerPlaceholder": "vanhempi@example.com tai käyttäjätunniste",
-        "lookUp": "Hae",
-        "lookingUp": "Haetaan",
-        "noParticipations": "Asiakkaalla ei ole aktiivisia paikkoja, joten syöte on tyhjä.",
-        "seatLine": "{gamer} — {product} ({type})",
-        "optionsHeading": "Asetukset",
-        "modeLabel": "Toisto",
-        "modeOptions": {
-          "discrete": "Yksi tapahtuma jokaisesta kerrasta",
-          "rrule": "Yksi viikkosääntö jokaisesta ajasta"
-        },
-        "titleLabel": "Tapahtuman nimi",
-        "titleOptions": {
-          "product": "Tuote",
-          "product-gamer": "Tuote ja sitten pelaaja",
-          "gamer-product": "Pelaaja ja sitten tuote"
-        },
-        "alarmLabel": "Muistutus",
-        "alarmOptions": {
-          "15": "15 minuuttia ennen",
-          "60": "Tunti ennen",
-          "1440": "Vuorokausi ennen",
-          "none": "Ei muistutusta"
-        },
-        "tzLabel": "Kellonajat",
-        "tzOptions": {
-          "utc": "UTC-hetkinä",
-          "tzid": "Tuotteen aikavyöhykkeellä"
-        },
-        "weeksLabel": "Aikaväli",
-        "weeksOption": "{weeks} viikkoa eteenpäin",
-        "scopeLabel": "Laajuus",
-        "scopeFamily": "Koko perhe",
-        "detailsLabel": "Tiedot",
-        "detailsOptions": {
-          "none": "Vain otsikko",
-          "basic": "Otsikko, pelaaja ja paikka",
-          "full": "Kaikki tiedot ja linkki"
-        },
-        "busyLabel": "Varattu vai vapaa",
-        "busyOptions": {
-          "busy": "Näkyy varattuna",
-          "free": "Näkyy vapaana"
-        },
-        "methodLabel": "METHOD-kenttä",
-        "methodOptions": {
-          "publish": "Merkitään METHOD:PUBLISH",
-          "none": "Jätetään pois"
-        },
-        "refreshLabel": "Päivitysvihje",
-        "refreshOptions": {
-          "off": "Ei mitään",
-          "1h": "Tunnin välein",
-          "6h": "Kuuden tunnin välein",
-          "24h": "Vuorokauden välein"
-        },
-        "colorLabel": "Kalenterin väri",
-        "colorOptions": {
-          "on": "Brändiväri",
-          "off": "Ei väriä"
-        },
-        "calnameLabel": "Kalenterin nimi",
-        "webUrlLabel": "Verkko-osoite",
-        "copy": "Kopioi",
-        "copied": "Kopioitu",
-        "previewHeading": "Esikatselu",
-        "loadPreview": "Lataa esikatselu",
-        "loadingPreview": "Ladataan",
-        "noEvents": "Tällä aikavälillä ei ole kertoja.",
-        "rawHeading": "Kalenteritiedosto sellaisenaan",
-        "columnWhen": "Milloin",
-        "columnSummary": "Kuvaus",
-        "columnGamer": "Pelaaja",
-        "columnProduct": "Tuote",
-        "recurring": "toistuu viikoittain",
-        "sourceHeading": "Perhe",
-        "sourceSandbox": "Hiekkalaatikkoperhe",
-        "sourceReal": "Oikea tili",
-        "subscribeHeading": "Tilaa",
-        "appleCalendar": "Apple Calendar",
-        "googleCalendar": "Google Calendar",
-        "outlook": "Outlook",
-        "otherApp": "Käytätkö jotain muuta kalenterisovellusta?",
-        "otherAppHint": "Liitä tämä kalenterisovelluksesi URL-tilauskenttään.",
-        "sandboxHeading": "Hiekkalaatikkoperhe",
-        "sandboxNote": "Tilattu kalenteri näyttää tallennuksen vasta seuraavalla hakukerralla, ei heti. Viimeksi tallennettu {savedAt}.",
-        "parentNameLabel": "Huoltajan etunimi",
-        "parentLocaleLabel": "Huoltajan kieliversio",
-        "gamersHeading": "Pelaajat",
-        "gamerNameLabel": "Etunimi",
-        "addGamer": "Lisää pelaaja",
-        "removeGamer": "Poista pelaaja",
-        "newGamerName": "Uusi pelaaja",
-        "productsHeading": "Tuotteet",
-        "productNameLabel": "Nimi",
-        "productTypeLabel": "Tyyppi",
-        "productTimezoneLabel": "Aikavyöhyke",
-        "productStartLabel": "Alkamispäivä",
-        "productEndLabel": "Päättymispäivä",
-        "productLanguageLabel": "Puhuttu kieli",
-        "productLocationLabel": "Paikka",
-        "productRemoteLabel": "Etänä",
-        "addProduct": "Lisää tuote",
-        "removeProduct": "Poista tuote",
-        "newProductName": "Uusi kerho",
-        "slotsHeading": "Kerrat",
-        "slotWeekdayLabel": "Päivä",
-        "slotStartLabel": "Alkamisaika",
-        "slotDurationLabel": "Minuuttia",
-        "addSlot": "Lisää kerta",
-        "removeSlot": "Poista kerta",
-        "seatsHeading": "Paikat",
-        "seatGamerLabel": "Pelaaja",
-        "seatProductLabel": "Tuote",
-        "seatStatusLabel": "Tila",
-        "seatStatus": {
-          "active": "Voimassa",
-          "waitlisted": "Jonossa"
-        },
-        "seatPlacedLabel": "Sijoitettu ryhmään",
-        "seatCancelsAtLabel": "Käyttöoikeus päättyy",
-        "addSeat": "Lisää paikka",
-        "removeSeat": "Poista paikka",
-        "saveSandbox": "Tallenna",
-        "savingSandbox": "Tallennetaan",
-        "resetSandbox": "Palauta oletus",
-        "resetConfirmTitle": "Palautetaanko hiekkalaatikkoperhe oletukseen?",
-        "resetConfirmBody": "Oletusperhe palaa ja muokkauksesi hylätään."
-      },
-      "calendarInvitations": {
-        "title": "Kalenterikutsut",
-        "description": "Lähetä yksi hiekkalaatikkopaikka oikeana kalenterikutsuna, päivitä se ja peru se, ja katso mitä kalenterisovellus tekee kullakin kerralla.",
-        "participationHeading": "Paikka",
-        "participationLabel": "Mikä paikka",
-        "participationHint": "Näiden paikkojen perhettä muokataan yllä olevassa kalenterisyötekortissa; kutsut lähetetään sen osallistumisille.",
-        "noParticipations": "Hiekkalaatikkoperheellä ei ole vielä aktiivisia paikkoja.",
-        "seatLine": "{gamer} – {product}",
-        "recipientHeading": "Vastaanottaja",
-        "recipientLabel": "Lähetä osoitteeseen",
-        "recipientPlaceholder": "sinä@esimerkki.fi",
-        "optionsHeading": "Asetukset",
-        "shapeLabel": "Muoto",
-        "shapeOptions": {
-          "series": "Yksi viikkosääntö koko aikataululle",
-          "occurrences": "Jokainen kerta lueteltuna päivämäärän mukaan"
-        },
-        "shapeHint": "Kummassakin muodossa lähetetään yksi kalenterimerkintä paikkaa kohti, ja se kattaa kaikki kerrat. Sääntö on tiivis ja pätee myös kahdentoista viikon aikaikkunan jälkeen, mutta se voi ilmaista vain kerrat, jotka alkavat samaan aikaan ja kestävät yhtä kauan. Luettelo ilmaisee jokaisen jäljellä olevan kerran päivämäärän mukaan kellonajoista riippumatta ja päättyy aikaikkunan rajaan.",
-        "shapeOptionUnavailable": "{option} – ei käytettävissä: näiden kertojen ajat tai kestot poikkeavat toisistaan",
-        "periodEntriesHint": "Kerrat eivät ole yhtä pitkiä, joten poikkeavat kerrat kirjoitetaan jaksomerkintöinä. Kalenterisovellusten tuki niille vaihtelee, joten tarkista, että kaikki kerrat tulivat perille.",
-        "reminderLabel": "Muistutus",
-        "reminderOptions": {
-          "15": "15 minuuttia ennen",
-          "60": "Tunti ennen",
-          "1440": "Vuorokausi ennen",
-          "none": "Ei muistutusta"
-        },
-        "methodLabel": "Kokemus",
-        "methodOptions": {
-          "request": "Kutsu, johon vastataan",
-          "publish": "Lisää kalenteriin, ei vastausta"
-        },
-        "statusHeading": "Tila",
-        "statusNone": "Ei vielä lähetetty.",
-        "statusSent": "Kutsu lähetetty osoitteeseen {recipient}, versio {sequence}, {when}.",
-        "statusCancelled": "Peruttu {when}. Uusi lähetys aloittaa uuden kalenterimerkinnän.",
-        "preview": "Esikatselu",
-        "send": "Lähetä kutsu",
-        "sendUpdate": "Lähetä päivitys",
-        "sendCancellation": "Lähetä peruutus",
-        "working": "Käsitellään",
-        "confirmCancelTitle": "Lähetetäänkö peruutus?",
-        "confirmCancelDescription": "Tämä lähettää peruutuksen valitusta paikasta. Merkintä katoaa vastaanottajan kalenterista, ja seuraava lähetys aloittaa uuden merkinnän.",
-        "previewedNotSent": "Muodostettu. Mitään ei lähetetty.",
-        "sentSuccess": "Lähetetty. Viestin tunnus {messageId}.",
-        "smtpNotConfigured": "Postivälitystä ei ole määritetty. Aseta BREVO_SMTP_LOGIN ja BREVO_SMTP_KEY ja yritä uudelleen.",
-        "rawHeading": "Viesti ja sen kalenteriosa",
-        "calendarPartLabel": "Kalenteriosa",
-        "mailLabel": "Muodostettu viesti",
-        "subjectLabel": "Aihe"
-      }
+      "attachment": "Liite: {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1858,36 +1675,6 @@
     "municipality_club": "Kerho",
     "camp": "Leiri",
     "event": "Tapahtuma"
-  },
-  "calendarFeed": {
-    "online": "Verkossa",
-    "gamerLine": "Pelaaja: {name}",
-    "typeLine": "Tyyppi: {type}",
-    "languageLine": "Kieli: {language}",
-    "durationLine": "Kesto: {minutes} minuuttia"
-  },
-  "calendarInvitation": {
-    "greeting": "Hei {name},",
-    "subject": {
-      "send": "Kalenterikutsu: {product} pelaajalle {gamer}",
-      "sendPublish": "Kalenterimerkintä: {product} pelaajalle {gamer}",
-      "update": "Aikataulu muuttui: {product} pelaajalle {gamer}",
-      "cancel": "Peruttu: {product} pelaajalle {gamer}"
-    },
-    "heading": {
-      "send": "Kalenterikutsusi",
-      "sendPublish": "Kalenterimerkintäsi",
-      "update": "Aikataulu on muuttunut",
-      "cancel": "Tämä kalenterimerkintä on peruttu"
-    },
-    "body": {
-      "send": "Pelaajan {gamer} kerrat kohteessa {product} ovat tässä viestissä kalenterikutsuna. Kun hyväksyt kutsun, kerrat ilmestyvät kalenteriisi.",
-      "sendPublish": "Pelaajan {gamer} kerrat kohteessa {product} ovat tässä viestissä kalenterimerkintänä. Kun lisäät merkinnän, kerrat ilmestyvät kalenteriisi.",
-      "update": "Kohteen {product} aikataulu on muuttunut. Tässä viestissä oleva kutsu korvaa merkinnän, joka sinulla jo on pelaajalle {gamer} — mitään ei tarvitse poistaa ensin.",
-      "updatePublish": "Kohteen {product} aikataulu on muuttunut. Tässä viestissä oleva kalenterimerkintä korvaa merkinnän, joka sinulla jo on pelaajalle {gamer} — mitään ei tarvitse poistaa ensin.",
-      "cancel": "Pelaajalla {gamer} ei ole enää paikkaa kohteessa {product}. Tässä viestissä oleva peruutus poistaa merkinnän kalenteristasi."
-    },
-    "updatesNote": "Jos aikataulu muuttuu myöhemmin, School of Gaming lähettää päivityksen ja tämä sama merkintä muuttuu kalenterissasi. Sinun ei tarvitse koskaan päätellä, kumpi kahdesta merkinnästä on ajan tasalla."
   },
   "activityCard": {
     "endedOn": "Päättyi {date}",
@@ -2906,6 +2693,42 @@
         "heading": "Paikkatarjous vanheni",
         "body": "Vastausaika päättyi ilman vastausta. Perhe on edelleen jonotuslistalla ja paikkaa voi tarjota heille uudelleen, mutta paikka itsessään on nyt vapaa."
       }
+    },
+    "calendarInvitation": {
+      "greeting": "Hei {name},",
+      "subject": {
+        "request": "Kalenterikutsu: {productName} – {gamerName}",
+        "publish": "Kalenterimerkintä: {productName} – {gamerName}",
+        "cancel": "Peruttu: {productName} – {gamerName}"
+      },
+      "heading": {
+        "request": "Kalenterikutsusi",
+        "publish": "Kalenterimerkintäsi",
+        "cancel": "Tämä kalenterimerkintä on peruttu"
+      },
+      "body": {
+        "request": "Tämän viestin liitteenä oleva kalenterikutsu sisältää kaikki tulevat kerrat: {productName}, osallistujana {gamerName}. Kun hyväksyt kutsun, kerrat ilmestyvät omaan kalenteriisi.",
+        "publish": "Tämän viestin liitteenä oleva kalenterimerkintä sisältää kaikki tulevat kerrat: {productName}, osallistujana {gamerName}. Kun lisäät merkinnän, kerrat ilmestyvät omaan kalenteriisi.",
+        "cancel": "{gamerName} ei ole enää mukana: {productName}. Tämän viestin liitteenä oleva peruutus poistaa merkinnän kalenteristasi."
+      },
+      "schedule": "{days} klo {time}",
+      "openEnded": "Alkaen {startDate}, toistaiseksi",
+      "typeLabel": "Mikä",
+      "scheduleLabel": "Aikataulu",
+      "datesLabel": "Ajankohta",
+      "whereLabel": "Missä",
+      "languageLabel": "Kieli",
+      "online": "Verkossa",
+      "type": {
+        "club": "Kerho",
+        "camp": "Leiri",
+        "event": "Tapahtuma"
+      },
+      "arrivalLabel": "Saapuminen",
+      "updatesNote": "Jos aikataulu muuttuu, School of Gaming lähettää päivityksen, ja sama merkintä muuttuu kalenterissasi. Kalenteriin ei koskaan jää kahta merkintää, joista sinun pitäisi päätellä, kumpi on voimassa.",
+      "dashboardButton": "Avaa Oma SOG",
+      "support": "Kysyttävää? Kirjoita osoitteeseen {email}",
+      "eventSummary": "{productName} – {gamerName}"
     }
   },
   "legal": {

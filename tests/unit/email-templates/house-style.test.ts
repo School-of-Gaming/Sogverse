@@ -7,6 +7,10 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
+import {
+  CALENDAR_INVITATION_START_DATE,
+  CALENDAR_INVITATION_END_DATE,
+} from "@/lib/email-templates/calendar-invitation";
 import { BRAND, DARK_THEME, GRADIENT, STATUS, STATUS_TINT } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 
@@ -54,6 +58,38 @@ const LEGAL_ON_FILL: Record<string, string> = {
   [BRAND.primary.toLowerCase()]: BRAND.primaryForeground.toLowerCase(),
   [BRAND.secondary.toLowerCase()]: BRAND.secondaryForeground.toLowerCase(),
 };
+
+/**
+ * The calendar invitation's params, kept together because its dates have to
+ * stay in the future: the builder refuses a run with nothing left in it, so a
+ * hardcoded date would turn into a failing suite on a date nobody chose. The
+ * template's own form placeholders are the next Monday and four weeks after
+ * it, which is exactly the property the fixture needs.
+ */
+const CALENDAR_INVITATION_FIXTURE = {
+  parentFirstName: "Sanna",
+  parentEmail: "sanna@example.com",
+  gamerFirstName: "Aino",
+  productName: "Minecraft building camp",
+  productType: "camp",
+  weekdays: "mon-wed-fri",
+  startDate: CALENDAR_INVITATION_START_DATE,
+  endDate: CALENDAR_INVITATION_END_DATE,
+  startTime: "16:00",
+  durationMinutes: "120",
+  timezone: "Europe/Helsinki",
+  address: "Kaisaniemenkatu 6, 00100 Helsinki",
+  arrivalInstructions: "Ring the bell marked School of Gaming and take the stairs.",
+  description: "Aino is building a harbour town, and the last session is the walk-through.",
+  geduFirstName: "Ville",
+  spokenLanguage: "fi",
+  reminder: "15",
+  method: "request",
+  shape: "rule",
+  uid: null,
+  sequence: "0",
+  dashboardUrl: "https://sogverse.sog.gg/parent",
+} satisfies Record<string, string | boolean | null>;
 
 /** Fixture params for the registry-backed renders. */
 const PARAMS: Record<string, Record<string, string | boolean | null>> = {
@@ -127,6 +163,7 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     reportMarkdown: "",
     productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
   },
+  calendarInvitation: CALENDAR_INVITATION_FIXTURE,
 };
 
 let t: EmailTranslator;
@@ -202,6 +239,18 @@ const MAILS: Record<string, () => [string, string][]> = {
     }),
   ],
   "verify-email": () => fromRegistry("verifyEmail"),
+  // All three messages of a thread. They are three different documents — the
+  // cancellation drops the description, the arrival note and the promise of
+  // future updates — so sweeping only the first would leave two unchecked.
+  "calendar-invitation": () => [
+    ...fromRegistry("calendarInvitation"),
+    ...fromRegistry("calendarInvitation", "calendarInvitation (publish)", {
+      method: "publish",
+    }),
+    ...fromRegistry("calendarInvitation", "calendarInvitation (cancel)", {
+      method: "cancel",
+    }),
+  ],
   welcome: () => [...fromRegistry("welcomeParent"), ...fromRegistry("welcomeGedu")],
 
   // Not registered, deliberately: a test send from the admin UI would mint a

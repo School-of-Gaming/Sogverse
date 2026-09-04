@@ -1,187 +1,90 @@
 # Calendar invitations — investigation
 
-**Status: investigation, not a plan.** Researched 2026-09. Nothing here is committed
-scope and the two designs it compares are both still open; one sub-question is not — one
-seat is one calendar object, decided by the owner and recorded below. Claims about Gmail,
-Apple Calendar, Outlook and Brevo age faster than the claims about our own code —
-re-verify the vendor behaviour before acting on any of it.
+**Status: investigation, not a plan.** Researched 2026-09; last verified 2026-09-04.
+Nothing here is committed scope. Claims about Gmail, Apple Mail and Outlook age much
+faster than claims about our own code — re-verify the client behaviour before acting on
+any of it.
 
-Read this beside `session-reminders-and-calendar-feed.md`, which holds the other half of
-the comparison. That doc's standing-tool section describes the subscribed feed; this one
-describes the invitation design and the tool built to try it.
+The comparison that produced this question is closed and recorded in
+`../records/calendar-feed-vs-invitations-2026-09.md`: a subscribed feed was built,
+measured and dropped, and a mailed invitation replaced it. This file is the open half —
+what a real build of the invitation would still have to answer.
 
-## The question
+## The design
 
-The feed publishes a document and waits. A calendar client stores one URL, re-fetches it
-on its own schedule, and takes whatever it finds — so a schedule change reaches a family
-whenever their vendor next polls, which is minutes to hours later, and there is nothing
-to accept, decline, or misplace.
+One product, one gamer, one calendar object. A single event under a single identifier
+carries the product's whole schedule: a camp on Monday, Wednesday and Friday for four
+weeks is twelve sessions in one invitation, accepted in one gesture and withdrawn in one.
+That is the owner's decision and it is not a detail to revisit — RFC 5546 gives a message
+one calendar object to describe, and a client handed several reads the first and ignores
+the rest, so a two-slot club split across two events would arrive as one of its sessions.
 
-The invitation design inverts that. **One invitation per product per gamer**, mailed when
-the seat is created; an **update mail** when the schedule changes; a **cancellation** when
-the seat ends. The family gets an entry that arrives immediately, sits in the calendar
-they already use, and can be answered.
+Two consequences follow. The identifier is the seat's, with no per-slot or per-date
+suffix. And a cancellation withdraws the whole run: there is no way yet to cancel one
+session out of the object.
 
-The two are not variants of one design. They differ in who holds the state, in what a
-failure looks like, and in what the family has to do:
+## What is verified
 
-| | Subscribed feed | Invitations |
-|---|---|---|
-| Who acts on a change | The vendor, on its own poll schedule | We do, by sending a mail |
-| What we must remember | Nothing — the document is the answer | Every `UID` and `SEQUENCE` we have ever stated |
-| What the family does | Subscribes once | Accepts each invitation |
-| Failure mode | Stale entries until the next poll | A duplicate entry, permanently |
-| Reminders | Ours, in the document | Overridden by the client on two of three platforms |
-| A reply | Impossible | Arrives at an inbox we do not have |
+- **Gmail renders a calendar file sent through the transactional REST API as an
+  `invite.ics` attachment as a full inline invitation, with RSVP buttons** — for both
+  schedule notations, a weekly rule and an explicit list of dates. Tested 2026-09-04.
+  This is what makes the design ordinary: it needs no second mail transport, and the mail
+  goes through the same REST wrapper as every other mail in the app.
+- **A calendar file that is *not* recognised as an invitation is worse than useless.**
+  The same client renders an unrecognised attachment as an "Add to calendar" link whose
+  entry is a copy — nothing sent later can find it again, so an update lands on nothing.
+  The difference between the two renderings is the whole design.
+- **Production schedules need only the simple notation.** Checked 2026-09-04: every
+  product runs at one clock time across all of its days — the summer camps are
+  consecutive weekdays at one time, the term camps and every club are a single weekly
+  slot — so a weekly rule states every real product's schedule. Consumer clubs are
+  open-ended, which is the one thing only a rule can say; an explicit date list has to
+  stop at whatever horizon we enumerate.
+- **A reminder we set is a suggestion on two clients out of three.** Apple Calendar keeps
+  the alarm the organiser sent; Google and Outlook replace it with the recipient's own
+  default notification settings for that calendar.
 
-## Decided by the owner: one seat is one calendar object
+## What is still open
 
-**Owner's decision, 2026-09.** An invitation for one product and one gamer is a single
-`VEVENT` under a single `UID`, carrying the product's entire schedule. A camp on Monday,
-Wednesday and Friday for four weeks is one invitation containing all twelve sessions.
+1. **Apple Mail and Outlook are untested.** Every rendering claim above is Gmail's. The
+   design rests on the invitation being recognised as one, and two of the three clients
+   families actually use have not been looked at.
+2. **Whether an update lands *in place*.** Re-stating the same identifier with a higher
+   revision number is how iTIP says "this is a new version of that entry", and it is the
+   single assumption everything else depends on. Untested on any client. If an update
+   arrives as a second entry rather than replacing the first, the design is a duplicate
+   generator and has to be rethought.
+3. **The change model — the largest missing piece.** Nothing in the schema records that a
+   session moved. The design turns on knowing *when* an update is due, and a schedule
+   edit today changes the slots and leaves no trace of what it changed from. This is a
+   prerequisite, not a detail.
+4. **The bookkeeping a real build needs.** An identifier, a revision number, the last
+   method, the last recipient and the last send, per seat, durable, written in the same
+   transaction as the send. Without it there is no way to state a second message about
+   the same entry, which is most of what the design is for.
+5. **A reply arrives at a mailbox nobody reads.** An RSVP is mailed back to the organiser
+   address, and we have no inbound parsing on it — so today every Yes, Maybe and No a
+   family sends is delivered into nothing. Either inbound parsing gets wired up, or the
+   mail stops asking a question it cannot hear the answer to and states the entry rather
+   than requesting an answer.
+6. **Cancelling or moving one session.** iTIP identifies one occurrence of a recurring
+   object by its own recurrence identifier, and nothing here emits one — so a holiday, a
+   snow day or a single moved session is a whole-object update. This is also the point at
+   which the holiday-aware occurrence expansion (still unbuilt, and named as a
+   prerequisite in the record) starts to matter on this side.
+7. **Deliverability of a mail carrying a calendar part**, which is filtered differently
+   from ordinary transactional mail. Worth measuring before anything reaches a family.
 
-RFC 5546 gives a message one calendar object to describe, and a client handed several
-reads the first component and ignores the rest — so a two-slot club split across two
-`VEVENT`s arrives as one of its two sessions. The rest of the design follows from the
-decision:
+## Where it lives, and how to try it
 
-- The `UID` is the participation's, with no per-slot or per-date suffix.
-- A cancellation withdraws the whole run; there is no way to cancel one session yet.
-- **The shape is not part of a `UID`'s identity**, so it is safe to change between an
-  invitation and its update — the same object arrives in a different notation and the
-  client applies it in place. Nothing is stranded by a shape switched mid-thread, because
-  there is no second set of entries for it to strand.
-- **A rule cannot always be offered.** `RRULE` carries one clock face, so `series` is
-  available only when every slot starts at the same time and runs the same length. The
-  builder returns a typed refusal, the route answers 409, and the card disables the option
-  off the same predicate so the offer and the refusal cannot drift apart.
+The invitation is an **email template** like every other mail in the app —
+`src/lib/calendar-invitations/` holds the pure builder that composes the calendar file,
+and the template that wraps it sits in `src/lib/email-templates/` and is registered in
+the template registry. It is therefore reachable from the **email testing tool** at
+`/admin/testing`: pick the calendar-invitation template, fill in the parameters (the
+schedule, the timezone, the reminder, whether the mail requests an answer or simply
+states the entry, and the revision number), and either preview it or send it to a real
+address. The preview shows the composed calendar file beneath the rendered mail, so what
+a client did can be read back against exactly what it was sent.
 
-**Still to come: `RECURRENCE-ID`.** Cancelling or moving one session out of the object is
-how iTIP handles a holiday, a snow day or a single rescheduled meeting, and nothing here
-emits one. It is the natural next step and a prerequisite for the holiday-aware expansion
-below to be worth anything on this side.
-
-## What was verified (2026-09)
-
-- **Brevo's REST send API cannot type a calendar part.** Its attachment field takes a
-  name and content, and the type is inferred from the file extension. There is no MIME
-  type field and no `method` parameter, so an `.ics` sent that way arrives as a plain
-  attachment. This is why the invitation tool does not go through the house mail wrapper.
-- **Gmail's behaviour with a bare `.ics` attachment is an "Add to calendar" link**, and
-  the entry it creates is a *copy*. Nothing sent afterwards can find that copy again, so
-  the update mail that arrives next week lands on nothing. This is the failure the whole
-  design has to avoid, and it is what rules out the simple approach.
-- **Brevo's SMTP relay plus nodemailer produces the correct part.** `smtp-relay.brevo.com`
-  on port 587 with STARTTLS, authenticating with an SMTP key generated in Brevo's
-  dashboard (a different credential from the REST API key). Nodemailer's `icalEvent`
-  option emits `text/calendar; charset=UTF-8; method=REQUEST` as an alternative part
-  rather than an attachment, which is the shape a client reads as an invitation.
-- **Reminders in an invitation are honoured by Apple and ignored by the other two.**
-  Apple Calendar keeps a `VALARM` the organizer sent. Google Calendar and Outlook both
-  replace it with the recipient's own default notification settings for that calendar.
-  So an alarm we set is a suggestion on two platforms out of three, which matters for
-  the reminder question the feed investigation opened.
-
-## What the tool lets an owner compare
-
-A third card on `/admin/testing`, beside the feed card, sending for one seat of the same
-sandbox family the feed card edits. That sharing is the point: change a product's slots
-in the editor above, send an update below, and watch one calendar entry move.
-
-- **Send, update, cancel**, in that order, against a real address. The update repeats the
-  `UID` and raises the `SEQUENCE`; the cancellation raises it again and states
-  `STATUS:CANCELLED`. Watching a real client apply each is the only way to answer whether
-  in-place updating works well enough to build on.
-- **Shape** — the one object's schedule as a weekly `RRULE`, or as an explicit `RDATE`
-  list of every remaining session in the horizon. This is where clients disagree most:
-  rule expansion is where a badly-behaved client duplicates or drops occurrences, and an
-  explicit list is the control it is measured against. A schedule whose sessions differ in
-  time or length has no rule form; the tool refuses it and the card disables the option.
-- **Reminder** — none, 15 minutes, an hour, a day, so the claim above can be re-checked
-  per client rather than taken on trust.
-- **Experience** — `REQUEST`, a real invitation with an RSVP, versus `PUBLISH`, the same
-  sessions as a plain add-to-calendar object with nobody being asked anything. Worth
-  comparing directly: the RSVP is the half of the design we cannot currently receive. The
-  choice is remembered per conversation, because a withdrawal has none of its own to make:
-  a published object is retracted by re-stating it as a `PUBLISH` with `STATUS:CANCELLED`,
-  never by a `CANCEL` naming an attendee it never carried.
-- **Preview**, which renders the mail and the calendar part without sending either, and
-  without consuming the sequence number an update is going to need.
-
-Both the mail and the raw calendar part are shown beneath the actions, so what a client
-did can be read back against exactly what it was sent.
-
-## What a real build would need
-
-None of this exists today, and each item is substantial on its own:
-
-- **A change model.** Nothing in the schema records that a session moved. The whole
-  design turns on knowing *when* to send an update, and today there is no event to hang
-  that on — a schedule edit changes the slots and leaves no trace of what it changed
-  from. This is the largest missing piece, and it is a prerequisite rather than a detail.
-- **A per-gamer-per-product invitation table.** `UID`, `SEQUENCE`, last method, last sent
-  and recipient, per seat, durable, and written in the same transaction as the send.
-  The tool keeps this inside the admin's sandbox document because that row already exists
-  and a migration for an undecided design would be premature.
-- **Somewhere for a reply to land.** An RSVP is mailed back to the `ORGANIZER` address.
-  We have no inbox on it and no inbound parsing, so today every Yes, Maybe and No a
-  parent sends is delivered into nothing. Either Brevo's inbound parsing is wired up, or
-  the design uses `PUBLISH` and stops asking a question it cannot hear the answer to.
-- **The SMTP key provisioned** in production and staging, as `BREVO_SMTP_LOGIN` and
-  `BREVO_SMTP_KEY`.
-- **The holiday-aware expansion**, which the feed investigation already names as its own
-  prerequisite. An invitation inherits it identically: the tool uses the shared
-  holiday-blind walker, so a cancelled-for-a-holiday session is invited to like any other.
-
-## Known limits of the tool as built
-
-- **Bookkeeping rides inside the sandbox document**, so that one row has two writers and
-  each preserves the other's half: the feed card's editor writes the family and carries the
-  stored `invitations` forward untouched, and this route writes `invitations` onto a
-  document it re-reads at the moment it writes. A family edit and a send are therefore
-  independent in either order, and the only write that clears the bookkeeping is Reset,
-  which re-seeds the family and would otherwise leave a `UID` and `SEQUENCE` pointing at a
-  conversation about a household that no longer exists. A real build gives this its own
-  table, at which point the two halves stop having to be careful of each other.
-- **Neither shape can state every schedule, and each fails differently.** A rule is
-  unavailable outright when the sessions differ in time or length, which is refused rather
-  than silently substituted. An explicit list stops at the twelve-week horizon, so an
-  open-ended club sent that way carries three months of sessions and no more — a real
-  build would have to re-send periodically or use the rule. And sessions of *differing
-  lengths* force `RDATE;VALUE=PERIOD` entries: RFC 5545 §3.8.5.2 permits them, but client
-  support is weak and untested by us, so only the occurrences that actually differ are
-  written that way (the rest stay in the plain date-time list, so a client that ignores
-  periods still receives those) and the card says when the document used any.
-
-- **One `VALARM` on one object.** The reminder fires before each occurrence of the single
-  event rather than being restated per session, which means the
-  Apple-honours-it / Google-and-Outlook-replace-it finding above is tested against one
-  alarm rather than a dozen identical ones.
-
-- **A single session cannot be cancelled or moved.** No `RECURRENCE-ID` is emitted, so a
-  holiday or a one-off reschedule is a whole-object update.
-- **The calendar writer is a second, smaller one.** `ORGANIZER`, `ATTENDEE` and `SEQUENCE`
-  are three properties the feed's writer has no use for and cannot express, so the
-  invitation module serialises its own events out of that writer's exported primitives.
-  The one thing it had to copy rather than import is the `Europe/Helsinki` `VTIMEZONE`
-  block, which the feed writer holds privately; exporting it there and deleting the copy
-  is the obvious tidy-up the next time that module is open.
-
-## Open questions
-
-1. **Does an update actually land in place, on all three clients?** This is the question
-   the whole design rests on, and it is the one the tool exists to answer empirically.
-2. **What does a client do when the same person is invited twice** — once by us and once
-   by a school or a parent forwarding the mail on?
-3. **Is an RSVP worth having at all?** It is the one thing a feed cannot offer, and it is
-   also the thing we cannot currently receive. If the answer is no, `PUBLISH` is the
-   honest form and the design gets much smaller.
-4. **What happens to a family that ignores the invitation?** A feed subscriber sees every
-   session forever; an invitation that is never accepted is simply not in the calendar,
-   and we have no way to know.
-5. **Do the two designs have to be exclusive?** An invitation per seat and a feed for the
-   whole family answer different needs, and offering both is not obviously worse than
-   choosing one — but it is two systems to keep in step with one schedule.
-6. **Deliverability.** A relay send is a different reputation path from the REST API the
-   rest of our mail uses, and a mail carrying a calendar part is filtered differently
-   again. Worth measuring before anything reaches a real family.
+Trying an update is two sends: the same identifier, a higher revision number.

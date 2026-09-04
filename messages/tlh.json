@@ -1112,190 +1112,7 @@
         "desktop": "De’wI’ tIn",
         "mobile": "De’wI’ mach"
       },
-      "calendarFeed": {
-        "title": "jajmey teywI’",
-        "description": "nIteb jajmey teywI’ yIwaH: ngeb qorDu’ yIchoH, pagh teH qorDu’Daq teywI’ rap yInab.",
-        "customerLabel": "je’wI’",
-        "customerPlaceholder": "vav@example.com pagh lo’wI’ mI’",
-        "lookUp": "yInej",
-        "lookingUp": "nejtaH",
-        "noParticipations": "je’wI’vam Daqmey tu’lu’be’, vaj chIm teywI’.",
-        "seatLine": "{gamer} — {product} ({type})",
-        "optionsHeading": "wIvmey",
-        "modeLabel": "qaSchoHmeH mIw",
-        "modeOptions": {
-          "discrete": "qaSDI’ Hoch, wa’ wanI’",
-          "rrule": "poH Hoch, wa’ Hogh chut"
-        },
-        "titleLabel": "wanI’ pong",
-        "titleOptions": {
-          "product": "ngev",
-          "product-gamer": "ngev ghIq SuvwI’",
-          "gamer-product": "SuvwI’ ghIq ngev"
-        },
-        "alarmLabel": "qawmoHwI’",
-        "alarmOptions": {
-          "15": "wa’maH vagh tup nung",
-          "60": "wa’ rep nung",
-          "1440": "wa’ jaj nung",
-          "none": "qawmoHwI’ pagh"
-        },
-        "tzLabel": "poHmey",
-        "tzOptions": {
-          "utc": "UTC poHmey",
-          "tzid": "ngev poH Daq"
-        },
-        "weeksLabel": "leng Hoch",
-        "weeksOption": "{weeks} Hoghmey vaD",
-        "scopeLabel": "’ar",
-        "scopeFamily": "qorDu’ naQ",
-        "detailsLabel": "De’",
-        "detailsOptions": {
-          "none": "pong neH",
-          "basic": "pong, SuvwI’, Daq je",
-          "full": "Hoch, ghoch je"
-        },
-        "busyLabel": "Qu’taH pagh leSpoH",
-        "busyOptions": {
-          "busy": "Qu’taH ’e’ cha’",
-          "free": "leSpoH ’e’ cha’"
-        },
-        "methodLabel": "METHOD Degh",
-        "methodOptions": {
-          "publish": "METHOD:PUBLISH yIghItlh",
-          "none": "yIghItlhQo’"
-        },
-        "refreshLabel": "chu’choHmeH mIw",
-        "refreshOptions": {
-          "off": "pagh",
-          "1h": "Hoch rep",
-          "6h": "jav repmey Hoch",
-          "24h": "cha’maH loS repmey Hoch"
-        },
-        "colorLabel": "jajmey teywI’ rItlh",
-        "colorOptions": {
-          "on": "SoQ rItlh",
-          "off": "pagh"
-        },
-        "calnameLabel": "jajmey teywI’ pong",
-        "webUrlLabel": "web Daq",
-        "copy": "yIvel",
-        "copied": "vellu’",
-        "previewHeading": "bejwI’",
-        "loadPreview": "bejwI’ yISuq",
-        "loadingPreview": "SuqtaH",
-        "noEvents": "poHvamDaq qaSbe’ vay’.",
-        "rawHeading": "jajmey teywI’ De’ Hom",
-        "columnWhen": "ghorgh",
-        "columnSummary": "ngoQ",
-        "columnGamer": "SuvwI’",
-        "columnProduct": "ngev",
-        "recurring": "Hoch Hogh qaS",
-        "sourceHeading": "qorDu’",
-        "sourceSandbox": "ngeb qorDu’",
-        "sourceReal": "teH qorDu’",
-        "subscribeHeading": "yImuv",
-        "appleCalendar": "Apple Calendar",
-        "googleCalendar": "Google Calendar",
-        "outlook": "Outlook",
-        "otherApp": "latlh jajmey De’wI’ Dalo’’a’?",
-        "otherAppHint": "jajmey De’wI’lIjDaq Daqvam yIlan.",
-        "sandboxHeading": "ngeb qorDu’",
-        "sandboxNote": "DaH Dapol ’ach poH veb neH ’oH legh muvbogh jajmey. {savedAt} Dapolpu’.",
-        "parentNameLabel": "vav pong",
-        "parentLocaleLabel": "vav Hol",
-        "gamersHeading": "reHwI’pu’",
-        "gamerNameLabel": "pong",
-        "addGamer": "reHwI’ yIchel",
-        "removeGamer": "reHwI’ yIteq",
-        "newGamerName": "reHwI’ chu’",
-        "productsHeading": "ngevmeH Dochmey",
-        "productNameLabel": "pong",
-        "productTypeLabel": "Segh",
-        "productTimezoneLabel": "poH Sep",
-        "productStartLabel": "taghmeH jaj",
-        "productEndLabel": "rInmeH jaj",
-        "productLanguageLabel": "Hol",
-        "productLocationLabel": "Daq",
-        "productRemoteLabel": "Hop",
-        "addProduct": "Doch yIchel",
-        "removeProduct": "Doch yIteq",
-        "newProductName": "ghom chu’",
-        "slotsHeading": "qaSmeH poHmey",
-        "slotWeekdayLabel": "jaj",
-        "slotStartLabel": "taghmeH rep",
-        "slotDurationLabel": "tupmey",
-        "addSlot": "poH yIchel",
-        "removeSlot": "poH yIteq",
-        "seatsHeading": "quSmey",
-        "seatGamerLabel": "reHwI’",
-        "seatProductLabel": "Doch",
-        "seatStatusLabel": "Dotlh",
-        "seatStatus": {
-          "active": "vum",
-          "waitlisted": "loS"
-        },
-        "seatPlacedLabel": "ghomDaq lanlu’",
-        "seatCancelsAtLabel": "rInmeH poH",
-        "addSeat": "quS yIchel",
-        "removeSeat": "quS yIteq",
-        "saveSandbox": "yIpol",
-        "savingSandbox": "pollu’taH",
-        "resetSandbox": "yIchoHHa’",
-        "resetConfirmTitle": "ngeb qorDu’ DachoHHa’’a’?",
-        "resetConfirmBody": "cheghpu’ ngeb qorDu’, ’ej chIllu’ DachoHpu’bogh."
-      },
-      "calendarInvitations": {
-        "title": "jajmey rI’mey",
-        "description": "wa’ ngeb quS jajmey rI’ yIngeH, ghIq yIchoH ’ej yIqIl; jajmey De’wI’ Qu’ yIbej.",
-        "participationHeading": "quS",
-        "participationLabel": "nuq quS",
-        "participationHint": "Dung jajmey teywI’ ghItlhDaq qorDu’ DachoH; quSmeyDaj rI’mey ngeHlu’.",
-        "noParticipations": "quSmey vumtaHbogh ghajbe’ ngeb qorDu’.",
-        "seatLine": "{gamer} – {product}",
-        "recipientHeading": "HevwI’",
-        "recipientLabel": "ngeHmeH Daq",
-        "recipientPlaceholder": "SoH@ngebDaq.gg",
-        "optionsHeading": "wIvmey",
-        "shapeLabel": "Segh",
-        "shapeOptions": {
-          "series": "wa’ Hogh chut, Hoch qaSwI’vaD",
-          "occurrences": "Hoch qaSwI’, jajDaj tu’lu’bogh"
-        },
-        "shapeHint": "cha’ Seghmey: wa’ ghItlh neH ngeHlu’, Hoch qaSwI’ ngaSbogh. chut mach ’ej wa’maH cha’ Hogh veH Haw’; ’ach rap poH rap ’ay’ je ghajbogh qaSwI’mey neH ja’laH. tetlh Hoch jaj ja’, poH pImchugh je, ’ach veHDaq mev.",
-        "shapeOptionUnavailable": "{option} – lo’laHbe’: rap poH rap ’ay’ je Hutlh qaSwI’vam",
-        "periodEntriesHint": "rap tIq Hutlh qaSwI’mey, vaj poH ’ay’ ghItlhlu’. qonwI’ law’ luyajbe’ — Hoch qaSwI’ pawpu’’a’? yInuD.",
-        "reminderLabel": "qawmoHwI’",
-        "reminderOptions": {
-          "15": "15 tup nIH",
-          "60": "wa’ rep nIH",
-          "1440": "wa’ jaj nIH",
-          "none": "qawmoHwI’ pagh"
-        },
-        "methodLabel": "wanI’",
-        "methodOptions": {
-          "request": "rI’, jang HevwI’",
-          "publish": "jajmeyDaq chel neH, jangbe’"
-        },
-        "statusHeading": "Dotlh",
-        "statusNone": "ngeHbe’lu’ba’.",
-        "statusSent": "{recipient}Daq ngeHlu’ rI’, choH {sequence}, {when}.",
-        "statusCancelled": "{when} qIllu’. ngeH latlh chu’ ghItlh chenmoH.",
-        "preview": "bejwI’",
-        "send": "rI’ yIngeH",
-        "sendUpdate": "choH yIngeH",
-        "sendCancellation": "qIl yIngeH",
-        "working": "vumtaH",
-        "confirmCancelTitle": "qIl DangeH’a’?",
-        "confirmCancelDescription": "wIvbogh quS qIl ngeHlu’. HevwI’ jajmeyvo’ ngab ghItlh, ’ej ngeH latlh chu’ ghItlh chenmoH.",
-        "previewedNotSent": "chenmoHlu’. ngeHbe’lu’.",
-        "sentSuccess": "ngeHlu’. QIn per {messageId}.",
-        "smtpNotConfigured": "QIn ngeHwI’ nabbe’lu’. BREVO_SMTP_LOGIN BREVO_SMTP_KEY je yIchel, ghIq yInID.",
-        "rawHeading": "QIn jajmey Hom je",
-        "calendarPartLabel": "jajmey Hom",
-        "mailLabel": "chenmoHlu’bogh QIn",
-        "subjectLabel": "ngoDvam"
-      }
+      "attachment": "chelta’ghach: {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1902,36 +1719,6 @@
     "municipality_club": "ghom’a’",
     "camp": "wa’leSvam",
     "event": "Soqbogh"
-  },
-  "calendarFeed": {
-    "online": "Hop Daq",
-    "gamerLine": "SuvwI’: {name}",
-    "typeLine": "Segh: {type}",
-    "languageLine": "Hol: {language}",
-    "durationLine": "poH: {minutes} tup"
-  },
-  "calendarInvitation": {
-    "greeting": "nuqneH, {name}!",
-    "subject": {
-      "send": "jajmey rI’: {gamer} {product}Daj",
-      "sendPublish": "jajmey ghItlh: {gamer} {product}Daj",
-      "update": "choHlu’pu’ poH: {gamer} {product}Daj",
-      "cancel": "qIlpu’: {gamer} {product}Daj"
-    },
-    "heading": {
-      "send": "jajmey rI’lIj",
-      "sendPublish": "jajmey ghItlhlIj",
-      "update": "choHpu’ poH",
-      "cancel": "qIlpu’ jajmey ghItlh"
-    },
-    "body": {
-      "send": "QInvamDaq tu’lu’ {product} qaStaHvIS {gamer} SuvtaHghachmey; jajmey rI’ ’oH. DalajDI’ jajmeylIjDaq chomey.",
-      "sendPublish": "QInvamDaq tu’lu’ {product} qaStaHvIS {gamer} SuvtaHghachmey; jajmey ghItlh ’oH. DachelDI’ jajmeylIjDaq chomey.",
-      "update": "choHpu’ {product} poH. QInvamDaq tu’lu’ jajmey rI’ chu’; {gamer} ghItlh qaSpu’bogh chIlmoHbe’ ’ach choHmoH. wa’Dich Qaw’nISbe’.",
-      "updatePublish": "choHpu’ {product} poH. QInvamDaq tu’lu’ jajmey ghItlh chu’; {gamer} ghItlh qaSpu’bogh chIlmoHbe’ ’ach choHmoH. wa’Dich Qaw’nISbe’.",
-      "cancel": "{product}Daq quS ghajbe’choH {gamer}. QInvamDaq tu’lu’ qIlmeH ghItlh; jajmeylIjvo’ teq ghItlh."
-    },
-    "updatesNote": "poH choHlu’chugh, choH ngeH School of Gaming, ’ej jajmeylIjDaq choH ghItlhvam. cha’ ghItlhmey Sammo’ bIQubnISbe’."
   },
   "activityCard": {
     "endedOn": "{date} rIntaH",
@@ -2950,6 +2737,42 @@
         "heading": "quS nob poH rInpu’",
         "body": "jangbe’lu’ ’ej rInpu’ poH. loS tetlhDaq ratlh qorDu’ ’ej latlh nob wIngeHlaH, ’ach DaH poStaH quS."
       }
+    },
+    "calendarInvitation": {
+      "greeting": "nuqneH {name}!",
+      "subject": {
+        "request": "poH ri’: {productName} – {gamerName}",
+        "publish": "poH ghItlh: {productName} – {gamerName}",
+        "cancel": "qIlpu’: {productName} – {gamerName}"
+      },
+      "heading": {
+        "request": "poHlIj ri’",
+        "publish": "poHlIj ghItlh",
+        "cancel": "qIlpu’ poH ghItlhvam"
+      },
+      "body": {
+        "request": "QInvamDaq tu’lu’ ri’: Hoch poHmey veb {productName}, {gamerName} je. yIlaj ’ej poHlIjDaq chomey.",
+        "publish": "QInvamDaq tu’lu’ ghItlh: Hoch poHmey veb {productName}, {gamerName} je. yIchel ’ej poHlIjDaq chomey.",
+        "cancel": "{productName}Daq quS ghajbe’ {gamerName}. QInvamDaq tu’lu’ qIlmeH ghItlh: poHlIjvo’ teq ghItlhvam."
+      },
+      "schedule": "{days} {time}",
+      "openEnded": "{startDate}vo’ – reH",
+      "typeLabel": "nuq",
+      "scheduleLabel": "poHmey",
+      "datesLabel": "jajmey",
+      "whereLabel": "nuqDaq",
+      "languageLabel": "Hol",
+      "online": "QonoSDaq",
+      "type": {
+        "club": "ghom",
+        "camp": "raQ",
+        "event": "wanI’"
+      },
+      "arrivalLabel": "pawmeH",
+      "updatesNote": "poHmey choHlu’chugh, chu’ QIn ngeH School of Gaming, ’ej choH ghItlhvam. cha’ ghItlh vIHutlh — wa’ neH.",
+      "dashboardButton": "My SOG-Daq yIlegh",
+      "support": "yu’lI’? {email}Daq yIghItlh",
+      "eventSummary": "{productName} – {gamerName}"
     }
   },
   "roblox": {

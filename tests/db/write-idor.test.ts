@@ -44,21 +44,19 @@ const SLOT = "00000000-0000-0000-0000-0000000005a9";
 // Outside the 5a4–5a9 block because it was full when the catalogue arrived;
 // registered in product-helpers.ts alongside it.
 const IMAGE = "00000000-0000-0000-0000-000000000637";
-const SANDBOX = "00000000-0000-0000-0000-000000000638";
 const WHATSAPP_PHONE = "358900000005";
 
 const tableGrantRows = z.array(
   z.object({ table_name: z.string(), privilege_type: z.string() })
 );
 
-const ATTACKERS = ["admin", "customer", "customer2", "gedu", "gamer"] as const;
+const ATTACKERS = ["customer", "customer2", "gedu", "gamer"] as const;
 type Attacker = (typeof ATTACKERS)[number];
 
 const ATTACKER_CREDENTIALS: Record<
   Attacker,
   { email: string; password: string }
 > = {
-  admin: TEST_CREDENTIALS.ADMIN,
   customer: TEST_CREDENTIALS.CUSTOMER,
   customer2: TEST_CREDENTIALS.CUSTOMER_2,
   gedu: TEST_CREDENTIALS.GEDU,
@@ -624,41 +622,6 @@ const CASES: Record<string, IdorCase> = {
       ),
   },
 
-  calendar_feed_sandboxes: {
-    attacker: "admin",
-    // The sharpest attacker available, and deliberately one who passes the role
-    // half of the policy: an admin fails only the ownership half, which is the
-    // half a second admin's sandbox depends on. The seed carries one admin, so
-    // the victim row is owned by another profile standing in for a colleague —
-    // what is under test is `owner_id = auth.uid()`, and that clause does not
-    // care which role the owner holds.
-    why: "an admin passes is_admin() and must still be refused another owner's sandbox",
-    probe: async (admin) =>
-      (
-        await admin
-          .from("calendar_feed_sandboxes")
-          .select("*")
-          .eq("id", SANDBOX)
-          .maybeSingle()
-      ).data,
-    update: async (client) =>
-      outcomeOf(
-        await client
-          .from("calendar_feed_sandboxes")
-          .update({ definition: { parent: { firstName: "Defaced" } } })
-          .eq("id", SANDBOX)
-          .select("id")
-      ),
-    remove: async (client) =>
-      outcomeOf(
-        await client
-          .from("calendar_feed_sandboxes")
-          .delete()
-          .eq("id", SANDBOX)
-          .select("id")
-      ),
-  },
-
   profiles: {
     attacker: "customer2",
     why: "column-granted UPDATE still has to be scoped to the caller's own row",
@@ -708,17 +671,8 @@ describe("write-path IDOR (§3.4 check 3)", () => {
     await admin.from("holiday_calendars").delete().eq("id", CALENDAR);
     await admin.from("whatsapp_contacts").delete().eq("phone", WHATSAPP_PHONE);
     await admin.from("product_images").delete().eq("id", IMAGE);
-    await admin.from("calendar_feed_sandboxes").delete().eq("id", SANDBOX);
 
     await createTestProduct(admin, { id: PRODUCT, seatCount: null });
-
-    // Owned by somebody who is not the attacking admin — the ownership clause
-    // is what this row exists to test, and it does not read the owner's role.
-    await admin.from("calendar_feed_sandboxes").insert({
-      id: SANDBOX,
-      owner_id: TEST_IDS.CUSTOMER_2,
-      definition: { parent: { firstName: "IDOR fixture" } },
-    });
 
     // Since 00198 the table CHECKs the shape of both columns — `sha256` is 64
     // lowercase hex characters and `path` is that hash plus a stored extension
@@ -839,7 +793,6 @@ describe("write-path IDOR (§3.4 check 3)", () => {
     await admin.from("holiday_calendars").delete().eq("id", CALENDAR);
     await admin.from("whatsapp_contacts").delete().eq("phone", WHATSAPP_PHONE);
     await admin.from("product_images").delete().eq("id", IMAGE);
-    await admin.from("calendar_feed_sandboxes").delete().eq("id", SANDBOX);
     await admin
       .from("gedu_locations")
       .delete()

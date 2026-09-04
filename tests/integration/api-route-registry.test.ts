@@ -153,8 +153,6 @@ const TESTS = {
   adminSiteNotes: "tests/integration/api/admin-site-notes.test.ts",
   billingPortal: "tests/integration/api/billing-portal.test.ts",
   callback: "tests/integration/auth/callback.test.ts",
-  calendarFeed: "tests/integration/api/calendar-feed.test.ts",
-  calendarInvitations: "tests/integration/api/calendar-invitations.test.ts",
   chatImageRead: "tests/integration/api/chat-image-read.test.ts",
   chatImageUpload: "tests/integration/api/chat-image-upload.test.ts",
   checkout: "tests/integration/api/checkout-products-create.test.ts",
@@ -218,62 +216,6 @@ const ADMIN_ONLY: Posture = { kind: "role-gated", roles: ["admin"] };
 
 const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // --- Admin surfaces ------------------------------------------------------
-
-  // The calendar-feed exploration's minting half. It runs entirely on the
-  // admin's own session client — `profiles` and `participations` both carry an
-  // admin-full-access policy — so it justifies no service-role import; the feed
-  // route it mints for is the opposite case and does.
-  "src/app/api/admin/calendar-feed/route.ts": {
-    handlers: {
-      POST: {
-        posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "calendarFeedLookupBody" },
-        test: TESTS.calendarFeed,
-      },
-    },
-  },
-
-  // The admin's own sandbox family — the fake household the feed route serves
-  // behind a sandbox token. Every handler runs on the caller's session client:
-  // the table's one policy answers to `is_admin() AND owner_id = auth.uid()`,
-  // so the database makes the role decision this route's gate makes and then
-  // the ownership decision the gate cannot. No service-role import.
-  "src/app/api/admin/calendar-feed/sandbox/route.ts": {
-    handlers: {
-      GET: {
-        posture: ADMIN_ONLY,
-        body: { kind: "none" },
-        test: TESTS.calendarFeed,
-      },
-      PUT: {
-        posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "calendarFeedSandboxSaveBody" },
-        test: TESTS.calendarFeed,
-      },
-      POST: {
-        posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "calendarFeedSandboxActionBody" },
-        test: TESTS.calendarFeed,
-      },
-    },
-  },
-
-  // The invitation half of the same exploration: it renders one sandbox seat as
-  // an iTIP message and mails it over Brevo's SMTP relay. Same client discipline
-  // as the sandbox route it reads and writes through — the caller's own session,
-  // the table's `is_admin() AND owner_id = auth.uid()` policy behind it, no
-  // service-role import. Every address it can reach is one an admin typed, and
-  // every name it can send is invented, because the seats come from the sandbox
-  // document rather than from any real family.
-  "src/app/api/admin/calendar-invitations/route.ts": {
-    handlers: {
-      POST: {
-        posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "calendarInvitationBody" },
-        test: TESTS.calendarInvitations,
-      },
-    },
-  },
 
   "src/app/api/admin/locations/[id]/route.ts": {
     handlers: {
@@ -638,24 +580,6 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "json", schema: "inline: switchAccountBody" },
         test: TESTS.switchAccount,
-      },
-    },
-  },
-
-  // --- Calendar ------------------------------------------------------------
-
-  "src/app/api/calendar/feed/[token]/route.ts": {
-    adminClient:
-      "a calendar app polls this with no session and no way to be given one, so there is no caller to act as; every family-enumeration path in src/services is auth.uid()-scoped and unusable here, and the admin sandbox table's own policy answers only to the admin who owns the row. The reads are filtered explicitly on the id the signed token resolved to — a customer id or a sandbox id — and that filter lives in the query module rather than in the handler",
-    handlers: {
-      GET: {
-        posture: {
-          kind: "signed-token",
-          reason:
-            "a subscribed ICS feed is fetched forever by a calendar client that holds no cookie, so the signed token in the path IS the authorization. A token names one of two subjects, domain-separated by its payload prefix so neither can ever answer as the other: a customer, whose feed discloses a child's weekly whereabouts, or an admin's sandbox family, which is invented and discloses nothing. An unverifiable token answers 404 rather than 401 — for a bad signature, an unknown customer and an unknown sandbox alike — because distinguishing them would itself disclose that a given id is one of our customers",
-        },
-        body: { kind: "none" },
-        test: TESTS.calendarFeed,
       },
     },
   },

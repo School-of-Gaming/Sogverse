@@ -16,6 +16,22 @@ import {
 } from "./seat-offer-staff";
 import { buildComponentsReferenceEmail } from "./components-reference";
 import {
+  buildCalendarInvitationEmail,
+  calendarInvitationAttachment,
+  calendarInvitationSubject,
+  resolveCalendarInvitation,
+  CALENDAR_INVITATION_METHODS,
+  CALENDAR_INVITATION_PRODUCT_TYPES,
+  CALENDAR_INVITATION_REMINDERS,
+  CALENDAR_INVITATION_SHAPES,
+  CALENDAR_INVITATION_TIMEZONES,
+  CALENDAR_INVITATION_WEEKDAY_PRESETS,
+  CALENDAR_INVITATION_START_DATE,
+  CALENDAR_INVITATION_END_DATE,
+  type CalendarInvitationWeekdayPreset,
+} from "./calendar-invitation";
+import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
+import {
   buildSessionReportEmail,
   sessionReportSubject,
   type SessionReportEmailOptions,
@@ -27,6 +43,7 @@ import {
   sessionReportPhotoFixtures,
 } from "./fixtures/session-report-photos";
 import type { EmailRenderContext } from "./render-context";
+import type { RenderedAttachment } from "./attachments";
 import type { EmailTranslator } from "./translator";
 import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
@@ -84,6 +101,13 @@ export interface RenderedTemplate {
   html: string;
   /** Reply-To this template's real sending route would set. */
   replyTo: string;
+  /**
+   * Files that travel with the mail. Absent for the templates that carry none,
+   * which is all of them but one — an attachment changes how a client reads a
+   * mail, so it is a property a template opts into rather than a slot every
+   * render has to fill with an empty array.
+   */
+  attachments?: RenderedAttachment[];
 }
 
 export interface TemplateDefinition {
@@ -144,18 +168,34 @@ function defineTemplate<P extends TemplateParams>(entry: {
    * send reproduce the live behaviour instead of a plausible-looking stand-in.
    */
   replyTo?: (params: P) => string;
+  /**
+   * Files this mail carries, for the rare template whose content is not only
+   * the body. Declared beside `build` rather than returned from it because the
+   * two are different artifacts with different rules — the body is HTML a
+   * client renders, an attachment is bytes a client *acts on* — and because a
+   * builder that returned a pair would make every template that carries nothing
+   * say so.
+   */
+  attachments?: (
+    params: P,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+  ) => RenderedAttachment[];
   resolveParams?: TemplateDefinition["resolveParams"];
 }): TemplateDefinition {
-  const { schema, build, subject, replyTo, ...rest } = entry;
+  const { schema, build, subject, replyTo, attachments, ...rest } = entry;
   return {
     ...rest,
     schema,
     render: (rawParams, t, locale, context = { to: "send" }) => {
       const params = schema.parse(rawParams);
+      const files = attachments?.(params, t, locale, context);
       return {
         subject: subject(params, t, locale, context),
         html: build(params, t, locale, context),
         replyTo: replyTo?.(params) ?? SUPPORT_EMAIL,
+        ...(files?.length && { attachments: files }),
       };
     },
   };
@@ -449,6 +489,139 @@ const sessionReportParamsSchema = z.object({
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
 
+// --- Calendar invitation: options, placeholders and schema ---
+
+/**
+ * The weekday patterns, labelled for the form. The keys are the builder's, so a
+ * preset added there shows up here without a second list to keep in step.
+ */
+const CALENDAR_INVITATION_WEEKDAY_LABELS: Record<
+  CalendarInvitationWeekdayPreset,
+  string
+> = {
+  "mon-fri": "Monday to Friday",
+  "mon-wed-fri": "Monday, Wednesday and Friday",
+  "tue-thu": "Tuesday and Thursday",
+  mon: "Monday",
+  wed: "Wednesday",
+  sat: "Saturday",
+};
+
+const CALENDAR_INVITATION_WEEKDAY_OPTIONS = CALENDAR_INVITATION_WEEKDAY_PRESETS.map(
+  (value) => ({ label: CALENDAR_INVITATION_WEEKDAY_LABELS[value], value }),
+);
+
+const CALENDAR_INVITATION_REMINDER_LABELS: Record<
+  (typeof CALENDAR_INVITATION_REMINDERS)[number],
+  string
+> = {
+  none: "No reminder",
+  "15": "15 minutes before",
+  "60": "An hour before",
+  "1440": "A day before",
+};
+
+/**
+ * The reminder options, defaulting to fifteen minutes — the first entry is what
+ * an untouched select posts, so the order is the default.
+ */
+const CALENDAR_INVITATION_REMINDER_OPTIONS = (["15", "60", "1440", "none"] as const).map(
+  (value) => ({ label: CALENDAR_INVITATION_REMINDER_LABELS[value], value }),
+);
+
+const CALENDAR_INVITATION_METHOD_LABELS: Record<
+  (typeof CALENDAR_INVITATION_METHODS)[number],
+  string
+> = {
+  request: "Request — asks the reader to answer (RSVP)",
+  publish: "Publish — states the entry, asks nothing",
+  cancel: "Cancel — withdraws the entry",
+};
+
+const CALENDAR_INVITATION_METHOD_OPTIONS = CALENDAR_INVITATION_METHODS.map((value) => ({
+  label: CALENDAR_INVITATION_METHOD_LABELS[value],
+  value,
+}));
+
+const CALENDAR_INVITATION_SHAPE_LABELS: Record<
+  (typeof CALENDAR_INVITATION_SHAPES)[number],
+  string
+> = {
+  rule: "Weekly rule (RRULE)",
+  list: "Explicit dates (RDATE)",
+};
+
+const CALENDAR_INVITATION_SHAPE_OPTIONS = CALENDAR_INVITATION_SHAPES.map((value) => ({
+  label: CALENDAR_INVITATION_SHAPE_LABELS[value],
+  value,
+}));
+
+const CALENDAR_INVITATION_TYPE_OPTIONS = CALENDAR_INVITATION_PRODUCT_TYPES.map((value) => ({
+  label: value,
+  value,
+}));
+
+const CALENDAR_INVITATION_TIMEZONE_OPTIONS = CALENDAR_INVITATION_TIMEZONES.map((value) => ({
+  label: value,
+  value,
+}));
+
+/** Derived from codegen, so a language added by migration appears in the form. */
+const CALENDAR_INVITATION_LANGUAGE_OPTIONS = SPOKEN_LANGUAGES.map((value) => ({
+  label: value,
+  value,
+}));
+
+const calendarInvitationParamsSchema = z.object({
+  parentFirstName: z.string().min(1),
+  parentEmail: z.string().email(),
+  gamerFirstName: z.string().min(1),
+  productName: z.string().min(1),
+  productType: z.enum(CALENDAR_INVITATION_PRODUCT_TYPES),
+  weekdays: z.enum(CALENDAR_INVITATION_WEEKDAY_PRESETS),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD"),
+  /** Null is an open-ended run — a consumer club, which never states a last day. */
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD").nullable(),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/, "expected HH:MM"),
+  durationMinutes: z.string().regex(/^\d+$/, "expected whole minutes"),
+  timezone: z.enum(CALENDAR_INVITATION_TIMEZONES),
+  /** Null is an online session, which has no address to state. */
+  address: z.string().nullable(),
+  arrivalInstructions: z.string().nullable(),
+  description: z.string().nullable(),
+  geduFirstName: z.string().min(1),
+  spokenLanguage: z.enum(Constants.public.Enums.spoken_language),
+  reminder: z.enum(CALENDAR_INVITATION_REMINDERS),
+  method: z.enum(CALENDAR_INVITATION_METHODS),
+  shape: z.enum(CALENDAR_INVITATION_SHAPES),
+  /** Null mints a fresh identifier at render; a thread's later message types the first one's back in. */
+  uid: z.string().nullable(),
+  sequence: z.string().regex(/^\d+$/, "expected a whole number"),
+  dashboardUrl: z.string().url(),
+});
+
+/**
+ * The form's strings as the template takes them.
+ *
+ * Four fields mean "none" when they are empty, and the identifier means "mint
+ * one" when it is empty *or* still holding the word its placeholder suggests —
+ * an untouched text input posts its placeholder, so the literal has to be
+ * recognised or nobody could ever get a generated one without clearing a field
+ * that looks already blank.
+ */
+function resolveCalendarInvitationParams(params: Record<string, string>): TemplateParams {
+  const { endDate, address, arrivalInstructions, description, uid, ...rest } = params;
+  const blankToNull = (value: string) => value.trim() || null;
+  return {
+    ...rest,
+    endDate: blankToNull(endDate),
+    address: blankToNull(address),
+    arrivalInstructions: blankToNull(arrivalInstructions),
+    description: blankToNull(description),
+    uid: uid.trim() === "generated" ? null : blankToNull(uid),
+  };
+}
+
 // --- Single source of truth for all email templates ---
 
 export const templateRegistry: Record<string, TemplateDefinition> = {
@@ -669,5 +842,83 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       buildSessionReportEmail(t, locale, resolveSessionReport(p, locale, context)),
     subject: (p, t, locale, context) =>
       sessionReportSubject(t, resolveSessionReport(p, locale, context)),
+  }),
+  /**
+   * The one template that carries a file, and the reason the registry can carry
+   * one at all. What is being tried here is not the mail's wording but what a
+   * calendar client *does* with the `invite.ics` beside it, so every knob a
+   * client could disagree about is a field: the notation the schedule is
+   * written in, whether the message asks for an answer, the reminder offset,
+   * and the identifier and revision number that decide whether a second message
+   * lands on the first one's entry or beside it.
+   *
+   * A thread is two or three sends: leave the identifier alone for the first,
+   * then type it back in with a higher revision number for the update and the
+   * cancellation.
+   */
+  calendarInvitation: defineTemplate({
+    label: "Calendar Invitation",
+    fields: [
+      { key: "parentFirstName", label: "Parent First Name", placeholder: "Sanna" },
+      {
+        key: "parentEmail",
+        // It is the ATTENDEE, and a client decides whether to show the RSVP by
+        // matching it against the mailbox it is reading — so a test send whose
+        // attendee is somebody else renders as somebody else's invitation.
+        label: "Parent Email (the attendee — use the address you are sending to)",
+        placeholder: "sanna@example.com",
+      },
+      { key: "gamerFirstName", label: "Gamer First Name", placeholder: "Aino" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft building camp" },
+      { key: "productType", label: "Product Type", type: "select", options: CALENDAR_INVITATION_TYPE_OPTIONS },
+      { key: "weekdays", label: "Days", type: "select", options: CALENDAR_INVITATION_WEEKDAY_OPTIONS },
+      { key: "startDate", label: "Start date", placeholder: CALENDAR_INVITATION_START_DATE },
+      { key: "endDate", label: "End date (empty for open-ended)", placeholder: CALENDAR_INVITATION_END_DATE },
+      { key: "startTime", label: "Start time", placeholder: "16:00" },
+      { key: "durationMinutes", label: "Duration (minutes)", placeholder: "120" },
+      { key: "timezone", label: "Timezone", type: "select", options: CALENDAR_INVITATION_TIMEZONE_OPTIONS },
+      {
+        key: "address",
+        label: "Address (empty for online)",
+        placeholder: "Kaisaniemenkatu 6, 00100 Helsinki",
+      },
+      {
+        key: "arrivalInstructions",
+        label: "Getting there",
+        type: "textarea",
+        placeholder: "Ring the bell marked School of Gaming and take the stairs to the second floor.",
+      },
+      {
+        key: "description",
+        label: "Description",
+        type: "textarea",
+        placeholder:
+          "Aino is building a harbour town this month, and the last session is the one where everyone walks through what they made.",
+      },
+      { key: "geduFirstName", label: "Gedu First Name", placeholder: "Ville" },
+      { key: "spokenLanguage", label: "Spoken language", type: "select", options: CALENDAR_INVITATION_LANGUAGE_OPTIONS },
+      { key: "reminder", label: "Reminder", type: "select", options: CALENDAR_INVITATION_REMINDER_OPTIONS },
+      { key: "method", label: "Message", type: "select", options: CALENDAR_INVITATION_METHOD_OPTIONS },
+      { key: "shape", label: "Schedule notation", type: "select", options: CALENDAR_INVITATION_SHAPE_OPTIONS },
+      {
+        key: "uid",
+        // The word itself is what an untouched field posts, and the resolver
+        // reads it as "mint one" — see the resolver for why the literal has to
+        // be recognised rather than only the empty string.
+        label: "Calendar UID (leave as generated for a new entry)",
+        placeholder: "generated",
+      },
+      { key: "sequence", label: "Sequence (raise it for an update)", placeholder: "0" },
+      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
+    ],
+    schema: calendarInvitationParamsSchema,
+    build: (p, t, locale) =>
+      buildCalendarInvitationEmail(t, locale, resolveCalendarInvitation(p, t, locale)),
+    subject: (p, t, locale) =>
+      calendarInvitationSubject(t, resolveCalendarInvitation(p, t, locale)),
+    attachments: (p, t, locale) => [
+      calendarInvitationAttachment(t, resolveCalendarInvitation(p, t, locale)),
+    ],
+    resolveParams: resolveCalendarInvitationParams,
   }),
 };
