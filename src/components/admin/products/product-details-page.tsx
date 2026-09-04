@@ -34,9 +34,9 @@ import { cn, formatCurrencyFromCents, formatDate } from "@/lib/utils";
 import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { productImageSrc } from "@/lib/images/product-image-url";
-import { productAudience } from "@/components/public/products/product-audience";
+import { productAudience } from "@/lib/products/product-audience";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
-import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
+import { formatClubTermDates } from "@/lib/products/format-product-term-dates";
 import { productTagLabelKey } from "@/components/public/products/product-tag";
 import { countryDisplayName } from "@/components/public/products/region-lock/region-gate";
 import {

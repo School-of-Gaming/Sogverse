@@ -4,7 +4,7 @@ import { ParticipantPickerSheet } from "@/components/admin/products/participant-
 import {
   audienceAdmitsRole,
   type ProductAudience,
-} from "@/components/public/products/product-audience";
+} from "@/lib/products/product-audience";
 import { Constants } from "@/types/database.types";
 import type { Profile, UserRole } from "@/types";
 

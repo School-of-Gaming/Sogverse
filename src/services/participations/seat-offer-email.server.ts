@@ -6,13 +6,15 @@ import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
 import {
   DEFAULT_LOCALE,
   detectLocaleFromHeader,
-  isSupportedLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import {
   buildSeatOfferEmail,
+  buildSeatOfferGamerEmail,
+  seatOfferGamerSubject,
   seatOfferSubject,
 } from "@/lib/email-templates/seat-offer";
+import { resolveFamilyRecipients } from "@/lib/email/family-recipients.server";
 import {
   buildSeatOfferStaffEmail,
   seatOfferStaffSubject,
@@ -38,6 +40,12 @@ import type { AppSupabaseClient } from "@/types";
  * site. Two of the three callers here are handling a row they have just written
  * and no longer own — a declined participation is *deleted* by the time this
  * runs — which makes reading by id the only shape that works at all.
+ *
+ * **The offer goes to the parent, and to the child as well when the child
+ * holds a mailbox of their own** — decided by the shared
+ * family-recipient resolver, never here. The child's copy is a different
+ * template with no buttons and nowhere to put the token: only the parent may
+ * answer, and the credential that answers stays in the parent's mail alone.
  *
  * **Every one of them is wrapped, logged and swallowed.** The outcome each mail
  * follows is already committed: a seat has been offered, accepted, declined, or
@@ -266,7 +274,12 @@ async function readContext(
       .single(),
     client
       .from("profiles")
-      .select("id, first_name, last_name, email, locale")
+      // The sign-in mode decides whether the child gets a copy of their own;
+      // `gamer_profiles` is one-to-one off `profiles`, so the embed is an
+      // object or null (null for the payer).
+      .select(
+        "id, first_name, last_name, email, locale, gamer_profiles(sign_in)",
+      )
       .in("id", [customerId, participantId]),
   ]);
 
@@ -320,22 +333,38 @@ async function sendOffer({
   // state the database permits, and there is nothing to report to anyone.
   if (!customer?.email) return;
 
-  // Stored preference → what the browser asked for → English. The same chain
-  // every other send in the app walks.
-  const locale: SupportedLocale = isSupportedLocale(customer.locale)
-    ? customer.locale
-    : detectLocaleFromHeader(request.headers.get("Accept-Language"));
-
-  const productName = resolveTranslation(product.product_translations, locale)?.name;
   const participantName = participant?.first_name.trim();
-  if (!productName || !participantName) {
+  if (!participant || !participantName) {
     console.error("[seat-offer email] nothing to name — skipping the send", {
       productId,
       participantId,
-      hasProductName: Boolean(productName),
     });
     return;
   }
+
+  // The same test the confirmation page and the signup mail make on the row:
+  // participant equals customer means the payer took the seat themselves, and
+  // every sentence naming them moves into the second person.
+  const isSelfSeat = participantId === customerId;
+
+  // Stored preference → what the browser asked for → English, per recipient.
+  // The same chain every other send in the app walks; the resolver applies it
+  // to the parent and to the child separately, because they need not share a
+  // locale.
+  const recipients = resolveFamilyRecipients({
+    parents: [
+      { email: customer.email, firstName: customer.first_name, locale: customer.locale },
+    ],
+    gamer: isSelfSeat
+      ? null
+      : {
+          email: participant.email,
+          firstName: participantName,
+          locale: participant.locale,
+          signIn: participant.gamer_profiles?.sign_in ?? null,
+        },
+    fallbackLocale: detectLocaleFromHeader(request.headers.get("Accept-Language")),
+  });
 
   // The TRUSTED origin, never the raw Host header: this link carries a
   // credential, and a spoofed Host would hand a family's seat to whoever asked.
@@ -344,36 +373,89 @@ async function sendOffer({
   const link = (answer: "accept" | "decline") =>
     `${origin}${ROUTES.seatOffer}?token=${encodeURIComponent(token)}&answer=${answer}`;
 
-  const params = {
-    participantName,
-    // The same test the confirmation page and the signup mail make on the row:
-    // participant equals customer means the payer took the seat themselves, and
-    // every sentence naming them moves into the second person.
-    isSelfSeat: participantId === customerId,
-    productName,
-    deadline: formatDeadline(sentAt, locale, product.timezone),
-    acceptUrl: link("accept"),
-    declineUrl: link("decline"),
-    // The one filled brand button in the mail: My SOG, where the same question
-    // waits on the family's own card. Same trusted origin as the two answers
-    // above — it carries no credential, but a link in a mail that resolved off
-    // an attacker's Host would still be a link in our mail pointing at them.
-    dashboardUrl: `${origin}${ROUTES.customer.dashboard}`,
-  };
+  // The parent's mail goes first, and a child's copy only follows a parent's
+  // that went: a copy saying "we have written to your parent" must not be the
+  // one mail that arrives. That ordering is load-bearing for the skip below,
+  // which is why this counts what has actually left rather than assuming.
+  let sent = 0;
+  for (const recipient of recipients) {
+    const locale = recipient.locale;
+    const productName = resolveTranslation(product.product_translations, locale)?.name;
+    if (!productName) {
+      // The two recipients resolve the name in DIFFERENT locales, so a product
+      // missing one translation can name itself for the parent and not for the
+      // child — which makes this a per-recipient failure, not a per-send one.
+      // It used to `return` unconditionally, abandoning the child's copy after
+      // the parent's had already gone out while logging it as "skipping the
+      // send", which read as though nothing had been mailed at all.
+      console.error("[seat-offer email] nothing to name — skipping this recipient", {
+        productId,
+        participantId,
+        recipientKind: recipient.kind,
+        locale,
+        anySent: sent > 0,
+      });
+      // Nothing has left yet, so there is nothing for a child's copy to be the
+      // follow-up to — and a copy saying "we have written to your parent" must
+      // not be the only mail that arrives. Give up on the whole send. Once
+      // something HAS gone out, skipping this one recipient is the honest
+      // remainder.
+      if (sent === 0) return;
+      continue;
+    }
+    const deadline = formatDeadline(sentAt, locale, product.timezone);
+    const t = await getEmailTranslator(locale);
 
-  const t = await getEmailTranslator(locale);
+    if (recipient.kind === "gamer") {
+      // The child's copy: the fact, who decides, and the deadline — no answer
+      // buttons and no token, which this builder has no parameter for.
+      const params = {
+        gamerName: participantName,
+        productName,
+        deadline,
+        // The child's own root; a `/parent` link would bounce them.
+        dashboardUrl: `${origin}${ROUTES.gamer.dashboard}`,
+      };
+      await sendTransactionalEmail({
+        fromEmail: SENDER_EMAIL,
+        fromName: SENDER_NAME,
+        toEmail: recipient.email,
+        subject: seatOfferGamerSubject(t, params),
+        htmlContent: buildSeatOfferGamerEmail(t, locale, params),
+        // Product mail TO a person, like the parent's: replies go to support.
+        replyToEmail: SUPPORT_EMAIL,
+      });
+      sent++;
+      continue;
+    }
 
-  await sendTransactionalEmail({
-    fromEmail: SENDER_EMAIL,
-    fromName: SENDER_NAME,
-    toEmail: customer.email,
-    subject: seatOfferSubject(t, params),
-    htmlContent: buildSeatOfferEmail(t, locale, params),
-    // Product mail TO a person: a family replying to this has a question about
-    // their seat, so the reply goes to the monitored support inbox rather than
-    // the unattended sending address.
-    replyToEmail: SUPPORT_EMAIL,
-  });
+    const params = {
+      participantName,
+      isSelfSeat,
+      productName,
+      deadline,
+      acceptUrl: link("accept"),
+      declineUrl: link("decline"),
+      // The one filled brand button in the mail: My SOG, where the same question
+      // waits on the family's own card. Same trusted origin as the two answers
+      // above — it carries no credential, but a link in a mail that resolved off
+      // an attacker's Host would still be a link in our mail pointing at them.
+      dashboardUrl: `${origin}${ROUTES.customer.dashboard}`,
+    };
+
+    await sendTransactionalEmail({
+      fromEmail: SENDER_EMAIL,
+      fromName: SENDER_NAME,
+      toEmail: recipient.email,
+      subject: seatOfferSubject(t, params),
+      htmlContent: buildSeatOfferEmail(t, locale, params),
+      // Product mail TO a person: a family replying to this has a question about
+      // their seat, so the reply goes to the monitored support inbox rather than
+      // the unattended sending address.
+      replyToEmail: SUPPORT_EMAIL,
+    });
+    sent++;
+  }
 }
 
 async function sendStaff({

@@ -4,6 +4,42 @@ import {
   parseEmailVerificationTokenUserId,
   verifyEmailVerificationToken,
 } from "@/lib/email-verification";
+import type { GamerSignIn, UserRole } from "@/types";
+
+/**
+ * What redeeming a verification link tells the page that redeemed it.
+ *
+ * `outcome` is the whole of the answer for an adult: the address is confirmed or
+ * the link is dead. The rest exists for a child in sign-in mode `email`, whose
+ * verification is the *first* step of getting an account they can actually use —
+ * the second is a password, which they set through the ordinary reset flow, and
+ * the page offers them the button that starts it. Everything needed to decide
+ * that is here, so the page makes no second lookup of its own.
+ *
+ * Every field but `outcome` is null on an invalid link — there is no account to
+ * describe.
+ *
+ * **There is deliberately no "was this the first redemption" signal.** One
+ * existed, and its only reader was a page that mailed a recovery token on the
+ * strength of it — a credential sent by whatever opened the URL, a mail scanner
+ * included. Nothing here now has a side effect to key on, so a first click and a
+ * fiftieth are the same answer, which is what the redemption honestly is.
+ */
+export interface EmailVerificationRedemption {
+  outcome: "verified" | "invalid";
+  role: UserRole | null;
+  /** The gamer's sign-in mode; null for every other role, which has none. */
+  signIn: GamerSignIn | null;
+  /** The address that was verified. */
+  email: string | null;
+}
+
+const INVALID: EmailVerificationRedemption = {
+  outcome: "invalid",
+  role: null,
+  signIn: null,
+  email: null,
+};
 
 /**
  * Redeem an emailed verification token: check it, and stamp
@@ -28,23 +64,23 @@ import {
  */
 export async function redeemEmailVerificationToken(
   token: string | null | undefined,
-): Promise<"verified" | "invalid"> {
-  if (!token) return "invalid";
+): Promise<EmailVerificationRedemption> {
+  if (!token) return INVALID;
 
   const claimedUserId = parseEmailVerificationTokenUserId(token);
-  if (!claimedUserId) return "invalid";
+  if (!claimedUserId) return INVALID;
 
   const admin = createAdminClient();
   const { data: profile } = await admin
     .from("profiles")
-    .select("email")
+    .select("email, role")
     .eq("id", claimedUserId)
     .single();
 
-  if (!profile?.email) return "invalid";
+  if (!profile?.email) return INVALID;
 
   const userId = await verifyEmailVerificationToken(token, profile.email);
-  if (!userId) return "invalid";
+  if (!userId) return INVALID;
 
   // `is("email_verified_at", null)` is what keeps the stamp at the moment the
   // address was first confirmed. A row already carrying one matches nothing,
@@ -60,8 +96,25 @@ export async function redeemEmailVerificationToken(
   // to fix it.
   if (error) {
     console.error("Email verification write failed:", error.message);
-    return "invalid";
+    return INVALID;
   }
 
-  return "verified";
+  // Read after the stamp, not before: the mode is what tells the page whether a
+  // password is still owed, and only a gamer has one.
+  let signIn: GamerSignIn | null = null;
+  if (profile.role === "gamer") {
+    const { data: gamerProfile } = await admin
+      .from("gamer_profiles")
+      .select("sign_in")
+      .eq("user_id", userId)
+      .maybeSingle();
+    signIn = gamerProfile?.sign_in ?? null;
+  }
+
+  return {
+    outcome: "verified",
+    role: profile.role,
+    signIn,
+    email: profile.email,
+  };
 }

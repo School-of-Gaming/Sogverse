@@ -18,7 +18,7 @@ import {
   useSendSeatOffer,
 } from "@/services/groups";
 import { useSeatOfferSweepOnMount } from "@/services/participations";
-import type { ProductAudience } from "@/components/public/products/product-audience";
+import type { ProductAudience } from "@/lib/products/product-audience";
 import { ParticipantPickerSheet } from "../participant-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
 import { GroupsPanelView, type GroupsPanelActions } from "./groups-panel-view";

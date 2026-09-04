@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
-import { templateRegistry } from "@/lib/email-templates/registry";
+import { templateRegistry, type TemplateDefinition } from "@/lib/email-templates/registry";
 import { BRAND } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
 import { bulletList } from "@/lib/email-templates/blocks";
@@ -8,7 +8,95 @@ import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import {
   CALENDAR_EXPLORER_BODY,
   calendarInvitationStartDate,
+  calendarInvitationUntilDate,
 } from "@/lib/email-templates/calendar-invitation";
+
+/**
+ * The product half of the signup form, as a product with a real schedule and a
+ * full set of "Good to know" facts posts it.
+ *
+ * Spread into every product-confirmation fixture below, because the schema
+ * requires the whole form — and because the dates have to be *ahead* of now for
+ * an invitation to be composed at all, which is a fact about the render rather
+ * than about the fixture.
+ */
+const PRODUCT_CONFIRMATION_SCHEDULE = {
+  firstChargeDate: "none",
+  ageRange: "8-12",
+  audience: "gamers",
+  spokenLanguageCode: "fi",
+  participationId: "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+  attendeeName: "Marja Virtanen",
+  attendeeEmail: "marja@example.com",
+  shortDescription: "Build, explore and survive together.",
+  timezone: "Europe/Helsinki",
+  startDate: calendarInvitationStartDate(),
+  endDate: calendarInvitationUntilDate(),
+  slots: "mon 16:00 60",
+  isRemote: "no",
+  siteName: "Kallion kirjasto",
+  siteAddress: "Viides linja 11, 00530 Helsinki",
+  siteNote: "The door on the north side. Ring the bell.",
+};
+
+/**
+ * Every field of a template at the value its untouched form control posts,
+ * except the ones `typed` names.
+ *
+ * This restates the testing page's own rule — a select posts its first option,
+ * a text input its placeholder, a textarea what it holds — because that rule is
+ * what decides whether a form nobody has typed into composes a whole mail or a
+ * stripped one, and the rule lives in a client component this suite does not
+ * render. Keeping it here means a field that changes control type changes what
+ * these tests see, which is the point.
+ *
+ * **`typed` goes in before `resolveParams`, and that is why it exists.** Some
+ * templates consume a `none` token inside `render`, so overriding the resolved
+ * bag reaches them; others consume it in `resolveParams`, which the testing
+ * page runs before posting — override those after the fact and the token
+ * travels to the builder as content, which is a test asserting the bug.
+ */
+function untouchedParams(
+  definition: TemplateDefinition,
+  typed: Record<string, string> = {},
+): Record<string, string | boolean | null> {
+  const raw = {
+    ...Object.fromEntries(
+      definition.fields.map((field) => [
+        field.key,
+        field.type === "select"
+          ? field.options[0].value
+          : field.type === "textarea"
+            ? ""
+            : field.placeholder,
+      ]),
+    ),
+    ...typed,
+  };
+  return definition.resolveParams ? definition.resolveParams(raw) : raw;
+}
+
+/**
+ * An `invite.ics`'s `DESCRIPTION`, unfolded and with RFC 5545's escapes undone
+ * so it reads as the text a parent finds in the calendar entry's notes.
+ *
+ * The search starts at `BEGIN:VEVENT`: a `VTIMEZONE` states lines of its own
+ * above the event, so a search over the whole document can answer about the
+ * zone table instead of about the session.
+ */
+function icsDescription(ics: string): string {
+  const event = ics.slice(Math.max(0, ics.indexOf("BEGIN:VEVENT")));
+  const line = event
+    .replace(/\r\n /g, "")
+    .split("\r\n")
+    .find((candidate) => candidate.startsWith("DESCRIPTION:"));
+  if (line === undefined) throw new Error("the document states no DESCRIPTION");
+  return line
+    .slice("DESCRIPTION:".length)
+    .replace(/\\n/g, "\n")
+    .replace(/\\,/g, ",")
+    .replace(/\\;/g, ";");
+}
 
 let t: EmailTranslator;
 
@@ -96,6 +184,8 @@ describe("templateRegistry render()", () => {
       mode: "subscription",
       priceAmount: "€40.00",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      gamerCopy: false,
+      ...PRODUCT_CONFIRMATION_SCHEDULE,
     };
 
     it("names the participant when the seat is a child's", () => {
@@ -160,7 +250,11 @@ describe("templateRegistry render()", () => {
       expect(subject).toBe("You are enrolled in Minecraft 101");
       expect(subject).not.toContain("Marja");
       expect(html).toContain("You’re enrolled in");
-      expect(html).not.toContain("Marja");
+      // The *sentences* move to the second person; the order summary still
+      // names the person, exactly as the confirmation page's does — there the
+      // name is a value rather than a subject.
+      expect(html).not.toContain("Marja is enrolled");
+      expect(html).toContain("Marja");
     });
 
     it("says waitlist in the subject when the outcome is a waitlist join", () => {
@@ -185,7 +279,26 @@ describe("templateRegistry render()", () => {
       expect(subject).toBe("You are on the waitlist for Minecraft 101");
       expect(subject).not.toContain("Marja");
       expect(html).toContain("You’re on the waitlist for");
-      expect(html).not.toContain("Marja");
+      expect(html).not.toContain("Marja is on the waitlist");
+      // Named in the summary row alone — see the self-seat case above.
+      expect(html).toContain("Marja");
+    });
+
+    /**
+     * The child's own copy is the third reader, and its subject has to agree
+     * with its body the same way: second person in both, the child's name in
+     * neither line of the inbox row.
+     */
+    it("takes the second person in the subject on the child's own copy", () => {
+      const { subject, html } = templateRegistry.productConfirmation.render(
+        { ...signup, isSelfSeat: false, gamerCopy: true, priceAmount: null },
+        t,
+        "en",
+      );
+
+      expect(subject).toBe("You are enrolled in Minecraft 101");
+      expect(html).toContain("You’re enrolled in");
+      expect(html).not.toContain("is enrolled in");
     });
 
     /**
@@ -200,9 +313,23 @@ describe("templateRegistry render()", () => {
 
       it("expands the seat select into a boolean", () => {
         if (!resolve) throw new Error("productConfirmation has no resolveParams");
-        expect(resolve({ seat: "self", mode: "subscription" })).toMatchObject({ isSelfSeat: true });
-        expect(resolve({ seat: "child", mode: "subscription" })).toMatchObject({ isSelfSeat: false });
-        expect(resolve({ mode: "subscription" })).toMatchObject({ isSelfSeat: false });
+        expect(resolve({ seat: "self", mode: "subscription" })).toMatchObject({ isSelfSeat: true, gamerCopy: false });
+        expect(resolve({ seat: "child", mode: "subscription" })).toMatchObject({ isSelfSeat: false, gamerCopy: false });
+        expect(resolve({ mode: "subscription" })).toMatchObject({ isSelfSeat: false, gamerCopy: false });
+      });
+
+      /**
+       * The child's copy states no price whatever the mode — the live send
+       * never reads one for it — so the select's third option clears the price
+       * even on a paid mode, where the other two options keep it.
+       */
+      it("expands the child's-copy option into the flag and clears the price", () => {
+        if (!resolve) throw new Error("productConfirmation has no resolveParams");
+        expect(resolve({ seat: "gamer", mode: "subscription", priceAmount: "€40.00" })).toMatchObject({
+          isSelfSeat: false,
+          gamerCopy: true,
+          priceAmount: null,
+        });
       });
 
       it("keeps the price on the paid modes and clears it on the rest", () => {
@@ -215,6 +342,298 @@ describe("templateRegistry render()", () => {
         }
       });
     });
+
+    /**
+     * The calendar half of the form. It is the same document the live send
+     * attaches, composed from typed fields instead of a product row — so this
+     * is where the parsing of those fields is pinned, and where the mail's
+     * three artifacts are checked to agree with each other.
+     */
+    describe("the calendar invitation it composes", () => {
+      it("attaches invite.ics and states the schedule when the form names slots", () => {
+        const { html, text, attachments } = templateRegistry.productConfirmation.render(
+          { ...signup, isSelfSeat: false },
+          t,
+          "en",
+        );
+
+        // The mail's own schedule words, composed by the confirmation page's
+        // formatter from the same slots the document is built from.
+        expect(html).toContain("Monday · 16:00–17:00");
+        expect(html).toContain("Kallion kirjasto");
+        expect(attachments?.[0].name).toBe("invite.ics");
+        expect(attachments?.[0].text).toContain("BEGIN:VCALENDAR");
+        expect(attachments?.[0].text).toContain(
+          `UID:${PRODUCT_CONFIRMATION_SCHEDULE.participationId}@sogverse`,
+        );
+        expect(text).toContain("Monday · 16:00–17:00");
+      });
+
+      it("mints an identifier when the form names none", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          { ...signup, isSelfSeat: false, participationId: "" },
+          t,
+          "en",
+        );
+
+        expect(attachments?.[0].text).toMatch(/UID:[0-9a-f-]{36}@sogverse/);
+      });
+
+      it("names the field when a schedule line cannot be read", () => {
+        expect(() =>
+          templateRegistry.productConfirmation.render(
+            { ...signup, isSelfSeat: false, slots: "funday 16:00 60" },
+            t,
+            "en",
+          ),
+        ).toThrow(/^Schedule: expected one of mon, tue/);
+      });
+
+      it("names the field when a date cannot be read", () => {
+        expect(() =>
+          templateRegistry.productConfirmation.render(
+            { ...signup, isSelfSeat: false, startDate: "2027-02-31" },
+            t,
+            "en",
+          ),
+        ).toThrow(/^Start date: expected a real calendar date/);
+      });
+    });
+
+    /**
+     * The form as an admin first meets it — nothing typed into anything.
+     *
+     * This is the one property the whole field design is arranged around, and
+     * the one that silently broke: every calendar field used to be a textarea
+     * whose empty value meant "none", so an untouched Product Confirmation
+     * composed no invitation at all and the mail the template exists to show
+     * was the one nobody saw. It is checked through `untouchedParams`, which
+     * applies the testing page's own rule for what an untouched control posts,
+     * so a field switched back to a textarea fails here rather than in an
+     * inbox.
+     */
+    describe("the untouched form", () => {
+      const untouched = untouchedParams(templateRegistry.productConfirmation);
+
+      it("composes an ordinary invitation, with every part the mail can carry", () => {
+        const { html, text, attachments } = templateRegistry.productConfirmation.render(
+          untouched,
+          t,
+          "en",
+        );
+
+        // The whole page, mirrored: the order summary, the four "Good to know"
+        // facts, and the one button — the page's "keep browsing" is a way back
+        // into a shop an inbox reader is not standing in.
+        expect(html).toContain("Your order");
+        expect(html).toContain("Good to know");
+        expect(html).toContain("Ages 8–12");
+        expect(html).toContain("Finnish");
+        expect(html).toContain("Go to My SOG");
+        expect(html).not.toContain("Keep browsing");
+        expect(attachments).toHaveLength(1);
+        expect(attachments?.[0].name).toBe("invite.ics");
+        expect(attachments?.[0].text).toContain("BEGIN:VCALENDAR");
+        // A calendar part means a plain-text twin, because that is what a
+        // Microsoft mailbox fills the entry's own notes from.
+        expect(text).toBeDefined();
+      });
+
+      /**
+       * The three values that come from fields whose "empty for none" label
+       * used to make them unreachable from an untouched form — each asserted
+       * where it actually lands.
+       *
+       * The description and the site note go into the entry's own notes; the
+       * schedule goes into the **mail** and nowhere else, because a client
+       * renders the recurrence from the properties themselves and a sentence
+       * beside them would be a copy that cannot be corrected.
+       */
+      it("states the description and the site note in the entry, the schedule in the mail", () => {
+        const { html, attachments } = templateRegistry.productConfirmation.render(
+          untouched,
+          t,
+          "en",
+        );
+        const text = icsDescription(attachments?.[0].text ?? "");
+
+        expect(text).toContain("Build, explore and survive together in a private world.");
+        expect(text).toContain("The door on the north side.");
+        // Both placeholder entries, at one clock face, stated as one line.
+        expect(html).toContain("Mon, Wed · 16:00–17:00");
+        expect(text).not.toContain("Mon, Wed");
+      });
+
+      /**
+       * The placeholder is a comma-separated list because the control is a text
+       * input, which has no newline to type — so both entries have to survive
+       * into the document, on their own weekdays.
+       */
+      it("reads both schedule entries out of one comma-separated line", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          untouched,
+          t,
+          "en",
+        );
+
+        expect(attachments?.[0].text).toMatch(/BYDAY=MO,WE/);
+      });
+    });
+
+    /**
+     * The other half of the same design: the states an untouched form does not
+     * compose are still reachable, and they are reached by typing a token
+     * rather than by clearing a box a text input refuses to stay cleared.
+     */
+    describe("its `none` tokens", () => {
+      const untouched = untouchedParams(templateRegistry.productConfirmation);
+
+      it("sends the plain mail, with no file and no text body, for `none` slots", () => {
+        const { html, text, attachments } = templateRegistry.productConfirmation.render(
+          { ...untouched, slots: "none" },
+          t,
+          "en",
+        );
+
+        expect(html).not.toContain("Session times");
+        expect(text).toBeUndefined();
+        expect(attachments).toBeUndefined();
+      });
+
+      it("takes the token however it was cased or spaced", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          { ...untouched, slots: "  NONE " },
+          t,
+          "en",
+        );
+
+        expect(attachments).toBeUndefined();
+      });
+
+      /**
+       * A product left without a short description — an ordinary stored state,
+       * because the writers coalesce a missing one to an empty string.
+       *
+       * The `not.toContain("none")` is the load-bearing half: a resolver that
+       * went back to `.trim() || null` would take the token as *content* and
+       * print the literal word "none" into the calendar entry as the product's
+       * own description, which is a paragraph nobody would read as a bug.
+       */
+      it("drops the description paragraph for a `none` short description", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          { ...untouched, shortDescription: "none" },
+          t,
+          "en",
+        );
+        const text = icsDescription(attachments?.[0].text ?? "");
+
+        expect(text).not.toContain("Build, explore and survive together");
+        expect(text).not.toContain("none");
+        // The paragraphs after it are untouched — the description is the
+        // entry's own first line, so there is nothing above it to check.
+        expect(text).toContain("The door on the north side.");
+        expect(text).toContain("Questions?");
+      });
+
+      /** An open-ended club: a rule that runs on with no `UNTIL` to stop it. */
+      it("drops the recurrence's end for a `none` end date", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          { ...untouched, endDate: "none" },
+          t,
+          "en",
+        );
+
+        expect(attachments?.[0].text).toContain("RRULE:");
+        expect(attachments?.[0].text).not.toContain("UNTIL=");
+      });
+
+      it("omits the address and the note when both are `none`", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          { ...untouched, siteAddress: "none", siteNote: "none" },
+          t,
+          "en",
+        );
+        const text = icsDescription(attachments?.[0].text ?? "");
+
+        expect(text).not.toContain("Viides linja 11");
+        expect(text).not.toContain("The door on the north side.");
+        // The site itself is not one of the token fields, so it stays.
+        expect(text).toContain("Kallion kirjasto");
+      });
+
+      /**
+       * The two page facts that can genuinely be absent. The untouched form
+       * states both, because the fuller mail is the one worth looking at.
+       */
+      it("drops the Age range fact for a `none` age range", () => {
+        const { html } = templateRegistry.productConfirmation.render(
+          { ...untouched, ageRange: "none" },
+          t,
+          "en",
+        );
+
+        expect(html).not.toContain("Age range");
+        // The token can never reach the copy — it is parsed into a pair of
+        // numbers or into nothing — so what is asserted is the fact's absence.
+        expect(html).not.toContain("Ages ");
+        // The three facts either side of it are untouched.
+        expect(html).toContain("Schedule");
+        expect(html).toContain("Language");
+      });
+
+      it("states no billing date for a `none` first charge", () => {
+        const paid = { ...untouched, mode: "subscription", firstChargeDate: "13 Jan 2027" };
+        expect(
+          templateRegistry.productConfirmation.render(paid, t, "en").html,
+        ).toContain("Nothing was charged today.");
+        expect(
+          templateRegistry.productConfirmation.render(
+            { ...paid, firstChargeDate: "none" },
+            t,
+            "en",
+          ).html,
+        ).not.toContain("Nothing was charged today.");
+      });
+    });
+  });
+});
+
+/**
+ * The same token design, on the other template that took it: a product with no
+ * schedule to state drops the row rather than printing an empty one.
+ *
+ * It is here rather than in the product confirmation's own `none` block because
+ * that block is scoped to one template — but it is the same rule, and the
+ * `not.toContain("none")` is the same load-bearing half: a resolver that took
+ * the token as content would put the word into a fact table staff read as data.
+ */
+describe("templateRegistry seatOfferStaff", () => {
+  let t: EmailTranslator;
+
+  beforeAll(async () => {
+    t = await getEmailTranslator("en");
+  });
+
+  it("drops the schedule row for a `none` schedule line", () => {
+    const render = (typed: Record<string, string> = {}) =>
+      templateRegistry.seatOfferStaff.render(
+        untouchedParams(templateRegistry.seatOfferStaff, typed),
+        t,
+        "en",
+      ).html;
+
+    const withSchedule = render();
+    const without = render({ productSchedule: "none" });
+
+    expect(withSchedule).toContain("Tue 16:00, Thu 16:00 (Europe/Helsinki)");
+    expect(withSchedule).toContain(t("seatOfferStaff.schedule"));
+    expect(without).not.toContain("Tue 16:00");
+    expect(without).not.toContain(t("seatOfferStaff.schedule"));
+    // The token as a *cell's* content, rather than the bare word: an email's
+    // inline CSS is full of `none` and a plain search would answer about that.
+    expect(without).not.toMatch(/>\s*none\s*</);
+    // Every other row is still there — only the schedule answered the token.
+    expect(without).toContain("Minecraft 101");
   });
 });
 
@@ -806,6 +1225,8 @@ describe("every template renders in every locale", () => {
       userRole: "customer",
       userEmail: "marja@example.com",
       message: "Great product!",
+      parentEmail: null,
+      gamerOwnMailbox: false,
     },
     welcomeParent: {
       firstName: "Marja",
@@ -828,9 +1249,24 @@ describe("every template renders in every locale", () => {
       mode: "upfront",
       priceAmount: "€40.00",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      gamerCopy: false,
+      // With a schedule, so the locale sweep also reaches the session-times
+      // section, the attached-invitation sentence and — through the invitation
+      // itself — every key the calendar entry's own notes are written from.
+      ...PRODUCT_CONFIRMATION_SCHEDULE,
     },
     verifyEmail: {
       firstName: "Marja",
+      verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
+    },
+    seatOfferGamer: {
+      gamerName: "Aino",
+      productName: "Minecraft 101",
+      deadline: "Sunday, 31 August at 14:20 GMT+3",
+      dashboardUrl: "https://sogverse.sog.gg/gamer",
+    },
+    gamerWelcome: {
+      gamerFirstName: "Aino",
       verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
     },
     seatOffer: {
@@ -879,7 +1315,23 @@ describe("every template renders in every locale", () => {
    * guard below; a template with no entry is swept once, as its own fixture.
    */
   const TEMPLATE_VARIANTS: Record<string, Record<string, string | boolean | null>[]> = {
-    sessionReport: [{ copy: "family" }, { copy: "staff" }],
+    // Three copies: the family's, the child's own (the one render that reads
+    // the child-addressed intro key) and the staff copy behind its banner.
+    sessionReport: [{ copy: "family" }, { copy: "gamer" }, { copy: "staff" }],
+    // The child's copy is the only render that reads its greeting key.
+    productConfirmation: [{ gamerCopy: false }, { gamerCopy: true, priceAmount: null }],
+    // The gamer case's note has two variants, and each is a key nothing else
+    // reaches.
+    feedback: [
+      {},
+      { userRole: "gamer", parentEmail: "marja@example.com", gamerOwnMailbox: false },
+      {
+        userRole: "gamer",
+        userEmail: "aino@example.com",
+        parentEmail: "marja@example.com",
+        gamerOwnMailbox: true,
+      },
+    ],
     // The offer speaks in two voices, and each has its own heading, opening and
     // subject — four keys per locale that only the self variant reaches.
     seatOffer: [{ isSelfSeat: false }, { isSelfSeat: true }],
@@ -904,11 +1356,9 @@ describe("every template renders in every locale", () => {
       const translator = await getEmailTranslator(locale);
 
       for (const params of variantsOf(key)) {
-        const { subject, html, replyTo } = templateRegistry[key].render(
-          params,
-          translator,
-          locale,
-        );
+        const { subject, html, text, replyTo, attachments } = templateRegistry[
+          key
+        ].render(params, translator, locale);
 
         expect(subject.trim()).not.toBe("");
         expect(subject).not.toContain(`email.${key}`);
@@ -916,6 +1366,14 @@ describe("every template renders in every locale", () => {
         expect(html).toContain(`lang="${locale}"`);
         expect(html).not.toContain(`email.${key}`);
         expect(replyTo).toContain("@");
+        // The other two artifacts a render can produce. A missing key resolves
+        // to its own path, so the same check catches an English fallback that
+        // leaked into a calendar entry's notes or into the text body — neither
+        // of which the HTML sweep above can see.
+        expect(text ?? "").not.toContain(`email.${key}`);
+        for (const attachment of attachments ?? []) {
+          expect(attachment.text ?? "").not.toContain(`email.${key}`);
+        }
       }
     });
   });

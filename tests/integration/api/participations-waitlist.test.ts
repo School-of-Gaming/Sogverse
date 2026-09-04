@@ -125,12 +125,34 @@ function mockAuthenticatedCustomer() {
 }
 
 /**
- * The two reads behind the confirmation mail, on the caller's own client: the
- * product with its translations, and both people in one query (on a self seat
- * they are the same row).
+ * The three reads behind the confirmation mail, on the caller's own client: the
+ * product with its translations, both people in one query (on a self seat they
+ * are the same row), and the schedule and location the mail's "Good to know"
+ * facts are composed from.
+ *
+ * That third read runs on the waitlist path too, because the mail is the
+ * confirmation page's twin and the page states those facts for a waitlisted
+ * seat as well. Only the site's *details* are unreadable through a customer's
+ * own client, and nothing built from them reaches a waitlist mail — a place in
+ * a queue composes no calendar entry.
  */
 function mockReadsForConfirmationEmail(
-  { participantFirstName = "Aino" }: { participantFirstName?: string } = {},
+  {
+    participantFirstName = "Aino",
+    gamer = {},
+  }: {
+    participantFirstName?: string;
+    /**
+     * Overrides on the child's profile row. The default is the switch-only
+     * sign-in every gamer is created with — no address of their own, so the
+     * mail goes to the parent alone.
+     */
+    gamer?: Partial<{
+      email: string | null;
+      locale: string | null;
+      gamer_profiles: { sign_in: string } | null;
+    }>;
+  } = {},
 ) {
   mockFrom.mockImplementation((table: string) => {
     if (table === "products") {
@@ -142,11 +164,25 @@ function mockReadsForConfirmationEmail(
                 Promise.resolve({
                   data: {
                     product_type: "consumer_club",
+                    timezone: "Europe/Helsinki",
+                    start_date: null,
+                    end_date: null,
+                    is_remote: true,
+                    min_age: 8,
+                    max_age: 12,
+                    for_gamers: true,
+                    for_parents: false,
+                    spoken_language_code: "en",
                     product_translations: [{ locale: "en", name: "Test Club" }],
                   },
                   error: null,
                 }),
             }),
+            single: () =>
+              Promise.resolve({
+                data: { schedule_slots: [], locations: null },
+                error: null,
+              }),
           }),
         }),
       };
@@ -162,12 +198,15 @@ function mockReadsForConfirmationEmail(
                   first_name: "Marja",
                   email: "parent@example.test",
                   locale: "en",
+                  gamer_profiles: null,
                 },
                 {
                   id: GAMER_ID,
                   first_name: participantFirstName,
                   email: null,
                   locale: null,
+                  gamer_profiles: { sign_in: "parent" },
+                  ...gamer,
                 },
               ],
               error: null,
@@ -592,6 +631,57 @@ describe("POST /api/participations/waitlist", () => {
     expect(sent.subject).toContain("Aino");
   });
 
+  /**
+   * A child with a mailbox of their own gets a copy beside the parent's:
+   * second person, no price, their own My SOG root. The gate is the sign-in
+   * mode alone — the address below is unverified and the copy goes out anyway
+   * — so the negative cases are the two modes that have no inbox behind them:
+   * the switch-only default above, and the username sign-in below.
+   */
+  it("sends a child with their own address a copy, after the parent's", async () => {
+    mockAuthenticatedCustomer();
+    joinsWaitlist();
+    mockReadsForConfirmationEmail({
+      gamer: {
+        email: "aino@example.test",
+        locale: "en",
+        gamer_profiles: { sign_in: "email" },
+      },
+    });
+
+    await POST(createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }));
+    await settleDeferred();
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(2);
+    const [parent, child] = mockSendTransactionalEmail.mock.calls.map(([options]) => options);
+    expect(parent.toEmail).toBe("parent@example.test");
+    expect(parent.htmlContent).toContain("https://test.sogverse.local/parent");
+
+    expect(child.toEmail).toBe("aino@example.test");
+    expect(child.subject).toBe("You are on the waitlist for Test Club");
+    expect(child.htmlContent).toContain("https://test.sogverse.local/gamer");
+    expect(child.htmlContent).not.toContain("/parent");
+    expect(child.htmlContent).not.toContain("Price");
+    expect(child.replyToEmail).toBe("help@sog.gg");
+  });
+
+  it("mails the parent alone for a child who signs in with a username", async () => {
+    mockAuthenticatedCustomer();
+    joinsWaitlist();
+    mockReadsForConfirmationEmail({
+      gamer: {
+        email: "aino@gamer.sogverse.internal",
+        gamer_profiles: { sign_in: "username" },
+      },
+    });
+
+    await POST(createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }));
+    await settleDeferred();
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+    expect(mockSendTransactionalEmail.mock.calls[0][0].toEmail).toBe("parent@example.test");
+  });
+
   // The card in My SOG reads the position live; a number frozen into an inbox
   // goes stale the moment somebody ahead drops out, with no way for the reader
   // to tell.
@@ -605,9 +695,10 @@ describe("POST /api/participations/waitlist", () => {
     await settleDeferred();
 
     const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-    expect(htmlContent).not.toContain("Price");
-    // It points at the live answer instead of freezing one.
-    expect(htmlContent).toContain("where you stand in My SOG");
+    expect(htmlContent).not.toContain(">Price</td>");
+    // It points at the live answer instead of freezing one — the same sentence
+    // the confirmation page's own waitlist list ends on.
+    expect(htmlContent).toContain("keep track of your waitlist spot");
     // The request carries no trusted Host, so the link falls back to the
     // canonical site URL rather than to anything the request could name.
     expect(htmlContent).toContain("https://test.sogverse.local/parent");

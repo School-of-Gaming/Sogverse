@@ -53,12 +53,25 @@ function createRequest(body: Record<string, unknown>): Request {
   });
 }
 
+/**
+ * The whole of what this route takes: a recipient, a registered template and
+ * its params. There is no free-form mode and no `mode` discriminant — the
+ * harness sends the mails the product can actually produce, and nothing else.
+ */
 const validBody = {
-  mode: "custom",
-  provider: "brevo",
   toEmail: "test@example.com",
-  subject: "Test Subject",
-  body: "Hello world",
+  template: "feedback",
+  params: {
+    userName: "Jane Doe",
+    userRole: "customer",
+    userEmail: "jane@example.com",
+    message: "Great product!",
+    // The gamer case's two fields, in their non-gamer state — the address
+    // posted as null, the way the testing page's resolver turns an emptied
+    // field into "none", and the sign-in select's default.
+    parentEmail: null,
+    gamerOwnMailbox: false,
+  },
 };
 
 // --- Tests ---
@@ -109,18 +122,6 @@ describe("POST /api/admin/send-test-email", () => {
 
   // -- Validation --
 
-  it("should return 400 for invalid provider", async () => {
-    mockAuthenticatedWithRole("admin");
-
-    const response = await POST(
-      createRequest({ ...validBody, provider: "mailgun" })
-    );
-    const data = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(data.error).toContain("provider");
-  });
-
   it("ignores a caller-supplied sender identity rather than honouring it", async () => {
     // Sender identity is a constant, so these keys are not part of the wire
     // shape. The assertion that matters is not the 200 — it is that the mail
@@ -156,104 +157,6 @@ describe("POST /api/admin/send-test-email", () => {
     expect(data.error).toContain("toEmail");
   });
 
-  it("should return 400 for empty subject", async () => {
-    mockAuthenticatedWithRole("admin");
-
-    const response = await POST(
-      createRequest({ ...validBody, subject: "" })
-    );
-    const data = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(data.error).toContain("subject");
-  });
-
-  it("should return 400 for empty body", async () => {
-    mockAuthenticatedWithRole("admin");
-
-    const response = await POST(
-      createRequest({ ...validBody, body: "" })
-    );
-    const data = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(data.error).toContain("body");
-  });
-
-  it("should return 400 for invalid replyToEmail", async () => {
-    mockAuthenticatedWithRole("admin");
-
-    const response = await POST(
-      createRequest({ ...validBody, replyToEmail: "not-an-email" })
-    );
-    const data = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(data.error).toContain("replyToEmail");
-  });
-
-  // -- Happy path --
-
-  it("should send email and return messageId", async () => {
-    mockAuthenticatedWithRole("admin");
-
-    const response = await POST(createRequest(validBody));
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(data.messageId).toBe("msg-123");
-    expect(mockSendTransactionalEmail).toHaveBeenCalledWith({
-      fromEmail: "sogverse@sog.gg",
-      fromName: "School of Gaming",
-      toEmail: ["test@example.com"],
-      subject: "Test Subject",
-      htmlContent: "Hello world",
-      replyToEmail: undefined,
-    });
-  });
-
-  it("should convert newlines to <br/> in body", async () => {
-    mockAuthenticatedWithRole("admin");
-
-    await POST(
-      createRequest({ ...validBody, body: "Line 1\nLine 2\nLine 3" })
-    );
-
-    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        htmlContent: "Line 1<br/>Line 2<br/>Line 3",
-      })
-    );
-  });
-
-  it("should escape HTML entities in body", async () => {
-    mockAuthenticatedWithRole("admin");
-
-    await POST(
-      createRequest({ ...validBody, body: "<script>alert('xss')</script>" })
-    );
-
-    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        htmlContent: "&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;",
-      })
-    );
-  });
-
-  it("should pass replyToEmail when provided", async () => {
-    mockAuthenticatedWithRole("admin");
-
-    await POST(
-      createRequest({ ...validBody, replyToEmail: "reply@example.com" })
-    );
-
-    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        replyToEmail: "reply@example.com",
-      })
-    );
-  });
-
   // -- Error handling --
 
   it("should return a generic 500 when the email provider fails", async () => {
@@ -269,24 +172,12 @@ describe("POST /api/admin/send-test-email", () => {
     expect(data.error).toBe("Internal server error");
   });
 
-  // -- Template mode --
-
-  const validTemplateBody = {
-    mode: "template",
-    toEmail: "test@example.com",
-    template: "feedback",
-    params: {
-      userName: "Jane Doe",
-      userRole: "customer",
-      userEmail: "jane@example.com",
-      message: "Great product!",
-    },
-  };
+  // -- Happy path --
 
   it("should send a template email and return messageId", async () => {
     mockAuthenticatedWithRole("admin");
 
-    const response = await POST(createRequest(validTemplateBody));
+    const response = await POST(createRequest(validBody));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -308,7 +199,7 @@ describe("POST /api/admin/send-test-email", () => {
   it("replies to the submitter for the feedback template", async () => {
     mockAuthenticatedWithRole("admin");
 
-    await POST(createRequest(validTemplateBody));
+    await POST(createRequest(validBody));
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({ replyToEmail: "jane@example.com" }),
@@ -319,7 +210,6 @@ describe("POST /api/admin/send-test-email", () => {
     mockAuthenticatedWithRole("admin");
 
     await POST(createRequest({
-      mode: "template",
       toEmail: "test@example.com",
       template: "passwordReset",
       params: { resetLink: "https://sogverse.sog.gg/reset-password?token_hash=abc" },
@@ -334,7 +224,7 @@ describe("POST /api/admin/send-test-email", () => {
     mockAuthenticatedWithRole("admin");
 
     const response = await POST(
-      createRequest({ ...validTemplateBody, template: "nonexistent" }),
+      createRequest({ ...validBody, template: "nonexistent" }),
     );
     const data = await response.json();
 
@@ -346,7 +236,7 @@ describe("POST /api/admin/send-test-email", () => {
     mockAuthenticatedWithRole("admin");
 
     const response = await POST(
-      createRequest({ ...validTemplateBody, params: { userName: "" } }),
+      createRequest({ ...validBody, params: { userName: "" } }),
     );
     const data = await response.json();
 
@@ -367,7 +257,6 @@ describe("POST /api/admin/send-test-email", () => {
    * narrowing would still let through.
    */
   const confirmationTemplateBody = (params: Record<string, string | boolean | null>) => ({
-    mode: "template",
     toEmail: "test@example.com",
     template: "productConfirmation",
     params: {
@@ -376,7 +265,29 @@ describe("POST /api/admin/send-test-email", () => {
       productType: "consumer_club",
       mode: "subscription",
       priceAmount: "€40.00",
+      firstChargeDate: "none",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      gamerCopy: false,
+      // The page facts the mail mirrors, which the schema requires whole too.
+      ageRange: "8-12",
+      audience: "gamers",
+      spokenLanguageCode: "fi",
+      // The calendar half of the form, which the schema requires whole. No
+      // slots, so these sends carry no invitation — what is checked here is the
+      // route's param handling, and a schedule would drag a calendar document
+      // into every assertion.
+      participationId: "",
+      attendeeName: "Marja Virtanen",
+      attendeeEmail: "marja@example.com",
+      shortDescription: "",
+      timezone: "Europe/Helsinki",
+      startDate: "2027-01-04",
+      endDate: "",
+      slots: "",
+      isRemote: "no",
+      siteName: "",
+      siteAddress: "",
+      siteNote: "",
       ...params,
     },
   });
@@ -436,7 +347,6 @@ describe("POST /api/admin/send-test-email", () => {
     mockAuthenticatedWithRole("admin");
 
     const response = await POST(createRequest({
-      mode: "template",
       toEmail: "test@example.com",
       template: "sessionReport",
       params: {
@@ -469,7 +379,6 @@ describe("POST /api/admin/send-test-email", () => {
     mockAuthenticatedWithRole("admin");
 
     await POST(createRequest({
-      mode: "template",
       toEmail: "test@example.com",
       template: "sessionReport",
       params: {
@@ -553,7 +462,6 @@ describe("POST /api/admin/send-test-email", () => {
 
   function sendCalendarInvitation(overrides: Record<string, string | null> = {}) {
     return POST(createRequest({
-      mode: "template",
       toEmail: "test@example.com",
       template: "calendarInvitation",
       params: { ...calendarInvitationParams(), ...overrides },
@@ -609,7 +517,7 @@ describe("POST /api/admin/send-test-email", () => {
     expect(textContent).not.toMatch(/<[a-z/][^>]*>/i);
 
     mockSendTransactionalEmail.mockClear();
-    await POST(createRequest(validTemplateBody));
+    await POST(createRequest(validBody));
     expect(mockSendTransactionalEmail.mock.calls[0][0].textContent).toBeUndefined();
   });
 
@@ -652,19 +560,9 @@ describe("POST /api/admin/send-test-email", () => {
   it("sends no attachments for a template that has none", async () => {
     mockAuthenticatedWithRole("admin");
 
-    await POST(createRequest(validTemplateBody));
+    await POST(createRequest(validBody));
 
     const [{ attachments }] = mockSendTransactionalEmail.mock.calls[0];
     expect(attachments).toBeUndefined();
-  });
-
-  it("should return 400 for missing mode field", async () => {
-    mockAuthenticatedWithRole("admin");
-
-    const response = await POST(
-      createRequest({ toEmail: "test@example.com", template: "feedback", params: {} }),
-    );
-
-    expect(response.status).toBe(400);
   });
 });

@@ -50,8 +50,10 @@ does not have, because there the licence is a property of the same call that
 creates the account. `create` reports those separately for that reason.
 
 **Rule: a Sogverse gamer account and a `@gamer.sog.gg` account are unrelated.**
-Platform gamer identities use a synthetic internal address. The only link
-between the two systems is the password-reset tool. Never join them by name.
+A platform gamer's sign-in address is the platform's own — an internal handle,
+or a username or real address the parent chose — and none of those is an
+Education tenant identity. The only link between the two systems is the
+password-reset tool. Never join them by name.
 
 ## Platform constraints
 

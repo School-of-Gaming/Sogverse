@@ -4,7 +4,7 @@ import type { ProductBrowseRow } from "@/types";
 import {
   matchesAudienceFilter,
   type AudienceFilterValue,
-} from "./product-audience";
+} from "@/lib/products/product-audience";
 import type { ProductTag } from "./product-tag";
 
 // Topic + format + language filters as the parent navigates the catalog.

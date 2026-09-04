@@ -20,9 +20,26 @@
  * redirect lands back on the same URL the user was browsing from). Otherwise
  * fall back to the canonical `NEXT_PUBLIC_SITE_URL` — an attacker spoofing
  * `Host: evil.com` lands the victim on our own site, not theirs.
+ *
+ * **Takes a `Request` or bare `Headers`**, because a server *component* has no
+ * Request to hand over — `headers()` is all it gets — and the alternative was a
+ * page fabricating a Request around the headers purely to satisfy a signature.
+ * Only the Host header is ever read, so the two forms carry the same
+ * information and there is nothing for a caller to get wrong.
  */
-export function getOrigin(request: Request): string {
-  const host = request.headers.get("host") ?? "";
+function isHeadersLike(source: Request | Headers): source is Headers {
+  return "get" in source && typeof source.get === "function";
+}
+
+export function getOrigin(source: Request | Headers): string {
+  // Discriminate on the *capability*, not on property presence. `instanceof
+  // Headers` fails because Next's `headers()` returns its own read-only
+  // adapter, and `"headers" in source` failed the other way: that adapter
+  // keeps its backing store under a `headers` field, so it looked like a
+  // Request and its inner object had no `get`. A Headers of any flavour can
+  // `get`; a Request cannot, and holds its headers one level down.
+  const requestHeaders = isHeadersLike(source) ? source : source.headers;
+  const host = requestHeaders.get("host") ?? "";
 
   const trusted = new Set<string>();
   if (process.env.NEXT_PUBLIC_SITE_URL) {

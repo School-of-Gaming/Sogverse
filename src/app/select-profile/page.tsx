@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { getUserWithProfile } from "@/lib/supabase/server";
+import { createClient, getUserWithProfile } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { readSessionProvenance } from "@/lib/auth";
+import type { SessionProvenance } from "@/lib/session-provenance";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ROUTES } from "@/lib/constants";
 import { ROLE_DASHBOARD_PATHS, type UserRole } from "@/lib/constants/roles";
@@ -54,7 +57,29 @@ export default async function SelectProfilePage() {
 
   // "Continue as me" target: the viewer's own dashboard.
   const selfDashboardPath = ROLE_DASHBOARD_PATHS[role];
-  const initialFamily = await getInitialFamily(userWithProfile.user.id, role);
+  const [resolvedFamily, initialSessionProvenance] = await Promise.all([
+    getInitialFamily(userWithProfile.user.id, role),
+    getSessionProvenance(),
+  ]);
+
+  /**
+   * **A seed is a claim that the first frame is right, and it is held for a
+   * minute.** React Query treats seeded data as fresh (the client's global
+   * `staleTime`), so a seed missing the provenance does not merely paint a
+   * pessimistic first frame — it pins one. A gamer would sit in front of tiles
+   * that are on screen, named, and out of service for the whole minute, with
+   * nothing scheduled to fix them.
+   *
+   * So the two halves are seeded together or not at all. A customer is the one
+   * exception, and not a hedge: their gate is `none` whatever the provenance
+   * turns out to be, so there is nothing for the missing half to decide.
+   * Everyone else falls back to the honest path — no seed, and the client's own
+   * fetch lands the list and the provenance in the same answer.
+   */
+  const initialFamily =
+    initialSessionProvenance !== undefined || role === "customer"
+      ? resolvedFamily
+      : undefined;
 
   return (
     <>
@@ -66,7 +91,11 @@ export default async function SelectProfilePage() {
           py-12 keeps the centering true; the body content is small enough
           (title + one row of tiles) that it never reaches the header zone. */}
       <main className="-mt-[var(--header-height)] flex min-h-screen items-center justify-center px-4 py-12 sm:py-16">
-        <SelectProfileView selfDashboardPath={selfDashboardPath} initialFamily={initialFamily} />
+        <SelectProfileView
+          selfDashboardPath={selfDashboardPath}
+          initialFamily={initialFamily}
+          initialSessionProvenance={initialSessionProvenance}
+        />
       </main>
     </>
   );
@@ -78,16 +107,53 @@ export default async function SelectProfilePage() {
  * dashboard. Uses the admin client because this page serves gamers too, and a
  * gamer must see siblings that RLS hides (see `resolveFamilyWithAdmin`).
  * Identity comes from the `getClaims()`-verified `getUserWithProfile()` above,
- * never request input. Returns `[]` on any failure; the client `useFamily`
- * refetches on mount, so the selector still renders.
+ * never request input.
+ *
+ * `undefined` on any failure, never `[]`: an empty list is a *claim* that the
+ * household is empty, and a seeded claim is held as fresh for a minute rather
+ * than corrected by the next fetch. Absence puts the selector on its skeleton
+ * and lets the client's own read answer.
  */
 async function getInitialFamily(
   userId: string,
   role: "customer" | "gamer",
-): Promise<FamilyMember[]> {
+): Promise<FamilyMember[] | undefined> {
   try {
     return await resolveFamilyWithAdmin(createAdminClient(), userId, role);
   } catch {
-    return [];
+    return undefined;
+  }
+}
+
+/**
+ * The provenance of the viewer's own session, seeded beside the list so the
+ * tiles paint with their gate already decided.
+ *
+ * This page serves gamers, and a gamer pays a credential to leave their own
+ * account — which one depends on this (`src/services/pin/CLAUDE.md`, Gate B).
+ * Unseeded, `useSessionProvenance()` is `null` on the first frame and every tile
+ * is correctly but pointlessly out of service until the client refetch lands.
+ *
+ * It is read exactly the way the API route's gate reads it — the same
+ * `readSessionProvenance`, over the locally-verified claims and the switch
+ * route's marker cookie — so the seed and the gate can never disagree. That
+ * includes a token carrying no `session_id`: the reader owns that case and
+ * answers `own`, so this must not pre-empt it with a guard of its own, which
+ * would seed nothing where the gate would have seeded the stronger answer.
+ * `undefined` on a genuine failure, which puts the surface back on the honest
+ * "wait for the fetch" path rather than inventing an answer.
+ */
+async function getSessionProvenance(): Promise<SessionProvenance | undefined> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getClaims();
+    const claims = data?.claims;
+    if (!claims?.sub) return undefined;
+    return await readSessionProvenance({
+      claims,
+      cookies: await cookies(),
+    });
+  } catch {
+    return undefined;
   }
 }

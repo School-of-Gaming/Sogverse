@@ -3,6 +3,11 @@ import {
   buildInvitation,
   type InvitationInput,
 } from "@/lib/calendar-invitations/invitation";
+import {
+  SUPPORTED_TIMEZONES,
+  ZONE_RULE_TIMEZONES,
+} from "@/lib/calendar-invitations/ics-primitives";
+import { PRODUCT_TIMEZONES } from "@/lib/constants/location-hierarchies";
 
 /**
  * The calendar document, asserted on the bytes that leave the building.
@@ -187,12 +192,12 @@ describe("the zone a document names", () => {
   /**
    * One block per zone, offsets and transition rules alike.
    *
-   * Four of the five follow the one European rule seen from four offsets — the
-   * switch is at 01:00 UTC, so its local clock face differs per zone — and the
-   * fifth is the genuinely different American one. Getting an offset or a
-   * `BYDAY` wrong here moves every occurrence in the document by an hour, on
-   * exactly the clients that read the block instead of their own database,
-   * which is the failure no amount of eyeballing the document catches.
+   * All four follow the one European rule seen from four offsets — the switch
+   * is at 01:00 UTC, so its local clock face differs per zone. Getting an
+   * offset or a `BYDAY` wrong here moves every occurrence in the document by an
+   * hour, on exactly the clients that read the block instead of their own
+   * database, which is the failure no amount of eyeballing the document
+   * catches.
    */
   const ZONES = [
     {
@@ -215,12 +220,33 @@ describe("the zone a document names", () => {
       daylight: ["TZOFFSETFROM:+0000", "TZOFFSETTO:+0100", "TZNAME:BST", "DTSTART:19700329T010000", "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU"],
       standard: ["TZOFFSETFROM:+0100", "TZOFFSETTO:+0000", "TZNAME:GMT", "DTSTART:19701025T020000", "RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU"],
     },
-    {
-      zone: "America/New_York",
-      daylight: ["TZOFFSETFROM:-0500", "TZOFFSETTO:-0400", "TZNAME:EDT", "DTSTART:19700308T020000", "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU"],
-      standard: ["TZOFFSETFROM:-0400", "TZOFFSETTO:-0500", "TZNAME:EST", "DTSTART:19701101T020000", "RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU"],
-    },
   ];
+
+  /**
+   * The table and the admin form's zone picker are one list, and this is the
+   * runtime half of that statement — the compile-time half is `ZONE_RULES`
+   * being a total `Record` over the product-zone union, which a `Record` type
+   * cannot enforce against a key computed or deleted after the fact.
+   *
+   * Both directions matter and they fail differently. A product zone with no
+   * rules ships an invitation carrying an unexplained note; a rule for a zone
+   * no product can be authored in is dead weight that reads as support for
+   * something we do not offer.
+   */
+  it("ships rules for exactly the zones a product can be authored in", () => {
+    expect([...ZONE_RULE_TIMEZONES].sort()).toEqual([...PRODUCT_TIMEZONES].sort());
+  });
+
+  /**
+   * UTC is the one entry in the explorer's list that is not a product zone, and
+   * the reason is the format rather than the platform: it is how a document
+   * states absolute instants, which is a property worth being able to try.
+   */
+  it("offers the product zones plus UTC, and nothing else", () => {
+    expect([...SUPPORTED_TIMEZONES].sort()).toEqual(
+      [...PRODUCT_TIMEZONES, "UTC"].sort(),
+    );
+  });
 
   it.each(ZONES)("ships the transition rules for $zone", ({ zone, daylight, standard }) => {
     const { ics } = build({ timezone: zone });

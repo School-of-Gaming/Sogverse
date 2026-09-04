@@ -399,6 +399,38 @@ describe("the photos under the report", () => {
   });
 });
 
+/**
+ * The child's own copy: one sentence addressed to the child instead of to the
+ * parent about them, and nothing else different. Both halves are pinned —
+ * that the sentence turns, and that the report under it does not — because
+ * the second is what makes the first safe to send: a child's copy that drifted
+ * in its body would be a fourth mail nobody reviews.
+ */
+describe("the child's own copy", () => {
+  const family = () => buildSessionReportEmail(t, "en", base);
+  const child = () => buildSessionReportEmail(t, "en", { ...base, gamerCopy: true });
+
+  it("addresses the framing sentence to the child", () => {
+    expect(child()).toContain("report from your ");
+    expect(child()).toContain("Hi ");
+    expect(family()).not.toContain("report from your ");
+  });
+
+  it("leaves everything under the intro byte-for-byte the family's", () => {
+    const from = (html: string) => html.slice(html.indexOf("Group"));
+    expect(from(child())).toBe(from(family()));
+  });
+
+  it("carries no staff banner", () => {
+    expect(child()).not.toContain("Gedu and Admin copy");
+    expect(child()).not.toContain(`border:1px solid ${STATUS_TINT.infoBorder}`);
+  });
+
+  it("renders the family mail when the flag is absent or false", () => {
+    expect(buildSessionReportEmail(t, "en", { ...base, gamerCopy: false })).toBe(family());
+  });
+});
+
 describe("sessionReportSubject", () => {
   it("names the product and the session date", () => {
     expect(sessionReportSubject(t, base)).toBe(

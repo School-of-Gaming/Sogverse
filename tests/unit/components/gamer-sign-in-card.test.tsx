@@ -1,0 +1,339 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/../messages/en.json";
+import { GamerSignInCard } from "@/components/family";
+import { ApiError } from "@/lib/api/api-error";
+import type { GamerSignIn } from "@/types";
+
+/**
+ * **The card a parent uses to change how one of their children signs in — and,
+ * without changing anything about the mode, to correct a username or reset a
+ * password.**
+ *
+ * Two standing affordances exist alongside the mode form, and each is its own
+ * submit because each is its own decision: a new password for a username-mode
+ * child, and a new username. There is deliberately no third for an address:
+ * changing an account's email address is not something the app supports for any
+ * role (owner ruling), and the route refuses one on an account already in
+ * `email` mode, so the card offers no field that would ask for it.
+ *
+ * What is pinned:
+ *
+ *  - the username write sends exactly that one key. The route reads the
+ *    account's stored mode and takes the handle it is addressed by, so a
+ *    `signIn` key alongside it would be proposing a mode change nobody asked
+ *    for;
+ *  - the value is normalised the same way the account will store it, so what a
+ *    parent reads back to their child is what the child will type;
+ *  - a taken username lands on the field the parent can fix, never in the
+ *    generic apology;
+ *  - an email-mode child's address is a read-only fact, and the block around it
+ *    states the verification answer in words either way, with the per-gamer send
+ *    allowance getting its own sentence rather than "try again".
+ */
+
+const mutateAsync = vi.fn<(args: unknown) => Promise<unknown>>();
+const sendVerification = vi.fn<
+  (
+    gamerId: string,
+    handlers: { onSuccess: () => void; onError: (error: Error) => void },
+  ) => void
+>();
+
+vi.mock("@/services/gamers", () => ({
+  // The codes are constants the card compares an ApiError against, so the mock
+  // has to carry them rather than only the hooks.
+  GAMER_USERNAME_TAKEN: "USERNAME_TAKEN",
+  GAMER_EMAIL_TAKEN: "EMAIL_TAKEN",
+  useUpdateGamer: () => ({ mutateAsync }),
+  useSendGamerVerificationEmail: () => ({ mutate: sendVerification }),
+}));
+
+const GAMER_ID = "8c4f1e57-2d3a-4b19-95e6-7a0d1c2b3f48";
+const COPY = messages.parent.gamerDetail.signIn;
+
+function renderCard(props: {
+  signIn: GamerSignIn;
+  email?: string | null;
+  emailVerifiedAt?: string | null;
+}) {
+  const view = render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <GamerSignInCard
+        gamerId={GAMER_ID}
+        firstName="Lily"
+        signIn={props.signIn}
+        email={props.email ?? null}
+        emailVerifiedAt={props.emailVerifiedAt ?? null}
+      />
+    </NextIntlClientProvider>,
+  );
+
+  function field(id: string) {
+    const input = view.container.querySelector<HTMLInputElement>(`#${id}`);
+    if (!input) throw new Error(`no field #${id}`);
+    return input;
+  }
+
+  return {
+    ...view,
+    field,
+    fill(id: string, value: string) {
+      fireEvent.change(field(id), { target: { value } });
+    },
+    /** Submit the form the given field belongs to. */
+    submitAround: (id: string) =>
+      act(async () => {
+        const form = field(id).closest("form");
+        if (!form) throw new Error(`#${id} is not inside a form`);
+        fireEvent.submit(form);
+      }),
+    button: (label: string) => screen.getByRole("button", { name: label }),
+    /**
+     * Redraws the card with the props an invalidated read would come back
+     * with — the moment `signIn`/`email` catch up with a write already sent.
+     * A plain `renderCard` call cannot stand in for this: it mounts a fresh
+     * card, where a save's own committed-value bookkeeping starts over.
+     */
+    rerenderWith(next: Partial<typeof props>) {
+      const merged = { ...props, ...next };
+      view.rerender(
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <GamerSignInCard
+            gamerId={GAMER_ID}
+            firstName="Lily"
+            signIn={merged.signIn}
+            email={merged.email ?? null}
+            emailVerifiedAt={merged.emailVerifiedAt ?? null}
+          />
+        </NextIntlClientProvider>,
+      );
+    },
+  };
+}
+
+/** The single `updates` object the card sent. */
+function sentUpdates(): unknown {
+  expect(mutateAsync).toHaveBeenCalledTimes(1);
+  const [args] = mutateAsync.mock.calls[0];
+  if (typeof args !== "object" || args === null) {
+    throw new Error("the mutation was not called with an object");
+  }
+  return Reflect.get(args, "updates");
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mutateAsync.mockResolvedValue({});
+});
+
+describe("changing a username-mode child's username", () => {
+  it("sends the username alone, normalised", async () => {
+    const view = renderCard({
+      signIn: "username",
+      email: "lily2015@gamer.sogverse.internal",
+    });
+
+    view.fill("gamer-change-username", "Lily2016");
+    await view.submitAround("gamer-change-username");
+
+    expect(sentUpdates()).toEqual({ username: "lily2016" });
+
+    // The write landed, but `currentValue` is still derived from the old
+    // `email` prop until the invalidated read comes back — the "saved" line
+    // waits for that redraw rather than the request.
+    expect(screen.queryByText(COPY.change.username.saved)).toBeNull();
+
+    view.rerenderWith({ email: "lily2016@gamer.sogverse.internal" });
+    expect(screen.getByText(COPY.change.username.saved)).toBeTruthy();
+  });
+
+  it("shows what the account holds today without prefilling it", () => {
+    const view = renderCard({
+      signIn: "username",
+      email: "lily2015@gamer.sogverse.internal",
+    });
+
+    const input = view.field("gamer-change-username");
+    expect(input.value).toBe("");
+    expect(input.getAttribute("placeholder")).toBe("lily2015");
+  });
+
+  it("refuses a username the pattern would not accept, before any request", async () => {
+    const view = renderCard({
+      signIn: "username",
+      email: "lily2015@gamer.sogverse.internal",
+    });
+
+    view.fill("gamer-change-username", "ab");
+    await view.submitAround("gamer-change-username");
+
+    expect(mutateAsync).not.toHaveBeenCalled();
+    expect(screen.getByText(messages.gamerSignIn.usernameInvalid)).toBeTruthy();
+  });
+
+  it("puts a taken username on the field rather than in the apology", async () => {
+    mutateAsync.mockRejectedValue(
+      new ApiError("taken", 409, "USERNAME_TAKEN"),
+    );
+    const view = renderCard({
+      signIn: "username",
+      email: "lily2015@gamer.sogverse.internal",
+    });
+
+    view.fill("gamer-change-username", "otso");
+    await view.submitAround("gamer-change-username");
+
+    expect(screen.getByText(messages.gamerSignIn.usernameTaken)).toBeTruthy();
+    expect(screen.queryByText(COPY.saveFailed)).toBeNull();
+  });
+
+  it("keeps the generic apology for every other failure", async () => {
+    mutateAsync.mockRejectedValue(new ApiError("boom", 500, undefined));
+    const view = renderCard({
+      signIn: "username",
+      email: "lily2015@gamer.sogverse.internal",
+    });
+
+    view.fill("gamer-change-username", "lily2016");
+    await view.submitAround("gamer-change-username");
+
+    expect(screen.getByText(COPY.saveFailed)).toBeTruthy();
+  });
+
+  it("is not offered to a child who signs in some other way", () => {
+    const view = renderCard({ signIn: "email", email: "lily@example.test" });
+
+    expect(view.container.querySelector("#gamer-change-username")).toBeNull();
+  });
+});
+
+/**
+ * **There is no form for replacing an email-mode child's address** (owner
+ * ruling): changing an account's email address is not something the app supports
+ * for any role, so the card states the address as a fact and offers only the one
+ * action either verification state allows. The refusal is backed at the route,
+ * which answers 400 to an `email` key on an account already in that mode, so
+ * the rule holds whether or not this card renders a field.
+ */
+describe("an email-mode child's address", () => {
+  it("is shown as a fact, with nothing to type a new one into", () => {
+    const view = renderCard({ signIn: "email", email: "lily@example.test" });
+
+    expect(view.container.querySelector("#gamer-change-email")).toBeNull();
+    // What survives: the address itself, and the button that sends the
+    // verification link again.
+    expect(screen.getByDisplayValue("lily@example.test")).toBeTruthy();
+    expect(screen.getByRole("button", { name: COPY.resend })).toBeTruthy();
+  });
+});
+
+describe("a switch-only child", () => {
+  it("gets no standing change form — there is no username to correct", () => {
+    const view = renderCard({ signIn: "parent" });
+
+    expect(view.container.querySelector("#gamer-change-username")).toBeNull();
+  });
+});
+
+/**
+ * The state the card lands in after an address change — the write clears the
+ * verification stamp, so the next render is the unverified one with the resend
+ * button. Rendered directly rather than driven through the write, because the
+ * clearing happens in the database and arrives here as a refetched prop.
+ */
+describe("the address block after a change", () => {
+  it("states the address is not yet verified and offers to send the link again", () => {
+    renderCard({
+      signIn: "email",
+      email: "lily@example.test",
+      emailVerifiedAt: null,
+    });
+
+    expect(
+      screen.getByText(COPY.notVerified.replace("{name}", "Lily")),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: COPY.resend })).toBeTruthy();
+  });
+
+  it("states the answer the other way once the child has opened the link", () => {
+    renderCard({
+      signIn: "email",
+      email: "lily@example.test",
+      emailVerifiedAt: "2026-02-19T17:40:00.000Z",
+    });
+
+    expect(screen.getByText(COPY.verified)).toBeTruthy();
+  });
+
+  it("gives the spent send allowance its own sentence, not a retry", async () => {
+    sendVerification.mockImplementation((_gamerId, handlers) => {
+      handlers.onError(new ApiError("too many", 429, undefined));
+    });
+    const view = renderCard({ signIn: "email", email: "lily@example.test" });
+
+    await act(async () => {
+      view.button(COPY.resend).click();
+    });
+
+    expect(screen.getByText(COPY.resendRateLimited)).toBeTruthy();
+    expect(screen.queryByText(COPY.resendFailed)).toBeNull();
+  });
+});
+
+describe("the mode form itself", () => {
+  it("has nothing to save until a different mode is chosen", () => {
+    const view = renderCard({ signIn: "parent" });
+
+    expect(view.button(messages.common.saveChanges).hasAttribute("disabled")).toBe(
+      true,
+    );
+  });
+
+  it("asks for a username and a password on the way into username mode", async () => {
+    const view = renderCard({ signIn: "parent" });
+
+    fireEvent.click(
+      view.container.querySelector<HTMLInputElement>(
+        'input[name="gamer-sign-in-mode"][value="username"]',
+      )!,
+    );
+
+    view.fill("gamer-mode-username", "lily2015");
+    view.fill("gamer-mode-password", "a-long-enough-password");
+    await view.submitAround("gamer-mode-username");
+
+    expect(sentUpdates()).toEqual({
+      signIn: "username",
+      username: "lily2015",
+      password: "a-long-enough-password",
+      email: undefined,
+    });
+  });
+
+  // The mutation resolving is not the end of the click: `signIn` is a prop off
+  // a query the write only invalidated, so the redraw that clears the fields
+  // and the redraw that carries the new `signIn` are two different renders.
+  // A button live in between would let a second click validate three empty
+  // strings and tell the parent their own username is required.
+  it("stays disabled after a successful save until the signIn prop catches up", async () => {
+    const view = renderCard({ signIn: "parent" });
+
+    fireEvent.click(
+      view.container.querySelector<HTMLInputElement>(
+        'input[name="gamer-sign-in-mode"][value="username"]',
+      )!,
+    );
+
+    view.fill("gamer-mode-username", "lily2015");
+    view.fill("gamer-mode-password", "a-long-enough-password");
+    await view.submitAround("gamer-mode-username");
+
+    // The mock resolves, but this test never re-renders the card with a new
+    // `signIn` prop — the same window the real refetch has not filled yet.
+    const button = view.button(messages.common.saving);
+    expect(button.hasAttribute("disabled")).toBe(true);
+    expect(screen.queryByText(COPY.saved)).toBeNull();
+  });
+});

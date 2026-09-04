@@ -6,12 +6,24 @@ import { useTranslations } from "next-intl";
 import { Input, type InputProps } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-export type PasswordInputProps = Omit<InputProps, "type">;
+export type PasswordInputProps = Omit<InputProps, "type"> & {
+  /**
+   * Start with the characters on screen rather than masked.
+   *
+   * Masking protects a secret from whoever is standing behind you, which is
+   * exactly backwards where a parent is *choosing* a password in order to read
+   * it out to their child: the person over their shoulder is the one it is for.
+   * The toggle stays, so the field can still be hidden — this only decides which
+   * way it opens, and only a field a parent is authoring for somebody else opens
+   * clear. A field where somebody types their *own* password never does.
+   */
+  defaultVisible?: boolean;
+};
 
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
-  ({ className, disabled, ...props }, ref) => {
+  ({ className, disabled, defaultVisible = false, ...props }, ref) => {
     const c = useTranslations("common");
-    const [visible, setVisible] = React.useState(false);
+    const [visible, setVisible] = React.useState(defaultVisible);
 
     return (
       <div className="relative">

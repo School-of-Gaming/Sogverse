@@ -8,14 +8,16 @@ import { LanguageFlag } from "@/components/ui/language-flag";
 import { resolveLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/utils";
 import type { ProductBrowseRow } from "@/types";
-import { formatProductLocation } from "./format-product-location";
-import { audienceLabelKey } from "./product-audience";
-import { formatClubTermDates } from "./format-product-term-dates";
 import {
-  formatProductSchedule,
-  renderScheduleLinesForDetail,
-  SCHEDULE_PART_SEPARATOR,
-} from "./format-product-schedule";
+  formatProductLocation,
+  productLocationLabelIsFormat,
+  renderProductLocationLine,
+} from "@/lib/products/format-product-location";
+import {
+  productScheduleDisplayLines,
+  productWhoItsFor,
+} from "@/lib/products/product-overview-facts";
+import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
 
 // Shared "Good to know" overview card. Renders schedule (day/time),
 // location/format, who the product is for (its audience, its age range, or
@@ -72,76 +74,22 @@ export function ProductOverviewCard({
   const timeZone = useTimezone();
   const now = useNow();
 
-  const schedule = formatProductSchedule({ product, locale: uiLocale, timeZone, now });
-  const scheduleLines = renderScheduleLinesForDetail(schedule);
   const location = formatProductLocation(product, uiLocale);
+  const labelIsFormat = productLocationLabelIsFormat(product.is_remote, location);
 
-  const ages =
-    product.min_age !== null && product.max_age !== null
-      ? { min: product.min_age, max: product.max_age }
-      : null;
-
-  // One cell answers "who is this for", in whichever of the three shapes the
-  // product has — which is what keeps the grid 2×2 for every audience instead
-  // of a family product growing a fifth fact and a third row.
-  //
-  //   - Gamers-only: the age range alone, unchanged and unlabelled by
-  //     audience. That is the assumed default, so a "For gamers" fact would be
-  //     a row every existing product page grew for no news — the same
-  //     restraint the browse card's badge shows.
-  //   - Parents-only: the audience label alone. No age range exists to state
-  //     (an adult "18+" was rejected as saying something else entirely), so
-  //     this is the fact that *replaces* the ages rather than joining them.
-  //   - Family: both, composed by one message ("For families, ages 8–12")
-  //     rather than concatenated from two — a comma is grammar, and grammar is
-  //     the translator's to own.
-  //
-  // The label follows the same split: "Age range" where the cell is a range,
-  // "Audience" where it leads with the audience word. The
-  // badge-or-nothing decision itself lives in product-audience.ts.
-  const whoItsFor = ((): {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    value: string;
-  } | null => {
-    switch (audienceLabelKey(product)) {
-      case null:
-        return ages === null
-          ? null
-          : {
-              icon: Users,
-              label: t("info.ageRange"),
-              value: t("info.ages", ages),
-            };
-      case "parents":
-        return {
-          icon: UserRound,
-          label: t("info.audience"),
-          value: tAudience("parents"),
-        };
-      case "families":
-        return {
-          icon: Users,
-          label: t("info.audience"),
-          // The CHECK ties a range to the gamer audience, so a family product
-          // always has one; the fallback is the shape of the data, not a case
-          // anyone should see.
-          value:
-            ages === null
-              ? tAudience("families")
-              : tAudience("familiesWithAges", ages),
-        };
-    }
-  })();
-
-  // A club's term range ("13 Jan – 30 May 2026") isn't in its weekly schedule
-  // line — camps/events already fold their dates into the schedule, so the
-  // helper returns null for them. Fold the club range in as an extra schedule
-  // line (rather than a 5th overview Fact) to keep the 2×2 grid intact.
-  const termRange = formatClubTermDates(product, uiLocale);
-  const scheduleDisplayLines = termRange
-    ? [...scheduleLines, termRange]
-    : scheduleLines;
+  // The three-shape "who is this for" answer, and the club term range folded
+  // into the schedule, are both shared rules — the mail that mirrors the
+  // purchase confirmation states them in the same words, so the composition
+  // lives in `@/lib/products/product-overview-facts` and each surface only
+  // renders it. The label follows the shape: "Age range" where the cell is a
+  // range, "Audience" where it leads with the audience word.
+  const whoItsFor = productWhoItsFor(product);
+  const scheduleDisplayLines = productScheduleDisplayLines({
+    product,
+    locale: uiLocale,
+    timeZone,
+    now,
+  });
 
   return (
     <Card>
@@ -189,19 +137,15 @@ export function ProductOverviewCard({
             )}
           </DetailRow>
           <DetailRow
-            icon={product.is_remote && location?.kind !== "muni" ? Globe : MapPin}
-            label={
-              product.is_remote && location?.kind !== "muni"
-                ? t("info.format")
-                : t("info.where")
-            }
+            icon={labelIsFormat ? Globe : MapPin}
+            label={labelIsFormat ? t("info.format") : t("info.where")}
             railFrom2xl={railFrom2xl}
           >
-            {renderLocationLine({
+            {renderProductLocationLine({
               location,
               isRemote: product.is_remote,
-              tOnline: t("info.online"),
-              tTbd: t("info.tbd"),
+              online: t("info.online"),
+              tbd: t("info.tbd"),
             })}
           </DetailRow>
           {/* Null only for a row carrying neither an audience label nor an age
@@ -210,11 +154,21 @@ export function ProductOverviewCard({
               cell. */}
           {whoItsFor !== null && (
             <DetailRow
-              icon={whoItsFor.icon}
-              label={whoItsFor.label}
+              icon={whoItsFor.value.kind === "parents" ? UserRound : Users}
+              label={
+                whoItsFor.label === "ageRange"
+                  ? t("info.ageRange")
+                  : t("info.audience")
+              }
               railFrom2xl={railFrom2xl}
             >
-              {whoItsFor.value}
+              {whoItsFor.value.kind === "ages"
+                ? t("info.ages", whoItsFor.value)
+                : whoItsFor.value.kind === "parents"
+                  ? tAudience("parents")
+                  : whoItsFor.value.kind === "families"
+                    ? tAudience("families")
+                    : tAudience("familiesWithAges", whoItsFor.value)}
             </DetailRow>
           )}
           <DetailRow
@@ -321,26 +275,4 @@ function ScheduleLine({ line }: { line: string }) {
       ))}
     </>
   );
-}
-
-function renderLocationLine({
-  location,
-  isRemote,
-  tOnline,
-  tTbd,
-}: {
-  location: ReturnType<typeof formatProductLocation>;
-  isRemote: boolean;
-  tOnline: string;
-  tTbd: string;
-}): string {
-  if (!location) return isRemote ? tOnline : tTbd;
-  switch (location.kind) {
-    case "site":
-      return location.parent
-        ? `${location.site}, ${location.parent}`
-        : location.site;
-    case "muni":
-      return location.name;
-  }
 }

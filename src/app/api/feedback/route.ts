@@ -3,7 +3,10 @@ import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { buildFeedbackEmail } from "@/lib/email-templates/feedback";
+import {
+  buildFeedbackEmail,
+  feedbackReplyToAddress,
+} from "@/lib/email-templates/feedback";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import {
@@ -11,6 +14,7 @@ import {
   isSupportedLocale,
 } from "@/lib/constants/locales";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import { gamerHoldsOwnMailbox } from "@/lib/email/family-recipients.server";
 
 const feedbackSchema = z.object({
   message: z
@@ -61,9 +65,9 @@ export const POST = defineRoute({
     // whenever staff do.
     const role = profile.role;
     const userEmail = profile.email || "";
-    let replyToEmail = userEmail;
     let isGamer = false;
     let parentEmail: string | undefined;
+    let gamerOwnMailbox = false;
 
     if (role === "gamer") {
       isGamer = true;
@@ -88,10 +92,25 @@ export const POST = defineRoute({
           .single();
 
         if (parentProfile?.email) {
-          replyToEmail = parentProfile.email;
           parentEmail = parentProfile.email;
         }
       }
+
+      // Reply-To stays the parent's — Brevo takes one address, and we never
+      // answer a child alone — but a gamer who holds a mailbox of their own is
+      // named in the staff-facing note so the admin can include both. The gate
+      // is the shared one: the real-email sign-in, which is the whole test.
+      // Same service-role read as the parent lookup, and for the same reason.
+      const { data: gamerProfile } = await adminClient
+        .from("gamer_profiles")
+        .select("sign_in")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      gamerOwnMailbox = gamerHoldsOwnMailbox({
+        email: userEmail,
+        signIn: gamerProfile?.sign_in ?? null,
+      });
     }
 
     // Resolve locale: profile preference → Accept-Language → English
@@ -103,10 +122,13 @@ export const POST = defineRoute({
     const t = await getEmailTranslator(locale);
     const displayName = profile.first_name || "Unknown";
 
-    const htmlContent = buildFeedbackEmail(t, locale, {
+    // `userEmail` is the submitter's own address, whatever it is — the mail
+    // resolves the reply-to from it and the parent's, in the one place both
+    // this send and the template's own "Reply to" row read it from.
+    const mailOptions = {
       userName: displayName,
       userRole: role,
-      userEmail: replyToEmail || userEmail,
+      userEmail,
       message: body.message,
       sentAt: new Date().toLocaleString(locale, {
         dateStyle: "medium",
@@ -114,7 +136,9 @@ export const POST = defineRoute({
       }),
       isGamer,
       parentEmail,
-    });
+      gamerOwnMailbox,
+    };
+    const htmlContent = buildFeedbackEmail(t, locale, mailOptions);
 
     await sendTransactionalEmail({
       fromEmail: SENDER_EMAIL,
@@ -131,12 +155,12 @@ export const POST = defineRoute({
       // usual SUPPORT_EMAIL reply-to would send the reply straight back to
       // ourselves.
       //
-      // For a gamer this is their parent's address *when the link above
-      // resolves*. A gamer with no linked parent leaves their own synthetic
-      // handle here, which would bounce — accepted, because every gamer is
-      // created through a parent, so an unlinked one is a broken row rather
-      // than a state to design a reply-to for.
-      replyToEmail: replyToEmail || undefined,
+      // Resolved by the shared helper the mail's own "Reply to" row reads, so
+      // the header and the printed address cannot drift apart: a gamer's goes
+      // to their linked parent whatever sign-in the child holds, because we
+      // never answer a child alone, and everyone else is answered at their own
+      // address. See the helper for what an unlinked gamer falls back to.
+      replyToEmail: feedbackReplyToAddress(mailOptions) || undefined,
     });
 
     return { success: true };

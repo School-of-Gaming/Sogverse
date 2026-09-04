@@ -3,11 +3,14 @@ import type {
   ParentGamer,
   CreateGamerInput,
   GamerProfile,
+  GamerSignIn,
   GenderType,
   AppSupabaseClient,
 } from "@/types";
 import { isGamerProfile } from "@/types";
 import { ApiError } from "@/lib/api/api-error";
+import { readErrorMessage } from "@/lib/api/json-response";
+import { chunkKeys } from "@/lib/supabase/paging";
 
 /**
  * What a parent may change about one of their gamers, one field at a time.
@@ -19,9 +22,26 @@ import { ApiError } from "@/lib/api/api-error";
  */
 export interface GamerUpdate {
   firstName?: string;
+  /**
+   * A new password for the child. Accepted only while the account is (or is
+   * becoming) in `username` mode — the route answers 400 otherwise, because a
+   * password on a switch-only or email-mode account is a credential with
+   * nothing to type it against.
+   */
   password?: string;
   minecraftUsername?: string | null;
   robloxUsername?: string | null;
+  /** Move the child to a different sign-in mode. Absent leaves the mode alone. */
+  signIn?: GamerSignIn;
+  /** A new username, which also becomes the account's synthetic address. */
+  username?: string;
+  /**
+   * The real address a child is *entering* `email` mode with, which they then
+   * have to verify. An account already in that mode does not take a new one —
+   * the route answers 400, because changing an account's address is not
+   * something the platform supports for any role.
+   */
+  email?: string;
 }
 
 /**
@@ -103,6 +123,49 @@ export class GamerService {
   }
 
   /**
+   * The sign-in mode of each named gamer, as `{ user_id, sign_in }` rows.
+   *
+   * For the admin users list, which prints a different identity line per mode —
+   * a mailbox, a username, or nothing at all — and cannot ask per row without
+   * turning one list into a query per child. One read alongside the profiles
+   * read it is already doing answers the whole page.
+   *
+   * **Keyed, not walked, and the ids come from the page.** The caller is
+   * already holding the users it is about to render — a page of them, or a
+   * search result — so asking about every gamer on the platform to print a line
+   * beside a couple of dozen is a read whose cost grows with the table while
+   * the page it feeds does not. Keyed also removes the truncation trap that
+   * made the walk necessary: `gamer_profiles` is one row per user, so a chunk
+   * asking for N ids can come back with at most N rows, and
+   * `KEY_LOOKUP_CHUNK_SIZE` is comfortably under `max_rows` — a short page here
+   * means the id had no row, which is exactly the answer the list wants.
+   *
+   * Ids that are not gamers cost nothing: this is a lookup, and a missing row
+   * is simply absent from the map the caller builds.
+   *
+   * Admin RLS (`admin_full_access_gamer_profiles`) is what permits the
+   * cross-user read; a parent calling this gets only their own children, which
+   * is correct rather than a limitation.
+   */
+  async getGamerSignIns(
+    userIds: readonly string[],
+  ): Promise<Pick<GamerProfile, "user_id" | "sign_in">[]> {
+    if (userIds.length === 0) return [];
+
+    const rows: Pick<GamerProfile, "user_id" | "sign_in">[] = [];
+    for (const batch of chunkKeys(userIds)) {
+      const { data, error } = await this.supabase
+        .from("gamer_profiles")
+        .select("user_id,sign_in")
+        .in("user_id", batch);
+
+      if (error) throw error;
+      rows.push(...data);
+    }
+    return rows;
+  }
+
+  /**
    * Writes a gamer's birth date and gender, returning the stored row.
    *
    * **Through the injected client rather than an API route.** Nothing here
@@ -148,6 +211,13 @@ export class GamerService {
         gender: input.gender,
         minecraftUsername: input.minecraftUsername,
         robloxUsername: input.robloxUsername,
+        // Named one at a time rather than spread, so a field the route does not
+        // take cannot arrive by accident. The credential trio is only ever the
+        // one its mode calls for; the route re-checks that pairing anyway.
+        signIn: input.signIn,
+        username: input.username,
+        email: input.email,
+        password: input.password,
       }),
     });
 
@@ -177,10 +247,37 @@ export class GamerService {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Failed to update gamer");
+      // Carries the code through, so a form can tell "that username is taken"
+      // from every other refusal and put the message on the right field.
+      throw new ApiError(
+        data.error || "Failed to update gamer",
+        response.status,
+        data.code,
+      );
     }
 
     return data.gamer;
+  }
+
+  /**
+   * Ask us to re-send the verification mail to one of this parent's children.
+   *
+   * A child in `email` mode cannot ask for themselves — they have no password
+   * until the address is verified — so the request is the parent's, about a
+   * named child. The send is the outcome here rather than a follow-on, so a
+   * failure is surfaced rather than swallowed.
+   */
+  async sendGamerVerificationEmail(gamerId: string): Promise<void> {
+    const response = await fetch(`/api/gamers/${gamerId}/verification/send`, {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new ApiError(
+        await readErrorMessage(response, "Failed to send the verification email"),
+        response.status,
+        undefined,
+      );
+    }
   }
 
   async getParentGamerLinks(parentId: string): Promise<ParentGamer[]> {

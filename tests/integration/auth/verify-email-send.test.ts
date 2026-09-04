@@ -43,10 +43,16 @@ function createRequest(headers?: Record<string, string>): Request {
  */
 const mockRpc = vi.fn();
 
+/**
+ * The sign-in mode the caller's own client reports — the one read this route
+ * makes beyond the rate-limit RPC, and only for a gamer caller.
+ */
+const mockSignIn = vi.fn();
+
 /** The gate's success shape, for a caller with a real inbox. */
 function authAs(
   overrides: {
-    role?: "customer" | "gedu" | "admin";
+    role?: "customer" | "gamer" | "gedu" | "admin";
     email?: string | null;
     locale?: string | null;
     emailVerifiedAt?: string | null;
@@ -62,7 +68,12 @@ function authAs(
       locale: overrides.locale === undefined ? "en" : overrides.locale,
       email_verified_at: overrides.emailVerifiedAt ?? null,
     },
-    supabase: { rpc: mockRpc },
+    supabase: {
+      rpc: mockRpc,
+      from: () => ({
+        select: () => ({ eq: () => ({ maybeSingle: mockSignIn }) }),
+      }),
+    },
   });
 }
 
@@ -78,6 +89,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
   mockRpc.mockResolvedValue({ data: true, error: null });
+  mockSignIn.mockResolvedValue({ data: { sign_in: "email" }, error: null });
 });
 
 // --- Tests ---
@@ -96,22 +108,22 @@ describe("POST /api/auth/verify-email/send", () => {
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
-  // The gate itself is mocked, so what this route owns — and what this asserts —
-  // is the role list it hands the gate. A gamer's address is the synthetic
-  // `@gamer.sogverse.internal` one their account was created with: nobody reads
-  // that inbox, so mail to it goes nowhere and a "verified" stamp on it would
-  // assert something nobody confirmed.
-  it("gates on the three roles with a real inbox, excluding gamers", async () => {
+  // The role gate lets every role through, because the question this route
+  // actually asks is about the ADDRESS: every adult holds a real one, and a
+  // gamer holds one only in sign-in mode `email`. The other two modes carry a
+  // synthetic `@gamer.sogverse.internal` handle nobody reads, so mail to it goes
+  // nowhere and a "verified" stamp on it would assert something nobody
+  // confirmed — which the handler refuses, one table over from the role.
+  it("gates on every role, and asks about the address in the handler", async () => {
     authAs();
 
     await POST(createRequest());
 
     const [roles] = mockRequireRole.mock.calls[0];
-    expect(roles).toEqual(["customer", "gedu", "admin"]);
-    expect(roles).not.toContain("gamer");
+    expect(roles).toEqual(["customer", "gamer", "gedu", "admin"]);
   });
 
-  it("returns the gate's 403 when the caller is a gamer", async () => {
+  it("returns the gate's 403 when the gate itself refuses", async () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json({ error: "Forbidden" }, { status: 403 }),
     );
@@ -121,6 +133,32 @@ describe("POST /api/auth/verify-email/send", () => {
     expect(response.status).toBe(403);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
+
+  it("lets a gamer in email mode send themselves the link", async () => {
+    authAs({ role: "gamer", email: "aino@example.com" });
+    mockSignIn.mockResolvedValue({ data: { sign_in: "email" }, error: null });
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(200);
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["parent", "username"] as const)(
+    "refuses a gamer in %s mode, whose address nobody reads",
+    async (mode) => {
+      authAs({ role: "gamer", email: "aino@gamer.sogverse.internal" });
+      mockSignIn.mockResolvedValue({ data: { sign_in: mode }, error: null });
+
+      const response = await POST(createRequest());
+
+      expect(response.status).toBe(403);
+      expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+      // Refused before the allowance is spent: no mail leaves, so nothing
+      // should be charged for it.
+      expect(mockRpc).not.toHaveBeenCalled();
+    },
+  );
 
   // -- Happy path --
 

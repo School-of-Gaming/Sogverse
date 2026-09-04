@@ -94,4 +94,42 @@ describe("getOrigin", () => {
       /NEXT_PUBLIC_SITE_URL/,
     );
   });
+
+  /**
+   * A server component has `headers()` and no Request, so bare `Headers` is
+   * accepted too. Both directions are pinned because only the Host is ever read,
+   * and the two forms must therefore be interchangeable — including in the
+   * refusal, which is the half that would be silently lost if a `Headers`
+   * argument fell through to some other branch.
+   */
+  it("reads a bare Headers exactly as it reads a Request's", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
+    expect(getOrigin(new Headers({ host: "sogverse.sog.gg" }))).toBe(
+      "https://sogverse.sog.gg",
+    );
+  });
+
+  it("refuses an untrusted Host on bare Headers too", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
+    expect(getOrigin(new Headers({ host: "evil.com" }))).toBe(
+      "https://sogverse.sog.gg",
+    );
+  });
+
+  /**
+   * Next's `headers()` hands back a read-only adapter that keeps its backing
+   * store under a `headers` field. Discriminating on that property's presence
+   * mistook it for a Request and read `.get` off the inner store — a runtime
+   * TypeError on the verify-email page, the first server component to call
+   * this. The discriminator now asks whether the value can `get`.
+   */
+  it("reads a Headers adapter that carries its own `headers` field", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
+    class AdapterLike extends Headers {
+      readonly headers = { host: "sogverse.sog.gg" };
+    }
+    expect(getOrigin(new AdapterLike({ host: "sogverse.sog.gg" }))).toBe(
+      "https://sogverse.sog.gg",
+    );
+  });
 });

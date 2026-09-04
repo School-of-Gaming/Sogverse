@@ -11,7 +11,15 @@ import { sessionImageUrl } from "@/lib/images/session-image-url";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
-import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
+import {
+  DEFAULT_LOCALE,
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
+import {
+  resolveFamilyRecipients,
+  type FamilyRecipient,
+} from "@/lib/email/family-recipients.server";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate, formatTimeRange } from "@/lib/utils";
 import { getOrigin } from "@/lib/url";
@@ -31,16 +39,20 @@ const ROUTE_LABEL = "/api/gedu/sessions/email-report";
 type AdminClient = ReturnType<typeof createAdminClient>;
 
 /**
- * One recipient of one family mail — a seat resolved to somebody who can be
- * written to. `participationId` is what the link is keyed by and what a failure
- * is logged against; the address itself never reaches a log line.
+ * One family mail to send — a seat, and one of the people it resolved to.
+ * `participationId` is what the link is keyed by and what a failure is logged
+ * against; the address itself never reaches a log line.
+ *
+ * A seat produces one of these per recipient: always the parent (or the adult
+ * on their own seat), plus the child when they hold a mailbox of their own. The parent's is the *outcome* — it is what the tally counts and
+ * what decides whether the claim stands — and the child's copy rides beside
+ * it: logged if it fails, never counted, never a reason to retry the send.
  */
-interface FamilyRecipient {
+interface SeatMail {
   participationId: string;
   /** The child, or the adult holding their own seat: whoever the mail is about. */
   gamerName: string;
-  email: string;
-  locale: SupportedLocale;
+  recipient: FamilyRecipient;
 }
 
 /** What every mail of one send shares, before any locale formatting. */
@@ -164,6 +176,14 @@ function failureName(reason: unknown): string {
  * mails that session's report to every family in the group — one mail per active
  * participation, each in its reader's locale, each linking that child's own page
  * in My SOG — and then one copy to the sender with every admin in CC.
+ *
+ * **A child with a mailbox of their own gets their own copy too**, beside the
+ * parent's and never instead of it. Who that is, is decided by the shared
+ * family-recipient resolver (the real-email sign-in, whether or not the address
+ * has been verified); what changes in the mail is the framing sentence and the
+ * My SOG root, since a `/parent` link bounces a signed-in child. The child's copy is not part of the tally: the
+ * parent's mail is the outcome the gedu is told about, and the copy's failure
+ * is logged and changes nothing.
  *
  * **An admin may press it too** (00200). The same panel now sits on the admin
  * product page, over the same feed component and the same claim, so the route
@@ -308,8 +328,12 @@ export const POST = defineRoute({
       const { data: participations, error: participationsError } =
         await adminClient
           .from("participations")
+          // The participant's sign-in mode rides along because it decides
+          // whether the child gets a copy of their own; `gamer_profiles` is
+          // one-to-one off `profiles`, so the embed is an object or null (an
+          // adult on their own seat has none).
           .select(
-            "id, participant_id, customer_id, participant:profiles!participations_participant_id_fkey!inner(first_name, email, role, locale)",
+            "id, participant_id, customer_id, participant:profiles!participations_participant_id_fkey!inner(first_name, email, role, locale, gamer_profiles(sign_in))",
           )
           .eq("group_id", claim.group_id)
           .eq("status", "active");
@@ -357,7 +381,7 @@ export const POST = defineRoute({
         );
       }
 
-      const recipients: FamilyRecipient[] = [];
+      const mails: SeatMail[] = [];
       let skipped = 0;
 
       for (const participation of participations) {
@@ -365,19 +389,48 @@ export const POST = defineRoute({
 
         // The roster RPC's exact test for "an adult holding their own seat",
         // role check included. Id equality alone would let a row with a gamer's
-        // id transposed into `customer_id` put the synthetic
-        // `@gamer.sogverse.internal` handle — which is not a mailbox — in front
-        // of a family mail. The roster also shows the gedu which contact each
-        // seat resolves to, so the two resolutions have to be one.
+        // id transposed into `customer_id` put a child's platform-internal
+        // handle — which is not a mailbox — in front of a family mail. The
+        // roster also shows the gedu which contact each seat resolves to, so
+        // the two resolutions have to be one.
         const isSelfSeat =
           participation.participant_id === participation.customer_id &&
           participant.role === "customer";
 
-        const contact = isSelfSeat
-          ? { email: participant.email, locale: participant.locale }
-          : earliestParent.get(participation.participant_id)?.parent;
+        const parentLink = earliestParent.get(participation.participant_id);
 
-        if (!contact) {
+        // The parent first, always; the child only behind the resolver's
+        // own-mailbox gate; nobody at all when there is no parent.
+        const recipients = resolveFamilyRecipients({
+          parents: isSelfSeat
+            ? [
+                {
+                  email: participant.email,
+                  firstName: participant.first_name,
+                  locale: participant.locale,
+                },
+              ]
+            : parentLink
+              ? [
+                  {
+                    email: parentLink.parent.email,
+                    firstName: parentLink.parent.first_name,
+                    locale: parentLink.parent.locale,
+                  },
+                ]
+              : [],
+          gamer: isSelfSeat
+            ? null
+            : {
+                email: participant.email,
+                firstName: participant.first_name,
+                locale: participant.locale,
+                signIn: participant.gamer_profiles?.sign_in ?? null,
+              },
+          fallbackLocale: DEFAULT_LOCALE,
+        });
+
+        if (recipients.length === 0) {
           // Neither a linked parent nor an adult's own address. Counted, not
           // failed: nothing went wrong with a send that never had a destination,
           // and the staff copy is how that gap reaches a human.
@@ -385,12 +438,13 @@ export const POST = defineRoute({
           continue;
         }
 
-        recipients.push({
-          participationId: participation.id,
-          gamerName: participant.first_name,
-          email: contact.email,
-          locale: resolveLocale(contact.locale),
-        });
+        for (const recipient of recipients) {
+          mails.push({
+            participationId: participation.id,
+            gamerName: participant.first_name,
+            recipient,
+          });
+        }
       }
 
       // --- 3. The family mails, all at once --------------------------------
@@ -428,24 +482,28 @@ export const POST = defineRoute({
       // Settled together, so one rejection does not stop the rest and the whole
       // fan-out costs one Brevo round trip of wall time rather than N.
       const outcomes = await Promise.allSettled(
-        recipients.map((recipient) => sendFamilyMail(recipient, facts)),
+        mails.map((mail) => sendFamilyMail(mail, facts)),
       );
 
+      // The tally counts seats, through the parent's mail: a child's own copy
+      // is neither a success to report nor a failure to retry the send over,
+      // so it is logged on failure and otherwise left out of the numbers.
       let sent = 0;
       let failed = 0;
       outcomes.forEach((outcome, index) => {
+        const { recipient, participationId } = mails[index];
         if (outcome.status === "fulfilled") {
-          sent += 1;
+          if (recipient.kind === "parent") sent += 1;
           return;
         }
-        failed += 1;
+        if (recipient.kind === "parent") failed += 1;
         // Ids and a class name, never an address and never the provider's own
         // words: the session and the seat are enough to find the family in the
         // admin UI, and Brevo's message can quote the mailbox it rejected. The
         // full provider reply is already in the log — the Brevo wrapper prints
         // the response body itself before it throws.
         console.error(
-          `[${ROUTE_LABEL}] family mail failed for session ${facts.sessionId}, participation ${recipients[index].participationId}: ${failureName(outcome.reason)}`,
+          `[${ROUTE_LABEL}] family mail (${recipient.kind}) failed for session ${facts.sessionId}, participation ${participationId}: ${failureName(outcome.reason)}`,
         );
       });
 
@@ -526,7 +584,7 @@ async function readParentLinks(adminClient: AdminClient, gamerIds: string[]) {
   const { data, error } = await adminClient
     .from("parent_gamer")
     .select(
-      "id, gamer_id, created_at, parent:profiles!parent_gamer_parent_id_fkey!inner(email, locale)",
+      "id, gamer_id, created_at, parent:profiles!parent_gamer_parent_id_fkey!inner(first_name, email, locale)",
     )
     .in("gamer_id", gamerIds);
 
@@ -535,7 +593,7 @@ async function readParentLinks(adminClient: AdminClient, gamerIds: string[]) {
 }
 
 /**
- * One family's mail. Everything locale-shaped is resolved here, per recipient:
+ * One family mail. Everything locale-shaped is resolved here, per recipient:
  * the translator, the product's name in their locale, and the date and time
  * range — in the PRODUCT's zone, with the zone named, because a mail is rendered
  * without the reader's own zone and has to say which one it used.
@@ -545,17 +603,23 @@ async function readParentLinks(adminClient: AdminClient, gamerIds: string[]) {
  * `escapeHtml`, and the report goes through the markdown renderer, which escapes
  * every text node and drops links. The one thing embedded raw is the URL, which
  * this function builds.
+ *
+ * The recipient's `kind` decides two things and nothing else: which My SOG
+ * root the button points at, and whether the builder renders the framing
+ * sentence to the parent about the child or to the child themselves. The
+ * report, the facts and the photos are the same in both.
  */
 async function sendFamilyMail(
-  recipient: FamilyRecipient,
+  { participationId, gamerName, recipient }: SeatMail,
   facts: SessionFacts,
 ): Promise<void> {
   const t = await getEmailTranslator(recipient.locale);
   const productName =
     resolveTranslation(facts.productTranslations, recipient.locale)?.name ?? "";
+  const gamerCopy = recipient.kind === "gamer";
 
   const params = {
-    gamerName: recipient.gamerName,
+    gamerName,
     geduName: facts.geduName,
     productName,
     groupName: facts.groupName,
@@ -572,9 +636,15 @@ async function sendFamilyMail(
     reportMarkdown: facts.reportMarkdown,
     photos: facts.photos,
     // Keyed by participation, not by product: two siblings in one club have two
-    // pages, and this mail is about one of them. Always the `/parent` root —
-    // every recipient here is an adult, including one on a seat of their own.
-    productUrl: `${facts.origin}${ROUTES.customer.enrollment(facts.productType, recipient.participationId)}`,
+    // pages, and this mail is about one of them. The root follows the reader —
+    // `/parent` for the parent or an adult on their own seat, `/gamer` for the
+    // child's own copy, because role routing bounces a child off the other.
+    productUrl: `${facts.origin}${
+      gamerCopy
+        ? ROUTES.gamer.enrollment(facts.productType, participationId)
+        : ROUTES.customer.enrollment(facts.productType, participationId)
+    }`,
+    gamerCopy,
   };
 
   await sendTransactionalEmail({
@@ -586,8 +656,9 @@ async function sendFamilyMail(
     // Product mail to a family: a parent who replies has a question for us, not
     // for the unattended sending address.
     replyToEmail: SUPPORT_EMAIL,
-    // No cc and no bcc, by omission and asserted in the integration test: a
-    // parent's mail is theirs alone.
+    // No cc and no bcc, by omission and asserted in the integration test: each
+    // recipient's mail is theirs alone — the child's copy is a separate send,
+    // not the parent's mail with a second address on it.
   });
 }
 

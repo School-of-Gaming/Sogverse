@@ -2,6 +2,7 @@ import "server-only";
 import { after } from "next/server";
 import { ApiError } from "@/lib/api/api-error";
 import { respondSeatOfferRpcResult } from "@/services/participations/seat-offer.contracts";
+import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import {
   notifyExpiredSeatOffers,
   sendSeatOfferStaffEmail,
@@ -74,6 +75,27 @@ export function settleSeatOfferAnswer({
 
   switch (parsed.data.kind) {
     case "accepted":
+      // A family who answered yes now holds a seat, and the mail that follows a
+      // seat is the signup confirmation — the same one the checkout route and
+      // the Stripe webhook send, with the same schedule section and the same
+      // `invite.ics`. Reaching a seat through a waitlist is a different door,
+      // not a different outcome, and a family who came through it was the one
+      // group being told least about the club they had just joined.
+      //
+      // The price shape is the sentinel: this arm has no idea what the product
+      // costs, and the sender already reads the row that decides it. See
+      // `ProductConfirmationSendMode`.
+      after(
+        sendProductConfirmationEmail({
+          client,
+          request,
+          customerId: parsed.data.customer_id,
+          participantId: parsed.data.participant_id,
+          productId: parsed.data.product_id,
+          participationId: parsed.data.participation_id,
+          mode: "honoured-offer",
+        }),
+      );
       return "accepted";
 
     case "declined":

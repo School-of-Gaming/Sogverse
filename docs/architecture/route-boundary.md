@@ -152,7 +152,11 @@ its classification:
   verifier), `api-key`. Every non-`role-gated` entry carries a mandatory `reason`
   string — the carve-out-with-reason shape the proxy test already uses.
 - **Body discipline** — `json` (names its schema), `multipart`, `raw` (webhook text
-  verification), `none`.
+  verification), `none`. `raw` covers a second, smaller case: a plain HTML form post
+  (urlencoded) that reads at most one named field — the sign-out route's `next` — where
+  there is no JSON to parse and nothing a schema would add; like a webhook's, that entry
+  carries a written reason, so both uses of the one label are documented rather than the
+  second looking like an unschema'd body.
 - **Test** — the integration test file that exercises the route. The spine verifies it
   exists on disk and imports the route. An entry may carry `test: null` only during
   Phase 1 (seeding reality); Phase 2 ends with none left.

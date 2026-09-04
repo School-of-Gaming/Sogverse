@@ -23,7 +23,7 @@ import {
   registrationCtaKind,
 } from "./derive-registration-state";
 import { ProductDetailPageBody } from "./product-detail-page-body";
-import { audienceAdmitsRole, productAudience } from "./product-audience";
+import { audienceAdmitsRole, productAudience } from "@/lib/products/product-audience";
 import { resolveRegionGate, type RegionGate } from "./region-lock/region-gate";
 import { SignupPanel } from "./signup-panel";
 import type {

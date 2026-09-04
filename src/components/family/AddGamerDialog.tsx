@@ -15,13 +15,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { GAME_PLATFORMS, GameUsernameEditableRow } from "@/components/game-account";
-import { useCreateGamer } from "@/services/gamers";
+import {
+  GAMER_EMAIL_TAKEN,
+  GAMER_USERNAME_TAKEN,
+  useCreateGamer,
+} from "@/services/gamers";
 import { usePinStatus, pinKeys } from "@/services/pin";
 import { PinUnlockFlow } from "@/components/pin";
 import { useRequiredAuth } from "@/providers/auth-provider";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { ApiError } from "@/lib/api/api-error";
+import { normalizeGamerUsername } from "@/lib/gamer-sign-in";
 import { cn } from "@/lib/utils";
-import type { CreateGamerInput } from "@/types";
+import type { CreateGamerInput, GamerSignIn } from "@/types";
+import { GamerSignInRadios } from "./gamer-sign-in-radios";
+import {
+  findGamerCredentialProblem,
+  GamerCredentialFields,
+  GAMER_PASSWORD_MIN_LENGTH,
+  type GamerCredentialProblem,
+} from "./gamer-credential-fields";
 import {
   assembleGamerDateOfBirth,
   gamerBirthMonthOptions,
@@ -29,6 +42,42 @@ import {
 } from "@/lib/gamer-birth";
 
 type Gender = "boy" | "girl" | "non_binary";
+
+/**
+ * Which page of the form is showing.
+ *
+ * Two pages, the same two for every parent: who the child is, then how they
+ * sign in. The sign-in question used to ride along at the bottom of page one
+ * and open a third page for the two modes that need a credential; it is a page
+ * of its own now, so the footer's affirmative is always Next on page one and
+ * always the create on page two — nothing about it is decided by a radio.
+ */
+type FormStep = "details" | "signIn";
+
+/**
+ * How the card can be seeded, which is the style guide's seam and nothing else.
+ *
+ * A union rather than three optional fields, because page two names the child:
+ * production can only reach it through page one's validation, which guarantees
+ * a first name, and this makes the same guarantee for a card that opens there.
+ */
+type InitialState =
+  | { step?: "details"; firstName?: string; signIn?: GamerSignIn }
+  | { step: "signIn"; firstName: string; signIn?: GamerSignIn };
+
+/**
+ * The stem every field id on this card is built from — both pages of it, and the
+ * radio group's `name` with them. A named constant rather than a literal at the
+ * call site because the literal-string lint reads JSX attributes and cannot tell
+ * a DOM id apart from copy — and the honest fix for that is to stop spelling it
+ * in the markup, not to silence the rule.
+ *
+ * It is the *default*, because the style guide renders four of these cards at
+ * once: one stem for all four would mint four `add-gamer-first-name` labels
+ * pointing at one input, and four radio groups sharing a `name`, which is a
+ * browser-level fight over which of them may hold a selection.
+ */
+const CREDENTIAL_FIELD_ID_PREFIX = "add-gamer";
 
 interface AddGamerDialogProps {
   open: boolean;
@@ -39,10 +88,11 @@ interface AddGamerDialogProps {
 /**
  * Reusable dialog for creating a gamer linked to the current parent.
  *
- * The form asks for a first name, a birth month and year, an optional gender,
- * and each platform's optional game handle — no username / password / email of
- * our own. Gamers under this model always sign in via account-switching from
- * their parent's account.
+ * The form asks for a first name, a birth month and year, an optional gender
+ * and each platform's optional game handle on page one, then how the child will
+ * sign in on page two. The default answer to the last one is the switch-only
+ * account every gamer used to get, so a parent who wants exactly what this
+ * dialog always produced reads page two and presses the button.
  *
  * Designed for reuse: family selector wires it now; product / club / camp /
  * event detail pages should pass `open` / `onOpenChange` to drop it in when a
@@ -179,27 +229,58 @@ function AddGamerForm({
  * `className` merges into the card, so a caller measuring it inside a frame can
  * scope the height cap to that frame instead of the real viewport. Production
  * passes nothing and keeps the `90vh` cap.
+ *
+ * `initial` is the third seam of the same kind: the style guide shows the
+ * sign-in page beside the details page, and driving a card there by simulating
+ * a parent filling the first page in would make the demo a script rather than a
+ * picture. Production passes nothing.
  */
 export function AddGamerFormCard({
   onCreate,
   onOpenChange,
   onCreated,
   className,
+  initial,
+  idPrefix = CREDENTIAL_FIELD_ID_PREFIX,
 }: {
   onCreate: (input: CreateGamerInput) => Promise<{ gamerId: string }>;
   onOpenChange: (open: boolean) => void;
   onCreated?: (gamerId: string) => void;
   className?: string;
+  initial?: InitialState;
+  /**
+   * The stem for every field id and the radio group's `name`. The fourth seam of
+   * the same kind as `className` and `initial`: production passes nothing and
+   * keeps the ids it has always had, and a surface rendering more than one card
+   * at once gives each its own stem so the labels and the radio group belong to
+   * exactly one of them.
+   */
+  idPrefix?: string;
 }) {
   const t = useTranslations("family.addGamerForm");
+  const s = useTranslations("gamerSignIn");
   const c = useTranslations("common");
   const g = useTranslations("gameAccount");
   const locale = useLocale();
 
-  const [firstName, setFirstName] = useState("");
+  const [firstName, setFirstName] = useState(initial?.firstName ?? "");
   const [month, setMonth] = useState<string>("");
   const [year, setYear] = useState<string>("");
   const [gender, setGender] = useState<Gender | null>(null);
+  // How the child will reach their own account, and which of the form's two
+  // pages is showing. `parent` is the answer a parent keeps by reading page two
+  // and pressing the button: the switch-only account every gamer used to get.
+  const [signIn, setSignIn] = useState<GamerSignIn>(initial?.signIn ?? "parent");
+  const [step, setStep] = useState<FormStep>(initial?.step ?? "details");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  // At most one credential field is wrong at a time — the validator stops at
+  // the first, and a 409 names exactly one — so this is a single slot rather
+  // than a map. Cleared on every edit of the field it belongs to would be
+  // churn; it is cleared on the next submit, which is when it is re-decided.
+  const [credentialProblem, setCredentialProblem] =
+    useState<GamerCredentialProblem | null>(null);
   // Both game handles are optional and independent. Held as `string | null`
   // because that is what a commit reports — `null` is "cleared", not "untouched"
   // — and neither is ever sent as an empty string.
@@ -218,28 +299,22 @@ export function AddGamerFormCard({
   // the future.
   const months = useMemo(() => gamerBirthMonthOptions(locale), [locale]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (committing) return;
+  const trimmedName = firstName.trim();
 
-    const trimmedName = firstName.trim();
-    if (trimmedName.length < DISPLAY_NAME_MIN) {
-      setError(t("firstNameTooShort"));
-      return;
-    }
-    if (trimmedName.length > DISPLAY_NAME_MAX) {
-      setError(t("firstNameTooLong"));
-      return;
-    }
-    if (!month) {
-      setError(t("birthMonthRequired"));
-      return;
-    }
-    if (!year) {
-      setError(t("birthYearRequired"));
-      return;
-    }
+  /**
+   * Page one's rules. Unchanged from when they were the whole form, and they
+   * run before the step to page two, so a parent never answers a question about
+   * a child the first page was going to refuse anyway.
+   */
+  function findDetailsError(): string | null {
+    if (trimmedName.length < DISPLAY_NAME_MIN) return t("firstNameTooShort");
+    if (trimmedName.length > DISPLAY_NAME_MAX) return t("firstNameTooLong");
+    if (!month) return t("birthMonthRequired");
+    if (!year) return t("birthYearRequired");
+    return null;
+  }
 
+  async function create() {
     setError(null);
     setCommitting(true);
 
@@ -255,17 +330,62 @@ export function AddGamerFormCard({
         // who does not exist yet.
         minecraftUsername: minecraftUsername ?? undefined,
         robloxUsername: robloxUsername ?? undefined,
+        signIn,
+        // Each mode carries exactly its own fields and no others — the contract
+        // refuses a password on an email-mode child and an address on a
+        // username-mode one, and sending a stale value from a mode the parent
+        // switched away from is the way that refusal would be hit.
+        username: signIn === "username" ? normalizeGamerUsername(username) : undefined,
+        password: signIn === "username" ? password : undefined,
+        email: signIn === "email" ? email.trim() : undefined,
       });
       onCreated?.(result.gamerId);
       onOpenChange(false);
       // Intentionally not clearing `committing` — the dialog unmounts.
-    } catch {
+    } catch (caught) {
       setCommitting(false);
+      // Two refusals a parent can actually fix, and both are about a value they
+      // typed on this page: the address is spoken for, or the username is. They
+      // land on the field rather than in the banner, because "try again" over a
+      // form the parent cannot see the fault in is the unhelpful version of the
+      // same message.
+      const code = caught instanceof ApiError ? caught.code : undefined;
+      if (code === GAMER_USERNAME_TAKEN) {
+        setCredentialProblem({ field: "username", key: "usernameTaken" });
+        return;
+      }
+      if (code === GAMER_EMAIL_TAKEN) {
+        setCredentialProblem({ field: "email", key: "emailTaken" });
+        return;
+      }
       // The route's own `message` is raw English (for logs); never show it. No
-      // failure here is something the parent can act on, so they all get the one
-      // localized generic.
+      // other failure here is something the parent can act on, so they all get
+      // the one localized generic.
       setError(t("genericError"));
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (committing) return;
+
+    if (step === "details") {
+      const detailsError = findDetailsError();
+      if (detailsError) {
+        setError(detailsError);
+        return;
+      }
+      setError(null);
+      setCredentialProblem(null);
+      setStep("signIn");
+      return;
+    }
+
+    const problem = findGamerCredentialProblem({ signIn, username, password, email });
+    setCredentialProblem(problem);
+    if (problem) return;
+
+    await create();
   }
 
   // Matches the styling used by other selects in the codebase
@@ -283,6 +403,17 @@ export function AddGamerFormCard({
       </DialogHeader>
 
       <form onSubmit={handleSubmit}>
+        {/* **The two pages swap; nothing crosses between them.** The title
+            above and the footer below are the only things that survive the
+            swap, and the title does not move — the footer does, because the two
+            pages are not the same height. That is a panel replaced by a
+            different panel on the parent's own click (root `CLAUDE.md`,
+            "Layout & Scrolling"): nothing a reader was pointing at is still on
+            screen somewhere else, so there is nothing to hold still, and
+            reserving page one's height behind page two would leave a hole
+            rather than prevent a shift. Inside page two the answer is the
+            opposite one, for the opposite reason — see the box below the
+            radios. */}
         <div className="space-y-4 py-4">
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -290,138 +421,225 @@ export function AddGamerFormCard({
             </div>
           )}
 
-          <Field label={t("firstNameLabel")} htmlFor="add-gamer-first-name">
-            <Input
-              id="add-gamer-first-name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder={t("firstNamePlaceholder")}
-              disabled={committing}
-              autoFocus
-              autoComplete="off"
-              required
-              minLength={DISPLAY_NAME_MIN}
-              maxLength={DISPLAY_NAME_MAX}
-            />
-          </Field>
+          {step === "signIn" ? (
+            <>
+              {/* The question names the child rather than "your gamer": page
+                  one has already refused an empty first name, so by the time
+                  this renders there is always a name to use. */}
+              <Field label={s("question", { name: trimmedName })}>
+                {({ labelId }) => (
+                  <GamerSignInRadios
+                    value={signIn}
+                    onChange={setSignIn}
+                    disabled={committing}
+                    labelId={labelId}
+                    name={`${idPrefix}-sign-in`}
+                  />
+                )}
+              </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={t("birthMonthLabel")} htmlFor="add-gamer-month">
-              <select
-                id="add-gamer-month"
-                value={month}
-                onChange={(e) => setMonth(e.target.value)}
+              {/* **One height for all three answers, declared here.** Clicking
+                  a radio swaps what is in this box while the radios above it
+                  and the footer below it both survive the change — the case the
+                  layout rule forbids moving — and it is also the case where
+                  reserving is right rather than a hole: the slot is used by
+                  whichever answer is selected, never held open beside content
+                  it cannot coexist with. Without it, the footer jumps under the
+                  thumb that just picked the radio.
+
+                  The number is the tallest of the three: username, which is a
+                  label, an input, a gap and the same again — 144px, measured at
+                  360px where the dialog's padding leaves the box 278px wide.
+                  The reservation is 148px: four pixels of slack, which cannot
+                  buy a line either way and only exists so a rounding difference
+                  cannot make the box *short*. Parent is 60px in the longest
+                  locale and email 64px; both leave their slack at the bottom,
+                  against the footer.
+
+                  With the hints under these fields gone, nothing in the box
+                  wraps any more, so the number is the same in all five locales
+                  and at every width — it used to be French at 360px that set
+                  it, and a wide dialog then carried ~36px of dead reserve.
+                  Re-measure if a field is ever added back with a hint.
+
+                  `min-h`, not `h`: a validation line arriving on the parent's
+                  own submit may grow the box rather than be clipped by it. */}
+              <div className="min-h-[9.25rem] space-y-4">
+                {signIn === "parent" ? (
+                  <p className="text-sm text-muted-foreground">
+                    {s("parentModeNote", { name: trimmedName })}
+                  </p>
+                ) : (
+                  <GamerCredentialFields
+                    signIn={signIn}
+                    username={username}
+                    onUsernameChange={setUsername}
+                    password={password}
+                    onPasswordChange={setPassword}
+                    email={email}
+                    onEmailChange={setEmail}
+                    disabled={committing}
+                    problem={
+                      credentialProblem
+                        ? {
+                            field: credentialProblem.field,
+                            message: s(credentialProblem.key, {
+                              count: GAMER_PASSWORD_MIN_LENGTH,
+                            }),
+                          }
+                        : null
+                    }
+                    idPrefix={idPrefix}
+                  />
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+            <Field label={t("firstNameLabel")} htmlFor={`${idPrefix}-first-name`}>
+              <Input
+                id={`${idPrefix}-first-name`}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder={t("firstNamePlaceholder")}
                 disabled={committing}
-                className={selectClassName}
+                autoFocus
+                autoComplete="off"
                 required
-              >
-                <option value="">{t("birthMonthPlaceholder")}</option>
-                {months.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
+                minLength={DISPLAY_NAME_MIN}
+                maxLength={DISPLAY_NAME_MAX}
+              />
             </Field>
-            <Field label={t("birthYearLabel")} htmlFor="add-gamer-year">
-              <select
-                id="add-gamer-year"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                disabled={committing}
-                className={selectClassName}
-                required
-              >
-                <option value="">{t("birthYearPlaceholder")}</option>
-                {years.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
 
-          {/* Three across at every width, not stacked below `sm`. The stack
-              cost 96px of a dialog that now also has to fit two game rows on a
-              phone — the single biggest lever available, and this is what it is
-              spent on.
-
-              A third of a 360px phone is 88px, which no locale's "non-binary"
-              fits on one line at `text-sm`, so the buttons below wrap instead of
-              overflowing and grow past 40px when they do. That is the price, and
-              it is roughly 4px against the 96px saved. */}
-          <Field label={t("genderLabel")} optional>
-            <div className="grid grid-cols-3 gap-2">
-              <GenderButton
-                selected={gender === "boy"}
-                disabled={committing}
-                onClick={() => setGender(gender === "boy" ? null : "boy")}
-                label={t("genderBoy")}
-              />
-              <GenderButton
-                selected={gender === "girl"}
-                disabled={committing}
-                onClick={() => setGender(gender === "girl" ? null : "girl")}
-                label={t("genderGirl")}
-              />
-              <GenderButton
-                selected={gender === "non_binary"}
-                disabled={committing}
-                onClick={() => setGender(gender === "non_binary" ? null : "non_binary")}
-                label={t("genderNonBinary")}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={t("birthMonthLabel")} htmlFor={`${idPrefix}-month`}>
+                <select
+                  id={`${idPrefix}-month`}
+                  value={month}
+                  onChange={(e) => setMonth(e.target.value)}
+                  disabled={committing}
+                  className={selectClassName}
+                  required
+                >
+                  <option value="">{t("birthMonthPlaceholder")}</option>
+                  {months.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label={t("birthYearLabel")} htmlFor={`${idPrefix}-year`}>
+                <select
+                  id={`${idPrefix}-year`}
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  disabled={committing}
+                  className={selectClassName}
+                  required
+                >
+                  <option value="">{t("birthYearPlaceholder")}</option>
+                  {years.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </Field>
             </div>
-          </Field>
 
-          {/* The two game identities, last because they are the two a parent is
-              most likely to skip — and because a child who has neither yet is
-              the ordinary case.
+            {/* Three across at every width, not stacked below `sm`. The stack
+                cost 96px of a dialog that now also has to fit two game rows on a
+                phone — the single biggest lever available, and this is what it is
+                spent on.
 
-              **Closed, not `autoEdit`.** A register page opens its row because
-              typing a name is the only thing there is to do there; here the row
-              sits among four fields the parent must fill in, and two more open
-              text inputs would read as two more things being asked of them. A
-              closed row costs exactly the same height — both modes declare the
-              game-account height at the same node — so this is a reading
-              decision, not a fitting one, and the pencil is the invitation.
+                A third of a 360px phone is 88px, which no locale's "non-binary"
+                fits on one line at `text-sm`, so the buttons below wrap instead of
+                overflowing and grow past 40px when they do. That is the price, and
+                it is roughly 4px against the 96px saved. */}
+            <Field label={t("genderLabel")} optional>
+              <div className="grid grid-cols-3 gap-2">
+                <GenderButton
+                  selected={gender === "boy"}
+                  disabled={committing}
+                  onClick={() => setGender(gender === "boy" ? null : "boy")}
+                  label={t("genderBoy")}
+                />
+                <GenderButton
+                  selected={gender === "girl"}
+                  disabled={committing}
+                  onClick={() => setGender(gender === "girl" ? null : "girl")}
+                  label={t("genderGirl")}
+                />
+                <GenderButton
+                  selected={gender === "non_binary"}
+                  disabled={committing}
+                  onClick={() => setGender(gender === "non_binary" ? null : "non_binary")}
+                  label={t("genderNonBinary")}
+                />
+              </div>
+            </Field>
 
-              Full width rather than paired, because the editor has to hold a
-              60px figure, an input and two buttons; half a dialog leaves the
-              input too narrow to read a 20-character handle back in. */}
-          <Field label={g("label", { platform: GAME_PLATFORMS.minecraft.name })} optional>
-            <GameUsernameEditableRow
-              platform="minecraft"
-              username={minecraftUsername}
-              onCommit={({ username }) => setMinecraftUsername(username)}
-            />
-          </Field>
+            {/* The two game identities, last because they are the two a parent is
+                most likely to skip — and because a child who has neither yet is
+                the ordinary case.
 
-          <Field label={g("label", { platform: GAME_PLATFORMS.roblox.name })} optional>
-            <GameUsernameEditableRow
-              platform="roblox"
-              username={robloxUsername}
-              // Nothing to draw and nothing to go and find: a Roblox render is
-              // not addressable by username, so the row shows its silhouette
-              // until a commit resolves one.
-              avatarUrl={null}
-              onCommit={({ username }) => setRobloxUsername(username)}
-            />
-          </Field>
+                **Closed, not `autoEdit`.** A register page opens its row because
+                typing a name is the only thing there is to do there; here the row
+                sits among four fields the parent must fill in, and two more open
+                text inputs would read as two more things being asked of them. A
+                closed row costs exactly the same height — both modes declare the
+                game-account height at the same node — so this is a reading
+                decision, not a fitting one, and the pencil is the invitation.
+
+                Full width rather than paired, because the editor has to hold a
+                60px figure, an input and two buttons; half a dialog leaves the
+                input too narrow to read a 20-character handle back in. */}
+            <Field label={g("label", { platform: GAME_PLATFORMS.minecraft.name })} optional>
+              <GameUsernameEditableRow
+                platform="minecraft"
+                username={minecraftUsername}
+                onCommit={({ username }) => setMinecraftUsername(username)}
+              />
+            </Field>
+
+            <Field label={g("label", { platform: GAME_PLATFORMS.roblox.name })} optional>
+              <GameUsernameEditableRow
+                platform="roblox"
+                username={robloxUsername}
+                // Nothing to draw and nothing to go and find: a Roblox render is
+                // not addressable by username, so the row shows its silhouette
+                // until a commit resolves one.
+                avatarUrl={null}
+                onCommit={({ username }) => setRobloxUsername(username)}
+              />
+            </Field>
+
+            </>
+          )}
         </div>
 
+        {/* Two fixed labels, one per page, decided by the page alone: page one
+            always advances and page two always creates, so the affirmative says
+            what pressing it will do without any radio having to change it. */}
         <DialogFooter className="gap-2">
           <Button
             type="button"
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() =>
+              step === "signIn" ? setStep("details") : onOpenChange(false)
+            }
             disabled={committing}
           >
-            {c("cancel")}
+            {step === "signIn" ? c("back") : c("cancel")}
           </Button>
           <Button type="submit" disabled={committing}>
             {committing && <Loader2 className="animate-spin" />}
-            {committing ? t("submitting") : t("submit")}
+            {committing
+              ? t("submitting")
+              : step === "details"
+                ? c("next")
+                : t("submit")}
           </Button>
         </DialogFooter>
       </form>

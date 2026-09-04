@@ -3,7 +3,10 @@ import { Constants } from "@/types";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts";
 import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
-import { registrationUtmBody } from "@/services/users/parent-registration.contracts";
+import {
+  realEmailValue,
+  registrationUtmBody,
+} from "@/services/users/parent-registration.contracts";
 
 /**
  * Request body for public gedu self-registration (`POST /api/gedu/register`).
@@ -17,7 +20,7 @@ import { registrationUtmBody } from "@/services/users/parent-registration.contra
  * themselves against codegen and the RPC's argument type is that same enum.
  */
 export const registerGeduBody = z.object({
-  email: z.string().email(),
+  email: realEmailValue,
   password: z.string().min(8, "Password must be at least 8 characters"),
   firstName: z
     .string()

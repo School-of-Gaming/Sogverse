@@ -101,7 +101,8 @@
     "roleParent": "Parent",
     "roleGamer": "Joueur",
     "roleGedu": "Gedu",
-    "gedus": "Gedus"
+    "gedus": "Gedus",
+    "next": "Suivant"
   },
   "about": {
     "pageTitle": "À propos",
@@ -130,7 +131,7 @@
       },
       "keepChildrenSafe": {
         "title": "Protéger les enfants en ligne",
-        "description": "La plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés. Chaque compte joueur est rattaché à un compte parent, et l’enfant s’y connecte par ce compte plutôt qu’avec un mot de passe à lui. Tolérance zéro pour le harcèlement."
+        "description": "La plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés. Chaque compte joueur est créé par un parent et rattaché à son compte, et c’est le parent qui choisit comment l’enfant se connecte — uniquement par le compte parent, ou avec un identifiant ou une adresse e-mail vérifiée et un mot de passe à lui. Tolérance zéro pour le harcèlement."
       },
       "familyInTheLoop": {
         "title": "La famille reste dans la boucle",
@@ -170,7 +171,7 @@
         },
         "howToStart": {
           "question": "Comment commencer ?",
-          "answer": "<p>Créez un compte parent, ajoutez votre enfant comme joueur depuis Mon SOG, puis parcourez la boutique et inscrivez-le — le panneau d’inscription demande à qui la place est destinée, et vous invite à ajouter un joueur si vous ne l’avez pas encore fait.</p><p>Une fois l’inscription faite, nous plaçons votre enfant dans un groupe avec un Gedu avant sa première séance, et le club apparaît ensuite sur Mon SOG pour vous deux.</p><p>Il rejoint les séances via votre compte — vous basculez vers son profil — et n’a donc jamais besoin d’un mot de passe à lui.</p>"
+          "answer": "<p>Créez un compte parent, ajoutez votre enfant comme joueur depuis Mon SOG, puis parcourez la boutique et inscrivez-le — le panneau d’inscription demande à qui la place est destinée, et vous invite à ajouter un joueur si vous ne l’avez pas encore fait.</p><p>Une fois l’inscription faite, nous plaçons votre enfant dans un groupe avec un Gedu avant sa première séance, et le club apparaît ensuite sur Mon SOG pour vous deux.</p><p>Il rejoint les séances via votre compte — vous basculez vers son profil — sauf si vous choisissez de lui donner ses propres identifiants depuis Mon SOG.</p>"
         },
         "isItASchool": {
           "question": "Est-ce que c’est de l’école ?",
@@ -210,11 +211,11 @@
         },
         "gamerAccounts": {
           "question": "Comment mon enfant se connecte-t-il, et qu’est-ce que le code PIN parent ?",
-          "answer": "<p>Votre enfant n’a pas d’identifiants à lui. Un compte joueur porte une adresse interne Sogverse plutôt que la véritable adresse e-mail de votre enfant, il est rattaché à votre compte parent, et votre enfant entre dans Sogverse en basculant vers son profil depuis le vôtre — il n’a donc aucun mot de passe à perdre ou à partager.</p><p>Pour accéder au côté parent, il faut un code PIN à quatre chiffres que vous seul connaissez : un mot de passe enregistré dans le navigateur ne suffit donc pas à acheter quoi que ce soit ni à modifier le compte d’un enfant, et la session se reverrouille dès que vous basculez vers le profil d’un enfant ou que vous vous déconnectez.</p><p>Si vous oubliez le code PIN, nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs — un enfant qui appuie sur « Vous avez oublié votre code PIN ? » vous envoie simplement un e-mail.</p>"
+          "answer": "<p>C’est vous qui choisissez, pour chaque enfant, comment il se connecte, depuis Mon SOG. Par défaut, un compte joueur n’a pas d’identifiants à lui : il porte une adresse interne Sogverse plutôt qu’une véritable adresse e-mail, il est rattaché à votre compte parent, et votre enfant entre dans Sogverse en basculant vers son profil depuis le vôtre. Si vous préférez, vous pouvez lui donner un identifiant et un mot de passe, ou sa propre adresse e-mail — qu’il vérifie avant de définir un mot de passe par le parcours de réinitialisation habituel.</p><p>Quel que soit votre choix, la connexion d’un enfant n’ouvre que son propre compte : un enfant connecté avec son propre identifiant ou sa propre adresse e-mail ne peut pas du tout basculer vers le vôtre ou celui d’un frère ou d’une sœur — l’enfant se déconnecte et se reconnecte : en tant que vous, avec votre mot de passe, ou en tant que frère ou sœur disposant de ses propres identifiants ; un frère ou une sœur qui se connecte via votre compte se rejoint plutôt depuis votre compte — et un enfant entré en basculant depuis votre compte a besoin de votre code PIN parent pour basculer ailleurs.</p><p>Pour accéder au côté parent, il faut un code PIN à quatre chiffres que vous seul connaissez : un mot de passe enregistré dans le navigateur ne suffit donc pas à acheter quoi que ce soit ni à modifier le compte d’un enfant, et la session se reverrouille dès que vous basculez vers le profil d’un enfant ou que vous vous déconnectez.</p><p>Si vous oubliez le code PIN, nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs — un enfant qui appuie sur « Vous avez oublié votre code PIN ? » vous envoie simplement un e-mail.</p>"
         },
         "childData": {
           "question": "Que conservez-vous au sujet de mon enfant ?",
-          "answer": "<p>Au sujet de votre enfant :</p><list><item>Son prénom, son mois et son année de naissance — nous ne demandons pas le jour — et éventuellement son genre.</item><item>Votre nom de famille, puisque votre enfant fait partie de votre famille. Il n’est montré à personne hors de votre famille : la liste du groupe côté Gedu et la salle vocale affichent son prénom, son âge et tout pseudo de jeu que vous avez ajouté.</item><item>Une adresse interne Sogverse sur son compte, plutôt qu’une véritable adresse e-mail.</item><item>Éventuellement son pseudo dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant que ce jeu lui attribue, afin de le reconnaître pendant une séance. L’image de son personnage est chargée depuis les serveurs du jeu, si bien que le pseudo parvient à Minecraft ou à Roblox chaque fois qu’une liste est affichée.</item><item>Une photo de profil qui n’en est pas une : sans compte de jeu lié, l’image à côté de son nom est un motif généré à partir de l’identifiant de son compte.</item></list><p>À cela s’ajoute ce que faire tourner un club exige : les clubs, stages et événements auxquels il est inscrit, ses présences, les comptes rendus de séance et les courtes notes internes que ses Gedus rédigent, le chat de ses séances et les images qui y sont postées, ce qu’il réalise et qu’un Gedu rattache à son groupe, les consentements enregistrés pour sa place, et les photos qu’un Gedu joint à un compte rendu. La modération d’un Gedu est également consignée — un enfant déplacé dans un espace à part, ou coupé dans le chat, en laisse une trace. Les photos du compte rendu sont celles de la séance et non celles d’un enfant en particulier — toutes les familles du groupe les voient sur la page du groupe et les reçoivent par e-mail avec le compte rendu.</p><p>Pour consulter, corriger ou supprimer ce que nous conservons au sujet de votre enfant, écrivez à {supportEmail}. Nous conservons vos informations tant que vous avez un compte et les supprimons ou les anonymisons si vous le fermez, sauf lorsque la loi nous impose de garder certains registres plus longtemps, comme le fait la loi comptable finlandaise pour les données de paiement.</p>"
+          "answer": "<p>Au sujet de votre enfant :</p><list><item>Son prénom, son mois et son année de naissance — nous ne demandons pas le jour — et éventuellement son genre.</item><item>Votre nom de famille, puisque votre enfant fait partie de votre famille. Il n’est montré à personne hors de votre famille : la liste du groupe côté Gedu et la salle vocale affichent son prénom, son âge et tout pseudo de jeu que vous avez ajouté.</item><item>Une adresse interne Sogverse sur son compte, plutôt qu’une véritable adresse e-mail — sauf si vous avez choisi de lui donner ses propres identifiants avec sa propre adresse, auquel cas nous conservons cette adresse. Dans les deux cas, aucune adresse e-mail de votre enfant n’apparaît sur la liste du groupe côté Gedu ni dans la salle vocale.</item><item>Éventuellement son pseudo dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant que ce jeu lui attribue, afin de le reconnaître pendant une séance. L’image de son personnage est chargée depuis les serveurs du jeu, si bien que le pseudo parvient à Minecraft ou à Roblox chaque fois qu’une liste est affichée.</item><item>Une photo de profil qui n’en est pas une : sans compte de jeu lié, l’image à côté de son nom est un motif généré à partir de l’identifiant de son compte.</item></list><p>À cela s’ajoute ce que faire tourner un club exige : les clubs, stages et événements auxquels il est inscrit, ses présences, les comptes rendus de séance et les courtes notes internes que ses Gedus rédigent, le chat de ses séances et les images qui y sont postées, ce qu’il réalise et qu’un Gedu rattache à son groupe, les consentements enregistrés pour sa place, et les photos qu’un Gedu joint à un compte rendu. La modération d’un Gedu est également consignée — un enfant déplacé dans un espace à part, ou coupé dans le chat, en laisse une trace. Les photos du compte rendu sont celles de la séance et non celles d’un enfant en particulier — toutes les familles du groupe les voient sur la page du groupe et les reçoivent par e-mail avec le compte rendu.</p><p>Pour consulter, corriger ou supprimer ce que nous conservons au sujet de votre enfant, écrivez à {supportEmail}. Nous conservons vos informations tant que vous avez un compte et les supprimons ou les anonymisons si vous le fermez, sauf lorsque la loi nous impose de garder certains registres plus longtemps, comme le fait la loi comptable finlandaise pour les données de paiement.</p>"
         },
         "becomeGedu": {
           "question": "Comment devenir animateur ?",
@@ -1005,7 +1006,8 @@
         "uncertifyAction": "Retirer la certification",
         "saving": "Enregistrement…",
         "error": "Impossible de mettre à jour la certification. Veuillez réessayer."
-      }
+      },
+      "usernameLabel": "Identifiant"
     },
     "locations": {
       "editName": "Modifier {name}",
@@ -1041,24 +1043,12 @@
       "description": "Outils internes de test et de développement",
       "emailTool": "Outil de test e-mail",
       "emailToolDescription": "Envoyez des e-mails de test via Brevo (SMTP) pour vérifier la délivrabilité et les modèles.",
-      "provider": "Fournisseur",
-      "brevo": "Brevo (SMTP)",
-      "klaviyoComingSoon": "Klaviyo (bientôt disponible)",
-      "content": "Contenu",
       "template": "Modèle",
       "language": "Langue",
-      "custom": "Personnalisé",
       "toEmail": "Destinataire",
       "toEmailPlaceholder": "destinataire@exemple.com",
       "templateParameters": "Paramètres du modèle",
-      "fromEmail": "Adresse d’expéditeur",
-      "fromName": "Nom de l’expéditeur",
       "subject": "Objet",
-      "subjectPlaceholder": "Objet de l’e-mail de test",
-      "body": "Corps du message",
-      "bodyPlaceholder": "Saisissez le corps de l’e-mail (HTML pris en charge)",
-      "replyTo": "Répondre à (facultatif)",
-      "replyToPlaceholder": "reponse@exemple.com",
       "sendTestEmail": "Envoyer l’e-mail de test",
       "emailSentSuccess": "E-mail envoyé ! ID du message : {messageId}",
       "failedToSendRequest": "Échec de l’envoi de la requête",
@@ -1089,15 +1079,16 @@
       "welcomeTitle": "Bienvenue chez School of Gaming",
       "noAccountSignUp": "Vous n’avez pas de compte ? <link>Inscrivez-vous</link>",
       "signingIn": "Connexion...",
-      "emailPlaceholder": "vous@exemple.com",
       "passwordPlaceholder": "Saisissez votre mot de passe",
       "errors": {
-        "identifierRequired": "Veuillez saisir votre adresse e-mail.",
+        "identifierRequired": "Veuillez saisir votre adresse e-mail ou votre identifiant.",
         "passwordTooShort": "Le mot de passe doit contenir au moins {count} caractères.",
-        "invalidCredentials": "L’adresse e-mail ou le mot de passe saisi est incorrect.",
+        "invalidCredentials": "L’adresse e-mail, l’identifiant ou le mot de passe saisi est incorrect.",
         "emailNotConfirmed": "Veuillez confirmer votre adresse e-mail avant de vous connecter.",
         "tooManyAttempts": "Trop de tentatives de connexion. Patientez un instant et réessayez."
-      }
+      },
+      "identifierLabel": "Adresse e-mail ou identifiant",
+      "identifierPlaceholder": "vous@exemple.com ou un identifiant"
     },
     "needHelp": "Besoin d’aide ? Contactez <link>{email}</link>",
     "register": {
@@ -1377,6 +1368,16 @@
     "switchToParentToAddGamer": {
       "title": "Passer au profil de {name} pour ajouter un joueur ?",
       "oneWayWarning": "Vous serez déconnecté de votre compte joueur."
+    },
+    "switchGate": {
+      "pinTitle": "Demande à un parent de saisir son code PIN",
+      "pinDescription": "Le code PIN d’un parent est nécessaire pour basculer vers {name}.",
+      "pinNotSetTitle": "Pas encore de code PIN parent",
+      "pinNotSetDescription": "Un parent doit d’abord créer un code PIN depuis son Mon SOG. Tu pourras ensuite changer de compte.",
+      "signOutTitle": "Déconnecte-toi d’abord",
+      "signOutOwnSession": "{name} est connecté avec son propre identifiant, donc ce compte ne peut pas passer à un autre. Ainsi, le compte de chacun reste privé.",
+      "signOutHow": "Déconnecte-toi, puis connecte-toi en tant que {name}.",
+      "signOutHowViaParent": "Déconnecte-toi, connecte-toi avec le compte de ton parent, puis bascule vers {name} depuis celui-ci."
     },
     "addGamerForm": {
       "title": "Ajouter un joueur",
@@ -2209,6 +2210,35 @@
       "roblox": {
         "title": "Compte Roblox",
         "description": "Associez un nom d’utilisateur Roblox pour les fonctionnalités en jeu."
+      },
+      "signIn": {
+        "title": "Connexion",
+        "current": {
+          "parent": "{name} se connecte via votre compte.",
+          "username": "{name} se connecte avec un identifiant et un mot de passe.",
+          "email": "{name} se connecte avec sa propre adresse e-mail."
+        },
+        "currentUsername": "{name} se connecte avec l’identifiant {username}.",
+        "saved": "Mode de connexion mis à jour.",
+        "saveFailed": "Impossible d’enregistrer ce changement. Veuillez réessayer.",
+        "newPasswordTitle": "Définir un nouveau mot de passe",
+        "newPasswordDescription": "Choisissez un nouveau mot de passe et lisez-le à {name}. Il remplace l’ancien immédiatement.",
+        "newPasswordSubmit": "Définir le mot de passe",
+        "newPasswordSaved": "Nouveau mot de passe enregistré.",
+        "verified": "Cette adresse a été vérifiée.",
+        "notVerified": "{name} n’a pas encore ouvert le lien de vérification.",
+        "resend": "Renvoyer l’e-mail de vérification",
+        "resendSent": "Envoyé. Demandez à {name} de regarder dans sa boîte de réception.",
+        "resendRateLimited": "Cela fait beaucoup d’e-mails pour un seul joueur. Veuillez réessayer plus tard.",
+        "resendFailed": "Impossible d’envoyer l’e-mail. Veuillez réessayer.",
+        "change": {
+          "username": {
+            "title": "Changer l’identifiant",
+            "description": "Choisissez un nouvel identifiant pour {name}. Le mot de passe reste le même, et l’ancien identifiant cesse de fonctionner immédiatement.",
+            "submit": "Enregistrer l’identifiant",
+            "saved": "Identifiant mis à jour. Lisez le nouveau à votre joueur."
+          }
+        }
       }
     },
     "switchToGamer": {
@@ -2219,7 +2249,7 @@
       "items": {
         "parentPin": {
           "question": "Qu’est-ce que le code PIN parent, et que faire si je l’oublie ?",
-          "answer": "<p>Votre code PIN parent est un code à quatre chiffres que vous définissez la première fois que vous utilisez votre compte parent. Il protège l’ensemble du côté parent de Sogverse plutôt que chaque action prise séparément : vous déverrouillez une fois, et la session se reverrouille dès que vous basculez vers un profil joueur ou que vous vous déconnectez — un mot de passe enregistré dans le navigateur ne suffit donc pas à lui seul pour acheter quoi que ce soit ou modifier le compte d’un enfant.</p><p>Si vous l’oubliez, appuyez sur « Vous avez oublié votre code PIN ? » sur l’écran du code PIN : nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs, si bien qu’un enfant qui appuie dessus vous envoie simplement un e-mail. Le lien reste valable 24 heures et ne fonctionne qu’une fois.</p><p>Vous pouvez aussi changer un code PIN dont vous vous souvenez encore depuis les Paramètres.</p>"
+          "answer": "<p>Votre code PIN parent est un code à quatre chiffres que vous définissez la première fois que vous utilisez votre compte parent. Il protège l’ensemble du côté parent de Sogverse plutôt que chaque action prise séparément : vous déverrouillez une fois, et la session se reverrouille dès que vous basculez vers un profil joueur ou que vous vous déconnectez — un mot de passe enregistré dans le navigateur ne suffit donc pas à lui seul pour acheter quoi que ce soit ou modifier le compte d’un enfant. Le même code PIN protège le chemin du retour : un enfant entré dans Sogverse en basculant depuis votre compte en a besoin pour basculer vers votre profil ou celui d’un frère ou d’une sœur.</p><p>Si vous l’oubliez, appuyez sur « Vous avez oublié votre code PIN ? » sur l’écran du code PIN : nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs, si bien qu’un enfant qui appuie dessus vous envoie simplement un e-mail. Le lien reste valable 24 heures et ne fonctionne qu’une fois.</p><p>Vous pouvez aussi changer un code PIN dont vous vous souvenez encore depuis les Paramètres.</p>"
         },
         "sessionReports": {
           "question": "Saurai-je comment se sont passées les séances ?",
@@ -2268,7 +2298,9 @@
       "title": "Préférences marketing",
       "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
       "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres."
-    }
+    },
+    "usernameLabel": "Identifiant",
+    "gamerPasswordFromParent": "Ton parent peut te définir un nouveau mot de passe depuis son Mon SOG."
   },
   "tools": {
     "uncertified": {
@@ -2306,7 +2338,12 @@
     "goToDashboard": "Aller à Mon SOG",
     "invalidTitle": "Ce lien ne fonctionne plus",
     "invalidDescription": "Un lien de vérification cesse de fonctionner dès que l’adresse e-mail du compte change. Ouvrez vos paramètres et envoyez-vous-en un nouveau.",
-    "goToSettings": "Aller aux paramètres"
+    "goToSettings": "Aller aux paramètres",
+    "gamerVerifiedTitle": "Ton adresse e-mail est confirmée",
+    "gamerChoosePasswordDescription": "Ensuite, choisis ton mot de passe — nous t’enverrons un lien par e-mail.",
+    "gamerSendPasswordLink": "Envoie-moi un lien pour le mot de passe",
+    "gamerPasswordLinkSent": "C’est envoyé. Regarde dans tes e-mails.",
+    "gamerPasswordLinkFailed": "Ça n’a pas marché. Réessaie."
   },
   "voice": {
     "participants": "Participants",
@@ -2557,7 +2594,8 @@
       "replyToLabel": "Répondre à",
       "sent": "Envoyé",
       "message": "Message",
-      "gamerNote": "Ce message provient d’un compte joueur. Les réponses seront adressées à son parent ({parentEmail})."
+      "gamerNoteNoMailbox": "Message envoyé depuis un compte joueur ({firstName}), qui n’a pas d’adresse e-mail propre.",
+      "gamerNoteOwnMailbox": "Message envoyé depuis un compte joueur ({firstName}) — cette personne lit aussi sa propre boîte e-mail, {gamerEmail}."
     },
     "welcomeParent": {
       "subject": "Bienvenue chez School of Gaming",
@@ -2592,7 +2630,7 @@
         "consumer_club": "L’inscription de {participantName} à {productName} est confirmée.",
         "municipality_club": "L’inscription de {participantName} à {productName} est confirmée.",
         "camp": "L’inscription de {participantName} à {productName} est confirmée.",
-        "event": "La participation de {participantName} à {productName} est confirmée."
+        "event": "L’inscription de {participantName} à {productName} est confirmée."
       },
       "self": {
         "subject": {
@@ -2605,10 +2643,16 @@
           "consumer_club": "Votre inscription à {productName} est confirmée.",
           "municipality_club": "Votre inscription à {productName} est confirmée.",
           "camp": "Votre inscription à {productName} est confirmée.",
-          "event": "Votre participation à {productName} est confirmée."
+          "event": "Votre inscription à {productName} est confirmée."
         },
         "waitlist": {
-          "subheading": "Vous êtes sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère."
+          "subheading": "Vous êtes sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère.",
+          "next2": {
+            "consumer_club": "Vous conservez votre place dans la file pendant toute la période.",
+            "municipality_club": "Vous conservez votre place dans la file pendant toute la période.",
+            "camp": "Vous conservez votre place dans la file pendant toute la durée du stage.",
+            "event": "Vous conservez votre place dans la file jusqu’à l’événement."
+          }
         }
       },
       "typeLabel": {
@@ -2628,9 +2672,9 @@
       "next": {
         "placement": "Nous placerons {participantName} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
         "placementSelf": "Nous vous placerons dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
-        "subscription": "Le prélèvement a lieu chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
+        "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
         "upfront": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
-        "free": "Il n’y a rien à régler pour cette inscription."
+        "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}."
       },
       "waitlist": {
         "subject": "{participantName} est sur la liste d’attente pour {productName}",
@@ -2638,9 +2682,53 @@
         "heading": "Vous êtes sur la liste d’attente",
         "subheading": "{participantName} est sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère.",
         "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
-        "next2": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
+        "summaryTitle": "Votre place en liste d’attente",
+        "forLabel": "En liste d’attente",
+        "next2": {
+          "consumer_club": "{participantName} conserve sa place dans la file pendant toute la période.",
+          "municipality_club": "{participantName} conserve sa place dans la file pendant toute la période.",
+          "camp": "{participantName} conserve sa place dans la file pendant toute la durée du stage.",
+          "event": "{participantName} conserve sa place dans la file jusqu’à l’événement."
+        },
+        "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
       },
-      "dashboardButton": "Aller à Mon SOG"
+      "gamer": {
+        "greeting": "Bonjour {participantName} !",
+        "summaryTitle": "Votre inscription"
+      },
+      "invite": {
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "En ligne – Mon SOG",
+        "locationInPerson": "{site}, {address}",
+        "whereOnline": "Les sessions ont lieu en ligne dans Mon SOG, et le salon vocal ouvre {minutes} minutes avant le début de chaque session.",
+        "whereInPerson": "Les sessions ont lieu à {site}.",
+        "whereAddress": "Adresse : {address}",
+        "link": "Tout sur cette inscription se trouve dans Mon SOG : {url}",
+        "questions": "Une question ? Écrivez à {supportEmail}."
+      },
+      "dashboardButton": "Aller à Mon SOG",
+      "summaryTitle": "Votre commande",
+      "forLabel": {
+        "consumer_club": "Inscription",
+        "municipality_club": "Inscription",
+        "camp": "Inscription",
+        "event": "Participation"
+      },
+      "overview": {
+        "title": "Bon à savoir",
+        "schedule": "Planning",
+        "where": "Où",
+        "format": "Format",
+        "online": "En ligne",
+        "tbd": "À confirmer",
+        "ageRange": "Tranche d’âge",
+        "audience": "Public",
+        "language": "Langue",
+        "ages": "{min}–{max} ans",
+        "audienceParents": "Pour les parents",
+        "audienceFamilies": "Pour les familles",
+        "audienceFamiliesWithAges": "Pour les familles, {min}–{max} ans"
+      }
     },
     "verifyEmail": {
       "subject": "Confirmez votre adresse e-mail",
@@ -2649,10 +2737,18 @@
       "button": "Confirmer votre adresse e-mail",
       "ignore": "Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer cet e-mail. Rien ne changera."
     },
+    "gamerWelcome": {
+      "subject": "Ton compte School of Gaming est prêt",
+      "heading": "Ton compte est prêt",
+      "body": "Bonjour {gamerName}, ton parent a créé un compte School of Gaming pour toi. Pour te connecter, il te faut un mot de passe — appuie d’abord sur le bouton pour confirmer que c’est bien ton adresse e-mail, puis tu pourras en choisir un.",
+      "button": "C’est bien mon adresse",
+      "ignore": "Si tu n’attendais pas cet e-mail, tu peux l’ignorer. Rien ne changera."
+    },
     "sessionReport": {
       "subject": "Compte rendu de la session – {productName}, {sessionDate}",
       "title": "Compte rendu de la session",
       "intro": "Bonjour ! Voici le compte rendu de {geduName} sur la session de {gamerName} dans {productName}.",
+      "gamerIntro": "Bonjour {gamerName} ! Voici le compte rendu de {geduName} sur ta session dans {productName}.",
       "groupLabel": "Groupe",
       "dateLabel": "Date",
       "timeLabel": "Heure",
@@ -2679,6 +2775,12 @@
       "self": {
         "subject": "Une place s’est libérée pour {productName}",
         "opening": "Nous avions promis de vous écrire dès qu’une place se libérerait. C’est le cas : vous pouvez nous rejoindre — {productName}."
+      },
+      "gamer": {
+        "subject": "Une place s’est libérée pour toi dans {productName}",
+        "opening": "Bonjour {gamerName}, une place s’est libérée pour toi dans {productName}. Bonne nouvelle !",
+        "parentDecides": "Ton parent a reçu un e-mail qui lui demande de dire oui ou non, et la réponse est attendue avant le {deadline}. Dès qu’elle arrive, tu la verras dans Mon SOG.",
+        "dashboardButton": "Ouvrir Mon SOG"
       }
     },
     "seatOfferStaff": {
@@ -2712,7 +2814,7 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Cette page liste l’essentiel de ce que nous conservons sur votre enfant, et pourquoi — en langage clair plutôt qu’en jargon juridique, pour que vous puissiez le vérifier vous-même. Un compte joueur porte une adresse interne Sogverse plutôt qu’un véritable e-mail, et il n’existe qu’à l’intérieur de votre propre compte.",
+        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Cette page liste l’essentiel de ce que nous conservons sur votre enfant, et pourquoi — en langage clair plutôt qu’en jargon juridique, pour que vous puissiez le vérifier vous-même. Un compte joueur n’existe qu’à l’intérieur de votre propre compte, et il porte une adresse interne Sogverse plutôt qu’un véritable e-mail, sauf si vous choisissez de donner la sienne à votre enfant.",
         "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d’un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à {supportEmail}."
       ]
     },
@@ -2739,7 +2841,7 @@
           "Vos préférences de langue et de devise — pour que le site s’affiche comme vous l’attendez.",
           "Votre mot de passe, que nous ne conservons que sous forme chiffrée (hachée) — nous ne pouvons jamais le voir.",
           "Les informations de paiement sont traitées directement dans Stripe. Nous ne voyons ni ne conservons jamais votre numéro de carte complet.",
-          "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement. Nous enregistrons aussi votre nom de famille sur son compte, parce que votre enfant fait partie de votre compte ; les Gedus et les autres joueurs ne le voient jamais. Le compte lui-même porte une adresse interne Sogverse plutôt qu’un véritable e-mail.",
+          "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement. Nous enregistrons aussi votre nom de famille sur son compte, parce que votre enfant fait partie de votre compte ; les Gedus et les autres joueurs ne le voient jamais. Le compte lui-même porte une adresse interne Sogverse plutôt qu’un véritable e-mail, sauf si vous choisissez de lui donner une connexion avec sa propre adresse e-mail ; nous conservons alors cette adresse et lui envoyons sa propre copie des e-mails que nous vous adressons au sujet de ses clubs, stages et événements.",
           "Facultativement, le nom d’utilisateur de votre enfant dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant de compte que le jeu lui attribue, pour que nous puissions le reconnaître dans le jeu et pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
           "Ce que nos animateurs notent au fil des sessions — présences, comptes rendus de session et courtes notes qui nous aident à accompagner votre enfant dans le groupe.",
           "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies, statistiques et publicité » ci-dessous).",
@@ -2942,7 +3044,7 @@
       "privacy": {
         "heading": "La vie privée de votre famille",
         "paragraphs": [
-          "Nous traitons les informations de votre famille conformément au droit finlandais et européen de la protection des données, et nous en conservons le moins possible sur votre enfant : un compte joueur est créé par vous, porte une adresse interne Sogverse plutôt que l’e-mail de votre enfant, et ne sert jamais à lui adresser de la publicité. Notre <linkPrivacy>politique de confidentialité</linkPrivacy> explique exactement ce que nous collectons et pourquoi."
+          "Nous traitons les informations de votre famille conformément au droit finlandais et européen de la protection des données, et nous en conservons le moins possible sur votre enfant : un compte joueur est créé par vous, porte une adresse interne Sogverse plutôt que l’e-mail de votre enfant sauf si vous choisissez de lui en donner un, et ne sert jamais à lui adresser de la publicité. Notre <linkPrivacy>politique de confidentialité</linkPrivacy> explique exactement ce que nous collectons et pourquoi."
         ]
       },
       "changes": {
@@ -3865,6 +3967,32 @@
       "next": "Image suivante",
       "close": "Fermer"
     }
+  },
+  "gamerSignIn": {
+    "question": "Comment {name} se connectera ?",
+    "option": {
+      "parent": "Via le compte du parent",
+      "username": "Via un compte enfant avec un identifiant",
+      "email": "Via un compte enfant avec l’adresse e-mail de l’enfant"
+    },
+    "optionHint": {
+      "parent": "Le parent se connecte sur l’appareil et le confie à l’enfant. L’enfant n’a ni identifiant ni mot de passe à lui.",
+      "username": "Le parent crée l’identifiant et le mot de passe pour l’enfant.",
+      "email": "Le parent crée le compte ; l’enfant confirme son adresse e-mail et crée son propre mot de passe."
+    },
+    "parentModeNote": "Rien à remplir — {name} se connectera lorsque vous basculerez sur son profil depuis votre compte.",
+    "usernameLabel": "Identifiant",
+    "usernamePlaceholder": "lily2015",
+    "usernameHint": "Lettres et chiffres uniquement, de 3 à 20 caractères.",
+    "usernameRequired": "Choisissez un identifiant.",
+    "usernameInvalid": "Utilisez de 3 à 20 lettres ou chiffres, sans espaces.",
+    "usernameTaken": "Cet identifiant est déjà pris. Essayez-en un autre.",
+    "passwordHint": "Au moins {count} caractères. Lisez-le à votre joueur — vous pourrez le changer ici plus tard.",
+    "passwordTooShort": "Le mot de passe doit contenir au moins {count} caractères.",
+    "emailPlaceholder": "lily@exemple.com",
+    "emailRequired": "Saisissez une adresse e-mail.",
+    "emailInvalid": "Cela ne ressemble pas à une adresse e-mail.",
+    "emailTaken": "Cette adresse e-mail a déjà un compte."
   },
   "consent": {
     "heading": "Votre vie privée, votre choix",

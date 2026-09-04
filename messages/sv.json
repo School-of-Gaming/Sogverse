@@ -101,7 +101,8 @@
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
     "roleGedu": "Gedu",
-    "gedus": "Geduer"
+    "gedus": "Geduer",
+    "next": "Nästa"
   },
   "about": {
     "pageTitle": "Om oss",
@@ -130,7 +131,7 @@
       },
       "keepChildrenSafe": {
         "title": "Håll barn trygga online",
-        "description": "Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Varje spelarkonto är kopplat till ett föräldrakonto, och barnet loggar in via det i stället för att ha ett eget lösenord. Nolltolerans mot mobbning och toxicitet."
+        "description": "Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Varje spelarkonto skapas av en förälder och är kopplat till förälderns konto, och föräldern väljer hur barnet loggar in — enbart via föräldrakontot, eller med ett användarnamn eller en verifierad e-postadress och ett eget lösenord. Nolltolerans mot mobbning och toxicitet."
       },
       "familyInTheLoop": {
         "title": "Familjen är delaktig",
@@ -170,7 +171,7 @@
         },
         "howToStart": {
           "question": "Hur kommer jag igång?",
-          "answer": "<p>Skapa ett föräldrakonto, lägg till ditt barn som spelare från Min SOG, och bläddra sedan i butiken och anmäl hen — anmälningspanelen frågar vem platsen är till för, och uppmanar dig att lägga till en spelare om du inte har gjort det än.</p><p>När du har anmält placerar vi ditt barn i en grupp med en Gedu före hens första tillfälle, och klubben dyker sedan upp på Min SOG för er båda.</p><p>Hen går med i tillfällena via ditt konto — du växlar till hens profil — så hen behöver aldrig ett eget lösenord.</p>"
+          "answer": "<p>Skapa ett föräldrakonto, lägg till ditt barn som spelare från Min SOG, och bläddra sedan i butiken och anmäl hen — anmälningspanelen frågar vem platsen är till för, och uppmanar dig att lägga till en spelare om du inte har gjort det än.</p><p>När du har anmält placerar vi ditt barn i en grupp med en Gedu före hens första tillfälle, och klubben dyker sedan upp på Min SOG för er båda.</p><p>Hen går med i tillfällena via ditt konto — du växlar till hens profil — om du inte väljer att ge hen en egen inloggning från Min SOG.</p>"
         },
         "isItASchool": {
           "question": "Är det här skola?",
@@ -210,11 +211,11 @@
         },
         "gamerAccounts": {
           "question": "Hur loggar mitt barn in, och vad är föräldra-PIN-koden?",
-          "answer": "<p>Ditt barn har ingen egen inloggning. Ett spelarkonto bär en intern Sogverse-adress i stället för ditt barns riktiga e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din — det finns inget lösenord för hen att tappa bort eller dela.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
+          "answer": "<p>Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet.</p><p>Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: ett barn som loggade in med sitt eget användarnamn eller sin egen e-postadress kan inte alls växla till ditt eller ett syskons konto — barnet loggar ut och loggar in igen, som dig med ditt lösenord eller som ett syskon som har en egen inloggning; ett syskon som loggar in via ditt konto nås i stället från ditt konto — och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
         },
         "childData": {
           "question": "Vad sparar ni om mitt barn?",
-          "answer": "<p>Om ditt barn:</p><list><item>Förnamnet, födelsemånaden och födelseåret — vi frågar inte efter dagen — och valfritt kön.</item><item>Ert efternamn, eftersom ditt barn är en del av din familj. Det visas för ingen utanför er familj: en Gedus deltagarlista och röstrummet visar ditt barns förnamn, hens ålder och eventuellt användarnamn i spel som du lagt till.</item><item>En intern Sogverse-adress på kontot i stället för en riktig e-postadress.</item><item>Valfritt hens användarnamn i de spel som hens klubbar använder — i dag Minecraft och Roblox — och det id spelet ger hen, så att vi känner igen hen under ett tillfälle. Bilden på spelfiguren hämtas från spelets egna servrar, så användarnamnet når Minecraft eller Roblox varje gång en deltagarlista ritas upp.</item><item>En profilbild som inte är ett foto: utan ett kopplat spelkonto är bilden bredvid namnet ett mönster som genereras ur konto-id:t.</item></list><p>Vid sidan av det sparar vi det som krävs för att driva en klubb: vilka klubbar, läger och evenemang hen är anmäld till, hens närvaro, de rapporter och korta personalanteckningar som hens Geduer skriver, chatten från hens tillfällen och eventuella bilder som lagts upp i den, det hen gör som en Gedu länkar till gruppen, de samtycken som noterats för hens plats, och de foton en Gedu bifogar en rapport. Även en Gedus moderering noteras — flyttas ett barn till ett eget utrymme eller tystas i chatten lämnar det ett spår. Rapportens foton är av tillfället och inte av ett enskilt barn — varje familj i gruppen ser dem på gruppens sida och får dem med rapporten per mejl.</p><p>Vill du se, rätta eller radera något vi har om ditt barn, mejla {supportEmail}. Vi sparar dina uppgifter så länge du har ett konto och raderar eller anonymiserar dem om du avslutar det, utom där lagen kräver att vi behåller vissa uppgifter längre, som den finländska bokföringslagen gör för betalningsuppgifter.</p>"
+          "answer": "<p>Om ditt barn:</p><list><item>Förnamnet, födelsemånaden och födelseåret — vi frågar inte efter dagen — och valfritt kön.</item><item>Ert efternamn, eftersom ditt barn är en del av din familj. Det visas för ingen utanför er familj: en Gedus deltagarlista och röstrummet visar ditt barns förnamn, hens ålder och eventuellt användarnamn i spel som du lagt till.</item><item>En intern Sogverse-adress på kontot i stället för en riktig e-postadress — om du inte har valt att ge barnet en egen inloggning med en egen adress, då sparar vi den adressen. Hur du än väljer visas ingen e-postadress till ditt barn på en Gedus deltagarlista eller i röstrummet.</item><item>Valfritt hens användarnamn i de spel som hens klubbar använder — i dag Minecraft och Roblox — och det id spelet ger hen, så att vi känner igen hen under ett tillfälle. Bilden på spelfiguren hämtas från spelets egna servrar, så användarnamnet når Minecraft eller Roblox varje gång en deltagarlista ritas upp.</item><item>En profilbild som inte är ett foto: utan ett kopplat spelkonto är bilden bredvid namnet ett mönster som genereras ur konto-id:t.</item></list><p>Vid sidan av det sparar vi det som krävs för att driva en klubb: vilka klubbar, läger och evenemang hen är anmäld till, hens närvaro, de rapporter och korta personalanteckningar som hens Geduer skriver, chatten från hens tillfällen och eventuella bilder som lagts upp i den, det hen gör som en Gedu länkar till gruppen, de samtycken som noterats för hens plats, och de foton en Gedu bifogar en rapport. Även en Gedus moderering noteras — flyttas ett barn till ett eget utrymme eller tystas i chatten lämnar det ett spår. Rapportens foton är av tillfället och inte av ett enskilt barn — varje familj i gruppen ser dem på gruppens sida och får dem med rapporten per mejl.</p><p>Vill du se, rätta eller radera något vi har om ditt barn, mejla {supportEmail}. Vi sparar dina uppgifter så länge du har ett konto och raderar eller anonymiserar dem om du avslutar det, utom där lagen kräver att vi behåller vissa uppgifter längre, som den finländska bokföringslagen gör för betalningsuppgifter.</p>"
         },
         "becomeGedu": {
           "question": "Hur blir jag spelfostrare?",
@@ -1005,7 +1006,8 @@
         "uncertifyAction": "Ta bort certifiering",
         "saving": "Sparar…",
         "error": "Det gick inte att uppdatera certifieringen. Försök igen."
-      }
+      },
+      "usernameLabel": "Användarnamn"
     },
     "locations": {
       "editName": "Redigera {name}",
@@ -1041,24 +1043,12 @@
       "description": "Interna verktyg för testning och utveckling",
       "emailTool": "Verktyg för e-posttestning",
       "emailToolDescription": "Skicka testmeddelanden via Brevo (SMTP) för att verifiera leverans och mallar.",
-      "provider": "Leverantör",
-      "brevo": "Brevo (SMTP)",
-      "klaviyoComingSoon": "Klaviyo (kommer snart)",
-      "content": "Innehåll",
       "template": "Mall",
       "language": "Språk",
-      "custom": "Anpassad",
       "toEmail": "Mottagare",
       "toEmailPlaceholder": "mottagare@example.com",
       "templateParameters": "Mallparametrar",
-      "fromEmail": "Avsändarens e-post",
-      "fromName": "Avsändarens namn",
       "subject": "Ämne",
-      "subjectPlaceholder": "Ämne för testmeddelande",
-      "body": "Brödtext",
-      "bodyPlaceholder": "Skriv e-postinnehåll (HTML stöds)",
-      "replyTo": "Svara till (valfritt)",
-      "replyToPlaceholder": "svar@example.com",
       "sendTestEmail": "Skicka testmeddelande",
       "emailSentSuccess": "E-post skickat! Meddelande-ID: {messageId}",
       "failedToSendRequest": "Kunde inte skicka förfrågan",
@@ -1089,15 +1079,16 @@
       "welcomeTitle": "Välkommen till School of Gaming",
       "noAccountSignUp": "Har du inget konto? <link>Registrera dig</link>",
       "signingIn": "Loggar in...",
-      "emailPlaceholder": "du@example.com",
       "passwordPlaceholder": "Ange ditt lösenord",
       "errors": {
-        "identifierRequired": "Ange din e-postadress.",
+        "identifierRequired": "Ange din e-postadress eller ditt användarnamn.",
         "passwordTooShort": "Lösenordet måste vara minst {count} tecken långt.",
-        "invalidCredentials": "E-postadressen eller lösenordet du angav är felaktigt.",
+        "invalidCredentials": "E-postadressen, användarnamnet eller lösenordet du angav är felaktigt.",
         "emailNotConfirmed": "Bekräfta din e-postadress innan du loggar in.",
         "tooManyAttempts": "För många inloggningsförsök. Vänta en stund och försök igen."
-      }
+      },
+      "identifierLabel": "E-postadress eller användarnamn",
+      "identifierPlaceholder": "du@example.com eller ett användarnamn"
     },
     "needHelp": "Behöver du hjälp? Kontakta <link>{email}</link>",
     "register": {
@@ -1377,6 +1368,16 @@
     "switchToParentToAddGamer": {
       "title": "Byt till {name}s profil för att lägga till en gamer?",
       "oneWayWarning": "Du loggas ut från ditt gamer-konto."
+    },
+    "switchGate": {
+      "pinTitle": "Be en förälder att ange sin PIN-kod",
+      "pinDescription": "En förälders PIN-kod behövs för att byta till {name}.",
+      "pinNotSetTitle": "Ingen föräldra-PIN ännu",
+      "pinNotSetDescription": "En förälder måste först skapa en PIN-kod från sin Min SOG. Sedan kan du byta konto.",
+      "signOutTitle": "Logga ut först",
+      "signOutOwnSession": "{name} är inloggad med sin egen inloggning, så det här kontot kan inte byta till ett annat. Så förblir allas konton privata.",
+      "signOutHow": "Logga ut och logga sedan in som {name}.",
+      "signOutHowViaParent": "Logga ut, logga sedan in med din förälders inloggning och växla till {name} därifrån."
     },
     "addGamerForm": {
       "title": "Lägg till en gamer",
@@ -2209,6 +2210,35 @@
       "roblox": {
         "title": "Roblox-konto",
         "description": "Koppla ett Roblox-användarnamn för funktioner i spelet."
+      },
+      "signIn": {
+        "title": "Inloggning",
+        "current": {
+          "parent": "{name} loggar in via ditt konto.",
+          "username": "{name} loggar in med användarnamn och lösenord.",
+          "email": "{name} loggar in med sin egen e-postadress."
+        },
+        "currentUsername": "{name} loggar in med användarnamnet {username}.",
+        "saved": "Inloggningen är uppdaterad.",
+        "saveFailed": "Det gick inte att spara ändringen. Försök igen.",
+        "newPasswordTitle": "Ange ett nytt lösenord",
+        "newPasswordDescription": "Välj ett nytt lösenord och läs upp det för {name}. Det ersätter det gamla direkt.",
+        "newPasswordSubmit": "Spara lösenordet",
+        "newPasswordSaved": "Nytt lösenord sparat.",
+        "verified": "Adressen är verifierad.",
+        "notVerified": "{name} har inte öppnat verifieringslänken än.",
+        "resend": "Skicka verifieringsmejlet igen",
+        "resendSent": "Skickat. Be {name} titta i sin inkorg.",
+        "resendRateLimited": "Det är många mejl till en och samma gamer. Försök igen om en stund.",
+        "resendFailed": "Det gick inte att skicka mejlet. Försök igen.",
+        "change": {
+          "username": {
+            "title": "Byt användarnamn",
+            "description": "Välj ett nytt användarnamn åt {name}. Lösenordet är detsamma, och det gamla användarnamnet slutar fungera direkt.",
+            "submit": "Spara användarnamnet",
+            "saved": "Användarnamnet är uppdaterat. Läs upp det nya för din gamer."
+          }
+        }
       }
     },
     "switchToGamer": {
@@ -2219,7 +2249,7 @@
       "items": {
         "parentPin": {
           "question": "Vad är föräldra-PIN-koden, och vad gör jag om jag glömmer den?",
-          "answer": "<p>Din föräldra-PIN är en fyrsiffrig kod som du väljer första gången du använder ditt föräldrakonto. Den skyddar hela föräldrasidan av Sogverse snarare än varje enskild åtgärd: du låser upp en gång, och sessionen låses igen i samma stund som du växlar till en spelarprofil eller loggar ut — så ett lösenord sparat i webbläsaren räcker inte i sig för att köpa något eller ändra ett barns konto.</p><p>Om du glömmer den, tryck på ”Glömt din PIN?” på PIN-skärmen: vi mejlar en återställningslänk till adressen på ditt konto och ingen annanstans, så ett barn som trycker på den skickar helt enkelt ett mejl till dig. Länken gäller i 24 timmar och fungerar en gång.</p><p>Du kan också byta en PIN du fortfarande minns under Inställningar.</p>"
+          "answer": "<p>Din föräldra-PIN är en fyrsiffrig kod som du väljer första gången du använder ditt föräldrakonto. Den skyddar hela föräldrasidan av Sogverse snarare än varje enskild åtgärd: du låser upp en gång, och sessionen låses igen i samma stund som du växlar till en spelarprofil eller loggar ut — så ett lösenord sparat i webbläsaren räcker inte i sig för att köpa något eller ändra ett barns konto. Samma PIN skyddar vägen tillbaka: ett barn som kom in i Sogverse genom att växla från ditt konto behöver den för att växla till din profil eller ett syskons.</p><p>Om du glömmer den, tryck på ”Glömt din PIN?” på PIN-skärmen: vi mejlar en återställningslänk till adressen på ditt konto och ingen annanstans, så ett barn som trycker på den skickar helt enkelt ett mejl till dig. Länken gäller i 24 timmar och fungerar en gång.</p><p>Du kan också byta en PIN du fortfarande minns under Inställningar.</p>"
         },
         "sessionReports": {
           "question": "Får jag veta hur tillfällena gick?",
@@ -2268,7 +2298,9 @@
       "title": "Marknadsföringsinställningar",
       "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
       "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden."
-    }
+    },
+    "usernameLabel": "Användarnamn",
+    "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från sin Min SOG."
   },
   "tools": {
     "uncertified": {
@@ -2306,7 +2338,12 @@
     "goToDashboard": "Gå till Min SOG",
     "invalidTitle": "Den här länken fungerar inte längre",
     "invalidDescription": "En verifieringslänk slutar fungera så snart kontots e-postadress ändras. Öppna dina inställningar och skicka en ny till dig själv.",
-    "goToSettings": "Gå till inställningar"
+    "goToSettings": "Gå till inställningar",
+    "gamerVerifiedTitle": "Din e-postadress är bekräftad",
+    "gamerChoosePasswordDescription": "Nu väljer du ditt lösenord – vi mejlar dig en länk.",
+    "gamerSendPasswordLink": "Skicka mig en lösenordslänk",
+    "gamerPasswordLinkSent": "Skickat. Titta i din e-post.",
+    "gamerPasswordLinkFailed": "Det gick inte. Försök igen."
   },
   "voice": {
     "participants": "Deltagare",
@@ -2557,7 +2594,8 @@
       "replyToLabel": "Svarsadress",
       "sent": "Skickat",
       "message": "Meddelande",
-      "gamerNote": "Det här meddelandet kommer från ett spelarkonto. Svar går till deras förälder ({parentEmail})."
+      "gamerNoteNoMailbox": "Skickat från ett spelarkonto ({firstName}) som inte har någon egen e-postadress.",
+      "gamerNoteOwnMailbox": "Skickat från ett spelarkonto ({firstName}) — hen läser också sin egen e-post, {gamerEmail}."
     },
     "welcomeParent": {
       "subject": "Välkommen till School of Gaming",
@@ -2608,7 +2646,13 @@
           "event": "Du har gått med i {productName}."
         },
         "waitlist": {
-          "subheading": "Du står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig."
+          "subheading": "Du står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig.",
+          "next2": {
+            "consumer_club": "Du behåller din plats i kön under hela terminen.",
+            "municipality_club": "Du behåller din plats i kön under hela terminen.",
+            "camp": "Du behåller din plats i kön under hela lägret.",
+            "event": "Du behåller din plats i kön fram till evenemanget."
+          }
         }
       },
       "typeLabel": {
@@ -2630,7 +2674,7 @@
         "placementSelf": "Vi placerar dig i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
         "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
         "upfront": "Detta var en engångsbetalning – det finns inget mer att betala.",
-        "free": "Det finns inget att betala för den här."
+        "firstCharge": "Inget debiterades i dag. Din första betalning sker den {date}."
       },
       "waitlist": {
         "subject": "{participantName} står på väntelistan för {productName}",
@@ -2638,9 +2682,53 @@
         "heading": "Du står på väntelistan",
         "subheading": "{participantName} står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig.",
         "next1": "Vi mejlar så snart en plats blir ledig.",
-        "next2": "Du kan följa din plats i kön när som helst i Min SOG."
+        "summaryTitle": "Din väntelisteplats",
+        "forLabel": "På väntelista",
+        "next2": {
+          "consumer_club": "{participantName} behåller sin plats i kön under hela terminen.",
+          "municipality_club": "{participantName} behåller sin plats i kön under hela terminen.",
+          "camp": "{participantName} behåller sin plats i kön under hela lägret.",
+          "event": "{participantName} behåller sin plats i kön fram till evenemanget."
+        },
+        "next3": "Du kan följa din plats i kön när som helst i Min SOG."
       },
-      "dashboardButton": "Gå till Min SOG"
+      "gamer": {
+        "greeting": "Hej {participantName}!",
+        "summaryTitle": "Din anmälan"
+      },
+      "invite": {
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "Online – Min SOG",
+        "locationInPerson": "{site}, {address}",
+        "whereOnline": "Tillfällena hålls online i Min SOG, och röstrummet öppnar {minutes} minuter innan varje tillfälle börjar.",
+        "whereInPerson": "Tillfällena hålls på {site}.",
+        "whereAddress": "Adress: {address}",
+        "link": "Allt om den här anmälan finns i Min SOG: {url}",
+        "questions": "Frågor? Skriv till {supportEmail}."
+      },
+      "dashboardButton": "Gå till Min SOG",
+      "summaryTitle": "Din beställning",
+      "forLabel": {
+        "consumer_club": "Anmäld",
+        "municipality_club": "Registrerad",
+        "camp": "Anmäld",
+        "event": "Deltar"
+      },
+      "overview": {
+        "title": "Bra att veta",
+        "schedule": "Schema",
+        "where": "Plats",
+        "format": "Format",
+        "online": "Online",
+        "tbd": "Bekräftas senare",
+        "ageRange": "Åldersintervall",
+        "audience": "Målgrupp",
+        "language": "Språk",
+        "ages": "Ålder {min}–{max}",
+        "audienceParents": "För föräldrar",
+        "audienceFamilies": "För familjer",
+        "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}"
+      }
     },
     "verifyEmail": {
       "subject": "Bekräfta din e-postadress",
@@ -2649,10 +2737,18 @@
       "button": "Bekräfta din e-postadress",
       "ignore": "Om du inte bad om det här kan du bortse från mejlet. Ingenting ändras."
     },
+    "gamerWelcome": {
+      "subject": "Ditt School of Gaming-konto är klart",
+      "heading": "Ditt konto är klart",
+      "body": "Hej {gamerName}, din förälder har skapat ett School of Gaming-konto åt dig. För att logga in behöver du ett lösenord – tryck först på knappen för att bekräfta att det här är din e-postadress, sedan får du välja ett.",
+      "button": "Det här är min e-postadress",
+      "ignore": "Om du inte väntade dig det här mejlet kan du bortse från det. Ingenting händer."
+    },
     "sessionReport": {
       "subject": "Rapport från passet – {productName}, {sessionDate}",
       "title": "Rapport från passet",
       "intro": "Hej! Här är {geduName}s rapport från {gamerName}s pass i {productName}.",
+      "gamerIntro": "Hej {gamerName}! Här är {geduName}s rapport från ditt pass i {productName}.",
       "groupLabel": "Grupp",
       "dateLabel": "Datum",
       "timeLabel": "Tid",
@@ -2679,6 +2775,12 @@
       "self": {
         "subject": "En plats har blivit ledig – {productName}",
         "opening": "Vi lovade att höra av oss så snart en plats blev ledig. Nu har det hänt: du kan vara med – {productName}."
+      },
+      "gamer": {
+        "subject": "En plats har blivit ledig för dig – {productName}",
+        "opening": "Hej {gamerName}, en plats har blivit ledig för dig i {productName}. Goda nyheter!",
+        "parentDecides": "Din förälder har fått ett mejl med frågan om platsen ska tas, och kan svara fram till {deadline}. När svaret kommer ser du det i Min SOG.",
+        "dashboardButton": "Öppna Min SOG"
       }
     },
     "seatOfferStaff": {
@@ -2712,7 +2814,7 @@
     "intro": {
       "heading": "Kort sammanfattning",
       "paragraphs": [
-        "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Den här sidan listar det viktigaste vi lagrar om ditt barn, och varför – på ett tydligt språk utan juridisk jargong, så att du själv kan kontrollera det. Ett spelarkonto har en intern Sogverse-adress i stället för en riktig e-postadress, och det finns bara inuti ditt eget konto.",
+        "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Den här sidan listar det viktigaste vi lagrar om ditt barn, och varför – på ett tydligt språk utan juridisk jargong, så att du själv kan kontrollera det. Ett spelarkonto finns bara inuti ditt eget konto, och det har en intern Sogverse-adress i stället för en riktig e-postadress om du inte väljer att ge ditt barn en egen.",
         "Kort sagt: vi samlar bara in det vi behöver för att driva våra klubbar, läger och evenemang. Vi säljer aldrig dina eller ditt barns uppgifter. Endast en förälder kan skapa ett konto åt ett barn, och vi gör aldrig reklam riktad till barn. Du kan när som helst be oss visa, rätta eller radera dina uppgifter genom att mejla {supportEmail}."
       ]
     },
@@ -2739,7 +2841,7 @@
           "Dina språk- och valutainställningar – så att webbplatsen visas som du förväntar dig.",
           "Ditt lösenord, som vi endast lagrar i krypterad (hashad) form – vi kan aldrig se det.",
           "Betaluppgifter hanteras direkt i Stripe. Vi ser eller lagrar aldrig hela ditt kortnummer.",
-          "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt. Vi lagrar också ditt efternamn på barnets konto, eftersom barnet hör till ditt konto. Geduer och andra spelare ser det aldrig. Själva kontot har en intern Sogverse-adress i stället för en riktig e-postadress.",
+          "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt. Vi lagrar också ditt efternamn på barnets konto, eftersom barnet hör till ditt konto. Geduer och andra spelare ser det aldrig. Själva kontot har en intern Sogverse-adress i stället för en riktig e-postadress, om du inte väljer att ge barnet en inloggning med en egen e-postadress; då sparar vi den adressen och skickar barnet en egen kopia av de mejl vi skickar dig om barnets klubbar, läger och evenemang.",
           "Eventuellt barnets användarnamn i de spel som barnets klubbar använder – i dag Minecraft och Roblox – och det konto-id som spelet ger barnet, så att vi känner igen barnet i spelet och så att barnet kan ansluta till vår Minecraft-server under träffarna.",
           "Våra spelfostrares anteckningar från träffarna – närvaro, träffrapporter och korta noteringar som hjälper oss att stötta ditt barn i gruppen.",
           "Allmän, anonym information om hur webbplatsen används (se \"Cookies, analys och annonsering\" nedan).",
@@ -2942,7 +3044,7 @@
       "privacy": {
         "heading": "Din familjs integritet",
         "paragraphs": [
-          "Vi hanterar din familjs uppgifter i enlighet med finländsk och europeisk dataskyddslagstiftning, och vi lagrar så lite som möjligt om ditt barn: ett spelarkonto skapas av dig, har en intern Sogverse-adress i stället för barnets egen e-postadress, och används aldrig för att rikta reklam till barnet. Vår <linkPrivacy>integritetspolicy</linkPrivacy> förklarar exakt vad vi samlar in och varför."
+          "Vi hanterar din familjs uppgifter i enlighet med finländsk och europeisk dataskyddslagstiftning, och vi lagrar så lite som möjligt om ditt barn: ett spelarkonto skapas av dig, har en intern Sogverse-adress i stället för barnets egen e-postadress om du inte väljer att ge barnet en, och används aldrig för att rikta reklam till barnet. Vår <linkPrivacy>integritetspolicy</linkPrivacy> förklarar exakt vad vi samlar in och varför."
         ]
       },
       "changes": {
@@ -3865,6 +3967,32 @@
       "next": "Nästa bild",
       "close": "Stäng"
     }
+  },
+  "gamerSignIn": {
+    "question": "Hur ska {name} logga in?",
+    "option": {
+      "parent": "Via förälderns konto",
+      "username": "Via ett barnkonto med användarnamn",
+      "email": "Via ett barnkonto med barnets e-postadress"
+    },
+    "optionHint": {
+      "parent": "Föräldern loggar in på enheten och lämnar över den till barnet. Barnet har inget eget användarnamn och inget eget lösenord.",
+      "username": "Föräldern skapar användarnamnet och lösenordet åt barnet.",
+      "email": "Föräldern skapar kontot; barnet bekräftar sin e-postadress och skapar ett eget lösenord."
+    },
+    "parentModeNote": "Inget att fylla i – {name} loggar in när du växlar till dem från ditt eget konto.",
+    "usernameLabel": "Användarnamn",
+    "usernamePlaceholder": "saga2015",
+    "usernameHint": "Endast bokstäver och siffror, 3 till 20 tecken.",
+    "usernameRequired": "Välj ett användarnamn.",
+    "usernameInvalid": "Använd 3 till 20 bokstäver eller siffror, utan mellanslag.",
+    "usernameTaken": "Användarnamnet är upptaget. Prova ett annat.",
+    "passwordHint": "Minst {count} tecken. Läs upp det för din gamer – du kan ändra det här senare.",
+    "passwordTooShort": "Lösenordet måste vara minst {count} tecken.",
+    "emailPlaceholder": "saga@example.com",
+    "emailRequired": "Ange en e-postadress.",
+    "emailInvalid": "Det ser inte ut som en e-postadress.",
+    "emailTaken": "Den e-postadressen har redan ett konto."
   },
   "consent": {
     "heading": "Din integritet, ditt val",
