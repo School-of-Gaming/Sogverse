@@ -3,25 +3,30 @@ import { useState } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
-import { SwitchGateBody } from "@/components/family/SwitchGateDialog";
+import {
+  SwitchGateBody,
+  type SwitchGateMode,
+} from "@/components/family/SwitchGateDialog";
 import {
   SwitchAccountError,
   SWITCH_PIN_INVALID,
   SWITCH_PIN_NOT_SET,
-  SWITCH_PASSWORD_INVALID,
+  SWITCH_SIGN_OUT_REQUIRED,
   type FamilyMember,
   type SwitchAccountCredentials,
   type SwitchAccountErrorCode,
 } from "@/services/family";
 
 /**
- * The gate a child pays to leave their own account.
+ * What stands between a child and somebody else's account.
  *
- * What is worth pinning here is not the markup but the three endings, because
- * each is a promise the route already makes and the UI has to match: a wrong
- * value never navigates and never signs anybody out, a family that holds no PIN
- * is told so instead of being asked to type more carefully, and a switch that
- * lands keeps every control disabled right through the navigation it causes.
+ * What is worth pinning here is not the markup but the endings, because each is
+ * a promise the route already makes and the UI has to match: a wrong PIN never
+ * navigates and never signs anybody out, a family that holds no PIN is told so
+ * instead of being asked to type more carefully, a switch that lands keeps every
+ * control disabled right through the navigation it causes — and a session that
+ * cannot switch at all is handed the canonical sign-out rather than a credential
+ * box that would refuse whatever was typed into it.
  */
 
 // A real, generated UUID — the same discipline every fixture person gets, so
@@ -33,7 +38,15 @@ const TARGET: FamilyMember = {
   sign_in: null,
 };
 
+/** The child whose session it is — the sign-out copy is about them. */
+const VIEWER_FIRST_NAME = "Aino";
+
 const GATE = messages.family.switchGate;
+
+/** The English string with its one placeholder filled, as the reader sees it. */
+function copy(template: string, name: string) {
+  return template.replaceAll("{name}", name);
+}
 
 /**
  * Drives the controlled `committing` pair the way both hosts do, and reports
@@ -45,7 +58,7 @@ function Harness({
   onCommit,
   committingSpy,
 }: {
-  mode: "pin" | "password";
+  mode: SwitchGateMode;
   onCommit: (credentials: SwitchAccountCredentials) => Promise<void>;
   committingSpy?: (value: boolean) => void;
 }) {
@@ -61,7 +74,7 @@ function Stateful({
   onCommit,
   committingSpy,
 }: {
-  mode: "pin" | "password";
+  mode: SwitchGateMode;
   onCommit: (credentials: SwitchAccountCredentials) => Promise<void>;
   committingSpy?: (value: boolean) => void;
 }) {
@@ -69,6 +82,7 @@ function Stateful({
   return (
     <SwitchGateBody
       target={TARGET}
+      viewerFirstName={VIEWER_FIRST_NAME}
       mode={mode}
       committing={committing}
       onCommittingChange={(next) => {
@@ -187,61 +201,107 @@ describe("SwitchGateBody — the PIN gate", () => {
     // reading the product in another language.
     expect(consoleError).toHaveBeenCalled();
   });
+
+  it("drops the pad when the route says this session has to sign out instead", async () => {
+    // The helper and the route are the same rule, so this should not happen —
+    // but the route is the boundary, and a child left typing digits nothing
+    // will ever accept is the worst way to be told.
+    const onCommit = vi
+      .fn()
+      .mockRejectedValue(refusal(SWITCH_SIGN_OUT_REQUIRED));
+    render(<Harness mode="pin" onCommit={onCommit} />);
+
+    await enterPin();
+
+    expect(screen.getByText(GATE.signOutTitle)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "1" })).toBeNull();
+  });
 });
 
-describe("SwitchGateBody — the password gate", () => {
-  function typePassword(value: string) {
-    const field = screen.getByLabelText(messages.common.password);
-    fireEvent.change(field, { target: { value } });
-    return field;
+describe("SwitchGateBody — the sign-out gate", () => {
+  /** The form the sign-out button submits, found through that button. */
+  function signOutForm() {
+    return screen
+      .getByRole("button", { name: messages.common.signOut })
+      .closest("form");
   }
 
-  it("names the target and refuses to submit an empty field", () => {
-    render(<Harness mode="password" onCommit={vi.fn()} />);
+  it("explains whose session this is, why it opens nobody else's, and what to do", () => {
+    render(<Harness mode="signOut" onCommit={vi.fn()} />);
 
+    expect(screen.getByText(GATE.signOutTitle)).toBeTruthy();
+    // The viewer is the subject of the first sentence, the target of the last:
+    // this session is Aino's, and the account she is reaching for is Riikka's.
     expect(
-      screen.getByText(GATE.passwordTitle.replace("{name}", TARGET.first_name)),
+      screen.getByText(copy(GATE.signOutOwnSession, VIEWER_FIRST_NAME)),
     ).toBeTruthy();
+    expect(screen.getByText(GATE.signOutWhy)).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: GATE.submit }).hasAttribute("disabled"),
-    ).toBe(true);
+      screen.getByText(copy(GATE.signOutHow, TARGET.first_name)),
+    ).toBeTruthy();
   });
 
-  it("says so inline when the password is wrong, and stays open", async () => {
-    const onCommit = vi.fn().mockRejectedValue(refusal(SWITCH_PASSWORD_INVALID));
-    render(<Harness mode="password" onCommit={onCommit} />);
+  it("collects nothing and commits nothing — there is no credential to send", () => {
+    const onCommit = vi.fn();
+    render(<Harness mode="signOut" onCommit={onCommit} />);
 
-    typePassword("hunter2");
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: GATE.submit }));
-    });
-
-    expect(onCommit).toHaveBeenCalledWith({ password: "hunter2" });
-    await waitFor(() => {
-      expect(screen.getByRole("alert").textContent).toBe(GATE.passwordInvalid);
-    });
-    // The field is still there, still holding what was typed: retry is one
-    // correction away, and nothing about the session has moved.
-    const field: HTMLInputElement = screen.getByLabelText(
-      messages.common.password,
-    );
-    expect(field.value).toBe("hunter2");
-    expect(
-      screen.getByRole("button", { name: GATE.submit }).hasAttribute("disabled"),
-    ).toBe(false);
+    // No pad, no password box: the route would refuse whatever was typed, so
+    // asking for it would be a question with no answer.
+    expect(screen.queryByRole("button", { name: "1" })).toBeNull();
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(onCommit).not.toHaveBeenCalled();
   });
 
-  it("holds the submit disabled through a switch that lands", async () => {
-    const onCommit = vi.fn().mockReturnValue(new Promise<void>(() => {}));
-    render(<Harness mode="password" onCommit={onCommit} />);
+  it("offers the canonical sign-out: a form POST to the sign-out route", () => {
+    render(<Harness mode="signOut" onCommit={vi.fn()} />);
 
-    typePassword("hunter2");
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: GATE.submit }));
-    });
+    const form = signOutForm();
+    // Not a fetch and not a router push. The route answers 303 and the browser
+    // follows it as a full-page GET, which is the only thing that rebuilds the
+    // browser Supabase client from the new cookies.
+    expect(form?.getAttribute("method")).toBe("post");
+    expect(form?.getAttribute("action")).toBe("/api/auth/signout");
+  });
+
+  it("orders the footer [Cancel, Sign out] so the affirmative is last in the DOM", () => {
+    render(<Harness mode="signOut" onCommit={vi.fn()} />);
+
+    // Last in the DOM is rightmost in a row and, under `flex-col-reverse`,
+    // topmost in a stack — one authoring shape for both layouts.
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
+      messages.common.cancel,
+      messages.common.signOut,
+    ]);
+  });
+
+  it("cancels back to the caller without signing anything out", () => {
+    render(<Harness mode="signOut" onCommit={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: messages.common.cancel }));
+
+    expect(onClose).toHaveBeenCalled();
+    // A `type="button"` cancel inside a form is what stops the click from
+    // submitting the sign-out it sits beside.
+    expect(
+      screen
+        .getByRole("button", { name: messages.common.cancel })
+        .getAttribute("type"),
+    ).toBe("button");
+  });
+
+  it("holds both buttons disabled from the submit onward", () => {
+    render(<Harness mode="signOut" onCommit={vi.fn()} />);
+
+    const form = signOutForm();
+    // jsdom does not navigate, so the submit is cancelled here — but the
+    // component's own `onSubmit` has already run, which is the flag under test.
+    // In a browser nothing clears it either: the 303 unloads the document.
+    fireEvent.submit(form!);
 
     expect(
-      screen.getByRole("button", { name: GATE.submit }).hasAttribute("disabled"),
+      screen
+        .getByRole("button", { name: messages.common.signOut })
+        .hasAttribute("disabled"),
     ).toBe(true);
     expect(
       screen

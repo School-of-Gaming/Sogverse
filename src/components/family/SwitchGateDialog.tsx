@@ -1,8 +1,8 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Loader2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,26 +13,36 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Field } from "@/components/ui/field";
-import { PasswordInput } from "@/components/ui/password-input";
 import { PinPad, usePinField } from "@/components/pin";
 import {
   SwitchAccountError,
   SWITCH_PIN_INVALID,
   SWITCH_PIN_NOT_SET,
   SWITCH_PIN_REQUIRED,
-  SWITCH_PASSWORD_INVALID,
-  SWITCH_PASSWORD_REQUIRED,
+  SWITCH_SIGN_OUT_REQUIRED,
   type FamilyMember,
   type SwitchAccountCredentials,
 } from "@/services/family";
 
-/** Which credential this gate collects. Chosen by `switchGateFor`, never here. */
-export type SwitchGateMode = "pin" | "password";
+/**
+ * What this gate does about the switch behind it. Chosen by `switchGateFor`,
+ * never here.
+ *
+ *  - `pin` — collect a linked parent's PIN and commit.
+ *  - `signOut` — collect nothing. Explain why this session cannot become
+ *    somebody else's, and offer the way that works.
+ */
+export type SwitchGateMode = "pin" | "signOut";
 
 interface SwitchGateBodyProps {
   /** The account being switched into — named in the copy, never a source of truth. */
   target: FamilyMember;
+  /**
+   * The signed-in viewer's own first name. The sign-out copy is about *them* —
+   * whose session this is and who it belongs to — so it cannot be derived from
+   * the target, and every host already knows it.
+   */
+  viewerFirstName: string;
   mode: SwitchGateMode;
   /**
    * Set synchronously before the commit and cleared only on a failure the
@@ -63,25 +73,30 @@ interface SwitchGateBodyProps {
 }
 
 /**
- * The credential a child pays to leave their own account, collected in the
- * shape the route will accept.
+ * What stands between a child and somebody else's account, in whichever of its
+ * two shapes applies.
  *
- * Which credential is not this component's decision — `switchGateFor` makes it
- * from the viewer's role and their session's provenance, and hands the answer
- * down as `mode`. What lives here is the collection and the three ways it can
- * end: the switch lands (and the page unloads underneath us), the value was
- * wrong (retry, in place), or the family holds no PIN at all — which no amount
- * of careful typing fixes, so the body stops being a prompt and becomes a
- * message.
+ * Which shape is not this component's decision — `switchGateFor` makes it from
+ * the viewer's role and their session's provenance, and hands the answer down
+ * as `mode`. A session a parent handed over is asked for that parent's PIN. A
+ * session the child opened with their own username or email is asked for
+ * nothing: it belongs to them alone, and the way to another account is the
+ * login page, so this body explains that in plain words and offers the sign-out
+ * that starts it.
  *
  * **A failure never navigates.** The route guarantees a refused gate leaves the
  * caller's session untouched, and the UI has to match that promise: a wrong PIN
- * shakes and clears, a wrong password says so, and the child stays exactly where
- * they were.
+ * shakes and clears, and the child stays exactly where they were.
+ *
+ * **The sign-out is the canonical shape and nothing else.** A form POST to
+ * `/api/auth/signout`, which the route answers with a 303 the browser follows
+ * as a full-page GET — no fetch, no router push. The browser Supabase client is
+ * seeded from cookies at construction time, so only a document unload rebuilds
+ * it (root `CLAUDE.md` § Auth Architecture).
  *
  * **There is no "forgot PIN" escape here.** That route is customer-gated, so a
  * child could not complete it; the way out of a family with a forgotten PIN is
- * to sign out and sign in as the parent.
+ * the same sign-out this body already offers on its other path.
  *
  * Rendered inside a `DialogContent` the caller owns — as its whole content
  * (`SwitchGateDialog`) or as the second step of a confirm dialog that decided a
@@ -90,6 +105,7 @@ interface SwitchGateBodyProps {
  */
 export function SwitchGateBody({
   target,
+  viewerFirstName,
   mode,
   committing,
   onCommittingChange,
@@ -100,8 +116,6 @@ export function SwitchGateBody({
   const t = useTranslations("family");
   const c = useTranslations("common");
   const pin = usePinField();
-  const passwordId = useId();
-  const [password, setPassword] = useState("");
   /**
    * The one terminal state: nobody in this family holds a PIN. Reached only
    * from the route's own answer, because a gamer session cannot ask the
@@ -109,6 +123,14 @@ export function SwitchGateBody({
    * child (see `src/services/pin/CLAUDE.md`).
    */
   const [pinNotSet, setPinNotSet] = useState(initialPinNotSet);
+  /**
+   * A commit that came back `SIGN_OUT_REQUIRED` even though this body was asked
+   * for a PIN. It should not happen — the helper and the route are the same
+   * rule — but the route is the boundary and its answer wins, so the body drops
+   * the prompt and shows what actually applies rather than leaving a child
+   * typing digits nothing will accept.
+   */
+  const [forcedSignOut, setForcedSignOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /** The code on a refusal, or undefined for anything that is not one. */
@@ -139,31 +161,17 @@ export function SwitchGateBody({
         setPinNotSet(true);
         return;
       }
+      if (code === SWITCH_SIGN_OUT_REQUIRED) {
+        // Same: the pad goes with the prompt it belonged to.
+        setForcedSignOut(true);
+        return;
+      }
       if (code !== SWITCH_PIN_INVALID && code !== SWITCH_PIN_REQUIRED) {
         setError(reportUnexpected(err));
       }
       // A wrong PIN is the pad's own language: flash, shake, clear, retry. No
       // error text — the same convention every other PIN screen keeps.
       pin.reject();
-    }
-  }
-
-  async function handlePassword(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (committing) return;
-    onCommittingChange(true);
-    setError(null);
-    try {
-      await onCommit({ password });
-      // Left set through the unload, exactly as above.
-    } catch (err) {
-      onCommittingChange(false);
-      const code = codeOf(err);
-      if (code === SWITCH_PASSWORD_INVALID || code === SWITCH_PASSWORD_REQUIRED) {
-        setError(t("switchGate.passwordInvalid"));
-      } else {
-        setError(reportUnexpected(err));
-      }
     }
   }
 
@@ -186,7 +194,7 @@ export function SwitchGateBody({
     );
   }
 
-  if (mode === "pin") {
+  if (mode === "pin" && !forcedSignOut) {
     return (
       <>
         <DialogHeader>
@@ -203,7 +211,11 @@ export function SwitchGateBody({
             value={pin.value}
             onChange={pin.setValue}
             onComplete={handlePin}
-            disabled={pin.busy}
+            // Either flag closes the pad. `pin.busy` is this body's own — set
+            // the instant the fourth digit lands and left set through the
+            // unload — and `committing` is the host's, which is what a commit
+            // the host started (or a style-guide box pinning the state) says.
+            disabled={pin.busy || committing}
             shaking={pin.shaking}
             ariaLabel={t("switchGate.pinTitle")}
           />
@@ -225,51 +237,90 @@ export function SwitchGateBody({
     );
   }
 
+  return <SignOutToSwitch target={target} viewerFirstName={viewerFirstName} onClose={onClose} />;
+}
+
+/**
+ * The answer to a switch no credential buys: what this session is, why it will
+ * not become somebody else's, and the way that does work.
+ *
+ * Three short sentences, in the words a parent standing behind the child can
+ * follow. The middle one is the mechanism (root `CLAUDE.md` § Safety copy): not
+ * that we care about privacy, but that a session opened with one person's own
+ * credentials opens exactly one account — which is a thing a reader can test.
+ */
+function SignOutToSwitch({
+  target,
+  viewerFirstName,
+  onClose,
+}: {
+  target: FamilyMember;
+  viewerFirstName: string;
+  onClose: () => void;
+}) {
+  const t = useTranslations("family");
+  const c = useTranslations("common");
+  /**
+   * The submit is a native form POST with no promise behind it and no JS error
+   * path: the document either navigates or it does not. Set in `onSubmit` while
+   * the submit proceeds, it renders immediately and stands until the 303
+   * unloads the page — never cleared, for the same reason.
+   */
+  const [signingOut, setSigningOut] = useState(false);
+
   return (
-    <form onSubmit={handlePassword} className="space-y-4">
+    <>
       <DialogHeader>
-        <DialogTitle>
-          {t("switchGate.passwordTitle", { name: target.first_name })}
+        <DialogTitle className="flex items-center gap-2">
+          <LogOut className="h-5 w-5 shrink-0" aria-hidden />
+          {t("switchGate.signOutTitle")}
         </DialogTitle>
         <DialogDescription>
-          {t("switchGate.passwordDescription")}
+          {t("switchGate.signOutOwnSession", { name: viewerFirstName })}
         </DialogDescription>
       </DialogHeader>
 
-      <Field label={c("password")} htmlFor={passwordId}>
-        <PasswordInput
-          id={passwordId}
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          autoComplete="current-password"
-          disabled={committing}
-          required
-          autoFocus
-        />
-      </Field>
+      <div className="space-y-2 text-sm text-muted-foreground">
+        <p>{t("switchGate.signOutWhy")}</p>
+        <p>{t("switchGate.signOutHow", { name: target.first_name })}</p>
+      </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      {/* The canonical sign-out: a form POST the server answers with a 303,
+          which the browser follows as a full-page GET. No client fetch, no
+          router — the route changes cookies the browser Supabase singleton
+          never sees, so only a document reload rebuilds it.
 
-      {/* DOM order [negative, affirmative]: rightmost in a row, topmost in a
-          stack. `DialogFooter` places both. */}
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          disabled={committing}
-        >
-          {c("cancel")}
-        </Button>
-        <Button type="submit" disabled={committing || password.length === 0}>
-          {t("switchGate.submit")}
-        </Button>
-      </DialogFooter>
-    </form>
+          The form wraps the whole footer rather than the one button, so the
+          footer stays the flex parent and its DOM order is untouched:
+          [negative, affirmative], rightmost in a row and topmost in a stack.
+          Cancel is `type="button"` so it cannot submit, and there is no text
+          field in this view for a browser's implicit submission to fire from.
+
+          `onSubmit` records the commit and lets the native submit proceed — no
+          `preventDefault`. The browser stays on this document until the 303
+          comes back, so the spinner is on screen for the whole round trip, and
+          there is no JS error path to clear it from. */}
+      <form
+        method="post"
+        action="/api/auth/signout"
+        onSubmit={() => setSigningOut(true)}
+      >
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={signingOut}
+          >
+            {c("cancel")}
+          </Button>
+          <Button type="submit" disabled={signingOut}>
+            {signingOut && <Loader2 className="animate-spin" aria-hidden />}
+            {c("signOut")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </>
   );
 }
 
@@ -277,6 +328,7 @@ interface SwitchGateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   target: FamilyMember;
+  viewerFirstName: string;
   mode: SwitchGateMode;
   onCommit: (credentials: SwitchAccountCredentials) => Promise<void>;
 }
@@ -284,7 +336,7 @@ interface SwitchGateDialogProps {
 /**
  * The gate on its own, for the surfaces that had nothing to confirm first: the
  * header account menu's rows and the /select-profile tiles. Clicking a name
- * there *is* the confirmation, so the credential prompt is the whole dialog.
+ * there *is* the confirmation, so the gate is the whole dialog.
  *
  * `SwitchProfileDialog` does not use this wrapper — it already has a dialog
  * open and renders `SwitchGateBody` as its second step, so the gate replaces
@@ -294,6 +346,7 @@ export function SwitchGateDialog({
   open,
   onOpenChange,
   target,
+  viewerFirstName,
   mode,
   onCommit,
 }: SwitchGateDialogProps) {
@@ -312,6 +365,7 @@ export function SwitchGateDialog({
       <DialogContent className="space-y-4">
         <SwitchGateBody
           target={target}
+          viewerFirstName={viewerFirstName}
           mode={mode}
           committing={committing}
           onCommittingChange={setCommitting}

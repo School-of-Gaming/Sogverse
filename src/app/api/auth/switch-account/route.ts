@@ -15,12 +15,10 @@ import {
 import {
   switchAccountBody,
   switchAccountResponse,
-  SWITCH_PASSWORD_INVALID,
-  SWITCH_PASSWORD_REQUIRED,
   SWITCH_PIN_INVALID,
   SWITCH_PIN_NOT_SET,
   SWITCH_PIN_REQUIRED,
-  SWITCH_TARGET_UNREACHABLE,
+  SWITCH_SIGN_OUT_REQUIRED,
   type SwitchAccountErrorCode,
 } from "@/services/family/family.contracts";
 
@@ -41,8 +39,8 @@ import {
  * shouldn't see, and a target that does not exist is refused identically to one
  * outside the family, so this route cannot be used to probe for account ids.
  *
- * **What it costs** — the gate, which is new and is keyed on the caller's role
- * and the provenance of their session (`src/lib/session-provenance.ts`):
+ * **What it costs** — the gate, keyed on the caller's role and the provenance of
+ * their session (`src/lib/session-provenance.ts`):
  *
  *  - **customer → gamer** is one click and no gate. A parent handing the device
  *    to a child is the gesture this route exists for, and a locked parent must
@@ -51,9 +49,18 @@ import {
  *    **PIN**. This is the household case: the child is on the family's device,
  *    the parent is nearby, and the PIN is the accepted friction.
  *  - **gamer, own session** (the child signed in with their own credentials) →
- *    the **target's password**. A child may sign in on a school computer and
- *    walk away from it; a four-digit PIN with no rate limit is not what should
- *    stand between that machine and the parent's account.
+ *    **no switch at all**, 403 `SIGN_OUT_REQUIRED`. A child may sign in on a
+ *    school computer and walk away from it, and this route must not be what
+ *    turns that machine into a way into a parent's account. Charging the
+ *    target's password instead would have made this endpoint a password oracle
+ *    aimable at a family member; the way to somebody else's account is the login
+ *    page, which has GoTrue's own protections behind it.
+ *
+ * **The own-session refusal lands after the membership matrix, and carries a
+ * code but no other distinction from a target outside the family.** Running it
+ * earlier would answer "this session cannot switch" for ids the caller has no
+ * relationship with, and there is nothing to say about an own session before we
+ * know the caller is in the family at all.
  *
  * **This route is the only place a switch PIN is verified, the only place the
  * unlock cookie is minted outside the PIN routes, and the only place the
@@ -62,14 +69,12 @@ import {
  * have to be bound to a session that does not exist yet. Nothing else is
  * positioned to do any of them.
  *
- * **The marker is what makes the gate above knowable.** Every session the OTP
- * path creates is a session this route handed over, and it says so by signing
- * `FAMILY_SESSION_COOKIE_NAME` against the new session's id; the password path
- * deletes it, because the person at the keyboard typed the target's own
- * credential. Nothing in a token can draw that line — a password-recovery
- * session records `otp` in `amr` exactly as a switch does — so the
- * classification is this route's own signature rather than an inference (see
- * `src/lib/session-provenance.ts`).
+ * **The marker is what makes the gate above knowable.** Every session this route
+ * creates is a session it handed over, and it says so by signing
+ * `FAMILY_SESSION_COOKIE_NAME` against the new session's id. Nothing in a token
+ * can draw that line — a password-recovery session records `otp` in `amr`
+ * exactly as a switch does — so the classification is this route's own signature
+ * rather than an inference (see `src/lib/session-provenance.ts`).
  *
  * The PIN is checked against `verify_pin_for_any` over the caller's linked
  * parents — a child may have more than one, and any of their PINs opens the
@@ -85,7 +90,7 @@ export const POST = defineRoute({
   response: switchAccountResponse,
 
   handler: async ({ supabase, user, profile, body }) => {
-    const { userId, pin, password } = body;
+    const { userId, pin } = body;
 
     if (userId === user.id) {
       return NextResponse.json(
@@ -123,16 +128,16 @@ export const POST = defineRoute({
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // The own-session path is a different mechanism, not a different credential
-    // on the same one: it signs in AS the target, so the session it produces
-    // carries `password` in its own `amr` and is itself an own session.
+    // An own session cannot switch to anybody, and nothing in the body buys a
+    // way past this — a `pin` sent here is refused exactly as an empty body is.
+    // Placed after the membership matrix so it says nothing about ids the caller
+    // has no relationship with, and before anything destructive so a refused
+    // caller is left holding the session they arrived with.
     if (profile.role === "gamer" && user.session.provenance === "own") {
-      return switchByPassword({
-        admin,
-        supabase,
-        target,
-        password,
-      });
+      return gateRefusal(
+        SWITCH_SIGN_OUT_REQUIRED,
+        "Sign out and sign in as that person to use their account.",
+      );
     }
 
     if (profile.role === "gamer") {
@@ -170,7 +175,7 @@ function gateRefusal(code: SwitchAccountErrorCode, message: string): NextRespons
 }
 
 // ---------------------------------------------------------------------------
-// Gate A — a linked parent's PIN, for a family session
+// The gate — a linked parent's PIN, for a family session
 // ---------------------------------------------------------------------------
 
 /**
@@ -224,22 +229,21 @@ async function verifyParentPin(args: {
 }
 
 // ---------------------------------------------------------------------------
-// The two ways a session is replaced
+// How the session is replaced
 // ---------------------------------------------------------------------------
 
 /**
- * The original switch: mint a magic-link OTP for the target server-side, drop
- * the caller's session, and redeem the OTP so the new cookies land in the
- * response.
+ * The switch: mint a magic-link OTP for the target server-side, drop the
+ * caller's session, and redeem the OTP so the new cookies land in the response.
  *
- * **Every session this path creates is a family session, and this is where that
+ * **Every session this route creates is a family session, and this is where that
  * is recorded.** The marker cookie is signed against the new session's id on
- * every OTP switch without exception — a gamer target, a parent target, a
- * parent dropping to a child. The rule is kept that simple deliberately: the
- * only alternative is a per-target condition, and a condition is a thing that
- * can be got wrong in the one place where getting it wrong hands out the
- * cheaper gate. On a parent target it is inert anyway (only a gamer caller is
- * ever charged for leaving), so narrowing it buys nothing.
+ * every switch without exception — a gamer target, a parent target, a parent
+ * dropping to a child. The rule is kept that simple deliberately: the only
+ * alternative is a per-target condition, and a condition is a thing that can be
+ * got wrong in the one place where getting it wrong hands out the cheaper gate.
+ * On a parent target it is inert anyway (only a gamer caller is ever charged for
+ * leaving), so narrowing it buys nothing.
  *
  * `mintUnlockCookie` is only ever true here, and only bites when the target is a
  * customer: the parent this lands on is unlocked for the life of the new
@@ -336,10 +340,10 @@ async function switchByOtp(args: {
     );
   } else {
     // Unmarked reads as `own`, which is the stronger gate: whoever holds this
-    // session is asked for a password rather than four digits. Worse for a
-    // family that then cannot leave the account, never weaker. This is where a
-    // token we could not read lands too, which is why reading it is allowed to
-    // fail but not to throw.
+    // session cannot switch out of it at all and has to sign in as the other
+    // person. Worse for a family that has to type a credential again, never
+    // weaker. This is where a token we could not read lands too, which is why
+    // reading it is allowed to fail but not to throw.
     console.error("switch-account: new session carried no session_id");
     cookieStore.delete(FAMILY_SESSION_COOKIE_NAME);
   }
@@ -357,117 +361,6 @@ async function switchByOtp(args: {
   // session_id so the old token wouldn't match anyway, but dropping it keeps
   // the cookie jar honest. Switching INTO a gamer therefore always re-locks.
   cookieStore.delete(PIN_COOKIE_NAME);
-
-  return { success: true };
-}
-
-/**
- * The own-session switch: sign in AS the target with their own password.
- *
- * **Why a sign-in rather than the OTP path plus a password check.** The session
- * this produces has to be an *own* session — its `amr` must carry `password` —
- * or a child who signed in on a school computer could switch to a sibling and
- * find the cheap PIN gate waiting for them on the way out of that one. Only an
- * actual `signInWithPassword` records that method, so the credential check and
- * the session creation are the same call rather than two.
- *
- * **Why the sign-in happens on the response client, before the caller is signed
- * out.** The hard constraint is that a wrong password must leave the caller
- * exactly where they were, and this order gives that for free: a failed
- * `signInWithPassword` writes no cookies at all, so there is nothing to unwind.
- * The alternative — verify on a throwaway client, sign the caller out, then sign
- * in again — costs a second password verification and leaves an orphan GoTrue
- * session behind from the throwaway. Signing in on the response client
- * overwrites the caller's cookies with the target's; the caller's now-unreachable
- * server-side session is revoked afterwards by its own access token, which is
- * the same thing `signOut()` would have done.
- *
- * **The unlock cookie is never minted here, and the family marker is deleted.**
- * A parent reached from a school computer lands on the unlock gate and pays for
- * both: the password that got here, and then the PIN. That is the point of the
- * whole path. Deleting the marker is what keeps the next switch out of this
- * session at the same price — a session opened by typing a credential is an own
- * session, and the browser must not carry into it a marker minted for the
- * session this one replaced.
- */
-async function switchByPassword(args: {
-  admin: AdminClient;
-  supabase: ServerClient;
-  target: TargetProfile;
-  password: string | undefined;
-}): Promise<Response | { success: true }> {
-  const { admin, supabase, target, password } = args;
-
-  // Falsy rather than `undefined`: an empty string is a password nobody set,
-  // and answering it "required" is both truer and what the form needs.
-  if (!password) {
-    return gateRefusal(
-      SWITCH_PASSWORD_REQUIRED,
-      "That account's password is required to switch to it.",
-    );
-  }
-
-  // A sibling in `parent` mode is switch-only and holds no password, so there is
-  // no credential this path could ever accept for them. Said plainly rather than
-  // answered as a wrong password: the family cannot fix it by typing, they fix
-  // it by giving that child a sign-in of their own.
-  if (target.role === "gamer") {
-    const { data: gamerProfile, error: modeError } = await admin
-      .from("gamer_profiles")
-      .select("sign_in")
-      .eq("user_id", target.id)
-      .maybeSingle();
-    if (modeError) throw modeError;
-    if (!gamerProfile || gamerProfile.sign_in === "parent") {
-      return gateRefusal(
-        SWITCH_TARGET_UNREACHABLE,
-        "That account has no sign-in of its own to switch into.",
-      );
-    }
-  }
-
-  const targetEmail = await resolveTargetEmail(admin, target);
-
-  // Captured before anything replaces it, so the caller's old session can be
-  // revoked once the new one is in place.
-  const { data: sessionData } = await supabase.auth.getSession();
-  const callerAccessToken = sessionData.session?.access_token;
-
-  const freshClient = await createClient();
-  const { error: signInError } = await freshClient.auth.signInWithPassword({
-    email: targetEmail,
-    password,
-  });
-
-  if (signInError) {
-    // Uniform for a wrong password and for an account with no password at all —
-    // the two are indistinguishable to the caller by design, so this cannot be
-    // read as an oracle for which family members hold a credential.
-    console.error("switch-account: password sign-in refused", signInError.code);
-    return gateRefusal(SWITCH_PASSWORD_INVALID, "That password is not correct.");
-  }
-
-  // The caller's cookies are already the target's. Revoke the session those
-  // cookies used to name, scoped to that one session, so the child's old refresh
-  // token cannot be replayed. Best-effort: the switch has happened either way,
-  // and the old cookies are gone from this browser.
-  if (callerAccessToken) {
-    const { error: revokeError } = await admin.auth.admin.signOut(
-      callerAccessToken,
-      "local",
-    );
-    if (revokeError) {
-      console.error("switch-account: old session revoke failed", revokeError);
-    }
-  }
-
-  // Never minted on this path — see the doc comment. A parent reached from an
-  // own session lands locked, and clearing keeps the cookie jar honest. The
-  // family marker goes with it: this session was opened by typing a credential,
-  // so it is an own session and must not inherit the previous one's marker.
-  const cookieStore = await cookies();
-  cookieStore.delete(PIN_COOKIE_NAME);
-  cookieStore.delete(FAMILY_SESSION_COOKIE_NAME);
 
   return { success: true };
 }
@@ -518,13 +411,12 @@ function isClaimsObject(value: unknown): value is Record<string, unknown> {
  * against. A trigger writes it on INSERT and thereafter it is kept in step by
  * whichever route moved the address; the gamer credential edit writes
  * `auth.users` first and `profiles` second, so a failure between the two leaves
- * the profile naming an address the account no longer answers to. Both calls
- * this feeds — `generateLink` and `signInWithPassword` — key on the address, so
- * a stale copy is not cosmetic drift: it is a 500 on one path and an
- * unexplainable wrong-password on the other. A gamer used to be read from the
- * profile row because a synthetic handle looked like ours to own; it is
- * GoTrue's, like everyone else's, and one admin lookup per switch is a cheap
- * price for asking the system of record.
+ * the profile naming an address the account no longer answers to. `generateLink`
+ * keys on the address, so a stale copy is not cosmetic drift — it is a 500 on
+ * the one path this route has. A gamer used to be read from the profile row
+ * because a synthetic handle looked like ours to own; it is GoTrue's, like
+ * everyone else's, and one admin lookup per switch is a cheap price for asking
+ * the system of record.
  */
 async function resolveTargetEmail(
   admin: AdminClient,

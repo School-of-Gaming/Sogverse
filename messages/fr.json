@@ -211,7 +211,7 @@
         },
         "gamerAccounts": {
           "question": "Comment mon enfant se connecte-t-il, et qu’est-ce que le code PIN parent ?",
-          "answer": "<p>C’est vous qui choisissez, pour chaque enfant, comment il se connecte, depuis Mon SOG. Par défaut, un compte joueur n’a pas d’identifiants à lui : il porte une adresse interne Sogverse plutôt qu’une véritable adresse e-mail, il est rattaché à votre compte parent, et votre enfant entre dans Sogverse en basculant vers son profil depuis le vôtre. Si vous préférez, vous pouvez lui donner un identifiant et un mot de passe, ou sa propre adresse e-mail — qu’il vérifie avant de définir un mot de passe par le parcours de réinitialisation habituel.</p><p>Quel que soit votre choix, la connexion d’un enfant n’ouvre que son propre compte : un enfant connecté avec son propre identifiant ou sa propre adresse e-mail ne peut atteindre le vôtre ou celui d’un frère ou d’une sœur qu’en tapant le mot de passe de ce compte, et un enfant entré en basculant depuis votre compte a besoin de votre code PIN parent pour basculer ailleurs.</p><p>Pour accéder au côté parent, il faut un code PIN à quatre chiffres que vous seul connaissez : un mot de passe enregistré dans le navigateur ne suffit donc pas à acheter quoi que ce soit ni à modifier le compte d’un enfant, et la session se reverrouille dès que vous basculez vers le profil d’un enfant ou que vous vous déconnectez.</p><p>Si vous oubliez le code PIN, nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs — un enfant qui appuie sur « Vous avez oublié votre code PIN ? » vous envoie simplement un e-mail.</p>"
+          "answer": "<p>C’est vous qui choisissez, pour chaque enfant, comment il se connecte, depuis Mon SOG. Par défaut, un compte joueur n’a pas d’identifiants à lui : il porte une adresse interne Sogverse plutôt qu’une véritable adresse e-mail, il est rattaché à votre compte parent, et votre enfant entre dans Sogverse en basculant vers son profil depuis le vôtre. Si vous préférez, vous pouvez lui donner un identifiant et un mot de passe, ou sa propre adresse e-mail — qu’il vérifie avant de définir un mot de passe par le parcours de réinitialisation habituel.</p><p>Quel que soit votre choix, la connexion d’un enfant n’ouvre que son propre compte : un enfant connecté avec son propre identifiant ou sa propre adresse e-mail ne peut pas du tout basculer vers le vôtre ou celui d’un frère ou d’une sœur — il se déconnecte et se connecte en tant que cette personne, avec le mot de passe de celle-ci — et un enfant entré en basculant depuis votre compte a besoin de votre code PIN parent pour basculer ailleurs.</p><p>Pour accéder au côté parent, il faut un code PIN à quatre chiffres que vous seul connaissez : un mot de passe enregistré dans le navigateur ne suffit donc pas à acheter quoi que ce soit ni à modifier le compte d’un enfant, et la session se reverrouille dès que vous basculez vers le profil d’un enfant ou que vous vous déconnectez.</p><p>Si vous oubliez le code PIN, nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs — un enfant qui appuie sur « Vous avez oublié votre code PIN ? » vous envoie simplement un e-mail.</p>"
         },
         "childData": {
           "question": "Que conservez-vous au sujet de mon enfant ?",
@@ -1386,11 +1386,10 @@
       "pinDescription": "Le code PIN d’un parent est nécessaire pour basculer vers {name}.",
       "pinNotSetTitle": "Pas encore de code PIN parent",
       "pinNotSetDescription": "Un parent doit d’abord créer un code PIN depuis son Mon SOG. Tu pourras ensuite changer de compte.",
-      "passwordTitle": "Saisis le mot de passe de {name}",
-      "passwordDescription": "Ce compte a son propre mot de passe. Saisis-le pour basculer.",
-      "passwordInvalid": "Ce mot de passe n’est pas correct. Réessaie.",
-      "submit": "Basculer",
-      "unreachable": "Se connecte depuis le compte d’un parent"
+      "signOutTitle": "Déconnecte-toi pour changer de compte",
+      "signOutOwnSession": "{name} s’est connecté avec son propre nom d’utilisateur ou sa propre adresse e-mail, donc cette session n’appartient qu’à cette personne.",
+      "signOutWhy": "Sogverse n’ouvre jamais le compte d’un autre membre de la famille depuis une session comme celle-ci — sinon, n’importe qui prenant cet appareil pourrait y entrer.",
+      "signOutHow": "Déconnecte-toi, puis connecte-toi en tant que {name} sur la page de connexion, comme d’habitude."
     },
     "addGamerForm": {
       "title": "Ajouter un joueur",

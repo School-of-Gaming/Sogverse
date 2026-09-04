@@ -60,9 +60,10 @@ import {
  * One row of the household, with what reaching that person costs.
  *
  * The gate travels *with* the row because both are snapshotted together when
- * the menu opens — see `openedWith`. A gate that arrived into an open panel
- * would change a row's height (an unreachable sibling grows a second line) and
- * push everything below it down on the data's own schedule.
+ * the menu opens — see `openedWith`. It decides whether a click commits or
+ * opens a dialog, and a row still waiting for it is out of service, so a gate
+ * landing into an open panel would change what a row does under a cursor
+ * already reaching for it.
  */
 interface SwitchRow {
   member: FamilyMember;
@@ -319,7 +320,9 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
     // lives once and this row only has to render the answer.
     .map((member) => ({
       member,
-      gate: switchGateFor(role, provenance.data, member),
+      // The gate is a fact about this session rather than about the person in
+      // the row, so every row in one snapshot carries the same answer.
+      gate: switchGateFor(role, provenance.data),
     }));
 
   function focusableItems(): HTMLElement[] {
@@ -342,15 +345,15 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
 
   /**
    * A row was activated. Where the switch costs nothing it commits on the spot,
-   * exactly as it always has; where it costs a credential the menu hands over
-   * to the gate dialog and closes behind it. A row the gate says is unreachable
-   * (or not yet decidable) never gets here — it is announced unavailable and
-   * its click is guarded.
+   * exactly as it always has; otherwise the menu hands over to the gate dialog
+   * and closes behind it — to collect a parent's PIN, or to say that this
+   * session has to be signed out of first. A row whose gate has not landed
+   * never gets here: it is disabled, and its click is guarded.
    */
   function handleActivate(row: SwitchRow, clickedRow: HTMLElement) {
     if (busy) return;
     const { kind } = row.gate;
-    if (kind === "pin" || kind === "password") {
+    if (kind === "pin" || kind === "signOut") {
       setSwitchError(null);
       setGated({ member: row.member, mode: kind });
       setOpen(false);
@@ -577,10 +580,6 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
                         descriptor={
                           row.member.role === "customer" ? c("roleParent") : null
                         }
-                        // Why a sibling cannot be reached, under their name.
-                        // Long enough that it cannot ride in the trailing
-                        // cluster without squeezing the name out of the row.
-                        unreachableNote={f("switchGate.unreachable")}
                         blocked={busy}
                         switching={switchingId === row.member.id}
                         onActivate={handleActivate}
@@ -674,8 +673,8 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
       </div>
 
       {/* Mounted only while a gate is standing, so its state — the digits
-          typed, the wrong-password line — is discarded when it closes rather
-          than waiting to greet the next switch. */}
+          typed, the no-PIN message — is discarded when it closes rather than
+          waiting to greet the next switch. */}
       {gated && (
         <SwitchGateDialog
           open
@@ -691,6 +690,7 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
             triggerRef.current?.focus();
           }}
           target={gated.member}
+          viewerFirstName={firstName}
           mode={gated.mode}
           onCommit={(credentials: SwitchAccountCredentials) =>
             commitAccountSwitch(gated.member, credentials)
@@ -757,7 +757,6 @@ function AccountRowItem({
   member,
   gate,
   descriptor,
-  unreachableNote,
   blocked,
   switching,
   onActivate,
@@ -767,8 +766,6 @@ function AccountRowItem({
   gate: SwitchGate;
   /** Rendered after the name; today only the parent's role word. */
   descriptor: string | null;
-  /** Why an unreachable sibling cannot be switched into. */
-  unreachableNote: string;
   /** Some commit is in flight — a switch or the sign-out — so no row acts. */
   blocked: boolean;
   /** This is the row that was clicked — it wears the spinner. */
@@ -781,16 +778,15 @@ function AccountRowItem({
   onActivate: (row: SwitchRow, element: HTMLElement) => void;
 }) {
   /**
-   * The sibling holds no password of their own, so an own session has nothing
-   * it could type. Still listed — the family is the family — and announced
-   * unavailable through `aria-disabled` rather than the `disabled` attribute,
-   * which is what keeps it reachable by keyboard: a row nobody can focus is a
-   * row whose explanation nobody hears. The arrow-key traversal deliberately
-   * keys its skip on the in-flight marker and not on `aria-disabled`, so this
-   * row stays in the run.
+   * The gate is not decidable yet. Transient, and out of service until it is —
+   * and the only reason a member row is ever inert.
+   *
+   * Every household member is listed and every one of them is clickable,
+   * whatever the viewer's session turns out to be. Where a switch needs a
+   * sign-out, that is what the click opens; the row does not carry the
+   * explanation, because a row that explains itself to a reader who was never
+   * going to click it is a row that has to be read before it can be ignored.
    */
-  const unreachable = gate.kind === "unreachable";
-  /** The gate is not decidable yet. Transient, and out of service until it is. */
   const pending = gate.kind === "unknown";
   const inert = blocked || pending;
   return (
@@ -802,18 +798,14 @@ function AccountRowItem({
       data-account-menu-item=""
       data-account-menu-blocked={inert ? "" : undefined}
       disabled={inert}
-      aria-disabled={unreachable || undefined}
-      onClick={(event) => {
-        if (unreachable) return;
-        onActivate({ member, gate }, event.currentTarget);
-      }}
+      onClick={(event) => onActivate({ member, gate }, event.currentTarget)}
       className={cn(
         ROW_CLASS,
-        unreachable ? "cursor-default" : ACTIONABLE_ROW_CLASS,
+        ACTIONABLE_ROW_CLASS,
         "group",
         // The whole row dims, spinner and chevron with it — a mark left at
         // full strength inside a dimmed row reads as still-live.
-        (inert || unreachable) && "opacity-60",
+        inert && "opacity-60",
       )}
     >
       {/* Hidden from the accessibility tree: the identicon labels itself "user
@@ -822,23 +814,7 @@ function AccountRowItem({
       <Avatar aria-hidden="true" className="h-6 w-6">
         <Identicon id={member.id} size={24} />
       </Avatar>
-      {/* The name, and under it the reason this row cannot be taken. The note
-          lives here rather than in the trailing cluster because that cluster
-          never shrinks: a sentence there would squeeze the name it explains
-          out of the row entirely. */}
-      <span className="flex min-w-0 flex-col">
-        <span className="truncate">{member.first_name}</span>
-        {/* The note wraps rather than truncates: the sentence is the only
-            thing that explains why the row does nothing, and a cut-off
-            explanation explains nothing. The row's height is fixed at snapshot
-            time (see `SwitchRow` and `openedWith`), so a second line moves
-            nothing after the panel is open. */}
-        {unreachable && (
-          <span className="whitespace-normal break-words text-xs leading-snug text-muted-foreground">
-            {unreachableNote}
-          </span>
-        )}
-      </span>
+      <span className="min-w-0 truncate">{member.first_name}</span>
       {/* One right-packed trailing cluster, descriptor then chevron. Keeping
           them as a group is what lets the descriptor appear on some rows and
           not others without the chevron shifting off the right edge — and it
@@ -854,9 +830,8 @@ function AccountRowItem({
             className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
           />
         ) : (
-          // The chevron marks a switch. An unreachable row is not one, so it
-          // carries none — and the note below the name takes the space back.
-          !unreachable && <NavChevron size="sm" />
+          // The chevron marks a switch, and every row here is one.
+          <NavChevron size="sm" />
         )}
       </span>
     </button>

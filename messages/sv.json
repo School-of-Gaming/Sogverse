@@ -211,7 +211,7 @@
         },
         "gamerAccounts": {
           "question": "Hur loggar mitt barn in, och vad är föräldra-PIN-koden?",
-          "answer": "<p>Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet.</p><p>Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: ett barn som loggade in med sitt eget användarnamn eller sin egen e-postadress kan bara nå ditt eller ett syskons konto genom att skriva det kontots lösenord, och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
+          "answer": "<p>Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet.</p><p>Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: ett barn som loggade in med sitt eget användarnamn eller sin egen e-postadress kan inte alls växla till ditt eller ett syskons konto — barnet loggar ut och loggar in som den personen, med den personens lösenord — och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
         },
         "childData": {
           "question": "Vad sparar ni om mitt barn?",
@@ -1386,11 +1386,10 @@
       "pinDescription": "En förälders PIN-kod behövs för att byta till {name}.",
       "pinNotSetTitle": "Ingen föräldra-PIN ännu",
       "pinNotSetDescription": "En förälder måste först skapa en PIN-kod från sin Min SOG. Sedan kan du byta konto.",
-      "passwordTitle": "Ange lösenordet för {name}",
-      "passwordDescription": "Det här kontot har ett eget lösenord. Skriv in det för att byta.",
-      "passwordInvalid": "Lösenordet stämmer inte. Försök igen.",
-      "submit": "Byt",
-      "unreachable": "Loggar in från en förälders konto"
+      "signOutTitle": "Logga ut för att byta konto",
+      "signOutOwnSession": "{name} loggade in med sitt eget användarnamn eller sin egen e-postadress, så den här sessionen tillhör bara den personen.",
+      "signOutWhy": "Sogverse öppnar aldrig en annan familjemedlems konto från en sådan här session — annars skulle vem som helst som tog den här enheten kunna komma in.",
+      "signOutHow": "Logga ut och logga sedan in som {name} på inloggningssidan som vanligt."
     },
     "addGamerForm": {
       "title": "Lägg till en gamer",

@@ -35,12 +35,15 @@ export class SwitchAccountError extends Error {
   }
 }
 
-/** The credentials a switch may have to carry. Both optional; see the route. */
+/**
+ * The credential a switch may have to carry. Optional, because only one caller
+ * in three pays anything: a parent dropping to a child sends nothing, a child in
+ * a switched-in session sends a linked parent's PIN, and a child in a session
+ * they opened themselves cannot switch at all — no credential buys that.
+ */
 export interface SwitchAccountCredentials {
   /** A linked parent's PIN — required when leaving a switched-in session. */
   pin?: string;
-  /** The TARGET's password — required when leaving a self-authenticated one. */
-  password?: string;
 }
 
 export class FamilyService {

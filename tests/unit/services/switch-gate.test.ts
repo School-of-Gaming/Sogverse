@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { switchGateFor } from "@/services/family/switch-gate";
-import type { FamilyMember } from "@/services/family";
 import type { UserRole } from "@/lib/constants";
 import type { SessionProvenance } from "@/lib/session-provenance";
 
@@ -9,37 +8,25 @@ import type { SessionProvenance } from "@/lib/session-provenance";
  *
  * The table below is the whole rule, and it is a restatement of what the switch
  * route enforces — so these cases are also the place a drift between the two
- * would show up as a decision nobody meant to make. Exhaustive on purpose: every
- * viewer role, both provenances plus the absence of one, and every sign-in mode
- * a target can carry, including a member row that names none at all.
+ * would show up as a decision nobody meant to make. Exhaustive on purpose:
+ * every viewer role, both provenances, and the absence of either.
+ *
+ * The thing worth noticing about the table is what is *not* in it. The target
+ * used to be an argument, and a sibling holding no credential of their own used
+ * to be a fourth answer; both are gone, because the route no longer asks the
+ * target for anything. What a switch costs is now a fact about the caller's
+ * session and nothing else, so there is no per-target axis left to enumerate.
  */
 
-const PARENT: FamilyMember = {
-  id: "4d0f6f52-4a97-4f0e-8ba3-6a63a1e33e34",
-  role: "customer",
-  first_name: "Riikka",
-  sign_in: null,
-};
-
-function gamer(sign_in: FamilyMember["sign_in"]): FamilyMember {
-  return {
-    id: "f1c9a1e3-3d1a-4d0b-9a94-2b6f2a6f4a11",
-    role: "gamer",
-    first_name: "Zoe",
-    sign_in,
-  };
-}
-
 const ROLES: UserRole[] = ["admin", "customer", "gamer", "gedu"];
-const PROVENANCES: (SessionProvenance | null)[] = ["own", "family", null];
+const ABSENT = [null, undefined] as const;
+const PROVENANCES: SessionProvenance[] = ["own", "family"];
 
 describe("switchGateFor — the viewer's role decides first", () => {
-  it("never gates a viewer who is not a gamer, whatever their session or the target", () => {
+  it("never gates a viewer who is not a gamer, whatever their session", () => {
     for (const role of ROLES.filter((r) => r !== "gamer")) {
-      for (const provenance of PROVENANCES) {
-        for (const target of [PARENT, gamer("parent"), gamer("username"), gamer("email")]) {
-          expect(switchGateFor(role, provenance, target)).toEqual({ kind: "none" });
-        }
+      for (const provenance of [...PROVENANCES, ...ABSENT]) {
+        expect(switchGateFor(role, provenance)).toEqual({ kind: "none" });
       }
     }
   });
@@ -48,61 +35,36 @@ describe("switchGateFor — the viewer's role decides first", () => {
     // "Not a gamer" cannot be concluded from "we do not know yet" — the absence
     // of a role is not a value, and guessing `none` fires a switch the route
     // would refuse.
-    expect(switchGateFor(null, "family", PARENT)).toEqual({ kind: "unknown" });
-    expect(switchGateFor(undefined, "own", PARENT)).toEqual({ kind: "unknown" });
+    for (const role of ABSENT) {
+      for (const provenance of [...PROVENANCES, ...ABSENT]) {
+        expect(switchGateFor(role, provenance)).toEqual({ kind: "unknown" });
+      }
+    }
   });
 });
 
 describe("switchGateFor — a gamer viewer", () => {
   it("waits while the session's provenance has not landed", () => {
-    for (const target of [PARENT, gamer("parent"), gamer("username")]) {
-      expect(switchGateFor("gamer", null, target)).toEqual({ kind: "unknown" });
-      expect(switchGateFor("gamer", undefined, target)).toEqual({ kind: "unknown" });
+    for (const provenance of ABSENT) {
+      expect(switchGateFor("gamer", provenance)).toEqual({ kind: "unknown" });
     }
   });
 
-  it("charges a parent's PIN from a family session, whoever the target is", () => {
-    for (const target of [PARENT, gamer("parent"), gamer("username"), gamer("email")]) {
-      expect(switchGateFor("gamer", "family", target)).toEqual({ kind: "pin" });
-    }
+  it("charges a parent's PIN from a family session", () => {
+    expect(switchGateFor("gamer", "family")).toEqual({ kind: "pin" });
   });
 
-  it("charges the target's own password from an own session", () => {
-    // The parent always holds one; so does a sibling who was given a sign-in.
-    expect(switchGateFor("gamer", "own", PARENT)).toEqual({ kind: "password" });
-    expect(switchGateFor("gamer", "own", gamer("username"))).toEqual({
-      kind: "password",
-    });
-    expect(switchGateFor("gamer", "own", gamer("email"))).toEqual({
-      kind: "password",
-    });
+  it("refuses an own session outright — no credential is collected at all", () => {
+    // The previous design priced this at the target's own password, which made
+    // the platform a password oracle. The answer now is that the session
+    // belongs to one account, and the login page is where another one is
+    // opened.
+    expect(switchGateFor("gamer", "own")).toEqual({ kind: "signOut" });
   });
 
-  it("calls a sibling in parent mode unreachable rather than asking for a password nobody set", () => {
-    expect(switchGateFor("gamer", "own", gamer("parent"))).toEqual({
-      kind: "unreachable",
-    });
-  });
-
-  it("reads a member row with no sign-in mode as holding no credential", () => {
-    // A fixture, or a row built before the modes existed. Withholding a path is
-    // the conservative answer; offering one the account cannot satisfy is not.
-    expect(switchGateFor("gamer", "own", gamer(null))).toEqual({
-      kind: "unreachable",
-    });
-    const noMode: FamilyMember = {
-      id: gamer(null).id,
-      role: "gamer",
-      first_name: "Zoe",
-    };
-    expect(switchGateFor("gamer", "own", noMode)).toEqual({ kind: "unreachable" });
-  });
-
-  it("never returns `none` — a gamer with a known session always pays something", () => {
-    for (const provenance of ["own", "family"] as const) {
-      for (const target of [PARENT, gamer("parent"), gamer("username"), gamer("email")]) {
-        expect(switchGateFor("gamer", provenance, target).kind).not.toBe("none");
-      }
+  it("never returns `none` — a gamer with a known session never switches freely", () => {
+    for (const provenance of PROVENANCES) {
+      expect(switchGateFor("gamer", provenance).kind).not.toBe("none");
     }
   });
 });

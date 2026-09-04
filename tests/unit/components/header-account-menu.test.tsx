@@ -789,13 +789,14 @@ describe("AccountMenu — sign out", () => {
 });
 
 /**
- * The gate a child pays to leave their own account, as the menu renders it.
+ * What a child meets on the way out of their own account, as the menu renders
+ * it.
  *
  * The decision itself is `switchGateFor`, unit-tested exhaustively elsewhere.
- * What is pinned here is the menu's half: that a gated row opens the credential
- * dialog instead of firing a switch, that a sibling with no password of their
- * own is listed and explained rather than hidden or silently broken, and that a
- * parent's rows are untouched by any of it.
+ * What is pinned here is the menu's half: that a gated row opens a dialog
+ * instead of firing a switch, that every household member stays listed and
+ * clickable whatever the session turns out to be, and that a parent's rows are
+ * untouched by any of it.
  */
 describe("AccountMenu — the gamer switch gate", () => {
   /** The household as a gamer viewer meets it, with sign-in modes attached. */
@@ -848,44 +849,46 @@ describe("AccountMenu — the gamer switch gate", () => {
     expect(gateTitle(messages.family.switchGate.pinTitle)).not.toBeNull();
   });
 
-  it("asks a self-authenticated child for the target's own password", () => {
+  it("tells a self-authenticated child to sign out, and sends nothing", () => {
     asGamer("own");
 
     fireEvent.click(row(`Riikka${PARENT_ROLE}`));
 
+    // No credential is collected at all: this platform does not answer "is this
+    // the right password for that family member?", so there is nothing to fire
+    // and nothing to type.
     expect(mockSwitchAccount).not.toHaveBeenCalled();
-    expect(
-      gateTitle(
-        messages.family.switchGate.passwordTitle.replace("{name}", "Riikka"),
-      ),
-    ).not.toBeNull();
+    expect(gateTitle(messages.family.switchGate.signOutTitle)).not.toBeNull();
     expect(gateTitle(messages.family.switchGate.pinTitle)).toBeNull();
+    expect(menuIsOpen()).toBe(false);
   });
 
-  it("lists a sibling who signs in from a parent, says why, and does not offer them", () => {
+  it("lists every sibling as an ordinary, clickable row from an own session", () => {
     asGamer("own", "parent");
 
-    // Listed — the family is the family. The note rides under the name because
-    // the trailing cluster never shrinks and would squeeze the name out.
-    const zoe = row(`Zoe${messages.family.switchGate.unreachable}`);
-    expect(zoe.getAttribute("aria-disabled")).toBe("true");
-    // Announced unavailable rather than `disabled`, so the keyboard can still
-    // land on it and hear the explanation.
+    // Zoe signs in from her parent's account and so holds no credential of her
+    // own — which used to make her row an explanation nobody could click. The
+    // gate is a fact about the *viewer's* session now, so her row is exactly
+    // like every other one, chevron included.
+    const zoe = row("Zoe");
     expect(zoe.hasAttribute("disabled")).toBe(false);
-    // No chevron: the chevron marks a switch, and this row is not one.
-    expect(zoe.querySelector(".lucide-chevron-right")).toBeNull();
+    expect(zoe.getAttribute("aria-disabled")).toBeNull();
+    expect(zoe.querySelector(".lucide-chevron-right")).not.toBeNull();
 
     fireEvent.click(zoe);
 
+    // And clicking it opens the same answer any other row would: this session
+    // has to be signed out of first.
     expect(mockSwitchAccount).not.toHaveBeenCalled();
-    expect(gateTitle(messages.family.switchGate.passwordTitle.replace("{name}", "Zoe"))).toBeNull();
+    expect(gateTitle(messages.family.switchGate.signOutTitle)).not.toBeNull();
   });
 
   it("takes every row out of service while the provenance is still unknown", () => {
     asGamer(null);
 
     // Waiting, not guessing: one guess prompts for four digits the route will
-    // refuse, the other asks a child for a password nobody set.
+    // refuse, the other fires a switch that comes back as a refusal the reader
+    // never asked for.
     expect(row(`Riikka${PARENT_ROLE}`).hasAttribute("disabled")).toBe(true);
     expect(row("Zoe").hasAttribute("disabled")).toBe(true);
 

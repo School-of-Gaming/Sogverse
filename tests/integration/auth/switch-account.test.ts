@@ -23,16 +23,16 @@ import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
  * 2. **What it costs** — the gate, keyed on the caller's role and the provenance
  *    of their session. A parent pays nothing. A gamer in a switched-in (family)
  *    session pays a linked parent's PIN. A gamer in a session they signed into
- *    themselves pays the TARGET's password, and the session they get is itself a
- *    password session.
+ *    themselves cannot switch at all: the route refuses with
+ *    `SIGN_OUT_REQUIRED`, and no credential in the body changes that.
  *
  * Three properties are asserted over and over on purpose, because they are the
  * ones a refactor breaks quietly: **a failed gate never signs the caller out**,
- * **the unlock cookie is minted on exactly one path**, and **every session the
- * OTP path creates carries the family-session marker while every session the
- * password path creates does not**. The third is what the gate above reads:
- * nothing in a token can separate a switch from a password recovery, so the
- * classification is this route's own signature on a session it built.
+ * **the unlock cookie is minted on exactly one path**, and **every session this
+ * route creates carries the family-session marker**. The third is what the gate
+ * above reads: nothing in a token can separate a switch from a password
+ * recovery, so the classification is this route's own signature on a session it
+ * built.
  */
 
 // --- Mocks ---
@@ -46,7 +46,6 @@ const mockAdminFrom = vi.fn();
 const mockAdminRpc = vi.fn();
 const mockAdminGenerateLink = vi.fn();
 const mockAdminGetUserById = vi.fn();
-const mockAdminSignOut = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: (...args: unknown[]) => mockAdminFrom(...args),
@@ -55,7 +54,6 @@ vi.mock("@/lib/supabase/admin", () => ({
       admin: {
         generateLink: (...args: unknown[]) => mockAdminGenerateLink(...args),
         getUserById: (...args: unknown[]) => mockAdminGetUserById(...args),
-        signOut: (...args: unknown[]) => mockAdminSignOut(...args),
       },
     },
   })),
@@ -63,24 +61,20 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 const mockSignOut = vi.fn();
 const mockVerifyOtp = vi.fn();
-const mockSignInWithPassword = vi.fn();
 const mockGetClaims = vi.fn();
-const mockGetSession = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: {
       signOut: mockSignOut,
       verifyOtp: (...args: unknown[]) => mockVerifyOtp(...args),
-      signInWithPassword: (...args: unknown[]) => mockSignInWithPassword(...args),
       getClaims: (...args: unknown[]) => mockGetClaims(...args),
-      getSession: (...args: unknown[]) => mockGetSession(...args),
     },
   })),
 }));
 
 // Two cookies pass through here: the parent-PIN unlock cookie, cleared on most
 // paths and minted on exactly one, and the family-session marker, minted on
-// every OTP switch and deleted on every password switch.
+// every switch this route completes.
 const mockCookieDelete = vi.fn();
 const mockCookieSet = vi.fn();
 vi.mock("next/headers", () => ({
@@ -121,7 +115,7 @@ function mockAuthenticated(
       first_name: role === "customer" ? "Parent" : "Gamer",
     },
     supabase: {
-      auth: { signOut: mockSignOut, getSession: mockGetSession },
+      auth: { signOut: mockSignOut },
     },
   });
 }
@@ -140,12 +134,10 @@ type TargetProfile = { id: string; role: string; email: string | null } | null;
  * responds the same way, but the parent_gamer chain varies between tests
  * (eq+eq+maybeSingle for direct link checks, in() for sibling checks, eq() for
  * the caller's parent list), so each test passes a builder for it.
- * `gamerSignIn` feeds the one `gamer_profiles` read the own-session path makes.
  */
 function setupAdminFrom(args: {
   target: TargetProfile;
   parentGamerBuilder?: () => Record<string, unknown>;
-  gamerSignIn?: "parent" | "username" | "email" | null;
 }) {
   const target = args.target;
   const profileChain = {
@@ -169,25 +161,8 @@ function setupAdminFrom(args: {
     });
   }
 
-  const gamerProfileChain = {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        maybeSingle: vi
-          .fn()
-          .mockResolvedValue(
-            mockSupabaseSuccess(
-              args.gamerSignIn === undefined || args.gamerSignIn === null
-                ? null
-                : { sign_in: args.gamerSignIn },
-            ),
-          ),
-      }),
-    }),
-  };
-
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "profiles") return profileChain;
-    if (table === "gamer_profiles") return gamerProfileChain;
     if (table === "parent_gamer") return args.parentGamerBuilder?.() ?? {};
     return {};
   });
@@ -349,15 +324,6 @@ describe("POST /api/auth/switch-account", () => {
     // between the switch landing and the marker being minted.
     mockGetClaims.mockResolvedValue({
       data: { claims: { sub: "someone-else", session_id: "claims-session" } },
-      error: null,
-    });
-    mockGetSession.mockResolvedValue({
-      data: { session: { access_token: "caller-token" } },
-      error: null,
-    });
-    mockAdminSignOut.mockResolvedValue({ error: null });
-    mockSignInWithPassword.mockResolvedValue({
-      data: { session: { access_token: "target-token" } },
       error: null,
     });
   });
@@ -718,176 +684,103 @@ describe("POST /api/auth/switch-account", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Gate B — an own session pays the TARGET's password
+  // An own session cannot switch at all
   // -------------------------------------------------------------------------
 
-  describe("gamer, own session → the password gate", () => {
+  /**
+   * The other half of the gate, and it is a refusal rather than a price. A
+   * gamer session opened with the child's own credentials — a school computer
+   * they walked away from is the case this is about — is not a session any
+   * other family account may be reached from. Charging the target's password
+   * instead would have made this endpoint a password oracle aimable at a family
+   * member; the way to somebody else's account is the login page.
+   *
+   * What every case here asserts, beyond the code: the refusal is inert. No
+   * sign-out, no link minted, no cookie written or deleted — the child is left
+   * holding exactly the session they arrived with.
+   */
+  describe("gamer, own session → refused, sign out instead", () => {
     function ownSessionToParent() {
       mockAuthenticated("gamer", GAMER_A1, "own");
       setupAdminFrom({
         target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
         parentGamerBuilder: linkLookup(true),
       });
-      mockAdminGetUserById.mockResolvedValue({
-        data: { user: { id: PARENT_A, email: "parent-a@example.com" } },
-        error: null,
-      });
+      mockHappyPathSession(PARENT_A);
     }
 
-    it("refuses with PASSWORD_REQUIRED when none was sent — and never asks for a PIN", async () => {
+    function ownSessionToSibling() {
+      mockAuthenticated("gamer", GAMER_A1, "own");
+      setupAdminFrom({
+        target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
+        parentGamerBuilder: siblingLookup([
+          { parent_id: PARENT_A, gamer_id: GAMER_A1 },
+          { parent_id: PARENT_A, gamer_id: GAMER_A2 },
+        ]),
+      });
+      mockHappyPathSession(GAMER_A2);
+    }
+
+    function expectNothingHappened() {
+      expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminGenerateLink).not.toHaveBeenCalled();
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(mockCookieSet).not.toHaveBeenCalled();
+      expect(mockCookieDelete).not.toHaveBeenCalled();
+    }
+
+    it("refuses a switch to a linked parent with SIGN_OUT_REQUIRED", async () => {
       ownSessionToParent();
 
       const response = await POST(createRequest({ userId: PARENT_A }));
       const data = await response.json();
 
       expect(response.status).toBe(403);
-      expect(data.code).toBe("PASSWORD_REQUIRED");
-      // A four-digit PIN is not what should stand between a school computer and
-      // the parent's account, so this path never falls back to one.
-      expect(mockAdminRpc).not.toHaveBeenCalled();
-      expect(mockSignOut).not.toHaveBeenCalled();
+      expect(data.code).toBe("SIGN_OUT_REQUIRED");
+      expectNothingHappened();
     });
 
-    it("refuses a PIN sent instead of a password", async () => {
+    it("refuses a switch to a sibling with SIGN_OUT_REQUIRED", async () => {
+      ownSessionToSibling();
+
+      const response = await POST(createRequest({ userId: GAMER_A2 }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.code).toBe("SIGN_OUT_REQUIRED");
+      expectNothingHappened();
+    });
+
+    it("refuses even when a PIN is sent — the PIN is not an alternative", async () => {
       ownSessionToParent();
 
       const response = await POST(createRequest({ userId: PARENT_A, pin: "1234" }));
       const data = await response.json();
 
       expect(response.status).toBe(403);
-      expect(data.code).toBe("PASSWORD_REQUIRED");
+      expect(data.code).toBe("SIGN_OUT_REQUIRED");
+      // A four-digit PIN with no rate limit is not what should stand between a
+      // school computer and a parent's account, so this path never falls back
+      // to one — and it does not even ask the PIN RPC whether it would match.
+      expectNothingHappened();
     });
 
-    it("refuses with PASSWORD_INVALID, leaving the caller's session untouched", async () => {
-      ownSessionToParent();
-      mockSignInWithPassword.mockResolvedValue({
-        data: { session: null },
-        error: { code: "invalid_credentials", message: "Invalid login credentials" },
+    it("refuses on membership first, so it says nothing about accounts outside the family", async () => {
+      mockAuthenticated("gamer", GAMER_A1, "own");
+      setupAdminFrom({
+        target: { id: PARENT_B, role: "customer", email: "parent-b@example.com" },
+        parentGamerBuilder: linkLookup(false),
       });
 
-      const response = await POST(
-        createRequest({ userId: PARENT_A, password: "wrong" }),
-      );
+      const response = await POST(createRequest({ userId: PARENT_B }));
       const data = await response.json();
 
+      // The plain 403 an unrelated target always gets — no code at all. An own
+      // session learning "that account exists but you'd have to sign out" for
+      // an arbitrary id is exactly the probe the matrix runs first to prevent.
       expect(response.status).toBe(403);
-      expect(data.code).toBe("PASSWORD_INVALID");
-      // The hard constraint of this path: a failed sign-in writes no cookies, so
-      // there is nothing to unwind and the child is still signed in as
-      // themselves. Nothing revoked the old session either.
-      expect(mockSignOut).not.toHaveBeenCalled();
-      expect(mockAdminSignOut).not.toHaveBeenCalled();
-    });
-
-    it("signs in AS the parent, so the new session is itself a password session", async () => {
-      ownSessionToParent();
-
-      const response = await POST(
-        createRequest({ userId: PARENT_A, password: "correct horse" }),
-      );
-
-      expect(response.status).toBe(200);
-      expect(mockSignInWithPassword).toHaveBeenCalledWith({
-        email: "parent-a@example.com",
-        password: "correct horse",
-      });
-      // The OTP path is not taken at all — an otp-created session would be a
-      // family session, and the next switch out of it would cost only a PIN.
-      expect(mockAdminGenerateLink).not.toHaveBeenCalled();
-    });
-
-    it("never mints the unlock cookie — the parent lands on the PIN gate too", async () => {
-      ownSessionToParent();
-
-      await POST(createRequest({ userId: PARENT_A, password: "correct horse" }));
-
-      expect(mockCookieSet).not.toHaveBeenCalled();
-      expect(mockCookieDelete).toHaveBeenCalledWith(PIN_COOKIE_NAME);
-    });
-
-    it("deletes the family marker, so this session is an own session", async () => {
-      ownSessionToParent();
-
-      await POST(createRequest({ userId: PARENT_A, password: "correct horse" }));
-
-      // The person at the keyboard typed the target's own credential, so the
-      // session that results is theirs — and the browser must not carry into it
-      // a marker minted for the session this one replaced. Left behind, it would
-      // make the next switch out cost four digits instead of a password, which
-      // is the whole thing this path exists to refuse.
-      expect(mockCookieDelete).toHaveBeenCalledWith(FAMILY_SESSION_COOKIE_NAME);
-      expect(mockCookieSet).not.toHaveBeenCalled();
-    });
-
-    it("revokes the caller's old session by its own access token", async () => {
-      ownSessionToParent();
-
-      await POST(createRequest({ userId: PARENT_A, password: "correct horse" }));
-
-      expect(mockAdminSignOut).toHaveBeenCalledWith("caller-token", "local");
-    });
-
-    it("reaches a sibling who has a sign-in of their own", async () => {
-      mockAuthenticated("gamer", GAMER_A1, "own");
-      setupAdminFrom({
-        target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
-        parentGamerBuilder: siblingLookup([
-          { parent_id: PARENT_A, gamer_id: GAMER_A1 },
-          { parent_id: PARENT_A, gamer_id: GAMER_A2 },
-        ]),
-        gamerSignIn: "username",
-      });
-
-      const response = await POST(
-        createRequest({ userId: GAMER_A2, password: "sibling-password" }),
-      );
-
-      expect(response.status).toBe(200);
-      expect(mockSignInWithPassword).toHaveBeenCalledWith({
-        email: "alphatwo@gamer.sogverse.internal",
-        password: "sibling-password",
-      });
-    });
-
-    it("refuses a switch-only sibling with TARGET_UNREACHABLE, not a wrong password", async () => {
-      mockAuthenticated("gamer", GAMER_A1, "own");
-      setupAdminFrom({
-        target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
-        parentGamerBuilder: siblingLookup([
-          { parent_id: PARENT_A, gamer_id: GAMER_A1 },
-          { parent_id: PARENT_A, gamer_id: GAMER_A2 },
-        ]),
-        gamerSignIn: "parent",
-      });
-
-      const response = await POST(
-        createRequest({ userId: GAMER_A2, password: "anything" }),
-      );
-      const data = await response.json();
-
-      expect(response.status).toBe(403);
-      // Said plainly rather than answered as a wrong password: no password can
-      // ever be right, so the family fixes it by giving that child a sign-in.
-      expect(data.code).toBe("TARGET_UNREACHABLE");
-      expect(mockSignInWithPassword).not.toHaveBeenCalled();
-    });
-
-    it("treats a sibling with no gamer_profiles row as unreachable", async () => {
-      mockAuthenticated("gamer", GAMER_A1, "own");
-      setupAdminFrom({
-        target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
-        parentGamerBuilder: siblingLookup([
-          { parent_id: PARENT_A, gamer_id: GAMER_A1 },
-          { parent_id: PARENT_A, gamer_id: GAMER_A2 },
-        ]),
-        gamerSignIn: null,
-      });
-
-      const response = await POST(
-        createRequest({ userId: GAMER_A2, password: "anything" }),
-      );
-
-      expect((await response.json()).code).toBe("TARGET_UNREACHABLE");
+      expect(data.code).toBeUndefined();
+      expectNothingHappened();
     });
   });
 

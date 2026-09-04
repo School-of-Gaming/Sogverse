@@ -66,7 +66,7 @@ import {
   SwitchAccountError,
   SWITCH_PIN_INVALID,
   SWITCH_PIN_NOT_SET,
-  SWITCH_PASSWORD_INVALID,
+  SWITCH_SIGN_OUT_REQUIRED,
   type SwitchAccountErrorCode,
 } from "@/services/family";
 import { UserRow } from "@/components/admin/user-row";
@@ -470,6 +470,9 @@ const GATE_TARGET = {
   first_name: "Riikka",
 };
 
+/** The child on the other side of the gate — the one whose session it is. */
+const GATE_VIEWER_FIRST_NAME = "Aino";
+
 /** An inert commit that always refuses, with the code the box is showing off. */
 function refusesWith(code: SwitchAccountErrorCode) {
   return () =>
@@ -477,15 +480,15 @@ function refusesWith(code: SwitchAccountErrorCode) {
 }
 
 /**
- * The credential a child pays to leave their own account, in every state it
+ * What stands between a child and somebody else's account, in every state it
  * has. Four boxes rather than four buttons opening one dialog: the states are
  * only worth anything next to each other, and the box below is exactly the card
  * `DialogContent` draws, so nothing about the chrome is being guessed at.
  *
  * Every commit here is inert — it refuses without touching the network — so the
- * boxes can be typed into freely. The wrong-PIN shake, the wrong-password line
- * and the switch to the no-PIN message are all real behaviour, driven by the
- * refusal code each box is given.
+ * boxes can be typed into freely. The wrong-PIN shake and the switch to the
+ * no-PIN message are real behaviour, driven by the refusal code each box is
+ * given. The sign-out form is real too, so do not press it.
  */
 function SwitchGateDemo() {
   const [committing, setCommitting] = useState(false);
@@ -493,9 +496,9 @@ function SwitchGateDemo() {
   return (
     <Section title="Switch Gate">
       <p className="text-sm text-muted-foreground">
-        What a gamer pays to leave their own account: a linked parent&rsquo;s PIN
-        when a parent switched them in, the target account&rsquo;s own password
-        when they signed in themselves.
+        What a gamer meets on the way out of their own account: a linked
+        parent&rsquo;s PIN when a parent switched them in, and no way through at
+        all when they signed in themselves.
       </p>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -503,6 +506,7 @@ function SwitchGateDemo() {
           <div className="rounded-lg border border-border bg-card p-6 space-y-4">
             <SwitchGateBody
               target={GATE_TARGET}
+              viewerFirstName={GATE_VIEWER_FIRST_NAME}
               mode="pin"
               committing={committing}
               onCommittingChange={setCommitting}
@@ -516,6 +520,7 @@ function SwitchGateDemo() {
           <div className="rounded-lg border border-border bg-card p-6 space-y-4">
             <SwitchGateBody
               target={GATE_TARGET}
+              viewerFirstName={GATE_VIEWER_FIRST_NAME}
               mode="pin"
               committing={committing}
               onCommittingChange={setCommitting}
@@ -526,14 +531,15 @@ function SwitchGateDemo() {
           </div>
         </SubSection>
 
-        <SubSection title="Target password — a wrong one says so">
+        <SubSection title="Sign out to switch">
           <div className="rounded-lg border border-border bg-card p-6 space-y-4">
             <SwitchGateBody
               target={GATE_TARGET}
-              mode="password"
+              viewerFirstName={GATE_VIEWER_FIRST_NAME}
+              mode="signOut"
               committing={committing}
               onCommittingChange={setCommitting}
-              onCommit={refusesWith(SWITCH_PASSWORD_INVALID)}
+              onCommit={refusesWith(SWITCH_SIGN_OUT_REQUIRED)}
               onClose={() => {}}
             />
           </div>
@@ -546,7 +552,8 @@ function SwitchGateDemo() {
                 document is already unloading. */}
             <SwitchGateBody
               target={GATE_TARGET}
-              mode="password"
+              viewerFirstName={GATE_VIEWER_FIRST_NAME}
+              mode="pin"
               committing
               onCommittingChange={() => {}}
               onCommit={() => new Promise<void>(() => {})}

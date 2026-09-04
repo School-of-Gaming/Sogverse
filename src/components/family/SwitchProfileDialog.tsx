@@ -50,6 +50,13 @@ interface SwitchProfileDialogProps {
    * turn into a 403.
    */
   gate?: SwitchGate;
+  /**
+   * The signed-in viewer's own first name, for the gate's sign-out copy, which
+   * is about whose session this is. Only the surfaces that can mount this for a
+   * *gamer* need it; a parent's switch is never gated, so the parent surfaces
+   * pass nothing and the gate step never renders.
+   */
+  viewerFirstName?: string;
 }
 
 /**
@@ -81,6 +88,7 @@ export function SwitchProfileDialog({
   title,
   oneWayWarning,
   gate = { kind: "none" },
+  viewerFirstName = "",
 }: SwitchProfileDialogProps) {
   const c = useTranslations("common");
   const f = useTranslations("family");
@@ -93,10 +101,10 @@ export function SwitchProfileDialog({
    * the reader just pressed is exactly the confirmation the gate is for.
    */
   const [step, setStep] = useState<"confirm" | "gate">("confirm");
-  const gated = gate.kind === "pin" || gate.kind === "password";
-  // The gate's own answer that this target can never be reached from here, or
-  // is not decidable yet. Neither is clickable; the tile says so by not lifting.
-  const blockedByGate = gate.kind === "unreachable" || gate.kind === "unknown";
+  const gated = gate.kind === "pin" || gate.kind === "signOut";
+  // The one answer that is not yet an answer. Not clickable until it lands;
+  // the tile says so by not lifting.
+  const blockedByGate = gate.kind === "unknown";
 
   /**
    * Every way this dialog closes goes through here, which is also the only
@@ -142,7 +150,8 @@ export function SwitchProfileDialog({
         {step === "gate" && gated ? (
           <SwitchGateBody
             target={target}
-            mode={gate.kind === "pin" ? "pin" : "password"}
+            viewerFirstName={viewerFirstName}
+            mode={gate.kind === "pin" ? "pin" : "signOut"}
             committing={isSwitching}
             onCommittingChange={setIsSwitching}
             onCommit={(credentials: SwitchAccountCredentials) =>
@@ -172,11 +181,6 @@ export function SwitchProfileDialog({
               onClick={handleSwitch}
               disabled={isSwitching || blockedByGate}
               isLoading={isSwitching}
-              note={
-                gate.kind === "unreachable"
-                  ? f("switchGate.unreachable")
-                  : undefined
-              }
             />
           </ProfileTilesRow>
 

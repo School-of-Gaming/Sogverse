@@ -126,12 +126,13 @@ export function FamilyProfileSelector({
   const viewerIsCustomer = profile?.role === "customer";
 
   /**
-   * What this tile costs, from the one helper all three switch surfaces share.
-   * The viewer's own tile is never a switch, so it is never gated.
+   * What a switch costs from this session, from the one helper all three switch
+   * surfaces share. The viewer's own tile is never a switch, so it is never
+   * gated — which is the only thing about a tile that changes the answer.
    */
   function gateFor(member: FamilyMember) {
     if (member.id === currentUserId) return { kind: "none" } as const;
-    return switchGateFor(profile?.role, provenance.data, member);
+    return switchGateFor(profile?.role, provenance.data);
   }
 
   // Honor the gamer→parent "Add Gamer" intent: read the URL marker once on
@@ -168,8 +169,8 @@ export function FamilyProfileSelector({
     }
 
     const gate = gateFor(target);
-    if (gate.kind === "unreachable" || gate.kind === "unknown") return;
-    if (gate.kind === "pin" || gate.kind === "password") {
+    if (gate.kind === "unknown") return;
+    if (gate.kind === "pin" || gate.kind === "signOut") {
       setSwitchError(null);
       setGated({ member: target, mode: gate.kind });
       return;
@@ -267,10 +268,11 @@ export function FamilyProfileSelector({
           const isActive = member.id === currentUserId;
           const activeIsClickable = !!onSelfClick;
           const gate = gateFor(member);
-          // A sibling with no password of their own, or a gate whose answer has
-          // not landed: on screen, named, and not takeable.
-          const blockedByGate =
-            gate.kind === "unreachable" || gate.kind === "unknown";
+          // The only thing that takes a tile out of service: a gate whose
+          // answer has not landed. Every family member is on screen and every
+          // one of them is clickable — a switch that needs a sign-out says so
+          // in the dialog the click opens.
+          const blockedByGate = gate.kind === "unknown";
           // Non-active tiles stay visually clickable even while a switch is
           // in flight — only the active tile (when it has no self navigator)
           // shows the default cursor.
@@ -287,11 +289,6 @@ export function FamilyProfileSelector({
                 blockedByGate
               }
               isLoading={committingTargetId === member.id}
-              note={
-                gate.kind === "unreachable"
-                  ? t("switchGate.unreachable")
-                  : undefined
-              }
               onClick={() => handleSwitch(member)}
             />
           );
@@ -311,6 +308,10 @@ export function FamilyProfileSelector({
             if (!next) setGated(null);
           }}
           target={gated.member}
+          // The gate only ever stands for a gamer viewer, and `gateFor` cannot
+          // answer anything but `unknown` until that viewer's profile has
+          // landed — so the fallback is unreachable and exists for the type.
+          viewerFirstName={profile?.first_name ?? ""}
           mode={gated.mode}
           onCommit={(credentials: SwitchAccountCredentials) =>
             commitAccountSwitch(gated.member, credentials)
@@ -334,6 +335,7 @@ export function FamilyProfileSelector({
           // switch; the dialog folds it in as a second step so the intent
           // marker still rides along on the redirect.
           gate={gateFor(parents[0])}
+          viewerFirstName={profile?.first_name ?? ""}
           redirectUrl={`${ROUTES.selectProfile}?${ADD_GAMER_INTENT.param}=${ADD_GAMER_INTENT.value}`}
           title={t("switchToParentToAddGamer.title", { name: parents[0].first_name })}
           oneWayWarning={t("switchToParentToAddGamer.oneWayWarning")}

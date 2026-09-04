@@ -16,12 +16,6 @@ function dashboardFor(role: FamilyMember["role"]): string {
 export interface CommitAccountSwitchOptions {
   /** A linked parent's PIN. Required when leaving a switched-in gamer session. */
   pin?: string;
-  /**
-   * The TARGET account's password. Required when leaving a gamer session the
-   * child signed into themselves — the resulting session is then a password
-   * session too, so the parent it may land on is still behind its own unlock.
-   */
-  password?: string;
   /** Where to land instead of the target's dashboard. */
   redirectUrl?: string;
 }
@@ -44,15 +38,16 @@ export interface CommitAccountSwitchOptions {
  * set on success — the returned promise resolves into a document that is
  * already unloading.
  *
- * **The credentials are the caller's to collect, not this function's to
- * prompt for.** Leaving a gamer session costs something: a linked parent's PIN
- * from a switched-in session, or the target account's own password from a
- * session the child signed into. Which of the two the route will demand is a
- * fact about the caller's session (see `session-provenance.ts`), and the
- * switcher knows it before the click — so a gate dialog collects the value and
- * hands it here. A commit sent without the value the route wants comes back as a
- * `SwitchAccountError` naming which one was missing, which is what lets a
- * surface open its dialog on the refusal rather than pre-empting it.
+ * **The credential is the caller's to collect, not this function's to prompt
+ * for.** Leaving a gamer session costs a linked parent's PIN when the session
+ * was handed over by a switch, and cannot be done at all from a session the
+ * child opened themselves — that one is refused `SIGN_OUT_REQUIRED`, and the way
+ * to the other account is the login page. Which of the two applies is a fact
+ * about the caller's session (see `session-provenance.ts`) that the switcher
+ * knows before the click, so a gate dialog collects the PIN and hands it here.
+ * A commit sent without it comes back as a `SwitchAccountError` naming what was
+ * missing, which is what lets a surface open its dialog on the refusal rather
+ * than pre-empting it.
  *
  * Failure is thrown, always as a `SwitchAccountError` carrying the route's code
  * where there is one; nothing is caught here, for the same reason no state is

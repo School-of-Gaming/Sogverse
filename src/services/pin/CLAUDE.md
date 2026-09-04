@@ -19,9 +19,9 @@ user **switches to a gamer** or **signs out**. There is no inactivity/TTL expiry
 the UI section below is Gate A.
 
 **Gate B — leaving a gamer session.** A child switching *out* of their own
-account into anyone else's pays a credential, and which one depends on how their
-session was created (`src/lib/session-provenance.ts`, resolved server-side by
-`readSessionProvenance()` in `src/lib/auth.ts` and carried on the guard's
+account into anyone else's meets one of two answers, and which one depends on how
+their session was created (`src/lib/session-provenance.ts`, resolved server-side
+by `readSessionProvenance()` in `src/lib/auth.ts` and carried on the guard's
 `user.session`):
 
 - a **family session** — the switch route created it, and said so by minting a
@@ -30,11 +30,21 @@ session was created (`src/lib/session-provenance.ts`, resolved server-side by
   parent is nearby, so the PIN is accepted friction. Any of the child's parents'
   PINs opens it, because a child may be linked to more than one.
 - an **own session** — anything else, including a session opened by typing a
-  username or an email of the child's own — costs **the target account's own
-  password**, and never a PIN. The reason is the threat this gate is actually
-  about: a child may sign in on a school computer and forget to sign out, and a
-  four-digit PIN with no rate limit is not what should stand between that machine
-  and the parent's account.
+  username or an email of the child's own — **cannot switch at all**. The route
+  refuses it with 403 `SIGN_OUT_REQUIRED`, and the way to the other person's
+  account is to sign out and sign in as them.
+
+**Why an own session is refused rather than priced.** The threat this gate is
+about is a child signing in on a school computer and walking away from it, and a
+four-digit PIN with no rate limit is not what should stand between that machine
+and the parent's account. The obvious stronger price — the *target's* own
+password, typed here — was the previous design and it was worse than no switch at
+all: it makes this platform a password oracle, an endpoint that answers "is this
+the right password for that family member?" to whoever is sitting at the machine.
+The login page answers the same question, but it is the place built to answer it,
+with GoTrue's own protections behind it. So a credential login on a device outside
+the home is a session into exactly one account, and the only way to another one is
+to authenticate to it directly.
 
 **Rule: `family` is a marker the switch route minted, never an inference from
 the token — and `own` is the default.** The obvious signal is the JWT's `amr`: a
@@ -94,8 +104,15 @@ nothing after it exists early enough to see the new session's id.
 
 What the route does, in order: resolve the target, run the family-membership
 matrix, *then* charge the gate. Membership first is load-bearing — otherwise the
-route would test PINs against families the caller is not in.
+route would test PINs against families the caller is not in, and it would tell an
+own session that some arbitrary account id is one it would have to sign out to
+reach.
 
+- **Own session.** Refused 403 `SIGN_OUT_REQUIRED` immediately after the
+  membership matrix, before anything else runs. A `pin` in the body changes
+  nothing — the PIN is not an alternative price here, so the route does not even
+  ask whether it would have matched — and nothing destructive has happened by
+  then, so the child is left holding the session they arrived with.
 - **Family session.** The PIN is checked with `verify_pin_for_any` over every
   parent this child is linked to, through the service-role client. That function
   compares none of its arguments against `auth.uid()`, so it is service-role only
@@ -105,36 +122,27 @@ route would test PINs against families the caller is not in.
   `PIN_NOT_SET` — a fact about the family, which no amount of careful typing
   fixes, so the family is sent to set a PIN rather than told a child got theirs
   wrong. A missing PIN in the body is 403 `PIN_REQUIRED`.
-- **Own session.** The route signs in **as the target** with their password, so
-  the session it produces is itself an own session — it mints no marker and
-  deletes any the browser was carrying, because a session opened by typing a
-  credential must not inherit the classification of the one it replaced. A
-  wrong password is 403 `PASSWORD_INVALID`, uniform with an account that holds no
-  password at all so it cannot be read as an oracle. A sibling in sign-in mode
-  `parent` holds no password by construction and is refused 403
-  `TARGET_UNREACHABLE`, said plainly rather than as a wrong password.
 
 **Rule: a failed gate must leave the caller's session untouched.** Verify before
-anything destructive — on the PIN path that means checking before the sign-out,
-and on the password path it means that the sign-in *is* the check, so a refusal
-writes no cookies and there is nothing to unwind.
+anything destructive: both refusals land before the sign-out, so a refused caller
+still holds the session they arrived with and no cookie has been written.
 
 **Rule: the unlock cookie is minted on exactly one path — a family session
-switching to a parent — and never on the own-session path.** On the first, the
-PIN was just checked one step earlier and asking for the same four digits twice
-in one gesture is friction with nothing behind it. On the second, the whole point
-is that a school computer pays for both: the password that got here, and then the
-PIN at the unlock gate. Switching into a *gamer* always clears the cookie.
+switching to a parent.** The PIN was just checked one step earlier, and asking
+for the same four digits twice in one gesture is friction with nothing behind it.
+Switching into a *gamer* always clears the cookie, and a session that is not
+allowed to switch never reaches either branch.
 
-**Rule: the family marker is minted on EVERY session the OTP path creates, with
-no per-target condition.** A gamer target, a parent target, a parent dropping to
-a child — all of them. The rule is kept that simple deliberately: the only
+**Rule: the family marker is minted on EVERY session the route creates, with no
+per-target condition.** A gamer target, a parent target, a parent dropping to a
+child — all of them. The rule is kept that simple deliberately: the only
 alternative is a condition, and a condition is a thing that can be got wrong in
 the one place where getting it wrong hands out the cheaper gate. On a parent
 target it is inert anyway (only a gamer caller is ever charged for leaving), so
 narrowing it would buy nothing. When the new session carries no `session_id`
 there is nothing to bind either cookie to, so neither is minted and the marker
-is deleted — the session then reads as `own`, which is the stronger gate.
+is deleted — the session then reads as `own`, which is the stronger answer: that
+family signs in again rather than switching.
 
 **Rule: the window between redeeming the OTP and minting the marker must not
 throw and must not touch the network.** Redeeming has already written the
@@ -174,10 +182,11 @@ the other.
 
 The marker's expiry runs the opposite way to the unlock cookie's, and
 deliberately. Dropping the unlock cookie on a browser quit re-locks the parent,
-which is free security; dropping the marker would re-classify a switched-in
-child as self-authenticated and ask for a password the family may not have, so a
-browser restart at home would become a dead end. It therefore carries a long
-`maxAge`, and the `session_id` binding is what actually expires it.
+which is free security; dropping the marker would re-classify a switched-in child
+as self-authenticated and refuse them the switch back to their parent, so a
+browser restart at home would strand the family in the child's account with no
+way out but a login. It therefore carries a long `maxAge`, and the `session_id`
+binding is what actually expires it.
 
 ### The unlock cookie
 
@@ -316,27 +325,28 @@ loading-state rule) — a fast double-tap must not fire twice across the nav or
 view swap that success triggers.
 
 **Gate B's prompt is not a PIN screen and does not live here.** It sits with the
-switcher (`src/components/family/`), because it collects *either* credential —
-four digits or a password — and which one is a fact about the caller's session
-rather than about PINs. It composes the pad from the pieces above rather than
-taking `PinUnlockFlow` whole: that flow drives customer-gated routes (verify,
-create, forgot), and none of the three is reachable from a gamer session. Two
-things follow, and both are the model showing through. **A wrong PIN is answered
-in the pad's own language** — flash, shake, clear, no error text — because the
-child can simply try again, while `PIN_NOT_SET` replaces the prompt with a
-message, since no amount of careful typing fixes a family that holds no PIN.
-And **there is no "forgot PIN" link on it**: that route is customer-gated, so a
-child could never complete it, and the way out is to sign out and sign in as the
-parent.
+switcher (`src/components/family/`), because what it asks for is a fact about the
+caller's session rather than about PINs: a family session is prompted for a
+parent's PIN, and an own session is not prompted at all — it is told that the
+switch needs a sign-out, and offered the sign-out form. It composes the pad from
+the pieces above rather than taking `PinUnlockFlow` whole: that flow drives
+customer-gated routes (verify, create, forgot), and none of the three is
+reachable from a gamer session. Two things follow, and both are the model showing
+through. **A wrong PIN is answered in the pad's own language** — flash, shake,
+clear, no error text — because the child can simply try again, while
+`PIN_NOT_SET` replaces the prompt with a message, since no amount of careful
+typing fixes a family that holds no PIN. And **there is no "forgot PIN" link on
+it**: that route is customer-gated, so a child could never complete it, and the
+way out is to sign out and sign in as the parent.
 
-**Rule: the client decides which credential to ask for through one shared helper
+**Rule: the client decides what to ask for through one shared helper
 (`switchGateFor`), and that helper is a restatement of what the route enforces.**
-It exists so a surface can ask for the right thing up front instead of firing a
-switch in order to be told; the route stays the boundary. Because it is a
-restatement it can drift, so a change to the route's three-way split is
-unfinished until the helper matches — and the helper answers `unknown` while the
-session's provenance has not landed, which every call site must render as *wait*
-rather than as *no gate*.
+It exists so a surface can ask for the right thing up front — or say plainly that
+a switch is not available — instead of firing one in order to be told; the route
+stays the boundary. Because it is a restatement it can drift, so a change to the
+route's split is unfinished until the helper matches — and the helper answers
+`unknown` while the session's provenance has not landed, which every call site
+must render as *wait* rather than as *no gate*.
 
 Screens:
 
