@@ -1435,9 +1435,8 @@
       "pinNotSetTitle": "vav PIN tu’be’lu’",
       "pinNotSetDescription": "My SOG DajDaq PIN cher vav wa’DIch. ghIq account DachoHlaH.",
       "signOutTitle": "yImej, ghIq yIchoH",
-      "signOutOwnSession": "pongDaj joq QInDaj lo’ta’ {name}. vaj ghaH neH ghaj sessionvam.",
-      "signOutWhy": "latlh qorDu’ account poSmoHbe’ Sogverse sessionvamvo’. jengva’vam tlhapbogh vay’ ’el net chaw’be’.",
-      "signOutHow": "yImej, ghIq loginDaq {name} yImoj."
+      "signOutOwnSession": "pongDaj lo’ta’ {name}. vaj latlh accountDaq choHlaHbe’ accountvam. Hoch account So’lu’.",
+      "signOutHow": "yImej, ghIq {name} yImoj."
     },
     "addGamerForm": {
       "title": "QujwI’ chu’ chel",

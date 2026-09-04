@@ -226,7 +226,7 @@ describe("SwitchGateBody — the sign-out gate", () => {
       .closest("form");
   }
 
-  it("explains whose session this is, why it opens nobody else's, and what to do", () => {
+  it("explains whose session this is and what to do", () => {
     render(<Harness mode="signOut" onCommit={vi.fn()} />);
 
     expect(screen.getByText(GATE.signOutTitle)).toBeTruthy();
@@ -235,7 +235,6 @@ describe("SwitchGateBody — the sign-out gate", () => {
     expect(
       screen.getByText(copy(GATE.signOutOwnSession, VIEWER_FIRST_NAME)),
     ).toBeTruthy();
-    expect(screen.getByText(GATE.signOutWhy)).toBeTruthy();
     expect(
       screen.getByText(copy(GATE.signOutHow, TARGET.first_name)),
     ).toBeTruthy();

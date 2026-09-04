@@ -1387,9 +1387,8 @@
       "pinNotSetTitle": "Ingen föräldra-PIN ännu",
       "pinNotSetDescription": "En förälder måste först skapa en PIN-kod från sin Min SOG. Sedan kan du byta konto.",
       "signOutTitle": "Logga ut för att byta konto",
-      "signOutOwnSession": "{name} loggade in med sitt eget användarnamn eller sin egen e-postadress, så den här sessionen tillhör bara den personen.",
-      "signOutWhy": "Sogverse öppnar aldrig en annan familjemedlems konto från en sådan här session — annars skulle vem som helst som tog den här enheten kunna komma in.",
-      "signOutHow": "Logga ut och logga sedan in som {name} på inloggningssidan som vanligt."
+      "signOutOwnSession": "{name} är inloggad med sin egen inloggning, så det här kontot kan inte byta till ett annat. Så förblir allas konton privata.",
+      "signOutHow": "Logga ut och logga sedan in som {name}."
     },
     "addGamerForm": {
       "title": "Lägg till en gamer",

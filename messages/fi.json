@@ -1387,9 +1387,8 @@
       "pinNotSetTitle": "PIN-koodia ei ole vielä asetettu",
       "pinNotSetDescription": "Vanhemman pitää ensin asettaa PIN-koodi Oma SOG -sivullaan. Sen jälkeen voit vaihtaa tiliä.",
       "signOutTitle": "Kirjaudu ulos, jotta voit vaihtaa tiliä",
-      "signOutOwnSession": "{name} kirjautui sisään omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, joten tämä istunto on vain hänen.",
-      "signOutWhy": "Sogverse ei koskaan avaa toisen perheenjäsenen tiliä tällaisesta istunnosta, koska muuten kuka tahansa tähän laitteeseen tarttuva pääsisi sinne.",
-      "signOutHow": "Kirjaudu ulos ja kirjaudu sitten kirjautumissivulla sisään käyttäjänä {name} tavalliseen tapaan."
+      "signOutOwnSession": "{name} on kirjautunut sisään omilla tunnuksillaan, joten tältä tililtä ei voi vaihtaa toiseen. Näin jokaisen tili pysyy yksityisenä.",
+      "signOutHow": "Kirjaudu ulos ja kirjaudu sitten sisään käyttäjänä {name}."
     },
     "addGamerForm": {
       "title": "Lisää pelaaja",

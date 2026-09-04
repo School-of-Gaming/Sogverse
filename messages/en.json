@@ -1387,9 +1387,8 @@
       "pinNotSetTitle": "No parent PIN yet",
       "pinNotSetDescription": "A parent needs to set a PIN from their own My SOG first. Then you can switch accounts.",
       "signOutTitle": "Sign out to switch",
-      "signOutOwnSession": "{name} signed in with their own username or email, so this session belongs to them alone.",
-      "signOutWhy": "Sogverse never opens another family member’s account from a session like this — anyone who picked up this device could otherwise get in.",
-      "signOutHow": "Sign out, then sign in as {name} on the login page as usual."
+      "signOutOwnSession": "{name} is signed in with their own login, so this account can’t switch to another one. That keeps everyone’s account private.",
+      "signOutHow": "Sign out, then sign in as {name}."
     },
     "addGamerForm": {
       "title": "Add a gamer",

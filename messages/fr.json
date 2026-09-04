@@ -1387,9 +1387,8 @@
       "pinNotSetTitle": "Pas encore de code PIN parent",
       "pinNotSetDescription": "Un parent doit d’abord créer un code PIN depuis son Mon SOG. Tu pourras ensuite changer de compte.",
       "signOutTitle": "Déconnecte-toi pour changer de compte",
-      "signOutOwnSession": "{name} s’est connecté avec son propre nom d’utilisateur ou sa propre adresse e-mail, donc cette session n’appartient qu’à cette personne.",
-      "signOutWhy": "Sogverse n’ouvre jamais le compte d’un autre membre de la famille depuis une session comme celle-ci — sinon, n’importe qui prenant cet appareil pourrait y entrer.",
-      "signOutHow": "Déconnecte-toi, puis connecte-toi en tant que {name} sur la page de connexion, comme d’habitude."
+      "signOutOwnSession": "{name} est connecté avec son propre identifiant, donc ce compte ne peut pas passer à un autre. Ainsi, le compte de chacun reste privé.",
+      "signOutHow": "Déconnecte-toi, puis connecte-toi en tant que {name}."
     },
     "addGamerForm": {
       "title": "Ajouter un joueur",

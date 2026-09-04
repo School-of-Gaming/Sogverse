@@ -270,7 +270,11 @@ function SignOutToSwitch({
 
   return (
     <>
-      <DialogHeader>
+      {/* `text-left` at every width: the header primitive centres on a phone,
+          which suits a one-line title over a pad, but this view is two
+          sentences of explanation and reads as a description. The second
+          sentence lives inside the header so both take the same alignment. */}
+      <DialogHeader className="text-left">
         <DialogTitle className="flex items-center gap-2">
           <LogOut className="h-5 w-5 shrink-0" aria-hidden />
           {t("switchGate.signOutTitle")}
@@ -278,12 +282,10 @@ function SignOutToSwitch({
         <DialogDescription>
           {t("switchGate.signOutOwnSession", { name: viewerFirstName })}
         </DialogDescription>
+        <p className="text-sm text-muted-foreground">
+          {t("switchGate.signOutHow", { name: target.first_name })}
+        </p>
       </DialogHeader>
-
-      <div className="space-y-2 text-sm text-muted-foreground">
-        <p>{t("switchGate.signOutWhy")}</p>
-        <p>{t("switchGate.signOutHow", { name: target.first_name })}</p>
-      </div>
 
       {/* The canonical sign-out: a form POST the server answers with a 303,
           which the browser follows as a full-page GET. No client fetch, no
