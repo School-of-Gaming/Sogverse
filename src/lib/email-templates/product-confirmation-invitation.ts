@@ -1,8 +1,10 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import {
   isUtcZone,
+  UTC_TIMEZONE,
   ZONE_RULE_TIMEZONES,
 } from "@/lib/calendar-invitations/ics-primitives";
+import type { ProductTimezone } from "@/lib/constants/location-hierarchies";
 import {
   buildInvitation,
   type InvitationOverride,
@@ -408,28 +410,58 @@ function minutesOf(time: string): number {
 }
 
 /**
- * The zone's own name, in the reader's language — the *generic* name, which is
- * the one true of the whole run.
+ * Each zone a product can be authored in, and the message key naming it.
  *
- * Read from `Intl` rather than from a message file: a zone name is data every
- * locale has, and a translated list of them would be one more thing to keep
- * correct in five files.
- *
- * **`longGeneric`, never `long`.** The seasonal name is read off one instant,
- * and this line sits above a run of months: a term starting in January would be
- * labelled "Eastern European Standard Time" for a schedule that is mostly
- * summer, and a camp in July would carry the summer name for its September
- * sessions. The generic name — "Eastern European Time", "Itä-Euroopan aika" —
- * is true on both sides of a transition, which is what the sentence is claiming
- * about every time above it. An instant is still needed, because that is how
- * `Intl` is asked which zone reading applies.
+ * **Typed against the same union `ZONE_RULES` is, so the compiler holds it
+ * total**: a zone added to a supported country does not build until it has a
+ * name here, exactly as it does not build until it has transition rules there.
+ * The two tables are the pair a new zone has to satisfy, and neither can be
+ * satisfied by forgetting.
  */
-function zoneName(locale: string, timezone: string, at: Date): string {
-  const parts = new Intl.DateTimeFormat(locale, {
-    timeZone: timezone,
-    timeZoneName: "longGeneric",
-  }).formatToParts(at);
-  return parts.find((part) => part.type === "timeZoneName")?.value ?? timezone;
+const ZONE_NAME_KEY = {
+  "Europe/Helsinki": "europeHelsinki",
+  "Europe/Paris": "europeParis",
+  "Europe/London": "europeLondon",
+  "Europe/Stockholm": "europeStockholm",
+} as const satisfies Record<ProductTimezone, string>;
+
+/**
+ * The same table, reachable by a string — the shape the guard above has already
+ * narrowed but the type has not.
+ */
+const zoneNameKeyByZone: ReadonlyMap<string, (typeof ZONE_NAME_KEY)[ProductTimezone]> =
+  new Map(Object.entries(ZONE_NAME_KEY));
+
+/**
+ * The zone's own name, in the reader's language — one true of the whole run.
+ *
+ * **Translated, not read from `Intl`, and that is a correction rather than a
+ * preference.** A zone name looks like data every locale has, and for the
+ * seasonal reading it is. The *generic* reading is not: CLDR carries no generic
+ * long name for every zone in every locale, and where one is missing `Intl`
+ * does not fail — it falls back to a differently shaped string that splices in
+ * a label and a separator of its own. Finnish and French did exactly that for
+ * `Europe/London`, and the sentence around it came out as "Ajat ovat
+ * aikavyöhykkeellä aikavyöhyke: Iso-Britannia." There is nothing in the
+ * returned value to detect that with, so the only way to be sure of the shape
+ * is to write the four names down.
+ *
+ * The seasonal reading is what a translated name buys back on the other side:
+ * this line sits above a run of months, so a name read off one instant would
+ * label a January term "Standard Time" for a schedule that is mostly summer.
+ * These names are true on both sides of a transition, which is what the
+ * sentence is claiming about every time above it.
+ *
+ * UTC takes no key: it is a mark rather than a word, and it is the explorer's
+ * zone rather than any product's.
+ */
+function zoneName(t: EmailTranslator, timezone: string): string {
+  if (isUtcZone(timezone)) return UTC_TIMEZONE;
+  const key = zoneNameKeyByZone.get(timezone);
+  // Unreachable: the composer refuses every zone outside this table before it
+  // reaches a sentence. The raw zone is the honest answer if that ever changes.
+  if (key === undefined) return timezone;
+  return t(`productConfirmation.invite.zoneName.${key}`);
 }
 
 /**
@@ -456,7 +488,6 @@ function scheduleInWords({
   timezone,
   startDate,
   endDate,
-  firstInstant,
 }: {
   t: EmailTranslator;
   locale: string;
@@ -465,7 +496,6 @@ function scheduleInWords({
   timezone: string;
   startDate: string;
   endDate: string | null;
-  firstInstant: Date;
 }): string[] {
   const byShape = new Map<string, InvitationSlot[]>();
   for (const slot of [...slots].sort((a, b) => a.weekday - b.weekday)) {
@@ -499,9 +529,7 @@ function scheduleInWords({
   });
 
   lines.push(
-    t("productConfirmation.invite.zoneNote", {
-      zone: zoneName(locale, timezone, firstInstant),
-    }),
+    t("productConfirmation.invite.zoneNote", { zone: zoneName(t, timezone) }),
   );
 
   // The dates are bare calendar dates with no clock face, so they are read and
@@ -739,7 +767,6 @@ export function composeProductConfirmationInvitation(
     timezone: input.timezone,
     startDate: input.startDate,
     endDate: input.endDate,
-    firstInstant: instantOf(schedule.start.date, schedule.start.time, input.timezone),
   });
   const placeLines = placeInWords({
     t,

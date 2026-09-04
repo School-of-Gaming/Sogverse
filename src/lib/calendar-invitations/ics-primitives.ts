@@ -256,11 +256,14 @@ const zoneRulesByName: ReadonlyMap<string, [daylight: ZoneRule, standard: ZoneRu
 /**
  * The zones the table actually holds rules for, at runtime.
  *
- * Exported for one test, and that test is the runtime half of the lockstep the
- * `Record<ProductTimezone, …>` type states: a `Record` type checks the keys
- * written in the literal, and nothing stops a key being computed or deleted
- * afterwards. Set equality against `PRODUCT_TIMEZONES`, both ways, is what
- * closes that.
+ * Two readers, and they want the same list for different reasons. **A test**
+ * holds it equal to `PRODUCT_TIMEZONES` both ways — the runtime half of the
+ * lockstep the `Record<ProductTimezone, …>` type states, since a `Record` type
+ * checks the keys written in the literal and nothing stops one being computed
+ * or deleted afterwards. **The signup confirmation's composer** asks it whether
+ * a stored `products.timezone` still has rules, and composes no invitation at
+ * all when it does not: the note below is a diagnostic for whoever typed a
+ * zone, and there is nobody of that description reading a family's mail.
  */
 export const ZONE_RULE_TIMEZONES: readonly string[] = [...zoneRulesByName.keys()];
 

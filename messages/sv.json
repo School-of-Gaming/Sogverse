@@ -2649,6 +2649,12 @@
         "scheduleDays": "{days}, {startTime}–{endTime}",
         "scheduleOnce": "{startTime}–{endTime}",
         "zoneNote": "Tiderna anges i {zone}.",
+        "zoneName": {
+          "europeHelsinki": "finsk tid",
+          "europeParis": "fransk tid",
+          "europeLondon": "brittisk tid",
+          "europeStockholm": "svensk tid"
+        },
         "dateRange": "Från {startDate} till {endDate}",
         "dateFrom": "Från {startDate}",
         "dateOn": "Den {date}",

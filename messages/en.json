@@ -3335,6 +3335,12 @@
         "scheduleDays": "{days}, {startTime}–{endTime}",
         "scheduleOnce": "{startTime}–{endTime}",
         "zoneNote": "Times are given in {zone}.",
+        "zoneName": {
+          "europeHelsinki": "Finland time",
+          "europeParis": "France time",
+          "europeLondon": "United Kingdom time",
+          "europeStockholm": "Sweden time"
+        },
         "dateRange": "From {startDate} to {endDate}",
         "dateFrom": "From {startDate}",
         "dateOn": "On {date}",

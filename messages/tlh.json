@@ -2693,6 +2693,12 @@
         "scheduleDays": "wa’logh neH: {days} {startTime}–{endTime}",
         "scheduleOnce": "{startTime}–{endTime}",
         "zoneNote": "poH Sep: {zone}.",
+        "zoneName": {
+          "europeHelsinki": "vInlan poH",
+          "europeParis": "vIraS poH",
+          "europeLondon": "brItan poH",
+          "europeStockholm": "SweDIn poH"
+        },
         "dateRange": "{startDate} vo’ {endDate} ghoS",
         "dateFrom": "{startDate} vo’",
         "dateOn": "jaj: {date}",

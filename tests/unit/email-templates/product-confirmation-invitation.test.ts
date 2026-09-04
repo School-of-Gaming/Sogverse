@@ -303,6 +303,89 @@ describe("a run that crosses a daylight-saving transition", () => {
       "DTSTART;TZID=Europe/Helsinki:20270330T140000",
     ]);
   });
+
+  /**
+   * The autumn mirror, and the harsher of the two: 31 October is a **25-hour
+   * day**, so a walk that steps 24 hours of elapsed time from the run's first
+   * local midnight lands twice on the 31st and never reaches the 2nd. Simulated
+   * against this exact run, such a walk yields 29, 30, 31, **31**, 01 — one
+   * `RECURRENCE-ID` naming an occurrence the rule already had, and one day of
+   * the camp with no component at all.
+   */
+  it("writes one override per day across the autumn fall-back, none twice", () => {
+    // Friday 29 October to Tuesday 2 November, with the transition on the
+    // Sunday.
+    const invitation = compose({
+      productType: "camp",
+      startDate: "2027-10-29",
+      endDate: "2027-11-02",
+      now: new Date("2027-10-28T12:00:00Z"),
+      slots: [
+        { weekday: 4, startTime: "09:00", durationMinutes: 120 },
+        { weekday: 5, startTime: "14:00", durationMinutes: 120 },
+        { weekday: 6, startTime: "14:00", durationMinutes: 120 },
+        { weekday: 0, startTime: "14:00", durationMinutes: 120 },
+        { weekday: 1, startTime: "14:00", durationMinutes: 120 },
+      ],
+    });
+
+    expect(lineStartingWith(invitation!.ics, "DTSTART;TZID")).toBe(
+      "DTSTART;TZID=Europe/Helsinki:20271029T090000",
+    );
+    const recurrenceIds = linesStartingWith(invitation!.ics, "RECURRENCE-ID");
+    expect(recurrenceIds).toEqual([
+      "RECURRENCE-ID;TZID=Europe/Helsinki:20271030T090000",
+      "RECURRENCE-ID;TZID=Europe/Helsinki:20271031T090000",
+      "RECURRENCE-ID;TZID=Europe/Helsinki:20271101T090000",
+      "RECURRENCE-ID;TZID=Europe/Helsinki:20271102T090000",
+    ]);
+    // Stated separately from the list above, because the duplicate is what the
+    // 25-hour day produces and a list assertion can be widened without anyone
+    // noticing it stopped forbidding one.
+    expect(new Set(recurrenceIds).size).toBe(recurrenceIds.length);
+  });
+
+  /**
+   * The autumn mirror of the first-occurrence walk. The reviewer's own case —
+   * a Tuesday slot with `now` on Saturday 30 October — is pinned first: it is
+   * the shape a reader will look for beside the spring test.
+   *
+   * **It is not the one that catches a naive walk**, and saying so is the
+   * point: simulated, a 24-hour-elapsed walk from the 30th yields 30, 31, 31,
+   * 01, 02 and still finds the Tuesday, one step later than it should. The case
+   * below it is where the repeat actually costs an answer.
+   */
+  it("lands the first occurrence after the fall-back on the right date", () => {
+    const invitation = compose({
+      startDate: "2027-10-01",
+      slots: [{ weekday: 1, startTime: "10:00", durationMinutes: 90 }],
+      now: new Date("2027-10-30T12:00:00Z"),
+    });
+
+    expect(lineStartingWith(invitation!.ics, "DTSTART;TZID")).toBe(
+      "DTSTART;TZID=Europe/Helsinki:20271102T100000",
+    );
+  });
+
+  /**
+   * The floor day's own weekday, its clock face already gone by — which is the
+   * case the eighth day of the search exists for, and the one the repeat eats.
+   * A walk that spends a step re-reading 31 October covers seven distinct days
+   * in eight, so the Sunday a week out falls off the end and the composer
+   * answers with no invitation at all rather than the right date.
+   */
+  it("recovers the floor day's own slot a week later, repeat or no repeat", () => {
+    // Sunday 31 October, 14:00 in Helsinki: past a 10:00 Sunday slot.
+    const invitation = compose({
+      startDate: "2027-10-01",
+      slots: [{ weekday: 6, startTime: "10:00", durationMinutes: 90 }],
+      now: new Date("2027-10-31T12:00:00Z"),
+    });
+
+    expect(lineStartingWith(invitation!.ics, "DTSTART;TZID")).toBe(
+      "DTSTART;TZID=Europe/Helsinki:20271107T100000",
+    );
+  });
 });
 
 /**
@@ -577,18 +660,18 @@ describe("what the entry's notes say", () => {
 
     expect(invitation!.scheduleLines[0]).toBe("Every Monday and Wednesday, 16:00–17:00");
     expect(invitation!.scheduleLines.join("\n")).toContain(
-      "Times are given in Eastern European Time.",
+      "Times are given in Finland time.",
     );
     expect(description(invitation!.ics)).toContain("Every Monday and Wednesday");
   });
 
   /**
-   * The generic zone name, never the seasonal one. `long` reads the name off
-   * one instant, and this line sits above a run of months: a term starting in
-   * January would be labelled "Standard Time" for a schedule that is mostly
-   * summer, and a camp in July would carry the summer name into September.
+   * One name for the whole run, never a seasonal reading. A name read off a
+   * single instant would label a January term "Standard Time" for a schedule
+   * that is mostly summer, and a camp starting in July would carry the summer
+   * name into its September sessions.
    */
-  it("names the zone generically, on both sides of a transition", () => {
+  it("names the zone the same way on both sides of a transition", () => {
     const winter = compose({ startDate: "2027-01-04" })!.scheduleLines.join("\n");
     // A club whose first occurrence is in July: the same line, the same name.
     const summer = compose({
@@ -596,10 +679,61 @@ describe("what the entry's notes say", () => {
       now: new Date("2027-06-01T08:00:00Z"),
     })!.scheduleLines.join("\n");
 
-    expect(winter).toContain("Eastern European Time");
-    expect(summer).toContain("Eastern European Time");
+    expect(winter).toContain("Finland time");
+    expect(summer).toContain("Finland time");
     expect(winter).not.toContain("Standard Time");
     expect(summer).not.toContain("Summer Time");
+  });
+
+  /**
+   * The name is a message key per zone rather than an `Intl` reading, because
+   * CLDR has no generic long name for every zone in every locale and `Intl`
+   * answers a gap with a differently shaped string — a label and a separator
+   * spliced into the sentence. `Europe/London` in Finnish and French was
+   * exactly that: "Ajat ovat aikavyöhykkeellä aikavyöhyke: Iso-Britannia."
+   */
+  const ZONES = [
+    "Europe/Helsinki",
+    "Europe/Paris",
+    "Europe/London",
+    "Europe/Stockholm",
+  ];
+
+  it.each(SUPPORTED_LOCALES)("names every supported zone in %s", async (locale) => {
+    const translator = await getEmailTranslator(locale);
+
+    for (const timezone of ZONES) {
+      const invitation = composeProductConfirmationInvitation(translator, locale, {
+        ...base,
+        timezone,
+      });
+      const lines = invitation!.scheduleLines.join("\n");
+
+      // No key path standing in for a missing name, and no raw IANA identifier
+      // standing in for a missing key.
+      expect(lines).not.toContain("productConfirmation.");
+      expect(lines).not.toContain(timezone);
+    }
+  });
+
+  /**
+   * The two locales the `Intl` reading broke in, pinned as whole sentences.
+   * Every one of these came back as "aikavyöhyke: Iso-Britannia" shaped output
+   * for London, which is the failure a per-zone key exists to make impossible.
+   */
+  it.each([
+    ["fi", "Europe/Helsinki", "Kellonajat ovat Suomen aikaa."],
+    ["fi", "Europe/London", "Kellonajat ovat Britannian aikaa."],
+    ["fr", "Europe/Helsinki", "Les horaires sont donnés en heure de Finlande."],
+    ["fr", "Europe/London", "Les horaires sont donnés en heure du Royaume-Uni."],
+  ] as const)("reads as a sentence: %s / %s", async (locale, timezone, sentence) => {
+    const translator = await getEmailTranslator(locale);
+    const invitation = composeProductConfirmationInvitation(translator, locale, {
+      ...base,
+      timezone,
+    });
+
+    expect(invitation!.scheduleLines).toContain(sentence);
   });
 
   it("gives one line per distinct time when the slots disagree", () => {
@@ -769,6 +903,24 @@ describe("every locale composes a whole document", () => {
     fr: "lundi",
   };
 
+  /**
+   * The base fixture's 16:00 slot, as each locale sets a clock face.
+   *
+   * Finnish separates hours from minutes with a period where English, Swedish
+   * and French use a colon, so a clock formatter hardcoded to `en` reads
+   * Finnish as `16:00` and fails here. `tlh` sets the period form too — it
+   * falls back to English for weekday *names* but not for the time pattern,
+   * which is measured rather than assumed, and it is why this pin covers a
+   * locale the weekday pin above has to skip.
+   */
+  const CLOCK: Record<(typeof SUPPORTED_LOCALES)[number], string> = {
+    en: "16:00",
+    fi: "16.00",
+    sv: "16:00",
+    fr: "16:00",
+    tlh: "16.00",
+  };
+
   it.each(SUPPORTED_LOCALES)("%s", async (locale) => {
     const translator = await getEmailTranslator(locale);
     const invitation = composeProductConfirmationInvitation(translator, locale, {
@@ -788,10 +940,13 @@ describe("every locale composes a whole document", () => {
     // answered rather than English standing in for it.
     expect(translator("productConfirmation.invite.sectionLabel")).toBe(PINNED[locale]);
 
+    // Inside the document, because that is where a hardcoded locale at an
+    // `Intl` call site would show up and nowhere else.
+    expect(invitation!.scheduleLines[0]).toContain(CLOCK[locale]);
+    expect(invitation!.ics).toContain(CLOCK[locale]);
+
     const weekday = WEEKDAY[locale];
     if (weekday !== undefined) {
-      // Inside the document, because that is where a hardcoded locale at an
-      // `Intl` call site would show up and nowhere else.
       expect(invitation!.scheduleLines[0]).toContain(weekday);
       expect(invitation!.ics).toContain(weekday);
     }

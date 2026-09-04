@@ -2648,7 +2648,13 @@
         "scheduleWeekly": "Joka {days} klo {startTime}–{endTime}",
         "scheduleDays": "{days} klo {startTime}–{endTime}",
         "scheduleOnce": "Klo {startTime}–{endTime}",
-        "zoneNote": "Ajat ovat aikavyöhykkeellä {zone}.",
+        "zoneNote": "Kellonajat ovat {zone}.",
+        "zoneName": {
+          "europeHelsinki": "Suomen aikaa",
+          "europeParis": "Ranskan aikaa",
+          "europeLondon": "Britannian aikaa",
+          "europeStockholm": "Ruotsin aikaa"
+        },
         "dateRange": "Ajalla {startDate} – {endDate}",
         "dateFrom": "Alkaen {startDate}",
         "dateOn": "Päivämäärä: {date}",
