@@ -42,7 +42,9 @@ const CALENDAR_INVITATION_FIXTURE = {
   description: "Aino is building a harbour town, and the last session is the walk-through.",
   geduFirstName: "Ville",
   spokenLanguage: "fi",
-  reminder: "15",
+  reminderFirst: "15",
+  reminderSecond: "1440",
+  showAs: "free",
   method: "request",
   shape: "rule",
   uid: null,
@@ -624,6 +626,65 @@ describe("templateRegistry calendarInvitation", () => {
   });
 
   /**
+   * The identifier is minted per *render*, and one render has to mint exactly
+   * one: the mail, the file it carries and the copy the admin reads back all
+   * state it, and an admin who cannot read the identifier a send used cannot
+   * send an update against it. Three parts each resolving their own params is
+   * how that broke, and each part was correct on its own — so the count is what
+   * has to be asserted.
+   */
+  it("mints one identifier per render, however many parts read it", () => {
+    const minted = vi.spyOn(crypto, "randomUUID");
+    try {
+      const rendered = templateRegistry.calendarInvitation.render(params, t, "en");
+      expect(minted).toHaveBeenCalledTimes(1);
+      expect(icsOf(rendered)).toContain(`UID:${minted.mock.results[0].value}@sogverse`);
+    } finally {
+      minted.mockRestore();
+    }
+  });
+
+  /**
+   * The plain-text body is not a courtesy: a Microsoft mailbox fills the
+   * calendar entry's notes from the message body, and with only HTML to work
+   * from it flattens the markup into them — tracking pixel included. So what
+   * the text says is what a reader finds inside the calendar entry.
+   */
+  it("states the mail as plain text, with no markup in it", () => {
+    const { text } = templateRegistry.calendarInvitation.render(params, t, "en");
+    if (text === undefined) throw new Error("no text body on the render");
+
+    expect(text).toContain("Aino");
+    expect(text).toContain("Minecraft building camp");
+    expect(text).toContain("https://sogverse.sog.gg/parent");
+    expect(text).not.toMatch(/<[a-z/][^>]*>/i);
+  });
+
+  /**
+   * An explicit date list stops at twelve weeks, so an open-ended run's entry
+   * holds twelve weeks of sessions rather than every session still ahead — and
+   * the mail has to say which. A rule states an open-ended run whole, so the
+   * same schedule in the other notation keeps the unqualified sentence.
+   */
+  it("says how far the entry reaches when the list stops at the horizon", () => {
+    const listed = templateRegistry.calendarInvitation.render(
+      { ...params, shape: "list", endDate: null },
+      t,
+      "en",
+    );
+    expect(listed.html).toContain("for the next twelve weeks");
+    expect(listed.html).not.toContain("holds every upcoming session");
+
+    const ruled = templateRegistry.calendarInvitation.render(
+      { ...params, shape: "rule", endDate: null },
+      t,
+      "en",
+    );
+    expect(ruled.html).toContain("holds every upcoming session");
+    expect(ruled.html).not.toContain("for the next twelve weeks");
+  });
+
+  /**
    * A schedule with nothing left in it is refused rather than sent empty: a
    * document describing no sessions still opens a conversation the reader's
    * calendar has no entry for. The message is the admin's to read — the
@@ -745,8 +806,15 @@ describe("every template renders in every locale", () => {
     // the reason they name is ever rendered.
     seatOfferStaff: [{ reason: "declined" }, { reason: "no_response" }],
     // Three messages, three subjects, three headings and three bodies — nine
-    // keys per locale, of which any one render reaches exactly three.
-    calendarInvitation: [{ method: "request" }, { method: "publish" }, { method: "cancel" }],
+    // keys per locale, of which any one render reaches exactly three. The
+    // fourth variant is the sentence an explicit list stopping at the horizon
+    // states instead of the body's own, which no other variant reaches.
+    calendarInvitation: [
+      { method: "request" },
+      { method: "publish" },
+      { method: "cancel" },
+      { shape: "list", endDate: null },
+    ],
   };
 
   function variantsOf(key: string): Record<string, string | boolean | null>[] {

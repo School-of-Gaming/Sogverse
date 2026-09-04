@@ -19,11 +19,14 @@ import {
   buildCalendarInvitationEmail,
   calendarInvitationAttachment,
   calendarInvitationSubject,
+  calendarInvitationText,
   resolveCalendarInvitation,
   CALENDAR_INVITATION_METHODS,
   CALENDAR_INVITATION_PRODUCT_TYPES,
   CALENDAR_INVITATION_REMINDERS,
+  CALENDAR_INVITATION_SECOND_REMINDERS,
   CALENDAR_INVITATION_SHAPES,
+  CALENDAR_INVITATION_SHOW_AS,
   CALENDAR_INVITATION_TIMEZONES,
   CALENDAR_INVITATION_WEEKDAY_PRESETS,
   CALENDAR_INVITATION_START_DATE,
@@ -99,6 +102,15 @@ type TemplateParams = Record<string, string | boolean | null>;
 export interface RenderedTemplate {
   subject: string;
   html: string;
+  /**
+   * The same mail as plain text, for the templates that state one.
+   *
+   * Optional because most mails have nothing to gain from it, and required in
+   * practice for one: a mail carrying a calendar part is read by Exchange as
+   * the source of the calendar entry's *notes*, and with no text part it
+   * flattens the HTML into them. See this directory's `CLAUDE.md`.
+   */
+  text?: string;
   /** Reply-To this template's real sending route would set. */
   replyTo: string;
   /**
@@ -182,18 +194,63 @@ function defineTemplate<P extends TemplateParams>(entry: {
     locale: string,
     context: EmailRenderContext,
   ) => RenderedAttachment[];
+  /**
+   * The plain-text body, for a template that states one. See
+   * `RenderedTemplate` for why one template must.
+   */
+  text?: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
   resolveParams?: TemplateDefinition["resolveParams"];
 }): TemplateDefinition {
-  const { schema, build, subject, replyTo, attachments, ...rest } = entry;
+  // The validated params are the resolution: a template with nothing to derive
+  // hands its own params to every part of the render.
+  return defineResolvedTemplate({ ...entry, resolve: (params: P) => params });
+}
+
+/**
+ * A template whose parts are built from something *derived* from the params,
+ * resolved exactly once per render.
+ *
+ * **The once is the whole reason this exists.** With four callbacks each doing
+ * their own derivation, a derivation that is not a pure function of the params
+ * — one that mints an identifier, say — produces a different answer in each of
+ * them, and the mail states one value while the file it carries states another.
+ * Nothing about that is visible from any one callback, which is what made it
+ * ship: each was correct on its own.
+ *
+ * Every template that has nothing to derive goes through the identity
+ * resolution above rather than through a second code path, so there is one
+ * render assembly and not two to keep in step.
+ */
+function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
+  label: string;
+  fields: TemplateField[];
+  schema: z.ZodType<P>;
+  resolve: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => R;
+  build: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  subject: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  text?: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  attachments?: (
+    resolved: R,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+  ) => RenderedAttachment[];
+  replyTo?: (params: P) => string;
+  resolveParams?: TemplateDefinition["resolveParams"];
+}): TemplateDefinition {
+  const { schema, resolve, build, subject, text, replyTo, attachments, ...rest } = entry;
   return {
     ...rest,
     schema,
     render: (rawParams, t, locale, context = { to: "send" }) => {
       const params = schema.parse(rawParams);
-      const files = attachments?.(params, t, locale, context);
+      const resolved = resolve(params, t, locale, context);
+      const files = attachments?.(resolved, t, locale, context);
+      const plain = text?.(resolved, t, locale, context);
       return {
-        subject: subject(params, t, locale, context),
-        html: build(params, t, locale, context),
+        subject: subject(resolved, t, locale, context),
+        html: build(resolved, t, locale, context),
+        ...(plain !== undefined && { text: plain }),
         replyTo: replyTo?.(params) ?? SUPPORT_EMAIL,
         ...(files?.length && { attachments: files }),
       };
@@ -522,12 +579,32 @@ const CALENDAR_INVITATION_REMINDER_LABELS: Record<
 };
 
 /**
- * The reminder options, defaulting to fifteen minutes — the first entry is what
- * an untouched select posts, so the order is the default.
+ * The two reminder selects, ordered by their own defaults — the first entry is
+ * what an untouched select posts, so the order *is* the default. Fifteen
+ * minutes first and a day second, because a Microsoft mailbox keeps only the
+ * first alarm and the near one is the one that gets a family out of the door.
  */
-const CALENDAR_INVITATION_REMINDER_OPTIONS = (["15", "60", "1440", "none"] as const).map(
+const CALENDAR_INVITATION_REMINDER_OPTIONS = CALENDAR_INVITATION_REMINDERS.map((value) => ({
+  label: CALENDAR_INVITATION_REMINDER_LABELS[value],
+  value,
+}));
+
+const CALENDAR_INVITATION_SECOND_REMINDER_OPTIONS = CALENDAR_INVITATION_SECOND_REMINDERS.map(
   (value) => ({ label: CALENDAR_INVITATION_REMINDER_LABELS[value], value }),
 );
+
+const CALENDAR_INVITATION_SHOW_AS_LABELS: Record<
+  (typeof CALENDAR_INVITATION_SHOW_AS)[number],
+  string
+> = {
+  free: "Free",
+  busy: "Busy",
+};
+
+const CALENDAR_INVITATION_SHOW_AS_OPTIONS = CALENDAR_INVITATION_SHOW_AS.map((value) => ({
+  label: CALENDAR_INVITATION_SHOW_AS_LABELS[value],
+  value,
+}));
 
 const CALENDAR_INVITATION_METHOD_LABELS: Record<
   (typeof CALENDAR_INVITATION_METHODS)[number],
@@ -591,7 +668,10 @@ const calendarInvitationParamsSchema = z.object({
   description: z.string().nullable(),
   geduFirstName: z.string().min(1),
   spokenLanguage: z.enum(Constants.public.Enums.spoken_language),
-  reminder: z.enum(CALENDAR_INVITATION_REMINDERS),
+  /** Two alarms, in the order they are emitted — Exchange keeps only the first. */
+  reminderFirst: z.enum(CALENDAR_INVITATION_REMINDERS),
+  reminderSecond: z.enum(CALENDAR_INVITATION_REMINDERS),
+  showAs: z.enum(CALENDAR_INVITATION_SHOW_AS),
   method: z.enum(CALENDAR_INVITATION_METHODS),
   shape: z.enum(CALENDAR_INVITATION_SHAPES),
   /** Null mints a fresh identifier at render; a thread's later message types the first one's back in. */
@@ -856,7 +936,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
    * then type it back in with a higher revision number for the update and the
    * cancellation.
    */
-  calendarInvitation: defineTemplate({
+  calendarInvitation: defineResolvedTemplate({
     label: "Calendar Invitation",
     fields: [
       { key: "parentFirstName", label: "Parent First Name", placeholder: "Sanna" },
@@ -897,7 +977,24 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       },
       { key: "geduFirstName", label: "Gedu First Name", placeholder: "Ville" },
       { key: "spokenLanguage", label: "Spoken language", type: "select", options: CALENDAR_INVITATION_LANGUAGE_OPTIONS },
-      { key: "reminder", label: "Reminder", type: "select", options: CALENDAR_INVITATION_REMINDER_OPTIONS },
+      {
+        key: "reminderFirst",
+        label: "First reminder (a Microsoft mailbox keeps only this one)",
+        type: "select",
+        options: CALENDAR_INVITATION_REMINDER_OPTIONS,
+      },
+      {
+        key: "reminderSecond",
+        label: "Second reminder (kept by the calendars that keep more than one)",
+        type: "select",
+        options: CALENDAR_INVITATION_SECOND_REMINDER_OPTIONS,
+      },
+      {
+        key: "showAs",
+        label: "Show as (a child's session does not normally block the parent's own calendar)",
+        type: "select",
+        options: CALENDAR_INVITATION_SHOW_AS_OPTIONS,
+      },
       { key: "method", label: "Message", type: "select", options: CALENDAR_INVITATION_METHOD_OPTIONS },
       { key: "shape", label: "Schedule notation", type: "select", options: CALENDAR_INVITATION_SHAPE_OPTIONS },
       {
@@ -912,13 +1009,16 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
     ],
     schema: calendarInvitationParamsSchema,
-    build: (p, t, locale) =>
-      buildCalendarInvitationEmail(t, locale, resolveCalendarInvitation(p, t, locale)),
-    subject: (p, t, locale) =>
-      calendarInvitationSubject(t, resolveCalendarInvitation(p, t, locale)),
-    attachments: (p, t, locale) => [
-      calendarInvitationAttachment(t, resolveCalendarInvitation(p, t, locale)),
-    ],
+    // One resolution per render, threaded through every part: the identifier is
+    // minted here, and the mail, the file and the copy the admin reads back all
+    // state the same one.
+    resolve: (p, t, locale) => resolveCalendarInvitation(p, t, locale),
+    build: (content, t, locale) => buildCalendarInvitationEmail(t, locale, content),
+    subject: (content, t) => calendarInvitationSubject(t, content),
+    // The one template that states a text body, because a mail carrying a
+    // calendar part is where Exchange reads the entry's notes from.
+    text: (content, t) => calendarInvitationText(t, content),
+    attachments: (content) => [calendarInvitationAttachment(content)],
     resolveParams: resolveCalendarInvitationParams,
   }),
 };

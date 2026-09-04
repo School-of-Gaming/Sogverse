@@ -507,38 +507,49 @@ describe("POST /api/admin/send-test-email", () => {
    * property worth pinning, alongside the content being base64 of the document
    * the template composed.
    */
-  it("passes a template's attachment through to the provider", async () => {
-    mockAuthenticatedWithRole("admin");
+  /** The calendar invitation's params, whose dates have to stay in the future. */
+  function calendarInvitationParams() {
+    return {
+      parentFirstName: "Sanna",
+      parentEmail: "sanna@example.com",
+      gamerFirstName: "Aino",
+      productName: "Minecraft building camp",
+      productType: "camp",
+      weekdays: "mon-wed-fri",
+      startDate: CALENDAR_INVITATION_START_DATE,
+      endDate: CALENDAR_INVITATION_END_DATE,
+      startTime: "16:00",
+      durationMinutes: "120",
+      timezone: "Europe/Helsinki",
+      address: "Kaisaniemenkatu 6, 00100 Helsinki",
+      arrivalInstructions: "Ring the bell.",
+      description: "A harbour town.",
+      geduFirstName: "Ville",
+      spokenLanguage: "fi",
+      reminderFirst: "15",
+      reminderSecond: "1440",
+      showAs: "free",
+      method: "request",
+      shape: "rule",
+      uid: null,
+      sequence: "0",
+      dashboardUrl: "https://sogverse.sog.gg/parent",
+    };
+  }
 
-    const response = await POST(createRequest({
+  function sendCalendarInvitation(overrides: Record<string, string | null> = {}) {
+    return POST(createRequest({
       mode: "template",
       toEmail: "test@example.com",
       template: "calendarInvitation",
-      params: {
-        parentFirstName: "Sanna",
-        parentEmail: "sanna@example.com",
-        gamerFirstName: "Aino",
-        productName: "Minecraft building camp",
-        productType: "camp",
-        weekdays: "mon-wed-fri",
-        startDate: CALENDAR_INVITATION_START_DATE,
-        endDate: CALENDAR_INVITATION_END_DATE,
-        startTime: "16:00",
-        durationMinutes: "120",
-        timezone: "Europe/Helsinki",
-        address: "Kaisaniemenkatu 6, 00100 Helsinki",
-        arrivalInstructions: "Ring the bell.",
-        description: "A harbour town.",
-        geduFirstName: "Ville",
-        spokenLanguage: "fi",
-        reminder: "15",
-        method: "request",
-        shape: "rule",
-        uid: null,
-        sequence: "0",
-        dashboardUrl: "https://sogverse.sog.gg/parent",
-      },
+      params: { ...calendarInvitationParams(), ...overrides },
     }));
+  }
+
+  it("passes a template's attachment through to the provider", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await sendCalendarInvitation();
 
     expect(response.status).toBe(200);
     const [{ attachments }] = mockSendTransactionalEmail.mock.calls[0];
@@ -546,6 +557,66 @@ describe("POST /api/admin/send-test-email", () => {
     expect(attachments[0].name).toBe("invite.ics");
     expect(Buffer.from(attachments[0].contentBase64, "base64").toString("utf8"))
       .toContain("BEGIN:VCALENDAR");
+  });
+
+  /**
+   * The document is read back to the admin, and that is the only way the
+   * identifier a send used ever becomes visible: a preview mints its own, so
+   * what it showed was never what went out — and without the identifier there
+   * is no second message about the same entry.
+   */
+  it("answers with the text of what it sent", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await sendCalendarInvitation();
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.attachments).toHaveLength(1);
+    expect(data.attachments[0].name).toBe("invite.ics");
+    expect(data.attachments[0].text).toContain("BEGIN:VCALENDAR");
+    // The bytes that went to the provider, not a second render of them.
+    const [{ attachments }] = mockSendTransactionalEmail.mock.calls[0];
+    expect(Buffer.from(attachments[0].contentBase64, "base64").toString("utf8"))
+      .toBe(data.attachments[0].text);
+  });
+
+  /**
+   * A mail carrying a calendar part states a plain-text body, because a
+   * Microsoft mailbox fills the calendar entry's notes from the message body
+   * and flattens the HTML into them when there is nothing else to read.
+   */
+  it("sends the plain-text body a template states, and none for one that states none", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    await sendCalendarInvitation();
+    const [{ textContent }] = mockSendTransactionalEmail.mock.calls[0];
+    expect(textContent).toContain("Minecraft building camp");
+    expect(textContent).not.toMatch(/<[a-z/][^>]*>/i);
+
+    mockSendTransactionalEmail.mockClear();
+    await POST(createRequest(validTemplateBody));
+    expect(mockSendTransactionalEmail.mock.calls[0][0].textContent).toBeUndefined();
+  });
+
+  /**
+   * A builder may refuse the params it was handed — a schedule with nothing
+   * ahead of it is the case — and that refusal is an answer about the request,
+   * so it comes back as a 400 carrying the message the builder wrote for the
+   * admin to read, exactly as the schema's own refusal does. Answered any other
+   * way it is a 500, and the admin is told nothing about what they got wrong.
+   */
+  it("returns 400 with the builder's own message when a render refuses", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await sendCalendarInvitation({
+      startDate: "2020-01-06",
+      endDate: "2020-02-03",
+    });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toContain("no sessions left");
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
   /** Every other template carries none, and says so by carrying nothing. */

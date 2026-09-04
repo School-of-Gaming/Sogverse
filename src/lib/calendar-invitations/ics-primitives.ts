@@ -92,17 +92,22 @@ export function property(name: string, value: string, params = ""): string {
 }
 
 /**
- * A parameter value, quoted when RFC 5545 §3.1 requires it.
+ * A parameter value, always a quoted-string.
  *
- * A param value carrying `:`, `;` or `,` has to be a quoted-string, and a
- * quoted-string cannot contain a DQUOTE at all — there is no escape for one —
+ * RFC 5545 §3.1 *requires* the quotes only around a value carrying `:`, `;` or
+ * `,`, and quoting only those is what this did — until an iPhone reading a
+ * Microsoft 365 mailbox displayed a bare `School of Gaming` as "School Gaming"
+ * (2026-09-04). A parser is entitled to quote a param value whether or not it
+ * has to, so the safe form is the one that never leaves a client guessing where
+ * the value ends, and it costs two characters.
+ *
+ * A quoted-string cannot contain a DQUOTE at all — there is no escape for one —
  * so a double quote in a name is dropped rather than smuggled through. This is
  * the one place a name reaches the document *outside* a TEXT value, which is
  * why `escapeText` is not the answer here.
  */
 export function paramValue(value: string): string {
-  const cleaned = value.replace(/["\r\n]/g, "");
-  return /[:;,]/.test(cleaned) ? `"${cleaned}"` : cleaned;
+  return `"${value.replace(/["\r\n]/g, "")}"`;
 }
 
 /** The zone this module can describe fully. Every product we run is in it. */
@@ -138,6 +143,21 @@ export const HELSINKI_VTIMEZONE: readonly string[] = [
 ];
 
 /**
+ * UTC is not a zone a document has to describe.
+ *
+ * Its times are written in the absolute `…Z` form, which names no `TZID` and
+ * therefore has nothing to resolve — so a document authored in UTC carries no
+ * zone block and no note about one either. There is no gap to warn a reader
+ * about when there is no reference to resolve.
+ */
+export const UTC_TIMEZONE = "UTC";
+
+/** True for the zone whose times are written as absolute instants. */
+export function isUtcZone(zone: string): boolean {
+  return zone === UTC_TIMEZONE;
+}
+
+/**
  * What a document says about a zone it names but cannot describe.
  *
  * A `TZID` with no transition rules beside it is legal and every mainstream
@@ -146,6 +166,7 @@ export const HELSINKI_VTIMEZONE: readonly string[] = [
  * is exactly the person who needs to know which case they are looking at.
  */
 export function zoneBlock(zone: string): string[] {
+  if (isUtcZone(zone)) return [];
   if (zone === KNOWN_TIMEZONE) return [...HELSINKI_VTIMEZONE];
   return [
     property(

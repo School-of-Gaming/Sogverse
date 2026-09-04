@@ -25,11 +25,41 @@ session out of the object.
 
 ## What is verified
 
-- **Gmail renders a calendar file sent through the transactional REST API as an
-  `invite.ics` attachment as a full inline invitation, with RSVP buttons** — for both
-  schedule notations, a weekly rule and an explicit list of dates. Tested 2026-09-04.
-  This is what makes the design ordinary: it needs no second mail transport, and the mail
-  goes through the same REST wrapper as every other mail in the app.
+- **The provider's own part header is what makes the design work.** A calendar sent as an
+  `invite.ics` attachment through the transactional REST API leaves as a calendar part
+  naming the iTIP method, with an attachment disposition. Nothing in the app asks for
+  that: the name carries the media type and the provider composes the rest, which is why
+  the file name is never rewritten on the way out.
+- **Gmail renders it as a full inline invitation, with RSVP buttons** — for both schedule
+  notations, a weekly rule and an explicit list of dates. Tested 2026-09-04. This is what
+  makes the design ordinary: it needs no second mail transport, and the mail goes through
+  the same REST wrapper as every other mail in the app. Gmail also shows a file chip for
+  the calendar beside the rendered invitation; that is Gmail's own doing rather than a
+  property of how the mail was sent, since an inline calendar part gets the same chip.
+- **Outlook on Windows renders a meeting request**, tested against a Microsoft 365
+  mailbox 2026-09-04: Accept, Tentative and Decline; the recurrence stated in prose
+  ("occurs every Monday, Wednesday and Friday, effective … until …"); the times converted
+  into the reader's own zone with the authoring zone noted beside them; the address mapped
+  from the location; and the HTML body rendered under it.
+- **An iPhone reading that same Microsoft 365 mailbox** shows the invitation in Calendar
+  with Accept, Maybe and Decline, and honours the free/busy answer the document states.
+  Three Exchange behaviours came out of the same test and all three are now baked into
+  what we send:
+  - **One reminder survives, and it is the first one.** Exchange keeps a single alarm per
+    item, so the reminder that matters most has to be written first — which is why the
+    tool asks for two in order rather than for a set.
+  - **The calendar entry's notes are filled from the *email body*, flattened to text.**
+    With only an HTML body to work from, a reader opens the session in their calendar and
+    finds the mail's markup flattened into it, the tracking pixel showing as a bracketed
+    link. So this mail states a plain-text body of its own, and that text is what a
+    Microsoft reader actually finds inside the entry.
+  - **A name in a parameter has to be quoted.** An unquoted organiser name was displayed
+    as "School Gaming" — a word silently lost — so every name is written as a quoted
+    string whether or not the format forces it.
+- **Open tracking is an operator setting, not a code one.** The pixel that appears in a
+  flattened calendar note comes from the provider's open tracking, which is switched off
+  per account for transactional mail in the provider's own dashboard. Nothing in this repo
+  adds or removes it.
 - **A calendar file that is *not* recognised as an invitation is worse than useless.**
   The same client renders an unrecognised attachment as an "Add to calendar" link whose
   entry is a copy — nothing sent later can find it again, so an update lands on nothing.
@@ -40,15 +70,19 @@ session out of the object.
   slot — so a weekly rule states every real product's schedule. Consumer clubs are
   open-ended, which is the one thing only a rule can say; an explicit date list has to
   stop at whatever horizon we enumerate.
-- **A reminder we set is a suggestion on two clients out of three.** Apple Calendar keeps
-  the alarm the organiser sent; Google and Outlook replace it with the recipient's own
-  default notification settings for that calendar.
+- **A reminder we set is a suggestion, and every client honours it differently.** Apple
+  Calendar keeps the alarms the organiser sent; Google replaces them with the recipient's
+  own default notification settings for that calendar; an Exchange mailbox keeps exactly
+  one, the first. Nothing about that is worth fighting — the answer is to send the near
+  reminder first and let each client do what it does.
 
 ## What is still open
 
-1. **Apple Mail and Outlook are untested.** Every rendering claim above is Gmail's. The
-   design rests on the invitation being recognised as one, and two of the three clients
-   families actually use have not been looked at.
+1. **Two Apple paths are still in flight.** Outlook on Windows and an iPhone reading an
+   Exchange mailbox are settled above. What is not is iCloud's own calendar, and a Gmail
+   account read through Apple Mail — the two remaining shapes a family is plausibly on,
+   and the two where the invitation could still arrive as a file rather than as an
+   invitation.
 2. **Whether an update lands *in place*.** Re-stating the same identifier with a higher
    revision number is how iTIP says "this is a new version of that entry", and it is the
    single assumption everything else depends on. Untested on any client. If an update
@@ -82,9 +116,12 @@ The invitation is an **email template** like every other mail in the app —
 and the template that wraps it sits in `src/lib/email-templates/` and is registered in
 the template registry. It is therefore reachable from the **email testing tool** at
 `/admin/testing`: pick the calendar-invitation template, fill in the parameters (the
-schedule, the timezone, the reminder, whether the mail requests an answer or simply
-states the entry, and the revision number), and either preview it or send it to a real
-address. The preview shows the composed calendar file beneath the rendered mail, so what
-a client did can be read back against exactly what it was sent.
+schedule, the timezone, the two reminders, whether the entry blocks the reader's own
+time, whether the mail requests an answer or simply states the entry, and the revision
+number), and either preview it or send it to a real address.
 
-Trying an update is two sends: the same identifier, a higher revision number.
+**Read the identifier off the send, not off the preview.** Both show the composed
+calendar file — the preview beneath the rendered mail, the send beneath the result
+banner — but a render mints its own identifier when the form names none, so the preview's
+was never the one that went out. Trying an update is two sends: copy the identifier the
+first send reports, type it back into the form, and raise the revision number.

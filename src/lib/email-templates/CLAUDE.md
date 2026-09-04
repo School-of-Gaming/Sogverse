@@ -98,7 +98,9 @@ When a template should be testable from `/admin/testing` and sendable via the te
 - `subject` — receives `(params, t, locale)`; the locale is there for a subject that prints a formatted value of its own (the session-report subject carries a date), and most subjects ignore it.
 - `resolveParams?` — optional transform from raw UI field values to API params (e.g. a "Whose seat" select expands into the `isSelfSeat` boolean the builder takes).
 - `replyTo?` — a function of the validated params, for the rare template whose live route replies to a person rather than to support. Omit it and the render defaults to `SUPPORT_EMAIL`. It exists so a test send reproduces the real mail's reply behaviour; a template that lies about this teaches the wrong thing to whoever is testing it.
-- `attachments?` — a function of the validated params, for the rare template whose content is not only its body. Declared beside `build` rather than returned from it, because the two are different artifacts with different rules — a body is HTML a client renders, an attachment is bytes a client *acts on* — and because a builder returning a pair would make every template that carries nothing say so. A render omits the key entirely when the function is absent or returns nothing.
+- `text?` — the plain-text body, for the one template that owes the reader one. See "A mail that carries a file" below for why a calendar mail is that template and no other is.
+- **A template whose parts are built from something *derived* from the params declares that derivation once**, through the sibling factory that takes a `resolve` step; every other template goes through the same assembly with the params as their own resolution, so there is one render path and not two. This exists because four callbacks each doing their own derivation is four derivations, and a derivation that is not a pure function of the params — one that mints an identifier — then answers differently in each of them. The mail states one value, the file beside it states another, and nothing about that is visible from inside any one callback: each is correct on its own.
+- `attachments?` — a function of the resolved params, for the rare template whose content is not only its body. Declared beside `build` rather than returned from it, because the two are different artifacts with different rules — a body is HTML a client renders, an attachment is bytes a client *acts on* — and because a builder returning a pair would make every template that carries nothing say so. A render omits the key entirely when the function is absent or returns nothing.
 
 Templates that are *not* exposed to the testing UI (currently the PIN-reset email) just export a builder and are sent directly from their API route — they don't need a registry entry.
 
@@ -109,6 +111,18 @@ Templates that are *not* exposed to the testing UI (currently the PIN-reset emai
 **Rule: an attachment is composed, never fetched.** A builder here reads no storage and makes no request, so what travels with a mail is something the template produced from its own params — which is what keeps this directory pure and what makes the whole thing testable from fixtures. A future mail that wanted to attach a *stored* file would take the bytes as a param, exactly as it already takes composed URLs.
 
 **Rule: only text attachments carry their decoded content, and it exists for the preview alone.** What is sent is the name and the base64; `text` is the same bytes decoded, so the testing tool can show what was composed rather than only how it looks. There is nothing useful to put on screen for a picture or a PDF, which is why the field is optional rather than derived.
+
+**Rule: a mail that carries a calendar part states a plain-text body, and it is the only
+mail here that has to.** Everywhere else a text part is a courtesy nobody reads — every
+client we care about renders the HTML. A calendar changes what the text part *is*: an
+Exchange mailbox fills the calendar entry's own notes from the message body, and with
+only HTML to work from it flattens the markup into them, so a reader opening the session
+in their calendar finds the mail's table structure and the provider's open-tracking pixel
+rendered as a bracketed link. The text is therefore not a stripped copy of the markup but
+the mail's own words — the greeting, the sentence saying what this is, the facts, how to
+get there, the link as a bare URL, and where to write with a question — because that is
+what somebody reads inside the entry weeks later. The registry carries it beside the body
+and the provider takes it as its own field; a template that states none simply omits it.
 
 **The encoder is deliberately not `Buffer`.** The registry is imported by an admin page as well as by the send route, so anything on this path has to run in a browser bundle. The string is encoded to bytes first and base64'd second — one step alone corrupts every character above U+00FF, which for a Finnish product name is most of them.
 

@@ -40,7 +40,8 @@ function input(overrides: Partial<InvitationInput> = {}): InvitationInput {
     url: "https://sogverse.sog.gg/parent",
     organizer: { name: "School of Gaming", email: "sogverse@sog.gg" },
     attendee: { name: "Sanna", email: "sanna@example.com" },
-    reminderMinutes: 15,
+    showAs: "free",
+    reminderMinutes: [15],
     now: NOW,
     ...overrides,
   };
@@ -50,6 +51,7 @@ function input(overrides: Partial<InvitationInput> = {}): InvitationInput {
 function build(overrides: Partial<InvitationInput> = {}): {
   ics: string;
   occurrenceCount: number;
+  truncated: boolean;
 } {
   const result = buildInvitation(input(overrides));
   if (!result.ok) throw new Error(`refused: ${result.reason}`);
@@ -198,10 +200,10 @@ describe("who is asking whom", () => {
     const { ics } = build();
     expect(lineStartingWith(ics, "METHOD:")).toBe("METHOD:REQUEST");
     expect(lineStartingWith(eventBody(ics), "ORGANIZER")).toBe(
-      "ORGANIZER;CN=School of Gaming:mailto:sogverse@sog.gg",
+      'ORGANIZER;CN="School of Gaming":mailto:sogverse@sog.gg',
     );
     expect(lineStartingWith(eventBody(ics), "ATTENDEE")).toBe(
-      "ATTENDEE;CN=Sanna;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:sanna@example.com",
+      'ATTENDEE;CN="Sanna";ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:sanna@example.com',
     );
     expect(ics).toContain("STATUS:CONFIRMED");
   });
@@ -226,16 +228,52 @@ describe("who is asking whom", () => {
     expect(ics).toContain("STATUS:CANCELLED");
     expect(ics).toContain("SEQUENCE:2");
     expect(lineStartingWith(eventBody(ics), "ATTENDEE")).toBe(
-      "ATTENDEE;CN=Sanna;ROLE=REQ-PARTICIPANT:mailto:sanna@example.com",
+      'ATTENDEE;CN="Sanna";ROLE=REQ-PARTICIPANT:mailto:sanna@example.com',
     );
     expect(ics).not.toContain("RSVP=TRUE");
   });
 });
 
 describe("the parts a client acts on", () => {
-  it("emits an alarm when one is asked for, and none when it is not", () => {
-    expect(build({ reminderMinutes: 60 }).ics).toContain("TRIGGER:-PT60M");
-    expect(build({ reminderMinutes: null }).ics).not.toContain("BEGIN:VALARM");
+  /** Every `TRIGGER` in the document, in the order it is written. */
+  function triggers(ics: string): string[] {
+    return unfold(ics).filter((line) => line.startsWith("TRIGGER:"));
+  }
+
+  /**
+   * Order is the property, not the set. Exchange keeps one alarm per item and
+   * keeps the first, so a document whose alarms come back sorted — or reversed
+   * — hands a Microsoft mailbox a different reminder than the one asked for.
+   */
+  it("writes two alarms in the order they were asked for", () => {
+    expect(triggers(build({ reminderMinutes: [15, 1440] }).ics)).toEqual([
+      "TRIGGER:-PT15M",
+      "TRIGGER:-PT1440M",
+    ]);
+    expect(triggers(build({ reminderMinutes: [1440, 15] }).ics)).toEqual([
+      "TRIGGER:-PT1440M",
+      "TRIGGER:-PT15M",
+    ]);
+  });
+
+  it("emits a single alarm, and none at all when none is asked for", () => {
+    expect(triggers(build({ reminderMinutes: [60] }).ics)).toEqual(["TRIGGER:-PT60M"]);
+    expect(build({ reminderMinutes: [] }).ics).not.toContain("BEGIN:VALARM");
+  });
+
+  /** Two alarms at one offset are one reminder everywhere, so one is written. */
+  it("drops a repeated offset", () => {
+    expect(triggers(build({ reminderMinutes: [15, 15] }).ics)).toEqual(["TRIGGER:-PT15M"]);
+  });
+
+  /**
+   * Whether the entry blocks the reader's own time. A child's session normally
+   * does not, and an iPhone reading a Microsoft 365 mailbox honours the answer,
+   * so it is stated rather than left to the client.
+   */
+  it("says whether the entry blocks the reader's time", () => {
+    expect(build({ showAs: "free" }).ics).toContain("TRANSP:TRANSPARENT");
+    expect(build({ showAs: "busy" }).ics).toContain("TRANSP:OPAQUE");
   });
 
   it("files the entry under the brand and links back to the app", () => {
@@ -282,6 +320,55 @@ describe("the zone a document names", () => {
       "No VTIMEZONE is emitted for Europe/Paris",
     );
   });
+
+  /**
+   * UTC names no zone and needs none described: its times are absolute
+   * instants, so there is no reference for a client to resolve and no gap to
+   * warn anybody about. A `TZID=UTC` beside a `…Z` timestamp would be both
+   * redundant and, on a strict reader, contradictory.
+   */
+  it("writes UTC as an absolute instant, with no zone named at all", () => {
+    const { ics } = build({ timezone: "UTC" });
+    expect(lineStartingWith(eventBody(ics), "DTSTART")).toBe("DTSTART:20260907T160000Z");
+    expect(ics).not.toContain("TZID");
+    expect(ics).not.toContain("BEGIN:VTIMEZONE");
+    expect(ics).not.toContain("X-SOGVERSE-NOTE");
+  });
+
+  it("writes a UTC date list as absolute instants too", () => {
+    const { ics } = build({ timezone: "UTC", shape: "list" });
+    const rdate = lineStartingWith(eventBody(ics), "RDATE");
+
+    expect(rdate.startsWith("RDATE:")).toBe(true);
+    const dates = rdate.slice("RDATE:".length).split(",");
+    expect(dates).toHaveLength(11);
+    for (const date of dates) expect(date).toMatch(/^\d{8}T160000Z$/);
+  });
+});
+
+/**
+ * Whether the document stops short of the run it describes.
+ *
+ * Only the explicit list can: it enumerates and therefore has to stop, while a
+ * rule states an open-ended run in one line. The mail's own sentence turns on
+ * this — an entry that holds twelve weeks must not claim to hold every session
+ * still ahead.
+ */
+describe("the twelve-week horizon", () => {
+  it("is not reached by a run that ends inside it", () => {
+    expect(build({ shape: "list" }).truncated).toBe(false);
+    expect(build({ shape: "rule" }).truncated).toBe(false);
+  });
+
+  it("cuts an open-ended list, and never a rule", () => {
+    expect(build({ shape: "list", endDate: null }).truncated).toBe(true);
+    expect(build({ shape: "rule", endDate: null }).truncated).toBe(false);
+  });
+
+  it("cuts a list whose end date is past the horizon", () => {
+    expect(build({ shape: "list", endDate: "2027-06-01" }).truncated).toBe(true);
+    expect(build({ shape: "rule", endDate: "2027-06-01" }).truncated).toBe(false);
+  });
 });
 
 describe("the parts every naive writer gets wrong", () => {
@@ -299,17 +386,23 @@ describe("the parts every naive writer gets wrong", () => {
   });
 
   /**
-   * A parameter value carrying a `:`, `;` or `,` has to be a quoted string, and
-   * a quoted string cannot contain a double quote at all — there is no escape
-   * for one — so a quote in a name is dropped rather than smuggled through.
+   * Every name is quoted, whether or not RFC 5545 forces it. A bare
+   * `CN=School of Gaming` was displayed as "School Gaming" by an iPhone reading
+   * a Microsoft 365 mailbox, so the quotes are what stop a client guessing
+   * where the value ends. A quoted string cannot contain a double quote at all
+   * — there is no escape for one — so a quote inside a name is dropped rather
+   * than smuggled through.
    */
-  it("quotes a name a parameter cannot hold bare, and drops a quote outright", () => {
+  it("quotes every name, and drops a quote inside one outright", () => {
+    expect(lineStartingWith(eventBody(build().ics), "ORGANIZER")).toContain(
+      'CN="School of Gaming"',
+    );
     expect(
       lineStartingWith(eventBody(build({ attendee: { name: "Virtanen, Sanna", email: "s@example.com" } }).ics), "ATTENDEE"),
     ).toContain('CN="Virtanen, Sanna"');
     expect(
       lineStartingWith(eventBody(build({ attendee: { name: 'Sanna "Ace"', email: "s@example.com" } }).ics), "ATTENDEE"),
-    ).toContain("CN=Sanna Ace");
+    ).toContain('CN="Sanna Ace"');
   });
 
   /**

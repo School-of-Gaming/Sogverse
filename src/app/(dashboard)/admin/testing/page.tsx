@@ -62,6 +62,16 @@ type PreviewWidth = (typeof PREVIEW_WIDTHS)[number];
 interface EmailResult {
   type: "success" | "error";
   message: string;
+  /**
+   * The text of every text attachment the send actually carried.
+   *
+   * A calendar document states the identifier its entry lives under, and a
+   * second message about that entry has to repeat it — so the identifier a send
+   * minted has to be readable *after* the send. The preview cannot stand in for
+   * it: a render mints its own, so what the preview shows was never what went
+   * out.
+   */
+  attachments?: { name: string; text: string }[];
 }
 
 const selectClass =
@@ -263,6 +273,7 @@ export default function TestingPage() {
         setResult({
           type: "success",
           message: t('emailSentSuccess', { messageId: data.messageId }),
+          attachments: data.attachments,
         });
       }
     } catch {
@@ -481,16 +492,33 @@ export default function TestingPage() {
               </>
             )}
 
-            {/* Result banner */}
+            {/* Result banner, and under it what the send actually carried. The
+                panel is the preview dialog's, closed by default for the same
+                reason: a hundred lines of calendar source above the send button
+                would bury the one line saying the mail went. It arrives with
+                the banner rather than after it, so nothing already on screen
+                moves when it appears. */}
             {result && (
-              <div
-                className={`rounded-md p-3 text-sm ${
-                  result.type === "success"
-                    ? "bg-success/10 text-success"
-                    : "bg-destructive/10 text-destructive"
-                }`}
-              >
-                {result.message}
+              <div className="space-y-2">
+                <div
+                  className={`rounded-md p-3 text-sm ${
+                    result.type === "success"
+                      ? "bg-success/10 text-success"
+                      : "bg-destructive/10 text-destructive"
+                  }`}
+                >
+                  {result.message}
+                </div>
+                {result.attachments?.map((attachment) => (
+                  <details key={attachment.name} className="rounded-md border border-border">
+                    <summary className="cursor-pointer px-3 py-2 text-sm">
+                      {t('sentAttachment', { name: attachment.name })}
+                    </summary>
+                    <pre className="h-64 overflow-auto border-t border-border p-3 font-mono text-xs whitespace-pre-wrap">
+                      {attachment.text}
+                    </pre>
+                  </details>
+                ))}
               </div>
             )}
 

@@ -1064,7 +1064,8 @@
         "desktop": "Dator",
         "mobile": "Mobil"
       },
-      "attachment": "Bilaga: {name}"
+      "attachment": "Bilaga: {name}",
+      "sentAttachment": "Det som skickades: {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -2711,6 +2712,10 @@
         "publish": "Kalenderposten som bifogas det här mejlet innehåller alla kommande pass i {productName} för {gamerName}. Lägg till den, så hamnar alla passen i din egen kalender.",
         "cancel": "{gamerName} har inte längre en plats i {productName}. Avbokningen som bifogas det här mejlet tar bort posten ur din kalender."
       },
+      "bodyHorizon": {
+        "request": "Kalenderinbjudan som bifogas det här mejlet innehåller passen i {productName} för {gamerName} de kommande tolv veckorna. Acceptera den, så hamnar alla passen i din egen kalender.",
+        "publish": "Kalenderposten som bifogas det här mejlet innehåller passen i {productName} för {gamerName} de kommande tolv veckorna. Lägg till den, så hamnar alla passen i din egen kalender."
+      },
       "schedule": "{days} kl. {time}",
       "openEnded": "Från {startDate}, tills vidare",
       "typeLabel": "Vad",
@@ -2725,7 +2730,6 @@
         "event": "Evenemang"
       },
       "arrivalLabel": "Hitta hit",
-      "updatesNote": "Om schemat ändras skickar School of Gaming en uppdatering, och samma post ändras i din kalender. Du får aldrig två poster och uppgiften att lista ut vilken som gäller.",
       "dashboardButton": "Öppna i Min SOG",
       "support": "Frågor? Skriv till {email}",
       "eventSummary": "{productName} – {gamerName}"

@@ -7,6 +7,7 @@ import {
   foldLine,
   formatUtcTimestamp,
   formatZonedTimestamp,
+  isUtcZone,
   paramValue,
   property,
   zoneBlock,
@@ -51,6 +52,18 @@ const LIST_HORIZON_DAYS = 84;
 export type InvitationMethod = "request" | "publish" | "cancel";
 export type InvitationShape = "rule" | "list";
 
+/**
+ * Whether the entry blocks the reader's own time.
+ *
+ * A parent's calendar holding their child's club is a note about where the
+ * child is, not a commitment the parent has made — so the default the tool
+ * offers is the transparent one. It is an option rather than a constant
+ * because a seat the parent holds themselves is the case where the opposite
+ * is right, and because a client honours it: an iPhone reading a Microsoft 365
+ * mailbox showed "Show as: Free" on an entry that asked for it (2026-09-04).
+ */
+export type InvitationShowAs = "free" | "busy";
+
 export interface InvitationParty {
   name: string;
   email: string;
@@ -83,13 +96,33 @@ export interface InvitationInput {
   organizer: InvitationParty;
   /** `null` for a published entry, which asks nobody for an answer. */
   attendee: InvitationParty | null;
-  reminderMinutes: number | null;
+  showAs: InvitationShowAs;
+  /**
+   * Reminder offsets in minutes before a session, **in the order they are
+   * emitted** — which is the whole of why this is a list rather than a set.
+   * Exchange keeps only one alarm per item and keeps the first, so the reminder
+   * that matters most is the one written first. Repeats are dropped, because
+   * two identical alarms are one alarm on every client and a duplicate on none.
+   */
+  reminderMinutes: number[];
   /** The instant the message is being composed at: `DTSTAMP`, and the past/future cut. */
   now: Date;
 }
 
 export type InvitationResult =
-  | { ok: true; ics: string; occurrenceCount: number }
+  | {
+      ok: true;
+      ics: string;
+      occurrenceCount: number;
+      /**
+       * Whether the document stops short of the run it describes. Only an
+       * explicit date list can: it stops at the horizon below, so an
+       * open-ended run — or one ending past the horizon — is stated only as
+       * far as the enumeration reaches. A rule states the run whole, with or
+       * without a last day, so it is never truncated.
+       */
+      truncated: boolean;
+    }
   /**
    * A run with nothing left in it. A refusal rather than an empty document,
    * because an empty `VCALENDAR` says nothing to a client and sending one would
@@ -131,13 +164,19 @@ function weekdayOf(utcDay: number): number {
  * it is a shorter way of writing this one — so only one expansion has to be
  * right, and the two notations cannot disagree about what the object covers.
  */
-function occurrencesOf(input: InvitationInput): Date[] {
+function occurrencesOf(input: InvitationInput): {
+  occurrences: Date[];
+  /** Whether the walk stopped at the horizon rather than at the run's own end. */
+  cutAtHorizon: boolean;
+} {
   const weekdays = new Set(input.weekdays);
-  if (weekdays.size === 0) return [];
+  if (weekdays.size === 0) return { occurrences: [], cutAtHorizon: false };
 
   const today = parseDay(formatInTimeZone(input.now, input.timezone, "yyyy-MM-dd"));
   const first = Math.max(parseDay(input.startDate), today);
   const horizon = first + LIST_HORIZON_DAYS * 86_400_000;
+  const cutAtHorizon =
+    input.endDate === null || parseDay(input.endDate) > horizon;
   const last =
     input.endDate === null ? horizon : Math.min(parseDay(input.endDate), horizon);
 
@@ -151,7 +190,7 @@ function occurrencesOf(input: InvitationInput): Date[] {
     if (instant.getTime() < input.now.getTime()) continue;
     found.push(instant);
   }
-  return found;
+  return { occurrences: found, cutAtHorizon };
 }
 
 /**
@@ -163,6 +202,24 @@ function occurrencesOf(input: InvitationInput): Date[] {
  */
 function isoDuration(minutes: number): string {
   return `PT${minutes}M`;
+}
+
+/**
+ * A schedule timestamp and the parameters that qualify it.
+ *
+ * A weekly slot promises a clock face, so a zoned schedule states a local wall
+ * clock under a `TZID`. UTC is the one zone with no clock face to promise — it
+ * has no transitions for a wall clock to survive — so it is written in the
+ * absolute `…Z` form, which names no zone and needs none described.
+ */
+function scheduleStamp(instant: Date, zone: string): string {
+  return isUtcZone(zone)
+    ? formatUtcTimestamp(instant)
+    : formatZonedTimestamp(instant, zone);
+}
+
+function scheduleParams(zone: string): string {
+  return isUtcZone(zone) ? "" : `;TZID=${zone}`;
 }
 
 /**
@@ -191,8 +248,8 @@ function ruleLines(input: InvitationInput, first: Date): string[] {
   return [
     property(
       "DTSTART",
-      formatZonedTimestamp(first, input.timezone),
-      `;TZID=${input.timezone}`,
+      scheduleStamp(first, input.timezone),
+      scheduleParams(input.timezone),
     ),
     property("DURATION", isoDuration(input.durationMinutes)),
     property("RRULE", `FREQ=WEEKLY;BYDAY=${weekdays.join(",")}${until}`),
@@ -206,21 +263,22 @@ function ruleLines(input: InvitationInput, first: Date): string[] {
  * first is never repeated, because a client that reads it twice has two
  * sessions where there is one. Both are stated as local wall clocks in the
  * product's zone rather than as instants, so a DST transition inside the run
- * moves nothing.
+ * moves nothing — except in UTC, where there is no transition to survive and
+ * the absolute form is the honest one.
  */
 function listLines(input: InvitationInput, occurrences: readonly Date[]): string[] {
-  const params = `;TZID=${input.timezone}`;
+  const params = scheduleParams(input.timezone);
   const lines = [
     property(
       "DTSTART",
-      formatZonedTimestamp(occurrences[0], input.timezone),
+      scheduleStamp(occurrences[0], input.timezone),
       params,
     ),
     property("DURATION", isoDuration(input.durationMinutes)),
   ];
   const rest = occurrences
     .slice(1)
-    .map((instant) => formatZonedTimestamp(instant, input.timezone));
+    .map((instant) => scheduleStamp(instant, input.timezone));
   if (rest.length > 0) lines.push(property("RDATE", rest.join(","), params));
   return lines;
 }
@@ -247,14 +305,26 @@ const METHOD_NAMES: Record<InvitationMethod, string> = {
   cancel: "CANCEL",
 };
 
-function alarmLines(minutes: number, description: string): string[] {
-  return [
+/**
+ * The alarms, in the order they were asked for.
+ *
+ * **Order is the whole of what this list carries.** A calendar that keeps every
+ * alarm shows them all and the order is invisible; Exchange keeps exactly one
+ * per item and keeps the first, so on a Microsoft mailbox the first entry is
+ * the only reminder the reader ever gets. Writing them in the order they arrive
+ * is what lets a caller decide which one that is.
+ *
+ * Repeats are dropped rather than emitted twice: two alarms at the same offset
+ * are one reminder on every client that keeps them and a duplicate on none.
+ */
+function alarmLines(minutes: readonly number[], description: string): string[] {
+  return [...new Set(minutes)].flatMap((offset) => [
     "BEGIN:VALARM",
     "ACTION:DISPLAY",
-    property("TRIGGER", `-PT${minutes}M`),
+    property("TRIGGER", `-PT${offset}M`),
     property("DESCRIPTION", escapeText(description)),
     "END:VALARM",
-  ];
+  ]);
 }
 
 function eventLines(input: InvitationInput, schedule: readonly string[]): string[] {
@@ -308,11 +378,12 @@ function eventLines(input: InvitationInput, schedule: readonly string[]): string
   }
 
   lines.push(`STATUS:${cancelled ? "CANCELLED" : "CONFIRMED"}`);
-  lines.push("TRANSP:TRANSPARENT");
+  // Whether the entry blocks the reader's own time. A child's session normally
+  // does not, which is why the tool offers `free` first — but it is the
+  // caller's answer, not this module's.
+  lines.push(`TRANSP:${input.showAs === "busy" ? "OPAQUE" : "TRANSPARENT"}`);
 
-  if (input.reminderMinutes !== null) {
-    lines.push(...alarmLines(input.reminderMinutes, input.summary));
-  }
+  lines.push(...alarmLines(input.reminderMinutes, input.summary));
 
   lines.push("END:VEVENT");
   return lines;
@@ -324,11 +395,13 @@ function eventLines(input: InvitationInput, schedule: readonly string[]): string
  * The `METHOD` is at the calendar level rather than on the event, which is what
  * makes the document an iTIP message rather than a calendar that happens to
  * contain one. Both shapes state their times as a wall clock in the product's
- * own zone, so the document always names a `TZID` and always owes the reader
- * either the transition rules for it or the note saying why it has none.
+ * own zone, so a zoned document names a `TZID` and owes the reader either the
+ * transition rules for it or the note saying why it has none. UTC is the
+ * exception at both ends: its times are absolute instants, so there is no zone
+ * named and nothing to describe.
  */
 export function buildInvitation(input: InvitationInput): InvitationResult {
-  const occurrences = occurrencesOf(input);
+  const { occurrences, cutAtHorizon } = occurrencesOf(input);
   if (occurrences.length === 0) return { ok: false, reason: "no-occurrences" };
 
   const schedule =
@@ -353,5 +426,9 @@ export function buildInvitation(input: InvitationInput): InvitationResult {
     // last line of the document is not an exception.
     ics: `${lines.join(CRLF)}${CRLF}`,
     occurrenceCount: occurrences.length,
+    // Only a list can fall short: a rule states the run whole, with or without
+    // a last day, so a walk cut at the horizon changes nothing about what it
+    // says.
+    truncated: input.shape === "list" && cutAtHorizon,
   };
 }

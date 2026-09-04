@@ -2,7 +2,12 @@ import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/locales";
 import { formatDateOnly, formatDateRange, formatTimeRange } from "@/lib/utils";
-import { buildInvitation, type InvitationMethod, type InvitationShape } from "@/lib/calendar-invitations/invitation";
+import {
+  buildInvitation,
+  type InvitationMethod,
+  type InvitationShape,
+  type InvitationShowAs,
+} from "@/lib/calendar-invitations/invitation";
 import { wrapInLayout } from "./layout";
 import { escapeHtml, heading, paragraph, styledName, styledProductName } from "./utils";
 import { ctaButton, factTable, sectionLabel } from "./blocks";
@@ -29,19 +34,54 @@ import type { EmailTranslator } from "./translator";
  * published entry asks nothing, and a cancellation withdraws what was stated
  * before. The subject and the heading move with the method, because an inbox
  * list is where a cancellation has to be recognisable as one.
+ *
+ * **It is also the one mail that owes a plain-text body.** An Exchange mailbox
+ * fills the calendar entry's own notes from the message body and, with only
+ * HTML to work from, flattens the markup into them — so the text here is the
+ * mail's words rather than a stripped copy of its markup, and it is what a
+ * Microsoft reader finds inside the entry weeks later.
+ *
+ * **One resolution per render.** The identifier is minted where the schedule is
+ * turned into a document, and the mail, the file and the copy the admin reads
+ * back all state the one that resolution produced.
  */
 
 export const CALENDAR_INVITATION_METHODS = ["request", "publish", "cancel"] as const;
 export const CALENDAR_INVITATION_SHAPES = ["rule", "list"] as const;
+
+/**
+ * The kinds of product a family recognises, which is a display axis rather than
+ * the database's own list: the schema's two club types are one word to a parent
+ * reading a mail, so they are folded into "club" here and the enum is not the
+ * source. Deriving this from codegen would put a column name in a fact row.
+ */
 export const CALENDAR_INVITATION_PRODUCT_TYPES = ["club", "camp", "event"] as const;
-export const CALENDAR_INVITATION_REMINDERS = ["none", "15", "60", "1440"] as const;
+
+/**
+ * The reminder offsets the form offers, in the order it lists them — an
+ * untouched select posts its first option, so the order is the default.
+ */
+export const CALENDAR_INVITATION_REMINDERS = ["15", "60", "1440", "none"] as const;
+
+/**
+ * The same offsets, ordered for the second reminder, which defaults to a day
+ * ahead. Two fields rather than one because a mail carries two alarms and their
+ * *order* decides what a Microsoft mailbox shows: Exchange keeps one alarm per
+ * item and keeps the first.
+ */
+export const CALENDAR_INVITATION_SECOND_REMINDERS = ["1440", "15", "60", "none"] as const;
+
+/** Whether the entry blocks the reader's own time. Free is the default. */
+export const CALENDAR_INVITATION_SHOW_AS = ["free", "busy"] as const;
 
 /**
  * The zones a schedule can be authored in, for the tool.
  *
  * Helsinki first because it is where every product we run is authored and the
- * one zone the writer ships transition rules for; the other three are here so
- * the note a document states about a zone it cannot describe can be seen.
+ * one zone the writer ships transition rules for. Stockholm and Paris are here
+ * so the note a document states about a zone it cannot describe can be seen,
+ * and UTC so the third case can: a document whose times are absolute instants,
+ * naming no zone and needing none described.
  */
 export const CALENDAR_INVITATION_TIMEZONES = [
   "Europe/Helsinki",
@@ -131,7 +171,10 @@ export interface CalendarInvitationParams {
   description: string | null;
   geduFirstName: string;
   spokenLanguage: string;
-  reminder: (typeof CALENDAR_INVITATION_REMINDERS)[number];
+  /** The alarm the reader should get if their calendar keeps only one. */
+  reminderFirst: (typeof CALENDAR_INVITATION_REMINDERS)[number];
+  reminderSecond: (typeof CALENDAR_INVITATION_REMINDERS)[number];
+  showAs: InvitationShowAs;
   method: InvitationMethod;
   shape: InvitationShape;
   /** `null` mints a fresh one at render — a thread's second message types the first one's. */
@@ -141,7 +184,7 @@ export interface CalendarInvitationParams {
 }
 
 /** The params with every locale-aware value already formatted. */
-interface CalendarInvitationContent extends CalendarInvitationParams {
+export interface CalendarInvitationContent extends CalendarInvitationParams {
   weekdayNumbers: number[];
   /** "Monday, Wednesday and Friday at 16:00 – 18:00 GMT+3", in the reader's locale. */
   scheduleLine: string;
@@ -149,10 +192,22 @@ interface CalendarInvitationContent extends CalendarInvitationParams {
   languageName: string;
   typeName: string;
   minutes: number;
-  reminderMinutes: number | null;
+  /** The alarm offsets, in the order the document emits them. */
+  reminderMinutes: number[];
   sequenceNumber: number;
   resolvedUid: string;
+  /** The calendar document itself, composed once per render. */
+  ics: string;
+  /** Whether the document stops at the twelve-week horizon rather than at the run's end. */
+  truncated: boolean;
 }
+
+/**
+ * Everything resolved except the document itself — what the calendar's own
+ * summary and description are composed from, and therefore what has to exist
+ * before it can be built.
+ */
+type CalendarInvitationFacts = Omit<CalendarInvitationContent, "ics" | "truncated">;
 
 /**
  * Weekday names in the reader's locale, from a UTC-pinned reference week.
@@ -193,6 +248,20 @@ export function resolveCalendarInvitation(
   t: EmailTranslator,
   locale: string,
 ): CalendarInvitationContent {
+  const facts = resolveFacts(params, t, locale);
+  const built = composeInvitation(t, facts);
+  return { ...facts, ics: built.ics, truncated: built.truncated };
+}
+
+/**
+ * The locale-aware half of a resolution: every value formatted once, here,
+ * rather than twice in two places that can drift.
+ */
+function resolveFacts(
+  params: CalendarInvitationParams,
+  t: EmailTranslator,
+  locale: string,
+): CalendarInvitationFacts {
   const weekdayNumbers = CALENDAR_INVITATION_WEEKDAYS[params.weekdays];
   const minutes = Number(params.durationMinutes);
 
@@ -221,7 +290,11 @@ export function resolveCalendarInvitation(
         : formatDateRange(params.startDate, params.endDate, locale),
     languageName: languageNameOf(params.spokenLanguage, locale),
     typeName: t(`calendarInvitation.type.${params.productType}`),
-    reminderMinutes: params.reminder === "none" ? null : Number(params.reminder),
+    // Order is the field, not a set: Exchange keeps the first alarm and drops
+    // the rest, so the one that matters is written first.
+    reminderMinutes: [params.reminderFirst, params.reminderSecond]
+      .filter((value) => value !== "none")
+      .map(Number),
     sequenceNumber: Number(params.sequence),
     // A fresh identity when the tester has not named one. Minted at render
     // rather than in the form's resolver, so a second message about the *same*
@@ -233,7 +306,7 @@ export function resolveCalendarInvitation(
 /** The label–value rows both the mail and the calendar description state. */
 function facts(
   t: EmailTranslator,
-  content: CalendarInvitationContent,
+  content: CalendarInvitationFacts,
 ): [label: string, value: string][] {
   return [
     [t("calendarInvitation.typeLabel"), content.typeName],
@@ -251,14 +324,34 @@ function facts(
 }
 
 /**
+ * Which sentence the mail opens with.
+ *
+ * The request and the published entry both claim to hold every session still
+ * ahead, and an explicit date list stopping at the twelve-week horizon does
+ * not — so those two have a second wording that says how far the entry reaches
+ * instead. The cancellation has neither: it says an entry is going away, which
+ * is true whatever the notation covered, and giving it a horizon variant would
+ * be two identical strings in five locales.
+ */
+type CalendarInvitationBodyKey =
+  | `calendarInvitation.body.${InvitationMethod}`
+  | `calendarInvitation.bodyHorizon.${"request" | "publish"}`;
+
+function bodyKey(content: CalendarInvitationContent): CalendarInvitationBodyKey {
+  if (content.method === "cancel") return "calendarInvitation.body.cancel";
+  return content.truncated
+    ? `calendarInvitation.bodyHorizon.${content.method}`
+    : `calendarInvitation.body.${content.method}`;
+}
+
+/**
  * The mail itself.
  *
  * The fact rows are the part a reader can act on without the attachment: a
  * client that renders the `.ics` as a file rather than as an invitation still
  * leaves them knowing which sessions, when, and where. The cancellation drops
  * everything that would read as an instruction — the description, how to get
- * there, the promise of future updates — and keeps only enough to say which
- * entry is going away.
+ * there — and keeps only enough to say which entry is going away.
  */
 export function buildCalendarInvitationEmail(
   t: EmailTranslator,
@@ -272,7 +365,7 @@ export function buildCalendarInvitationEmail(
     heading(title),
     paragraph(t("calendarInvitation.greeting", { name: escapeHtml(content.parentFirstName) })),
     paragraph(
-      t(`calendarInvitation.body.${content.method}`, {
+      t(bodyKey(content), {
         gamerName: styledName(content.gamerFirstName),
         productName: styledProductName(content.productName),
       }),
@@ -288,7 +381,6 @@ export function buildCalendarInvitationEmail(
         paragraph(escapeHtml(content.arrivalInstructions)),
       );
     }
-    body.push(paragraph(t("calendarInvitation.updatesNote")));
   }
 
   body.push(
@@ -299,6 +391,58 @@ export function buildCalendarInvitationEmail(
   );
 
   return wrapInLayout({ title, content: body.join("\n"), locale, t });
+}
+
+/**
+ * The same mail as plain text.
+ *
+ * **This is not a courtesy fallback — on a Microsoft mailbox it is the calendar
+ * entry's notes.** Exchange fills the entry from the message body, and when the
+ * only body is HTML it flattens that instead: the reader opens the session in
+ * their calendar and finds the mail's markup rendered as text, tracking pixel
+ * and all. So the text is written as the mail's own words rather than as a
+ * stripped copy of the markup — the greeting, the sentence that says what this
+ * is, the facts, how to get there, the link as a bare URL, and where to write
+ * with a question.
+ */
+export function calendarInvitationText(
+  t: EmailTranslator,
+  content: CalendarInvitationContent,
+): string {
+  const lines = [
+    t("calendarInvitation.greeting", { name: content.parentFirstName }),
+    "",
+    t(bodyKey(content), {
+      gamerName: content.gamerFirstName,
+      productName: content.productName,
+    }),
+    "",
+    ...facts(t, content).map(([label, value]) => `${label}: ${value}`),
+  ];
+
+  if (content.method !== "cancel") {
+    if (content.description !== null) lines.push("", content.description);
+    if (content.arrivalInstructions !== null) {
+      lines.push(
+        "",
+        `${t("calendarInvitation.arrivalLabel")}: ${content.arrivalInstructions}`,
+      );
+    }
+  }
+
+  lines.push(
+    "",
+    // The button, as the only thing a text part can make of one: its label and
+    // the address behind it. A client linkifies the bare URL on its own.
+    `${t("calendarInvitation.dashboardButton")}: ${content.dashboardUrl}`,
+    "",
+    t("calendarInvitation.support", { email: SUPPORT_EMAIL }),
+    "",
+    // The shell's own closing line, which is where the HTML mail signs off.
+    t("footer", { year: String(new Date().getFullYear()) }),
+  );
+
+  return lines.join("\n");
 }
 
 /** The subject line, which has to say which of the three messages this is. */
@@ -315,7 +459,7 @@ export function calendarInvitationSubject(
 /** The plain-text description a calendar client shows inside the entry. */
 function calendarDescription(
   t: EmailTranslator,
-  content: CalendarInvitationContent,
+  content: CalendarInvitationFacts,
 ): string {
   const lines = facts(t, content).map(([label, value]) => `${label}: ${value}`);
   if (content.description !== null) lines.push("", content.description);
@@ -329,7 +473,7 @@ function calendarDescription(
 /** The same content as HTML, for the clients that read `X-ALT-DESC`. */
 function calendarHtmlDescription(
   t: EmailTranslator,
-  content: CalendarInvitationContent,
+  content: CalendarInvitationFacts,
 ): string {
   const rows = facts(t, content)
     .map(([label, value]) => `<li><strong>${escapeHtml(label)}</strong>: ${escapeHtml(value)}</li>`)
@@ -354,23 +498,25 @@ function calendarHtmlDescription(
 }
 
 /**
- * The `invite.ics` the mail carries.
+ * The calendar document, composed once per render.
  *
- * **The file name is load-bearing.** The provider infers the media type from
- * the extension, and `invite.ics` is what makes a client read the part as an
- * invitation rather than as a file to download — which is the difference
- * between an entry that can be updated in place and a copy nothing can find
- * again.
+ * **Once is the point.** The identifier is minted here when the form names
+ * none, and every part of the render that carries it — the file the reader
+ * gets, the copy the admin reads back — has to carry the *same* one, or there
+ * is no way to send an update against what was sent. So the document is built
+ * inside the resolution rather than beside it, and everything downstream reads
+ * the string it produced.
  *
- * A run with nothing left in it throws rather than sending an empty calendar: a
- * document describing no sessions still opens a conversation the reader's
+ * A run with nothing left in it throws rather than composing an empty calendar:
+ * a document describing no sessions still opens a conversation the reader's
  * calendar has no entry for. The message is written to be read by the admin
- * composing it, because the testing tool shows a render error verbatim.
+ * composing it — the testing tool shows a render error verbatim, and the send
+ * route answers with it.
  */
-export function calendarInvitationAttachment(
+function composeInvitation(
   t: EmailTranslator,
-  content: CalendarInvitationContent,
-): RenderedAttachment {
+  content: CalendarInvitationFacts,
+): { ics: string; truncated: boolean } {
   const built = buildInvitation({
     uid: content.resolvedUid,
     sequence: content.sequenceNumber,
@@ -397,6 +543,7 @@ export function calendarInvitationAttachment(
       content.method === "publish"
         ? null
         : { name: content.parentFirstName, email: content.parentEmail },
+    showAs: content.showAs,
     reminderMinutes: content.reminderMinutes,
     now: new Date(),
   });
@@ -407,5 +554,20 @@ export function calendarInvitationAttachment(
     );
   }
 
-  return textAttachment("invite.ics", built.ics);
+  return { ics: built.ics, truncated: built.truncated };
+}
+
+/**
+ * The `invite.ics` the mail carries.
+ *
+ * **The file name is load-bearing.** The provider infers the media type from
+ * the extension, and `invite.ics` is what makes a client read the part as an
+ * invitation rather than as a file to download — which is the difference
+ * between an entry that can be updated in place and a copy nothing can find
+ * again.
+ */
+export function calendarInvitationAttachment(
+  content: CalendarInvitationContent,
+): RenderedAttachment {
+  return textAttachment("invite.ics", content.ics);
 }

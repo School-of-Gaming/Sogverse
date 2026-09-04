@@ -1064,7 +1064,8 @@
         "desktop": "Desktop",
         "mobile": "Mobile"
       },
-      "attachment": "Attachment: {name}"
+      "attachment": "Attachment: {name}",
+      "sentAttachment": "What was sent: {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -3397,6 +3398,10 @@
         "publish": "The calendar entry attached to this mail holds every upcoming session of {productName} for {gamerName}. Add it and they all appear in your own calendar.",
         "cancel": "{gamerName} no longer has a place in {productName}. The cancellation attached to this mail removes the entry from your calendar."
       },
+      "bodyHorizon": {
+        "request": "The calendar invitation attached to this mail holds the sessions of {productName} for {gamerName} for the next twelve weeks. Accept it and they all appear in your own calendar.",
+        "publish": "The calendar entry attached to this mail holds the sessions of {productName} for {gamerName} for the next twelve weeks. Add it and they all appear in your own calendar."
+      },
       "schedule": "{days} at {time}",
       "openEnded": "From {startDate}, until further notice",
       "typeLabel": "What",
@@ -3411,7 +3416,6 @@
         "event": "Event"
       },
       "arrivalLabel": "Getting there",
-      "updatesNote": "If the schedule changes, School of Gaming sends an update and this same entry changes in your calendar. You never end up with two entries and the job of working out which one is current.",
       "dashboardButton": "View in My SOG",
       "support": "Questions? Write to {email}",
       "eventSummary": "{productName} – {gamerName}"

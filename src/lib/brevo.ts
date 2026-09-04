@@ -48,6 +48,15 @@ interface SendEmailOptions {
   toEmail: string | string[];
   subject: string;
   htmlContent: string;
+  /**
+   * The same mail as plain text, for the mails that state one.
+   *
+   * Not a courtesy fallback: a mail carrying a calendar part is read by
+   * Exchange as the source of the calendar entry's *notes*, and with no text
+   * part it flattens the HTML into them — markup, tracking pixel and all. See
+   * `src/lib/email-templates/CLAUDE.md`.
+   */
+  textContent?: string;
   replyToEmail?: string;
   cc?: string[];
   bcc?: string[];
@@ -68,6 +77,7 @@ export async function sendTransactionalEmail(options: SendEmailOptions): Promise
       ),
       subject: options.subject,
       htmlContent: options.htmlContent,
+      ...(options.textContent && { textContent: options.textContent }),
       ...(options.replyToEmail && { replyTo: { email: options.replyToEmail } }),
       ...(options.cc?.length && { cc: options.cc.map((email) => ({ email })) }),
       ...(options.bcc?.length && { bcc: options.bcc.map((email) => ({ email })) }),

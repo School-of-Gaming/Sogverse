@@ -1064,7 +1064,8 @@
         "desktop": "Työpöytä",
         "mobile": "Mobiili"
       },
-      "attachment": "Liite: {name}"
+      "attachment": "Liite: {name}",
+      "sentAttachment": "Mitä lähetettiin: {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -2711,6 +2712,10 @@
         "publish": "Tämän viestin liitteenä oleva kalenterimerkintä sisältää kaikki tulevat kerrat: {productName}, osallistujana {gamerName}. Kun lisäät merkinnän, kerrat ilmestyvät omaan kalenteriisi.",
         "cancel": "{gamerName} ei ole enää mukana: {productName}. Tämän viestin liitteenä oleva peruutus poistaa merkinnän kalenteristasi."
       },
+      "bodyHorizon": {
+        "request": "Tämän viestin liitteenä oleva kalenterikutsu sisältää seuraavan kahdentoista viikon kerrat: {productName}, osallistujana {gamerName}. Kun hyväksyt kutsun, kerrat ilmestyvät omaan kalenteriisi.",
+        "publish": "Tämän viestin liitteenä oleva kalenterimerkintä sisältää seuraavan kahdentoista viikon kerrat: {productName}, osallistujana {gamerName}. Kun lisäät merkinnän, kerrat ilmestyvät omaan kalenteriisi."
+      },
       "schedule": "{days} klo {time}",
       "openEnded": "Alkaen {startDate}, toistaiseksi",
       "typeLabel": "Mikä",
@@ -2725,7 +2730,6 @@
         "event": "Tapahtuma"
       },
       "arrivalLabel": "Saapuminen",
-      "updatesNote": "Jos aikataulu muuttuu, School of Gaming lähettää päivityksen, ja sama merkintä muuttuu kalenterissasi. Kalenteriin ei koskaan jää kahta merkintää, joista sinun pitäisi päätellä, kumpi on voimassa.",
       "dashboardButton": "Avaa Oma SOG",
       "support": "Kysyttävää? Kirjoita osoitteeseen {email}",
       "eventSummary": "{productName} – {gamerName}"

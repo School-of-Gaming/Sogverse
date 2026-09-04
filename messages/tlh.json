@@ -1112,7 +1112,8 @@
         "desktop": "De’wI’ tIn",
         "mobile": "De’wI’ mach"
       },
-      "attachment": "chelta’ghach: {name}"
+      "attachment": "chelta’ghach: {name}",
+      "sentAttachment": "ngeHta’: {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -2755,6 +2756,10 @@
         "publish": "QInvamDaq tu’lu’ ghItlh: Hoch poHmey veb {productName}, {gamerName} je. yIchel ’ej poHlIjDaq chomey.",
         "cancel": "{productName}Daq quS ghajbe’ {gamerName}. QInvamDaq tu’lu’ qIlmeH ghItlh: poHlIjvo’ teq ghItlhvam."
       },
+      "bodyHorizon": {
+        "request": "QInvamDaq tu’lu’ ri’: wa’maH cha’ hogh veb poHmey {productName}, {gamerName} je. yIlaj ’ej poHlIjDaq chomey.",
+        "publish": "QInvamDaq tu’lu’ ghItlh: wa’maH cha’ hogh veb poHmey {productName}, {gamerName} je. yIchel ’ej poHlIjDaq chomey."
+      },
       "schedule": "{days} {time}",
       "openEnded": "{startDate}vo’ – reH",
       "typeLabel": "nuq",
@@ -2769,7 +2774,6 @@
         "event": "wanI’"
       },
       "arrivalLabel": "pawmeH",
-      "updatesNote": "poHmey choHlu’chugh, chu’ QIn ngeH School of Gaming, ’ej choH ghItlhvam. cha’ ghItlh vIHutlh — wa’ neH.",
       "dashboardButton": "My SOG-Daq yIlegh",
       "support": "yu’lI’? {email}Daq yIghItlh",
       "eventSummary": "{productName} – {gamerName}"

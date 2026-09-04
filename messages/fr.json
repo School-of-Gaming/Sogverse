@@ -1064,7 +1064,8 @@
         "desktop": "Ordinateur",
         "mobile": "Mobile"
       },
-      "attachment": "Pièce jointe : {name}"
+      "attachment": "Pièce jointe : {name}",
+      "sentAttachment": "Ce qui a été envoyé : {name}"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -2711,6 +2712,10 @@
         "publish": "L’événement joint à cet e-mail contient toutes les prochaines sessions de {productName} pour {gamerName}. Ajoutez-le et elles apparaissent toutes dans votre propre agenda.",
         "cancel": "{gamerName} n’a plus de place dans {productName}. L’annulation jointe à cet e-mail retire l’événement de votre agenda."
       },
+      "bodyHorizon": {
+        "request": "L’invitation jointe à cet e-mail contient les sessions de {productName} pour {gamerName} des douze prochaines semaines. Acceptez-la et elles apparaissent toutes dans votre propre agenda.",
+        "publish": "L’événement joint à cet e-mail contient les sessions de {productName} pour {gamerName} des douze prochaines semaines. Ajoutez-le et elles apparaissent toutes dans votre propre agenda."
+      },
       "schedule": "{days} à {time}",
       "openEnded": "À partir du {startDate}, jusqu’à nouvel ordre",
       "typeLabel": "Quoi",
@@ -2725,7 +2730,6 @@
         "event": "Événement"
       },
       "arrivalLabel": "Pour venir",
-      "updatesNote": "Si l’horaire change, School of Gaming envoie une mise à jour et ce même événement change dans votre agenda. Vous ne vous retrouvez jamais avec deux événements et la charge de deviner lequel fait foi.",
       "dashboardButton": "Ouvrir dans Mon SOG",
       "support": "Une question ? Écrivez à {email}",
       "eventSummary": "{productName} – {gamerName}"
