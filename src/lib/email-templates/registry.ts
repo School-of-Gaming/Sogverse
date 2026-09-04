@@ -442,9 +442,12 @@ function resolveProductConfirmationOptions(
       productName: params.productName,
       productType: params.productType,
       productTopic: params.topic,
-      // A product's short description is NOT NULL on the row, so there is no
-      // absence to express here and the field states no token.
-      shortDescription: params.shortDescription.trim() || null,
+      // The column is NOT NULL, but the product writers coalesce a missing
+      // description to an empty string, so a product with nothing to say here
+      // is an ordinary stored state — and the composer skips the paragraph for
+      // it. The token is what lets a test send reach that state, since an empty
+      // text input posts its placeholder.
+      shortDescription: noneOrText(params.shortDescription),
       timezone: params.timezone,
       startDate: optionalDate(params.startDate, "Start date"),
       // The three fields with a real "none" state, and all three are text
@@ -686,10 +689,14 @@ function resolveSeatOffer(params: Record<string, string>): TemplateParams {
   return { ...rest, isSelfSeat: seat === "self" };
 }
 
-/** An untouched text field posts its placeholder, so "none" has to be typed. */
+/**
+ * An untouched text field posts its placeholder, so the no-schedule variant is
+ * reached by typing the token — the same rule the confirmation's fields follow;
+ * see `FORM_NONE_TOKEN`.
+ */
 function resolveSeatOfferStaff(params: Record<string, string>): TemplateParams {
   const { productSchedule, ...rest } = params;
-  return { ...rest, productSchedule: productSchedule.trim() || null };
+  return { ...rest, productSchedule: noneOrText(productSchedule) };
 }
 
 const SEAT_OFFER_STAFF_REASON_LABELS: Record<
@@ -1350,10 +1357,8 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         options: PRODUCT_TOPIC_OPTIONS,
       },
       {
-        // No token here: a product's short description is NOT NULL on the row,
-        // so a product without one is not a state this mail can be in.
         key: "shortDescription",
-        label: "Invite – The product's short description",
+        label: `Invite – The product's short description (\`${FORM_NONE_TOKEN}\` for a product left without one)`,
         placeholder: "Build, explore and survive together in a private world.",
       },
       {
@@ -1442,7 +1447,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       {
         key: "productSchedule",
-        label: "Schedule line (empty for none)",
+        label: `Schedule line (\`${FORM_NONE_TOKEN}\` for none)`,
         placeholder: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
       },
       {

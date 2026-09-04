@@ -141,6 +141,11 @@ export function textareaLines(value: string): string[] {
  *
  * The same list, whichever control it is typed into: a text input has no
  * newline to offer, so a list that has to survive one takes a comma as well.
+ *
+ * **Only for a list whose entries can never contain a comma** — a weekday, a
+ * clock face and a duration, say. An address ("Viides linja 11, 00530
+ * Helsinki") or any free text would be split in the middle, silently; a field
+ * like that is not a list and does not come through here.
  */
 export function listEntries(value: string): string[] {
   return value
