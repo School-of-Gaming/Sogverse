@@ -2738,45 +2738,6 @@
         "heading": "quS nob poH rInpu’",
         "body": "jangbe’lu’ ’ej rInpu’ poH. loS tetlhDaq ratlh qorDu’ ’ej latlh nob wIngeHlaH, ’ach DaH poStaH quS."
       }
-    },
-    "calendarInvitation": {
-      "greeting": "nuqneH {name}!",
-      "subject": {
-        "request": "poH ri’: {productName} – {gamerName}",
-        "publish": "poH ghItlh: {productName} – {gamerName}",
-        "cancel": "qIlpu’: {productName} – {gamerName}"
-      },
-      "heading": {
-        "request": "poHlIj ri’",
-        "publish": "poHlIj ghItlh",
-        "cancel": "qIlpu’ poH ghItlhvam"
-      },
-      "body": {
-        "request": "QInvamDaq tu’lu’ ri’: Hoch poHmey veb {productName}, {gamerName} je. yIlaj ’ej poHlIjDaq chomey.",
-        "publish": "QInvamDaq tu’lu’ ghItlh: Hoch poHmey veb {productName}, {gamerName} je. yIchel ’ej poHlIjDaq chomey.",
-        "cancel": "{productName}Daq quS ghajbe’ {gamerName}. QInvamDaq tu’lu’ qIlmeH ghItlh: poHlIjvo’ teq ghItlhvam."
-      },
-      "bodyHorizon": {
-        "request": "QInvamDaq tu’lu’ ri’: wa’maH cha’ hogh veb poHmey {productName}, {gamerName} je. yIlaj ’ej poHlIjDaq chomey.",
-        "publish": "QInvamDaq tu’lu’ ghItlh: wa’maH cha’ hogh veb poHmey {productName}, {gamerName} je. yIchel ’ej poHlIjDaq chomey."
-      },
-      "schedule": "{days} {time}",
-      "openEnded": "{startDate}vo’ – reH",
-      "typeLabel": "nuq",
-      "scheduleLabel": "poHmey",
-      "datesLabel": "jajmey",
-      "whereLabel": "nuqDaq",
-      "languageLabel": "Hol",
-      "online": "QonoSDaq",
-      "type": {
-        "club": "ghom",
-        "camp": "raQ",
-        "event": "wanI’"
-      },
-      "arrivalLabel": "pawmeH",
-      "dashboardButton": "My SOG-Daq yIlegh",
-      "support": "yu’lI’? {email}Daq yIghItlh",
-      "eventSummary": "{productName} – {gamerName}"
     }
   },
   "roblox": {

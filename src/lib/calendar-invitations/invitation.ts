@@ -1,12 +1,10 @@
-import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
-import { SENDER_NAME } from "@/lib/constants";
+import { fromZonedTime } from "date-fns-tz";
 import {
   CRLF,
   ICS_PRODID,
   escapeText,
   foldLine,
   formatUtcTimestamp,
-  formatZonedTimestamp,
   isUtcZone,
   paramValue,
   property,
@@ -14,60 +12,141 @@ import {
 } from "./ics-primitives";
 
 /**
- * One seat's whole schedule as a single calendar object.
+ * One calendar object, with a knob for every property worth exploring.
  *
- * **One seat is one calendar object, and that is decided.** A message carries a
- * single `VEVENT` under a single `UID`, and that object states the product's
- * entire schedule — a camp on Monday, Wednesday and Friday for four weeks is
- * twelve sessions in one invitation, accepted in one gesture and withdrawn in
- * one. RFC 5546 gives an iTIP message one calendar object to describe, and a
- * client handed several reads the first and ignores the rest.
+ * **This is an explorer of the format, not a description of a product.** The
+ * question it exists to answer is what Google Calendar, Apple Calendar and
+ * Outlook actually *do* with each property — which ones they render, which they
+ * ignore, which they quietly rewrite — and the only way to find out is to send
+ * one invitation that differs from the last one in exactly one place. So the
+ * input mirrors RFC 5545 and RFC 5546 rather than mirroring a seat: nothing
+ * here knows what a club is, and nothing here composes a sentence.
  *
- * **The two shapes are two notations for that one object**, not two ways of
- * splitting it up — which is what makes a shape safe to change between an
- * invitation and its update: the `UID` does not move, so the client applies the
- * new notation in place.
+ * **A property is a knob only if all three of those clients honour it.** The
+ * three are the whole audience, and a field one of them drops on the floor
+ * teaches nothing but its own absence — worse, it makes a send ambiguous,
+ * because a difference that fails to appear could be the client or could be the
+ * property never having been supported. `X-ALT-DESC`, `GEO`, `CATEGORIES`,
+ * `PRIORITY`, `CLASS`, `X-MICROSOFT-CDO-BUSYSTATUS`, the RFC 7986 additions
+ * (`CONFERENCE`, `COLOR`, `IMAGE`, `ATTACH`) and the explicit `RDATE` list were
+ * all written here and all removed for exactly that reason. Adding one back is
+ * a decision about the audience, not a tidy-up.
  *
- * **This module is pure.** It takes a plain description of a schedule and
- * returns a string; it reads no database, no request and no environment, and
- * the only thing it imports from the app is the brand name it files the entry
- * under. Everything a real send has to remember — the identifier, the revision
- * number, who it went to — is the caller's, because none of it can be derived
- * from a schedule.
+ * **One UID, and every `VEVENT` in the document is under it.** An iTIP message
+ * describes a single calendar object, and a client handed *several objects*
+ * reads the first and ignores the rest — so the identifier never varies, and it
+ * is used verbatim, which is what lets a later message land on the entry an
+ * earlier one created. What may vary is how many components state that one
+ * object: the master event, plus one per overridden occurrence, each carrying a
+ * `RECURRENCE-ID` naming the occurrence it replaces. That is RFC 5545's own
+ * shape for "this one is different", not a second object.
+ *
+ * **Every field either emits its property or omits it, and nothing else.** A
+ * blank value is an absence rather than an empty property, because "what does
+ * this client do when the property is missing" is half of what is being
+ * explored. No field is derived from another, no default is invented here, and
+ * no value is composed — the caller resolves the strings a form gave it and
+ * hands over a plain object.
+ *
+ * **The module is pure.** It reads no database, no request and no environment;
+ * `now` is an argument, because a `DTSTAMP` read off the wall clock is the one
+ * input that would make every test true only on the day it was written.
  */
 
-/** RFC 5545 `BYDAY` codes, indexed by the schema's 0=Monday weekday. */
+/** RFC 5545 `BYDAY` codes, indexed by `0` = Monday. */
 const BYDAY = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"] as const;
 
-/**
- * How far ahead an explicit date list reaches.
- *
- * The list has to stop somewhere — an open-ended club has no last session to
- * enumerate — and twelve weeks is a term. It is measured from the run's first
- * remaining day rather than from today, so a camp six months out still lists
- * its own sessions rather than coming back empty.
- */
-const LIST_HORIZON_DAYS = 84;
+const DAY_MS = 86_400_000;
 
 export type InvitationMethod = "request" | "publish" | "cancel";
-export type InvitationShape = "rule" | "list";
+export type InvitationStatus = "confirmed" | "tentative" | "cancelled";
 
 /**
- * Whether the entry blocks the reader's own time.
+ * How a time of day is written down.
  *
- * A parent's calendar holding their child's club is a note about where the
- * child is, not a commitment the parent has made — so the default the tool
- * offers is the transparent one. It is an option rather than a constant
- * because a seat the parent holds themselves is the case where the opposite
- * is right, and because a client honours it: an iPhone reading a Microsoft 365
- * mailbox showed "Show as: Free" on an entry that asked for it (2026-09-04).
+ * A wall clock under a `TZID` promises a clock face and survives a daylight
+ * saving transition; a `…Z` instant promises a moment and does not. Which of
+ * the two a client honours — and what it shows a reader in another zone — is
+ * one of the things worth watching, so it is a knob rather than a consequence.
  */
+export type InvitationTimeForm = "tzid" | "utc";
+
+/** Whether the entry blocks the reader's own time (`TRANSP`). */
 export type InvitationShowAs = "free" | "busy";
+
+export type InvitationRole = "REQ-PARTICIPANT" | "OPT-PARTICIPANT" | "NON-PARTICIPANT";
+export type InvitationPartstat = "NEEDS-ACTION" | "ACCEPTED" | "TENTATIVE" | "DECLINED";
+export type InvitationAlarmAction = "display" | "email" | "audio";
+/** Whether an alarm counts back from the start of the event or from its end. */
+export type InvitationAlarmAnchor = "start" | "end";
 
 export interface InvitationParty {
   name: string;
   email: string;
 }
+
+export interface InvitationAttendee extends InvitationParty {
+  role: InvitationRole;
+  partstat: InvitationPartstat;
+  /** Whether the message asks for an answer. */
+  rsvp: boolean;
+}
+
+export interface InvitationAlarm {
+  /** Minutes before the anchor. `0` fires on it. */
+  minutesBefore: number;
+  action: InvitationAlarmAction;
+  anchor: InvitationAlarmAnchor;
+}
+
+/** A wall clock in the document's own zone: `YYYY-MM-DD` and `HH:MM`. */
+export interface InvitationDateTime {
+  date: string;
+  time: string;
+}
+
+/**
+ * One occurrence of the rule that happens at a different time from the rest.
+ *
+ * **This is what a mixed-time product needs, and what a single moved session
+ * needs, and they are the same mechanism.** A club that runs Monday at 16:00
+ * and Wednesday at 14:00 cannot be one `RRULE` — a rule states one clock face —
+ * and neither can a term whose one week moved an hour later. RFC 5545 answers
+ * both the same way: the rule states the ordinary case, and each exception is
+ * its own `VEVENT` under the same `UID`, naming the occurrence it replaces with
+ * a `RECURRENCE-ID`.
+ */
+export interface InvitationOverride {
+  /** `YYYY-MM-DD`, the day of the occurrence being replaced. */
+  date: string;
+  /** `HH:MM`, the clock face it happens at instead. */
+  time: string;
+  /** The duration it runs for instead, or `null` to keep the master's. */
+  durationMinutes: number | null;
+}
+
+/**
+ * The two shapes a calendar object's schedule can take.
+ *
+ * `none` is a single occurrence and is the baseline every other setting is
+ * compared against. `weekly` is the compact notation, and it is the only
+ * recurrence here: an explicit `RDATE` list was the third shape and was dropped
+ * because Outlook handles it poorly, which makes every send that used it
+ * ambiguous between a client's fault and the notation's.
+ */
+export type InvitationRecurrence =
+  | { kind: "none" }
+  | {
+      kind: "weekly";
+      /** `0` = Monday … `6` = Sunday. Written in RFC order, deduplicated. */
+      weekdays: number[];
+      /** `INTERVAL`, in weeks. */
+      interval: number;
+      /** `YYYY-MM-DD`, or `null` for a rule with no last day. */
+      until: string | null;
+      /** `COUNT`. Wins over `until` when both are given, as RFC 5545 forbids both. */
+      count: number | null;
+    };
 
 export interface InvitationInput {
   /** The object's identity, used verbatim — this is what makes an update land in place. */
@@ -75,37 +154,45 @@ export interface InvitationInput {
   /** The revision number. A later message about the same object states a higher one. */
   sequence: number;
   method: InvitationMethod;
-  shape: InvitationShape;
-  /** Weekdays the product runs on, `0` = Monday … `6` = Sunday, as `schedule_slots` numbers them. */
-  weekdays: number[];
-  /** `YYYY-MM-DD`, the run's first day, read as a date in `timezone`. */
-  startDate: string;
-  /** `YYYY-MM-DD`, the run's last day, or `null` for an open-ended run. */
-  endDate: string | null;
-  /** `HH:MM`, the wall clock every session starts at, in `timezone`. */
-  startTime: string;
-  durationMinutes: number;
-  /** The IANA zone the schedule is authored in — a weekly slot promises a clock face, not an instant. */
+  status: InvitationStatus;
+
+  /** The IANA zone the wall clocks below are read in. */
   timezone: string;
-  summary: string;
-  description: string;
-  /** The same content as HTML, for the clients that render `X-ALT-DESC`. */
-  htmlDescription?: string;
-  location: string | null;
-  url: string | null;
-  organizer: InvitationParty;
-  /** `null` for a published entry, which asks nobody for an answer. */
-  attendee: InvitationParty | null;
-  showAs: InvitationShowAs;
+  timeForm: InvitationTimeForm;
+  /** A DATE-valued event: no clock face, no zone, `DTEND` on the following day. */
+  allDay: boolean;
+  start: InvitationDateTime;
+  /** Ignored for an all-day event, which states a `DTEND` instead of a duration. */
+  durationMinutes: number;
+  recurrence: InvitationRecurrence;
+  /** `YYYY-MM-DD` per entry; each becomes an `EXDATE` at the start time. */
+  excludedDates: string[];
   /**
-   * Reminder offsets in minutes before a session, **in the order they are
-   * emitted** — which is the whole of why this is a list rather than a set.
-   * Exchange keeps only one alarm per item and keeps the first, so the reminder
-   * that matters most is the one written first. Repeats are dropped, because
-   * two identical alarms are one alarm on every client and a duplicate on none.
+   * Occurrences that happen at another time, each an extra `VEVENT` under the
+   * same `UID`. Only the weekly rule has occurrences to override, so this is
+   * ignored for a single event.
    */
-  reminderMinutes: number[];
-  /** The instant the message is being composed at: `DTSTAMP`, and the past/future cut. */
+  overrides: InvitationOverride[];
+
+  organizer: InvitationParty;
+  /** `null` states no `ATTENDEE` at all — which is what a `PUBLISH` normally does. */
+  attendee: InvitationAttendee | null;
+
+  summary: string;
+  /** Blank omits `DESCRIPTION`. */
+  description: string;
+  /** Blank omits the property. */
+  location: string;
+  /** Blank omits `URL`. */
+  url: string;
+
+  alarms: InvitationAlarm[];
+  /** Who an `ACTION:EMAIL` alarm is addressed to. An email alarm without one is invalid. */
+  alarmEmail: string;
+
+  showAs: InvitationShowAs;
+
+  /** The instant the message is composed at: `DTSTAMP`. */
   now: Date;
 }
 
@@ -113,23 +200,23 @@ export type InvitationResult =
   | {
       ok: true;
       ics: string;
-      occurrenceCount: number;
       /**
-       * Whether the document stops short of the run it describes. Only an
-       * explicit date list can: it stops at the horizon below, so an
-       * open-ended run — or one ending past the horizon — is stated only as
-       * far as the enumeration reaches. A rule states the run whole, with or
-       * without a last day, so it is never truncated.
+       * How many occurrences the document states, or `null` where it states an
+       * unbounded run — a weekly rule with neither `UNTIL` nor `COUNT` covers a
+       * number no document can name.
        */
-      truncated: boolean;
+      occurrenceCount: number | null;
     }
   /**
-   * A run with nothing left in it. A refusal rather than an empty document,
-   * because an empty `VCALENDAR` says nothing to a client and sending one would
-   * still open a conversation the recipient's calendar has no entry for — and
-   * because the caller is the one that knows what to say about it.
+   * An object with nothing in it. A refusal rather than an empty document,
+   * because a calendar describing no occurrence says nothing to a client and
+   * sending one would still open a conversation the recipient's calendar has no
+   * entry for — and because the caller is the one that knows what to say about
+   * it.
    */
   | { ok: false; reason: "no-occurrences" };
+
+// --- Dates, UTC-pinned throughout ---
 
 /** A `YYYY-MM-DD` string as a UTC-pinned day. */
 function parseDay(value: string): number {
@@ -150,47 +237,57 @@ function weekdayOf(utcDay: number): number {
   return (new Date(utcDay).getUTCDay() + 6) % 7;
 }
 
+/** The Monday of the week a day falls in, UTC-pinned. */
+function weekStartOf(utcDay: number): number {
+  return utcDay - weekdayOf(utcDay) * DAY_MS;
+}
+
+/** `YYYYMMDD` — the compact DATE form. */
+function compactDate(date: string): string {
+  return date.replace(/-/g, "");
+}
+
+/** `YYYYMMDDTHHMMSS` — the compact local DATE-TIME form, written as typed. */
+function compactDateTime({ date, time }: InvitationDateTime): string {
+  return `${compactDate(date)}T${time.replace(":", "")}00`;
+}
+
+/** A wall clock in a zone as an absolute instant. */
+function instantOf({ date, time }: InvitationDateTime, zone: string): Date {
+  return fromZonedTime(`${date}T${time}:00`, zone);
+}
+
+// --- How a time is written ---
+
 /**
- * Every session still ahead of `now`, soonest first, within the list horizon.
+ * Whether times are written as absolute instants.
  *
- * **The day walk is UTC-pinned and the conversion is the last step**, which is
- * the only shape that survives a DST transition inside a run: stepping a zoned
- * wall clock by 24 hours repeats or skips a calendar date once a year, and UTC
- * has no transitions for the arithmetic to fall into. Each day that lands on one
- * of the product's weekdays is turned into an instant by reading its wall clock
- * in the product's own zone, which is what the schedule actually promises.
- *
- * Both shapes walk this same list. A rule is not a different set of sessions,
- * it is a shorter way of writing this one — so only one expansion has to be
- * right, and the two notations cannot disagree about what the object covers.
+ * The caller's answer, except in UTC, where it is the only answer: a zone with
+ * no transitions has no clock face to promise, and `TZID=UTC` beside a `…Z`
+ * timestamp is redundant on a forgiving reader and contradictory on a strict
+ * one.
  */
-function occurrencesOf(input: InvitationInput): {
-  occurrences: Date[];
-  /** Whether the walk stopped at the horizon rather than at the run's own end. */
-  cutAtHorizon: boolean;
-} {
-  const weekdays = new Set(input.weekdays);
-  if (weekdays.size === 0) return { occurrences: [], cutAtHorizon: false };
+function writesInstants(input: InvitationInput): boolean {
+  return !input.allDay && (input.timeForm === "utc" || isUtcZone(input.timezone));
+}
 
-  const today = parseDay(formatInTimeZone(input.now, input.timezone, "yyyy-MM-dd"));
-  const first = Math.max(parseDay(input.startDate), today);
-  const horizon = first + LIST_HORIZON_DAYS * 86_400_000;
-  const cutAtHorizon =
-    input.endDate === null || parseDay(input.endDate) > horizon;
-  const last =
-    input.endDate === null ? horizon : Math.min(parseDay(input.endDate), horizon);
+/** Whether any property in the document references the zone by name. */
+function writesTzid(input: InvitationInput): boolean {
+  return !input.allDay && !writesInstants(input);
+}
 
-  const found: Date[] = [];
-  for (let day = first; day <= last; day += 86_400_000) {
-    if (!weekdays.has(weekdayOf(day))) continue;
-    const instant = fromZonedTime(
-      `${dayString(day)}T${input.startTime}:00`,
-      input.timezone,
-    );
-    if (instant.getTime() < input.now.getTime()) continue;
-    found.push(instant);
-  }
-  return { occurrences: found, cutAtHorizon };
+/** The parameters that qualify every schedule timestamp in the document. */
+function timeParams(input: InvitationInput): string {
+  if (input.allDay) return ";VALUE=DATE";
+  return writesInstants(input) ? "" : `;TZID=${input.timezone}`;
+}
+
+/** One schedule timestamp, in whichever of the three forms the document uses. */
+function timeValue(input: InvitationInput, when: InvitationDateTime): string {
+  if (input.allDay) return compactDate(when.date);
+  return writesInstants(input)
+    ? formatUtcTimestamp(instantOf(when, input.timezone))
+    : compactDateTime(when);
 }
 
 /**
@@ -204,84 +301,125 @@ function isoDuration(minutes: number): string {
   return `PT${minutes}M`;
 }
 
-/**
- * A schedule timestamp and the parameters that qualify it.
- *
- * A weekly slot promises a clock face, so a zoned schedule states a local wall
- * clock under a `TZID`. UTC is the one zone with no clock face to promise — it
- * has no transitions for a wall clock to survive — so it is written in the
- * absolute `…Z` form, which names no zone and needs none described.
- */
-function scheduleStamp(instant: Date, zone: string): string {
-  return isUtcZone(zone)
-    ? formatUtcTimestamp(instant)
-    : formatZonedTimestamp(instant, zone);
-}
-
-function scheduleParams(zone: string): string {
-  return isUtcZone(zone) ? "" : `;TZID=${zone}`;
-}
+// --- The schedule ---
 
 /**
- * The schedule as a weekly rule.
+ * `UNTIL`, in the form the value type forces.
  *
- * `BYDAY` names every weekday the product runs on, in RFC order, and `DTSTART`
- * is the first session still ahead — which may be mid-week, in which case the
- * rule's own first week is clipped by `DTSTART` exactly as RFC 5545 requires.
- * `UNTIL` is absent for an open-ended run: that is the one thing this shape can
- * say and an explicit list cannot, since a list stops at whatever horizon we
- * happened to enumerate. When there is an end date, `UNTIL` is the end of that
- * last *product-local* day expressed as an instant, because the run ends when
- * the day ends where the product is, not where the reader is.
+ * RFC 5545 §3.3.10 is strict about this and clients are strict with it: a
+ * DATE-valued `DTSTART` takes a DATE `UNTIL`, and a local `DTSTART` under a
+ * `TZID` takes a UTC one — never a local time. The instant is the end of the
+ * last day *in the document's own zone*, because a run ends when that day ends
+ * where the event is.
  */
-function ruleLines(input: InvitationInput, first: Date): string[] {
-  const weekdays = [...new Set(input.weekdays)]
+function untilValue(input: InvitationInput, until: string): string {
+  if (input.allDay) return compactDate(until);
+  return formatUtcTimestamp(
+    fromZonedTime(`${until}T23:59:59`, isUtcZone(input.timezone) ? "UTC" : input.timezone),
+  );
+}
+
+/** The `RRULE` value for a weekly rule. */
+function weeklyRule(
+  input: InvitationInput,
+  recurrence: Extract<InvitationRecurrence, { kind: "weekly" }>,
+): string {
+  const weekdays = [...new Set(recurrence.weekdays)]
     .sort((a, b) => a - b)
     .map((weekday) => BYDAY[weekday]);
-  const until =
-    input.endDate === null
-      ? ""
-      : `;UNTIL=${formatUtcTimestamp(
-          fromZonedTime(`${input.endDate}T23:59:59`, input.timezone),
-        )}`;
-
-  return [
-    property(
-      "DTSTART",
-      scheduleStamp(first, input.timezone),
-      scheduleParams(input.timezone),
-    ),
-    property("DURATION", isoDuration(input.durationMinutes)),
-    property("RRULE", `FREQ=WEEKLY;BYDAY=${weekdays.join(",")}${until}`),
-  ];
+  const parts = [`FREQ=WEEKLY`, `BYDAY=${weekdays.join(",")}`];
+  if (recurrence.interval !== 1) parts.push(`INTERVAL=${recurrence.interval}`);
+  // RFC 5545 forbids stating both, so one has to win, and the count is the more
+  // specific of the two — a reader who typed a number of occurrences meant that
+  // number, whatever date they left in the other field.
+  if (recurrence.count !== null) parts.push(`COUNT=${recurrence.count}`);
+  else if (recurrence.until !== null) parts.push(`UNTIL=${untilValue(input, recurrence.until)}`);
+  return parts.join(";");
 }
 
 /**
- * The schedule as an explicit list of dates.
+ * The lines that state when the object happens.
  *
- * `DTSTART` is the first session and every *later* one is an `RDATE` — the
- * first is never repeated, because a client that reads it twice has two
- * sessions where there is one. Both are stated as local wall clocks in the
- * product's zone rather than as instants, so a DST transition inside the run
- * moves nothing — except in UTC, where there is no transition to survive and
- * the absolute form is the honest one.
+ * `DTSTART` is exactly what the caller typed — never the next occurrence still
+ * ahead, because an explorer that quietly moved the date would be answering a
+ * question nobody asked. A timed event states a `DURATION`; an all-day event
+ * states a `DTEND` on the following day, which is what a DATE-valued end means.
  */
-function listLines(input: InvitationInput, occurrences: readonly Date[]): string[] {
-  const params = scheduleParams(input.timezone);
-  const lines = [
-    property(
-      "DTSTART",
-      scheduleStamp(occurrences[0], input.timezone),
-      params,
-    ),
-    property("DURATION", isoDuration(input.durationMinutes)),
-  ];
-  const rest = occurrences
-    .slice(1)
-    .map((instant) => scheduleStamp(instant, input.timezone));
-  if (rest.length > 0) lines.push(property("RDATE", rest.join(","), params));
+function scheduleLines(input: InvitationInput): string[] {
+  const params = timeParams(input);
+  const lines = [property("DTSTART", timeValue(input, input.start), params)];
+
+  if (input.allDay) {
+    lines.push(
+      property("DTEND", compactDate(dayString(parseDay(input.start.date) + DAY_MS)), params),
+    );
+  } else {
+    lines.push(property("DURATION", isoDuration(input.durationMinutes)));
+  }
+
+  if (input.recurrence.kind === "weekly") {
+    lines.push(property("RRULE", weeklyRule(input, input.recurrence)));
+  }
+
+  if (input.excludedDates.length > 0) {
+    lines.push(
+      property(
+        "EXDATE",
+        input.excludedDates
+          .map((date) => timeValue(input, { date, time: input.start.time }))
+          .join(","),
+        params,
+      ),
+    );
+  }
+
   return lines;
 }
+
+/**
+ * How many occurrences the document states.
+ *
+ * **`DTSTART` is an occurrence in its own right** — RFC 5545 makes it the first
+ * instance whether or not it satisfies the rule beside it — so it is counted
+ * once, and removed again only by an `EXDATE` that names its day.
+ *
+ * `null` where no number exists: a weekly rule with no `UNTIL` and no `COUNT`
+ * runs forever, which is the one thing that shape can say and an enumeration
+ * cannot. A `COUNT` is reported as given, because that is precisely what it
+ * asks the client for. Zero is what the caller refuses on.
+ */
+function occurrenceCountOf(input: InvitationInput): number | null {
+  const excluded = new Set(input.excludedDates);
+  const startCounts = excluded.has(input.start.date) ? 0 : 1;
+
+  if (input.recurrence.kind === "none") return startCounts;
+
+  const { weekdays, interval, until, count } = input.recurrence;
+  if (count !== null) return count;
+  if (until === null) return null;
+
+  const weekdaySet = new Set(weekdays);
+  const first = parseDay(input.start.date);
+  const last = parseDay(until);
+  const firstWeek = weekStartOf(first);
+  let found = 0;
+  // The day walk is UTC-pinned, which is the only shape that survives a
+  // daylight-saving transition inside the run: stepping a zoned wall clock by
+  // 24 hours repeats or skips a calendar date once a year, and UTC has no
+  // transitions for the arithmetic to fall into.
+  for (let day = first; day <= last; day += DAY_MS) {
+    if (!weekdaySet.has(weekdayOf(day))) continue;
+    if (((weekStartOf(day) - firstWeek) / (7 * DAY_MS)) % interval !== 0) continue;
+    if (excluded.has(dayString(day))) continue;
+    found += 1;
+  }
+  // The walk starts at `DTSTART`'s own day, so a start that satisfies the rule
+  // is already in the total; one that does not is the instance RFC 5545 adds on
+  // top of the rule, and it is added here for the same reason.
+  return weekdaySet.has(weekdayOf(first)) ? found : found + startCounts;
+}
+
+// --- The people ---
 
 /**
  * `ORGANIZER` / `ATTENDEE` — a property whose value is a URI and whose
@@ -305,87 +443,151 @@ const METHOD_NAMES: Record<InvitationMethod, string> = {
   cancel: "CANCEL",
 };
 
+// --- The alarms ---
+
+const ALARM_ACTIONS: Record<InvitationAlarmAction, string> = {
+  display: "DISPLAY",
+  email: "EMAIL",
+  audio: "AUDIO",
+};
+
 /**
- * The alarms, in the order they were asked for.
+ * The alarms, in the order they were asked for, each with the parts its own
+ * action requires.
  *
- * **Order is the whole of what this list carries.** A calendar that keeps every
- * alarm shows them all and the order is invisible; Exchange keeps exactly one
- * per item and keeps the first, so on a Microsoft mailbox the first entry is
- * the only reminder the reader ever gets. Writing them in the order they arrive
- * is what lets a caller decide which one that is.
+ * **Order is a real property here.** A calendar that keeps every alarm shows
+ * them all and the order is invisible; an Exchange mailbox keeps exactly one
+ * per item and keeps the first, so on a Microsoft reader the first entry is the
+ * only reminder anybody gets.
  *
- * Repeats are dropped rather than emitted twice: two alarms at the same offset
- * are one reminder on every client that keeps them and a duplicate on none.
+ * **The one place a client's disagreement is the subject rather than a
+ * disqualification.** Every other knob here is a property all three clients
+ * honour; the alarms are kept in full precisely because the three do *not*
+ * agree — Apple keeps what the organiser sent, Google replaces it with the
+ * reader's own defaults, Exchange keeps one — and watching that happen is the
+ * point.
+ *
+ * Each action needs different lines and a client will reject an alarm missing
+ * them: a display alarm needs text to show, an email alarm needs a subject and
+ * somebody to send it to, and an audio alarm needs neither.
  */
-function alarmLines(minutes: readonly number[], description: string): string[] {
-  return [...new Set(minutes)].flatMap((offset) => [
-    "BEGIN:VALARM",
-    "ACTION:DISPLAY",
-    property("TRIGGER", `-PT${offset}M`),
-    property("DESCRIPTION", escapeText(description)),
-    "END:VALARM",
-  ]);
+function alarmLines(input: InvitationInput): string[] {
+  return input.alarms.flatMap((alarm) => {
+    const trigger = property(
+      "TRIGGER",
+      `-PT${alarm.minutesBefore}M`,
+      alarm.anchor === "end" ? ";RELATED=END" : "",
+    );
+    const lines = ["BEGIN:VALARM", `ACTION:${ALARM_ACTIONS[alarm.action]}`, trigger];
+    if (alarm.action !== "audio") {
+      lines.push(property("DESCRIPTION", escapeText(input.summary)));
+    }
+    if (alarm.action === "email") {
+      lines.push(
+        property("SUMMARY", escapeText(input.summary)),
+        foldLine(`ATTENDEE:mailto:${input.alarmEmail}`),
+      );
+    }
+    lines.push("END:VALARM");
+    return lines;
+  });
 }
 
-function eventLines(input: InvitationInput, schedule: readonly string[]): string[] {
-  const cancelled = input.method === "cancel";
+// --- The event ---
+
+/** A property emitted only when its value is not blank. */
+function optional(name: string, value: string, params = ""): string[] {
+  return value.trim() === "" ? [] : [property(name, value, params)];
+}
+
+/**
+ * Everything a `VEVENT` states that is not its schedule.
+ *
+ * Shared by the master and by every override, and that sharing is the design
+ * rather than a saving: an overridden occurrence differs from the rest in *when
+ * it happens*, and a client comparing the two components should find one
+ * difference. A summary or an attendee that drifted between them would be a
+ * second difference nobody asked for, and it would show up as an occurrence
+ * that mysteriously lost its RSVP.
+ */
+function eventContentLines(input: InvitationInput): string[] {
   const lines: string[] = [
+    property("SUMMARY", escapeText(input.summary)),
+    ...optional("DESCRIPTION", escapeText(input.description)),
+    ...optional("LOCATION", escapeText(input.location)),
+    // A URI, not TEXT: RFC 5545 §3.3.13 does not escape it, and escaping would
+    // corrupt the query string of any link that carries one.
+    ...optional("URL", input.url),
+  ];
+
+  // RFC 5546 wants an organizer on every method, a `PUBLISH` included — it says
+  // who the entry came from. The `ATTENDEE` is what carries RSVP semantics, and
+  // whether one is written at all is the caller's answer.
+  lines.push(calendarUser("ORGANIZER", input.organizer));
+  if (input.attendee !== null) {
+    const params = [
+      `;ROLE=${input.attendee.role}`,
+      `;PARTSTAT=${input.attendee.partstat}`,
+      `;RSVP=${input.attendee.rsvp ? "TRUE" : "FALSE"}`,
+    ].join("");
+    lines.push(calendarUser("ATTENDEE", input.attendee, params));
+  }
+
+  lines.push(`STATUS:${input.status.toUpperCase()}`);
+  lines.push(`TRANSP:${input.showAs === "busy" ? "OPAQUE" : "TRANSPARENT"}`);
+  lines.push(...alarmLines(input));
+  return lines;
+}
+
+/** One `VEVENT`: the identity every component shares, then its own schedule. */
+function eventLines(input: InvitationInput, schedule: readonly string[]): string[] {
+  return [
     "BEGIN:VEVENT",
     property("UID", input.uid),
     property("DTSTAMP", formatUtcTimestamp(input.now)),
     `SEQUENCE:${input.sequence}`,
     ...schedule,
-    property("SUMMARY", escapeText(input.summary)),
-    property("DESCRIPTION", escapeText(input.description)),
+    ...eventContentLines(input),
+    "END:VEVENT",
   ];
+}
 
-  if (input.htmlDescription !== undefined) {
+/**
+ * An overridden occurrence's schedule: which one it replaces, and when it
+ * happens instead.
+ *
+ * `RECURRENCE-ID` names the occurrence **as the rule would have produced it** —
+ * that day at the rule's own clock face — because that is the only value a
+ * client can match against what it already holds. Writing the *new* time there
+ * is the classic way to get an override that silently creates a second entry
+ * beside the one it was meant to replace.
+ */
+function overrideScheduleLines(
+  input: InvitationInput,
+  override: InvitationOverride,
+): string[] {
+  const params = timeParams(input);
+  const lines = [
+    property(
+      "RECURRENCE-ID",
+      timeValue(input, { date: override.date, time: input.start.time }),
+      params,
+    ),
+    property("DTSTART", timeValue(input, { date: override.date, time: override.time }), params),
+  ];
+  if (input.allDay) {
+    // A DATE-valued document has no clock face for an override to move, so the
+    // component restates the same day and differs from the master in nothing
+    // but being an exception. It is written rather than refused because what a
+    // client does with that is itself worth seeing.
     lines.push(
-      property(
-        "X-ALT-DESC",
-        escapeText(input.htmlDescription),
-        ";FMTTYPE=text/html",
-      ),
+      property("DTEND", compactDate(dayString(parseDay(override.date) + DAY_MS)), params),
+    );
+  } else {
+    lines.push(
+      property("DURATION", isoDuration(override.durationMinutes ?? input.durationMinutes)),
     );
   }
-  if (input.location !== null) {
-    lines.push(property("LOCATION", escapeText(input.location)));
-  }
-  // A URI, not TEXT: RFC 5545 §3.3.13 does not escape it, and escaping would
-  // corrupt the query string of any link that carries one.
-  if (input.url !== null) lines.push(property("URL", input.url));
-  lines.push(property("CATEGORIES", escapeText(SENDER_NAME)));
-
-  // Every method names an organizer — RFC 5546 requires one of a `PUBLISH` too,
-  // and it is the wrong property to drop anyway, since it says who the entry
-  // came from. The `ATTENDEE` is what carries RSVP semantics, so a published
-  // entry leaves it off entirely: an object a reader adds to their calendar
-  // with nobody asking them to answer.
-  lines.push(calendarUser("ORGANIZER", input.organizer));
-  if (input.attendee !== null) {
-    // A withdrawal names the attendee whose invitation is being retracted — a
-    // `CANCEL` with nobody on it is not addressed to anyone — but it does not
-    // ask for an answer, so the RSVP parameters belong to the request alone.
-    lines.push(
-      calendarUser(
-        "ATTENDEE",
-        input.attendee,
-        cancelled
-          ? ";ROLE=REQ-PARTICIPANT"
-          : ";ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE",
-      ),
-    );
-  }
-
-  lines.push(`STATUS:${cancelled ? "CANCELLED" : "CONFIRMED"}`);
-  // Whether the entry blocks the reader's own time. A child's session normally
-  // does not, which is why the tool offers `free` first — but it is the
-  // caller's answer, not this module's.
-  lines.push(`TRANSP:${input.showAs === "busy" ? "OPAQUE" : "TRANSPARENT"}`);
-
-  lines.push(...alarmLines(input.reminderMinutes, input.summary));
-
-  lines.push("END:VEVENT");
   return lines;
 }
 
@@ -394,20 +596,28 @@ function eventLines(input: InvitationInput, schedule: readonly string[]): string
  *
  * The `METHOD` is at the calendar level rather than on the event, which is what
  * makes the document an iTIP message rather than a calendar that happens to
- * contain one. Both shapes state their times as a wall clock in the product's
- * own zone, so a zoned document names a `TZID` and owes the reader either the
- * transition rules for it or the note saying why it has none. UTC is the
- * exception at both ends: its times are absolute instants, so there is no zone
- * named and nothing to describe.
+ * contain one. The zone block is emitted only when some property actually
+ * references the zone by name: an all-day document states DATE values that
+ * carry no zone, and an instant-form document names none either, so in both
+ * cases a `VTIMEZONE` would describe a reference nothing makes.
+ *
+ * The master component comes first and the overrides follow it, which is the
+ * order RFC 5545 expects and the order a client applies them in — an exception
+ * read before the rule it excepts has nothing to attach itself to.
  */
 export function buildInvitation(input: InvitationInput): InvitationResult {
-  const { occurrences, cutAtHorizon } = occurrencesOf(input);
-  if (occurrences.length === 0) return { ok: false, reason: "no-occurrences" };
+  const occurrenceCount = occurrenceCountOf(input);
+  if (occurrenceCount === 0) return { ok: false, reason: "no-occurrences" };
 
-  const schedule =
-    input.shape === "rule"
-      ? ruleLines(input, occurrences[0])
-      : listLines(input, occurrences);
+  // Only a rule has occurrences for an exception to name. A single event that
+  // arrived with overrides has nothing to override, so they are dropped rather
+  // than written as components a client cannot match to anything.
+  const overrides =
+    input.recurrence.kind === "weekly"
+      ? input.overrides.map((override) =>
+          eventLines(input, overrideScheduleLines(input, override)),
+        )
+      : [];
 
   const lines = [
     "BEGIN:VCALENDAR",
@@ -415,8 +625,9 @@ export function buildInvitation(input: InvitationInput): InvitationResult {
     property("PRODID", ICS_PRODID),
     "CALSCALE:GREGORIAN",
     property("METHOD", METHOD_NAMES[input.method]),
-    ...zoneBlock(input.timezone),
-    ...eventLines(input, schedule),
+    ...(writesTzid(input) ? zoneBlock(input.timezone) : []),
+    ...eventLines(input, scheduleLines(input)),
+    ...overrides.flat(),
     "END:VCALENDAR",
   ];
 
@@ -425,10 +636,6 @@ export function buildInvitation(input: InvitationInput): InvitationResult {
     // A trailing CRLF as well: a content line is terminated by one, and the
     // last line of the document is not an exception.
     ics: `${lines.join(CRLF)}${CRLF}`,
-    occurrenceCount: occurrences.length,
-    // Only a list can fall short: a rule states the run whole, with or without
-    // a last day, so a walk cut at the horizon changes nothing about what it
-    // says.
-    truncated: input.shape === "list" && cutAtHorizon,
+    occurrenceCount,
   };
 }

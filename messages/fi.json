@@ -2694,45 +2694,6 @@
         "heading": "Paikkatarjous vanheni",
         "body": "Vastausaika päättyi ilman vastausta. Perhe on edelleen jonotuslistalla ja paikkaa voi tarjota heille uudelleen, mutta paikka itsessään on nyt vapaa."
       }
-    },
-    "calendarInvitation": {
-      "greeting": "Hei {name},",
-      "subject": {
-        "request": "Kalenterikutsu: {productName} – {gamerName}",
-        "publish": "Kalenterimerkintä: {productName} – {gamerName}",
-        "cancel": "Peruttu: {productName} – {gamerName}"
-      },
-      "heading": {
-        "request": "Kalenterikutsusi",
-        "publish": "Kalenterimerkintäsi",
-        "cancel": "Tämä kalenterimerkintä on peruttu"
-      },
-      "body": {
-        "request": "Tämän viestin liitteenä oleva kalenterikutsu sisältää kaikki tulevat kerrat: {productName}, osallistujana {gamerName}. Kun hyväksyt kutsun, kerrat ilmestyvät omaan kalenteriisi.",
-        "publish": "Tämän viestin liitteenä oleva kalenterimerkintä sisältää kaikki tulevat kerrat: {productName}, osallistujana {gamerName}. Kun lisäät merkinnän, kerrat ilmestyvät omaan kalenteriisi.",
-        "cancel": "{gamerName} ei ole enää mukana: {productName}. Tämän viestin liitteenä oleva peruutus poistaa merkinnän kalenteristasi."
-      },
-      "bodyHorizon": {
-        "request": "Tämän viestin liitteenä oleva kalenterikutsu sisältää seuraavan kahdentoista viikon kerrat: {productName}, osallistujana {gamerName}. Kun hyväksyt kutsun, kerrat ilmestyvät omaan kalenteriisi.",
-        "publish": "Tämän viestin liitteenä oleva kalenterimerkintä sisältää seuraavan kahdentoista viikon kerrat: {productName}, osallistujana {gamerName}. Kun lisäät merkinnän, kerrat ilmestyvät omaan kalenteriisi."
-      },
-      "schedule": "{days} klo {time}",
-      "openEnded": "Alkaen {startDate}, toistaiseksi",
-      "typeLabel": "Mikä",
-      "scheduleLabel": "Aikataulu",
-      "datesLabel": "Ajankohta",
-      "whereLabel": "Missä",
-      "languageLabel": "Kieli",
-      "online": "Verkossa",
-      "type": {
-        "club": "Kerho",
-        "camp": "Leiri",
-        "event": "Tapahtuma"
-      },
-      "arrivalLabel": "Saapuminen",
-      "dashboardButton": "Avaa Oma SOG",
-      "support": "Kysyttävää? Kirjoita osoitteeseen {email}",
-      "eventSummary": "{productName} – {gamerName}"
     }
   },
   "legal": {

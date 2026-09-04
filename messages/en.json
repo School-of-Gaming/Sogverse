@@ -3380,45 +3380,6 @@
         "heading": "A seat offer ran out",
         "body": "The response window closed with no answer. The family is still on the waitlist and can be offered the seat again, but the seat itself is free right now."
       }
-    },
-    "calendarInvitation": {
-      "greeting": "Hi {name},",
-      "subject": {
-        "request": "Calendar invitation: {productName} for {gamerName}",
-        "publish": "Calendar entry: {productName} for {gamerName}",
-        "cancel": "Cancelled: {productName} for {gamerName}"
-      },
-      "heading": {
-        "request": "Your calendar invitation",
-        "publish": "Your calendar entry",
-        "cancel": "This calendar entry has been cancelled"
-      },
-      "body": {
-        "request": "The calendar invitation attached to this mail holds every upcoming session of {productName} for {gamerName}. Accept it and they all appear in your own calendar.",
-        "publish": "The calendar entry attached to this mail holds every upcoming session of {productName} for {gamerName}. Add it and they all appear in your own calendar.",
-        "cancel": "{gamerName} no longer has a place in {productName}. The cancellation attached to this mail removes the entry from your calendar."
-      },
-      "bodyHorizon": {
-        "request": "The calendar invitation attached to this mail holds the sessions of {productName} for {gamerName} for the next twelve weeks. Accept it and they all appear in your own calendar.",
-        "publish": "The calendar entry attached to this mail holds the sessions of {productName} for {gamerName} for the next twelve weeks. Add it and they all appear in your own calendar."
-      },
-      "schedule": "{days} at {time}",
-      "openEnded": "From {startDate}, until further notice",
-      "typeLabel": "What",
-      "scheduleLabel": "Schedule",
-      "datesLabel": "Dates",
-      "whereLabel": "Where",
-      "languageLabel": "Language",
-      "online": "Online",
-      "type": {
-        "club": "Club",
-        "camp": "Camp",
-        "event": "Event"
-      },
-      "arrivalLabel": "Getting there",
-      "dashboardButton": "View in My SOG",
-      "support": "Questions? Write to {email}",
-      "eventSummary": "{productName} – {gamerName}"
     }
   },
   "legal": {

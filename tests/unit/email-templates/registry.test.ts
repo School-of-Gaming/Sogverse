@@ -6,8 +6,8 @@ import { bulletList } from "@/lib/email-templates/blocks";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import {
+  CALENDAR_EXPLORER_BODY,
   CALENDAR_INVITATION_START_DATE,
-  CALENDAR_INVITATION_END_DATE,
 } from "@/lib/email-templates/calendar-invitation";
 
 let t: EmailTranslator;
@@ -17,39 +17,53 @@ beforeAll(async () => {
 });
 
 /**
- * The calendar invitation's params.
- *
- * Its dates come from the template's own form placeholders rather than from
- * literals, and that is load-bearing: the builder refuses a run with nothing
- * left ahead of it, so a hardcoded date turns into a suite that fails on a day
- * nobody chose. The placeholders are the next Monday and four weeks after it,
- * which is exactly the property a fixture needs.
+ * The calendar explorer's baseline params — every field at the value its
+ * untouched form control posts, which is what makes it a *baseline*: this is
+ * the document the first send of a session carries, and everything after it is
+ * this fixture with one key overridden.
  */
 const CALENDAR_INVITATION_FIXTURE = {
-  parentFirstName: "Sanna",
-  parentEmail: "sanna@example.com",
-  gamerFirstName: "Aino",
-  productName: "Minecraft building camp",
-  productType: "camp",
-  weekdays: "mon-wed-fri",
+  subject: "Calendar invite explorer",
+  body: "",
+  uid: "",
+  sequence: "0",
+  method: "request",
+  status: "confirmed",
+  timezone: "Europe/Helsinki",
   startDate: CALENDAR_INVITATION_START_DATE,
-  endDate: CALENDAR_INVITATION_END_DATE,
   startTime: "16:00",
   durationMinutes: "120",
-  timezone: "Europe/Helsinki",
-  address: "Kaisaniemenkatu 6, 00100 Helsinki",
-  arrivalInstructions: "Ring the bell marked School of Gaming and take the stairs.",
-  description: "Aino is building a harbour town, and the last session is the walk-through.",
-  geduFirstName: "Ville",
-  spokenLanguage: "fi",
-  reminderFirst: "15",
-  reminderSecond: "1440",
+  timeForm: "tzid",
+  allDay: "no",
+  recurrence: "none",
+  weekdays: "mon",
+  until: "",
+  count: "",
+  interval: "1",
+  excludedDates: "",
+  overrides: "",
+  organizerName: "School of Gaming",
+  organizerEmail: "sogverse@sog.gg",
+  attendeeName: "Attendee",
+  attendeeEmail: "attendee@example.com",
+  rsvp: "yes",
+  attendeeRole: "REQ-PARTICIPANT",
+  partstat: "NEEDS-ACTION",
+  includeAttendee: "yes",
+  summary: "Calendar invite explorer",
+  description: "",
+  location: "Helsinki, Finland",
+  url: "",
+  alert1Offset: "15",
+  alert1Action: "display",
+  alert1RelativeTo: "start",
+  alert2Offset: "1440",
+  alert2Action: "display",
+  alert2RelativeTo: "start",
+  alert3Offset: "none",
+  alert3Action: "display",
+  alert3RelativeTo: "start",
   showAs: "free",
-  method: "request",
-  shape: "rule",
-  uid: null,
-  sequence: "0",
-  dashboardUrl: "https://sogverse.sog.gg/parent",
 } satisfies Record<string, string | boolean | null>;
 
 /**
@@ -499,13 +513,13 @@ describe("templateRegistry sessionReport", () => {
  * The one template that carries a file, and the half of it a unit test can
  * settle.
  *
- * What no test can settle is the thing the template exists for — whether a
- * client reads the part as an invitation and applies an update in place — so
- * what is pinned here is everything the mail states *about* which of the three
- * messages it is, plus the fact that the file is there at all. A mail whose
- * subject says "invitation" over a document carrying `METHOD:CANCEL` is two
- * wrong answers in the one line a reader meets first, and each half looks fine
- * on its own.
+ * What no test can settle is the thing the template exists for — what a client
+ * *does* with each property — so what is pinned here is the boundary between
+ * the form and the document: that the form's untouched values compose a
+ * baseline invitation, that the file travels as `invite.ics` in both the form
+ * a send takes and the form a preview shows, that one render mints one
+ * identifier, and that a mistyped field earns a sentence naming it rather than
+ * a stack trace.
  */
 describe("templateRegistry calendarInvitation", () => {
   const params = CALENDAR_INVITATION_FIXTURE;
@@ -516,55 +530,67 @@ describe("templateRegistry calendarInvitation", () => {
     return invite.text;
   }
 
+  function render(overrides: Record<string, string> = {}) {
+    return templateRegistry.calendarInvitation.render({ ...params, ...overrides }, t, "en");
+  }
+
   it("carries the calendar as invite.ics, decoded for the preview and encoded for the send", () => {
-    const rendered = templateRegistry.calendarInvitation.render(params, t, "en");
-    const [invite] = rendered.attachments ?? [];
+    const [invite] = render().attachments ?? [];
 
     expect(invite.name).toBe("invite.ics");
-    expect(invite.text).toContain("BEGIN:VCALENDAR");
+    expect(invite.text?.startsWith("BEGIN:VCALENDAR")).toBe(true);
     // The two halves are the same bytes: the name and the base64 are what
     // leaves the building, the text is only ever shown on screen.
     expect(Buffer.from(invite.contentBase64, "base64").toString("utf8")).toBe(invite.text);
   });
 
-  it.each([
-    ["request", "Calendar invitation: Minecraft building camp for Aino", "Your calendar invitation", "REQUEST"],
-    ["publish", "Calendar entry: Minecraft building camp for Aino", "Your calendar entry", "PUBLISH"],
-    ["cancel", "Cancelled: Minecraft building camp for Aino", "This calendar entry has been cancelled", "CANCEL"],
-  ])("says %s in the subject, the heading and the document alike", (method, subject, heading, icsMethod) => {
-    const rendered = templateRegistry.calendarInvitation.render({ ...params, method }, t, "en");
+  /**
+   * The whole method the template exists for: an untouched form is a document
+   * with nothing surprising in it, so a client that mangles the *next* send has
+   * told you which single property it mangled.
+   */
+  it("composes a baseline invitation from an untouched form", () => {
+    const ics = icsOf(render());
 
-    expect(rendered.subject).toBe(subject);
-    expect(rendered.html).toContain(heading);
-    expect(icsOf(rendered)).toContain(`METHOD:${icsMethod}`);
+    expect(ics).toContain("METHOD:REQUEST");
+    expect(ics).toContain("STATUS:CONFIRMED");
+    expect(ics).toContain("TRANSP:TRANSPARENT");
+    expect(ics).toContain("DTSTART;TZID=Europe/Helsinki:");
+    expect(ics).toContain("BEGIN:VTIMEZONE");
+    // The two alarms the two defaulted selects ask for, and no third.
+    expect(ics.match(/BEGIN:VALARM/g)).toHaveLength(2);
+    // Nothing the form left blank. Scoped to the event, because the zone block
+    // carries an `RRULE` of its own describing the daylight-saving transitions
+    // — a search over the whole document finds that one and asserts nothing.
+    const event = ics.slice(ics.indexOf("BEGIN:VEVENT"), ics.indexOf("END:VEVENT"));
+    // `DESCRIPTION` is not on this list, and cannot be: a display alarm carries
+    // one of its own, so its absence from the *event* is the builder suite's
+    // assertion to make, where a component can be picked out on its own.
+    for (const absent of ["RRULE", "EXDATE", "RECURRENCE-ID", "URL"]) {
+      expect(event, `${absent} was written from a blank field`).not.toContain(`\r\n${absent}`);
+    }
   });
 
   /**
-   * A withdrawal has to say so twice — at the calendar level, so a client reads
-   * the message as a retraction, and on the event, so the entry it already
-   * holds is marked cancelled. One without the other is a message a client can
-   * read as an ordinary update.
+   * The mail is incidental and says so: the subject and the body are the two
+   * fields, unchanged, and nothing about the calendar leaks into either.
    */
-  it("marks a cancellation both ways and asks for no answer", () => {
-    const ics = icsOf(
-      templateRegistry.calendarInvitation.render({ ...params, method: "cancel" }, t, "en"),
-    );
-    expect(ics).toContain("METHOD:CANCEL");
-    expect(ics).toContain("STATUS:CANCELLED");
-    expect(ics).not.toContain("RSVP=TRUE");
+  it("states the typed subject and body, and falls back to the neutral one", () => {
+    const typed = render({ subject: "One field changed", body: "Watch the DTSTART." });
+    expect(typed.subject).toBe("One field changed");
+    expect(typed.text).toBe("Watch the DTSTART.");
+    expect(typed.html).toContain("Watch the DTSTART.");
 
-    const request = icsOf(templateRegistry.calendarInvitation.render(params, t, "en"));
-    expect(request).toContain("STATUS:CONFIRMED");
-    expect(request).toContain("RSVP=TRUE");
+    // An untouched textarea posts nothing, and a mail with no words in it is
+    // not a baseline mail — so this one field reads its own placeholder back.
+    expect(render().text).toBe(CALENDAR_EXPLORER_BODY);
   });
 
-  /** A published entry names no attendee: nobody is being asked anything. */
-  it("names no attendee on a published entry", () => {
-    const ics = icsOf(
-      templateRegistry.calendarInvitation.render({ ...params, method: "publish" }, t, "en"),
-    );
-    expect(ics).toContain("ORGANIZER;CN=");
-    expect(ics).not.toContain("ATTENDEE");
+  /** The plain-text part is the mail's own words, with no markup in it. */
+  it("states a plain-text body, which is where Exchange reads the entry's notes", () => {
+    const { text } = render();
+    if (text === undefined) throw new Error("no text body on the render");
+    expect(text).not.toMatch(/<[a-z/][^>]*>/i);
   });
 
   /**
@@ -573,70 +599,25 @@ describe("templateRegistry calendarInvitation", () => {
    * empty field mints one, and a typed one is used exactly as typed.
    */
   it("mints an identifier when the form names none and uses a typed one verbatim", () => {
-    const generated = icsOf(templateRegistry.calendarInvitation.render(params, t, "en"));
-    expect(generated).toMatch(/UID:[0-9a-f-]{36}@sogverse/);
+    expect(icsOf(render())).toMatch(/UID:[0-9a-f-]{36}@sogverse/);
 
-    const named = icsOf(
-      templateRegistry.calendarInvitation.render(
-        { ...params, uid: "seat-42@sogverse", sequence: "3" },
-        t,
-        "en",
-      ),
-    );
-    expect(named).toContain("UID:seat-42@sogverse");
+    const named = icsOf(render({ uid: "explorer-1@sogverse", sequence: "3" }));
+    expect(named).toContain("UID:explorer-1@sogverse");
     expect(named).toContain("SEQUENCE:3");
   });
 
   /**
-   * The resolver is where the form's strings become the template's nulls. Four
-   * fields mean "none" when empty, and the identifier means "mint one" when it
-   * is empty *or* still holding the word its placeholder suggests — an
-   * untouched text input posts its placeholder, so the literal has to be
-   * recognised or a generated identifier would be unreachable from the form.
-   */
-  it("reads the form's empty fields, and its untouched UID, as absences", () => {
-    const resolve = templateRegistry.calendarInvitation.resolveParams;
-    if (!resolve) throw new Error("calendarInvitation has no resolveParams");
-
-    expect(
-      resolve({
-        endDate: "  ",
-        address: "",
-        arrivalInstructions: "",
-        description: "",
-        uid: "generated",
-      }),
-    ).toMatchObject({
-      endDate: null,
-      address: null,
-      arrivalInstructions: null,
-      description: null,
-      uid: null,
-    });
-
-    expect(
-      resolve({
-        endDate: "2026-10-01",
-        address: "Kaisaniemenkatu 6",
-        arrivalInstructions: "Ring the bell.",
-        description: "A harbour town.",
-        uid: "seat-42@sogverse",
-      }),
-    ).toMatchObject({ endDate: "2026-10-01", uid: "seat-42@sogverse" });
-  });
-
-  /**
    * The identifier is minted per *render*, and one render has to mint exactly
-   * one: the mail, the file it carries and the copy the admin reads back all
-   * state it, and an admin who cannot read the identifier a send used cannot
-   * send an update against it. Three parts each resolving their own params is
-   * how that broke, and each part was correct on its own — so the count is what
-   * has to be asserted.
+   * one: the file the reader gets and the copy the admin reads back after a
+   * send both state it, and an admin who cannot read the identifier a send used
+   * cannot send an update against it. Three parts each resolving their own
+   * params is how that broke, and each part was correct on its own — so the
+   * count is what has to be asserted.
    */
   it("mints one identifier per render, however many parts read it", () => {
     const minted = vi.spyOn(crypto, "randomUUID");
     try {
-      const rendered = templateRegistry.calendarInvitation.render(params, t, "en");
+      const rendered = render();
       expect(minted).toHaveBeenCalledTimes(1);
       expect(icsOf(rendered)).toContain(`UID:${minted.mock.results[0].value}@sogverse`);
     } finally {
@@ -645,62 +626,103 @@ describe("templateRegistry calendarInvitation", () => {
   });
 
   /**
-   * The plain-text body is not a courtesy: a Microsoft mailbox fills the
-   * calendar entry's notes from the message body, and with only HTML to work
-   * from it flattens the markup into them — tracking pixel included. So what
-   * the text says is what a reader finds inside the calendar entry.
+   * Every knob is a field, so every field is somewhere a typo can land — and
+   * the person typing is looking at fifty of them. A refusal therefore names
+   * the field and what it wanted, because the testing page shows a thrown
+   * message verbatim and the send route answers with it.
    */
-  it("states the mail as plain text, with no markup in it", () => {
-    const { text } = templateRegistry.calendarInvitation.render(params, t, "en");
-    if (text === undefined) throw new Error("no text body on the render");
-
-    expect(text).toContain("Aino");
-    expect(text).toContain("Minecraft building camp");
-    expect(text).toContain("https://sogverse.sog.gg/parent");
-    expect(text).not.toMatch(/<[a-z/][^>]*>/i);
+  it.each([
+    ["startDate", { startDate: "7.9.2026" }, /Start date: expected a date as YYYY-MM-DD/],
+    ["startDate", { startDate: "2026-02-31" }, /Start date: expected a real calendar date/],
+    ["startTime", { startTime: "16.00" }, /Start time: expected a 24-hour clock time/],
+    ["durationMinutes", { durationMinutes: "two hours" }, /Duration: expected a whole number/],
+    ["url", { url: "sogverse.sog.gg" }, /URL: expected an absolute URL/],
+    ["url", { url: "javascript:alert(1)" }, /URL: expected an http or https URL/],
+    ["attendeeEmail", { attendeeEmail: "nobody" }, /Attendee email: expected an email address/],
+    ["organizerEmail", { organizerEmail: "nobody" }, /Organizer email: expected an email address/],
+    ["sequence", { sequence: "-1" }, /SEQUENCE: expected a whole number/],
+    // The two shapes each parse fields the other never looks at, so each case
+    // has to select its own shape or the field it is about is never read.
+    ["interval", { recurrence: "weekly", interval: "0" }, /INTERVAL: expected a whole number of at least 1/],
+    ["until", { recurrence: "weekly", until: "31-10-2026" }, /UNTIL: expected a date as YYYY-MM-DD/],
+    ["count", { recurrence: "weekly", count: "many" }, /COUNT: expected a whole number/],
+    ["excludedDates", { excludedDates: "next Tuesday" }, /Excluded dates: expected a date as YYYY-MM-DD/],
+  ])("refuses a malformed %s with a message naming it", (_field, overrides, message) => {
+    expect(() => render(overrides)).toThrow(message);
   });
 
   /**
-   * An explicit date list stops at twelve weeks, so an open-ended run's entry
-   * holds twelve weeks of sessions rather than every session still ahead — and
-   * the mail has to say which. A rule states an open-ended run whole, so the
-   * same schedule in the other notation keeps the unqualified sentence.
+   * A document with nothing in it is refused rather than sent: a calendar
+   * describing no occurrence still opens a conversation the reader's calendar
+   * has no entry for.
    */
-  it("says how far the entry reaches when the list stops at the horizon", () => {
-    const listed = templateRegistry.calendarInvitation.render(
-      { ...params, shape: "list", endDate: null },
-      t,
-      "en",
+  it("refuses an object whose every occurrence is excluded", () => {
+    expect(() => render({ excludedDates: params.startDate })).toThrow(
+      /states no occurrence at all/,
     );
-    expect(listed.html).toContain("for the next twelve weeks");
-    expect(listed.html).not.toContain("holds every upcoming session");
-
-    const ruled = templateRegistry.calendarInvitation.render(
-      { ...params, shape: "rule", endDate: null },
-      t,
-      "en",
-    );
-    expect(ruled.html).toContain("holds every upcoming session");
-    expect(ruled.html).not.toContain("for the next twelve weeks");
   });
 
   /**
-   * A schedule with nothing left in it is refused rather than sent empty: a
-   * document describing no sessions still opens a conversation the reader's
-   * calendar has no entry for. The message is the admin's to read — the
-   * testing page shows a render error verbatim.
+   * The override lines, which are the one field whose validity depends on the
+   * *rest* of the form: a date the rule never produces is a `RECURRENCE-ID`
+   * matching nothing, and a client answers that by creating a second entry
+   * beside the one that was meant to move. By the time anybody notices there
+   * are two, so it is refused here.
    */
-  it("refuses a run that is already over", () => {
-    expect(() =>
-      templateRegistry.calendarInvitation.render(
-        { ...params, startDate: "2020-01-06", endDate: "2020-02-03" },
-        t,
-        "en",
-      ),
-    ).toThrow(/no sessions left/);
+  describe("the override lines", () => {
+    /** A Monday rule, so a Monday override lands and any other weekday does not. */
+    const weekly = { recurrence: "weekly", weekdays: "mon" };
+    const secondMonday = (() => {
+      const start = new Date(`${params.startDate}T00:00:00Z`);
+      start.setUTCDate(start.getUTCDate() + 7);
+      return start.toISOString().slice(0, 10);
+    })();
+
+    it("emits an exception component under the same identifier", () => {
+      const ics = icsOf(render({ ...weekly, overrides: `${secondMonday} 14:00 90` }));
+
+      expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
+      expect(ics).toContain(`RECURRENCE-ID;TZID=Europe/Helsinki:${secondMonday.replace(/-/g, "")}T160000`);
+      expect(ics).toContain(`DTSTART;TZID=Europe/Helsinki:${secondMonday.replace(/-/g, "")}T140000`);
+      expect(ics).toContain("DURATION:PT90M");
+    });
+
+    it.each([
+      [
+        "a weekday the rule never produces",
+        { ...weekly, weekdays: "tue", overrides: `${secondMonday} 14:00` },
+        /Overrides: expected a date the rule's BYDAY covers/,
+      ],
+      [
+        "a date before the run starts",
+        { ...weekly, overrides: "2020-01-06 14:00" },
+        /Overrides: expected a date on or after the start date/,
+      ],
+      [
+        "a date that is also excluded",
+        { ...weekly, excludedDates: secondMonday, overrides: `${secondMonday} 14:00` },
+        /Overrides: expected a date that is not also on the excluded list/,
+      ],
+      [
+        "a line that is not a date and a time",
+        { ...weekly, overrides: secondMonday },
+        /Overrides: expected a date, a time, and optionally a duration/,
+      ],
+      [
+        "a duration that is not a number",
+        { ...weekly, overrides: `${secondMonday} 14:00 ninety` },
+        /Override duration: expected a whole number/,
+      ],
+      [
+        "a schedule with no occurrences to except",
+        { recurrence: "none", overrides: `${secondMonday} 14:00` },
+        /Overrides: only the weekly rule has occurrences to override/,
+      ],
+    ])("refuses %s", (_case, overrides, message) => {
+      expect(() => render(overrides)).toThrow(message);
+    });
   });
 });
-
 /**
  * Every registered template, rendered in every locale we ship.
  *
@@ -805,16 +827,6 @@ describe("every template renders in every locale", () => {
     // Declined and no-response are three keys apiece, in five locales, and only
     // the reason they name is ever rendered.
     seatOfferStaff: [{ reason: "declined" }, { reason: "no_response" }],
-    // Three messages, three subjects, three headings and three bodies — nine
-    // keys per locale, of which any one render reaches exactly three. The
-    // fourth variant is the sentence an explicit list stopping at the horizon
-    // states instead of the body's own, which no other variant reaches.
-    calendarInvitation: [
-      { method: "request" },
-      { method: "publish" },
-      { method: "cancel" },
-      { shape: "list", endDate: null },
-    ],
   };
 
   function variantsOf(key: string): Record<string, string | boolean | null>[] {

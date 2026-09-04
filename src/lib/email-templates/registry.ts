@@ -17,23 +17,31 @@ import {
 import { buildComponentsReferenceEmail } from "./components-reference";
 import {
   buildCalendarInvitationEmail,
+  calendarExplorerAlarmOffsets,
   calendarInvitationAttachment,
   calendarInvitationSubject,
   calendarInvitationText,
   resolveCalendarInvitation,
-  CALENDAR_INVITATION_METHODS,
-  CALENDAR_INVITATION_PRODUCT_TYPES,
-  CALENDAR_INVITATION_REMINDERS,
-  CALENDAR_INVITATION_SECOND_REMINDERS,
-  CALENDAR_INVITATION_SHAPES,
-  CALENDAR_INVITATION_SHOW_AS,
-  CALENDAR_INVITATION_TIMEZONES,
-  CALENDAR_INVITATION_WEEKDAY_PRESETS,
+  CALENDAR_EXPLORER_ALARM_ACTIONS,
+  CALENDAR_EXPLORER_ALARM_ANCHORS,
+  CALENDAR_EXPLORER_ALARM_OFFSETS,
+  CALENDAR_EXPLORER_BODY,
+  CALENDAR_EXPLORER_METHODS,
+  CALENDAR_EXPLORER_PARTSTATS,
+  CALENDAR_EXPLORER_RECURRENCES,
+  CALENDAR_EXPLORER_ROLES,
+  CALENDAR_EXPLORER_SHOW_AS,
+  CALENDAR_EXPLORER_STATUSES,
+  CALENDAR_EXPLORER_TIMEZONES,
+  CALENDAR_EXPLORER_TIME_FORMS,
+  CALENDAR_EXPLORER_TITLE,
+  CALENDAR_EXPLORER_WEEKDAY_PRESETS,
+  CALENDAR_EXPLORER_YES_NO,
   CALENDAR_INVITATION_START_DATE,
-  CALENDAR_INVITATION_END_DATE,
-  type CalendarInvitationWeekdayPreset,
+  CALENDAR_INVITATION_UNTIL_DATE,
+  type CalendarExplorerAlarmOffset,
+  type CalendarExplorerWeekdayPreset,
 } from "./calendar-invitation";
-import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
 import {
   buildSessionReportEmail,
   sessionReportSubject,
@@ -50,7 +58,7 @@ import type { RenderedAttachment } from "./attachments";
 import type { EmailTranslator } from "./translator";
 import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { Constants } from "@/types";
 
 // --- Field types for the testing UI ---
@@ -546,161 +554,407 @@ const sessionReportParamsSchema = z.object({
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
 
-// --- Calendar invitation: options, placeholders and schema ---
+// --- Calendar invite explorer: options, placeholders and schema ---
 
 /**
- * The weekday patterns, labelled for the form. The keys are the builder's, so a
- * preset added there shows up here without a second list to keep in step.
- */
-const CALENDAR_INVITATION_WEEKDAY_LABELS: Record<
-  CalendarInvitationWeekdayPreset,
-  string
-> = {
-  "mon-fri": "Monday to Friday",
-  "mon-wed-fri": "Monday, Wednesday and Friday",
-  "tue-thu": "Tuesday and Thursday",
-  mon: "Monday",
-  wed: "Wednesday",
-  sat: "Saturday",
-};
-
-const CALENDAR_INVITATION_WEEKDAY_OPTIONS = CALENDAR_INVITATION_WEEKDAY_PRESETS.map(
-  (value) => ({ label: CALENDAR_INVITATION_WEEKDAY_LABELS[value], value }),
-);
-
-const CALENDAR_INVITATION_REMINDER_LABELS: Record<
-  (typeof CALENDAR_INVITATION_REMINDERS)[number],
-  string
-> = {
-  none: "No reminder",
-  "15": "15 minutes before",
-  "60": "An hour before",
-  "1440": "A day before",
-};
-
-/**
- * The two reminder selects, ordered by their own defaults — the first entry is
- * what an untouched select posts, so the order *is* the default. Fifteen
- * minutes first and a day second, because a Microsoft mailbox keeps only the
- * first alarm and the near one is the one that gets a family out of the door.
- */
-const CALENDAR_INVITATION_REMINDER_OPTIONS = CALENDAR_INVITATION_REMINDERS.map((value) => ({
-  label: CALENDAR_INVITATION_REMINDER_LABELS[value],
-  value,
-}));
-
-const CALENDAR_INVITATION_SECOND_REMINDER_OPTIONS = CALENDAR_INVITATION_SECOND_REMINDERS.map(
-  (value) => ({ label: CALENDAR_INVITATION_REMINDER_LABELS[value], value }),
-);
-
-const CALENDAR_INVITATION_SHOW_AS_LABELS: Record<
-  (typeof CALENDAR_INVITATION_SHOW_AS)[number],
-  string
-> = {
-  free: "Free",
-  busy: "Busy",
-};
-
-const CALENDAR_INVITATION_SHOW_AS_OPTIONS = CALENDAR_INVITATION_SHOW_AS.map((value) => ({
-  label: CALENDAR_INVITATION_SHOW_AS_LABELS[value],
-  value,
-}));
-
-const CALENDAR_INVITATION_METHOD_LABELS: Record<
-  (typeof CALENDAR_INVITATION_METHODS)[number],
-  string
-> = {
-  request: "Request — asks the reader to answer (RSVP)",
-  publish: "Publish — states the entry, asks nothing",
-  cancel: "Cancel — withdraws the entry",
-};
-
-const CALENDAR_INVITATION_METHOD_OPTIONS = CALENDAR_INVITATION_METHODS.map((value) => ({
-  label: CALENDAR_INVITATION_METHOD_LABELS[value],
-  value,
-}));
-
-const CALENDAR_INVITATION_SHAPE_LABELS: Record<
-  (typeof CALENDAR_INVITATION_SHAPES)[number],
-  string
-> = {
-  rule: "Weekly rule (RRULE)",
-  list: "Explicit dates (RDATE)",
-};
-
-const CALENDAR_INVITATION_SHAPE_OPTIONS = CALENDAR_INVITATION_SHAPES.map((value) => ({
-  label: CALENDAR_INVITATION_SHAPE_LABELS[value],
-  value,
-}));
-
-const CALENDAR_INVITATION_TYPE_OPTIONS = CALENDAR_INVITATION_PRODUCT_TYPES.map((value) => ({
-  label: value,
-  value,
-}));
-
-const CALENDAR_INVITATION_TIMEZONE_OPTIONS = CALENDAR_INVITATION_TIMEZONES.map((value) => ({
-  label: value,
-  value,
-}));
-
-/** Derived from codegen, so a language added by migration appears in the form. */
-const CALENDAR_INVITATION_LANGUAGE_OPTIONS = SPOKEN_LANGUAGES.map((value) => ({
-  label: value,
-  value,
-}));
-
-const calendarInvitationParamsSchema = z.object({
-  parentFirstName: z.string().min(1),
-  parentEmail: z.string().email(),
-  gamerFirstName: z.string().min(1),
-  productName: z.string().min(1),
-  productType: z.enum(CALENDAR_INVITATION_PRODUCT_TYPES),
-  weekdays: z.enum(CALENDAR_INVITATION_WEEKDAY_PRESETS),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD"),
-  /** Null is an open-ended run — a consumer club, which never states a last day. */
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD").nullable(),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/, "expected HH:MM"),
-  durationMinutes: z.string().regex(/^\d+$/, "expected whole minutes"),
-  timezone: z.enum(CALENDAR_INVITATION_TIMEZONES),
-  /** Null is an online session, which has no address to state. */
-  address: z.string().nullable(),
-  arrivalInstructions: z.string().nullable(),
-  description: z.string().nullable(),
-  geduFirstName: z.string().min(1),
-  spokenLanguage: z.enum(Constants.public.Enums.spoken_language),
-  /** Two alarms, in the order they are emitted — Exchange keeps only the first. */
-  reminderFirst: z.enum(CALENDAR_INVITATION_REMINDERS),
-  reminderSecond: z.enum(CALENDAR_INVITATION_REMINDERS),
-  showAs: z.enum(CALENDAR_INVITATION_SHOW_AS),
-  method: z.enum(CALENDAR_INVITATION_METHODS),
-  shape: z.enum(CALENDAR_INVITATION_SHAPES),
-  /** Null mints a fresh identifier at render; a thread's later message types the first one's back in. */
-  uid: z.string().nullable(),
-  sequence: z.string().regex(/^\d+$/, "expected a whole number"),
-  dashboardUrl: z.string().url(),
-});
-
-/**
- * The form's strings as the template takes them.
+ * A select whose values are already the tokens the document writes.
  *
- * Four fields mean "none" when they are empty, and the identifier means "mint
- * one" when it is empty *or* still holding the word its placeholder suggests —
- * an untouched text input posts its placeholder, so the literal has to be
- * recognised or nobody could ever get a generated one without clearing a field
- * that looks already blank.
+ * `ROLE` and `PARTSTAT` are read straight off the calendar file, so the raw
+ * value is the clearest possible label: the person picking one is about to go
+ * looking for that exact string in the document beneath the form.
  */
-function resolveCalendarInvitationParams(params: Record<string, string>): TemplateParams {
-  const { endDate, address, arrivalInstructions, description, uid, ...rest } = params;
-  const blankToNull = (value: string) => value.trim() || null;
-  return {
-    ...rest,
-    endDate: blankToNull(endDate),
-    address: blankToNull(address),
-    arrivalInstructions: blankToNull(arrivalInstructions),
-    description: blankToNull(description),
-    uid: uid.trim() === "generated" ? null : blankToNull(uid),
-  };
+function literalOptions(values: readonly string[]): { label: string; value: string }[] {
+  return values.map((value) => ({ label: value, value }));
 }
+
+/**
+ * A yes/no select with `first` as its default, because an untouched select
+ * posts its first option — so the order *is* the default, and these four fields
+ * do not all default the same way.
+ */
+function yesNoOptions(
+  first: (typeof CALENDAR_EXPLORER_YES_NO)[number],
+): { label: string; value: string }[] {
+  const rest = CALENDAR_EXPLORER_YES_NO.filter((value) => value !== first);
+  return [first, ...rest].map((value) => ({
+    label: value === "yes" ? "Yes" : "No",
+    value,
+  }));
+}
+
+const CALENDAR_EXPLORER_METHOD_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_METHODS)[number],
+  string
+> = {
+  request: "REQUEST — asks the reader to answer",
+  publish: "PUBLISH — states the entry, asks nothing",
+  cancel: "CANCEL — withdraws the entry",
+};
+
+const CALENDAR_EXPLORER_STATUS_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_STATUSES)[number],
+  string
+> = {
+  confirmed: "CONFIRMED",
+  tentative: "TENTATIVE",
+  cancelled: "CANCELLED",
+};
+
+const CALENDAR_EXPLORER_TIME_FORM_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_TIME_FORMS)[number],
+  string
+> = {
+  tzid: "Wall clock under a TZID — promises a clock face",
+  utc: "Absolute instant (…Z) — promises a moment",
+};
+
+const CALENDAR_EXPLORER_RECURRENCE_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_RECURRENCES)[number],
+  string
+> = {
+  none: "None — a single occurrence",
+  weekly: "Weekly rule (RRULE)",
+};
+
+const CALENDAR_EXPLORER_WEEKDAY_LABELS: Record<CalendarExplorerWeekdayPreset, string> = {
+  mon: "MO",
+  tue: "TU",
+  wed: "WE",
+  thu: "TH",
+  fri: "FR",
+  sat: "SA",
+  sun: "SU",
+  "mon-wed-fri": "MO,WE,FR",
+  "tue-thu": "TU,TH",
+  "mon-fri": "MO,TU,WE,TH,FR",
+  "sat-sun": "SA,SU",
+  "every-day": "Every day",
+};
+
+const CALENDAR_EXPLORER_ALARM_OFFSET_LABELS: Record<CalendarExplorerAlarmOffset, string> = {
+  none: "No alarm",
+  "0": "On the trigger point (0 minutes)",
+  "5": "5 minutes before",
+  "15": "15 minutes before",
+  "30": "30 minutes before",
+  "60": "60 minutes before (an hour)",
+  "120": "120 minutes before (two hours)",
+  "1440": "1440 minutes before (a day)",
+  "2880": "2880 minutes before (two days)",
+};
+
+const CALENDAR_EXPLORER_ALARM_ACTION_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_ALARM_ACTIONS)[number],
+  string
+> = {
+  display: "DISPLAY",
+  email: "EMAIL — carries a SUMMARY and an ATTENDEE",
+  audio: "AUDIO",
+};
+
+const CALENDAR_EXPLORER_ALARM_ANCHOR_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_ALARM_ANCHORS)[number],
+  string
+> = {
+  start: "Before the start",
+  end: "Before the end (RELATED=END)",
+};
+
+const CALENDAR_EXPLORER_SHOW_AS_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_SHOW_AS)[number],
+  string
+> = {
+  free: "TRANSPARENT — does not block the reader's time",
+  busy: "OPAQUE — blocks it",
+};
+
+/**
+ * One alarm's three selects, built the same way for all three alarms.
+ *
+ * The alarms are the one place the three clients are *known* to disagree and
+ * are kept anyway — Apple keeps what the organiser sent, Google replaces it
+ * with the reader's own defaults, Exchange keeps the first and drops the rest —
+ * because watching that happen is the point rather than a disqualification.
+ */
+function alarmFields(
+  index: 1 | 2 | 3,
+  defaultOffset: CalendarExplorerAlarmOffset,
+): TemplateField[] {
+  return [
+    {
+      key: `alert${index}Offset`,
+      label: `Alerts – Alarm ${index} offset`,
+      type: "select",
+      options: calendarExplorerAlarmOffsets(defaultOffset).map((value) => ({
+        label: CALENDAR_EXPLORER_ALARM_OFFSET_LABELS[value],
+        value,
+      })),
+    },
+    {
+      key: `alert${index}Action`,
+      label: `Alerts – Alarm ${index} ACTION`,
+      type: "select",
+      options: CALENDAR_EXPLORER_ALARM_ACTIONS.map((value) => ({
+        label: CALENDAR_EXPLORER_ALARM_ACTION_LABELS[value],
+        value,
+      })),
+    },
+    {
+      key: `alert${index}RelativeTo`,
+      label: `Alerts – Alarm ${index} TRIGGER relative to`,
+      type: "select",
+      options: CALENDAR_EXPLORER_ALARM_ANCHORS.map((value) => ({
+        label: CALENDAR_EXPLORER_ALARM_ANCHOR_LABELS[value],
+        value,
+      })),
+    },
+  ];
+}
+
+/**
+ * The explorer's form, grouped by what part of the document a field lands in.
+ *
+ * The page renders fields in the order this array gives them and has no notion
+ * of a group, so the group is carried in the label's own prefix — which is
+ * enough, because the fields of one group are adjacent and a reader scanning a
+ * column of labels is looking for the prefix rather than for a heading.
+ *
+ * **A text field with no placeholder is a field whose default is "omit".** An
+ * untouched text input posts its placeholder, so a blank placeholder is the
+ * only way a text field can default to absent — and the label says what it
+ * would write if it were filled in.
+ *
+ * **Every field is a property all three target clients honour.** Google
+ * Calendar, Apple Calendar and Outlook are the whole audience, and a knob one
+ * of them drops teaches nothing but its own absence — so this list is shorter
+ * than the format is, on purpose.
+ */
+const CALENDAR_EXPLORER_FIELDS: TemplateField[] = [
+  { key: "subject", label: "Mail – Subject", placeholder: CALENDAR_EXPLORER_TITLE },
+  {
+    key: "body",
+    label: "Mail – Body (empty sends the neutral default)",
+    type: "textarea",
+    placeholder: CALENDAR_EXPLORER_BODY,
+  },
+
+  {
+    key: "uid",
+    label: "Identity – UID (empty mints one per render; type one back for an update)",
+    placeholder: "",
+  },
+  { key: "sequence", label: "Identity – SEQUENCE", placeholder: "0" },
+  {
+    key: "method",
+    label: "Identity – METHOD",
+    type: "select",
+    options: CALENDAR_EXPLORER_METHODS.map((value) => ({
+      label: CALENDAR_EXPLORER_METHOD_LABELS[value],
+      value,
+    })),
+  },
+  {
+    key: "status",
+    label: "Identity – STATUS",
+    type: "select",
+    options: CALENDAR_EXPLORER_STATUSES.map((value) => ({
+      label: CALENDAR_EXPLORER_STATUS_LABELS[value],
+      value,
+    })),
+  },
+
+  {
+    key: "timezone",
+    label: "Time – TZID (each of these ships its own VTIMEZONE; UTC ships none)",
+    type: "select",
+    options: literalOptions(CALENDAR_EXPLORER_TIMEZONES),
+  },
+  { key: "startDate", label: "Time – DTSTART date", placeholder: CALENDAR_INVITATION_START_DATE },
+  { key: "startTime", label: "Time – DTSTART time", placeholder: "16:00" },
+  { key: "durationMinutes", label: "Time – DURATION (minutes)", placeholder: "120" },
+  {
+    key: "timeForm",
+    label: "Time – How the times are written",
+    type: "select",
+    options: CALENDAR_EXPLORER_TIME_FORMS.map((value) => ({
+      label: CALENDAR_EXPLORER_TIME_FORM_LABELS[value],
+      value,
+    })),
+  },
+  {
+    key: "allDay",
+    label: "Time – All day (DATE-valued DTSTART and DTEND, no zone at all)",
+    type: "select",
+    options: yesNoOptions("no"),
+  },
+
+  {
+    key: "recurrence",
+    label: "Recurrence – Shape",
+    type: "select",
+    options: CALENDAR_EXPLORER_RECURRENCES.map((value) => ({
+      label: CALENDAR_EXPLORER_RECURRENCE_LABELS[value],
+      value,
+    })),
+  },
+  {
+    key: "weekdays",
+    label: "Recurrence – BYDAY",
+    type: "select",
+    options: CALENDAR_EXPLORER_WEEKDAY_PRESETS.map((value) => ({
+      label: CALENDAR_EXPLORER_WEEKDAY_LABELS[value],
+      value,
+    })),
+  },
+  { key: "until", label: "Recurrence – UNTIL date (empty for none)", placeholder: "" },
+  {
+    key: "count",
+    // RFC 5545 forbids stating both, so one has to win, and it is this one: a
+    // reader who typed a number of occurrences meant that number.
+    label: "Recurrence – COUNT (empty for none; wins over UNTIL when both are set)",
+    placeholder: "",
+  },
+  { key: "interval", label: "Recurrence – INTERVAL (weeks)", placeholder: "1" },
+  {
+    key: "excludedDates",
+    label: "Recurrence – EXDATE, one YYYY-MM-DD per line (written at the start time)",
+    type: "textarea",
+    placeholder: CALENDAR_INVITATION_UNTIL_DATE,
+  },
+  {
+    key: "overrides",
+    // The mechanism a mixed-time product needs and the one a single moved
+    // session needs are the same: an occurrence that happens at another clock
+    // face becomes its own VEVENT under the same UID, naming the occurrence it
+    // replaces. A rule states one clock face, so a club that meets Monday at
+    // 16:00 and Wednesday at 14:00 cannot be stated without this.
+    label:
+      "Recurrence – Overrides, one YYYY-MM-DD HH:MM [minutes] per line (the weekly rule only)",
+    type: "textarea",
+    placeholder: `${CALENDAR_INVITATION_UNTIL_DATE} 14:00 90`,
+  },
+
+  { key: "organizerName", label: "People – ORGANIZER name", placeholder: SENDER_NAME },
+  { key: "organizerEmail", label: "People – ORGANIZER email", placeholder: SENDER_EMAIL },
+  { key: "attendeeName", label: "People – ATTENDEE name", placeholder: "Attendee" },
+  {
+    key: "attendeeEmail",
+    // A client decides whether to show the RSVP by matching the attendee
+    // against the mailbox it is reading, so a send whose attendee is somebody
+    // else renders as somebody else's invitation.
+    label: "People – ATTENDEE email (use the address you send to)",
+    placeholder: "attendee@example.com",
+  },
+  { key: "rsvp", label: "People – RSVP", type: "select", options: yesNoOptions("yes") },
+  {
+    key: "attendeeRole",
+    label: "People – ROLE",
+    type: "select",
+    options: literalOptions(CALENDAR_EXPLORER_ROLES),
+  },
+  {
+    key: "partstat",
+    label: "People – PARTSTAT",
+    type: "select",
+    options: literalOptions(CALENDAR_EXPLORER_PARTSTATS),
+  },
+  {
+    key: "includeAttendee",
+    label: "People – Write an ATTENDEE at all (a PUBLISH normally does not)",
+    type: "select",
+    options: yesNoOptions("yes"),
+  },
+
+  { key: "summary", label: "Content – SUMMARY", placeholder: CALENDAR_EXPLORER_TITLE },
+  {
+    key: "description",
+    label: "Content – DESCRIPTION (empty omits it)",
+    type: "textarea",
+    placeholder: "A baseline invitation. Change one field, send it again, and compare.",
+  },
+  { key: "location", label: "Content – LOCATION (empty omits it)", placeholder: "Helsinki, Finland" },
+  { key: "url", label: "Content – URL (empty omits it)", placeholder: "" },
+
+  // Three alarms, because the order they are written in is a real property: an
+  // Exchange mailbox keeps exactly one per item and keeps the first.
+  ...alarmFields(1, "15"),
+  ...alarmFields(2, "1440"),
+  ...alarmFields(3, "none"),
+
+  {
+    key: "showAs",
+    label: "Behaviour – TRANSP",
+    type: "select",
+    options: CALENDAR_EXPLORER_SHOW_AS.map((value) => ({
+      label: CALENDAR_EXPLORER_SHOW_AS_LABELS[value],
+      value,
+    })),
+  },
+];
+
+/**
+ * The wire shape, and only the wire shape.
+ *
+ * Every free-form field is a bare string here and is parsed by the template's
+ * own resolver, which is where a blank means "omit" and where a malformed date
+ * earns a sentence naming the field. Duplicating the shapes as regexes would
+ * give the same mistake two different error messages depending on which layer
+ * caught it first.
+ */
+const calendarInvitationParamsSchema = z.object({
+  subject: z.string().min(1),
+  body: z.string(),
+
+  uid: z.string(),
+  sequence: z.string(),
+  method: z.enum(CALENDAR_EXPLORER_METHODS),
+  status: z.enum(CALENDAR_EXPLORER_STATUSES),
+
+  timezone: z
+    .string()
+    .refine((zone) => CALENDAR_EXPLORER_TIMEZONES.includes(zone), {
+      message: "no VTIMEZONE is written for this zone",
+    }),
+  startDate: z.string(),
+  startTime: z.string(),
+  durationMinutes: z.string(),
+  timeForm: z.enum(CALENDAR_EXPLORER_TIME_FORMS),
+  allDay: z.enum(CALENDAR_EXPLORER_YES_NO),
+
+  recurrence: z.enum(CALENDAR_EXPLORER_RECURRENCES),
+  weekdays: z.enum(CALENDAR_EXPLORER_WEEKDAY_PRESETS),
+  until: z.string(),
+  count: z.string(),
+  interval: z.string(),
+  excludedDates: z.string(),
+  overrides: z.string(),
+
+  organizerName: z.string().min(1),
+  organizerEmail: z.string(),
+  attendeeName: z.string().min(1),
+  attendeeEmail: z.string(),
+  rsvp: z.enum(CALENDAR_EXPLORER_YES_NO),
+  attendeeRole: z.enum(CALENDAR_EXPLORER_ROLES),
+  partstat: z.enum(CALENDAR_EXPLORER_PARTSTATS),
+  includeAttendee: z.enum(CALENDAR_EXPLORER_YES_NO),
+
+  summary: z.string().min(1),
+  description: z.string(),
+  location: z.string(),
+  url: z.string(),
+
+  alert1Offset: z.enum(CALENDAR_EXPLORER_ALARM_OFFSETS),
+  alert1Action: z.enum(CALENDAR_EXPLORER_ALARM_ACTIONS),
+  alert1RelativeTo: z.enum(CALENDAR_EXPLORER_ALARM_ANCHORS),
+  alert2Offset: z.enum(CALENDAR_EXPLORER_ALARM_OFFSETS),
+  alert2Action: z.enum(CALENDAR_EXPLORER_ALARM_ACTIONS),
+  alert2RelativeTo: z.enum(CALENDAR_EXPLORER_ALARM_ANCHORS),
+  alert3Offset: z.enum(CALENDAR_EXPLORER_ALARM_OFFSETS),
+  alert3Action: z.enum(CALENDAR_EXPLORER_ALARM_ACTIONS),
+  alert3RelativeTo: z.enum(CALENDAR_EXPLORER_ALARM_ANCHORS),
+
+  showAs: z.enum(CALENDAR_EXPLORER_SHOW_AS),
+});
 
 // --- Single source of truth for all email templates ---
 
@@ -925,100 +1179,33 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
   }),
   /**
    * The one template that carries a file, and the reason the registry can carry
-   * one at all. What is being tried here is not the mail's wording but what a
-   * calendar client *does* with the `invite.ics` beside it, so every knob a
-   * client could disagree about is a field: the notation the schedule is
-   * written in, whether the message asks for an answer, the reminder offset,
-   * and the identifier and revision number that decide whether a second message
-   * lands on the first one's entry or beside it.
+   * one at all.
+   *
+   * **It explores the format rather than stating a product.** What is being
+   * tried is not our wording but what a calendar client *does* with an
+   * `invite.ics` — which properties it renders, which it drops, which it
+   * rewrites — so every knob RFC 5545, RFC 5546 and RFC 7986 expose is a field,
+   * with defaults that compose an unremarkable baseline invitation. The way to
+   * use it is one send at a time: send the baseline, change one field, send it
+   * again, and compare what each client made of the two.
    *
    * A thread is two or three sends: leave the identifier alone for the first,
    * then type it back in with a higher revision number for the update and the
    * cancellation.
    */
   calendarInvitation: defineResolvedTemplate({
-    label: "Calendar Invitation",
-    fields: [
-      { key: "parentFirstName", label: "Parent First Name", placeholder: "Sanna" },
-      {
-        key: "parentEmail",
-        // It is the ATTENDEE, and a client decides whether to show the RSVP by
-        // matching it against the mailbox it is reading — so a test send whose
-        // attendee is somebody else renders as somebody else's invitation.
-        label: "Parent Email (the attendee — use the address you are sending to)",
-        placeholder: "sanna@example.com",
-      },
-      { key: "gamerFirstName", label: "Gamer First Name", placeholder: "Aino" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft building camp" },
-      { key: "productType", label: "Product Type", type: "select", options: CALENDAR_INVITATION_TYPE_OPTIONS },
-      { key: "weekdays", label: "Days", type: "select", options: CALENDAR_INVITATION_WEEKDAY_OPTIONS },
-      { key: "startDate", label: "Start date", placeholder: CALENDAR_INVITATION_START_DATE },
-      { key: "endDate", label: "End date (empty for open-ended)", placeholder: CALENDAR_INVITATION_END_DATE },
-      { key: "startTime", label: "Start time", placeholder: "16:00" },
-      { key: "durationMinutes", label: "Duration (minutes)", placeholder: "120" },
-      { key: "timezone", label: "Timezone", type: "select", options: CALENDAR_INVITATION_TIMEZONE_OPTIONS },
-      {
-        key: "address",
-        label: "Address (empty for online)",
-        placeholder: "Kaisaniemenkatu 6, 00100 Helsinki",
-      },
-      {
-        key: "arrivalInstructions",
-        label: "Getting there",
-        type: "textarea",
-        placeholder: "Ring the bell marked School of Gaming and take the stairs to the second floor.",
-      },
-      {
-        key: "description",
-        label: "Description",
-        type: "textarea",
-        placeholder:
-          "Aino is building a harbour town this month, and the last session is the one where everyone walks through what they made.",
-      },
-      { key: "geduFirstName", label: "Gedu First Name", placeholder: "Ville" },
-      { key: "spokenLanguage", label: "Spoken language", type: "select", options: CALENDAR_INVITATION_LANGUAGE_OPTIONS },
-      {
-        key: "reminderFirst",
-        label: "First reminder (a Microsoft mailbox keeps only this one)",
-        type: "select",
-        options: CALENDAR_INVITATION_REMINDER_OPTIONS,
-      },
-      {
-        key: "reminderSecond",
-        label: "Second reminder (kept by the calendars that keep more than one)",
-        type: "select",
-        options: CALENDAR_INVITATION_SECOND_REMINDER_OPTIONS,
-      },
-      {
-        key: "showAs",
-        label: "Show as (a child's session does not normally block the parent's own calendar)",
-        type: "select",
-        options: CALENDAR_INVITATION_SHOW_AS_OPTIONS,
-      },
-      { key: "method", label: "Message", type: "select", options: CALENDAR_INVITATION_METHOD_OPTIONS },
-      { key: "shape", label: "Schedule notation", type: "select", options: CALENDAR_INVITATION_SHAPE_OPTIONS },
-      {
-        key: "uid",
-        // The word itself is what an untouched field posts, and the resolver
-        // reads it as "mint one" — see the resolver for why the literal has to
-        // be recognised rather than only the empty string.
-        label: "Calendar UID (leave as generated for a new entry)",
-        placeholder: "generated",
-      },
-      { key: "sequence", label: "Sequence (raise it for an update)", placeholder: "0" },
-      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
-    ],
+    label: "Calendar invite explorer",
+    fields: CALENDAR_EXPLORER_FIELDS,
     schema: calendarInvitationParamsSchema,
     // One resolution per render, threaded through every part: the identifier is
-    // minted here, and the mail, the file and the copy the admin reads back all
-    // state the same one.
-    resolve: (p, t, locale) => resolveCalendarInvitation(p, t, locale),
+    // minted here, and the file and the copy the admin reads back after a send
+    // both state the same one.
+    resolve: (p) => resolveCalendarInvitation(p),
     build: (content, t, locale) => buildCalendarInvitationEmail(t, locale, content),
-    subject: (content, t) => calendarInvitationSubject(t, content),
+    subject: (content) => calendarInvitationSubject(content),
     // The one template that states a text body, because a mail carrying a
     // calendar part is where Exchange reads the entry's notes from.
-    text: (content, t) => calendarInvitationText(t, content),
+    text: (content) => calendarInvitationText(content),
     attachments: (content) => [calendarInvitationAttachment(content)],
-    resolveParams: resolveCalendarInvitationParams,
   }),
 };

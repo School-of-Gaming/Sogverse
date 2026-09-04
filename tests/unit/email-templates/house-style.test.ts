@@ -7,10 +7,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
-import {
-  CALENDAR_INVITATION_START_DATE,
-  CALENDAR_INVITATION_END_DATE,
-} from "@/lib/email-templates/calendar-invitation";
+import { CALENDAR_INVITATION_START_DATE } from "@/lib/email-templates/calendar-invitation";
 import { BRAND, DARK_THEME, GRADIENT, STATUS, STATUS_TINT } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 
@@ -60,37 +57,56 @@ const LEGAL_ON_FILL: Record<string, string> = {
 };
 
 /**
- * The calendar invitation's params, kept together because its dates have to
- * stay in the future: the builder refuses a run with nothing left in it, so a
- * hardcoded date would turn into a failing suite on a date nobody chose. The
- * template's own form placeholders are the next Monday and four weeks after
- * it, which is exactly the property the fixture needs.
+ * The calendar explorer's baseline params — every field at the value its
+ * untouched form control posts.
+ *
+ * It is the whole form because the schema requires every key, and it is the
+ * *baseline* because this file only cares about the mail around the document:
+ * a subject, a body and the house shell. Which properties the calendar itself
+ * writes is the builder suite's subject, next door.
  */
 const CALENDAR_INVITATION_FIXTURE = {
-  parentFirstName: "Sanna",
-  parentEmail: "sanna@example.com",
-  gamerFirstName: "Aino",
-  productName: "Minecraft building camp",
-  productType: "camp",
-  weekdays: "mon-wed-fri",
+  subject: "Calendar invite explorer",
+  body: "",
+  uid: "",
+  sequence: "0",
+  method: "request",
+  status: "confirmed",
+  timezone: "Europe/Helsinki",
   startDate: CALENDAR_INVITATION_START_DATE,
-  endDate: CALENDAR_INVITATION_END_DATE,
   startTime: "16:00",
   durationMinutes: "120",
-  timezone: "Europe/Helsinki",
-  address: "Kaisaniemenkatu 6, 00100 Helsinki",
-  arrivalInstructions: "Ring the bell marked School of Gaming and take the stairs.",
-  description: "Aino is building a harbour town, and the last session is the walk-through.",
-  geduFirstName: "Ville",
-  spokenLanguage: "fi",
-  reminderFirst: "15",
-  reminderSecond: "1440",
+  timeForm: "tzid",
+  allDay: "no",
+  recurrence: "none",
+  weekdays: "mon",
+  until: "",
+  count: "",
+  interval: "1",
+  excludedDates: "",
+  overrides: "",
+  organizerName: "School of Gaming",
+  organizerEmail: "sogverse@sog.gg",
+  attendeeName: "Attendee",
+  attendeeEmail: "attendee@example.com",
+  rsvp: "yes",
+  attendeeRole: "REQ-PARTICIPANT",
+  partstat: "NEEDS-ACTION",
+  includeAttendee: "yes",
+  summary: "Calendar invite explorer",
+  description: "",
+  location: "Helsinki, Finland",
+  url: "",
+  alert1Offset: "15",
+  alert1Action: "display",
+  alert1RelativeTo: "start",
+  alert2Offset: "1440",
+  alert2Action: "display",
+  alert2RelativeTo: "start",
+  alert3Offset: "none",
+  alert3Action: "display",
+  alert3RelativeTo: "start",
   showAs: "free",
-  method: "request",
-  shape: "rule",
-  uid: null,
-  sequence: "0",
-  dashboardUrl: "https://sogverse.sog.gg/parent",
 } satisfies Record<string, string | boolean | null>;
 
 /** Fixture params for the registry-backed renders. */
@@ -241,18 +257,12 @@ const MAILS: Record<string, () => [string, string][]> = {
     }),
   ],
   "verify-email": () => fromRegistry("verifyEmail"),
-  // All three messages of a thread. They are three different documents — the
-  // cancellation drops the description, the arrival note and the promise of
-  // future updates — so sweeping only the first would leave two unchecked.
-  "calendar-invitation": () => [
-    ...fromRegistry("calendarInvitation"),
-    ...fromRegistry("calendarInvitation", "calendarInvitation (publish)", {
-      method: "publish",
-    }),
-    ...fromRegistry("calendarInvitation", "calendarInvitation (cancel)", {
-      method: "cancel",
-    }),
-  ],
+  // One render, unlike the other multi-message templates: every message this
+  // template can send is the same mail — the typed subject and the typed body
+  // in the shell — and everything that moves between a request, a publish and
+  // a cancellation moves inside the attached document, which carries no markup
+  // for this file to sweep.
+  "calendar-invitation": () => fromRegistry("calendarInvitation"),
   welcome: () => [...fromRegistry("welcomeParent"), ...fromRegistry("welcomeGedu")],
 
   // Not registered, deliberately: a test send from the admin UI would mint a

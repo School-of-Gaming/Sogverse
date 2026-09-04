@@ -4,10 +4,7 @@ import { NextResponse } from "next/server";
 // The calendar invitation refuses a run with nothing left ahead of it, so its
 // fixture dates come from the template's own form placeholders — the next
 // Monday and four weeks after it — rather than from literals that would rot.
-import {
-  CALENDAR_INVITATION_START_DATE,
-  CALENDAR_INVITATION_END_DATE,
-} from "@/lib/email-templates/calendar-invitation";
+import { CALENDAR_INVITATION_START_DATE } from "@/lib/email-templates/calendar-invitation";
 
 // --- Mocks ---
 
@@ -507,33 +504,50 @@ describe("POST /api/admin/send-test-email", () => {
    * property worth pinning, alongside the content being base64 of the document
    * the template composed.
    */
-  /** The calendar invitation's params, whose dates have to stay in the future. */
+  /** The calendar explorer's baseline params — every field as its form posts it. */
   function calendarInvitationParams() {
     return {
-      parentFirstName: "Sanna",
-      parentEmail: "sanna@example.com",
-      gamerFirstName: "Aino",
-      productName: "Minecraft building camp",
-      productType: "camp",
-      weekdays: "mon-wed-fri",
+      subject: "Calendar invite explorer",
+      body: "The invitation is the file attached to this message.",
+      uid: "",
+      sequence: "0",
+      method: "request",
+      status: "confirmed",
+      timezone: "Europe/Helsinki",
       startDate: CALENDAR_INVITATION_START_DATE,
-      endDate: CALENDAR_INVITATION_END_DATE,
       startTime: "16:00",
       durationMinutes: "120",
-      timezone: "Europe/Helsinki",
-      address: "Kaisaniemenkatu 6, 00100 Helsinki",
-      arrivalInstructions: "Ring the bell.",
-      description: "A harbour town.",
-      geduFirstName: "Ville",
-      spokenLanguage: "fi",
-      reminderFirst: "15",
-      reminderSecond: "1440",
+      timeForm: "tzid",
+      allDay: "no",
+      recurrence: "none",
+      weekdays: "mon",
+      until: "",
+      count: "",
+      interval: "1",
+      excludedDates: "",
+      overrides: "",
+      organizerName: "School of Gaming",
+      organizerEmail: "sogverse@sog.gg",
+      attendeeName: "Attendee",
+      attendeeEmail: "attendee@example.com",
+      rsvp: "yes",
+      attendeeRole: "REQ-PARTICIPANT",
+      partstat: "NEEDS-ACTION",
+      includeAttendee: "yes",
+      summary: "Calendar invite explorer",
+      description: "",
+      location: "Helsinki, Finland",
+      url: "",
+      alert1Offset: "15",
+      alert1Action: "display",
+      alert1RelativeTo: "start",
+      alert2Offset: "1440",
+      alert2Action: "display",
+      alert2RelativeTo: "start",
+      alert3Offset: "none",
+      alert3Action: "display",
+      alert3RelativeTo: "start",
       showAs: "free",
-      method: "request",
-      shape: "rule",
-      uid: null,
-      sequence: "0",
-      dashboardUrl: "https://sogverse.sog.gg/parent",
     };
   }
 
@@ -591,7 +605,7 @@ describe("POST /api/admin/send-test-email", () => {
 
     await sendCalendarInvitation();
     const [{ textContent }] = mockSendTransactionalEmail.mock.calls[0];
-    expect(textContent).toContain("Minecraft building camp");
+    expect(textContent).toBe("The invitation is the file attached to this message.");
     expect(textContent).not.toMatch(/<[a-z/][^>]*>/i);
 
     mockSendTransactionalEmail.mockClear();
@@ -600,22 +614,37 @@ describe("POST /api/admin/send-test-email", () => {
   });
 
   /**
-   * A builder may refuse the params it was handed — a schedule with nothing
-   * ahead of it is the case — and that refusal is an answer about the request,
-   * so it comes back as a 400 carrying the message the builder wrote for the
-   * admin to read, exactly as the schema's own refusal does. Answered any other
-   * way it is a 500, and the admin is told nothing about what they got wrong.
+   * A builder may refuse the params it was handed — an object whose every
+   * occurrence is on the excluded list is the case — and that refusal is an
+   * answer about the request, so it comes back as a 400 carrying the message
+   * the builder wrote for the admin to read, exactly as the schema's own
+   * refusal does. Answered any other way it is a 500, and the admin is told
+   * nothing about what they got wrong.
    */
   it("returns 400 with the builder's own message when a render refuses", async () => {
     mockAuthenticatedWithRole("admin");
 
     const response = await sendCalendarInvitation({
-      startDate: "2020-01-06",
-      endDate: "2020-02-03",
+      excludedDates: CALENDAR_INVITATION_START_DATE,
     });
 
     expect(response.status).toBe(400);
-    expect((await response.json()).error).toContain("no sessions left");
+    expect((await response.json()).error).toContain("states no occurrence at all");
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The same shape one layer up: a field the resolver cannot parse is the
+   * admin's typo, not our fault, so it earns the sentence naming the field
+   * rather than a 500 that tells them nothing.
+   */
+  it("returns 400 naming the field when one is malformed", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await sendCalendarInvitation({ startTime: "16.00" });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toContain("Start time");
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 

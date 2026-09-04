@@ -2694,45 +2694,6 @@
         "heading": "Ett platserbjudande gick ut",
         "body": "Svarstiden gick ut utan svar. Familjen står kvar på väntelistan och kan erbjudas platsen igen, men själva platsen är ledig nu."
       }
-    },
-    "calendarInvitation": {
-      "greeting": "Hej {name},",
-      "subject": {
-        "request": "Kalenderinbjudan: {productName} – {gamerName}",
-        "publish": "Kalenderpost: {productName} – {gamerName}",
-        "cancel": "Inställt: {productName} – {gamerName}"
-      },
-      "heading": {
-        "request": "Din kalenderinbjudan",
-        "publish": "Din kalenderpost",
-        "cancel": "Den här kalenderposten är inställd"
-      },
-      "body": {
-        "request": "Kalenderinbjudan som bifogas det här mejlet innehåller alla kommande pass i {productName} för {gamerName}. Acceptera den, så hamnar alla passen i din egen kalender.",
-        "publish": "Kalenderposten som bifogas det här mejlet innehåller alla kommande pass i {productName} för {gamerName}. Lägg till den, så hamnar alla passen i din egen kalender.",
-        "cancel": "{gamerName} har inte längre en plats i {productName}. Avbokningen som bifogas det här mejlet tar bort posten ur din kalender."
-      },
-      "bodyHorizon": {
-        "request": "Kalenderinbjudan som bifogas det här mejlet innehåller passen i {productName} för {gamerName} de kommande tolv veckorna. Acceptera den, så hamnar alla passen i din egen kalender.",
-        "publish": "Kalenderposten som bifogas det här mejlet innehåller passen i {productName} för {gamerName} de kommande tolv veckorna. Lägg till den, så hamnar alla passen i din egen kalender."
-      },
-      "schedule": "{days} kl. {time}",
-      "openEnded": "Från {startDate}, tills vidare",
-      "typeLabel": "Vad",
-      "scheduleLabel": "Schema",
-      "datesLabel": "Datum",
-      "whereLabel": "Var",
-      "languageLabel": "Språk",
-      "online": "Online",
-      "type": {
-        "club": "Klubb",
-        "camp": "Läger",
-        "event": "Evenemang"
-      },
-      "arrivalLabel": "Hitta hit",
-      "dashboardButton": "Öppna i Min SOG",
-      "support": "Frågor? Skriv till {email}",
-      "eventSummary": "{productName} – {gamerName}"
     }
   },
   "legal": {
