@@ -102,10 +102,10 @@ session out of the object.
    mail stops asking a question it cannot hear the answer to and states the entry rather
    than requesting an answer.
 6. **Cancelling or moving one session.** iTIP identifies one occurrence of a recurring
-   object by its own recurrence identifier, and nothing here emits one — so a holiday, a
-   snow day or a single moved session is a whole-object update. This is also the point at
-   which the holiday-aware occurrence expansion (still unbuilt, and named as a
-   prerequisite in the record) starts to matter on this side.
+   object by its own recurrence identifier, and nothing here emits one — so a skipped
+   day, a snow day or a single moved session is a whole-object update. (The holiday
+   calendar itself left the product on 2026-09-04, so a skipped session is now a change
+   to record, not a rule to apply.)
 7. **Deliverability of a mail carrying a calendar part**, which is filtered differently
    from ordinary transactional mail. Worth measuring before anything reaches a family.
 

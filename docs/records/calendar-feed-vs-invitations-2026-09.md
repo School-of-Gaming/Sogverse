@@ -58,8 +58,10 @@ A full feed was built and subscribed to from real clients. What it established:
   session feeds use is holiday-blind, deliberately, while the public product calendar and
   the SQL session predicate are holiday-aware. A dashboard row that ignores a holiday is
   tolerable; a calendar entry or a reminder mail for a session that is not happening is
-  flatly wrong. Unifying the three is the first brick of *any* feature in this area, and
-  it is still unbuilt — the tool inherited the holiday-blind walker.
+  flatly wrong. The tool inherited the holiday-blind walker. The trap then closed from
+  the other side: on 2026-09-04 the holiday calendar was removed from the product
+  entirely, so every expansion now gives the same answer and there is nothing left to
+  unify.
 - **Nothing in the schema records that a session moved**, so neither shape can say
   "tonight's session is cancelled". Both are schedule-of-record features until a change
   model exists.
@@ -113,6 +115,7 @@ calendar entries is a question for after, not before.
 
 The feed's route, token, sandbox table, option parsing, subscribe links and its half of
 the admin tool were deleted rather than left standing; git history holds them. Anyone
-reviving the idea should read the two prerequisites above first — the holiday-aware
-expansion and the revocable per-customer credential — because neither was solved and both
-gate a real feed regardless of what the document looks like.
+reviving the idea should read the prerequisite above first — the revocable per-customer
+credential — because it was never solved and it gates a real feed regardless of what the
+document looks like. The other prerequisite, a holiday-aware expansion, dissolved when
+the holiday calendar left the product.
