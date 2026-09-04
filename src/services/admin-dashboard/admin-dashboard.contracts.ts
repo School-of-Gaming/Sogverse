@@ -31,11 +31,17 @@ const productName = z.object({
  * One role's tile in the users strip. Always four of them (one per `user_role`),
  * including roles nobody holds — a zero tile is a fact, a missing tile is a gap.
  *
- * `verified` is null rather than 0 for gamers, and the difference is the point:
- * a gamer's address is a synthetic `@gamer.sogverse.internal` handle nobody will
- * ever click a link in, so "0 verified" would report a problem that does not
- * exist. Null means the stat has no meaning for this role. `certified` is the
- * same shape for the same reason — only an educator can be certified.
+ * `verified` is null rather than 0 where the stat has no meaning — and what
+ * decides that is the ADDRESS, not the role (00235/00240). A gamer signing in
+ * through their parent or by username carries a synthetic
+ * `@gamer.sogverse.internal` handle nobody will ever click a link in, so "0
+ * verified" would report a problem that does not exist; a gamer whose parent
+ * chose sign-in mode `email` holds a real mailbox and counts exactly like
+ * everyone else. So null means *this role has accounts and none of them is
+ * addressable* — which is every gamer only until one of them is given an email.
+ * A role with no accounts at all reports 0, because an empty tile has nothing to
+ * say either way. `certified` is the same null-means-no-meaning shape for a
+ * simpler reason: only an educator can be certified.
  */
 export const adminDashboardUserStat = z.object({
   role: z.enum(Constants.public.Enums.user_role),
