@@ -115,4 +115,21 @@ describe("getOrigin", () => {
       "https://sogverse.sog.gg",
     );
   });
+
+  /**
+   * Next's `headers()` hands back a read-only adapter that keeps its backing
+   * store under a `headers` field. Discriminating on that property's presence
+   * mistook it for a Request and read `.get` off the inner store — a runtime
+   * TypeError on the verify-email page, the first server component to call
+   * this. The discriminator now asks whether the value can `get`.
+   */
+  it("reads a Headers adapter that carries its own `headers` field", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
+    class AdapterLike extends Headers {
+      readonly headers = { host: "sogverse.sog.gg" };
+    }
+    expect(getOrigin(new AdapterLike({ host: "sogverse.sog.gg" }))).toBe(
+      "https://sogverse.sog.gg",
+    );
+  });
 });

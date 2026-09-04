@@ -27,11 +27,18 @@
  * Only the Host header is ever read, so the two forms carry the same
  * information and there is nothing for a caller to get wrong.
  */
+function isHeadersLike(source: Request | Headers): source is Headers {
+  return "get" in source && typeof source.get === "function";
+}
+
 export function getOrigin(source: Request | Headers): string {
-  // `"headers" in source` rather than `instanceof Headers`: Next's `headers()`
-  // returns its own read-only subclass, and a Request is the only one of the two
-  // shapes that carries a `headers` property at all.
-  const requestHeaders = "headers" in source ? source.headers : source;
+  // Discriminate on the *capability*, not on property presence. `instanceof
+  // Headers` fails because Next's `headers()` returns its own read-only
+  // adapter, and `"headers" in source` failed the other way: that adapter
+  // keeps its backing store under a `headers` field, so it looked like a
+  // Request and its inner object had no `get`. A Headers of any flavour can
+  // `get`; a Request cannot, and holds its headers one level down.
+  const requestHeaders = isHeadersLike(source) ? source : source.headers;
   const host = requestHeaders.get("host") ?? "";
 
   const trusted = new Set<string>();
