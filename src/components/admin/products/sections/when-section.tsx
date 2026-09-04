@@ -1,6 +1,5 @@
 "use client";
 
-import { Info } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -138,10 +137,17 @@ export function WhenSection({
                   : t("labels.startDate")
               }
               htmlFor="p-start-date"
+              // The two hints are exclusive: the billing anchor is a consumer
+              // club's, the single-date note an event's. The event's used to
+              // sit in the empty second column as a bottom-aligned box beside
+              // the input, which read as misaligned; the field's own hint slot
+              // is where every other hint on this form lives.
               hint={
                 startDateMovesBilling
                   ? t("hints.startDateBillingAnchor")
-                  : undefined
+                  : productType === "event"
+                    ? t("hints.eventSingleDay")
+                    : undefined
               }
             >
               <Input
@@ -154,12 +160,7 @@ export function WhenSection({
                 required
               />
             </Field>
-            {productType === "event" ? (
-              <div className="flex items-end text-xs text-muted-foreground">
-                <Info className="mr-1.5 inline h-3.5 w-3.5" />
-                {t("hints.eventSingleDay")}
-              </div>
-            ) : productType === "consumer_club" ? null : (
+            {productType === "event" || productType === "consumer_club" ? null : (
               // Municipality clubs and camps always have a fixed end date.
               <Field
                 label={
