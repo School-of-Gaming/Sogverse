@@ -216,7 +216,6 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     product_prices: [{ currency: "eur", price_cents: 3000 }],
     schedule_slots: [],
     locations: null,
-    product_holiday_calendars: [],
     product_required_consents: [],
     product_marketing_consents: [],
   };

@@ -46,7 +46,6 @@ const GROUP_NO_GEDU = "00000000-0000-0000-0000-000000000622";
 const P_WAITLIST = "00000000-0000-0000-0000-000000000623";
 const P_MUNI = "00000000-0000-0000-0000-000000000624";
 const P_CLEAN = "00000000-0000-0000-0000-000000000625";
-const CALENDAR = "00000000-0000-0000-0000-000000000626";
 const GROUP_EMPTY = "00000000-0000-0000-0000-000000000627";
 const P_ENDED = "00000000-0000-0000-0000-000000000628";
 
@@ -167,7 +166,6 @@ describe("get_admin_dashboard", () => {
     );
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
-    await admin.from("holiday_calendars").delete().eq("id", CALENDAR);
 
     // --- products -----------------------------------------------------------
     //
@@ -285,21 +283,6 @@ describe("get_admin_dashboard", () => {
     expect(participations.error).toBeNull();
 
     // --- the schedule facts -------------------------------------------------
-    const calendar = await admin
-      .from("holiday_calendars")
-      .insert({ id: CALENDAR, name: "Dashboard fixture break", timezone: "UTC" });
-    expect(calendar.error).toBeNull();
-
-    const holiday = await admin
-      .from("calendar_holidays")
-      .insert({ calendar_id: CALENDAR, date: utcDay(7), reason: "Fixture break" });
-    expect(holiday.error).toBeNull();
-
-    const linked = await admin
-      .from("product_holiday_calendars")
-      .insert({ product_id: P_CLEAN, calendar_id: CALENDAR });
-    expect(linked.error).toBeNull();
-
     const slot = await admin.from("schedule_slots").insert({
       product_id: P_CLEAN,
       weekday: 2,
@@ -402,7 +385,6 @@ describe("get_admin_dashboard", () => {
 
   afterAll(async () => {
     await deleteTestProducts(admin, ALL_PRODUCTS);
-    await admin.from("holiday_calendars").delete().eq("id", CALENDAR);
     if (queuedGeduId) await admin.auth.admin.deleteUser(queuedGeduId);
     if (orphanGeduId) await admin.auth.admin.deleteUser(orphanGeduId);
     // Acceptances cascade with the account; the fixture version does not, and
@@ -613,7 +595,6 @@ describe("get_admin_dashboard", () => {
       expect(product?.schedule_slots).toEqual([
         { weekday: 2, start_time: "17:00", duration_minutes: 90 },
       ]);
-      expect(product?.holidays).toEqual([utcDay(7)]);
     });
 
     it("carries the seat counts a chip is titled with", () => {

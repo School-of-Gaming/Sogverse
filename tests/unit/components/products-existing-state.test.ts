@@ -75,9 +75,6 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
       { weekday: 1, start_time: "16:00", duration_minutes: 90 },
     ],
     locations: null,
-    product_holiday_calendars: [
-      { calendar_id: "cal-1", holiday_calendars: { name: "Finland" } },
-    ],
     product_required_consents: [{ document_slug: "roblox-programme-terms" }],
     // The optional ask set, stored on its own join table beside the required
     // one. Populated here rather than left empty because the seeding of the
@@ -106,7 +103,6 @@ describe("existingFormState", () => {
     expect(state.endDate).toBe("");
     expect(state.startMode).toBe("date"); // start_date set, no threshold
     expect(state.signupThreshold).toBe("");
-    expect(state.holidayCalendarIds).toEqual(new Set(["cal-1"]));
     // The stored requirement set, straight through. Unlike the region lock
     // below, a slug the app cannot name is deliberately NOT filtered out —
     // dropping one would let the next save clear a legal condition silently.
@@ -270,7 +266,6 @@ describe("buildUpdateInput round-trip", () => {
     expect(input.start_date).toBe("2026-09-01");
     expect(input.end_date).toBe(null);
     expect(input.signup_threshold).toBe(null);
-    expect(input.holiday_calendar_ids).toEqual(["cal-1"]);
     // Travels on every save, empty array included: the RPC replaces the whole
     // requirement set, so an omission would clear it rather than preserve it.
     //

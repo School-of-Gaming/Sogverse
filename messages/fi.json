@@ -274,7 +274,6 @@
         "sessionCount": "{count, plural, one {# kerta} other {# kertaa}}",
         "timesIn": "ajat aikavyöhykkeellä {zone}",
         "nothingOn": "Ei mitään",
-        "paused": "Tauolla tällä viikolla:",
         "needsAttention": "Vaatii huomiota – tämä tuote on sivun yläreunan jonossa",
         "chipTitle": "{type} · {name} · klo {time}, {minutes} min · {counts}"
       },
@@ -417,7 +416,6 @@
           "endDate": "Päättymispäivä",
           "signupThreshold": "Ilmoittautumiskynnys",
           "termDates": "Kausi",
-          "holidayCalendars": "Lomakalenterit",
           "billingMode": "Laskutus",
           "seats": "Paikat",
           "waitlist": "Jonotuslista",
@@ -507,8 +505,6 @@
         "dayAndTime": "Päivä & aika",
         "daysAndTimes": "Päivät & ajat",
         "time": "Aika",
-        "holidayCalendars": "Loma-kalenterit",
-        "holidayNoUpcoming": "Ei tulevia päivämääriä — tätä kalenteria ei voi käyttää ilman niitä.",
         "pricing": "Hinta",
         "free": "Ilmainen",
         "paid": "Maksullinen",
@@ -635,7 +631,6 @@
         "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät ”X / Y tarvitaan” -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
         "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneFixedHelsinki": "Ajat ovat aikavyöhykkeellä Europe/Helsinki. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
-        "holidayHint": "Yksikään kerta ei pidetä valittujen kalenterien päivinä. Muokkaa kalenteria kerran ja kaikki sitä käyttävät tuotteet päivittyvät automaattisesti.",
         "billingHint": "Maksuttomilla tuotteilla on oletuksena paikkaraja, maksullisilla ei.",
         "freeDetail": "Ei maksua. Kuka tahansa voi liittyä yhdellä klikkauksella.",
         "paidDetailMonthly": "Veloitetaan kuukausittain tilauksena.",
@@ -647,7 +642,6 @@
         "seatHintNoWaitlist": "Kun täynnä, uudet ilmoittautumiset hylätään.",
         "visibleHint": "Ilman valintaa tuote ei näy millään julkisella sivulla, mutta jokainen, jolla on suora linkki, voi silti avata sen ja ostaa paikan. Juuri siksi tämä sopii julkistamattomiin, kutsuvieraille tarkoitettuihin ja kampanjatuotteisiin. Tämä ei ole keino lopettaa ilmoittautumisia, eikä se vaikuta jo mukana oleviin vanhempiin ja pelaajiin.",
         "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
-        "holidayComingSoon": "Lomakalenterit tulevat pian. Toistaiseksi jokainen aikataulutettu kerta pidetään.",
         "startDateBillingAnchor": "Kerhon aloituspäivä ja samalla perheiden ensimmäisen maksun päivä. Päivän muuttaminen jälkikäteen ei siirrä jo ilmoittautuneiden ensimmäistä maksua — korjaa nuo tilaukset Stripessä."
       },
       "errors": {
@@ -1928,18 +1922,6 @@
       "language": "Kieli",
       "online": "Verkossa",
       "tbd": "Vahvistetaan myöhemmin"
-    },
-    "calendar": {
-      "weekdayMon": "Ma",
-      "weekdayTue": "Ti",
-      "weekdayWed": "Ke",
-      "weekdayThu": "To",
-      "weekdayFri": "Pe",
-      "weekdaySat": "La",
-      "weekdaySun": "Su",
-      "legendSession": "Tapaaminen",
-      "legendSkipped": "Ei tapaamista",
-      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "verb": {

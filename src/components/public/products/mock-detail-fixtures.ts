@@ -1408,7 +1408,6 @@ function buildBaseProduct(
     // scenario hands its own set to the panel rather than writing one onto a
     // fixture, because the panel is the only thing on this page that reads it.
     product_marketing_consents: [],
-    holidays: pickHolidays(productType),
   };
 }
 
@@ -1641,19 +1640,6 @@ function pickLocationFixture(
     case "event":
       return MOCK_LOC_SOG_HQ;
   }
-}
-
-function pickHolidays(
-  productType: ProductType,
-): { date: string; reason: string }[] {
-  if (productType !== "consumer_club" && productType !== "municipality_club") {
-    return [];
-  }
-  return [
-    { date: "2026-02-24", reason: "Talviloma · winter break" },
-    { date: "2026-04-07", reason: "Pääsiäisloma · Easter" },
-    { date: "2026-05-01", reason: "Vappu" },
-  ];
 }
 
 // ---------- Price rows ----------

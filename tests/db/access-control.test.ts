@@ -117,9 +117,6 @@ describe("Access Control", () => {
       ["product_images", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["schedule_slots", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_prices", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["holiday_calendars", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["calendar_holidays", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["product_holiday_calendars", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["site_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["site_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
@@ -170,7 +167,7 @@ describe("Access Control", () => {
 
   it("anon has no write grants on any table", async () => {
     // anon's only legitimate table access is SELECT through the public
-    // catalog policies (products, locations, holiday calendars, languages).
+    // catalog policies (products, locations, languages).
     // Write grants for anon are never acceptable: RLS default-deny is the
     // only thing between a standing grant and an unauthenticated write path,
     // and a single future policy written without a TO clause (which defaults

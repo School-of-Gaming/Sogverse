@@ -322,7 +322,6 @@
         "sessionCount": "{count, plural, one {# poH} other {# poHmey}}",
         "timesIn": "poHmey: {zone}",
         "nothingOn": "pagh",
-        "paused": "Hoghvam leSlI’:",
         "needsAttention": "poQ Qu’ – De’vam tu’lu’ ’etlhDaq QaDDaq",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
@@ -465,7 +464,6 @@
           "endDate": "rIn jaj",
           "signupThreshold": "ghIH yum",
           "termDates": "poH",
-          "holidayCalendars": "leSpoH naQ",
           "billingMode": "Huch yIv",
           "seats": "quS",
           "waitlist": "loS DIS",
@@ -555,8 +553,6 @@
         "dayAndTime": "jaj & poH",
         "daysAndTimes": "jajmey & poHmey",
         "time": "poH",
-        "holidayCalendars": "jajmey Do’",
-        "holidayNoUpcoming": "jaj pagh — jaj poQ.",
         "pricing": "Huch",
         "free": "Huch pagh",
         "paid": "Huch",
@@ -683,7 +679,6 @@
         "thresholdOnly": "jaj tagh DaH pagh. vavmey ”X / Y poQ” laSvargh lulegh teb. ghItlh law’ tIghaj ’ej tagh yIqotlh, jaj tagh yIngu’ qIb.",
         "thresholdWithDate": "jaj taghDaq ghItlh law’ pumchugh, De’ Daq tlhotlh ’ej Huch chegh.",
         "timezoneFixedHelsinki": "poHmey Europe/Helsinki Daq. vavmey Daq poHchaj choHlu’.",
-        "holidayHint": "jajmey Do’ qaStaHvIS pagh qaS. wa’ jajmey Do’ DachoHchugh, Hoch ghor De’.",
         "billingHint": "Huch Hutlhbogh Dochmey: pa’ mI’ Sub ghaj. Huch ghajbogh Dochmey: Sub Hutlh.",
         "freeDetail": "Huch pagh. Hoch wa’ chu’wI’ lo’.",
         "paidDetailMonthly": "jar Hoch Huch nob. not mev.",
@@ -695,7 +690,6 @@
         "seatHintNoWaitlist": "tebDI’, ghItlh chu’mey lajQo’lu’.",
         "visibleHint": "yIchu’Ha’chugh, pagh tetlhDaq Doch tu’lu’ — ’ach He nIH ghajbogh nuv Doch legh ’ej pa’ je’laH. vaj ’angbe’lu’bogh Doch, ri’bogh Doch, ghap tlhIngan may’ Doch DaSuqmeH QaQ. ghItlh chu’ DamevmeH mIw ghaHbe’, ’ej ghoStaHbogh vavpu’ QujwI’pu’ je luQaHbe’.",
         "seatLimitHint": "pa’ mI’ yIgheS pagh Sub Hutlh yIqaw.",
-        "holidayComingSoon": "jaj Do’ De’wI’ tugh chol. DaH Hoch ghum qaS.",
         "startDateBillingAnchor": "tagh ghom jaj ’ej DIl qorDu’ jaj. jaj Da’choHchugh, DIlpu’bogh qorDu’vaD pagh choH — Stripe Daq yIchoH!"
       },
       "errors": {
@@ -1972,18 +1966,6 @@
       "language": "Hol",
       "online": "QumDaq",
       "tbd": "Sov pagh"
-    },
-    "calendar": {
-      "weekdayMon": "wa’",
-      "weekdayTue": "cha’",
-      "weekdayWed": "wej",
-      "weekdayThu": "loS",
-      "weekdayFri": "vagh",
-      "weekdaySat": "jav",
-      "weekdaySun": "Soch",
-      "legendSession": "qaStaHvIS",
-      "legendSkipped": "qIl",
-      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "verb": {

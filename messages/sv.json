@@ -274,7 +274,6 @@
         "sessionCount": "{count, plural, one {# tillfälle} other {# tillfällen}}",
         "timesIn": "tider i {zone}",
         "nothingOn": "Inget inplanerat",
-        "paused": "Pausade den här veckan:",
         "needsAttention": "Behöver åtgärd – den här produkten finns i kön högst upp på sidan",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
@@ -417,7 +416,6 @@
           "endDate": "Slutdatum",
           "signupThreshold": "Anmälningströskel",
           "termDates": "Period",
-          "holidayCalendars": "Lovkalendrar",
           "billingMode": "Fakturering",
           "seats": "Platser",
           "waitlist": "Väntelista",
@@ -507,8 +505,6 @@
         "dayAndTime": "Dag & tid",
         "daysAndTimes": "Dagar & tider",
         "time": "Tid",
-        "holidayCalendars": "Lovkalendrar",
-        "holidayNoUpcoming": "Inga kommande datum — denna kalender behöver datum innan den är användbar.",
         "pricing": "Pris",
         "free": "Gratis",
         "paid": "Betalt",
@@ -635,7 +631,6 @@
         "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare ”X av Y behövs” medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
-        "holidayHint": "Inget tillfälle körs på något datum från de valda kalendrarna. Redigera en kalender en gång och alla produkter som använder den uppdateras automatiskt.",
         "billingHint": "Gratisprodukter får som standard en platsgräns, betalda börjar utan gräns.",
         "freeDetail": "Ingen avgift. Alla kan delta med ett klick.",
         "paidDetailMonthly": "Debiteras varje månad som en prenumeration.",
@@ -647,7 +642,6 @@
         "seatHintNoWaitlist": "När fullt nekas nya anmälningar.",
         "visibleHint": "Utan bocken visas produkten inte på någon publik sida, men den som har direktlänken kan ändå öppna den och köpa en plats. Det är just det som gör den lämplig för oannonserade produkter, inbjudningar och kampanjer. Det är inget sätt att stoppa anmälningar, och det påverkar aldrig föräldrar och gamers som redan deltar.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
-        "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
         "startDateBillingAnchor": "Datumet då klubben börjar, och då familjerna debiteras första gången. Att ändra det i efterhand flyttar inte första betalningen för dem som redan har anmält sig — rätta de prenumerationerna i Stripe."
       },
       "errors": {
@@ -1928,18 +1922,6 @@
       "language": "Språk",
       "online": "Online",
       "tbd": "Bekräftas senare"
-    },
-    "calendar": {
-      "weekdayMon": "Mån",
-      "weekdayTue": "Tis",
-      "weekdayWed": "Ons",
-      "weekdayThu": "Tor",
-      "weekdayFri": "Fre",
-      "weekdaySat": "Lör",
-      "weekdaySun": "Sön",
-      "legendSession": "Pass",
-      "legendSkipped": "Inställt",
-      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "verb": {

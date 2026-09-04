@@ -17,8 +17,8 @@ import { TEST_IDS } from "./constants";
  * suffix is the last byte of the UUID (`...0000000005XX`):
  *   5a1–5a3, 5aa   exposed-function-scope.test.ts (5a3 is its product_groups
  *                  id; 5aa is its unlisted-but-published product)
- *   5a4–5a9        write-idor.test.ts (5a4 is the product; 5a5–5a9 are the
- *                  group / zone / calendar / holiday / slot fixtures it seeds)
+ *   5a4–5a9        write-idor.test.ts (5a4 is the product; 5a5, 5a6 and 5a9
+ *                  are the group / zone / slot fixtures it seeds)
  *   5b1–5b5        participations-race.test.ts (5b2 is its soft-cap product)
  *   5b6–5b7        participations-rls.test.ts
  *   5b8–5b9        participations-external.test.ts
@@ -50,9 +50,9 @@ import { TEST_IDS } from "./constants";
  *   610-616        product-audience.test.ts (three products 610-612, one group
  *                  613, and 614-616 for the roster-shape fixtures)
  *   620-628        admin-dashboard.test.ts (six products — 620, 621, 623, 624,
- *                  625, 628 — plus two groups 622/627 and a holiday calendar
- *                  626; one product per dashboard issue so a fixture built for
- *                  one cannot accidentally raise another)
+ *                  625, 628 — plus two groups 622/627; one product per
+ *                  dashboard issue so a fixture built for one cannot
+ *                  accidentally raise another)
  *   630-636        product-images-trigger.test.ts (three products 630-632, and
  *                  633-636 for the product_images entries it links them to —
  *                  a different table, but kept in the one registry so nobody

@@ -72,7 +72,6 @@ export interface ProductTypeConfig {
    *     and accepted; see the `region_lock_country` column comment.
    */
   regionLockable: boolean;
-  hasHolidayCalendars: boolean;
   /** Start triggers admin can choose from. First entry is the default. */
   allowedStartModes: StartMode[];
   defaultBillingMode: BillingMode;
@@ -103,7 +102,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
     regionLockable: true,
-    hasHolidayCalendars: true,
     allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "paid",
   },
@@ -121,7 +119,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     // The one type with no region lock: its country is already settled by
     // `countryBound` above, through an entirely separate mechanism.
     regionLockable: false,
-    hasHolidayCalendars: true,
     allowedStartModes: ["date"],
     defaultBillingMode: "external_contract",
   },
@@ -140,7 +137,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
     regionLockable: true,
-    hasHolidayCalendars: false,
     allowedStartModes: ["date", "date_and_threshold"],
     defaultBillingMode: "paid",
   },
@@ -158,7 +154,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
     regionLockable: true,
-    hasHolidayCalendars: false,
     allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "free",
   },

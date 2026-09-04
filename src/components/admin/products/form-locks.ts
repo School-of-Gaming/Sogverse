@@ -22,15 +22,12 @@ import type { ProductTypeConfig } from "./product-type-config";
 interface FormLocks {
   /** Start trigger is pinned to "On a specific date" (no threshold launches). */
   startMode: boolean;
-  /** Holiday-calendar selection is shown as "coming soon" instead of editable. */
-  holidayCalendars: boolean;
   /** Registration always opens immediately (no scheduled ticket drop). */
   registrationTiming: boolean;
 }
 
 export const FORM_LOCKS: FormLocks = {
   startMode: true,
-  holidayCalendars: true,
   registrationTiming: true,
 };
 

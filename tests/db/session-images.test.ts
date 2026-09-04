@@ -691,7 +691,7 @@ describe("session photos", () => {
     });
 
     it("refuses a date the session record does not reach", async () => {
-      // The same loose, holiday-blind validation every session write is held to.
+      // The same loose validation every session write is held to.
       // A photo cannot document a session that was never scheduled.
       const { error } = await geduAuth.rpc("add_group_session_image", {
         p_group_id: GROUP_MINE,

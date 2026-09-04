@@ -101,7 +101,6 @@ const validBody = {
   is_visible: true,
   schedule_slots: [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }],
   prices: [],
-  holiday_calendar_ids: [],
   required_consent_slugs: [],
   marketing_consent_types: [],
   primary_gedu_fee_cents: null,

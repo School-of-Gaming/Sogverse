@@ -44,13 +44,13 @@ import type { GeduAssignmentCardData } from "./GeduAssignmentsSectionView";
  *
  * **The dashboard never fetches a feed.** A page of six cards would otherwise
  * be six clubs' entire histories downloaded to render six numbers. The count
- * comes back with the summary, computed server-side against the same
- * holiday-blind weekday expansion the workspace's feed uses, floored at the same
- * epoch and applying the same two-part test — a finished session is owed until
- * its register is complete **and** a report has been written — so the badge on
- * the card and the alerts in the feed behind it are two views of one number. The
- * report half is the newer of the two conditions and is the one to check first
- * if they ever disagree.
+ * comes back with the summary, computed server-side against the same weekday
+ * expansion the workspace's feed uses, floored at the same epoch and applying
+ * the same two-part test — a finished session is owed until its register is
+ * complete **and** a report has been written — so the badge on the card and the
+ * alerts in the feed behind it are two views of one number. The report half is
+ * the newer of the two conditions and is the one to check first if they ever
+ * disagree.
  *
  * Both reads are server-prefetched by the route, so the ordinary visit paints
  * complete on the first frame with no loading state at all.

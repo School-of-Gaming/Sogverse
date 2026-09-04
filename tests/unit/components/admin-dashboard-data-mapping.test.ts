@@ -13,8 +13,8 @@ import type {
 /**
  * The snapshot → page mapping, which is where every calendar decision on the
  * admin dashboard is actually made: which weeks can be stepped through, which
- * occurrences survive a holiday, which weekday a session lands on for the person
- * reading it, and what collapses into one line of the coming-up feed.
+ * weekday a session lands on for the person reading it, and what collapses into
+ * one line of the coming-up feed.
  *
  * The clock is pinned to a known Monday so a week's arithmetic has a fixed
  * answer, and the zones are chosen for what they disagree about: Helsinki and
@@ -45,7 +45,6 @@ function scheduleProduct(
     schedule_slots: [
       { weekday: 0, start_time: "17:00", duration_minutes: 90 },
     ],
-    holidays: [],
     ...overrides,
   };
 }
@@ -124,8 +123,7 @@ describe("the week window", () => {
 
   it("offers only weeks lying wholly inside the snapshot's own window", () => {
     // The RPC sends [today - 30 days, today + 4 months), less a day at each end
-    // (see the straddle case below); the holidays it sends are bounded the same
-    // way, so a half-covered week would render a break as a session.
+    // (see the straddle case below), so a half-covered week is never offered.
     expect(data.weeks[0].weekStart).toBe("2026-07-20");
     expect(data.weeks[data.weeks.length - 1].weekStart).toBe("2026-12-07");
   });
@@ -245,50 +243,6 @@ describe("resolving a week's sessions", () => {
     );
 
     expect(data.weeks.every((entry) => entry.chips.length === 0)).toBe(true);
-  });
-
-  it("drops a session that falls on a holiday and says the product is paused", () => {
-    const data = build(
-      snapshot({
-        schedule_products: [
-          scheduleProduct({
-            id: "kerho",
-            translations: [{ locale: "en", name: "Pelikerho Leppävaara" }],
-            holidays: ["2026-10-12"],
-          }),
-        ],
-      }),
-    );
-
-    const holidayWeek = week(data, "2026-10-12");
-    expect(holidayWeek.chips).toHaveLength(0);
-    expect(holidayWeek.onBreak).toEqual(["Pelikerho Leppävaara"]);
-
-    const ordinaryWeek = week(data, "2026-10-05");
-    expect(ordinaryWeek.chips).toHaveLength(1);
-    expect(ordinaryWeek.onBreak).toEqual([]);
-  });
-
-  it("does not call a product paused when only one of its two sessions is a holiday", () => {
-    const data = build(
-      snapshot({
-        schedule_products: [
-          scheduleProduct({
-            id: "kerho",
-            schedule_slots: [
-              { weekday: 0, start_time: "17:00", duration_minutes: 90 },
-              { weekday: 2, start_time: "17:00", duration_minutes: 90 },
-            ],
-            holidays: ["2026-10-12"],
-          }),
-        ],
-      }),
-    );
-
-    const holidayWeek = week(data, "2026-10-12");
-    // Monday is gone, Wednesday still ran — so the club met that week.
-    expect(holidayWeek.chips).toMatchObject([{ weekday: 2 }]);
-    expect(holidayWeek.onBreak).toEqual([]);
   });
 
   it("marks a chip when its product is in the attention queue, and only then", () => {

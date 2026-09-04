@@ -257,14 +257,6 @@ export type ProductImage = Database["public"]["Tables"]["product_images"]["Row"]
 export type ProductImageInsert = Database["public"]["Tables"]["product_images"]["Insert"];
 export type ProductImageUpdate = Database["public"]["Tables"]["product_images"]["Update"];
 
-// holiday_calendars + calendar_holidays + product_holiday_calendars
-export type HolidayCalendar = Database["public"]["Tables"]["holiday_calendars"]["Row"];
-export type HolidayCalendarInsert = Database["public"]["Tables"]["holiday_calendars"]["Insert"];
-export type CalendarHoliday = Database["public"]["Tables"]["calendar_holidays"]["Row"];
-export type CalendarHolidayInsert = Database["public"]["Tables"]["calendar_holidays"]["Insert"];
-export type ProductHolidayCalendar = Database["public"]["Tables"]["product_holiday_calendars"]["Row"];
-export type ProductHolidayCalendarInsert = Database["public"]["Tables"]["product_holiday_calendars"]["Insert"];
-
 // site_details (member-visible) + site_staff_details (admin + Gedu only)
 export type SiteDetails = Database["public"]["Tables"]["site_details"]["Row"];
 export type SiteDetailsInsert = Database["public"]["Tables"]["site_details"]["Insert"];

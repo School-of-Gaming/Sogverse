@@ -274,7 +274,6 @@
         "sessionCount": "{count, plural, one {# session} other {# sessions}}",
         "timesIn": "horaires en {zone}",
         "nothingOn": "Rien de prévu",
-        "paused": "En pause cette semaine :",
         "needsAttention": "À traiter – ce produit figure dans la file en haut de la page",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
@@ -417,7 +416,6 @@
           "endDate": "Date de fin",
           "signupThreshold": "Seuil d’inscriptions",
           "termDates": "Dates de la période scolaire",
-          "holidayCalendars": "Calendriers de vacances",
           "billingMode": "Facturation",
           "seats": "Places",
           "waitlist": "Liste d’attente",
@@ -507,8 +505,6 @@
         "dayAndTime": "Jour et heure",
         "daysAndTimes": "Jours et heures",
         "time": "Heure",
-        "holidayCalendars": "Calendriers de vacances",
-        "holidayNoUpcoming": "Aucune date à venir — ce calendrier a besoin de dates pour être utile.",
         "pricing": "Prix",
         "free": "Gratuit",
         "paid": "Payant",
@@ -635,7 +631,6 @@
         "thresholdOnly": "Pas encore de date de début fixe. Les parents voient un compteur « X sur Y requis » pendant le remplissage. Vous appuyez sur Démarrer quand vous avez assez d’inscriptions et vous choisissez alors la date de la première session.",
         "thresholdWithDate": "Si moins de parents que ce nombre se sont inscrits à la date de début, vous devrez annuler et rembourser depuis la page du produit.",
         "timezoneFixedHelsinki": "Les horaires sont exprimés en heure Europe/Helsinki. Les parents les voient automatiquement convertis dans leur fuseau horaire.",
-        "holidayHint": "Aucune session n’aura lieu aux dates issues des calendriers sélectionnés. Modifiez un calendrier une fois et tous les produits qui l’utilisent se mettent à jour automatiquement.",
         "billingHint": "Les produits gratuits ont une limite de places par défaut ; les produits payants démarrent sans limite.",
         "freeDetail": "Aucun frais. Tout le monde peut participer en un clic.",
         "paidDetailMonthly": "Facturé chaque mois sous forme d’abonnement.",
@@ -647,7 +642,6 @@
         "seatHintNoWaitlist": "Une fois complet, les nouvelles inscriptions sont refusées.",
         "visibleHint": "Sans la case cochée, le produit n’apparaît sur aucune page publique, mais toute personne disposant du lien direct peut l’ouvrir et acheter une place. C’est précisément ce qui le rend adapté aux produits non annoncés, réservés sur invitation ou liés à une campagne. Ce n’est pas un moyen d’arrêter les inscriptions, et cela n’affecte jamais les parents et les joueurs déjà inscrits.",
         "seatLimitHint": "Plafonnez le nombre de participants, ou fonctionnez sans limite.",
-        "holidayComingSoon": "Les calendriers de vacances arrivent bientôt. Pour l’instant, toutes les sessions programmées ont lieu.",
         "startDateBillingAnchor": "La date de début du club, et celle du premier prélèvement pour les familles. La modifier ensuite ne déplace pas le premier prélèvement des familles déjà inscrites — corrigez ces abonnements dans Stripe."
       },
       "errors": {
@@ -1928,18 +1922,6 @@
       "language": "Langue",
       "online": "En ligne",
       "tbd": "À confirmer"
-    },
-    "calendar": {
-      "weekdayMon": "lun.",
-      "weekdayTue": "mar.",
-      "weekdayWed": "mer.",
-      "weekdayThu": "jeu.",
-      "weekdayFri": "ven.",
-      "weekdaySat": "sam.",
-      "weekdaySun": "dim.",
-      "legendSession": "Session",
-      "legendSkipped": "Sans session",
-      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "verb": {
