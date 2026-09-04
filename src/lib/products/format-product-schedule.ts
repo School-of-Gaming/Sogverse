@@ -314,26 +314,6 @@ export function renderScheduleLinesForDetail(
   }
 }
 
-/**
- * Whether this schedule states a clock face at all, as opposed to a date range,
- * a lone date, or nothing.
- *
- * It exists for the one caller that has something to say about the *zone* the
- * times are in: a sentence naming a timezone under a line that carries no time
- * is answering a question nobody asked. Everything else reads the lines.
- */
-export function scheduleStatesTimes(schedule: ProductScheduleSummary): boolean {
-  switch (schedule.kind) {
-    case "tbd":
-      return false;
-    case "recurring":
-    case "ranged":
-      return schedule.groups.length > 0;
-    case "single":
-      return schedule.time !== null;
-  }
-}
-
 export function formatProductSchedule({
   product,
   locale,
