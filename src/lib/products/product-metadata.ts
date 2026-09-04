@@ -42,8 +42,8 @@ export const PRODUCT_ROBOTS_ONLY: Metadata = {
  * still fetched and rendered client-side by `ProductDetailPage` — so it is kept
  * as narrow as the card is: the image path, plus the three translation columns
  * the title and description come out of. The joined shapes the products service
- * selects (prices, slots, locations, holiday calendars) exist for the page body
- * and would be a large second fetch for two strings.
+ * selects (prices, slots, locations) exist for the page body and would be a
+ * large second fetch for two strings.
  *
  * **The translation is resolved at the default locale, not the viewer's.** The
  * audience for this metadata is a link scraper, which carries no locale cookie

@@ -142,7 +142,6 @@ const productDataBase = z.object({
   is_visible: z.boolean(),
   schedule_slots: z.array(scheduleSlotInput),
   prices: z.array(priceInput),
-  holiday_calendar_ids: z.array(z.string()),
   // The consent documents a parent must agree to before enrolling — slugs from
   // `consent_documents`, empty for almost every product.
   //

@@ -162,12 +162,6 @@ export const adminDashboardScheduleProduct = z.object({
   active_count: z.number(),
   waitlist_count: z.number(),
   schedule_slots: z.array(adminDashboardScheduleSlot),
-  /**
-   * The product's holiday dates that fall inside the schedule window, as bare
-   * calendar dates. A week whose sessions all land on one of these is a break,
-   * which the page needs in order to say a product is absent *on purpose*.
-   */
-  holidays: z.array(z.string()),
 });
 
 /** The whole document `get_admin_dashboard` returns. */

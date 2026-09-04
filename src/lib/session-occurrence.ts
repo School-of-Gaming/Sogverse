@@ -372,12 +372,6 @@ export function enumerateRowOccurrences(args: {
  * it is a history, read newest-first — so it needs the same slots walked the
  * other way, and it needs the walk to be as DST-safe as the forward one.
  *
- * **Holiday-blind, deliberately.** It expands weekday slots and nothing else,
- * matching the live dashboards' expansion rather than the calendar component's
- * holiday-aware one. A feed that hid a listed holiday while the write path
- * still accepted a record for it (or vice versa) would produce sessions a gedu
- * can neither see nor clear.
- *
  * The walk is bounded twice over — by `floor` and by `maxOccurrences` — because
  * a schedule with no start date would otherwise be an unbounded loop, and an
  * unbounded loop in an expansion helper is how this codebase once pegged a

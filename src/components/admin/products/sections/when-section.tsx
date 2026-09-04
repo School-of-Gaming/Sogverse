@@ -5,10 +5,8 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
-import { useHolidayCalendars } from "@/services/products";
 import { FormSection, InfoCallout } from "../form-primitives";
 import { formLocksFor } from "../form-locks";
-import { HolidayCalendarOption } from "../holiday-calendar-option";
 import { ScheduleSlotsEditor } from "../schedule-slots-editor";
 import {
   END_DATE_MODE_VALUES,
@@ -26,18 +24,16 @@ interface WhenSectionProps {
 
 export function WhenSection({ state, setState, config }: WhenSectionProps) {
   const t = useTranslations("admin.products");
-  const { data: calendars } = useHolidayCalendars();
 
   const productType = config.productType;
   const startTriggerOptions = config.allowedStartModes;
   const usesDate = startModeUsesDate(state.startMode);
   const usesThreshold = startModeUsesThreshold(state.startMode);
-  const showHolidayCalendars = config.hasHolidayCalendars;
 
   // Pre-prod UI locks, resolved through form-locks.ts like every other section
-  // — neither of the two below lifts for any product today, but reading the
-  // constant directly would put a second decision-maker next to the resolver.
-  // The start trigger is pinned to the type's default ("On a specific date").
+  // — the lock below lifts for no product today, but reading the constant
+  // directly would put a second decision-maker next to the resolver. The start
+  // trigger is pinned to the type's default ("On a specific date").
   const locks = formLocksFor(config);
   const lockStartMode = locks.startMode;
   // A consumer club's first charge is deferred to its start date, so the date
@@ -269,34 +265,6 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
           }
         />
       </Field>
-
-      {showHolidayCalendars && (
-        <Field
-          label={t("labels.holidayCalendars")}
-          optional
-          hint={t("hints.holidayHint")}
-        >
-          {locks.holidayCalendars ? (
-            <InfoCallout text={t("hints.holidayComingSoon")} />
-          ) : (
-            <div className="space-y-2">
-              {calendars?.map((cal) => (
-                <HolidayCalendarOption
-                  key={cal.id}
-                  calendar={cal}
-                  checked={state.holidayCalendarIds.has(cal.id)}
-                  onToggle={() => {
-                    const next = new Set(state.holidayCalendarIds);
-                    if (next.has(cal.id)) next.delete(cal.id);
-                    else next.add(cal.id);
-                    setState({ ...state, holidayCalendarIds: next });
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </Field>
-      )}
     </FormSection>
   );
 }

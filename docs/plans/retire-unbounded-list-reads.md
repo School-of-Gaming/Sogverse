@@ -166,8 +166,7 @@ discipline the route registry uses).
 - **Audited and deliberately unchanged** (bounded by construction; recorded so the next
   sweep doesn't re-litigate): voice zone/occupant reads (one group's roster), per-family
   participation and subscription reads, parent↔gamer link reads by parent or gamer, the
-  holiday-calendar read (a handful of rows; its per-calendar embed is nested and uncapped),
-  the spoken-languages reference read, all set-returning RPCs (each caller-scoped to own
+  spoken-languages reference read, all set-returning RPCs (each caller-scoped to own
   family / own assignments), and all jsonb-returning RPCs (structurally immune). These
   belong in the ratchet's registry with these reasons, which is where the audit record
   lives from then on.

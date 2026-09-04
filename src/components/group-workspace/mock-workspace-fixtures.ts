@@ -627,9 +627,9 @@ const YEARLONG_STAFF_NOTES: readonly string[] = [
  * Plus a pre-epoch tail: one session somebody went back and wrote up (an
  * ordinary past entry that never turns amber, and the only place on this page
  * the neutral marker still appears) and two nobody ever touched (quiet
- * placeholder lines that still open the record editor). There are no holiday
- * skips: a session that did not run has no entry kind, because declaring one off
- * is part of the cancellation flows nobody has designed.
+ * placeholder lines that still open the record editor). A session that did not
+ * run has no entry kind at all, because declaring one off is part of the
+ * cancellation flows nobody has designed.
  */
 function yearlongSpecs(): readonly EntrySpec[] {
   const OWED_AT = new Set([2, 12]);

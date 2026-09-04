@@ -38,7 +38,6 @@ vi.mock("next-intl", () => ({
 }));
 
 vi.mock("@/services/products", () => ({
-  useHolidayCalendars: () => ({ data: [] }),
   useConsentDocuments: () => ({ data: [] }),
 }));
 

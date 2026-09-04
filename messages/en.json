@@ -274,7 +274,6 @@
         "sessionCount": "{count, plural, one {# session} other {# sessions}}",
         "timesIn": "times in {zone}",
         "nothingOn": "Nothing on",
-        "paused": "Paused this week:",
         "needsAttention": "Needs attention — this product is in the queue at the top of the page",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
@@ -417,7 +416,6 @@
           "endDate": "End date",
           "signupThreshold": "Signup threshold",
           "termDates": "Term dates",
-          "holidayCalendars": "Holiday calendars",
           "billingMode": "Billing",
           "seats": "Seats",
           "waitlist": "Waitlist",
@@ -507,8 +505,6 @@
         "dayAndTime": "Day & time",
         "daysAndTimes": "Days & times",
         "time": "Time",
-        "holidayCalendars": "Holiday calendars",
-        "holidayNoUpcoming": "No upcoming dates — this calendar needs dates before it’s useful.",
         "pricing": "Price",
         "free": "Free",
         "paid": "Paid",
@@ -635,7 +631,6 @@
         "thresholdOnly": "No fixed start date yet. Parents see a “X of Y needed” counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
         "thresholdWithDate": "If fewer than this many parents sign up by the start date, you’ll need to cancel and refund from the product’s page.",
         "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
-        "holidayHint": "No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically.",
         "billingHint": "Free products default to a seat limit; paid ones start unlimited.",
         "freeDetail": "No charge. Anyone can join with one click.",
         "paidDetailMonthly": "Charged monthly as a subscription.",
@@ -647,7 +642,6 @@
         "seatHintNoWaitlist": "When full, new signups are refused.",
         "visibleHint": "Unchecked, the product appears on no public page — but anyone with the direct link can still open it and buy a place. That is what makes it right for unannounced, invite-only or campaign products. It is not a way to stop sign-ups, and it never affects parents and gamers already taking part.",
         "seatLimitHint": "Cap the number of participants, or run with no limit.",
-        "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
         "startDateBillingAnchor": "The date the club starts, and the date families are first charged. Changing it later does not move the first charge for anyone who has already signed up — correct those subscriptions in Stripe."
       },
       "errors": {
@@ -1928,18 +1922,6 @@
       "language": "Language",
       "online": "Online",
       "tbd": "To be confirmed"
-    },
-    "calendar": {
-      "weekdayMon": "Mon",
-      "weekdayTue": "Tue",
-      "weekdayWed": "Wed",
-      "weekdayThu": "Thu",
-      "weekdayFri": "Fri",
-      "weekdaySat": "Sat",
-      "weekdaySun": "Sun",
-      "legendSession": "Session",
-      "legendSkipped": "Skipped",
-      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "verb": {

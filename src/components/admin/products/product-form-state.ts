@@ -178,7 +178,6 @@ export interface FormState {
   hasEndDate: boolean;
   endDate: string;
   scheduleSlots: ScheduleSlotDraft[];
-  holidayCalendarIds: Set<string>;
   signupThreshold: string;
 
   // Capacity & billing
@@ -212,9 +211,9 @@ export interface FormState {
   // Required consents
   //
   // The consent documents a parent must agree to before enrolling, as the slugs
-  // of `consent_documents` rows. A Set for the same reason `holidayCalendarIds`
-  // is one: the control is a list of independent checkboxes and the payload
-  // builder flattens it with `Array.from`.
+  // of `consent_documents` rows. A Set because the control is a list of
+  // independent checkboxes and the payload builder flattens it with
+  // `Array.from`.
   //
   // Offered on every product type, deliberately: the mechanism is generic — a
   // product requires whichever published documents it requires — and a per-type
@@ -311,7 +310,6 @@ export function initialState(
     hasEndDate: false,
     endDate: "",
     scheduleSlots: defaultSlots(config),
-    holidayCalendarIds: new Set(),
     signupThreshold: "",
     paidMode: initialPaidMode,
     prices: {

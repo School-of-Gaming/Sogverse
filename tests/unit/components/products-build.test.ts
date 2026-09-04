@@ -1504,7 +1504,6 @@ function mockDetailRow(
       { weekday: 1, start_time: "16:00", duration_minutes: 90 },
     ],
     locations: null,
-    product_holiday_calendars: [],
     product_required_consents: [],
     product_marketing_consents: [],
     ...overrides,

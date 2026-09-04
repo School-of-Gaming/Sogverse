@@ -4,6 +4,16 @@
 lean, so a future session can turn it into a `docs/plans/` plan when we're ready to
 build. Nothing here is committed scope.
 
+**Superseded on one point (2026-09-04): the holiday calendar no longer exists.** The
+feature was removed whole — three tables, the RPC arguments, the admin field and
+`product_has_session` — so the "holiday-aware vs holiday-blind" split below is
+history. Every expansion now applies the same rule (a session is any in-term date on a
+slot weekday), which removes the trap rather than solving it: an outbound artifact
+built today can use any expansion and get the same answer. The public product calendar
+component named below — the one holiday-aware expansion in the app — was deleted in the
+same change, having had no consumer since the detail page dropped it. Read the findings
+below as the state on the research date; the rest of the investigation stands.
+
 ## The goal
 
 Parents should learn about upcoming sessions without us running managed, per-session
@@ -20,7 +30,7 @@ reminding.
   occurrence arithmetic lives in `src/lib/session-occurrence.ts` (with DST-safe
   primitives in `src/lib/enrollment.ts` and `src/lib/schedule-occurrence.ts`).
 - **Three occurrence expansions exist with different holiday behaviour**, and this is
-  the live trap for any outbound artifact:
+  the live trap for any outbound artifact *(superseded — see the note at the top)*:
   - `src/lib/session-occurrence.ts` — **holiday-blind** (dashboards and both session
     feeds, deliberately).
   - `src/components/calendar/compute-product-sessions.ts` — holiday-aware (public

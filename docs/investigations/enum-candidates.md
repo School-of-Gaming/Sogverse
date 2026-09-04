@@ -9,6 +9,12 @@ where no column is involved — would make the code cleaner? This doc records th
 sweep, the candidates it found, and the ground it covered. If any of it is committed
 to, it becomes a plan in `docs/plans/` (or a `TODO.md` item) and is removed from here.
 
+**Superseded on two points (2026-09-04): the holiday calendar was removed whole** —
+its three tables, the RPC arguments, the admin form field and `product_has_session`
+are all gone. That closes the `useHolidayCalendars()` wasted-read bug in §C (the hook
+and its caller no longer exist) and retires the holiday-calendars entry in §D along
+with the table it ruled on. Nothing else in the sweep is affected.
+
 ## The test a candidate has to pass
 
 The spoken-language conversion qualified on five counts, and they are the bar:

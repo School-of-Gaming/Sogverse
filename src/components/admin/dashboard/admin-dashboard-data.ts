@@ -228,18 +228,15 @@ export interface ScheduleChip {
 /**
  * One week of the schedule, already resolved.
  *
- * "Resolved" is the load-bearing word: a product whose term has not started,
- * has ended, or is on a holiday break this week contributes no chip, so the
- * week is what is actually happening rather than what the schedule says in the
- * abstract. Doing that resolution in the feed keeps the body from having to know
- * about terms and breaks at all.
+ * "Resolved" is the load-bearing word: a product whose term has not started or
+ * has ended contributes no chip, so the week is what is actually happening
+ * rather than what the schedule says in the abstract. Doing that resolution in
+ * the feed keeps the body from having to know about terms at all.
  */
 export interface ScheduleWeek {
   /** The Monday, as a bare `YYYY-MM-DD` calendar date in the viewer's zone. */
   weekStart: string;
   chips: readonly ScheduleChip[];
-  /** Products paused this week, named so the page can say why they are absent. */
-  onBreak: readonly string[];
 }
 
 /** One product in a coming-up milestone. */

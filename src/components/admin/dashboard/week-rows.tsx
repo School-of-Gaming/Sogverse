@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, PauseCircle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { cn, formatDateOnly } from "@/lib/utils";
 import type { ScheduleChip, ScheduleWeek } from "./admin-dashboard-data";
 import { addCalendarDays, formatDayMonth } from "./calendar";
@@ -107,19 +107,6 @@ export function WeekRows({
           </li>
         ))}
       </ul>
-
-      {week.onBreak.length > 0 && (
-        // Kept under the whole week rather than pinned to a row: a paused club
-        // is absent from every row it would have appeared in, so attaching the
-        // line to one of them would say it once and imply it about the others.
-        <p className="flex items-start gap-2 text-xs text-muted-foreground">
-          <PauseCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span>
-            <span className="font-medium">{t("paused")}</span>{" "}
-            {week.onBreak.join(", ")}
-          </span>
-        </p>
-      )}
     </div>
   );
 }

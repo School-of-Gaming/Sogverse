@@ -157,7 +157,7 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason))), product_required_consents(document_slug), product_marketing_consents(consent_type)",
+      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -188,7 +188,7 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(calendar_id, holiday_calendars(name)), product_required_consents(document_slug), product_marketing_consents(consent_type)",
+      "*, product_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -235,25 +235,17 @@ export type ProductWithDetails = QueryData<
 // from the browse row: one page reading one product can afford the whole row,
 // and it renders things a card never does — the authored long description above
 // all. Deriving it from the browse row is what used to force `BROWSE_SELECT` to
-// stay wide, so the two are deliberately independent now.
-//
-// The junction embed is dropped from the public shape because the service
-// flattens it: `holidays` is every (date, reason) pair pulled from the linked
-// calendars, with the calendar's own `name` standing in where the admin set no
-// per-date reason. Consumed by the detail page calendar widget; the signup panel
-// also reads `product_prices` off this row.
-export type ProductDetailRow = Omit<
-  NonNullable<QueryData<ReturnType<typeof buildProductDetailQuery>>>,
-  "product_holiday_calendars"
-> & {
-  holidays: { date: string; reason: string }[];
-};
+// stay wide, so the two are deliberately independent now. The signup panel reads
+// `product_prices` off this row.
+export type ProductDetailRow = NonNullable<
+  QueryData<ReturnType<typeof buildProductDetailQuery>>
+>;
 
 // Admin-only single-product detail, inferred from buildAdminProductQuery
 // (`NonNullable` strips the `maybeSingle()` `| null`). Unlike the browse row
 // this is NOT filtered on listing or status, so admins can fetch unlisted and
 // cancelled rows alike. Carries the IDs the form needs to round-trip an edit
-// plus readable strings (location chain, holiday calendar names).
+// plus readable strings (the location chain).
 export type ProductAdminDetailRow = NonNullable<
   QueryData<ReturnType<typeof buildAdminProductQuery>>
 >;
@@ -374,7 +366,6 @@ export type CreateProductInput = {
   is_visible: boolean;
   schedule_slots: ScheduleSlotInput[];
   prices: PriceInput[];
-  holiday_calendar_ids: string[];
   /**
    * The consent documents a parent must agree to before enrolling, as slugs
    * from `consent_documents`. Empty on almost every product — the Roblox
@@ -462,7 +453,6 @@ export type UpdateProductInput = {
   is_visible: boolean;
   schedule_slots: ScheduleSlotInput[];
   prices: PriceInput[];
-  holiday_calendar_ids: string[];
   /** Required consent document slugs — see CreateProductInput. The update half
    *  is the load-bearing one: the RPC replaces the whole requirement set on
    *  every call, so the answer has to travel on every save. */
@@ -526,9 +516,7 @@ export class ProductsService {
   }
 
   // Single-product detail fetch for the parent-facing detail page
-  // (`/shop/[id]`). Returns the same shape as `listVisibleByTypes` plus a
-  // flattened `holidays` array sourced from the linked holiday calendars —
-  // that's everything the calendar widget and the signup panel need to render.
+  // (`/shop/[id]`).
   //
   // RLS is the sole gate: a viewer reaches this row if the product is in a
   // published status (pending/running — listed or not, which is the point of
@@ -543,24 +531,7 @@ export class ProductsService {
     const { data, error } = await buildProductDetailQuery(this.supabase, id);
 
     if (error) throw error;
-    if (!data) return null;
-
-    // Flatten linked-calendar holidays into a single array. Each row keeps
-    // its per-date `reason` if the admin filled one in; otherwise the
-    // calendar's own `name` is the fallback (e.g., "Finnish national
-    // holidays" reads better than a blank row in the UI).
-    const holidays: { date: string; reason: string }[] = [];
-    for (const link of data.product_holiday_calendars) {
-      // `holiday_calendars` is non-null — the junction's `calendar_id` is a
-      // NOT-NULL FK, so the inferred embed can't be null (the old hand-written
-      // raw type over-declared it nullable).
-      const cal = link.holiday_calendars;
-      for (const h of cal.calendar_holidays) {
-        holidays.push({ date: h.date, reason: h.reason ?? cal.name });
-      }
-    }
-
-    return { ...data, holidays };
+    return data;
   }
 
   // Plain JSON both ways. The picture travels as the id of a catalogue entry

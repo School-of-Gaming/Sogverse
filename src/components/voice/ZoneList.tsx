@@ -395,8 +395,8 @@ function ZoneCard({
 // Each zone reserves a fixed-height member area whether or not anyone is in it,
 // so a card's height never changes as people move between zones (the whole
 // stack would otherwise reflow). When more avatars are present than fit, the
-// row scrolls horizontally and the overflowing edge(s) fade out — the same
-// "there's more to scroll" cue the session calendar uses — instead of wrapping
+// row scrolls horizontally and the overflowing edge(s) fade out as a
+// "there's more to scroll" cue — instead of wrapping
 // (which grows the card) or overlapping (which would hide names). Names are
 // always kept.
 // ---------------------------------------------------------------------------

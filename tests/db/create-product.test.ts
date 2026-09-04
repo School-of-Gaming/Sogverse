@@ -96,7 +96,6 @@ describe("create_product", () => {
         { weekday: 1, start_time: "16:00", duration_minutes: 60 },
       ],
       p_prices: [],
-      p_holiday_calendar_ids: [],
       // Omitted entirely when the caller has no tag — the DEFAULT NULL is what
       // writes "untagged", exactly as the route's `?? undefined` produces.
       ...(tag === undefined ? {} : { p_tag: tag }),

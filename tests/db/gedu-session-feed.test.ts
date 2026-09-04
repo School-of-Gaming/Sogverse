@@ -606,7 +606,7 @@ describe("gedu session feed", () => {
   });
 
   // -------------------------------------------------------------------------
-  // 4. Write validation — loose, holiday-blind, start-gated for attendance
+  // 4. Write validation — loose, start-gated for attendance
   // -------------------------------------------------------------------------
 
   describe("write validation", () => {

@@ -585,7 +585,6 @@ function buildSharedFields(
           };
         })
       : [],
-    holiday_calendar_ids: Array.from(state.holidayCalendarIds),
     // The enrolment conditions, on every save including the empty array that
     // means "requires nothing" — the RPC replaces the whole set on every call,
     // so an omitted answer would drop a product's conditions rather than
@@ -876,9 +875,6 @@ export function existingFormState(
       start_time: s.start_time,
       duration_minutes: s.duration_minutes,
     })),
-    holidayCalendarIds: new Set(
-      product.product_holiday_calendars.map((h) => h.calendar_id),
-    ),
     // Straight through from the join table. A stored slug this deploy cannot
     // name is deliberately NOT filtered out the way an un-seeded region lock is
     // — the checkbox renders the raw slug and stays ticked, so a save made for

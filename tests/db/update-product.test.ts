@@ -11,7 +11,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *
  * What we cover:
  *   - admin happy path: parent fields update; child sets (translations,
- *     prices, schedule slots, holiday calendars) wipe-and-replace.
+ *     prices, schedule slots) wipe-and-replace.
  *   - the design tag (00178) round-trips, and an OMITTED p_tag clears it —
  *     the defaulted-parameter half that has no CHECK behind it.
  *   - non-admin denied (customer client gets 42501).
