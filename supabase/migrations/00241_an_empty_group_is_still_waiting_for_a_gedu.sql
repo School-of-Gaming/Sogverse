@@ -27,6 +27,19 @@
 -- and paints it muted, because it is a loose end rather than a child nobody is
 -- looking after.
 --
+-- REBASED ONTO 00240
+--
+-- This branch was written before 00240 landed, and both migrations restate the
+-- WHOLE of get_admin_dashboard(). This one sorts after, so its body is what a
+-- database built from `migrations/` ends up with — which means it has to carry
+-- 00240's body forward or it would silently revert it. It does: the body below is
+-- 00240's verbatim, with only the four changes described above spliced in (the
+-- section-3 header comment, the `empty_groups_without_gedu` key, the `eg` lateral
+-- and the outer WHERE disjunct), and the COMMENT is 00240's with this migration's
+-- sentence added. In particular 00240's users strip — the `addressable` count,
+-- the `verified` CASE keyed on it and the `gamer_profiles` join it reads
+-- `sign_in` from — is untouched.
+--
 -- Nothing else about the function moves. The signature is unchanged, so this
 -- replaces in place and keeps its ACL; the REVOKE/GRANTs are restated below
 -- anyway so this file states the end state it leaves.
@@ -50,17 +63,26 @@ BEGIN
   -- a role with no accounts renders a zero tile instead of vanishing — and a
   -- role added to the enum later arrives here without an edit.
   --
-  -- Two stats are NULL rather than 0, and the difference is the point. A gamer's
-  -- address is a synthetic @gamer.sogverse.internal handle nobody will ever click
-  -- a link in, so "0 verified" would report a problem that does not exist; NULL
-  -- means the stat has no meaning for that role. `certified` is the same shape
-  -- for the same reason — only an educator can be certified.
+  -- Two stats can be NULL rather than 0, and the difference is the point.
+  -- `verified` is NULL for a role none of whose accounts holds a REAL address: a
+  -- gamer in sign-in mode `parent` or `username` carries a synthetic
+  -- @gamer.sogverse.internal handle nobody will ever click a link in, so "0
+  -- verified" would report a problem that does not exist. A gamer in mode
+  -- `email` holds a real mailbox and counts exactly like everyone else — which
+  -- is why the test below is the ADDRESS and not the role (00235). `certified`
+  -- is the same NULL-means-no-meaning shape for a simpler reason: only an
+  -- educator can be certified.
+  --
+  -- A role with no accounts at all still reports 0 rather than NULL — the
+  -- addressable test only speaks about accounts that exist, and an empty tile
+  -- has nothing to say either way.
   -- ---------------------------------------------------------------------------
   SELECT jsonb_agg(
            jsonb_build_object(
              'role',      r.role_name,
              'total',     COALESCE(c.total, 0),
-             'verified',  CASE WHEN r.role_name = 'gamer' THEN NULL
+             'verified',  CASE WHEN COALESCE(c.total, 0) > 0
+                                 AND COALESCE(c.addressable, 0) = 0 THEN NULL
                                ELSE COALESCE(c.verified, 0) END,
              'certified', CASE WHEN r.role_name = 'gedu' THEN COALESCE(c.certified, 0)
                                ELSE NULL END
@@ -73,10 +95,21 @@ BEGIN
     LEFT JOIN (
       SELECT pr.role,
              count(*)                                                 AS total,
-             count(*) FILTER (WHERE pr.email_verified_at IS NOT NULL)  AS verified,
+             -- "Holds an address a human reads." True of every non-gamer, and
+             -- of a gamer exactly when their parent chose sign-in mode `email`.
+             -- A gamer row missing from gamer_profiles is a data error and
+             -- lands on the conservative side: not addressable.
+             count(*) FILTER (
+               WHERE pr.role <> 'gamer' OR gmr.sign_in = 'email'
+             )                                                        AS addressable,
+             count(*) FILTER (
+               WHERE pr.email_verified_at IS NOT NULL
+                 AND (pr.role <> 'gamer' OR gmr.sign_in = 'email')
+             )                                                        AS verified,
              count(*) FILTER (WHERE gp.certified)                      AS certified
         FROM public.profiles pr
-        LEFT JOIN public.gedu_profiles gp ON gp.user_id = pr.id
+        LEFT JOIN public.gedu_profiles gp   ON gp.user_id  = pr.id
+        LEFT JOIN public.gamer_profiles gmr ON gmr.user_id = pr.id
        GROUP BY pr.role
     ) c ON c.role = r.role_name;
 
@@ -376,7 +409,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — both NULL where the stat has no meaning for the role), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00213 each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Since 00241 an unstaffed group with NO active member is named too, in its own empty_groups_without_gedu array beside groups_without_gedu, and can put a product in the queue by itself: the empty group used to be carved out of the group check entirely, on the reasoning that an admin pre-building next term has not made a mistake, and that reasoning now decides its RANK on the page rather than hiding it. The two arrays are disjoint by construction and neither holds a group somebody is assigned to. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
+COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — either can be NULL, where the stat has no meaning: certified only means something for an educator, and verified is NULL for a role none of whose accounts holds a real address, which is every gamer unless their parent chose sign-in mode email), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00213 each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Since 00241 an unstaffed group with NO active member is named too, in its own empty_groups_without_gedu array beside groups_without_gedu, and can put a product in the queue by itself: the empty group used to be carved out of the group check entirely, on the reasoning that an admin pre-building next term has not made a mistake, and that reasoning now decides its RANK on the page rather than hiding it. The two arrays are disjoint by construction and neither holds a group somebody is assigned to. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
 
 REVOKE EXECUTE ON FUNCTION public.get_admin_dashboard() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_admin_dashboard() TO authenticated;
