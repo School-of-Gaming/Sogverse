@@ -14,13 +14,22 @@ import { resolveLocale } from "@/lib/constants/locales";
  * hand-maintained map silently falls back to English for anything new.
  *
  * The optional `fallback` is returned when Intl cannot help, and it exists for
- * the **locale** side alone: `tlh` is not a language Intl has a name for, so
- * the locale surfaces pass `LOCALE_CONFIG.label` and get "Klingon" rather than
- * a raw tag. Every spoken-language code is named in every locale we ship, so
- * those callers pass no fallback at all. (For a viewer whose locale Intl has no
- * data for — Klingon again — `DisplayNames` resolves against its own
- * default-locale data, so tlh viewers read English language names; the easter
- * egg does not get its own.)
+ * the **locale** side alone: the locale surfaces pass `LOCALE_CONFIG.label` so
+ * `tlh` reads "Klingon" rather than a raw tag. Every spoken-language code is
+ * named in every locale we ship, so those callers pass no fallback at all. (For
+ * a viewer whose locale Intl has no data for — Klingon again — `DisplayNames`
+ * resolves against its own default-locale data, so tlh viewers read English
+ * language names; the easter egg does not get its own.)
+ *
+ * **Klingon is never asked of Intl at all.** Whether CLDR has a name for it
+ * depends on the ICU build: the Node this renders on names it in French,
+ * Finnish and Swedish ("klingon", "klingonska"), and the browser hydrating that
+ * markup does not and falls back to English "Klingon" — a hydration mismatch
+ * on every locale picker for any viewer whose browser and our server disagree,
+ * and one that flips as either side updates its ICU. So the answer for `tlh`
+ * is the caller's fallback, deterministically, on both sides. That also
+ * matches the house rule for the easter egg: "Klingon" is a mark, like
+ * "Sogverse", and is not translated.
  */
 export function useLanguageNames(): (code: string, fallback?: string) => string {
   const uiLocale = resolveLocale(useLocale());
@@ -46,6 +55,8 @@ export function useLanguageNames(): (code: string, fallback?: string) => string 
 
   return useMemo(
     () => (code: string, fallback?: string) => {
+      // The easter-egg locale, by name rather than through Intl — see above.
+      if (code === "tlh") return fallback ?? code;
       try {
         return displayNames?.of(code) ?? fallback ?? code;
       } catch {
