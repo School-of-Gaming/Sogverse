@@ -2612,8 +2612,8 @@
       "replyToLabel": "Svarsadress",
       "sent": "Skickat",
       "message": "Meddelande",
-      "gamerNote": "Det här meddelandet kommer från ett spelarkonto. Svar går till deras förälder ({parentEmail}).",
-      "gamerOwnEmailNote": "Spelaren har också en egen e-postadress ({gamerEmail}) — ta med den om du svarar."
+      "gamerNoteNoMailbox": "Skickat från ett spelarkonto ({firstName}) som inte har någon egen e-postadress.",
+      "gamerNoteOwnMailbox": "Skickat från ett spelarkonto ({firstName}) — hen läser också sin egen e-post, {gamerEmail}."
     },
     "welcomeParent": {
       "subject": "Välkommen till School of Gaming",
@@ -2711,9 +2711,9 @@
     "gamerWelcome": {
       "subject": "Ditt School of Gaming-konto är klart",
       "heading": "Ditt konto är klart",
-      "body": "Hej {gamerName}, {parentName} har skapat ett School of Gaming-konto åt dig. Bekräfta den här e-postadressen, så är kontot ditt.",
-      "button": "Bekräfta min e-postadress",
-      "afterVerifying": "När du har bekräftat adressen skickar vi ett mejl till med en länk där du väljer ditt lösenord. Sedan kan du logga in på egen hand.",
+      "body": "Hej {gamerName}, din förälder har skapat ett School of Gaming-konto åt dig. Tryck på knappen nedan för att bekräfta att det här är din e-postadress.",
+      "button": "Det här är min e-postadress",
+      "afterConfirming": "Sedan skickar vi ett mejl till med en länk där du väljer ditt lösenord. Därefter kan du logga in på egen hand.",
       "ignore": "Om du inte väntade dig det här mejlet kan du bortse från det. Ingenting händer."
     },
     "sessionReport": {
@@ -2750,10 +2750,8 @@
       },
       "gamer": {
         "subject": "En plats har blivit ledig för dig – {productName}",
-        "opening": "Hej {gamerName}! Vi lovade att höra av oss så snart en plats blev ledig, och nu har det hänt: det finns en plats för dig i {productName}. Vi har precis mejlat din förälder om det.",
-        "parentDecides": "Din förälder bestämmer om platsen ska tas — knapparna för att svara finns i hens mejl, inte i det här. Vill du vara med är det här ett bra tillfälle att säga det.",
-        "deadlineLabel": "Din förälder kan svara till",
-        "deadlineBody": "{deadline}. Därefter går platsen vidare till nästa familj i kön.",
+        "opening": "Hej {gamerName}, en plats har blivit ledig för dig i {productName}. Goda nyheter!",
+        "parentDecides": "Din förälder har fått ett mejl med frågan om platsen ska tas, och kan svara fram till {deadline}. När svaret kommer ser du det i Min SOG.",
         "dashboardButton": "Öppna Min SOG"
       }
     },

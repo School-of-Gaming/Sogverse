@@ -276,10 +276,11 @@ describe("POST /api/admin/send-test-email", () => {
       userRole: "customer",
       userEmail: "jane@example.com",
       message: "Great product!",
-      // The gamer case's two notes, absent here — posted as null, the way the
-      // testing page's resolver turns an emptied field into "none".
+      // The gamer case's two fields, in their non-gamer state — the address
+      // posted as null, the way the testing page's resolver turns an emptied
+      // field into "none", and the sign-in select's default.
       parentEmail: null,
-      gamerEmail: null,
+      gamerOwnMailbox: false,
     },
   };
 

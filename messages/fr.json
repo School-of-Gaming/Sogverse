@@ -2612,8 +2612,8 @@
       "replyToLabel": "Répondre à",
       "sent": "Envoyé",
       "message": "Message",
-      "gamerNote": "Ce message provient d’un compte joueur. Les réponses seront adressées à son parent ({parentEmail}).",
-      "gamerOwnEmailNote": "Ce joueur dispose aussi d’une adresse e-mail qui lui est propre ({gamerEmail}) — ajoutez-la si vous répondez."
+      "gamerNoteNoMailbox": "Message envoyé depuis un compte joueur ({firstName}), qui n’a pas d’adresse e-mail propre.",
+      "gamerNoteOwnMailbox": "Message envoyé depuis un compte joueur ({firstName}) — cette personne lit aussi sa propre boîte e-mail, {gamerEmail}."
     },
     "welcomeParent": {
       "subject": "Bienvenue chez School of Gaming",
@@ -2711,9 +2711,9 @@
     "gamerWelcome": {
       "subject": "Ton compte School of Gaming est prêt",
       "heading": "Ton compte est prêt",
-      "body": "Bonjour {gamerName}, {parentName} a créé un compte School of Gaming pour toi. Confirme cette adresse e-mail et le compte est à toi.",
-      "button": "Confirmer mon adresse e-mail",
-      "afterVerifying": "Une fois l’adresse confirmée, nous t’enverrons un dernier e-mail avec un lien pour choisir ton mot de passe. Tu pourras ensuite te connecter tout seul.",
+      "body": "Bonjour {gamerName}, ton parent a créé un compte School of Gaming pour toi. Appuie sur le bouton ci-dessous pour confirmer que c’est bien ton adresse e-mail.",
+      "button": "C’est bien mon adresse",
+      "afterConfirming": "Nous t’enverrons ensuite un dernier e-mail avec un lien pour choisir ton mot de passe. Tu pourras alors te connecter par toi-même.",
       "ignore": "Si tu n’attendais pas cet e-mail, tu peux l’ignorer. Rien ne changera."
     },
     "sessionReport": {
@@ -2750,10 +2750,8 @@
       },
       "gamer": {
         "subject": "Une place s’est libérée pour toi dans {productName}",
-        "opening": "Bonjour {gamerName} ! Nous avions promis d’écrire dès qu’une place se libérerait, et c’est le cas : il y a une place pour toi dans {productName}. Nous venons d’envoyer un e-mail à ton parent à ce sujet.",
-        "parentDecides": "C’est ton parent qui décide de la prendre ou non — les boutons pour répondre sont dans son e-mail, pas dans celui-ci. Si tu as envie d’y aller, c’est le bon moment pour le lui dire.",
-        "deadlineLabel": "Ton parent peut répondre jusqu’au",
-        "deadlineBody": "{deadline}. Passé ce délai, la place ira à la famille suivante sur la liste.",
+        "opening": "Bonjour {gamerName}, une place s’est libérée pour toi dans {productName}. Bonne nouvelle !",
+        "parentDecides": "Ton parent a reçu un e-mail qui lui demande de dire oui ou non, et la réponse est attendue avant le {deadline}. Dès qu’elle arrive, tu la verras dans Mon SOG.",
         "dashboardButton": "Ouvrir Mon SOG"
       }
     },

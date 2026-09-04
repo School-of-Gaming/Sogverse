@@ -7,22 +7,54 @@ import { factTable } from "./blocks";
 import { defuseAutolinks, escapeHtml, heading, paragraph, pinnedFill } from "./utils";
 import type { EmailTranslator } from "./translator";
 
-interface FeedbackEmailOptions {
+export interface FeedbackEmailOptions {
   userName: string;
   userRole: UserRole;
+  /**
+   * The address on the submitter's own account — a gamer's included, which
+   * under the switch-only and username sign-ins is the platform-internal handle
+   * nobody reads. It is not necessarily where a reply goes: see
+   * `feedbackReplyToAddress` below for which of the two addresses does.
+   */
   userEmail: string;
   message: string;
   sentAt: string;
   isGamer?: boolean;
+  /** The linked parent's address — the one a reply to a gamer's message goes to. */
   parentEmail?: string;
   /**
-   * The gamer's own address, present only when they hold a mailbox of their
-   * own (the real-email sign-in). Brevo's Reply-To is one address and stays the
-   * parent's, so this goes in the staff-facing note instead — the admin
-   * answering can then include both. Never set for a child who signs in
-   * through their parent or with a username: there is no inbox behind those.
+   * Whether the gamer signs in with a real address of their own, which is the
+   * whole of the test: in that one mode `userEmail` is a mailbox the child
+   * actually reads, and the note names it so the admin answering can include
+   * them alongside the parent. False for the two modes with no inbox behind
+   * them, where naming the handle would be naming nothing.
    */
-  gamerEmail?: string;
+  gamerOwnMailbox?: boolean;
+}
+
+/**
+ * Where a reply to this message goes, decided once.
+ *
+ * A gamer's message is answered through their linked parent — we never write to
+ * a child alone — and everybody else is answered at their own address. Two
+ * places need this answer and they must not be able to disagree: the route sets
+ * the Brevo Reply-To header from it, and the mail prints it in the "Reply to"
+ * row so whoever opens the mail can see where their reply will land. A row that
+ * named a different address from the header is the specific lie this exists to
+ * prevent.
+ *
+ * A gamer with no linked parent falls back to their own address, which under
+ * two of the three sign-ins is a handle that would bounce. That is accepted and
+ * honest: every gamer is created through a parent, so an unlinked one is a
+ * broken row rather than a state to design a reply-to for, and the mail says
+ * exactly what the header carries.
+ */
+export function feedbackReplyToAddress({
+  isGamer,
+  parentEmail,
+  userEmail,
+}: Pick<FeedbackEmailOptions, "isGamer" | "parentEmail" | "userEmail">): string {
+  return isGamer && parentEmail ? parentEmail : userEmail;
 }
 
 /**
@@ -42,42 +74,39 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
   const escapedName = escapeHtml(opts.userName);
   const roleKey = ROLE_LABEL_KEYS[opts.userRole];
   const escapedRole = escapeHtml(t(roleKey));
-  // Displayed, never linked. This mail's Reply-To is already this address, so
-  // replying is how you answer the person — a second, differently-styled route
-  // to the same place is a question about which one is the real one. The
-  // defusing is what stops the client inventing that link on our behalf.
+  // Displayed, never linked. This mail's Reply-To header carries exactly this
+  // address, so replying is how you answer the person — a second,
+  // differently-styled route to the same place is a question about which one is
+  // the real one. The defusing is what stops the client inventing that link on
+  // our behalf.
   //
   // The row is labelled "Reply to" rather than "Email" because that is what the
-  // value actually is: the route resolves the reply-to first and passes it in
-  // here, so on a gamer's submission this is their linked parent's address, not
-  // the gamer's synthetic handle. Labelling it "Email" was the one line in the
-  // mail that could be read as false.
-  const escapedEmail = defuseAutolinks(escapeHtml(opts.userEmail));
+  // value is: one shared resolver picks it, so on a gamer's submission this is
+  // their linked parent's address, not the child's own. Labelling it "Email"
+  // was the one line in the mail that could be read as false.
+  const escapedEmail = defuseAutolinks(escapeHtml(feedbackReplyToAddress(opts)));
 
-  const gamerNote = opts.isGamer && opts.parentEmail
+  // One note for a gamer's message, never two. The facts a staff reader needs
+  // are that the message came from a child's account and whether that child has
+  // a mailbox worth including — and the earlier pair of lines answered the
+  // second question with an address that the Reply-to row above had already
+  // shown, on the reading where they differed at all. Flattened: the row is the
+  // reply address, the note is the account it came from.
+  const gamerNote = opts.isGamer
     ? `<tr>
         <td style="padding:12px 0 0;color:${DARK_THEME.mutedFg};font-size:13px;font-style:italic;">
-          ${t("feedback.gamerNote", {
-            // Defused like the sender's address above: a displayed address that a
-            // client turns into its own link is a link we did not write, in a
-            // colour we did not choose. This one is a parent's, in a mail about
-            // their child, which makes it the worse of the two to get wrong.
-            parentEmail: defuseAutolinks(escapeHtml(opts.parentEmail)),
-          })}
-        </td>
-      </tr>`
-    : "";
-
-  // A second line under the first, only when the gamer has an address of
-  // their own. Same style and the same defusing: this address is a child's,
-  // and a client linking it on our behalf is the worst place for an invented
-  // link to appear.
-  const gamerOwnEmailNote = opts.isGamer && opts.parentEmail && opts.gamerEmail
-    ? `<tr>
-        <td style="padding:4px 0 0;color:${DARK_THEME.mutedFg};font-size:13px;font-style:italic;">
-          ${t("feedback.gamerOwnEmailNote", {
-            gamerEmail: defuseAutolinks(escapeHtml(opts.gamerEmail)),
-          })}
+          ${
+            opts.gamerOwnMailbox
+              ? t("feedback.gamerNoteOwnMailbox", {
+                  firstName: escapedName,
+                  // Defused like the reply-to address above: a displayed address
+                  // a client turns into its own link is a link we did not write,
+                  // in a colour we did not choose. This one is a child's, which
+                  // makes it the worse of the two to get wrong.
+                  gamerEmail: defuseAutolinks(escapeHtml(opts.userEmail)),
+                })
+              : t("feedback.gamerNoteNoMailbox", { firstName: escapedName })
+          }
         </td>
       </tr>`
     : "";
@@ -120,7 +149,6 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
         </td>
       </tr>
       ${gamerNote}
-      ${gamerOwnEmailNote}
     </table>`;
 
   return wrapInLayout({ title: t("feedback.heading"), content, locale, t });

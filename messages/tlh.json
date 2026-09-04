@@ -2656,8 +2656,8 @@
       "replyToLabel": "jangmeH QIn",
       "sent": "ngeHlu’",
       "message": "QIn",
-      "gamerNote": "QIn’vam toy’wI’ account vo’. jangmey vav/SoS naDev ({parentEmail}) ghoS.",
-      "gamerOwnEmailNote": "toy’wI’vam jabbI’ID Daq je ghaj ({gamerEmail}) — bIjangchugh yIchel."
+      "gamerNoteNoMailbox": "toy’wI’ account vo’ QInvam ({firstName}) — jabbI’ID Daq ghajbe’.",
+      "gamerNoteOwnMailbox": "toy’wI’ account vo’ QInvam ({firstName}) — jabbI’ID DaqDaj je laD: {gamerEmail}."
     },
     "welcomeParent": {
       "subject": "School of Gamingvo’ nuqneH!",
@@ -2755,9 +2755,9 @@
     "gamerWelcome": {
       "subject": "School of Gaming patlhlIj DaSuqpu’",
       "heading": "patlhlIj DaSuqpu’",
-      "body": "nuqneH {gamerName}! School of Gaming patlhlIj chenmoHpu’ {parentName}. QIn Daqvam yIchel, vaj SoHvaD patlh.",
-      "button": "QIn Daqwij vIchel",
-      "afterVerifying": "QIn Daq Dachelta’DI’, latlh QIn wIngeH: mu’wIj Sub DawIvmeH Duv qeng. ghIq bIjol laH.",
+      "body": "nuqneH {gamerName}! School of Gaming patlhlIj chenmoHpu’ vavlI’. QIn Daqvam Daghaj ’e’ toblu’meH, bIngDaq leQ yIqIp.",
+      "button": "QIn Daqwij ’oH",
+      "afterConfirming": "ghIq latlh QIn wIngeH: mu’wIj Sub DawIvmeH Duv qeng. ghIq bIjol laH.",
       "ignore": "QInvam DapIHbe’chugh, yIleghQo’. pagh qaS."
     },
     "sessionReport": {
@@ -2794,10 +2794,8 @@
       },
       "gamer": {
         "subject": "SoHvaD quS poSchoHpu’ – {productName}",
-        "opening": "nuqneH {gamerName}! quS poSDI’ wIja’ ’e’ wIper, ’ej DaH poSchoHpu’: SoHvaD quS tu’lu’ – {productName}. vavlI’vaD QIn wIngeHta’.",
-        "parentDecides": "quS Suq pagh Suqbe’ ’e’ wuq vavlI’ — jangmeH leQmey QInDajDaq tu’lu’, QInvamDaq tu’lu’be’. bIghoS DaneHchugh, DaH vavlI’vaD yIja’!",
-        "deadlineLabel": "jang vavlI’ poH",
-        "deadlineBody": "{deadline}. ghIq latlh qorDu’vaD jaH quS.",
+        "opening": "nuqneH {gamerName}! SoHvaD quS poSchoHpu’ – {productName}. QaQ De’vam!",
+        "parentDecides": "HIja’ pagh ghobe’ jang ’e’ luQoy vavlI’, ’ej {deadline} jangnIS. jangDI’, My SOG-Daq Dalegh.",
         "dashboardButton": "My SOG yIpoSmoH"
       }
     },

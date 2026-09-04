@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { buildFeedbackEmail } from "./feedback";
+import { buildFeedbackEmail, feedbackReplyToAddress } from "./feedback";
 import { buildPasswordResetEmail } from "./password-reset";
 import { buildWelcomeParentEmail, buildWelcomeGeduEmail } from "./welcome";
 import {
@@ -183,8 +183,8 @@ const SEAT_OPTIONS = [
 
 /**
  * The signup mail has a third reader the seat offer's form does not: the
- * child's own copy, sent beside the parent's when the child holds a verified
- * mailbox. Second person like the self seat, minus everything only a parent
+ * child's own copy, sent beside the parent's when the child holds a mailbox of
+ * their own. Second person like the self seat, minus everything only a parent
  * can act on — so it is a select option here and a flag on the builder.
  */
 const PRODUCT_CONFIRMATION_SEAT_OPTIONS = [
@@ -233,17 +233,28 @@ function resolveProductConfirmation(params: Record<string, string>): TemplatePar
 }
 
 /**
- * The help-and-feedback form's two optional addresses. Both are the gamer
- * case's — the parent a reply goes to, and the child's own verified address
- * when they hold one — and an untouched text input posts its placeholder, so
- * "none" has to be typed as an empty field, which becomes null here.
+ * Which sign-in the gamer holds. The mail only cares whether there is an inbox
+ * behind it — the note names the address in the one mode that has one — so the
+ * two modes that share an answer share an option, and the form's default is the
+ * one nearly every gamer is on.
+ */
+const FEEDBACK_GAMER_MAILBOX_OPTIONS = [
+  { label: "No email of their own (parent or username sign-in)", value: "none" },
+  { label: "Their own email (the email sign-in)", value: "own" },
+];
+
+/**
+ * The help-and-feedback form's two gamer-only fields. The parent's address is
+ * where a reply to a child's message goes, so an untouched text input posting
+ * its placeholder means "none" has to be typed as an empty field, which becomes
+ * null here; the sign-in select becomes the boolean the builder takes.
  */
 function resolveFeedback(params: Record<string, string>): TemplateParams {
-  const { parentEmail, gamerEmail, ...rest } = params;
+  const { parentEmail, gamerMailbox, ...rest } = params;
   return {
     ...rest,
     parentEmail: parentEmail.trim() || null,
-    gamerEmail: gamerEmail.trim() || null,
+    gamerOwnMailbox: gamerMailbox === "own",
   };
 }
 
@@ -302,7 +313,7 @@ const SESSION_REPORT_COPIES = ["family", "gamer", "staff"] as const;
 
 const SESSION_REPORT_COPY_LABELS: Record<(typeof SESSION_REPORT_COPIES)[number], string> = {
   family: "The family mail (what a parent receives)",
-  gamer: "The child's own copy (a gamer with a verified email)",
+  gamer: "The child's own copy (a gamer in email mode)",
   staff: "The Gedu and Admin copy (sender, admins in CC)",
 };
 
@@ -365,10 +376,10 @@ const passwordResetParamsSchema = z.object({
 });
 
 /**
- * The two addresses are nullable rather than optional for the same reason the
+ * The parent's address is nullable rather than optional for the same reason the
  * session report's `copy` is required: an optional key's `undefined` does not
- * fit the registry's param bag. Both only mean anything on a gamer's message
- * — the builder ignores them for every other role.
+ * fit the registry's param bag. It and the mailbox flag only mean anything on a
+ * gamer's message — the builder ignores both for every other role.
  */
 const feedbackParamsSchema = z.object({
   userName: z.string().min(1),
@@ -376,7 +387,7 @@ const feedbackParamsSchema = z.object({
   userEmail: z.string().email(),
   message: z.string().min(1),
   parentEmail: z.string().email().nullable(),
-  gamerEmail: z.string().email().nullable(),
+  gamerOwnMailbox: z.boolean(),
 });
 
 const welcomeParentParamsSchema = z.object({
@@ -420,7 +431,6 @@ const verifyEmailParamsSchema = z.object({
 
 const gamerWelcomeParamsSchema = z.object({
   gamerFirstName: z.string().min(1),
-  parentFirstName: z.string().min(1),
   verificationUrl: z.string().url(),
 });
 
@@ -570,15 +580,23 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
           { label: "Admin", value: "admin" },
         ],
       },
-      { key: "userEmail", label: "User Email", placeholder: "marja@example.com" },
+      // The sender's OWN address, not necessarily where a reply goes: for a
+      // gamer that is the parent's, and the mail resolves which is which.
+      { key: "userEmail", label: "Sender's own email", placeholder: "marja@example.com" },
       // An untouched text input posts its placeholder, so this is what a test
       // send actually carries — a help request rather than a compliment, since
       // that is the half of the form the mail's copy was rewritten for.
       { key: "message", label: "Message", placeholder: "How do I move my child to a different club?" },
-      // The gamer case's two notes. Both post their placeholder untouched, so
-      // clear them to render the mail as it goes for every other role.
+      // The gamer case's two fields. The address posts its placeholder
+      // untouched, so clear it to render the mail as it goes for every other
+      // role; the select's first option is the default and means "no inbox".
       { key: "parentEmail", label: "Parent email (gamer only, empty for none)", placeholder: "marja@example.com" },
-      { key: "gamerEmail", label: "Gamer's own verified email (empty for none)", placeholder: "aino@example.com" },
+      {
+        key: "gamerMailbox",
+        label: "Gamer's sign-in (gamer only)",
+        type: "select",
+        options: FEEDBACK_GAMER_MAILBOX_OPTIONS,
+      },
     ],
     schema: feedbackParamsSchema,
     build: (p, t, locale) => buildFeedbackEmail(t, locale, {
@@ -589,14 +607,18 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
       isGamer: p.userRole === "gamer",
       parentEmail: p.parentEmail ?? undefined,
-      gamerEmail: p.gamerEmail ?? undefined,
+      gamerOwnMailbox: p.gamerOwnMailbox,
     }),
     subject: (p, t) => t("feedback.subject", { displayName: p.userName, role: t(ROLE_LABEL_KEYS[p.userRole]) }),
     resolveParams: resolveFeedback,
-    // The live route resolves the reply-to first and passes it in as
-    // `userEmail` (a gamer's resolves to their linked parent's), so this param
-    // already *is* the address the real mail replies to.
-    replyTo: (p) => p.userEmail,
+    // The same resolver the mail's own "Reply to" row reads, so a test send
+    // replies exactly where the live one does — a gamer's to their linked
+    // parent, everyone else's to themselves.
+    replyTo: (p) => feedbackReplyToAddress({
+      isGamer: p.userRole === "gamer",
+      parentEmail: p.parentEmail ?? undefined,
+      userEmail: p.userEmail,
+    }),
   }),
   welcomeParent: defineTemplate({
     label: "Welcome (Parent)",
@@ -757,7 +779,6 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Welcome (Gamer)",
     fields: [
       { key: "gamerFirstName", label: "Gamer First Name", placeholder: "Aino" },
-      { key: "parentFirstName", label: "Parent First Name", placeholder: "Marja" },
       {
         key: "verificationUrl",
         label: "Verification URL",

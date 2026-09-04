@@ -65,7 +65,7 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     userEmail: "marja@example.com",
     message: "Great product!",
     parentEmail: null,
-    gamerEmail: null,
+    gamerOwnMailbox: false,
   },
   welcomeParent: {
     firstName: "Marja",
@@ -96,7 +96,6 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
   },
   gamerWelcome: {
     gamerFirstName: "Aino",
-    parentFirstName: "Marja",
     verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
   },
   seatOffer: {
@@ -191,14 +190,15 @@ function fromRegistry(
 const MAILS: Record<string, () => [string, string][]> = {
   "components-reference": () => fromRegistry("componentsReference"),
   "password-reset": () => fromRegistry("passwordReset"),
-  // The plain mail, and the gamer case with both of its notes — two rows of
-  // markup no other render reaches, one of them carrying a child's address.
+  // The plain mail, and the gamer case with the note that names a child's own
+  // address — a row of markup no other render reaches.
   feedback: () => [
     ...fromRegistry("feedback"),
-    ...fromRegistry("feedback", "feedback (gamer, own email)", {
+    ...fromRegistry("feedback", "feedback (gamer, own mailbox)", {
       userRole: "gamer",
+      userEmail: "aino@example.com",
       parentEmail: "marja@example.com",
-      gamerEmail: "aino@example.com",
+      gamerOwnMailbox: true,
     }),
   ],
   // The parent's mail and the child's own copy, which greets the reader and

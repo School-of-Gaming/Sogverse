@@ -122,7 +122,7 @@ export const POST = defineRoute({
     // last_name, gamer profiles do not auto-update. Track as a follow-up.
     const { data: parentProfile } = await admin
       .from("profiles")
-      .select("first_name, last_name")
+      .select("last_name")
       .eq("id", user.id)
       .single();
     const inheritedLastName = parentProfile?.last_name ?? "";
@@ -285,11 +285,7 @@ export const POST = defineRoute({
     // send it.
     if (signIn === "email") {
       try {
-        await sendGamerWelcomeEmail({
-          request,
-          gamerId,
-          parentFirstName: parentProfile?.first_name ?? "",
-        });
+        await sendGamerWelcomeEmail({ request, gamerId });
       } catch (mailError) {
         console.error("gamer creation: welcome email failed", mailError);
       }

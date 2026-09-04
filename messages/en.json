@@ -3298,8 +3298,8 @@
       "replyToLabel": "Reply to",
       "sent": "Sent",
       "message": "Message",
-      "gamerNote": "This message is from a gamer account. Replies go to their parent ({parentEmail}).",
-      "gamerOwnEmailNote": "This gamer also has an email address of their own ({gamerEmail}) — include it if you write back."
+      "gamerNoteNoMailbox": "Sent from {firstName}'s gamer account, which has no email of its own.",
+      "gamerNoteOwnMailbox": "Sent from {firstName}'s gamer account — they also read their own email, {gamerEmail}."
     },
     "welcomeParent": {
       "subject": "Welcome to School of Gaming",
@@ -3397,9 +3397,9 @@
     "gamerWelcome": {
       "subject": "Your School of Gaming account is ready",
       "heading": "Your account is ready",
-      "body": "Hi {gamerName}, {parentName} set up a School of Gaming account for you. Confirm this email address and the account is yours.",
-      "button": "Verify my email",
-      "afterVerifying": "Once you have confirmed it, we will send you one more email with a link to choose your password. After that you can sign in on your own.",
+      "body": "Hi {gamerName}, your parent set up a School of Gaming account for you. Tap the button below to confirm this is your email.",
+      "button": "This is my email",
+      "afterConfirming": "Then we will send you one more email with a link to choose your password. After that you can sign in on your own.",
       "ignore": "If you were not expecting this email, you can ignore it. Nothing will happen."
     },
     "sessionReport": {
@@ -3436,10 +3436,8 @@
       },
       "gamer": {
         "subject": "A seat has opened for you in {productName}",
-        "opening": "Hi {gamerName}! We promised to write the moment a seat opened, and it has: there is a seat for you in {productName}. We have just emailed your parent about it.",
-        "parentDecides": "Your parent decides whether to take it — the buttons to answer are in their email, not in this one. If you would like to go, now is a good moment to tell them.",
-        "deadlineLabel": "Your parent can answer until",
-        "deadlineBody": "{deadline}. After that, the seat goes to the next family in line.",
+        "opening": "Hi {gamerName}, a seat has opened up for you in {productName}. That is good news.",
+        "parentDecides": "Your parent has an email asking them to say yes or no, and they have until {deadline}. Once they answer, you will see it in My SOG.",
         "dashboardButton": "Open My SOG"
       }
     },

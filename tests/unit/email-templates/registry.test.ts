@@ -512,7 +512,7 @@ describe("every template renders in every locale", () => {
       userEmail: "marja@example.com",
       message: "Great product!",
       parentEmail: null,
-      gamerEmail: null,
+      gamerOwnMailbox: false,
     },
     welcomeParent: {
       firstName: "Marja",
@@ -549,7 +549,6 @@ describe("every template renders in every locale", () => {
     },
     gamerWelcome: {
       gamerFirstName: "Aino",
-      parentFirstName: "Marja",
       verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
     },
     seatOffer: {
@@ -602,10 +601,17 @@ describe("every template renders in every locale", () => {
     sessionReport: [{ copy: "family" }, { copy: "gamer" }, { copy: "staff" }],
     // The child's copy is the only render that reads its greeting key.
     productConfirmation: [{ gamerCopy: false }, { gamerCopy: true, priceAmount: null }],
-    // The gamer case's two notes are keys nothing else reaches.
+    // The gamer case's note has two variants, and each is a key nothing else
+    // reaches.
     feedback: [
       {},
-      { userRole: "gamer", parentEmail: "marja@example.com", gamerEmail: "aino@example.com" },
+      { userRole: "gamer", parentEmail: "marja@example.com", gamerOwnMailbox: false },
+      {
+        userRole: "gamer",
+        userEmail: "aino@example.com",
+        parentEmail: "marja@example.com",
+        gamerOwnMailbox: true,
+      },
     ],
     // The offer speaks in two voices, and each has its own heading, opening and
     // subject — four keys per locale that only the self variant reaches.

@@ -44,10 +44,8 @@ import { getOrigin } from "@/lib/url";
 export async function sendGamerWelcomeEmail(args: {
   request: Request;
   gamerId: string;
-  /** The parent doing the setting-up. Named in the mail, so the child knows why. */
-  parentFirstName: string;
 }): Promise<void> {
-  const { request, gamerId, parentFirstName } = args;
+  const { request, gamerId } = args;
   const admin = createAdminClient();
 
   // Read the child's row rather than taking these as parameters: the address is
@@ -112,7 +110,6 @@ export async function sendGamerWelcomeEmail(args: {
     subject: t("gamerWelcome.subject"),
     htmlContent: buildGamerWelcomeEmail(t, locale, {
       gamerFirstName: gamer.first_name,
-      parentFirstName,
       verificationUrl,
     }),
     // Product mail to a person: a child (or the parent reading over their

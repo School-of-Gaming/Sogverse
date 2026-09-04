@@ -146,13 +146,27 @@ const gamerCopy = {
  * parameter that could hold it, so the assertions here are mostly negative.
  */
 describe("buildSeatOfferGamerEmail", () => {
-  it("names the child and the product, states the deadline, and says the parent decides", () => {
+  it("names the child and the product, states the deadline, and says the parent answers", () => {
     const html = buildSeatOfferGamerEmail(t, "en", gamerCopy);
     expect(html).toContain("Aino");
     expect(html).toContain("Minecraft 101");
     expect(html).toContain(DEADLINE);
-    expect(html).toContain("Your parent decides");
+    expect(html).toContain("Your parent has an email");
     expect(html).toContain("<!DOCTYPE html>");
+  });
+
+  /**
+   * The deadline is a fact the parent's mail carries too, and both must state
+   * it the same way: absolutely, never as a countdown. The child's copy states
+   * it in a sentence rather than a panel of its own — one less box in a mail
+   * whose whole job is three short lines — which is exactly why this assertion
+   * has to hold on the rendered text rather than on where it sits.
+   */
+  it("states the deadline absolutely and never as a window", () => {
+    const html = buildSeatOfferGamerEmail(t, "en", gamerCopy);
+    expect(html).toContain(DEADLINE);
+    expect(html).not.toMatch(/\b5 days\b/);
+    expect(html).not.toMatch(/\bfive days\b/i);
   });
 
   it("carries no answer buttons and no token — its one link is My SOG at the child's root", () => {

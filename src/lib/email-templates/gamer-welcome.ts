@@ -9,30 +9,33 @@ import type { EmailTranslator } from "./translator";
  * be confirmed before anything else can happen.
  *
  * **Written to the child, not about them.** Every other mail in this directory
- * addresses an adult; this one is read by a nine-year-old, so it names the
- * parent who did this ("Marja set up an account for you") rather than assuming
- * the reader already knows why a stranger is writing to them, and it says in one
- * sentence what happens after the button.
+ * addresses an adult; this one is read by a nine-year-old, so it says in plain
+ * words why a stranger is writing to them and what the button does.
+ *
+ * **It says "your parent" and never a name.** Naming the adult was an attempt to
+ * make the mail recognisable and it bought the opposite: the account can be set
+ * up by either parent, the name we hold is whichever of them registered, and a
+ * child told the wrong one did this has been handed a reason to distrust the
+ * mail. "Your parent" is true of every family shape we have, needs no lookup,
+ * and is what a child would say themselves.
  *
  * **One action, and the second step is described rather than offered.** The
- * child cannot set a password yet — verifying the address is what causes the
- * reset link to be sent — so a second button would be a link to nowhere. Saying
- * plainly that another mail follows is what keeps the child from waiting for a
- * page that never appears.
+ * child cannot set a password yet — confirming the address is what causes the
+ * password link to be sent — so a second button would be a link to nowhere.
+ * Saying plainly that another mail follows is what keeps the child from waiting
+ * for a page that never appears.
  *
- * No expiry is stated, because the verification link has none: it stays good
- * until the address on the account changes.
+ * No expiry is stated, because the link has none: it stays good until the
+ * address on the account changes.
  */
 export function buildGamerWelcomeEmail(
   t: EmailTranslator,
   locale: string,
   {
     gamerFirstName,
-    parentFirstName,
     verificationUrl,
   }: {
     gamerFirstName: string;
-    parentFirstName: string;
     verificationUrl: string;
   },
 ): string {
@@ -41,11 +44,10 @@ export function buildGamerWelcomeEmail(
     ${paragraph(
       t("gamerWelcome.body", {
         gamerName: styledName(gamerFirstName),
-        parentName: styledName(parentFirstName),
       }),
     )}
     ${ctaButton({ href: verificationUrl, label: t("gamerWelcome.button") })}
-    ${paragraph(t("gamerWelcome.afterVerifying"))}
+    ${paragraph(t("gamerWelcome.afterConfirming"))}
     ${paragraph(t("gamerWelcome.ignore"))}
   `;
   return wrapInLayout({

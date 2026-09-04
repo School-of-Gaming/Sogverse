@@ -136,11 +136,16 @@ export interface SeatOfferGamerEmailOptions {
  * **It carries no buttons and no token, by construction.** Only the parent may
  * accept or decline, and the links that do so carry a signed credential; this
  * builder's options have nowhere to put one, so a caller cannot hand the
- * child's copy the parent's answer by mistake. What it says instead is the
- * fact and who decides: a seat has opened, their parent has been written to,
- * and the answer is the parent's to give. The deadline is stated the same way
- * the parent's mail states it — absolutely, in a panel — so a child who wants
- * to go knows how long there is to ask.
+ * child's copy the parent's answer by mistake.
+ *
+ * **It is written to a gamer, not to a user.** The facts are the parent's mail's
+ * facts and none of them moved — a seat opened, the parent was asked, there is a
+ * date on the answer — but the earlier draft narrated the *mechanism* (which
+ * buttons live in which mail, that the answer arrives by a route this reader
+ * cannot take) and a teenager reading a technical account of their own good news
+ * has been handed a manual. So the news leads, the deadline is a plain clause
+ * rather than a panel of its own, and what the reader can actually do with it —
+ * ask, then look in My SOG — is the last thing said.
  *
  * The one link is My SOG at the child's root, `primary` because it is the
  * mail's only action, and because it lands the child on their own card rather
@@ -159,13 +164,14 @@ export function buildSeatOfferGamerEmail(
         productName: styledProductName(productName),
       }),
     )}
-    ${paragraph(t("seatOffer.gamer.parentDecides"))}
-    ${calloutPanel({
-      label: t("seatOffer.gamer.deadlineLabel"),
-      // Unescaped for the same reason as the parent mail's: every path here
-      // produces it with `Intl`, from a timestamp and a zone.
-      paragraphs: [t("seatOffer.gamer.deadlineBody", { deadline })],
-    })}
+    ${paragraph(
+      // The deadline goes in unescaped for the same reason as the parent
+      // mail's: every path that reaches this builder produces it with `Intl`,
+      // from a timestamp and a zone, so there is no user-authored character in
+      // it — and the one other path is an admin typing it into the testing
+      // registry, on a mail addressed to whoever typed it.
+      t("seatOffer.gamer.parentDecides", { deadline }),
+    )}
     ${ctaButton({ href: dashboardUrl, label: t("seatOffer.gamer.dashboardButton") })}
   `;
   return wrapInLayout({ title: t("seatOffer.heading"), content, locale, t });

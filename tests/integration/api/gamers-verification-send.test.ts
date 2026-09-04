@@ -198,7 +198,7 @@ describe("POST /api/gamers/[id]/verification/send", () => {
 
     expect(response.status).toBe(200);
     expect(mockSendGamerWelcomeEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ gamerId: GAMER_ID, parentFirstName: "Marja" }),
+      expect.objectContaining({ gamerId: GAMER_ID }),
     );
   });
 

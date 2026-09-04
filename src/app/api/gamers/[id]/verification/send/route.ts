@@ -90,17 +90,7 @@ export const POST = defineRoute({
       );
     }
 
-    const { data: parentProfile } = await admin
-      .from("profiles")
-      .select("first_name")
-      .eq("id", user.id)
-      .single();
-
-    await sendGamerWelcomeEmail({
-      request,
-      gamerId,
-      parentFirstName: parentProfile?.first_name ?? "",
-    });
+    await sendGamerWelcomeEmail({ request, gamerId });
 
     return { success: true };
   },

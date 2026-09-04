@@ -819,7 +819,7 @@
         "loading": "Ladataan…",
         "genderBoy": "poika",
         "genderGirl": "tyttö",
-        "genderNonBinary": "muunsukupuolinen",
+        "genderNonBinary": "muu",
         "chip": {
           "age": "{age}v",
           "parent": "Vanhempi: {name}",
@@ -1401,7 +1401,7 @@
       "genderLabel": "Sukupuoli",
       "genderBoy": "Poika",
       "genderGirl": "Tyttö",
-      "genderNonBinary": "Muunsukupuolinen",
+      "genderNonBinary": "Muu",
       "submit": "Lisää pelaaja",
       "submitting": "Lisätään…",
       "firstNameTooShort": "Etunimessä on oltava vähintään 2 merkkiä.",
@@ -2612,8 +2612,8 @@
       "replyToLabel": "Vastausosoite",
       "sent": "Lähetetty",
       "message": "Viesti",
-      "gamerNote": "Tämä viesti on pelaajatililtä. Vastaukset ohjautuvat hänen vanhemmalleen ({parentEmail}).",
-      "gamerOwnEmailNote": "Pelaajalla on myös oma sähköpostiosoite ({gamerEmail}) – lisää se mukaan, jos vastaat."
+      "gamerNoteNoMailbox": "Viesti on lähetetty pelaajatililtä ({firstName}), jolla ei ole omaa sähköpostiosoitetta.",
+      "gamerNoteOwnMailbox": "Viesti on lähetetty pelaajatililtä ({firstName}) – hän lukee myös omaa sähköpostiaan {gamerEmail}."
     },
     "welcomeParent": {
       "subject": "Tervetuloa School of Gamingiin",
@@ -2711,9 +2711,9 @@
     "gamerWelcome": {
       "subject": "School of Gaming -tilisi on valmis",
       "heading": "Tilisi on valmis",
-      "body": "Hei {gamerName}, {parentName} loi sinulle School of Gaming -tilin. Vahvista tämä sähköpostiosoite, niin tili on sinun.",
-      "button": "Vahvista sähköpostiosoitteeni",
-      "afterVerifying": "Kun olet vahvistanut osoitteen, lähetämme sinulle vielä yhden viestin, jossa on linkki salasanan valintaa varten. Sen jälkeen voit kirjautua sisään itse.",
+      "body": "Hei {gamerName}, vanhempasi loi sinulle School of Gaming -tilin. Vahvista alla olevalla painikkeella, että tämä on sinun sähköpostiosoitteesi.",
+      "button": "Tämä on sähköpostiosoitteeni",
+      "afterConfirming": "Sen jälkeen lähetämme sinulle vielä yhden viestin, jossa on linkki salasanan valintaa varten. Sitten voit kirjautua sisään itse.",
       "ignore": "Jos et odottanut tätä viestiä, voit jättää sen huomiotta. Mitään ei tapahdu."
     },
     "sessionReport": {
@@ -2750,10 +2750,8 @@
       },
       "gamer": {
         "subject": "Sinulle vapautui paikka – {productName}",
-        "opening": "Hei {gamerName}! Lupasimme ilmoittaa heti, kun paikka vapautuu, ja nyt niin kävi: sinulle on paikka – {productName}. Lähetimme siitä juuri sähköpostia vanhemmallesi.",
-        "parentDecides": "Vanhempasi päättää, otetaanko paikka vastaan – vastauspainikkeet ovat hänen viestissään, eivät tässä. Jos haluat mukaan, nyt on hyvä hetki kertoa siitä hänelle.",
-        "deadlineLabel": "Vanhempasi voi vastata viimeistään",
-        "deadlineBody": "{deadline}. Sen jälkeen paikka siirtyy jonossa seuraavalle perheelle.",
+        "opening": "Hei {gamerName}, sinulle vapautui paikka – {productName}. Hyvä uutinen!",
+        "parentDecides": "Vanhemmallesi lähti sähköposti, jossa kysytään, otetaanko paikka vastaan. Hän voi vastata viimeistään {deadline}. Kun hän on vastannut, näet paikan Oma SOG -näkymässä.",
         "dashboardButton": "Avaa Oma SOG"
       }
     },
