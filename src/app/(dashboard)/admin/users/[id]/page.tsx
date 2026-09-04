@@ -13,7 +13,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
-import { UserMarketingConsentsCard } from "@/components/admin/user-marketing-consents-card";
+import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { gamerUsernameFromEmail, hasRealEmail } from "@/lib/gamer-sign-in";
 import { cn, formatDate } from "@/lib/utils";
@@ -142,10 +142,18 @@ export default async function AdminUserDetailPage({
   // is also what the write route refuses as a target.
   const showGameAccounts = isGamer || isGedu;
 
+  // Where this account came from, handed to the marketing card as the server
+  // read it — nulls included, because that card shows all three fields whether
+  // they carry anything or not.
+  //
   // A display choice, not a data invariant: every account is born `customer`,
   // so one promoted to admin after registering through a tagged link still
-  // carries its code — this page just doesn't surface it there.
-  const showReferralCode = (isCustomer || isGedu) && Boolean(profile.referral_code);
+  // carries its attribution — this page just doesn't surface it there.
+  const attribution = {
+    source: profile.utm_source,
+    medium: profile.utm_medium,
+    campaign: profile.utm_campaign,
+  };
 
   const [
     linkedGamers,
@@ -321,25 +329,12 @@ export default async function AdminUserDetailPage({
               <span className="text-sm text-muted-foreground">
                 {t('joined')} {profile.created_at ? formatDate(profile.created_at, locale, { dateStyle: "medium", timeZone }) : t('unknown')}
               </span>
-              {/* Where this account came from — the marketing link's `?ref=`
-                  code, captured once at registration. Read-only on purpose:
-                  the column has no UPDATE grant, so an admin cannot edit it
-                  through the app either (see src/lib/referral.ts). Shown for
-                  parents and educators only — gamer rows are NULL by
-                  construction, and the value is omitted entirely rather than
-                  shown as an empty row, since the large majority of accounts
-                  will never carry one. */}
-              {showReferralCode && (
-                <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {t('referralCode')}
-                  {/* Code-chip treatment matching the instant voice room's
-                      compact RoomLinkChip, so codes read as codes site-wide. */}
-                  <span className="rounded-md border border-border bg-muted/50 px-2 py-0.5 font-mono font-semibold tracking-wider">
-                    {profile.referral_code}
-                  </span>
-                </span>
-              )}
             </div>
+            {/* The account's UTM attribution used to sit here, inside the
+                identity summary. It has moved into the Marketing card at the
+                foot of the page, which is now the page's one section about
+                marketing: where the account came from, and what its holder has
+                agreed to since. */}
           </div>
         </CardContent>
       </Card>
@@ -492,14 +487,26 @@ export default async function AdminUserDetailPage({
       {/* Coverage areas, for substitute matching. */}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
 
-      {/* Last on the page, and the position is load-bearing: this is the only
-          block here whose data is fetched client-side after first paint, so at
-          the end of the run its arrival is paid for out of the page's own slack
-          and nothing already painted moves. A later tidy-up that files it beside
-          the summary card on aesthetic grounds would reintroduce that shift
-          silently. Customers only — gamers and gedus hold no marketing consents
-          at all. */}
-      {isCustomer && <UserMarketingConsentsCard customerId={userId} />}
+      {/* Everything about marketing, in one card: where the account came from,
+          and what its holder has agreed to since.
+
+          Last on the page, and the position is load-bearing: the consent half
+          is the only data on this page fetched client-side after first paint,
+          so at the end of the run its arrival is paid for out of the page's own
+          slack and nothing already painted moves. A later tidy-up that files it
+          beside the summary card on aesthetic grounds would reintroduce that
+          shift silently.
+
+          Parents and educators, because those are the two roles that can carry
+          an attribution — a gamer's three columns are NULL by construction.
+          Only a customer can hold a marketing consent, so `customerId` is null
+          for an educator and their card is the attribution block alone. */}
+      {(isCustomer || isGedu) && (
+        <UserMarketingCard
+          attribution={attribution}
+          customerId={isCustomer ? userId : null}
+        />
+      )}
     </div>
   );
 }

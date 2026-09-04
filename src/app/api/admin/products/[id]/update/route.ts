@@ -9,7 +9,7 @@ type RpcArgs = Database["public"]["Functions"]["update_product"]["Args"];
 function friendlyRpcError(err: { code?: string; message: string }): string {
   switch (err.code) {
     case "23503": // foreign_key_violation
-      return "Something you selected (location or holiday calendar) is no longer available. Please refresh the page and try again.";
+      return "Something you selected (the location) is no longer available. Please refresh the page and try again.";
     case "23505": // unique_violation
       return "A product with these details already exists. Please change something and try again.";
     default:
@@ -113,12 +113,11 @@ export const POST = defineRoute({
       p_seat_count: body.seat_count ?? undefined,
       p_schedule_slots: body.schedule_slots,
       p_prices: body.prices,
-      p_holiday_calendar_ids: body.holiday_calendar_ids,
-      // Wipe-and-replace, like the calendars above: the RPC hands this straight
-      // to the requirement set's single writer, so an empty array clears the
-      // conditions and a populated one replaces them. Never `?? undefined` — an
-      // omission here would be indistinguishable from "requires nothing", and
-      // the contract demands the field precisely so it cannot be one.
+      // Wipe-and-replace: the RPC hands this straight to the requirement set's
+      // single writer, so an empty array clears the conditions and a populated
+      // one replaces them. Never `?? undefined` — an omission here would be
+      // indistinguishable from "requires nothing", and the contract demands the
+      // field precisely so it cannot be one.
       p_required_consent_slugs: body.required_consent_slugs,
       // null (unknown/none) maps to undefined so the RPC's DEFAULT NULL clears
       // the column; 0 (volunteer) survives `??` since it's not nullish.

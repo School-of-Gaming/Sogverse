@@ -38,7 +38,6 @@ vi.mock("next-intl", () => ({
 }));
 
 vi.mock("@/services/products", () => ({
-  useHolidayCalendars: () => ({ data: [] }),
   useConsentDocuments: () => ({ data: [] }),
 }));
 
@@ -52,6 +51,7 @@ vi.mock("@/components/admin/products/long-description-editor", () => ({
   LongDescriptionEditor: () => <div data-testid="long-description" />,
 }));
 
+import { NowProvider } from "@/providers";
 import { ProductFormShell } from "@/components/admin/products/product-form";
 import {
   initialState,
@@ -98,13 +98,19 @@ function renderForm(month: string) {
   });
   const view = render(
     <QueryClientProvider client={queryClient}>
-      <ProductFormShell
-        productType="consumer_club"
-        initialFormState={paidClubState(month)}
-        submitLabel="Save"
-        onCancel={vi.fn()}
-        onSubmit={onSubmit}
-      />
+      {/* The When and Registration sections read the shared clock to label the
+          timezone picker's offsets. A fixed instant keeps the render
+          deterministic; nothing here asserts on a label. */}
+      <NowProvider initialNow={new Date("2026-09-01T12:00:00Z")}>
+        <ProductFormShell
+          productType="consumer_club"
+          initialFormState={paidClubState(month)}
+          isEdit={false}
+          submitLabel="Save"
+          onCancel={vi.fn()}
+          onSubmit={onSubmit}
+        />
+      </NowProvider>
     </QueryClientProvider>,
   );
   const form = view.container.querySelector("form");

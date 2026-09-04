@@ -1,4 +1,7 @@
-import { type SupportedCurrency } from "@/lib/constants";
+import {
+  DEFAULT_PRODUCT_TIMEZONE,
+  type SupportedCurrency,
+} from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductTag, ProductTopic, SpokenLanguageCode } from "@/types";
 import type { AttachableMarketingConsentType } from "@/lib/constants/marketing-consents";
@@ -80,8 +83,6 @@ export const MINUTE_OPTIONS = Array.from(
   { length: 60 / MINUTE_STEP },
   (_, i) => String(i * MINUTE_STEP).padStart(2, "0"),
 );
-
-export const FIXED_TIMEZONE = "Europe/Helsinki";
 
 export type RegistrationOpensMode =
   (typeof REGISTRATION_OPENS_MODE_VALUES)[number];
@@ -169,6 +170,21 @@ export interface FormState {
   locationId: string | null;
 
   // When
+  //
+  // The IANA zone every wall clock on this form is entered in — the schedule
+  // slots and the scheduled registration drop alike. It is a real field rather
+  // than a constant because a product's sessions happen where the product does,
+  // and the platform now runs in four countries; it stays editable on the edit
+  // form because the schedule is stored as wall clock, so changing it re-resolves
+  // every session the schedule still projects to that same clock face in the new
+  // zone, which is exactly the correction an admin who picked the wrong zone
+  // needs. What it does not move is a session already recorded: a session row is
+  // written lazily, only once a report, a note or an attendance mark needs
+  // somewhere to live, and it snapshots its start and end at that moment and
+  // never re-derives them. So history keeps the times it was held at while the
+  // rest of the term follows the new zone — which is what the edit form's hint
+  // tells the admin, and why that hint is not simply "every session moves".
+  timezone: string;
   startMode: StartMode;
   startDate: string;
   // Whether a consumer club has a fixed end date. `false` ⇒ ongoing (end_date
@@ -178,7 +194,6 @@ export interface FormState {
   hasEndDate: boolean;
   endDate: string;
   scheduleSlots: ScheduleSlotDraft[];
-  holidayCalendarIds: Set<string>;
   signupThreshold: string;
 
   // Capacity & billing
@@ -201,9 +216,10 @@ export interface FormState {
   municipalityFee: FeeDraft<MunicipalityFeeStatus>;
 
   // Registration timing — `immediately` accepts signups as soon as the
-  // product is published; `scheduled` opens at the picked Helsinki-local
-  // date+time. The date/hour/minute fields are kept around even when mode
-  // is `immediately` so toggling back doesn't lose what was typed.
+  // product is published; `scheduled` opens at the picked date+time, read as a
+  // wall clock in the product's own `timezone` above. The date/hour/minute
+  // fields are kept around even when mode is `immediately` so toggling back
+  // doesn't lose what was typed.
   registrationOpensMode: RegistrationOpensMode;
   registrationOpensDate: string;
   registrationOpensHour: string;
@@ -212,9 +228,9 @@ export interface FormState {
   // Required consents
   //
   // The consent documents a parent must agree to before enrolling, as the slugs
-  // of `consent_documents` rows. A Set for the same reason `holidayCalendarIds`
-  // is one: the control is a list of independent checkboxes and the payload
-  // builder flattens it with `Array.from`.
+  // of `consent_documents` rows. A Set because the control is a list of
+  // independent checkboxes and the payload builder flattens it with
+  // `Array.from`.
   //
   // Offered on every product type, deliberately: the mechanism is generic — a
   // product requires whichever published documents it requires — and a per-type
@@ -303,6 +319,9 @@ export function initialState(
     spokenLanguageCode: "",
     isRemote: true,
     locationId: null,
+    // Finland unless the admin says otherwise — most of what we run is Finnish,
+    // and every product that predates the picker carries this zone.
+    timezone: DEFAULT_PRODUCT_TIMEZONE,
     startMode: config.allowedStartModes[0],
     // Blank on every type, consumer clubs included: a club may now start on a
     // future date (billing defers to it), so there is no safe date to pin and
@@ -311,7 +330,6 @@ export function initialState(
     hasEndDate: false,
     endDate: "",
     scheduleSlots: defaultSlots(config),
-    holidayCalendarIds: new Set(),
     signupThreshold: "",
     paidMode: initialPaidMode,
     prices: {

@@ -5,6 +5,7 @@ import {
   FaqAccordion,
   type FaqAccordionItem,
 } from "@/components/ui/faq-accordion";
+import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
 /**
@@ -34,11 +35,14 @@ import { SUPPORT_EMAIL } from "@/lib/constants";
  * uncompilable exactly when it is emptied, which is the state all three shipped
  * in and any of them could return to.
  *
- * Answers are single plain paragraphs, the same shape the About page's FAQ
- * uses. The one that names the support address takes it as a `{supportEmail}`
- * value rather than spelling it out, and it stays text: the form directly above
- * every one of these lists already carries the live mailto for the two adult
- * roles, and a second one inside an answer would be the same link twice.
+ * Answers are block-structured markup in the catalog rather than one paragraph
+ * each — see the shared tag vocabulary — so a locale breaks its own copy where
+ * its own sentences want breaking, and an answer that is really a procedure can
+ * be a numbered list. The one that names the support address takes it as a
+ * `{supportEmail}` value rather than spelling it out, and it stays text: the
+ * form directly above every one of these lists already carries the live mailto
+ * for the two adult roles, and a second one inside an answer would be the same
+ * link twice.
  */
 
 /** Parent operating questions — the parent PIN, reports, absences, times. */
@@ -49,17 +53,39 @@ const PARENT_FAQ_KEYS = [
   "sessionTimes",
 ] as const;
 
-/** Gamer questions, child-facing — getting in, being heard, being treated well. */
+/**
+ * Gamer questions, child-facing — getting in, being heard, hearing the others,
+ * being treated well.
+ *
+ * **The two microphone questions are deliberately separate entries**, though
+ * one combined answer once covered both. A child who cannot be heard and a
+ * child who cannot hear are looking for different words and need different
+ * checks — a mute button and a device picker on one side, the volume and which
+ * zone they are standing in on the other — and a single answer made each of
+ * them read past the half that was not theirs.
+ */
 const GAMER_FAQ_KEYS = [
   "joiningSession",
-  "micTrouble",
+  "cannotBeHeard",
+  "cannotHearOthers",
   "someoneIsMean",
 ] as const;
 
-/** Gedu operating questions — certification, assignment, the two escalations. */
+/**
+ * Gedu operating questions, ordered the way a gedu meets them: getting started,
+ * then running a session, then the two escalations.
+ *
+ * The two attendance entries are the questions gedus actually ask, and they ask
+ * them at different times — how the register works, before a first club; why a
+ * session is still flagged, weeks later. The alert entry stands in for what the
+ * badge itself does not yet say, which is *which* of its four conditions is
+ * unmet.
+ */
 const GEDU_FAQ_KEYS = [
   "certification",
   "groupAssignment",
+  "takingAttendance",
+  "attendanceAlert",
   "safeguardingConcern",
   "gamerCannotConnect",
 ] as const;
@@ -72,13 +98,10 @@ export function ParentHelpFaq() {
       items={PARENT_FAQ_KEYS.map((key) => ({
         key,
         question: t(`helpFaq.items.${key}.question` as const),
-        answer: (
-          <p>
-            {t(`helpFaq.items.${key}.answer` as const, {
-              supportEmail: SUPPORT_EMAIL,
-            })}
-          </p>
-        ),
+        answer: t.rich(`helpFaq.items.${key}.answer` as const, {
+          ...FAQ_ANSWER_TAGS,
+          supportEmail: SUPPORT_EMAIL,
+        }),
       }))}
     />
   );
@@ -92,13 +115,10 @@ export function GamerHelpFaq() {
       items={GAMER_FAQ_KEYS.map((key) => ({
         key,
         question: t(`helpFaq.items.${key}.question` as const),
-        answer: (
-          <p>
-            {t(`helpFaq.items.${key}.answer` as const, {
-              supportEmail: SUPPORT_EMAIL,
-            })}
-          </p>
-        ),
+        answer: t.rich(`helpFaq.items.${key}.answer` as const, {
+          ...FAQ_ANSWER_TAGS,
+          supportEmail: SUPPORT_EMAIL,
+        }),
       }))}
     />
   );
@@ -112,13 +132,10 @@ export function GeduHelpFaq() {
       items={GEDU_FAQ_KEYS.map((key) => ({
         key,
         question: t(`helpFaq.items.${key}.question` as const),
-        answer: (
-          <p>
-            {t(`helpFaq.items.${key}.answer` as const, {
-              supportEmail: SUPPORT_EMAIL,
-            })}
-          </p>
-        ),
+        answer: t.rich(`helpFaq.items.${key}.answer` as const, {
+          ...FAQ_ANSWER_TAGS,
+          supportEmail: SUPPORT_EMAIL,
+        }),
       }))}
     />
   );

@@ -3,6 +3,7 @@ import { Constants } from "@/types";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts";
 import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
+import { registrationUtmBody } from "@/services/users/parent-registration.contracts";
 
 /**
  * Request body for public gedu self-registration (`POST /api/gedu/register`).
@@ -46,18 +47,13 @@ export const registerGeduBody = z.object({
   minecraftUsername: minecraftUsernameValue.optional(),
   robloxUsername: robloxUsernameValue.optional(),
   /**
-   * Marketing provenance: the `?ref=` code this visit arrived with, if any.
+   * Marketing provenance: the UTM values this visit arrived with, if any.
    *
-   * **A plain optional string on purpose — no `.regex()` here.** This is a
-   * deliberate exception to this contract's usual "the body schema is the
-   * validation" discipline, and it exists because of who supplies the value: not
-   * the educator filling in the form, who never typed it and cannot see it, but
-   * whoever authored the link they clicked. A format rule on the schema would
-   * turn a malformed marketing param into a 400 that blocks a legitimate
-   * registration. The handler runs it through the shared sanitiser instead,
-   * where a bad value becomes NULL and the registration succeeds.
+   * Imported rather than restated — the parent registration body takes the
+   * identical shape, both routes hand it to the same signup trigger, and the
+   * reasoning for why these carry no format rule lives with the definition.
    */
-  referralCode: z.string().optional(),
+  utm: registrationUtmBody.optional(),
 });
 
 export type RegisterGeduBody = z.infer<typeof registerGeduBody>;

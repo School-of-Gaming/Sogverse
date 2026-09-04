@@ -312,20 +312,63 @@ where the fix would change what we commit to rather than how it reads.
       products).
 
       **When they are wired, they must become in-app `next/link` navigations, not
-      `<a href>` full page loads.** Referral attribution (`?ref=` on a partner's link)
-      is held in memory for the visit: a soft navigation keeps it alive, a hard load
-      destroys it silently, with no error and no visible symptom — the code is simply
-      absent at registration.
+      `<a href>` full page loads.** UTM attribution (`utm_source`/`utm_medium`/
+      `utm_campaign` on a partner's link) is held in memory for the visit: a soft
+      navigation keeps it alive, a hard load destroys it silently, with no error and
+      no visible symptom — the values are simply absent at registration.
 
 ## Attribution, cookie consent, and the Lynx data export
 
-**Opened 2026-08-26.** Research is complete and written up here; every decision in it is
-still open. Nothing has been applied. The `?ref=` system is untouched and still live.
+**Opened 2026-08-26.** Research is complete and written up below.
 
 This sits in this file rather than `TODO.md` because Lynx's original ask is what created
 it and Lynx's data schema is what resolves it — but note that the **cookie-banner half is
 platform-wide, not programme-specific**, and would be true if the Roblox programme did not
 exist.
+
+### Resolved 2026-09-03
+
+The owner's decisions on the open questions below. Everything after this block is the
+research as it was written on 2026-08-26 and is kept as the historical record — read it
+for *why*, not for what is true now.
+
+- **The banner ships.** Three tiers, per device, in our own copy: reject all / analytics
+  only / analytics and marketing. It is platform-wide, not programme-specific.
+- **`ref` becomes UTM.** `profiles.referral_code` is replaced by `utm_source`,
+  `utm_medium` and `utm_campaign`; `utm_campaign` is the single "utm parameter" a partner
+  export reports on. **Existing `referral_code` values are dropped, not migrated** — none
+  were ever issued to a partner, and carrying them into a column whose format rule they
+  were not authored against buys nothing. The sanitiser widened accordingly: four
+  refusals (empty, over 200 characters, any control character, a leading `=`/`+`/`-`/`@`/
+  tab/CR) and everything else accepted verbatim, **case preserved**, because Vercel
+  reports UTM values case-sensitively.
+- **The value is written at account creation regardless of what the visitor answered on
+  the banner — pending counsel.** Open decision 3 below is the one thing counsel still has
+  to answer, and it is the last unknown in this area. The write-once design is what keeps
+  the reversal cheap: with no UPDATE grant on the three columns, clearing them is one
+  service-role statement.
+- **Web Analytics Plus is not bought.** Lynx's ask is the per-account value, which lives
+  in our own database; Plus only adds landing-page UTM reporting, which is useful for
+  non-ad links and for nothing Lynx asked for.
+- **Meta and TikTok pixels ship, behind marketing consent**, using School of Gaming's own
+  pixel IDs.
+- **The partner prefix convention survives the rename** as a `utm_campaign` naming
+  convention: a campaign issued to or for a partner is prefixed with the partner's slug
+  and a hyphen (`lynx-summer-a`, `rblx-launch`). It cannot be retrofitted, because the
+  value is immutable once written. It is documented in `src/lib/utm.ts` and on the
+  `profiles.utm_campaign` column comment.
+- **`docs/plans/referral-landing-clicks.md` is deleted**, as the knock-on below proposed.
+- **The wrong premise is corrected where it was recorded.** "Nothing is written to the
+  device, therefore no banner" no longer appears anywhere in the code: the module header
+  now says that reading the params off the landing URL is itself what engages Art 5(3),
+  that it happens pre-consent, and that the banner governs the browser scripts rather
+  than this. Two of the three files the paragraph below names are gone with the rename
+  (`src/lib/referral.ts` → `src/lib/utm.ts`, `referral-provider.tsx` → `utm-provider.tsx`)
+  and the third was the deleted plan.
+
+Not resolved, and unchanged: the third-party sharing of children's personal data in
+Lynx's schema — see "The half that is bigger than the banner" — and the privacy policy's
+answer to the cookie question.
 
 ### What triggered it
 
@@ -503,16 +546,28 @@ time is rationed, spend it here rather than on the banner.**
   (`lynx-summer-a`, `rblx-launch`), which cannot be retrofitted because the value is
   immutable once written, and which survives the rename as a `utm_campaign` convention.
   Worth settling before the first Lynx campaign link goes out.
-- **The privacy policy still says nothing about the referral code, in any locale.** That
-  was item 1 on the "non-negotiable" list from 2026-08-13 ("Update the privacy policy. This
-  is important, needs to happen." — Kyle) and it never shipped. It is a GDPR Art 13
-  transparency gap sitting in production **independent of how the banner question
-  resolves**, and it is the cheapest thing on this page to fix.
+- **The privacy policy does disclose the attribution value, and the wording now needs to
+  match the rename.** `privacy.sections.infoWeCollect.bullets` carries a bullet in all
+  five locales — "If you came to us through a link shared by a school, club or partner
+  organisation, a short code telling us which one" — so the Art 13 transparency gap
+  claimed here on 2026-08-26 was not real; the bullet had already shipped. What is left is
+  smaller and still worth doing: the copy describes *one* short code, and there are now
+  three UTM fields, so the sentence should be re-read against what is actually stored. It
+  is also written in the register a parent reads, which is why it says "a short code"
+  rather than naming the columns — keep that. *(Done — 2026-09-03. The bullet now names
+  the campaign tag and its three parts, says it is stored once at account creation, and
+  keeps the parent's register; `en`, `fi`, `sv`, `fr`.)*
 - **`privacy.sections.cookies` answers the wrong question.** It says Vercel's analytics is
   "cookie-free", which is true and irrelevant — Art 5(3) does not care about the mechanism.
+  *(Done — 2026-09-03. The section was rewritten as "Cookies, analytics and advertising":
+  strictly necessary cookies first, then the two purposes a visitor actually consents to,
+  each naming what runs and what it learns. "Cookie-free" is gone from the Vercel bullet
+  under `providers` too, and the answer is now collected by a consent banner rather than
+  asserted by the copy.)*
 - **The `?ref=` note under "/roblox CTAs and events are deliberately inert" goes stale** if
   the rename happens. It is still correct today, and its underlying point (soft navigation
-  keeps the value alive, a hard load destroys it) holds for any payload name.
+  keeps the value alive, a hard load destroys it) holds for any payload name. *(Done — the
+  note now names the UTM params.)*
 
 ## Tone — where the programme documents don't sound like Sogverse
 

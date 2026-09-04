@@ -8,7 +8,7 @@ type RpcArgs = Database["public"]["Functions"]["create_product"]["Args"];
 function friendlyRpcError(err: { code?: string; message: string }): string {
   switch (err.code) {
     case "23503": // foreign_key_violation
-      return "Something you selected (location or holiday calendar) is no longer available. Please refresh the page and try again.";
+      return "Something you selected (the location) is no longer available. Please refresh the page and try again.";
     case "23505": // unique_violation
       return "A product with these details already exists. Please change something and try again.";
     default:
@@ -125,7 +125,6 @@ export const POST = defineRoute({
       p_registration_opens_at: body.registration_opens_at,
       p_schedule_slots: body.schedule_slots,
       p_prices: body.prices,
-      p_holiday_calendar_ids: body.holiday_calendar_ids,
       // The enrolment conditions, unconditionally and as an array — never
       // `?? undefined`. An empty array is the ordinary "requires nothing", the
       // RPC reads it exactly as it reads NULL, and passing it through keeps this
@@ -147,8 +146,8 @@ export const POST = defineRoute({
 
     if (rpcError) {
       // The form validates everything client-side, so RPC errors here are
-      // mostly race conditions (an admin deleted a location / holiday calendar
-      // between page load and submit).
+      // mostly race conditions (an admin deleted a location between page load
+      // and submit).
       throw new ApiError(friendlyRpcError(rpcError), 400);
     }
     if (!productId) {

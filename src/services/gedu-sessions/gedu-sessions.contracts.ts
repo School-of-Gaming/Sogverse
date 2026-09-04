@@ -302,8 +302,8 @@ export type GeduFeedSite = z.infer<typeof geduFeedSite>;
 /**
  * One dashboard card's worth of assignment facts.
  *
- * `attention_count` is computed server-side against the same holiday-blind
- * weekday expansion the client uses, floored at `max(product start, epoch)`, and
+ * `attention_count` is computed server-side against the same weekday
+ * expansion the client uses, floored at `max(product start, epoch)`, and
  * counts a finished session until **all four** parts are in: every current
  * roster member marked, a non-empty report written, that report emailed to the
  * families, and — on the run's FINAL session of a product with

@@ -1,14 +1,15 @@
 "use client";
 
-import { Info } from "lucide-react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
+import { PRODUCT_TIMEZONES } from "@/lib/constants";
+import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
-import { useHolidayCalendars } from "@/services/products";
-import { FormSection, InfoCallout } from "../form-primitives";
+import { useNow } from "@/providers";
+import { FormSection } from "../form-primitives";
 import { formLocksFor } from "../form-locks";
-import { HolidayCalendarOption } from "../holiday-calendar-option";
 import { ScheduleSlotsEditor } from "../schedule-slots-editor";
 import {
   END_DATE_MODE_VALUES,
@@ -22,22 +23,52 @@ interface WhenSectionProps {
   state: FormState;
   setState: React.Dispatch<React.SetStateAction<FormState>>;
   config: ProductTypeConfig;
+  /** Whether this form is editing a product that already exists. Only the
+   *  timezone hint reads it: on a product whose term is already running,
+   *  changing the zone re-times every session still ahead of it while leaving
+   *  the ones already reported or marked at the times they were held — a
+   *  consequence a create form has nothing to warn about. */
+  isEdit: boolean;
 }
 
-export function WhenSection({ state, setState, config }: WhenSectionProps) {
+export function WhenSection({
+  state,
+  setState,
+  config,
+  isEdit,
+}: WhenSectionProps) {
   const t = useTranslations("admin.products");
-  const { data: calendars } = useHolidayCalendars();
+  // The clock the offsets are read at, shared with the rest of the dashboard so
+  // the server render and the first client render agree on which side of a DST
+  // transition "now" is — a label computed from a bare `new Date()` on each end
+  // could disagree by an hour on the two days a year that matters.
+  const now = useNow();
+
+  // What the picker offers: the zones the seeded countries declare, plus the
+  // product's own stored zone when the row arrived carrying one that is no
+  // longer offered (a country un-seeded since, or a value written before the
+  // picker existed). A `<select>` whose value matches no option shows the admin
+  // the first one while state holds something else, which is how an admin ends
+  // up "correcting" a field into a value they never chose.
+  //
+  // The extra option is seeded from the value the form opened with and pinned
+  // for the life of the form, never re-derived from the live field: derived
+  // live, it would vanish the moment the admin selected one of the offered
+  // zones, and a mis-click would be unrecoverable short of reloading the page.
+  const [storedZone] = useState(() => state.timezone);
+  const timezoneOptions = PRODUCT_TIMEZONES.includes(storedZone)
+    ? PRODUCT_TIMEZONES
+    : [...PRODUCT_TIMEZONES, storedZone];
 
   const productType = config.productType;
   const startTriggerOptions = config.allowedStartModes;
   const usesDate = startModeUsesDate(state.startMode);
   const usesThreshold = startModeUsesThreshold(state.startMode);
-  const showHolidayCalendars = config.hasHolidayCalendars;
 
   // Pre-prod UI locks, resolved through form-locks.ts like every other section
-  // — neither of the two below lifts for any product today, but reading the
-  // constant directly would put a second decision-maker next to the resolver.
-  // The start trigger is pinned to the type's default ("On a specific date").
+  // — the lock below lifts for no product today, but reading the constant
+  // directly would put a second decision-maker next to the resolver. The start
+  // trigger is pinned to the type's default ("On a specific date").
   const locks = formLocksFor(config);
   const lockStartMode = locks.startMode;
   // A consumer club's first charge is deferred to its start date, so the date
@@ -113,10 +144,17 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
                   : t("labels.startDate")
               }
               htmlFor="p-start-date"
+              // The two hints are exclusive: the billing anchor is a consumer
+              // club's, the single-date note an event's. The event's used to
+              // sit in the empty second column as a bottom-aligned box beside
+              // the input, which read as misaligned; the field's own hint slot
+              // is where every other hint on this form lives.
               hint={
                 startDateMovesBilling
                   ? t("hints.startDateBillingAnchor")
-                  : undefined
+                  : productType === "event"
+                    ? t("hints.eventSingleDay")
+                    : undefined
               }
             >
               <Input
@@ -129,12 +167,7 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
                 required
               />
             </Field>
-            {productType === "event" ? (
-              <div className="flex items-end text-xs text-muted-foreground">
-                <Info className="mr-1.5 inline h-3.5 w-3.5" />
-                {t("hints.eventSingleDay")}
-              </div>
-            ) : productType === "consumer_club" ? null : (
+            {productType === "event" || productType === "consumer_club" ? null : (
               // Municipality clubs and camps always have a fixed end date.
               <Field
                 label={
@@ -250,7 +283,29 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
         </Field>
       )}
 
-      <InfoCallout text={t("hints.timezoneFixedHelsinki")} />
+      {/* The zone every wall clock below is entered in. It sits directly above
+          the schedule rather than in its own section: the times are read in it,
+          so it has to be visible while they are being typed. */}
+      <Field
+        label={t("labels.timezone")}
+        htmlFor="p-timezone"
+        hint={
+          isEdit ? t("hints.timezoneChangeMoves") : t("hints.timezoneEntry")
+        }
+      >
+        <select
+          id="p-timezone"
+          value={state.timezone}
+          onChange={(e) => setState({ ...state, timezone: e.target.value })}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          {timezoneOptions.map((zone) => (
+            <option key={zone} value={zone}>
+              {formatTimezoneOptionLabel(zone, now)}
+            </option>
+          ))}
+        </select>
+      </Field>
 
       <Field
         label={
@@ -269,34 +324,6 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
           }
         />
       </Field>
-
-      {showHolidayCalendars && (
-        <Field
-          label={t("labels.holidayCalendars")}
-          optional
-          hint={t("hints.holidayHint")}
-        >
-          {locks.holidayCalendars ? (
-            <InfoCallout text={t("hints.holidayComingSoon")} />
-          ) : (
-            <div className="space-y-2">
-              {calendars?.map((cal) => (
-                <HolidayCalendarOption
-                  key={cal.id}
-                  calendar={cal}
-                  checked={state.holidayCalendarIds.has(cal.id)}
-                  onToggle={() => {
-                    const next = new Set(state.holidayCalendarIds);
-                    if (next.has(cal.id)) next.delete(cal.id);
-                    else next.add(cal.id);
-                    setState({ ...state, holidayCalendarIds: next });
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </Field>
-      )}
     </FormSection>
   );
 }

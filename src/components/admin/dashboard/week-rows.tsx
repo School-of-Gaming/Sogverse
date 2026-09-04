@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, PauseCircle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { cn, formatDateOnly } from "@/lib/utils";
 import type { ScheduleChip, ScheduleWeek } from "./admin-dashboard-data";
 import { addCalendarDays, formatDayMonth } from "./calendar";
@@ -62,65 +62,50 @@ export function WeekRows({
   });
 
   return (
-    <div className="space-y-3">
-      <ul className="space-y-1.5">
-        {rows.map((row) => (
-          <li
-            key={row.date}
-            className={cn(
-              "flex flex-col gap-2 rounded-lg border p-2 sm:flex-row sm:gap-3",
-              row.isToday
-                ? "border-primary/60 bg-primary/5"
-                : "border-border bg-card",
-            )}
-          >
-            <div className="flex shrink-0 items-baseline gap-2 px-1 sm:w-24 sm:flex-col sm:items-start sm:gap-0">
-              <span
-                className={cn(
-                  "text-sm font-semibold",
-                  row.isToday ? "text-primary" : "text-foreground",
-                )}
-              >
-                {row.label}
-              </span>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {formatDayMonth(row.date, locale)}
-              </span>
-            </div>
+    <ul className="space-y-1.5">
+      {rows.map((row) => (
+        <li
+          key={row.date}
+          className={cn(
+            "flex flex-col gap-2 rounded-lg border p-2 sm:flex-row sm:gap-3",
+            row.isToday
+              ? "border-primary/60 bg-primary/5"
+              : "border-border bg-card",
+          )}
+        >
+          <div className="flex shrink-0 items-baseline gap-2 px-1 sm:w-24 sm:flex-col sm:items-start sm:gap-0">
+            <span
+              className={cn(
+                "text-sm font-semibold",
+                row.isToday ? "text-primary" : "text-foreground",
+              )}
+            >
+              {row.label}
+            </span>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {formatDayMonth(row.date, locale)}
+            </span>
+          </div>
 
-            {row.chips.length === 0 ? (
-              // No placeholder and no reserved height: an empty Sunday is a fact
-              // about the week, and a ghost chip there would read as something
-              // that failed to load.
-              <p className="px-1 text-xs text-muted-foreground">
-                {t("nothingOn")}
-              </p>
-            ) : (
-              <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-                {row.chips.map((chip) => (
-                  <li key={chip.id}>
-                    <SessionChip chip={chip} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      {week.onBreak.length > 0 && (
-        // Kept under the whole week rather than pinned to a row: a paused club
-        // is absent from every row it would have appeared in, so attaching the
-        // line to one of them would say it once and imply it about the others.
-        <p className="flex items-start gap-2 text-xs text-muted-foreground">
-          <PauseCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span>
-            <span className="font-medium">{t("paused")}</span>{" "}
-            {week.onBreak.join(", ")}
-          </span>
-        </p>
-      )}
-    </div>
+          {row.chips.length === 0 ? (
+            // No placeholder and no reserved height: an empty Sunday is a fact
+            // about the week, and a ghost chip there would read as something
+            // that failed to load.
+            <p className="px-1 text-xs text-muted-foreground">
+              {t("nothingOn")}
+            </p>
+          ) : (
+            <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+              {row.chips.map((chip) => (
+                <li key={chip.id}>
+                  <SessionChip chip={chip} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 

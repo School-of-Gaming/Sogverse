@@ -688,7 +688,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/feedback/route.ts": {
     adminClient:
-      "the submission write runs on the user client; the admin client survives only for the notification fan-out (every admin's address, a gamer's parent's) which is not in the submitter's view and must not be returnable",
+      "the submission write runs on the user client; the admin client survives only to resolve a gamer's reply-to (their parent's address), which is not in the submitter's view and must not be returnable",
     handlers: {
       POST: {
         // Every role, which is the shared gate's way of spelling "any

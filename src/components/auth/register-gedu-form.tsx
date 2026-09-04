@@ -23,7 +23,7 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
-import { useAuth, useReferralCode } from "@/providers";
+import { useAuth, useUtm } from "@/providers";
 import { readErrorMessage } from "@/lib/api/json-response";
 import type { SpokenLanguageCode } from "@/types";
 
@@ -54,7 +54,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
   // Educator capture is not for the Roblox programme — it is for knowing where
   // educators come from when SOG runs a recruitment campaign.
-  const referralCode = useReferralCode();
+  const utm = useUtm();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -123,11 +123,14 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
           locationIds,
           minecraftUsername: minecraftUsername ?? undefined,
           robloxUsername: robloxUsername ?? undefined,
-          // The route cannot read `x-referral-code` off its own request: the
-          // proxy derives that header from the query string of the request it is
-          // handling, and this POST carries no `?ref=`. So it travels in the
-          // body.
-          referralCode: referralCode ?? undefined,
+          // The route cannot read `x-utm` off its own request: the proxy derives
+          // that header from the query string of the request it is handling, and
+          // this POST carries no UTM params. So they travel in the body.
+          utm: {
+            source: utm.source ?? undefined,
+            medium: utm.medium ?? undefined,
+            campaign: utm.campaign ?? undefined,
+          },
         }),
       });
 

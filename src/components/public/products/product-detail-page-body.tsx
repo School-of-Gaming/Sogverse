@@ -104,12 +104,9 @@ function usePublishedHeight(
 export interface ProductDetailPageBodyProps {
   /**
    * The detail row, not the browse row: this page renders the authored long
-   * description, which the browse listing deliberately does not fetch. Holidays
-   * stay optional — a caller that has no calendar to draw simply omits them.
+   * description, which the browse listing deliberately does not fetch.
    */
-  product: Omit<ProductDetailRow, "holidays"> & {
-    holidays?: { date: string; reason: string }[];
-  };
+  product: ProductDetailRow;
   /** The signup panel, injected so the body stays panel-agnostic. Prod passes
    *  the live `SignupPanel`; the preview passes a navigating one. Every state
    *  it can render, it renders here. */

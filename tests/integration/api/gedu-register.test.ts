@@ -370,57 +370,72 @@ describe("POST /api/gedu/register", () => {
     expect(args.p_roblox_user_id).toBe("");
   });
 
-  // -- Referral attribution --
+  // -- UTM attribution --
   //
-  // The code travels in the body (the form POSTs here with no `?ref=` on the
-  // URL, so the proxy's header is simply absent on this request) and reaches the
-  // profile-creation trigger through the same user metadata key the parent path
-  // uses. The body schema takes it as a plain string on purpose: the educator
-  // never typed it and cannot see it, so a malformed one must not 400 them.
+  // The values travel in the body (the form POSTs here with no utm params on
+  // the URL, so the proxy's header is simply absent on this request) and reach
+  // the profile-creation trigger through the same three user-metadata keys the
+  // parent path uses. The body schema takes them as plain strings on purpose:
+  // the educator never typed them and cannot see them, so a malformed one must
+  // not 400 them.
 
-  it("passes a valid referral code through to the signup metadata", async () => {
+  function signupMetadata() {
+    return asObject(asObject(mockCreateUser.mock.calls[0][0]).user_metadata);
+  }
+
+  it("passes valid utm values through to the signup metadata", async () => {
     const response = await POST(
-      registerRequest({ ...validBody, referralCode: "Paris-Nord" }),
+      registerRequest({
+        ...validBody,
+        utm: { source: "Lynx", medium: "email", campaign: "lynx-summer-a" },
+      }),
     );
 
     expect(response.status).toBe(200);
-    const metadata = asObject(
-      asObject(mockCreateUser.mock.calls[0][0]).user_metadata,
-    );
-    expect(metadata.referral_code).toBe("paris-nord");
+    const metadata = signupMetadata();
+    expect(metadata.utm_source).toBe("Lynx");
+    expect(metadata.utm_medium).toBe("email");
+    expect(metadata.utm_campaign).toBe("lynx-summer-a");
   });
 
-  it("registers successfully with NULL when the referral code is malformed", async () => {
+  it("registers successfully with NULL when a utm value is malformed", async () => {
     const response = await POST(
-      registerRequest({ ...validBody, referralCode: "=SUM(A1)" }),
+      registerRequest({
+        ...validBody,
+        utm: { source: "=SUM(A1)", campaign: "lynx-summer-a" },
+      }),
     );
 
     // A 400 here would let whoever authored the marketing link break somebody
-    // else's registration.
+    // else's registration. The fields are independent, so the well-formed
+    // campaign beside the refused source still lands.
     expect(response.status).toBe(200);
-    const metadata = asObject(
-      asObject(mockCreateUser.mock.calls[0][0]).user_metadata,
-    );
-    expect(metadata).not.toHaveProperty("referral_code");
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_source");
+    expect(metadata.utm_campaign).toBe("lynx-summer-a");
   });
 
-  it("sends no referral key at all when the educator arrived without one", async () => {
+  it("sends no utm keys at all when the educator arrived without any", async () => {
     const response = await POST(registerRequest(validBody));
 
     expect(response.status).toBe(200);
-    const metadata = asObject(
-      asObject(mockCreateUser.mock.calls[0][0]).user_metadata,
-    );
-    expect(metadata).not.toHaveProperty("referral_code");
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_source");
+    expect(metadata).not.toHaveProperty("utm_medium");
+    expect(metadata).not.toHaveProperty("utm_campaign");
   });
 
-  it("never passes the referral code to the promotion RPC", async () => {
-    // register_gedu names a targeted column list and does not mention
-    // referral_code, so the trigger-written value survives promotion untouched.
-    await POST(registerRequest({ ...validBody, referralCode: "paris-nord" }));
+  it("never passes the utm values to the promotion RPC", async () => {
+    // register_gedu names a targeted column list and mentions none of the
+    // three, so the trigger-written values survive promotion untouched.
+    await POST(
+      registerRequest({ ...validBody, utm: { campaign: "lynx-summer-a" } }),
+    );
 
     const args = asObject(mockRpc.mock.calls[0][1]);
-    expect(Object.keys(args)).not.toContain("p_referral_code");
+    expect(Object.keys(args)).not.toContain("p_utm_source");
+    expect(Object.keys(args)).not.toContain("p_utm_medium");
+    expect(Object.keys(args)).not.toContain("p_utm_campaign");
   });
 
   // -- The welcome mail --

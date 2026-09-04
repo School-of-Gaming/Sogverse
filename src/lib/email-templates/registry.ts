@@ -268,9 +268,14 @@ const SESSION_REPORT_SAMPLE_OPTIONS = SESSION_REPORT_SAMPLES.map((sample) => ({
   value: sample.id,
 }));
 
-/** Zones to format the mail in; the first is what the live send uses (the product's). */
+/**
+ * Zones to format the mail in. A live send uses the product's own zone, which
+ * an admin now picks per product — so the first entry is labelled as the
+ * default that zone starts at rather than as "the product's zone", which was
+ * true only while every product was pinned to Helsinki.
+ */
 const VIEWER_TIMEZONE_OPTIONS = [
-  { label: "Europe/Helsinki (the product's zone)", value: "Europe/Helsinki" },
+  { label: "Europe/Helsinki (the default product zone)", value: "Europe/Helsinki" },
   { label: "Europe/Stockholm", value: "Europe/Stockholm" },
   { label: "Europe/London", value: "Europe/London" },
   { label: "Europe/Paris", value: "Europe/Paris" },

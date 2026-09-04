@@ -23,8 +23,8 @@ import type { GeduFeedSession } from "@/services/gedu-sessions/gedu-sessions.con
  * into the feed the workspace renders.
  *
  * **The RPC returns data; this module does the calendar math.** Nothing on the
- * server expands a schedule — that would be the third holiday-blind expansion in
- * the codebase and the second language it is written in. What comes back is the
+ * server expands a schedule — that would be the third schedule expansion in the
+ * codebase and the second language it is written in. What comes back is the
  * schedule parameters, the rows, and the roster; the walk forward, the walk
  * backward, the merge of rows over projections and the derivation of what kind
  * of entry each date is all happen here, once, in front of one clock.

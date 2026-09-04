@@ -155,71 +155,71 @@
       "items": {
         "whatIsSogverse": {
           "question": "What is Sogverse?",
-          "answer": "Sogverse is School of Gaming’s platform for clubs, camps and events led by professional Game Educators, in Minecraft, Roblox, Fortnite and more."
+          "answer": "<p>Sogverse is School of Gaming’s platform for clubs, camps and events in Minecraft, Roblox, Fortnite and more, led by professional Game Educators — Gedus, as everyone here calls them.</p>"
         },
         "isItASchool": {
           "question": "Is this school?",
-          "answer": "No. Gaming is a hobby like any other, and that is how we run it: a Game Educator is there to guide and help, not to grade. Nothing in Sogverse gives a child a mark, sets homework or holds an exam. What your child does get is a group of their own, a Gedu who knows them, and a written report after each session so you can see what they worked on and how it went."
+          "answer": "<p>No. Gaming is a hobby like any other, and that is how we run it: a Game Educator is there to guide and help, not to grade. Nothing in Sogverse gives a child a mark, sets homework or holds an exam.</p><p>What your child does get is a group of their own, a Gedu who knows them, and a written report after each session so you can see what they worked on and how it went.</p>"
         },
         "ages": {
           "question": "What ages is this for?",
-          "answer": "Every club, camp and event carries its own age range, shown on its page and on its card in the shop — and the shop has an age filter to help you find what fits your child. Across the platform those ranges run from age 7 to 17. The games themselves have their own ratings, and we follow Finland’s official age-rating guidance: a child may play a game rated up to three years above their own age when a parent is present and comfortable with it, and never a game rated 18+. Signing your child up confirms you are happy with the ratings of the games involved."
+          "answer": "<p>Every club, camp and event carries its own age range, shown on its page and on its card in the shop — and the shop has an age filter to help you find what fits your child. Across the platform those ranges run from age 7 to 17.</p><p>The games themselves carry their own age ratings, and every game’s rating is shown on the page of the club, camp or event built around it. We never run a game rated 18+. In Finland we follow the national age-rating guidance, which lets a child play a game rated up to three years above their own age when a parent is present and comfortable with it.</p><p>Wherever you are, the game’s rating and the activity’s own age range are both on the page before you sign up, and signing your child up confirms you are happy with them.</p>"
         },
         "games": {
           "question": "Which games do you run, and does my child need to own the game?",
-          "answer": "Our clubs, camps and events run in Minecraft (Java, Bedrock and Education editions), Roblox Studio, Fortnite, Rocket League and Pokémon GO, alongside sessions on esports, programming, AI and game creation — every club, camp and event page names the game it is built around and says plainly what you need. Fortnite, Rocket League, Pokémon GO and Roblox Studio are free to download; your child needs a free account for them. Minecraft Java and Minecraft Bedrock are paid games your family buys once from the publisher — the price is not included in ours, and the edition matters, so the page tells you which one and where to get it. For Minecraft Education there is nothing to buy and no school account to arrange: School of Gaming provides the accounts used in the session, and your child only downloads the game itself, free of charge."
+          "answer": "<p>Our clubs, camps and events run in Minecraft (Java, Bedrock and Education editions), Roblox Studio, Fortnite, Rocket League and Pokémon GO, alongside sessions on esports, programming, AI and game creation — every club, camp and event page names the game it is built around and says plainly what you need.</p><p>Fortnite, Rocket League, Pokémon GO and Roblox Studio are free to download; your child needs a free account for them.</p><p>Minecraft Java and Minecraft Bedrock are paid games your family buys once from the publisher — the price is not included in ours, and the edition matters, so the page tells you which one and where to get it. For Minecraft Education there is nothing to buy and no school account to arrange: School of Gaming provides the accounts used in the session, and your child only downloads the game itself, free of charge.</p>"
         },
         "equipment": {
           "question": "What equipment does my child need?",
-          "answer": "It depends on the game, and every club, camp and event says so on its own page. Minecraft Java needs a computer — Windows, Mac or Linux — and the console, phone and tablet edition will not work. Roblox Studio runs on Windows PCs and Macs only: not on a tablet, Chromebook, phone or console. Minecraft Bedrock runs on consoles, phones, tablets and Windows PCs, and Rocket League on Windows PCs, PlayStation, Xbox and Nintendo Switch. Pokémon GO needs a phone or tablet with GPS and a mobile data connection, because it is played outdoors. Online sessions themselves run in the browser, over voice, so your child also needs a microphone — the session screen has a microphone picker and a live test bar so they can check it is the right one before they speak."
+          "answer": "<p>It depends on the game, and every club, camp and event says so on its own page.</p><p>Minecraft Java needs a computer — Windows, Mac or Linux — and the console, phone and tablet edition will not work. Roblox Studio runs on Windows PCs and Macs only: not on a tablet, Chromebook, phone or console. Minecraft Bedrock runs on consoles, phones, tablets and Windows PCs, and Rocket League on Windows PCs, PlayStation, Xbox and Nintendo Switch. Pokémon GO needs a phone or tablet with GPS and a mobile data connection, because it is played outdoors.</p><p>Online sessions themselves run in the browser, over voice, so your child also needs a microphone — the session screen has a microphone picker and a live test bar so they can check it is the right one before they speak.</p>"
         },
         "productTypes": {
           "question": "What’s the difference between clubs, camps, and events?",
-          "answer": "Clubs meet on a recurring schedule. Camps run across multiple days during school breaks. Events are one-off get-togethers."
+          "answer": "<p>Clubs meet on a recurring schedule. Camps run across multiple days during school breaks. Events are one-off get-togethers.</p>"
         },
         "billing": {
           "question": "What does it cost, and how does billing work?",
-          "answer": "Prices are set per club, camp and event, and each one shows its own price on its page, in euros and including VAT. How you pay depends on what you are signing up for: a club is a monthly subscription, billed every month with no fixed commitment; a camp or an event is a single payment made once at signup, with nothing further to pay; and a municipality club is paid for by the municipality, so there is nothing to pay us. Each child’s place in each club is its own monthly subscription, named after the child and the club, so a family with two children in two clubs sees four lines. If you sign up before a club has started, nothing is charged that day: the page tells you the date of your first payment before you commit. Your saved cards, invoices and subscriptions all live in the Payment & billing card on My SOG, which opens Stripe’s own secure billing page."
+          "answer": "<p>Prices are set per club, camp and event, and each one shows its own price on its page, in euros and including VAT.</p><p>How you pay depends on what you are signing up for: a club is a monthly subscription, billed every month with no fixed commitment; a camp or an event is a single payment made once at signup, with nothing further to pay; and a municipality club is paid for by the municipality, so there is nothing to pay us. Each child’s place in each club is its own monthly subscription, named after the child and the club, so a family with two children in two clubs sees four lines. If you sign up before a club has started, nothing is charged that day: the page tells you the date of your first payment before you commit.</p><p>Your saved cards, invoices and subscriptions all live in the Payment & billing card on My SOG, which opens Stripe’s own secure billing page.</p>"
         },
         "cancellation": {
           "question": "Can I cancel, and what is your refund policy?",
-          "answer": "A club runs as a monthly subscription with no fixed commitment, and you can cancel whenever you like, at no cost, from the Payment & billing card on My SOG, which opens Stripe’s secure billing page. Your child keeps their place until the end of the billing period you have already paid for — their club page shows the date of their last session while the membership winds down. Every club also carries a 30-day money-back guarantee: if it turns out not to be right for your child, email {supportEmail} within 30 days of their first session and we refund everything you have paid towards that club — there is no form and no reason to give. Camps are booked and paid as a one-off, so they work differently: cancel 14 days or more before the camp starts and you get a full refund; between 7 and 14 days before, we refund you minus a €50 administration fee; less than 7 days before we cannot refund the payment, because the place has been held and prepared for your child — unless it is a medical emergency or something genuinely outside your control. If your child cannot attend because of illness, send us a doctor’s certificate at {supportEmail} and we refund you."
+          "answer": "<p>A club runs as a monthly subscription with no fixed commitment, and you can cancel whenever you like, at no cost, from the Payment & billing card on My SOG, which opens Stripe’s secure billing page. Your child keeps their place until the end of the billing period you have already paid for — their club page shows the date of their last session while the membership winds down.</p><p>Every club also carries a 30-day money-back guarantee: if it turns out not to be right for your child, email {supportEmail} within 30 days of their first session and we refund everything you have paid towards that club — there is no form and no reason to give.</p><p>Camps are booked and paid as a one-off, so they work differently: cancel 14 days or more before the camp starts and you get a full refund; between 7 and 14 days before, we refund you minus a €50 administration fee; less than 7 days before we cannot refund the payment, because the place has been held and prepared for your child — unless it is a medical emergency or something genuinely outside your control. If your child cannot attend because of illness, send us a doctor’s certificate at {supportEmail} and we refund you.</p>"
         },
         "severalChildren": {
           "question": "I have several children — how do accounts and payments work?",
-          "answer": "You hold one parent account, and you create a gamer account for each child from My SOG — first name, birth month and year, and optionally gender. A child never creates an account of their own, and your account can hold up to seven gamers. Paying is yours to do: each child’s place in each club is its own line, so you can see and cancel them one at a time, and you reach them all from the Payment & billing card on My SOG. There is no per-family bundle to buy and no separate account to set up per child."
+          "answer": "<p>You hold one parent account, and you create a gamer account for each child from My SOG — first name, birth month and year, and optionally gender. A child never creates an account of their own, and your account can hold up to seven gamers.</p><p>Paying is yours to do: each child’s place in each club is its own line, so you can see and cancel them one at a time, and you reach them all from the Payment & billing card on My SOG.</p><p>There is no per-family bundle to buy and no separate account to set up per child.</p>"
         },
         "languages": {
           "question": "What language are sessions run in?",
-          "answer": "Two different settings, and they do not have to match. Every club, camp and event is delivered in one language — Finnish, Swedish, English or French — shown on its page and usable as a filter in the shop. Separately, the language you read Sogverse in is your own choice, from the picker in the site header. Changing it changes the app, not the language your child’s sessions are run in, so a Finnish-speaking parent can read the site in Finnish and enrol their child in an English club."
+          "answer": "<p>Two different settings, and they do not have to match.</p><p>Every club, camp and event is delivered in one language — Finnish, Swedish, English or French — shown on its page and usable as a filter in the shop.</p><p>Separately, the language you read Sogverse in is your own choice, from the picker in the site header. Changing it changes the app, not the language your child’s sessions are run in, so a Finnish-speaking parent can read the site in Finnish and enrol their child in an English club.</p>"
         },
         "municipalityClubs": {
           "question": "What is a municipality club, and how do we join one?",
-          "answer": "A municipality club is a club we run together with a Finnish municipality. Depending on the municipality it meets either online from home or in person at your child’s school, and a professional Game Educator is there to guide it either way. The municipality pays for it, so there is nothing to pay us when you register — some municipalities charge families a small fee of their own, which they will tell you about. You do not need a code or a referral: search for your municipality on our municipality clubs page, and if we have reached it, its clubs are listed there and you register your child directly, with no payment step. Places are limited and clubs often have a waiting list, so if your child stops attending, please tell us so the place can be offered to the next gamer. We also run clubs that are open to everyone, which a gamer can join wherever they live."
+          "answer": "<p>A municipality club is a club we run together with a Finnish municipality. Depending on the municipality it meets either online from home or in person at your child’s school, and a professional Game Educator is there to guide it either way.</p><p>The municipality pays for it, so there is nothing to pay us when you register — some municipalities charge families a small fee of their own, which they will tell you about. You do not need a code or a referral: search for your municipality on our municipality clubs page, and if we have reached it, its clubs are listed there and you register your child directly, with no payment step.</p><p>Places are limited and clubs often have a waiting list, so if your child stops attending, please tell us so the place can be offered to the next gamer. We also run clubs that are open to everyone, which a gamer can join wherever they live.</p>"
         },
         "whoLeads": {
           "question": "Who leads the sessions, and how are Gedus vetted?",
-          "answer": "Every session is hosted by a Gedu — a Game Educator who’s also a gamer and knows how to support children in-game and out. We require every Gedu to show us a criminal record extract for working with children before we certify them — the Finnish rikosrekisteriote, which they order themselves from the Legal Register Centre and which must be less than six months old when they show it to us — and to read and accept the contract they work under. We keep no copy of the extract and record nothing out of it, only that an acceptable one was shown and when. Registering as a Gedu opens no group on its own: until an admin certifies the account, a Gedu cannot be assigned to a group or use the Gedu tools."
+          "answer": "<p>Every session is hosted by a Gedu — a Game Educator who’s also a gamer and knows how to support children in-game and out.</p><p>We require every Gedu to show us a criminal record extract for working with children before we certify them — the Finnish rikosrekisteriote, which they order themselves from the Legal Register Centre and which must be less than six months old when they show it to us — and to read and accept the contract they work under. We keep no copy of the extract and record nothing out of it, only that an acceptable one was shown and when.</p><p>Registering as a Gedu opens no group on its own: until an admin certifies the account, a Gedu cannot be assigned to a group or use the Gedu tools.</p>"
         },
         "safety": {
           "question": "Can strangers talk to my child, and is anything recorded?",
-          "answer": "No — a club’s voice room is not a public room anyone can find. It exists only during that group’s session window, opening five minutes before the session starts and closing five minutes after it ends, and the only people who can enter are the members of that group, a Game Educator working on that club, and School of Gaming admins; that check runs on our server every time someone joins, so a child with no place in that group has no way in. There is no direct-message feature anywhere on the platform: text chat during a call goes to the whole room, lives only as long as the call does, and is never stored. Nothing in the app records, transcribes or stores a session, and the room carries no recording controls. Only the Gedu and admins hold the moderator controls: muting a microphone, locking one, and moving someone to a separate space. In-game chat is a separate thing, run by the games themselves — on School of Gaming’s own Minecraft server our Gedus can mute, kick and ban a player."
+          "answer": "<p>No — a club’s voice room is not a public room anyone can find. It exists only during that group’s session window, opening five minutes before the session starts and closing five minutes after it ends, and the only people who can enter are the members of that group, a Game Educator working on that club, and School of Gaming admins; that check runs on our server every time someone joins, so a child with no place in that group has no way in.</p><p>There is no direct-message feature anywhere on the platform: a session’s chat goes to the whole room, never to one child privately, and it carries pictures as well as words. It lives in the room, which is open for that same window — that is where your child reads it, and once the room closes there is no way to open it again. We do keep it: the Gedus running that club and School of Gaming admins can look back at what was said, which is what makes moderating it possible. Removing a message leaves a marker in its place rather than erasing it.</p><p>The session itself is not recorded. Nothing in the app records, transcribes or stores the voice or video of a session, and the room carries no recording controls.</p><p>Only the Gedu and admins hold the moderator controls, and those reach a long way: muting a microphone or locking it, turning a camera off or locking it, muting someone in the chat, moving someone into a space of their own, and speaking to every space at once. In-game chat is a separate thing, run by the games themselves — on School of Gaming’s own Minecraft server our Gedus can mute, kick and ban a player.</p>"
         },
         "gamerAccounts": {
           "question": "How does my child sign in, and what is the parent PIN?",
-          "answer": "You choose how your child signs in, for each child, from My SOG. By default a gamer account has no login of its own: it carries an internal Sogverse address rather than a real email address, and your child enters Sogverse by switching to their profile from your account. If you prefer, you can give them a username and a password, or their own email address — which they verify before setting a password through the normal reset flow. Whichever you choose, a child’s sign-in opens only their own account: a child who signed in with their own username or email can reach your account or a sibling’s only by typing that account’s password, and a child who got in by switching from your account needs your parent PIN to switch anywhere else. Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or change a child’s account, and the session locks again the moment you switch to a child’s profile or sign out. If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email."
+          "answer": "<p>You choose how your child signs in, for each child, from My SOG. By default a gamer account has no login of its own: it carries an internal Sogverse address rather than a real email address, it is linked to your parent account, and your child enters Sogverse by switching to their profile from yours. If you prefer, you can give them a username and a password, or their own email address — which they verify before setting a password through the normal reset flow.</p><p>Whichever you choose, a child’s sign-in opens only their own account: a child who signed in with their own username or email can reach your account or a sibling’s only by typing that account’s password, and a child who got in by switching from your account needs your parent PIN to switch anywhere else.</p><p>Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or change a child’s account, and the session locks again the moment you switch to a child’s profile or sign out.</p><p>If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email.</p>"
         },
         "childData": {
           "question": "What do you store about my child?",
-          "answer": "Their first name, their birth month and year — we do not ask for the day — and optionally their gender, plus your family surname, because your child is part of your family; a Gedu’s roster and the voice room show your child’s first name only. Their account carries an internal Sogverse address rather than a real email address unless you chose to give them their own, and optionally we hold their username in the games their clubs use — today Minecraft and Roblox — and the id that game gives them, so we can recognise them in a session. Their profile picture is not a photo: the image beside their name is a pattern generated from their account id. Alongside that we keep what running a club requires — which clubs, camps and events they are signed up for, their attendance, the session reports and short staff notes their Gedus write, and the photos a Gedu attaches to a report. Those photos are of the session rather than of one child: every family in that group sees them on the group’s page and receives them with the report by email. To see, correct or delete anything we hold about your child, email {supportEmail}. We keep your information for as long as you have an account and delete or anonymise it if you close one, except where the law requires us to keep certain records longer, as Finnish accounting law does for payment records."
+          "answer": "<p>About your child:</p><list><item>Their first name, their birth month and year — we do not ask for the day — and optionally their gender.</item><item>Your family surname, because your child is part of your family. It is shown to nobody outside your family: a Gedu’s roster and the voice room show your child’s first name, their age, and any game username you have added.</item><item>An internal Sogverse address on their account, rather than a real email address — unless you chose to give your child a sign-in of their own with their own address, in which case we hold that address. Either way, no email address of your child’s is shown on a Gedu’s roster or in the voice room.</item><item>Optionally, their username in the games their clubs use — today Minecraft and Roblox — and the id that game gives them, so we can recognise them in a session. Their in-game character picture is loaded from that game’s own servers, so the username reaches Minecraft or Roblox whenever a roster is drawn.</item><item>A profile picture that is not a photo: with no game account linked, the image beside their name is a pattern generated from their account id.</item></list><p>Alongside that we keep what running a club requires: which clubs, camps and events they are signed up for, their attendance, the session reports and short staff notes their Gedus write, the chat from their sessions and any picture posted into it, anything they make that a Gedu links to their group, the consents recorded against their place, and the photos a Gedu attaches to a report. A Gedu’s moderation is on record too — a child moved into a private space, or muted in the chat, leaves a record of it. Those report photos are of the session rather than of one child — every family in that group sees them on the group’s page and receives them with the report by email.</p><p>To see, correct or delete anything we hold about your child, email {supportEmail}. We keep your information for as long as you have an account and delete or anonymise it if you close one, except where the law requires us to keep certain records longer, as Finnish accounting law does for payment records.</p>"
         },
         "howToStart": {
           "question": "How do I get started?",
-          "answer": "Create a parent account, add your child as a gamer from My SOG, then browse the shop and enrol them — the signup panel asks who the seat is for, and prompts you to add a gamer if you have not yet. Once you have signed up we place your child in a group with a Gedu before their first session, and the club then appears on My SOG for both of you. They join sessions through your account — you switch to their profile — unless you choose to give them a sign-in of their own from My SOG."
+          "answer": "<p>Create a parent account, add your child as a gamer from My SOG, then browse the shop and enrol them — the signup panel asks who the seat is for, and prompts you to add a gamer if you have not yet.</p><p>Once you have signed up we place your child in a group with a Gedu before their first session, and the club then appears on My SOG for both of you.</p><p>They join sessions through your account — you switch to their profile — unless you choose to give them a sign-in of their own from My SOG.</p>"
         },
         "becomeGedu": {
           "question": "How do I become a Game Educator?",
-          "answer": "Register for a Gedu account on our Game Educator sign-up page: it asks for your name and email, a password, and optionally your phone number, the languages you speak, the areas you can work in on site, and your Minecraft or Roblox username. You can sign in straight away. Before an admin certifies your account we ask two things of you: read and accept the contract you would work under, and show us a criminal record extract for working with children (rikosrekisteriote), which you order yourself from the Legal Register Centre and which must be less than six months old — we keep no copy of it. Certification is what opens the rest: until then you cannot be assigned to a group or use the Gedu tools."
+          "answer": "<p>Register for a Gedu account on our Game Educator sign-up page: it asks for your name and email, a password, and optionally your phone number, the languages you speak, the areas you can work in on site, and your Minecraft or Roblox username. You can sign in straight away.</p><p>Before an admin certifies your account we ask two things of you: read and accept the contract you would work under, and show us a criminal record extract for working with children (rikosrekisteriote), which you order yourself from the Legal Register Centre and which must be less than six months old — we keep no copy of it.</p><p>Certification is what opens the rest: until then you cannot be assigned to a group or use the Gedu tools.</p>"
         }
       }
     }
@@ -275,7 +275,6 @@
         "sessionCount": "{count, plural, one {# session} other {# sessions}}",
         "timesIn": "times in {zone}",
         "nothingOn": "Nothing on",
-        "paused": "Paused this week:",
         "needsAttention": "Needs attention — this product is in the queue at the top of the page",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
@@ -418,7 +417,6 @@
           "endDate": "End date",
           "signupThreshold": "Signup threshold",
           "termDates": "Term dates",
-          "holidayCalendars": "Holiday calendars",
           "billingMode": "Billing",
           "seats": "Seats",
           "waitlist": "Waitlist",
@@ -426,6 +424,7 @@
           "primaryGeduFee": "Primary Gedu fee / session",
           "assistantGeduFee": "Assistant Gedu fee / session",
           "municipalityFee": "Municipality fee / session",
+          "timezone": "Timezone",
           "registrationOpensAt": "Registration opens",
           "tag": "Designed for",
           "regionLock": "Region lock",
@@ -508,8 +507,7 @@
         "dayAndTime": "Day & time",
         "daysAndTimes": "Days & times",
         "time": "Time",
-        "holidayCalendars": "Holiday calendars",
-        "holidayNoUpcoming": "No upcoming dates — this calendar needs dates before it’s useful.",
+        "timezone": "Timezone",
         "pricing": "Price",
         "free": "Free",
         "paid": "Paid",
@@ -635,8 +633,9 @@
         "eventSingleDay": "Events happen on a single date.",
         "thresholdOnly": "No fixed start date yet. Parents see a “X of Y needed” counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
         "thresholdWithDate": "If fewer than this many parents sign up by the start date, you’ll need to cancel and refund from the product’s page.",
-        "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
-        "holidayHint": "No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically.",
+        "timezoneEntry": "Session times below are entered in this timezone. Parents see them converted to their own automatically.",
+        "timezoneChangeMoves": "Session times below are entered in this timezone. Changing it moves every upcoming session to the same clock time in the new zone, while sessions that already have a report or attendance recorded keep the times they were held at.",
+        "timezoneIs": "Times are in {timezone}. Parents see them converted to their local timezone automatically.",
         "billingHint": "Free products default to a seat limit; paid ones start unlimited.",
         "freeDetail": "No charge. Anyone can join with one click.",
         "paidDetailMonthly": "Charged monthly as a subscription.",
@@ -648,7 +647,6 @@
         "seatHintNoWaitlist": "When full, new signups are refused.",
         "visibleHint": "Unchecked, the product appears on no public page — but anyone with the direct link can still open it and buy a place. That is what makes it right for unannounced, invite-only or campaign products. It is not a way to stop sign-ups, and it never affects parents and gamers already taking part.",
         "seatLimitHint": "Cap the number of participants, or run with no limit.",
-        "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
         "startDateBillingAnchor": "The date the club starts, and the date families are first charged. Changing it later does not move the first charge for anyone who has already signed up — correct those subscriptions in Stripe."
       },
       "errors": {
@@ -944,7 +942,6 @@
       "userNotFound": "User not found.",
       "joined": "Joined",
       "unknown": "Unknown",
-      "referralCode": "Referral code",
       "linkedGamers": "Linked Gamers",
       "linkedParents": "Linked Parents",
       "unnamedGamer": "Unnamed Gamer",
@@ -975,7 +972,14 @@
         "description": "Set or correct this account's game usernames. Saving checks the name with the platform."
       },
       "marketing": {
-        "title": "Marketing preferences",
+        "title": "Marketing",
+        "attribution": "Attribution",
+        "utm": {
+          "source": "Source",
+          "medium": "Medium",
+          "campaign": "Campaign"
+        },
+        "preferences": "Preferences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
         "granted": "Granted",
@@ -1459,7 +1463,8 @@
     "privacy": "Privacy Policy",
     "terms": "Terms & Conditions",
     "antiBullying": "Anti-Bullying",
-    "attributions": "Attributions"
+    "attributions": "Attributions",
+    "privacyChoices": "Privacy choices"
   },
   "gamer": {
     "welcomeNamed": "Welcome, {name}!",
@@ -1470,15 +1475,19 @@
       "items": {
         "joiningSession": {
           "question": "How do I join my session when it starts?",
-          "answer": "Open My SOG and find your club. Five minutes before your session starts, the button on it changes from a locked “Opens…” to Join voice room — tap that and you are in. There is nothing to install and no code to type, and until then the button tells you the day and time it opens. If your club says instead that you are signed up and we are matching you with a Gedu and a group, there is no button on it yet: you are in, we just have not put you in a group. That happens before your first session, and your Gedu will be there when it does."
+          "answer": "<p>Here is the whole thing:</p><steps><step>Open My SOG and find your club.</step><step>Look at the button on it. Until your session is close it stays locked, and it tells you the day and time it opens.</step><step>Five minutes before your session starts, that button changes to “Join voice room”.</step><step>Tap it. You are in.</step></steps><p>There is nothing to install and no code to type.</p><p>If your club says instead that you are signed up and we are matching you with a Gedu and a group, there is no button on it yet. You are in — we just have not put you in a group. That happens before your first session, and your Gedu will be there when it does.</p>"
         },
-        "micTrouble": {
-          "question": "Nobody can hear me, or I cannot hear anyone — what do I check?",
-          "answer": "Tap the small arrow next to the microphone button. It opens your microphone settings: pick the right microphone from the list, then talk — the bar moves when your microphone is working, and if it does not move, something else has the microphone. If you cannot see a bar at all, your microphone is off rather than quiet. Then three things to check. Is your microphone button red? That means you are muted, so tap it to unmute. Does it show a padlock? Your Gedu has locked it for a moment, and they will unlock it. And if a red message says we cannot reach your microphone, close any other app or tab using it, allow microphone access in your browser’s settings, and tap Reload. If you cannot hear anyone, check the volume on your computer and that your headphones are plugged in properly. Still stuck? Tell your Gedu in the session — they can help."
+        "cannotBeHeard": {
+          "question": "Nobody can hear me — what do I check?",
+          "answer": "<p>Check these in order. It is almost always the first one.</p><steps><step>Is your microphone button red? That means you are muted. Tap it to unmute.</step><step>Does the button show a padlock? Your Gedu has locked your microphone for a moment. They will unlock it.</step><step>Tap the small arrow next to the microphone button. It opens your microphone settings, where you can pick the right microphone from the list.</step><step>Now talk, and look for the bar under the list. If there is no bar at all, your microphone is off rather than quiet — go back to step 1. If the bar is there but never moves, something else on your device has your microphone.</step></steps><p>If you see a red message saying we cannot reach your microphone, close any other app or tab that is using it, allow microphone access in your browser’s settings, and tap Reload.</p><p>Still nobody? Tell your Gedu in the session — they can help.</p>"
+        },
+        "cannotHearOthers": {
+          "question": "I cannot hear anyone — what do I check?",
+          "answer": "<p>Check these in order:</p><steps><step>Turn your device’s volume up, and check your headphones are plugged in properly.</step><step>Look at the zones. You only hear the people in the same zone as you, so if everyone else is somewhere else, tap the zone they are in to move in with them.</step><step>If your Gedu moved you into a zone on purpose, stay there. They will bring you back.</step></steps><p>If the others are in your zone, your volume is up and it is still silent, tell your Gedu — say it out loud, or write it in the chat if your room has one. They can see who is in the room and help.</p>"
         },
         "someoneIsMean": {
           "question": "What if someone is mean to me in a session?",
-          "answer": "Tell your Gedu. Say it out loud in the session, or tell them afterwards — they are there for exactly this, and it is never telling tales. You can also tell a parent, and they can email us. Your Gedu will talk with the person about what happened and help them put it right. If it keeps happening they take firmer steps: a quiet one-to-one chat, muting someone or limiting what they can do in the game, asking them to sit out the rest of the session, and — if nothing changes — time away from our clubs altogether. Being unkind is never something you have to put up with here."
+          "answer": "<p>Tell your Gedu or a parent. You never have to deal with mean behaviour on your own, and telling an adult is not telling tales.</p><p>Your Gedu will always take it seriously and help sort out what happened. Being mean to others or breaking the club rules has consequences. Everyone has the right to feel safe and welcome in the club.</p>"
         }
       }
     }
@@ -1669,19 +1678,27 @@
       "items": {
         "certification": {
           "question": "What does certification mean, and what can I not do until then?",
-          "answer": "Certification is an admin confirming your account is ready to work with children. Two things come before it: accepting your Gedu contract, and presenting a criminal record extract for working with children (rikosrekisteriote) that is less than six months old. You order the extract yourself from the Legal Register Centre. We keep no copy of it and record nothing out of it — only that an acceptable one was shown, and when. Your contract page shows where both of them stand. Until you are certified you cannot be assigned to a group, and your Tools section stays closed: you cannot start an instant voice room, and you cannot reset Minecraft Education passwords. You also cannot email a session report to families or add photos to one. Everything else is open now: signing in, My SOG, your profile and coverage areas, and reading and accepting the contract. Help & feedback is here whether or not you are certified — use the form above if you are waiting and want to know where you stand."
+          "answer": "<p>Certification is an admin confirming your account is ready to work with children. Two things come before it: accepting your Gedu contract, and presenting a criminal record extract for working with children (rikosrekisteriote) that is less than six months old. You order the extract yourself from the Legal Register Centre. We keep no copy of it and record nothing out of it — only that an acceptable one was shown, and when. Your contract page shows where both of them stand.</p><p>Until you are certified you cannot be assigned to a group, and your Tools section stays closed: you cannot start an instant voice room, and you cannot reset Minecraft Education passwords. You also cannot email a session report to families or add photos to one.</p><p>Everything else is open now: signing in, My SOG, your profile and coverage areas, and reading and accepting the contract. Help & feedback is here whether or not you are certified — use the form above if you are waiting and want to know where you stand.</p>"
         },
         "groupAssignment": {
           "question": "How do I get assigned to a group?",
-          "answer": "An admin assigns you. Assignments are made from a club, camp or event’s groups panel on the admin side — you cannot assign yourself, and there is no request to submit — and you can hold one group per club, camp or event. Two things decide whether you appear as an option: your account has to be certified, and the admin picking a Gedu sees the languages you speak beside your name and can filter on them, so keeping your spoken languages up to date in your settings is what puts you in front of the right groups. Your coverage areas are for something else — finding you as a substitute when another Gedu cannot cover a session — so they are worth keeping current too. There is no email when an assignment is made — the group and its next session appear on your My SOG the next time you open it."
+          "answer": "<p>An admin assigns you. Assignments are made from a club, camp or event’s groups panel on the admin side — you cannot assign yourself, and there is no request to submit — and you can hold one group per club, camp or event.</p><p>Two things decide whether you appear as an option: your account has to be certified, and the admin picking a Gedu sees the languages you speak beside your name and can filter on them, so keeping your spoken languages up to date in your settings is what puts you in front of the right groups. Your coverage areas are for something else — finding you as a substitute when another Gedu cannot cover a session — so they are worth keeping current too.</p><p>There is no email when an assignment is made — the group and its next session appear on your My SOG the next time you open it.</p>"
+        },
+        "takingAttendance": {
+          "question": "How do I take attendance?",
+          "answer": "<p>From your My SOG:</p><steps><step>Open the club, camp or event you run. Its sessions are all listed on its page.</step><step>Find the session and tap Edit.</step><step>Attendance is the first thing in the editor: one row per gamer, each with Present and Absent.</step><step>Mark every gamer on the list, then tap Save.</step></steps><p>A row starts unmarked, and unmarked is a real third state rather than a quiet “absent”. Tapping an answer you have already chosen clears it again, so a wrong tap costs nothing, and the counter above the list tells you how many of the group you have marked so far.</p><p>You can save a half-marked sheet and finish it later — nothing you have already marked is lost. There is deliberately no “mark all present”: the register is also your confirmation that the session ran, and it is what you are paid on. Saving it does not finish the session on its own, though — the report and sending it to the families are the rest.</p>"
+        },
+        "attendanceAlert": {
+          "question": "Why does my club still show a yellow “needs attention” mark?",
+          "answer": "<p>Because that session still owes something. When a finished session is flagged, it is one of these four:</p><steps><step>Every gamer on the group’s current roster is marked, present or absent.</step><step>A session report has been written. Text you wrote in the plan beforehand counts as one, so revise it into what actually happened.</step><step>That report has been sent to the families.</step><step>On the last session of a run that requires creations, every member has one.</step></steps><p>The first is by far the most common reason. Marking the gamers who turned up is only half the register — the ones who did not turn up need marking Absent, or their rows stay unmarked and the session stays flagged.</p><p>One other thing reopens a session you had already finished: a gamer who joins the group afterwards. Nobody has said yet whether they were there, so their row comes back unmarked and waits for you.</p>"
         },
         "safeguardingConcern": {
           "question": "I have a safeguarding concern mid-session — what do I do?",
-          "answer": "Deal with the immediate situation in the room first — you hold the moderator controls: mute a microphone, lock it, or move someone into a private space away from the group. Then put it on record the same day, while it is fresh. Every session has a staff note, marked for Gedus and admins, that families never see; it is where an incident, bullying or a worry about a gamer belongs. There is also a per-gamer note on the group roster that stays with that child in that group, session to session, and is likewise Gedu- and admin-only. Neither is visible to any family. A note is a record, not an alert: nobody is paged by it, so anything urgent, or anything that needs someone beyond the group, goes to the office at {supportEmail} as well."
+          "answer": "<p>Deal with the immediate situation in the room first — you hold the moderator controls: mute a microphone, lock it, or move someone into a private space away from the group. Then put it on record the same day, while it is fresh.</p><p>Every session has a staff note, marked for Gedus and admins, that families never see; it is where an incident, bullying or a worry about a gamer belongs. There is also a per-gamer note on the group roster that stays with that child in that group, session to session, and is likewise Gedu- and admin-only. Neither is visible to any family.</p><p>A note is a record, not an alert: nobody is paged by it, so anything urgent, or anything that needs someone beyond the group, goes to the office at {supportEmail} as well.</p>"
         },
         "gamerCannotConnect": {
           "question": "A gamer cannot connect and the session has started — what can I do?",
-          "answer": "Two things you can do inside the product, and one you cannot. Check who is actually in the room against your roster — the participant list only shows people who are connected right now, so a name missing from it is a gamer who has not made it in, and nothing marks that for you; you read it off the list. To reach the family, open the group’s roster in the group workspace: each row carries the family’s contact email, which you copy with a tap, and there is a copy-all control above the list. You send from your own mail — there is no in-app message to a family, no text message, and no phone number on the roster. What you cannot do is admit them yourself: entry is decided by our server on the gamer’s own request, and they need an active place in that group with the session window open. If they hold a place and still cannot get in, the fastest fix is usually on their side — allow the browser microphone access, close whatever else is using it, reload. If it is something we need to fix, mail the office at {supportEmail}."
+          "answer": "<p>Two things you can do inside the product, and one you cannot.</p><p>Check who is actually in the room against your roster — the participant list only shows people who are connected right now, so a name missing from it is a gamer who has not made it in, and nothing marks that for you; you read it off the list.</p><p>To reach the family, open the group’s roster in the group workspace: each row carries the family’s contact email, which you copy with a tap, and there is a copy-all control above the list. You send from your own mail — there is no in-app message to a family, no text message, and no phone number on the roster.</p><p>What you cannot do is admit them yourself: entry is decided by our server on the gamer’s own request, and they need an active place in that group with the session window open. If they hold a place and still cannot get in, the fastest fix is usually on their side — allow the browser microphone access, close whatever else is using it, reload. If it is something we need to fix, mail the office at {supportEmail}.</p>"
         }
       }
     }
@@ -1924,18 +1941,6 @@
       "language": "Language",
       "online": "Online",
       "tbd": "To be confirmed"
-    },
-    "calendar": {
-      "weekdayMon": "Mon",
-      "weekdayTue": "Tue",
-      "weekdayWed": "Wed",
-      "weekdayThu": "Thu",
-      "weekdayFri": "Fri",
-      "weekdaySat": "Sat",
-      "weekdaySun": "Sun",
-      "legendSession": "Session",
-      "legendSkipped": "Skipped",
-      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "verb": {
@@ -2182,7 +2187,7 @@
       "empty": "The first events are being scheduled now. Check back shortly to see what is coming up.",
       "previous": "Previous events",
       "next": "Next events",
-      "browseShop": "Browse all events in the shop"
+      "browseShop": "Browse the shop"
     },
     "parents": {
       "eyebrow": "For parents",
@@ -2195,49 +2200,49 @@
       "items": {
         "programme": {
           "question": "What is the Programme?",
-          "answer": "A free game-design programme where young people learn to build on Roblox, run by Lynx Educate and School of Gaming, in collaboration with Roblox. It runs both online and in person across France, and finishes with your child publishing their own game or item."
+          "answer": "<p>A free game-design programme where young people learn to build on Roblox, run by Lynx Educate and School of Gaming, in collaboration with Roblox.</p><p>It runs both online and in person across France, and finishes with your child publishing their own game or item.</p>"
         },
         "eligibility": {
           "question": "Who can take part?",
-          "answer": "Young people in France aged 13–17, registered by a parent or legal guardian."
+          "answer": "<p>Young people in France aged 13–17, registered by a parent or legal guardian.</p>"
         },
         "cost": {
           "question": "Does it cost anything?",
-          "answer": "No, the Programme is 100% free for registered families!"
+          "answer": "<p>No, the Programme is 100% free for registered families!</p>"
         },
         "experience": {
           "question": "Does my child need Roblox experience already?",
-          "answer": "No prior experience needed — sessions are designed to teach game-building from the basics through to publishing."
+          "answer": "<p>No prior experience needed — sessions are designed to teach game-building from the basics through to publishing.</p>"
         },
         "where": {
           "question": "Where do sessions happen?",
-          "answer": "In-person sessions run in Paris, Lille, Strasbourg and Bordeaux. Online sessions are open to families anywhere in France. Sessions range from 60 minutes to 9 weeks.",
+          "answer": "<p>In-person sessions run in Paris, Lille, Strasbourg and Bordeaux. Online sessions are open to families anywhere in France.</p><p>Sessions range from 60 minutes to 9 weeks.</p>",
           "answer2": "See each specific event for details."
         },
         "language": {
           "question": "What language are sessions delivered in?",
-          "answer": "Sessions are delivered in French."
+          "answer": "<p>Sessions are delivered in French.</p>"
         },
         "equipment": {
           "question": "What equipment does my child need?",
-          "answer": "A computer (Windows or Mac) connected to the internet, plus access to Roblox Studio.",
+          "answer": "<p>A computer (Windows or Mac) connected to the internet, plus access to Roblox Studio.</p>",
           "answer2": "For online events, gamers should join with their own computer with Roblox Studio installed. For in-person events, computers and equipment will be available at the venue."
         },
         "dataSharing": {
           "question": "Is my child’s information shared with Roblox?",
-          "answer": "Some account information is shared with Lynx Educate and Roblox to deliver the Programme and to evaluate the Programme’s efficacy. Full detail is in our <linkPrivacy>Privacy Policy</linkPrivacy>."
+          "answer": "<p>Some account information is shared with Lynx Educate and Roblox to deliver the Programme and to evaluate the Programme’s efficacy. Full detail is in our <linkPrivacy>Privacy Policy</linkPrivacy>.</p>"
         },
         "media": {
           "question": "Will my child be photographed or filmed?",
-          "answer": "Sessions may be photographed for internal records. Whether footage is used externally in marketing is entirely your choice at registration, and you can change it anytime."
+          "answer": "<p>Sessions may be photographed for internal records. Whether footage is used externally in marketing is entirely your choice at registration, and you can change it anytime.</p>"
         },
         "facilitators": {
           "question": "Who runs the sessions, and how are they vetted?",
-          "answer": "Game Educators are trained and vetted by School of Gaming per our joint <linkSafeguarding>Child Safeguarding Policy</linkSafeguarding>."
+          "answer": "<p>Game Educators are trained and vetted by School of Gaming per our joint <linkSafeguarding>Child Safeguarding Policy</linkSafeguarding>.</p>"
         },
         "contact": {
           "question": "Who do I contact with questions?",
-          "answer": "Please write to <linkEmail>{email}</linkEmail> with any questions or concerns."
+          "answer": "<p>Please write to <linkEmail>{email}</linkEmail> with any questions or concerns.</p>"
         }
       }
     },
@@ -2949,19 +2954,19 @@
       "items": {
         "parentPin": {
           "question": "What is the parent PIN, and what if I forget it?",
-          "answer": "Your parent PIN is a four-digit code you set the first time you use your parent account. It gates the parent side of Sogverse rather than each separate action: you unlock once, and the session locks again the moment you switch to a gamer profile or sign out — so a password saved in the browser is not enough on its own to buy anything or change a child’s account. The same PIN gates the way back: a child who entered Sogverse by switching from your account needs it to switch to your profile or to a sibling’s. If you forget it, tap “Forgot your PIN?” on the PIN screen: we email a reset link to the address on your account and nowhere else, so a child pressing it simply sends you an email. The link lasts 24 hours and works once. You can also change a PIN you still know from Settings."
+          "answer": "<p>Your parent PIN is a four-digit code you set the first time you use your parent account. It gates the parent side of Sogverse rather than each separate action: you unlock once, and the session locks again the moment you switch to a gamer profile or sign out — so a password saved in the browser is not enough on its own to buy anything or change a child’s account. The same PIN gates the way back: a child who entered Sogverse by switching from your account needs it to switch to your profile or to a sibling’s.</p><p>If you forget it, tap “Forgot your PIN?” on the PIN screen: we email a reset link to the address on your account and nowhere else, so a child pressing it simply sends you an email. The link lasts 24 hours and works once.</p><p>You can also change a PIN you still know from Settings.</p>"
         },
         "sessionReports": {
           "question": "Will I hear how sessions went?",
-          "answer": "Yes. After a session your child’s Game Educator writes a report on it — what the group worked on, how it went, and the moments worth remembering — often with photos. It appears on that club, camp or event’s page in My SOG, under Sessions, alongside every earlier report and the sessions still to come, and your child sees the same reports in their own My SOG. When the Gedu sends the report, it also arrives by email, addressed to you alone — every family receives their own separate email and no family sees another. You will also see your own child’s attendance mark for each session on that page; your child does not see attendance, and no family ever sees another child’s."
+          "answer": "<p>Yes. After a session your child’s Game Educator writes a report on it — what the group worked on, how it went, and the moments worth remembering — often with photos.</p><p>It appears on that club, camp or event’s page in My SOG, under Sessions, alongside every earlier report and the sessions still to come, and your child sees the same reports in their own My SOG. When the Gedu sends the report, it also arrives by email, addressed to you alone — every family receives their own separate email and no family sees another.</p><p>You will also see your own child’s attendance mark for each session on that page; your child does not see attendance, and no family ever sees another child’s.</p>"
         },
         "missedSessions": {
           "question": "What if we miss a session, or join a club partway through?",
-          "answer": "A club stays open for new gamers while it is running, so you can join partway through a term — the club page shows which day and time it meets each week, the term it runs over, and how many seats are left; once your child is enrolled, their own club page names the date of the next session. Camps and events are different: a camp closes to new sign-ups the day before it starts, because the group starts together, and an event closes once its session has ended. A club is billed as a full month from the day you sign up, so joining mid-month does not reduce that month’s payment; if a club has not started yet, nothing is charged on the day you sign up and the page tells you the date of your first payment. If your child misses a single session there is nothing to do — their place is not affected. Their Gedu marks attendance for each session and you will see that mark on the club page. A session missed is not made up or refunded; on a municipality club, repeated unexcused absences may open the place for the next family on the waiting list, which you agree to when you register."
+          "answer": "<p>A club stays open for new gamers while it is running, so you can join partway through a term — the club page shows which day and time it meets each week, the term it runs over, and how many seats are left; once your child is enrolled, their own club page names the date of the next session.</p><p>Camps and events are different: a camp closes to new sign-ups the day before it starts, because the group starts together, and an event closes once its session has ended.</p><p>A club is billed as a full month from the day you sign up, so joining mid-month does not reduce that month’s payment; if a club has not started yet, nothing is charged on the day you sign up and the page tells you the date of your first payment.</p><p>If your child misses a single session there is nothing to do — their place is not affected. Their Gedu marks attendance for each session and you will see that mark on the club page. A session missed is not made up or refunded; on a municipality club, repeated unexcused absences may open the place for the next family on the waiting list, which you agree to when you register.</p>"
         },
         "sessionTimes": {
           "question": "What time do sessions happen in our timezone?",
-          "answer": "In yours. Session times are authored in Finnish time and shown to you converted to your own device’s timezone automatically, everywhere they appear — on a club’s page, on its card, and on your My SOG. When your timezone differs from the club’s, the time carries a short timezone marker beside it so the conversion is visible; when you are in the same zone as the club, there is nothing to convert and no marker. Because the conversion is real, a club running on two Finnish weekdays can land on different weekdays for you, and the schedule you see is grouped by your weekdays, not ours. A camp’s start and end dates are plain calendar dates and do not shift."
+          "answer": "<p>In yours. Session times are authored in Finnish time and shown to you converted to your own device’s timezone automatically, everywhere they appear — on a club’s page, on its card, and on your My SOG.</p><p>When your timezone differs from the club’s, the time carries a short timezone marker beside it so the conversion is visible; when you are in the same zone as the club, there is nothing to convert and no marker.</p><p>Because the conversion is real, a club running on two Finnish weekdays can land on different weekdays for you, and the schedule you see is grouped by your weekdays, not ours. A camp’s start and end dates are plain calendar dates and do not shift.</p>"
         }
       }
     }
@@ -3501,8 +3506,8 @@
           "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly. We store your family surname on their account too, because your child is part of your account; Gedus and other gamers never see it. Their account itself uses an internal Sogverse address rather than a real email, unless you choose to give them a sign-in with their own email address; we then hold that address and, once they have verified it, send them their own copy of the emails we send you about their clubs, camps and events.",
           "Optionally, your child’s username in the games their clubs use — today that’s Minecraft and Roblox — and the account id that game gives them, so we can recognise them in the game and so they can connect to our Minecraft server during sessions.",
           "Session records our Game Educators write — attendance, session reports, and short notes that help us support your child in the group.",
-          "Basic, anonymous information about how the site is used (see \"Cookies and analytics\" below).",
-          "If you came to us through a link shared by a school, club or partner organisation, a short code telling us which one — so we know which outreach actually reaches families, and can tell our partners whether theirs worked."
+          "Basic, anonymous information about how the site is used (see \"Cookies, analytics and advertising\" below).",
+          "The campaign tag — source, medium and campaign — carried by the link your visit came from. We store it once, when the account is created, so that we and our partners know which outreach actually reaches families."
         ]
       },
       "childrensPrivacy": {
@@ -3510,7 +3515,7 @@
         "paragraphs": [
           "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
           "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
-          "What we hold about a child is set out above under \"The information we collect\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. Live sessions are run by our trained Game Educators (we call them Gedus).",
+          "What we hold about a child is set out above under \"The information we collect\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. When your child is signed in as a gamer, nothing about their browsing is sent to an advertising platform, even if marketing is switched on for the device. Live sessions are run by our trained Game Educators (we call them Gedus).",
           "If you ever want to see, change, or delete your child’s information, just email {supportEmail} and we’ll take care of it."
         ]
       },
@@ -3538,7 +3543,8 @@
           "Because a parent has given permission on their child’s behalf (consent).",
           "To meet our legal duties, such as keeping accounting records for payments.",
           "For our legitimate interest in keeping the site secure and working well — always balanced against your privacy.",
-          "For our legitimate interest in understanding which of our outreach efforts reach families — always balanced against your privacy, and you can ask us to stop at any time."
+          "For our legitimate interest in understanding which of our outreach efforts reach families — always balanced against your privacy, and you can ask us to stop at any time.",
+          "Your consent, for the analytics and marketing cookies — which you can withdraw at any time from Privacy choices at the bottom of every page."
         ]
       },
       "providers": {
@@ -3551,18 +3557,24 @@
           "Stripe — processes payments. Your card details go straight to Stripe; we never see them.",
           "Brevo — sends our emails, such as receipts and reminders.",
           "Daily.co — powers the live voice and video sessions.",
-          "Vercel — hosts the website and provides anonymous, cookie-free usage statistics.",
+          "Vercel — hosts the website and provides anonymous usage statistics.",
           "Meta (WhatsApp) — used to send some messages and reminders to families who prefer WhatsApp.",
           "Roblox — receives your child’s Roblox account id, so we can confirm the account and show their avatar picture.",
-          "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account."
+          "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account.",
+          "Meta (Facebook and Instagram ads) — learns, through the Meta Pixel, that you visited and whether you created an account, so we can show our ads there. Only if you allow marketing cookies.",
+          "TikTok — learns, through the TikTok Pixel, that you visited and whether you created an account, so we can show our ads on TikTok. Only if you allow marketing cookies."
         ]
       },
       "cookies": {
-        "heading": "Cookies and analytics",
+        "heading": "Cookies, analytics and advertising",
         "paragraphs": [
-          "We don’t use advertising or tracking cookies, and we don’t follow you around the internet.",
-          "We use a small number of necessary cookies to keep you securely logged in — the site can’t work without these, so they don’t need your consent.",
-          "To understand things like how many people visit and whether they’re using a phone or a computer, we use Vercel’s analytics. It’s privacy-friendly: no cookies, and it doesn’t identify you personally."
+          "A few cookies are simply how the site works: they keep you signed in, remember that you entered your parent PIN, hold your language and timezone, and store the cookie choice you make. These don’t need your consent — without them there is no site to consent to.",
+          "Everything else waits for you. The first time you visit we ask, and nothing beyond those necessary cookies runs until you answer. You can change your mind whenever you like from Privacy choices at the bottom of every page: switching something off takes effect straight away, and it doesn’t change anything we already did while it was on.",
+          "There are two things to say yes or no to:"
+        ],
+        "bullets": [
+          "Analytics — Vercel’s, and only if you choose it. It counts visits, measures how quickly pages load, and receives a few anonymous events about how the site is used: how someone reached their My SOG, when someone changes the language. It can’t see who you are, and we never hand it to advertisers.",
+          "Marketing — the Meta Pixel and the TikTok Pixel, and only if you choose them. They learn that you visited School of Gaming and whether you created an account, so Meta and TikTok can show you our ads on their own platforms. Neither pixel loads while your child is signed in as a gamer. If you say yes to marketing and then create an account, we set one short-lived cookie of our own — five minutes, no name, no address, nothing but the word \"registration\" — whose only job is to tell the pixels on the next page that an account was created. Switching marketing off deletes the cookies the pixels left in your browser, but we can’t delete what Meta and TikTok already hold — you can ask them to, in your own settings there, where Meta calls it \"activity off Meta technologies\"."
         ]
       },
       "voice": {
@@ -3958,5 +3970,12 @@
     "emailRequired": "Enter an email address.",
     "emailInvalid": "That does not look like an email address.",
     "emailTaken": "That email address already has an account."
+  },
+  "consent": {
+    "heading": "Your privacy, your choice",
+    "body": "Analytics tells us how many people visit and how fast pages load. It can’t see who you are, and it never goes to advertisers. Marketing tells the advertising platforms we run ads on that you visited and whether you signed up, so they can show you our ads there. It is never on while your child is signed in as a gamer. Nothing beyond the necessary cookies runs until you choose, and you can change your mind any time from the footer — the details are in our <link>privacy policy</link>.",
+    "rejectAll": "Reject all",
+    "analyticsOnly": "Analytics only",
+    "analyticsAndMarketing": "Analytics and marketing"
   }
 }

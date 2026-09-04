@@ -34,12 +34,12 @@ import { resolveLocale } from "@/lib/constants/locales";
  *
  * The fixture is memoised rather than rebuilt per render. Nothing in it depends
  * on a live clock — the whole scene is pinned to a fixed Monday morning, because
- * a calendar page's cases (a holiday week, a term straddling the window, a today
- * column) are arithmetic against a known date — so this is about work, not about
- * drift: sixteen weeks resolved over sixty products is not something to redo
- * every time a tab is switched. It depends on the *locale* rather than being
- * built once and kept, because the one `Intl`-formatted string inside it (how
- * long a gedu has waited) has to follow a previewer who switches language.
+ * a calendar page's cases (a term straddling the window, a today column) are
+ * arithmetic against a known date — so this is about work, not about drift:
+ * sixteen weeks resolved over sixty products is not something to redo every
+ * time a tab is switched. It depends on the *locale* rather than being built
+ * once and kept, because the one `Intl`-formatted string inside it (how long a
+ * gedu has waited) has to follow a previewer who switches language.
  */
 export function AdminDashboardScene({
   scenario,

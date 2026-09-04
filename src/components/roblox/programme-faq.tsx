@@ -5,6 +5,7 @@ import {
   FaqAccordion,
   type FaqAccordionItem,
 } from "@/components/ui/faq-accordion";
+import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 
@@ -24,6 +25,14 @@ import { ROUTES } from "@/lib/constants/routes";
  * site below rather than expressed as a flag here: the extra paragraph is not
  * uniform (one is a full second paragraph, one a subordinate note), and naming
  * the two message keys literally is what keeps them under the compiler's eye.
+ *
+ * **Those two `answer2` keys stay plain, untagged strings**, unlike every
+ * `answer` on the site. Each is rendered into a paragraph this component
+ * chooses — the locations note is deliberately subordinate and carries its own
+ * muted, italic styling — so the block is the render site's decision here,
+ * which is exactly what an `answer`'s tags exist to take away from it. Folding
+ * them into their answers would also merge signed-off copy Lynx Educate
+ * approved as separate parts.
  */
 const FAQ_ITEM_KEYS = [
   "programme",
@@ -70,6 +79,9 @@ export function ProgrammeFaq() {
    * auth screens show.
    */
   const answerTags = {
+    // The block vocabulary every FAQ on the site shares, so an answer's
+    // paragraphs are decided by the copy rather than by this component.
+    ...FAQ_ANSWER_TAGS,
     email: SUPPORT_EMAIL,
     linkPrivacy: (chunks: ReactNode) => (
       <Link href={ROUTES.robloxPrivacy} className={ANSWER_LINK_CLASS}>
@@ -93,7 +105,7 @@ export function ProgrammeFaq() {
     question: t(`items.${key}.question`),
     answer: (
       <>
-        <p>{t.rich(`items.${key}.answer`, answerTags)}</p>
+        {t.rich(`items.${key}.answer`, answerTags)}
         {/* The equipment answer's second half: what each format expects a
             family to bring, which is a full paragraph. */}
         {key === "equipment" && <p>{t("items.equipment.answer2")}</p>}

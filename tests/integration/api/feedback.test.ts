@@ -15,8 +15,8 @@ vi.mock("@/lib/brevo", () => ({
 }));
 
 // The feedback WRITE now runs on the user-bound client (`submit_my_feedback`);
-// the admin client survives only for the notification fan-out, which reads every
-// admin's email and a gamer's parent's — neither in the submitter's RLS view.
+// the admin client survives only to resolve a gamer's reply-to (their parent's
+// address), which is not in the submitter's RLS view.
 const mockFrom = vi.fn();
 const mockRpc = vi.fn();
 const mockAdminClient = { from: mockFrom };
@@ -55,21 +55,15 @@ function mockAuthenticatedAs(role: string, overrides?: Record<string, unknown>) 
   });
 }
 
-/** Sets up the admin client mock chain for the standard happy path. */
+/**
+ * The standard happy path for a non-gamer submitter: the RPC accepts, and the
+ * admin client is never reached — the mail's recipient is the fixed support
+ * inbox, and only a gamer's parent lookup touches the service-role client.
+ */
 function setupHappyPath(accepted = true) {
   mockRpc.mockResolvedValue({ data: accepted, error: null });
-  mockFrom.mockImplementation((table: string) => {
-    if (table === "profiles") {
-      return {
-        select: () => ({
-          eq: () => Promise.resolve({
-            data: [{ email: "admin1@test.local" }, { email: "admin2@test.local" }],
-            error: null,
-          }),
-        }),
-      };
-    }
-    return {};
+  mockFrom.mockImplementation(() => {
+    throw new Error("the admin client must not be used for a non-gamer submission");
   });
 }
 
@@ -109,24 +103,15 @@ function setupGamerParentLookup(
       };
     }
     if (table === "profiles") {
+      // Parent profile lookup (id = parent-123)
       return {
         select: () => ({
-          eq: (_col: string, val: string) => {
-            // Admin emails query (role = admin)
-            if (val === "admin") {
-              return Promise.resolve({
-                data: [{ email: "admin1@test.local" }],
-                error: null,
-              });
-            }
-            // Parent profile lookup (id = parent-123)
-            return {
-              single: () => Promise.resolve({
-                data: { email: parentEmail },
-                error: null,
-              }),
-            };
-          },
+          eq: () => ({
+            single: () => Promise.resolve({
+              data: { email: parentEmail },
+              error: null,
+            }),
+          }),
         }),
       };
     }
@@ -200,7 +185,7 @@ describe("POST /api/feedback", () => {
     expect(response.status).toBe(429);
     expect(data.error).toContain("Too many");
 
-    // The whole point of the rate limit is the admin inbox, not the status
+    // The whole point of the rate limit is the support inbox, not the status
     // code: the RPC's per-hour cap is the only throttle on feedback mail, since
     // a caller can reach the RPC through PostgREST without this route at all.
     // Sending the mail before the accepted check — or ignoring it — would keep
@@ -221,7 +206,7 @@ describe("POST /api/feedback", () => {
     expect(data.success).toBe(true);
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        toEmail: ["admin1@test.local", "admin2@test.local"],
+        toEmail: "help@sog.gg",
         replyToEmail: "customer@test.local",
         subject: expect.stringContaining("Test customer"),
       })

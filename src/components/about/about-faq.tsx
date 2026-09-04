@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { FaqAccordion, type FaqAccordionItem } from "@/components/ui/faq-accordion";
+import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
 /**
@@ -48,7 +49,10 @@ interface AboutFaqProps {
  * trace on the page at all, and a heading over nothing is exactly the dead
  * space the layout rules forbid.
  *
- * Answers are plain paragraphs: this copy carries no links by design. The
+ * Answers carry their own block structure — paragraphs, and a bulleted list
+ * where the answer is really an inventory — from the catalog rather than from
+ * this component, so each locale breaks its copy where its own sentences fall.
+ * They carry no links by design. The
  * footer already puts the support address on every public page, and pointing a
  * reader out of an answer is a decision to make per question, not a default.
  * The two answers that *name* that address take it as a `{supportEmail}` value
@@ -62,7 +66,10 @@ export function AboutFaq({ id }: AboutFaqProps) {
   const items: FaqAccordionItem[] = FAQ_ITEM_KEYS.map((key) => ({
     key,
     question: t(`items.${key}.question`),
-    answer: <p>{t(`items.${key}.answer`, { supportEmail: SUPPORT_EMAIL })}</p>,
+    answer: t.rich(`items.${key}.answer`, {
+      ...FAQ_ANSWER_TAGS,
+      supportEmail: SUPPORT_EMAIL,
+    }),
   }));
 
   if (items.length === 0) return null;

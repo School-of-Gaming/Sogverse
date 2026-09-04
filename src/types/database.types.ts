@@ -14,35 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      calendar_holidays: {
-        Row: {
-          calendar_id: string
-          date: string
-          id: string
-          reason: string | null
-        }
-        Insert: {
-          calendar_id: string
-          date: string
-          id?: string
-          reason?: string | null
-        }
-        Update: {
-          calendar_id?: string
-          date?: string
-          id?: string
-          reason?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "calendar_holidays_calendar_id_fkey"
-            columns: ["calendar_id"]
-            isOneToOne: false
-            referencedRelation: "holiday_calendars"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       chat_channel_locks: {
         Row: {
           channel_id: string
@@ -1066,30 +1037,6 @@ export type Database = {
           },
         ]
       }
-      holiday_calendars: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          timezone: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          timezone: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          timezone?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       locations: {
         Row: {
           country_code: string | null
@@ -1522,39 +1469,6 @@ export type Database = {
           },
         ]
       }
-      product_holiday_calendars: {
-        Row: {
-          calendar_id: string
-          created_at: string
-          product_id: string
-        }
-        Insert: {
-          calendar_id: string
-          created_at?: string
-          product_id: string
-        }
-        Update: {
-          calendar_id?: string
-          created_at?: string
-          product_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_holiday_calendars_calendar_id_fkey"
-            columns: ["calendar_id"]
-            isOneToOne: false
-            referencedRelation: "holiday_calendars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_holiday_calendars_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       product_images: {
         Row: {
           created_at: string
@@ -1935,10 +1849,12 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
-          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           created_at?: string
@@ -1951,10 +1867,12 @@ export type Database = {
           last_name?: string
           locale?: string | null
           phone?: string | null
-          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           created_at?: string
@@ -1967,10 +1885,12 @@ export type Database = {
           last_name?: string
           locale?: string | null
           phone?: string | null
-          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
@@ -2423,13 +2343,15 @@ export type Database = {
           last_name: string | null
           locale: string | null
           phone: string | null
-          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           search_blob: string | null
           spoken_languages:
             | Database["public"]["Enums"]["spoken_language"][]
             | null
           updated_at: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Relationships: [
           {
@@ -2625,7 +2547,6 @@ export type Database = {
           p_end_date?: string
           p_for_gamers: boolean
           p_for_parents: boolean
-          p_holiday_calendar_ids?: string[]
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
@@ -2752,10 +2673,12 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
-          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }[]
         SetofOptions: {
           from: "*"
@@ -2781,10 +2704,12 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
-          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }[]
         SetofOptions: {
           from: "*"
@@ -2888,10 +2813,6 @@ export type Database = {
         Returns: string
       }
       pin_is_set: { Args: never; Returns: boolean }
-      product_has_session: {
-        Args: { p_product_id: string; p_session_date: string }
-        Returns: boolean
-      }
       promote_from_waitlist: {
         Args: { p_group_id?: string; p_participation_id: string }
         Returns: Json
@@ -3076,7 +2997,6 @@ export type Database = {
           p_end_date?: string
           p_for_gamers: boolean
           p_for_parents: boolean
-          p_holiday_calendar_ids?: string[]
           p_id: string
           p_is_remote: boolean
           p_is_visible?: boolean
