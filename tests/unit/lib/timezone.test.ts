@@ -9,39 +9,47 @@ import {
  * The picker label, which is not a translated string and therefore has nothing
  * in `messages/` to keep it honest.
  *
- * Two things can go wrong in it and both are silent. The offset is read at a
- * caller-supplied instant so it tracks DST, which nothing else in the app would
- * notice being wrong for half the year; and `Intl` abbreviates a zero offset to
- * a bare "GMT", which would leave one option in a list of four a different
- * shape from its neighbours.
+ * Three things can go wrong in it and all of them are silent. The offset is
+ * read at a caller-supplied instant so it tracks DST, which nothing else in the
+ * app would notice being wrong for half the year; a zero offset has to come out
+ * in the same shape as every other, or one option in a list of four is ragged;
+ * and a zone whose offset is not a whole number of hours has to keep its
+ * minutes.
  */
 describe("formatTimezoneOptionLabel", () => {
   const JULY = new Date("2026-07-15T12:00:00Z");
   const JANUARY = new Date("2026-01-15T12:00:00Z");
 
   it("tracks DST rather than baking an offset in", () => {
-    expect(formatTimezoneOptionLabel("Europe/Helsinki", JULY, "en")).toBe(
+    expect(formatTimezoneOptionLabel("Europe/Helsinki", JULY)).toBe(
       "(GMT+03:00) Helsinki",
     );
-    expect(formatTimezoneOptionLabel("Europe/Helsinki", JANUARY, "en")).toBe(
+    expect(formatTimezoneOptionLabel("Europe/Helsinki", JANUARY)).toBe(
       "(GMT+02:00) Helsinki",
     );
   });
 
   it("renders a zero offset in the same shape as every other", () => {
-    // `Intl`'s `longOffset` gives a bare "GMT" here, which is the one value
-    // that would make the list ragged.
-    expect(formatTimezoneOptionLabel("Europe/London", JANUARY, "en")).toBe(
+    // The shape a localized `Intl` offset part would have abbreviated away to a
+    // bare prefix with no digits — the one value that would make the list
+    // ragged.
+    expect(formatTimezoneOptionLabel("Europe/London", JANUARY)).toBe(
       "(GMT+00:00) London",
     );
-    expect(formatTimezoneOptionLabel("Europe/London", JULY, "en")).toBe(
+    expect(formatTimezoneOptionLabel("Europe/London", JULY)).toBe(
       "(GMT+01:00) London",
     );
   });
 
-  it("opens out the IANA id's underscores", () => {
-    expect(formatTimezoneOptionLabel("America/New_York", JANUARY, "en")).toBe(
+  it("signs a negative offset and opens out the IANA id's underscores", () => {
+    expect(formatTimezoneOptionLabel("America/New_York", JANUARY)).toBe(
       "(GMT-05:00) New York",
+    );
+  });
+
+  it("keeps the minutes of a half-hour zone", () => {
+    expect(formatTimezoneOptionLabel("Asia/Kolkata", JANUARY)).toBe(
+      "(GMT+05:30) Kolkata",
     );
   });
 });

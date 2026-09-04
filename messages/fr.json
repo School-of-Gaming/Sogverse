@@ -632,7 +632,7 @@
         "thresholdOnly": "Pas encore de date de début fixe. Les parents voient un compteur « X sur Y requis » pendant le remplissage. Vous appuyez sur Démarrer quand vous avez assez d’inscriptions et vous choisissez alors la date de la première session.",
         "thresholdWithDate": "Si moins de parents que ce nombre se sont inscrits à la date de début, vous devrez annuler et rembourser depuis la page du produit.",
         "timezoneEntry": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. Les parents les voient automatiquement convertis dans le leur.",
-        "timezoneChangeMoves": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. En changer déplace chaque séance au même horaire dans le nouveau fuseau.",
+        "timezoneChangeMoves": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. En changer déplace chaque séance à venir au même horaire dans le nouveau fuseau, tandis que les séances dont un compte rendu ou une présence est déjà enregistré conservent les horaires auxquels elles se sont tenues.",
         "timezoneIs": "Les horaires sont exprimés en {timezone}. Les parents les voient automatiquement convertis dans leur fuseau horaire.",
         "billingHint": "Les produits gratuits ont une limite de places par défaut ; les produits payants démarrent sans limite.",
         "freeDetail": "Aucun frais. Tout le monde peut participer en un clic.",

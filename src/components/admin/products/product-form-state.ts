@@ -176,8 +176,14 @@ export interface FormState {
   // than a constant because a product's sessions happen where the product does,
   // and the platform now runs in four countries; it stays editable on the edit
   // form because the schedule is stored as wall clock, so changing it re-resolves
-  // every session to that same clock face in the new zone, which is exactly the
-  // correction an admin who picked the wrong zone needs.
+  // every session the schedule still projects to that same clock face in the new
+  // zone, which is exactly the correction an admin who picked the wrong zone
+  // needs. What it does not move is a session already recorded: a session row is
+  // written lazily, only once a report, a note or an attendance mark needs
+  // somewhere to live, and it snapshots its start and end at that moment and
+  // never re-derives them. So history keeps the times it was held at while the
+  // rest of the term follows the new zone — which is what the edit form's hint
+  // tells the admin, and why that hint is not simply "every session moves".
   timezone: string;
   startMode: StartMode;
   startDate: string;

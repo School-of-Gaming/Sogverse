@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { formatTimezoneOptionLabel } from "@/lib/timezone";
@@ -28,7 +28,6 @@ export function RegistrationSection({
   config,
 }: RegistrationSectionProps) {
   const t = useTranslations("admin.products");
-  const locale = useLocale();
   const now = useNow();
 
   // Pre-prod UI lock (see form-locks.ts): registration always opens immediately
@@ -145,7 +144,7 @@ export function RegistrationSection({
               describe one field two ways. */}
           <InfoCallout
             text={t("hints.timezoneIs", {
-              timezone: formatTimezoneOptionLabel(state.timezone, now, locale),
+              timezone: formatTimezoneOptionLabel(state.timezone, now),
             })}
           />
         </>

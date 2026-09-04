@@ -1178,6 +1178,15 @@ one an admin should read as that country's ordinary answer. An unseeded country'
 allowed to be representative rather than complete — nothing offers it yet — and the day it
 is seeded, filling in the rest is part of the same work the anchor tripwire already forces.
 
+**Un-seeding a country is therefore not a harmless config edit.** The admin product form
+offers the seeded countries' zones and the products contract refines the stored zone
+against that same list, so dropping a country — or removing one zone from its list —
+makes every existing product sitting in that zone unsavable through the form until its
+zone is changed: the form still shows the stored zone as an extra option so the admin can
+see what the row holds, and the save is refused loudly with the contract's message rather
+than silently rewriting the product into a zone nobody chose. Retire or re-zone a
+country's products before removing it, or leave its zones listed.
+
 ## Localized display names (`name_i18n`)
 
 A location's `name` is the **canonical native-language name** — Finnish for FI rows,

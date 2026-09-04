@@ -632,7 +632,7 @@
         "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare ”X av Y behövs” medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneEntry": "Tiderna för tillfällena nedan anges i den här tidszonen. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
-        "timezoneChangeMoves": "Tiderna för tillfällena nedan anges i den här tidszonen. Byter du zon flyttas varje tillfälle till samma klockslag i den nya zonen.",
+        "timezoneChangeMoves": "Tiderna för tillfällena nedan anges i den här tidszonen. Byter du zon flyttas varje kommande tillfälle till samma klockslag i den nya zonen, medan tillfällen som redan har en rapport eller närvaro registrerad behåller de tider de hölls på.",
         "timezoneIs": "Tider är i {timezone}. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "billingHint": "Gratisprodukter får som standard en platsgräns, betalda börjar utan gräns.",
         "freeDetail": "Ingen avgift. Alla kan delta med ett klick.",
