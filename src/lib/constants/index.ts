@@ -7,7 +7,8 @@ export * from "./location-hierarchies";
 export * from "./session-epoch";
 export * from "./voice";
 
-export const GAMER_EMAIL_DOMAIN = "@gamer.sogverse.internal";
+// GAMER_EMAIL_DOMAIN moved to src/lib/gamer-sign-in.ts, which owns everything
+// about what address a child's account carries and why.
 
 export const DISPLAY_NAME_MIN = 2;
 export const DISPLAY_NAME_MAX = 32;

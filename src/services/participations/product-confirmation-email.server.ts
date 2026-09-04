@@ -5,7 +5,6 @@ import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import {
   detectLocaleFromHeader,
-  isSupportedLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import {
@@ -18,6 +17,10 @@ import {
 } from "@/lib/email-templates/product-confirmation";
 import type { InvitationSlot } from "@/lib/email-templates/product-confirmation-invitation";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
+import {
+  resolveFamilyRecipients,
+  type FamilyRecipient,
+} from "@/lib/email/family-recipients.server";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { formatProductLocation } from "@/lib/products/format-product-location";
@@ -31,7 +34,7 @@ import type { AppSupabaseClient } from "@/types";
  * the free/instant activation in the checkout route, the waitlist join, and the
  * Stripe webhook that confirms a payment.
  *
- * **The recipient is always the customer — the person who paid, or would
+ * **The parent is always a recipient — the person who paid, or would
  * have.** A child's seat produces a mail to their parent; a parent's own seat
  * produces a mail to themselves, and the only difference is the voice the copy
  * speaks in. That is why `isSelfSeat` is derived here from
@@ -39,6 +42,14 @@ import type { AppSupabaseClient } from "@/types";
  * test the confirmation page makes on the participation row, and deriving it
  * once stops the page and the mail from ever disagreeing about whose signup
  * this was.
+ *
+ * **A child with a mailbox of their own gets a copy beside the parent's** —
+ * decided by the shared family-recipient resolver, never here. The copy is the
+ * same template in its child variant: second person, no price row and no
+ * billing bullets (paying is the parent's), the button at the child's own My
+ * SOG root, and the same `invite.ics`, addressed to the child as its attendee.
+ * Each recipient is rendered in their own locale, which is why everything below
+ * that a locale touches is resolved inside the loop rather than once.
  *
  * **It takes ids and reads everything itself, including the recipient's own
  * address and locale.** Two of the three call sites are holding that profile
@@ -193,7 +204,10 @@ async function send({
       .single(),
     client
       .from("profiles")
-      .select("id, first_name, last_name, email, locale")
+      // The sign-in mode decides whether the child gets a copy of their own;
+      // `gamer_profiles` is one-to-one off `profiles`, so the embed is an
+      // object or null (null for the payer).
+      .select("id, first_name, last_name, email, locale, gamer_profiles(sign_in)")
       .in("id", [customerId, participantId]),
     client
       .from("products")
@@ -224,12 +238,6 @@ async function send({
   // state the database permits, and there is nothing to report to anyone.
   if (!customer?.email) return;
 
-  // Stored preference → what the browser asked for → English. Same chain every
-  // other send in the app walks.
-  const locale: SupportedLocale = isSupportedLocale(customer.locale)
-    ? customer.locale
-    : detectLocaleFromHeader(request.headers.get("Accept-Language"));
-
   const product = productResult.data;
   // The sentinel resolved before anything is built, so the mail only ever meets
   // a real mode. A seat offer is made on no-charge products alone, so the only
@@ -241,97 +249,155 @@ async function send({
         : "free"
       : sendMode;
 
-  const translation = resolveTranslation(product.product_translations, locale);
-  const productName = translation?.name;
-  // Read here rather than beside the invitation below, because the guard on
-  // `productName` narrows the row it comes from and the optional access would
-  // then read as dead code.
-  const shortDescription = translation?.short_description ?? null;
   const participantName = participant?.first_name.trim();
 
-  // Both are guaranteed by the schema — a product has at least one translation
-  // row, and `profiles.first_name` is NOT NULL — so this is a shape the data
-  // model says cannot arrive. If it does, a mail whose subject line names an
-  // empty product or an empty person is worse than no mail, so stop and say so.
-  if (!productName || !participantName) {
+  // Guaranteed by the schema — `profiles.first_name` is NOT NULL — so this is a
+  // shape the data model says cannot arrive. If it does, a mail whose subject
+  // line names an empty person is worse than no mail, so stop and say so.
+  if (!participant || !participantName) {
     console.error(
       "[product-confirmation email] nothing to name — skipping the send",
-      { productId, participantId, hasProductName: Boolean(productName) },
+      { productId, participantId },
     );
     return;
   }
 
+  // The same test the confirmation page makes on the row: participant equals
+  // customer means the payer took the seat themselves, and every sentence
+  // naming them moves into the second person.
+  const isSelfSeat = participantId === customerId;
+
+  // Stored preference → what the browser asked for → English, per recipient —
+  // the same chain every other send in the app walks, applied to the parent and
+  // to the child separately, because they need not share a locale.
+  const recipients = resolveFamilyRecipients({
+    parents: [
+      { email: customer.email, firstName: customer.first_name, locale: customer.locale },
+    ],
+    gamer: isSelfSeat
+      ? null
+      : {
+          email: participant.email,
+          firstName: participantName,
+          locale: participant.locale,
+          signIn: participant.gamer_profiles?.sign_in ?? null,
+        },
+    fallbackLocale: detectLocaleFromHeader(request.headers.get("Accept-Language")),
+  });
+
   // The TRUSTED origin, never the raw Host header — these links go in an email,
   // and a spoofed Host would send a family somewhere we do not own.
   const origin = getOrigin(request);
-  // One link, read twice: the mail's button and the calendar entry's own URL.
-  // My SOG rather than the seat's page, which needs a group the seat usually
-  // does not have yet — see the composer's note on `dashboardUrl`.
-  const dashboardUrl = `${origin}${ROUTES.customer.dashboard}`;
   const site = scheduleResult.data.locations;
-  const isSelfSeat = participantId === customerId;
-  const t = await getEmailTranslator(locale);
-  const priceAmount = await resolvePriceAmount(client, {
-    productId,
-    mode,
-    currency,
-    locale,
-  });
-
   const slots = scheduleResult.data.schedule_slots;
+  // One clock for the whole send rather than one per render. Which occurrence a
+  // calendar entry starts at is a function of when the mail was composed, and a
+  // parent and a child comparing their two invitations are entitled to find the
+  // same one.
+  const now = new Date();
 
-  const content = resolveProductConfirmation(t, locale, {
-    participantName,
-    // The same test the confirmation page makes on the row: participant equals
-    // customer means the payer took the seat themselves, and every sentence
-    // naming them moves into the second person.
-    isSelfSeat,
-    productName,
-    productType: product.product_type,
-    mode,
-    priceAmount,
-    // Only a deferred subscription has one, and only the Stripe webhook knows
-    // it — see the input's own note. Rendered through the same rule the
-    // confirmation page renders it with, in the product's zone, because a mail
-    // has no viewer zone to project a clamped instant into.
-    firstChargeDate:
-      firstChargeAt && mode === "subscription"
-        ? formatFirstChargeDate(
-            firstChargeAt,
-            product.start_date,
-            product.timezone,
-            locale,
-            product.timezone,
-          )
-        : null,
-    dashboardUrl,
-    // The page's "Good to know" card, from the same columns and through the
-    // same formatters. The location goes through the shared rule rather than
-    // being re-derived here, so "Where" says what the page says.
-    overview: {
-      timezone: product.timezone,
-      startDate: product.start_date,
-      endDate: product.end_date,
-      slots,
-      isRemote: product.is_remote,
-      location: formatProductLocation(
-        { is_remote: product.is_remote, product_type: product.product_type, locations: site },
-        locale,
-      ),
-      minAge: product.min_age,
-      maxAge: product.max_age,
-      forGamers: product.for_gamers,
-      forParents: product.for_parents,
-      spokenLanguageCode: product.spoken_language_code,
-      now: new Date(),
-    },
-    invitation:
-      !wantsSchedule
+  // The parent's mail goes first, and a child's copy only follows a parent's
+  // that went. That ordering is load-bearing for the skip below, which is why
+  // this counts what has actually left rather than assuming.
+  let sent = 0;
+  for (const recipient of recipients) {
+    const locale = recipient.locale;
+    const translation = resolveTranslation(product.product_translations, locale);
+    const productName = translation?.name;
+    // Read here rather than beside the invitation below, because the guard on
+    // `productName` narrows the row it comes from and the optional access would
+    // then read as dead code.
+    const shortDescription = translation?.short_description ?? null;
+
+    // A product has at least one translation row, so an empty name here is the
+    // same impossible shape as an empty person above — except that the two
+    // recipients resolve the name in DIFFERENT locales, so a product missing one
+    // translation can name itself for the parent and not for the child. That
+    // makes it a per-recipient failure, not a per-send one. It used to `return`
+    // unconditionally, abandoning the child's copy after the parent's had
+    // already gone out while logging it as "skipping the send", which read as
+    // though nothing had been mailed at all.
+    if (!productName) {
+      console.error(
+        "[product-confirmation email] nothing to name — skipping this recipient",
+        {
+          productId,
+          participantId,
+          recipientKind: recipient.kind,
+          locale,
+          anySent: sent > 0,
+        },
+      );
+      // Nothing has left yet, so there is nothing for a child's copy to be the
+      // follow-up to. Give up on the whole send. Once something HAS gone out,
+      // skipping this one recipient is the honest remainder.
+      if (sent === 0) return;
+      continue;
+    }
+
+    const gamerCopy = recipient.kind === "gamer";
+    // One link, read twice: the mail's button and the calendar entry's own URL.
+    // The reader's own My SOG root — a `/parent` link bounces a signed-in child
+    // — and My SOG rather than the seat's page, which needs a group the seat
+    // usually does not have yet; see the composer's note on `dashboardUrl`.
+    const dashboardUrl = `${origin}${gamerCopy ? ROUTES.gamer.dashboard : ROUTES.customer.dashboard}`;
+    const t = await getEmailTranslator(locale);
+
+    const content = resolveProductConfirmation(t, locale, {
+      participantName,
+      isSelfSeat,
+      productName,
+      productType: product.product_type,
+      mode,
+      // The child's copy states no price, so it never reads one.
+      priceAmount: gamerCopy
+        ? null
+        : await resolvePriceAmount(client, { productId, mode, currency, locale }),
+      // Only a deferred subscription has one, and only the Stripe webhook knows
+      // it — see the input's own note. Rendered through the same rule the
+      // confirmation page renders it with, in the product's zone, because a mail
+      // has no viewer zone to project a clamped instant into. The child's copy
+      // states no billing bullet at all, so it composes none.
+      firstChargeDate:
+        firstChargeAt && mode === "subscription" && !gamerCopy
+          ? formatFirstChargeDate(
+              firstChargeAt,
+              product.start_date,
+              product.timezone,
+              locale,
+              product.timezone,
+            )
+          : null,
+      dashboardUrl,
+      gamerCopy,
+      // The page's "Good to know" card, from the same columns and through the
+      // same formatters. The location goes through the shared rule rather than
+      // being re-derived here, so "Where" says what the page says. Both copies
+      // carry it, each resolved in its own reader's locale.
+      overview: {
+        timezone: product.timezone,
+        startDate: product.start_date,
+        endDate: product.end_date,
+        slots,
+        isRemote: product.is_remote,
+        location: formatProductLocation(
+          { is_remote: product.is_remote, product_type: product.product_type, locations: site },
+          locale,
+        ),
+        minAge: product.min_age,
+        maxAge: product.max_age,
+        forGamers: product.for_gamers,
+        forParents: product.for_parents,
+        spokenLanguageCode: product.spoken_language_code,
+        now,
+      },
+      invitation: !wantsSchedule
         ? null
         : {
             participationId,
             participantName,
             isSelfSeat,
+            gamerCopy,
             productName,
             productType: product.product_type,
             shortDescription,
@@ -352,36 +418,58 @@ async function send({
             siteName: site ? localizedLocationName(site, locale) : null,
             siteAddress: site?.site_details?.address ?? null,
             siteNote: site?.site_details?.notes ?? null,
-            attendeeName:
-              [customer.first_name, customer.last_name]
-                .filter(Boolean)
-                .join(" ")
-                .trim() || customer.first_name,
-            attendeeEmail: customer.email,
+            // This copy's own reader, so a client can offer them the RSVP: the
+            // parent on the parent's, the child on theirs. The identifier is
+            // the seat's, so both name the same calendar object.
+            attendeeName: attendeeNameFor(recipient, { customer, participant }),
+            attendeeEmail: recipient.email,
             dashboardUrl,
-            now: new Date(),
+            now,
           },
-  });
+    });
 
-  const attachments = productConfirmationAttachments(content);
+    const attachments = productConfirmationAttachments(content);
 
-  await sendTransactionalEmail({
-    fromEmail: SENDER_EMAIL,
-    fromName: SENDER_NAME,
-    toEmail: customer.email,
-    subject: productConfirmationSubject(t, content),
-    htmlContent: buildProductConfirmationEmail(t, locale, content),
-    // The mail's own words as text — stated only when a calendar part travels
-    // with it, because that is what an Exchange mailbox fills the calendar
-    // entry's notes from. With only HTML to work from it flattens the markup
-    // into them instead.
-    textContent: productConfirmationText(t, content),
-    attachments: attachments.length > 0 ? attachments : undefined,
-    // Product mail to a person: someone replying to this has a question about
-    // their signup, so the reply goes to the monitored support inbox rather than
-    // the unattended sending address.
-    replyToEmail: SUPPORT_EMAIL,
-  });
+    await sendTransactionalEmail({
+      fromEmail: SENDER_EMAIL,
+      fromName: SENDER_NAME,
+      toEmail: recipient.email,
+      subject: productConfirmationSubject(t, content),
+      htmlContent: buildProductConfirmationEmail(t, locale, content),
+      // The mail's own words as text — stated only when a calendar part travels
+      // with it, because that is what an Exchange mailbox fills the calendar
+      // entry's notes from. With only HTML to work from it flattens the markup
+      // into them instead.
+      textContent: productConfirmationText(t, content),
+      attachments: attachments.length > 0 ? attachments : undefined,
+      // Product mail to a person: someone replying to this has a question about
+      // their signup, so the reply goes to the monitored support inbox rather than
+      // the unattended sending address.
+      replyToEmail: SUPPORT_EMAIL,
+    });
+    sent++;
+  }
+}
+
+/** One profile row, as much of a name as it holds. */
+interface NamedRow {
+  first_name: string;
+  last_name: string | null;
+}
+
+/**
+ * The attendee's display name for one recipient's copy.
+ *
+ * The full name where the row holds one, because that is what a calendar client
+ * prints beside the RSVP. A child's surname is the family's and sits on their
+ * own row like everyone else's.
+ */
+function attendeeNameFor(
+  recipient: FamilyRecipient,
+  { customer, participant }: { customer: NamedRow; participant: NamedRow },
+): string {
+  const row = recipient.kind === "gamer" ? participant : customer;
+  return [row.first_name, row.last_name].filter(Boolean).join(" ").trim() || row.first_name;
 }
 
 /**

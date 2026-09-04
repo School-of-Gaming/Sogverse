@@ -6,9 +6,12 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
- * Scope test for `request_my_verification_email` — the self-scoping
- * classification it carries in the §3.4 spine's allowlist
- * (authorization-spine.test.ts, check 5).
+ * Scope test for `request_my_verification_email` and, since 00235, for
+ * `request_gamer_verification_email` — the self-scoping classification both
+ * carry in the §3.4 spine's allowlist (authorization-spine.test.ts, check 5).
+ * They share a file because they share a ledger: one keys it to the caller, the
+ * other to a named child, and what "somebody else's allowance" means is only
+ * legible with both in view.
  *
  * The function takes no argument at all: the row it writes and the rows it
  * counts are both keyed to `auth.uid()`. That is the property under test — not
@@ -25,13 +28,16 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
  */
 
 /**
- * Every assertion below filters to these three, so a request row belonging to
+ * Every assertion below filters to these four, so a request row belonging to
  * some other fixture can neither mask a leak nor fail an exact-match assertion.
+ * The two children are both here because the parent-scoped sibling's key is the
+ * SUBJECT, so a row can land on either of them.
  */
 const SCOPED_USERS: string[] = [
   TEST_IDS.CUSTOMER,
   TEST_IDS.CUSTOMER_2,
   TEST_IDS.GAMER,
+  TEST_IDS.GAMER_2,
 ];
 
 describe("request_my_verification_email", () => {
@@ -170,6 +176,124 @@ describe("request_my_verification_email", () => {
 
     expect(error).toBeNull();
     expect(data).toBe(true);
+  });
+
+  /**
+   * `request_gamer_verification_email` (00235) — the parent-scoped sibling, and
+   * the self-scoping classification it carries in the same spine allowlist.
+   *
+   * Its subject is not its caller: a child in sign-in mode `email` cannot sign
+   * in until the address is verified, so the parent asks on their behalf. That
+   * makes two things worth proving, and they are different questions. WHO may
+   * ask — `is_parent_of`, keyed to auth.uid(), so another family's child and an
+   * id that does not exist are refused identically. And WHOSE allowance is
+   * spent — the GAMER's, not the caller's, because the mail quota this protects
+   * is spent per address.
+   */
+  describe("request_gamer_verification_email", () => {
+    it("writes the row against the GAMER, not the caller", async () => {
+      const { data, error } = await customer.rpc(
+        "request_gamer_verification_email",
+        { p_gamer_id: TEST_IDS.GAMER },
+      );
+
+      expect(error).toBeNull();
+      expect(data).toBe(true);
+
+      const { data: rows } = await admin
+        .from("verification_email_requests")
+        .select("user_id")
+        .in("user_id", SCOPED_USERS);
+
+      // The parent spent nothing of their own: the only row names the child.
+      expect(rows).toEqual([{ user_id: TEST_IDS.GAMER }]);
+    });
+
+    it("refuses a caller who is not the child's parent", async () => {
+      const { error } = await customer2.rpc(
+        "request_gamer_verification_email",
+        { p_gamer_id: TEST_IDS.GAMER },
+      );
+      expect(error?.code).toBe("42501");
+
+      // And nothing was written on the way to the refusal.
+      const { data: rows } = await admin
+        .from("verification_email_requests")
+        .select("user_id")
+        .in("user_id", SCOPED_USERS);
+      expect(rows).toEqual([]);
+    });
+
+    it("refuses a child asking about themselves", async () => {
+      // The gamer is not their own parent, so the same guard refuses them —
+      // which is the shape the feature depends on: the request is the parent's
+      // to make, from the parent's own session.
+      const { error } = await gamer.rpc("request_gamer_verification_email", {
+        p_gamer_id: TEST_IDS.GAMER,
+      });
+      expect(error?.code).toBe("42501");
+    });
+
+    it("refuses an id that does not exist exactly as it refuses another family's", async () => {
+      // Same code, so neither answer can be read as an oracle for whether an id
+      // is somebody's child. The id is shaped to be impossible rather than
+      // merely unlikely: all-f is not a value any fixture or real row holds.
+      const { error } = await customer.rpc(
+        "request_gamer_verification_email",
+        { p_gamer_id: "ffffffff-ffff-ffff-ffff-ffffffffffff" },
+      );
+      expect(error?.code).toBe("42501");
+    });
+
+    it("rate-limits per CHILD, so siblings hold independent allowances", async () => {
+      for (let i = 0; i < 6; i++) {
+        const { data } = await customer.rpc(
+          "request_gamer_verification_email",
+          { p_gamer_id: TEST_IDS.GAMER },
+        );
+        expect(data, `call ${i + 1} of 6`).toBe(true);
+      }
+
+      const { data: seventh, error } = await customer.rpc(
+        "request_gamer_verification_email",
+        { p_gamer_id: TEST_IDS.GAMER },
+      );
+      expect(error).toBeNull();
+      expect(seventh).toBe(false);
+
+      // The sibling's allowance is untouched — the key is the subject, not the
+      // parent who asked, and the same parent asked both times.
+      const { data: sibling } = await customer.rpc(
+        "request_gamer_verification_email",
+        { p_gamer_id: TEST_IDS.GAMER_2 },
+      );
+      expect(sibling).toBe(true);
+    });
+
+    it("prunes the subject's expired rows, and only theirs", async () => {
+      const twoHoursAgo = new Date(
+        Date.now() - 2 * 60 * 60 * 1000,
+      ).toISOString();
+      await admin.from("verification_email_requests").insert([
+        { user_id: TEST_IDS.GAMER, created_at: twoHoursAgo },
+        { user_id: TEST_IDS.CUSTOMER_2, created_at: twoHoursAgo },
+      ]);
+
+      const { data: accepted } = await customer.rpc(
+        "request_gamer_verification_email",
+        { p_gamer_id: TEST_IDS.GAMER },
+      );
+      // The expired row did not count against the limit either.
+      expect(accepted).toBe(true);
+
+      const { data: survivors } = await admin
+        .from("verification_email_requests")
+        .select("user_id")
+        .in("user_id", SCOPED_USERS)
+        .lt("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
+
+      expect(survivors).toEqual([{ user_id: TEST_IDS.CUSTOMER_2 }]);
+    });
   });
 
   it("keeps the ledger unreadable and unwritable through the Data API", async () => {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { buildFeedbackEmail } from "./feedback";
+import { buildFeedbackEmail, feedbackReplyToAddress } from "./feedback";
 import { buildPasswordResetEmail } from "./password-reset";
 import { buildWelcomeParentEmail, buildWelcomeGeduEmail } from "./welcome";
 import {
@@ -29,7 +29,13 @@ import {
   FORM_YES_NO,
 } from "./form-fields";
 import { buildVerifyEmailEmail } from "./verify-email";
-import { buildSeatOfferEmail, seatOfferSubject } from "./seat-offer";
+import { buildGamerWelcomeEmail } from "./gamer-welcome";
+import {
+  buildSeatOfferEmail,
+  buildSeatOfferGamerEmail,
+  seatOfferGamerSubject,
+  seatOfferSubject,
+} from "./seat-offer";
 import {
   buildSeatOfferStaffEmail,
   seatOfferStaffSubject,
@@ -320,6 +326,17 @@ const SEAT_OPTIONS = [
 ];
 
 /**
+ * The signup mail has a third reader the seat offer's form does not: the
+ * child's own copy, sent beside the parent's when the child holds a mailbox of
+ * their own. Second person like the self seat, minus everything only a parent
+ * can act on — so it is a select option here and a flag on the builder.
+ */
+const PRODUCT_CONFIRMATION_SEAT_OPTIONS = [
+  ...SEAT_OPTIONS,
+  { label: "The child's own copy (second person, no billing)", value: "gamer" },
+];
+
+/**
  * Both derived from their source tuples rather than hand-listed, so a new
  * product type from codegen — or a new confirmation mode — shows up in the
  * testing form without anyone remembering to add it. The labels are the raw
@@ -382,11 +399,42 @@ const SPOKEN_LANGUAGE_OPTIONS = Constants.public.Enums.spoken_language.map(
  */
 function resolveProductConfirmationParams(params: Record<string, string>): TemplateParams {
   const { seat, priceAmount, ...rest } = params;
-  const statesPrice = rest.mode === "subscription" || rest.mode === "upfront";
+  const gamerCopy = seat === "gamer";
+  // The child's copy states no price whatever the mode, exactly as the live
+  // send never reads one for it.
+  const statesPrice =
+    !gamerCopy && (rest.mode === "subscription" || rest.mode === "upfront");
   return {
     ...rest,
     isSelfSeat: seat === "self",
+    gamerCopy,
     priceAmount: statesPrice ? priceAmount : null,
+  };
+}
+
+/**
+ * Which sign-in the gamer holds. The mail only cares whether there is an inbox
+ * behind it — the note names the address in the one mode that has one — so the
+ * two modes that share an answer share an option, and the form's default is the
+ * one nearly every gamer is on.
+ */
+const FEEDBACK_GAMER_MAILBOX_OPTIONS = [
+  { label: "No email of their own (parent or username sign-in)", value: "none" },
+  { label: "Their own email (the email sign-in)", value: "own" },
+];
+
+/**
+ * The help-and-feedback form's two gamer-only fields. The parent's address is
+ * where a reply to a child's message goes, so an untouched text input posting
+ * its placeholder means "none" has to be typed as an empty field, which becomes
+ * null here; the sign-in select becomes the boolean the builder takes.
+ */
+function resolveFeedback(params: Record<string, string>): TemplateParams {
+  const { parentEmail, gamerMailbox, ...rest } = params;
+  return {
+    ...rest,
+    parentEmail: parentEmail.trim() || null,
+    gamerOwnMailbox: gamerMailbox === "own",
   };
 }
 
@@ -459,6 +507,10 @@ function resolveProductConfirmationOptions(
   return {
     participantName: params.participantName,
     isSelfSeat: params.isSelfSeat,
+    // The third reader the seat select offers. It is a flag on the builder
+    // rather than a template of its own, and it reaches the invitation too —
+    // the child's entry names them as its attendee.
+    gamerCopy: params.gamerCopy,
     productName: params.productName,
     productType: params.productType,
     mode: params.mode,
@@ -499,6 +551,7 @@ function resolveProductConfirmationOptions(
           : params.participationId.trim(),
       participantName: params.participantName,
       isSelfSeat: params.isSelfSeat,
+      gamerCopy: params.gamerCopy,
       productName: params.productName,
       productType: params.productType,
       // The column is NOT NULL, but the product writers coalesce a missing
@@ -523,7 +576,7 @@ function resolveProductConfirmationOptions(
       // Named for the *label* the admin is looking at, not for the property it
       // becomes: the testing page shows a thrown message verbatim, and a
       // refusal naming a field no form control carries sends them hunting.
-      attendeeEmail: requireEmail(params.attendeeEmail, "Parent email"),
+      attendeeEmail: requireEmail(params.attendeeEmail, "Attendee email"),
       // The same link the mail's own button carries: the entry points a parent
       // at My SOG, which resolves for every seat, rather than at a seat page
       // that needs a group the seat may not have yet.
@@ -569,24 +622,26 @@ const VIEWER_TIMEZONE_OPTIONS = [
 ];
 
 /**
- * Which of the two mails one send produces. The live route sends both — a
- * family's, and one copy to the sender with the admins in CC — and they differ
- * in three places, none of which is visible unless the testing UI can ask for
- * the other mail: the copy opens with the staff banner, it carries the GROUP's
+ * Which of the mails one send produces. The live route sends a family's mail,
+ * a copy to the child themselves when the child holds a mailbox of their own, and one copy to the sender with the admins in CC — and they
+ * differ in places none of which is visible unless the testing UI can ask for
+ * the other mail: the staff copy opens with the banner and carries the GROUP's
  * name where a family's mail carries the child's (so the intro reads as a
- * record of what the group was sent), and its button points at the sender's own
- * workspace rather than at a family's enrollment page.
+ * record of what the group was sent), the child's copy addresses its framing
+ * sentence to the child, and each button points at its reader's own surface —
+ * the family page, the child's page under `/gamer`, or the sender's workspace.
  *
- * The first two follow this select. The third stays the tester's to type: the
- * `productUrl` field is a family-page link, and a workspace URL cannot be
- * derived here — the live route picks between the gedu workspace and the admin
- * product page from the sender's role, which this form has no notion of. Change
- * it by hand when the link is what you are checking.
+ * The copy and the name follow this select. The link stays the tester's to
+ * type: the `productUrl` field is a family-page link, and neither the `/gamer`
+ * twin nor a workspace URL can be derived here — the live route picks the root
+ * from the recipient and the workspace from the sender's role, which this form
+ * has no notion of. Change it by hand when the link is what you are checking.
  */
-const SESSION_REPORT_COPIES = ["family", "staff"] as const;
+const SESSION_REPORT_COPIES = ["family", "gamer", "staff"] as const;
 
 const SESSION_REPORT_COPY_LABELS: Record<(typeof SESSION_REPORT_COPIES)[number], string> = {
   family: "The family mail (what a parent receives)",
+  gamer: "The child's own copy (a gamer in email mode)",
   staff: "The Gedu and Admin copy (sender, admins in CC)",
 };
 
@@ -631,6 +686,7 @@ function resolveSessionReport(
     // is a record of what the group was mailed, not one child's report.
     gamerName: staffCopy ? rest.groupName : rest.gamerName,
     staffCopy,
+    gamerCopy: copy === "gamer",
     sessionDate: formatDate(sample.startsAt, locale, {
       timeZone: viewerTimezone,
       dateStyle: "full",
@@ -647,11 +703,19 @@ const passwordResetParamsSchema = z.object({
   resetLink: z.string().url(),
 });
 
+/**
+ * The parent's address is nullable rather than optional for the same reason the
+ * session report's `copy` is required: an optional key's `undefined` does not
+ * fit the registry's param bag. It and the mailbox flag only mean anything on a
+ * gamer's message — the builder ignores both for every other role.
+ */
 const feedbackParamsSchema = z.object({
   userName: z.string().min(1),
   userRole: z.enum(Constants.public.Enums.user_role),
   userEmail: z.string().email(),
   message: z.string().min(1),
+  parentEmail: z.string().email().nullable(),
+  gamerOwnMailbox: z.boolean(),
 });
 
 const welcomeParentParamsSchema = z.object({
@@ -685,6 +749,7 @@ const productConfirmationParamsSchema = z.object({
   mode: z.enum(PRODUCT_CONFIRMATION_MODES),
   priceAmount: z.string().nullable(),
   dashboardUrl: z.string().url(),
+  gamerCopy: z.boolean(),
 
   // --- The "Good to know" facts the mail states, exactly as the page does. ---
   //
@@ -727,6 +792,11 @@ const verifyEmailParamsSchema = z.object({
   verificationUrl: z.string().url(),
 });
 
+const gamerWelcomeParamsSchema = z.object({
+  gamerFirstName: z.string().min(1),
+  verificationUrl: z.string().url(),
+});
+
 /**
  * The deadline arrives already formatted, like every other locale-aware value a
  * builder takes: the live send has the product row and the recipient's locale
@@ -741,6 +811,18 @@ const seatOfferParamsSchema = z.object({
   deadline: z.string().min(1),
   acceptUrl: z.string().url(),
   declineUrl: z.string().url(),
+  dashboardUrl: z.string().url(),
+});
+
+/**
+ * The child's copy of a seat offer. No accept or decline URL, and no field
+ * that could carry one: the token is the parent's, and this schema is the
+ * mechanical half of the rule that it never reaches the child's mail.
+ */
+const seatOfferGamerParamsSchema = z.object({
+  gamerName: z.string().min(1),
+  productName: z.string().min(1),
+  deadline: z.string().min(1),
   dashboardUrl: z.string().url(),
 });
 
@@ -1294,22 +1376,45 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
           { label: "Admin", value: "admin" },
         ],
       },
-      { key: "userEmail", label: "User Email", placeholder: "marja@example.com" },
+      // The sender's OWN address, not necessarily where a reply goes: for a
+      // gamer that is the parent's, and the mail resolves which is which.
+      { key: "userEmail", label: "Sender's own email", placeholder: "marja@example.com" },
       // An untouched text input posts its placeholder, so this is what a test
       // send actually carries — a help request rather than a compliment, since
       // that is the half of the form the mail's copy was rewritten for.
       { key: "message", label: "Message", placeholder: "How do I move my child to a different club?" },
+      // The gamer case's two fields. The address posts its placeholder
+      // untouched, so clear it to render the mail as it goes for every other
+      // role; the select's first option is the default and means "no inbox".
+      { key: "parentEmail", label: "Parent email (gamer only, empty for none)", placeholder: "marja@example.com" },
+      {
+        key: "gamerMailbox",
+        label: "Gamer's sign-in (gamer only)",
+        type: "select",
+        options: FEEDBACK_GAMER_MAILBOX_OPTIONS,
+      },
     ],
     schema: feedbackParamsSchema,
     build: (p, t, locale) => buildFeedbackEmail(t, locale, {
-      ...p,
+      userName: p.userName,
+      userRole: p.userRole,
+      userEmail: p.userEmail,
+      message: p.message,
       sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
+      isGamer: p.userRole === "gamer",
+      parentEmail: p.parentEmail ?? undefined,
+      gamerOwnMailbox: p.gamerOwnMailbox,
     }),
     subject: (p, t) => t("feedback.subject", { displayName: p.userName, role: t(ROLE_LABEL_KEYS[p.userRole]) }),
-    // The live route resolves the reply-to first and passes it in as
-    // `userEmail` (a gamer's resolves to their linked parent's), so this param
-    // already *is* the address the real mail replies to.
-    replyTo: (p) => p.userEmail,
+    resolveParams: resolveFeedback,
+    // The same resolver the mail's own "Reply to" row reads, so a test send
+    // replies exactly where the live one does — a gamer's to their linked
+    // parent, everyone else's to themselves.
+    replyTo: (p) => feedbackReplyToAddress({
+      isGamer: p.userRole === "gamer",
+      parentEmail: p.parentEmail ?? undefined,
+      userEmail: p.userEmail,
+    }),
   }),
   welcomeParent: defineTemplate({
     label: "Welcome (Parent)",
@@ -1362,7 +1467,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Product Confirmation",
     fields: [
       { key: "participantName", label: "Participant Name", placeholder: "Aino" },
-      { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
+      { key: "seat", label: "Whose seat, or whose copy", type: "select", options: PRODUCT_CONFIRMATION_SEAT_OPTIONS },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "productType", label: "Product Type", type: "select", options: PRODUCT_TYPE_OPTIONS },
       { key: "mode", label: "Outcome", type: "select", options: PRODUCT_CONFIRMATION_MODE_OPTIONS },
@@ -1459,21 +1564,22 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         placeholder: "",
       },
       {
-        // The labels say *parent* and then explain themselves, because "who is
-        // the attendee" is the one thing about this document that looks like an
-        // oversight from outside: the seat is a child's and the entry names the
-        // adult. A gamer's address is a synthetic internal one no mail can
-        // reach, and a client decides whether to show the RSVP by matching the
-        // attendee against the mailbox it is reading — so naming the child
-        // would invite a mailbox that does not exist and lose the RSVP with it.
+        // The labels say *the reader*, not *the parent*, and they explain
+        // themselves: a client offers the RSVP only when the attendee matches
+        // the mailbox it is reading, so a document is composed per recipient and
+        // names whoever received it. The parent's copy names the parent; the
+        // child's copy — the third seat option above — names the child. Sending
+        // the child's copy with the parent's address in these fields renders a
+        // document the child could not answer, which is the mistake the label
+        // is here to prevent.
         key: "attendeeName",
         label:
-          "Invite – Parent name (the attendee: a client shows RSVP only when the attendee matches the mailbox reading it, and the gamer has no mailbox)",
+          "Invite – Attendee name (this copy's own reader: a client shows RSVP only when the attendee matches the mailbox reading it)",
         placeholder: "Marja Virtanen",
       },
       {
         key: "attendeeEmail",
-        label: "Invite – Parent email (the attendee; use the address you send to)",
+        label: "Invite – Attendee email (this copy's own reader; use the address you send to)",
         placeholder: "marja@example.com",
       },
     ],
@@ -1603,6 +1709,42 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       buildSessionReportEmail(t, locale, resolveSessionReport(p, locale, context)),
     subject: (p, t, locale, context) =>
       sessionReportSubject(t, resolveSessionReport(p, locale, context)),
+  }),
+  gamerWelcome: defineTemplate({
+    label: "Welcome (Gamer)",
+    fields: [
+      { key: "gamerFirstName", label: "Gamer First Name", placeholder: "Aino" },
+      {
+        key: "verificationUrl",
+        label: "Verification URL",
+        placeholder: "https://sogverse.sog.gg/verify-email?token=abc123",
+      },
+    ],
+    schema: gamerWelcomeParamsSchema,
+    build: (p, t, locale) => buildGamerWelcomeEmail(t, locale, p),
+    subject: (_p, t) => t("gamerWelcome.subject"),
+  }),
+  /**
+   * The child's copy of a seat offer — its own entry rather than a select on
+   * the parent's, because it takes a different, smaller param set: no accept
+   * or decline URL exists for it to carry, which is the point of the variant.
+   */
+  seatOfferGamer: defineTemplate({
+    label: "Seat Offer (Gamer's own copy)",
+    fields: [
+      { key: "gamerName", label: "Gamer Name", placeholder: "Aino" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      {
+        key: "deadline",
+        label: "Deadline (formatted)",
+        // The same string the parent's mail states — one deadline, two readers.
+        placeholder: "Monday, August 31 at 14:20 GMT+3",
+      },
+      { key: "dashboardUrl", label: "My SOG URL (gamer root)", placeholder: "https://sogverse.sog.gg/gamer" },
+    ],
+    schema: seatOfferGamerParamsSchema,
+    build: (p, t, locale) => buildSeatOfferGamerEmail(t, locale, p),
+    subject: (p, t) => seatOfferGamerSubject(t, p),
   }),
   /**
    * The one template that carries a file, and the reason the registry can carry

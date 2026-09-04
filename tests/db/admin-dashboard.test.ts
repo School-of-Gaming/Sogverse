@@ -413,11 +413,21 @@ describe("get_admin_dashboard", () => {
       expect(roles).toEqual(["admin", "customer", "gamer", "gedu"]);
     });
 
-    it("reports no verification stat for gamers, and one for everyone else", () => {
+    it("reports a verification stat wherever the role holds real addresses", async () => {
+      // Since 00235 the test is the ADDRESS, not the role. A gamer in sign-in
+      // mode `parent` or `username` carries a synthetic
+      // @gamer.sogverse.internal handle nobody will ever click a link in, so "0
+      // verified" would report a problem that does not exist and NULL says the
+      // stat has no meaning. A gamer in mode `email` holds a real mailbox and
+      // counts exactly like an adult — so whether the gamer tile is NULL is a
+      // question about the data, and is asked of the data rather than assumed.
+      const { count: addressableGamers } = await admin
+        .from("gamer_profiles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("sign_in", "email");
+
       for (const tile of snapshot.users) {
-        // A gamer's address is synthetic, so "0 verified" would report a
-        // problem that does not exist. NULL says the stat has no meaning.
-        if (tile.role === "gamer") {
+        if (tile.role === "gamer" && !addressableGamers) {
           expect(tile.verified).toBeNull();
         } else {
           expect(tile.verified).not.toBeNull();

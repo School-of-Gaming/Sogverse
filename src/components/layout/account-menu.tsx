@@ -22,9 +22,20 @@ import { byFirstName } from "@/lib/family-order";
 import { cn } from "@/lib/utils";
 import {
   commitAccountSwitch,
+  switchGateFor,
   useFamily,
+  useSessionProvenance,
   type FamilyMember,
+  type SwitchAccountCredentials,
+  type SwitchGate,
 } from "@/services/family";
+// The module, not the family barrel: the header mounts on every page for every
+// role, and the barrel would drag the profile selector and the add-gamer form
+// into that bundle for the sake of one dialog most viewers never open.
+import {
+  SwitchGateDialog,
+  type SwitchGateMode,
+} from "@/components/family/SwitchGateDialog";
 
 /**
  * The header avatar's dropdown: who else the viewer can be, and the two things
@@ -44,6 +55,20 @@ import {
  * trip through the /select-profile interstitial. Admins and gedus have a single
  * profile and nobody to switch to, so their menu is the fixed rows alone.
  */
+
+/**
+ * One row of the household, with what reaching that person costs.
+ *
+ * The gate travels *with* the row because both are snapshotted together when
+ * the menu opens — see `openedWith`. It decides whether a click commits or
+ * opens a dialog, and a row still waiting for it is out of service, so a gate
+ * landing into an open panel would change what a row does under a cursor
+ * already reaching for it.
+ */
+interface SwitchRow {
+  member: FamilyMember;
+  gate: SwitchGate;
+}
 
 /** Roles whose menu lists a household rather than nobody. */
 function listsFamily(role: UserRole): boolean {
@@ -109,7 +134,7 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
    * is the shift the root layout rule forbids. So an open panel keeps the row
    * set it opened with; the next open shows the fuller list.
    */
-  const [openedWith, setOpenedWith] = useState<FamilyMember[]>([]);
+  const [openedWith, setOpenedWith] = useState<SwitchRow[]>([]);
   // Held locally and flipped synchronously before the switch call, so no row
   // re-enables between the click and the full-page navigation it causes. It is
   // deliberately never cleared on success — the document unloads instead.
@@ -129,6 +154,19 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
    */
   const [signingOut, setSigningOut] = useState(false);
   const [switchError, setSwitchError] = useState<string | null>(null);
+  /**
+   * The switch a gate is standing in front of — the target, and which
+   * credential it costs. Non-null exactly while the gate dialog is open.
+   *
+   * The menu closes when this is set: the gate is a modal over the page, and a
+   * panel left painted behind it is a second set of rows the reader can no
+   * longer reach. Coming back from a cancelled gate means opening the menu
+   * again, which is also what re-snapshots the household.
+   */
+  const [gated, setGated] = useState<{
+    member: FamilyMember;
+    mode: SwitchGateMode;
+  } | null>(null);
   const switchToId = useId();
 
   /**
@@ -245,6 +283,14 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
   // on every navigation.
   const wantsFamily = listsFamily(role);
   const family = useFamily({ enabled: wantsFamily });
+  /**
+   * Where this session came from, out of the same cache entry as the list above
+   * — one request answers both. `null` until it lands, and the gate helper
+   * reads that as "wait", never as "no gate": a gamer's rows stay out of service
+   * until the answer is in, because guessing either way prompts for a credential
+   * the route will not accept.
+   */
+  const provenance = useSessionProvenance({ enabled: wantsFamily });
 
   const dashboardPath = ROLE_DASHBOARD_PATHS[role];
   const isOnDashboard =
@@ -265,10 +311,19 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
   // already in the cache under that key, and no household of theirs is ever
   // listed here.
   const members = wantsFamily ? (family.data ?? []) : [];
-  const switchTargets = [
+  const switchRows: SwitchRow[] = [
     ...members.filter((m) => m.role === "customer").sort(byFirstName(locale)),
     ...members.filter((m) => m.role === "gamer").sort(byFirstName(locale)),
-  ].filter((m) => m.id !== userId);
+  ]
+    .filter((m) => m.id !== userId)
+    // One helper decides the gate for all three switch surfaces, so the rule
+    // lives once and this row only has to render the answer.
+    .map((member) => ({
+      member,
+      // The gate is a fact about this session rather than about the person in
+      // the row, so every row in one snapshot carries the same answer.
+      gate: switchGateFor(role, provenance.data),
+    }));
 
   function focusableItems(): HTMLElement[] {
     const panel = panelRef.current;
@@ -284,8 +339,28 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
     // an open minutes later would be greeted by an alert about something the
     // reader has long since moved on from.
     setSwitchError(null);
-    setOpenedWith(switchTargets);
+    setOpenedWith(switchRows);
     setOpen(true);
+  }
+
+  /**
+   * A row was activated. Where the switch costs nothing it commits on the spot,
+   * exactly as it always has; otherwise the menu hands over to the gate dialog
+   * and closes behind it — to collect a parent's PIN, or to say that this
+   * session has to be signed out of first. A row whose gate has not landed
+   * never gets here: it is disabled, and its click is guarded.
+   */
+  function handleActivate(row: SwitchRow, clickedRow: HTMLElement) {
+    if (busy) return;
+    const { kind } = row.gate;
+    if (kind === "pin" || kind === "signOut") {
+      setSwitchError(null);
+      setGated({ member: row.member, mode: kind });
+      setOpen(false);
+      return;
+    }
+    if (kind !== "none") return;
+    void handleSwitch(row.member, clickedRow);
   }
 
   async function handleSwitch(target: FamilyMember, clickedRow: HTMLElement) {
@@ -393,202 +468,236 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
   }
 
   return (
-    <div
-      className="relative"
-      ref={wrapperRef}
-      onKeyDown={handleKeyDown}
-      onBlur={handleFocusOut}
-    >
-      <button
-        ref={triggerRef}
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        // The identicon is the identity, and it says nothing to a screen
-        // reader — so the name the menu no longer carries as a row is carried
-        // here instead.
-        aria-label={menuLabel}
-        onClick={() => (open ? setOpen(false) : openMenu())}
-        className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+    // The gate dialog is a *sibling* of the menu wrapper, never a child of it.
+    // A portal still bubbles its events through the React tree it was rendered
+    // in, so a dialog mounted inside the wrapper would hand every arrow key
+    // typed at the PIN pad to the menu's own key handler — which, with the menu
+    // closed, answers ArrowDown by opening the panel behind the dialog.
+    <>
+      <div
+        className="relative"
+        ref={wrapperRef}
+        onKeyDown={handleKeyDown}
+        onBlur={handleFocusOut}
       >
-        {/* The open state takes the ring the avatar used to wear when the page
-            it linked to was the current one. It links nowhere now, so "you are
-            here" has nothing left to mean; "this is what is open" does. */}
-        <Avatar
-          className={cn(
-            "h-8 w-8 transition-shadow",
-            open && "ring-2 ring-primary",
-          )}
+        <button
+          ref={triggerRef}
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          // The identicon is the identity, and it says nothing to a screen
+          // reader — so the name the menu no longer carries as a row is carried
+          // here instead.
+          aria-label={menuLabel}
+          onClick={() => (open ? setOpen(false) : openMenu())}
+          className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
         >
-          <Identicon id={userId} size={32} />
-        </Avatar>
-      </button>
-
-      {open && (
-        // `w-56` clears the 360px floor with room to spare — the header's own
-        // gutter is 12px there, so the panel sits 224px inside a 360px viewport
-        // and cannot push the document sideways. The widest label in any locale
-        // ("Kirjaudu ulos", "Se déconnecter") is well inside that at 14px.
-        //
-        // The card, not the `menu` element, is what is capped and scrolled: a
-        // full household is up to eight rows plus three fixed ones, which on a
-        // short phone (an SE-class 667px viewport in landscape, say) would push
-        // Sign out past the bottom edge — and the panel is absolutely
-        // positioned inside a sticky header, so the document scroll cannot
-        // reach it.
-        <div className="absolute right-0 z-50 mt-1 max-h-[calc(100vh-var(--header-height)-1rem)] w-56 overflow-y-auto rounded-md border border-border bg-card py-1 shadow-lg">
-          <div ref={panelRef} role="menu" aria-label={menuLabel}>
-            <MenuLinkRow
-              href={dashboardPath}
-              active={isOnDashboard}
-              disabled={busy}
-              onNavigate={() => {
-                // The event answers: who (role), from where, and which of the
-                // two chrome affordances — the logo or this row. Every role
-                // emits; the gedu-only "avatar" series ended when the avatar
-                // became the menu trigger (see DashboardNavMethod).
-                trackDashboardNav({
-                  role,
-                  method: "account_menu",
-                  from: pathname,
-                });
-                setOpen(false);
-              }}
-              icon={<LayoutDashboard className="h-4 w-4 shrink-0" />}
-              label={dashboardLabel}
-            />
-
-            {/* No household in hand — a read still in flight, a read that
-                failed, or a role with nobody to switch to — simply means no
-                member block, heading and all. The panel still opens complete
-                and at once: a trigger claiming `aria-expanded="true"` over
-                nothing, for as long as a retry backs off, would leave Settings
-                and the way out unreachable, and they live nowhere else on the
-                page. The heading is part of this block rather than a fixed row
-                precisely so it can never stand orphaned over no names. */}
-            {openedWith.length > 0 && (
-              <>
-                <div role="separator" className="my-1 h-px bg-border" />
-                {/* `group` is a valid child of `menu`; a heading element is
-                    not, which is why the visible label is an `aria-hidden`
-                    div and the group takes its accessible name from it by
-                    reference. One string, rendered once, announced once —
-                    the same move the error line makes by sitting outside the
-                    menu rather than pretending to be a row. */}
-                <div role="group" aria-labelledby={switchToId}>
-                  {/* A parent whose household holds one child sees exactly one
-                      name here, and without this heading that name reads as
-                      "who I am" rather than "where I can go" — the question
-                      the viewer's own row used to answer badly. */}
-                  <div
-                    id={switchToId}
-                    aria-hidden="true"
-                    className="px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground"
-                  >
-                    {t("switchTo")}
-                  </div>
-                  {openedWith.map((member) => (
-                    <AccountRowItem
-                      key={member.id}
-                      member={member}
-                      // The parent is the row a household can't always tell
-                      // apart by name alone — a gamer looking at the list needs
-                      // to know which one is the adult account. Gamers carry no
-                      // descriptor; they are the default.
-                      descriptor={
-                        member.role === "customer" ? c("roleParent") : null
-                      }
-                      blocked={busy}
-                      switching={switchingId === member.id}
-                      onSwitch={handleSwitch}
-                    />
-                  ))}
-                </div>
-              </>
+          {/* The open state takes the ring the avatar used to wear when the page
+              it linked to was the current one. It links nowhere now, so "you are
+              here" has nothing left to mean; "this is what is open" does. */}
+          <Avatar
+            className={cn(
+              "h-8 w-8 transition-shadow",
+              open && "ring-2 ring-primary",
             )}
+          >
+            <Identicon id={userId} size={32} />
+          </Avatar>
+        </button>
 
-            <div role="separator" className="my-1 h-px bg-border" />
-
-            <MenuLinkRow
-              href={ROUTES.settings}
-              active={isOnSettings}
-              disabled={busy}
-              onNavigate={() => setOpen(false)}
-              icon={<Settings className="h-4 w-4 shrink-0" />}
-              label={c("settings")}
-            />
-
-            {/* The canonical sign-out: a form POST the server answers with a
-                303, which the browser follows as a full-page GET. No client
-                fetch — the route changes cookies the browser Supabase
-                singleton never sees, so only a document reload rebuilds it.
-
-                `role="none"` because a menu's children have to be menu items
-                and the form is a wrapper, not a row; it still submits
-                normally.
-
-                The row is styled exactly like My SOG and Settings — no
-                destructive tint. Signing out is reversible and routine, not a
-                deletion, and every menu that offers it treats it as an
-                ordinary row; `destructive` in this panel is reserved for the
-                one thing that actually went wrong, the failure line below.
-
-                `onSubmit` records the commit and lets the native submit
-                proceed — no `preventDefault`, no fetch. The browser stays on
-                this document until the 303 comes back, so the spinner is on
-                screen for the whole round trip, and there is no JS error path
-                to clear it from: the page either navigates or it does not. */}
-            <form
-              role="none"
-              method="post"
-              action="/api/auth/signout"
-              onSubmit={() => setSigningOut(true)}
-            >
-              <button
-                type="submit"
-                role="menuitem"
-                data-account-menu-item=""
-                data-account-menu-blocked={busy ? "" : undefined}
+        {open && (
+          // `w-56` clears the 360px floor with room to spare — the header's own
+          // gutter is 12px there, so the panel sits 224px inside a 360px viewport
+          // and cannot push the document sideways. The widest label in any locale
+          // ("Kirjaudu ulos", "Se déconnecter") is well inside that at 14px.
+          //
+          // The card, not the `menu` element, is what is capped and scrolled: a
+          // full household is up to eight rows plus three fixed ones, which on a
+          // short phone (an SE-class 667px viewport in landscape, say) would push
+          // Sign out past the bottom edge — and the panel is absolutely
+          // positioned inside a sticky header, so the document scroll cannot
+          // reach it.
+          <div className="absolute right-0 z-50 mt-1 max-h-[calc(100vh-var(--header-height)-1rem)] w-56 overflow-y-auto rounded-md border border-border bg-card py-1 shadow-lg">
+            <div ref={panelRef} role="menu" aria-label={menuLabel}>
+              <MenuLinkRow
+                href={dashboardPath}
+                active={isOnDashboard}
                 disabled={busy}
-                className={cn(ROW_CLASS, ACTIONABLE_ROW_CLASS, busy && "opacity-60")}
-              >
-                <LogOut className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 truncate">{c("signOut")}</span>
-                {/* The spinner lands in the trailing slot, the same one the
-                    member rows keep a chevron in — but this row starts with
-                    that slot empty, so the mark *arrives* at the end of the
-                    run rather than swapping for another. That is the placement
-                    the layout rule allows: it grows leftward into the row's own
-                    slack, and the icon and label already painted hold their
-                    positions to the pixel. Nothing is reserved for it. It
-                    inherits the row's colour, whatever that ends up being. */}
-                {signingOut && (
-                  <Loader2
-                    aria-hidden
-                    className="ml-auto h-4 w-4 shrink-0 animate-spin"
-                  />
-                )}
-              </button>
-            </form>
-          </div>
+                onNavigate={() => {
+                  // The event answers: who (role), from where, and which of the
+                  // two chrome affordances — the logo or this row. Every role
+                  // emits; the gedu-only "avatar" series ended when the avatar
+                  // became the menu trigger (see DashboardNavMethod).
+                  trackDashboardNav({
+                    role,
+                    method: "account_menu",
+                    from: pathname,
+                  });
+                  setOpen(false);
+                }}
+                icon={<LayoutDashboard className="h-4 w-4 shrink-0" />}
+                label={dashboardLabel}
+              />
 
-          {/* A sibling of the `menu` element, not a child of it: a menu's
-              children have to be menu items, and this is a message. It still
-              sits last in the card, so a failed switch adds a line below
-              everything already painted rather than displacing a row
-              mid-list. */}
-          {switchError && (
-            <p
-              ref={errorRef}
-              role="alert"
-              className="px-3 pb-1 pt-2 text-xs text-destructive"
-            >
-              {switchError}
-            </p>
-          )}
-        </div>
+              {/* No household in hand — a read still in flight, a read that
+                  failed, or a role with nobody to switch to — simply means no
+                  member block, heading and all. The panel still opens complete
+                  and at once: a trigger claiming `aria-expanded="true"` over
+                  nothing, for as long as a retry backs off, would leave Settings
+                  and the way out unreachable, and they live nowhere else on the
+                  page. The heading is part of this block rather than a fixed row
+                  precisely so it can never stand orphaned over no names. */}
+              {openedWith.length > 0 && (
+                <>
+                  <div role="separator" className="my-1 h-px bg-border" />
+                  {/* `group` is a valid child of `menu`; a heading element is
+                      not, which is why the visible label is an `aria-hidden`
+                      div and the group takes its accessible name from it by
+                      reference. One string, rendered once, announced once —
+                      the same move the error line makes by sitting outside the
+                      menu rather than pretending to be a row. */}
+                  <div role="group" aria-labelledby={switchToId}>
+                    {/* A parent whose household holds one child sees exactly one
+                        name here, and without this heading that name reads as
+                        "who I am" rather than "where I can go" — the question
+                        the viewer's own row used to answer badly. */}
+                    <div
+                      id={switchToId}
+                      aria-hidden="true"
+                      className="px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground"
+                    >
+                      {t("switchTo")}
+                    </div>
+                    {openedWith.map((row) => (
+                      <AccountRowItem
+                        key={row.member.id}
+                        member={row.member}
+                        gate={row.gate}
+                        // The parent is the row a household can't always tell
+                        // apart by name alone — a gamer looking at the list needs
+                        // to know which one is the adult account. Gamers carry no
+                        // descriptor; they are the default.
+                        descriptor={
+                          row.member.role === "customer" ? c("roleParent") : null
+                        }
+                        blocked={busy}
+                        switching={switchingId === row.member.id}
+                        onActivate={handleActivate}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <div role="separator" className="my-1 h-px bg-border" />
+
+              <MenuLinkRow
+                href={ROUTES.settings}
+                active={isOnSettings}
+                disabled={busy}
+                onNavigate={() => setOpen(false)}
+                icon={<Settings className="h-4 w-4 shrink-0" />}
+                label={c("settings")}
+              />
+
+              {/* The canonical sign-out: a form POST the server answers with a
+                  303, which the browser follows as a full-page GET. No client
+                  fetch — the route changes cookies the browser Supabase
+                  singleton never sees, so only a document reload rebuilds it.
+
+                  `role="none"` because a menu's children have to be menu items
+                  and the form is a wrapper, not a row; it still submits
+                  normally.
+
+                  The row is styled exactly like My SOG and Settings — no
+                  destructive tint. Signing out is reversible and routine, not a
+                  deletion, and every menu that offers it treats it as an
+                  ordinary row; `destructive` in this panel is reserved for the
+                  one thing that actually went wrong, the failure line below.
+
+                  `onSubmit` records the commit and lets the native submit
+                  proceed — no `preventDefault`, no fetch. The browser stays on
+                  this document until the 303 comes back, so the spinner is on
+                  screen for the whole round trip, and there is no JS error path
+                  to clear it from: the page either navigates or it does not. */}
+              <form
+                role="none"
+                method="post"
+                action="/api/auth/signout"
+                onSubmit={() => setSigningOut(true)}
+              >
+                <button
+                  type="submit"
+                  role="menuitem"
+                  data-account-menu-item=""
+                  data-account-menu-blocked={busy ? "" : undefined}
+                  disabled={busy}
+                  className={cn(ROW_CLASS, ACTIONABLE_ROW_CLASS, busy && "opacity-60")}
+                >
+                  <LogOut className="h-4 w-4 shrink-0" />
+                  <span className="min-w-0 truncate">{c("signOut")}</span>
+                  {/* The spinner lands in the trailing slot, the same one the
+                      member rows keep a chevron in — but this row starts with
+                      that slot empty, so the mark *arrives* at the end of the
+                      run rather than swapping for another. That is the placement
+                      the layout rule allows: it grows leftward into the row's own
+                      slack, and the icon and label already painted hold their
+                      positions to the pixel. Nothing is reserved for it. It
+                      inherits the row's colour, whatever that ends up being. */}
+                  {signingOut && (
+                    <Loader2
+                      aria-hidden
+                      className="ml-auto h-4 w-4 shrink-0 animate-spin"
+                    />
+                  )}
+                </button>
+              </form>
+            </div>
+
+            {/* A sibling of the `menu` element, not a child of it: a menu's
+                children have to be menu items, and this is a message. It still
+                sits last in the card, so a failed switch adds a line below
+                everything already painted rather than displacing a row
+                mid-list. */}
+            {switchError && (
+              <p
+                ref={errorRef}
+                role="alert"
+                className="px-3 pb-1 pt-2 text-xs text-destructive"
+              >
+                {switchError}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Mounted only while a gate is standing, so its state — the digits
+          typed, the no-PIN message — is discarded when it closes rather than
+          waiting to greet the next switch. */}
+      {gated && (
+        <SwitchGateDialog
+          open
+          onOpenChange={(next) => {
+            if (next) return;
+            setGated(null);
+            // The row that opened this gate went with the panel — opening the
+            // gate closes the menu — so there is nothing for the dialog to hand
+            // focus back to and it lands on <body>, restarting the next Tab at
+            // the top of the page. The trigger always exists, and it is where
+            // the reader was two clicks ago. Only on a close: a committed switch
+            // is already unloading the document.
+            triggerRef.current?.focus();
+          }}
+          target={gated.member}
+          viewerFirstName={firstName}
+          mode={gated.mode}
+          onCommit={(credentials: SwitchAccountCredentials) =>
+            commitAccountSwitch(gated.member, credentials)
+          }
+        />
       )}
-    </div>
+    </>
   );
 }
 
@@ -646,12 +755,15 @@ function MenuLinkRow({
 /** One other member of the household — always a switch target, never the viewer. */
 function AccountRowItem({
   member,
+  gate,
   descriptor,
   blocked,
   switching,
-  onSwitch,
+  onActivate,
 }: {
   member: FamilyMember;
+  /** What reaching this person costs, decided once by `switchGateFor`. */
+  gate: SwitchGate;
   /** Rendered after the name; today only the parent's role word. */
   descriptor: string | null;
   /** Some commit is in flight — a switch or the sign-out — so no row acts. */
@@ -659,12 +771,24 @@ function AccountRowItem({
   /** This is the row that was clicked — it wears the spinner. */
   switching: boolean;
   /**
-   * Handed the row element as well as the member: a failed switch has to give
+   * Handed the row element as well as the row: a failed switch has to give
    * focus back to the button that was pressed, and only the click knows which
    * one that was.
    */
-  onSwitch: (target: FamilyMember, row: HTMLElement) => void;
+  onActivate: (row: SwitchRow, element: HTMLElement) => void;
 }) {
+  /**
+   * The gate is not decidable yet. Transient, and out of service until it is —
+   * and the only reason a member row is ever inert.
+   *
+   * Every household member is listed and every one of them is clickable,
+   * whatever the viewer's session turns out to be. Where a switch needs a
+   * sign-out, that is what the click opens; the row does not carry the
+   * explanation, because a row that explains itself to a reader who was never
+   * going to click it is a row that has to be read before it can be ignored.
+   */
+  const pending = gate.kind === "unknown";
+  const inert = blocked || pending;
   return (
     // `group` is what the chevron's nudge keys on. Nothing else in this row
     // uses one, so the unnamed group is unambiguous.
@@ -672,16 +796,16 @@ function AccountRowItem({
       type="button"
       role="menuitem"
       data-account-menu-item=""
-      data-account-menu-blocked={blocked ? "" : undefined}
-      disabled={blocked}
-      onClick={(event) => onSwitch(member, event.currentTarget)}
+      data-account-menu-blocked={inert ? "" : undefined}
+      disabled={inert}
+      onClick={(event) => onActivate({ member, gate }, event.currentTarget)}
       className={cn(
         ROW_CLASS,
         ACTIONABLE_ROW_CLASS,
         "group",
         // The whole row dims, spinner and chevron with it — a mark left at
         // full strength inside a dimmed row reads as still-live.
-        blocked && "opacity-60",
+        inert && "opacity-60",
       )}
     >
       {/* Hidden from the accessibility tree: the identicon labels itself "user
@@ -706,6 +830,7 @@ function AccountRowItem({
             className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
           />
         ) : (
+          // The chevron marks a switch, and every row here is one.
           <NavChevron size="sm" />
         )}
       </span>

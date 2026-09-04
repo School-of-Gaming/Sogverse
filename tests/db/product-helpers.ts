@@ -167,6 +167,10 @@ import { TEST_IDS } from "./constants";
  *                  two is always on summer time — and a fixed-offset zone in
  *                  which it is just after local midnight, which is what
  *                  exercises the SQL window search's adjacent-day probe)
+ *   7f5-7f6       gamer-sign-in.test.ts (one club 7f5 with one group 7f6 — the
+ *                  smallest document that can carry a roster, which is all the
+ *                  boundary half needs: a gedu-readable feed that would show a
+ *                  child's address if any RPC ever emitted one)
  *   637           write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather

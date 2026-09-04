@@ -5,17 +5,22 @@ import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/providers/auth-provider";
 import {
   commitAccountSwitch,
+  switchGateFor,
   useFamily,
+  useSessionProvenance,
   type FamilyMember,
+  type SwitchAccountCredentials,
 } from "@/services/family";
 import { AddGamerDialog } from "./AddGamerDialog";
 import { SwitchProfileDialog } from "./SwitchProfileDialog";
+import { SwitchGateDialog, type SwitchGateMode } from "./SwitchGateDialog";
 import {
   AddGamerTile,
   ProfileTile,
   ProfileTilesRow,
   SkeletonTile,
 } from "./ProfileTiles";
+import type { SessionProvenance } from "@/lib/session-provenance";
 import { ROUTES, MAX_GAMERS_PER_PARENT } from "@/lib/constants";
 import { byFirstName } from "@/lib/family-order";
 
@@ -60,6 +65,16 @@ interface FamilyProfileSelectorProps {
    * first frame; omitted for in-session mounts (dialogs), which load client-side.
    */
   initialFamily?: FamilyMember[];
+  /**
+   * The provenance of the viewer's own session, seeded beside the list above.
+   *
+   * Required in practice wherever a *gamer* can land, because the gate is
+   * undecidable without it and an undecided gate takes every tile out of
+   * service. /select-profile derives it off the same verified JWT its auth
+   * check already read; the My Family section on the parent dashboard omits it,
+   * since a customer's switches are never gated.
+   */
+  initialSessionProvenance?: SessionProvenance;
 }
 
 /**
@@ -77,19 +92,48 @@ export function FamilyProfileSelector({
   onSelfClick,
   autoOpenAddGamerFromUrl = false,
   initialFamily,
+  initialSessionProvenance,
 }: FamilyProfileSelectorProps = {}) {
   const t = useTranslations("family");
   const locale = useLocale();
   const { user, profile } = useAuth();
-  const { data: family, isLoading, error } = useFamily({ initialData: initialFamily });
+  const { data: family, isLoading, error } = useFamily({
+    initialData: initialFamily
+      ? { family: initialFamily, sessionProvenance: initialSessionProvenance }
+      : undefined,
+  });
+  /**
+   * Out of the same cache entry as the list above, so it is non-null on the very
+   * first frame wherever the page seeded it — which is what keeps a gamer's
+   * tiles from starting disabled and then enabling themselves a round trip
+   * later. Unseeded it is `null`, and `null` still means *wait*: guessing would
+   * prompt for a credential the route refuses. A parent is unaffected either
+   * way, because their gate is `none` whatever the provenance turns out to be.
+   */
+  const provenance = useSessionProvenance();
   const [committingTargetId, setCommittingTargetId] = useState<string | null>(null);
   const [switchError, setSwitchError] = useState<string | null>(null);
   const [addGamerOpen, setAddGamerOpen] = useState(false);
   const [pendingAddGamerIntent, setPendingAddGamerIntent] = useState(false);
   const [switchToParentOpen, setSwitchToParentOpen] = useState(false);
+  /** The switch a credential gate is standing in front of, while it stands. */
+  const [gated, setGated] = useState<{
+    member: FamilyMember;
+    mode: SwitchGateMode;
+  } | null>(null);
 
   const currentUserId = user?.id ?? null;
   const viewerIsCustomer = profile?.role === "customer";
+
+  /**
+   * What a switch costs from this session, from the one helper all three switch
+   * surfaces share. The viewer's own tile is never a switch, so it is never
+   * gated — which is the only thing about a tile that changes the answer.
+   */
+  function gateFor(member: FamilyMember) {
+    if (member.id === currentUserId) return { kind: "none" } as const;
+    return switchGateFor(profile?.role, provenance.data);
+  }
 
   // Honor the gamer→parent "Add Gamer" intent: read the URL marker once on
   // mount and strip it (so a refresh/back doesn't reopen), recording a pending
@@ -121,6 +165,14 @@ export function FamilyProfileSelector({
       // — same loading-state contract as the cross-account switch below.
       setCommittingTargetId(target.id);
       onSelfClick();
+      return;
+    }
+
+    const gate = gateFor(target);
+    if (gate.kind === "unknown") return;
+    if (gate.kind === "pin" || gate.kind === "signOut") {
+      setSwitchError(null);
+      setGated({ member: target, mode: gate.kind });
       return;
     }
 
@@ -215,17 +267,27 @@ export function FamilyProfileSelector({
         {[...parents, ...gamers].map((member) => {
           const isActive = member.id === currentUserId;
           const activeIsClickable = !!onSelfClick;
+          const gate = gateFor(member);
+          // The only thing that takes a tile out of service: a gate whose
+          // answer has not landed. Every family member is on screen and every
+          // one of them is clickable — a switch that needs a sign-out says so
+          // in the dialog the click opens.
+          const blockedByGate = gate.kind === "unknown";
           // Non-active tiles stay visually clickable even while a switch is
           // in flight — only the active tile (when it has no self navigator)
           // shows the default cursor.
-          const clickable = !isActive || activeIsClickable;
+          const clickable = (!isActive || activeIsClickable) && !blockedByGate;
           return (
             <ProfileTile
               key={member.id}
               member={member}
               isActive={isActive}
               clickable={clickable}
-              disabled={(isActive && !activeIsClickable) || isAnyCommitting}
+              disabled={
+                (isActive && !activeIsClickable) ||
+                isAnyCommitting ||
+                blockedByGate
+              }
               isLoading={committingTargetId === member.id}
               onClick={() => handleSwitch(member)}
             />
@@ -235,6 +297,27 @@ export function FamilyProfileSelector({
           <AddGamerTile onClick={handleAddGamerClick} />
         )}
       </ProfileTilesRow>
+
+      {/* The gate for a tile the viewer clicked. Mounted only while it stands,
+          so the digits typed into it are discarded on close rather than
+          waiting to greet the next switch. */}
+      {gated && (
+        <SwitchGateDialog
+          open
+          onOpenChange={(next) => {
+            if (!next) setGated(null);
+          }}
+          target={gated.member}
+          // The gate only ever stands for a gamer viewer, and `gateFor` cannot
+          // answer anything but `unknown` until that viewer's profile has
+          // landed — so the fallback is unreachable and exists for the type.
+          viewerFirstName={profile?.first_name ?? ""}
+          mode={gated.mode}
+          onCommit={(credentials: SwitchAccountCredentials) =>
+            commitAccountSwitch(gated.member, credentials)
+          }
+        />
+      )}
 
       <AddGamerDialog open={showAddGamer} onOpenChange={handleAddGamerOpenChange} />
       {/* Gamer → parent switch so a gamer can land on a parent who's allowed to
@@ -248,6 +331,11 @@ export function FamilyProfileSelector({
           open={switchToParentOpen}
           onOpenChange={setSwitchToParentOpen}
           target={parents[0]}
+          // A gamer reaching for a parent pays the same gate as any other
+          // switch; the dialog folds it in as a second step so the intent
+          // marker still rides along on the redirect.
+          gate={gateFor(parents[0])}
+          viewerFirstName={profile?.first_name ?? ""}
           redirectUrl={`${ROUTES.selectProfile}?${ADD_GAMER_INTENT.param}=${ADD_GAMER_INTENT.value}`}
           title={t("switchToParentToAddGamer.title", { name: parents[0].first_name })}
           oneWayWarning={t("switchToParentToAddGamer.oneWayWarning")}

@@ -121,6 +121,8 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     userRole: "customer",
     userEmail: "marja@example.com",
     message: "Great product!",
+    parentEmail: null,
+    gamerOwnMailbox: false,
   },
   welcomeParent: {
     firstName: "Marja",
@@ -149,6 +151,7 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     priceAmount: "€40.00",
     firstChargeDate: "none",
     dashboardUrl: "https://sogverse.sog.gg/parent",
+    gamerCopy: false,
     ageRange: "8-12",
     audience: "gamers",
     spokenLanguageCode: "fi",
@@ -169,6 +172,10 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     firstName: "Marja",
     verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
   },
+  gamerWelcome: {
+    gamerFirstName: "Aino",
+    verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
+  },
   seatOffer: {
     participantName: "Aino",
     isSelfSeat: false,
@@ -177,6 +184,12 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     acceptUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
     declineUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
     dashboardUrl: "https://sogverse.sog.gg/parent",
+  },
+  seatOfferGamer: {
+    gamerName: "Aino",
+    productName: "Minecraft 101",
+    deadline: "Sunday, 31 August at 14:20 GMT+3",
+    dashboardUrl: "https://sogverse.sog.gg/gamer",
   },
   seatOfferStaff: {
     reason: "declined",
@@ -256,21 +269,48 @@ function fromRegistry(
 const MAILS: Record<string, () => [string, string][]> = {
   "components-reference": () => fromRegistry("componentsReference"),
   "password-reset": () => fromRegistry("passwordReset"),
-  feedback: () => fromRegistry("feedback"),
-  "product-confirmation": () => fromRegistry("productConfirmation"),
-  // Both mails one send produces: the family's, and the copy to staff, which
-  // carries a banner of its own and so has markup no other render reaches.
+  // The plain mail, and the gamer case with the note that names a child's own
+  // address — a row of markup no other render reaches.
+  feedback: () => [
+    ...fromRegistry("feedback"),
+    ...fromRegistry("feedback", "feedback (gamer, own mailbox)", {
+      userRole: "gamer",
+      userEmail: "aino@example.com",
+      parentEmail: "marja@example.com",
+      gamerOwnMailbox: true,
+    }),
+  ],
+  // The parent's mail and the child's own copy, which greets the reader and
+  // drops the price line — a different document, swept on its own.
+  "product-confirmation": () => [
+    ...fromRegistry("productConfirmation"),
+    ...fromRegistry("productConfirmation", "productConfirmation (child's copy)", {
+      gamerCopy: true,
+      priceAmount: null,
+      dashboardUrl: "https://sogverse.sog.gg/gamer",
+    }),
+  ],
+  // All three mails one send produces: the family's, the child's own copy, and
+  // the copy to staff, which carries a banner of its own and so has markup no
+  // other render reaches.
   "session-report": () => [
     ...fromRegistry("sessionReport"),
+    ...fromRegistry("sessionReport", "sessionReport (child's copy)", {
+      copy: "gamer",
+      productUrl: "https://sogverse.sog.gg/gamer/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+    }),
     ...fromRegistry("sessionReport", "sessionReport (staff copy)", { copy: "staff" }),
   ],
-  // Both voices of the parent mail. Every sentence moves between the second and
-  // the third person on `isSelfSeat`, and the two are swept for the same reason
-  // the staff mail's two flavours are: a variant nothing renders is a variant
-  // nothing can vouch for.
+  // Both voices of the parent mail, and the child's own copy from the same
+  // module. Every sentence moves between the second and the third person on
+  // `isSelfSeat`, and the child's copy is a second builder with no answer
+  // buttons at all; all three are swept for the same reason the staff mail's
+  // two flavours are: a variant nothing renders is a variant nothing can vouch
+  // for.
   "seat-offer": () => [
     ...fromRegistry("seatOffer"),
     ...fromRegistry("seatOffer", "seatOffer (own seat)", { isSelfSeat: true }),
+    ...fromRegistry("seatOfferGamer"),
   ],
   // Both flavours of the staff mail: they differ only in two sentences, but a
   // variant nothing renders is a variant nothing can vouch for.
@@ -281,6 +321,7 @@ const MAILS: Record<string, () => [string, string][]> = {
     }),
   ],
   "verify-email": () => fromRegistry("verifyEmail"),
+  "gamer-welcome": () => fromRegistry("gamerWelcome"),
   // One render, unlike the other multi-message templates: every message this
   // template can send is the same mail — the typed subject and the typed body
   // in the shell — and everything that moves between a request, a publish and

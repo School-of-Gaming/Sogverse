@@ -71,6 +71,14 @@ import type { ProductType } from "@/types";
  *
  * The language fact is the small one: the page shows a flag chip and a code,
  * which a mail has no component for, so the mail names the language instead.
+ *
+ * **The child's own copy is the same mail with the parent's half taken out.**
+ * When a child holds a mailbox of their own they receive their own render
+ * beside the parent's: the reader is the participant, so every sentence takes
+ * the second person the way a self seat does, and the price row and the billing
+ * bullets — the only lines addressed to whoever pays — are gone. Everything
+ * else is the same document, the calendar file included: a child with an inbox
+ * has a calendar, and the sessions are theirs to be reminded of.
  */
 
 /**
@@ -184,6 +192,36 @@ export interface ProductConfirmationEmailOptions {
    * is over" answers are made.
    */
   invitation: ProductConfirmationInvitationInput | null;
+  /**
+   * The child's own copy, sent beside the parent's when the child holds a
+   * mailbox of their own. The reader *is* the participant, so it speaks in the
+   * second person exactly as a self seat does — and it drops everything only a
+   * parent can act on: the price row and the billing bullets.
+   *
+   * It is **not** an axis of the calendar file. The child's copy carries the
+   * same `invite.ics` as the parent's, addressed to the child as its attendee;
+   * see the composer for what that changes and what it deliberately does not.
+   *
+   * `isSelfSeat` is ignored under it, because the child's copy of an adult's
+   * own seat does not exist.
+   */
+  gamerCopy?: boolean;
+}
+
+/**
+ * Whether the reader of this render is the participant it is about.
+ *
+ * Two different facts answer it — the parent took the seat themselves, or the
+ * render is the child's own copy — and every sentence naming the participant
+ * turns on the answer rather than on either fact, by swapping the *whole key*
+ * as the self seat has always done. One function, so the subject, the body and
+ * the text twin cannot decide it three ways.
+ */
+function readerIsParticipant({
+  isSelfSeat,
+  gamerCopy,
+}: Pick<ProductConfirmationEmailOptions, "isSelfSeat" | "gamerCopy">): boolean {
+  return isSelfSeat || gamerCopy === true;
 }
 
 /** One already-translated fact: a label, and one or more lines of value. */
@@ -228,7 +266,14 @@ export function resolveProductConfirmation(
   const invitation =
     options.invitation === null || options.mode === "waitlist"
       ? null
-      : composeProductConfirmationInvitation(t, locale, options.invitation);
+      : composeProductConfirmationInvitation(t, locale, {
+          ...options.invitation,
+          // The one thing the child's copy changes about the document beyond
+          // its attendee: the entry's title stops naming the reader. The flag
+          // travels rather than being re-derived, so the mail and the file
+          // cannot disagree about who is reading them.
+          gamerCopy: options.gamerCopy ?? false,
+        });
   return {
     options,
     invitation,
@@ -346,16 +391,18 @@ function resolveOverview(
  */
 export function productConfirmationSubject(
   t: EmailTranslator,
-  {
-    options: { participantName, isSelfSeat, productName, productType, mode },
-  }: ProductConfirmationContent,
+  { options }: ProductConfirmationContent,
 ): string {
+  const { participantName, productName, productType, mode } = options;
+  // The child reading their own copy is the participant, so the subject takes
+  // the second person exactly as a self seat does.
+  const secondPerson = readerIsParticipant(options);
   if (mode === "waitlist") {
-    return isSelfSeat
+    return secondPerson
       ? t("productConfirmation.waitlist.subjectSelf", { productName })
       : t("productConfirmation.waitlist.subject", { participantName, productName });
   }
-  return isSelfSeat
+  return secondPerson
     ? t(`productConfirmation.self.subject.${productType}`, { productName })
     : t(`productConfirmation.subject.${productType}`, { participantName, productName });
 }
@@ -366,14 +413,7 @@ export function buildProductConfirmationEmail(
   content: ProductConfirmationContent,
 ): string {
   const {
-    options: {
-      participantName,
-      isSelfSeat,
-      productName,
-      productType,
-      mode,
-      dashboardUrl,
-    },
+    options: { participantName, productName, productType, mode, dashboardUrl, gamerCopy },
     // No `invitation` here: the body says nothing about the file, so whether
     // one was composed changes the attachment and the text twin and no byte of
     // the HTML.
@@ -382,18 +422,29 @@ export function buildProductConfirmationEmail(
   const isWaitlist = mode === "waitlist";
   const name = styledName(participantName);
   const product = styledProductName(productName);
+  // The reader is the participant on a self seat and on the child's own copy,
+  // and every sentence naming the participant moves to the second person on
+  // both — by swapping whole keys, as the self seat already does.
+  const secondPerson = readerIsParticipant(content.options);
 
   const title = isWaitlist
     ? t("productConfirmation.waitlist.heading")
     : t("productConfirmation.heading");
 
   const subheading = isWaitlist
-    ? isSelfSeat
+    ? secondPerson
       ? t("productConfirmation.self.waitlist.subheading", { productName: product })
       : t("productConfirmation.waitlist.subheading", { participantName: name, productName: product })
-    : isSelfSeat
+    : secondPerson
       ? t(`productConfirmation.self.subheading.${productType}`, { productName: product })
       : t(`productConfirmation.subheading.${productType}`, { participantName: name, productName: product });
+
+  // The child's copy is the one variant that greets the reader by name: the
+  // second-person sentences under it name nobody, and a mail to a child that
+  // never says who it is for reads as one that was meant for their parent.
+  const greeting = gamerCopy
+    ? paragraph(t("productConfirmation.gamer.greeting", { participantName: name }))
+    : "";
 
   // The order summary, in the page's order: the type and the product's name,
   // then who the seat is for, then what it costs.
@@ -417,19 +468,18 @@ export function buildProductConfirmationEmail(
       escapeHtml(participantName),
     ],
   ];
-  const price = plainPriceLine(t, mode, content.options.priceAmount);
+  // The child's copy states no price whatever it was handed: what a seat cost
+  // is between us and whoever paid for it.
+  const price = gamerCopy ? null : plainPriceLine(t, mode, content.options.priceAmount);
   if (price !== null) {
     summaryRows.push([t("productConfirmation.priceLabel"), escapeHtml(price)]);
   }
 
   const body = `
     ${heading(title)}
+    ${greeting}
     ${paragraph(subheading)}
-    ${sectionLabel(
-      isWaitlist
-        ? t("productConfirmation.waitlist.summaryTitle")
-        : t("productConfirmation.summaryTitle"),
-    )}
+    ${sectionLabel(summaryTitle(t, content.options))}
     ${factTable(summaryRows)}
     ${overviewSection(t, overview)}
     ${sectionLabel(t("productConfirmation.nextTitle"))}
@@ -451,6 +501,26 @@ export function buildProductConfirmationEmail(
     })}
   `;
   return wrapInLayout({ title, content: body, locale, t });
+}
+
+/**
+ * The order summary's own title.
+ *
+ * **"Your order" is a buyer's word, and the child's copy has no buyer in it.**
+ * That copy states no price and asks for no payment, so the card above it is a
+ * record of a signup rather than of a purchase, and naming it after an order a
+ * child did not place is the one line where the parent's mail would show
+ * through. The waitlist's own title needs no such variant: waiting for a seat
+ * is the same fact for whoever is waiting.
+ */
+function summaryTitle(
+  t: EmailTranslator,
+  { mode, gamerCopy }: ProductConfirmationEmailOptions,
+): string {
+  if (mode === "waitlist") return t("productConfirmation.waitlist.summaryTitle");
+  return gamerCopy
+    ? t("productConfirmation.gamer.summaryTitle")
+    : t("productConfirmation.summaryTitle");
 }
 
 /** The "Good to know" card, or nothing where the send had no facts to state. */
@@ -495,11 +565,12 @@ function nextItems(
    */
   values: { participantName: string; firstChargeDate: string },
 ): string[] {
-  const { isSelfSeat, productType, mode, firstChargeDate } = options;
+  const { productType, mode, firstChargeDate, gamerCopy } = options;
+  const secondPerson = readerIsParticipant(options);
   if (mode === "waitlist") {
     return [
       t("productConfirmation.waitlist.next1"),
-      isSelfSeat
+      secondPerson
         ? t(`productConfirmation.self.waitlist.next2.${productType}`)
         : t(`productConfirmation.waitlist.next2.${productType}`, {
             participantName: values.participantName,
@@ -509,12 +580,18 @@ function nextItems(
   }
 
   const items = [
-    isSelfSeat
+    secondPerson
       ? t("productConfirmation.next.placementSelf")
       : t("productConfirmation.next.placement", {
           participantName: values.participantName,
         }),
   ];
+  // **The child's copy stops here, on every mode.** What is left is the money:
+  // when the first charge falls, and that a subscription bills monthly or a
+  // one-time payment is done with. All of it is addressed to whoever pays, and
+  // a child told they will be billed every month has been sent their parent's
+  // mail under their own name.
+  if (gamerCopy === true) return items;
   if (mode === "subscription" && firstChargeDate !== null) {
     items.push(
       t("productConfirmation.next.firstCharge", { date: values.firstChargeDate }),
@@ -549,30 +626,34 @@ export function productConfirmationText(
   const {
     options: {
       participantName,
-      isSelfSeat,
       productName,
       productType,
       mode,
       priceAmount,
       dashboardUrl,
+      gamerCopy,
     },
   } = content;
+  // The same reader test the HTML makes, so the entry's notes speak in the
+  // voice the mail above them does.
+  const secondPerson = readerIsParticipant(content.options);
 
   // The enrolled keys throughout, with no waitlist branch: a waitlist join
   // composes no calendar object, so this function has already returned for it.
   const lines: string[] = [
     t("productConfirmation.heading"),
     "",
-    isSelfSeat
+    ...(gamerCopy ? [t("productConfirmation.gamer.greeting", { participantName }), ""] : []),
+    secondPerson
       ? t(`productConfirmation.self.subheading.${productType}`, { productName })
       : t(`productConfirmation.subheading.${productType}`, { participantName, productName }),
     "",
-    t("productConfirmation.summaryTitle"),
+    summaryTitle(t, content.options),
     `${t(`productConfirmation.typeLabel.${productType}`)}: ${productName}`,
     `${t(`productConfirmation.forLabel.${productType}`)}: ${participantName}`,
   ];
 
-  const price = plainPriceLine(t, mode, priceAmount);
+  const price = gamerCopy ? null : plainPriceLine(t, mode, priceAmount);
   if (price !== null) {
     lines.push(`${t("productConfirmation.priceLabel")}: ${price}`);
   }

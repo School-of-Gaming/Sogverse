@@ -4,6 +4,15 @@ export {
   type GamerUpdate,
 } from "./gamers.service";
 export {
+  createGamerBody,
+  updateGamerBody,
+  gamerSignInValue,
+  gamerUsernameValue,
+  GAMER_PIN_REQUIRED,
+  GAMER_USERNAME_TAKEN,
+  GAMER_EMAIL_TAKEN,
+} from "./gamers.contracts";
+export {
   gamerKeys,
   useMyGamers,
   useMyParents,
@@ -12,5 +21,7 @@ export {
   useCreateGamer,
   useUpdateGamer,
   useUpdateGamerProfile,
+  useSendGamerVerificationEmail,
   useGamerProfile,
+  useGamerSignIns,
 } from "./gamers.queries";

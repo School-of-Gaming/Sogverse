@@ -11,6 +11,7 @@ import {
   GEDU_CONTRACT_CURRENT_VERSION,
 } from "@/components/gedu/contract/documents";
 import { useUsers, useSearchUsers, useParentGamerLinks } from "@/services/users";
+import { useGamerSignIns } from "@/services/gamers";
 import {
   useGeduCertificationMap,
   useGeduContractAcceptanceMap,
@@ -77,7 +78,7 @@ export default function AdminUsersPage() {
 
   const isSearchActive = searchQuery.length >= 2;
   const baseUsers = isSearchActive ? searchResults?.results : allUsers;
-  const isLoading = isSearchActive ? isSearching : isLoadingAll;
+  const isLoadingUsers = isSearchActive ? isSearching : isLoadingAll;
 
   // Search is capped server-side, so a full page of hits and a complete answer
   // look identical without this. Rendered *below* whichever branch is showing:
@@ -155,6 +156,26 @@ export default function AdminUsersPage() {
 
     return result;
   }, [baseUsers, gamerToParentIds, allUsersById, roleFilter]);
+
+  // How each child signs in, read for exactly the rows about to render: the
+  // displayed users plus the children nested under each parent. Bounded by the
+  // display list rather than the platform, and memoised so the query key does
+  // not churn on every render. Unlike the two standing reads above — whose
+  // marks land in a right-packed group where a late arrival costs nothing —
+  // this one decides whether a *line* exists under a name, and a line appearing
+  // under one row pushes every row below it. So the list waits for it (see
+  // `isLoading`), which is what keeps the rows in the places they first painted.
+  const signInUserIds = useMemo(() => {
+    if (!users) return undefined;
+    const ids = new Set<string>();
+    for (const user of users) {
+      ids.add(user.id);
+      for (const gamer of parentToGamers.get(user.id) ?? []) ids.add(gamer.id);
+    }
+    return [...ids];
+  }, [users, parentToGamers]);
+  const gamerSignIns = useGamerSignIns(signInUserIds);
+  const isLoading = isLoadingUsers || gamerSignIns.isPending;
 
 
   return (
@@ -249,6 +270,10 @@ export default function AdminUsersPage() {
                       standingWarnings={
                         geduStandingWarnings.get(user.id) ?? null
                       }
+                      // The whole map, not this row's entry: the row also draws
+                      // the parent's children underneath, and each of those has
+                      // a mode of its own to look up.
+                      gamerSignIns={gamerSignIns.map}
                     />
                   ))}
                 </div>

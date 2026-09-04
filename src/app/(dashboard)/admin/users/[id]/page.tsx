@@ -15,6 +15,7 @@ import { GeduCertificationCard } from "@/components/admin/gedu-certification-car
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
 import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
+import { gamerUsernameFromEmail, hasRealEmail } from "@/lib/gamer-sign-in";
 import { cn, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
@@ -214,6 +215,19 @@ export default async function AdminUserDetailPage({
     participationsByGamer.set(row.participant_id, list);
   }
 
+  // Whether this account's stored address is a mailbox rather than one of our
+  // synthetic handles. True for every adult by construction, and for a child
+  // only in sign-in mode `email` — which is also the only child whose address is
+  // worth printing or whose verification state means anything.
+  const accountHasMailbox = hasRealEmail({
+    role: profile.role,
+    sign_in: gamerProfile?.sign_in ?? null,
+  });
+  const gamerUsername =
+    gamerProfile?.sign_in === "username"
+      ? gamerUsernameFromEmail(profile.email)
+      : null;
+
   const uiLocale = resolveLocale(locale);
   const statusLabels: Record<ParticipationStatus, string> = {
     active: t("participationStatus.active"),
@@ -259,7 +273,19 @@ export default async function AdminUserDetailPage({
             <h1 className="text-2xl font-bold">
               {[profile.first_name, profile.last_name].filter(Boolean).join(" ")}
             </h1>
-            {!isGamer && profile.email && (
+            {/* A username-mode child's username, which lives in the local part
+                of their synthetic address and nowhere else. Labelled, so it is
+                not read as a mangled email; no verification mark, because there
+                is no inbox behind it to have confirmed anything. */}
+            {gamerUsername && (
+              <p className="flex items-baseline gap-1.5 text-muted-foreground">
+                <span className="text-[10px] uppercase tracking-wide">
+                  {t('usernameLabel')}
+                </span>
+                <span>{gamerUsername}</span>
+              </p>
+            )}
+            {accountHasMailbox && profile.email && (
               <div className="flex items-center gap-2">
                 <p className="text-muted-foreground">{profile.email}</p>
                 {/* The list shows only the positive case (a check that means

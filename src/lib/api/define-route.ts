@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import type { z } from "zod";
-import { requireRole } from "@/lib/auth";
+import { cookies } from "next/headers";
+import {
+  readSessionProvenance,
+  requireRole,
+  type GatedUser,
+} from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ApiError } from "@/lib/api/api-error";
 import { parseBodyValue, parseJsonBody } from "@/lib/api/json-body.server";
-import type { AuthenticatedUser, Profile, UserRole } from "@/types";
+import type { Profile, UserRole } from "@/types";
 
 /**
  * `defineRoute` — the HTTP route boundary primitive.
@@ -155,7 +160,7 @@ type RoleGatedContext<R extends UserRole, TBody, TQuery, TParams> = ParsedInput<
   TQuery,
   TParams
 > & {
-  user: AuthenticatedUser;
+  user: GatedUser;
   profile: NarrowedProfile<R>;
   supabase: UserBoundClient;
 };
@@ -165,7 +170,7 @@ type AnyAuthenticatedContext<TBody, TQuery, TParams> = ParsedInput<
   TQuery,
   TParams
 > & {
-  user: AuthenticatedUser;
+  user: GatedUser;
   supabase: UserBoundClient;
 };
 
@@ -289,7 +294,7 @@ interface ErasedRouteConfig {
     params: unknown;
     // Optional because a public route has none. The typed overload is what
     // decides whether a given handler may read them.
-    user?: AuthenticatedUser;
+    user?: GatedUser;
     profile?: Profile;
     supabase?: UserBoundClient;
   }): unknown;
@@ -322,7 +327,7 @@ async function runRoute(
   // Runs before any parsing so an unauthorized caller is refused without the
   // route revealing which inputs it would have accepted.
   let identity: {
-    user: AuthenticatedUser;
+    user: GatedUser;
     profile?: Profile;
     supabase: UserBoundClient;
   } | null = null;
@@ -389,7 +394,7 @@ async function runRoute(
  * route that needs a role is role-gated, not any-authenticated.
  */
 async function requireSession(): Promise<
-  { user: AuthenticatedUser; supabase: UserBoundClient } | NextResponse
+  { user: GatedUser; supabase: UserBoundClient } | NextResponse
 > {
   const supabase = await createClient();
   // Verifies the JWT locally against the project's JWKS — no auth round-trip,
@@ -399,7 +404,22 @@ async function requireSession(): Promise<
   if (error || !claims?.sub) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return { user: { id: claims.sub, email: claims.email }, supabase };
+  return {
+    user: {
+      id: claims.sub,
+      email: claims.email,
+      // The same session shape the role gate hands back, derived the same way,
+      // so a handler reads `user.session` without caring which posture it is on.
+      session: {
+        id: claims.session_id,
+        provenance: await readSessionProvenance({
+          claims,
+          cookies: await cookies(),
+        }),
+      },
+    },
+    supabase,
+  };
 }
 
 async function parseInputs(

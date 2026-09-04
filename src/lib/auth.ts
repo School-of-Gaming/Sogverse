@@ -1,14 +1,113 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
+import {
+  FAMILY_SESSION_COOKIE_NAME,
+  PIN_COOKIE_NAME,
+  isFamilySessionTokenValid,
+  isPinTokenValid,
+} from "@/lib/pin-session";
+import {
+  sessionProvenance,
+  type SessionProvenance,
+} from "@/lib/session-provenance";
 // Imported from the service file (not the @/services/gedu barrel) so this
 // server module doesn't pull in the barrel's React Query hooks.
 import { isGeduCertified } from "@/services/gedu/gedu-profiles.service";
 import type { AuthenticatedUser, Profile, UserRole } from "@/types";
 
+/**
+ * The session behind a gated request, resolved once by the gate.
+ *
+ * Both fields come off the verified JWT, and both are put here so no route has
+ * to re-read claims to get them: `id` is the `session_id` the PIN unlock cookie
+ * is bound to, and `provenance` is whether this session was opened with this
+ * account's own credential or handed over from another family member's
+ * (`src/lib/session-provenance.ts`). The switch route reads both; nothing else
+ * has to know how either is derived.
+ *
+ * `id` is not optional because `session_id` is a required claim on every access
+ * token GoTrue issues. A token somehow missing it is not refused upstream, and
+ * that is deliberate: both readers of it already fail closed on their own — the
+ * unlock HMAC cannot reproduce over an absent id so the parent stays locked, and
+ * the provenance reader answers `own`, the stronger switch gate. Neither reader
+ * may be changed to trust an absent id without changing that.
+ */
+export interface GatedSession {
+  id: string;
+  provenance: SessionProvenance;
+}
+
+/** The caller a gate hands back: their identity plus the session they hold. */
+export type GatedUser = AuthenticatedUser & { session: GatedSession };
+
+/**
+ * Read a shape a cookie store satisfies. Structural rather than Next's
+ * `ReadonlyRequestCookies` so a test — or a caller holding a plain map — can
+ * pass one without constructing a request.
+ */
+export interface CookieReader {
+  get(name: string): { value: string } | undefined;
+}
+
+/**
+ * Logged at most once per process. A missing `PIN_COOKIE_SECRET` is a
+ * deployment fault that reproduces on every single gated request, so the first
+ * occurrence is the whole of the signal and the rest is noise in the logs.
+ */
+let markerValidationFailureLogged = false;
+
+/**
+ * Where this session came from, from the verified claims plus the switch
+ * route's marker cookie.
+ *
+ * Exported because two gates and at least one server component need the same
+ * answer and none of them should re-derive it: the marker is only meaningful
+ * once validated against *this* session's `(sub, session_id)`, and a caller
+ * that merely checks the cookie's presence has reintroduced the hole the marker
+ * was minted to close.
+ *
+ * **`session_id` is optional here, and its absence is answered `own`.** The
+ * marker is bound to a session id, so with no id there is nothing a marker
+ * could be validated against — and the guard lives here rather than in each
+ * caller so the API gates and the server components that seed the profile grid
+ * cannot answer the same session differently.
+ *
+ * **A marker that cannot be validated at all is also `own`.** This runs on
+ * every gated request, so a missing `PIN_COOKIE_SECRET` would otherwise turn
+ * one misconfiguration into a 500 on every request a marked session makes.
+ * Answering the stronger gate keeps the platform usable and cannot hand
+ * anybody the cheaper one.
+ */
+export async function readSessionProvenance(args: {
+  claims: { sub: string; session_id?: string; amr?: unknown };
+  cookies: CookieReader;
+}): Promise<SessionProvenance> {
+  const { claims, cookies: cookieStore } = args;
+  const sessionId = claims.session_id;
+  if (!sessionId) return "own";
+
+  const marker = cookieStore.get(FAMILY_SESSION_COOKIE_NAME)?.value;
+
+  let familyMarkerValid = false;
+  try {
+    familyMarkerValid = await isFamilySessionTokenValid(
+      marker,
+      claims.sub,
+      sessionId,
+    );
+  } catch (error) {
+    if (!markerValidationFailureLogged) {
+      markerValidationFailureLogged = true;
+      console.error("readSessionProvenance: marker validation failed", error);
+    }
+  }
+
+  return sessionProvenance({ amr: claims.amr, familyMarkerValid });
+}
+
 type AuthSuccess<R extends UserRole> = {
-  user: AuthenticatedUser;
+  user: GatedUser;
   profile: Omit<Profile, "role"> & { role: R };
   supabase: Awaited<ReturnType<typeof createClient>>;
 };
@@ -131,6 +230,17 @@ export async function requireRole<const R extends UserRole>(
     }
   }
 
-  const user = { id: claims.sub, email: claims.email };
+  const user: GatedUser = {
+    id: claims.sub,
+    email: claims.email,
+    session: {
+      id: claims.session_id,
+      // The same cookie store the PIN gate above read, asked a second question.
+      provenance: await readSessionProvenance({
+        claims,
+        cookies: await cookies(),
+      }),
+    },
+  };
   return { user, profile, supabase };
 }

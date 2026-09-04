@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import {
   buildProductConfirmationEmail,
   productConfirmationAttachments,
+  productConfirmationSubject,
   productConfirmationText,
   resolveProductConfirmation,
   type ProductConfirmationEmailOptions,
@@ -401,6 +402,161 @@ describe("buildProductConfirmationEmail", () => {
       });
       expect(html).toContain("You’re on the waitlist for");
       expect(html).toContain("You keep your place in line for the whole term.");
+    });
+  });
+
+  /**
+   * The child's own copy: the reader is the participant, so it takes the self
+   * seat's second person — and it drops everything only a parent can act on.
+   * The negative assertions are the load-bearing half: a child told they will
+   * be billed monthly has been sent their parent's mail under another name.
+   */
+  describe("the child's own copy", () => {
+    const GAMER_DASHBOARD_URL = "https://sogverse.sog.gg/gamer";
+    /** What the sender hands the child's render: their root, and no price. */
+    const child: Partial<ProductConfirmationEmailOptions> = {
+      gamerCopy: true,
+      priceAmount: null,
+      dashboardUrl: GAMER_DASHBOARD_URL,
+    };
+
+    it("greets the child by name and speaks in the second person", () => {
+      const html = render(child);
+      expect(html).toContain("Aino");
+      expect(html).toContain("Hi ");
+      expect(html).toContain("You’re enrolled in");
+      expect(html).not.toContain("is enrolled in");
+      expect(html).toContain("We’ll place you in a group");
+    });
+
+    it("states no price and no billing line on any mode", () => {
+      for (const mode of ["subscription", "upfront", "free", "external"] as const) {
+        const html = render({ ...child, mode });
+        expect(html).not.toContain("Price");
+        expect(html).not.toContain("billed every month");
+        expect(html).not.toContain("nothing more to pay");
+        expect(html).not.toContain("Nothing was charged today");
+      }
+    });
+
+    it("ignores a price and a first-charge date it is handed", () => {
+      const html = render({
+        ...child,
+        priceAmount: "€40.00",
+        firstChargeDate: "13 Jan 2027",
+      });
+      expect(html).not.toContain("€40.00");
+      expect(html).not.toContain("13 Jan 2027");
+    });
+
+    /**
+     * The card records a signup rather than a purchase, because there is no
+     * purchase in this copy — no price row, and nothing the reader paid.
+     */
+    it("titles the summary after the signup rather than after an order", () => {
+      const html = render(child);
+      expect(html).toContain("Your signup");
+      expect(html).not.toContain("Your order");
+      // Still the same card otherwise: who the seat is for, under the page's
+      // own label.
+      expect(html).toContain("Enrolled");
+    });
+
+    it("keeps the Good to know facts, which are nobody's to withhold", () => {
+      const html = render(child);
+      expect(html).toContain("Good to know");
+      expect(html).toContain("Ages 8–12");
+      expect(html).toContain("Finnish");
+    });
+
+    it("links the child's own My SOG root", () => {
+      const html = render(child);
+      expect(html).toContain(`href="${GAMER_DASHBOARD_URL}"`);
+      expect(html).not.toContain("/parent");
+    });
+
+    it("takes the second person on the waitlist and keeps the live-position pointer", () => {
+      const html = render({ ...child, mode: "waitlist" });
+      expect(html).toContain("You’re on the waitlist for");
+      expect(html).toContain("You keep your place in line for the whole term.");
+      expect(html).not.toContain("is on the waitlist for");
+    });
+
+    it("subjects the copy in the second person, whatever the seat flag says", () => {
+      expect(productConfirmationSubject(t, resolve(child))).toBe(
+        "You are enrolled in Minecraft 101",
+      );
+      expect(
+        productConfirmationSubject(t, resolve({ ...child, mode: "waitlist" })),
+      ).toBe("You are on the waitlist for Minecraft 101");
+    });
+
+    /**
+     * **The calendar file is in both copies, and it is one calendar object.** A
+     * child with a mailbox has a calendar, and the sessions in it are theirs;
+     * the identifier is the seat's, so the two documents are one event seen by
+     * two people rather than two events nobody can reconcile. What differs is
+     * the attendee, because a client offers the RSVP only to the mailbox it
+     * matches.
+     */
+    describe("its calendar invitation", () => {
+      const CHILD_SCHEDULE: ProductConfirmationInvitationInput = {
+        ...SCHEDULE,
+        attendeeName: "Aino Virtanen",
+        attendeeEmail: "aino@example.test",
+      };
+
+      it("carries the same invite.ics under the same identifier as the parent's", () => {
+        const [parent] = productConfirmationAttachments(resolve({ invitation: SCHEDULE }));
+        const [mine] = productConfirmationAttachments(
+          resolve({ ...child, invitation: CHILD_SCHEDULE }),
+        );
+
+        expect(mine.name).toBe("invite.ics");
+        expect(parent.name).toBe("invite.ics");
+        expect(mine.text).toContain(`UID:${PARTICIPATION_ID}@sogverse`);
+        expect(parent.text).toContain(`UID:${PARTICIPATION_ID}@sogverse`);
+      });
+
+      it("names the child as the attendee, and only the child", () => {
+        const [mine] = productConfirmationAttachments(
+          resolve({ ...child, invitation: CHILD_SCHEDULE }),
+        );
+
+        expect(mine.text).toContain("aino@example.test");
+        expect(mine.text).toContain("Aino Virtanen");
+        expect(mine.text).not.toContain("marja@example.com");
+      });
+
+      /**
+       * The same rule the mail's sentences follow: name the participant only
+       * when the reader is not the participant. In the child's own calendar
+       * that is their own name, which is the shape of an entry about somebody
+       * else.
+       */
+      it("titles the entry by the product alone", () => {
+        const [mine] = productConfirmationAttachments(
+          resolve({ ...child, invitation: CHILD_SCHEDULE }),
+        );
+        const [parent] = productConfirmationAttachments(resolve({ invitation: SCHEDULE }));
+
+        expect(mine.text).toContain("SUMMARY:Minecraft 101\r\n");
+        expect(parent.text).toContain("SUMMARY:Minecraft 101 – Aino");
+      });
+
+      it("states the text twin the entry's notes are filled from", () => {
+        const text = productConfirmationText(
+          t,
+          resolve({ ...child, invitation: CHILD_SCHEDULE }),
+        )!;
+
+        expect(text).toContain("Hi Aino!");
+        expect(text).toContain("You’re enrolled in Minecraft 101.");
+        expect(text).toContain("Your signup");
+        expect(text).toContain(GAMER_DASHBOARD_URL);
+        expect(text).not.toContain("Price");
+        expect(text).not.toContain("billed every month");
+      });
     });
   });
 });

@@ -235,4 +235,20 @@ describe("POST /api/auth/forgot-password", () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
   });
+
+  it("answers 200 and mails nothing for a synthetic gamer address", async () => {
+    // A child in username mode has an address nobody reads, and their password
+    // is not theirs to reset in the first place — the parent sets it from the
+    // child card. Refusing silently is the correct behaviour, not a limitation:
+    // this route cannot report what it found without becoming an oracle.
+    const response = await POST(
+      createRequest({ email: "aino@gamer.sogverse.internal" }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(mockGenerateLink).not.toHaveBeenCalled();
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
 });

@@ -39,9 +39,9 @@ import type { EmailTranslator } from "./translator";
  * template registry is imported by the admin testing page — so nothing here
  * touches `Buffer` or `server-only`.
  *
- * **Every sentence goes through the translator.** The reader is a parent, in
- * their own language, reading the document inside their calendar app weeks
- * later; the only strings that stay as they are are marks and content — the
+ * **Every sentence goes through the translator.** The reader is a parent — or,
+ * on the child's own copy of the mail, the child — in their own language,
+ * reading the document inside their calendar app weeks later; the only strings that stay as they are are marks and content — the
  * product's own name and short description, the site's name, address and public
  * note, "My SOG", and the support address.
  */
@@ -60,6 +60,14 @@ export interface ProductConfirmationInvitationInput {
   /** The participant's first name; the buyer's own on a self seat. */
   participantName: string;
   isSelfSeat: boolean;
+  /**
+   * True on the child's own copy of the mail. The same calendar object either
+   * way — same identifier, same schedule, same organizer — read by the child
+   * instead of the parent, which changes the two things a reader is in: who the
+   * attendee is, and whether the entry's title names them. See `summaryOf` and
+   * the attendee below.
+   */
+  gamerCopy?: boolean;
   productName: string;
   productType: ProductType;
   /** The product's own short description, in the reader's locale. */
@@ -77,7 +85,13 @@ export interface ProductConfirmationInvitationInput {
   siteAddress: string | null;
   /** The FAMILY-facing site note — how to find the room, where to park. */
   siteNote: string | null;
-  /** The paying parent: the mail's recipient, and the entry's one attendee. */
+  /**
+   * **This copy's own reader**, and the entry's one attendee: the paying parent
+   * on the parent's copy, the child on theirs. Not "the payer" — a document is
+   * composed per recipient, and a client decides whether to offer the RSVP by
+   * matching the attendee against the mailbox it is reading, so an entry naming
+   * somebody else is an entry the reader cannot answer.
+   */
   attendeeName: string;
   attendeeEmail: string;
   /**
@@ -398,20 +412,25 @@ function placeInWords({
 /**
  * The entry's title.
  *
- * A child's seat names the child, because a parent's calendar holds more than
- * one of these and "Minecraft 101" twice over says nothing about who is going.
- * A parent's own seat names nobody: they are the participant, and reading their
- * own name back at them is the shape of an entry about somebody else.
+ * **It names the participant only when the reader is not the participant.** A
+ * child's seat in a *parent's* calendar names the child, because that calendar
+ * holds more than one of these and "Minecraft 101" twice over says nothing
+ * about who is going. A parent's own seat names nobody: they are the
+ * participant, and reading their own name back at them is the shape of an entry
+ * about somebody else — and the child's own copy is that same case, in the
+ * child's own calendar, which is why the two share a branch rather than each
+ * having a rule.
  */
 function summaryOf(
   t: EmailTranslator,
-  { isSelfSeat, productName, participantName }: {
+  { isSelfSeat, gamerCopy, productName, participantName }: {
     isSelfSeat: boolean;
+    gamerCopy?: boolean;
     productName: string;
     participantName: string;
   },
 ): string {
-  return isSelfSeat
+  return isSelfSeat || gamerCopy === true
     ? productName
     : t("productConfirmation.invite.summary", { productName, participantName });
 }
@@ -530,6 +549,14 @@ function descriptionOf({
  * identifier with a higher `SEQUENCE` and a `METHOD` of `REQUEST` or `CANCEL`,
  * which is exactly why the identifier is a function of the row rather than
  * minted per render.
+ *
+ * **It is a function of the seat and not of the recipient, so the parent's copy
+ * and the child's carry the same one** — which is what it means for the two to
+ * be one calendar object seen by two people, and what would let one later
+ * message update both entries. The copies land in different calendars, so there
+ * is nothing for a shared identifier to collide with; keying it on the reader
+ * instead would mint two objects for one seat and make a cancellation a thing
+ * you have to remember to send twice.
  */
 export function composeProductConfirmationInvitation(
   t: EmailTranslator,
@@ -596,9 +623,14 @@ export function composeProductConfirmationInvitation(
     // The support inbox, not the unattended sending address: an RSVP is a
     // reply, and a reply about a child's seat has to reach somebody.
     organizer: { name: SENDER_NAME, email: SUPPORT_EMAIL },
-    // The paying parent, and only ever them. A gamer's address is a synthetic
-    // internal one that no mail can reach, so naming a child as an attendee
-    // would be inviting a mailbox that does not exist.
+    // **This copy's own reader, whoever that is.** A client offers the RSVP
+    // only when the attendee matches the mailbox it is reading, so the parent's
+    // document names the parent and the child's names the child — the same
+    // object, addressed to each of the two people who received it. Naming the
+    // parent in both would leave the child holding an entry they cannot answer;
+    // naming the child in both would take the answer away from the one person
+    // who may give it. A child with no mailbox of their own never reaches here:
+    // no copy is composed for them at all.
     attendee: {
       name: input.attendeeName,
       email: input.attendeeEmail,

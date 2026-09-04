@@ -66,6 +66,11 @@ const validBody = {
     userRole: "customer",
     userEmail: "jane@example.com",
     message: "Great product!",
+    // The gamer case's two fields, in their non-gamer state — the address
+    // posted as null, the way the testing page's resolver turns an emptied
+    // field into "none", and the sign-in select's default.
+    parentEmail: null,
+    gamerOwnMailbox: false,
   },
 };
 
@@ -262,6 +267,7 @@ describe("POST /api/admin/send-test-email", () => {
       priceAmount: "€40.00",
       firstChargeDate: "none",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      gamerCopy: false,
       // The page facts the mail mirrors, which the schema requires whole too.
       ageRange: "8-12",
       audience: "gamers",
