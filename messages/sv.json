@@ -3959,7 +3959,6 @@
     "usernameInvalid": "Använd 3 till 20 bokstäver eller siffror, utan mellanslag.",
     "usernameTaken": "Användarnamnet är upptaget. Prova ett annat.",
     "passwordHint": "Minst {count} tecken. Läs upp det för din gamer – du kan ändra det här senare.",
-    "passwordHintOnGamerPage": "Minst {count} tecken. Läs upp det för din gamer – du kan ändra det senare från deras sida på Min SOG.",
     "passwordTooShort": "Lösenordet måste vara minst {count} tecken.",
     "emailHint": "Verifieringslänken skickas hit, så det måste vara en adress din gamer kan öppna.",
     "emailPlaceholder": "saga@example.com",

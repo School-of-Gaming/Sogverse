@@ -3959,7 +3959,6 @@
     "usernameInvalid": "Käytä 3–20 kirjainta tai numeroa ilman välilyöntejä.",
     "usernameTaken": "Käyttäjätunnus on jo varattu. Kokeile toista.",
     "passwordHint": "Vähintään {count} merkkiä. Lue se ääneen pelaajallesi – voit vaihtaa sen täällä myöhemmin.",
-    "passwordHintOnGamerPage": "Vähintään {count} merkkiä. Lue se ääneen pelaajallesi – voit vaihtaa sen myöhemmin hänen sivultaan Omassa SOGissa.",
     "passwordTooShort": "Salasanassa on oltava vähintään {count} merkkiä.",
     "emailHint": "Vahvistuslinkki lähetetään tähän osoitteeseen, joten pelaajasi on päästävä lukemaan se.",
     "emailPlaceholder": "lilja@example.com",

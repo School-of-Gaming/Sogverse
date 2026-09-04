@@ -3959,7 +3959,6 @@
     "usernameInvalid": "Utilisez de 3 à 20 lettres ou chiffres, sans espaces.",
     "usernameTaken": "Cet identifiant est déjà pris. Essayez-en un autre.",
     "passwordHint": "Au moins {count} caractères. Lisez-le à votre joueur — vous pourrez le changer ici plus tard.",
-    "passwordHintOnGamerPage": "Au moins {count} caractères. Lisez-le à votre joueur — vous pourrez le changer plus tard depuis sa page sur Mon SOG.",
     "passwordTooShort": "Le mot de passe doit contenir au moins {count} caractères.",
     "emailHint": "Le lien de vérification sera envoyé à cette adresse, qui doit donc être accessible à votre joueur.",
     "emailPlaceholder": "lily@exemple.com",

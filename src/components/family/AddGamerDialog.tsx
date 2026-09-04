@@ -432,21 +432,24 @@ export function AddGamerFormCard({
                   it cannot coexist with. Without it, the footer jumps under the
                   thumb that just picked the radio.
 
-                  The number is the tallest of the three: username, measured in
-                  French — the widest hints — at 360px, where the dialog's
-                  padding leaves the box 278px wide and both field hints wrap to
-                  two lines. That comes to 244px, and the reservation is 248px:
-                  four pixels of slack, which cannot buy a line either way and
-                  only exists so a rounding difference cannot make the box
-                  *short*. The same box in French on a desktop dialog is 212px,
-                  so the widest layout carries ~36px of the reserve as slack; a
-                  second value behind a breakpoint would buy that back and cost
-                  a second number to keep true. Parent is 60px and email 122px,
-                  and both leave their slack at the bottom, against the footer.
+                  The number is the tallest of the three: username, which is a
+                  label, an input, a gap and the same again — 144px, measured at
+                  360px where the dialog's padding leaves the box 278px wide.
+                  The reservation is 148px: four pixels of slack, which cannot
+                  buy a line either way and only exists so a rounding difference
+                  cannot make the box *short*. Parent is 60px in the longest
+                  locale and email 64px; both leave their slack at the bottom,
+                  against the footer.
+
+                  With the hints under these fields gone, nothing in the box
+                  wraps any more, so the number is the same in all five locales
+                  and at every width — it used to be French at 360px that set
+                  it, and a wide dialog then carried ~36px of dead reserve.
+                  Re-measure if a field is ever added back with a hint.
 
                   `min-h`, not `h`: a validation line arriving on the parent's
                   own submit may grow the box rather than be clipped by it. */}
-              <div className="min-h-[15.5rem] space-y-4">
+              <div className="min-h-[9.25rem] space-y-4">
                 {signIn === "parent" ? (
                   <p className="text-sm text-muted-foreground">
                     {s("parentModeNote", { name: trimmedName })}
@@ -472,10 +475,6 @@ export function AddGamerFormCard({
                         : null
                     }
                     idPrefix={CREDENTIAL_FIELD_ID_PREFIX}
-                    // The child does not exist yet and this dialog can be
-                    // opened from anywhere, so "change it here later" would
-                    // name a box that is about to close.
-                    passwordChangeableFrom="gamerPage"
                   />
                 )}
               </div>

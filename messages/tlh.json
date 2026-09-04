@@ -3106,7 +3106,6 @@
     "usernameInvalid": "wej – cha’maH ghItlh mI’ joq yIlo’. pe’vIl yIlo’Qo’.",
     "usernameTaken": "pongvam lo’lu’. latlh yInuD!",
     "passwordHint": "{count} Hap law’ law’. QujwI’lIjvaD yIjatlh – naDev DachoHlaH.",
-    "passwordHintOnGamerPage": "{count} Hap law’ law’. QujwI’lIjvaD yIjatlh – wa’leS My SOGDaj Daq DachoHlaH.",
     "passwordTooShort": "{count} Hap law’ law’ poQ mu’mey.",
     "emailHint": "naDev ngeHlu’ ngu’meH lInk. laDlaH QujwI’lIj ’e’ poQ.",
     "emailPlaceholder": "mara@example.com",

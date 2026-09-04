@@ -265,7 +265,6 @@ export function GamerSignInCard({
               email={newEmail}
               onEmailChange={setNewEmail}
               disabled={modeBusy}
-              passwordChangeableFrom="thisPage"
               problem={
                 problem
                   ? {

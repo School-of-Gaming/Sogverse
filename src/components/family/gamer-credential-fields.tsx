@@ -133,12 +133,13 @@ export function findGamerCredentialProblem(input: {
  * `idPrefix` keeps two instances (the dialog's and the settings card's, which
  * never coexist today) from minting the same `id`.
  *
- * **`passwordChangeableFrom` is the one sentence the two surfaces cannot
- * share.** The settings card *is* the child's page, so it promises the parent
- * they can change the password here; the add-gamer dialog can be opened from
- * anywhere and is about a child who does not exist yet, so "here" would point at
- * a dialog that is closing. A required prop rather than a default, because
- * getting it wrong is invisible from the call site.
+ * **No hint under any of these fields** (owner ruling). A hint here spends three
+ * lines telling a parent in advance what the validator will tell them precisely,
+ * on submit, only if it turns out to matter — and every one of those lines is
+ * paid for twice on a phone, where the sentences wrap and push the footer down.
+ * The refusals are unchanged and still say exactly what is wrong. This is about
+ * the text under the *fields*: the sentence under each sign-in radio is what
+ * tells a parent what a mode does, and it stays.
  *
  * **Nothing here takes focus on mount.** On both surfaces these fields are
  * revealed by a radio the parent has just picked, and pulling focus out of the
@@ -155,7 +156,6 @@ export function GamerCredentialFields({
   disabled = false,
   problem,
   idPrefix,
-  passwordChangeableFrom,
 }: {
   signIn: GamerSignIn;
   username: string;
@@ -168,67 +168,48 @@ export function GamerCredentialFields({
   /** The one thing currently wrong, already translated, or null. */
   problem: { field: GamerCredentialProblem["field"]; message: string } | null;
   idPrefix: string;
-  /** Where the password hint promises the parent they can change it later. */
-  passwordChangeableFrom: "thisPage" | "gamerPage";
 }) {
   const t = useTranslations("gamerSignIn");
   const c = useTranslations("common");
-  const passwordHint = t(
-    passwordChangeableFrom === "gamerPage"
-      ? "passwordHintOnGamerPage"
-      : "passwordHint",
-    { count: GAMER_PASSWORD_MIN_LENGTH },
-  );
 
   if (signIn === "username") {
     return (
       <>
-        <Field
-          label={t("usernameLabel")}
-          htmlFor={`${idPrefix}-username`}
-          hint={t("usernameHint")}
-        >
-          {({ hintId }) => (
-            <Input
-              id={`${idPrefix}-username`}
-              value={username}
-              // Folded on the way in rather than on the way out, so what the
-              // parent reads back to their child is the string the account will
-              // actually hold. The API normalises again; this is about what is
-              // on screen.
-              onChange={(e) => onUsernameChange(normalizeGamerUsername(e.target.value))}
-              placeholder={t("usernamePlaceholder")}
-              disabled={disabled}
-              autoComplete="off"
-              autoCapitalize="none"
-              spellCheck={false}
-              maxLength={20}
-              aria-describedby={hintId}
-              aria-invalid={problem?.field === "username" || undefined}
-            />
-          )}
+        {/* Plain children rather than the `Field` render-prop form: that form
+            exists to hand a control the id of a hint it should point at, and
+            there is no hint here to point at. */}
+        <Field label={t("usernameLabel")} htmlFor={`${idPrefix}-username`}>
+          <Input
+            id={`${idPrefix}-username`}
+            value={username}
+            // Folded on the way in rather than on the way out, so what the
+            // parent reads back to their child is the string the account will
+            // actually hold. The API normalises again; this is about what is
+            // on screen.
+            onChange={(e) => onUsernameChange(normalizeGamerUsername(e.target.value))}
+            placeholder={t("usernamePlaceholder")}
+            disabled={disabled}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            maxLength={20}
+            aria-invalid={problem?.field === "username" || undefined}
+          />
         </Field>
         {problem?.field === "username" && (
           <p className="text-sm text-destructive">{problem.message}</p>
         )}
 
-        <Field
-          label={c("password")}
-          htmlFor={`${idPrefix}-password`}
-          hint={passwordHint}
-        >
-          {({ hintId }) => (
-            <PasswordInput
-              id={`${idPrefix}-password`}
-              value={password}
-              onChange={(e) => onPasswordChange(e.target.value)}
-              disabled={disabled}
-              defaultVisible
-              autoComplete="new-password"
-              aria-describedby={hintId}
-              aria-invalid={problem?.field === "password" || undefined}
-            />
-          )}
+        <Field label={c("password")} htmlFor={`${idPrefix}-password`}>
+          <PasswordInput
+            id={`${idPrefix}-password`}
+            value={password}
+            onChange={(e) => onPasswordChange(e.target.value)}
+            disabled={disabled}
+            defaultVisible
+            autoComplete="new-password"
+            aria-invalid={problem?.field === "password" || undefined}
+          />
         </Field>
         {problem?.field === "password" && (
           <p className="text-sm text-destructive">{problem.message}</p>
@@ -240,24 +221,17 @@ export function GamerCredentialFields({
   if (signIn === "email") {
     return (
       <>
-        <Field
-          label={c("email")}
-          htmlFor={`${idPrefix}-email`}
-          hint={t("emailHint")}
-        >
-          {({ hintId }) => (
-            <Input
-              id={`${idPrefix}-email`}
-              type="email"
-              value={email}
-              onChange={(e) => onEmailChange(e.target.value)}
-              placeholder={t("emailPlaceholder")}
-              disabled={disabled}
-              autoComplete="off"
-              aria-describedby={hintId}
-              aria-invalid={problem?.field === "email" || undefined}
-            />
-          )}
+        <Field label={c("email")} htmlFor={`${idPrefix}-email`}>
+          <Input
+            id={`${idPrefix}-email`}
+            type="email"
+            value={email}
+            onChange={(e) => onEmailChange(e.target.value)}
+            placeholder={t("emailPlaceholder")}
+            disabled={disabled}
+            autoComplete="off"
+            aria-invalid={problem?.field === "email" || undefined}
+          />
         </Field>
         {problem?.field === "email" && (
           <p className="text-sm text-destructive">{problem.message}</p>

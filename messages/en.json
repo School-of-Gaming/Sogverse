@@ -3959,7 +3959,6 @@
     "usernameInvalid": "Use 3 to 20 letters or numbers, with no spaces.",
     "usernameTaken": "That username is taken. Try another one.",
     "passwordHint": "At least {count} characters. Read it out to your gamer — you can change it here later.",
-    "passwordHintOnGamerPage": "At least {count} characters. Read it out to your gamer — you can change it later from their page in My SOG.",
     "passwordTooShort": "The password needs at least {count} characters.",
     "emailHint": "The verification link goes here, so it has to be an address your gamer can open.",
     "emailPlaceholder": "lily@example.com",
