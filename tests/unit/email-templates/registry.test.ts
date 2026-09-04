@@ -325,7 +325,6 @@ describe("templateRegistry render()", () => {
           "en",
         );
 
-        expect(html).toContain("A calendar invitation is attached");
         // The mail's own schedule words, composed by the confirmation page's
         // formatter from the same slots the document is built from.
         expect(html).toContain("Monday · 16:00–17:00");
@@ -391,7 +390,6 @@ describe("templateRegistry render()", () => {
           "en",
         );
 
-        expect(html).toContain("A calendar invitation is attached");
         // The whole page, mirrored: the order summary, the four "Good to know"
         // facts, and the one button — the page's "keep browsing" is a way back
         // into a shop an inbox reader is not standing in.

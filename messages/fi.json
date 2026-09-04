@@ -2642,7 +2642,6 @@
         "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
       },
       "invite": {
-        "attached": "Viestin liitteenä on kalenterikutsu. Kun hyväksyt sen, kaikki tapaamiset siirtyvät kalenteriisi.",
         "summary": "{productName} – {participantName}",
         "locationOnline": "Verkossa – Oma SOG",
         "locationInPerson": "{site}, {address}",

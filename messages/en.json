@@ -3328,7 +3328,6 @@
         "next3": "You can keep track of your waitlist spot anytime in My SOG."
       },
       "invite": {
-        "attached": "A calendar invitation is attached to this email. Accepting it adds every session to your calendar.",
         "summary": "{productName} – {participantName}",
         "locationOnline": "Online – My SOG",
         "locationInPerson": "{site}, {address}",

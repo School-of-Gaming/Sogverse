@@ -2642,7 +2642,6 @@
         "next3": "Du kan följa din plats i kön när som helst i Min SOG."
       },
       "invite": {
-        "attached": "En kalenderinbjudan är bifogad det här mejlet. Accepterar du den läggs alla tillfällen in i din kalender.",
         "summary": "{productName} – {participantName}",
         "locationOnline": "Online – Min SOG",
         "locationInPerson": "{site}, {address}",

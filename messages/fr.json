@@ -2642,7 +2642,6 @@
         "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
       },
       "invite": {
-        "attached": "Une invitation de calendrier est jointe à cet e-mail. En l’acceptant, vous ajoutez toutes les sessions à votre calendrier.",
         "summary": "{productName} – {participantName}",
         "locationOnline": "En ligne – Mon SOG",
         "locationInPerson": "{site}, {address}",

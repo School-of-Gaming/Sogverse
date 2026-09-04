@@ -54,12 +54,16 @@ import type { ProductType } from "@/types";
  * **The three places the mail deliberately differs from the page**, each because
  * the medium differs rather than because the copy drifted:
  *
- *   - It carries an `invite.ics` and a sentence saying so. The page has nothing
- *     to attach.
- *   - It states the schedule in the *product's* own zone and names that zone in
- *     words, because a mail has no viewer zone: the page reads one from the
- *     signed-in profile and renders the clock faces in it. Same lines, same
- *     formatter — a different zone, said out loud.
+ *   - It carries an `invite.ics`, and says nothing about it. The page has
+ *     nothing to attach; the mail has nothing to announce, because a client
+ *     that can act on the file renders the invitation itself and a sentence
+ *     underneath would be narrating the attachment list to somebody already
+ *     looking at it.
+ *   - It states the schedule in the *product's* own zone and always appends
+ *     that zone's short abbrev to the time-bearing line, because a mail has no
+ *     viewer zone: the page reads one from the signed-in profile, renders the
+ *     clock faces in it, and appends the same abbrev only where the two zones
+ *     differ. Same lines, same formatter, one option.
  *   - It drops the waitlist position, and it prints no product picture. A queue
  *     number frozen into an inbox goes stale the moment somebody ahead drops
  *     out and a parent cannot tell a stale one from a live one; the picture is
@@ -214,7 +218,7 @@ export interface ProductConfirmationContent {
  * A waitlist join never composes a calendar object — there is no seat behind it
  * — and neither does a product whose schedule states nothing a calendar can
  * hold. Both come back as `null`, and every part of the render then produces
- * the mail with no file, no attachment sentence and no plain-text twin.
+ * the mail with no file and no plain-text twin.
  */
 export function resolveProductConfirmation(
   t: EmailTranslator,
@@ -370,7 +374,9 @@ export function buildProductConfirmationEmail(
       mode,
       dashboardUrl,
     },
-    invitation,
+    // No `invitation` here: the body says nothing about the file, so whether
+    // one was composed changes the attachment and the text twin and no byte of
+    // the HTML.
     overview,
   } = content;
   const isWaitlist = mode === "waitlist";
@@ -443,7 +449,6 @@ export function buildProductConfirmationEmail(
       label: t("productConfirmation.dashboardButton"),
       variant: "primary",
     })}
-    ${invitation === null ? "" : paragraph(t("productConfirmation.invite.attached"))}
   `;
   return wrapInLayout({ title, content: body, locale, t });
 }
@@ -588,8 +593,6 @@ export function productConfirmationText(
     }).map((item) => `- ${item}`),
     "",
     `${t("productConfirmation.dashboardButton")}: ${dashboardUrl}`,
-    "",
-    t("productConfirmation.invite.attached"),
   );
 
   return lines.join("\n");

@@ -406,21 +406,21 @@ describe("buildProductConfirmationEmail", () => {
 });
 
 /**
- * The three artifacts a signup mail can carry, and the one thing that decides
- * all three: whether a calendar object could be composed at all.
+ * The two artifacts a signup mail can carry — the file and its plain-text twin
+ * — and the one thing that decides both: whether a calendar object could be
+ * composed at all.
  *
- * They are asserted together because they have to agree. A sentence promising
- * an attachment with no file behind it, or a file with nothing in the mail
- * saying it is there, is worse than the plain mail either would replace.
+ * **The mail says nothing about the file, deliberately.** A client that can act
+ * on an `invite.ics` shows the invitation itself, with its own buttons, and a
+ * sentence announcing it underneath is the mail narrating its own attachment
+ * list. So the pins here are on the artifacts, not on any copy.
  */
 describe("the calendar invitation", () => {
-  it("says the file is attached where the schedule composes an entry", () => {
+  it("announces the attachment nowhere in the body", () => {
     const html = render({ invitation: SCHEDULE });
-    expect(html).toContain("A calendar invitation is attached");
-  });
 
-  it("says nothing about a file when there is no schedule to state", () => {
-    expect(render()).not.toContain("A calendar invitation is attached");
+    expect(html).not.toContain("calendar invitation");
+    expect(html).not.toContain("invite.ics");
   });
 
   /**
@@ -437,9 +437,7 @@ describe("the calendar invitation", () => {
 
     expect(content.invitation).toBeNull();
     expect(productConfirmationAttachments(content)).toEqual([]);
-    expect(buildProductConfirmationEmail(t, "en", content)).not.toContain(
-      "A calendar invitation is attached",
-    );
+    expect(productConfirmationText(t, content)).toBeUndefined();
   });
 
   it("attaches the document as invite.ics, carrying the seat's own identifier", () => {
@@ -481,7 +479,6 @@ describe("the plain-text twin", () => {
       "What happens next",
       "- We’ll place Aino in a group",
       DASHBOARD_URL,
-      "A calendar invitation is attached",
     ];
     let cursor = -1;
     for (const fragment of order) {

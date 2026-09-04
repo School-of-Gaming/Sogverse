@@ -162,7 +162,10 @@ the page able to disagree about when a club meets.
 
 **The three places the mail is allowed to differ**, each because the medium differs:
 
-- It attaches an `invite.ics` and says so. The page has nothing to attach.
+- It attaches an `invite.ics`. The page has nothing to attach. **The mail says nothing
+  about the file**: a client that can act on one renders the invitation itself, with its
+  own accept/decline, so a sentence announcing it underneath is the mail narrating its
+  own attachment list to a reader who is already looking at the thing.
 - It renders the schedule in the **product's** zone and **always** decorates the
   time-bearing line with that zone's short abbrev, because a mail has no viewer zone —
   parents store none, so the reader cannot infer which zone the times are in. The page
