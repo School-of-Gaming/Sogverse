@@ -231,6 +231,20 @@ function mockAdmin(opts: AdminMockOptions = {}): void {
                   ),
               };
             },
+            // The confirmation mail's second read: the schedule and the site
+            // its calendar invitation would be composed from. No `.order`,
+            // because nothing embedded there is locale-keyed.
+            //
+            // **No slots, deliberately.** What this file covers about that mail
+            // is who receives it and in what voice; the calendar it composes for
+            // a product that *has* a schedule is the composer suite's subject,
+            // and a fixture schedule here would put a document nobody asserts on
+            // into every one of these renders.
+            single: () =>
+              Promise.resolve({
+                data: { schedule_slots: [], locations: null },
+                error: null,
+              }),
           }),
         }),
       };
@@ -1810,7 +1824,8 @@ describe("POST /api/checkout/products/create", () => {
       expect(sent.toEmail).toBe("parent@example.test");
       expect(sent.replyToEmail).toBe("help@sog.gg");
       expect(sent.subject).toContain(GAMER_FIRST_NAME);
-      expect(sent.htmlContent).toContain("Price: Free");
+      expect(sent.htmlContent).toContain(">Price</td>");
+      expect(sent.htmlContent).toContain("Free");
       // The trusted origin — here the localhost the request really came from,
       // which `getOrigin` accepts outside production.
       expect(sent.htmlContent).toContain("http://localhost:3000/parent");
@@ -1870,8 +1885,8 @@ describe("POST /api/checkout/products/create", () => {
       expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
       const sent = mockSendTransactionalEmail.mock.calls[0][0];
       expect(sent.toEmail).toBe("parent@example.test");
-      expect(sent.htmlContent).toContain("Price: Paid for by your municipality");
-      expect(sent.htmlContent).not.toContain("Price: Free");
+      expect(sent.htmlContent).toContain("Paid for by your municipality");
+      expect(sent.htmlContent).not.toContain(">Free<");
       expect(sent.htmlContent).not.toContain("nothing to pay for this one");
     });
 

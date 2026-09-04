@@ -20,7 +20,7 @@ import type { ProductDetailRow } from "@/services/products";
 import type { ProductType } from "@/types";
 import { LongDescription } from "./long-description";
 import { cameFromBrowse, listingHrefWithBrowseState } from "./browse-state";
-import { audienceLabelKey } from "./product-audience";
+import { audienceLabelKey } from "@/lib/products/product-audience";
 import { ProductMediaChips } from "./product-chips";
 import { ProductOverviewCard } from "./product-overview-card";
 import { productTagLabelKey } from "./product-tag";

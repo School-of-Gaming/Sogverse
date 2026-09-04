@@ -7,7 +7,10 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
-import { calendarInvitationStartDate } from "@/lib/email-templates/calendar-invitation";
+import {
+  calendarInvitationStartDate,
+  calendarInvitationUntilDate,
+} from "@/lib/email-templates/calendar-invitation";
 import { BRAND, DARK_THEME, GRADIENT, STATUS, STATUS_TINT } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 
@@ -132,6 +135,11 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     dashboardUrl: "https://sogverse.sog.gg/gedu",
     settingsUrl: "https://sogverse.sog.gg/settings",
   },
+  // A schedule, deliberately: the session-times section and the sentence about
+  // the attached calendar are markup no other render in this sweep reaches, and
+  // a fixture with no slots would leave them unchecked. The dates are read at
+  // fixture time for the same reason the form's placeholders are — an
+  // invitation whose run has finished composes nothing at all.
   productConfirmation: {
     participantName: "Aino",
     isSelfSeat: false,
@@ -139,7 +147,23 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     productType: "camp",
     mode: "upfront",
     priceAmount: "€40.00",
+    firstChargeDate: "none",
     dashboardUrl: "https://sogverse.sog.gg/parent",
+    ageRange: "8-12",
+    audience: "gamers",
+    spokenLanguageCode: "fi",
+    participationId: "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+    attendeeName: "Marja Virtanen",
+    attendeeEmail: "marja@example.com",
+    shortDescription: "Build, explore and survive together.",
+    timezone: "Europe/Helsinki",
+    startDate: calendarInvitationStartDate(),
+    endDate: calendarInvitationUntilDate(),
+    slots: "mon 16:00 60\nwed 16:00 60",
+    isRemote: "no",
+    siteName: "Kallion kirjasto",
+    siteAddress: "Viides linja 11, 00530 Helsinki",
+    siteNote: "The door on the north side. Ring the bell.",
   },
   verifyEmail: {
     firstName: "Marja",

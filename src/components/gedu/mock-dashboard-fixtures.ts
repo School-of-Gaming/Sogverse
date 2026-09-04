@@ -14,7 +14,7 @@ import type { GeduAssignmentCardData } from "@/components/gedu/GeduAssignmentsSe
 import {
   formatProductSchedule,
   scheduleCardLines,
-} from "@/components/public/products/format-product-schedule";
+} from "@/lib/products/format-product-schedule";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import {
   rollUpGeduAssignments,

@@ -4,9 +4,30 @@ import { buildPasswordResetEmail } from "./password-reset";
 import { buildWelcomeParentEmail, buildWelcomeGeduEmail } from "./welcome";
 import {
   buildProductConfirmationEmail,
+  productConfirmationAttachments,
   productConfirmationSubject,
+  productConfirmationText,
+  resolveProductConfirmation,
   PRODUCT_CONFIRMATION_MODES,
+  type ProductConfirmationEmailOptions,
 } from "./product-confirmation";
+import type { InvitationSlot } from "./product-confirmation-invitation";
+import { formatProductLocation } from "@/lib/products/format-product-location";
+import {
+  fail,
+  isNoneToken,
+  listEntries,
+  noneOrAgeRange,
+  noneOrDate,
+  noneOrText,
+  optionalDate,
+  requireEmail,
+  requireTime,
+  requireWeekday,
+  requireWholeNumber,
+  FORM_NONE_TOKEN,
+  FORM_YES_NO,
+} from "./form-fields";
 import { buildVerifyEmailEmail } from "./verify-email";
 import { buildSeatOfferEmail, seatOfferSubject } from "./seat-offer";
 import {
@@ -56,6 +77,8 @@ import {
 import type { EmailRenderContext } from "./render-context";
 import type { RenderedAttachment } from "./attachments";
 import type { EmailTranslator } from "./translator";
+import { SUPPORTED_TIMEZONES } from "@/lib/calendar-invitations/ics-primitives";
+import { DEFAULT_PRODUCT_TIMEZONE } from "@/lib/constants/location-hierarchies";
 import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
@@ -206,7 +229,12 @@ function defineTemplate<P extends TemplateParams>(entry: {
    * The plain-text body, for a template that states one. See
    * `RenderedTemplate` for why one template must.
    */
-  text?: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  text?: (
+    params: P,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+  ) => string | undefined;
   resolveParams?: TemplateDefinition["resolveParams"];
 }): TemplateDefinition {
   // The validated params are the resolution: a template with nothing to derive
@@ -236,7 +264,18 @@ function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
   resolve: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => R;
   build: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
   subject: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
-  text?: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  /**
+   * `undefined` is a real answer, not an omission: a template can owe a text
+   * body only on the renders that carry a calendar part, and the signup
+   * confirmation is exactly that — it attaches one when the product has a
+   * schedule and sends the plain HTML mail when it does not.
+   */
+  text?: (
+    resolved: R,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+  ) => string | undefined;
   attachments?: (
     resolved: R,
     t: EmailTranslator,
@@ -298,20 +337,199 @@ const PRODUCT_CONFIRMATION_MODE_OPTIONS = PRODUCT_CONFIRMATION_MODES.map((value)
 }));
 
 /**
+ * The zones a calendar document can be written in, default first.
+ *
+ * The product zones plus UTC, which is the calendar builder's own list — so a
+ * test send cannot ask for a zone the document would carry an unexplained note
+ * about. `DEFAULT_PRODUCT_TIMEZONE` leads because an untouched select posts its
+ * first option and that is the zone the great majority of products carry.
+ */
+const INVITATION_TIMEZONE_OPTIONS = [
+  DEFAULT_PRODUCT_TIMEZONE,
+  ...SUPPORTED_TIMEZONES.filter((zone) => zone !== DEFAULT_PRODUCT_TIMEZONE),
+].map((value) => ({ label: value, value }));
+
+/**
+ * Who the product is sold to, as the one word the overview card renders rather
+ * than as the two booleans behind it — a form offering both flags separately
+ * offers the neither-flag row the schema's CHECK refuses. Gamers-only leads
+ * because it is the audience every product had before audiences existed, and
+ * because it is the shape whose cell states an age range.
+ */
+const PRODUCT_AUDIENCE_OPTIONS = [
+  { label: "Gamers (an age range)", value: "gamers" },
+  { label: "Parents", value: "parents" },
+  { label: "Families (an audience and an age range)", value: "families" },
+];
+
+/** The spoken languages a product can be delivered in, from codegen. */
+const SPOKEN_LANGUAGE_OPTIONS = Constants.public.Enums.spoken_language.map(
+  (value) => ({ label: value, value }),
+);
+
+/**
  * The product-confirmation form's two derived values. The seat select becomes
  * the boolean the builder takes, defaulting to the child case — which is what an
  * unfilled field in the testing UI means, and what every seat was before
  * for-parents products existed. The price is cleared on the modes that state no
  * amount, so a test render of a free signup, a municipality registration or a
  * waitlist join carries no price at all, which is what the live mail carries.
+ *
+ * Everything the *invitation* needs stays a string here and is parsed by the
+ * template's own resolver below: this function runs in the browser with no
+ * translator and no clock, and a blank date means something the form cannot
+ * decide on its own.
  */
-function resolveProductConfirmation(params: Record<string, string>): TemplateParams {
+function resolveProductConfirmationParams(params: Record<string, string>): TemplateParams {
   const { seat, priceAmount, ...rest } = params;
   const statesPrice = rest.mode === "subscription" || rest.mode === "upfront";
   return {
     ...rest,
     isSelfSeat: seat === "self",
     priceAmount: statesPrice ? priceAmount : null,
+  };
+}
+
+/**
+ * One typed schedule entry: `mon 16:00 60` — a weekday, a start time, and how
+ * many minutes the session runs, several of them separated by commas.
+ *
+ * The same shape the explorer's override lines take, for the same reason: the
+ * testing form's fields are single values, and a schedule is a list. **A
+ * product with no slots is a real state** — it is the one that sends the plain
+ * mail with no invitation at all — and it is stated with the `none` token
+ * rather than by clearing the field, because this is a text input and an
+ * untouched one posts its placeholder. That is deliberate: the untouched form
+ * composes an ordinary invitation, which is the document worth looking at, and
+ * the empty state stays one word away.
+ */
+function parseInvitationSlots(value: string): InvitationSlot[] {
+  if (isNoneToken(value)) return [];
+  return listEntries(value).map((line) => {
+    const parts = line.split(/\s+/);
+    if (parts.length !== 3) {
+      fail("Schedule", "a weekday, a start time and a duration in minutes", line);
+    }
+    const [weekday, startTime, duration] = parts;
+    return {
+      weekday: requireWeekday(weekday, "Schedule"),
+      startTime: requireTime(startTime, "Schedule"),
+      durationMinutes: requireWholeNumber(duration, "Schedule duration", 1),
+    };
+  });
+}
+
+/**
+ * The form's strings as the options the mail is built from, resolved once.
+ *
+ * `now` is the resolver's own — the live sends read the clock at the moment
+ * they compose, and so does a test send, because which occurrence a `DTSTART`
+ * lands on is a fact about when the mail was written. The composer itself never
+ * reads a clock; this is the one place the value enters.
+ */
+function resolveProductConfirmationOptions(
+  params: ProductConfirmationParams,
+  now: Date,
+): ProductConfirmationEmailOptions {
+  const startDate = optionalDate(params.startDate, "Start date");
+  const endDate = noneOrDate(params.endDate, "End date");
+  const slots = parseInvitationSlots(params.slots);
+  const isRemote = params.isRemote === "yes";
+  const siteName = params.siteName.trim() || null;
+  // The location as the page's own rule resolves it — the mail states "Where"
+  // in exactly the words the confirmation page does, so the shape it renders is
+  // that rule's output rather than a second reading of the same fields. The
+  // form has no parent-location field, so a test send shows a bare site.
+  const location = formatProductLocation(
+    {
+      is_remote: isRemote,
+      product_type: params.productType,
+      // `parent: null` is a real answer here, not a forgotten join: the form
+      // has one site field and no municipality field, so a test send shows a
+      // bare site by construction.
+      locations: siteName ? { name: siteName, name_i18n: null, parent: null } : null,
+    },
+    // The locale is inert: `name_i18n` is `null` on everything this form can
+    // build, so `localizedLocationName` falls through to the typed `name`
+    // whatever locale it is handed. A translated site name cannot reach here.
+    "en",
+  );
+  const ages = noneOrAgeRange(params.ageRange, "Age range");
+
+  return {
+    participantName: params.participantName,
+    isSelfSeat: params.isSelfSeat,
+    productName: params.productName,
+    productType: params.productType,
+    mode: params.mode,
+    priceAmount: params.priceAmount,
+    // Only a subscription ever states one, and the live send only knows the
+    // date on a club bought before it starts — so the token is what reaches
+    // the mail that states no billing line.
+    firstChargeDate: noneOrText(params.firstChargeDate),
+    dashboardUrl: params.dashboardUrl,
+    overview: {
+      timezone: params.timezone,
+      startDate,
+      endDate,
+      // The same schedule the invitation is composed from, in the column
+      // spelling the page's formatter reads. One list, two consumers: a form
+      // that could feed the words and the file different times would be a form
+      // whose mail and attachment disagree.
+      slots: slots.map((slot) => ({
+        weekday: slot.weekday,
+        start_time: slot.startTime,
+        duration_minutes: slot.durationMinutes,
+      })),
+      isRemote,
+      location,
+      minAge: ages?.min ?? null,
+      maxAge: ages?.max ?? null,
+      forGamers: params.audience !== "parents",
+      forParents: params.audience !== "gamers",
+      spokenLanguageCode: params.spokenLanguageCode,
+      now,
+    },
+    invitation: {
+      // Minted when the form names none, exactly as the explorer mints a UID:
+      // the identifier is a function of the seat, and a test send has no seat.
+      participationId:
+        params.participationId.trim() === ""
+          ? crypto.randomUUID()
+          : params.participationId.trim(),
+      participantName: params.participantName,
+      isSelfSeat: params.isSelfSeat,
+      productName: params.productName,
+      productType: params.productType,
+      // The column is NOT NULL, but the product writers coalesce a missing
+      // description to an empty string, so a product with nothing to say here
+      // is an ordinary stored state — and the composer skips the paragraph for
+      // it. The token is what lets a test send reach that state, since an empty
+      // text input posts its placeholder.
+      shortDescription: noneOrText(params.shortDescription),
+      timezone: params.timezone,
+      startDate,
+      // Three more of the token fields, alongside the description above and the
+      // schedule below. Every one of them is a text input, so the absence is a
+      // typed word rather than a cleared box — see `FORM_NONE_TOKEN` for why an
+      // empty one cannot carry it.
+      endDate,
+      slots,
+      isRemote,
+      siteName,
+      siteAddress: noneOrText(params.siteAddress),
+      siteNote: noneOrText(params.siteNote),
+      attendeeName: params.attendeeName,
+      // Named for the *label* the admin is looking at, not for the property it
+      // becomes: the testing page shows a thrown message verbatim, and a
+      // refusal naming a field no form control carries sends them hunting.
+      attendeeEmail: requireEmail(params.attendeeEmail, "Parent email"),
+      // The same link the mail's own button carries: the entry points a parent
+      // at My SOG, which resolves for every seat, rather than at a seat page
+      // that needs a group the seat may not have yet.
+      dashboardUrl: params.dashboardUrl,
+      now,
+    },
   };
 }
 
@@ -467,7 +685,42 @@ const productConfirmationParamsSchema = z.object({
   mode: z.enum(PRODUCT_CONFIRMATION_MODES),
   priceAmount: z.string().nullable(),
   dashboardUrl: z.string().url(),
+
+  // --- The "Good to know" facts the mail states, exactly as the page does. ---
+  //
+  // The schedule, the zone, the dates and the site are shared with the calendar
+  // block below rather than doubled: one form field feeds both, so a test send
+  // cannot make the words and the file disagree. These four are the facts the
+  // calendar has no use for.
+  firstChargeDate: z.string(),
+  ageRange: z.string(),
+  audience: z.enum(["gamers", "parents", "families"]),
+  spokenLanguageCode: z.enum(Constants.public.Enums.spoken_language),
+
+  // --- What the calendar invitation is composed from. ---
+  //
+  // Bare strings, like the explorer's, and parsed by the template's own
+  // resolver rather than here: that is where a blank means "omit" and where a
+  // malformed date earns a sentence naming the field. Duplicating the shapes as
+  // regexes would give one mistake two different messages depending on which
+  // layer caught it first.
+  participationId: z.string(),
+  attendeeName: z.string().min(1),
+  attendeeEmail: z.string(),
+  shortDescription: z.string(),
+  timezone: z.string().refine((zone) => SUPPORTED_TIMEZONES.includes(zone), {
+    message: "no VTIMEZONE is written for this zone",
+  }),
+  startDate: z.string(),
+  endDate: z.string(),
+  slots: z.string(),
+  isRemote: z.enum(FORM_YES_NO),
+  siteName: z.string(),
+  siteAddress: z.string(),
+  siteNote: z.string(),
 });
+
+type ProductConfirmationParams = z.infer<typeof productConfirmationParamsSchema>;
 
 const verifyEmailParamsSchema = z.object({
   firstName: z.string().min(1),
@@ -509,10 +762,14 @@ function resolveSeatOffer(params: Record<string, string>): TemplateParams {
   return { ...rest, isSelfSeat: seat === "self" };
 }
 
-/** An untouched text field posts its placeholder, so "none" has to be typed. */
+/**
+ * An untouched text field posts its placeholder, so the no-schedule variant is
+ * reached by typing the token — the same rule the confirmation's fields follow;
+ * see `FORM_NONE_TOKEN`.
+ */
 function resolveSeatOfferStaff(params: Record<string, string>): TemplateParams {
   const { productSchedule, ...rest } = params;
-  return { ...rest, productSchedule: productSchedule.trim() || null };
+  return { ...rest, productSchedule: noneOrText(productSchedule) };
 }
 
 const SEAT_OFFER_STAFF_REASON_LABELS: Record<
@@ -1079,7 +1336,29 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     build: (p, t, locale) => buildWelcomeGeduEmail(t, locale, p),
     subject: (_p, t) => t("welcomeGedu.subject"),
   }),
-  productConfirmation: defineTemplate({
+  /**
+   * The signup mail — and the second template in this registry that carries a
+   * file.
+   *
+   * **Its fields are two forms in one, and the split is worth reading.** The
+   * first seven describe the *signup*: who took a seat, on what, and what it
+   * cost. The rest describe the *product's schedule*, because that is what the
+   * attached `invite.ics` is composed from — a live send reads every one of
+   * them off the product row, and here they are typed so the document can be
+   * previewed and sent without a product existing.
+   *
+   * **The untouched form composes an ordinary invitation**, and that is the
+   * point of it: every calendar field is a text input, an untouched text input
+   * posts its placeholder, so a form nobody has typed into sends the mail with
+   * a schedule, a site, a note and a description in it — the render with the
+   * most to look at. The mail this template sent *before* the invitation
+   * existed — no session-times section, no attachment, no text body — is one
+   * word away: type `none` into the schedule field. Five fields take that
+   * token — the schedule, the end date, the site address, the site note and
+   * the short description — because a cleared text input posts its placeholder
+   * and so can never mean "none"; see `FORM_NONE_TOKEN`.
+   */
+  productConfirmation: defineResolvedTemplate({
     label: "Product Confirmation",
     fields: [
       { key: "participantName", label: "Participant Name", placeholder: "Aino" },
@@ -1088,14 +1367,130 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "productType", label: "Product Type", type: "select", options: PRODUCT_TYPE_OPTIONS },
       { key: "mode", label: "Outcome", type: "select", options: PRODUCT_CONFIRMATION_MODE_OPTIONS },
       { key: "priceAmount", label: "Formatted Price", placeholder: "€40.00" },
+      {
+        key: "firstChargeDate",
+        label: `Formatted first-charge date (\`${FORM_NONE_TOKEN}\` for a signup billed at checkout)`,
+        // What the live send composes for `en` through the shared first-charge
+        // rule: a club bought before it starts renders that bare start date.
+        placeholder: "13 Jan 2027",
+      },
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
+
+      {
+        key: "ageRange",
+        label: `Good to know – Age range, \`8-12\` (\`${FORM_NONE_TOKEN}\` for a product with none)`,
+        placeholder: "8-12",
+      },
+      {
+        key: "audience",
+        label: "Good to know – Who the product is for",
+        type: "select",
+        options: PRODUCT_AUDIENCE_OPTIONS,
+      },
+      {
+        key: "spokenLanguageCode",
+        label: "Good to know – Spoken language",
+        type: "select",
+        options: SPOKEN_LANGUAGE_OPTIONS,
+      },
+
+      {
+        key: "slots",
+        label: `Invite – Schedule, comma-separated \`mon 16:00 60\` entries (\`${FORM_NONE_TOKEN}\` sends the mail with no invitation)`,
+        placeholder: "mon 16:00 60, wed 16:00 60",
+      },
+      {
+        key: "timezone",
+        label: "Invite – The product's own timezone",
+        type: "select",
+        options: INVITATION_TIMEZONE_OPTIONS,
+      },
+      {
+        key: "startDate",
+        label: "Invite – Product start date",
+        // A getter, so the suggestion is read when the field is read rather
+        // than when this module loads: the registry is imported by the admin
+        // page and by the send route, and a value frozen at load would differ
+        // between the server's render and the browser's hydration of it. A
+        // start date in the past would also compose an invitation with nothing
+        // ahead of it, which is not the document worth looking at.
+        get placeholder() {
+          return calendarInvitationStartDate();
+        },
+      },
+      {
+        key: "endDate",
+        label: `Invite – Product end date (\`${FORM_NONE_TOKEN}\` for an open-ended club)`,
+        get placeholder() {
+          return calendarInvitationUntilDate();
+        },
+      },
+      {
+        key: "isRemote",
+        label: "Invite – Runs online",
+        type: "select",
+        // "No" first, so the untouched form composes the in-person document —
+        // the one with a site, an address and a note in it, which is the case
+        // with more to look at.
+        options: yesNoOptions("no"),
+      },
+      { key: "siteName", label: "Invite – Site name", placeholder: "Kallion kirjasto" },
+      {
+        key: "siteAddress",
+        label: `Invite – Site address (\`${FORM_NONE_TOKEN}\` for none)`,
+        placeholder: "Viides linja 11, 00530 Helsinki",
+      },
+      {
+        // A text input rather than a textarea for the same reason "no" leads
+        // the online select above: the untouched form composes the site with a
+        // note in it, which is the case with more to look at.
+        key: "siteNote",
+        label: `Invite – Public site note (\`${FORM_NONE_TOKEN}\` for none)`,
+        placeholder: "The door on the north side. Ring the bell marked School of Gaming.",
+      },
+      {
+        key: "shortDescription",
+        label: `Invite – The product's short description (\`${FORM_NONE_TOKEN}\` for a product left without one)`,
+        placeholder: "Build, explore and survive together in a private world.",
+      },
+      {
+        key: "participationId",
+        label: "Invite – Participation id (empty mints one per render)",
+        placeholder: "",
+      },
+      {
+        // The labels say *parent* and then explain themselves, because "who is
+        // the attendee" is the one thing about this document that looks like an
+        // oversight from outside: the seat is a child's and the entry names the
+        // adult. A gamer's address is a synthetic internal one no mail can
+        // reach, and a client decides whether to show the RSVP by matching the
+        // attendee against the mailbox it is reading — so naming the child
+        // would invite a mailbox that does not exist and lose the RSVP with it.
+        key: "attendeeName",
+        label:
+          "Invite – Parent name (the attendee: a client shows RSVP only when the attendee matches the mailbox reading it, and the gamer has no mailbox)",
+        placeholder: "Marja Virtanen",
+      },
+      {
+        key: "attendeeEmail",
+        label: "Invite – Parent email (the attendee; use the address you send to)",
+        placeholder: "marja@example.com",
+      },
     ],
     schema: productConfirmationParamsSchema,
-    build: (p, t, locale) => buildProductConfirmationEmail(t, locale, p),
+    // One resolution per render: the schedule is composed once and the body,
+    // the text twin and the attached file all read that one composition.
+    resolve: (p, t, locale) =>
+      resolveProductConfirmation(t, locale, resolveProductConfirmationOptions(p, new Date())),
+    build: (content, t, locale) => buildProductConfirmationEmail(t, locale, content),
     // Shared with the live sends rather than restated here — see the function's
     // own note for what the subject has to agree with.
-    subject: (p, t) => productConfirmationSubject(t, p),
-    resolveParams: resolveProductConfirmation,
+    subject: (content, t) => productConfirmationSubject(t, content),
+    // Stated only on the renders that carry a calendar part, which is where
+    // Exchange reads the entry's notes from.
+    text: (content, t) => productConfirmationText(t, content),
+    attachments: (content) => productConfirmationAttachments(content),
+    resolveParams: resolveProductConfirmationParams,
   }),
   verifyEmail: defineTemplate({
     label: "Verify Email",
@@ -1153,7 +1548,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       {
         key: "productSchedule",
-        label: "Schedule line (empty for none)",
+        label: `Schedule line (\`${FORM_NONE_TOKEN}\` for none)`,
         placeholder: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
       },
       {

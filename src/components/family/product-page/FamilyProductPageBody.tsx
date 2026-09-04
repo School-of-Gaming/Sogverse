@@ -17,7 +17,7 @@ import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import {
   formatProductSchedule,
   renderScheduleLinesForDetail,
-} from "@/components/public/products/format-product-schedule";
+} from "@/lib/products/format-product-schedule";
 import { cn, formatDate } from "@/lib/utils";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";

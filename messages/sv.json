@@ -1040,24 +1040,12 @@
       "description": "Interna verktyg för testning och utveckling",
       "emailTool": "Verktyg för e-posttestning",
       "emailToolDescription": "Skicka testmeddelanden via Brevo (SMTP) för att verifiera leverans och mallar.",
-      "provider": "Leverantör",
-      "brevo": "Brevo (SMTP)",
-      "klaviyoComingSoon": "Klaviyo (kommer snart)",
-      "content": "Innehåll",
       "template": "Mall",
       "language": "Språk",
-      "custom": "Anpassad",
       "toEmail": "Mottagare",
       "toEmailPlaceholder": "mottagare@example.com",
       "templateParameters": "Mallparametrar",
-      "fromEmail": "Avsändarens e-post",
-      "fromName": "Avsändarens namn",
       "subject": "Ämne",
-      "subjectPlaceholder": "Ämne för testmeddelande",
-      "body": "Brödtext",
-      "bodyPlaceholder": "Skriv e-postinnehåll (HTML stöds)",
-      "replyTo": "Svara till (valfritt)",
-      "replyToPlaceholder": "svar@example.com",
       "sendTestEmail": "Skicka testmeddelande",
       "emailSentSuccess": "E-post skickat! Meddelande-ID: {messageId}",
       "failedToSendRequest": "Kunde inte skicka förfrågan",
@@ -2607,7 +2595,13 @@
           "event": "Du har gått med i {productName}."
         },
         "waitlist": {
-          "subheading": "Du står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig."
+          "subheading": "Du står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig.",
+          "next2": {
+            "consumer_club": "Du behåller din plats i kön under hela terminen.",
+            "municipality_club": "Du behåller din plats i kön under hela terminen.",
+            "camp": "Du behåller din plats i kön under hela lägret.",
+            "event": "Du behåller din plats i kön fram till evenemanget."
+          }
         }
       },
       "typeLabel": {
@@ -2629,7 +2623,7 @@
         "placementSelf": "Vi placerar dig i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
         "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
         "upfront": "Detta var en engångsbetalning – det finns inget mer att betala.",
-        "free": "Det finns inget att betala för den här."
+        "firstCharge": "Inget debiterades i dag. Din första betalning sker den {date}."
       },
       "waitlist": {
         "subject": "{participantName} står på väntelistan för {productName}",
@@ -2637,9 +2631,49 @@
         "heading": "Du står på väntelistan",
         "subheading": "{participantName} står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig.",
         "next1": "Vi mejlar så snart en plats blir ledig.",
-        "next2": "Du kan följa din plats i kön när som helst i Min SOG."
+        "summaryTitle": "Din väntelisteplats",
+        "forLabel": "På väntelista",
+        "next2": {
+          "consumer_club": "{participantName} behåller sin plats i kön under hela terminen.",
+          "municipality_club": "{participantName} behåller sin plats i kön under hela terminen.",
+          "camp": "{participantName} behåller sin plats i kön under hela lägret.",
+          "event": "{participantName} behåller sin plats i kön fram till evenemanget."
+        },
+        "next3": "Du kan följa din plats i kön när som helst i Min SOG."
       },
-      "dashboardButton": "Gå till Min SOG"
+      "invite": {
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "Online – Min SOG",
+        "locationInPerson": "{site}, {address}",
+        "whereOnline": "Tillfällena hålls online i Min SOG, och röstrummet öppnar {minutes} minuter innan varje tillfälle börjar.",
+        "whereInPerson": "Tillfällena hålls på {site}.",
+        "whereAddress": "Adress: {address}",
+        "link": "Allt om den här anmälan finns i Min SOG: {url}",
+        "questions": "Frågor? Skriv till {supportEmail}."
+      },
+      "dashboardButton": "Gå till Min SOG",
+      "summaryTitle": "Din beställning",
+      "forLabel": {
+        "consumer_club": "Anmäld",
+        "municipality_club": "Registrerad",
+        "camp": "Anmäld",
+        "event": "Deltar"
+      },
+      "overview": {
+        "title": "Bra att veta",
+        "schedule": "Schema",
+        "where": "Plats",
+        "format": "Format",
+        "online": "Online",
+        "tbd": "Bekräftas senare",
+        "ageRange": "Åldersintervall",
+        "audience": "Målgrupp",
+        "language": "Språk",
+        "ages": "Ålder {min}–{max}",
+        "audienceParents": "För föräldrar",
+        "audienceFamilies": "För familjer",
+        "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}"
+      }
     },
     "verifyEmail": {
       "subject": "Bekräfta din e-postadress",

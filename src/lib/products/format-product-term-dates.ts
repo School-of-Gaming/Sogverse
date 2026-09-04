@@ -1,5 +1,5 @@
 import { formatDateRange } from "@/lib/utils";
-import type { ProductBrowseRow } from "@/types";
+import type { ProductType } from "@/types";
 
 // Recurring clubs (consumer / municipality) run across a term whose start/end
 // dates the weekly schedule line never conveys — so both the parent overview
@@ -11,7 +11,11 @@ import type { ProductBrowseRow } from "@/types";
 // `formatDateRange`'s job; this helper only adds the club gate. Returns `null`
 // for a non-club or a club with no start date.
 export function formatClubTermDates(
-  product: Pick<ProductBrowseRow, "product_type" | "start_date" | "end_date">,
+  product: {
+    product_type: ProductType;
+    start_date: string | null;
+    end_date: string | null;
+  },
   locale: string,
 ): string | null {
   if (

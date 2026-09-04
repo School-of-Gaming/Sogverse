@@ -11,7 +11,7 @@ import {
   type EmbeddedLocationNode,
 } from "@/lib/locations/embedded-chain";
 import { localizedLocationName } from "@/lib/locations/localized-name";
-import { formatWeekday } from "@/components/public/products/format-product-schedule";
+import { formatWeekday } from "@/lib/products/format-product-schedule";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import {

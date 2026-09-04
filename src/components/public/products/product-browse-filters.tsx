@@ -12,7 +12,7 @@ import { useLanguageNames } from "@/hooks/use-language-names";
 import { cn } from "@/lib/utils";
 import { TagGlyph } from "./product-chips";
 import { PRODUCT_TAG_VALUES, productTagLabelKey } from "./product-tag";
-import { formatWeekday } from "./format-product-schedule";
+import { formatWeekday } from "@/lib/products/format-product-schedule";
 import { useBrowseFilters } from "./use-browse-filters";
 import { useShopCategories } from "./use-shop-categories";
 

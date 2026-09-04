@@ -15,6 +15,17 @@ import {
   type InvitationTimeForm,
 } from "@/lib/calendar-invitations/invitation";
 import { SUPPORTED_TIMEZONES } from "@/lib/calendar-invitations/ics-primitives";
+import {
+  fail,
+  FORM_YES_NO,
+  optionalUrl,
+  optionalWholeNumber,
+  requireDate,
+  requireEmail,
+  requireTime,
+  requireWholeNumber,
+  textareaLines,
+} from "./form-fields";
 import { wrapInLayout } from "./layout";
 import { escapeHtml, paragraph } from "./utils";
 import { textAttachment, type RenderedAttachment } from "./attachments";
@@ -79,7 +90,8 @@ export const CALENDAR_EXPLORER_PARTSTATS = [
 export const CALENDAR_EXPLORER_SHOW_AS = ["free", "busy"] as const;
 export const CALENDAR_EXPLORER_ALARM_ACTIONS = ["display", "email", "audio"] as const;
 export const CALENDAR_EXPLORER_ALARM_ANCHORS = ["start", "end"] as const;
-export const CALENDAR_EXPLORER_YES_NO = ["yes", "no"] as const;
+/** The shared form vocabulary, re-exported under this form's own name. */
+export const CALENDAR_EXPLORER_YES_NO = FORM_YES_NO;
 
 /**
  * The alarm offsets, in minutes, plus the `none` that writes no alarm.
@@ -283,87 +295,12 @@ export interface CalendarInvitationContent {
   ics: string;
 }
 
-// --- Validation: plain messages, written to be read by the admin who typed the
-//     field. The testing page shows a thrown message verbatim and the send
-//     route answers with it, so each one names the field and what it wanted. ---
-
-function fail(field: string, wanted: string, got: string): never {
-  throw new Error(`${field}: expected ${wanted}, got "${got}".`);
-}
-
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
-
-function requireDate(value: string, field: string): string {
-  const trimmed = value.trim();
-  if (!DATE_PATTERN.test(trimmed)) fail(field, "a date as YYYY-MM-DD", value);
-  const [year, month, day] = trimmed.split("-").map(Number);
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-  // A real calendar date, not merely a well-shaped one: `2026-02-31` matches the
-  // pattern and rolls over to March, which would move an occurrence silently.
-  if (
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
-  ) {
-    fail(field, "a real calendar date", value);
-  }
-  return trimmed;
-}
-
-function requireTime(value: string, field: string): string {
-  const trimmed = value.trim();
-  if (!TIME_PATTERN.test(trimmed)) fail(field, "a 24-hour clock time as HH:MM", value);
-  return trimmed;
-}
-
-function requireWholeNumber(value: string, field: string, minimum: number): number {
-  const trimmed = value.trim();
-  if (!/^\d+$/.test(trimmed)) fail(field, "a whole number", value);
-  const parsed = Number(trimmed);
-  if (parsed < minimum) fail(field, `a whole number of at least ${minimum}`, value);
-  return parsed;
-}
-
-/** A blank field is an absence; anything else has to be a whole number. */
-function optionalWholeNumber(value: string, field: string, minimum: number): number | null {
-  return value.trim() === "" ? null : requireWholeNumber(value, field, minimum);
-}
-
-/** A blank field is an absence; anything else has to be a URL a client can follow. */
-function optionalUrl(value: string, field: string): string {
-  const trimmed = value.trim();
-  if (trimmed === "") return "";
-  let parsed: URL;
-  try {
-    parsed = new URL(trimmed);
-  } catch {
-    return fail(field, "an absolute URL", value);
-  }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    fail(field, "an http or https URL", value);
-  }
-  return trimmed;
-}
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function requireEmail(value: string, field: string): string {
-  const trimmed = value.trim();
-  if (!EMAIL_PATTERN.test(trimmed)) fail(field, "an email address", value);
-  return trimmed;
-}
-
-/** A textarea's non-blank lines, trimmed. */
-function lines(value: string): string[] {
-  return value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line !== "");
-}
+// --- Validation. The pieces live in `form-fields.ts`, shared with every other
+//     template whose form posts free text, so one malformed date earns one
+//     sentence whichever form it was typed into. ---
 
 function parseExcludedDates(value: string): string[] {
-  return lines(value).map((line) => requireDate(line, "Excluded dates"));
+  return textareaLines(value).map((line) => requireDate(line, "Excluded dates"));
 }
 
 /** `0` = Monday … `6` = Sunday, from a `YYYY-MM-DD` read as a UTC-pinned day. */
@@ -395,7 +332,7 @@ function parseOverrides(
   recurrence: InvitationRecurrence,
   excluded: readonly string[],
 ): InvitationOverride[] {
-  const parsed = lines(value).map((line) => {
+  const parsed = textareaLines(value).map((line) => {
     const parts = line.split(/\s+/);
     if (parts.length !== 2 && parts.length !== 3) {
       fail("Overrides", "a date, a time, and optionally a duration in minutes", line);
