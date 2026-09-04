@@ -12,7 +12,8 @@ import {
 } from "@/lib/email-templates/calendar-invitation";
 
 /**
- * The schedule half of the signup form, as a product with a real one posts it.
+ * The product half of the signup form, as a product with a real schedule and a
+ * full set of "Good to know" facts posts it.
  *
  * Spread into every product-confirmation fixture below, because the schema
  * requires the whole form — and because the dates have to be *ahead* of now for
@@ -20,6 +21,11 @@ import {
  * than about the fixture.
  */
 const PRODUCT_CONFIRMATION_SCHEDULE = {
+  shopUrl: "https://sogverse.sog.gg/shop",
+  firstChargeDate: "none",
+  ageRange: "8-12",
+  audience: "gamers",
+  spokenLanguageCode: "fi",
   participationId: "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
   attendeeName: "Marja Virtanen",
   attendeeEmail: "marja@example.com",
@@ -244,7 +250,11 @@ describe("templateRegistry render()", () => {
       expect(subject).toBe("You are enrolled in Minecraft 101");
       expect(subject).not.toContain("Marja");
       expect(html).toContain("You’re enrolled in");
-      expect(html).not.toContain("Marja");
+      // The *sentences* move to the second person; the order summary still
+      // names the person, exactly as the confirmation page's does — there the
+      // name is a value rather than a subject.
+      expect(html).not.toContain("Marja is enrolled");
+      expect(html).toContain("Marja");
     });
 
     it("says waitlist in the subject when the outcome is a waitlist join", () => {
@@ -269,7 +279,9 @@ describe("templateRegistry render()", () => {
       expect(subject).toBe("You are on the waitlist for Minecraft 101");
       expect(subject).not.toContain("Marja");
       expect(html).toContain("You’re on the waitlist for");
-      expect(html).not.toContain("Marja");
+      expect(html).not.toContain("Marja is on the waitlist");
+      // Named in the summary row alone — see the self-seat case above.
+      expect(html).toContain("Marja");
     });
 
     /**
@@ -314,15 +326,17 @@ describe("templateRegistry render()", () => {
           "en",
         );
 
-        expect(html).toContain("Session times");
-        expect(html).toContain("Every Monday, 16:00–17:00");
+        expect(html).toContain("A calendar invitation is attached");
+        // The mail's own schedule words, composed by the confirmation page's
+        // formatter from the same slots the document is built from.
+        expect(html).toContain("Monday · 16:00–17:00");
         expect(html).toContain("Kallion kirjasto");
         expect(attachments?.[0].name).toBe("invite.ics");
         expect(attachments?.[0].text).toContain("BEGIN:VCALENDAR");
         expect(attachments?.[0].text).toContain(
           `UID:${PRODUCT_CONFIRMATION_SCHEDULE.participationId}@sogverse`,
         );
-        expect(text).toContain("Every Monday, 16:00–17:00");
+        expect(text).toContain("Monday · 16:00–17:00");
       });
 
       it("mints an identifier when the form names none", () => {
@@ -378,7 +392,14 @@ describe("templateRegistry render()", () => {
           "en",
         );
 
-        expect(html).toContain("Session times");
+        expect(html).toContain("A calendar invitation is attached");
+        // The whole page, mirrored: the order summary, the four "Good to know"
+        // facts and the two ways onward.
+        expect(html).toContain("Your order");
+        expect(html).toContain("Good to know");
+        expect(html).toContain("Ages 8–12");
+        expect(html).toContain("Finnish");
+        expect(html).toContain("Keep browsing");
         expect(attachments).toHaveLength(1);
         expect(attachments?.[0].name).toBe("invite.ics");
         expect(attachments?.[0].text).toContain("BEGIN:VCALENDAR");
@@ -408,8 +429,8 @@ describe("templateRegistry render()", () => {
         expect(text).toContain("Build, explore and survive together in a private world.");
         expect(text).toContain("The door on the north side.");
         // Both placeholder entries, at one clock face, stated as one line.
-        expect(html).toContain("Every Monday and Wednesday, 16:00–17:00");
-        expect(text).not.toContain("Every Monday and Wednesday");
+        expect(html).toContain("Mon, Wed · 16:00–17:00");
+        expect(text).not.toContain("Mon, Wed");
       });
 
       /**
@@ -506,6 +527,40 @@ describe("templateRegistry render()", () => {
         expect(text).not.toContain("The door on the north side.");
         // The site itself is not one of the token fields, so it stays.
         expect(text).toContain("Kallion kirjasto");
+      });
+
+      /**
+       * The two page facts that can genuinely be absent. The untouched form
+       * states both, because the fuller mail is the one worth looking at.
+       */
+      it("drops the Age range fact for a `none` age range", () => {
+        const { html } = templateRegistry.productConfirmation.render(
+          { ...untouched, ageRange: "none" },
+          t,
+          "en",
+        );
+
+        expect(html).not.toContain("Age range");
+        // The token can never reach the copy — it is parsed into a pair of
+        // numbers or into nothing — so what is asserted is the fact's absence.
+        expect(html).not.toContain("Ages ");
+        // The three facts either side of it are untouched.
+        expect(html).toContain("Schedule");
+        expect(html).toContain("Language");
+      });
+
+      it("states no billing date for a `none` first charge", () => {
+        const paid = { ...untouched, mode: "subscription", firstChargeDate: "13 Jan 2027" };
+        expect(
+          templateRegistry.productConfirmation.render(paid, t, "en").html,
+        ).toContain("Nothing was charged today.");
+        expect(
+          templateRegistry.productConfirmation.render(
+            { ...paid, firstChargeDate: "none" },
+            t,
+            "en",
+          ).html,
+        ).not.toContain("Nothing was charged today.");
       });
     });
   });

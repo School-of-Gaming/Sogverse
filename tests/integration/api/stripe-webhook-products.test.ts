@@ -312,6 +312,13 @@ function mockAdmin(opts: AdminMockOptions = {}) {
                     start_date: null,
                     end_date: null,
                     is_remote: true,
+                    // The "Good to know" facts the mail mirrors from the
+                    // confirmation page.
+                    min_age: 8,
+                    max_age: 12,
+                    for_gamers: true,
+                    for_parents: false,
+                    spoken_language_code: "en",
                     product_translations: [
                       { locale: "en", name: "Test Club", short_description: "" },
                     ],
@@ -1436,7 +1443,10 @@ describe("POST /api/webhooks/stripe/products", () => {
       await POST(createWebhookRequest());
 
       const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-      expect(htmlContent).toContain("Price: €40.00 (one-time)");
+      // The summary's price row — a label cell and a value cell, as the page's
+      // own summary states it.
+      expect(htmlContent).toContain(">Price</td>");
+      expect(htmlContent).toContain("€40.00 (one-time)");
       expect(htmlContent).not.toContain("/ month");
     });
 
@@ -1466,6 +1476,36 @@ describe("POST /api/webhooks/stripe/products", () => {
       const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
       expect(htmlContent).toContain("/ month");
       expect(htmlContent).toContain("40.00");
+      // The same session is the deferred shape — €0 today, a period end still
+      // ahead — so the mail owes the parent the real date, from the value this
+      // handler already holds rather than from a second Stripe read.
+      expect(htmlContent).toContain("Nothing was charged today.");
+    });
+
+    /**
+     * The other half of that rule: money moved today, so nothing was deferred
+     * and the mail must not promise a future first payment.
+     */
+    it("states no first-charge date when the club was billed at checkout", async () => {
+      mockConstructEvent.mockReturnValue(
+        createCompletedEvent({
+          purchaseShape: "subscription_monthly",
+          subscription: SUB_ID,
+        }),
+      );
+      mockAdmin({ productPrice: { price_cents: 4000 } });
+      confirmFresh();
+      mockSubscriptionsRetrieve.mockResolvedValue({
+        id: SUB_ID,
+        status: "active",
+        cancel_at_period_end: false,
+        items: { data: [{ id: "si_1", price: { id: "price_1" }, current_period_end: 1900000000 }] },
+      });
+
+      await POST(createWebhookRequest());
+
+      const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+      expect(htmlContent).not.toContain("Nothing was charged today.");
     });
 
     it("states no price when the product is not sold in the session's currency", async () => {
@@ -1478,7 +1518,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       // A blank figure beside a product name reads as "free", so the whole
       // price line is omitted rather than left empty — and the mail still goes.
       const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-      expect(htmlContent).not.toContain("Price:");
+      expect(htmlContent).not.toContain(">Price</td>");
       expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
     });
 

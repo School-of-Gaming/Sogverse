@@ -2576,10 +2576,10 @@
       },
       "heading": "Valmista tuli!",
       "subheading": {
-        "consumer_club": "{participantName} on ilmoitettu kerhoon {productName}.",
-        "municipality_club": "{participantName} on ilmoitettu kerhoon {productName}.",
-        "camp": "{participantName} on ilmoitettu leirille {productName}.",
-        "event": "{participantName} osallistuu tapahtumaan {productName}."
+        "consumer_club": "{participantName} on ilmoitettu toimintaan {productName}.",
+        "municipality_club": "{participantName} on ilmoitettu toimintaan {productName}.",
+        "camp": "{participantName} on ilmoitettu toimintaan {productName}.",
+        "event": "{participantName} on liittynyt toimintaan {productName}."
       },
       "self": {
         "subject": {
@@ -2589,13 +2589,19 @@
           "event": "Osallistut tapahtumaan {productName}"
         },
         "subheading": {
-          "consumer_club": "Sinut on ilmoitettu kerhoon {productName}.",
-          "municipality_club": "Sinut on ilmoitettu kerhoon {productName}.",
-          "camp": "Sinut on ilmoitettu leirille {productName}.",
-          "event": "Osallistut tapahtumaan {productName}."
+          "consumer_club": "Sinut on ilmoitettu toimintaan {productName}.",
+          "municipality_club": "Sinut on ilmoitettu toimintaan {productName}.",
+          "camp": "Sinut on ilmoitettu toimintaan {productName}.",
+          "event": "Olet liittynyt toimintaan {productName}."
         },
         "waitlist": {
-          "subheading": "Olet jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu."
+          "subheading": "Olet jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu.",
+          "next2": {
+            "consumer_club": "Säilytät paikkasi jonossa koko kauden ajan.",
+            "municipality_club": "Säilytät paikkasi jonossa koko kauden ajan.",
+            "camp": "Säilytät paikkasi jonossa koko leirin ajan.",
+            "event": "Säilytät paikkasi jonossa koko tapahtuman ajan."
+          }
         }
       },
       "typeLabel": {
@@ -2613,11 +2619,11 @@
       },
       "nextTitle": "Mitä seuraavaksi tapahtuu",
       "next": {
-        "placement": "{participantName} liitetään Gedun ohjaamaan ryhmään. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
-        "placementSelf": "Sinut liitetään Gedun ohjaamaan ryhmään. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+        "placement": "{participantName} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+        "placementSelf": "Sinut sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
         "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
         "upfront": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
-        "free": "Tästä ei veloiteta mitään."
+        "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksu veloitetaan {date}."
       },
       "waitlist": {
         "subject": "{participantName} on jonotuslistalla – {productName}",
@@ -2625,17 +2631,21 @@
         "heading": "Olet jonotuslistalla",
         "subheading": "{participantName} on jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu.",
         "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
-        "next2": "Näet jonotustilanteesi milloin tahansa Oma SOG -sivulla."
+        "summaryTitle": "Jonotuspaikkasi",
+        "forLabel": "Jonotuslistalla",
+        "next2": {
+          "consumer_club": "{participantName} säilyttää paikkansa jonossa koko kauden ajan.",
+          "municipality_club": "{participantName} säilyttää paikkansa jonossa koko kauden ajan.",
+          "camp": "{participantName} säilyttää paikkansa jonossa koko leirin ajan.",
+          "event": "{participantName} säilyttää paikkansa jonossa koko tapahtuman ajan."
+        },
+        "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
       },
       "invite": {
-        "sectionLabel": "Tapaamisajat",
         "attached": "Viestin liitteenä on kalenterikutsu. Kun hyväksyt sen, kaikki tapaamiset siirtyvät kalenteriisi.",
         "summary": "{productName} – {participantName}",
         "locationOnline": "Verkossa – Oma SOG",
         "locationInPerson": "{site}, {address}",
-        "scheduleWeekly": "Joka {days} klo {startTime}–{endTime}",
-        "scheduleDays": "{days} klo {startTime}–{endTime}",
-        "scheduleOnce": "Klo {startTime}–{endTime}",
         "zoneNote": "Kellonajat ovat {zone}.",
         "zoneName": {
           "europeHelsinki": "Suomen aikaa",
@@ -2643,16 +2653,36 @@
           "europeLondon": "Britannian aikaa",
           "europeStockholm": "Ruotsin aikaa"
         },
-        "dateRange": "Ajalla {startDate} – {endDate}",
-        "dateFrom": "Alkaen {startDate}",
-        "dateOn": "Päivämäärä: {date}",
         "whereOnline": "Tapaamiset ovat verkossa Oma SOG -sivulla, ja puhehuone avautuu {minutes} minuuttia ennen tapaamisen alkua.",
         "whereInPerson": "Tapaamispaikka on {site}.",
         "whereAddress": "Osoite: {address}",
         "link": "Kaikki tiedot ilmoittautumisesta löytyvät Oma SOG -sivulta: {url}",
         "questions": "Kysyttävää? Kirjoita osoitteeseen {supportEmail}."
       },
-      "dashboardButton": "Siirry Oma SOG -sivulle"
+      "dashboardButton": "Siirry Oma SOG -sivulle",
+      "summaryTitle": "Tilauksesi",
+      "forLabel": {
+        "consumer_club": "Ilmoitettu",
+        "municipality_club": "Ilmoitettu",
+        "camp": "Ilmoitettu",
+        "event": "Liittynyt"
+      },
+      "overview": {
+        "title": "Hyvä tietää",
+        "schedule": "Aikataulu",
+        "where": "Missä",
+        "format": "Muoto",
+        "online": "Verkossa",
+        "tbd": "Vahvistetaan myöhemmin",
+        "ageRange": "Ikähaarukka",
+        "audience": "Kohderyhmä",
+        "language": "Kieli",
+        "ages": "Ikä {min}–{max}",
+        "audienceParents": "Vanhemmille",
+        "audienceFamilies": "Perheille",
+        "audienceFamiliesWithAges": "Perheille, ikä {min}–{max}"
+      },
+      "keepBrowsing": "Jatka selailua"
     },
     "verifyEmail": {
       "subject": "Vahvista sähköpostiosoitteesi",

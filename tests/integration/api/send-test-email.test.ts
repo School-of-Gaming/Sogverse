@@ -260,7 +260,13 @@ describe("POST /api/admin/send-test-email", () => {
       productType: "consumer_club",
       mode: "subscription",
       priceAmount: "€40.00",
+      firstChargeDate: "none",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      shopUrl: "https://sogverse.sog.gg/shop",
+      // The page facts the mail mirrors, which the schema requires whole too.
+      ageRange: "8-12",
+      audience: "gamers",
+      spokenLanguageCode: "fi",
       // The calendar half of the form, which the schema requires whole. No
       // slots, so these sends carry no invitation — what is checked here is the
       // route's param handling, and a schedule would drag a calendar document

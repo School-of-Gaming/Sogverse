@@ -3281,7 +3281,13 @@
           "event": "You’re joining {productName}."
         },
         "waitlist": {
-          "subheading": "You’re on the waitlist for {productName}. We’ll let you know if a seat opens."
+          "subheading": "You’re on the waitlist for {productName}. We’ll let you know if a seat opens.",
+          "next2": {
+            "consumer_club": "You keep your place in line for the whole term.",
+            "municipality_club": "You keep your place in line for the whole term.",
+            "camp": "You keep your place in line for the camp.",
+            "event": "You keep your place in line for the event."
+          }
         }
       },
       "typeLabel": {
@@ -3299,11 +3305,11 @@
       },
       "nextTitle": "What happens next",
       "next": {
-        "placement": "We’ll place {participantName} in a group with a Gedu. The sessions will then appear in My SOG.",
-        "placementSelf": "We’ll place you in a group with a Gedu. The sessions will then appear in My SOG.",
+        "placement": "We’ll place {participantName} in a group with a Gedu. The sessions will then appear under My SOG.",
+        "placementSelf": "We’ll place you in a group with a Gedu. The sessions will then appear under My SOG.",
         "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
         "upfront": "This was a one-time payment — there’s nothing more to pay.",
-        "free": "There’s nothing to pay for this one."
+        "firstCharge": "Nothing was charged today. Your first payment is on {date}."
       },
       "waitlist": {
         "subject": "{participantName} is on the waitlist for {productName}",
@@ -3311,17 +3317,21 @@
         "heading": "You’re on the waitlist",
         "subheading": "{participantName} is on the waitlist for {productName}. We’ll let you know if a seat opens.",
         "next1": "We’ll email you the moment a seat opens.",
-        "next2": "You can see where you stand in My SOG at any time."
+        "summaryTitle": "Your waitlist spot",
+        "forLabel": "Waitlisted",
+        "next2": {
+          "consumer_club": "{participantName} keeps their place in line for the whole term.",
+          "municipality_club": "{participantName} keeps their place in line for the whole term.",
+          "camp": "{participantName} keeps their place in line for the camp.",
+          "event": "{participantName} keeps their place in line for the event."
+        },
+        "next3": "You can keep track of your waitlist spot anytime in My SOG."
       },
       "invite": {
-        "sectionLabel": "Session times",
         "attached": "A calendar invitation is attached to this email. Accepting it adds every session to your calendar.",
         "summary": "{productName} – {participantName}",
         "locationOnline": "Online – My SOG",
         "locationInPerson": "{site}, {address}",
-        "scheduleWeekly": "Every {days}, {startTime}–{endTime}",
-        "scheduleDays": "{days}, {startTime}–{endTime}",
-        "scheduleOnce": "{startTime}–{endTime}",
         "zoneNote": "Times are given in {zone}.",
         "zoneName": {
           "europeHelsinki": "Finland time",
@@ -3329,16 +3339,36 @@
           "europeLondon": "United Kingdom time",
           "europeStockholm": "Sweden time"
         },
-        "dateRange": "From {startDate} to {endDate}",
-        "dateFrom": "From {startDate}",
-        "dateOn": "On {date}",
         "whereOnline": "Sessions run online in My SOG, and the voice room opens {minutes} minutes before each session starts.",
         "whereInPerson": "Sessions run at {site}.",
         "whereAddress": "Address: {address}",
         "link": "Everything about this signup is in My SOG: {url}",
         "questions": "Questions? Write to {supportEmail}."
       },
-      "dashboardButton": "Go to My SOG"
+      "dashboardButton": "Go to My SOG",
+      "summaryTitle": "Your order",
+      "forLabel": {
+        "consumer_club": "Enrolled",
+        "municipality_club": "Registered",
+        "camp": "Signed up",
+        "event": "Joined"
+      },
+      "overview": {
+        "title": "Good to know",
+        "schedule": "Schedule",
+        "where": "Where",
+        "format": "Format",
+        "online": "Online",
+        "tbd": "To be confirmed",
+        "ageRange": "Age range",
+        "audience": "Audience",
+        "language": "Language",
+        "ages": "Ages {min}–{max}",
+        "audienceParents": "For parents",
+        "audienceFamilies": "For families",
+        "audienceFamiliesWithAges": "For families, ages {min}–{max}"
+      },
+      "keepBrowsing": "Keep browsing"
     },
     "verifyEmail": {
       "subject": "Verify your email address",

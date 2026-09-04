@@ -11,13 +11,13 @@ import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
 import { deriveRegistrationState } from "./derive-registration-state";
-import { formatProductLocation } from "./format-product-location";
-import { audienceLabelKey } from "./product-audience";
+import { formatProductLocation } from "@/lib/products/format-product-location";
+import { audienceLabelKey } from "@/lib/products/product-audience";
 import { formatProductPrice } from "./format-product-price";
 import {
   formatProductSchedule,
   scheduleCardLines,
-} from "./format-product-schedule";
+} from "@/lib/products/format-product-schedule";
 import {
   type BrowseCardFooterLeft,
   type LocationLine,

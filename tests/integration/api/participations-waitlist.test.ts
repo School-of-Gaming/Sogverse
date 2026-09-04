@@ -125,9 +125,16 @@ function mockAuthenticatedCustomer() {
 }
 
 /**
- * The two reads behind the confirmation mail, on the caller's own client: the
- * product with its translations, and both people in one query (on a self seat
- * they are the same row).
+ * The three reads behind the confirmation mail, on the caller's own client: the
+ * product with its translations, both people in one query (on a self seat they
+ * are the same row), and the schedule and location the mail's "Good to know"
+ * facts are composed from.
+ *
+ * That third read runs on the waitlist path too, because the mail is the
+ * confirmation page's twin and the page states those facts for a waitlisted
+ * seat as well. Only the site's *details* are unreadable through a customer's
+ * own client, and nothing built from them reaches a waitlist mail — a place in
+ * a queue composes no calendar entry.
  */
 function mockReadsForConfirmationEmail(
   { participantFirstName = "Aino" }: { participantFirstName?: string } = {},
@@ -142,11 +149,25 @@ function mockReadsForConfirmationEmail(
                 Promise.resolve({
                   data: {
                     product_type: "consumer_club",
+                    timezone: "Europe/Helsinki",
+                    start_date: null,
+                    end_date: null,
+                    is_remote: true,
+                    min_age: 8,
+                    max_age: 12,
+                    for_gamers: true,
+                    for_parents: false,
+                    spoken_language_code: "en",
                     product_translations: [{ locale: "en", name: "Test Club" }],
                   },
                   error: null,
                 }),
             }),
+            single: () =>
+              Promise.resolve({
+                data: { schedule_slots: [], locations: null },
+                error: null,
+              }),
           }),
         }),
       };
@@ -605,9 +626,10 @@ describe("POST /api/participations/waitlist", () => {
     await settleDeferred();
 
     const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-    expect(htmlContent).not.toContain("Price");
-    // It points at the live answer instead of freezing one.
-    expect(htmlContent).toContain("where you stand in My SOG");
+    expect(htmlContent).not.toContain(">Price</td>");
+    // It points at the live answer instead of freezing one — the same sentence
+    // the confirmation page's own waitlist list ends on.
+    expect(htmlContent).toContain("keep track of your waitlist spot");
     // The request carries no trusted Host, so the link falls back to the
     // canonical site URL rather than to anything the request could name.
     expect(htmlContent).toContain("https://test.sogverse.local/parent");

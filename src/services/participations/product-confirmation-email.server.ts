@@ -20,6 +20,8 @@ import type { InvitationSlot } from "@/lib/email-templates/product-confirmation-
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
+import { formatProductLocation } from "@/lib/products/format-product-location";
+import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { getOrigin } from "@/lib/url";
 import { formatCurrencyFromCents } from "@/lib/utils";
 import type { AppSupabaseClient } from "@/types";
@@ -97,6 +99,21 @@ export interface ProductConfirmationEmailInput {
    * the free and waitlist modes have no price and never consult it.
    */
   currency?: SupportedCurrency;
+  /**
+   * When the first subscription invoice falls, as a true instant (ISO) — for a
+   * club bought before it starts, where the parent completed Checkout at €0 and
+   * is owed the real date in the same breath. The confirmation page states the
+   * same line from the same rule.
+   *
+   * **Only the Stripe webhook passes one, because only the Stripe webhook knows
+   * it without asking.** It has just retrieved the subscription to write the
+   * `family_subscriptions` row, so the period end is in its hand; every other
+   * send site would have to make a Stripe read or wait for a row it has not
+   * written yet, and a billing line is never worth a round trip on a path that
+   * must not fail. Absent, the mail simply states no first-charge bullet —
+   * which is what a signup billed at checkout wants anyway.
+   */
+  firstChargeAt?: string | null;
 }
 
 /**
@@ -135,16 +152,22 @@ async function send({
   participationId,
   mode: sendMode,
   currency,
+  firstChargeAt = null,
 }: ProductConfirmationEmailInput): Promise<void> {
-  // A waitlist join reads no schedule at all, and that is a rule about the
-  // CLIENT rather than an optimisation: this is the one call site that hands
-  // over the caller's own session, and `site_details` grants SELECT to
-  // `authenticated` with policies for admins and gedus only — a customer's
-  // client matches neither, so the embed would come back silently empty and the
-  // mail would state a site with no address. A place in a queue is not a seat
-  // either, so there is nothing for a calendar to hold. Every enrolled mode
+  // A waitlist join composes no calendar object — a place in a queue is not a
+  // seat — so nothing built from `site_details` reaches its mail.
+  //
+  // **That is what makes the one read below sound on every path**, and it is a
+  // fact about the CLIENT rather than an optimisation: this is the one call
+  // site that hands over the caller's own session, and `site_details` grants
+  // SELECT to `authenticated` with policies for admins and gedus only, so on a
+  // waitlist join that embed comes back silently empty. The rest of the read is
+  // anon-readable — the schedule rows and a location's own names are what the
+  // public browse grid paints — so the "Good to know" facts the mail mirrors
+  // from the confirmation page arrive on every mode. Every enrolled mode
   // arrives on the admin client (the checkout route, the Stripe webhook and the
-  // seat-offer answer all pass one), which is what makes the read below sound.
+  // seat-offer answer all pass one), which is what makes the site's address and
+  // note readable exactly where a calendar entry is about to state them.
   const wantsSchedule = sendMode !== "waitlist";
 
   // Unrelated reads, so they run together — the people know nothing about the
@@ -155,7 +178,10 @@ async function send({
     client
       .from("products")
       .select(
-        "product_type, billing_mode, timezone, start_date, end_date, is_remote, product_translations(locale, name, short_description)",
+        // The last five are the "Good to know" facts the mail states because
+        // the confirmation page states them — the mail is that page's twin, so
+        // its overview card reads the same columns through the same formatters.
+        "product_type, billing_mode, timezone, start_date, end_date, is_remote, min_age, max_age, for_gamers, for_parents, spoken_language_code, product_translations(locale, name, short_description)",
       )
       .eq("id", productId)
       // Embedded resources come back unordered, so a product without a
@@ -169,23 +195,26 @@ async function send({
       .from("profiles")
       .select("id, first_name, last_name, email, locale")
       .in("id", [customerId, participantId]),
-    wantsSchedule
-      ? client
-          .from("products")
-          .select(
-            // `notes` here is the FAMILY-facing site note — how to find the
-            // room, where to park. The staff-only note lives in
-            // `site_staff_details` and is never read on this path.
-            "schedule_slots(weekday, start_time, duration_minutes), locations(name, name_i18n, site_details(address, notes))",
-          )
-          .eq("id", productId)
-          .single()
-      : null,
+    client
+      .from("products")
+      .select(
+        // `notes` here is the FAMILY-facing site note — how to find the room,
+        // where to park. The staff-only note lives in `site_staff_details` and
+        // is never read on this path.
+        //
+        // `parent:parent_id(...)` is the column-name form on purpose: the
+        // `locations!parent_id` spelling resolves to a location's *children*
+        // and answers `[]` for every leaf, which is how "Foo, undefined"
+        // reaches a page.
+        "schedule_slots(weekday, start_time, duration_minutes), locations(name, name_i18n, parent:parent_id(name, name_i18n), site_details(address, notes))",
+      )
+      .eq("id", productId)
+      .single(),
   ]);
 
   if (productResult.error) throw productResult.error;
   if (peopleResult.error) throw peopleResult.error;
-  if (scheduleResult?.error) throw scheduleResult.error;
+  if (scheduleResult.error) throw scheduleResult.error;
 
   const people = peopleResult.data;
   const customer = people.find((row) => row.id === customerId);
@@ -239,7 +268,10 @@ async function send({
   // My SOG rather than the seat's page, which needs a group the seat usually
   // does not have yet — see the composer's note on `dashboardUrl`.
   const dashboardUrl = `${origin}${ROUTES.customer.dashboard}`;
-  const site = scheduleResult?.data.locations ?? null;
+  // The page's other button, same origin — "Keep browsing" goes back to the
+  // shop, exactly as it does on the confirmation page.
+  const shopUrl = `${origin}${ROUTES.shop}`;
+  const site = scheduleResult.data.locations;
   const isSelfSeat = participantId === customerId;
   const t = await getEmailTranslator(locale);
   const priceAmount = await resolvePriceAmount(client, {
@@ -248,6 +280,8 @@ async function send({
     currency,
     locale,
   });
+
+  const slots = scheduleResult.data.schedule_slots;
 
   const content = resolveProductConfirmation(t, locale, {
     participantName,
@@ -259,9 +293,44 @@ async function send({
     productType: product.product_type,
     mode,
     priceAmount,
+    // Only a deferred subscription has one, and only the Stripe webhook knows
+    // it — see the input's own note. Rendered through the same rule the
+    // confirmation page renders it with, in the product's zone, because a mail
+    // has no viewer zone to project a clamped instant into.
+    firstChargeDate:
+      firstChargeAt && mode === "subscription"
+        ? formatFirstChargeDate(
+            firstChargeAt,
+            product.start_date,
+            product.timezone,
+            locale,
+            product.timezone,
+          )
+        : null,
     dashboardUrl,
+    shopUrl,
+    // The page's "Good to know" card, from the same columns and through the
+    // same formatters. The location goes through the shared rule rather than
+    // being re-derived here, so "Where" says what the page says.
+    overview: {
+      timezone: product.timezone,
+      startDate: product.start_date,
+      endDate: product.end_date,
+      slots,
+      isRemote: product.is_remote,
+      location: formatProductLocation(
+        { is_remote: product.is_remote, product_type: product.product_type, locations: site },
+        locale,
+      ),
+      minAge: product.min_age,
+      maxAge: product.max_age,
+      forGamers: product.for_gamers,
+      forParents: product.for_parents,
+      spokenLanguageCode: product.spoken_language_code,
+      now: new Date(),
+    },
     invitation:
-      scheduleResult === null
+      !wantsSchedule
         ? null
         : {
             participationId,
@@ -273,7 +342,7 @@ async function send({
             timezone: product.timezone,
             startDate: product.start_date,
             endDate: product.end_date,
-            slots: scheduleResult.data.schedule_slots.map(
+            slots: slots.map(
               (slot): InvitationSlot => ({
                 weekday: slot.weekday,
                 // `time without time zone` comes back as `HH:MM:SS`.

@@ -260,6 +260,14 @@ async function handleCheckoutCompleted(
   // gamer×club), so there's nothing to find-or-merge — just insert, keyed to the
   // participation. Idempotent on replay via the UNIQUE participation_id /
   // stripe_subscription_id (insert and swallow 23505).
+  // The confirmation mail's "your first payment is on …" line, and this handler
+  // is the only send site that gets it for free: the subscription is retrieved
+  // just below to write the row, so the period end is already in hand. It is a
+  // *deferred* first charge only where nothing moved today — a club bought
+  // before it starts completes Checkout at €0 — and only while the instant is
+  // still ahead of us; those two tests are the same pair the confirmation page
+  // makes against the ledger, asked here of the values that produced it.
+  let firstChargeAt: string | null = null;
   if (isSubscription && typeof session.subscription === "string") {
     const subId = session.subscription;
     const sub = await stripe.subscriptions.retrieve(subId, {
@@ -286,6 +294,14 @@ async function handleCheckoutCompleted(
     });
     if (subErr && subErr.code !== "23505") {
       throw subErr;
+    }
+
+    if (
+      (session.amount_total ?? 0) === 0 &&
+      periodEnd !== null &&
+      periodEnd * 1000 > Date.now()
+    ) {
+      firstChargeAt = new Date(periodEnd * 1000).toISOString();
     }
   }
 
@@ -347,6 +363,8 @@ async function handleCheckoutCompleted(
       // was built. Anything outside the supported set cannot be formatted, and
       // the mail then states no price rather than a wrong one.
       currency: isSupportedCurrency(currency) ? currency : undefined,
+      // Null on everything but a club bought before it starts — see above.
+      firstChargeAt,
     });
   }
 }

@@ -2579,7 +2579,7 @@
         "consumer_club": "L’inscription de {participantName} à {productName} est confirmée.",
         "municipality_club": "L’inscription de {participantName} à {productName} est confirmée.",
         "camp": "L’inscription de {participantName} à {productName} est confirmée.",
-        "event": "La participation de {participantName} à {productName} est confirmée."
+        "event": "L’inscription de {participantName} à {productName} est confirmée."
       },
       "self": {
         "subject": {
@@ -2592,10 +2592,16 @@
           "consumer_club": "Votre inscription à {productName} est confirmée.",
           "municipality_club": "Votre inscription à {productName} est confirmée.",
           "camp": "Votre inscription à {productName} est confirmée.",
-          "event": "Votre participation à {productName} est confirmée."
+          "event": "Votre inscription à {productName} est confirmée."
         },
         "waitlist": {
-          "subheading": "Vous êtes sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère."
+          "subheading": "Vous êtes sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère.",
+          "next2": {
+            "consumer_club": "Vous conservez votre place dans la file pendant toute la période.",
+            "municipality_club": "Vous conservez votre place dans la file pendant toute la période.",
+            "camp": "Vous conservez votre place dans la file pendant toute la durée du stage.",
+            "event": "Vous conservez votre place dans la file jusqu’à l’événement."
+          }
         }
       },
       "typeLabel": {
@@ -2615,9 +2621,9 @@
       "next": {
         "placement": "Nous placerons {participantName} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
         "placementSelf": "Nous vous placerons dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
-        "subscription": "Le prélèvement a lieu chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
+        "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
         "upfront": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
-        "free": "Il n’y a rien à régler pour cette inscription."
+        "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}."
       },
       "waitlist": {
         "subject": "{participantName} est sur la liste d’attente pour {productName}",
@@ -2625,17 +2631,21 @@
         "heading": "Vous êtes sur la liste d’attente",
         "subheading": "{participantName} est sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère.",
         "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
-        "next2": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
+        "summaryTitle": "Votre place en liste d’attente",
+        "forLabel": "En liste d’attente",
+        "next2": {
+          "consumer_club": "{participantName} conserve sa place dans la file pendant toute la période.",
+          "municipality_club": "{participantName} conserve sa place dans la file pendant toute la période.",
+          "camp": "{participantName} conserve sa place dans la file pendant toute la durée du stage.",
+          "event": "{participantName} conserve sa place dans la file jusqu’à l’événement."
+        },
+        "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
       },
       "invite": {
-        "sectionLabel": "Horaires des sessions",
         "attached": "Une invitation de calendrier est jointe à cet e-mail. En l’acceptant, vous ajoutez toutes les sessions à votre calendrier.",
         "summary": "{productName} – {participantName}",
         "locationOnline": "En ligne – Mon SOG",
         "locationInPerson": "{site}, {address}",
-        "scheduleWeekly": "Chaque {days}, {startTime}–{endTime}",
-        "scheduleDays": "{days}, {startTime}–{endTime}",
-        "scheduleOnce": "{startTime}–{endTime}",
         "zoneNote": "Les horaires sont donnés en {zone}.",
         "zoneName": {
           "europeHelsinki": "heure de Finlande",
@@ -2643,16 +2653,36 @@
           "europeLondon": "heure du Royaume-Uni",
           "europeStockholm": "heure de Suède"
         },
-        "dateRange": "Du {startDate} au {endDate}",
-        "dateFrom": "À partir du {startDate}",
-        "dateOn": "Le {date}",
         "whereOnline": "Les sessions ont lieu en ligne dans Mon SOG, et le salon vocal ouvre {minutes} minutes avant le début de chaque session.",
         "whereInPerson": "Les sessions ont lieu à {site}.",
         "whereAddress": "Adresse : {address}",
         "link": "Tout sur cette inscription se trouve dans Mon SOG : {url}",
         "questions": "Une question ? Écrivez à {supportEmail}."
       },
-      "dashboardButton": "Aller à Mon SOG"
+      "dashboardButton": "Aller à Mon SOG",
+      "summaryTitle": "Votre commande",
+      "forLabel": {
+        "consumer_club": "Inscription",
+        "municipality_club": "Inscription",
+        "camp": "Inscription",
+        "event": "Participation"
+      },
+      "overview": {
+        "title": "Bon à savoir",
+        "schedule": "Planning",
+        "where": "Où",
+        "format": "Format",
+        "online": "En ligne",
+        "tbd": "À confirmer",
+        "ageRange": "Tranche d’âge",
+        "audience": "Public",
+        "language": "Langue",
+        "ages": "{min}–{max} ans",
+        "audienceParents": "Pour les parents",
+        "audienceFamilies": "Pour les familles",
+        "audienceFamiliesWithAges": "Pour les familles, {min}–{max} ans"
+      },
+      "keepBrowsing": "Continuer à explorer"
     },
     "verifyEmail": {
       "subject": "Confirmez votre adresse e-mail",

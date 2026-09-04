@@ -3,6 +3,10 @@
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
+import {
+  languageDisplayName,
+  languageDisplayNames,
+} from "@/lib/i18n/language-name";
 
 /**
  * Resolve a language code to its name in the **viewer's UI locale** —
@@ -34,37 +38,16 @@ import { resolveLocale } from "@/lib/constants/locales";
 export function useLanguageNames(): (code: string, fallback?: string) => string {
   const uiLocale = resolveLocale(useLocale());
 
-  const displayNames = useMemo(() => {
-    try {
-      // fallback: "none" is load-bearing: the default ("code") makes `.of()`
-      // return the code itself for any well-formed tag Intl has no data for,
-      // so the `?? fallback` chain below would never fire and an unknown tag
-      // would render raw instead of its configured English name.
-      // "en" second: for a locale Intl has no data for (Klingon), a bare
-      // [uiLocale] falls back to the RUNTIME default locale — different on the
-      // server and each visitor's machine, i.e. a hydration mismatch. The
-      // explicit fallback makes the answer deterministic English everywhere.
-      return new Intl.DisplayNames([uiLocale, "en"], {
-        type: "language",
-        fallback: "none",
-      });
-    } catch {
-      return null;
-    }
-  }, [uiLocale]);
+  // The instance and the lookup both live in `@/lib/i18n/language-name`, with
+  // the reasoning above spelled out beside them — the signup confirmation email
+  // names a product's spoken language the same way and cannot call a hook, so
+  // the rule has one home and this is its React wrapper. All the hook adds is
+  // memoisation of the instance across renders.
+  const displayNames = useMemo(() => languageDisplayNames(uiLocale), [uiLocale]);
 
   return useMemo(
-    () => (code: string, fallback?: string) => {
-      // The easter-egg locale, by name rather than through Intl — see above.
-      if (code === "tlh") return fallback ?? code;
-      try {
-        return displayNames?.of(code) ?? fallback ?? code;
-      } catch {
-        // RangeError on a structurally invalid tag — the fallback is exactly
-        // for a code Intl refuses.
-        return fallback ?? code;
-      }
-    },
+    () => (code: string, fallback?: string) =>
+      languageDisplayName(displayNames, code, fallback),
     [displayNames],
   );
 }

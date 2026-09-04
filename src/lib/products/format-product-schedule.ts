@@ -62,11 +62,28 @@ export interface ScheduleTimeGroup {
   endTime: string;
 }
 
+/**
+ * The structural subset of a product row this formatter reads.
+ *
+ * Spelled out rather than `Pick`ed off the browse row, because the callers are
+ * no longer one query's shape: every family surface passes a browse or detail
+ * row, and the signup confirmation's mail passes a read that selects these five
+ * things and nothing else. One rule, whichever query fetched it.
+ */
+export interface ProductScheduleSubject {
+  product_type: ProductBrowseRow["product_type"];
+  start_date: string | null;
+  end_date: string | null;
+  timezone: string;
+  schedule_slots: readonly {
+    weekday: number;
+    start_time: string;
+    duration_minutes: number;
+  }[];
+}
+
 export interface FormatScheduleArgs {
-  product: Pick<
-    ProductBrowseRow,
-    "product_type" | "start_date" | "end_date" | "timezone" | "schedule_slots"
-  >;
+  product: ProductScheduleSubject;
   locale: string;
   /** Viewer's IANA zone — from `useTimezone()` (client) / `getServerTimezone()` (server). */
   timeZone: string;
@@ -269,6 +286,26 @@ export function renderScheduleLinesForDetail(
         : schedule.date;
       return [line];
     }
+  }
+}
+
+/**
+ * Whether this schedule states a clock face at all, as opposed to a date range,
+ * a lone date, or nothing.
+ *
+ * It exists for the one caller that has something to say about the *zone* the
+ * times are in: a sentence naming a timezone under a line that carries no time
+ * is answering a question nobody asked. Everything else reads the lines.
+ */
+export function scheduleStatesTimes(schedule: ProductScheduleSummary): boolean {
+  switch (schedule.kind) {
+    case "tbd":
+      return false;
+    case "recurring":
+    case "ranged":
+      return schedule.groups.length > 0;
+    case "single":
+      return schedule.time !== null;
   }
 }
 

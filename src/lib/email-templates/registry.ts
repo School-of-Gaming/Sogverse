@@ -12,10 +12,12 @@ import {
   type ProductConfirmationEmailOptions,
 } from "./product-confirmation";
 import type { InvitationSlot } from "./product-confirmation-invitation";
+import { formatProductLocation } from "@/lib/products/format-product-location";
 import {
   fail,
   isNoneToken,
   listEntries,
+  noneOrAgeRange,
   noneOrDate,
   noneOrText,
   optionalDate,
@@ -348,6 +350,24 @@ const INVITATION_TIMEZONE_OPTIONS = [
 ].map((value) => ({ label: value, value }));
 
 /**
+ * Who the product is sold to, as the one word the overview card renders rather
+ * than as the two booleans behind it — a form offering both flags separately
+ * offers the neither-flag row the schema's CHECK refuses. Gamers-only leads
+ * because it is the audience every product had before audiences existed, and
+ * because it is the shape whose cell states an age range.
+ */
+const PRODUCT_AUDIENCE_OPTIONS = [
+  { label: "Gamers (an age range)", value: "gamers" },
+  { label: "Parents", value: "parents" },
+  { label: "Families (an audience and an age range)", value: "families" },
+];
+
+/** The spoken languages a product can be delivered in, from codegen. */
+const SPOKEN_LANGUAGE_OPTIONS = Constants.public.Enums.spoken_language.map(
+  (value) => ({ label: value, value }),
+);
+
+/**
  * The product-confirmation form's two derived values. The seat select becomes
  * the boolean the builder takes, defaulting to the child case — which is what an
  * unfilled field in the testing UI means, and what every seat was before
@@ -411,6 +431,25 @@ function resolveProductConfirmationOptions(
   params: ProductConfirmationParams,
   now: Date,
 ): ProductConfirmationEmailOptions {
+  const startDate = optionalDate(params.startDate, "Start date");
+  const endDate = noneOrDate(params.endDate, "End date");
+  const slots = parseInvitationSlots(params.slots);
+  const isRemote = params.isRemote === "yes";
+  const siteName = params.siteName.trim() || null;
+  // The location as the page's own rule resolves it — the mail states "Where"
+  // in exactly the words the confirmation page does, so the shape it renders is
+  // that rule's output rather than a second reading of the same fields. The
+  // form has no parent-location field, so a test send shows a bare site.
+  const location = formatProductLocation(
+    {
+      is_remote: isRemote,
+      product_type: params.productType,
+      locations: siteName ? { name: siteName, name_i18n: null } : null,
+    },
+    "en",
+  );
+  const ages = noneOrAgeRange(params.ageRange, "Age range");
+
   return {
     participantName: params.participantName,
     isSelfSeat: params.isSelfSeat,
@@ -418,7 +457,34 @@ function resolveProductConfirmationOptions(
     productType: params.productType,
     mode: params.mode,
     priceAmount: params.priceAmount,
+    // Only a subscription ever states one, and the live send only knows the
+    // date on a club bought before it starts — so the token is what reaches
+    // the mail that states no billing line.
+    firstChargeDate: noneOrText(params.firstChargeDate),
     dashboardUrl: params.dashboardUrl,
+    shopUrl: params.shopUrl,
+    overview: {
+      timezone: params.timezone,
+      startDate,
+      endDate,
+      // The same schedule the invitation is composed from, in the column
+      // spelling the page's formatter reads. One list, two consumers: a form
+      // that could feed the words and the file different times would be a form
+      // whose mail and attachment disagree.
+      slots: slots.map((slot) => ({
+        weekday: slot.weekday,
+        start_time: slot.startTime,
+        duration_minutes: slot.durationMinutes,
+      })),
+      isRemote,
+      location,
+      minAge: ages?.min ?? null,
+      maxAge: ages?.max ?? null,
+      forGamers: params.audience !== "parents",
+      forParents: params.audience !== "gamers",
+      spokenLanguageCode: params.spokenLanguageCode,
+      now,
+    },
     invitation: {
       // Minted when the form names none, exactly as the explorer mints a UID:
       // the identifier is a function of the seat, and a test send has no seat.
@@ -437,15 +503,15 @@ function resolveProductConfirmationOptions(
       // text input posts its placeholder.
       shortDescription: noneOrText(params.shortDescription),
       timezone: params.timezone,
-      startDate: optionalDate(params.startDate, "Start date"),
+      startDate,
       // Three more of the token fields, alongside the description above and the
       // schedule below. Every one of them is a text input, so the absence is a
       // typed word rather than a cleared box — see `FORM_NONE_TOKEN` for why an
       // empty one cannot carry it.
-      endDate: noneOrDate(params.endDate, "End date"),
-      slots: parseInvitationSlots(params.slots),
-      isRemote: params.isRemote === "yes",
-      siteName: params.siteName.trim() || null,
+      endDate,
+      slots,
+      isRemote,
+      siteName,
       siteAddress: noneOrText(params.siteAddress),
       siteNote: noneOrText(params.siteNote),
       attendeeName: params.attendeeName,
@@ -614,6 +680,18 @@ const productConfirmationParamsSchema = z.object({
   mode: z.enum(PRODUCT_CONFIRMATION_MODES),
   priceAmount: z.string().nullable(),
   dashboardUrl: z.string().url(),
+  shopUrl: z.string().url(),
+
+  // --- The "Good to know" facts the mail states, exactly as the page does. ---
+  //
+  // The schedule, the zone, the dates and the site are shared with the calendar
+  // block below rather than doubled: one form field feeds both, so a test send
+  // cannot make the words and the file disagree. These four are the facts the
+  // calendar has no use for.
+  firstChargeDate: z.string(),
+  ageRange: z.string(),
+  audience: z.enum(["gamers", "parents", "families"]),
+  spokenLanguageCode: z.enum(Constants.public.Enums.spoken_language),
 
   // --- What the calendar invitation is composed from. ---
   //
@@ -1285,7 +1363,33 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "productType", label: "Product Type", type: "select", options: PRODUCT_TYPE_OPTIONS },
       { key: "mode", label: "Outcome", type: "select", options: PRODUCT_CONFIRMATION_MODE_OPTIONS },
       { key: "priceAmount", label: "Formatted Price", placeholder: "€40.00" },
+      {
+        key: "firstChargeDate",
+        label: `Formatted first-charge date (\`${FORM_NONE_TOKEN}\` for a signup billed at checkout)`,
+        // What the live send composes for `en` through the shared first-charge
+        // rule: a club bought before it starts renders that bare start date.
+        placeholder: "13 Jan 2027",
+      },
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
+      { key: "shopUrl", label: "Shop URL", placeholder: "https://sogverse.sog.gg/shop" },
+
+      {
+        key: "ageRange",
+        label: `Good to know – Age range, \`8-12\` (\`${FORM_NONE_TOKEN}\` for a product with none)`,
+        placeholder: "8-12",
+      },
+      {
+        key: "audience",
+        label: "Good to know – Who the product is for",
+        type: "select",
+        options: PRODUCT_AUDIENCE_OPTIONS,
+      },
+      {
+        key: "spokenLanguageCode",
+        label: "Good to know – Spoken language",
+        type: "select",
+        options: SPOKEN_LANGUAGE_OPTIONS,
+      },
 
       {
         key: "slots",

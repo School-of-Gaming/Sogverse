@@ -12,13 +12,21 @@ import {
 } from "@/lib/calendar-invitations/invitation";
 import { SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
-import { formatDateOnly } from "@/lib/utils";
 import type { ProductType } from "@/types";
 import type { EmailTranslator } from "./translator";
 
 /**
  * The signup confirmation's calendar invitation — a product's schedule as one
- * iCalendar object, plus the sentences the mail and the document both state.
+ * iCalendar object, and the sentences the document itself states.
+ *
+ * **The mail's own schedule section is no longer composed here**, and that is
+ * the boundary worth knowing. The mail is the confirmation page's twin, so it
+ * states the schedule in the page's words, through the page's formatter
+ * (`@/lib/products/product-overview-facts`). This module used to write a second
+ * set of sentences for it, which meant one product's schedule had two
+ * renderings that could disagree the first time either was corrected. What is
+ * left here is the document: its properties, and the notes a parent reads
+ * inside the entry weeks later.
  *
  * **It lives here rather than beside the builder because it knows what a club
  * is.** `src/lib/calendar-invitations/` mirrors RFC 5545 and is deliberately
@@ -96,23 +104,6 @@ export interface ProductConfirmationInvitation {
   /** The object's identity — what a later update or cancellation must restate. */
   uid: string;
   ics: string;
-  /**
-   * The schedule in words: one line per distinct time, then the zone, then the
-   * dates.
-   *
-   * **These are the mail's, not the document's.** The mail's "Session times"
-   * section is the only place they are stated — a calendar client draws the
-   * recurrence, the clock face and the zone from the properties themselves, so
-   * the entry's own notes say none of it and cannot fall out of step with what
-   * a later message changes. They are composed here because the schedule is
-   * resolved here and composing it twice is how the two would disagree.
-   */
-  scheduleLines: string[];
-  /**
-   * Where it happens — and these *are* in both, because nothing renders a site
-   * note or a voice-room window out of a `LOCATION` string.
-   */
-  placeLines: string[];
 }
 
 const DAY_MS = 86_400_000;
@@ -369,51 +360,6 @@ function resolveSchedule({
   };
 }
 
-// --- The words ---
-
-/**
- * A weekday's name in the reader's language.
- *
- * 2024-01-01 was a Monday, so a UTC-pinned walk from it lands index `0` on
- * Monday — the app's own weekday convention. `Intl` rather than a message key:
- * weekday names are data every locale already has, and a translated list of
- * seven would be seven more strings to keep correct in five files.
- */
-function weekdayName(locale: string, weekday: number): string {
-  return new Intl.DateTimeFormat(locale, {
-    weekday: "long",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(2024, 0, 1 + weekday)));
-}
-
-/**
- * A clock face in the reader's language — `16:00` in English, `16.00` in
- * Finnish.
- *
- * It is a wall clock rather than an instant, so it is formatted from a
- * UTC-pinned time of day and carries no zone: the zone is stated once, on its
- * own line, rather than repeated after every time.
- *
- * `hour12: false` is pinned rather than left to the locale, exactly as the seat
- * offer's deadline is: `en` would otherwise set this as "04:00 PM" while every
- * in-app surface stating the same schedule sets it as "16:00", and a family
- * comparing a mail against My SOG should not have to convert.
- */
-function formatClock(locale: string, minutesOfDay: number): string {
-  return new Intl.DateTimeFormat(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(1970, 0, 1, 0, minutesOfDay)));
-}
-
-/** `HH:MM` as minutes past midnight. */
-function minutesOf(time: string): number {
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours * 60 + minutes;
-}
-
 /**
  * Each zone a product can be authored in, and the message key naming it.
  *
@@ -460,101 +406,13 @@ const zoneNameKeyByZone: ReadonlyMap<string, (typeof ZONE_NAME_KEY)[ProductTimez
  * UTC takes no key: it is a mark rather than a word, and it is the explorer's
  * zone rather than any product's.
  */
-function zoneName(t: EmailTranslator, timezone: string): string {
+export function zoneName(t: EmailTranslator, timezone: string): string {
   if (isUtcZone(timezone)) return UTC_TIMEZONE;
   const key = zoneNameKeyByZone.get(timezone);
   // Unreachable: the composer refuses every zone outside this table before it
   // reaches a sentence. The raw zone is the honest answer if that ever changes.
   if (key === undefined) return timezone;
   return t(`productConfirmation.invite.zoneName.${key}`);
-}
-
-/**
- * The schedule in words: one line per distinct time, then the zone, then the
- * dates the run covers.
- *
- * Grouped by clock face rather than listed per weekday, because "Every Monday
- * and Wednesday, 16:00–17:00" is one fact and two lines saying the same times
- * on different days is two facts a reader has to compare. A mixed-time camp
- * gets one line per time, which is exactly the difference worth showing.
- *
- * **"Every" is a claim about repetition, and a run too short to repeat must not
- * make it.** A camp running Monday to Friday of one week meets each of those
- * weekdays exactly once, so "Every Monday, Tuesday, Wednesday, Thursday and
- * Friday" promises a second week that does not exist. The days and the clock
- * face are still the fact worth stating, so the short form states them and
- * drops the word alone.
- */
-function scheduleInWords({
-  t,
-  locale,
-  slots,
-  productType,
-  timezone,
-  startDate,
-  endDate,
-}: {
-  t: EmailTranslator;
-  locale: string;
-  slots: readonly InvitationSlot[];
-  productType: ProductType;
-  timezone: string;
-  startDate: string;
-  endDate: string | null;
-}): string[] {
-  const byShape = new Map<string, InvitationSlot[]>();
-  for (const slot of [...slots].sort((a, b) => a.weekday - b.weekday)) {
-    const existing = byShape.get(shapeOf(slot));
-    if (existing) existing.push(slot);
-    else byShape.set(shapeOf(slot), [slot]);
-  }
-
-  // A run whose first and last day are fewer than seven days apart holds each
-  // weekday at most once, so nothing in it repeats and the word "every" would
-  // be describing a second week the product does not have.
-  const repeats =
-    endDate === null || parseDay(endDate) - parseDay(startDate) >= 7 * DAY_MS;
-
-  const lines = [...byShape.values()].map((group) => {
-    const start = minutesOf(group[0].startTime);
-    const times = {
-      startTime: formatClock(locale, start),
-      endTime: formatClock(locale, start + group[0].durationMinutes),
-    };
-    // An event happens once, so naming its weekday would be stating the date
-    // twice — the date line below already says which day it is.
-    if (productType === "event") return t("productConfirmation.invite.scheduleOnce", times);
-    const days = new Intl.ListFormat(locale, {
-      style: "long",
-      type: "conjunction",
-    }).format(group.map((slot) => weekdayName(locale, slot.weekday)));
-    return repeats
-      ? t("productConfirmation.invite.scheduleWeekly", { ...times, days })
-      : t("productConfirmation.invite.scheduleDays", { ...times, days });
-  });
-
-  lines.push(
-    t("productConfirmation.invite.zoneNote", { zone: zoneName(t, timezone) }),
-  );
-
-  // The dates are bare calendar dates with no clock face, so they are read and
-  // rendered UTC-pinned — re-anchoring one to anybody's zone would shift it off
-  // by a day.
-  const from = formatDateOnly(startDate, locale, { dateStyle: "long" });
-  if (productType === "event") {
-    lines.push(t("productConfirmation.invite.dateOn", { date: from }));
-  } else if (endDate === null) {
-    lines.push(t("productConfirmation.invite.dateFrom", { startDate: from }));
-  } else {
-    lines.push(
-      t("productConfirmation.invite.dateRange", {
-        startDate: from,
-        endDate: formatDateOnly(endDate, locale, { dateStyle: "long" }),
-      }),
-    );
-  }
-
-  return lines;
 }
 
 /** Where the sessions happen — online, or at a named site with its own note. */
@@ -761,15 +619,6 @@ export function composeProductConfirmationInvitation(
   });
   if (schedule === null || input.startDate === null) return null;
 
-  const scheduleLines = scheduleInWords({
-    t,
-    locale,
-    slots: input.slots,
-    productType: input.productType,
-    timezone: input.timezone,
-    startDate: input.startDate,
-    endDate: input.endDate,
-  });
   const placeLines = placeInWords({
     t,
     isRemote: input.isRemote,
@@ -843,5 +692,5 @@ export function composeProductConfirmationInvitation(
 
   if (!built.ok) return null;
 
-  return { uid, ics: built.ics, scheduleLines, placeLines };
+  return { uid, ics: built.ics };
 }

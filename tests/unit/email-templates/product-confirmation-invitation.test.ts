@@ -203,9 +203,6 @@ describe("the shapes a product's schedule takes", () => {
     expect(lineStartingWith(invitation!.ics, "DTSTART")).toBe(
       "DTSTART;TZID=Europe/Helsinki:20270104T160000",
     );
-    // The *stated* dates still say when the club runs from, because that is a
-    // fact about the product rather than about this seat.
-    expect(invitation!.scheduleLines.join("\n")).toContain("2026");
   });
 
   it("skips the day whose clock face has already gone by", () => {
@@ -626,7 +623,6 @@ describe("where it happens", () => {
     });
 
     expect(description(invitation!.ics)).toContain("The door on the north side.");
-    expect(invitation!.placeLines).toContain("The door on the north side.");
   });
 
   it("states the voice window from the constant the room itself reads", () => {
@@ -650,25 +646,23 @@ describe("what the entry's notes say", () => {
   });
 
   /**
-   * The schedule sentences are the *mail's*. A client draws the recurrence,
-   * the clock face and the zone from the properties themselves, so a second
-   * copy in the notes could only ever contradict what a later message changed.
+   * The schedule in words is the *mail's*, and the mail composes it from the
+   * confirmation page's own formatter. A client draws the recurrence, the clock
+   * face and the zone out of the properties themselves, so a second copy in the
+   * notes could only ever contradict what a later message changed.
    */
-  it("states the schedule in words for the mail, and not in the entry", () => {
-    const invitation = compose({
-      slots: [
-        { weekday: 0, startTime: "16:00", durationMinutes: 60 },
-        { weekday: 2, startTime: "16:00", durationMinutes: 60 },
-      ],
-    });
-
-    expect(invitation!.scheduleLines[0]).toBe("Every Monday and Wednesday, 16:00–17:00");
-    expect(invitation!.scheduleLines.join("\n")).toContain(
-      "Times are given in Finland time.",
+  it("says nothing about when the sessions are", () => {
+    const text = description(
+      compose({
+        slots: [
+          { weekday: 0, startTime: "16:00", durationMinutes: 60 },
+          { weekday: 2, startTime: "16:00", durationMinutes: 60 },
+        ],
+      })!.ics,
     );
 
-    const text = description(invitation!.ics);
-    expect(text).not.toContain("Every Monday and Wednesday");
+    expect(text).not.toContain("Monday");
+    expect(text).not.toContain("16:00");
     expect(text).not.toContain("Finland time");
     // The term's own dates go with it — the run's bounds are the `RRULE`'s
     // `UNTIL` and the client's to render.
@@ -686,168 +680,6 @@ describe("what the entry's notes say", () => {
     expect(
       description(compose({ isSelfSeat: true, participantName: "Marja" })!.ics),
     ).not.toContain("group");
-  });
-
-  /**
-   * One name for the whole run, never a seasonal reading. A name read off a
-   * single instant would label a January term "Standard Time" for a schedule
-   * that is mostly summer, and a camp starting in July would carry the summer
-   * name into its September sessions.
-   */
-  it("names the zone the same way on both sides of a transition", () => {
-    const winter = compose({ startDate: "2027-01-04" })!.scheduleLines.join("\n");
-    // A club whose first occurrence is in July: the same line, the same name.
-    const summer = compose({
-      startDate: "2027-07-05",
-      now: new Date("2027-06-01T08:00:00Z"),
-    })!.scheduleLines.join("\n");
-
-    expect(winter).toContain("Finland time");
-    expect(summer).toContain("Finland time");
-    expect(winter).not.toContain("Standard Time");
-    expect(summer).not.toContain("Summer Time");
-  });
-
-  /**
-   * The name is a message key per zone rather than an `Intl` reading, because
-   * CLDR has no generic long name for every zone in every locale and `Intl`
-   * answers a gap with a differently shaped string — a label and a separator
-   * spliced into the sentence. `Europe/London` in Finnish and French was
-   * exactly that: "Ajat ovat aikavyöhykkeellä aikavyöhyke: Iso-Britannia."
-   */
-  const ZONES = [
-    "Europe/Helsinki",
-    "Europe/Paris",
-    "Europe/London",
-    "Europe/Stockholm",
-  ];
-
-  it.each(SUPPORTED_LOCALES)("names every supported zone in %s", async (locale) => {
-    const translator = await getEmailTranslator(locale);
-
-    for (const timezone of ZONES) {
-      const invitation = composeProductConfirmationInvitation(translator, locale, {
-        ...base,
-        timezone,
-      });
-      const lines = invitation!.scheduleLines.join("\n");
-
-      // No key path standing in for a missing name, and no raw IANA identifier
-      // standing in for a missing key.
-      expect(lines).not.toContain("productConfirmation.");
-      expect(lines).not.toContain(timezone);
-    }
-  });
-
-  /**
-   * The two locales the `Intl` reading broke in, pinned as whole sentences.
-   * Every one of these came back as "aikavyöhyke: Iso-Britannia" shaped output
-   * for London, which is the failure a per-zone key exists to make impossible.
-   */
-  it.each([
-    ["fi", "Europe/Helsinki", "Kellonajat ovat Suomen aikaa."],
-    ["fi", "Europe/London", "Kellonajat ovat Britannian aikaa."],
-    ["fr", "Europe/Helsinki", "Les horaires sont donnés en heure de Finlande."],
-    ["fr", "Europe/London", "Les horaires sont donnés en heure du Royaume-Uni."],
-  ] as const)("reads as a sentence: %s / %s", async (locale, timezone, sentence) => {
-    const translator = await getEmailTranslator(locale);
-    const invitation = composeProductConfirmationInvitation(translator, locale, {
-      ...base,
-      timezone,
-    });
-
-    expect(invitation!.scheduleLines).toContain(sentence);
-  });
-
-  it("gives one line per distinct time when the slots disagree", () => {
-    const invitation = compose({
-      productType: "camp",
-      endDate: "2027-01-12",
-      slots: [
-        { weekday: 0, startTime: "11:00", durationMinutes: 180 },
-        { weekday: 1, startTime: "13:00", durationMinutes: 120 },
-      ],
-    });
-
-    expect(invitation!.scheduleLines[0]).toBe("Every Monday, 11:00–14:00");
-    expect(invitation!.scheduleLines[1]).toBe("Every Tuesday, 13:00–15:00");
-  });
-
-  /**
-   * "Every" is a claim about repetition, and a run whose first and last day are
-   * fewer than seven days apart holds each weekday at most once — so the word
-   * would promise a second week the camp does not have. The days and the clock
-   * face are still the fact worth stating; only the word goes.
-   */
-  describe("a run too short to repeat", () => {
-    /** Monday 4 January to Friday 8 January 2027: each weekday once. */
-    const ONE_WEEK: Partial<ProductConfirmationInvitationInput> = {
-      productType: "camp",
-      startDate: "2027-01-04",
-      endDate: "2027-01-08",
-      slots: [0, 1, 2, 3, 4].map((weekday) => ({
-        weekday,
-        startTime: "10:00",
-        durationMinutes: 120,
-      })),
-    };
-
-    it("names the days and the times without saying Every", () => {
-      const invitation = compose(ONE_WEEK);
-
-      expect(invitation!.scheduleLines[0]).toBe(
-        "Monday, Tuesday, Wednesday, Thursday, and Friday, 10:00–12:00",
-      );
-    });
-
-    it("still says Every once the run is long enough to repeat one", () => {
-      const invitation = compose({ ...ONE_WEEK, endDate: "2027-01-15" });
-
-      expect(invitation!.scheduleLines[0]).toBe(
-        "Every Monday, Tuesday, Wednesday, Thursday, and Friday, 10:00–12:00",
-      );
-    });
-
-    /**
-     * Each locale's own word for it, so no message file keeps the repetition.
-     * `tlh` is absent because its word is a joke rather than a translation, and
-     * pinning it would make a Klingon rewrite look like a regression.
-     */
-    const EVERY = [
-      ["en", "Every"],
-      ["fi", "Joka"],
-      ["sv", "Varje"],
-      ["fr", "Chaque"],
-    ] as const;
-
-    it.each(EVERY)("drops the repeating word in %s", async (locale, every) => {
-      const translator = await getEmailTranslator(locale);
-      const short = composeProductConfirmationInvitation(translator, locale, {
-        ...base,
-        ...ONE_WEEK,
-      });
-      const long = composeProductConfirmationInvitation(translator, locale, {
-        ...base,
-        ...ONE_WEEK,
-        endDate: "2027-01-15",
-      });
-
-      expect(short!.scheduleLines[0]).not.toContain(every);
-      expect(long!.scheduleLines[0]).toContain(every);
-    });
-  });
-
-  it("states an open-ended run as a start with no end", () => {
-    const lines = compose()!.scheduleLines.join("\n");
-
-    expect(lines).toContain("From ");
-    expect(lines).not.toContain(" to ");
-  });
-
-  it("states a bounded run as a range", () => {
-    const lines = compose({ endDate: "2027-05-31" })!.scheduleLines.join("\n");
-
-    expect(lines).toMatch(/From .+ to .+/);
   });
 
   it("ends with the My SOG link and a way to reach a human", () => {
@@ -873,85 +705,32 @@ describe("what the entry's notes say", () => {
  * A missing key renders as its own path — `productConfirmation.invite.…` — so a
  * sweep that looks for the namespace catches an English fallback wherever it
  * leaked, in the notes, the title or the location alike. Each locale also pins
- * one word only its own translation produces, so a file that silently held the
- * English string would fail too.
+ * one phrase only its own translation produces, so a file that silently held
+ * the English string would fail too.
+ *
+ * There is no `Intl` reading left to check here: the weekday, the clock face
+ * and the list conjunction moved out with the schedule sentences, which the
+ * mail now composes through the confirmation page's own formatter. What remains
+ * is message copy and the document's properties.
  */
 describe("every locale composes a whole document", () => {
   const PINNED: Record<string, string> = {
-    en: "Session times",
-    fi: "Tapaamisajat",
-    sv: "Tider för tillfällena",
-    fr: "Horaires des sessions",
-    tlh: "ghom poHmey",
-  };
-
-  /**
-   * A word `Intl` produces for this locale and no other, asserted **inside the
-   * document**.
-   *
-   * The four `Intl` call sites here — the weekday, the clock face, the list
-   * conjunction and the zone name — each take the locale as an argument, and a
-   * hardcoded `"en"` at any of them would be invisible to a sweep that only
-   * checks the message files answered. Monday is the base fixture's one slot,
-   * so its name in each language is the cheapest thing to pin.
-   *
-   * `tlh` has no `Intl` data of its own and falls back to English weekday
-   * names, which is why it is absent rather than pinned to "Monday": that
-   * assertion would pass for a locale that had leaked English everywhere.
-   */
-  const WEEKDAY: Partial<Record<(typeof SUPPORTED_LOCALES)[number], string>> = {
-    en: "Monday",
-    fi: "maanantai",
-    sv: "måndag",
-    fr: "lundi",
-  };
-
-  /**
-   * The base fixture's 16:00 slot, as each locale sets a clock face.
-   *
-   * Finnish separates hours from minutes with a period where English, Swedish
-   * and French use a colon, so a clock formatter hardcoded to `en` reads
-   * Finnish as `16:00` and fails here.
-   *
-   * `tlh` is absent for the same reason it is absent from the weekday map, and
-   * the reason is stronger than "it falls back to English": `Intl` has no data
-   * for it at all, so it resolves to the *runtime default* locale — `en-FI` on
-   * one machine, `en-US` on CI — and nothing about its output is stable across
-   * environments. A pin on it would pass or fail by the machine's `LANG`.
-   */
-  const CLOCK: Partial<Record<(typeof SUPPORTED_LOCALES)[number], string>> = {
-    en: "16:00",
-    fi: "16.00",
-    sv: "16:00",
-    fr: "16:00",
+    en: "the voice room opens",
+    fi: "puhehuone avautuu",
+    sv: "röstrummet öppnar",
+    fr: "le salon vocal ouvre",
+    tlh: "ghogh pa’",
   };
 
   it.each(SUPPORTED_LOCALES)("%s", async (locale) => {
     const translator = await getEmailTranslator(locale);
     const invitation = composeProductConfirmationInvitation(translator, locale, {
       ...base,
-      isRemote: false,
-      siteName: "Kallion kirjasto",
-      siteAddress: "Viides linja 11",
       siteNote: "The door on the north side.",
     });
 
     expect(invitation).not.toBeNull();
     expect(invitation!.ics).not.toContain("productConfirmation.");
-    expect(invitation!.scheduleLines.join("\n")).not.toContain("productConfirmation.");
-    expect(invitation!.placeLines.join("\n")).not.toContain("productConfirmation.");
-    // The section label is not part of the document, so it is asserted through
-    // the translator directly — the pin exists to prove this locale's own file
-    // answered rather than English standing in for it.
-    expect(translator("productConfirmation.invite.sectionLabel")).toBe(PINNED[locale]);
-
-    // On the schedule line, because that is the only thing the four `Intl`
-    // call sites feed — the document itself states no weekday and no clock
-    // face in words, it states properties a client renders.
-    const clock = CLOCK[locale];
-    if (clock !== undefined) expect(invitation!.scheduleLines[0]).toContain(clock);
-
-    const weekday = WEEKDAY[locale];
-    if (weekday !== undefined) expect(invitation!.scheduleLines[0]).toContain(weekday);
+    expect(description(invitation!.ics)).toContain(PINNED[locale]);
   });
 });

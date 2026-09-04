@@ -81,6 +81,28 @@ export function noneOrText(value: string): string | null {
   return isNoneToken(value) ? null : value.trim() || null;
 }
 
+/**
+ * An age range as one field — `8-12`, or `none` for a product that states no
+ * ages at all.
+ *
+ * One control rather than two, because the two columns behind it are
+ * both-or-neither in the schema and a form offering a minimum without a maximum
+ * would compose a product row the database refuses. The separator is tolerant
+ * of the dashes a person actually types.
+ */
+export function noneOrAgeRange(
+  value: string,
+  field: string,
+): { min: number; max: number } | null {
+  if (isNoneToken(value)) return null;
+  const parts = value.trim().split(/\s*[-–—]\s*/);
+  if (parts.length !== 2) fail(field, "two ages separated by a dash", value);
+  const min = requireWholeNumber(parts[0], field, 0);
+  const max = requireWholeNumber(parts[1], field, 0);
+  if (max < min) fail(field, "a range whose second age is not the smaller", value);
+  return { min, max };
+}
+
 export function requireTime(value: string, field: string): string {
   const trimmed = value.trim();
   if (!TIME_PATTERN.test(trimmed)) fail(field, "a 24-hour clock time as HH:MM", value);

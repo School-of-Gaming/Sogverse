@@ -19,7 +19,7 @@ import {
 import {
   audienceAdmitsRole,
   type ProductAudience,
-} from "@/components/public/products/product-audience";
+} from "@/lib/products/product-audience";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useParentGamerLinks, useSearchUsers, useUsers } from "@/services/users";
