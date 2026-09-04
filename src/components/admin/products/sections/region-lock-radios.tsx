@@ -14,9 +14,10 @@
  * commonest answer, and it wears a `Globe` rather than a flag: it is the
  * absence of a country being chosen, so breaking the flag rhythm is the point.
  *
- * Only seeded countries are offered. An unseeded entry in the country config is
- * a declared hierarchy with no rows beneath it, so locking to one would produce
- * a value no family's stored location could ever match.
+ * Every country in the config is offered, which is the whole of the rule now
+ * that the config holds only countries whose rows are seeded: a declared
+ * hierarchy with no rows beneath it would let an admin lock a product to a
+ * value no family's stored location could ever match.
  */
 
 import { useMemo } from "react";
@@ -24,7 +25,7 @@ import { Globe } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { FLAGS, type FlagComponent } from "@/components/ui/flags";
 import { countryDisplayName } from "@/components/public/products/region-lock/region-gate";
-import { SEEDED_COUNTRIES } from "@/lib/constants/location-hierarchies";
+import { SUPPORTED_COUNTRIES } from "@/lib/constants/location-hierarchies";
 import { resolveLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,7 @@ import { cn } from "@/lib/utils";
 // — `react-hooks/static-components` recognises that and flags any function call
 // that hands back a component instead. The `| undefined` value side is required
 // without `noUncheckedIndexedAccess`, which would otherwise type a miss as a
-// hit; today every seeded country has a flag, and this renders the card without
+// hit; today every supported country has a flag, and this renders the card without
 // one rather than crashing if that ever stops being true.
 const FLAG_BY_COUNTRY: Record<string, FlagComponent | undefined> = FLAGS;
 
@@ -59,7 +60,7 @@ export function RegionLockRadios({
   const options = useMemo(
     () => [
       { code: null, name: null },
-      ...SEEDED_COUNTRIES.map((country) => ({
+      ...SUPPORTED_COUNTRIES.map((country) => ({
         code: country.code,
         name: countryDisplayName(country.code, uiLocale),
       })),

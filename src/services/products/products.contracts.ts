@@ -4,7 +4,7 @@ import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import {
   isProductTimezone,
-  isSeededCountry,
+  isSupportedCountry,
 } from "@/lib/constants/location-hierarchies";
 
 /**
@@ -86,16 +86,16 @@ const productDataBase = z.object({
   // pointing at a country whose municipalities were never seeded is one no
   // family's stored location could satisfy — an unpassable gate that looks from
   // the admin form exactly like a working one. The database deliberately holds
-  // only the shape invariant: which countries are seeded changes as rows land,
-  // so an enum or FK there would need a migration per country and would turn an
-  // already-stored lock into a violation the day one is un-seeded.
+  // only the shape invariant: which countries we operate in changes as rows
+  // land, so an enum or FK there would need a migration per country and would
+  // turn an already-stored lock into a violation the day one is dropped.
   //
   // `refine` rather than `z.enum` because `CountryConfig.code` is typed
   // `string`, so a tuple built from it narrows to nothing a literal union could
   // be made of — the enum would buy an error message and no type at all.
   region_lock_country: z
     .string()
-    .refine(isSeededCountry, {
+    .refine(isSupportedCountry, {
       message: "Not a country products can be locked to",
     })
     .nullable(),

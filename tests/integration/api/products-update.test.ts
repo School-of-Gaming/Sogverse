@@ -451,9 +451,9 @@ describe("POST /api/admin/products/[id]/update", () => {
   });
 
   it("returns 400 for a country the lock cannot point at", async () => {
-    // Narrowed to the SEEDED countries rather than to the column's alpha-2
-    // shape: "JP" is well-formed, declared in SUPPORTED_COUNTRIES, and has no
-    // location rows, so a lock on it would be a gate nobody could ever pass.
+    // Narrowed to the countries we operate in rather than to the column's
+    // alpha-2 shape: "JP" is well-formed and not one of them, so it has no
+    // location rows and a lock on it would be a gate nobody could ever pass.
     mockAuthenticatedAdmin();
 
     const response = await POST(

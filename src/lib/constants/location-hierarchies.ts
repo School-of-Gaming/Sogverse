@@ -24,7 +24,7 @@ export interface HierarchyLevel {
 export interface CountryConfig {
   code: string;
   name: string;
-  hierarchy: HierarchyLevel[];
+  hierarchy: readonly HierarchyLevel[];
   /**
    * The level a parent identifies with, and the level a `site` is parented
    * under. **One field for both roles, because the architecture requires them
@@ -36,16 +36,13 @@ export interface CountryConfig {
    *
    * It is therefore always the level immediately above `site` in this country's
    * own `hierarchy` — a unit test pins that structurally, for every country
-   * here. It is `municipality` for every country whose rows are seeded today,
-   * which a second assertion pins separately, because the two facts are not the
-   * same fact: the speculative US/GB/JP entries below honestly declare
-   * `district` *below* municipality, so their anchor is `district`. They just
-   * have no rows.
-   *
-   * The day one of those is seeded is the day the pickers' hardcoded
-   * `municipality` pickable types have to generalize to anchor-driven, and the
-   * seeded-country assertion is the tripwire that forces that work then. Until
-   * then the pickers keep their current types with no new machinery.
+   * here. It is `municipality` everywhere today, which a second assertion pins
+   * separately, because the two facts are not the same fact: a country whose
+   * hierarchy puts `district` below municipality would anchor there, and the
+   * day one arrives is the day the pickers' hardcoded `municipality` pickable
+   * types have to generalize to anchor-driven. That second assertion is the
+   * tripwire which forces the work then; until then the pickers keep their
+   * current types with no new machinery.
    */
   anchor: LocationType;
   /**
@@ -58,37 +55,44 @@ export interface CountryConfig {
    * a non-empty tuple, not one string, because country↔timezone is not 1:1 —
    * and the first entry is the one an admin should read as the country's
    * ordinary answer.
+   *
+   * The zones named here are also the zones the calendar invitation ships
+   * `VTIMEZONE` rules for, and that lockstep is enforced by the compiler rather
+   * than by anybody remembering: see `ProductTimezone` below.
    */
   timezones: readonly [string, ...string[]];
-  /**
-   * Whether this country's region/municipality/district rows exist in the
-   * `locations` table.
-   *
-   * A declared flag rather than a query: it is what the anchor tripwire above
-   * reads, and a tripwire that fired only after a seed migration reached a
-   * database would fire too late to be useful. Seeding a country is adding its
-   * rows *and* flipping this — and if flipping it fails the assertion, that
-   * failure is the whole point.
-   */
-  seeded: boolean;
 }
 
 /**
- * Defines the strict hierarchy for each supported country.
+ * Defines the strict hierarchy for each country we operate in.
  * The UI only allows adding children in this order.
  * The DB can store any structure, but the admin UI enforces these.
  *
+ * **A country is in this list only once its region/municipality rows are
+ * seeded.** There is no speculative entry and no flag saying which entries are
+ * real: a declared hierarchy with nothing under it is a country an admin can
+ * pick and a family can never match, and the UK's entry — which read
+ * Nation → City → Borough for as long as it was speculation, and is not how the
+ * UK is governed — is what settled that. Adding a country is four things in one
+ * change: this entry, its ingestion config, its timezones, and the calendar's
+ * transition rules for those zones. The compiler and the tests hold all four
+ * together.
+ *
  * Location type labels are translated for the country's native language only.
- * A Finnish user sees Finland's hierarchy in Finnish but UK/US in English.
+ * A Finnish user sees Finland's hierarchy in Finnish but the UK's in English.
  * See src/services/locations/CLAUDE.md for the rationale.
+ *
+ * **`as const satisfies` rather than a plain annotation**, so each entry's
+ * `timezones` keeps its literal type: `ProductTimezone` below is derived from
+ * them, and an annotation would widen them all to `string` and take the whole
+ * lockstep with it.
  */
-export const SUPPORTED_COUNTRIES: CountryConfig[] = [
+export const SUPPORTED_COUNTRIES = [
   {
     code: "FI",
     name: "Finland",
     anchor: "municipality",
     timezones: ["Europe/Helsinki"],
-    seeded: true,
     hierarchy: [
       { type: "region", label: "Region", pluralLabel: "Regions", i18n: { fi: { label: "Maakunta", pluralLabel: "Maakunnat" } } },
       { type: "municipality", label: "Municipality", pluralLabel: "Municipalities", i18n: { fi: { label: "Kunta", pluralLabel: "Kunnat" } } },
@@ -102,7 +106,6 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     // Metropolitan France only. The overseas départements span a further ten
     // zones and would be listed here the day one of them is operated in.
     timezones: ["Europe/Paris"],
-    seeded: true,
     // France uses the `district` level Finland skips: région → département →
     // commune. `fr` is a supported UI locale, so every level carries its French
     // label pair per the rule in src/services/locations/CLAUDE.md.
@@ -114,30 +117,14 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     ],
   },
   {
-    code: "US",
-    name: "United States",
-    anchor: "district",
-    // Representative rather than complete, and honest about it: the US spans
-    // six zones and the day it is seeded is the day the rest of them are
-    // written here. Unseeded, so nothing offers this list yet.
-    timezones: ["America/New_York"],
-    seeded: false,
-    hierarchy: [
-      { type: "region", label: "State", pluralLabel: "States" },
-      { type: "municipality", label: "City", pluralLabel: "Cities" },
-      { type: "district", label: "School District", pluralLabel: "School Districts" },
-      { type: "site", label: "Site", pluralLabel: "Sites" },
-    ],
-  },
-  {
     code: "GB",
     name: "United Kingdom",
     anchor: "municipality",
     timezones: ["Europe/London"],
-    seeded: true,
-    // Nation → local authority. The speculative entry here used to read
-    // Nation → City → Borough, which is how the UK looks from outside and not
-    // how it is governed: "borough" is one of several words for the same rung
+    // Nation → local authority. This entry used to read Nation → City →
+    // Borough, back when it was speculation, which is how the UK looks from
+    // outside and not how it is governed: "borough" is one of several words for
+    // the same rung
     // (Scotland has council areas, Wales principal areas, Northern Ireland
     // districts, England a mixture of counties, unitaries and metropolitan
     // boroughs), and there is no administrative city level above them. "Local
@@ -156,94 +143,73 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     name: "Sweden",
     anchor: "municipality",
     timezones: ["Europe/Stockholm"],
-    seeded: true,
     hierarchy: [
       { type: "region", label: "County", pluralLabel: "Counties", i18n: { sv: { label: "Län", pluralLabel: "Län" } } },
       { type: "municipality", label: "Municipality", pluralLabel: "Municipalities", i18n: { sv: { label: "Kommun", pluralLabel: "Kommuner" } } },
       { type: "site", label: "Site", pluralLabel: "Sites", i18n: { sv: { label: "Plats", pluralLabel: "Platser" } } },
     ],
   },
-  {
-    code: "ES",
-    name: "Spain",
-    anchor: "municipality",
-    // Mainland and the Balearics. The Canaries sit an hour behind on
-    // Atlantic/Canary and join this list if Spain is ever seeded.
-    timezones: ["Europe/Madrid"],
-    seeded: false,
-    hierarchy: [
-      { type: "region", label: "Autonomous Community", pluralLabel: "Autonomous Communities" },
-      { type: "municipality", label: "City", pluralLabel: "Cities" },
-      { type: "site", label: "Site", pluralLabel: "Sites" },
-    ],
-  },
-  {
-    code: "JP",
-    name: "Japan",
-    anchor: "district",
-    timezones: ["Asia/Tokyo"],
-    seeded: false,
-    hierarchy: [
-      { type: "region", label: "Prefecture", pluralLabel: "Prefectures" },
-      { type: "municipality", label: "City", pluralLabel: "Cities" },
-      { type: "district", label: "Ward", pluralLabel: "Wards" },
-      { type: "site", label: "Site", pluralLabel: "Sites" },
-    ],
-  },
-];
+] as const satisfies readonly CountryConfig[];
+
+/** Whether a country code names one of the countries we operate in. */
+export function isSupportedCountry(code: string | null): boolean {
+  return SUPPORTED_COUNTRIES.some((c) => c.code === code);
+}
 
 /**
- * The countries whose region/municipality rows actually exist — the `seeded`
- * half of the list above, derived rather than restated so the two cannot drift.
+ * One of the zones a product may be authored in — every zone any supported
+ * country declares, and nothing else.
  *
- * This is the set any feature should offer when it asks an admin or a family to
- * *name a country we operate in*: an unseeded entry is a declared hierarchy with
- * nothing under it, so choosing one produces a value no stored location could
- * ever match. Order follows `SUPPORTED_COUNTRIES`.
+ * **This union is the lockstep.** The calendar invitation's hand-written
+ * `VTIMEZONE` table is a total `Record` over it, so a zone added to a country
+ * above does not build until its transition rules are written, and a rule for a
+ * zone no country declares does not build either. The two lists cannot drift in
+ * either direction, and neither can the admin form's dropdown, which is derived
+ * from the same entries below.
  */
-export const SEEDED_COUNTRIES: readonly CountryConfig[] =
-  SUPPORTED_COUNTRIES.filter((c) => c.seeded);
-
-/** Whether a country code names one of the seeded countries above. */
-export function isSeededCountry(code: string | null): boolean {
-  return SEEDED_COUNTRIES.some((c) => c.code === code);
-}
+export type ProductTimezone =
+  (typeof SUPPORTED_COUNTRIES)[number]["timezones"][number];
 
 /**
  * The zone a product is authored in unless an admin picks another one.
  *
  * Every product written before the picker existed carries this value, and the
  * create form still starts here: the great majority of what we run is Finnish,
- * so it is the answer that needs no thought.
+ * so it is the answer that needs no thought. Typed as a product zone rather than
+ * a string, so a default that stopped being a zone we operate in would not
+ * build.
  */
-export const DEFAULT_PRODUCT_TIMEZONE = "Europe/Helsinki";
+export const DEFAULT_PRODUCT_TIMEZONE: ProductTimezone = "Europe/Helsinki";
 
 /**
  * The zones the admin product form offers, in the order it offers them.
  *
- * Derived from the seeded countries' own `timezones` rather than listed
- * separately, so the set of zones a product can be authored in and the set of
- * countries we operate in cannot drift apart: seeding a country adds its zones
- * on the same commit, and the field being required means an entry cannot arrive
- * without them. Unseeded countries are excluded for the same reason
- * `SEEDED_COUNTRIES` excludes them — nothing we run happens there yet.
+ * Derived from the countries' own `timezones` rather than listed separately, so
+ * the set of zones a product can be authored in and the set of countries we
+ * operate in cannot drift apart: adding a country adds its zones on the same
+ * commit, and the field being required means an entry cannot arrive without
+ * them.
  *
  * `DEFAULT_PRODUCT_TIMEZONE` leads, then the rest in `SUPPORTED_COUNTRIES`
  * order, deduped because two countries may well share a zone.
  */
-export const PRODUCT_TIMEZONES: readonly string[] = [
-  ...new Set([
+export const PRODUCT_TIMEZONES: readonly ProductTimezone[] = [
+  ...new Set<ProductTimezone>([
     DEFAULT_PRODUCT_TIMEZONE,
-    ...SEEDED_COUNTRIES.flatMap((c) => c.timezones),
+    ...SUPPORTED_COUNTRIES.flatMap((c) => c.timezones),
   ]),
 ];
 
 /** Whether a string names one of the zones a product may be authored in. */
 export function isProductTimezone(value: string): boolean {
-  return PRODUCT_TIMEZONES.includes(value);
+  return PRODUCT_TIMEZONES.some((zone) => zone === value);
 }
 
-const countriesByCode = new Map(SUPPORTED_COUNTRIES.map((c) => [c.code, c]));
+// Keyed by plain `string`, not by the literal union the const list gives the
+// codes: the lookup below takes whatever a stored `country_code` column holds.
+const countriesByCode: ReadonlyMap<string, CountryConfig> = new Map(
+  SUPPORTED_COUNTRIES.map((c) => [c.code, c]),
+);
 
 /** Get the country config for a country code, or null if unsupported. */
 export function getCountryConfig(countryCode: string | null): CountryConfig | null {

@@ -19,7 +19,7 @@ import {
   ATTACHABLE_MARKETING_CONSENT_TYPES,
   isAttachableMarketingConsent,
 } from "@/lib/constants/marketing-consents";
-import { isSeededCountry } from "@/lib/constants/location-hierarchies";
+import { isSupportedCountry } from "@/lib/constants/location-hierarchies";
 import {
   isSupportedLocale,
   SUPPORTED_LOCALES,
@@ -856,16 +856,16 @@ export function existingFormState(
     tag: product.tag,
     // Nearly straight through — the column is already `string | null` and the
     // picker's "not region locked" option *is* null. The one filter is a stored
-    // code the picker cannot offer (a country un-seeded since the lock was set,
-    // or one written before this field existed): it loads as *unlocked* rather
-    // than as a value with no matching option, because a select whose value
-    // matches nothing shows the admin the first option while state holds
-    // something else, and the write contract — which only admits seeded
-    // countries — would then refuse every save of the product with an error
-    // about a field they were never shown. Loading it as null is the same
+    // code the picker cannot offer (a country dropped from the supported list
+    // since the lock was set, or one written before this field existed): it
+    // loads as *unlocked* rather than as a value with no matching option,
+    // because a select whose value matches nothing shows the admin the first
+    // option while state holds something else, and the write contract — which
+    // only admits countries we operate in — would then refuse every save of the
+    // product with an error about a field they were never shown. Loading it as null is the same
     // heal-on-write shape the uncapped-muni and locked-registration cases use:
     // the next save of anything at all normalises the row, visibly.
-    regionLockCountry: isSeededCountry(product.region_lock_country)
+    regionLockCountry: isSupportedCountry(product.region_lock_country)
       ? product.region_lock_country
       : null,
     // Straight through: a NOT NULL boolean column and a boolean field, with no
@@ -893,7 +893,7 @@ export function existingFormState(
       duration_minutes: s.duration_minutes,
     })),
     // Straight through from the join table. A stored slug this deploy cannot
-    // name is deliberately NOT filtered out the way an un-seeded region lock is
+    // name is deliberately NOT filtered out the way an unsupported region lock is
     // — the checkbox renders the raw slug and stays ticked, so a save made for
     // some other reason cannot silently drop a legal condition the product
     // really carries. The write contract admits any string for exactly this

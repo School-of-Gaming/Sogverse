@@ -80,7 +80,8 @@ document worth being able to send, precisely because what a client does with one
 unobvious.
 
 **Which of the two shapes a real product's invitation takes is decided by one question:
-whether every slot runs at the same clock face.** If it does — and every product in
+whether every slot runs at the same clock face**, and the signup confirmation's composer is
+where that question is asked. If it does — and every product in
 production does, as of 2026-09-04 — the whole schedule is one weekly rule with several
 weekdays in its `BYDAY`, and there is no override in the document at all. If it does not,
 the invitation is that rule plus one override per session that disagrees with it. Only a
@@ -120,16 +121,32 @@ survive — so its times are written as absolute instants whatever the form fiel
 Naming the zone anyway beside an absolute timestamp would be redundant on a forgiving
 reader and contradictory on a strict one.
 
-**The zone table is hand-written, one block per zone the tool offers, and what it covers
-is worth knowing.** Four of the five European-rule zones are the *same* rule seen from
-different offsets: the switch happens at 01:00 UTC on the last Sunday of March and the
-last Sunday of October, which is 01:00 local in London, 02:00 in Paris and Stockholm and
-03:00 in Helsinki — and one hour later in each in the autumn, because the autumn clock is
-read in the summer offset. `America/New_York` is the fifth and is a genuinely different
-rule (second Sunday of March, first Sunday of November, both at 02:00 local), which is
-the point of having it: a document that only ever described the EU rule could not show a
-client getting a US transition wrong. Anything outside the table still gets its `TZID`
-plus a note saying no rules travel with it.
+**The zone table is hand-written, and its key set is exactly the zones a product can be
+authored in.** That is a mechanism rather than a convention: the table is typed as a total
+`Record` over the product-zone union, which is itself derived from the timezones each
+supported country declares — so a zone added to a country does not build until its
+transition rules are written here, and a rule for a zone no country declares does not
+build either. The two lists cannot drift in either direction, and the admin form's own
+dropdown is derived from the same entries, so the picker can never offer a zone the
+invitation has no rules for. A runtime test holds the same equality both ways, because a
+`Record` type cannot stop a key being computed or deleted after the fact.
+
+What the table covers today is one rule seen from four offsets: the EU switch happens at
+01:00 UTC on the last Sunday of March and the last Sunday of October, which is 01:00 local
+in London, 02:00 in Paris and Stockholm and 03:00 in Helsinki — and one hour later in each
+in the autumn, because the autumn clock is read in the summer offset. They agree because
+everywhere we operate is under that rule; a zone with a different one joins the table by
+its country being added, not by being interesting.
+
+**UTC is the one zone the explorer offers that is not a product zone**, and it is here for
+the format rather than for the platform: it is how a document states absolute instants,
+which is a property worth being able to try. Nothing is authored in it.
+
+A zone outside the table still gets its `TZID` plus a note saying no rules travel with it.
+That branch is unreachable for a zone the admin form offers and is not dead: a stored
+`products.timezone` can name a zone the form no longer offers — the picker itself handles
+that case, adding the stored value back as an extra option — and the explorer's own form
+can be handed anything.
 
 **The day walk that enumerates the rule's occurrences is UTC-pinned end to end**, which
 is the only shape that survives a daylight-saving transition inside a run: stepping a
@@ -166,20 +183,31 @@ instance whether or not it satisfies the rule beside it — so the refusal has e
 meaning: every occurrence, the start included, is on the excluded list. A rule that ends
 before it begins is caught where the dates are read, and says so in those words.
 
-## The template is the only caller, and it must carry a plain-text body
+## Two callers, and both must carry a plain-text body
 
-A calendar invitation is an email template like any other — it lives in the email
-template registry, composes its parameters from a form, and is sent and previewed from
-the admin email testing tool at `/admin/testing`. What is not like any other is the text
-body: an Exchange mailbox fills the calendar entry's own notes from the message body, and
-with only HTML to work from it flattens the markup into them. So the mail that carries
-this document states its own words as text, and that text is what a Microsoft reader
-finds inside the entry.
+**There is the explorer, and there is a product mail.** The explorer is the template that
+lives in the email registry, composes its parameters from a form, and is sent and
+previewed from the admin email testing tool at `/admin/testing`. Its mail is incidental —
+a typed subject and a typed body in the house shell, nothing composed from the calendar's
+values — and it is in the shell rather than a bare paragraph because every mail this
+codebase can send is swept for house style, so a document that opted out would be the one
+render none of that reaches.
 
-The mail itself is incidental — a typed subject and a typed body in the house shell,
-nothing composed from the calendar's values. The shell rather than a bare paragraph
-because every mail this codebase can send is swept for house style, and a document that
-opted out would be the one render none of that reaches.
+**The second caller is the signup confirmation, and it is the one this module was built
+for.** It composes a family's invitation from a product's schedule: real sentences, in the
+reader's own language, about a club that meets on particular days. That composition does
+*not* live here — the rule at the top of this file still holds, and nothing in this
+directory knows what a club is. It lives beside the mail that sends it, and it reaches
+this module the way the explorer does: by handing over a plain description of one calendar
+object. The boundary is the point. A product-aware line in the builder would be the first
+of many, and the format's own behaviour would stop being separable from our wording.
+
+**Both mails carry a plain-text body, and for the same reason.** An Exchange mailbox fills
+the calendar entry's own notes from the message body, and with only HTML to work from it
+flattens the markup into them — table structure, tracking pixel and all. So a mail
+carrying one of these documents states its own words as text, and that text is what a
+Microsoft reader finds inside the entry weeks later. The signup mail states one only on
+the sends that actually carry a file, because that is the only reason it exists.
 
 ## What is verified, and what is not
 

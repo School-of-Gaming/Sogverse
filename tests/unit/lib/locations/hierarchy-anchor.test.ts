@@ -28,8 +28,9 @@ describe("country hierarchy anchors", () => {
   it("is the level immediately above `site` in the country's own hierarchy", () => {
     // A site is created directly beneath the row an admin confirmed in the
     // picker, so the anchor cannot be any other level without the picker
-    // handing the create route a parent it does not accept. This holds for
-    // US/GB/JP too, whose hierarchies put `district` below municipality.
+    // handing the create route a parent it does not accept. It holds whatever
+    // sits above the site level — France's hierarchy puts a `district` between
+    // region and commune.
     for (const country of SUPPORTED_COUNTRIES) {
       const siteIndex = country.hierarchy.findIndex((level) => level.type === "site");
       expect(siteIndex, `${country.code} declares no site level`).toBeGreaterThan(0);
@@ -37,24 +38,28 @@ describe("country hierarchy anchors", () => {
     }
   });
 
-  it("is `municipality` for every country whose rows are seeded", () => {
+  it("is `municipality` for every supported country", () => {
     // Not a law — a tripwire. The pickers hardcode `municipality` as their
     // pickable type (the product form's online-municipality field, a parent's
-    // own location), which is correct only while every seeded country anchors
-    // there. The day a district-below-municipality country is seeded, this
-    // fails, and generalizing those pickers to read the anchor is the work it
-    // is asking for. Do that work; do not relax this.
+    // own location), which is correct only while every country we operate in
+    // anchors there. The day a district-below-municipality country is added,
+    // this fails, and generalizing those pickers to read the anchor is the work
+    // it is asking for. Do that work; do not relax this.
     //
-    // The UK is what a seeded country looks like when the speculative entry was
-    // wrong: it was sketched Nation → City → Borough and anchored at
-    // `district`, and seeding it meant finding out the country has one
-    // local-authority rung and re-declaring it there. This tripwire is what
-    // made that a decision rather than an accident.
-    const seeded = SUPPORTED_COUNTRIES.filter((country) => country.seeded);
-    expect(seeded.map((country) => country.code).sort()).toEqual(["FI", "FR", "GB", "SE"]);
+    // The UK is what this list looked like while it still carried speculation:
+    // it was sketched Nation → City → Borough and anchored at `district`, and
+    // seeding it meant finding out the country has one local-authority rung and
+    // re-declaring it there. This tripwire is what made that a decision rather
+    // than an accident, and it is why the list holds no unseeded entries now.
+    expect(SUPPORTED_COUNTRIES.map((country) => country.code).sort()).toEqual([
+      "FI",
+      "FR",
+      "GB",
+      "SE",
+    ]);
 
-    for (const country of seeded) {
-      expect(country.anchor, `${country.code} is seeded, so its anchor`).toBe("municipality");
+    for (const country of SUPPORTED_COUNTRIES) {
+      expect(country.anchor, `${country.code} anchor`).toBe("municipality");
     }
   });
 });
@@ -90,16 +95,14 @@ describe("the ingestion config and the UI hierarchy config", () => {
     }
   });
 
-  it("agree on which countries are seeded at all", () => {
-    // `seeded` is a declared flag rather than a query, and this is what keeps
-    // it honest: a country gets rows by having an ingestion config entry, so
-    // the two sets are the same set. A flag flipped without an entry means a
-    // seed that cannot be generated; an entry without the flag means the anchor
-    // tripwire above stops covering a country whose rows are live.
+  it("name the same countries, in both directions", () => {
+    // A country is in the hierarchy config only once its rows exist, and rows
+    // exist by way of an ingestion entry, so the two sets are the same set. An
+    // entry with no hierarchy config is a seed nothing can label; a hierarchy
+    // config with no entry is a country an admin can pick and a family can
+    // never match — which is what this list used to carry and no longer does.
     const configured = Object.keys(COUNTRIES).sort();
-    const declared = SUPPORTED_COUNTRIES.filter((country) => country.seeded)
-      .map((country) => country.code)
-      .sort();
+    const declared = SUPPORTED_COUNTRIES.map((country) => country.code).sort();
 
     expect(configured).toEqual(declared);
   });
@@ -130,11 +133,11 @@ describe("the zones a product can be scheduled in", () => {
     }
   });
 
-  it("offers exactly the seeded countries' zones, default first", () => {
+  it("offers exactly the supported countries' zones, default first", () => {
     // Not a restatement of the config: it is the *derivation* that is pinned —
-    // seeded only, deduped, and led by the default so the create form's first
-    // option is the one it starts on. The day a fifth country is seeded this
-    // fails, which is the reminder that the picker grew.
+    // deduped, and led by the default so the create form's first option is the
+    // one it starts on. The day a fifth country is added this fails, which is
+    // the reminder that the picker grew.
     expect(PRODUCT_TIMEZONES).toEqual([
       "Europe/Helsinki",
       "Europe/Paris",

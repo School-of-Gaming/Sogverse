@@ -50,7 +50,7 @@ export interface ProductTypeConfig {
   countryBound: string | null;
   /**
    * Whether the form offers a **region lock** — one country whose families may
-   * enrol, chosen from the seeded entries of `SUPPORTED_COUNTRIES`. Off for
+   * enrol, chosen from `SUPPORTED_COUNTRIES`. Off for
    * municipality clubs and on for everything else.
    *
    * Two things about this flag are worth stating where it lives, because both
