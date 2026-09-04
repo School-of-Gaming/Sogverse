@@ -30,10 +30,10 @@
       "terms": "Användarvillkor",
       "antiBullying": "Mot mobbning och disciplin",
       "attributions": "Källor och licenser",
-      "roblox": "Roblox-speldesignprogram",
-      "robloxPrivacy": "Integritetspolicy för Roblox-programmet",
-      "robloxSafeguarding": "Barnskyddspolicy för Roblox-programmet",
-      "robloxTerms": "Användarvillkor för Roblox-programmet",
+      "roblox": "Skaparnas akademi",
+      "robloxPrivacy": "Integritetspolicy för Skaparnas akademi",
+      "robloxSafeguarding": "Barnskyddspolicy för Skaparnas akademi",
+      "robloxTerms": "Användarvillkor för Skaparnas akademi",
       "geduContract": "Gedu-avtal",
       "seatOffer": "Platserbjudande"
     }
@@ -1977,7 +1977,7 @@
         "heading": "Samtycke",
         "agree": "Jag har läst och godkänner dessa dokument.",
         "bundles": {
-          "robloxProgramme": "Jag har läst och godkänner Roblox-programmets <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>."
+          "robloxProgramme": "Jag har läst och godkänner Skaparnas akademis <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>."
         },
         "marketing": {
           "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden.",
@@ -3035,7 +3035,7 @@
   "roblox": {
     "hero": {
       "title": "Bygg<br></br><primary>Spela</primary><br></br><secondary>Äg det</secondary>",
-      "subtitle": "Ett gratis Roblox-speldesignprogram för tonåringar — från Lynx Educate och School of Gaming, i samarbete med Roblox.",
+      "subtitle": "Ett gratis speldesignprogram för tonåringar — från Lynx Educate och School of Gaming, i samarbete med Roblox.",
       "cta": "Häng med!"
     },
     "lockup": {
@@ -3172,14 +3172,14 @@
     "legal": {
       "roblox": "Ordmärket Roblox, Roblox-logotypen och Roblox Tilt är bland Roblox Corporations registrerade och oregistrerade varumärken i USA och andra länder. Används med tillstånd.",
       "lynx": "Lynx Educate och Lynx Educate-logotypen är varumärken som tillhör Lynx Educate. Används med tillstånd.",
-      "documents": "Dokument för Roblox-programmet",
+      "documents": "Dokument för Skaparnas akademi",
       "privacy": "Integritetspolicy",
       "safeguarding": "Barnskyddspolicy",
       "terms": "Användarvillkor"
     }
   },
   "robloxPrivacy": {
-    "title": "Integritetspolicy för Roblox-programmet",
+    "title": "Integritetspolicy för Skaparnas akademi",
     "subtitle": "För familjer som anmäler sig till Programmet för ungas digitala kreativitet i Frankrike, som drivs av Lynx Educate och School of Gaming och sponsras av Roblox.",
     "lastUpdated": "Senast uppdaterad: {date}",
     "intro": {
@@ -3208,7 +3208,7 @@
       "applies": {
         "heading": "Vem policyn gäller",
         "blocks": [
-          "Den här policyn gäller föräldrar, vårdnadshavare och unga som anmäler sig till Roblox program för ungas digitala kreativitet i Frankrike (Programmet).",
+          "Den här policyn gäller föräldrar, vårdnadshavare och unga som anmäler sig till Skaparnas akademi, programmet för ungas digitala kreativitet i Frankrike (Programmet).",
           "Programmet riktar sig till unga i åldern 8–17 år. En förälder eller vårdnadshavare måste göra anmälan och bekräfta att hen har rätt att anmäla barnet.",
           "Policyn omfattar anmälan till Programmet, administration, lärandeträffar, evenemang, support, barns trygghet och utvärdering av effekt. Den kompletterar School of Gamings <linkPrivacy>allmänna integritetspolicy</linkPrivacy>. Om de två policyerna står i konflikt med varandra när det gäller Programmet gäller den här programspecifika policyn.",
           "Barnets egen användning av ett Roblox-konto, Roblox Studio eller någon annan Roblox-tjänst omfattas av Roblox egen integritetspolicy och egna villkor.",
@@ -3576,7 +3576,7 @@
     }
   },
   "robloxSafeguarding": {
-    "title": "Barnskyddspolicy för Roblox-programmet",
+    "title": "Barnskyddspolicy för Skaparnas akademi",
     "subtitle": "Det här dokumentet kompletterar School of Gamings <linkDiscipline>policy mot mobbning</linkDiscipline>, som fortsatt gäller för vardagligt beteende under träffarna. Här beskrivs Lynx Educates och School of Gamings bredare ansvar för barns trygghet i Programmet, även vid fysiska evenemang.",
     "lastUpdated": "Senast granskad: {date}",
     "pendingContact": "En kontaktadress hos School of Gaming för trygghetsfrågor håller på att bekräftas och läggs till här.",
@@ -3635,7 +3635,7 @@
       "data": {
         "heading": "Uppgifter och foton",
         "blocks": [
-          "All fotografering, filmning och användning av ett barns bild styrs av de samtyckesval som beskrivs i <linkRobloxPrivacy>Integritetspolicyn för Roblox-programmet</linkRobloxPrivacy> – aldrig förutsatta, alltid frivilliga, alltid möjliga att ändra."
+          "All fotografering, filmning och användning av ett barns bild styrs av de samtyckesval som beskrivs i <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> – aldrig förutsatta, alltid frivilliga, alltid möjliga att ändra."
         ]
       },
       "review": {
@@ -3647,14 +3647,14 @@
     }
   },
   "robloxTerms": {
-    "title": "Användarvillkor för Roblox-programmet",
-    "subtitle": "Gäller familjer som anmäler sig till programmet Lynx Educate × School of Gaming × Roblox i Frankrike.",
+    "title": "Användarvillkor för Skaparnas akademi",
+    "subtitle": "Gäller familjer som anmäler sig till Skaparnas akademi i Frankrike – Lynx Educate × School of Gaming, i samarbete med Roblox.",
     "lastUpdated": "Uppdaterad: {date}",
     "pendingContact": "En kontaktadress hos School of Gaming håller på att bekräftas och läggs till här.",
     "intro": {
       "heading": "Kort sammanfattning",
       "blocks": [
-        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för Roblox-programmet. Det är ett gemensamt program mellan Lynx Educate och School of Gaming, sponsrat av Roblox. Om något är oklart, mejla support@lynxeducate.com."
+        "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för Skaparnas akademi. Det är ett gemensamt program mellan Lynx Educate och School of Gaming, sponsrat av Roblox. Om något är oklart, mejla support@lynxeducate.com."
       ]
     },
     "sections": {
@@ -3695,8 +3695,8 @@
       "information": {
         "heading": "Dina uppgifter",
         "blocks": [
-          "Hur vi använder dina och ditt barns uppgifter förklaras i vår <linkRobloxPrivacy>Integritetspolicy för Roblox-programmet</linkRobloxPrivacy>. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
-          "När du anmäler dig till ett Roblox-program delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter."
+          "Hur vi använder dina och ditt barns uppgifter förklaras i vår <linkRobloxPrivacy>Integritetspolicy för Skaparnas akademi</linkRobloxPrivacy>. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
+          "När du anmäler dig till Skaparnas akademi delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter."
         ]
       },
       "media": {
@@ -3775,11 +3775,11 @@
   },
   "consentDocuments": {
     "names": {
-      "robloxProgrammeTerms": "Användarvillkor för Roblox-programmet",
-      "robloxPrivacyPolicy": "Integritetspolicy för Roblox-programmet"
+      "robloxProgrammeTerms": "Användarvillkor för Skaparnas akademi",
+      "robloxPrivacyPolicy": "Integritetspolicy för Skaparnas akademi"
     },
     "bundles": {
-      "robloxProgramme": "Dokument för Roblox-programmet"
+      "robloxProgramme": "Dokument för Skaparnas akademi"
     }
   },
   "chat": {

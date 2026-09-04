@@ -30,10 +30,10 @@
       "terms": "Conditions générales",
       "antiBullying": "Lutte contre le harcèlement et discipline",
       "attributions": "Crédits et licences",
-      "roblox": "Programme de création de jeux Roblox",
-      "robloxPrivacy": "Politique de confidentialité du Programme Roblox",
-      "robloxSafeguarding": "Politique de protection de l’enfance du Programme Roblox",
-      "robloxTerms": "Conditions générales du Programme Roblox",
+      "roblox": "Académie des Créateurs",
+      "robloxPrivacy": "Politique de confidentialité de l’Académie des Créateurs",
+      "robloxSafeguarding": "Politique de protection de l’enfance de l’Académie des Créateurs",
+      "robloxTerms": "Conditions générales d’utilisation de l’Académie des Créateurs",
       "geduContract": "Contrat Gedu",
       "seatOffer": "Proposition de place"
     }
@@ -1977,7 +1977,7 @@
         "heading": "Consentement",
         "agree": "J’ai lu et j’accepte ces documents.",
         "bundles": {
-          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> du Programme Roblox."
+          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> de l’Académie des Créateurs."
         },
         "marketing": {
           "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres.",
@@ -3035,7 +3035,7 @@
   "roblox": {
     "hero": {
       "title": "Construisez<br></br><primary>Jouez</primary><br></br><secondary>Publiez</secondary>",
-      "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
+      "subtitle": "Un programme gratuit de création de jeux pour les ados, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
       "cta": "Lancez-vous !"
     },
     "lockup": {
@@ -3172,14 +3172,14 @@
     "legal": {
       "roblox": "Roblox, le logo Roblox et Roblox Tilt font partie des marques déposées et non déposées de Roblox Corporation aux États-Unis et dans d’autres pays. Utilisées avec autorisation.",
       "lynx": "Lynx Educate et le logo Lynx Educate sont des marques de Lynx Educate. Utilisées avec autorisation.",
-      "documents": "Documents du Programme Roblox",
+      "documents": "Documents de l’Académie des Créateurs",
       "privacy": "Politique de confidentialité",
       "safeguarding": "Politique de protection de l’enfance",
       "terms": "Conditions générales"
     }
   },
   "robloxPrivacy": {
-    "title": "Politique de confidentialité du Programme Roblox",
+    "title": "Politique de confidentialité de l’Académie des Créateurs",
     "subtitle": "À l’attention des familles qui inscrivent leur enfant au Programme de créativité numérique pour les jeunes en France, proposé par Lynx Educate et School of Gaming et parrainé par Roblox.",
     "lastUpdated": "Dernière mise à jour : {date}",
     "intro": {
@@ -3208,7 +3208,7 @@
       "applies": {
         "heading": "À qui s’applique cette politique",
         "blocks": [
-          "Cette politique s’applique aux parents, aux représentants légaux et aux jeunes qui s’inscrivent au Programme Roblox de créativité numérique pour les jeunes en France (le Programme).",
+          "Cette politique s’applique aux parents, aux représentants légaux et aux jeunes qui s’inscrivent à l’Académie des Créateurs, le programme de créativité numérique pour les jeunes en France (le Programme).",
           "Le Programme s’adresse aux jeunes de 8–17 ans. Un parent ou un représentant légal doit effectuer l’inscription et confirmer qu’il a bien qualité pour inscrire l’enfant.",
           "Cette politique couvre l’inscription au Programme, son administration, les sessions d’apprentissage, les événements, l’assistance, la protection de l’enfance et l’évaluation d’impact. Elle complète la <linkPrivacy>politique de confidentialité générale</linkPrivacy> de School of Gaming. En cas de contradiction entre les deux textes concernant ce Programme, la présente politique spécifique au Programme prévaut.",
           "L’utilisation, par l’enfant, d’un compte Roblox, de Roblox Studio ou d’un autre service Roblox relève de la politique de confidentialité et des conditions propres à Roblox.",
@@ -3576,7 +3576,7 @@
     }
   },
   "robloxSafeguarding": {
-    "title": "Politique de protection de l’enfance du Programme Roblox",
+    "title": "Politique de protection de l’enfance de l’Académie des Créateurs",
     "subtitle": "Ce document complète la <linkDiscipline>politique de lutte contre le harcèlement</linkDiscipline> de School of Gaming, qui continue de s’appliquer aux comportements du quotidien pendant les sessions. Il couvre les responsabilités plus larges de Lynx Educate et de School of Gaming en matière de protection de l’enfance dans le cadre du Programme, y compris lors des événements en présentiel.",
     "lastUpdated": "Dernière révision : {date}",
     "pendingContact": "Une adresse de contact School of Gaming pour les questions de protection de l’enfance est en cours de confirmation et sera ajoutée ici.",
@@ -3635,7 +3635,7 @@
       "data": {
         "heading": "Données et photos",
         "blocks": [
-          "Toute photographie, tout enregistrement vidéo et toute utilisation de l’image d’un enfant sont régis par les choix de consentement décrits dans la <linkRobloxPrivacy>Politique de confidentialité du Programme Roblox</linkRobloxPrivacy> — jamais présumés, toujours facultatifs, toujours modifiables."
+          "Toute photographie, tout enregistrement vidéo et toute utilisation de l’image d’un enfant sont régis par les choix de consentement décrits dans la <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy> — jamais présumés, toujours facultatifs, toujours modifiables."
         ]
       },
       "review": {
@@ -3647,14 +3647,14 @@
     }
   },
   "robloxTerms": {
-    "title": "Conditions générales du Programme Roblox",
-    "subtitle": "S’applique aux familles qui inscrivent leur enfant au programme Lynx Educate × School of Gaming × Roblox en France.",
+    "title": "Conditions générales d’utilisation de l’Académie des Créateurs",
+    "subtitle": "S’applique aux familles qui inscrivent leur enfant à l’Académie des Créateurs en France — Lynx Educate × School of Gaming, en collaboration avec Roblox.",
     "lastUpdated": "Mise à jour : {date}",
     "pendingContact": "Une adresse de contact School of Gaming est en cours de confirmation et sera ajoutée ici.",
     "intro": {
       "heading": "En bref",
       "blocks": [
-        "Ce document explique ce à quoi vous inscrivez votre enfant lorsque vous vous enregistrez au Programme Roblox. Il s’agit d’un programme commun à Lynx Educate et à School of Gaming, parrainé par Roblox. Si quelque chose n’est pas clair, écrivez à support@lynxeducate.com."
+        "Ce document explique ce à quoi vous inscrivez votre enfant lorsque vous vous enregistrez à l’Académie des Créateurs. Il s’agit d’un programme commun à Lynx Educate et à School of Gaming, parrainé par Roblox. Si quelque chose n’est pas clair, écrivez à support@lynxeducate.com."
       ]
     },
     "sections": {
@@ -3695,8 +3695,8 @@
       "information": {
         "heading": "Vos informations",
         "blocks": [
-          "La manière dont nous utilisons vos informations et celles de votre enfant est expliquée dans notre <linkRobloxPrivacy>Politique de confidentialité du Programme Roblox</linkRobloxPrivacy>. En vous inscrivant, vous confirmez en avoir pris connaissance et l’avoir comprise.",
-          "Lors de l’inscription à un programme Roblox, les informations associées à votre compte School of Gaming (y compris vos coordonnées et les informations du compte de votre enfant) seront également communiquées à Lynx Educate aux fins de la mise en œuvre du programme et à Roblox aux fins de la recherche sur l’impact du programme."
+          "La manière dont nous utilisons vos informations et celles de votre enfant est expliquée dans notre <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy>. En vous inscrivant, vous confirmez en avoir pris connaissance et l’avoir comprise.",
+          "Lors de l’inscription à l’Académie des Créateurs, les informations associées à votre compte School of Gaming (y compris vos coordonnées et les informations du compte de votre enfant) seront également communiquées à Lynx Educate aux fins de la mise en œuvre du programme et à Roblox aux fins de la recherche sur l’impact du programme."
         ]
       },
       "media": {
@@ -3775,11 +3775,11 @@
   },
   "consentDocuments": {
     "names": {
-      "robloxProgrammeTerms": "Conditions générales du Programme Roblox",
-      "robloxPrivacyPolicy": "Politique de confidentialité du Programme Roblox"
+      "robloxProgrammeTerms": "Conditions générales d’utilisation de l’Académie des Créateurs",
+      "robloxPrivacyPolicy": "Politique de confidentialité de l’Académie des Créateurs"
     },
     "bundles": {
-      "robloxProgramme": "Documents du Programme Roblox"
+      "robloxProgramme": "Documents de l’Académie des Créateurs"
     }
   },
   "chat": {

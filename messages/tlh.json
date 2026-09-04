@@ -26,7 +26,7 @@
       "resetPin": "PIN yIchu’qa’",
       "verifyEmail": "QIn Daq yIngu’",
       "changePin": "PIN yIchoH",
-      "roblox": "Roblox qetlh chenmoHmeH ghojmoH",
+      "roblox": "chenmoHwI’ DuSaQ",
       "geduContract": "Gedu quv chut",
       "seatOffer": "quS nob"
     }
@@ -2021,7 +2021,7 @@
         "heading": "chaw’",
         "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj.",
         "bundles": {
-          "robloxProgramme": "<terms>Roblox Programme Terms & Conditions</terms>, <privacy>Roblox Programme Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj."
+          "robloxProgramme": "<terms>Creator Academy Terms & Conditions</terms>, <privacy>Creator Academy Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj."
         },
         "marketing": {
           "lynxEducate": "boqwI’maj <link>Lynx Educate</link> vISovmoH ’e’ vIchaw’ — vaj QIn mungeHlaH.",
@@ -2748,7 +2748,7 @@
   "roblox": {
     "hero": {
       "title": "yIchen<br></br><primary>yItIv</primary><br></br><secondary>yIghaj</secondary>",
-      "subtitle": "Roblox qetlh chenmoHmeH ghojmoH — Huch Hutlh! loDHompu’ be’Hompu’vaD. Lynx Educate, School of Gaming, je Roblox boqwI’pu’.",
+      "subtitle": "qetlh chenmoHmeH ghojmoH — Huch Hutlh! loDHompu’ be’Hompu’vaD. Lynx Educate, School of Gaming, je Roblox boqwI’pu’.",
       "cta": "may’Daq yIghoS!"
     },
     "lockup": {
@@ -2885,7 +2885,7 @@
     "legal": {
       "roblox": "Roblox per, Roblox Degh, je Roblox Tilt Roblox Corporation ngoq’a’mey — Amerika Sepmey je latlh Sepmey. chaw’ lo’lu’.",
       "lynx": "Lynx Educate je Lynx Educate Degh Lynx Educate ngoq’a’mey. chaw’ lo’lu’.",
-      "documents": "Roblox Qu’ ghItlhmey"
+      "documents": "chenmoHwI’ DuSaQ ghItlhmey"
     }
   },
   "seatOffer": {

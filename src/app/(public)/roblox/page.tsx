@@ -256,7 +256,7 @@ export default function RobloxPage() {
           into every row. A reader's question here is not which box a link sits
           in, it is which document governs them — and only a heading answers
           that. Putting the scope in the labels instead is what this replaces:
-          three rows each opening "Roblox Programme …" read as a wall and still
+          three rows each opening "Creator Academy …" read as a wall and still
           leave the grouping implicit.
 
           Second, the order. The fine print sits *under* the links rather than
