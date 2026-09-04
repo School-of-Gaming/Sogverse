@@ -3170,11 +3170,12 @@
       "button": "Aloita"
     },
     "legal": {
-      "roblox": "© 2024 Roblox Corporation. Roblox-sanamerkki, Roblox-logo ja Roblox Tilt ovat Roblox Corporationin rekisteröityjä ja rekisteröimättömiä tavaramerkkejä Yhdysvalloissa ja muissa maissa. Käytetty luvalla.",
+      "roblox": "Roblox-sanamerkki, Roblox-logo ja Roblox Tilt ovat Roblox Corporationin rekisteröityjä ja rekisteröimättömiä tavaramerkkejä Yhdysvalloissa ja muissa maissa. Käytetty luvalla.",
       "lynx": "Lynx Educate ja Lynx Educate -logo ovat Lynx Educaten tavaramerkkejä. Käytetty luvalla.",
-      "privacy": "Roblox-ohjelman tietosuojaseloste",
-      "safeguarding": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
-      "terms": "Roblox-ohjelman käyttöehdot"
+      "documents": "Roblox-ohjelman asiakirjat",
+      "privacy": "Tietosuojaseloste",
+      "safeguarding": "Lasten turvallisuuden toimintaohje",
+      "terms": "Käyttöehdot"
     }
   },
   "robloxPrivacy": {

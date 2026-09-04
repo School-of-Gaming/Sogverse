@@ -2237,11 +2237,12 @@
       "button": "Get started"
     },
     "legal": {
-      "roblox": "© 2024 Roblox Corporation. The Roblox word mark, Roblox Logo and Roblox Tilt are among the registered and unregistered trademarks of Roblox Corporation in the U.S. and other countries. Used with permission.",
+      "roblox": "The Roblox word mark, Roblox Logo and Roblox Tilt are among the registered and unregistered trademarks of Roblox Corporation in the U.S. and other countries. Used with permission.",
       "lynx": "Lynx Educate and the Lynx Educate logo are trademarks of Lynx Educate. Used with permission.",
-      "privacy": "Roblox Programme Privacy Policy",
-      "safeguarding": "Roblox Programme Child Safeguarding Policy",
-      "terms": "Roblox Programme Terms & Conditions"
+      "documents": "Roblox Programme documents",
+      "privacy": "Privacy Policy",
+      "safeguarding": "Child Safeguarding Policy",
+      "terms": "Terms & Conditions"
     }
   },
   "robloxPrivacy": {
