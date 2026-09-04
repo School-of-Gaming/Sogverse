@@ -51,6 +51,36 @@ export function optionalDate(value: string, field: string): string | null {
   return value.trim() === "" ? null : requireDate(value, field);
 }
 
+/**
+ * The literal an admin types into a **text input** to mean "none".
+ *
+ * A blank text input cannot mean it. An untouched text field posts its
+ * *placeholder*, which is what makes an untouched form compose a whole mail
+ * rather than a stripped one — and the cost of that is that clearing the field
+ * posts the placeholder too, so a label promising "empty for none" describes a
+ * state the control can never reach. A token can be typed, it survives the
+ * placeholder fallback, and it is unambiguous against every value these fields
+ * actually take. A textarea has the opposite property (it posts what it holds,
+ * empty included), so this is for text inputs alone, and a field that offers
+ * the token says so in its own label.
+ */
+export const FORM_NONE_TOKEN = "none";
+
+/** Whether a typed value is the "none" token, however it was cased or spaced. */
+export function isNoneToken(value: string): boolean {
+  return value.trim().toLowerCase() === FORM_NONE_TOKEN;
+}
+
+/** `none` is an absence; anything else has to be a real calendar date. */
+export function noneOrDate(value: string, field: string): string | null {
+  return isNoneToken(value) ? null : optionalDate(value, field);
+}
+
+/** `none` is an absence; anything else is the trimmed text. */
+export function noneOrText(value: string): string | null {
+  return isNoneToken(value) ? null : value.trim() || null;
+}
+
 export function requireTime(value: string, field: string): string {
   const trimmed = value.trim();
   if (!TIME_PATTERN.test(trimmed)) fail(field, "a 24-hour clock time as HH:MM", value);
@@ -104,6 +134,19 @@ export function textareaLines(value: string): string[] {
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line !== "");
+}
+
+/**
+ * A typed list's non-blank entries, separated by commas *or* newlines.
+ *
+ * The same list, whichever control it is typed into: a text input has no
+ * newline to offer, so a list that has to survive one takes a comma as well.
+ */
+export function listEntries(value: string): string[] {
+  return value
+    .split(/[\n,]/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== "");
 }
 
 /** `0` = Monday … `6` = Sunday, as the schedule and RFC 5545 both order them. */

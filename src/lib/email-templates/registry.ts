@@ -14,12 +14,16 @@ import {
 import type { InvitationSlot } from "./product-confirmation-invitation";
 import {
   fail,
+  isNoneToken,
+  listEntries,
+  noneOrDate,
+  noneOrText,
   optionalDate,
   requireEmail,
   requireTime,
   requireWeekday,
   requireWholeNumber,
-  textareaLines,
+  FORM_NONE_TOKEN,
   FORM_YES_NO,
 } from "./form-fields";
 import { buildVerifyEmailEmail } from "./verify-email";
@@ -378,16 +382,21 @@ function resolveProductConfirmationParams(params: Record<string, string>): Templ
 }
 
 /**
- * One typed schedule line: `mon 16:00 60` — a weekday, a start time, and how
- * many minutes the session runs.
+ * One typed schedule entry: `mon 16:00 60` — a weekday, a start time, and how
+ * many minutes the session runs, several of them separated by commas.
  *
  * The same shape the explorer's override lines take, for the same reason: the
- * testing form's fields are single values, and a schedule is a list. A blank
- * textarea is a product with no slots, which is a real state and the one that
- * sends the plain mail with no invitation at all.
+ * testing form's fields are single values, and a schedule is a list. **A
+ * product with no slots is a real state** — it is the one that sends the plain
+ * mail with no invitation at all — and it is stated with the `none` token
+ * rather than by clearing the field, because this is a text input and an
+ * untouched one posts its placeholder. That is deliberate: the untouched form
+ * composes an ordinary invitation, which is the document worth looking at, and
+ * the empty state stays one word away.
  */
 function parseInvitationSlots(value: string): InvitationSlot[] {
-  return textareaLines(value).map((line) => {
+  if (isNoneToken(value)) return [];
+  return listEntries(value).map((line) => {
     const parts = line.split(/\s+/);
     if (parts.length !== 3) {
       fail("Schedule", "a weekday, a start time and a duration in minutes", line);
@@ -433,15 +442,20 @@ function resolveProductConfirmationOptions(
       productName: params.productName,
       productType: params.productType,
       productTopic: params.topic,
+      // A product's short description is NOT NULL on the row, so there is no
+      // absence to express here and the field states no token.
       shortDescription: params.shortDescription.trim() || null,
       timezone: params.timezone,
       startDate: optionalDate(params.startDate, "Start date"),
-      endDate: optionalDate(params.endDate, "End date"),
+      // The three fields with a real "none" state, and all three are text
+      // inputs — so the absence is a typed token rather than a cleared box.
+      // See `FORM_NONE_TOKEN` for why an empty one cannot carry it.
+      endDate: noneOrDate(params.endDate, "End date"),
       slots: parseInvitationSlots(params.slots),
       isRemote: params.isRemote === "yes",
       siteName: params.siteName.trim() || null,
-      siteAddress: params.siteAddress.trim() || null,
-      siteNote: params.siteNote.trim() || null,
+      siteAddress: noneOrText(params.siteAddress),
+      siteNote: noneOrText(params.siteNote),
       attendeeName: params.attendeeName,
       attendeeEmail: requireEmail(params.attendeeEmail, "Attendee email"),
       // The same link the mail's own button carries: the entry points a parent
@@ -1253,11 +1267,16 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
    * them off the product row, and here they are typed so the document can be
    * previewed and sent without a product existing.
    *
-   * **An empty schedule is a real state, not an unfilled form.** A textarea
-   * posts what it holds, so an untouched one is a product with no slots — and
-   * the mail that produces is exactly the mail this template sent before the
-   * invitation existed: no session-times section, no attachment, no text body.
-   * Type a line or two into the schedule field to see the other one.
+   * **The untouched form composes an ordinary invitation**, and that is the
+   * point of it: every calendar field is a text input, an untouched text input
+   * posts its placeholder, so a form nobody has typed into sends the mail with
+   * a schedule, a site, a note and a description in it — the render with the
+   * most to look at. The mail this template sent *before* the invitation
+   * existed — no session-times section, no attachment, no text body — is one
+   * word away: type `none` into the schedule field. Four fields take that
+   * token — the schedule, the end date, the site address and the site note —
+   * because a cleared text input posts its placeholder and so can never mean
+   * "none"; see `FORM_NONE_TOKEN`.
    */
   productConfirmation: defineResolvedTemplate({
     label: "Product Confirmation",
@@ -1272,10 +1291,8 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
 
       {
         key: "slots",
-        label:
-          "Invite – Schedule, one `mon 16:00 60` per line (empty sends the mail with no invitation)",
-        type: "textarea",
-        placeholder: "mon 16:00 60\nwed 16:00 60",
+        label: `Invite – Schedule, comma-separated \`mon 16:00 60\` entries (\`${FORM_NONE_TOKEN}\` sends the mail with no invitation)`,
+        placeholder: "mon 16:00 60, wed 16:00 60",
       },
       {
         key: "timezone",
@@ -1298,7 +1315,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       },
       {
         key: "endDate",
-        label: "Invite – Product end date (empty for an open-ended club)",
+        label: `Invite – Product end date (\`${FORM_NONE_TOKEN}\` for an open-ended club)`,
         get placeholder() {
           return calendarInvitationUntilDate();
         },
@@ -1315,13 +1332,15 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "siteName", label: "Invite – Site name", placeholder: "Kallion kirjasto" },
       {
         key: "siteAddress",
-        label: "Invite – Site address (empty for none)",
+        label: `Invite – Site address (\`${FORM_NONE_TOKEN}\` for none)`,
         placeholder: "Viides linja 11, 00530 Helsinki",
       },
       {
+        // A text input rather than a textarea for the same reason "no" leads
+        // the online select above: the untouched form composes the site with a
+        // note in it, which is the case with more to look at.
         key: "siteNote",
-        label: "Invite – Public site note (empty for none)",
-        type: "textarea",
+        label: `Invite – Public site note (\`${FORM_NONE_TOKEN}\` for none)`,
         placeholder: "The door on the north side. Ring the bell marked School of Gaming.",
       },
       {
@@ -1331,9 +1350,10 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         options: PRODUCT_TOPIC_OPTIONS,
       },
       {
+        // No token here: a product's short description is NOT NULL on the row,
+        // so a product without one is not a state this mail can be in.
         key: "shortDescription",
-        label: "Invite – The product's short description (empty for none)",
-        type: "textarea",
+        label: "Invite – The product's short description",
         placeholder: "Build, explore and survive together in a private world.",
       },
       {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
-import { templateRegistry } from "@/lib/email-templates/registry";
+import { templateRegistry, type TemplateDefinition } from "@/lib/email-templates/registry";
 import { BRAND } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
 import { bulletList } from "@/lib/email-templates/blocks";
@@ -34,6 +34,52 @@ const PRODUCT_CONFIRMATION_SCHEDULE = {
   siteAddress: "Viides linja 11, 00530 Helsinki",
   siteNote: "The door on the north side. Ring the bell.",
 };
+
+/**
+ * Every field of a template at the value its untouched form control posts.
+ *
+ * This restates the testing page's own rule — a select posts its first option,
+ * a text input its placeholder, a textarea what it holds — because that rule is
+ * what decides whether a form nobody has typed into composes a whole mail or a
+ * stripped one, and the rule lives in a client component this suite does not
+ * render. Keeping it here means a field that changes control type changes what
+ * these tests see, which is the point.
+ */
+function untouchedParams(definition: TemplateDefinition): Record<string, string | boolean | null> {
+  const raw = Object.fromEntries(
+    definition.fields.map((field) => [
+      field.key,
+      field.type === "select"
+        ? field.options[0].value
+        : field.type === "textarea"
+          ? ""
+          : field.placeholder,
+    ]),
+  );
+  return definition.resolveParams ? definition.resolveParams(raw) : raw;
+}
+
+/**
+ * An `invite.ics`'s `DESCRIPTION`, unfolded and with RFC 5545's escapes undone
+ * so it reads as the text a parent finds in the calendar entry's notes.
+ *
+ * The search starts at `BEGIN:VEVENT`: a `VTIMEZONE` states lines of its own
+ * above the event, so a search over the whole document can answer about the
+ * zone table instead of about the session.
+ */
+function icsDescription(ics: string): string {
+  const event = ics.slice(Math.max(0, ics.indexOf("BEGIN:VEVENT")));
+  const line = event
+    .replace(/\r\n /g, "")
+    .split("\r\n")
+    .find((candidate) => candidate.startsWith("DESCRIPTION:"));
+  if (line === undefined) throw new Error("the document states no DESCRIPTION");
+  return line
+    .slice("DESCRIPTION:".length)
+    .replace(/\\n/g, "\n")
+    .replace(/\\,/g, ",")
+    .replace(/\\;/g, ";");
+}
 
 let t: EmailTranslator;
 
@@ -267,23 +313,6 @@ describe("templateRegistry render()", () => {
         expect(text).toContain("Every Monday, 16:00–17:00");
       });
 
-      /**
-       * An untouched schedule textarea posts nothing, and nothing means a
-       * product with no slots — which is the mail this template sent before the
-       * invitation existed. All three artifacts have to disappear together.
-       */
-      it("sends the plain mail, with no file and no text body, when the schedule is empty", () => {
-        const { html, text, attachments } = templateRegistry.productConfirmation.render(
-          { ...signup, isSelfSeat: false, slots: "" },
-          t,
-          "en",
-        );
-
-        expect(html).not.toContain("Session times");
-        expect(text).toBeUndefined();
-        expect(attachments).toBeUndefined();
-      });
-
       it("mints an identifier when the form names none", () => {
         const { attachments } = templateRegistry.productConfirmation.render(
           { ...signup, isSelfSeat: false, participationId: "" },
@@ -312,6 +341,129 @@ describe("templateRegistry render()", () => {
             "en",
           ),
         ).toThrow(/^Start date: expected a real calendar date/);
+      });
+    });
+
+    /**
+     * The form as an admin first meets it — nothing typed into anything.
+     *
+     * This is the one property the whole field design is arranged around, and
+     * the one that silently broke: every calendar field used to be a textarea
+     * whose empty value meant "none", so an untouched Product Confirmation
+     * composed no invitation at all and the mail the template exists to show
+     * was the one nobody saw. It is checked through `untouchedParams`, which
+     * applies the testing page's own rule for what an untouched control posts,
+     * so a field switched back to a textarea fails here rather than in an
+     * inbox.
+     */
+    describe("the untouched form", () => {
+      const untouched = untouchedParams(templateRegistry.productConfirmation);
+
+      it("composes an ordinary invitation, with every part the mail can carry", () => {
+        const { html, text, attachments } = templateRegistry.productConfirmation.render(
+          untouched,
+          t,
+          "en",
+        );
+
+        expect(html).toContain("Session times");
+        expect(attachments).toHaveLength(1);
+        expect(attachments?.[0].name).toBe("invite.ics");
+        expect(attachments?.[0].text).toContain("BEGIN:VCALENDAR");
+        // A calendar part means a plain-text twin, because that is what a
+        // Microsoft mailbox fills the entry's own notes from.
+        expect(text).toBeDefined();
+      });
+
+      /**
+       * What a parent reads inside the calendar entry weeks later. The three
+       * values pinned here are the three that come from fields whose "empty
+       * for none" label used to make them unreachable from an untouched form.
+       */
+      it("states the description, the site note and the schedule in the entry", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          untouched,
+          t,
+          "en",
+        );
+        const text = icsDescription(attachments?.[0].text ?? "");
+
+        expect(text).toContain("Build, explore and survive together in a private world.");
+        expect(text).toContain("The door on the north side.");
+        // Both placeholder entries, at one clock face, stated as one line.
+        expect(text).toContain("Every Monday and Wednesday, 16:00–17:00");
+      });
+
+      /**
+       * The placeholder is a comma-separated list because the control is a text
+       * input, which has no newline to type — so both entries have to survive
+       * into the document, on their own weekdays.
+       */
+      it("reads both schedule entries out of one comma-separated line", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          untouched,
+          t,
+          "en",
+        );
+
+        expect(attachments?.[0].text).toMatch(/BYDAY=MO,WE/);
+      });
+    });
+
+    /**
+     * The other half of the same design: the states an untouched form does not
+     * compose are still reachable, and they are reached by typing a token
+     * rather than by clearing a box a text input refuses to stay cleared.
+     */
+    describe("its `none` tokens", () => {
+      const untouched = untouchedParams(templateRegistry.productConfirmation);
+
+      it("sends the plain mail, with no file and no text body, for `none` slots", () => {
+        const { html, text, attachments } = templateRegistry.productConfirmation.render(
+          { ...untouched, slots: "none" },
+          t,
+          "en",
+        );
+
+        expect(html).not.toContain("Session times");
+        expect(text).toBeUndefined();
+        expect(attachments).toBeUndefined();
+      });
+
+      it("takes the token however it was cased or spaced", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          { ...untouched, slots: "  NONE " },
+          t,
+          "en",
+        );
+
+        expect(attachments).toBeUndefined();
+      });
+
+      /** An open-ended club: a rule that runs on with no `UNTIL` to stop it. */
+      it("drops the recurrence's end for a `none` end date", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          { ...untouched, endDate: "none" },
+          t,
+          "en",
+        );
+
+        expect(attachments?.[0].text).toContain("RRULE:");
+        expect(attachments?.[0].text).not.toContain("UNTIL=");
+      });
+
+      it("omits the address and the note when both are `none`", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          { ...untouched, siteAddress: "none", siteNote: "none" },
+          t,
+          "en",
+        );
+        const text = icsDescription(attachments?.[0].text ?? "");
+
+        expect(text).not.toContain("Viides linja 11");
+        expect(text).not.toContain("The door on the north side.");
+        // The site itself is not one of the token fields, so it stays.
+        expect(text).toContain("Kallion kirjasto");
       });
     });
   });
