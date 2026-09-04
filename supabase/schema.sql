@@ -80,6 +80,17 @@ COMMENT ON TYPE public.effective_product_status IS 'The lifecycle as a reader se
 
 
 --
+-- Name: gamer_sign_in; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.gamer_sign_in AS ENUM (
+    'parent',
+    'username',
+    'email'
+);
+
+
+--
 -- Name: gender_type; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -1587,14 +1598,28 @@ $$;
 
 
 --
--- Name: create_gamer(uuid, uuid, text, text, date, public.gender_type, text, text, text, bigint); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_gamer(uuid, uuid, text, text, date, public.gender_type, text, text, text, bigint, public.gamer_sign_in); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_minecraft_username text DEFAULT NULL::text, p_minecraft_uuid text DEFAULT NULL::text, p_roblox_username text DEFAULT NULL::text, p_roblox_user_id bigint DEFAULT NULL::bigint) RETURNS void
+CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_minecraft_username text DEFAULT NULL::text, p_minecraft_uuid text DEFAULT NULL::text, p_roblox_username text DEFAULT NULL::text, p_roblox_user_id bigint DEFAULT NULL::bigint, p_sign_in public.gamer_sign_in DEFAULT 'parent'::public.gamer_sign_in) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 begin
+  -- The PIN invariant, first and before anything is written: a gamer must never
+  -- exist in a family that has no parent PIN, because the gate on leaving a
+  -- gamer session IS that PIN, and a family without one would leave the gate
+  -- with nothing behind it. Named SQLSTATE, because this is the one failure in
+  -- this body the parent can actually act on — the route turns P0025 into "set
+  -- a PIN first" rather than into the generic failure the raises below get.
+  if not exists (
+    select 1 from public.customer_profiles
+     where user_id = p_parent_id
+       and pin_hash is not null
+  ) then
+    raise exception 'PIN_REQUIRED' using errcode = 'P0025';
+  end if;
+
   -- Promote the trigger-seeded customer profile to a gamer. Gate on role =
   -- 'customer' so this can't corrupt an already-promoted gamer or an admin/gedu,
   -- and so a double-call fails on the second pass. Keep the synthetic email
@@ -1614,8 +1639,11 @@ begin
   -- add the gamer row.
   delete from public.customer_profiles where user_id = p_gamer_id;
 
-  insert into public.gamer_profiles (user_id, date_of_birth, gender)
-  values (p_gamer_id, p_date_of_birth, p_gender);
+  -- `sign_in` rides along rather than being written afterwards: the route has
+  -- already created the auth user with whichever address the chosen mode calls
+  -- for, so the mode and the address it describes land in one transaction.
+  insert into public.gamer_profiles (user_id, date_of_birth, gender, sign_in)
+  values (p_gamer_id, p_date_of_birth, p_gender, p_sign_in);
 
   -- Optional Minecraft link. Nothing here can reject a username: the account may
   -- be shared with another Sogverse user, and an unresolvable one simply lands
@@ -1641,6 +1669,13 @@ begin
   values (p_parent_id, p_gamer_id);
 end;
 $$;
+
+
+--
+-- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in) IS 'The atomic promote-and-link the gamer-creation route calls once GoTrue has minted the auth user: swaps the trigger-seeded customer profile to a gamer, writes the gamer row with its chosen sign-in mode, links the optional game accounts, and links the parent — in ONE transaction, so a failure anywhere leaves nothing behind for the route to compensate but the auth user itself. service_role only. Refuses with SQLSTATE P0025 and the message PIN_REQUIRED when the named parent holds no PIN: the gate on leaving a gamer session is the parent''s PIN, so a family may not acquire a gamer before it has one, and the route turns that one refusal into a specific ask. `p_sign_in` defaults to `parent`, the switch-only shape every gamer had before the modes existed.';
 
 
 --
@@ -2606,17 +2641,26 @@ BEGIN
   -- a role with no accounts renders a zero tile instead of vanishing — and a
   -- role added to the enum later arrives here without an edit.
   --
-  -- Two stats are NULL rather than 0, and the difference is the point. A gamer's
-  -- address is a synthetic @gamer.sogverse.internal handle nobody will ever click
-  -- a link in, so "0 verified" would report a problem that does not exist; NULL
-  -- means the stat has no meaning for that role. `certified` is the same shape
-  -- for the same reason — only an educator can be certified.
+  -- Two stats can be NULL rather than 0, and the difference is the point.
+  -- `verified` is NULL for a role none of whose accounts holds a REAL address: a
+  -- gamer in sign-in mode `parent` or `username` carries a synthetic
+  -- @gamer.sogverse.internal handle nobody will ever click a link in, so "0
+  -- verified" would report a problem that does not exist. A gamer in mode
+  -- `email` holds a real mailbox and counts exactly like everyone else — which
+  -- is why the test below is the ADDRESS and not the role (00235). `certified`
+  -- is the same NULL-means-no-meaning shape for a simpler reason: only an
+  -- educator can be certified.
+  --
+  -- A role with no accounts at all still reports 0 rather than NULL — the
+  -- addressable test only speaks about accounts that exist, and an empty tile
+  -- has nothing to say either way.
   -- ---------------------------------------------------------------------------
   SELECT jsonb_agg(
            jsonb_build_object(
              'role',      r.role_name,
              'total',     COALESCE(c.total, 0),
-             'verified',  CASE WHEN r.role_name = 'gamer' THEN NULL
+             'verified',  CASE WHEN COALESCE(c.total, 0) > 0
+                                 AND COALESCE(c.addressable, 0) = 0 THEN NULL
                                ELSE COALESCE(c.verified, 0) END,
              'certified', CASE WHEN r.role_name = 'gedu' THEN COALESCE(c.certified, 0)
                                ELSE NULL END
@@ -2629,10 +2673,21 @@ BEGIN
     LEFT JOIN (
       SELECT pr.role,
              count(*)                                                 AS total,
-             count(*) FILTER (WHERE pr.email_verified_at IS NOT NULL)  AS verified,
+             -- "Holds an address a human reads." True of every non-gamer, and
+             -- of a gamer exactly when their parent chose sign-in mode `email`.
+             -- A gamer row missing from gamer_profiles is a data error and
+             -- lands on the conservative side: not addressable.
+             count(*) FILTER (
+               WHERE pr.role <> 'gamer' OR gmr.sign_in = 'email'
+             )                                                        AS addressable,
+             count(*) FILTER (
+               WHERE pr.email_verified_at IS NOT NULL
+                 AND (pr.role <> 'gamer' OR gmr.sign_in = 'email')
+             )                                                        AS verified,
              count(*) FILTER (WHERE gp.certified)                      AS certified
         FROM public.profiles pr
-        LEFT JOIN public.gedu_profiles gp ON gp.user_id = pr.id
+        LEFT JOIN public.gedu_profiles gp   ON gp.user_id  = pr.id
+        LEFT JOIN public.gamer_profiles gmr ON gmr.user_id = pr.id
        GROUP BY pr.role
     ) c ON c.role = r.role_name;
 
@@ -2904,7 +2959,7 @@ $$;
 -- Name: FUNCTION get_admin_dashboard(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — both NULL where the stat has no meaning for the role), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00213 each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
+COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — either can be NULL, where the stat has no meaning: certified only means something for an educator, and verified is NULL for a role none of whose accounts holds a real address, which is every gamer unless their parent chose sign-in mode email), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00213 each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
 
 
 --
@@ -6008,6 +6063,62 @@ $$;
 
 
 --
+-- Name: request_gamer_verification_email(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.request_gamer_verification_email(p_gamer_id uuid) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_count integer;
+BEGIN
+  -- Guard first. A gamer id that does not exist and one belonging to another
+  -- family are refused identically, so this cannot be used to ask whether an id
+  -- is somebody's child.
+  IF p_gamer_id IS NULL OR NOT public.is_parent_of(p_gamer_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- Advisory lock keyed to the SUBJECT, matching the key the count below uses:
+  -- two concurrent requests about the same child must serialize; two about
+  -- different children need not.
+  PERFORM pg_advisory_xact_lock(hashtext(p_gamer_id::text));
+
+  SELECT count(*) INTO v_count
+  FROM public.verification_email_requests
+  WHERE user_id = p_gamer_id
+    AND created_at > now() - interval '1 hour';
+
+  -- Returns false (not an error) when the per-hour rate limit is hit; the route
+  -- maps that to 429. The same six as the self-serve sibling.
+  IF v_count >= 6 THEN
+    RETURN false;
+  END IF;
+
+  INSERT INTO public.verification_email_requests (user_id)
+  VALUES (p_gamer_id);
+
+  -- The same self-prune on the same terms: nothing reads these rows but the
+  -- count above, and one outside the window can never change it again. Scoped to
+  -- the subject, under the lock already held.
+  DELETE FROM public.verification_email_requests
+  WHERE user_id = p_gamer_id
+    AND created_at <= now() - interval '1 hour';
+
+  RETURN true;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION request_gamer_verification_email(p_gamer_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.request_gamer_verification_email(p_gamer_id uuid) IS 'The parent-scoped sibling of request_my_verification_email: a PARENT asks for the verification mail on behalf of a named child, because a child in sign-in mode `email` cannot sign in until that address is verified and so cannot ask for themselves. Guard-first on is_parent_of, so another family''s child and an id that does not exist are refused identically (42501) and neither answer can be read as an oracle. The rate-limit state is keyed on the GAMER rather than on the caller — a parent of four gets four independent hourly allowances, because the shared mail quota this protects is spent per address — and is otherwise the same six-per-hour window, the same false-rather-than-raise refusal the route maps to 429, and the same prune of the subject''s own expired rows.';
+
+
+--
 -- Name: request_my_verification_email(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8278,6 +8389,60 @@ $$;
 
 
 --
+-- Name: verify_pin_for_any(uuid[], text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.verify_pin_for_any(p_user_ids uuid[], p_pin text) RETURNS text
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO 'public', 'extensions'
+    AS $_$
+declare
+  v_any_pin boolean;
+begin
+  -- Does anybody in the set hold a PIN at all? Asked first and independently of
+  -- what was typed, because `not_set` is a fact about the FAMILY and must not
+  -- depend on the shape of the input.
+  select exists (
+    select 1
+      from customer_profiles
+     where user_id = any(coalesce(p_user_ids, array[]::uuid[]))
+       and pin_hash is not null
+  ) into v_any_pin;
+
+  if not v_any_pin then
+    return 'not_set';
+  end if;
+
+  -- A malformed PIN is `invalid`, never an error: this sits on a credential path
+  -- where raising would turn "the child typed three digits" into a 500 the
+  -- client has to special-case. The regex is set_my_pin's, unchanged.
+  if p_pin is null or p_pin !~ '^\d{4}$' then
+    return 'invalid';
+  end if;
+
+  if exists (
+    select 1
+      from customer_profiles
+     where user_id = any(p_user_ids)
+       and pin_hash is not null
+       and pin_hash = crypt(p_pin, pin_hash)
+  ) then
+    return 'valid';
+  end if;
+
+  return 'invalid';
+end;
+$_$;
+
+
+--
+-- Name: FUNCTION verify_pin_for_any(p_user_ids uuid[], p_pin text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.verify_pin_for_any(p_user_ids uuid[], p_pin text) IS 'Does this PIN match ANY of these users? Answers with exactly one of `valid`, `invalid` or `not_set` — never NULL, and never a raise, not even on malformed input, because it sits on a credential path where a throw would become a 500 for a mistyped digit. `not_set` means nobody in the set holds a PIN at all, which the account-switch route answers by sending the family to set one rather than by telling a child their PIN was wrong; that distinction is why this returns text and not a boolean. The comparison is the same bcrypt one verify_my_pin uses. The set exists because a child may be linked to more than one parent and any of their PINs opens the gate. service_role ONLY: no argument is checked against auth.uid(), so reachable by `authenticated` this would be a PIN oracle pointable at any family — entitlement to ask about these particular users is established by the route that calls it.';
+
+
+--
 -- Name: chat_channel_locks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -8690,8 +8855,16 @@ CREATE TABLE public.gamer_profiles (
     user_id uuid NOT NULL,
     date_of_birth date NOT NULL,
     gender public.gender_type,
+    sign_in public.gamer_sign_in DEFAULT 'parent'::public.gamer_sign_in NOT NULL,
     CONSTRAINT gamer_profiles_date_of_birth_check CHECK ((date_of_birth <= CURRENT_DATE))
 );
+
+
+--
+-- Name: COLUMN gamer_profiles.sign_in; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_profiles.sign_in IS 'How this child reaches their own account, chosen by their PARENT and written only by the API routes on the service-role client — never by the account holder, and not by the parent''s own session either: `authenticated` holds column-scoped UPDATE on this table (date_of_birth, gender) and this column is deliberately not among them. Three modes. `parent` is the default and the behaviour every gamer had before the modes existed: the auth email is a random synthetic `<token>@gamer.sogverse.internal` handle, there is no password, and the only way in is an account switch from the parent. `username` means the parent picked a lowercase [a-z0-9]{3,20} handle and a password; the auth email becomes `<username>@gamer.sogverse.internal`, so GoTrue''s uniqueness constraint on that address is what makes the username unique, and the child signs in with an ordinary email and password. `email` means the address on the account is the child''s REAL mailbox: they verify it and set a password through the same reset flow an adult uses. The value is a PRIVILEGE marker as much as a preference — it decides whether a child can sign in without their parent at all, and whether the address stored for them is something we may mail or a handle nobody reads.';
 
 
 --
@@ -12855,11 +13028,11 @@ GRANT ALL ON FUNCTION public.count_active_seats(p_product_id uuid) TO service_ro
 
 
 --
--- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint) TO service_role;
+REVOKE ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in) TO service_role;
 
 
 --
@@ -13407,6 +13580,15 @@ GRANT ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_
 
 
 --
+-- Name: FUNCTION request_gamer_verification_email(p_gamer_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.request_gamer_verification_email(p_gamer_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.request_gamer_verification_email(p_gamer_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.request_gamer_verification_email(p_gamer_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION request_my_verification_email(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -13727,6 +13909,14 @@ GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO service_role;
 
 
 --
+-- Name: FUNCTION verify_pin_for_any(p_user_ids uuid[], p_pin text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.verify_pin_for_any(p_user_ids uuid[], p_pin text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.verify_pin_for_any(p_user_ids uuid[], p_pin text) TO service_role;
+
+
+--
 -- Name: TABLE chat_channel_locks; Type: ACL; Schema: public; Owner: -
 --
 
@@ -13823,7 +14013,21 @@ GRANT ALL ON TABLE public.gamer_group_notes TO service_role;
 
 GRANT SELECT ON TABLE public.gamer_profiles TO anon;
 GRANT ALL ON TABLE public.gamer_profiles TO service_role;
-GRANT SELECT,UPDATE ON TABLE public.gamer_profiles TO authenticated;
+GRANT SELECT ON TABLE public.gamer_profiles TO authenticated;
+
+
+--
+-- Name: COLUMN gamer_profiles.date_of_birth; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(date_of_birth) ON TABLE public.gamer_profiles TO authenticated;
+
+
+--
+-- Name: COLUMN gamer_profiles.gender; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(gender) ON TABLE public.gamer_profiles TO authenticated;
 
 
 --
