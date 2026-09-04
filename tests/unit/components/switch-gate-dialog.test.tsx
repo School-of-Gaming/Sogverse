@@ -260,6 +260,11 @@ describe("SwitchGateBody — the sign-out gate", () => {
     // browser Supabase client from the new cookies.
     expect(form?.getAttribute("method")).toBe("post");
     expect(form?.getAttribute("action")).toBe("/api/auth/signout");
+    // The header's sign-out lands at home; this one asks the route for the
+    // login page, since its whole point is signing in as someone else.
+    const next = form?.querySelector<HTMLInputElement>('input[name="next"]');
+    expect(next?.type).toBe("hidden");
+    expect(next?.value).toBe("/login");
   });
 
   it("orders the footer [Cancel, Sign out] so the affirmative is last in the DOM", () => {

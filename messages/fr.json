@@ -1386,7 +1386,7 @@
       "pinDescription": "Le code PIN d’un parent est nécessaire pour basculer vers {name}.",
       "pinNotSetTitle": "Pas encore de code PIN parent",
       "pinNotSetDescription": "Un parent doit d’abord créer un code PIN depuis son Mon SOG. Tu pourras ensuite changer de compte.",
-      "signOutTitle": "Déconnecte-toi pour changer de compte",
+      "signOutTitle": "Déconnecte-toi d’abord",
       "signOutOwnSession": "{name} est connecté avec son propre identifiant, donc ce compte ne peut pas passer à un autre. Ainsi, le compte de chacun reste privé.",
       "signOutHow": "Déconnecte-toi, puis connecte-toi en tant que {name}."
     },

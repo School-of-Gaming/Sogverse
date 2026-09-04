@@ -566,7 +566,11 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           reason:
             "clearing a session must work even when the session is already unusable, so requiring a valid one would strand exactly the callers who need it. POST-only is the CSRF control: a cross-origin top-level POST carries no SameSite=Lax cookie, so a hostile page cannot force a sign-out. Answers a 303 the browser follows as a full-page GET",
         },
-        body: { kind: "none" },
+        body: {
+          kind: "raw",
+          reason:
+            "an HTML form post carrying at most one urlencoded field, `next`, the internal path to land on; it is resolved through resolveInternalPath() with '/' as the fallback, and there is nothing else to validate, so no schema",
+        },
         test: TESTS.signout,
       },
     },

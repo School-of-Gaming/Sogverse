@@ -1386,7 +1386,7 @@
       "pinDescription": "En förälders PIN-kod behövs för att byta till {name}.",
       "pinNotSetTitle": "Ingen föräldra-PIN ännu",
       "pinNotSetDescription": "En förälder måste först skapa en PIN-kod från sin Min SOG. Sedan kan du byta konto.",
-      "signOutTitle": "Logga ut för att byta konto",
+      "signOutTitle": "Logga ut först",
       "signOutOwnSession": "{name} är inloggad med sin egen inloggning, så det här kontot kan inte byta till ett annat. Så förblir allas konton privata.",
       "signOutHow": "Logga ut och logga sedan in som {name}."
     },

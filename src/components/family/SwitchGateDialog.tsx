@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { KeyRound, Loader2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants";
 import {
   Dialog,
   DialogContent,
@@ -307,6 +308,11 @@ function SignOutToSwitch({
         action="/api/auth/signout"
         onSubmit={() => setSigningOut(true)}
       >
+        {/* The header's sign-out lands on the home page; this one exists to
+            sign in as someone else, so it asks the route for the login page.
+            The route resolves the value as an internal path and falls back to
+            home for anything else. */}
+        <input type="hidden" name="next" value={ROUTES.login} />
         <DialogFooter>
           <Button
             type="button"

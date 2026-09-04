@@ -1386,7 +1386,7 @@
       "pinDescription": "Vanhemman PIN-koodi tarvitaan, jotta voit vaihtaa käyttäjän {name} profiiliin.",
       "pinNotSetTitle": "PIN-koodia ei ole vielä asetettu",
       "pinNotSetDescription": "Vanhemman pitää ensin asettaa PIN-koodi Oma SOG -sivullaan. Sen jälkeen voit vaihtaa tiliä.",
-      "signOutTitle": "Kirjaudu ulos, jotta voit vaihtaa tiliä",
+      "signOutTitle": "Kirjaudu ensin ulos",
       "signOutOwnSession": "{name} on kirjautunut sisään omilla tunnuksillaan, joten tältä tililtä ei voi vaihtaa toiseen. Näin jokaisen tili pysyy yksityisenä.",
       "signOutHow": "Kirjaudu ulos ja kirjaudu sitten sisään käyttäjänä {name}."
     },

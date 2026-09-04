@@ -1386,7 +1386,7 @@
       "pinDescription": "A parent’s PIN is needed to switch to {name}.",
       "pinNotSetTitle": "No parent PIN yet",
       "pinNotSetDescription": "A parent needs to set a PIN from their own My SOG first. Then you can switch accounts.",
-      "signOutTitle": "Sign out to switch",
+      "signOutTitle": "Sign out first",
       "signOutOwnSession": "{name} is signed in with their own login, so this account can’t switch to another one. That keeps everyone’s account private.",
       "signOutHow": "Sign out, then sign in as {name}."
     },

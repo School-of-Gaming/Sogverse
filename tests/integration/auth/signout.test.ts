@@ -77,4 +77,62 @@ describe("POST /api/auth/signout", () => {
 
     expect(response.headers.get("location")).toBe("https://app.example.test/");
   });
+
+  describe("the form's `next` field", () => {
+    function formSignoutRequest(next: string) {
+      return new Request("http://localhost:3000/api/auth/signout", {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ next }).toString(),
+      });
+    }
+
+    it("lands on an internal path the form asked for", async () => {
+      // The sign-out-to-switch dialog posts `/login`: its point is signing in
+      // as someone else, so the home page would be a detour.
+      const response = await POST(formSignoutRequest("/login"));
+
+      expect(response.status).toBe(303);
+      expect(response.headers.get("location")).toBe(
+        "http://localhost:3000/login",
+      );
+    });
+
+    it("falls back to the site root for anything that is not an internal path", async () => {
+      // Caller-supplied, so it is an open-redirect surface; every escape the
+      // URL parser can spell has to land at home.
+      for (const next of [
+        "https://evil.example/",
+        "//evil.example",
+        "/\\evil.example",
+      ]) {
+        const response = await POST(formSignoutRequest(next));
+        expect(response.headers.get("location")).toBe("http://localhost:3000/");
+      }
+    });
+
+    it("never leaves the request's own origin, whatever the field spells", async () => {
+      // `https:/evil.example` (one slash) is the variant string matching loses
+      // to. The parser resolves it as a *path* on our own origin, which is the
+      // safe reading — it lands somewhere internal, never on another host.
+      const response = await POST(formSignoutRequest("https:/evil.example"));
+
+      expect(new URL(response.headers.get("location")!).origin).toBe(
+        "http://localhost:3000",
+      );
+    });
+
+    it("still signs out and lands at home when the body is not a form", async () => {
+      const response = await POST(
+        new Request("http://localhost:3000/api/auth/signout", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: "{",
+        }),
+      );
+
+      expect(mockSignOut).toHaveBeenCalledTimes(1);
+      expect(response.headers.get("location")).toBe("http://localhost:3000/");
+    });
+  });
 });
