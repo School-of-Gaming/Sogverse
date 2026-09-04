@@ -2615,7 +2615,7 @@
       "sent": "Skickat",
       "message": "Meddelande",
       "gamerNote": "Det här meddelandet kommer från ett spelarkonto. Svar går till deras förälder ({parentEmail}).",
-      "gamerOwnEmailNote": "Spelaren har också en egen verifierad e-postadress ({gamerEmail}) — ta med den om du svarar."
+      "gamerOwnEmailNote": "Spelaren har också en egen e-postadress ({gamerEmail}) — ta med den om du svarar."
     },
     "welcomeParent": {
       "subject": "Välkommen till School of Gaming",
@@ -2817,7 +2817,7 @@
           "Dina språk- och valutainställningar – så att webbplatsen visas som du förväntar dig.",
           "Ditt lösenord, som vi endast lagrar i krypterad (hashad) form – vi kan aldrig se det.",
           "Betaluppgifter hanteras direkt i Stripe. Vi ser eller lagrar aldrig hela ditt kortnummer.",
-          "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt. Vi lagrar också ditt efternamn på barnets konto, eftersom barnet hör till ditt konto. Geduer och andra spelare ser det aldrig. Själva kontot har en intern Sogverse-adress i stället för en riktig e-postadress, om du inte väljer att ge barnet en inloggning med en egen e-postadress; då sparar vi den adressen och skickar barnet, när det har verifierat den, en egen kopia av de mejl vi skickar dig om barnets klubbar, läger och evenemang.",
+          "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt. Vi lagrar också ditt efternamn på barnets konto, eftersom barnet hör till ditt konto. Geduer och andra spelare ser det aldrig. Själva kontot har en intern Sogverse-adress i stället för en riktig e-postadress, om du inte väljer att ge barnet en inloggning med en egen e-postadress; då sparar vi den adressen och skickar barnet en egen kopia av de mejl vi skickar dig om barnets klubbar, läger och evenemang.",
           "Eventuellt barnets användarnamn i de spel som barnets klubbar använder – i dag Minecraft och Roblox – och det konto-id som spelet ger barnet, så att vi känner igen barnet i spelet och så att barnet kan ansluta till vår Minecraft-server under träffarna.",
           "Våra spelfostrares anteckningar från träffarna – närvaro, träffrapporter och korta noteringar som hjälper oss att stötta ditt barn i gruppen.",
           "Allmän, anonym information om hur webbplatsen används (se \"Cookies, analys och annonsering\" nedan).",

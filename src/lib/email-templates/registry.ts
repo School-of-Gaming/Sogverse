@@ -284,8 +284,7 @@ const VIEWER_TIMEZONE_OPTIONS = [
 
 /**
  * Which of the mails one send produces. The live route sends a family's mail,
- * a copy to the child themselves when the child holds a verified mailbox of
- * their own, and one copy to the sender with the admins in CC — and they
+ * a copy to the child themselves when the child holds a mailbox of their own, and one copy to the sender with the admins in CC — and they
  * differ in places none of which is visible unless the testing UI can ask for
  * the other mail: the staff copy opens with the banner and carries the GROUP's
  * name where a family's mail carries the child's (so the intro reads as a

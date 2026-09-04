@@ -33,8 +33,7 @@ import type { AppSupabaseClient } from "@/types";
  * once stops the page and the mail from ever disagreeing about whose signup
  * this was.
  *
- * **A child with a verified mailbox of their own gets a copy beside the
- * parent's** — decided by the shared family-recipient resolver, never here.
+ * **A child with a mailbox of their own gets a copy beside the parent's** — decided by the shared family-recipient resolver, never here.
  * The copy is the same template in its child variant: second person, no price
  * line and no billing bullet (paying is the parent's), and the button at the
  * child's own My SOG root.
@@ -130,10 +129,10 @@ async function send({
       .single(),
     client
       .from("profiles")
-      // The verification stamp and the sign-in mode decide whether the child
-      // gets a copy of their own; `gamer_profiles` is one-to-one off
-      // `profiles`, so the embed is an object or null (null for the payer).
-      .select("id, first_name, email, email_verified_at, locale, gamer_profiles(sign_in)")
+      // The sign-in mode decides whether the child gets a copy of their own;
+      // `gamer_profiles` is one-to-one off `profiles`, so the embed is an
+      // object or null (null for the payer).
+      .select("id, first_name, email, locale, gamer_profiles(sign_in)")
       .in("id", [customerId, participantId]),
   ]);
 
@@ -181,7 +180,6 @@ async function send({
           firstName: participantName,
           locale: participant.locale,
           signIn: participant.gamer_profiles?.sign_in ?? null,
-          emailVerifiedAt: participant.email_verified_at,
         },
     fallbackLocale: detectLocaleFromHeader(request.headers.get("Accept-Language")),
   });

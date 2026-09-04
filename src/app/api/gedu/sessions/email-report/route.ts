@@ -44,8 +44,7 @@ type AdminClient = ReturnType<typeof createAdminClient>;
  * against; the address itself never reaches a log line.
  *
  * A seat produces one of these per recipient: always the parent (or the adult
- * on their own seat), plus the child when they hold a verified mailbox of
- * their own. The parent's is the *outcome* — it is what the tally counts and
+ * on their own seat), plus the child when they hold a mailbox of their own. The parent's is the *outcome* — it is what the tally counts and
  * what decides whether the claim stands — and the child's copy rides beside
  * it: logged if it fails, never counted, never a reason to retry the send.
  */
@@ -178,12 +177,11 @@ function failureName(reason: unknown): string {
  * participation, each in its reader's locale, each linking that child's own page
  * in My SOG — and then one copy to the sender with every admin in CC.
  *
- * **A child with a verified mailbox of their own gets their own copy too**,
- * beside the parent's and never instead of it. Who that is, is decided by the
- * shared family-recipient resolver (the real-email sign-in *and* a verified
- * address — a typed address alone may be a stranger's); what changes in the
- * mail is the framing sentence and the My SOG root, since a `/parent` link
- * bounces a signed-in child. The child's copy is not part of the tally: the
+ * **A child with a mailbox of their own gets their own copy too**, beside the
+ * parent's and never instead of it. Who that is, is decided by the shared
+ * family-recipient resolver (the real-email sign-in, whether or not the address
+ * has been verified); what changes in the mail is the framing sentence and the
+ * My SOG root, since a `/parent` link bounces a signed-in child. The child's copy is not part of the tally: the
  * parent's mail is the outcome the gedu is told about, and the copy's failure
  * is logged and changes nothing.
  *
@@ -330,12 +328,12 @@ export const POST = defineRoute({
       const { data: participations, error: participationsError } =
         await adminClient
           .from("participations")
-          // The participant's verification stamp and sign-in mode ride along
-          // because together they decide whether the child gets a copy of
-          // their own; `gamer_profiles` is one-to-one off `profiles`, so the
-          // embed is an object or null (an adult on their own seat has none).
+          // The participant's sign-in mode rides along because it decides
+          // whether the child gets a copy of their own; `gamer_profiles` is
+          // one-to-one off `profiles`, so the embed is an object or null (an
+          // adult on their own seat has none).
           .select(
-            "id, participant_id, customer_id, participant:profiles!participations_participant_id_fkey!inner(first_name, email, email_verified_at, role, locale, gamer_profiles(sign_in))",
+            "id, participant_id, customer_id, participant:profiles!participations_participant_id_fkey!inner(first_name, email, role, locale, gamer_profiles(sign_in))",
           )
           .eq("group_id", claim.group_id)
           .eq("status", "active");
@@ -402,7 +400,7 @@ export const POST = defineRoute({
         const parentLink = earliestParent.get(participation.participant_id);
 
         // The parent first, always; the child only behind the resolver's
-        // verified-mailbox gate; nobody at all when there is no parent.
+        // own-mailbox gate; nobody at all when there is no parent.
         const recipients = resolveFamilyRecipients({
           parents: isSelfSeat
             ? [
@@ -428,7 +426,6 @@ export const POST = defineRoute({
                 firstName: participant.first_name,
                 locale: participant.locale,
                 signIn: participant.gamer_profiles?.sign_in ?? null,
-                emailVerifiedAt: participant.email_verified_at,
               },
           fallbackLocale: DEFAULT_LOCALE,
         });

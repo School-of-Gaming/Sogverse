@@ -2615,7 +2615,7 @@
       "sent": "Lähetetty",
       "message": "Viesti",
       "gamerNote": "Tämä viesti on pelaajatililtä. Vastaukset ohjautuvat hänen vanhemmalleen ({parentEmail}).",
-      "gamerOwnEmailNote": "Pelaajalla on myös oma vahvistettu sähköpostiosoite ({gamerEmail}) – lisää se mukaan, jos vastaat."
+      "gamerOwnEmailNote": "Pelaajalla on myös oma sähköpostiosoite ({gamerEmail}) – lisää se mukaan, jos vastaat."
     },
     "welcomeParent": {
       "subject": "Tervetuloa School of Gamingiin",
@@ -2817,7 +2817,7 @@
           "Kieli- ja valuuttavalintasi – jotta sivusto näkyy sinulle odottamallasi tavalla.",
           "Salasanasi, jonka tallennamme vain salatussa (tiivistetyssä) muodossa – emme voi koskaan nähdä sitä.",
           "Maksutiedot käsitellään suoraan Stripessä. Emme koskaan näe emmekä tallenna koko korttinumeroasi.",
-          "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ellet anna lapselle kirjautumista hänen omalla sähköpostiosoitteellaan; silloin säilytämme sen osoitteen ja lähetämme hänelle, kun hän on vahvistanut sen, oman kopion viesteistä, jotka lähetämme sinulle hänen kerhoistaan, leireistään ja tapahtumistaan.",
+          "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein. Tallennamme lapsen tilille myös perheesi sukunimen, koska lapsi kuuluu tiliisi. Gedut ja muut pelaajat eivät näe sitä koskaan. Tilillä itsellään on Sogversen sisäinen osoite oikean sähköpostiosoitteen sijaan, ellet anna lapselle kirjautumista hänen omalla sähköpostiosoitteellaan; silloin säilytämme sen osoitteen ja lähetämme hänelle oman kopion viesteistä, jotka lähetämme sinulle hänen kerhoistaan, leireistään ja tapahtumistaan.",
           "Halutessasi lapsesi käyttäjätunnuksen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tilitunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet pelissä ja jotta hän voi liittyä Minecraft-palvelimellemme tapaamisten aikana.",
           "Pelikasvattajiemme kirjoittamat merkinnät tapaamisista – läsnäolot, tapaamisraportit ja lyhyet muistiinpanot, jotka auttavat meitä tukemaan lastasi ryhmässä.",
           "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet, analytiikka ja mainonta\" jäljempänä).",

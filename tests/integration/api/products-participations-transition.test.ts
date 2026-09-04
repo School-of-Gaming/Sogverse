@@ -83,7 +83,6 @@ async function settleDeferred(): Promise<void> {
 /** The columns on the child's profile row that decide whether they get a copy. */
 interface GamerContactOverrides {
   email?: string;
-  email_verified_at?: string | null;
   locale?: string | null;
   gamer_profiles?: { sign_in: string } | null;
 }
@@ -92,14 +91,19 @@ interface GamerContactOverrides {
  * Overrides on the child's profile row, applied by the stub below. Empty by
  * default — the switch-only sign-in every gamer is created with, under which
  * the child's profile address is a platform-internal handle and no copy goes
- * to them. A test that wants the child's own copy swaps in a verified real
- * address; `beforeEach` clears it again.
+ * to them. A test that wants the child's own copy swaps in the real-email
+ * sign-in; `beforeEach` clears it again.
  */
 let gamerOverrides: GamerContactOverrides = {};
 
-const VERIFIED_GAMER: GamerContactOverrides = {
+/**
+ * The one shape that earns a child their own copy: the real-email sign-in.
+ * Nothing here says whether the address has been verified, because the send no
+ * longer asks — and the flip is deliberate, since the copy is most useful
+ * before the child has clicked anything.
+ */
+const EMAIL_GAMER: GamerContactOverrides = {
   email: "aino@example.test",
-  email_verified_at: "2026-08-01T10:00:00Z",
   locale: "en",
   gamer_profiles: { sign_in: "email" },
 };
@@ -134,7 +138,6 @@ function adminTableStub(table: string) {
             first_name: "Marja",
             last_name: "Virtanen",
             email: "marja@example.com",
-            email_verified_at: "2026-01-01T00:00:00Z",
             locale: "en",
             gamer_profiles: null,
           },
@@ -143,7 +146,6 @@ function adminTableStub(table: string) {
             first_name: "Aino",
             last_name: null,
             email: "aino@gamer.sogverse.internal",
-            email_verified_at: null,
             locale: null,
             gamer_profiles: { sign_in: "parent" },
             ...gamerOverrides,
@@ -508,14 +510,14 @@ describe("PATCH /api/admin/products/[id]/participations/[participationId]", () =
   });
 
   /**
-   * A child with a verified mailbox of their own gets a copy of the offer
-   * beside the parent's — and the copy is the whole reason the child's mail is
-   * a separate template: only the parent may answer, so the token stays in
-   * the parent's mail alone.
+   * A child with a mailbox of their own gets a copy of the offer beside the
+   * parent's — and the copy is the whole reason the child's mail is a separate
+   * template: only the parent may answer, so the token stays in the parent's
+   * mail alone. The address here is unverified, which changes nothing.
    */
-  it("sends a verified child their own copy, with no token in it", async () => {
+  it("sends a child with their own address a copy, with no token in it", async () => {
     mockAuthenticatedAdmin();
-    gamerOverrides = VERIFIED_GAMER;
+    gamerOverrides = EMAIL_GAMER;
 
     await PATCH(patchRequest(invite), { params });
     await settleDeferred();
@@ -537,9 +539,13 @@ describe("PATCH /api/admin/products/[id]/participations/[participationId]", () =
     expect(child.replyToEmail).toBe("help@sog.gg");
   });
 
-  it("mails the parent alone for a child whose real address is not yet verified", async () => {
+  it("mails the parent alone for a child who signs in with a username", async () => {
     mockAuthenticatedAdmin();
-    gamerOverrides = { ...VERIFIED_GAMER, email_verified_at: null };
+    gamerOverrides = {
+      ...EMAIL_GAMER,
+      email: "aino@gamer.sogverse.internal",
+      gamer_profiles: { sign_in: "username" },
+    };
 
     await PATCH(patchRequest(invite), { params });
     await settleDeferred();

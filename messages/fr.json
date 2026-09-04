@@ -2615,7 +2615,7 @@
       "sent": "Envoyé",
       "message": "Message",
       "gamerNote": "Ce message provient d’un compte joueur. Les réponses seront adressées à son parent ({parentEmail}).",
-      "gamerOwnEmailNote": "Ce joueur dispose aussi d’une adresse e-mail vérifiée qui lui est propre ({gamerEmail}) — ajoutez-la si vous répondez."
+      "gamerOwnEmailNote": "Ce joueur dispose aussi d’une adresse e-mail qui lui est propre ({gamerEmail}) — ajoutez-la si vous répondez."
     },
     "welcomeParent": {
       "subject": "Bienvenue chez School of Gaming",
@@ -2817,7 +2817,7 @@
           "Vos préférences de langue et de devise — pour que le site s’affiche comme vous l’attendez.",
           "Votre mot de passe, que nous ne conservons que sous forme chiffrée (hachée) — nous ne pouvons jamais le voir.",
           "Les informations de paiement sont traitées directement dans Stripe. Nous ne voyons ni ne conservons jamais votre numéro de carte complet.",
-          "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement. Nous enregistrons aussi votre nom de famille sur son compte, parce que votre enfant fait partie de votre compte ; les Gedus et les autres joueurs ne le voient jamais. Le compte lui-même porte une adresse interne Sogverse plutôt qu’un véritable e-mail, sauf si vous choisissez de lui donner une connexion avec sa propre adresse e-mail ; nous conservons alors cette adresse et, une fois qu’il l’a vérifiée, lui envoyons sa propre copie des e-mails que nous vous adressons au sujet de ses clubs, stages et événements.",
+          "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement. Nous enregistrons aussi votre nom de famille sur son compte, parce que votre enfant fait partie de votre compte ; les Gedus et les autres joueurs ne le voient jamais. Le compte lui-même porte une adresse interne Sogverse plutôt qu’un véritable e-mail, sauf si vous choisissez de lui donner une connexion avec sa propre adresse e-mail ; nous conservons alors cette adresse et lui envoyons sa propre copie des e-mails que nous vous adressons au sujet de ses clubs, stages et événements.",
           "Facultativement, le nom d’utilisateur de votre enfant dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant de compte que le jeu lui attribue, pour que nous puissions le reconnaître dans le jeu et pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
           "Ce que nos animateurs notent au fil des sessions — présences, comptes rendus de session et courtes notes qui nous aident à accompagner votre enfant dans le groupe.",
           "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies, statistiques et publicité » ci-dessous).",

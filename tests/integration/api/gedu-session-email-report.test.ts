@@ -127,8 +127,6 @@ interface ParticipationFixture {
   participant: {
     first_name: string;
     email: string;
-    /** The proof a real address is the child's; null under every other sign-in. */
-    email_verified_at: string | null;
     role: string;
     locale: string | null;
     /** One-to-one off `profiles`, so an object or null (an adult has none). */
@@ -169,7 +167,6 @@ const PARTICIPATIONS: ParticipationFixture[] = [
     participant: {
       first_name: "Aino",
       email: "aino@gamer.sogverse.internal",
-      email_verified_at: null,
       role: "gamer",
       locale: null,
       gamer_profiles: { sign_in: "parent" },
@@ -182,7 +179,6 @@ const PARTICIPATIONS: ParticipationFixture[] = [
     participant: {
       first_name: "Väinö",
       email: "vaino@gamer.sogverse.internal",
-      email_verified_at: null,
       role: "gamer",
       locale: null,
       gamer_profiles: { sign_in: "parent" },
@@ -195,7 +191,6 @@ const PARTICIPATIONS: ParticipationFixture[] = [
     participant: {
       first_name: "Sylvie",
       email: "sylvie@test.local",
-      email_verified_at: "2026-01-01T00:00:00Z",
       role: "customer",
       locale: "en",
       gamer_profiles: null,
@@ -204,15 +199,15 @@ const PARTICIPATIONS: ParticipationFixture[] = [
 ];
 
 /**
- * Aino again, holding a verified mailbox of her own: the real-email sign-in
- * AND the stamp. The one shape that earns a child their own copy.
+ * Aino again, holding a mailbox of her own: the real-email sign-in, which is
+ * the whole of what earns a child their own copy. Nothing here says whether
+ * she has verified the address, because the route no longer asks.
  */
-const VERIFIED_CHILD: ParticipationFixture = {
+const EMAIL_CHILD: ParticipationFixture = {
   ...PARTICIPATIONS[0],
   participant: {
     ...PARTICIPATIONS[0].participant,
     email: "aino@example.test",
-    email_verified_at: "2026-08-01T10:00:00Z",
     locale: "en",
     gamer_profiles: { sign_in: "email" },
   },
@@ -820,7 +815,6 @@ describe("POST /api/gedu/sessions/email-report", () => {
           participant: {
             first_name: "Orvokki",
             email: "orvokki@gamer.sogverse.internal",
-            email_verified_at: null,
             role: "gamer",
             locale: null,
             gamer_profiles: { sign_in: "parent" },
@@ -873,14 +867,14 @@ describe("POST /api/gedu/sessions/email-report", () => {
 
   // -- The child's own copy --
   //
-  // A child who holds a verified mailbox of their own gets their own copy of
-  // the report, beside the parent's and never instead of it. The gate is both
-  // facts together — the real-email sign-in AND the verification stamp — and
-  // the cases below are each one way of having only one of them.
+  // A child who holds a mailbox of their own gets their own copy of the
+  // report, beside the parent's and never instead of it. The gate is the
+  // sign-in mode alone — verification is deliberately not a precondition — so
+  // the cases below are the two modes that have no inbox behind them.
 
-  it("sends a verified email-mode child their own copy, beside the parent's", async () => {
+  it("sends an email-mode child their own copy, beside the parent's", async () => {
     setupAdminClient({
-      participations: [VERIFIED_CHILD, PARTICIPATIONS[1], PARTICIPATIONS[2]],
+      participations: [EMAIL_CHILD, PARTICIPATIONS[1], PARTICIPATIONS[2]],
     });
 
     const response = await POST(createRequest());
@@ -910,7 +904,7 @@ describe("POST /api/gedu/sessions/email-report", () => {
   });
 
   it("writes the child's copy in the child's locale, not the parent's", async () => {
-    setupAdminClient({ participations: [VERIFIED_CHILD] });
+    setupAdminClient({ participations: [EMAIL_CHILD] });
 
     await POST(createRequest());
 
@@ -923,24 +917,16 @@ describe("POST /api/gedu/sessions/email-report", () => {
   it.each([
     [
       "switch-only sign-in",
-      { email: "aino@gamer.sogverse.internal", email_verified_at: null, gamer_profiles: { sign_in: "parent" } },
+      { email: "aino@gamer.sogverse.internal", gamer_profiles: { sign_in: "parent" } },
     ],
     [
       "username sign-in",
-      { email: "aino@gamer.sogverse.internal", email_verified_at: null, gamer_profiles: { sign_in: "username" } },
-    ],
-    [
-      "real email, not yet verified",
-      { email: "aino@example.test", email_verified_at: null, gamer_profiles: { sign_in: "email" } },
-    ],
-    [
-      "a stamp left behind after switching back to the parent sign-in",
-      { email: "aino@gamer.sogverse.internal", email_verified_at: "2026-08-01T10:00:00Z", gamer_profiles: { sign_in: "parent" } },
+      { email: "aino@gamer.sogverse.internal", gamer_profiles: { sign_in: "username" } },
     ],
   ])("mails the parent alone for a child with a %s", async (_label, participant) => {
     setupAdminClient({
       participations: [
-        { ...VERIFIED_CHILD, participant: { ...VERIFIED_CHILD.participant, ...participant } },
+        { ...EMAIL_CHILD, participant: { ...EMAIL_CHILD.participant, ...participant } },
       ],
     });
 
@@ -954,8 +940,8 @@ describe("POST /api/gedu/sessions/email-report", () => {
     ).toBe(false);
   });
 
-  it("writes to nobody for a verified child with no parent — never to a child alone", async () => {
-    setupAdminClient({ participations: [VERIFIED_CHILD], parentLinks: [] });
+  it("writes to nobody for a child with no parent — never to a child alone", async () => {
+    setupAdminClient({ participations: [EMAIL_CHILD], parentLinks: [] });
 
     const response = await POST(createRequest());
     const data = await response.json();
@@ -966,7 +952,7 @@ describe("POST /api/gedu/sessions/email-report", () => {
   });
 
   it("neither counts nor retries over a child's copy that throws", async () => {
-    setupAdminClient({ participations: [VERIFIED_CHILD] });
+    setupAdminClient({ participations: [EMAIL_CHILD] });
     mockSendTransactionalEmail.mockImplementation((options: SentMail) =>
       options.toEmail === "aino@example.test"
         ? Promise.reject(new Error("mailbox full"))

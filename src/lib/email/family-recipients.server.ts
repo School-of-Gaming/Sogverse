@@ -7,23 +7,25 @@ import type { GamerSignIn } from "@/types";
  *
  * **We never write to a child alone.** Every mail about a seat goes to the
  * parent — the linked parent for a child's seat, the adult themselves for a
- * seat they hold in their own name — and *in addition* the child receives
- * their own copy when, and only when, they hold a mailbox of their own that we
- * have seen answer. A seat with no parent contact produces no mail at all,
- * whatever the child holds: a verified address is not a reason to start
- * corresponding with a child on their own.
+ * seat they hold in their own name — and *in addition* the child receives their
+ * own copy when they hold a mailbox of their own. A seat with no parent contact
+ * produces no mail at all, whatever the child holds: a child's own address is
+ * not a reason to start corresponding with a child on their own.
  *
- * **The child's copy is gated on two facts together, and the second is
- * load-bearing.** A parent chooses how each child signs in, and one of the
- * choices is the child's real email address; that address is *typed* by the
- * parent and only *proven* when the child follows the verification link we
- * send to it. Until then it is a string somebody typed, and a mistyped one
- * belongs to a stranger — so a session report, a seat offer or a confirmation
- * sent to it would be a mail about a named child landing in an unknown inbox.
- * The sign-in mode alone is therefore never enough: the copy goes out only
- * when the stored mode is the real-email one AND the verification stamp is
- * set. A parent who later switches the child back to another mode takes the
+ * **The child's copy is gated on one fact: the stored sign-in mode is the
+ * real-email one.** A parent chooses how each child signs in, and one of the
+ * choices is the child's own email address; the other two are a
+ * platform-internal handle no inbox answers, which the gate below never lets
+ * through. A parent who later switches the child back to another mode takes the
  * copy away with it, because the mode is checked on every send.
+ *
+ * **Verification is deliberately not a precondition.** The address is typed by
+ * the parent and only proven when the child follows the verification link, and
+ * gating the copy on that stamp was a special case this one role carried alone.
+ * It cost the copy exactly where it is most useful — a confirmation sent
+ * moments after a parent creates the account, before the child has clicked
+ * anything at all — and children cannot be relied on to verify. So the mode is
+ * the whole test, and an unverified real address receives the copy.
  *
  * **What the child's copy is, is the template's decision, not this module's.**
  * This resolves *who*; each mail decides what a child's copy may carry — and
@@ -76,18 +78,14 @@ export interface FamilyGamerContact {
   locale: string | null;
   /** `gamer_profiles.sign_in`; null when the row is missing (an adult, or a broken profile). */
   signIn: GamerSignIn | null;
-  /** `profiles.email_verified_at` — the proof the address is the child's. */
-  emailVerifiedAt: string | null;
 }
 
 /**
- * Whether a child holds a mailbox we may write to: the real-email sign-in,
- * AND a verification stamp. See the module comment for why both.
+ * Whether a child holds a mailbox we may write to: the real-email sign-in, and
+ * nothing else. See the module comment for why verification is not part of it.
  */
-export function gamerHoldsOwnMailbox(
-  gamer: Pick<FamilyGamerContact, "signIn" | "emailVerifiedAt">,
-): boolean {
-  return gamer.signIn === "email" && Boolean(gamer.emailVerifiedAt);
+export function gamerHoldsOwnMailbox(gamer: Pick<FamilyGamerContact, "signIn">): boolean {
+  return gamer.signIn === "email";
 }
 
 /**

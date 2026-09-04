@@ -7,26 +7,26 @@ import {
 
 /**
  * Who a family mail goes to. The rule under test has two halves — the parent
- * always, the child only behind a verified real address — and every case here
- * is one way of getting the second half wrong: a mode without a stamp, a stamp
- * without the mode, a child with nobody to write to first.
+ * always, the child only when their sign-in is their own email address — and
+ * every case here is one way of getting the second half wrong: a mode that has
+ * no inbox behind it, a child with nobody to write to first, and the case that
+ * used to be withheld and no longer is (a real address nobody has verified).
  */
 
 const parent = { email: "marja@example.test", firstName: "Marja", locale: "fi" };
 
-const verifiedChild: FamilyGamerContact = {
+const emailChild: FamilyGamerContact = {
   email: "aino@example.test",
   firstName: "Aino",
   locale: "en",
   signIn: "email",
-  emailVerifiedAt: "2026-08-01T10:00:00Z",
 };
 
 describe("resolveFamilyRecipients", () => {
   it("writes to the parent alone when the child signs in through the parent", () => {
     const recipients = resolveFamilyRecipients({
       parents: [parent],
-      gamer: { ...verifiedChild, signIn: "parent", emailVerifiedAt: null },
+      gamer: { ...emailChild, signIn: "parent" },
       fallbackLocale: "en",
     });
     expect(recipients).toEqual([
@@ -40,10 +40,9 @@ describe("resolveFamilyRecipients", () => {
     const recipients = resolveFamilyRecipients({
       parents: [parent],
       gamer: {
-        ...verifiedChild,
+        ...emailChild,
         email: "aino@gamer.sogverse.internal",
         signIn: "username",
-        emailVerifiedAt: null,
       },
       fallbackLocale: "en",
     });
@@ -51,34 +50,23 @@ describe("resolveFamilyRecipients", () => {
   });
 
   /**
-   * The load-bearing case. A real address the parent typed but the child has
-   * not verified may belong to a stranger, and a mail about a named child must
-   * not land there. The mode alone is never enough.
+   * Verification is not a precondition, by decision. A copy is most useful
+   * before the child has clicked anything — a confirmation minutes after the
+   * parent created the account — so the mode is the whole test.
    */
-  it("withholds the child's copy until the address is verified", () => {
+  it("sends the child's copy to a real address nobody has verified", () => {
     const recipients = resolveFamilyRecipients({
       parents: [parent],
-      gamer: { ...verifiedChild, emailVerifiedAt: null },
+      gamer: emailChild,
       fallbackLocale: "en",
     });
-    expect(recipients.map((r) => r.kind)).toEqual(["parent"]);
+    expect(recipients.map((r) => r.kind)).toEqual(["parent", "gamer"]);
   });
 
-  it("withholds the copy when a stamp survives a switch away from the real-email mode", () => {
-    // Both facts together, not either: a stamp left behind by an earlier mode
-    // does not reopen the mailbox once the parent has chosen another sign-in.
+  it("adds the child's own copy after the parent, never instead of them", () => {
     const recipients = resolveFamilyRecipients({
       parents: [parent],
-      gamer: { ...verifiedChild, signIn: "parent" },
-      fallbackLocale: "en",
-    });
-    expect(recipients.map((r) => r.kind)).toEqual(["parent"]);
-  });
-
-  it("adds the child's own copy, after the parent, when the address is verified", () => {
-    const recipients = resolveFamilyRecipients({
-      parents: [parent],
-      gamer: verifiedChild,
+      gamer: emailChild,
       fallbackLocale: "en",
     });
     expect(recipients).toEqual([
@@ -88,9 +76,9 @@ describe("resolveFamilyRecipients", () => {
   });
 
   /** We never write to a child alone, whatever they hold. */
-  it("writes to nobody when there is no parent, even for a verified child", () => {
+  it("writes to nobody when there is no parent, even for a child with their own address", () => {
     expect(
-      resolveFamilyRecipients({ parents: [], gamer: verifiedChild, fallbackLocale: "en" }),
+      resolveFamilyRecipients({ parents: [], gamer: emailChild, fallbackLocale: "en" }),
     ).toEqual([]);
   });
 
@@ -108,7 +96,7 @@ describe("resolveFamilyRecipients", () => {
   it("resolves each recipient's locale on their own, with the caller's fallback", () => {
     const recipients = resolveFamilyRecipients({
       parents: [{ ...parent, locale: null }],
-      gamer: { ...verifiedChild, locale: "sv" },
+      gamer: { ...emailChild, locale: "sv" },
       fallbackLocale: "fr",
     });
     expect(recipients.map((r) => r.locale)).toEqual(["fr", "sv"]);
@@ -125,11 +113,10 @@ describe("resolveFamilyRecipients", () => {
 });
 
 describe("gamerHoldsOwnMailbox", () => {
-  it("is true only for the real-email mode with a verification stamp", () => {
-    expect(gamerHoldsOwnMailbox({ signIn: "email", emailVerifiedAt: "2026-08-01T10:00:00Z" })).toBe(true);
-    expect(gamerHoldsOwnMailbox({ signIn: "email", emailVerifiedAt: null })).toBe(false);
-    expect(gamerHoldsOwnMailbox({ signIn: "username", emailVerifiedAt: "2026-08-01T10:00:00Z" })).toBe(false);
-    expect(gamerHoldsOwnMailbox({ signIn: "parent", emailVerifiedAt: null })).toBe(false);
-    expect(gamerHoldsOwnMailbox({ signIn: null, emailVerifiedAt: "2026-08-01T10:00:00Z" })).toBe(false);
+  it("is true for the real-email mode and for nothing else", () => {
+    expect(gamerHoldsOwnMailbox({ signIn: "email" })).toBe(true);
+    expect(gamerHoldsOwnMailbox({ signIn: "username" })).toBe(false);
+    expect(gamerHoldsOwnMailbox({ signIn: "parent" })).toBe(false);
+    expect(gamerHoldsOwnMailbox({ signIn: null })).toBe(false);
   });
 });

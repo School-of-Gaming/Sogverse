@@ -143,7 +143,6 @@ function mockReadsForConfirmationEmail(
     gamer?: Partial<{
       email: string | null;
       locale: string | null;
-      email_verified_at: string | null;
       gamer_profiles: { sign_in: string } | null;
     }>;
   } = {},
@@ -177,7 +176,6 @@ function mockReadsForConfirmationEmail(
                   id: CUSTOMER_ID,
                   first_name: "Marja",
                   email: "parent@example.test",
-                  email_verified_at: "2026-01-01T00:00:00Z",
                   locale: "en",
                   gamer_profiles: null,
                 },
@@ -185,7 +183,6 @@ function mockReadsForConfirmationEmail(
                   id: GAMER_ID,
                   first_name: participantFirstName,
                   email: null,
-                  email_verified_at: null,
                   locale: null,
                   gamer_profiles: { sign_in: "parent" },
                   ...gamer,
@@ -614,19 +611,19 @@ describe("POST /api/participations/waitlist", () => {
   });
 
   /**
-   * A child with a verified mailbox of their own gets a copy beside the
-   * parent's: second person, no price, their own My SOG root. The two negative
-   * cases are the gate's two halves — the mode without the stamp, and the
-   * switch-only default — and each must leave the parent's mail as the only one.
+   * A child with a mailbox of their own gets a copy beside the parent's:
+   * second person, no price, their own My SOG root. The gate is the sign-in
+   * mode alone — the address below is unverified and the copy goes out anyway
+   * — so the negative cases are the two modes that have no inbox behind them:
+   * the switch-only default above, and the username sign-in below.
    */
-  it("sends a verified child their own copy, after the parent's", async () => {
+  it("sends a child with their own address a copy, after the parent's", async () => {
     mockAuthenticatedCustomer();
     joinsWaitlist();
     mockReadsForConfirmationEmail({
       gamer: {
         email: "aino@example.test",
         locale: "en",
-        email_verified_at: "2026-08-01T10:00:00Z",
         gamer_profiles: { sign_in: "email" },
       },
     });
@@ -647,14 +644,13 @@ describe("POST /api/participations/waitlist", () => {
     expect(child.replyToEmail).toBe("help@sog.gg");
   });
 
-  it("mails the parent alone while the child's real address is unverified", async () => {
+  it("mails the parent alone for a child who signs in with a username", async () => {
     mockAuthenticatedCustomer();
     joinsWaitlist();
     mockReadsForConfirmationEmail({
       gamer: {
-        email: "aino@example.test",
-        email_verified_at: null,
-        gamer_profiles: { sign_in: "email" },
+        email: "aino@gamer.sogverse.internal",
+        gamer_profiles: { sign_in: "username" },
       },
     });
 

@@ -96,10 +96,9 @@ export const POST = defineRoute({
       }
 
       // Reply-To stays the parent's — Brevo takes one address, and we never
-      // answer a child alone — but a gamer who holds a verified mailbox of
-      // their own is named in the staff-facing note so the admin can include
-      // both. The gate is the shared one: the real-email sign-in AND the
-      // verification stamp, because an unverified address may be a stranger's.
+      // answer a child alone — but a gamer who holds a mailbox of their own is
+      // named in the staff-facing note so the admin can include both. The gate
+      // is the shared one: the real-email sign-in, which is the whole test.
       // Same service-role read as the parent lookup, and for the same reason.
       const { data: gamerProfile } = await adminClient
         .from("gamer_profiles")
@@ -107,12 +106,7 @@ export const POST = defineRoute({
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (
-        gamerHoldsOwnMailbox({
-          signIn: gamerProfile?.sign_in ?? null,
-          emailVerifiedAt: profile.email_verified_at,
-        })
-      ) {
+      if (gamerHoldsOwnMailbox({ signIn: gamerProfile?.sign_in ?? null })) {
         gamerEmail = profile.email;
       }
     }

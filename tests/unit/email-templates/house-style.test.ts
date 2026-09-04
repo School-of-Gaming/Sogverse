@@ -195,7 +195,7 @@ const MAILS: Record<string, () => [string, string][]> = {
   // markup no other render reaches, one of them carrying a child's address.
   feedback: () => [
     ...fromRegistry("feedback"),
-    ...fromRegistry("feedback", "feedback (gamer, verified own email)", {
+    ...fromRegistry("feedback", "feedback (gamer, own email)", {
       userRole: "gamer",
       parentEmail: "marja@example.com",
       gamerEmail: "aino@example.com",

@@ -59,10 +59,10 @@ import type { EmailTranslator } from "./translator";
  * a variant of the one template rather than a template of its own, because
  * everything below the banner is deliberately the same mail the families read.
  *
- * **A child with a verified mailbox of their own gets a third variant: their
- * copy.** The route sends it beside the parent's, never instead of it, and
- * only when the child's sign-in is their real email *and* that address has
- * been verified — the recipient rule lives with the route, not here. What
+ * **A child with a mailbox of their own gets a third variant: their copy.**
+ * The route sends it beside the parent's, never instead of it, and only when
+ * the child's sign-in is their real email — the recipient rule lives with the
+ * route, not here. What
  * changes in the mail is the one framing sentence: the parent's copy is
  * written *to the parent about the child* ("here is X's report from Aino's
  * session"), and read by Aino that sentence is about somebody else, so the
@@ -109,8 +109,8 @@ export interface SessionReportEmailOptions {
   /**
    * Render the copy that goes to the child themselves — the same mail with its
    * framing sentence addressed to the child rather than to their parent about
-   * them. Only ever set for a child whose verified real email is the
-   * recipient; a family mail and a staff copy leave it unset.
+   * them. Only ever set for a child whose own real email is the recipient; a
+   * family mail and a staff copy leave it unset.
    */
   gamerCopy?: boolean;
 }

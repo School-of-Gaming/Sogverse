@@ -3301,7 +3301,7 @@
       "sent": "Sent",
       "message": "Message",
       "gamerNote": "This message is from a gamer account. Replies go to their parent ({parentEmail}).",
-      "gamerOwnEmailNote": "This gamer also has a verified email address of their own ({gamerEmail}) — include it if you write back."
+      "gamerOwnEmailNote": "This gamer also has an email address of their own ({gamerEmail}) — include it if you write back."
     },
     "welcomeParent": {
       "subject": "Welcome to School of Gaming",
@@ -3503,7 +3503,7 @@
           "Your language and currency preferences — so the site shows up the way you expect.",
           "Your password, which we store only in a scrambled (hashed) form — we can never see it.",
           "Payment details are handled directly in Stripe. We never see or store your full card number.",
-          "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly. We store your family surname on their account too, because your child is part of your account; Gedus and other gamers never see it. Their account itself uses an internal Sogverse address rather than a real email, unless you choose to give them a sign-in with their own email address; we then hold that address and, once they have verified it, send them their own copy of the emails we send you about their clubs, camps and events.",
+          "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly. We store your family surname on their account too, because your child is part of your account; Gedus and other gamers never see it. Their account itself uses an internal Sogverse address rather than a real email, unless you choose to give them a sign-in with their own email address; we then hold that address and send them their own copy of the emails we send you about their clubs, camps and events.",
           "Optionally, your child’s username in the games their clubs use — today that’s Minecraft and Roblox — and the account id that game gives them, so we can recognise them in the game and so they can connect to our Minecraft server during sessions.",
           "Session records our Game Educators write — attendance, session reports, and short notes that help us support your child in the group.",
           "Basic, anonymous information about how the site is used (see \"Cookies, analytics and advertising\" below).",

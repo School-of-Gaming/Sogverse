@@ -68,7 +68,7 @@ interface ProductConfirmationEmailOptions {
   dashboardUrl: string;
   /**
    * The child's own copy, sent beside the parent's when the child holds a
-   * verified mailbox of their own. It speaks to the reader the way a self seat
+   * mailbox of their own. It speaks to the reader the way a self seat
    * does — the reader *is* the participant — and drops everything only a
    * parent can act on: the price line and the billing bullet. `isSelfSeat` is
    * ignored under it, because the child's copy of an adult's own seat does

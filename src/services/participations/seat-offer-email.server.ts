@@ -42,7 +42,7 @@ import type { AppSupabaseClient } from "@/types";
  * runs — which makes reading by id the only shape that works at all.
  *
  * **The offer goes to the parent, and to the child as well when the child
- * holds a verified mailbox of their own** — decided by the shared
+ * holds a mailbox of their own** — decided by the shared
  * family-recipient resolver, never here. The child's copy is a different
  * template with no buttons and nowhere to put the token: only the parent may
  * answer, and the credential that answers stays in the parent's mail alone.
@@ -274,11 +274,11 @@ async function readContext(
       .single(),
     client
       .from("profiles")
-      // The verification stamp and the sign-in mode decide whether the child
-      // gets a copy of their own; `gamer_profiles` is one-to-one off
-      // `profiles`, so the embed is an object or null (null for the payer).
+      // The sign-in mode decides whether the child gets a copy of their own;
+      // `gamer_profiles` is one-to-one off `profiles`, so the embed is an
+      // object or null (null for the payer).
       .select(
-        "id, first_name, last_name, email, email_verified_at, locale, gamer_profiles(sign_in)",
+        "id, first_name, last_name, email, locale, gamer_profiles(sign_in)",
       )
       .in("id", [customerId, participantId]),
   ]);
@@ -362,7 +362,6 @@ async function sendOffer({
           firstName: participantName,
           locale: participant.locale,
           signIn: participant.gamer_profiles?.sign_in ?? null,
-          emailVerifiedAt: participant.email_verified_at,
         },
     fallbackLocale: detectLocaleFromHeader(request.headers.get("Accept-Language")),
   });

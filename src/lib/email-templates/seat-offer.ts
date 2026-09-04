@@ -131,7 +131,7 @@ export interface SeatOfferGamerEmailOptions {
 
 /**
  * The seat offer as the child reads it, sent beside the parent's mail when the
- * child holds a verified mailbox of their own.
+ * child holds a mailbox of their own.
  *
  * **It carries no buttons and no token, by construction.** Only the parent may
  * accept or decline, and the links that do so carry a signed credential; this

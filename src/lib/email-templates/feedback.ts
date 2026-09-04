@@ -16,11 +16,11 @@ interface FeedbackEmailOptions {
   isGamer?: boolean;
   parentEmail?: string;
   /**
-   * The gamer's own address, present only when they hold a verified mailbox
-   * (the real-email sign-in, verified). Brevo's Reply-To is one address and
-   * stays the parent's, so this goes in the staff-facing note instead — the
-   * admin answering can then include both. Never set for an unverified
-   * address: a mistyped one belongs to a stranger.
+   * The gamer's own address, present only when they hold a mailbox of their
+   * own (the real-email sign-in). Brevo's Reply-To is one address and stays the
+   * parent's, so this goes in the staff-facing note instead — the admin
+   * answering can then include both. Never set for a child who signs in
+   * through their parent or with a username: there is no inbox behind those.
    */
   gamerEmail?: string;
 }
@@ -68,8 +68,8 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
       </tr>`
     : "";
 
-  // A second line under the first, only when the gamer has a verified address
-  // of their own. Same style and the same defusing: this address is a child's,
+  // A second line under the first, only when the gamer has an address of
+  // their own. Same style and the same defusing: this address is a child's,
   // and a client linking it on our behalf is the worst place for an invented
   // link to appear.
   const gamerOwnEmailNote = opts.isGamer && opts.parentEmail && opts.gamerEmail
