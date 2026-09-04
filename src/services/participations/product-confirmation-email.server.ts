@@ -10,11 +10,16 @@ import {
 } from "@/lib/constants/locales";
 import {
   buildProductConfirmationEmail,
+  productConfirmationAttachments,
   productConfirmationSubject,
+  productConfirmationText,
+  resolveProductConfirmation,
   type ProductConfirmationMode,
 } from "@/lib/email-templates/product-confirmation";
+import type { InvitationSlot } from "@/lib/email-templates/product-confirmation-invitation";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { localizedLocationName } from "@/lib/locations/localized-name";
 import { getOrigin } from "@/lib/url";
 import { formatCurrencyFromCents } from "@/lib/utils";
 import type { AppSupabaseClient } from "@/types";
@@ -47,6 +52,24 @@ import type { AppSupabaseClient } from "@/types";
  * own row and their child's (it is the same read the confirmation page makes).
  * Nothing here constructs a privileged client of its own.
  */
+/**
+ * How a caller names the outcome — the five the mail branches on, plus one
+ * sentinel it resolves for itself.
+ *
+ * **`honoured-offer` exists because the seat-offer answer does not know the
+ * price shape and should not have to guess.** A seat is only ever *offered* on
+ * a no-charge product, so the answer is `external` where the municipality is
+ * invoiced and `free` everywhere else — and the product row this module already
+ * reads carries the billing mode that decides it. The sentinel is resolved
+ * before any params are built, so the template never meets it.
+ *
+ * A product flipped from no-charge to paid while the family was deciding still
+ * honours the free seat; that grandfathering is deliberate and is stated in
+ * `docs/architecture/products.md`'s waitlist section, so reading `paid` here as
+ * `free` is the accepted answer rather than a gap.
+ */
+export type ProductConfirmationSendMode = ProductConfirmationMode | "honoured-offer";
+
 export interface ProductConfirmationEmailInput {
   client: AppSupabaseClient;
   /**
@@ -62,7 +85,13 @@ export interface ProductConfirmationEmailInput {
   customerId: string;
   participantId: string;
   productId: string;
-  mode: ProductConfirmationMode;
+  /**
+   * The seat itself. It is what the calendar entry is identified by — one entry
+   * per participation, so two children in one club are two events a parent can
+   * tell apart — and what the enrollment link in the mail points at.
+   */
+  participationId: string;
+  mode: ProductConfirmationSendMode;
   /**
    * Currency to price the mail in. Read only on the modes that state an amount;
    * the free and waitlist modes have no price and never consult it.
@@ -103,17 +132,31 @@ async function send({
   customerId,
   participantId,
   productId,
-  mode,
+  participationId,
+  mode: sendMode,
   currency,
 }: ProductConfirmationEmailInput): Promise<void> {
-  // Two unrelated reads, so they run together — the people know nothing about
-  // the product, and a signup confirmation is already behind the thing it
-  // confirms. The payer and the participant come back in ONE query rather than
-  // two, because on a self seat they are the same row.
-  const [productResult, peopleResult] = await Promise.all([
+  // A waitlist join reads no schedule at all, and that is a rule about the
+  // CLIENT rather than an optimisation: this is the one call site that hands
+  // over the caller's own session, and `site_details` grants SELECT to
+  // `authenticated` with policies for admins and gedus only — a customer's
+  // client matches neither, so the embed would come back silently empty and the
+  // mail would state a site with no address. A place in a queue is not a seat
+  // either, so there is nothing for a calendar to hold. Every enrolled mode
+  // arrives on the admin client (the checkout route, the Stripe webhook and the
+  // seat-offer answer all pass one), which is what makes the read below sound.
+  const wantsSchedule = sendMode !== "waitlist";
+
+  // Unrelated reads, so they run together — the people know nothing about the
+  // product, and a signup confirmation is already behind the thing it confirms.
+  // The payer and the participant come back in ONE query rather than two,
+  // because on a self seat they are the same row.
+  const [productResult, peopleResult, scheduleResult] = await Promise.all([
     client
       .from("products")
-      .select("product_type, product_translations(locale, name)")
+      .select(
+        "product_type, billing_mode, topic, timezone, start_date, end_date, is_remote, product_translations(locale, name, short_description)",
+      )
       .eq("id", productId)
       // Embedded resources come back unordered, so a product without a
       // translation in the reader's locale or in English would otherwise resolve
@@ -124,12 +167,25 @@ async function send({
       .single(),
     client
       .from("profiles")
-      .select("id, first_name, email, locale")
+      .select("id, first_name, last_name, email, locale")
       .in("id", [customerId, participantId]),
+    wantsSchedule
+      ? client
+          .from("products")
+          .select(
+            // `notes` here is the FAMILY-facing site note — how to find the
+            // room, where to park. The staff-only note lives in
+            // `site_staff_details` and is never read on this path.
+            "schedule_slots(weekday, start_time, duration_minutes), locations(name, name_i18n, site_details(address, notes))",
+          )
+          .eq("id", productId)
+          .single()
+      : null,
   ]);
 
   if (productResult.error) throw productResult.error;
   if (peopleResult.error) throw peopleResult.error;
+  if (scheduleResult?.error) throw scheduleResult.error;
 
   const people = peopleResult.data;
   const customer = people.find((row) => row.id === customerId);
@@ -146,10 +202,22 @@ async function send({
     : detectLocaleFromHeader(request.headers.get("Accept-Language"));
 
   const product = productResult.data;
-  const productName = resolveTranslation(
-    product.product_translations,
-    locale,
-  )?.name;
+  // The sentinel resolved before anything is built, so the mail only ever meets
+  // a real mode. A seat offer is made on no-charge products alone, so the only
+  // question left is who bears the cost.
+  const mode: ProductConfirmationMode =
+    sendMode === "honoured-offer"
+      ? product.billing_mode === "external_contract"
+        ? "external"
+        : "free"
+      : sendMode;
+
+  const translation = resolveTranslation(product.product_translations, locale);
+  const productName = translation?.name;
+  // Read here rather than beside the invitation below, because the guard on
+  // `productName` narrows the row it comes from and the optional access would
+  // then read as dead code.
+  const shortDescription = translation?.short_description ?? null;
   const participantName = participant?.first_name.trim();
 
   // Both are guaranteed by the schema — a product has at least one translation
@@ -164,34 +232,83 @@ async function send({
     return;
   }
 
-  const params = {
+  // The TRUSTED origin, never the raw Host header — these links go in an email,
+  // and a spoofed Host would send a family somewhere we do not own.
+  const origin = getOrigin(request);
+  const site = scheduleResult?.data.locations ?? null;
+  const isSelfSeat = participantId === customerId;
+  const t = await getEmailTranslator(locale);
+  const priceAmount = await resolvePriceAmount(client, {
+    productId,
+    mode,
+    currency,
+    locale,
+  });
+
+  const content = resolveProductConfirmation(t, locale, {
     participantName,
     // The same test the confirmation page makes on the row: participant equals
     // customer means the payer took the seat themselves, and every sentence
     // naming them moves into the second person.
-    isSelfSeat: participantId === customerId,
+    isSelfSeat,
     productName,
     productType: product.product_type,
     mode,
-    priceAmount: await resolvePriceAmount(client, {
-      productId,
-      mode,
-      currency,
-      locale,
-    }),
-    // The TRUSTED origin, never the raw Host header — this link goes in an
-    // email, and a spoofed Host would send a family somewhere we do not own.
-    dashboardUrl: `${getOrigin(request)}${ROUTES.customer.dashboard}`,
-  };
+    priceAmount,
+    dashboardUrl: `${origin}${ROUTES.customer.dashboard}`,
+    invitation:
+      scheduleResult === null
+        ? null
+        : {
+            participationId,
+            participantName,
+            isSelfSeat,
+            productName,
+            productType: product.product_type,
+            productTopic: product.topic,
+            shortDescription,
+            timezone: product.timezone,
+            startDate: product.start_date,
+            endDate: product.end_date,
+            slots: scheduleResult.data.schedule_slots.map(
+              (slot): InvitationSlot => ({
+                weekday: slot.weekday,
+                // `time without time zone` comes back as `HH:MM:SS`.
+                startTime: slot.start_time.slice(0, 5),
+                durationMinutes: slot.duration_minutes,
+              }),
+            ),
+            isRemote: product.is_remote,
+            // The shared `name_i18n[locale] ?? name` resolution every other
+            // surface makes on a location row.
+            siteName: site ? localizedLocationName(site, locale) : null,
+            siteAddress: site?.site_details?.address ?? null,
+            siteNote: site?.site_details?.notes ?? null,
+            attendeeName:
+              [customer.first_name, customer.last_name]
+                .filter(Boolean)
+                .join(" ")
+                .trim() || customer.first_name,
+            attendeeEmail: customer.email,
+            enrollmentUrl: `${origin}${ROUTES.customer.enrollment(product.product_type, participationId)}`,
+            now: new Date(),
+          },
+  });
 
-  const t = await getEmailTranslator(locale);
+  const attachments = productConfirmationAttachments(content);
 
   await sendTransactionalEmail({
     fromEmail: SENDER_EMAIL,
     fromName: SENDER_NAME,
     toEmail: customer.email,
-    subject: productConfirmationSubject(t, params),
-    htmlContent: buildProductConfirmationEmail(t, locale, params),
+    subject: productConfirmationSubject(t, content),
+    htmlContent: buildProductConfirmationEmail(t, locale, content),
+    // The mail's own words as text — stated only when a calendar part travels
+    // with it, because that is what an Exchange mailbox fills the calendar
+    // entry's notes from. With only HTML to work from it flattens the markup
+    // into them instead.
+    textContent: productConfirmationText(t, content),
+    attachments: attachments.length > 0 ? attachments : undefined,
     // Product mail to a person: someone replying to this has a question about
     // their signup, so the reply goes to the monitored support inbox rather than
     // the unattended sending address.

@@ -3325,6 +3325,26 @@
         "next1": "We’ll email you the moment a seat opens.",
         "next2": "You can see where you stand in My SOG at any time."
       },
+      "invite": {
+        "sectionLabel": "Session times",
+        "attached": "A calendar invitation is attached to this email. Accepting it adds every session to your calendar.",
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "Online – My SOG",
+        "locationInPerson": "{site}, {address}",
+        "scheduleWeekly": "Every {days}, {startTime}–{endTime}",
+        "scheduleOnce": "{startTime}–{endTime}",
+        "zoneNote": "Times are given in {zone}.",
+        "dateRange": "From {startDate} to {endDate}",
+        "dateFrom": "From {startDate}",
+        "dateOn": "On {date}",
+        "whereOnline": "Sessions run online in My SOG, and the voice room opens {minutes} minutes before each session starts.",
+        "whereInPerson": "Sessions run at {site}.",
+        "whereAddress": "Address: {address}",
+        "gameAccount": "{participantName} needs a {game} account linked in My SOG before the first session.",
+        "gameAccountSelf": "You need a {game} account linked in My SOG before the first session.",
+        "link": "Everything about this signup is in My SOG: {url}",
+        "questions": "Questions? Write to {supportEmail}."
+      },
       "dashboardButton": "Go to My SOG"
     },
     "verifyEmail": {

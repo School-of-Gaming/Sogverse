@@ -231,6 +231,20 @@ function mockAdmin(opts: AdminMockOptions = {}): void {
                   ),
               };
             },
+            // The confirmation mail's second read: the schedule and the site
+            // its calendar invitation would be composed from. No `.order`,
+            // because nothing embedded there is locale-keyed.
+            //
+            // **No slots, deliberately.** What this file covers about that mail
+            // is who receives it and in what voice; the calendar it composes for
+            // a product that *has* a schedule is the composer suite's subject,
+            // and a fixture schedule here would put a document nobody asserts on
+            // into every one of these renders.
+            single: () =>
+              Promise.resolve({
+                data: { schedule_slots: [], locations: null },
+                error: null,
+              }),
           }),
         }),
       };

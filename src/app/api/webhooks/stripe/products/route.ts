@@ -339,6 +339,7 @@ async function handleCheckoutCompleted(
       customerId,
       participantId,
       productId,
+      participationId: confirmJson.participation_id,
       // The price shape, from the shape that was bought: a club is a monthly
       // subscription, a camp or event is paid once.
       mode: isSubscription ? "subscription" : "upfront",

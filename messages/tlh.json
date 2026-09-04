@@ -2683,6 +2683,26 @@
         "next1": "quS poSDI’, QInHom wIngeH.",
         "next2": "reH My SOG-Daq loS DaqlIj DaleghlaH."
       },
+      "invite": {
+        "sectionLabel": "ghom poHmey",
+        "attached": "QInvamDaq nav poH tlhap. DalajDI’, Hoch ghom poH tetlhlIjDaq chellu’.",
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "De’wI’Daq – My SOG",
+        "locationInPerson": "{site}, {address}",
+        "scheduleWeekly": "Hoch {days} {startTime}–{endTime}",
+        "scheduleOnce": "{startTime}–{endTime}",
+        "zoneNote": "poH Sep: {zone}.",
+        "dateRange": "{startDate} vo’ {endDate} ghoS",
+        "dateFrom": "{startDate} vo’",
+        "dateOn": "jaj: {date}",
+        "whereOnline": "De’wI’Daq ghom, My SOG-Daq. ghom pagh {minutes} tup pa’ poSlu’ ghogh pa’.",
+        "whereInPerson": "{site}Daq ghom.",
+        "whereAddress": "Daq: {address}",
+        "gameAccount": "wa’DIch ghom pa’, My SOG-Daq {participantName} {game} pong yIchel.",
+        "gameAccountSelf": "wa’DIch ghom pa’, My SOG-Daq {game} ponglIj yIchel.",
+        "link": "My SOG-Daq Hoch De’: {url}",
+        "questions": "yIghel: {supportEmail}."
+      },
       "dashboardButton": "My SOG yIghoS"
     },
     "verifyEmail": {

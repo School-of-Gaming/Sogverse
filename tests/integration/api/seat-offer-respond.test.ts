@@ -33,6 +33,21 @@ vi.mock("@/lib/brevo", () => ({
     mockSendTransactionalEmail(...args),
 }));
 
+/**
+ * The signup confirmation, mocked at its own boundary rather than at Brevo's.
+ *
+ * A family who answers yes now gets the same mail a family who bought a seat
+ * gets — the schedule, and the calendar invitation with it — and what this file
+ * is about is *which outcome* sends it. The sender reads a product row of its
+ * own and composes an `.ics`; letting it run here would make every assertion in
+ * this file depend on a schedule it has no reason to hold an opinion about.
+ */
+const mockSendProductConfirmationEmail = vi.fn();
+vi.mock("@/services/participations/product-confirmation-email.server", () => ({
+  sendProductConfirmationEmail: (...args: unknown[]) =>
+    mockSendProductConfirmationEmail(...args),
+}));
+
 const deferred: unknown[] = [];
 vi.mock("next/server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("next/server")>();
@@ -318,12 +333,29 @@ describe("POST /api/seat-offer/respond", () => {
     });
   });
 
-  it("answers `accepted` and mails nobody", async () => {
+  /**
+   * A yes is a seat, and a seat is owed the signup confirmation — the same mail
+   * a family who bought one gets, with the schedule and the calendar invitation
+   * in it. Staff are told nothing: the offer did what it was for.
+   *
+   * The price shape is the sentinel rather than a mode this arm invents: it has
+   * no idea what the product costs, and the sender already reads the row that
+   * decides it.
+   */
+  it("answers `accepted`, confirms the seat to the family, and tells staff nothing", async () => {
     const response = await POST(request({ token: await liveToken(), accept: true }));
 
     expect(await response.json()).toEqual({ outcome: "accepted" });
-    expect(deferred).toHaveLength(0);
     await settleDeferred();
+
+    expect(mockSendProductConfirmationEmail).toHaveBeenCalledTimes(1);
+    expect(mockSendProductConfirmationEmail.mock.calls[0][0]).toMatchObject({
+      customerId: CUSTOMER_ID,
+      participantId: GAMER_ID,
+      productId: PRODUCT_ID,
+      participationId: PARTICIPATION_ID,
+      mode: "honoured-offer",
+    });
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
@@ -356,7 +388,11 @@ describe("POST /api/seat-offer/respond", () => {
     expect(sent.toEmail).toEqual(["ada@sog.gg", "bo@sog.gg"]);
     expect(sent.replyToEmail).toBe("help@sog.gg");
     expect(sent.subject).toContain("declined");
+    // No seat, so no signup confirmation — the mail follows the seat rather
+    // than the answer.
+    expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
   });
+
 
   // -- What a refused compare-and-swap is told --
   //
@@ -493,6 +529,9 @@ describe("POST /api/seat-offer/respond", () => {
       "claim_expired_seat_offer_notifications",
       { p_participation_id: PARTICIPATION_ID },
     );
+    // No seat was granted, so there is nothing to confirm — a confirmation for
+    // a seat a family did not get would be the worst mail on this path.
+    expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
   });
 
   /**

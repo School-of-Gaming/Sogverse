@@ -1,14 +1,27 @@
 import { wrapInLayout } from "./layout";
 import { escapeHtml, heading, paragraph, styledName, styledProductName } from "./utils";
 import { bulletList, ctaButton, sectionLabel } from "./blocks";
+import { textAttachment, type RenderedAttachment } from "./attachments";
+import {
+  composeProductConfirmationInvitation,
+  type ProductConfirmationInvitation,
+  type ProductConfirmationInvitationInput,
+} from "./product-confirmation-invitation";
 import type { EmailTranslator } from "./translator";
 import type { ProductType } from "@/types";
 
 /**
- * The mail that follows a signup — the emailed twin of the purchase
- * confirmation page, and deliberately the same copy: a parent who paid on their
- * phone and then opens the mail on a laptop must not be told two different
- * stories about what just happened.
+ * The mail that follows a signup.
+ *
+ * It was the emailed twin of the purchase confirmation page, deliberately the
+ * same copy so that a parent who paid on their phone and then opened the mail
+ * on a laptop was not told two different stories. **That is no longer the whole
+ * truth, and the difference is worth knowing**: the mail now carries the
+ * product's schedule — the days, the clock faces, the zone, the dates and where
+ * it happens — and an `invite.ics` a parent can accept into their own calendar.
+ * The page carries neither. Everything the two *do* both say still says it in
+ * the same words, and the mail's schedule section is composed from the same
+ * sentences as the calendar entry's own notes.
  *
  * What the mail drops is the waitlist position. The page can show it because it
  * reads it live; a number frozen into an email goes stale the moment somebody
@@ -44,7 +57,7 @@ export const PRODUCT_CONFIRMATION_MODES = [
 
 export type ProductConfirmationMode = (typeof PRODUCT_CONFIRMATION_MODES)[number];
 
-interface ProductConfirmationEmailOptions {
+export interface ProductConfirmationEmailOptions {
   /** The participant's first name — a child's, or the buyer's own on a self seat. */
   participantName: string;
   /**
@@ -66,6 +79,54 @@ interface ProductConfirmationEmailOptions {
   priceAmount: string | null;
   /** App-generated My SOG link. */
   dashboardUrl: string;
+  /**
+   * Everything the calendar invitation is composed from, or `null` where the
+   * mail is not to carry one at all.
+   *
+   * **`null` is the waitlist**, and it is a different absence from a schedule
+   * that yields no calendar object: a place in a queue is not a seat, and an
+   * entry in somebody's calendar for sessions they may never attend would be
+   * the wrong promise. Everything else hands the schedule over and lets the
+   * composer decide, which is where the "product has no slots yet" and "product
+   * is over" answers are made.
+   */
+  invitation: ProductConfirmationInvitationInput | null;
+}
+
+/**
+ * One render's worth of resolved content: the options it was given, and the
+ * calendar object composed from them exactly once.
+ *
+ * **Once is the point**, and it is the same reason the calendar explorer
+ * resolves once. The body, the plain-text twin and the attached file all state
+ * the schedule, and a composition that ran per callback would let the mail say
+ * one thing and the file beside it say another — with nothing about the
+ * disagreement visible from inside any one of them.
+ */
+export interface ProductConfirmationContent {
+  options: ProductConfirmationEmailOptions;
+  /** `null` where no calendar object could be composed. See the composer. */
+  invitation: ProductConfirmationInvitation | null;
+}
+
+/**
+ * The options, plus the one calendar object every part of the render reads.
+ *
+ * A waitlist join never composes one — there is no seat behind it — and neither
+ * does a product whose schedule states nothing a calendar can hold. Both come
+ * back as `null`, and every part of the render then produces exactly the mail
+ * this template sent before the invitation existed.
+ */
+export function resolveProductConfirmation(
+  t: EmailTranslator,
+  locale: string,
+  options: ProductConfirmationEmailOptions,
+): ProductConfirmationContent {
+  const invitation =
+    options.invitation === null || options.mode === "waitlist"
+      ? null
+      : composeProductConfirmationInvitation(t, locale, options.invitation);
+  return { options, invitation };
 }
 
 /**
@@ -86,15 +147,8 @@ interface ProductConfirmationEmailOptions {
 export function productConfirmationSubject(
   t: EmailTranslator,
   {
-    participantName,
-    isSelfSeat,
-    productName,
-    productType,
-    mode,
-  }: Pick<
-    ProductConfirmationEmailOptions,
-    "participantName" | "isSelfSeat" | "productName" | "productType" | "mode"
-  >,
+    options: { participantName, isSelfSeat, productName, productType, mode },
+  }: ProductConfirmationContent,
 ): string {
   if (mode === "waitlist") {
     return isSelfSeat
@@ -109,16 +163,20 @@ export function productConfirmationSubject(
 export function buildProductConfirmationEmail(
   t: EmailTranslator,
   locale: string,
-  {
-    participantName,
-    isSelfSeat,
-    productName,
-    productType,
-    mode,
-    priceAmount,
-    dashboardUrl,
-  }: ProductConfirmationEmailOptions,
+  content: ProductConfirmationContent,
 ): string {
+  const {
+    options: {
+      participantName,
+      isSelfSeat,
+      productName,
+      productType,
+      mode,
+      priceAmount,
+      dashboardUrl,
+    },
+    invitation,
+  } = content;
   const isWaitlist = mode === "waitlist";
   const name = styledName(participantName);
   const product = styledProductName(productName);
@@ -150,16 +208,129 @@ export function buildProductConfirmationEmail(
         ...(mode === "external" ? [] : [t(`productConfirmation.next.${mode}`)]),
       ];
 
-  const content = `
+  const body = `
     ${heading(title)}
     ${paragraph(subheading)}
     ${paragraph(`${t(`productConfirmation.typeLabel.${productType}`)}: ${product}`)}
     ${priceLine(t, mode, priceAmount)}
+    ${sessionTimesSection(t, invitation)}
     ${sectionLabel(t("productConfirmation.nextTitle"))}
     ${bulletList(nextItems)}
     ${ctaButton({ href: dashboardUrl, label: t("productConfirmation.dashboardButton") })}
   `;
-  return wrapInLayout({ title, content, locale, t });
+  return wrapInLayout({ title, content: body, locale, t });
+}
+
+/**
+ * The schedule, between the price and what happens next — and nothing at all
+ * when there is no invitation.
+ *
+ * It sits where it does because that is the reading order of the mail's own
+ * facts: what this is, what it costs, when it happens, what we do next. The
+ * closing sentence names the attached file, because a `.ics` a parent has not
+ * been told about is a paperclip they will not press.
+ *
+ * The lines are the composer's own — the same sentences the calendar entry's
+ * notes carry — so the mail and the entry cannot disagree about when a club
+ * meets.
+ */
+function sessionTimesSection(
+  t: EmailTranslator,
+  invitation: ProductConfirmationInvitation | null,
+): string {
+  if (invitation === null) return "";
+  return `
+    ${sectionLabel(t("productConfirmation.invite.sectionLabel"))}
+    ${[...invitation.scheduleLines, ...invitation.placeLines]
+      .map((line) => paragraph(escapeHtml(line)))
+      .join("\n    ")}
+    ${paragraph(t("productConfirmation.invite.attached"))}
+  `;
+}
+
+/**
+ * The whole mail as plain text.
+ *
+ * **Not a courtesy fallback — on a Microsoft mailbox it is the calendar entry's
+ * notes.** Exchange fills the entry from the message body, and with only HTML
+ * to work from it flattens the markup into them: a parent opening the session
+ * in their calendar finds the mail's table structure and the provider's
+ * tracking pixel rendered as text. So it is the mail's own words, in the mail's
+ * own order.
+ *
+ * It is stated only when the mail carries the calendar part, because that is
+ * the only reason it exists. Every other send is HTML alone, as it always was.
+ */
+export function productConfirmationText(
+  t: EmailTranslator,
+  content: ProductConfirmationContent,
+): string | undefined {
+  const { invitation } = content;
+  if (invitation === null) return undefined;
+
+  const {
+    options: {
+      participantName,
+      isSelfSeat,
+      productName,
+      productType,
+      mode,
+      priceAmount,
+      dashboardUrl,
+    },
+  } = content;
+
+  const lines: string[] = [
+    t("productConfirmation.heading"),
+    "",
+    isSelfSeat
+      ? t(`productConfirmation.self.subheading.${productType}`, { productName })
+      : t(`productConfirmation.subheading.${productType}`, { participantName, productName }),
+    "",
+    `${t(`productConfirmation.typeLabel.${productType}`)}: ${productName}`,
+  ];
+
+  const price = plainPriceLine(t, mode, priceAmount);
+  if (price !== null) lines.push(price);
+
+  lines.push(
+    "",
+    t("productConfirmation.invite.sectionLabel"),
+    ...invitation.scheduleLines,
+    ...invitation.placeLines,
+    "",
+    t("productConfirmation.invite.attached"),
+    "",
+    t("productConfirmation.nextTitle"),
+    isSelfSeat
+      ? t("productConfirmation.next.placementSelf")
+      : t("productConfirmation.next.placement", { participantName }),
+  );
+  // `external` states no bullet at all — see the mode note above.
+  if (mode !== "external" && mode !== "waitlist") {
+    lines.push(t(`productConfirmation.next.${mode}`));
+  }
+
+  lines.push("", `${t("productConfirmation.dashboardButton")}: ${dashboardUrl}`);
+
+  return lines.join("\n");
+}
+
+/**
+ * The `invite.ics`, or nothing at all.
+ *
+ * **The file name is load-bearing.** The provider infers the media type from
+ * the extension, and `invite.ics` is what makes a client read the part as an
+ * invitation it can act on rather than as a file to download — which is the
+ * difference between an entry that lands in a calendar and one a parent has to
+ * add by hand.
+ */
+export function productConfirmationAttachments(
+  content: ProductConfirmationContent,
+): RenderedAttachment[] {
+  return content.invitation === null
+    ? []
+    : [textAttachment("invite.ics", content.invitation.ics)];
 }
 
 /**
@@ -173,20 +344,31 @@ function priceLine(
   mode: ProductConfirmationMode,
   priceAmount: string | null,
 ): string {
+  const line = plainPriceLine(t, mode, priceAmount === null ? null : escapeHtml(priceAmount));
+  return line === null ? "" : paragraph(line);
+}
+
+/**
+ * The same line as words, shared by the HTML and the text body so the two
+ * cannot state different prices. The caller escapes for its own destination.
+ */
+function plainPriceLine(
+  t: EmailTranslator,
+  mode: ProductConfirmationMode,
+  priceAmount: string | null,
+): string | null {
   const label = t("productConfirmation.priceLabel");
   switch (mode) {
     case "subscription":
     case "upfront":
       return priceAmount === null
-        ? ""
-        : paragraph(
-            `${label}: ${t(`productConfirmation.price.${mode}`, { amount: escapeHtml(priceAmount) })}`,
-          );
+        ? null
+        : `${label}: ${t(`productConfirmation.price.${mode}`, { amount: priceAmount })}`;
     case "free":
-      return paragraph(`${label}: ${t("productConfirmation.price.free")}`);
+      return `${label}: ${t("productConfirmation.price.free")}`;
     case "external":
-      return paragraph(`${label}: ${t("productConfirmation.price.external")}`);
+      return `${label}: ${t("productConfirmation.price.external")}`;
     case "waitlist":
-      return "";
+      return null;
   }
 }

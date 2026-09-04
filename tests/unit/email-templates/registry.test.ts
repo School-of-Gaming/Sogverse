@@ -8,7 +8,34 @@ import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import {
   CALENDAR_EXPLORER_BODY,
   calendarInvitationStartDate,
+  calendarInvitationUntilDate,
 } from "@/lib/email-templates/calendar-invitation";
+
+/**
+ * The schedule half of the signup form, as a product with a real one posts it.
+ *
+ * Spread into every product-confirmation fixture below, because the schema
+ * requires the whole form — and because the dates have to be *ahead* of now for
+ * an invitation to be composed at all, which is a fact about the render rather
+ * than about the fixture.
+ */
+const PRODUCT_CONFIRMATION_SCHEDULE = {
+  participationId: "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+  attendeeName: "Marja Virtanen",
+  attendeeEmail: "marja@example.com",
+  enrollmentUrl:
+    "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+  topic: "minecraft_java",
+  shortDescription: "Build, explore and survive together.",
+  timezone: "Europe/Helsinki",
+  startDate: calendarInvitationStartDate(),
+  endDate: calendarInvitationUntilDate(),
+  slots: "mon 16:00 60",
+  isRemote: "no",
+  siteName: "Kallion kirjasto",
+  siteAddress: "Viides linja 11, 00530 Helsinki",
+  siteNote: "The door on the north side. Ring the bell.",
+};
 
 let t: EmailTranslator;
 
@@ -96,6 +123,7 @@ describe("templateRegistry render()", () => {
       mode: "subscription",
       priceAmount: "€40.00",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      ...PRODUCT_CONFIRMATION_SCHEDULE,
     };
 
     it("names the participant when the seat is a child's", () => {
@@ -213,6 +241,79 @@ describe("templateRegistry render()", () => {
         for (const mode of ["free", "waitlist"]) {
           expect(resolve({ mode, priceAmount: "€40.00" })).toMatchObject({ priceAmount: null });
         }
+      });
+    });
+
+    /**
+     * The calendar half of the form. It is the same document the live send
+     * attaches, composed from typed fields instead of a product row — so this
+     * is where the parsing of those fields is pinned, and where the mail's
+     * three artifacts are checked to agree with each other.
+     */
+    describe("the calendar invitation it composes", () => {
+      it("attaches invite.ics and states the schedule when the form names slots", () => {
+        const { html, text, attachments } = templateRegistry.productConfirmation.render(
+          { ...signup, isSelfSeat: false },
+          t,
+          "en",
+        );
+
+        expect(html).toContain("Session times");
+        expect(html).toContain("Every Monday, 16:00–17:00");
+        expect(html).toContain("Kallion kirjasto");
+        expect(attachments?.[0].name).toBe("invite.ics");
+        expect(attachments?.[0].text).toContain("BEGIN:VCALENDAR");
+        expect(attachments?.[0].text).toContain(
+          `UID:${PRODUCT_CONFIRMATION_SCHEDULE.participationId}@sogverse`,
+        );
+        expect(text).toContain("Every Monday, 16:00–17:00");
+      });
+
+      /**
+       * An untouched schedule textarea posts nothing, and nothing means a
+       * product with no slots — which is the mail this template sent before the
+       * invitation existed. All three artifacts have to disappear together.
+       */
+      it("sends the plain mail, with no file and no text body, when the schedule is empty", () => {
+        const { html, text, attachments } = templateRegistry.productConfirmation.render(
+          { ...signup, isSelfSeat: false, slots: "" },
+          t,
+          "en",
+        );
+
+        expect(html).not.toContain("Session times");
+        expect(text).toBeUndefined();
+        expect(attachments).toBeUndefined();
+      });
+
+      it("mints an identifier when the form names none", () => {
+        const { attachments } = templateRegistry.productConfirmation.render(
+          { ...signup, isSelfSeat: false, participationId: "" },
+          t,
+          "en",
+        );
+
+        expect(attachments?.[0].text).toMatch(/UID:[0-9a-f-]{36}@sogverse/);
+      });
+
+      it("names the field when a schedule line cannot be read", () => {
+        expect(() =>
+          templateRegistry.productConfirmation.render(
+            { ...signup, isSelfSeat: false, slots: "funday 16:00 60" },
+            t,
+            "en",
+          ),
+        ).toThrow(/^Schedule: expected one of mon, tue/);
+      });
+
+      it("names the field when a date cannot be read", () => {
+        expect(() =>
+          templateRegistry.productConfirmation.render(
+            { ...signup, isSelfSeat: false, startDate: "2027-02-31" },
+            t,
+            "en",
+          ),
+        ).toThrow(/^Start date: expected a real calendar date/);
       });
     });
   });
@@ -828,6 +929,10 @@ describe("every template renders in every locale", () => {
       mode: "upfront",
       priceAmount: "€40.00",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      // With a schedule, so the locale sweep also reaches the session-times
+      // section, the attached-invitation sentence and — through the invitation
+      // itself — every key the calendar entry's own notes are written from.
+      ...PRODUCT_CONFIRMATION_SCHEDULE,
     },
     verifyEmail: {
       firstName: "Marja",
@@ -904,11 +1009,9 @@ describe("every template renders in every locale", () => {
       const translator = await getEmailTranslator(locale);
 
       for (const params of variantsOf(key)) {
-        const { subject, html, replyTo } = templateRegistry[key].render(
-          params,
-          translator,
-          locale,
-        );
+        const { subject, html, text, replyTo, attachments } = templateRegistry[
+          key
+        ].render(params, translator, locale);
 
         expect(subject.trim()).not.toBe("");
         expect(subject).not.toContain(`email.${key}`);
@@ -916,6 +1019,14 @@ describe("every template renders in every locale", () => {
         expect(html).toContain(`lang="${locale}"`);
         expect(html).not.toContain(`email.${key}`);
         expect(replyTo).toContain("@");
+        // The other two artifacts a render can produce. A missing key resolves
+        // to its own path, so the same check catches an English fallback that
+        // leaked into a calendar entry's notes or into the text body — neither
+        // of which the HTML sweep above can see.
+        expect(text ?? "").not.toContain(`email.${key}`);
+        for (const attachment of attachments ?? []) {
+          expect(attachment.text ?? "").not.toContain(`email.${key}`);
+        }
       }
     });
   });

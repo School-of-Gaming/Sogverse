@@ -2639,6 +2639,26 @@
         "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
         "next2": "Näet jonotustilanteesi milloin tahansa Oma SOG -sivulla."
       },
+      "invite": {
+        "sectionLabel": "Tapaamisajat",
+        "attached": "Viestin liitteenä on kalenterikutsu. Kun hyväksyt sen, kaikki tapaamiset siirtyvät kalenteriisi.",
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "Verkossa – Oma SOG",
+        "locationInPerson": "{site}, {address}",
+        "scheduleWeekly": "Joka {days} klo {startTime}–{endTime}",
+        "scheduleOnce": "Klo {startTime}–{endTime}",
+        "zoneNote": "Ajat ovat aikavyöhykkeellä {zone}.",
+        "dateRange": "Ajalla {startDate} – {endDate}",
+        "dateFrom": "Alkaen {startDate}",
+        "dateOn": "Päivämäärä: {date}",
+        "whereOnline": "Tapaamiset ovat verkossa Oma SOG -sivulla, ja puhehuone avautuu {minutes} minuuttia ennen tapaamisen alkua.",
+        "whereInPerson": "Tapaamispaikka on {site}.",
+        "whereAddress": "Osoite: {address}",
+        "gameAccount": "{participantName} tarvitsee {game}-tilin, joka on liitetty Oma SOG -sivulle ennen ensimmäistä tapaamista.",
+        "gameAccountSelf": "Tarvitset {game}-tilin, joka on liitetty Oma SOG -sivulle ennen ensimmäistä tapaamista.",
+        "link": "Kaikki tiedot ilmoittautumisesta löytyvät Oma SOG -sivulta: {url}",
+        "questions": "Kysyttävää? Kirjoita osoitteeseen {supportEmail}."
+      },
       "dashboardButton": "Siirry Oma SOG -sivulle"
     },
     "verifyEmail": {

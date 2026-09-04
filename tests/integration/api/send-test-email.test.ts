@@ -377,6 +377,24 @@ describe("POST /api/admin/send-test-email", () => {
       mode: "subscription",
       priceAmount: "€40.00",
       dashboardUrl: "https://sogverse.sog.gg/parent",
+      // The calendar half of the form, which the schema requires whole. No
+      // slots, so these sends carry no invitation — what is checked here is the
+      // route's param handling, and a schedule would drag a calendar document
+      // into every assertion.
+      participationId: "",
+      attendeeName: "Marja Virtanen",
+      attendeeEmail: "marja@example.com",
+      enrollmentUrl: "",
+      topic: "minecraft_java",
+      shortDescription: "",
+      timezone: "Europe/Helsinki",
+      startDate: "2027-01-04",
+      endDate: "",
+      slots: "",
+      isRemote: "no",
+      siteName: "",
+      siteAddress: "",
+      siteNote: "",
       ...params,
     },
   });

@@ -306,13 +306,29 @@ function mockAdmin(opts: AdminMockOptions = {}) {
                 Promise.resolve({
                   data: {
                     product_type: "consumer_club",
+                    billing_mode: "paid",
+                    topic: "minecraft_java",
+                    timezone: "Europe/Helsinki",
+                    start_date: null,
+                    end_date: null,
+                    is_remote: true,
                     product_translations: [
-                      { locale: "en", name: "Test Club" },
+                      { locale: "en", name: "Test Club", short_description: "" },
                     ],
                   },
                   error: null,
                 }),
             }),
+            // The confirmation mail's second read: the schedule and the site
+            // its calendar invitation would be composed from. No slots here on
+            // purpose — what this file covers about that mail is which webhook
+            // outcome sends it and to whom, and a fixture schedule would put a
+            // calendar document nobody asserts on into every render.
+            single: () =>
+              Promise.resolve({
+                data: { schedule_slots: [], locations: null },
+                error: null,
+              }),
           }),
         }),
       };
