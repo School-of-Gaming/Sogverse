@@ -249,6 +249,7 @@
         "issues": {
           "unassignedGamers": "{count, plural, one {# oplacerad spelare} other {# oplacerade spelare}}",
           "groupWithoutGedu": "Gruppen {group} har ingen Gedu",
+          "emptyGroupWithoutGedu": "Den tomma gruppen {group} har ingen Gedu",
           "waitlistOpenSeats": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga",
           "missingGeduFee": "Gedu-arvode saknas",
           "missingMunicipalityFee": "Kommunavgift saknas",

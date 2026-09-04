@@ -190,7 +190,7 @@ function orderUsers(
 /**
  * One product's card: its name, and every one of its problems as a fact.
  *
- * The wire carries facts (`unassigned_count`, a list of group names, a
+ * The wire carries facts (`unassigned_count`, two lists of group names, a
  * waitlist pair, two booleans) and this keeps them facts: a `kind` naming the
  * message and the numbers or names that message interpolates. **Nothing here is
  * worded**, because this module is pure — no locale hook, no `t()` — and a count
@@ -230,6 +230,18 @@ function toProductAttention(
       id: `${product.id}-waitlist-open-seats`,
       kind: "waitlist-open-seats",
       values: { waiting, open, offers },
+    });
+  }
+
+  // Its own loop over its own wire array, not a second pass over the one
+  // above: the two are disjoint sets from the RPC, and reading them separately
+  // is what keeps "who is in the group" a question the query answered rather
+  // than one this module re-derives.
+  for (const group of product.empty_groups_without_gedu) {
+    issues.push({
+      id: `${product.id}-empty-group-without-gedu-${group.id}`,
+      kind: "empty-group-without-gedu",
+      values: { group: group.name },
     });
   }
 

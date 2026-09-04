@@ -49,10 +49,12 @@ import { TEST_IDS } from "./constants";
  *                  groups 60a-60b)
  *   610-616        product-audience.test.ts (three products 610-612, one group
  *                  613, and 614-616 for the roster-shape fixtures)
- *   620-628        admin-dashboard.test.ts (six products — 620, 621, 623, 624,
- *                  625, 628 — plus two groups 622/627; one product per
- *                  dashboard issue so a fixture built for one cannot
- *                  accidentally raise another)
+ *   620-629        admin-dashboard.test.ts (seven products — 620, 621, 623, 624,
+ *                  625, 626, 628 — plus three groups 622/627/629; one product
+ *                  per dashboard issue so a fixture built for one cannot
+ *                  accidentally raise another, and three groups because the two
+ *                  unstaffed-group arrays need a group with members, a group
+ *                  with none, and a group with an educator to be told apart)
  *   630-636        product-images-trigger.test.ts (three products 630-632, and
  *                  633-636 for the product_images entries it links them to —
  *                  a different table, but kept in the one registry so nobody

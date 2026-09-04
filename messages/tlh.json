@@ -297,6 +297,7 @@
         "issues": {
           "unassignedGamers": "{count, plural, one {# toy’wI’ ghomHa’} other {# toy’wI’pu’ ghomHa’}}",
           "groupWithoutGedu": "ghom {group} Gedu ghajbe’",
+          "emptyGroupWithoutGedu": "ghom chIm {group} Gedu ghajbe’",
           "waitlistOpenSeats": "{waiting} loStaH · {open, plural, one {# quS} other {# quSmey}} poSmoH",
           "missingGeduFee": "Gedu Huch Hutlh",
           "missingMunicipalityFee": "veng Huch Hutlh",

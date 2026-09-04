@@ -73,7 +73,11 @@ export const adminDashboardCertificationCandidate = z.object({
   criminal_record_check_at: z.string().nullable(),
 });
 
-/** A group with members and nobody teaching it. */
+/**
+ * A group with nobody teaching it — the shape both unstaffed-group arrays are
+ * built from, because they carry the same fact and differ only in whether
+ * anybody is in the group.
+ */
 export const adminDashboardGroupWithoutGedu = z.object({
   id: z.string(),
   name: z.string(),
@@ -106,7 +110,7 @@ export const adminDashboardWaitlistPressure = z.object({
 /**
  * A live product with at least one thing wrong with it. A product with nothing
  * wrong is absent from the list entirely, so every entry here has at least one
- * of the five issues populated.
+ * of the six issues populated.
  *
  * The issues are facts, not sentences: the page words and orders them, because
  * the wording is translated copy and the order is a ranking the page owns.
@@ -119,6 +123,20 @@ export const adminDashboardAttentionProduct = z.object({
   unassigned_count: z.number(),
   /** Groups with at least one active member and no gedu assigned. */
   groups_without_gedu: z.array(adminDashboardGroupWithoutGedu),
+  /**
+   * Groups with no gedu assigned and nobody in them either (00240).
+   *
+   * A sibling key rather than a flag on the objects above, because the page
+   * ranks the two differently — an empty unstaffed group is a loose end, not a
+   * child nobody is looking after — and the ranking maps one wire fact onto one
+   * kind of issue. The two arrays are disjoint by construction, and a group
+   * somebody is assigned to is in neither.
+   *
+   * It puts a product in the queue on its own: an admin pre-building next
+   * term's groups has not made a mistake, which is what decides where the line
+   * sits rather than whether it is shown at all.
+   */
+  empty_groups_without_gedu: z.array(adminDashboardGroupWithoutGedu),
   waitlist: adminDashboardWaitlistPressure.nullable(),
   /**
    * The primary gedu fee is unset. A fee of *zero* is a volunteer session —
