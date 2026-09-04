@@ -7,6 +7,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
+import { calendarInvitationStartDate } from "@/lib/email-templates/calendar-invitation";
 import { BRAND, DARK_THEME, GRADIENT, STATUS, STATUS_TINT } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 
@@ -54,6 +55,59 @@ const LEGAL_ON_FILL: Record<string, string> = {
   [BRAND.primary.toLowerCase()]: BRAND.primaryForeground.toLowerCase(),
   [BRAND.secondary.toLowerCase()]: BRAND.secondaryForeground.toLowerCase(),
 };
+
+/**
+ * The calendar explorer's baseline params — every field at the value its
+ * untouched form control posts.
+ *
+ * It is the whole form because the schema requires every key, and it is the
+ * *baseline* because this file only cares about the mail around the document:
+ * a subject, a body and the house shell. Which properties the calendar itself
+ * writes is the builder suite's subject, next door.
+ */
+const CALENDAR_INVITATION_FIXTURE = {
+  subject: "Calendar invite explorer",
+  body: "",
+  uid: "",
+  sequence: "0",
+  method: "request",
+  status: "confirmed",
+  timezone: "Europe/Helsinki",
+  startDate: calendarInvitationStartDate(),
+  startTime: "16:00",
+  durationMinutes: "120",
+  timeForm: "tzid",
+  allDay: "no",
+  recurrence: "none",
+  weekdays: "mon",
+  until: "",
+  count: "",
+  interval: "1",
+  excludedDates: "",
+  overrides: "",
+  organizerName: "School of Gaming",
+  organizerEmail: "sogverse@sog.gg",
+  attendeeName: "Attendee",
+  attendeeEmail: "attendee@example.com",
+  rsvp: "yes",
+  attendeeRole: "REQ-PARTICIPANT",
+  partstat: "NEEDS-ACTION",
+  includeAttendee: "yes",
+  summary: "Calendar invite explorer",
+  description: "",
+  location: "Helsinki, Finland",
+  url: "",
+  alert1Offset: "15",
+  alert1Action: "display",
+  alert1RelativeTo: "start",
+  alert2Offset: "1440",
+  alert2Action: "display",
+  alert2RelativeTo: "start",
+  alert3Offset: "none",
+  alert3Action: "display",
+  alert3RelativeTo: "start",
+  showAs: "free",
+} satisfies Record<string, string | boolean | null>;
 
 /** Fixture params for the registry-backed renders. */
 const PARAMS: Record<string, Record<string, string | boolean | null>> = {
@@ -127,6 +181,7 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     reportMarkdown: "",
     productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
   },
+  calendarInvitation: CALENDAR_INVITATION_FIXTURE,
 };
 
 let t: EmailTranslator;
@@ -202,6 +257,12 @@ const MAILS: Record<string, () => [string, string][]> = {
     }),
   ],
   "verify-email": () => fromRegistry("verifyEmail"),
+  // One render, unlike the other multi-message templates: every message this
+  // template can send is the same mail — the typed subject and the typed body
+  // in the shell — and everything that moves between a request, a publish and
+  // a cancellation moves inside the attached document, which carries no markup
+  // for this file to sweep.
+  "calendar-invitation": () => fromRegistry("calendarInvitation"),
   welcome: () => [...fromRegistry("welcomeParent"), ...fromRegistry("welcomeGedu")],
 
   // Not registered, deliberately: a test send from the admin UI would mint a

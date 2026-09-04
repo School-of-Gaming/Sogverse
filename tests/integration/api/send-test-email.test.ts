@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/send-test-email/route";
 import { NextResponse } from "next/server";
+// The calendar invitation refuses a run with nothing left ahead of it, so its
+// fixture dates come from the template's own form placeholders — the next
+// Monday and four weeks after it — rather than from literals that would rot.
+import { calendarInvitationStartDate } from "@/lib/email-templates/calendar-invitation";
 
 // --- Mocks ---
 
@@ -490,6 +494,168 @@ describe("POST /api/admin/send-test-email", () => {
     const [{ htmlContent }] = mockSendTransactionalEmail.mock.calls[0];
     expect(htmlContent).not.toContain("Lanterns over the Harbour");
     expect(htmlContent).not.toContain("evil.example");
+  });
+
+  /**
+   * The one template that carries a file, asserted at the boundary the file has
+   * to cross. What makes a calendar arrive as an invitation rather than as
+   * something to download is the *name* — the provider infers the media type
+   * from the extension — so the name reaching the provider unchanged is the
+   * property worth pinning, alongside the content being base64 of the document
+   * the template composed.
+   */
+  /** The calendar explorer's baseline params — every field as its form posts it. */
+  function calendarInvitationParams() {
+    return {
+      subject: "Calendar invite explorer",
+      body: "The invitation is the file attached to this message.",
+      uid: "",
+      sequence: "0",
+      method: "request",
+      status: "confirmed",
+      timezone: "Europe/Helsinki",
+      startDate: calendarInvitationStartDate(),
+      startTime: "16:00",
+      durationMinutes: "120",
+      timeForm: "tzid",
+      allDay: "no",
+      recurrence: "none",
+      weekdays: "mon",
+      until: "",
+      count: "",
+      interval: "1",
+      excludedDates: "",
+      overrides: "",
+      organizerName: "School of Gaming",
+      organizerEmail: "sogverse@sog.gg",
+      attendeeName: "Attendee",
+      attendeeEmail: "attendee@example.com",
+      rsvp: "yes",
+      attendeeRole: "REQ-PARTICIPANT",
+      partstat: "NEEDS-ACTION",
+      includeAttendee: "yes",
+      summary: "Calendar invite explorer",
+      description: "",
+      location: "Helsinki, Finland",
+      url: "",
+      alert1Offset: "15",
+      alert1Action: "display",
+      alert1RelativeTo: "start",
+      alert2Offset: "1440",
+      alert2Action: "display",
+      alert2RelativeTo: "start",
+      alert3Offset: "none",
+      alert3Action: "display",
+      alert3RelativeTo: "start",
+      showAs: "free",
+    };
+  }
+
+  function sendCalendarInvitation(overrides: Record<string, string | null> = {}) {
+    return POST(createRequest({
+      mode: "template",
+      toEmail: "test@example.com",
+      template: "calendarInvitation",
+      params: { ...calendarInvitationParams(), ...overrides },
+    }));
+  }
+
+  it("passes a template's attachment through to the provider", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await sendCalendarInvitation();
+
+    expect(response.status).toBe(200);
+    const [{ attachments }] = mockSendTransactionalEmail.mock.calls[0];
+    expect(attachments).toHaveLength(1);
+    expect(attachments[0].name).toBe("invite.ics");
+    expect(Buffer.from(attachments[0].contentBase64, "base64").toString("utf8"))
+      .toContain("BEGIN:VCALENDAR");
+  });
+
+  /**
+   * The document is read back to the admin, and that is the only way the
+   * identifier a send used ever becomes visible: a preview mints its own, so
+   * what it showed was never what went out — and without the identifier there
+   * is no second message about the same entry.
+   */
+  it("answers with the text of what it sent", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await sendCalendarInvitation();
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.attachments).toHaveLength(1);
+    expect(data.attachments[0].name).toBe("invite.ics");
+    expect(data.attachments[0].text).toContain("BEGIN:VCALENDAR");
+    // The bytes that went to the provider, not a second render of them.
+    const [{ attachments }] = mockSendTransactionalEmail.mock.calls[0];
+    expect(Buffer.from(attachments[0].contentBase64, "base64").toString("utf8"))
+      .toBe(data.attachments[0].text);
+  });
+
+  /**
+   * A mail carrying a calendar part states a plain-text body, because a
+   * Microsoft mailbox fills the calendar entry's notes from the message body
+   * and flattens the HTML into them when there is nothing else to read.
+   */
+  it("sends the plain-text body a template states, and none for one that states none", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    await sendCalendarInvitation();
+    const [{ textContent }] = mockSendTransactionalEmail.mock.calls[0];
+    expect(textContent).toBe("The invitation is the file attached to this message.");
+    expect(textContent).not.toMatch(/<[a-z/][^>]*>/i);
+
+    mockSendTransactionalEmail.mockClear();
+    await POST(createRequest(validTemplateBody));
+    expect(mockSendTransactionalEmail.mock.calls[0][0].textContent).toBeUndefined();
+  });
+
+  /**
+   * A builder may refuse the params it was handed — an object whose every
+   * occurrence is on the excluded list is the case — and that refusal is an
+   * answer about the request, so it comes back as a 400 carrying the message
+   * the builder wrote for the admin to read, exactly as the schema's own
+   * refusal does. Answered any other way it is a 500, and the admin is told
+   * nothing about what they got wrong.
+   */
+  it("returns 400 with the builder's own message when a render refuses", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await sendCalendarInvitation({
+      excludedDates: calendarInvitationStartDate(),
+    });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toContain("states no occurrence at all");
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The same shape one layer up: a field the resolver cannot parse is the
+   * admin's typo, not our fault, so it earns the sentence naming the field
+   * rather than a 500 that tells them nothing.
+   */
+  it("returns 400 naming the field when one is malformed", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await sendCalendarInvitation({ startTime: "16.00" });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toContain("Start time");
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  /** Every other template carries none, and says so by carrying nothing. */
+  it("sends no attachments for a template that has none", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    await POST(createRequest(validTemplateBody));
+
+    const [{ attachments }] = mockSendTransactionalEmail.mock.calls[0];
+    expect(attachments).toBeUndefined();
   });
 
   it("should return 400 for missing mode field", async () => {

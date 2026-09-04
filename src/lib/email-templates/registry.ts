@@ -16,6 +16,33 @@ import {
 } from "./seat-offer-staff";
 import { buildComponentsReferenceEmail } from "./components-reference";
 import {
+  buildCalendarInvitationEmail,
+  calendarExplorerAlarmOffsets,
+  calendarInvitationAttachment,
+  calendarInvitationSubject,
+  calendarInvitationText,
+  resolveCalendarInvitation,
+  CALENDAR_EXPLORER_ALARM_ACTIONS,
+  CALENDAR_EXPLORER_ALARM_ANCHORS,
+  CALENDAR_EXPLORER_ALARM_OFFSETS,
+  CALENDAR_EXPLORER_BODY,
+  CALENDAR_EXPLORER_METHODS,
+  CALENDAR_EXPLORER_PARTSTATS,
+  CALENDAR_EXPLORER_RECURRENCES,
+  CALENDAR_EXPLORER_ROLES,
+  CALENDAR_EXPLORER_SHOW_AS,
+  CALENDAR_EXPLORER_STATUSES,
+  CALENDAR_EXPLORER_TIMEZONES,
+  CALENDAR_EXPLORER_TIME_FORMS,
+  CALENDAR_EXPLORER_TITLE,
+  CALENDAR_EXPLORER_WEEKDAY_PRESETS,
+  CALENDAR_EXPLORER_YES_NO,
+  calendarInvitationStartDate,
+  calendarInvitationUntilDate,
+  type CalendarExplorerAlarmOffset,
+  type CalendarExplorerWeekdayPreset,
+} from "./calendar-invitation";
+import {
   buildSessionReportEmail,
   sessionReportSubject,
   type SessionReportEmailOptions,
@@ -27,10 +54,11 @@ import {
   sessionReportPhotoFixtures,
 } from "./fixtures/session-report-photos";
 import type { EmailRenderContext } from "./render-context";
+import type { RenderedAttachment } from "./attachments";
 import type { EmailTranslator } from "./translator";
 import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { Constants } from "@/types";
 
 // --- Field types for the testing UI ---
@@ -82,8 +110,24 @@ type TemplateParams = Record<string, string | boolean | null>;
 export interface RenderedTemplate {
   subject: string;
   html: string;
+  /**
+   * The same mail as plain text, for the templates that state one.
+   *
+   * Optional because most mails have nothing to gain from it, and required in
+   * practice for one: a mail carrying a calendar part is read by Exchange as
+   * the source of the calendar entry's *notes*, and with no text part it
+   * flattens the HTML into them. See this directory's `CLAUDE.md`.
+   */
+  text?: string;
   /** Reply-To this template's real sending route would set. */
   replyTo: string;
+  /**
+   * Files that travel with the mail. Absent for the templates that carry none,
+   * which is all of them but one — an attachment changes how a client reads a
+   * mail, so it is a property a template opts into rather than a slot every
+   * render has to fill with an empty array.
+   */
+  attachments?: RenderedAttachment[];
 }
 
 export interface TemplateDefinition {
@@ -144,18 +188,79 @@ function defineTemplate<P extends TemplateParams>(entry: {
    * send reproduce the live behaviour instead of a plausible-looking stand-in.
    */
   replyTo?: (params: P) => string;
+  /**
+   * Files this mail carries, for the rare template whose content is not only
+   * the body. Declared beside `build` rather than returned from it because the
+   * two are different artifacts with different rules — the body is HTML a
+   * client renders, an attachment is bytes a client *acts on* — and because a
+   * builder that returned a pair would make every template that carries nothing
+   * say so.
+   */
+  attachments?: (
+    params: P,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+  ) => RenderedAttachment[];
+  /**
+   * The plain-text body, for a template that states one. See
+   * `RenderedTemplate` for why one template must.
+   */
+  text?: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
   resolveParams?: TemplateDefinition["resolveParams"];
 }): TemplateDefinition {
-  const { schema, build, subject, replyTo, ...rest } = entry;
+  // The validated params are the resolution: a template with nothing to derive
+  // hands its own params to every part of the render.
+  return defineResolvedTemplate({ ...entry, resolve: (params: P) => params });
+}
+
+/**
+ * A template whose parts are built from something *derived* from the params,
+ * resolved exactly once per render.
+ *
+ * **The once is the whole reason this exists.** With four callbacks each doing
+ * their own derivation, a derivation that is not a pure function of the params
+ * — one that mints an identifier, say — produces a different answer in each of
+ * them, and the mail states one value while the file it carries states another.
+ * Nothing about that is visible from any one callback, which is what made it
+ * ship: each was correct on its own.
+ *
+ * Every template that has nothing to derive goes through the identity
+ * resolution above rather than through a second code path, so there is one
+ * render assembly and not two to keep in step.
+ */
+function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
+  label: string;
+  fields: TemplateField[];
+  schema: z.ZodType<P>;
+  resolve: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => R;
+  build: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  subject: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  text?: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  attachments?: (
+    resolved: R,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext,
+  ) => RenderedAttachment[];
+  replyTo?: (params: P) => string;
+  resolveParams?: TemplateDefinition["resolveParams"];
+}): TemplateDefinition {
+  const { schema, resolve, build, subject, text, replyTo, attachments, ...rest } = entry;
   return {
     ...rest,
     schema,
     render: (rawParams, t, locale, context = { to: "send" }) => {
       const params = schema.parse(rawParams);
+      const resolved = resolve(params, t, locale, context);
+      const files = attachments?.(resolved, t, locale, context);
+      const plain = text?.(resolved, t, locale, context);
       return {
-        subject: subject(params, t, locale, context),
-        html: build(params, t, locale, context),
+        subject: subject(resolved, t, locale, context),
+        html: build(resolved, t, locale, context),
+        ...(plain !== undefined && { text: plain }),
         replyTo: replyTo?.(params) ?? SUPPORT_EMAIL,
+        ...(files?.length && { attachments: files }),
       };
     },
   };
@@ -454,6 +559,429 @@ const sessionReportParamsSchema = z.object({
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
 
+// --- Calendar invite explorer: options, placeholders and schema ---
+
+/**
+ * A select whose values are already the tokens the document writes.
+ *
+ * `ROLE` and `PARTSTAT` are read straight off the calendar file, so the raw
+ * value is the clearest possible label: the person picking one is about to go
+ * looking for that exact string in the document beneath the form.
+ */
+function literalOptions(values: readonly string[]): { label: string; value: string }[] {
+  return values.map((value) => ({ label: value, value }));
+}
+
+/**
+ * A yes/no select with `first` as its default, because an untouched select
+ * posts its first option — so the order *is* the default, and these four fields
+ * do not all default the same way.
+ */
+function yesNoOptions(
+  first: (typeof CALENDAR_EXPLORER_YES_NO)[number],
+): { label: string; value: string }[] {
+  const rest = CALENDAR_EXPLORER_YES_NO.filter((value) => value !== first);
+  return [first, ...rest].map((value) => ({
+    label: value === "yes" ? "Yes" : "No",
+    value,
+  }));
+}
+
+const CALENDAR_EXPLORER_METHOD_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_METHODS)[number],
+  string
+> = {
+  request: "REQUEST — asks the reader to answer",
+  publish: "PUBLISH — states the entry, asks nothing",
+  cancel: "CANCEL — withdraws the entry",
+};
+
+const CALENDAR_EXPLORER_STATUS_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_STATUSES)[number],
+  string
+> = {
+  confirmed: "CONFIRMED",
+  tentative: "TENTATIVE",
+  cancelled: "CANCELLED",
+};
+
+const CALENDAR_EXPLORER_TIME_FORM_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_TIME_FORMS)[number],
+  string
+> = {
+  tzid: "Wall clock under a TZID — promises a clock face",
+  utc: "Absolute instant (…Z) — promises a moment",
+};
+
+const CALENDAR_EXPLORER_RECURRENCE_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_RECURRENCES)[number],
+  string
+> = {
+  none: "None — a single occurrence",
+  weekly: "Weekly rule (RRULE)",
+};
+
+const CALENDAR_EXPLORER_WEEKDAY_LABELS: Record<CalendarExplorerWeekdayPreset, string> = {
+  mon: "MO",
+  tue: "TU",
+  wed: "WE",
+  thu: "TH",
+  fri: "FR",
+  sat: "SA",
+  sun: "SU",
+  "mon-wed-fri": "MO,WE,FR",
+  "tue-thu": "TU,TH",
+  "mon-fri": "MO,TU,WE,TH,FR",
+  "sat-sun": "SA,SU",
+  "every-day": "Every day",
+};
+
+const CALENDAR_EXPLORER_ALARM_OFFSET_LABELS: Record<CalendarExplorerAlarmOffset, string> = {
+  none: "No alarm",
+  "0": "On the trigger point (0 minutes)",
+  "5": "5 minutes before",
+  "15": "15 minutes before",
+  "30": "30 minutes before",
+  "60": "60 minutes before (an hour)",
+  "120": "120 minutes before (two hours)",
+  "1440": "1440 minutes before (a day)",
+  "2880": "2880 minutes before (two days)",
+};
+
+const CALENDAR_EXPLORER_ALARM_ACTION_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_ALARM_ACTIONS)[number],
+  string
+> = {
+  display: "DISPLAY",
+  email: "EMAIL — carries a SUMMARY and an ATTENDEE",
+  audio: "AUDIO",
+};
+
+const CALENDAR_EXPLORER_ALARM_ANCHOR_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_ALARM_ANCHORS)[number],
+  string
+> = {
+  start: "Before the start",
+  end: "Before the end (RELATED=END)",
+};
+
+const CALENDAR_EXPLORER_SHOW_AS_LABELS: Record<
+  (typeof CALENDAR_EXPLORER_SHOW_AS)[number],
+  string
+> = {
+  free: "TRANSPARENT — does not block the reader's time",
+  busy: "OPAQUE — blocks it",
+};
+
+/**
+ * One alarm's three selects, built the same way for all three alarms.
+ *
+ * The alarms are the one place the three clients are *known* to disagree and
+ * are kept anyway — Apple keeps what the organiser sent, Google replaces it
+ * with the reader's own defaults, Exchange keeps the first and drops the rest —
+ * because watching that happen is the point rather than a disqualification.
+ */
+function alarmFields(
+  index: 1 | 2 | 3,
+  defaultOffset: CalendarExplorerAlarmOffset,
+): TemplateField[] {
+  return [
+    {
+      key: `alert${index}Offset`,
+      label: `Alerts – Alarm ${index} offset`,
+      type: "select",
+      options: calendarExplorerAlarmOffsets(defaultOffset).map((value) => ({
+        label: CALENDAR_EXPLORER_ALARM_OFFSET_LABELS[value],
+        value,
+      })),
+    },
+    {
+      key: `alert${index}Action`,
+      label: `Alerts – Alarm ${index} ACTION`,
+      type: "select",
+      options: CALENDAR_EXPLORER_ALARM_ACTIONS.map((value) => ({
+        label: CALENDAR_EXPLORER_ALARM_ACTION_LABELS[value],
+        value,
+      })),
+    },
+    {
+      key: `alert${index}RelativeTo`,
+      label: `Alerts – Alarm ${index} TRIGGER relative to`,
+      type: "select",
+      options: CALENDAR_EXPLORER_ALARM_ANCHORS.map((value) => ({
+        label: CALENDAR_EXPLORER_ALARM_ANCHOR_LABELS[value],
+        value,
+      })),
+    },
+  ];
+}
+
+/**
+ * The explorer's form, grouped by what part of the document a field lands in.
+ *
+ * The page renders fields in the order this array gives them and has no notion
+ * of a group, so the group is carried in the label's own prefix — which is
+ * enough, because the fields of one group are adjacent and a reader scanning a
+ * column of labels is looking for the prefix rather than for a heading.
+ *
+ * **A text field with no placeholder is a field whose default is "omit".** An
+ * untouched text input posts its placeholder, so a blank placeholder is the
+ * only way a text field can default to absent — and the label says what it
+ * would write if it were filled in.
+ *
+ * **Every field is a property all three target clients honour.** Google
+ * Calendar, Apple Calendar and Outlook are the whole audience, and a knob one
+ * of them drops teaches nothing but its own absence — so this list is shorter
+ * than the format is, on purpose.
+ */
+const CALENDAR_EXPLORER_FIELDS: TemplateField[] = [
+  { key: "subject", label: "Mail – Subject", placeholder: CALENDAR_EXPLORER_TITLE },
+  {
+    key: "body",
+    label: "Mail – Body (empty sends the neutral default)",
+    type: "textarea",
+    placeholder: CALENDAR_EXPLORER_BODY,
+  },
+
+  {
+    key: "uid",
+    label: "Identity – UID (empty mints one per render; type one back for an update)",
+    placeholder: "",
+  },
+  { key: "sequence", label: "Identity – SEQUENCE", placeholder: "0" },
+  {
+    key: "method",
+    label: "Identity – METHOD",
+    type: "select",
+    options: CALENDAR_EXPLORER_METHODS.map((value) => ({
+      label: CALENDAR_EXPLORER_METHOD_LABELS[value],
+      value,
+    })),
+  },
+  {
+    key: "status",
+    label: "Identity – STATUS",
+    type: "select",
+    options: CALENDAR_EXPLORER_STATUSES.map((value) => ({
+      label: CALENDAR_EXPLORER_STATUS_LABELS[value],
+      value,
+    })),
+  },
+
+  {
+    key: "timezone",
+    label: "Time – TZID (each of these ships its own VTIMEZONE; UTC ships none)",
+    type: "select",
+    options: literalOptions(CALENDAR_EXPLORER_TIMEZONES),
+  },
+  {
+    key: "startDate",
+    label: "Time – DTSTART date",
+    // A getter, so the date is read when the field is read rather than when
+    // this module loads: the same registry is imported by the admin page and by
+    // the send route, and a value frozen at load would differ between the
+    // server's render and the browser's hydration of it.
+    get placeholder() {
+      return calendarInvitationStartDate();
+    },
+  },
+  { key: "startTime", label: "Time – DTSTART time", placeholder: "16:00" },
+  { key: "durationMinutes", label: "Time – DURATION (minutes)", placeholder: "120" },
+  {
+    key: "timeForm",
+    label: "Time – How the times are written",
+    type: "select",
+    options: CALENDAR_EXPLORER_TIME_FORMS.map((value) => ({
+      label: CALENDAR_EXPLORER_TIME_FORM_LABELS[value],
+      value,
+    })),
+  },
+  {
+    key: "allDay",
+    label: "Time – All day (DATE-valued DTSTART and DTEND, no zone at all)",
+    type: "select",
+    options: yesNoOptions("no"),
+  },
+
+  {
+    key: "recurrence",
+    label: "Recurrence – Shape",
+    type: "select",
+    options: CALENDAR_EXPLORER_RECURRENCES.map((value) => ({
+      label: CALENDAR_EXPLORER_RECURRENCE_LABELS[value],
+      value,
+    })),
+  },
+  {
+    key: "weekdays",
+    label: "Recurrence – BYDAY",
+    type: "select",
+    options: CALENDAR_EXPLORER_WEEKDAY_PRESETS.map((value) => ({
+      label: CALENDAR_EXPLORER_WEEKDAY_LABELS[value],
+      value,
+    })),
+  },
+  { key: "until", label: "Recurrence – UNTIL date (empty for none)", placeholder: "" },
+  {
+    key: "count",
+    // RFC 5545 forbids stating both, so one has to win, and it is this one: a
+    // reader who typed a number of occurrences meant that number.
+    label: "Recurrence – COUNT (empty for none; wins over UNTIL when both are set)",
+    placeholder: "",
+  },
+  { key: "interval", label: "Recurrence – INTERVAL (weeks)", placeholder: "1" },
+  {
+    key: "excludedDates",
+    label: "Recurrence – EXDATE, one YYYY-MM-DD per line (written at the start time)",
+    type: "textarea",
+    // Read-time, for the reason the start date's own getter states.
+    get placeholder() {
+      return calendarInvitationUntilDate();
+    },
+  },
+  {
+    key: "overrides",
+    // The mechanism a mixed-time product needs and the one a single moved
+    // session needs are the same: an occurrence that happens at another clock
+    // face becomes its own VEVENT under the same UID, naming the occurrence it
+    // replaces. A rule states one clock face, so a club that meets Monday at
+    // 16:00 and Wednesday at 14:00 cannot be stated without this.
+    label:
+      "Recurrence – Overrides, one YYYY-MM-DD HH:MM [minutes] per line (the weekly rule only)",
+    type: "textarea",
+    // Read-time, for the reason the start date's own getter states.
+    get placeholder() {
+      return `${calendarInvitationUntilDate()} 14:00 90`;
+    },
+  },
+
+  { key: "organizerName", label: "People – ORGANIZER name", placeholder: SENDER_NAME },
+  { key: "organizerEmail", label: "People – ORGANIZER email", placeholder: SENDER_EMAIL },
+  { key: "attendeeName", label: "People – ATTENDEE name", placeholder: "Attendee" },
+  {
+    key: "attendeeEmail",
+    // A client decides whether to show the RSVP by matching the attendee
+    // against the mailbox it is reading, so a send whose attendee is somebody
+    // else renders as somebody else's invitation.
+    label: "People – ATTENDEE email (use the address you send to)",
+    placeholder: "attendee@example.com",
+  },
+  { key: "rsvp", label: "People – RSVP", type: "select", options: yesNoOptions("yes") },
+  {
+    key: "attendeeRole",
+    label: "People – ROLE",
+    type: "select",
+    options: literalOptions(CALENDAR_EXPLORER_ROLES),
+  },
+  {
+    key: "partstat",
+    label: "People – PARTSTAT",
+    type: "select",
+    options: literalOptions(CALENDAR_EXPLORER_PARTSTATS),
+  },
+  {
+    key: "includeAttendee",
+    label: "People – Write an ATTENDEE at all (a PUBLISH normally does not)",
+    type: "select",
+    options: yesNoOptions("yes"),
+  },
+
+  { key: "summary", label: "Content – SUMMARY", placeholder: CALENDAR_EXPLORER_TITLE },
+  {
+    key: "description",
+    label: "Content – DESCRIPTION (empty omits it)",
+    type: "textarea",
+    placeholder: "A baseline invitation. Change one field, send it again, and compare.",
+  },
+  { key: "location", label: "Content – LOCATION (empty omits it)", placeholder: "Helsinki, Finland" },
+  { key: "url", label: "Content – URL (empty omits it)", placeholder: "" },
+
+  // Three alarms, because the order they are written in is a real property: an
+  // Exchange mailbox keeps exactly one per item and keeps the first.
+  ...alarmFields(1, "15"),
+  ...alarmFields(2, "1440"),
+  ...alarmFields(3, "none"),
+
+  {
+    key: "showAs",
+    label: "Behaviour – TRANSP",
+    type: "select",
+    options: CALENDAR_EXPLORER_SHOW_AS.map((value) => ({
+      label: CALENDAR_EXPLORER_SHOW_AS_LABELS[value],
+      value,
+    })),
+  },
+];
+
+/**
+ * The wire shape, and only the wire shape.
+ *
+ * Every free-form field is a bare string here and is parsed by the template's
+ * own resolver, which is where a blank means "omit" and where a malformed date
+ * earns a sentence naming the field. Duplicating the shapes as regexes would
+ * give the same mistake two different error messages depending on which layer
+ * caught it first.
+ */
+const calendarInvitationParamsSchema = z.object({
+  subject: z.string().min(1),
+  body: z.string(),
+
+  uid: z.string(),
+  sequence: z.string(),
+  method: z.enum(CALENDAR_EXPLORER_METHODS),
+  status: z.enum(CALENDAR_EXPLORER_STATUSES),
+
+  timezone: z
+    .string()
+    .refine((zone) => CALENDAR_EXPLORER_TIMEZONES.includes(zone), {
+      message: "no VTIMEZONE is written for this zone",
+    }),
+  startDate: z.string(),
+  startTime: z.string(),
+  durationMinutes: z.string(),
+  timeForm: z.enum(CALENDAR_EXPLORER_TIME_FORMS),
+  allDay: z.enum(CALENDAR_EXPLORER_YES_NO),
+
+  recurrence: z.enum(CALENDAR_EXPLORER_RECURRENCES),
+  weekdays: z.enum(CALENDAR_EXPLORER_WEEKDAY_PRESETS),
+  until: z.string(),
+  count: z.string(),
+  interval: z.string(),
+  excludedDates: z.string(),
+  overrides: z.string(),
+
+  organizerName: z.string().min(1),
+  organizerEmail: z.string(),
+  attendeeName: z.string().min(1),
+  attendeeEmail: z.string(),
+  rsvp: z.enum(CALENDAR_EXPLORER_YES_NO),
+  attendeeRole: z.enum(CALENDAR_EXPLORER_ROLES),
+  partstat: z.enum(CALENDAR_EXPLORER_PARTSTATS),
+  includeAttendee: z.enum(CALENDAR_EXPLORER_YES_NO),
+
+  // Whitespace is refused as well as emptiness, because the two arrive at the
+  // same place: `SUMMARY` is the only line a client has to name the entry by,
+  // and a value of three spaces writes one every calendar shows as untitled.
+  summary: z.string().refine((value) => value.trim() !== "", {
+    message: "a SUMMARY of nothing but whitespace writes an entry no client can name",
+  }),
+  description: z.string(),
+  location: z.string(),
+  url: z.string(),
+
+  alert1Offset: z.enum(CALENDAR_EXPLORER_ALARM_OFFSETS),
+  alert1Action: z.enum(CALENDAR_EXPLORER_ALARM_ACTIONS),
+  alert1RelativeTo: z.enum(CALENDAR_EXPLORER_ALARM_ANCHORS),
+  alert2Offset: z.enum(CALENDAR_EXPLORER_ALARM_OFFSETS),
+  alert2Action: z.enum(CALENDAR_EXPLORER_ALARM_ACTIONS),
+  alert2RelativeTo: z.enum(CALENDAR_EXPLORER_ALARM_ANCHORS),
+  alert3Offset: z.enum(CALENDAR_EXPLORER_ALARM_OFFSETS),
+  alert3Action: z.enum(CALENDAR_EXPLORER_ALARM_ACTIONS),
+  alert3RelativeTo: z.enum(CALENDAR_EXPLORER_ALARM_ANCHORS),
+
+  showAs: z.enum(CALENDAR_EXPLORER_SHOW_AS),
+});
+
 // --- Single source of truth for all email templates ---
 
 export const templateRegistry: Record<string, TemplateDefinition> = {
@@ -463,11 +991,17 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
    * what it is for: whoever opens this page to test a template should meet the
    * house style before they meet their own mail.
    *
-   * It takes no params and ignores the locale for its own copy (see the builder
-   * for why it is the one untranslated one). A registry entry rather than a
-   * page because it has to be *sent* to be worth anything — a reference for
-   * email that can only be viewed in a browser is describing a rendering nobody
-   * receives.
+   * **The one entry that takes no params at all**: a specimen sheet has nothing
+   * to be told, so the form under it is empty and the fixture that renders it
+   * is `{}`. Its copy is literal English rather than translated, which is the
+   * call `fixtures/` makes too — developer-facing instrumentation whose strings
+   * are component names and hex values (see the builder). The calendar explorer
+   * is untranslated for the opposite reason: it has no copy of its own to
+   * translate, because both of its strings are typed into the form.
+   *
+   * A registry entry rather than a page because it has to be *sent* to be worth
+   * anything — a reference for email that can only be viewed in a browser is
+   * describing a rendering nobody receives.
    */
   componentsReference: defineTemplate({
     label: "Email components (reference)",
@@ -674,5 +1208,39 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       buildSessionReportEmail(t, locale, resolveSessionReport(p, locale, context)),
     subject: (p, t, locale, context) =>
       sessionReportSubject(t, resolveSessionReport(p, locale, context)),
+  }),
+  /**
+   * The one template that carries a file, and the reason the registry can carry
+   * one at all.
+   *
+   * **It explores the format rather than stating a product.** What is being
+   * tried is not our wording but what a calendar client *does* with an
+   * `invite.ics` — which properties it renders, which it drops, which it
+   * rewrites — so every property all three clients honour is a field, with
+   * defaults that compose an unremarkable baseline invitation. The form is
+   * therefore shorter than the format is: the RFC 7986 additions and the rest
+   * of what was tried are gone on purpose, because a knob one client drops
+   * teaches nothing but its own absence. The way to use it is one send at a
+   * time: send the baseline, change one field, send it again, and compare what
+   * each client made of the two.
+   *
+   * A thread is two or three sends: leave the identifier alone for the first,
+   * then type it back in with a higher revision number for the update and the
+   * cancellation.
+   */
+  calendarInvitation: defineResolvedTemplate({
+    label: "Calendar invite explorer",
+    fields: CALENDAR_EXPLORER_FIELDS,
+    schema: calendarInvitationParamsSchema,
+    // One resolution per render, threaded through every part: the identifier is
+    // minted here, and the file and the copy the admin reads back after a send
+    // both state the same one.
+    resolve: (p) => resolveCalendarInvitation(p),
+    build: (content, t, locale) => buildCalendarInvitationEmail(t, locale, content),
+    subject: (content) => calendarInvitationSubject(content),
+    // The one template that states a text body, because a mail carrying a
+    // calendar part is where Exchange reads the entry's notes from.
+    text: (content) => calendarInvitationText(content),
+    attachments: (content) => [calendarInvitationAttachment(content)],
   }),
 };

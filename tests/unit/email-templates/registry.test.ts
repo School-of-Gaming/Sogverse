@@ -5,12 +5,66 @@ import { styledName } from "@/lib/email-templates/utils";
 import { bulletList } from "@/lib/email-templates/blocks";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import {
+  CALENDAR_EXPLORER_BODY,
+  calendarInvitationStartDate,
+} from "@/lib/email-templates/calendar-invitation";
 
 let t: EmailTranslator;
 
 beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
+
+/**
+ * The calendar explorer's baseline params — every field at the value its
+ * untouched form control posts, which is what makes it a *baseline*: this is
+ * the document the first send of a session carries, and everything after it is
+ * this fixture with one key overridden.
+ */
+const CALENDAR_INVITATION_FIXTURE = {
+  subject: "Calendar invite explorer",
+  body: "",
+  uid: "",
+  sequence: "0",
+  method: "request",
+  status: "confirmed",
+  timezone: "Europe/Helsinki",
+  startDate: calendarInvitationStartDate(),
+  startTime: "16:00",
+  durationMinutes: "120",
+  timeForm: "tzid",
+  allDay: "no",
+  recurrence: "none",
+  weekdays: "mon",
+  until: "",
+  count: "",
+  interval: "1",
+  excludedDates: "",
+  overrides: "",
+  organizerName: "School of Gaming",
+  organizerEmail: "sogverse@sog.gg",
+  attendeeName: "Attendee",
+  attendeeEmail: "attendee@example.com",
+  rsvp: "yes",
+  attendeeRole: "REQ-PARTICIPANT",
+  partstat: "NEEDS-ACTION",
+  includeAttendee: "yes",
+  summary: "Calendar invite explorer",
+  description: "",
+  location: "Helsinki, Finland",
+  url: "",
+  alert1Offset: "15",
+  alert1Action: "display",
+  alert1RelativeTo: "start",
+  alert2Offset: "1440",
+  alert2Action: "display",
+  alert2RelativeTo: "start",
+  alert3Offset: "none",
+  alert3Action: "display",
+  alert3RelativeTo: "start",
+  showAs: "free",
+} satisfies Record<string, string | boolean | null>;
 
 /**
  * The seat variant reaches the reader twice — once in the body and once in the
@@ -456,6 +510,279 @@ describe("templateRegistry sessionReport", () => {
 });
 
 /**
+ * The one template that carries a file, and the half of it a unit test can
+ * settle.
+ *
+ * What no test can settle is the thing the template exists for — what a client
+ * *does* with each property — so what is pinned here is the boundary between
+ * the form and the document: that the form's untouched values compose a
+ * baseline invitation, that the file travels as `invite.ics` in both the form
+ * a send takes and the form a preview shows, that one render mints one
+ * identifier, and that a mistyped field earns a sentence naming it rather than
+ * a stack trace.
+ */
+describe("templateRegistry calendarInvitation", () => {
+  const params = CALENDAR_INVITATION_FIXTURE;
+
+  function icsOf(rendered: { attachments?: { name: string; text?: string }[] }): string {
+    const invite = rendered.attachments?.find((file) => file.name === "invite.ics");
+    if (invite?.text === undefined) throw new Error("no invite.ics on the render");
+    return invite.text;
+  }
+
+  function render(overrides: Record<string, string> = {}) {
+    return templateRegistry.calendarInvitation.render({ ...params, ...overrides }, t, "en");
+  }
+
+  it("carries the calendar as invite.ics, decoded for the preview and encoded for the send", () => {
+    const [invite] = render().attachments ?? [];
+
+    expect(invite.name).toBe("invite.ics");
+    expect(invite.text?.startsWith("BEGIN:VCALENDAR")).toBe(true);
+    // The two halves are the same bytes: the name and the base64 are what
+    // leaves the building, the text is only ever shown on screen.
+    expect(Buffer.from(invite.contentBase64, "base64").toString("utf8")).toBe(invite.text);
+  });
+
+  /**
+   * The whole method the template exists for: an untouched form is a document
+   * with nothing surprising in it, so a client that mangles the *next* send has
+   * told you which single property it mangled.
+   */
+  it("composes a baseline invitation from an untouched form", () => {
+    const ics = icsOf(render());
+
+    expect(ics).toContain("METHOD:REQUEST");
+    expect(ics).toContain("STATUS:CONFIRMED");
+    expect(ics).toContain("TRANSP:TRANSPARENT");
+    expect(ics).toContain("DTSTART;TZID=Europe/Helsinki:");
+    expect(ics).toContain("BEGIN:VTIMEZONE");
+    // The two alarms the two defaulted selects ask for, and no third.
+    expect(ics.match(/BEGIN:VALARM/g)).toHaveLength(2);
+    // Nothing the form left blank. Scoped to the event, because the zone block
+    // carries an `RRULE` of its own describing the daylight-saving transitions
+    // — a search over the whole document finds that one and asserts nothing.
+    const event = ics.slice(ics.indexOf("BEGIN:VEVENT"), ics.indexOf("END:VEVENT"));
+    // `DESCRIPTION` is not on this list, and cannot be: a display alarm carries
+    // one of its own, so its absence from the *event* is the builder suite's
+    // assertion to make, where a component can be picked out on its own.
+    for (const absent of ["RRULE", "EXDATE", "RECURRENCE-ID", "URL"]) {
+      expect(event, `${absent} was written from a blank field`).not.toContain(`\r\n${absent}`);
+    }
+  });
+
+  /**
+   * The mail is incidental and says so: the subject and the body are the two
+   * fields, unchanged, and nothing about the calendar leaks into either.
+   */
+  it("states the typed subject and body, and falls back to the neutral one", () => {
+    const typed = render({ subject: "One field changed", body: "Watch the DTSTART." });
+    expect(typed.subject).toBe("One field changed");
+    expect(typed.text).toBe("Watch the DTSTART.");
+    expect(typed.html).toContain("Watch the DTSTART.");
+
+    // An untouched textarea posts nothing, and a mail with no words in it is
+    // not a baseline mail — so this one field reads its own placeholder back.
+    expect(render().text).toBe(CALENDAR_EXPLORER_BODY);
+  });
+
+  /** The plain-text part is the mail's own words, with no markup in it. */
+  it("states a plain-text body, which is where Exchange reads the entry's notes", () => {
+    const { text } = render();
+    if (text === undefined) throw new Error("no text body on the render");
+    expect(text).not.toMatch(/<[a-z/][^>]*>/i);
+  });
+
+  /**
+   * The identifier is what makes a second message land on the first one's
+   * entry, so the form's two states are the whole of the thread mechanism: an
+   * empty field mints one, and a typed one is used exactly as typed.
+   */
+  it("mints an identifier when the form names none and uses a typed one verbatim", () => {
+    expect(icsOf(render())).toMatch(/UID:[0-9a-f-]{36}@sogverse/);
+
+    const named = icsOf(render({ uid: "explorer-1@sogverse", sequence: "3" }));
+    expect(named).toContain("UID:explorer-1@sogverse");
+    expect(named).toContain("SEQUENCE:3");
+  });
+
+  /**
+   * The identifier is minted per *render*, and one render has to mint exactly
+   * one: the file the reader gets and the copy the admin reads back after a
+   * send both state it, and an admin who cannot read the identifier a send used
+   * cannot send an update against it. Three parts each resolving their own
+   * params is how that broke, and each part was correct on its own — so the
+   * count is what has to be asserted.
+   */
+  it("mints one identifier per render, however many parts read it", () => {
+    const minted = vi.spyOn(crypto, "randomUUID");
+    try {
+      const rendered = render();
+      expect(minted).toHaveBeenCalledTimes(1);
+      expect(icsOf(rendered)).toContain(`UID:${minted.mock.results[0].value}@sogverse`);
+    } finally {
+      minted.mockRestore();
+    }
+  });
+
+  /**
+   * Every knob is a field, so every field is somewhere a typo can land — and
+   * the person typing is looking at fifty of them. A refusal therefore names
+   * the field and what it wanted, because the testing page shows a thrown
+   * message verbatim and the send route answers with it.
+   */
+  it.each([
+    ["startDate", { startDate: "7.9.2026" }, /Start date: expected a date as YYYY-MM-DD/],
+    ["startDate", { startDate: "2026-02-31" }, /Start date: expected a real calendar date/],
+    ["startTime", { startTime: "16.00" }, /Start time: expected a 24-hour clock time/],
+    ["durationMinutes", { durationMinutes: "two hours" }, /Duration: expected a whole number/],
+    ["url", { url: "sogverse.sog.gg" }, /URL: expected an absolute URL/],
+    ["url", { url: "javascript:alert(1)" }, /URL: expected an http or https URL/],
+    ["attendeeEmail", { attendeeEmail: "nobody" }, /Attendee email: expected an email address/],
+    ["organizerEmail", { organizerEmail: "nobody" }, /Organizer email: expected an email address/],
+    ["sequence", { sequence: "-1" }, /SEQUENCE: expected a whole number/],
+    // The two shapes each parse fields the other never looks at, so each case
+    // has to select its own shape or the field it is about is never read.
+    ["interval", { recurrence: "weekly", interval: "0" }, /INTERVAL: expected a whole number of at least 1/],
+    ["until", { recurrence: "weekly", until: "31-10-2026" }, /UNTIL: expected a date as YYYY-MM-DD/],
+    ["count", { recurrence: "weekly", count: "many" }, /COUNT: expected a whole number/],
+    ["excludedDates", { excludedDates: "next Tuesday" }, /Excluded dates: expected a date as YYYY-MM-DD/],
+    // A run that ends before it begins. Nothing downstream refuses it — the
+    // start is an occurrence whatever the rule says — so the document would go
+    // out stating a rule that produces exactly one day.
+    [
+      "until before the start",
+      { recurrence: "weekly", until: "2020-01-06" },
+      /UNTIL: the end date is before the start date/,
+    ],
+    // A title of three spaces is not a title: SUMMARY is the only line a client
+    // has to name the entry by, so blank and whitespace arrive at the same
+    // untitled entry and are refused together.
+    ["summary", { summary: "   " }, /nothing but whitespace/],
+  ])("refuses a malformed %s with a message naming it", (_field, overrides, message) => {
+    expect(() => render(overrides)).toThrow(message);
+  });
+
+  /**
+   * The attendee's address is read by the `ATTENDEE` line and by an email
+   * alarm, and by nothing else — so a publish that writes neither never looks
+   * at the field, and refusing a send over an address no line of the document
+   * states is a refusal about nothing.
+   */
+  it("validates the attendee address only where the document reads it", () => {
+    const published = icsOf(render({ includeAttendee: "no", attendeeEmail: "not an address" }));
+    expect(published).toContain("BEGIN:VCALENDAR");
+    expect(published).not.toContain("ATTENDEE");
+
+    expect(() =>
+      render({ includeAttendee: "no", attendeeEmail: "not an address", alert1Action: "email" }),
+    ).toThrow(/Attendee email: expected an email address/);
+  });
+
+  /**
+   * A document with nothing in it is refused rather than sent: a calendar
+   * describing no occurrence still opens a conversation the reader's calendar
+   * has no entry for.
+   */
+  it("refuses an object whose every occurrence is excluded", () => {
+    expect(() => render({ excludedDates: params.startDate })).toThrow(
+      /states no occurrence at all/,
+    );
+  });
+
+  /**
+   * The override lines, which are the one field whose validity depends on the
+   * *rest* of the form: a date the rule never produces is a `RECURRENCE-ID`
+   * matching nothing, and a client answers that by creating a second entry
+   * beside the one that was meant to move. By the time anybody notices there
+   * are two, so it is refused here.
+   */
+  describe("the override lines", () => {
+    /** A Monday rule, so a Monday override lands and any other weekday does not. */
+    const weekly = { recurrence: "weekly", weekdays: "mon" };
+
+    /**
+     * The Monday `weeks` after the start, as `YYYY-MM-DD`.
+     *
+     * UTC-pinned end to end — built from a `…Z` string and stepped and read
+     * through the UTC accessors alone — so the arithmetic never meets a
+     * daylight-saving transition, whatever zone the suite runs in.
+     */
+    function mondayAfter(weeks: number): string {
+      const day = new Date(`${params.startDate}T00:00:00Z`);
+      day.setUTCDate(day.getUTCDate() + weeks * 7);
+      return day.toISOString().slice(0, 10);
+    }
+
+    const secondMonday = mondayAfter(1);
+
+    it("emits an exception component under the same identifier", () => {
+      const ics = icsOf(render({ ...weekly, overrides: `${secondMonday} 14:00 90` }));
+
+      expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
+      expect(ics).toContain(`RECURRENCE-ID;TZID=Europe/Helsinki:${secondMonday.replace(/-/g, "")}T160000`);
+      expect(ics).toContain(`DTSTART;TZID=Europe/Helsinki:${secondMonday.replace(/-/g, "")}T140000`);
+      expect(ics).toContain("DURATION:PT90M");
+    });
+
+    it.each([
+      [
+        "a weekday the rule never produces",
+        { ...weekly, weekdays: "tue", overrides: `${secondMonday} 14:00` },
+        /Overrides: expected a date the rule's BYDAY covers/,
+      ],
+      [
+        "a date before the run starts",
+        { ...weekly, overrides: "2020-01-06 14:00" },
+        /Overrides: expected a date on or after the start date/,
+      ],
+      [
+        "a date that is also excluded",
+        { ...weekly, excludedDates: secondMonday, overrides: `${secondMonday} 14:00` },
+        /Overrides: expected a date that is not also on the excluded list/,
+      ],
+      [
+        "a line that is not a date and a time",
+        { ...weekly, overrides: secondMonday },
+        /Overrides: expected a date, a time, and optionally a duration/,
+      ],
+      [
+        "a duration that is not a number",
+        { ...weekly, overrides: `${secondMonday} 14:00 ninety` },
+        /Override duration: expected a whole number/,
+      ],
+      [
+        "a schedule with no occurrences to except",
+        { recurrence: "none", overrides: `${secondMonday} 14:00` },
+        /Overrides: only the weekly rule has occurrences to override/,
+      ],
+    ])("refuses %s", (_case, overrides, message) => {
+      expect(() => render(overrides)).toThrow(message);
+    });
+
+    /**
+     * The other end of the same check the start date makes, and the end no
+     * field can answer on its own: an `UNTIL` names a day the run may not pass
+     * rather than the day it stops on, and a `COUNT` names no day at all. Both
+     * rules below state three Mondays — the start and the two after it — so the
+     * third Monday after it is past the end of both, and the second is the last
+     * occurrence itself, which is a date an override may legitimately name.
+     */
+    it.each([
+      ["an UNTIL-bounded rule", { until: mondayAfter(2) }],
+      ["a COUNT-bounded rule", { count: "3" }],
+    ])("refuses an override past the last occurrence of %s", (_case, bound) => {
+      expect(() =>
+        render({ ...weekly, ...bound, overrides: `${mondayAfter(3)} 14:00` }),
+      ).toThrow(/Overrides: expected a date on or before/);
+
+      expect(icsOf(render({ ...weekly, ...bound, overrides: `${mondayAfter(2)} 14:00` }))).toContain(
+        `RECURRENCE-ID;TZID=Europe/Helsinki:${mondayAfter(2).replace(/-/g, "")}T160000`,
+      );
+    });
+  });
+});
+/**
  * Every registered template, rendered in every locale we ship.
  *
  * The failure this catches is a key added to `en.json` and forgotten in one of
@@ -540,6 +867,7 @@ describe("every template renders in every locale", () => {
       reportMarkdown: "",
       productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
     },
+    calendarInvitation: CALENDAR_INVITATION_FIXTURE,
   };
 
   /**
