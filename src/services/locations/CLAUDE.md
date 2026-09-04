@@ -1161,10 +1161,31 @@ Authority" is the term that covers all four nations and the one a parent reads o
 council letter. The anchor tripwire is what forced the question — the entry anchored at
 `district`, and every seeded country must anchor at `municipality`.
 
-Adding a country end to end is now two things: hierarchy config, and an ingestion config
-entry whose generated seed migration supplies its rows. It appears in the picker, in search and in coverage the moment its rows exist —
+Adding a country end to end is now three things: hierarchy config, an ingestion config
+entry whose generated seed migration supplies its rows, and the country's list of IANA
+timezones. It appears in the picker, in search and in coverage the moment its rows exist —
 there is no asset to generate, no loader arm to add, and no bundle-size judgement call
 about whether it is small enough to ship.
+
+**The timezone list is a required field on the country entry, and that is the whole
+mechanism.** It is a non-empty tuple, so a new country that forgets it does not compile;
+the admin product form's timezone dropdown is derived from the *seeded* countries' lists
+flattened and deduped (`PRODUCT_TIMEZONES`, with `DEFAULT_PRODUCT_TIMEZONE` leading), so
+seeding a country widens the dropdown on the same commit and the two facts cannot drift.
+**Country↔timezone is not 1:1**, which is why the field is a list rather than one string:
+a country spanning several zones names all of them, primary first, and the primary is the
+one an admin should read as that country's ordinary answer. An unseeded country's list is
+allowed to be representative rather than complete — nothing offers it yet — and the day it
+is seeded, filling in the rest is part of the same work the anchor tripwire already forces.
+
+**Un-seeding a country is therefore not a harmless config edit.** The admin product form
+offers the seeded countries' zones and the products contract refines the stored zone
+against that same list, so dropping a country — or removing one zone from its list —
+makes every existing product sitting in that zone unsavable through the form until its
+zone is changed: the form still shows the stored zone as an extra option so the admin can
+see what the row holds, and the save is refused loudly with the contract's message rather
+than silently rewriting the product into a zone nobody chose. Retire or re-zone a
+country's products before removing it, or leave its zones listed.
 
 ## Localized display names (`name_i18n`)
 

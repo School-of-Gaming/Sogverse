@@ -36,7 +36,6 @@ import type { ProductType } from "@/types";
 import { formLocksFor } from "./form-locks";
 import {
   effectivePricingShape,
-  FIXED_TIMEZONE,
   locationPickerMode,
   offersUncapped,
   startModeUsesDate,
@@ -353,12 +352,14 @@ function feeDraftToCents(
 
 /**
  * "Right away" (mode=immediately) resolves to *now*, "Specific time" to the
- * picked Helsinki-local moment. Always returns a real ISO string — every
- * product type has a single ticket-drop concept (`registration_opens_at`
- * is NOT NULL in the schema). `fromZonedTime` interprets the local string
- * as Helsinki time regardless of the admin's browser timezone, so a Tokyo
- * admin and a Helsinki admin produce the same UTC for the same picker
- * input.
+ * picked moment in the product's own zone. Always returns a real ISO string —
+ * every product type has a single ticket-drop concept
+ * (`registration_opens_at` is NOT NULL in the schema). `fromZonedTime`
+ * interprets the local string in `state.timezone` regardless of the admin's
+ * browser timezone, so a Tokyo admin and a Helsinki admin filling the same
+ * picker for the same product produce the same UTC — and an admin who switches
+ * the zone dropdown moves the drop to that clock face in the new zone, which is
+ * the same re-resolution the schedule slots get.
  */
 function resolveRegistrationOpensAt(state: FormState): string {
   if (
@@ -367,7 +368,7 @@ function resolveRegistrationOpensAt(state: FormState): string {
   ) {
     return fromZonedTime(
       `${state.registrationOpensDate}T${state.registrationOpensHour}:${state.registrationOpensMinute}:00`,
-      FIXED_TIMEZONE,
+      state.timezone,
     ).toISOString();
   }
   return new Date().toISOString();
@@ -555,7 +556,7 @@ function buildSharedFields(
             ? state.endDate || null
             : null
           : state.endDate || null,
-    timezone: FIXED_TIMEZONE,
+    timezone: state.timezone,
     seat_count: seat,
     waitlist_enabled: waitlist,
     registration_opens_at: resolveRegistrationOpensAt(state),
@@ -733,8 +734,10 @@ function inferStartMode(
  *
  * Decisions baked in:
  *   - `registrationOpensMode` is derived: in the future ⇒ scheduled (with
- *     the date/hour/minute fields populated from the timestamp in
- *     Helsinki TZ). In the past ⇒ "immediately" (the form will re-resolve
+ *     the date/hour/minute fields populated from the timestamp read in the
+ *     row's OWN stored zone, which is also what seeds `timezone` — the form
+ *     shows the wall clock the product was authored at, in the zone it was
+ *     authored in). In the past ⇒ "immediately" (the form will re-resolve
  *     to a fresh now() at submit; harmless because the timestamp is
  *     already in the past). A type whose chooser is locked always derives
  *     "immediately" regardless of the stored value — see the comment at the
@@ -813,14 +816,19 @@ export function existingFormState(
   const isFuture =
     opensAt.getTime() > Date.now() && !formLocksFor(config).registrationTiming;
   const mode: RegistrationOpensMode = isFuture ? "scheduled" : "immediately";
+  // Read back in the row's OWN stored zone, not a constant and not the admin's
+  // browser: the form shows the wall clock the product was authored at, and the
+  // dropdown below shows which zone that clock is in. Reading it in some other
+  // zone would show an admin a time nobody ever typed, and saving would then
+  // write that misread clock back as if they had meant it.
   const opensDate = isFuture
-    ? formatInTimeZone(opensAt, FIXED_TIMEZONE, "yyyy-MM-dd")
+    ? formatInTimeZone(opensAt, product.timezone, "yyyy-MM-dd")
     : "";
   const opensHour = isFuture
-    ? formatInTimeZone(opensAt, FIXED_TIMEZONE, "HH")
+    ? formatInTimeZone(opensAt, product.timezone, "HH")
     : "10";
   const opensMinute = isFuture
-    ? formatInTimeZone(opensAt, FIXED_TIMEZONE, "mm")
+    ? formatInTimeZone(opensAt, product.timezone, "mm")
     : "00";
 
   const paidMode: PaidMode = product.billing_mode === "free" ? "free" : "paid";
@@ -866,6 +874,15 @@ export function existingFormState(
     spokenLanguageCode: product.spoken_language_code,
     isRemote: product.is_remote,
     locationId: product.location_id,
+    // Straight through, deliberately unfiltered — the opposite treatment to the
+    // region lock above, for the opposite reason. A lock the picker cannot offer
+    // is a gate nobody can pass, so loading it as "unlocked" loses nothing; a
+    // zone the picker cannot offer is the only interpretation the row's schedule
+    // has, and swapping it for the default would silently re-time every session
+    // on the next save of anything at all. The picker closes the usual gap by
+    // offering the stored zone as an extra option, so what the admin sees always
+    // matches what state holds.
+    timezone: product.timezone,
     startMode: inferStartMode(product, config),
     startDate: product.start_date ?? "",
     hasEndDate: product.end_date != null,

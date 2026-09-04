@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { SUPPORTED_COUNTRIES } from "@/lib/constants/location-hierarchies";
+import {
+  DEFAULT_PRODUCT_TIMEZONE,
+  isProductTimezone,
+  PRODUCT_TIMEZONES,
+  SUPPORTED_COUNTRIES,
+} from "@/lib/constants/location-hierarchies";
+import { isValidTimezone } from "@/lib/timezone";
 // The ingestion config, imported from a test rather than from application code.
 // The generators are `.mjs` run by bare `node` and cannot resolve the `@/` path
 // alias, which is why they restate the level order instead of reading it — but
@@ -96,5 +102,55 @@ describe("the ingestion config and the UI hierarchy config", () => {
       .sort();
 
     expect(configured).toEqual(declared);
+  });
+});
+
+/**
+ * The zones the admin product form offers, which are derived from this same
+ * country config rather than listed anywhere else.
+ *
+ * The type does most of the work — `timezones` is a required non-empty tuple,
+ * so a new country entry without one does not compile and the "add a country"
+ * process cannot quietly leave the picker behind. What the type cannot check is
+ * whether the strings name real zones, or whether the derivation still produces
+ * the list the form is meant to show.
+ */
+describe("the zones a product can be scheduled in", () => {
+  it("gives every configured country at least one real IANA zone", () => {
+    for (const country of SUPPORTED_COUNTRIES) {
+      expect(
+        country.timezones.length,
+        `${country.code} declares no timezone`,
+      ).toBeGreaterThan(0);
+      for (const zone of country.timezones) {
+        // A typo here would reach `Intl` as a `timeZone` option and throw at
+        // render time, on the one product authored in that country.
+        expect(isValidTimezone(zone), `${country.code} zone ${zone}`).toBe(true);
+      }
+    }
+  });
+
+  it("offers exactly the seeded countries' zones, default first", () => {
+    // Not a restatement of the config: it is the *derivation* that is pinned —
+    // seeded only, deduped, and led by the default so the create form's first
+    // option is the one it starts on. The day a fifth country is seeded this
+    // fails, which is the reminder that the picker grew.
+    expect(PRODUCT_TIMEZONES).toEqual([
+      "Europe/Helsinki",
+      "Europe/Paris",
+      "Europe/London",
+      "Europe/Stockholm",
+    ]);
+    expect(PRODUCT_TIMEZONES[0]).toBe(DEFAULT_PRODUCT_TIMEZONE);
+  });
+
+  it("recognizes only the zones it offers", () => {
+    for (const zone of PRODUCT_TIMEZONES) {
+      expect(isProductTimezone(zone), zone).toBe(true);
+    }
+    // A real, well-formed IANA zone in a country we do not operate in — the
+    // shape the write contract has to refuse, and the reason it refines rather
+    // than taking any string `Intl` accepts.
+    expect(isProductTimezone("Europe/Berlin")).toBe(false);
   });
 });

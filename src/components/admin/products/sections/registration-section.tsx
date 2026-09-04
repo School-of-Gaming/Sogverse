@@ -3,7 +3,9 @@
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
+import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
+import { useNow } from "@/providers";
 import { FormSection, InfoCallout } from "../form-primitives";
 import { formLocksFor } from "../form-locks";
 import {
@@ -26,6 +28,7 @@ export function RegistrationSection({
   config,
 }: RegistrationSectionProps) {
   const t = useTranslations("admin.products");
+  const now = useNow();
 
   // Pre-prod UI lock (see form-locks.ts): registration always opens immediately
   // and the chooser is pinned to "Right away" — except on municipality clubs,
@@ -136,7 +139,14 @@ export function RegistrationSection({
               </div>
             </Field>
           </div>
-          <InfoCallout text={t("hints.timezoneFixedHelsinki")} />
+          {/* The zone is picked in the When section; this only reports it, and
+              reports it through the same formatter, so the two sections cannot
+              describe one field two ways. */}
+          <InfoCallout
+            text={t("hints.timezoneIs", {
+              timezone: formatTimezoneOptionLabel(state.timezone, now),
+            })}
+          />
         </>
       )}
     </FormSection>

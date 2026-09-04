@@ -490,6 +490,35 @@ describe("POST /api/admin/products/create", () => {
     expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
+  it("accepts a timezone the platform operates in", async () => {
+    // The zone stopped being a constant when the admin form gained a picker, so
+    // the boundary has to carry a value other than the Helsinki default all the
+    // way to the RPC. Paris is a seeded country's zone.
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({ data: { ...validBody, timezone: "Europe/Paris" } }),
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({ p_timezone: "Europe/Paris" }),
+    );
+  });
+
+  it("returns 400 for a timezone no product can be scheduled in", async () => {
+    // The same narrowing the region lock gets, one field over: the contract is
+    // constrained to the zones the SEEDED countries declare, not to whatever
+    // `Intl` will accept. "Europe/Berlin" is a real IANA zone in a country we do
+    // not operate in — the form cannot offer it, so a request carrying it did
+    // not come from the form. The column holds no such constraint, because
+    // which countries are seeded changes as rows land.
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({ data: { ...validBody, timezone: "Europe/Berlin" } }),
+    );
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
   it("surfaces RPC errors as 400 with the message", async () => {
     mockAuthenticatedAdmin();
     mockUserRpc.mockResolvedValue({

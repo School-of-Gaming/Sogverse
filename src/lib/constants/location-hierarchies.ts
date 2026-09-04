@@ -49,6 +49,18 @@ export interface CountryConfig {
    */
   anchor: LocationType;
   /**
+   * The IANA zones this country's sessions can be scheduled in, primary first.
+   *
+   * Required, and that is the whole mechanism: a new country entry that forgets
+   * its zones does not compile, so the admin product form's timezone dropdown
+   * cannot silently go on offering the old set after the platform gains a
+   * country. A country spanning several zones lists all of them — the field is
+   * a non-empty tuple, not one string, because country↔timezone is not 1:1 —
+   * and the first entry is the one an admin should read as the country's
+   * ordinary answer.
+   */
+  timezones: readonly [string, ...string[]];
+  /**
    * Whether this country's region/municipality/district rows exist in the
    * `locations` table.
    *
@@ -75,6 +87,7 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     code: "FI",
     name: "Finland",
     anchor: "municipality",
+    timezones: ["Europe/Helsinki"],
     seeded: true,
     hierarchy: [
       { type: "region", label: "Region", pluralLabel: "Regions", i18n: { fi: { label: "Maakunta", pluralLabel: "Maakunnat" } } },
@@ -86,6 +99,9 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     code: "FR",
     name: "France",
     anchor: "municipality",
+    // Metropolitan France only. The overseas départements span a further ten
+    // zones and would be listed here the day one of them is operated in.
+    timezones: ["Europe/Paris"],
     seeded: true,
     // France uses the `district` level Finland skips: région → département →
     // commune. `fr` is a supported UI locale, so every level carries its French
@@ -101,6 +117,10 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     code: "US",
     name: "United States",
     anchor: "district",
+    // Representative rather than complete, and honest about it: the US spans
+    // six zones and the day it is seeded is the day the rest of them are
+    // written here. Unseeded, so nothing offers this list yet.
+    timezones: ["America/New_York"],
     seeded: false,
     hierarchy: [
       { type: "region", label: "State", pluralLabel: "States" },
@@ -113,6 +133,7 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     code: "GB",
     name: "United Kingdom",
     anchor: "municipality",
+    timezones: ["Europe/London"],
     seeded: true,
     // Nation → local authority. The speculative entry here used to read
     // Nation → City → Borough, which is how the UK looks from outside and not
@@ -134,6 +155,7 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     code: "SE",
     name: "Sweden",
     anchor: "municipality",
+    timezones: ["Europe/Stockholm"],
     seeded: true,
     hierarchy: [
       { type: "region", label: "County", pluralLabel: "Counties", i18n: { sv: { label: "Län", pluralLabel: "Län" } } },
@@ -145,6 +167,9 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     code: "ES",
     name: "Spain",
     anchor: "municipality",
+    // Mainland and the Balearics. The Canaries sit an hour behind on
+    // Atlantic/Canary and join this list if Spain is ever seeded.
+    timezones: ["Europe/Madrid"],
     seeded: false,
     hierarchy: [
       { type: "region", label: "Autonomous Community", pluralLabel: "Autonomous Communities" },
@@ -156,6 +181,7 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     code: "JP",
     name: "Japan",
     anchor: "district",
+    timezones: ["Asia/Tokyo"],
     seeded: false,
     hierarchy: [
       { type: "region", label: "Prefecture", pluralLabel: "Prefectures" },
@@ -181,6 +207,40 @@ export const SEEDED_COUNTRIES: readonly CountryConfig[] =
 /** Whether a country code names one of the seeded countries above. */
 export function isSeededCountry(code: string | null): boolean {
   return SEEDED_COUNTRIES.some((c) => c.code === code);
+}
+
+/**
+ * The zone a product is authored in unless an admin picks another one.
+ *
+ * Every product written before the picker existed carries this value, and the
+ * create form still starts here: the great majority of what we run is Finnish,
+ * so it is the answer that needs no thought.
+ */
+export const DEFAULT_PRODUCT_TIMEZONE = "Europe/Helsinki";
+
+/**
+ * The zones the admin product form offers, in the order it offers them.
+ *
+ * Derived from the seeded countries' own `timezones` rather than listed
+ * separately, so the set of zones a product can be authored in and the set of
+ * countries we operate in cannot drift apart: seeding a country adds its zones
+ * on the same commit, and the field being required means an entry cannot arrive
+ * without them. Unseeded countries are excluded for the same reason
+ * `SEEDED_COUNTRIES` excludes them — nothing we run happens there yet.
+ *
+ * `DEFAULT_PRODUCT_TIMEZONE` leads, then the rest in `SUPPORTED_COUNTRIES`
+ * order, deduped because two countries may well share a zone.
+ */
+export const PRODUCT_TIMEZONES: readonly string[] = [
+  ...new Set([
+    DEFAULT_PRODUCT_TIMEZONE,
+    ...SEEDED_COUNTRIES.flatMap((c) => c.timezones),
+  ]),
+];
+
+/** Whether a string names one of the zones a product may be authored in. */
+export function isProductTimezone(value: string): boolean {
+  return PRODUCT_TIMEZONES.includes(value);
 }
 
 const countriesByCode = new Map(SUPPORTED_COUNTRIES.map((c) => [c.code, c]));
