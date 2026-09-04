@@ -2751,18 +2751,24 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- 3. The attention queue: live products with at least one thing wrong.
   --
-  -- Five kinds of wrong, and each is stated as the fact rather than as a sentence
+  -- Six kinds of wrong, and each is stated as the fact rather than as a sentence
   -- — the page words them, because the wording is translated copy.
   --
   --   * `unassigned_count`  — active seats sitting in no group. A child enrolled
   --                           and nobody looking after them is the worst of these.
-  --   * `groups_without_gedu` — a group with members and no educator assigned. An
-  --                           EMPTY group is not flagged: an admin building the
-  --                           term's groups ahead of time has not made a mistake.
+  --   * `groups_without_gedu` — a group with members and no educator assigned.
   --   * `waitlist`          — people queueing while seats stand open AND those
   --                           seats have not all been offered to somebody. Only
   --                           meaningful on a capped product with the queue
   --                           switched on. NULL when there is nothing to say.
+  --   * `empty_groups_without_gedu` (00241) — a group with no educator AND no
+  --                           active member. An admin pre-building next term's
+  --                           groups has not made a mistake, which is why this is
+  --                           a SEPARATE and LOWER-ranked kind rather than part
+  --                           of the one above — but it is still a loose end
+  --                           somebody has to come back to, so it is named rather
+  --                           than carved out of the group check, which is what
+  --                           it was before this migration.
   --   * `missing_gedu_fee`  — NULL, not zero. Zero is a volunteer session, which
   --                           is a decision somebody made; NULL is a blank field.
   --                           The assistant fee is never flagged — NULL there
@@ -2788,6 +2794,7 @@ BEGIN
                'translations',        tr.items,
                'unassigned_count',    ua.n,
                'groups_without_gedu', gw.items,
+               'empty_groups_without_gedu', eg.items,
                'waitlist',
                  CASE WHEN wl.open_seats IS NOT NULL
                       THEN jsonb_build_object(
@@ -2842,6 +2849,31 @@ BEGIN
                           )
                  ), '[]'::jsonb) AS items
         ) gw
+        -- The same question asked of the OTHER half of the unstaffed groups
+        -- (00241): no educator, and nobody in it either. Deliberately a second
+        -- lateral with an inverted membership test rather than a flag on the one
+        -- above, because the page ranks the two differently and one wire fact per
+        -- kind of wrong is what its ranking maps over. The EXISTS / NOT EXISTS
+        -- pair is what makes the two arrays disjoint: no group can be in both,
+        -- and a group somebody teaches is in neither.
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object('id', g.id, 'name', g.name)
+                            ORDER BY g.name, g.id
+                          )
+                     FROM public.product_groups g
+                    WHERE g.product_id = c.id
+                      AND NOT EXISTS (
+                            SELECT 1 FROM public.participations pa
+                             WHERE pa.group_id = g.id AND pa.status = 'active'
+                          )
+                      AND NOT EXISTS (
+                            SELECT 1 FROM public.gedu_group_assignments ga
+                             WHERE ga.group_id = g.id
+                          )
+                 ), '[]'::jsonb) AS items
+        ) eg
         -- The waitlist flag asks "is there something for an admin to do here",
         -- not "is this product in an interesting state" (00207). An open seat
         -- that has already been offered to a family is being dealt with, so it
@@ -2872,6 +2904,7 @@ BEGIN
         ) wl ON true
        WHERE ua.n > 0
           OR jsonb_array_length(gw.items) > 0
+          OR jsonb_array_length(eg.items) > 0
           OR wl.open_seats IS NOT NULL
           OR c.primary_gedu_fee_cents IS NULL
           OR (c.product_type = 'municipality_club'
@@ -2959,7 +2992,7 @@ $$;
 -- Name: FUNCTION get_admin_dashboard(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — either can be NULL, where the stat has no meaning: certified only means something for an educator, and verified is NULL for a role none of whose accounts holds a real address, which is every gamer unless their parent chose sign-in mode email), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00213 each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
+COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — either can be NULL, where the stat has no meaning: certified only means something for an educator, and verified is NULL for a role none of whose accounts holds a real address, which is every gamer unless their parent chose sign-in mode email), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Since 00201 each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; since 00202 that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Since 00213 each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. Since 00207 the waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. Since 00241 an unstaffed group with NO active member is named too, in its own empty_groups_without_gedu array beside groups_without_gedu, and can put a product in the queue by itself: the empty group used to be carved out of the group check entirely, on the reasoning that an admin pre-building next term has not made a mistake, and that reasoning now decides its RANK on the page rather than hiding it. The two arrays are disjoint by construction and neither holds a group somebody is assigned to. Both product sections ask effective_status() rather than products.status, and every date window is computed in the product''s own timezone. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
 
 
 --
