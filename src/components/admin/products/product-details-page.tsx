@@ -31,6 +31,7 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import { cn, formatCurrencyFromCents, formatDate } from "@/lib/utils";
+import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { productImageSrc } from "@/lib/images/product-image-url";
 import { productAudience } from "@/components/public/products/product-audience";
@@ -324,6 +325,9 @@ function OperationalFacts({
   // box are looking at one name for one document.
   const tConsent = useTranslations("consentDocuments.names");
   const tConsentBundle = useTranslations("consentDocuments.bundles");
+  // The clock the zone label's offset is read at — request-stable, so the
+  // server and the first client render agree across a DST transition.
+  const now = useNow();
 
   // Render a per-session fee from its stored cents. The state is derived from
   // the value: null = "not set" (the `nullStatus` label — "unknown" draws the
@@ -410,6 +414,14 @@ function OperationalFacts({
         <Fact icon={Clock} label={t("detailsPage.fields.seats")}>
           {seatsLine}
           {waitlistSuffix}
+        </Fact>
+
+        {/* The zone the schedule is authored in — the stored property, as
+            distinct from the viewer-converted times the overview card shows.
+            Same label the edit form's dropdown uses, so the two cannot
+            disagree about what a zone is called. */}
+        <Fact icon={Globe2} label={t("detailsPage.fields.timezone")}>
+          {formatTimezoneOptionLabel(product.timezone, now)}
         </Fact>
 
         <Fact icon={Globe2} label={t("detailsPage.fields.registrationOpensAt")}>

@@ -423,6 +423,7 @@
           "primaryGeduFee": "Rémunération Gedu principal / session",
           "assistantGeduFee": "Rémunération Gedu assistant / session",
           "municipalityFee": "Montant commune / session",
+          "timezone": "Fuseau horaire",
           "registrationOpensAt": "Ouverture des inscriptions",
           "tag": "Conçu pour",
           "regionLock": "Restriction par pays",

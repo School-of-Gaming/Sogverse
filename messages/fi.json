@@ -423,6 +423,7 @@
           "primaryGeduFee": "Vastaavan Gedun palkkio / kerta",
           "assistantGeduFee": "Avustavan Gedun palkkio / kerta",
           "municipalityFee": "Kunnan maksu / kerta",
+          "timezone": "Aikavyöhyke",
           "registrationOpensAt": "Ilmoittautuminen aukeaa",
           "tag": "Kenelle suunniteltu",
           "regionLock": "Maakohtainen rajaus",

@@ -423,6 +423,7 @@
           "primaryGeduFee": "Primary Gedu fee / session",
           "assistantGeduFee": "Assistant Gedu fee / session",
           "municipalityFee": "Municipality fee / session",
+          "timezone": "Timezone",
           "registrationOpensAt": "Registration opens",
           "tag": "Designed for",
           "regionLock": "Region lock",
