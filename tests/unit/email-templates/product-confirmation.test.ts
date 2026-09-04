@@ -46,7 +46,7 @@ const SCHEDULE: ProductConfirmationInvitationInput = {
   siteNote: null,
   attendeeName: "Marja Virtanen",
   attendeeEmail: "marja@example.com",
-  enrollmentUrl: `https://sogverse.sog.gg/parent/clubs/${PARTICIPATION_ID}`,
+  dashboardUrl: DASHBOARD_URL,
   now: NOW,
 };
 

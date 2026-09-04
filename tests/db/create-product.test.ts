@@ -224,12 +224,11 @@ describe("create_product", () => {
   it("refuses a malformed country code with a CHECK violation", async () => {
     // The database holds the SHAPE invariant and nothing else: which countries
     // may be chosen is application config (`SUPPORTED_COUNTRIES`) and lives in
-    // the write contract. What must never
-    // reach the column is something that is not a country code at all — a
-    // lower-case code included, since the shop compares the stored value
-    // against a code that is always upper-case, and 'fi' would be a lock that
-    // silently matches nobody. The failure has to be loud, so it is asserted
-    // as a refusal rather than as a value read back.
+    // the write contract. What must never reach the column is something that
+    // is not a country code at all — a lower-case code included, since the
+    // shop compares the stored value against a code that is always upper-case,
+    // and 'fi' would be a lock that silently matches nobody. The failure has to
+    // be loud, so it is asserted as a refusal rather than as a value read back.
     const { data, error } = await adminAuth.rpc("create_product", {
       p_product_type: "consumer_club",
       p_billing_mode: "free",

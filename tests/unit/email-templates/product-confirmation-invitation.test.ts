@@ -26,7 +26,9 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
 const NOW = new Date("2027-01-04T08:00:00Z");
 
 const PARTICIPATION_ID = "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15";
-const ENROLLMENT_URL = `https://sogverse.sog.gg/parent/clubs/${PARTICIPATION_ID}`;
+/** The mail's own button, and the entry's `URL`: one link, because a seat's own
+ *  page needs a group most seats do not have when this mail is composed. */
+const DASHBOARD_URL = "https://sogverse.sog.gg/parent";
 
 let t: EmailTranslator;
 
@@ -52,7 +54,7 @@ const base: ProductConfirmationInvitationInput = {
   siteNote: null,
   attendeeName: "Marja Virtanen",
   attendeeEmail: "marja@example.com",
-  enrollmentUrl: ENROLLMENT_URL,
+  dashboardUrl: DASHBOARD_URL,
   now: NOW,
 };
 
@@ -218,6 +220,114 @@ describe("the shapes a product's schedule takes", () => {
   });
 });
 
+/**
+ * The two days a year the offset moves, which is where every date walk in this
+ * module either holds or quietly loses a day.
+ *
+ * Europe/Helsinki in 2027: the clocks go forward on Sunday 28 March at 03:00
+ * local, and back on Sunday 31 October at 04:00 local. A run that crosses
+ * either one is the case a UTC-pinned walk exists for — stepping a zoned wall
+ * clock by 24 hours repeats or skips a calendar date exactly here, and nothing
+ * outside these dates would notice.
+ */
+describe("a run that crosses a daylight-saving transition", () => {
+  /**
+   * `UNTIL` is an absolute instant, so the same wall clock is a different `Z`
+   * value on each side of the switch: the end of a winter day is 21:59:59Z at
+   * UTC+02:00, and the end of a summer day is 20:59:59Z at UTC+03:00.
+   */
+  it("reads the last day's end in the offset in force on that day", () => {
+    const winter = compose({ productType: "municipality_club", endDate: "2027-12-31" });
+
+    expect(lineStartingWith(winter!.ics, "RRULE")).toBe(
+      "RRULE:FREQ=WEEKLY;BYDAY=MO;UNTIL=20271231T215959Z",
+    );
+  });
+
+  /**
+   * The first-occurrence search walks bare dates and builds exactly one
+   * instant, to compare against `now`. A walk that stepped a zoned wall clock
+   * instead would land on the 27th or the 29th here, and only here.
+   */
+  it("lands the first occurrence on the transition day itself", () => {
+    // Saturday 27 March, the day before the clocks go forward.
+    const invitation = compose({
+      startDate: "2027-03-01",
+      slots: [{ weekday: 6, startTime: "10:00", durationMinutes: 90 }],
+      now: new Date("2027-03-27T12:00:00Z"),
+    });
+
+    expect(lineStartingWith(invitation!.ics, "DTSTART;TZID")).toBe(
+      "DTSTART;TZID=Europe/Helsinki:20270328T100000",
+    );
+  });
+
+  /**
+   * The override walk runs day by day from `DTSTART` to the last day, and every
+   * `RECURRENCE-ID` names the occurrence **as the rule produced it** — that
+   * date at the master's own clock face. A day repeated or skipped here would
+   * be an override matching no occurrence, which a client answers by creating a
+   * second entry beside the one it was meant to replace.
+   */
+  it("steps every overridden day by the calendar, across the switch", () => {
+    // Friday 26 March to Tuesday 30 March, with the transition on the Sunday.
+    const invitation = compose({
+      productType: "camp",
+      startDate: "2027-03-26",
+      endDate: "2027-03-30",
+      now: new Date("2027-03-25T12:00:00Z"),
+      slots: [
+        { weekday: 4, startTime: "09:00", durationMinutes: 120 },
+        { weekday: 5, startTime: "14:00", durationMinutes: 120 },
+        { weekday: 6, startTime: "14:00", durationMinutes: 120 },
+        { weekday: 0, startTime: "14:00", durationMinutes: 120 },
+        { weekday: 1, startTime: "14:00", durationMinutes: 120 },
+      ],
+    });
+
+    expect(lineStartingWith(invitation!.ics, "DTSTART;TZID")).toBe(
+      "DTSTART;TZID=Europe/Helsinki:20270326T090000",
+    );
+    expect(linesStartingWith(invitation!.ics, "RECURRENCE-ID")).toEqual([
+      "RECURRENCE-ID;TZID=Europe/Helsinki:20270327T090000",
+      "RECURRENCE-ID;TZID=Europe/Helsinki:20270328T090000",
+      "RECURRENCE-ID;TZID=Europe/Helsinki:20270329T090000",
+      "RECURRENCE-ID;TZID=Europe/Helsinki:20270330T090000",
+    ]);
+    // Each of them moved to its own time, and the master kept its own.
+    expect(linesStartingWith(invitation!.ics, "DTSTART;TZID")).toEqual([
+      "DTSTART;TZID=Europe/Helsinki:20270326T090000",
+      "DTSTART;TZID=Europe/Helsinki:20270327T140000",
+      "DTSTART;TZID=Europe/Helsinki:20270328T140000",
+      "DTSTART;TZID=Europe/Helsinki:20270329T140000",
+      "DTSTART;TZID=Europe/Helsinki:20270330T140000",
+    ]);
+  });
+});
+
+/**
+ * `DTSTART` is the first occurrence still ahead, and nothing says that has to
+ * be the first weekday in `BYDAY`: a signup on a Tuesday starts the run on
+ * Wednesday while the rule still states both days.
+ */
+describe("the weekday DTSTART lands on", () => {
+  it("is the next one ahead, not the earliest in the rule", () => {
+    const invitation = compose({
+      // Tuesday 5 January 2027, 14:00 in Helsinki.
+      now: new Date("2027-01-05T12:00:00Z"),
+      slots: [
+        { weekday: 0, startTime: "16:00", durationMinutes: 60 },
+        { weekday: 2, startTime: "16:00", durationMinutes: 60 },
+      ],
+    });
+
+    expect(lineStartingWith(invitation!.ics, "DTSTART;TZID")).toBe(
+      "DTSTART;TZID=Europe/Helsinki:20270106T160000",
+    );
+    expect(lineStartingWith(invitation!.ics, "RRULE")).toBe("RRULE:FREQ=WEEKLY;BYDAY=MO,WE");
+  });
+});
+
 describe("the products that carry no invitation at all", () => {
   it("has none for a product with no schedule slots", () => {
     expect(compose({ slots: [] })).toBeNull();
@@ -272,6 +382,18 @@ describe("the products that carry no invitation at all", () => {
         ],
       }),
     ).toBeNull();
+  });
+
+  /**
+   * A zone the builder ships no transition rules for gets an explorer-facing
+   * `X-SOGVERSE-NOTE` in place of its `VTIMEZONE` — a diagnostic for whoever
+   * typed the zone, not a line to put inside a family's calendar. The rule
+   * table and the admin picker are held in lockstep so a product cannot name
+   * such a zone; what still reaches here is a stored `products.timezone` the
+   * picker no longer offers, and the honest answer to that is the plain mail.
+   */
+  it("has none for a zone this build ships no transition rules for", () => {
+    expect(compose({ timezone: "Pacific/Auckland" })).toBeNull();
   });
 
   it("has none where one weekday carries two different sessions", () => {
@@ -352,8 +474,22 @@ describe("what the document says about itself", () => {
     expect(compose()!.ics).toContain("BEGIN:VTIMEZONE");
   });
 
-  it("links the seat's own enrollment page", () => {
-    expect(lineStartingWith(compose()!.ics, "URL")).toBe(`URL:${ENROLLMENT_URL}`);
+  /**
+   * My SOG rather than the seat's own page: that page needs a group, and a
+   * seat usually has none at the moment this mail is composed — so the more
+   * specific link would be the one most likely to 404, inside a document a
+   * parent still holds weeks later.
+   */
+  it("links My SOG, the one page every seat can reach", () => {
+    expect(lineStartingWith(compose()!.ics, "URL")).toBe(`URL:${DASHBOARD_URL}`);
+  });
+
+  it("writes no URL property and no link paragraph when there is no link", () => {
+    const invitation = compose({ dashboardUrl: "" });
+
+    expect(linesStartingWith(invitation!.ics, "URL")).toEqual([]);
+    // A sentence promising a link and carrying none is worse than no sentence.
+    expect(description(invitation!.ics)).not.toContain("My SOG:");
   });
 });
 
@@ -440,8 +576,30 @@ describe("what the entry's notes say", () => {
     });
 
     expect(invitation!.scheduleLines[0]).toBe("Every Monday and Wednesday, 16:00–17:00");
-    expect(invitation!.scheduleLines.join("\n")).toContain("Eastern European");
+    expect(invitation!.scheduleLines.join("\n")).toContain(
+      "Times are given in Eastern European Time.",
+    );
     expect(description(invitation!.ics)).toContain("Every Monday and Wednesday");
+  });
+
+  /**
+   * The generic zone name, never the seasonal one. `long` reads the name off
+   * one instant, and this line sits above a run of months: a term starting in
+   * January would be labelled "Standard Time" for a schedule that is mostly
+   * summer, and a camp in July would carry the summer name into September.
+   */
+  it("names the zone generically, on both sides of a transition", () => {
+    const winter = compose({ startDate: "2027-01-04" })!.scheduleLines.join("\n");
+    // A club whose first occurrence is in July: the same line, the same name.
+    const summer = compose({
+      startDate: "2027-07-05",
+      now: new Date("2027-06-01T08:00:00Z"),
+    })!.scheduleLines.join("\n");
+
+    expect(winter).toContain("Eastern European Time");
+    expect(summer).toContain("Eastern European Time");
+    expect(winter).not.toContain("Standard Time");
+    expect(summer).not.toContain("Summer Time");
   });
 
   it("gives one line per distinct time when the slots disagree", () => {
@@ -456,6 +614,70 @@ describe("what the entry's notes say", () => {
 
     expect(invitation!.scheduleLines[0]).toBe("Every Monday, 11:00–14:00");
     expect(invitation!.scheduleLines[1]).toBe("Every Tuesday, 13:00–15:00");
+  });
+
+  /**
+   * "Every" is a claim about repetition, and a run whose first and last day are
+   * fewer than seven days apart holds each weekday at most once — so the word
+   * would promise a second week the camp does not have. The days and the clock
+   * face are still the fact worth stating; only the word goes.
+   */
+  describe("a run too short to repeat", () => {
+    /** Monday 4 January to Friday 8 January 2027: each weekday once. */
+    const ONE_WEEK: Partial<ProductConfirmationInvitationInput> = {
+      productType: "camp",
+      startDate: "2027-01-04",
+      endDate: "2027-01-08",
+      slots: [0, 1, 2, 3, 4].map((weekday) => ({
+        weekday,
+        startTime: "10:00",
+        durationMinutes: 120,
+      })),
+    };
+
+    it("names the days and the times without saying Every", () => {
+      const invitation = compose(ONE_WEEK);
+
+      expect(invitation!.scheduleLines[0]).toBe(
+        "Monday, Tuesday, Wednesday, Thursday, and Friday, 10:00–12:00",
+      );
+    });
+
+    it("still says Every once the run is long enough to repeat one", () => {
+      const invitation = compose({ ...ONE_WEEK, endDate: "2027-01-15" });
+
+      expect(invitation!.scheduleLines[0]).toBe(
+        "Every Monday, Tuesday, Wednesday, Thursday, and Friday, 10:00–12:00",
+      );
+    });
+
+    /**
+     * Each locale's own word for it, so no message file keeps the repetition.
+     * `tlh` is absent because its word is a joke rather than a translation, and
+     * pinning it would make a Klingon rewrite look like a regression.
+     */
+    const EVERY = [
+      ["en", "Every"],
+      ["fi", "Joka"],
+      ["sv", "Varje"],
+      ["fr", "Chaque"],
+    ] as const;
+
+    it.each(EVERY)("drops the repeating word in %s", async (locale, every) => {
+      const translator = await getEmailTranslator(locale);
+      const short = composeProductConfirmationInvitation(translator, locale, {
+        ...base,
+        ...ONE_WEEK,
+      });
+      const long = composeProductConfirmationInvitation(translator, locale, {
+        ...base,
+        ...ONE_WEEK,
+        endDate: "2027-01-15",
+      });
+
+      expect(short!.scheduleLines[0]).not.toContain(every);
+      expect(long!.scheduleLines[0]).toContain(every);
+    });
   });
 
   it("states an open-ended run as a start with no end", () => {
@@ -494,7 +716,7 @@ describe("what the entry's notes say", () => {
   it("ends with the My SOG link and a way to reach a human", () => {
     const text = description(compose()!.ics);
 
-    expect(text).toContain(ENROLLMENT_URL);
+    expect(text).toContain(DASHBOARD_URL);
     expect(text).toContain(SUPPORT_EMAIL);
   });
 
@@ -526,6 +748,27 @@ describe("every locale composes a whole document", () => {
     tlh: "ghom poHmey",
   };
 
+  /**
+   * A word `Intl` produces for this locale and no other, asserted **inside the
+   * document**.
+   *
+   * The four `Intl` call sites here — the weekday, the clock face, the list
+   * conjunction and the zone name — each take the locale as an argument, and a
+   * hardcoded `"en"` at any of them would be invisible to a sweep that only
+   * checks the message files answered. Monday is the base fixture's one slot,
+   * so its name in each language is the cheapest thing to pin.
+   *
+   * `tlh` has no `Intl` data of its own and falls back to English weekday
+   * names, which is why it is absent rather than pinned to "Monday": that
+   * assertion would pass for a locale that had leaked English everywhere.
+   */
+  const WEEKDAY: Partial<Record<(typeof SUPPORTED_LOCALES)[number], string>> = {
+    en: "Monday",
+    fi: "maanantai",
+    sv: "måndag",
+    fr: "lundi",
+  };
+
   it.each(SUPPORTED_LOCALES)("%s", async (locale) => {
     const translator = await getEmailTranslator(locale);
     const invitation = composeProductConfirmationInvitation(translator, locale, {
@@ -544,5 +787,13 @@ describe("every locale composes a whole document", () => {
     // the translator directly — the pin exists to prove this locale's own file
     // answered rather than English standing in for it.
     expect(translator("productConfirmation.invite.sectionLabel")).toBe(PINNED[locale]);
+
+    const weekday = WEEKDAY[locale];
+    if (weekday !== undefined) {
+      // Inside the document, because that is where a hardcoded locale at an
+      // `Intl` call site would show up and nowhere else.
+      expect(invitation!.scheduleLines[0]).toContain(weekday);
+      expect(invitation!.ics).toContain(weekday);
+    }
   });
 });

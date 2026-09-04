@@ -15,7 +15,6 @@ import type { InvitationSlot } from "./product-confirmation-invitation";
 import {
   fail,
   optionalDate,
-  optionalUrl,
   requireEmail,
   requireTime,
   requireWeekday,
@@ -445,7 +444,10 @@ function resolveProductConfirmationOptions(
       siteNote: params.siteNote.trim() || null,
       attendeeName: params.attendeeName,
       attendeeEmail: requireEmail(params.attendeeEmail, "Attendee email"),
-      enrollmentUrl: optionalUrl(params.enrollmentUrl, "Enrollment URL"),
+      // The same link the mail's own button carries: the entry points a parent
+      // at My SOG, which resolves for every seat, rather than at a seat page
+      // that needs a group the seat may not have yet.
+      dashboardUrl: params.dashboardUrl,
       now,
     },
   };
@@ -614,7 +616,6 @@ const productConfirmationParamsSchema = z.object({
   participationId: z.string(),
   attendeeName: z.string().min(1),
   attendeeEmail: z.string(),
-  enrollmentUrl: z.string(),
   topic: z.enum(Constants.public.Enums.product_topic),
   shortDescription: z.string(),
   timezone: z.string().refine((zone) => SUPPORTED_TIMEZONES.includes(zone), {
@@ -1339,12 +1340,6 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         key: "participationId",
         label: "Invite – Participation id (empty mints one per render)",
         placeholder: "",
-      },
-      {
-        key: "enrollmentUrl",
-        label: "Invite – Enrollment page URL (empty omits it)",
-        placeholder:
-          "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
       },
       { key: "attendeeName", label: "Invite – Attendee name (the parent)", placeholder: "Marja Virtanen" },
       {

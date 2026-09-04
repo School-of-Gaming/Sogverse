@@ -2690,6 +2690,7 @@
         "locationOnline": "De’wI’Daq – My SOG",
         "locationInPerson": "{site}, {address}",
         "scheduleWeekly": "Hoch {days} {startTime}–{endTime}",
+        "scheduleDays": "wa’logh neH: {days} {startTime}–{endTime}",
         "scheduleOnce": "{startTime}–{endTime}",
         "zoneNote": "poH Sep: {zone}.",
         "dateRange": "{startDate} vo’ {endDate} ghoS",

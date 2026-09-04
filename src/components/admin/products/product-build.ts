@@ -861,9 +861,10 @@ export function existingFormState(
     // loads as *unlocked* rather than as a value with no matching option,
     // because a select whose value matches nothing shows the admin the first
     // option while state holds something else, and the write contract — which
-    // only admits countries we operate in — would then refuse every save of the
-    // product with an error about a field they were never shown. Loading it as null is the same
-    // heal-on-write shape the uncapped-muni and locked-registration cases use:
+    // only admits countries we operate in — would then refuse every save of
+    // the product with an error about a field they were never shown. Loading
+    // it as null is the same heal-on-write shape the uncapped-muni and
+    // locked-registration cases use:
     // the next save of anything at all normalises the row, visibly.
     regionLockCountry: isSupportedCountry(product.region_lock_country)
       ? product.region_lock_country

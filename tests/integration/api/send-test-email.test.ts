@@ -384,7 +384,6 @@ describe("POST /api/admin/send-test-email", () => {
       participationId: "",
       attendeeName: "Marja Virtanen",
       attendeeEmail: "marja@example.com",
-      enrollmentUrl: "",
       topic: "minecraft_java",
       shortDescription: "",
       timezone: "Europe/Helsinki",

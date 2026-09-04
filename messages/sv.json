@@ -2646,6 +2646,7 @@
         "locationOnline": "Online – Min SOG",
         "locationInPerson": "{site}, {address}",
         "scheduleWeekly": "Varje {days}, {startTime}–{endTime}",
+        "scheduleDays": "{days}, {startTime}–{endTime}",
         "scheduleOnce": "{startTime}–{endTime}",
         "zoneNote": "Tiderna anges i {zone}.",
         "dateRange": "Från {startDate} till {endDate}",

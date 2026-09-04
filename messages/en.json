@@ -3332,6 +3332,7 @@
         "locationOnline": "Online – My SOG",
         "locationInPerson": "{site}, {address}",
         "scheduleWeekly": "Every {days}, {startTime}–{endTime}",
+        "scheduleDays": "{days}, {startTime}–{endTime}",
         "scheduleOnce": "{startTime}–{endTime}",
         "zoneNote": "Times are given in {zone}.",
         "dateRange": "From {startDate} to {endDate}",

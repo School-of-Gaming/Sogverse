@@ -2646,6 +2646,7 @@
         "locationOnline": "En ligne – Mon SOG",
         "locationInPerson": "{site}, {address}",
         "scheduleWeekly": "Chaque {days}, {startTime}–{endTime}",
+        "scheduleDays": "{days}, {startTime}–{endTime}",
         "scheduleOnce": "{startTime}–{endTime}",
         "zoneNote": "Les horaires sont donnés en {zone}.",
         "dateRange": "Du {startDate} au {endDate}",

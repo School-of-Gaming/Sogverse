@@ -393,7 +393,6 @@ describe("POST /api/seat-offer/respond", () => {
     expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
   });
 
-
   // -- What a refused compare-and-swap is told --
   //
   // The signature verified, so the holder was sent this exact offer and may be

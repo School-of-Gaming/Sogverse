@@ -1,5 +1,9 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import {
+  isUtcZone,
+  ZONE_RULE_TIMEZONES,
+} from "@/lib/calendar-invitations/ics-primitives";
+import {
   buildInvitation,
   type InvitationOverride,
   type InvitationRecurrence,
@@ -71,8 +75,20 @@ export interface ProductConfirmationInvitationInput {
   /** The paying parent: the mail's recipient, and the entry's one attendee. */
   attendeeName: string;
   attendeeEmail: string;
-  /** Absolute link to this seat's enrollment page in My SOG. */
-  enrollmentUrl: string;
+  /**
+   * Absolute link to My SOG — the same one the mail's own button carries.
+   *
+   * **The dashboard rather than this seat's own page, because that page needs a
+   * group and most seats have none at the moment this mail is composed.** A
+   * paid signup lands the seat unplaced; a free or externally-billed one is
+   * placed only where the product has exactly one group to place it in; an
+   * accepted seat offer is the same. The seat's page answers a request for an
+   * unplaced seat with a 404, so the link that reads as the most specific would
+   * be the link most likely to be broken — and this one is broken in a document
+   * a parent still holds weeks later. My SOG always resolves, and it is one
+   * click from there to the seat once it has a group.
+   */
+  dashboardUrl: string;
   /** When the mail is being composed. */
   now: Date;
 }
@@ -392,17 +408,26 @@ function minutesOf(time: string): number {
 }
 
 /**
- * The zone's own name, in the reader's language, at the instant the run starts.
+ * The zone's own name, in the reader's language — the *generic* name, which is
+ * the one true of the whole run.
  *
  * Read from `Intl` rather than from a message file: a zone name is data every
- * locale has, and the reading depends on the date — the same zone is "Eastern
- * European Standard Time" in January and its summer name in July — so it has to
- * be resolved against a concrete instant rather than written down.
+ * locale has, and a translated list of them would be one more thing to keep
+ * correct in five files.
+ *
+ * **`longGeneric`, never `long`.** The seasonal name is read off one instant,
+ * and this line sits above a run of months: a term starting in January would be
+ * labelled "Eastern European Standard Time" for a schedule that is mostly
+ * summer, and a camp in July would carry the summer name for its September
+ * sessions. The generic name — "Eastern European Time", "Itä-Euroopan aika" —
+ * is true on both sides of a transition, which is what the sentence is claiming
+ * about every time above it. An instant is still needed, because that is how
+ * `Intl` is asked which zone reading applies.
  */
 function zoneName(locale: string, timezone: string, at: Date): string {
   const parts = new Intl.DateTimeFormat(locale, {
     timeZone: timezone,
-    timeZoneName: "long",
+    timeZoneName: "longGeneric",
   }).formatToParts(at);
   return parts.find((part) => part.type === "timeZoneName")?.value ?? timezone;
 }
@@ -415,6 +440,13 @@ function zoneName(locale: string, timezone: string, at: Date): string {
  * and Wednesday, 16:00–17:00" is one fact and two lines saying the same times
  * on different days is two facts a reader has to compare. A mixed-time camp
  * gets one line per time, which is exactly the difference worth showing.
+ *
+ * **"Every" is a claim about repetition, and a run too short to repeat must not
+ * make it.** A camp running Monday to Friday of one week meets each of those
+ * weekdays exactly once, so "Every Monday, Tuesday, Wednesday, Thursday and
+ * Friday" promises a second week that does not exist. The days and the clock
+ * face are still the fact worth stating, so the short form states them and
+ * drops the word alone.
  */
 function scheduleInWords({
   t,
@@ -442,6 +474,12 @@ function scheduleInWords({
     else byShape.set(shapeOf(slot), [slot]);
   }
 
+  // A run whose first and last day are fewer than seven days apart holds each
+  // weekday at most once, so nothing in it repeats and the word "every" would
+  // be describing a second week the product does not have.
+  const repeats =
+    endDate === null || parseDay(endDate) - parseDay(startDate) >= 7 * DAY_MS;
+
   const lines = [...byShape.values()].map((group) => {
     const start = minutesOf(group[0].startTime);
     const times = {
@@ -451,13 +489,13 @@ function scheduleInWords({
     // An event happens once, so naming its weekday would be stating the date
     // twice — the date line below already says which day it is.
     if (productType === "event") return t("productConfirmation.invite.scheduleOnce", times);
-    return t("productConfirmation.invite.scheduleWeekly", {
-      ...times,
-      days: new Intl.ListFormat(locale, {
-        style: "long",
-        type: "conjunction",
-      }).format(group.map((slot) => weekdayName(locale, slot.weekday))),
-    });
+    const days = new Intl.ListFormat(locale, {
+      style: "long",
+      type: "conjunction",
+    }).format(group.map((slot) => weekdayName(locale, slot.weekday)));
+    return repeats
+      ? t("productConfirmation.invite.scheduleWeekly", { ...times, days })
+      : t("productConfirmation.invite.scheduleDays", { ...times, days });
   });
 
   lines.push(
@@ -590,7 +628,7 @@ function descriptionOf({
     productType,
     productTopic,
     shortDescription,
-    enrollmentUrl,
+    dashboardUrl,
   } = input;
 
   const paragraphs = [
@@ -629,8 +667,13 @@ function descriptionOf({
     );
   }
 
+  // A sentence promising a link and carrying none is worse than no sentence,
+  // and the builder omits a blank `URL` for the same reason — so the paragraph
+  // and the property are both skipped rather than half-written.
+  if (dashboardUrl.trim() !== "") {
+    paragraphs.push(t("productConfirmation.invite.link", { url: dashboardUrl.trim() }));
+  }
   paragraphs.push(
-    t("productConfirmation.invite.link", { url: enrollmentUrl }),
     t("productConfirmation.invite.questions", { supportEmail: SUPPORT_EMAIL }),
   );
 
@@ -643,10 +686,11 @@ function descriptionOf({
  *
  * **`null` is silence, not an error.** Every shape behind it is a product a
  * family can legitimately sign up to — one with no schedule yet, one that has
- * finished, a waitlist join with no seat behind it — and the mail those
- * families get is the mail this feature replaced, with nothing attached and no
- * session-times section. A confirmation that failed because a calendar could
- * not be composed would be the wrong thing to break.
+ * finished, a waitlist join with no seat behind it, one whose stored zone this
+ * build ships no transition rules for — and the mail those families get is the
+ * mail this feature replaced, with nothing attached and no session-times
+ * section. A confirmation that failed because a calendar could not be composed
+ * would be the wrong thing to break.
  *
  * **The identifier is derived from the participation, and that is what makes an
  * update possible later.** One entry per seat, so two children in one club are
@@ -661,6 +705,22 @@ export function composeProductConfirmationInvitation(
   locale: string,
   input: ProductConfirmationInvitationInput,
 ): ProductConfirmationInvitation | null {
+  // **A zone with no transition rules is silence, not a document with a note in
+  // it.** The builder answers an unknown zone with an `X-SOGVERSE-NOTE` saying
+  // this build ships no `VTIMEZONE` for it — a diagnostic written for the
+  // explorer, where somebody typed the zone and wants to know what happened. A
+  // family's mail has no such reader: they get an entry whose clock face rests
+  // entirely on their client's own database, plus a line of our engineering
+  // vocabulary inside their calendar. The zone table and the admin picker are
+  // held in lockstep precisely so a product cannot name a zone with no rules;
+  // what still reaches here is a stored `products.timezone` the picker no
+  // longer offers, and the honest answer to that is the plain mail. UTC is the
+  // exception at both ends: its times are absolute instants, so it needs no
+  // rules and gets no note.
+  if (!isUtcZone(input.timezone) && !ZONE_RULE_TIMEZONES.includes(input.timezone)) {
+    return null;
+  }
+
   const schedule = resolveSchedule({
     slots: input.slots,
     productType: input.productType,
@@ -729,7 +789,7 @@ export function composeProductConfirmationInvitation(
     summary: summaryOf(t, input),
     description: descriptionOf({ t, input, scheduleLines, placeLines }),
     location: locationOf(t, input),
-    url: input.enrollmentUrl,
+    url: input.dashboardUrl.trim(),
 
     // A day before, then an hour before, **in that order and for that
     // reason**: an Exchange mailbox keeps exactly one alarm per item and keeps

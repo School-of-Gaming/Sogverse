@@ -47,10 +47,9 @@ export function WhenSection({
   // What the picker offers: the zones the supported countries declare, plus the
   // product's own stored zone when the row arrived carrying one that is no
   // longer offered (a country dropped from the list since, or a value written
-  // before the
-  // picker existed). A `<select>` whose value matches no option shows the admin
-  // the first one while state holds something else, which is how an admin ends
-  // up "correcting" a field into a value they never chose.
+  // before the picker existed). A `<select>` whose value matches no option
+  // shows the admin the first one while state holds something else, which is
+  // how an admin ends up "correcting" a field into a value they never chose.
   //
   // The extra option is seeded from the value the form opened with and pinned
   // for the life of the form, never re-derived from the live field: derived

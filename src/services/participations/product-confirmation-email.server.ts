@@ -235,6 +235,10 @@ async function send({
   // The TRUSTED origin, never the raw Host header — these links go in an email,
   // and a spoofed Host would send a family somewhere we do not own.
   const origin = getOrigin(request);
+  // One link, read twice: the mail's button and the calendar entry's own URL.
+  // My SOG rather than the seat's page, which needs a group the seat usually
+  // does not have yet — see the composer's note on `dashboardUrl`.
+  const dashboardUrl = `${origin}${ROUTES.customer.dashboard}`;
   const site = scheduleResult?.data.locations ?? null;
   const isSelfSeat = participantId === customerId;
   const t = await getEmailTranslator(locale);
@@ -255,7 +259,7 @@ async function send({
     productType: product.product_type,
     mode,
     priceAmount,
-    dashboardUrl: `${origin}${ROUTES.customer.dashboard}`,
+    dashboardUrl,
     invitation:
       scheduleResult === null
         ? null
@@ -290,7 +294,7 @@ async function send({
                 .join(" ")
                 .trim() || customer.first_name,
             attendeeEmail: customer.email,
-            enrollmentUrl: `${origin}${ROUTES.customer.enrollment(product.product_type, participationId)}`,
+            dashboardUrl,
             now: new Date(),
           },
   });

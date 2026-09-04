@@ -303,10 +303,12 @@ function ruleLines(kind: "DAYLIGHT" | "STANDARD", rule: ZoneRule): string[] {
  * to know which case they are looking at.
  *
  * **The third answer is unreachable for a zone the admin form offers**, because
- * the table is keyed by exactly that list. What still reaches it is a stored
- * `products.timezone` naming a zone the form no longer offers — the picker
- * itself carries the same case, adding a stored-but-unoffered zone back as an
- * extra option — plus anything the explorer's form is given by hand.
+ * the table is keyed by exactly that list. What reaches it is the explorer's
+ * own form, which can be handed anything — and the note is written for exactly
+ * that reader. A stored `products.timezone` naming a zone the form no longer
+ * offers would reach it too; the signup confirmation's composer refuses such a
+ * zone before it gets here, because a diagnostic sentence inside a family's
+ * calendar entry is not a thing to send.
  */
 export function zoneBlock(zone: string): string[] {
   if (isUtcZone(zone)) return [];

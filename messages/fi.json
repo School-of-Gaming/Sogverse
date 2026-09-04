@@ -2646,6 +2646,7 @@
         "locationOnline": "Verkossa – Oma SOG",
         "locationInPerson": "{site}, {address}",
         "scheduleWeekly": "Joka {days} klo {startTime}–{endTime}",
+        "scheduleDays": "{days} klo {startTime}–{endTime}",
         "scheduleOnce": "Klo {startTime}–{endTime}",
         "zoneNote": "Ajat ovat aikavyöhykkeellä {zone}.",
         "dateRange": "Ajalla {startDate} – {endDate}",

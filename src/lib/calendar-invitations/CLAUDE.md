@@ -143,10 +143,13 @@ the format rather than for the platform: it is how a document states absolute in
 which is a property worth being able to try. Nothing is authored in it.
 
 A zone outside the table still gets its `TZID` plus a note saying no rules travel with it.
-That branch is unreachable for a zone the admin form offers and is not dead: a stored
-`products.timezone` can name a zone the form no longer offers — the picker itself handles
-that case, adding the stored value back as an extra option — and the explorer's own form
-can be handed anything.
+**That note is the explorer's, and only the explorer's.** It is a diagnostic addressed to
+whoever typed the zone, and the branch stays because the explorer's form can be handed
+anything. The other way of reaching it — a stored `products.timezone` naming a zone the
+form no longer offers, which the picker itself handles by adding the stored value back as
+an extra option — is closed one level up: the signup confirmation's composer answers such
+a zone with no invitation at all, because a family's calendar entry is the wrong place for
+our engineering vocabulary and an unresolvable clock face is worse than silence.
 
 **The day walk that enumerates the rule's occurrences is UTC-pinned end to end**, which
 is the only shape that survives a daylight-saving transition inside a run: stepping a
