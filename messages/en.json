@@ -3332,13 +3332,6 @@
         "summary": "{productName} – {participantName}",
         "locationOnline": "Online – My SOG",
         "locationInPerson": "{site}, {address}",
-        "zoneNote": "Times are given in {zone}.",
-        "zoneName": {
-          "europeHelsinki": "Finland time",
-          "europeParis": "France time",
-          "europeLondon": "United Kingdom time",
-          "europeStockholm": "Sweden time"
-        },
         "whereOnline": "Sessions run online in My SOG, and the voice room opens {minutes} minutes before each session starts.",
         "whereInPerson": "Sessions run at {site}.",
         "whereAddress": "Address: {address}",
@@ -3367,8 +3360,7 @@
         "audienceParents": "For parents",
         "audienceFamilies": "For families",
         "audienceFamiliesWithAges": "For families, ages {min}–{max}"
-      },
-      "keepBrowsing": "Keep browsing"
+      }
     },
     "verifyEmail": {
       "subject": "Verify your email address",

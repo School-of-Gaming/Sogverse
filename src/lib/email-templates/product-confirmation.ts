@@ -7,11 +7,10 @@ import {
   styledName,
   styledProductName,
 } from "./utils";
-import { bulletList, ctaButtonRow, factTable, sectionLabel } from "./blocks";
+import { bulletList, ctaButton, factTable, sectionLabel } from "./blocks";
 import { textAttachment, type RenderedAttachment } from "./attachments";
 import {
   composeProductConfirmationInvitation,
-  zoneName,
   type ProductConfirmationInvitation,
   type ProductConfirmationInvitationInput,
 } from "./product-confirmation-invitation";
@@ -34,8 +33,17 @@ import type { ProductType } from "@/types";
  *
  * Section for section it is that page — the same heading and opening sentence,
  * the same order summary, the same "Good to know" facts, the same "what happens
- * next" bullets, the same pair of buttons at the foot — composed in the mail's
- * own idiom of tables and inline CSS. A parent who paid on their phone and then
+ * next" bullets — composed in the mail's own idiom of tables and inline CSS.
+ *
+ * **The foot is where the two deliberately differ, and it is one button here.**
+ * The page offers My SOG beside a "keep browsing", because a reader who has
+ * just checked out is still standing in the shop and the second button is the
+ * way back into it. A reader in their inbox is not standing anywhere, so the
+ * mail carries the one action it is asking for — and, being alone, it takes the
+ * primary brand fill that a two-button row forbids. That sentence is therefore
+ * not shared and not in the parity table.
+ *
+ * A parent who paid on their phone and then
  * opened the mail on a laptop is not told two different stories, and the copy
  * cannot drift: every sentence the two share is held equal, locale by locale, by
  * the parity test in `tests/unit/email-templates/product-confirmation.test.ts`.
@@ -156,10 +164,8 @@ export interface ProductConfirmationEmailOptions {
    * deferred. Only a subscription ever states one.
    */
   firstChargeDate: string | null;
-  /** App-generated My SOG link. */
+  /** App-generated My SOG link — the mail's one button. */
   dashboardUrl: string;
-  /** App-generated shop link — the page's "Keep browsing" destination. */
-  shopUrl: string;
   /** The "Good to know" facts, or `null` where the send could not read them. */
   overview: ProductConfirmationOverviewInput | null;
   /**
@@ -255,13 +261,13 @@ function resolveOverview(
         schedule_slots: input.slots,
       },
       locale,
-      // The product's own zone, because a mail has no viewer zone — and so the
-      // zone is named in words below the times, which the page does not need.
+      // The product's own zone, because a mail has no viewer zone — parents
+      // store none. So the times are in a zone the reader cannot infer, and the
+      // abbrev that names it is always appended rather than only when the
+      // viewer's zone differs, which is what the page keys on.
       timeZone: input.timezone,
       now: input.now,
-      zoneNote: t("productConfirmation.invite.zoneNote", {
-        zone: zoneName(t, input.timezone),
-      }),
+      nameZone: "always",
     }),
   });
 
@@ -363,7 +369,6 @@ export function buildProductConfirmationEmail(
       productType,
       mode,
       dashboardUrl,
-      shopUrl,
     },
     invitation,
     overview,
@@ -428,15 +433,16 @@ export function buildProductConfirmationEmail(
         firstChargeDate: escapeHtml(content.options.firstChargeDate ?? ""),
       }),
     )}
-    ${ctaButtonRow(
-      // The page's pair, in the page's positions — root `CLAUDE.md`, "Button
-      // Order". My SOG is the affirmative and takes the right-hand cell; Keep
-      // browsing is the alternative beside it. A row may not hold the primary
-      // brand button, so the emphasis the row *does* allow goes to the right,
-      // which is where the page steers.
-      { href: shopUrl, label: t("productConfirmation.keepBrowsing"), variant: "outline" },
-      { href: dashboardUrl, label: t("productConfirmation.dashboardButton"), variant: "secondary" },
-    )}
+    ${ctaButton({
+      // One button, and it is the page's own primary. The page also offers a
+      // "keep browsing" beside it, because a reader still standing in the shop
+      // has somewhere obvious to go back to; a reader in their inbox does not,
+      // so the mail carries the one action it is actually asking for and takes
+      // the brand fill a two-button row would forbid it.
+      href: dashboardUrl,
+      label: t("productConfirmation.dashboardButton"),
+      variant: "primary",
+    })}
     ${invitation === null ? "" : paragraph(t("productConfirmation.invite.attached"))}
   `;
   return wrapInLayout({ title, content: body, locale, t });
@@ -544,7 +550,6 @@ export function productConfirmationText(
       mode,
       priceAmount,
       dashboardUrl,
-      shopUrl,
     },
   } = content;
 
@@ -582,7 +587,6 @@ export function productConfirmationText(
       firstChargeDate: content.options.firstChargeDate ?? "",
     }).map((item) => `- ${item}`),
     "",
-    `${t("productConfirmation.keepBrowsing")}: ${shopUrl}`,
     `${t("productConfirmation.dashboardButton")}: ${dashboardUrl}`,
     "",
     t("productConfirmation.invite.attached"),

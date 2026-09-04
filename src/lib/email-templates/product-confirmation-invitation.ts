@@ -1,10 +1,8 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import {
   isUtcZone,
-  UTC_TIMEZONE,
   ZONE_RULE_TIMEZONES,
 } from "@/lib/calendar-invitations/ics-primitives";
-import type { ProductTimezone } from "@/lib/constants/location-hierarchies";
 import {
   buildInvitation,
   type InvitationOverride,
@@ -360,61 +358,6 @@ function resolveSchedule({
   };
 }
 
-/**
- * Each zone a product can be authored in, and the message key naming it.
- *
- * **Typed against the same union `ZONE_RULES` is, so the compiler holds it
- * total**: a zone added to a supported country does not build until it has a
- * name here, exactly as it does not build until it has transition rules there.
- * The two tables are the pair a new zone has to satisfy, and neither can be
- * satisfied by forgetting.
- */
-const ZONE_NAME_KEY = {
-  "Europe/Helsinki": "europeHelsinki",
-  "Europe/Paris": "europeParis",
-  "Europe/London": "europeLondon",
-  "Europe/Stockholm": "europeStockholm",
-} as const satisfies Record<ProductTimezone, string>;
-
-/**
- * The same table, reachable by a string — the shape the guard above has already
- * narrowed but the type has not.
- */
-const zoneNameKeyByZone: ReadonlyMap<string, (typeof ZONE_NAME_KEY)[ProductTimezone]> =
-  new Map(Object.entries(ZONE_NAME_KEY));
-
-/**
- * The zone's own name, in the reader's language — one true of the whole run.
- *
- * **Translated, not read from `Intl`, and that is a correction rather than a
- * preference.** A zone name looks like data every locale has, and for the
- * seasonal reading it is. The *generic* reading is not: CLDR carries no generic
- * long name for every zone in every locale, and where one is missing `Intl`
- * does not fail — it falls back to a differently shaped string that splices in
- * a label and a separator of its own. Finnish and French did exactly that for
- * `Europe/London`, and the sentence around it came out as "Ajat ovat
- * aikavyöhykkeellä aikavyöhyke: Iso-Britannia." There is nothing in the
- * returned value to detect that with, so the only way to be sure of the shape
- * is to write the four names down.
- *
- * The seasonal reading is what a translated name buys back on the other side:
- * this line sits above a run of months, so a name read off one instant would
- * label a January term "Standard Time" for a schedule that is mostly summer.
- * These names are true on both sides of a transition, which is what the
- * sentence is claiming about every time above it.
- *
- * UTC takes no key: it is a mark rather than a word, and it is the explorer's
- * zone rather than any product's.
- */
-export function zoneName(t: EmailTranslator, timezone: string): string {
-  if (isUtcZone(timezone)) return UTC_TIMEZONE;
-  const key = zoneNameKeyByZone.get(timezone);
-  // Unreachable: the composer refuses every zone outside this table before it
-  // reaches a sentence. The raw zone is the honest answer if that ever changes.
-  if (key === undefined) return timezone;
-  return t(`productConfirmation.invite.zoneName.${key}`);
-}
-
 /** Where the sessions happen — online, or at a named site with its own note. */
 function placeInWords({
   t,
@@ -497,9 +440,24 @@ function locationOf(
  * calendar, weeks after the mail it arrived in has been archived.
  *
  * Plain text, in the reader's locale, paragraphs separated by blank lines — the
- * builder escapes it, so there is no markup here and none would survive. Five
- * of them, in order: the mail's opening sentence, the product's own short
- * description, where it happens, the My SOG link, and how to reach a human.
+ * builder escapes it, so there is no markup here and none would survive. Four
+ * of them, in order: where it happens, the My SOG link, the product's own short
+ * description, and how to reach a human.
+ *
+ * **The order is what a parent opens this entry to find out.** It is read on
+ * the way somewhere — five minutes before a session, on a phone, looking for
+ * the door on the north side or the link to the voice room — so the place goes
+ * first and the way back into My SOG second. The product's marketing sentence
+ * is the one paragraph nobody opens a calendar entry to read; it is worth
+ * carrying, because it is what the family chose, and it belongs below the two
+ * things that are useful in a hurry.
+ *
+ * **It does not open on a sentence saying who is signed up for what**, because
+ * the entry has already said that: its title names the product and the child,
+ * and a reader is looking at it while they read. The mail opens with that
+ * sentence and should — it arrives among fifty others and has to say what it is
+ * about — but repeating it here spends the first line of the notes on the one
+ * fact the entry cannot fail to convey.
  *
  * **The schedule is deliberately not among them, and this is the one absence
  * worth explaining.** Everything a schedule sentence would say — which days,
@@ -531,27 +489,9 @@ function descriptionOf({
   input: ProductConfirmationInvitationInput;
   placeLines: string[];
 }): string {
-  const {
-    isSelfSeat,
-    participantName,
-    productName,
-    productType,
-    shortDescription,
-    dashboardUrl,
-  } = input;
+  const { shortDescription, dashboardUrl } = input;
 
-  const paragraphs = [
-    // The mail's own opening sentence, in the same words: a parent who reads
-    // the entry and a parent who reads the mail have been told one thing.
-    isSelfSeat
-      ? t(`productConfirmation.self.subheading.${productType}`, { productName })
-      : t(`productConfirmation.subheading.${productType}`, {
-          participantName,
-          productName,
-        }),
-  ];
-
-  if (shortDescription?.trim()) paragraphs.push(shortDescription.trim());
+  const paragraphs: string[] = [];
 
   if (placeLines.length > 0) paragraphs.push(placeLines.join("\n"));
 
@@ -561,6 +501,9 @@ function descriptionOf({
   if (dashboardUrl.trim() !== "") {
     paragraphs.push(t("productConfirmation.invite.link", { url: dashboardUrl.trim() }));
   }
+
+  if (shortDescription?.trim()) paragraphs.push(shortDescription.trim());
+
   paragraphs.push(
     t("productConfirmation.invite.questions", { supportEmail: SUPPORT_EMAIL }),
   );

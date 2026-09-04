@@ -2646,13 +2646,6 @@
         "summary": "{productName} – {participantName}",
         "locationOnline": "En ligne – Mon SOG",
         "locationInPerson": "{site}, {address}",
-        "zoneNote": "Les horaires sont donnés en {zone}.",
-        "zoneName": {
-          "europeHelsinki": "heure de Finlande",
-          "europeParis": "heure de France",
-          "europeLondon": "heure du Royaume-Uni",
-          "europeStockholm": "heure de Suède"
-        },
         "whereOnline": "Les sessions ont lieu en ligne dans Mon SOG, et le salon vocal ouvre {minutes} minutes avant le début de chaque session.",
         "whereInPerson": "Les sessions ont lieu à {site}.",
         "whereAddress": "Adresse : {address}",
@@ -2681,8 +2674,7 @@
         "audienceParents": "Pour les parents",
         "audienceFamilies": "Pour les familles",
         "audienceFamiliesWithAges": "Pour les familles, {min}–{max} ans"
-      },
-      "keepBrowsing": "Continuer à explorer"
+      }
     },
     "verifyEmail": {
       "subject": "Confirmez votre adresse e-mail",

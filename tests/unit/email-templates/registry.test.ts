@@ -21,7 +21,6 @@ import {
  * than about the fixture.
  */
 const PRODUCT_CONFIRMATION_SCHEDULE = {
-  shopUrl: "https://sogverse.sog.gg/shop",
   firstChargeDate: "none",
   ageRange: "8-12",
   audience: "gamers",
@@ -394,12 +393,14 @@ describe("templateRegistry render()", () => {
 
         expect(html).toContain("A calendar invitation is attached");
         // The whole page, mirrored: the order summary, the four "Good to know"
-        // facts and the two ways onward.
+        // facts, and the one button — the page's "keep browsing" is a way back
+        // into a shop an inbox reader is not standing in.
         expect(html).toContain("Your order");
         expect(html).toContain("Good to know");
         expect(html).toContain("Ages 8–12");
         expect(html).toContain("Finnish");
-        expect(html).toContain("Keep browsing");
+        expect(html).toContain("Go to My SOG");
+        expect(html).not.toContain("Keep browsing");
         expect(attachments).toHaveLength(1);
         expect(attachments?.[0].name).toBe("invite.ics");
         expect(attachments?.[0].text).toContain("BEGIN:VCALENDAR");
@@ -498,9 +499,10 @@ describe("templateRegistry render()", () => {
 
         expect(text).not.toContain("Build, explore and survive together");
         expect(text).not.toContain("none");
-        // The paragraphs either side of it are untouched.
-        expect(text).toContain("Aino is enrolled in Minecraft 101.");
+        // The paragraphs after it are untouched — the description is the
+        // entry's own first line, so there is nothing above it to check.
         expect(text).toContain("The door on the north side.");
+        expect(text).toContain("Questions?");
       });
 
       /** An open-ended club: a rule that runs on with no `UNTIL` to stop it. */

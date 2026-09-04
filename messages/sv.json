@@ -2646,13 +2646,6 @@
         "summary": "{productName} – {participantName}",
         "locationOnline": "Online – Min SOG",
         "locationInPerson": "{site}, {address}",
-        "zoneNote": "Tiderna anges i {zone}.",
-        "zoneName": {
-          "europeHelsinki": "finsk tid",
-          "europeParis": "fransk tid",
-          "europeLondon": "brittisk tid",
-          "europeStockholm": "svensk tid"
-        },
         "whereOnline": "Tillfällena hålls online i Min SOG, och röstrummet öppnar {minutes} minuter innan varje tillfälle börjar.",
         "whereInPerson": "Tillfällena hålls på {site}.",
         "whereAddress": "Adress: {address}",
@@ -2681,8 +2674,7 @@
         "audienceParents": "För föräldrar",
         "audienceFamilies": "För familjer",
         "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}"
-      },
-      "keepBrowsing": "Fortsätt bläddra"
+      }
     },
     "verifyEmail": {
       "subject": "Bekräfta din e-postadress",

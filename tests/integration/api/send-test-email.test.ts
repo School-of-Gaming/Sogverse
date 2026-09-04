@@ -262,7 +262,6 @@ describe("POST /api/admin/send-test-email", () => {
       priceAmount: "€40.00",
       firstChargeDate: "none",
       dashboardUrl: "https://sogverse.sog.gg/parent",
-      shopUrl: "https://sogverse.sog.gg/shop",
       // The page facts the mail mirrors, which the schema requires whole too.
       ageRange: "8-12",
       audience: "gamers",

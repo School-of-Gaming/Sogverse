@@ -268,9 +268,6 @@ async function send({
   // My SOG rather than the seat's page, which needs a group the seat usually
   // does not have yet — see the composer's note on `dashboardUrl`.
   const dashboardUrl = `${origin}${ROUTES.customer.dashboard}`;
-  // The page's other button, same origin — "Keep browsing" goes back to the
-  // shop, exactly as it does on the confirmation page.
-  const shopUrl = `${origin}${ROUTES.shop}`;
   const site = scheduleResult.data.locations;
   const isSelfSeat = participantId === customerId;
   const t = await getEmailTranslator(locale);
@@ -308,7 +305,6 @@ async function send({
           )
         : null,
     dashboardUrl,
-    shopUrl,
     // The page's "Good to know" card, from the same columns and through the
     // same formatters. The location goes through the shared rule rather than
     // being re-derived here, so "Where" says what the page says.

@@ -149,7 +149,6 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     priceAmount: "€40.00",
     firstChargeDate: "none",
     dashboardUrl: "https://sogverse.sog.gg/parent",
-    shopUrl: "https://sogverse.sog.gg/shop",
     ageRange: "8-12",
     audience: "gamers",
     spokenLanguageCode: "fi",

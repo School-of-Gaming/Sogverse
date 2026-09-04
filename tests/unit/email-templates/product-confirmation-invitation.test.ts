@@ -635,14 +635,48 @@ describe("where it happens", () => {
 });
 
 describe("what the entry's notes say", () => {
-  it("opens with the same sentence the mail does", () => {
-    expect(description(compose()!.ics)).toContain("Aino is enrolled in Minecraft 101.");
+  /**
+   * The order is what a parent opens this entry to find out. It is read on the
+   * way somewhere — five minutes before a session, on a phone — so the place
+   * goes first and the way back into My SOG second. The marketing sentence is
+   * the paragraph nobody opens a calendar entry to read, and it sits below the
+   * two that are useful in a hurry.
+   *
+   * Asserted by index rather than by presence: every one of these could be
+   * present in any order, and the order is the claim.
+   */
+  it("states the place, then My SOG, then the description, then support", () => {
+    const text = description(
+      compose({
+        isRemote: false,
+        siteName: "Kallion kirjasto",
+        siteNote: "The door on the north side.",
+      })!.ics,
+    );
+
+    const at = (fragment: string) => {
+      const index = text.indexOf(fragment);
+      expect(index, fragment).toBeGreaterThanOrEqual(0);
+      return index;
+    };
+
+    expect(at("Kallion kirjasto")).toBeLessThan(at(DASHBOARD_URL));
+    expect(at(DASHBOARD_URL)).toBeLessThan(at("Build, explore and survive together."));
+    expect(at("Build, explore and survive together.")).toBeLessThan(at(SUPPORT_EMAIL));
   });
 
-  it("carries the product's own short description", () => {
-    expect(description(compose()!.ics)).toContain(
-      "Build, explore and survive together.",
-    );
+  /**
+   * The entry's own title names the product and the child, and a reader is
+   * looking at it while they read the notes — so a sentence saying who is
+   * signed up for what would spend a paragraph on the one fact the entry cannot
+   * fail to convey. The mail opens with it and should: it arrives among fifty
+   * others and has to say what it is about.
+   */
+  it("says nothing the title already says", () => {
+    expect(description(compose()!.ics)).not.toContain("is enrolled in");
+    expect(
+      description(compose({ isSelfSeat: true, participantName: "Marja" })!.ics),
+    ).not.toContain("You’re enrolled in");
   });
 
   /**
@@ -663,7 +697,9 @@ describe("what the entry's notes say", () => {
 
     expect(text).not.toContain("Monday");
     expect(text).not.toContain("16:00");
-    expect(text).not.toContain("Finland time");
+    // No zone either: the abbrev the mail appends to its own schedule line is
+    // meaningless here, where a client renders the times in the reader's zone.
+    expect(text).not.toContain("GMT+");
     // The term's own dates go with it — the run's bounds are the `RRULE`'s
     // `UNTIL` and the client's to render.
     expect(text).not.toContain("From ");

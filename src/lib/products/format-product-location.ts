@@ -34,7 +34,18 @@ export type ProductLocationDisplay =
 export interface ProductLocationRowSubset {
   name: string;
   name_i18n: Json | null;
-  parent?: { name: string; name_i18n: Json | null } | null;
+  /**
+   * The site's municipality, or `null` for a row that has none.
+   *
+   * **Required-and-nullable rather than optional, deliberately.** A caller that
+   * forgot the `parent` join and one whose row genuinely has no parent look
+   * identical to an optional field, and the two mean opposite things: the
+   * second is a site with no municipality to name, the first is a site whose
+   * municipality we have and failed to fetch. Making the key mandatory turns
+   * the forgotten join into a compile error instead of a "Where" line that
+   * silently drops the municipality a reader was looking for.
+   */
+  parent: { name: string; name_i18n: Json | null } | null;
 }
 
 export interface ProductLocationSubject {

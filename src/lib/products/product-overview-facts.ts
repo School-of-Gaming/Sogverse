@@ -3,8 +3,8 @@ import { formatClubTermDates } from "./format-product-term-dates";
 import {
   formatProductSchedule,
   renderScheduleLinesForDetail,
-  scheduleStatesTimes,
   type ProductScheduleSubject,
+  type ScheduleZoneNaming,
 } from "./format-product-schedule";
 
 /**
@@ -40,7 +40,7 @@ export function productScheduleDisplayLines({
   locale,
   timeZone,
   now,
-  zoneNote = null,
+  nameZone = "whenAdjusted",
 }: {
   product: ProductScheduleSubject;
   locale: string;
@@ -49,21 +49,21 @@ export function productScheduleDisplayLines({
   /** Stable "now", anchoring a recurring schedule's next occurrence. */
   now: Date;
   /**
-   * An already-translated sentence naming the zone, appended below the times.
+   * Whether the rendered zone is named beside the times always, or only when
+   * they have been moved out of the product's own zone.
    *
-   * **For the mail, and only the mail.** A page renders in the *viewer's* zone
-   * and decorates a time-bearing line with the short abbrev when that differs
-   * from the product's, which is the whole statement it needs. A mail has no
-   * viewer zone to render in — parents store none — so it renders in the
-   * product's own and has to say so in words, which is a sentence and not an
-   * abbrev. It is appended only where the schedule states a clock face: under a
-   * date range or a "to be confirmed" it would answer a question nobody asked.
+   * **`always` is the mail's, and it is one option rather than a second
+   * rendering.** A page renders in the viewer's zone and says which zone that
+   * is only when it differs from the product's — otherwise the abbrev is noise
+   * next to times the reader already reads as local. A mail has no viewer zone
+   * to render in, because parents store none, so it renders in the product's
+   * own; there the reader cannot tell which zone the times are in and the
+   * abbrev is the whole statement. Same formatter, same line, one flag.
    */
-  zoneNote?: string | null;
+  nameZone?: ScheduleZoneNaming;
 }): string[] {
   const schedule = formatProductSchedule({ product, locale, timeZone, now });
-  const lines = renderScheduleLinesForDetail(schedule);
-  if (zoneNote !== null && scheduleStatesTimes(schedule)) lines.push(zoneNote);
+  const lines = renderScheduleLinesForDetail(schedule, nameZone);
   const termRange = formatClubTermDates(product, locale);
   return termRange ? [...lines, termRange] : lines;
 }

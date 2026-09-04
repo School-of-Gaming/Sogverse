@@ -2646,13 +2646,6 @@
         "summary": "{productName} – {participantName}",
         "locationOnline": "Verkossa – Oma SOG",
         "locationInPerson": "{site}, {address}",
-        "zoneNote": "Kellonajat ovat {zone}.",
-        "zoneName": {
-          "europeHelsinki": "Suomen aikaa",
-          "europeParis": "Ranskan aikaa",
-          "europeLondon": "Britannian aikaa",
-          "europeStockholm": "Ruotsin aikaa"
-        },
         "whereOnline": "Tapaamiset ovat verkossa Oma SOG -sivulla, ja puhehuone avautuu {minutes} minuuttia ennen tapaamisen alkua.",
         "whereInPerson": "Tapaamispaikka on {site}.",
         "whereAddress": "Osoite: {address}",
@@ -2681,8 +2674,7 @@
         "audienceParents": "Vanhemmille",
         "audienceFamilies": "Perheille",
         "audienceFamiliesWithAges": "Perheille, ikä {min}–{max}"
-      },
-      "keepBrowsing": "Jatka selailua"
+      }
     },
     "verifyEmail": {
       "subject": "Vahvista sähköpostiosoitteesi",

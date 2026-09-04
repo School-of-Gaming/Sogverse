@@ -2690,13 +2690,6 @@
         "summary": "{productName} – {participantName}",
         "locationOnline": "De’wI’Daq – My SOG",
         "locationInPerson": "{site}, {address}",
-        "zoneNote": "poH Sep: {zone}.",
-        "zoneName": {
-          "europeHelsinki": "vInlan poH",
-          "europeParis": "vIraS poH",
-          "europeLondon": "brItan poH",
-          "europeStockholm": "SweDIn poH"
-        },
         "whereOnline": "De’wI’Daq ghom, My SOG-Daq. ghom pagh {minutes} tup pa’ poSlu’ ghogh pa’.",
         "whereInPerson": "{site}Daq ghom.",
         "whereAddress": "Daq: {address}",
@@ -2725,8 +2718,7 @@
         "audienceParents": "vavpu’vaD",
         "audienceFamilies": "qorDu’pu’vaD",
         "audienceFamiliesWithAges": "qorDu’pu’vaD, qan {min}–{max}"
-      },
-      "keepBrowsing": "yIqIm taH"
+      }
     },
     "verifyEmail": {
       "subject": "QIn DaqlIj yIchel",

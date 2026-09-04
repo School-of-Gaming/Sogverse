@@ -20,7 +20,6 @@ beforeAll(async () => {
 });
 
 const DASHBOARD_URL = "https://sogverse.sog.gg/parent";
-const SHOP_URL = "https://sogverse.sog.gg/shop";
 const PARTICIPATION_ID = "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15";
 
 /** Monday 4 January 2027, 10:00 in Helsinki. */
@@ -77,7 +76,6 @@ const base: ProductConfirmationEmailOptions = {
   priceAmount: "€40.00",
   firstChargeDate: null,
   dashboardUrl: DASHBOARD_URL,
-  shopUrl: SHOP_URL,
   overview: OVERVIEW,
   invitation: null,
 };
@@ -101,21 +99,19 @@ describe("buildProductConfirmationEmail", () => {
   });
 
   /**
-   * The page's pair of buttons, in the page's positions: My SOG is the
-   * affirmative and takes the right-hand cell of the row, "Keep browsing" is
-   * the alternative beside it. A mail's row cannot hold the primary brand
-   * button, so the emphasis it *can* carry goes to the half the page steers
-   * toward.
+   * One button, and it is the page's own primary. The page also offers a "keep
+   * browsing" beside it, because a reader who has just checked out is still
+   * standing in the shop; a reader in their inbox is not, so the mail carries
+   * only the action it is asking for — and, being alone, takes the primary
+   * brand fill a two-button row forbids.
    */
-  it("offers the page's two ways onward, My SOG on the right", () => {
+  it("offers one way onward, filled in the brand primary", () => {
     const html = render(base);
-    expect(html).toContain(`href="${SHOP_URL}"`);
     expect(html).toContain(`href="${DASHBOARD_URL}"`);
-    expect(html).toContain("Keep browsing");
     expect(html).toContain("Go to My SOG");
-    // Last in the DOM is rightmost in a row.
-    expect(html.indexOf(SHOP_URL)).toBeLessThan(html.indexOf(DASHBOARD_URL));
-    expect(html).toContain(BRAND.secondary);
+    expect(html).toContain(BRAND.primary);
+    expect(html).not.toContain("Keep browsing");
+    expect(html).not.toContain("/shop");
   });
 
   it("uses the verb the product type calls for", () => {
@@ -213,20 +209,21 @@ describe("buildProductConfirmationEmail", () => {
     });
 
     /**
-     * The mail renders in the *product's* zone because there is no viewer zone
-     * to render in, so it says which zone that is — in a sentence, since the
-     * page's short abbrev only means anything beside a zone the reader already
-     * knows they are in.
+     * The mail renders in the *product's* zone, because there is no viewer zone
+     * to render in — parents store none. So the reader cannot infer which zone
+     * the times are in, and the abbrev that names it is always appended. The
+     * page appends the same abbrev through the same formatter, but only when
+     * the viewer's zone differs from the product's; one option, one line.
      */
-    it("names the zone the times are given in", () => {
-      expect(render(base)).toContain("Times are given in Finland time.");
+    it("appends the product zone's abbrev to the time-bearing line", () => {
+      expect(render(base)).toContain("16:00–17:00 (GMT+2)");
     });
 
-    it("says nothing about a zone where the schedule states no time", () => {
+    it("appends no abbrev where the schedule states no time", () => {
       const html = render({
         overview: { ...OVERVIEW, slots: [], startDate: null, endDate: null },
       });
-      expect(html).not.toContain("Times are given in");
+      expect(html).not.toContain("(GMT+");
     });
 
     it("names a site and its parent under Where", () => {
@@ -483,7 +480,6 @@ describe("the plain-text twin", () => {
       "Language: Finnish",
       "What happens next",
       "- We’ll place Aino in a group",
-      SHOP_URL,
       DASHBOARD_URL,
       "A calendar invitation is attached",
     ];
@@ -595,8 +591,15 @@ describe("copy parity with the confirmation page", () => {
       ],
     ),
     ["waitlist.next3", "purchaseConfirmation.waitlist.next3"],
-    ["keepBrowsing", "purchaseConfirmation.keepBrowsing"],
+    // No `keepBrowsing` pair: the page's second button is a way back into the
+    // shop a reader is still standing in, and the mail carries one button.
     ["dashboardButton", "purchaseConfirmation.goToDashboard"],
+    // The order summary's own row label. Both surfaces name the product by its
+    // type before naming it, so the two spellings of "Club"/"Camp" have to
+    // agree as hard as the sentences around them do.
+    ...TYPES.map(
+      (tp): [string, string] => [`typeLabel.${tp}`, `productDetail.typeLabel.${tp}`],
+    ),
   ];
 
   /** The page's placeholder names, in the email's spelling. */
@@ -635,65 +638,53 @@ describe("copy parity with the confirmation page", () => {
 });
 
 /**
- * The zone the mail names is a message key per zone rather than an `Intl`
- * reading, because CLDR has no generic long name for every zone in every locale
- * and `Intl` answers a gap with a differently shaped string — a label and a
- * separator spliced into the sentence. `Europe/London` in Finnish and French
- * was exactly that: "Ajat ovat aikavyöhykkeellä aikavyöhyke: Iso-Britannia."
+ * The zone the mail's times are in, named the way every other mail already
+ * names one: the short `Intl` abbrev, appended to the line that carries the
+ * clock face.
  *
- * It also has to read the same on both sides of a transition: a name taken off
- * one instant would label a January term "Standard Time" for a schedule that is
- * mostly summer.
+ * **It is the product's zone, not the viewer's**, and that is the whole reason
+ * the abbrev is unconditional here. A page renders in the viewer's own zone and
+ * decorates the line only when that differs from the product's; a mail has no
+ * viewer zone to render in, so the times are in a zone the reader has no way to
+ * infer and the abbrev is the whole statement.
+ *
+ * The values are **measured, not guessed** — CLDR gives different abbrevs for
+ * one zone in different languages, and the point of the pin is that the abbrev
+ * is locale-formatted rather than a string we wrote. `tlh` is skipped for the
+ * reason its clock face is: `Intl` has no data for it, so it resolves to the
+ * runtime default locale and nothing about its output is stable across
+ * machines.
  */
 describe("the zone the times are given in", () => {
-  const ZONES = [
-    "Europe/Helsinki",
-    "Europe/Paris",
-    "Europe/London",
-    "Europe/Stockholm",
-  ];
+  /** Europe/Helsinki in January (EET, UTC+2), as each locale's `Intl` sets it. */
+  const ABBREV = [
+    ["en", "GMT+2"],
+    ["fi", "UTC+2"],
+    ["sv", "EET"],
+    ["fr", "UTC+2"],
+  ] as const;
 
-  it.each(SUPPORTED_LOCALES)("names every supported zone in %s", async (locale) => {
-    const translator = await getEmailTranslator(locale);
-    for (const timezone of ZONES) {
-      const html = buildProductConfirmationEmail(
-        translator,
-        locale,
-        resolveProductConfirmation(translator, locale, {
-          ...base,
-          overview: { ...OVERVIEW, timezone },
-        }),
-      );
-      // No key path standing in for a missing name, and no raw IANA identifier
-      // standing in for a missing key.
-      expect(html).not.toContain("productConfirmation.");
-      expect(html).not.toContain(timezone);
-    }
-  });
-
-  /**
-   * The two locales the `Intl` reading broke in, pinned as whole sentences.
-   */
-  it.each([
-    ["fi", "Europe/Helsinki", "Kellonajat ovat Suomen aikaa."],
-    ["fi", "Europe/London", "Kellonajat ovat Britannian aikaa."],
-    ["fr", "Europe/Helsinki", "Les horaires sont donnés en heure de Finlande."],
-    ["fr", "Europe/London", "Les horaires sont donnés en heure du Royaume-Uni."],
-  ] as const)("reads as a sentence: %s / %s", async (locale, timezone, sentence) => {
+  it.each(ABBREV)("appends %s's own abbrev for the product zone", async (locale, abbrev) => {
     const translator = await getEmailTranslator(locale);
     const html = buildProductConfirmationEmail(
       translator,
       locale,
-      resolveProductConfirmation(translator, locale, {
-        ...base,
-        overview: { ...OVERVIEW, timezone },
-      }),
+      resolveProductConfirmation(translator, locale, base),
     );
 
-    expect(html).toContain(sentence);
+    expect(html).toContain(`(${abbrev})`);
+    // The raw IANA identifier is the fallback `viewerTzAbbrev` returns when
+    // `Intl` throws; seeing it here would mean no abbrev was resolved at all.
+    expect(html).not.toContain("Europe/Helsinki");
   });
 
-  it("names the zone the same way on both sides of a transition", () => {
+  /**
+   * The abbrev is read off the run's own first occurrence, so a summer term
+   * says EEST where a winter one says EET. That is correct rather than a
+   * seasonal-name bug: unlike a long name spanning a whole run, this decorates
+   * one line of times that were themselves rendered at that instant.
+   */
+  it("reads the abbrev at the occurrence the times are rendered for", () => {
     const winter = render({ overview: { ...OVERVIEW, startDate: "2027-01-04" } });
     const summer = render({
       overview: {
@@ -704,9 +695,7 @@ describe("the zone the times are given in", () => {
       },
     });
 
-    expect(winter).toContain("Finland time");
-    expect(summer).toContain("Finland time");
-    expect(winter).not.toContain("Standard Time");
-    expect(summer).not.toContain("Summer Time");
+    expect(winter).toContain("(GMT+2)");
+    expect(summer).toContain("(GMT+3)");
   });
 });

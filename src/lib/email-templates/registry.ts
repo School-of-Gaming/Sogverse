@@ -444,8 +444,14 @@ function resolveProductConfirmationOptions(
     {
       is_remote: isRemote,
       product_type: params.productType,
-      locations: siteName ? { name: siteName, name_i18n: null } : null,
+      // `parent: null` is a real answer here, not a forgotten join: the form
+      // has one site field and no municipality field, so a test send shows a
+      // bare site by construction.
+      locations: siteName ? { name: siteName, name_i18n: null, parent: null } : null,
     },
+    // The locale is inert: `name_i18n` is `null` on everything this form can
+    // build, so `localizedLocationName` falls through to the typed `name`
+    // whatever locale it is handed. A translated site name cannot reach here.
     "en",
   );
   const ages = noneOrAgeRange(params.ageRange, "Age range");
@@ -462,7 +468,6 @@ function resolveProductConfirmationOptions(
     // the mail that states no billing line.
     firstChargeDate: noneOrText(params.firstChargeDate),
     dashboardUrl: params.dashboardUrl,
-    shopUrl: params.shopUrl,
     overview: {
       timezone: params.timezone,
       startDate,
@@ -680,7 +685,6 @@ const productConfirmationParamsSchema = z.object({
   mode: z.enum(PRODUCT_CONFIRMATION_MODES),
   priceAmount: z.string().nullable(),
   dashboardUrl: z.string().url(),
-  shopUrl: z.string().url(),
 
   // --- The "Good to know" facts the mail states, exactly as the page does. ---
   //
@@ -1371,7 +1375,6 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         placeholder: "13 Jan 2027",
       },
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
-      { key: "shopUrl", label: "Shop URL", placeholder: "https://sogverse.sog.gg/shop" },
 
       {
         key: "ageRange",

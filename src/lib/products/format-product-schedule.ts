@@ -212,13 +212,35 @@ export function joinScheduleGroups(
     .join(", ");
 }
 
-// The viewer-tz abbrev to append, or "" when the viewer is in the source zone
-// (no adjustment → no decoration). The abbrev is already locale-formatted by
-// Intl, so no translation is needed — we show the bare short zone, e.g.
-// "(GMT+9)". Only time-bearing lines get it (the camp date RANGE is UTC-pinned
-// and unadjusted, so it never does).
-function tzAbbrevFor(schedule: ProductScheduleSummary): string {
-  return schedule.kind !== "tbd" && schedule.tzAdjusted ? schedule.tzAbbrev : "";
+/**
+ * When the rendered zone is named beside the times.
+ *
+ * `whenAdjusted` is the page's answer and the default: a reader looking at
+ * times already in their own zone does not need to be told which zone that is,
+ * and the abbrev only earns its space when the times have been moved into a
+ * zone other than the product's.
+ *
+ * `always` is the **mail's**, and the difference is not a preference. A page
+ * renders in the viewer's zone, which it knows; a mail has no viewer zone —
+ * parents store none — so it renders in the *product's* own and the reader has
+ * no way to tell which that is. There the abbrev is the whole statement, and
+ * omitting it because "the zones match" would be answering a question the
+ * reader cannot see the answer to.
+ */
+export type ScheduleZoneNaming = "always" | "whenAdjusted";
+
+// The tz abbrev to append, or "" where the schedule states no time to hang it
+// on. The abbrev is for the zone the times were rendered in — the viewer's on a
+// page, the product's own in a mail, since that is the zone the caller passed —
+// and it is already locale-formatted by Intl, so no translation is needed: we
+// show the bare short zone, e.g. "(GMT+9)". Only time-bearing lines get it (the
+// camp date RANGE is UTC-pinned and unadjusted, so it never does).
+function tzAbbrevFor(
+  schedule: ProductScheduleSummary,
+  nameZone: ScheduleZoneNaming,
+): string {
+  if (schedule.kind === "tbd") return "";
+  return nameZone === "always" || schedule.tzAdjusted ? schedule.tzAbbrev : "";
 }
 
 function withTz(line: string, abbrev: string): string {
@@ -228,7 +250,7 @@ function withTz(line: string, abbrev: string): string {
 // 0-2 schedule lines for a card. The viewer-tz abbrev is appended to the line
 // that carries TIMES (not the camp date range).
 export function scheduleCardLines(schedule: ProductScheduleSummary): string[] {
-  const abbrev = tzAbbrevFor(schedule);
+  const abbrev = tzAbbrevFor(schedule, "whenAdjusted");
   switch (schedule.kind) {
     case "tbd":
       return [];
@@ -256,12 +278,15 @@ export function scheduleCardLines(schedule: ProductScheduleSummary): string[] {
 }
 
 // Multi-line schedule for detail surfaces — the parent/gedu "When & where"
-// card and the admin product details page. Breaks each time-group onto its own
-// line; the viewer-tz abbrev decorates the first time-bearing line.
+// card, the admin product details page, and the signup mail that mirrors the
+// confirmation page. Breaks each time-group onto its own line; the rendered
+// zone's abbrev decorates the first time-bearing line, on the terms `nameZone`
+// states.
 export function renderScheduleLinesForDetail(
   schedule: ProductScheduleSummary,
+  nameZone: ScheduleZoneNaming = "whenAdjusted",
 ): string[] {
-  const abbrev = tzAbbrevFor(schedule);
+  const abbrev = tzAbbrevFor(schedule, nameZone);
   switch (schedule.kind) {
     case "tbd":
       return ["—"];
