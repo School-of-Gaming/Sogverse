@@ -908,17 +908,19 @@ describe("every locale composes a whole document", () => {
    *
    * Finnish separates hours from minutes with a period where English, Swedish
    * and French use a colon, so a clock formatter hardcoded to `en` reads
-   * Finnish as `16:00` and fails here. `tlh` sets the period form too — it
-   * falls back to English for weekday *names* but not for the time pattern,
-   * which is measured rather than assumed, and it is why this pin covers a
-   * locale the weekday pin above has to skip.
+   * Finnish as `16:00` and fails here.
+   *
+   * `tlh` is absent for the same reason it is absent from the weekday map, and
+   * the reason is stronger than "it falls back to English": `Intl` has no data
+   * for it at all, so it resolves to the *runtime default* locale — `en-FI` on
+   * one machine, `en-US` on CI — and nothing about its output is stable across
+   * environments. A pin on it would pass or fail by the machine's `LANG`.
    */
-  const CLOCK: Record<(typeof SUPPORTED_LOCALES)[number], string> = {
+  const CLOCK: Partial<Record<(typeof SUPPORTED_LOCALES)[number], string>> = {
     en: "16:00",
     fi: "16.00",
     sv: "16:00",
     fr: "16:00",
-    tlh: "16.00",
   };
 
   it.each(SUPPORTED_LOCALES)("%s", async (locale) => {
@@ -942,8 +944,11 @@ describe("every locale composes a whole document", () => {
 
     // Inside the document, because that is where a hardcoded locale at an
     // `Intl` call site would show up and nowhere else.
-    expect(invitation!.scheduleLines[0]).toContain(CLOCK[locale]);
-    expect(invitation!.ics).toContain(CLOCK[locale]);
+    const clock = CLOCK[locale];
+    if (clock !== undefined) {
+      expect(invitation!.scheduleLines[0]).toContain(clock);
+      expect(invitation!.ics).toContain(clock);
+    }
 
     const weekday = WEEKDAY[locale];
     if (weekday !== undefined) {
