@@ -28,16 +28,33 @@ import type { GamerSignIn, UserRole } from "@/types";
 export const GAMER_EMAIL_DOMAIN = "@gamer.sogverse.internal";
 
 /**
+ * The bounds on a username, named so a text field can stop a parent typing past
+ * them rather than restating the number in its own markup.
+ *
+ * A `maxLength` spelled as a literal beside a pattern that owns the same number
+ * is two sources for one rule: the day the pattern widens, the field goes on
+ * truncating at the old bound and the parent watches characters vanish with no
+ * message saying why.
+ */
+export const GAMER_USERNAME_MIN_LENGTH = 3;
+export const GAMER_USERNAME_MAX_LENGTH = 20;
+
+/**
  * What a parent may pick as their child's username: 3–20 lowercase letters and
  * digits. Deliberately narrow — the value becomes the local part of an email
  * address, it is typed by a child on a keyboard they may be new to, and it is
  * read back to a parent who has to recognise it. Anything a case fold, an accent
  * or a lookalike character could make ambiguous is out.
  *
+ * Built from the two bounds above rather than spelling them a second time, so
+ * the pattern and every field that limits its input move together.
+ *
  * The pattern tests an ALREADY-NORMALISED value; run {@link normalizeGamerUsername}
  * first (or use {@link isValidGamerUsername}, which does).
  */
-export const GAMER_USERNAME_PATTERN = /^[a-z0-9]{3,20}$/;
+export const GAMER_USERNAME_PATTERN = new RegExp(
+  `^[a-z0-9]{${GAMER_USERNAME_MIN_LENGTH},${GAMER_USERNAME_MAX_LENGTH}}$`,
+);
 
 /** Trim the surrounding whitespace and fold to lowercase. */
 export function normalizeGamerUsername(raw: string): string {

@@ -2,12 +2,13 @@
  * Where a session came from: opened by whoever holds this account's own
  * credential, or handed over from another family member's session.
  *
- * WHY IT DECIDES ANYTHING. Leaving a gamer session costs a credential, and which
- * credential depends on this: a family session is inside the home, so a parent's
- * PIN is the accepted friction; an own session may be a school computer a child
- * signed into and walked away from, and a four-digit PIN with no rate limit is
- * not what should stand between that machine and the parent's account. There the
- * price is the target account's own password.
+ * WHY IT DECIDES ANYTHING. Leaving a gamer session is priced by this, and the
+ * two answers are not two prices: a family session is inside the home, so a
+ * parent's PIN is the accepted friction; an own session may be a school computer
+ * a child signed into and walked away from, and a four-digit PIN with no rate
+ * limit is not what should stand between that machine and the parent's account
+ * — so an own session cannot switch at all, and the way to the other person's
+ * account is to sign out and sign in as them.
  *
  * THE SIGNAL IS A MARKER THE SWITCH ROUTE MINTS, NOT SOMETHING READ OFF THE
  * TOKEN. The account-switch route signs a cookie bound to `(userId,
@@ -27,10 +28,10 @@
  * site does, which is why the marker is the primary signal.
  *
  * THE CONSERVATIVE DIRECTION IS NOW `own`, and that is the point of the change.
- * A session we cannot positively identify as a switch is charged the target's
- * password rather than four digits — the *stronger* gate, so an unclassifiable
- * session can never be the cheap way in. (The old derivation defaulted to
- * `family`, which was fail-open toward the weaker gate.)
+ * A session we cannot positively identify as a switch is refused the switch
+ * outright rather than offered it for four digits — the *stronger* answer, so an
+ * unclassifiable session can never be the cheap way in. (The old derivation
+ * defaulted to `family`, which was fail-open toward the weaker gate.)
  *
  * `amr` survives as a second, redundant condition: a session whose token says a
  * password was typed is `own` even if it somehow carries a valid marker. The

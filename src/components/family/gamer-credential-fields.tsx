@@ -4,7 +4,11 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
-import { GAMER_USERNAME_PATTERN, normalizeGamerUsername } from "@/lib/gamer-sign-in";
+import {
+  GAMER_USERNAME_MAX_LENGTH,
+  GAMER_USERNAME_PATTERN,
+  normalizeGamerUsername,
+} from "@/lib/gamer-sign-in";
 import type { GamerSignIn } from "@/types";
 
 /**
@@ -172,71 +176,117 @@ export function GamerCredentialFields({
   const t = useTranslations("gamerSignIn");
   const c = useTranslations("common");
 
+  /**
+   * The refusal, if it belongs to this field.
+   *
+   * **It is rendered inside the `Field`, through the render-prop form.** The
+   * sentence used to be a sibling below the field, with no id and nothing
+   * pointing at it — so a control marked `aria-invalid` announced that it was
+   * wrong and never said what was wrong with it. The only ids that can name a
+   * node inside a field come from the field itself, which is what the render
+   * prop hands over; the error id is minted off `labelId` so it is unique per
+   * instance even where two cards share an `idPrefix`.
+   */
+  const errorFor = (field: GamerCredentialProblem["field"]) =>
+    problem?.field === field ? problem.message : null;
+
   if (signIn === "username") {
     return (
       <>
-        {/* Plain children rather than the `Field` render-prop form: that form
-            exists to hand a control the id of a hint it should point at, and
-            there is no hint here to point at. */}
         <Field label={t("usernameLabel")} htmlFor={`${idPrefix}-username`}>
-          <Input
-            id={`${idPrefix}-username`}
-            value={username}
-            // Folded on the way in rather than on the way out, so what the
-            // parent reads back to their child is the string the account will
-            // actually hold. The API normalises again; this is about what is
-            // on screen.
-            onChange={(e) => onUsernameChange(normalizeGamerUsername(e.target.value))}
-            placeholder={t("usernamePlaceholder")}
-            disabled={disabled}
-            autoComplete="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            maxLength={20}
-            aria-invalid={problem?.field === "username" || undefined}
-          />
+          {({ labelId }) => {
+            const message = errorFor("username");
+            const errorId = `${labelId}-error`;
+            return (
+              <>
+                <Input
+                  id={`${idPrefix}-username`}
+                  value={username}
+                  // Folded on the way in rather than on the way out, so what the
+                  // parent reads back to their child is the string the account
+                  // will actually hold. The API normalises again; this is about
+                  // what is on screen.
+                  onChange={(e) =>
+                    onUsernameChange(normalizeGamerUsername(e.target.value))
+                  }
+                  placeholder={t("usernamePlaceholder")}
+                  disabled={disabled}
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  // The bound belongs to the pattern that judges the value, so
+                  // it is read from there rather than spelled again here.
+                  maxLength={GAMER_USERNAME_MAX_LENGTH}
+                  aria-invalid={message !== null || undefined}
+                  aria-describedby={message !== null ? errorId : undefined}
+                />
+                {message !== null && (
+                  <p id={errorId} role="alert" className="text-sm text-destructive">
+                    {message}
+                  </p>
+                )}
+              </>
+            );
+          }}
         </Field>
-        {problem?.field === "username" && (
-          <p className="text-sm text-destructive">{problem.message}</p>
-        )}
 
         <Field label={c("password")} htmlFor={`${idPrefix}-password`}>
-          <PasswordInput
-            id={`${idPrefix}-password`}
-            value={password}
-            onChange={(e) => onPasswordChange(e.target.value)}
-            disabled={disabled}
-            defaultVisible
-            autoComplete="new-password"
-            aria-invalid={problem?.field === "password" || undefined}
-          />
+          {({ labelId }) => {
+            const message = errorFor("password");
+            const errorId = `${labelId}-error`;
+            return (
+              <>
+                <PasswordInput
+                  id={`${idPrefix}-password`}
+                  value={password}
+                  onChange={(e) => onPasswordChange(e.target.value)}
+                  disabled={disabled}
+                  defaultVisible
+                  autoComplete="new-password"
+                  aria-invalid={message !== null || undefined}
+                  aria-describedby={message !== null ? errorId : undefined}
+                />
+                {message !== null && (
+                  <p id={errorId} role="alert" className="text-sm text-destructive">
+                    {message}
+                  </p>
+                )}
+              </>
+            );
+          }}
         </Field>
-        {problem?.field === "password" && (
-          <p className="text-sm text-destructive">{problem.message}</p>
-        )}
       </>
     );
   }
 
   if (signIn === "email") {
     return (
-      <>
-        <Field label={c("email")} htmlFor={`${idPrefix}-email`}>
-          <Input
-            id={`${idPrefix}-email`}
-            type="email"
-            value={email}
-            onChange={(e) => onEmailChange(e.target.value)}
-            placeholder={t("emailPlaceholder")}
-            disabled={disabled}
-            autoComplete="off"
-            aria-invalid={problem?.field === "email" || undefined}
-          />
-        </Field>
-        {problem?.field === "email" && (
-          <p className="text-sm text-destructive">{problem.message}</p>
-        )}
-      </>
+      <Field label={c("email")} htmlFor={`${idPrefix}-email`}>
+        {({ labelId }) => {
+          const message = errorFor("email");
+          const errorId = `${labelId}-error`;
+          return (
+            <>
+              <Input
+                id={`${idPrefix}-email`}
+                type="email"
+                value={email}
+                onChange={(e) => onEmailChange(e.target.value)}
+                placeholder={t("emailPlaceholder")}
+                disabled={disabled}
+                autoComplete="off"
+                aria-invalid={message !== null || undefined}
+                aria-describedby={message !== null ? errorId : undefined}
+              />
+              {message !== null && (
+                <p id={errorId} role="alert" className="text-sm text-destructive">
+                  {message}
+                </p>
+              )}
+            </>
+          );
+        }}
+      </Field>
     );
   }
 

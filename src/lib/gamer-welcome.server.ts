@@ -18,12 +18,21 @@ import { getOrigin } from "@/lib/url";
  * Send a child the mail that welcomes them to their own account and carries the
  * link that verifies its address.
  *
- * Three routes send this exact mail — creating a gamer in `email` mode, changing
- * one into that mode, and the parent's explicit resend — so it lives here rather
- * than three times over. What is NOT here is the decision about whether to send:
- * the rate limit belongs to the resend route (a parent leaning on the button
- * spends the shared mail quota), and creation is not rate-limited because
- * creating an account is.
+ * Three routes send this exact mail, so it lives here rather than three times
+ * over. What is NOT here is the decision about whether to send — each caller
+ * makes it, and the three do not make the same one:
+ *
+ *  - **Creating a gamer in `email` mode** charges nothing. The account did not
+ *    exist a moment ago, so the mail cannot repeat without a second account
+ *    being created, and creating an account is its own limit.
+ *  - **Changing a gamer INTO `email` mode** charges
+ *    `request_gamer_verification_email` on the caller's own client — six an
+ *    hour, keyed on the child. A parent flipping a child in and out of the mode
+ *    is pressing the resend button by another route, so it spends the same
+ *    allowance. A refusal costs the mail and nothing else: the mode change has
+ *    committed and the parent can resend from the child's card.
+ *  - **The parent's explicit resend** charges the same RPC, and there a refusal
+ *    is the answer — a 429, because the send IS what was asked for.
  *
  * **It throws, and the caller decides what that means.** After a creation the
  * account already exists and a Brevo outage must not unwind it, so that caller

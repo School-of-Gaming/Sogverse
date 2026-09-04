@@ -259,7 +259,7 @@
         },
         "gamerAccounts": {
           "question": "chay’ ’el puqwI’, ’ej nuq ’oH vav PIN’e’?",
-          "answer": "<p>chay’ ’el puqlI’ ’e’ DawIv, Hoch puqvaD, jIH SOGDaq. motlh ’elmeH ngoq Daj ghajbe’ toy’wI’ account: Sogverse qoD Daq ghaj — jabbI’ID Daq teH ghajbe’ — vav accountlIj tlhej boqlu’, ’ej accountlIjvo’ profileDaj DawIvDI’, Sogverse ’el puqlI’. DaneHchugh, pong pegh mu’ je DanoblaH, pagh jabbI’ID DaqDaj — ’olDI’ puq, pegh mu’ wIv.</p><p>DawIvbogh Hoch: puq ’elmeH ngoq accountDaj neH poSmoH — ponglIj mu’lIj joq lo’taHbogh puq: accountlIj qoj loDnI’ be’nI’ account ’ol laHbe’ pagh. mej ’ej latlh nuv rur, pegh mu’Daj lo’. ’ej accountlIjvo’ ’elpu’bogh puq: latlh DaqDaq wIvmeH vav PINlIj poQ.</p><p>vav Daq ’elmeH loS mI’ PIN poQlu’, ’ej SoH neH Sov: vaj Hal qawwI’Daq polta’bogh mu’ pegh: je’meH qoj puq account choHmeH lI’be’. puq profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’.</p><p>PIN DalIjchugh, accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj ”PIN DalIj’a’?” qIptaHvIS puq, jabbI’ID neH DangeHmoH.</p>"
+          "answer": "<p>chay’ ’el puqlI’ ’e’ DawIv, Hoch puqvaD, jIH SOGDaq. motlh ’elmeH ngoq Daj ghajbe’ toy’wI’ account: Sogverse qoD Daq ghaj — jabbI’ID Daq teH ghajbe’ — vav accountlIj tlhej boqlu’, ’ej accountlIjvo’ profileDaj DawIvDI’, Sogverse ’el puqlI’. DaneHchugh, pong pegh mu’ je DanoblaH, pagh jabbI’ID DaqDaj — ’olDI’ puq, pegh mu’ wIv.</p><p>DawIvbogh Hoch: puq ’elmeH ngoq accountDaj neH poSmoH — ponglIj mu’lIj joq lo’taHbogh puq: accountlIj qoj loDnI’ be’nI’ account ’ol laHbe’ pagh. mej ’ej ’elqa’: SoH ghaH ’ej pegh mu’lIj lo’, pagh loDnI’ be’nI’ je ghaj pong pegh mu’ je. ’ach accountlIjvo’ ’elbogh loDnI’ be’nI’: accountlIjvo’ neH yISuch. ’ej accountlIjvo’ ’elpu’bogh puq: latlh DaqDaq wIvmeH vav PINlIj poQ.</p><p>vav Daq ’elmeH loS mI’ PIN poQlu’, ’ej SoH neH Sov: vaj Hal qawwI’Daq polta’bogh mu’ pegh: je’meH qoj puq account choHmeH lI’be’. puq profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’.</p><p>PIN DalIjchugh, accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj ”PIN DalIj’a’?” qIptaHvIS puq, jabbI’ID neH DangeHmoH.</p>"
         },
         "childData": {
           "question": "nuq De’ puqwI’vo’ bopol?",
@@ -1138,7 +1138,6 @@
       "welcomeTitle": "noH Quj yejHaD bIghoS, SuvwI’!",
       "noAccountSignUp": "account DaHutlh’a’? <link>DachenmoH</link>",
       "signingIn": "bI’el...",
-      "emailPlaceholder": "SoH@example.com",
       "passwordPlaceholder": "mu’mey yIchel",
       "errors": {
         "identifierRequired": "QIn Daq pagh ponglIj yIchel, SuvwI’!",
@@ -1436,7 +1435,8 @@
       "pinNotSetDescription": "My SOG DajDaq PIN cher vav wa’DIch. ghIq account DachoHlaH.",
       "signOutTitle": "yImej wa’DIch",
       "signOutOwnSession": "pongDaj lo’ta’ {name}. vaj latlh accountDaq choHlaHbe’ accountvam. Hoch account So’lu’.",
-      "signOutHow": "yImej, ghIq {name} yImoj."
+      "signOutHow": "yImej, ghIq {name} yImoj.",
+      "signOutHowViaParent": "yImej. vavlI’ pong yIlo’, ghIq pa’vo’ {name} yIchoH."
     },
     "addGamerForm": {
       "title": "QujwI’ chu’ chel",
@@ -3081,14 +3081,14 @@
   "gamerSignIn": {
     "question": "chay’ ’el {name}?",
     "option": {
-      "parent": "accountlIj Dung",
-      "username": "pong mu’mey je",
-      "email": "QIn Daq Daj"
+      "parent": "vav account Dung",
+      "username": "puq account: pong lo’",
+      "email": "puq account: puq QIn Daq lo’"
     },
     "optionHint": {
-      "parent": "accountlIjvo’ bIchoH. mu’mey ghajbe’, QIn Daq ghajbe’ je.",
-      "username": "cha’ DawIv. SoH Hutlhchugh, ’el. QIn Daq poQbe’.",
-      "email": "lInk wIngeH. Daq ngu’ ’ej mu’meyDaj wIv."
+      "parent": "janDaq ’el vav, ’ej puqvaD jan nob. pong ghajbe’ puq, pegh mu’ ghajbe’ je.",
+      "username": "puqvaD pong pegh mu’ je cher vav.",
+      "email": "account chenmoH vav. QIn DaqDaj ngu’ puq, ’ej pegh mu’Daj chenmoH."
     },
     "parentModeNote": "pagh yIghItlh. accountlIjvo’ bIchoHDI’ ’el {name}.",
     "usernameLabel": "pong",

@@ -71,6 +71,18 @@ interface SwitchGateBodyProps {
    * route's answer to a commit, never a caller's opinion.
    */
   initialPinNotSet?: boolean;
+  /**
+   * Runs before the sign-out form's native submit proceeds.
+   *
+   * The second style-guide seam, and it exists because the sign-out here is
+   * *real*: a demo box rendering this body renders a form that really posts to
+   * `/api/auth/signout`, so a reader clicking the button to see what it does
+   * would be signed out of the admin session they are reading the page in.
+   * Calling `preventDefault` on the event makes the box inert, and the flag
+   * that disables the buttons is then left unset — nothing is in flight, so
+   * nothing should look like it is. Production passes nothing.
+   */
+  onSignOutSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
 }
 
 /**
@@ -113,6 +125,7 @@ export function SwitchGateBody({
   onCommit,
   onClose,
   initialPinNotSet = false,
+  onSignOutSubmit,
 }: SwitchGateBodyProps) {
   const t = useTranslations("family");
   const c = useTranslations("common");
@@ -238,7 +251,14 @@ export function SwitchGateBody({
     );
   }
 
-  return <SignOutToSwitch target={target} viewerFirstName={viewerFirstName} onClose={onClose} />;
+  return (
+    <SignOutToSwitch
+      target={target}
+      viewerFirstName={viewerFirstName}
+      onClose={onClose}
+      onSignOutSubmit={onSignOutSubmit}
+    />
+  );
 }
 
 /**
@@ -249,15 +269,27 @@ export function SwitchGateBody({
  * follow. The middle one is the mechanism (root `CLAUDE.md` § Safety copy): not
  * that we care about privacy, but that a session opened with one person's own
  * credentials opens exactly one account — which is a thing a reader can test.
+ *
+ * **The last sentence branches on what the target actually is**, because
+ * "sign in as them" is advice only some targets can be reached by. A parent, and
+ * a child whose account holds a username or a mailbox, each have a login of
+ * their own; a `parent`-mode child has none at all — their account is reached by
+ * an account switch and nothing else — so telling a reader to sign in as them
+ * names an action that does not exist. That target gets the route that does
+ * work: sign in as the parent, then switch from there. A member carrying no mode
+ * at all is read the same way, since "no credential of their own" is the honest
+ * reading of an absent one (`family.contracts.ts`).
  */
 function SignOutToSwitch({
   target,
   viewerFirstName,
   onClose,
+  onSignOutSubmit,
 }: {
   target: FamilyMember;
   viewerFirstName: string;
   onClose: () => void;
+  onSignOutSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
 }) {
   const t = useTranslations("family");
   const c = useTranslations("common");
@@ -268,6 +300,17 @@ function SignOutToSwitch({
    * unloads the page — never cleared, for the same reason.
    */
   const [signingOut, setSigningOut] = useState(false);
+
+  /**
+   * Whether the target can be signed into directly. A customer always can, and
+   * so can a child in `username` or `email` mode; `parent` mode — and an absent
+   * mode, which means the same thing — cannot, so the advice has to route
+   * through the parent instead.
+   */
+  const targetHasOwnLogin =
+    target.role === "customer" ||
+    target.sign_in === "username" ||
+    target.sign_in === "email";
 
   return (
     <>
@@ -280,12 +323,22 @@ function SignOutToSwitch({
           <LogOut className="h-5 w-5 shrink-0" aria-hidden />
           {t("switchGate.signOutTitle")}
         </DialogTitle>
+        {/* Both sentences are the dialog's description, so both live inside
+            `DialogDescription` — the second used to be a sibling paragraph
+            beside it, which put half the explanation outside the description a
+            screen reader is handed. A `<p>` cannot hold a `<p>`, so the second
+            sentence is a block `span` rather than a paragraph of its own; the
+            two still read as two lines. */}
         <DialogDescription>
-          {t("switchGate.signOutOwnSession", { name: viewerFirstName })}
+          <span className="block">
+            {t("switchGate.signOutOwnSession", { name: viewerFirstName })}
+          </span>
+          <span className="mt-1.5 block">
+            {targetHasOwnLogin
+              ? t("switchGate.signOutHow", { name: target.first_name })
+              : t("switchGate.signOutHowViaParent", { name: target.first_name })}
+          </span>
         </DialogDescription>
-        <p className="text-sm text-muted-foreground">
-          {t("switchGate.signOutHow", { name: target.first_name })}
-        </p>
       </DialogHeader>
 
       {/* The canonical sign-out: a form POST the server answers with a 303,
@@ -302,11 +355,19 @@ function SignOutToSwitch({
           `onSubmit` records the commit and lets the native submit proceed — no
           `preventDefault`. The browser stays on this document until the 303
           comes back, so the spinner is on screen for the whole round trip, and
-          there is no JS error path to clear it from. */}
+          there is no JS error path to clear it from.
+
+          The one exception is the style-guide seam: a host that cancels the
+          submit has stopped the sign-out, so the flag stays clear rather than
+          disabling two buttons over a request nobody made. */}
       <form
         method="post"
         action="/api/auth/signout"
-        onSubmit={() => setSigningOut(true)}
+        onSubmit={(event) => {
+          onSignOutSubmit?.(event);
+          if (event.defaultPrevented) return;
+          setSigningOut(true);
+        }}
       >
         {/* The header's sign-out lands on the home page; this one exists to
             sign in as someone else, so it asks the route for the login page.

@@ -188,20 +188,38 @@ async function send({
   // email, and a spoofed Host would send a family somewhere we do not own.
   const origin = getOrigin(request);
 
-  // The parent's mail goes first; the child's copy only follows a parent's
-  // that went.
+  // The parent's mail goes first, and a child's copy only follows a parent's
+  // that went. That ordering is load-bearing for the skip below, which is why
+  // this counts what has actually left rather than assuming.
+  let sent = 0;
   for (const recipient of recipients) {
     const locale = recipient.locale;
     const productName = resolveTranslation(product.product_translations, locale)?.name;
 
     // A product has at least one translation row, so an empty name here is the
-    // same impossible shape as an empty person above.
+    // same impossible shape as an empty person above — except that the two
+    // recipients resolve the name in DIFFERENT locales, so a product missing one
+    // translation can name itself for the parent and not for the child. That
+    // makes it a per-recipient failure, not a per-send one. It used to `return`
+    // unconditionally, abandoning the child's copy after the parent's had
+    // already gone out while logging it as "skipping the send", which read as
+    // though nothing had been mailed at all.
     if (!productName) {
       console.error(
-        "[product-confirmation email] nothing to name — skipping the send",
-        { productId, participantId, hasProductName: false },
+        "[product-confirmation email] nothing to name — skipping this recipient",
+        {
+          productId,
+          participantId,
+          recipientKind: recipient.kind,
+          locale,
+          anySent: sent > 0,
+        },
       );
-      return;
+      // Nothing has left yet, so there is nothing for a child's copy to be the
+      // follow-up to. Give up on the whole send. Once something HAS gone out,
+      // skipping this one recipient is the honest remainder.
+      if (sent === 0) return;
+      continue;
     }
 
     const gamerCopy = recipient.kind === "gamer";
@@ -233,6 +251,7 @@ async function send({
       // the unattended sending address.
       replyToEmail: SUPPORT_EMAIL,
     });
+    sent++;
   }
 }
 

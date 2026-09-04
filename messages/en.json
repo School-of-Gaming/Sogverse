@@ -207,7 +207,7 @@
         },
         "gamerAccounts": {
           "question": "How does my child sign in, and what is the parent PIN?",
-          "answer": "<p>You choose how your child signs in, for each child, from My SOG. By default a gamer account has no login of its own: it carries an internal Sogverse address rather than a real email address, it is linked to your parent account, and your child enters Sogverse by switching to their profile from yours. If you prefer, you can give them a username and a password, or their own email address — which they verify before setting a password through the normal reset flow.</p><p>Whichever you choose, a child’s sign-in opens only their own account: a child who signed in with their own username or email cannot switch to your account or a sibling’s at all — they sign out and sign in as that person, with that person’s password — and a child who got in by switching from your account needs your parent PIN to switch anywhere else.</p><p>Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or change a child’s account, and the session locks again the moment you switch to a child’s profile or sign out.</p><p>If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email.</p>"
+          "answer": "<p>You choose how your child signs in, for each child, from My SOG. By default a gamer account has no login of its own: it carries an internal Sogverse address rather than a real email address, it is linked to your parent account, and your child enters Sogverse by switching to their profile from yours. If you prefer, you can give them a username and a password, or their own email address — which they verify before setting a password through the normal reset flow.</p><p>Whichever you choose, a child’s sign-in opens only their own account: a child who signed in with their own username or email cannot switch to your account or a sibling’s at all — they sign out and sign in again, as you with your password, or as a sibling who has a login of their own; a sibling who signs in through your account is reached from your account instead — and a child who got in by switching from your account needs your parent PIN to switch anywhere else.</p><p>Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or change a child’s account, and the session locks again the moment you switch to a child’s profile or sign out.</p><p>If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email.</p>"
         },
         "childData": {
           "question": "What do you store about my child?",
@@ -1090,7 +1090,6 @@
       "welcomeTitle": "Welcome to School of Gaming",
       "noAccountSignUp": "Don’t have an account? <link>Sign up</link>",
       "signingIn": "Signing in...",
-      "emailPlaceholder": "you@example.com",
       "passwordPlaceholder": "Enter your password",
       "errors": {
         "identifierRequired": "Please enter your email or username.",
@@ -1388,7 +1387,8 @@
       "pinNotSetDescription": "A parent needs to set a PIN from their own My SOG first. Then you can switch accounts.",
       "signOutTitle": "Sign out first",
       "signOutOwnSession": "{name} is signed in with their own login, so this account can’t switch to another one. That keeps everyone’s account private.",
-      "signOutHow": "Sign out, then sign in as {name}."
+      "signOutHow": "Sign out, then sign in as {name}.",
+      "signOutHowViaParent": "Sign out, then sign in as your parent and switch to {name} from there."
     },
     "addGamerForm": {
       "title": "Add a gamer",
@@ -3291,8 +3291,8 @@
       "replyToLabel": "Reply to",
       "sent": "Sent",
       "message": "Message",
-      "gamerNoteNoMailbox": "Sent from {firstName}'s gamer account, which has no email of its own.",
-      "gamerNoteOwnMailbox": "Sent from {firstName}'s gamer account — they also read their own email, {gamerEmail}."
+      "gamerNoteNoMailbox": "Sent from {firstName}’s gamer account, which has no email of its own.",
+      "gamerNoteOwnMailbox": "Sent from {firstName}’s gamer account — they also read their own email, {gamerEmail}."
     },
     "welcomeParent": {
       "subject": "Welcome to School of Gaming",
@@ -3934,14 +3934,14 @@
   "gamerSignIn": {
     "question": "How will {name} sign in?",
     "option": {
-      "parent": "Through your account",
-      "username": "With a username and password",
-      "email": "With their own email"
+      "parent": "Through the parent account",
+      "username": "Through a child account with a username",
+      "email": "Through a child account with the child’s email address"
     },
     "optionHint": {
-      "parent": "You switch to them from your own account. They get no password and no email address of their own.",
-      "username": "You choose both; they sign in without needing you. No email needed.",
-      "email": "We email them a link to verify the address and set their own password."
+      "parent": "The parent signs in on the device and hands it to the child. The child has no username or password of their own.",
+      "username": "The parent sets up the username and password for the child.",
+      "email": "The parent creates the account; the child confirms their email address and creates their own password."
     },
     "parentModeNote": "Nothing to fill in — {name} will sign in when you switch to them from your own account.",
     "usernameLabel": "Username",

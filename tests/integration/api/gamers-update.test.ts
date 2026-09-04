@@ -65,6 +65,10 @@ function mockForbiddenRole() {
 }
 
 const mockSupabaseFrom = vi.fn();
+// The per-child verification-mail allowance, spent on the caller's own client:
+// the mode change into `email` sends the same mail the resend button does, so it
+// pays the same six-an-hour.
+const mockSupabaseRpc = vi.fn();
 
 // Real gamer ids are auth-user uuids, and the route validates the path
 // segment as one — so the fixtures are uuids too.
@@ -76,6 +80,7 @@ function mockAuthenticated(userId = "customer-123") {
     profile: { role: "customer" },
     supabase: {
       from: (...args: unknown[]) => mockSupabaseFrom(...args),
+      rpc: (...args: unknown[]) => mockSupabaseRpc(...args),
     },
   });
 }
@@ -215,6 +220,8 @@ describe("PATCH /api/gamers/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     currentSignIn = "username";
+    // The allowance is there unless a test spends it.
+    mockSupabaseRpc.mockResolvedValue({ data: true, error: null });
     // The identity re-read echoes whatever address the auth write carried, which
     // is the honest default: a test that wants the trap asserts a stale one.
     mockAdminAuthAdmin.getUserById.mockImplementation(() => {
@@ -1205,6 +1212,124 @@ describe("PATCH /api/gamers/[id]", () => {
       expect(writes[1].password).not.toBe("a good password");
       expect(String(writes[1].password)).toHaveLength(64);
 
+      spy.mockRestore();
+    });
+
+    it("refuses a username the resolved mode has no use for", async () => {
+      // A `username` against a child who signs in through their parent names a
+      // field that mode does not have. It used to be dropped and answered 200,
+      // which tells the parent their edit landed.
+      currentSignIn = "parent";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, { username: "aino" });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+      expect(mockSignInUpdate).not.toHaveBeenCalled();
+    });
+
+    it("refuses an email the resolved mode has no use for", async () => {
+      // The mirror case: an address against a username-mode child, with no
+      // `signIn` key to make it a transition. The schema cannot catch it — it
+      // cannot see the mode — so the route does.
+      currentSignIn = "username";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, { email: "aino@example.com" });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(400);
+      expect(mockAdminAuthAdmin.updateUserById).not.toHaveBeenCalled();
+      expect(mockSignInUpdate).not.toHaveBeenCalled();
+    });
+
+    it("→ email: spends the child's verification-mail allowance", async () => {
+      currentSignIn = "username";
+      mockCredentialChange();
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "aino@example.com",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(200);
+      // Keyed on the CHILD and charged on the caller's own client, exactly as
+      // the resend button charges it: flipping a child into the mode is the
+      // same mail by another route, and must not be the uncounted way to it.
+      expect(mockSupabaseRpc).toHaveBeenCalledWith(
+        "request_gamer_verification_email",
+        { p_gamer_id: GAMER_ID },
+      );
+      expect(mockSendGamerWelcomeEmail).toHaveBeenCalled();
+    });
+
+    it("→ email: a spent allowance still changes the mode, and sends nothing", async () => {
+      // The refusal costs the mail and nothing else. The mode change has
+      // committed by the time the send runs and it is what the parent asked
+      // for, so the answer is a success — and the parent can resend from the
+      // child's card once the hour has turned.
+      currentSignIn = "username";
+      mockCredentialChange();
+      mockSupabaseRpc.mockResolvedValue({ data: false, error: null });
+      const spy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "aino@example.com",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(200);
+      expect(mockSignInUpdate).toHaveBeenCalledWith({ sign_in: "email" });
+      expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
+    it("withdraws the credential when profiles.email fails after the auth write", async () => {
+      // The compensated window is everything after GoTrue accepts, not the mode
+      // write alone: by this point the child answers to a username and password
+      // the parent just chose, while our own tables still describe the child
+      // they used to be. The same unrecorded credential, one write earlier.
+      currentSignIn = "parent";
+      mockCredentialChange();
+      const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      const roleCheck = mockTargetProfile("gamer");
+      let profilesCall = 0;
+      mockAdminFrom.mockImplementation((table: string) => {
+        if (table === "gamer_profiles") return gamerProfileTable();
+        profilesCall++;
+        if (profilesCall === 1) return roleCheck;
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi
+              .fn()
+              .mockResolvedValue({ data: null, error: { message: "conflict" } }),
+          }),
+        };
+      });
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "username",
+        username: "aino",
+        password: "a good password",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(500);
+      // The mode was never recorded, so the credential must not survive: two
+      // auth writes, the second a password nobody holds and no address.
+      expect(mockSignInUpdate).not.toHaveBeenCalled();
+      const writes = mockAdminAuthAdmin.updateUserById.mock.calls.map(([, p]) => p);
+      expect(writes).toHaveLength(2);
+      expect(writes[0]).toMatchObject({ password: "a good password" });
+      expect(Object.keys(writes[1])).toEqual(["password"]);
+      expect(writes[1].password).not.toBe("a good password");
+      expect(String(writes[1].password)).toHaveLength(64);
       spy.mockRestore();
     });
 

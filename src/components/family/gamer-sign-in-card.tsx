@@ -15,7 +15,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/api-error";
-import { gamerUsernameFromEmail, normalizeGamerUsername } from "@/lib/gamer-sign-in";
+import {
+  GAMER_USERNAME_MAX_LENGTH,
+  gamerUsernameFromEmail,
+  normalizeGamerUsername,
+} from "@/lib/gamer-sign-in";
 import {
   GAMER_EMAIL_TAKEN,
   GAMER_USERNAME_TAKEN,
@@ -38,6 +42,13 @@ import {
  * tell a DOM id from copy, and moving the string out is the honest answer.
  */
 const CREDENTIAL_FIELD_ID_PREFIX = "gamer-mode";
+
+/**
+ * The read-only address row's id, out of the markup for the same reason as the
+ * stem above: the literal-string lint reads JSX attributes and cannot tell a DOM
+ * id from copy.
+ */
+const GAMER_EMAIL_FIELD_ID = "gamer-current-email";
 
 /**
  * A parent changing how one of their children signs in.
@@ -253,7 +264,28 @@ export function GamerSignInCard({
 
           {/* Only for a mode the parent is moving *to*. Staying put asks for
               nothing, and the two standing affordances below — a new password,
-              a re-sent verification mail — are what the current mode offers. */}
+              a re-sent verification mail — are what the current mode offers.
+
+              `parent` asks for no credential at all, so it gets the dialog's
+              sentence rather than an empty gap: a parent moving a child back to
+              a switch-only account should read the same words in both places,
+              or the two surfaces have told them two things about one mechanism.
+
+              **No fixed-height reserve here, unlike the dialog's box.** What the
+              reserve buys there is a footer that does not jump under the thumb
+              that just picked the radio; this card has nothing below it — the
+              submit is the last thing in the form, and the forms after it belong
+              to the *current* mode and are unmounted the moment the draft
+              differs. So there is nothing on screen the reveal could push, and
+              a slot held open beside a sentence that may never arrive would be
+              the hole the layout rule warns about instead (root `CLAUDE.md`,
+              "Layout & Scrolling"). The change is the parent's own click either
+              way. */}
+          {modeChanged && draft === "parent" && (
+            <p className="text-sm text-muted-foreground">
+              {s("parentModeNote", { name: firstName })}
+            </p>
+          )}
           {modeChanged && (
             <GamerCredentialFields
               signIn={draft}
@@ -281,10 +313,14 @@ export function GamerSignInCard({
               button that still says "Saving…" would be two answers to one
               click. It appears with the redraw that makes it true. */}
           {modeOutcome === "saved" && !awaitingModeRefetch && (
-            <p className="text-sm text-success">{t("saved")}</p>
+            <p role="status" className="text-sm text-success">
+              {t("saved")}
+            </p>
           )}
           {modeOutcome === "failed" && (
-            <p className="text-sm text-destructive">{t("saveFailed")}</p>
+            <p role="alert" className="text-sm text-destructive">
+              {t("saveFailed")}
+            </p>
           )}
 
           <Button type="submit" disabled={!modeChanged || modeBusy}>
@@ -298,8 +334,11 @@ export function GamerSignInCard({
             be replaced — the child has no mailbox to send a reset link to. */}
         {signIn === "username" && !modeChanged && (
           <form onSubmit={handleSetPassword} className="space-y-4 border-t pt-6">
+            {/* `h4`, not `h2`: the card's own title is the `h3` a `CardTitle`
+                renders, and this sits under it. Sentence case, no tracking —
+                it is the brand speaking rather than a furniture label. */}
             <div className="space-y-1">
-              <h2 className="font-medium">{t("newPasswordTitle")}</h2>
+              <h4 className="font-medium">{t("newPasswordTitle")}</h4>
               <p className="text-sm text-muted-foreground">
                 {t("newPasswordDescription", { name: firstName })}
               </p>
@@ -322,15 +361,19 @@ export function GamerSignInCard({
               )}
             </Field>
             {passwordOutcome === "tooShort" && (
-              <p className="text-sm text-destructive">
+              <p role="alert" className="text-sm text-destructive">
                 {s("passwordTooShort", { count: GAMER_PASSWORD_MIN_LENGTH })}
               </p>
             )}
             {passwordOutcome === "saved" && (
-              <p className="text-sm text-success">{t("newPasswordSaved")}</p>
+              <p role="status" className="text-sm text-success">
+                {t("newPasswordSaved")}
+              </p>
             )}
             {passwordOutcome === "failed" && (
-              <p className="text-sm text-destructive">{t("saveFailed")}</p>
+              <p role="alert" className="text-sm text-destructive">
+                {t("saveFailed")}
+              </p>
             )}
             <Button type="submit" disabled={savingPassword}>
               {savingPassword ? c("saving") : t("newPasswordSubmit")}
@@ -352,8 +395,19 @@ export function GamerSignInCard({
             a button. */}
         {signIn === "email" && !modeChanged && (
           <div className="space-y-4 border-t pt-6">
-            <Field label={c("email")}>
-              <Input value={email ?? ""} disabled className="bg-muted" />
+            {/* `readOnly`, not `disabled`: the value is the one thing a parent
+                comes here to read back, and a disabled input is skipped by the
+                keyboard entirely — so the address would be unreachable by tab
+                and unselectable for a copy. The label names the input through
+                `htmlFor` for the same reason: a `Field` label over an
+                unidentified node names nothing. */}
+            <Field label={c("email")} htmlFor={GAMER_EMAIL_FIELD_ID}>
+              <Input
+                id={GAMER_EMAIL_FIELD_ID}
+                value={email ?? ""}
+                readOnly
+                className="bg-muted"
+              />
             </Field>
             {emailVerifiedAt ? (
               <p className="flex items-center gap-1.5 text-sm text-success">
@@ -370,17 +424,23 @@ export function GamerSignInCard({
               {resending ? c("sending") : t("resend")}
             </Button>
             {resendOutcome === "sent" && (
-              <p className="text-sm text-success">
+              <p role="status" className="text-sm text-success">
                 {t("resendSent", { name: firstName })}
               </p>
             )}
             {/* Warning rather than destructive: nothing broke and the wait is
-                short, but no mail went out, so it cannot read as success. */}
+                short, but no mail went out, so it cannot read as success. It is
+                still an outcome the reader has to act on, so it is announced as
+                one. */}
             {resendOutcome === "rateLimited" && (
-              <p className="text-sm text-warning">{t("resendRateLimited")}</p>
+              <p role="alert" className="text-sm text-warning">
+                {t("resendRateLimited")}
+              </p>
             )}
             {resendOutcome === "failed" && (
-              <p className="text-sm text-destructive">{t("resendFailed")}</p>
+              <p role="alert" className="text-sm text-destructive">
+                {t("resendFailed")}
+              </p>
             )}
           </div>
         )}
@@ -492,8 +552,10 @@ function ChangeUsernameForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 border-t pt-6">
+      {/* `h4`, not `h2`: the card's own title is the `h3` a `CardTitle` renders,
+          and this sits under it. */}
       <div className="space-y-1">
-        <h2 className="font-medium">{t("change.username.title")}</h2>
+        <h4 className="font-medium">{t("change.username.title")}</h4>
         <p className="text-sm text-muted-foreground">
           {t("change.username.description", { name: firstName })}
         </p>
@@ -503,38 +565,53 @@ function ChangeUsernameForm({
         htmlFor={inputId}
         hint={s("usernameHint")}
       >
-        {({ hintId }) => (
-          <Input
-            id={inputId}
-            value={value}
-            // Folded on the way in, so what the parent reads back to their child
-            // is the string the account will actually hold.
-            onChange={(event) =>
-              setValue(normalizeGamerUsername(event.target.value))
-            }
-            placeholder={currentUsername}
-            disabled={busy}
-            autoComplete="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            maxLength={20}
-            aria-describedby={hintId}
-            aria-invalid={problem !== null || undefined}
-          />
+        {({ hintId, labelId }) => (
+          <>
+            <Input
+              id={inputId}
+              value={value}
+              // Folded on the way in, so what the parent reads back to their
+              // child is the string the account will actually hold.
+              onChange={(event) =>
+                setValue(normalizeGamerUsername(event.target.value))
+              }
+              placeholder={currentUsername}
+              disabled={busy}
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              // The bound belongs to the pattern that judges the value.
+              maxLength={GAMER_USERNAME_MAX_LENGTH}
+              // The hint always, the refusal when there is one — a control
+              // marked invalid has to be able to say what is wrong with it.
+              aria-describedby={
+                problem ? `${hintId ?? ""} ${labelId}-error`.trim() : hintId
+              }
+              aria-invalid={problem !== null || undefined}
+            />
+            {problem && (
+              <p
+                id={`${labelId}-error`}
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {s(problem.key, { count: GAMER_PASSWORD_MIN_LENGTH })}
+              </p>
+            )}
+          </>
         )}
       </Field>
-      {problem && (
-        <p className="text-sm text-destructive">
-          {s(problem.key, { count: GAMER_PASSWORD_MIN_LENGTH })}
-        </p>
-      )}
       {/* Held back until the new value is the one the placeholder shows — the
           same reasoning as the mode form's line above. */}
       {outcome === "saved" && !awaitingRefetch && (
-        <p className="text-sm text-success">{t("change.username.saved")}</p>
+        <p role="status" className="text-sm text-success">
+          {t("change.username.saved")}
+        </p>
       )}
       {outcome === "failed" && (
-        <p className="text-sm text-destructive">{t("saveFailed")}</p>
+        <p role="alert" className="text-sm text-destructive">
+          {t("saveFailed")}
+        </p>
       )}
       <Button type="submit" disabled={busy}>
         {busy ? c("saving") : t("change.username.submit")}

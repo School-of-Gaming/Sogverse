@@ -7,9 +7,15 @@ import { Constants } from "@/types";
  * `sign_in` is the child's sign-in mode and is `null` for a customer, who has no
  * such thing. It is not what decides whether a switch is possible — that is the
  * caller's own session provenance, and a switch is either free, priced at a
- * parent's PIN, or refused outright — but the switcher still renders the mode
- * (a username-mode child is one a family can also reach by logging in), so the
- * list carries it.
+ * parent's PIN, or refused outright.
+ *
+ * **What reads it is the sign-out gate**, which has to tell a child how to reach
+ * the account they asked for once their own session has been refused. "Sign out,
+ * then sign in as them" is true of a customer and of a child holding a username
+ * or a mailbox; a `parent`-mode child has no login at all, so that target is
+ * reached by signing in as the parent and switching from there. The mode is the
+ * only thing on the wire that separates the two, which is why the list carries
+ * it.
  *
  * **Optional as well as nullable, and the two absences mean the same thing.**
  * The route always sends the field; what is optional is a member constructed

@@ -151,10 +151,18 @@ export function ResetPasswordForm() {
     //
     // It is *not* what keeps the switch gate honest — a recovery session
     // carries no marker from the switch route, so it is an `own` session and
-    // pays the target's password like any other (`src/lib/session-provenance.ts`).
+    // cannot switch at all, like any other (`src/lib/session-provenance.ts`).
     // This sign-out predates that model; it stays because the reason above
     // stands on its own.
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (signOutError) {
+      // The password has already moved; the session is the lesser half, and a
+      // throw here would strand the form with `committing` still set and no way
+      // forward. So the failure is logged and the success card shown — the user
+      // is being sent to sign in again either way.
+      console.error("[reset-password] sign-out after the update failed:", signOutError);
+    }
 
     // Success swaps to the success card (unmounts the form); leave `committing`
     // set so the button never re-enables on the way out.

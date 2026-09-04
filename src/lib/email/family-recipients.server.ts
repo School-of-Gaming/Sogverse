@@ -1,5 +1,6 @@
 import "server-only";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
+import { isSyntheticGamerEmail } from "@/lib/gamer-sign-in";
 import type { GamerSignIn } from "@/types";
 
 /**
@@ -12,12 +13,15 @@ import type { GamerSignIn } from "@/types";
  * produces no mail at all, whatever the child holds: a child's own address is
  * not a reason to start corresponding with a child on their own.
  *
- * **The child's copy is gated on one fact: the stored sign-in mode is the
- * real-email one.** A parent chooses how each child signs in, and one of the
- * choices is the child's own email address; the other two are a
- * platform-internal handle no inbox answers, which the gate below never lets
- * through. A parent who later switches the child back to another mode takes the
- * copy away with it, because the mode is checked on every send.
+ * **The child's copy is gated on the stored sign-in mode being the real-email
+ * one — and on the stored address agreeing with it.** A parent chooses how each
+ * child signs in, and one of the choices is the child's own email address; the
+ * other two are a platform-internal handle no inbox answers, which the gate
+ * below never lets through. A parent who later switches the child back to
+ * another mode takes the copy away with it, because the mode is checked on
+ * every send. The address is checked beside it because the two are written
+ * separately and a failure between them can leave the mode saying one thing
+ * while the row holds a handle nobody reads.
  *
  * **Verification is deliberately not a precondition.** The address is typed by
  * the parent and only proven when the child follows the verification link, and
@@ -82,10 +86,21 @@ export interface FamilyGamerContact {
 
 /**
  * Whether a child holds a mailbox we may write to: the real-email sign-in, and
- * nothing else. See the module comment for why verification is not part of it.
+ * an address that is not one of ours. See the module comment for why
+ * verification is not part of it.
+ *
+ * **The address is checked as well as the mode, because the two are written
+ * separately.** A mode change moves `auth.users` first and `profiles.email`
+ * second, so a failure between them leaves a row saying `email` beside a
+ * `@gamer.sogverse.internal` handle no inbox answers — and every send here
+ * reads the stored address, not the one the parent typed. Believing the mode
+ * alone would post a child's copy into the void and log it as delivered. The
+ * mode stays the product rule; this is the check that the row can honour it.
  */
-export function gamerHoldsOwnMailbox(gamer: Pick<FamilyGamerContact, "signIn">): boolean {
-  return gamer.signIn === "email";
+export function gamerHoldsOwnMailbox(
+  gamer: Pick<FamilyGamerContact, "email" | "signIn">,
+): boolean {
+  return gamer.signIn === "email" && !isSyntheticGamerEmail(gamer.email);
 }
 
 /**

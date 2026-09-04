@@ -110,13 +110,49 @@ describe("resolveFamilyRecipients", () => {
     });
     expect(recipients[0].locale).toBe("en");
   });
+
+  it("writes to the parent alone when the mode says email but the address is ours", () => {
+    // The half-written mode change: `gamer_profiles.sign_in` says `email` while
+    // the stored address is still the synthetic handle. The child's copy would
+    // go nowhere, so it is not sent.
+    const recipients = resolveFamilyRecipients({
+      parents: [parent],
+      gamer: { ...emailChild, email: "aino@gamer.sogverse.internal" },
+      fallbackLocale: "en",
+    });
+    expect(recipients.map((r) => r.kind)).toEqual(["parent"]);
+  });
 });
 
 describe("gamerHoldsOwnMailbox", () => {
+  const real = "aino@example.test";
+
   it("is true for the real-email mode and for nothing else", () => {
-    expect(gamerHoldsOwnMailbox({ signIn: "email" })).toBe(true);
-    expect(gamerHoldsOwnMailbox({ signIn: "username" })).toBe(false);
-    expect(gamerHoldsOwnMailbox({ signIn: "parent" })).toBe(false);
-    expect(gamerHoldsOwnMailbox({ signIn: null })).toBe(false);
+    expect(gamerHoldsOwnMailbox({ email: real, signIn: "email" })).toBe(true);
+    expect(gamerHoldsOwnMailbox({ email: real, signIn: "username" })).toBe(false);
+    expect(gamerHoldsOwnMailbox({ email: real, signIn: "parent" })).toBe(false);
+    expect(gamerHoldsOwnMailbox({ email: real, signIn: null })).toBe(false);
+  });
+
+  it("refuses a synthetic address even when the mode says the child holds one", () => {
+    // The two are written separately — a mode change moves `auth.users` and
+    // `profiles.email` in two statements — so a failure between them leaves a
+    // row saying `email` beside a handle no inbox answers. Every send reads the
+    // stored address, so believing the mode alone posts a child's copy into the
+    // void and logs it as delivered.
+    expect(
+      gamerHoldsOwnMailbox({
+        email: "aino@gamer.sogverse.internal",
+        signIn: "email",
+      }),
+    ).toBe(false);
+    // Case-folded, like every other test of the domain: GoTrue lowercases on
+    // the way in, but nothing guarantees a row written by hand did.
+    expect(
+      gamerHoldsOwnMailbox({
+        email: "G1234@GAMER.SOGVERSE.INTERNAL",
+        signIn: "email",
+      }),
+    ).toBe(false);
   });
 });

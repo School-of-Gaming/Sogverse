@@ -38,6 +38,26 @@ const TARGET: FamilyMember = {
   sign_in: null,
 };
 
+/**
+ * A sibling whose account has no login at all — reached by an account switch
+ * from the parent and by nothing else. "Sign in as them" names an action that
+ * does not exist for this target, which is what the branched sentence is for.
+ */
+const PARENT_MODE_SIBLING: FamilyMember = {
+  id: "b52efb5b-b359-4612-aace-759a602117e8",
+  role: "gamer",
+  first_name: "Eero",
+  sign_in: "parent",
+};
+
+/** A sibling who does hold a credential, so the direct advice is true of them. */
+const USERNAME_MODE_SIBLING: FamilyMember = {
+  id: "b3b57dc5-26c1-4918-9e07-564511a9eff9",
+  role: "gamer",
+  first_name: "Lily",
+  sign_in: "username",
+};
+
 /** The child whose session it is — the sign-out copy is about them. */
 const VIEWER_FIRST_NAME = "Aino";
 
@@ -57,14 +77,22 @@ function Harness({
   mode,
   onCommit,
   committingSpy,
+  target = TARGET,
 }: {
   mode: SwitchGateMode;
   onCommit: (credentials: SwitchAccountCredentials) => Promise<void>;
   committingSpy?: (value: boolean) => void;
+  /** Who the switch was reaching for; defaults to the parent every other case uses. */
+  target?: FamilyMember;
 }) {
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
-      <Stateful mode={mode} onCommit={onCommit} committingSpy={committingSpy} />
+      <Stateful
+        mode={mode}
+        onCommit={onCommit}
+        committingSpy={committingSpy}
+        target={target}
+      />
     </NextIntlClientProvider>
   );
 }
@@ -73,15 +101,17 @@ function Stateful({
   mode,
   onCommit,
   committingSpy,
+  target,
 }: {
   mode: SwitchGateMode;
   onCommit: (credentials: SwitchAccountCredentials) => Promise<void>;
   committingSpy?: (value: boolean) => void;
+  target: FamilyMember;
 }) {
   const [committing, setCommitting] = useState(false);
   return (
     <SwitchGateBody
-      target={TARGET}
+      target={target}
       viewerFirstName={VIEWER_FIRST_NAME}
       mode={mode}
       committing={committing}
@@ -237,6 +267,33 @@ describe("SwitchGateBody — the sign-out gate", () => {
     ).toBeTruthy();
     expect(
       screen.getByText(copy(GATE.signOutHow, TARGET.first_name)),
+    ).toBeTruthy();
+  });
+
+  it("routes through the parent for a target that has no login of its own", () => {
+    render(
+      <Harness mode="signOut" onCommit={vi.fn()} target={PARENT_MODE_SIBLING} />,
+    );
+
+    // A `parent`-mode sibling is reached by a switch and by nothing else, so
+    // "sign in as them" would name a login that does not exist.
+    expect(
+      screen.getByText(
+        copy(GATE.signOutHowViaParent, PARENT_MODE_SIBLING.first_name),
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText(copy(GATE.signOutHow, PARENT_MODE_SIBLING.first_name)),
+    ).toBeNull();
+  });
+
+  it("keeps the direct advice for a target that does hold a login", () => {
+    render(
+      <Harness mode="signOut" onCommit={vi.fn()} target={USERNAME_MODE_SIBLING} />,
+    );
+
+    expect(
+      screen.getByText(copy(GATE.signOutHow, USERNAME_MODE_SIBLING.first_name)),
     ).toBeTruthy();
   });
 

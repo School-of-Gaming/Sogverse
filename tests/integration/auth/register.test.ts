@@ -175,6 +175,20 @@ describe("POST /api/auth/register", () => {
     expect(mockCreateUser).not.toHaveBeenCalled();
   });
 
+  it("returns 400 for an address in our own synthetic gamer domain", async () => {
+    // `@gamer.sogverse.internal` is the namespace a child's username-mode
+    // account lives in, and GoTrue's uniqueness on the address is what makes a
+    // username unique. A stranger registering there would squat the handle a
+    // family later picks for their child — so a PUBLIC registration refuses the
+    // domain outright, before anything is created.
+    const response = await POST(
+      registerRequest({ ...validBody, email: "aino@gamer.sogverse.internal" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
+  });
+
   it("returns 400 for a password below the contract minimum", async () => {
     const response = await POST(
       registerRequest({ ...validBody, password: "short" }),

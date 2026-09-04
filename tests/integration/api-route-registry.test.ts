@@ -737,7 +737,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/gamers/[id]/verification/send/route.ts": {
     adminClient:
-      "reads the child's sign-in mode and the parent's first name for the mail, and the shared sender reads the child's own address — none of which the parent's own client is granted, while the two things that decide entitlement (the parent_gamer link and the rate-limit RPC's is_parent_of guard) both run on the caller's client",
+      "reads the child's sign-in mode, and the shared sender reads the child's own address — none of which the parent's own client is granted, while the two things that decide entitlement (the parent_gamer link and the rate-limit RPC's is_parent_of guard) both run on the caller's client",
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },

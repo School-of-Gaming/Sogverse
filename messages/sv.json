@@ -211,7 +211,7 @@
         },
         "gamerAccounts": {
           "question": "Hur loggar mitt barn in, och vad är föräldra-PIN-koden?",
-          "answer": "<p>Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet.</p><p>Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: ett barn som loggade in med sitt eget användarnamn eller sin egen e-postadress kan inte alls växla till ditt eller ett syskons konto — barnet loggar ut och loggar in som den personen, med den personens lösenord — och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
+          "answer": "<p>Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet.</p><p>Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: ett barn som loggade in med sitt eget användarnamn eller sin egen e-postadress kan inte alls växla till ditt eller ett syskons konto — barnet loggar ut och loggar in igen, som dig med ditt lösenord eller som ett syskon som har en egen inloggning; ett syskon som loggar in via ditt konto nås i stället från ditt konto — och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
         },
         "childData": {
           "question": "Vad sparar ni om mitt barn?",
@@ -1090,7 +1090,6 @@
       "welcomeTitle": "Välkommen till School of Gaming",
       "noAccountSignUp": "Har du inget konto? <link>Registrera dig</link>",
       "signingIn": "Loggar in...",
-      "emailPlaceholder": "du@example.com",
       "passwordPlaceholder": "Ange ditt lösenord",
       "errors": {
         "identifierRequired": "Ange din e-postadress eller ditt användarnamn.",
@@ -1388,7 +1387,8 @@
       "pinNotSetDescription": "En förälder måste först skapa en PIN-kod från sin Min SOG. Sedan kan du byta konto.",
       "signOutTitle": "Logga ut först",
       "signOutOwnSession": "{name} är inloggad med sin egen inloggning, så det här kontot kan inte byta till ett annat. Så förblir allas konton privata.",
-      "signOutHow": "Logga ut och logga sedan in som {name}."
+      "signOutHow": "Logga ut och logga sedan in som {name}.",
+      "signOutHowViaParent": "Logga ut, logga sedan in med din förälders inloggning och växla till {name} därifrån."
     },
     "addGamerForm": {
       "title": "Lägg till en gamer",
@@ -3934,14 +3934,14 @@
   "gamerSignIn": {
     "question": "Hur ska {name} logga in?",
     "option": {
-      "parent": "Via ditt konto",
-      "username": "Med användarnamn och lösenord",
-      "email": "Med en egen e-postadress"
+      "parent": "Via förälderns konto",
+      "username": "Via ett barnkonto med användarnamn",
+      "email": "Via ett barnkonto med barnets e-postadress"
     },
     "optionHint": {
-      "parent": "Du växlar till dem från ditt eget konto. De får varken eget lösenord eller egen e-postadress.",
-      "username": "Du väljer båda; de loggar in utan din hjälp. Ingen e-postadress behövs.",
-      "email": "Vi mejlar dem en länk för att verifiera adressen och välja ett eget lösenord."
+      "parent": "Föräldern loggar in på enheten och lämnar över den till barnet. Barnet har inget eget användarnamn och inget eget lösenord.",
+      "username": "Föräldern skapar användarnamnet och lösenordet åt barnet.",
+      "email": "Föräldern skapar kontot; barnet bekräftar sin e-postadress och skapar ett eget lösenord."
     },
     "parentModeNote": "Inget att fylla i – {name} loggar in när du växlar till dem från ditt eget konto.",
     "usernameLabel": "Användarnamn",

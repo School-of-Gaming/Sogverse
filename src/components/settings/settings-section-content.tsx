@@ -56,6 +56,13 @@ import {
 const NO_MARKETING_CONSENTS: readonly MarketingConsent[] = [];
 
 /**
+ * The read-only username row's id. A named constant rather than a literal in
+ * the markup because the literal-string lint reads JSX attributes and cannot
+ * tell a DOM id apart from copy.
+ */
+const GAMER_USERNAME_FIELD_ID = "settings-gamer-username";
+
+/**
  * A keyed location read, as the picker's own value shape. The two are already
  * the same information — a row plus its ancestors, nearest first — so this only
  * renames the row half; there is nothing to look up and nothing to reconcile.
@@ -583,12 +590,22 @@ export function SettingsSectionContent({
               where a new password comes from — the one thing a child locked out
               of this account needs to know, and a mechanism rather than a
               reassurance. */}
+          {/* `readOnly`, not `disabled`, and a label that names the input: the
+              username is the one value a child comes here to look up, and a
+              disabled input is skipped by the keyboard entirely — so it could
+              be neither tabbed to nor selected to copy, and the label above it
+              named nothing. */}
           {gamerUsername && (
-            <Field label={t('usernameLabel')} hint={t('gamerPasswordFromParent')}>
+            <Field
+              label={t('usernameLabel')}
+              htmlFor={GAMER_USERNAME_FIELD_ID}
+              hint={t('gamerPasswordFromParent')}
+            >
               {({ hintId }) => (
                 <Input
+                  id={GAMER_USERNAME_FIELD_ID}
                   value={gamerUsername}
-                  disabled
+                  readOnly
                   className="bg-muted"
                   aria-describedby={hintId}
                 />

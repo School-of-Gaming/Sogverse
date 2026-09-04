@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   await supabase.auth.signOut();
   // Drop both session markers so the next session starts locked and unmarked:
-  // the parent-PIN unlock cookie, and the switch route s family-session marker.
+  // the parent-PIN unlock cookie, and the switch route's family-session marker.
   // Both are bound to a session_id that is now gone, so neither would validate
   // anyway — dropping them is what keeps the cookie jar honest.
   const cookieStore = await cookies();

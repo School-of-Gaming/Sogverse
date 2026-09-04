@@ -12,7 +12,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GameAccountCard } from "@/components/game-account";
-import { GamerSignInCard } from "@/components/family";
+// The module, not the family barrel: the barrel would drag the profile
+// selector, the add-gamer form and the switch dialogs into this route's bundle
+// for the sake of one card, and none of the three is reachable from this page.
+import { GamerSignInCard } from "@/components/family/gamer-sign-in-card";
 import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
 import { useMinecraftAccount } from "@/services/minecraft";
 import { useRobloxAccount } from "@/services/roblox";

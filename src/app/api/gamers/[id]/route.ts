@@ -63,10 +63,17 @@ import type { GamerSignIn } from "@/types";
  * exists only where `gamer_profiles.sign_in` says one does. They cannot be one
  * transaction — two are GoTrue's and one is ours — so ordering plus a
  * compensation carries it instead: the mode is written LAST, because it is the
- * record of the other two rather than a part of them, and a failure there
- * withdraws the credential it failed to record rather than leaving a working
- * username and password the platform believes does not exist. See
- * `compensateUnrecordedCredential`.
+ * record of the other two rather than a part of them.
+ *
+ * THE COMPENSATED WINDOW IS EVERYTHING AFTER THE AUTH WRITE LANDS, not the mode
+ * write alone. The moment GoTrue accepts the new address and password, a
+ * credential exists that nothing in our own tables records — and three separate
+ * steps can still throw before the record catches up: the identity re-read, the
+ * `profiles.email` copy, and the mode write itself. Any of them leaving that
+ * credential live is the shape the invariant forbids, so the whole window is
+ * wrapped and every throw in it scrambles the password before it is rethrown.
+ * The rethrow is the original failure, so each of the specific 500s below still
+ * says which write broke. See `compensateUnrecordedCredential`.
  *
  * THE TWO AUTH-SIDE WRITES ARE ORDERED, AND THE ORDER IS THE SAME ONE THE HAND OPERATION
  * USES (`scripts/correct-user-email.ts`). Auth goes first, because it is the
@@ -210,9 +217,34 @@ export const PATCH = defineRoute({
     // product send — the mode change is the outcome the parent asked for and it
     // has already happened, and the parent can send the link again from the
     // child's card.
+    //
+    // IT IS CHARGED TO THE SAME PER-CHILD ALLOWANCE THE RESEND BUTTON SPENDS.
+    // The mail is identical and so is the way to make it repeat: the resend
+    // route pays `request_gamer_verification_email` (six an hour, keyed on the
+    // child), and a parent flipping a child in and out of `email` mode would
+    // otherwise be an uncounted second tap on the same button. The RPC runs on
+    // the CALLER'S client, whose `is_parent_of` guard re-derives entitlement
+    // from `auth.uid()` rather than trusting the id in the path.
+    //
+    // A refusal does NOT undo the mode change — that write has committed and it
+    // is what the parent asked for. It costs the automatic mail, and the parent
+    // can send it from the child's card once the hour has turned (rate-limited
+    // there too), so the honest answer is a success with a log rather than an
+    // error naming a mail the parent never asked to send.
     if (credentialChange.welcomeGamer) {
       try {
-        await sendGamerWelcomeEmail({ request, gamerId });
+        const { data: accepted, error: rateLimitError } = await supabase.rpc(
+          "request_gamer_verification_email",
+          { p_gamer_id: gamerId },
+        );
+        if (rateLimitError) throw rateLimitError;
+        if (accepted) {
+          await sendGamerWelcomeEmail({ request, gamerId });
+        } else {
+          console.warn(
+            `gamer ${gamerId}: the verification-mail allowance is spent, so the mode change carried no welcome mail — the parent can resend from the child's card`,
+          );
+        }
       } catch (mailError) {
         console.error("gamer update: welcome email failed", mailError);
       }
@@ -293,6 +325,32 @@ async function applyCredentialChange(args: {
     );
   }
 
+  // The same test for the other two credential fields, and for the same reason:
+  // a field the resolved mode has no use for is a request that cannot be
+  // honoured, and answering it 200 while dropping the value is the worst of the
+  // three possible answers — the parent is told their edit landed. The schema
+  // catches these only when `signIn` is stated; a bare `{ username }` against a
+  // child in `parent` mode, or a bare `{ email }` against one in `username`
+  // mode, resolves to a mode that will not use it and can only be caught here.
+  if (body.username !== undefined && nextMode !== "username") {
+    return NextResponse.json(
+      {
+        error:
+          "A username can only be set on a gamer who signs in with a username.",
+      },
+      { status: 400 },
+    );
+  }
+  if (body.email !== undefined && nextMode !== "email") {
+    return NextResponse.json(
+      {
+        error:
+          "An email address can only be set on a gamer who signs in with their own email address.",
+      },
+      { status: 400 },
+    );
+  }
+
   let newEmail: string | null = null;
   let newPassword: string | null = null;
   let welcomeGamer = false;
@@ -350,38 +408,88 @@ async function applyCredentialChange(args: {
     }
   }
 
-  if (newEmail !== null || newPassword !== null) {
-    await writeAuthCredentials({
-      admin,
-      gamerId,
-      newEmail,
-      newPassword,
-      mode: nextMode,
-    });
+  if (newEmail === null && newPassword === null) {
+    // Nothing reached GoTrue, so there is no credential a later failure could
+    // leave unrecorded and nothing to compensate: the mode write stands on its
+    // own. No transition produces this shape today — all three write an address
+    // — but the branch says so rather than the code assuming it.
+    if (entering) {
+      await recordSignInMode({ admin, gamerId, currentMode, nextMode });
+    }
+    return { welcomeGamer };
   }
 
-  if (entering) {
-    const { error: signInError } = await admin
-      .from("gamer_profiles")
-      .update({ sign_in: nextMode })
-      .eq("user_id", gamerId);
-    if (signInError) {
-      await compensateUnrecordedCredential({
-        admin,
-        gamerId,
-        currentMode,
-        nextMode,
-        signInError,
-      });
+  await writeAuthCredentials({
+    admin,
+    gamerId,
+    newEmail,
+    newPassword,
+    mode: nextMode,
+  });
+
+  // FROM HERE THE CREDENTIAL IS LIVE AND OUR OWN TABLES DO NOT RECORD IT. Each
+  // remaining step can throw — the identity re-read, the `profiles.email` copy,
+  // the mode write — and any of them leaving a working credential behind is the
+  // one shape the invariant forbids, so the whole window is compensated rather
+  // than its last step alone.
+  //
+  // The wrap is deliberately uniform, including the case where the mode is not
+  // moving at all (a parent renaming a username-mode child). There the address
+  // is half of the credential, so an auth write the app's own tables never
+  // learned about is the same unrecorded credential under a different name —
+  // and the cost of treating it that way is a password the parent can simply
+  // set again.
+  try {
+    if (newEmail !== null) {
+      await copyAddressToProfile({ admin, gamerId, newEmail });
     }
+    if (entering) {
+      await recordSignInMode({ admin, gamerId, currentMode, nextMode });
+    }
+  } catch (failure) {
+    await compensateUnrecordedCredential({
+      admin,
+      gamerId,
+      currentMode,
+      nextMode,
+      failure,
+    });
   }
 
   return { welcomeGamer };
 }
 
 /**
- * The last write failed, so the credential that was just set is one nothing
- * records. Take it away again.
+ * Write the mode — the record of the credential writes that came before it.
+ *
+ * Throws rather than returning the error, because it runs inside the
+ * compensated window and a throw is what puts the withdrawal on the path.
+ */
+async function recordSignInMode(args: {
+  admin: AdminClient;
+  gamerId: string;
+  currentMode: GamerSignIn;
+  nextMode: GamerSignIn;
+}): Promise<void> {
+  const { admin, gamerId, currentMode, nextMode } = args;
+  const { error } = await admin
+    .from("gamer_profiles")
+    .update({ sign_in: nextMode })
+    .eq("user_id", gamerId);
+  if (!error) return;
+  console.error(
+    `gamer ${gamerId}: gamer_profiles.sign_in write failed moving ${currentMode} -> ${nextMode}`,
+    error,
+  );
+  throw new ApiError(
+    `gamer ${gamerId}: sign-in mode could not be recorded`,
+    500,
+  );
+}
+
+/**
+ * Something failed after GoTrue accepted the credential, so what the account
+ * now holds is a credential nothing records. Take it away again.
  *
  * **The invariant this defends:** a credential that opens a gamer account
  * exists only where `gamer_profiles.sign_in` says one does. The three writes
@@ -392,20 +500,24 @@ async function applyCredentialChange(args: {
  * the mode is written last because it is the *record* of the other two rather
  * than a part of them.
  *
- * Last means the failure it can suffer is the worst-shaped one: every earlier
- * write has committed, so the account is already answering to a username and a
- * password the parent has just chosen, while the platform still believes the
- * child is switch-only or on a mailbox. A working credential nobody has
- * recorded is precisely what the switch gate is built to rule out — a child
- * holding one could sign in on any machine, and the platform would classify
- * that session by a mode that is a lie.
+ * **Every failure after the auth write is this failure**, not only the mode
+ * write's. Once GoTrue has accepted, the account is already answering to a
+ * username and a password the parent has just chosen while our own tables still
+ * describe the child they used to be — and that is equally true whether the
+ * identity re-read refused, the `profiles.email` copy failed, or the mode write
+ * did. A working credential nobody has recorded is precisely what the switch
+ * gate is built to rule out: a child holding one could sign in on any machine,
+ * and the platform would classify that session by a mode that is a lie.
  *
  * So the password is scrambled back to a value nobody holds, which restores the
  * one property that matters: whatever `sign_in` says, no credential anyone
  * knows will open this account. The address is deliberately left where it
  * landed — moving it back is another write that can fail the same way, and an
  * unreachable account under an unexpected address is a repair, not a breach.
- * The parent is answered with a 500 and re-runs the edit.
+ *
+ * The original failure is what gets rethrown, so the parent still meets the
+ * specific 500 the broken write raised and the log still names which one it
+ * was.
  *
  * Every failure past this point is logged loudly on purpose: it names a row
  * that needs a human, and there is no automatic path back to a consistent
@@ -416,12 +528,12 @@ async function compensateUnrecordedCredential(args: {
   gamerId: string;
   currentMode: GamerSignIn;
   nextMode: GamerSignIn;
-  signInError: unknown;
+  failure: unknown;
 }): Promise<never> {
-  const { admin, gamerId, currentMode, nextMode, signInError } = args;
+  const { admin, gamerId, currentMode, nextMode, failure } = args;
   console.error(
-    `gamer ${gamerId}: gamer_profiles.sign_in write failed moving ${currentMode} -> ${nextMode}; scrambling the password so no unrecorded credential survives`,
-    signInError,
+    `gamer ${gamerId}: a write failed after the credential landed, moving ${currentMode} -> ${nextMode}; scrambling the password so no unrecorded credential survives`,
+    failure,
   );
 
   const { error: scrambleError } = await admin.auth.admin.updateUserById(
@@ -435,19 +547,18 @@ async function compensateUnrecordedCredential(args: {
     );
   }
 
-  throw new ApiError(
-    `gamer ${gamerId}: sign-in mode could not be recorded, so the credential was withdrawn`,
-    500,
-  );
+  throw failure;
 }
 
 /**
- * The auth-then-profiles pair, in that order and with the identity check in
- * between. See the route's doc comment for why each half is here.
+ * The auth half: the one write that can legitimately refuse, and the only one
+ * that runs before there is anything to compensate.
  *
  * Throws a `NextResponse` for the one refusal the parent can act on — the
  * address is already spoken for — so the caller does not have to thread a third
- * return shape through. The wrapper honours a thrown `Response`.
+ * return shape through. The wrapper honours a thrown `Response`. Nothing has
+ * landed when it does, which is exactly why this half sits OUTSIDE the
+ * compensated window: a refusal here leaves the account as it was.
  */
 async function writeAuthCredentials(args: {
   admin: AdminClient;
@@ -480,8 +591,20 @@ async function writeAuthCredentials(args: {
     }
     throw authError;
   }
+}
 
-  if (newEmail === null) return;
+/**
+ * The profiles half, and the identity check that has to pass before it: run
+ * only when the address moved, and only ever from inside the compensated
+ * window, because by the time either can fail the credential is already live.
+ * See the route's doc comment for why each is here.
+ */
+async function copyAddressToProfile(args: {
+  admin: AdminClient;
+  gamerId: string;
+  newEmail: string;
+}): Promise<void> {
+  const { admin, gamerId, newEmail } = args;
 
   // Re-read rather than trusting the update's own payload: it carries the
   // identities array as it was BEFORE the write, so checking it there reports a

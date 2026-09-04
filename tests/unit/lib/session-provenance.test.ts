@@ -73,9 +73,9 @@ describe("sessionProvenance", () => {
 
   it("falls to `own` with no marker, whatever the token says", () => {
     // The conservative direction, and the point of the marker model: an
-    // unclassifiable session is charged the target's password rather than four
-    // digits, so it can never be the cheap way in. The old derivation defaulted
-    // to `family`, which was fail-open toward the weaker gate.
+    // unclassifiable session is refused the switch rather than offered it for
+    // four digits, so it can never be the cheap way in. The old derivation
+    // defaulted to `family`, which was fail-open toward the weaker gate.
     expect(sessionProvenance({ amr: undefined, familyMarkerValid: false })).toBe(
       "own",
     );

@@ -488,7 +488,10 @@ function refusesWith(code: SwitchAccountErrorCode) {
  * Every commit here is inert — it refuses without touching the network — so the
  * boxes can be typed into freely. The wrong-PIN shake and the switch to the
  * no-PIN message are real behaviour, driven by the refusal code each box is
- * given. The sign-out form is real too, so do not press it.
+ * given. The sign-out is inert too, through the body's own seam: the form
+ * really posts to `/api/auth/signout`, and an admin reading this page pressing
+ * the button to see what it does would be signed out of the session they are
+ * reading it in.
  */
 function SwitchGateDemo() {
   const [committing, setCommitting] = useState(false);
@@ -541,6 +544,7 @@ function SwitchGateDemo() {
               onCommittingChange={setCommitting}
               onCommit={refusesWith(SWITCH_SIGN_OUT_REQUIRED)}
               onClose={() => {}}
+              onSignOutSubmit={(event) => event.preventDefault()}
             />
           </div>
         </SubSection>
@@ -4226,6 +4230,11 @@ function inertCreateGamer(): Promise<{ gamerId: string }> {
  * `DialogContent` needs no portal to render, which is the whole reason the card
  * is separable from it. The height cap goes with the dialog: `90vh` is about a
  * viewport, and these are four columns on a page.
+ *
+ * **Each card gets its own `idPrefix`.** Four cards on one page is the case the
+ * seam exists for: without it every label would point at the first card's input,
+ * and all four radio groups would share a `name`, so the browser would treat the
+ * twelve radios as one group and let a click in one card clear another's answer.
  */
 function AddGamerDialogDemo() {
   const dismiss = () => {};
@@ -4236,23 +4245,27 @@ function AddGamerDialogDemo() {
         onOpenChange={dismiss}
         onCreate={inertCreateGamer}
         className="max-h-none"
+        idPrefix="add-gamer-demo-details"
       />
       <AddGamerFormCard
         onOpenChange={dismiss}
         onCreate={inertCreateGamer}
         className="max-h-none"
+        idPrefix="add-gamer-demo-parent"
         initial={{ firstName: "Lily", signIn: "parent", step: "signIn" }}
       />
       <AddGamerFormCard
         onOpenChange={dismiss}
         onCreate={inertCreateGamer}
         className="max-h-none"
+        idPrefix="add-gamer-demo-username"
         initial={{ firstName: "Lily", signIn: "username", step: "signIn" }}
       />
       <AddGamerFormCard
         onOpenChange={dismiss}
         onCreate={inertCreateGamer}
         className="max-h-none"
+        idPrefix="add-gamer-demo-email"
         initial={{ firstName: "Lily", signIn: "email", step: "signIn" }}
       />
     </div>

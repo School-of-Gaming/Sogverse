@@ -21,10 +21,11 @@ import { resolveFamilyWithAdmin } from "@/services/family/family.server";
  * The payload carries two things the switcher needs to know before a tile is
  * clicked, both about what a switch will *cost*: each gamer's `sign_in` mode,
  * and the provenance of the caller's own session. Leaving a gamer session is
- * gated — a linked parent's PIN from a switched-in session, the target's own
- * password from a session the child signed into — so the surface has to render
- * the right prompt, and mark a sibling that no password can reach. Answering it
- * here rather than from a second endpoint is what keeps the switcher one fetch.
+ * gated — a linked parent's PIN from a switched-in session, and no switch at all
+ * from a session the child signed into, which has to sign out and sign in as the
+ * other person — so the surface has to say which of the two it is up front
+ * rather than firing a switch in order to be told. Answering it here rather than
+ * from a second endpoint is what keeps the switcher one fetch.
  */
 export const GET = defineRoute({
   posture: "role-gated",

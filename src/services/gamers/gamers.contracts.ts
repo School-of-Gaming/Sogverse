@@ -2,11 +2,13 @@ import { z } from "zod";
 import { Constants } from "@/types";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import {
-  GAMER_EMAIL_DOMAIN,
   GAMER_USERNAME_PATTERN,
   normalizeGamerUsername,
 } from "@/lib/gamer-sign-in";
-import { accountPasswordValue } from "@/services/users/parent-registration.contracts";
+import {
+  accountPasswordValue,
+  realEmailValue,
+} from "@/services/users/parent-registration.contracts";
 import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts";
 import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
 
@@ -50,32 +52,16 @@ export const gamerUsernameValue = z
   });
 
 /**
- * A real mailbox a parent gave for their child, normalised and fenced off from
- * our own domain.
+ * A real mailbox a parent gave for their child: the shared account-address
+ * value, under the name this feature's schemas read it by.
  *
- * **Normalised for the same reason the username is.** The address becomes the
- * account's login and the thing the verification token is signed over, and
- * GoTrue lowercases on the way in — so a parent typing `"Aino@Example.com "`
- * must produce the row GoTrue will actually hold, not a second spelling of it
- * that every later comparison then has to fold for itself.
- *
- * **And it refuses our synthetic domain outright.** `@gamer.sogverse.internal`
- * is the namespace the other two modes live in: a random handle for a
- * switch-only child, and a username-derived one where GoTrue's uniqueness on
- * the address IS the uniqueness of the username. An address typed into the
- * `email` field that lands in that namespace would put a mailbox nobody can
- * read where a real one is promised — a child stamped verified for a void, or,
- * worse, a parent claiming a handle that belongs to somebody else's child. The
- * domain is ours and no family types it.
+ * It is the same rule the two public registrations take, and deliberately one
+ * definition rather than three — normalise to what GoTrue will hold, and refuse
+ * our own synthetic domain. See `realEmailValue` for why the domain is fenced
+ * off; here the cost of letting one through is a child stamped verified for a
+ * void, or a parent claiming a handle that belongs to somebody else's child.
  */
-export const gamerEmailValue = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .pipe(z.string().email())
-  .refine((value) => !value.endsWith(GAMER_EMAIL_DOMAIN), {
-    message: `${GAMER_EMAIL_DOMAIN} is our own internal domain — use the child's real email address`,
-  });
+export const gamerEmailValue = realEmailValue;
 
 /**
  * SQLSTATE `P0025` — `create_gamer` refusing a parent who holds no PIN.

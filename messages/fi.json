@@ -211,7 +211,7 @@
         },
         "gamerAccounts": {
           "question": "Miten lapseni kirjautuu sisään, ja mikä vanhemman PIN on?",
-          "answer": "<p>Valitset Oma SOG -sivulla jokaiselle lapselle erikseen, miten hän kirjautuu sisään. Oletuksena pelaajatilillä ei ole omaa kirjautumista: sillä on sisäinen Sogverse-osoite eikä oikeaa sähköpostiosoitetta, se on liitetty vanhemman tiliisi, ja lapsesi tulee Sogverseen vaihtamalla sinun profiilistasi omaan profiiliinsa. Halutessasi voit antaa hänelle käyttäjätunnuksen ja salasanan tai hänen oman sähköpostiosoitteensa, jonka hän vahvistaa ennen kuin asettaa salasanan tavallisen palautuspolun kautta.</p><p>Valitsitpa minkä tavan tahansa, lapsen kirjautuminen avaa vain hänen oman tilinsä: lapsi, joka kirjautui sisään omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, ei voi vaihtaa sinun tai sisaruksen tilille lainkaan — hän kirjautuu ulos ja kirjautuu sisään kyseisenä henkilönä tämän salasanalla — ja lapsi, joka tuli sisään vaihtamalla sinun tililtäsi, tarvitsee vanhemman PIN-koodisi vaihtaakseen mihinkään muualle.</p><p>Vanhemman puolelle pääsee nelinumeroisella PIN-koodilla, jonka vain sinä tiedät, joten selaimeen tallennettu salasana ei riitä ostamiseen eikä lapsen tilin muuttamiseen, ja istunto lukittuu uudelleen heti, kun vaihdat lapsen profiiliin tai kirjaudut ulos.</p><p>Jos unohdat PIN-koodin, lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle – jos lapsi painaa ”Unohditko PIN-koodin?”, hän vain lähettää sinulle sähköpostia.</p>"
+          "answer": "<p>Valitset Oma SOG -sivulla jokaiselle lapselle erikseen, miten hän kirjautuu sisään. Oletuksena pelaajatilillä ei ole omaa kirjautumista: sillä on sisäinen Sogverse-osoite eikä oikeaa sähköpostiosoitetta, se on liitetty vanhemman tiliisi, ja lapsesi tulee Sogverseen vaihtamalla sinun profiilistasi omaan profiiliinsa. Halutessasi voit antaa hänelle käyttäjätunnuksen ja salasanan tai hänen oman sähköpostiosoitteensa, jonka hän vahvistaa ennen kuin asettaa salasanan tavallisen palautuspolun kautta.</p><p>Valitsitpa minkä tavan tahansa, lapsen kirjautuminen avaa vain hänen oman tilinsä: lapsi, joka kirjautui sisään omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, ei voi vaihtaa sinun tai sisaruksen tilille lainkaan — hän kirjautuu ulos ja kirjautuu takaisin sisään joko sinuna, sinun salasanallasi, tai sisaruksena, jolla on omat tunnukset; sisarus, joka kirjautuu sisään sinun tilisi kautta, tavoitetaan sen sijaan sinun tililtäsi — ja lapsi, joka tuli sisään vaihtamalla sinun tililtäsi, tarvitsee vanhemman PIN-koodisi vaihtaakseen mihinkään muualle.</p><p>Vanhemman puolelle pääsee nelinumeroisella PIN-koodilla, jonka vain sinä tiedät, joten selaimeen tallennettu salasana ei riitä ostamiseen eikä lapsen tilin muuttamiseen, ja istunto lukittuu uudelleen heti, kun vaihdat lapsen profiiliin tai kirjaudut ulos.</p><p>Jos unohdat PIN-koodin, lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle – jos lapsi painaa ”Unohditko PIN-koodin?”, hän vain lähettää sinulle sähköpostia.</p>"
         },
         "childData": {
           "question": "Mitä tietoja lapsestani säilytätte?",
@@ -1090,7 +1090,6 @@
       "welcomeTitle": "Tervetuloa School of Gamingiin",
       "noAccountSignUp": "Eikö sinulla ole tiliä? <link>Rekisteröidy</link>",
       "signingIn": "Kirjaudutaan...",
-      "emailPlaceholder": "sinä@example.com",
       "passwordPlaceholder": "Syötä salasanasi",
       "errors": {
         "identifierRequired": "Syötä sähköpostiosoite tai käyttäjätunnus.",
@@ -1388,7 +1387,8 @@
       "pinNotSetDescription": "Vanhemman pitää ensin asettaa PIN-koodi Oma SOG -sivullaan. Sen jälkeen voit vaihtaa tiliä.",
       "signOutTitle": "Kirjaudu ensin ulos",
       "signOutOwnSession": "{name} on kirjautunut sisään omilla tunnuksillaan, joten tältä tililtä ei voi vaihtaa toiseen. Näin jokaisen tili pysyy yksityisenä.",
-      "signOutHow": "Kirjaudu ulos ja kirjaudu sitten sisään käyttäjänä {name}."
+      "signOutHow": "Kirjaudu ulos ja kirjaudu sitten sisään käyttäjänä {name}.",
+      "signOutHowViaParent": "Kirjaudu ulos, kirjaudu sitten sisään vanhempasi tunnuksilla ja vaihda sieltä käyttäjään {name}."
     },
     "addGamerForm": {
       "title": "Lisää pelaaja",
@@ -3934,14 +3934,14 @@
   "gamerSignIn": {
     "question": "Miten {name} kirjautuu sisään?",
     "option": {
-      "parent": "Sinun tilisi kautta",
-      "username": "Käyttäjätunnuksella ja salasanalla",
-      "email": "Omalla sähköpostiosoitteella"
+      "parent": "Vanhemman tilin kautta",
+      "username": "Lapsen tilin kautta käyttäjätunnuksella",
+      "email": "Lapsen tilin kautta lapsen sähköpostiosoitteella"
     },
     "optionHint": {
-      "parent": "Vaihdat hänen tililleen omalta tililtäsi. Hän ei saa omaa salasanaa eikä omaa sähköpostiosoitetta.",
-      "username": "Valitset molemmat itse, ja hän kirjautuu ilman sinua. Sähköpostiosoitetta ei tarvita.",
-      "email": "Lähetämme hänelle sähköpostilla linkin, jolla hän vahvistaa osoitteen ja valitsee oman salasanansa."
+      "parent": "Vanhempi kirjautuu sisään laitteella ja antaa laitteen lapselle. Lapsella ei ole omaa käyttäjätunnusta eikä salasanaa.",
+      "username": "Vanhempi luo lapselle käyttäjätunnuksen ja salasanan.",
+      "email": "Vanhempi luo tilin, ja lapsi vahvistaa sähköpostiosoitteensa ja luo oman salasanansa."
     },
     "parentModeNote": "Ei täytettävää – {name} kirjautuu sisään, kun vaihdat hänen tililleen omalta tililtäsi.",
     "usernameLabel": "Käyttäjätunnus",

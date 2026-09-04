@@ -108,6 +108,7 @@ export const POST = defineRoute({
         .maybeSingle();
 
       gamerOwnMailbox = gamerHoldsOwnMailbox({
+        email: userEmail,
         signIn: gamerProfile?.sign_in ?? null,
       });
     }

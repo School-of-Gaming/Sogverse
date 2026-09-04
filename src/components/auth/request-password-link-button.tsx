@@ -85,11 +85,18 @@ export function RequestPasswordLinkButton({
         {inFlight ? c("sending") : t("gamerSendPasswordLink")}
       </Button>
       {children}
+      {/* The outcome is announced, not only painted: the button that produced
+          it locks on success, so a reader who cannot see the sentence has
+          nothing left on the page telling them the mail is on its way. */}
       {outcome === "sent" && (
-        <p className="text-sm text-success">{t("gamerPasswordLinkSent")}</p>
+        <p role="status" className="text-sm text-success">
+          {t("gamerPasswordLinkSent")}
+        </p>
       )}
       {outcome === "failed" && (
-        <p className="text-sm text-destructive">{t("gamerPasswordLinkFailed")}</p>
+        <p role="alert" className="text-sm text-destructive">
+          {t("gamerPasswordLinkFailed")}
+        </p>
       )}
     </div>
   );

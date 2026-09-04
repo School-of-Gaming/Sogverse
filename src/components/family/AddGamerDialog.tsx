@@ -66,10 +66,16 @@ type InitialState =
   | { step: "signIn"; firstName: string; signIn?: GamerSignIn };
 
 /**
- * The stem every field id on the credential page is built from. A named constant
- * rather than a literal at the call site because the literal-string lint reads
- * JSX attributes and cannot tell a DOM id apart from copy — and the honest fix
- * for that is to stop spelling it in the markup, not to silence the rule.
+ * The stem every field id on this card is built from — both pages of it, and the
+ * radio group's `name` with them. A named constant rather than a literal at the
+ * call site because the literal-string lint reads JSX attributes and cannot tell
+ * a DOM id apart from copy — and the honest fix for that is to stop spelling it
+ * in the markup, not to silence the rule.
+ *
+ * It is the *default*, because the style guide renders four of these cards at
+ * once: one stem for all four would mint four `add-gamer-first-name` labels
+ * pointing at one input, and four radio groups sharing a `name`, which is a
+ * browser-level fight over which of them may hold a selection.
  */
 const CREDENTIAL_FIELD_ID_PREFIX = "add-gamer";
 
@@ -235,12 +241,21 @@ export function AddGamerFormCard({
   onCreated,
   className,
   initial,
+  idPrefix = CREDENTIAL_FIELD_ID_PREFIX,
 }: {
   onCreate: (input: CreateGamerInput) => Promise<{ gamerId: string }>;
   onOpenChange: (open: boolean) => void;
   onCreated?: (gamerId: string) => void;
   className?: string;
   initial?: InitialState;
+  /**
+   * The stem for every field id and the radio group's `name`. The fourth seam of
+   * the same kind as `className` and `initial`: production passes nothing and
+   * keeps the ids it has always had, and a surface rendering more than one card
+   * at once gives each its own stem so the labels and the radio group belong to
+   * exactly one of them.
+   */
+  idPrefix?: string;
 }) {
   const t = useTranslations("family.addGamerForm");
   const s = useTranslations("gamerSignIn");
@@ -418,7 +433,7 @@ export function AddGamerFormCard({
                     onChange={setSignIn}
                     disabled={committing}
                     labelId={labelId}
-                    name="add-gamer-sign-in"
+                    name={`${idPrefix}-sign-in`}
                   />
                 )}
               </Field>
@@ -474,16 +489,16 @@ export function AddGamerFormCard({
                           }
                         : null
                     }
-                    idPrefix={CREDENTIAL_FIELD_ID_PREFIX}
+                    idPrefix={idPrefix}
                   />
                 )}
               </div>
             </>
           ) : (
             <>
-            <Field label={t("firstNameLabel")} htmlFor="add-gamer-first-name">
+            <Field label={t("firstNameLabel")} htmlFor={`${idPrefix}-first-name`}>
               <Input
-                id="add-gamer-first-name"
+                id={`${idPrefix}-first-name`}
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder={t("firstNamePlaceholder")}
@@ -497,9 +512,9 @@ export function AddGamerFormCard({
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={t("birthMonthLabel")} htmlFor="add-gamer-month">
+              <Field label={t("birthMonthLabel")} htmlFor={`${idPrefix}-month`}>
                 <select
-                  id="add-gamer-month"
+                  id={`${idPrefix}-month`}
                   value={month}
                   onChange={(e) => setMonth(e.target.value)}
                   disabled={committing}
@@ -514,9 +529,9 @@ export function AddGamerFormCard({
                   ))}
                 </select>
               </Field>
-              <Field label={t("birthYearLabel")} htmlFor="add-gamer-year">
+              <Field label={t("birthYearLabel")} htmlFor={`${idPrefix}-year`}>
                 <select
-                  id="add-gamer-year"
+                  id={`${idPrefix}-year`}
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
                   disabled={committing}
