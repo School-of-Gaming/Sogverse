@@ -34,7 +34,6 @@ const SCHEDULE: ProductConfirmationInvitationInput = {
   isSelfSeat: false,
   productName: "Minecraft 101",
   productType: "consumer_club",
-  productTopic: "minecraft_java",
   shortDescription: null,
   timezone: "Europe/Helsinki",
   startDate: "2027-01-04",

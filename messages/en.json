@@ -3335,8 +3335,6 @@
         "whereOnline": "Sessions run online in My SOG, and the voice room opens {minutes} minutes before each session starts.",
         "whereInPerson": "Sessions run at {site}.",
         "whereAddress": "Address: {address}",
-        "gameAccount": "{participantName} needs a {game} account linked in My SOG before the first session.",
-        "gameAccountSelf": "You need a {game} account linked in My SOG before the first session.",
         "link": "Everything about this signup is in My SOG: {url}",
         "questions": "Questions? Write to {supportEmail}."
       },

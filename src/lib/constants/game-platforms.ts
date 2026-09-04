@@ -18,22 +18,6 @@ export const SUPPORTED_GAME_PLATFORMS = ["minecraft", "roblox"] as const;
 export type GamePlatform = (typeof SUPPORTED_GAME_PLATFORMS)[number];
 
 /**
- * What each platform is *called*, as a brand proper noun.
- *
- * **Never translated**, the same rule the product topic labels follow: a family
- * reads "Minecraft" as a name in every locale, and a locale that translated it
- * would be renaming somebody else's product. It lives here rather than in the
- * UI descriptor registry because that registry is a `"use client"` module full
- * of JSX, and the confirmation mail — which asks a parent to link the account
- * before the first session — cannot pull a component tree into a mail builder.
- * The registry reads these values, so the two cannot disagree.
- */
-export const GAME_PLATFORM_NAMES: Record<GamePlatform, string> = {
-  minecraft: "Minecraft",
-  roblox: "Roblox",
-};
-
-/**
  * How much of the character a row draws. Here rather than beside the components
  * for the same reason as the platforms: the avatar route takes a figure on its
  * query string, so the wire schema needs the list and cannot reach the component

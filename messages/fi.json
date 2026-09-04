@@ -2649,8 +2649,6 @@
         "whereOnline": "Tapaamiset ovat verkossa Oma SOG -sivulla, ja puhehuone avautuu {minutes} minuuttia ennen tapaamisen alkua.",
         "whereInPerson": "Tapaamispaikka on {site}.",
         "whereAddress": "Osoite: {address}",
-        "gameAccount": "{participantName} tarvitsee {game}-tilin, joka on liitetty Oma SOG -sivulle ennen ensimmäistä tapaamista.",
-        "gameAccountSelf": "Tarvitset {game}-tilin, joka on liitetty Oma SOG -sivulle ennen ensimmäistä tapaamista.",
         "link": "Kaikki tiedot ilmoittautumisesta löytyvät Oma SOG -sivulta: {url}",
         "questions": "Kysyttävää? Kirjoita osoitteeseen {supportEmail}."
       },

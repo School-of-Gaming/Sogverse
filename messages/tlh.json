@@ -2693,8 +2693,6 @@
         "whereOnline": "De’wI’Daq ghom, My SOG-Daq. ghom pagh {minutes} tup pa’ poSlu’ ghogh pa’.",
         "whereInPerson": "{site}Daq ghom.",
         "whereAddress": "Daq: {address}",
-        "gameAccount": "wa’DIch ghom pa’, My SOG-Daq {participantName} {game} pong yIchel.",
-        "gameAccountSelf": "wa’DIch ghom pa’, My SOG-Daq {game} ponglIj yIchel.",
         "link": "My SOG-Daq Hoch De’: {url}",
         "questions": "yIghel: {supportEmail}."
       },

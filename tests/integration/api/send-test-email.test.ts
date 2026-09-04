@@ -268,7 +268,6 @@ describe("POST /api/admin/send-test-email", () => {
       participationId: "",
       attendeeName: "Marja Virtanen",
       attendeeEmail: "marja@example.com",
-      topic: "minecraft_java",
       shortDescription: "",
       timezone: "Europe/Helsinki",
       startDate: "2027-01-04",

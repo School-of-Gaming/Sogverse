@@ -20,8 +20,7 @@ import type { ProductType } from "@/types";
  * product's schedule — the days, the clock faces, the zone, the dates and where
  * it happens — and an `invite.ics` a parent can accept into their own calendar.
  * The page carries neither. Everything the two *do* both say still says it in
- * the same words, and the mail's schedule section is composed from the same
- * sentences as the calendar entry's own notes.
+ * the same words.
  *
  * What the mail drops is the waitlist position. The page can show it because it
  * reads it live; a number frozen into an email goes stale the moment somebody
@@ -230,9 +229,15 @@ export function buildProductConfirmationEmail(
  * closing sentence names the attached file, because a `.ics` a parent has not
  * been told about is a paperclip they will not press.
  *
- * The lines are the composer's own — the same sentences the calendar entry's
- * notes carry — so the mail and the entry cannot disagree about when a club
- * meets.
+ * **This section is the only place the schedule is stated in words, and the
+ * attached file deliberately does not restate it.** A calendar client renders
+ * the recurrence, the clock face and the zone out of the properties, in the
+ * reader's own zone, and keeps doing so when a later message moves the run — so
+ * a sentence inside the entry's notes could only ever become the copy that
+ * contradicts it. Nothing renders an email's recurrence for a reader, which is
+ * why the words belong here and only here. The lines are still composed by the
+ * calendar composer, because that is where the schedule is resolved and
+ * resolving it twice is how the two would disagree.
  */
 function sessionTimesSection(
   t: EmailTranslator,

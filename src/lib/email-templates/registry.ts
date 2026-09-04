@@ -335,17 +335,6 @@ const PRODUCT_CONFIRMATION_MODE_OPTIONS = PRODUCT_CONFIRMATION_MODES.map((value)
 }));
 
 /**
- * The topics, from codegen, raw. Only two of them ask a family to link a game
- * account, so this select is how the invitation's reminder sentence is reached
- * at all — and the labels are the enum values because this form is developer
- * tooling and `minecraft_java` is the name whoever is testing it works with.
- */
-const PRODUCT_TOPIC_OPTIONS = Constants.public.Enums.product_topic.map((value) => ({
-  label: value,
-  value,
-}));
-
-/**
  * The zones a calendar document can be written in, default first.
  *
  * The product zones plus UTC, which is the calendar builder's own list — so a
@@ -441,7 +430,6 @@ function resolveProductConfirmationOptions(
       isSelfSeat: params.isSelfSeat,
       productName: params.productName,
       productType: params.productType,
-      productTopic: params.topic,
       // The column is NOT NULL, but the product writers coalesce a missing
       // description to an empty string, so a product with nothing to say here
       // is an ordinary stored state — and the composer skips the paragraph for
@@ -450,9 +438,10 @@ function resolveProductConfirmationOptions(
       shortDescription: noneOrText(params.shortDescription),
       timezone: params.timezone,
       startDate: optionalDate(params.startDate, "Start date"),
-      // The three fields with a real "none" state, and all three are text
-      // inputs — so the absence is a typed token rather than a cleared box.
-      // See `FORM_NONE_TOKEN` for why an empty one cannot carry it.
+      // Three more of the token fields, alongside the description above and the
+      // schedule below. Every one of them is a text input, so the absence is a
+      // typed word rather than a cleared box — see `FORM_NONE_TOKEN` for why an
+      // empty one cannot carry it.
       endDate: noneOrDate(params.endDate, "End date"),
       slots: parseInvitationSlots(params.slots),
       isRemote: params.isRemote === "yes",
@@ -460,7 +449,10 @@ function resolveProductConfirmationOptions(
       siteAddress: noneOrText(params.siteAddress),
       siteNote: noneOrText(params.siteNote),
       attendeeName: params.attendeeName,
-      attendeeEmail: requireEmail(params.attendeeEmail, "Attendee email"),
+      // Named for the *label* the admin is looking at, not for the property it
+      // becomes: the testing page shows a thrown message verbatim, and a
+      // refusal naming a field no form control carries sends them hunting.
+      attendeeEmail: requireEmail(params.attendeeEmail, "Parent email"),
       // The same link the mail's own button carries: the entry points a parent
       // at My SOG, which resolves for every seat, rather than at a seat page
       // that needs a group the seat may not have yet.
@@ -633,7 +625,6 @@ const productConfirmationParamsSchema = z.object({
   participationId: z.string(),
   attendeeName: z.string().min(1),
   attendeeEmail: z.string(),
-  topic: z.enum(Constants.public.Enums.product_topic),
   shortDescription: z.string(),
   timezone: z.string().refine((zone) => SUPPORTED_TIMEZONES.includes(zone), {
     message: "no VTIMEZONE is written for this zone",
@@ -1280,10 +1271,10 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
    * a schedule, a site, a note and a description in it — the render with the
    * most to look at. The mail this template sent *before* the invitation
    * existed — no session-times section, no attachment, no text body — is one
-   * word away: type `none` into the schedule field. Four fields take that
-   * token — the schedule, the end date, the site address and the site note —
-   * because a cleared text input posts its placeholder and so can never mean
-   * "none"; see `FORM_NONE_TOKEN`.
+   * word away: type `none` into the schedule field. Five fields take that
+   * token — the schedule, the end date, the site address, the site note and
+   * the short description — because a cleared text input posts its placeholder
+   * and so can never mean "none"; see `FORM_NONE_TOKEN`.
    */
   productConfirmation: defineResolvedTemplate({
     label: "Product Confirmation",
@@ -1351,12 +1342,6 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         placeholder: "The door on the north side. Ring the bell marked School of Gaming.",
       },
       {
-        key: "topic",
-        label: "Invite – Topic (two of them ask for a linked game account)",
-        type: "select",
-        options: PRODUCT_TOPIC_OPTIONS,
-      },
-      {
         key: "shortDescription",
         label: `Invite – The product's short description (\`${FORM_NONE_TOKEN}\` for a product left without one)`,
         placeholder: "Build, explore and survive together in a private world.",
@@ -1366,13 +1351,22 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         label: "Invite – Participation id (empty mints one per render)",
         placeholder: "",
       },
-      { key: "attendeeName", label: "Invite – Attendee name (the parent)", placeholder: "Marja Virtanen" },
+      {
+        // The labels say *parent* and then explain themselves, because "who is
+        // the attendee" is the one thing about this document that looks like an
+        // oversight from outside: the seat is a child's and the entry names the
+        // adult. A gamer's address is a synthetic internal one no mail can
+        // reach, and a client decides whether to show the RSVP by matching the
+        // attendee against the mailbox it is reading — so naming the child
+        // would invite a mailbox that does not exist and lose the RSVP with it.
+        key: "attendeeName",
+        label:
+          "Invite – Parent name (the attendee: a client shows RSVP only when the attendee matches the mailbox reading it, and the gamer has no mailbox)",
+        placeholder: "Marja Virtanen",
+      },
       {
         key: "attendeeEmail",
-        // A client decides whether to show the RSVP by matching the attendee
-        // against the mailbox it is reading, so a send whose attendee is
-        // somebody else renders as somebody else's invitation.
-        label: "Invite – Attendee email (use the address you send to)",
+        label: "Invite – Parent email (the attendee; use the address you send to)",
         placeholder: "marja@example.com",
       },
     ],

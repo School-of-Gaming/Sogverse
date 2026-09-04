@@ -2649,8 +2649,6 @@
         "whereOnline": "Tillfällena hålls online i Min SOG, och röstrummet öppnar {minutes} minuter innan varje tillfälle börjar.",
         "whereInPerson": "Tillfällena hålls på {site}.",
         "whereAddress": "Adress: {address}",
-        "gameAccount": "{participantName} behöver ett {game}-konto kopplat i Min SOG före det första tillfället.",
-        "gameAccountSelf": "Du behöver ett {game}-konto kopplat i Min SOG före det första tillfället.",
         "link": "Allt om den här anmälan finns i Min SOG: {url}",
         "questions": "Frågor? Skriv till {supportEmail}."
       },

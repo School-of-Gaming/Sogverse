@@ -2649,8 +2649,6 @@
         "whereOnline": "Les sessions ont lieu en ligne dans Mon SOG, et le salon vocal ouvre {minutes} minutes avant le début de chaque session.",
         "whereInPerson": "Les sessions ont lieu à {site}.",
         "whereAddress": "Adresse : {address}",
-        "gameAccount": "{participantName} doit avoir un compte {game} associé dans Mon SOG avant la première session.",
-        "gameAccountSelf": "Vous devez avoir un compte {game} associé dans Mon SOG avant la première session.",
         "link": "Tout sur cette inscription se trouve dans Mon SOG : {url}",
         "questions": "Une question ? Écrivez à {supportEmail}."
       },

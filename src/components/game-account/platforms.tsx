@@ -2,10 +2,7 @@
 
 import type { ReactElement } from "react";
 import { minecraftSkinBodyUrl, minecraftSkinFaceUrl } from "@/lib/mojang";
-import {
-  GAME_PLATFORM_NAMES,
-  type GamePlatform,
-} from "@/lib/constants/game-platforms";
+import type { GamePlatform } from "@/lib/constants/game-platforms";
 import { useVerifyMinecraft } from "@/services/minecraft";
 import { useVerifyRoblox } from "@/services/roblox";
 
@@ -368,7 +365,7 @@ export const GAME_PLATFORMS: Readonly<
 > = {
   minecraft: {
     platform: "minecraft",
-    name: GAME_PLATFORM_NAMES.minecraft,
+    name: "Minecraft",
     usernameExample: "Steve",
     avatar: {
       full: {
@@ -387,7 +384,7 @@ export const GAME_PLATFORMS: Readonly<
   },
   roblox: {
     platform: "roblox",
-    name: GAME_PLATFORM_NAMES.roblox,
+    name: "Roblox",
     usernameExample: "builderman",
     avatar: {
       full: {

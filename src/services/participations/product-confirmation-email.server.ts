@@ -155,7 +155,7 @@ async function send({
     client
       .from("products")
       .select(
-        "product_type, billing_mode, topic, timezone, start_date, end_date, is_remote, product_translations(locale, name, short_description)",
+        "product_type, billing_mode, timezone, start_date, end_date, is_remote, product_translations(locale, name, short_description)",
       )
       .eq("id", productId)
       // Embedded resources come back unordered, so a product without a
@@ -269,7 +269,6 @@ async function send({
             isSelfSeat,
             productName,
             productType: product.product_type,
-            productTopic: product.topic,
             shortDescription,
             timezone: product.timezone,
             startDate: product.start_date,

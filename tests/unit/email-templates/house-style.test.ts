@@ -151,7 +151,6 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     participationId: "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
     attendeeName: "Marja Virtanen",
     attendeeEmail: "marja@example.com",
-    topic: "minecraft_java",
     shortDescription: "Build, explore and survive together.",
     timezone: "Europe/Helsinki",
     startDate: calendarInvitationStartDate(),

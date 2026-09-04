@@ -42,7 +42,6 @@ const base: ProductConfirmationInvitationInput = {
   isSelfSeat: false,
   productName: "Minecraft 101",
   productType: "consumer_club",
-  productTopic: "minecraft_java",
   shortDescription: "Build, explore and survive together.",
   timezone: "Europe/Helsinki",
   startDate: "2027-01-04",
@@ -650,7 +649,12 @@ describe("what the entry's notes say", () => {
     );
   });
 
-  it("states the schedule in words, with the zone named", () => {
+  /**
+   * The schedule sentences are the *mail's*. A client draws the recurrence,
+   * the clock face and the zone from the properties themselves, so a second
+   * copy in the notes could only ever contradict what a later message changed.
+   */
+  it("states the schedule in words for the mail, and not in the entry", () => {
     const invitation = compose({
       slots: [
         { weekday: 0, startTime: "16:00", durationMinutes: 60 },
@@ -662,7 +666,26 @@ describe("what the entry's notes say", () => {
     expect(invitation!.scheduleLines.join("\n")).toContain(
       "Times are given in Finland time.",
     );
-    expect(description(invitation!.ics)).toContain("Every Monday and Wednesday");
+
+    const text = description(invitation!.ics);
+    expect(text).not.toContain("Every Monday and Wednesday");
+    expect(text).not.toContain("Finland time");
+    // The term's own dates go with it — the run's bounds are the `RRULE`'s
+    // `UNTIL` and the client's to render.
+    expect(text).not.toContain("From ");
+  });
+
+  /**
+   * News about what happens next goes stale where the mail it arrived in does
+   * not: a parent opening this entry in week six does not need to be told a
+   * group is coming. The mail's own "what happens next" bullet said it once,
+   * at the moment it was true.
+   */
+  it("leaves the placement sentence to the mail", () => {
+    expect(description(compose()!.ics)).not.toContain("group");
+    expect(
+      description(compose({ isSelfSeat: true, participantName: "Marja" })!.ics),
+    ).not.toContain("group");
   });
 
   /**
@@ -827,26 +850,6 @@ describe("what the entry's notes say", () => {
     expect(lines).toMatch(/From .+ to .+/);
   });
 
-  it("reminds a parent to link the game account the topic is about", () => {
-    expect(description(compose()!.ics)).toContain(
-      "Aino needs a Minecraft account linked in My SOG",
-    );
-    expect(
-      description(compose({ isSelfSeat: true, participantName: "Marja" })!.ics),
-    ).toContain("You need a Minecraft account linked in My SOG");
-  });
-
-  /**
-   * Most topics are about no single account a child holds — subject matter, or
-   * a game we store no identity for — so asking for one there would be asking
-   * for something that does not exist.
-   */
-  it("asks for no account where the topic is about none", () => {
-    expect(description(compose({ productTopic: "programming" })!.ics)).not.toContain(
-      "linked in My SOG",
-    );
-  });
-
   it("ends with the My SOG link and a way to reach a human", () => {
     const text = description(compose()!.ics);
 
@@ -942,18 +945,13 @@ describe("every locale composes a whole document", () => {
     // answered rather than English standing in for it.
     expect(translator("productConfirmation.invite.sectionLabel")).toBe(PINNED[locale]);
 
-    // Inside the document, because that is where a hardcoded locale at an
-    // `Intl` call site would show up and nowhere else.
+    // On the schedule line, because that is the only thing the four `Intl`
+    // call sites feed — the document itself states no weekday and no clock
+    // face in words, it states properties a client renders.
     const clock = CLOCK[locale];
-    if (clock !== undefined) {
-      expect(invitation!.scheduleLines[0]).toContain(clock);
-      expect(invitation!.ics).toContain(clock);
-    }
+    if (clock !== undefined) expect(invitation!.scheduleLines[0]).toContain(clock);
 
     const weekday = WEEKDAY[locale];
-    if (weekday !== undefined) {
-      expect(invitation!.scheduleLines[0]).toContain(weekday);
-      expect(invitation!.ics).toContain(weekday);
-    }
+    if (weekday !== undefined) expect(invitation!.scheduleLines[0]).toContain(weekday);
   });
 });

@@ -11,11 +11,9 @@ import {
   type InvitationRecurrence,
 } from "@/lib/calendar-invitations/invitation";
 import { SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
-import { GAME_PLATFORM_NAMES } from "@/lib/constants/game-platforms";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
-import { platformForTopic } from "@/lib/products/topics";
 import { formatDateOnly } from "@/lib/utils";
-import type { ProductTopic, ProductType } from "@/types";
+import type { ProductType } from "@/types";
 import type { EmailTranslator } from "./translator";
 
 /**
@@ -58,7 +56,6 @@ export interface ProductConfirmationInvitationInput {
   isSelfSeat: boolean;
   productName: string;
   productType: ProductType;
-  productTopic: ProductTopic;
   /** The product's own short description, in the reader's locale. */
   shortDescription: string | null;
   /** The IANA zone the product is authored in. */
@@ -101,12 +98,20 @@ export interface ProductConfirmationInvitation {
   ics: string;
   /**
    * The schedule in words: one line per distinct time, then the zone, then the
-   * dates. The mail's own "Session times" section states these same lines, so
-   * a parent reading the mail and a parent reading the calendar entry are given
-   * one answer rather than two.
+   * dates.
+   *
+   * **These are the mail's, not the document's.** The mail's "Session times"
+   * section is the only place they are stated — a calendar client draws the
+   * recurrence, the clock face and the zone from the properties themselves, so
+   * the entry's own notes say none of it and cannot fall out of step with what
+   * a later message changes. They are composed here because the schedule is
+   * resolved here and composing it twice is how the two would disagree.
    */
   scheduleLines: string[];
-  /** Where it happens — the same sentences, for the same reason. */
+  /**
+   * Where it happens — and these *are* in both, because nothing renders a site
+   * note or a voice-room window out of a `LOCATION` string.
+   */
   placeLines: string[];
 }
 
@@ -634,19 +639,38 @@ function locationOf(
  * calendar, weeks after the mail it arrived in has been archived.
  *
  * Plain text, in the reader's locale, paragraphs separated by blank lines — the
- * builder escapes it, so there is no markup here and none would survive. What
- * is deliberately absent is money and the age range: an entry in a calendar is
- * read by whoever the calendar is shared with, and neither is theirs.
+ * builder escapes it, so there is no markup here and none would survive. Five
+ * of them, in order: the mail's opening sentence, the product's own short
+ * description, where it happens, the My SOG link, and how to reach a human.
+ *
+ * **The schedule is deliberately not among them, and this is the one absence
+ * worth explaining.** Everything a schedule sentence would say — which days,
+ * what time, in which zone, between which dates — is already stated by the
+ * properties around it, and a calendar client renders *those*: it draws the
+ * recurrence in its own words, in the reader's own zone, and it keeps doing so
+ * when a later message moves the run. A sentence beside them would be a second
+ * copy that cannot be updated, so the first thing a client corrected would be
+ * the first thing the entry contradicted. The mail is the other case and keeps
+ * its schedule section: nothing renders an email's recurrence for a reader, so
+ * there the words are the only statement there is.
+ *
+ * **The placement sentence is out for the neighbouring reason**: it is news
+ * about what happens next, and news goes stale where the mail it arrived in
+ * does not. A parent opening this entry in week six does not need to be told a
+ * group is coming; the mail's own "what happens next" bullet said it once, at
+ * the moment it was true.
+ *
+ * What is absent for a third reason is money and the age range: an entry in a
+ * calendar is read by whoever the calendar is shared with, and neither is
+ * theirs.
  */
 function descriptionOf({
   t,
   input,
-  scheduleLines,
   placeLines,
 }: {
   t: EmailTranslator;
   input: ProductConfirmationInvitationInput;
-  scheduleLines: string[];
   placeLines: string[];
 }): string {
   const {
@@ -654,7 +678,6 @@ function descriptionOf({
     participantName,
     productName,
     productType,
-    productTopic,
     shortDescription,
     dashboardUrl,
   } = input;
@@ -672,28 +695,7 @@ function descriptionOf({
 
   if (shortDescription?.trim()) paragraphs.push(shortDescription.trim());
 
-  paragraphs.push(scheduleLines.join("\n"));
   if (placeLines.length > 0) paragraphs.push(placeLines.join("\n"));
-
-  paragraphs.push(
-    isSelfSeat
-      ? t("productConfirmation.next.placementSelf")
-      : t("productConfirmation.next.placement", { participantName }),
-  );
-
-  // Only where the product is about one game account a child actually holds.
-  // Most topics are about no single account — subject matter, or a game we
-  // store no identity for — and a reminder to link one there would be asking a
-  // parent for something that does not exist.
-  const platform = platformForTopic(productTopic);
-  if (platform !== null) {
-    const game = GAME_PLATFORM_NAMES[platform];
-    paragraphs.push(
-      isSelfSeat
-        ? t("productConfirmation.invite.gameAccountSelf", { game })
-        : t("productConfirmation.invite.gameAccount", { game, participantName }),
-    );
-  }
 
   // A sentence promising a link and carrying none is worse than no sentence,
   // and the builder omits a blank `URL` for the same reason — so the paragraph
@@ -814,7 +816,7 @@ export function composeProductConfirmationInvitation(
     },
 
     summary: summaryOf(t, input),
-    description: descriptionOf({ t, input, scheduleLines, placeLines }),
+    description: descriptionOf({ t, input, placeLines }),
     location: locationOf(t, input),
     url: input.dashboardUrl.trim(),
 
