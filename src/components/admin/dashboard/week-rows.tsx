@@ -62,52 +62,50 @@ export function WeekRows({
   });
 
   return (
-    <div className="space-y-3">
-      <ul className="space-y-1.5">
-        {rows.map((row) => (
-          <li
-            key={row.date}
-            className={cn(
-              "flex flex-col gap-2 rounded-lg border p-2 sm:flex-row sm:gap-3",
-              row.isToday
-                ? "border-primary/60 bg-primary/5"
-                : "border-border bg-card",
-            )}
-          >
-            <div className="flex shrink-0 items-baseline gap-2 px-1 sm:w-24 sm:flex-col sm:items-start sm:gap-0">
-              <span
-                className={cn(
-                  "text-sm font-semibold",
-                  row.isToday ? "text-primary" : "text-foreground",
-                )}
-              >
-                {row.label}
-              </span>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {formatDayMonth(row.date, locale)}
-              </span>
-            </div>
+    <ul className="space-y-1.5">
+      {rows.map((row) => (
+        <li
+          key={row.date}
+          className={cn(
+            "flex flex-col gap-2 rounded-lg border p-2 sm:flex-row sm:gap-3",
+            row.isToday
+              ? "border-primary/60 bg-primary/5"
+              : "border-border bg-card",
+          )}
+        >
+          <div className="flex shrink-0 items-baseline gap-2 px-1 sm:w-24 sm:flex-col sm:items-start sm:gap-0">
+            <span
+              className={cn(
+                "text-sm font-semibold",
+                row.isToday ? "text-primary" : "text-foreground",
+              )}
+            >
+              {row.label}
+            </span>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {formatDayMonth(row.date, locale)}
+            </span>
+          </div>
 
-            {row.chips.length === 0 ? (
-              // No placeholder and no reserved height: an empty Sunday is a fact
-              // about the week, and a ghost chip there would read as something
-              // that failed to load.
-              <p className="px-1 text-xs text-muted-foreground">
-                {t("nothingOn")}
-              </p>
-            ) : (
-              <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-                {row.chips.map((chip) => (
-                  <li key={chip.id}>
-                    <SessionChip chip={chip} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
+          {row.chips.length === 0 ? (
+            // No placeholder and no reserved height: an empty Sunday is a fact
+            // about the week, and a ghost chip there would read as something
+            // that failed to load.
+            <p className="px-1 text-xs text-muted-foreground">
+              {t("nothingOn")}
+            </p>
+          ) : (
+            <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+              {row.chips.map((chip) => (
+                <li key={chip.id}>
+                  <SessionChip chip={chip} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 

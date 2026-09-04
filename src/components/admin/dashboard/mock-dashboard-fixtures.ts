@@ -34,10 +34,10 @@ import { addCalendarDays, mondayOf, monthsAfter, weekdayOf } from "./calendar";
  *
  * **The schedule and the coming-up feed are resolved here, not in the body.** A
  * week's chips are the occurrences that actually fall in it — a term that has
- * not started, one that has ended and a club paused for syysloma all contribute
- * nothing — and the feed's cohorts are already grouped by date and type. That is
- * the same split the live page will want: the aggregation is a query's job, and
- * swapping this module for one is the whole of promotion.
+ * not started and one that has ended contribute nothing — and the feed's
+ * cohorts are already grouped by date and type. That is the same split the live
+ * page will want: the aggregation is a query's job, and swapping this module
+ * for one is the whole of promotion.
  */
 
 /**

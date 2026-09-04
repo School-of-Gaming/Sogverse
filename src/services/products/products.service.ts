@@ -525,9 +525,7 @@ export class ProductsService {
   // purchased layout for the latter — both branches need the row, so there are
   // deliberately no listing or status filters here. Returns null on miss so the
   // page can render a clean "not found" state.
-  async getDetailById(
-    id: string,
-  ): Promise<ProductDetailRow | null> {
+  async getDetailById(id: string): Promise<ProductDetailRow | null> {
     const { data, error } = await buildProductDetailQuery(this.supabase, id);
 
     if (error) throw error;

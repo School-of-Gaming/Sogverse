@@ -115,9 +115,9 @@ export const POST = defineRoute({
       p_prices: body.prices,
       // Wipe-and-replace: the RPC hands this straight to the requirement set's
       // single writer, so an empty array clears the conditions and a populated
-      // one replaces them. Never `?? undefined` — an
-      // omission here would be indistinguishable from "requires nothing", and
-      // the contract demands the field precisely so it cannot be one.
+      // one replaces them. Never `?? undefined` — an omission here would be
+      // indistinguishable from "requires nothing", and the contract demands the
+      // field precisely so it cannot be one.
       p_required_consent_slugs: body.required_consent_slugs,
       // null (unknown/none) maps to undefined so the RPC's DEFAULT NULL clears
       // the column; 0 (volunteer) survives `??` since it's not nullish.

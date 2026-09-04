@@ -458,15 +458,14 @@ function resolveWeeks({
  * **The day at each end is the price of two calendars.** This window is measured
  * from the *viewer's* today, while every product's own occurrence window is
  * measured from today in the *product's* zone, which the walk above mirrors.
- * The two agree for most of the day and
- * disagree across whichever midnight comes first: an LA admin reading a Helsinki
- * club is a calendar date behind it for seven hours out of every twenty-four.
- * On those hours a boundary week can be offered whose first or last day lies
- * outside the product's window, so its sessions are simply missing — the exact
- * half-covered week the whole-weeks bound exists to refuse. Shrinking by one day
- * at each end covers the largest gap the two calendars can open (a day) and
- * costs at most one week of navigation at each extreme, which is a range nobody
- * is reading anyway.
+ * The two agree for most of the day and disagree across whichever midnight
+ * comes first: an LA admin reading a Helsinki club is a calendar date behind it
+ * for seven hours out of every twenty-four. On those hours a boundary week can
+ * be offered whose first or last day lies outside the product's window, so its
+ * sessions are simply missing — the exact half-covered week the whole-weeks
+ * bound exists to refuse. Shrinking by one day at each end covers the largest
+ * gap the two calendars can open (a day) and costs at most one week of
+ * navigation at each extreme, which is a range nobody is reading anyway.
  *
  * **The day comes off `today`, not off the far edge**, and the two are not the
  * same date. Adding four months clamps to the end of the target month, so a
@@ -516,9 +515,8 @@ interface Occurrence {
  *
  * The walk is in the product's zone because that is the zone its term dates and
  * its slot weekdays are authored in — a term that ends on the 13th ends on the
- * 13th there, whoever is reading. Conversion happens one
- * step later, per occurrence, once there is a concrete date to hang a clock
- * face on.
+ * 13th there, whoever is reading. Conversion happens one step later, per
+ * occurrence, once there is a concrete date to hang a clock face on.
  */
 function* productOccurrences(
   product: AdminDashboardScheduleProduct,
