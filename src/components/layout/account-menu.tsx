@@ -828,8 +828,13 @@ function AccountRowItem({
           out of the row entirely. */}
       <span className="flex min-w-0 flex-col">
         <span className="truncate">{member.first_name}</span>
+        {/* The note wraps rather than truncates: the sentence is the only
+            thing that explains why the row does nothing, and a cut-off
+            explanation explains nothing. The row's height is fixed at snapshot
+            time (see `SwitchRow` and `openedWith`), so a second line moves
+            nothing after the panel is open. */}
         {unreachable && (
-          <span className="truncate text-xs text-muted-foreground">
+          <span className="whitespace-normal break-words text-xs leading-snug text-muted-foreground">
             {unreachableNote}
           </span>
         )}
