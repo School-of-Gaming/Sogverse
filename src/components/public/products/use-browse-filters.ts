@@ -8,7 +8,7 @@ import type { ProductFormat } from "./filter-products";
 import {
   isAudienceFilterValue,
   type AudienceFilterValue,
-} from "./product-audience";
+} from "@/lib/products/product-audience";
 import { isProductTag, type ProductTag } from "./product-tag";
 import {
   isSpokenLanguageCode,

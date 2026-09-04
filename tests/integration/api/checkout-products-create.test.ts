@@ -203,10 +203,23 @@ type AdminMockOptions = {
   productErr?: { message: string } | null;
   /** Gamer profile returned for the subscription-description lookup. */
   gamer?: { first_name: string | null } | null;
+  /**
+   * The product's schedule rows, for the one case that is about the calendar
+   * file. Empty by default — see the note on the read below.
+   */
+  scheduleSlots?: { weekday: number; start_time: string; duration_minutes: number }[];
+  /**
+   * The child's own contact columns, which decide whether they get a copy of
+   * the confirmation. Absent by default: a gamer created the ordinary way
+   * signs in by switching from the parent and holds no mailbox at all.
+   */
+  gamerContact?: { email: string | null; locale: string | null; sign_in: string } | null;
 };
 
 function mockAdmin(opts: AdminMockOptions = {}): void {
   const gamer = opts.gamer ?? { first_name: GAMER_FIRST_NAME };
+  const scheduleSlots = opts.scheduleSlots ?? [];
+  const gamerContact = opts.gamerContact ?? null;
 
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "products") {
@@ -231,6 +244,20 @@ function mockAdmin(opts: AdminMockOptions = {}): void {
                   ),
               };
             },
+            // The confirmation mail's second read: the schedule and the site
+            // its calendar invitation would be composed from. No `.order`,
+            // because nothing embedded there is locale-keyed.
+            //
+            // **No slots, deliberately.** What this file covers about that mail
+            // is who receives it and in what voice; the calendar it composes for
+            // a product that *has* a schedule is the composer suite's subject,
+            // and a fixture schedule here would put a document nobody asserts on
+            // into every one of these renders.
+            single: () =>
+              Promise.resolve({
+                data: { schedule_slots: scheduleSlots, locations: null },
+                error: null,
+              }),
           }),
         }),
       };
@@ -251,14 +278,20 @@ function mockAdmin(opts: AdminMockOptions = {}): void {
                 {
                   id: CUSTOMER_ID,
                   first_name: "Marja",
+                  last_name: "Virtanen",
                   email: "parent@example.test",
                   locale: "en",
+                  gamer_profiles: null,
                 },
                 {
                   id: GAMER_ID,
                   first_name: gamer.first_name ?? GAMER_FIRST_NAME,
-                  email: null,
-                  locale: null,
+                  last_name: "Virtanen",
+                  email: gamerContact?.email ?? null,
+                  locale: gamerContact?.locale ?? null,
+                  gamer_profiles: gamerContact
+                    ? { sign_in: gamerContact.sign_in }
+                    : { sign_in: "parent" },
                 },
               ],
               error: null,
@@ -1805,12 +1838,15 @@ describe("POST /api/checkout/products/create", () => {
       await settleDeferred();
       expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
       const sent = mockSendTransactionalEmail.mock.calls[0][0];
-      // The payer's inbox, not the child's — a gamer account's address is the
-      // synthetic one nobody reads.
+      // The payer's inbox, and only the payer's: the fixture child signs in by
+      // switching from the parent, so their profile address is the synthetic
+      // handle no inbox answers and no copy is composed for them. The child who
+      // does hold a mailbox is two tests below.
       expect(sent.toEmail).toBe("parent@example.test");
       expect(sent.replyToEmail).toBe("help@sog.gg");
       expect(sent.subject).toContain(GAMER_FIRST_NAME);
-      expect(sent.htmlContent).toContain("Price: Free");
+      expect(sent.htmlContent).toContain(">Price</td>");
+      expect(sent.htmlContent).toContain("Free");
       // The trusted origin — here the localhost the request really came from,
       // which `getOrigin` accepts outside production.
       expect(sent.htmlContent).toContain("http://localhost:3000/parent");
@@ -1870,8 +1906,8 @@ describe("POST /api/checkout/products/create", () => {
       expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
       const sent = mockSendTransactionalEmail.mock.calls[0][0];
       expect(sent.toEmail).toBe("parent@example.test");
-      expect(sent.htmlContent).toContain("Price: Paid for by your municipality");
-      expect(sent.htmlContent).not.toContain("Price: Free");
+      expect(sent.htmlContent).toContain("Paid for by your municipality");
+      expect(sent.htmlContent).not.toContain(">Free<");
       expect(sent.htmlContent).not.toContain("nothing to pay for this one");
     });
 
@@ -1899,6 +1935,82 @@ describe("POST /api/checkout/products/create", () => {
       const { subject } = mockSendTransactionalEmail.mock.calls[0][0];
       expect(subject).toContain("You are");
       expect(subject).not.toContain(GAMER_FIRST_NAME);
+    });
+
+    /**
+     * **The child's copy, and the file both copies carry.** A gamer whose
+     * sign-in is their own email address receives their own render beside the
+     * parent's, and the calendar entry goes in it: a child with a mailbox has a
+     * calendar, and the sessions in it are theirs. It is one calendar object —
+     * the identifier is the seat's — addressed to each reader in turn, which is
+     * what lets a client offer each of them the RSVP.
+     *
+     * This is the one test in the file that gives the product a schedule; every
+     * other render here is about who receives the mail and in what voice, and a
+     * fixture schedule would drag a document nobody asserts on into all of them.
+     */
+    it("mails the child their own copy, with the same invite.ics and no price", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({
+        product: FREE_CLUB,
+        scheduleSlots: [{ weekday: 0, start_time: "16:00:00", duration_minutes: 60 }],
+        gamerContact: { email: "aino@example.test", locale: "en", sign_in: "email" },
+      });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+
+      const res = await POST(freeSignupRequest());
+
+      expect(res.status).toBe(200);
+      await settleDeferred();
+      expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(2);
+      const [parent, child] = mockSendTransactionalEmail.mock.calls.map(([options]) => options);
+
+      // The parent's, unchanged: their address, their root, the price row.
+      expect(parent.toEmail).toBe("parent@example.test");
+      expect(parent.htmlContent).toContain("http://localhost:3000/parent");
+      expect(parent.htmlContent).toContain(">Price</td>");
+
+      // The child's: their own address, their own root, no price at all.
+      expect(child.toEmail).toBe("aino@example.test");
+      expect(child.htmlContent).toContain("http://localhost:3000/gamer");
+      expect(child.htmlContent).not.toContain("/parent");
+      expect(child.htmlContent).not.toContain(">Price</td>");
+      expect(child.replyToEmail).toBe("help@sog.gg");
+
+      // One calendar object, in both inboxes, under the seat's own identifier —
+      // and each document naming its own reader as the attendee.
+      for (const sent of [parent, child]) {
+        expect(sent.attachments?.[0].name).toBe("invite.ics");
+        expect(sent.attachments?.[0].text).toContain(`UID:${PARTICIPATION_ID}@sogverse`);
+      }
+      expect(parent.attachments[0].text).toContain("parent@example.test");
+      expect(child.attachments[0].text).toContain("aino@example.test");
+      expect(child.attachments[0].text).not.toContain("parent@example.test");
+    });
+
+    it("mails the parent alone for a child who signs in with a username", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({
+        product: FREE_EVENT,
+        gamerContact: {
+          email: "aino@gamer.sogverse.internal",
+          locale: null,
+          sign_in: "username",
+        },
+      });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+
+      await POST(freeSignupRequest());
+      await settleDeferred();
+
+      expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendTransactionalEmail.mock.calls[0][0].toEmail).toBe("parent@example.test");
     });
 
     it("sends nothing when the product is full", async () => {

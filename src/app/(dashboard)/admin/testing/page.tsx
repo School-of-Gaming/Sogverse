@@ -21,10 +21,9 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/providers";
-import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { useLanguageNames } from "@/hooks/use-language-names";
-import { cn, findOption } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   templateRegistry,
   type TemplateDefinition,
@@ -32,11 +31,6 @@ import {
 } from "@/lib/email-templates/registry";
 import type { RenderedAttachment } from "@/lib/email-templates/attachments";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
-
-const EMAIL_PROVIDERS = ["brevo", "klaviyo"] as const;
-type EmailProvider = (typeof EMAIL_PROVIDERS)[number];
-const EMAIL_MODES = ["custom", "template"] as const;
-type EmailMode = (typeof EMAIL_MODES)[number];
 
 /**
  * The two viewports the preview frame can be given.
@@ -79,8 +73,14 @@ const selectClass =
 
 /**
  * What an untouched field posts: a select its first option, a text input its
- * placeholder — and a textarea whatever it holds, empty included, so its
- * placeholder can be a hint and an empty value can mean "none".
+ * placeholder — and a textarea whatever it holds, empty included.
+ *
+ * The placeholder fallback is what makes an untouched form compose a whole
+ * mail rather than a stripped one, and it is also why a text input can never
+ * be *emptied*: clearing the box posts the placeholder again. A field with a
+ * real "none" state therefore takes a typed token instead of a blank, and says
+ * so in its own label — see `FORM_NONE_TOKEN` in `form-fields.ts`. Only a
+ * textarea can let an empty value mean "none".
  */
 function fieldValue(field: TemplateField, typed: string | undefined): string {
   switch (field.type) {
@@ -119,18 +119,10 @@ export default function TestingPage() {
   const c = useTranslations('common');
   const { profile } = useAuth();
 
-  const [mode, setMode] = useState<EmailMode>("template");
-  const [provider, setProvider] = useState<EmailProvider>("brevo");
   const [toEmail, setToEmail] = useState(profile?.email ?? "");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<EmailResult | null>(null);
 
-  // Custom mode state
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
-  const [replyToEmail, setReplyToEmail] = useState("");
-
-  // Template mode state
   const templateKeys = Object.keys(templateRegistry);
   const [templateName, setTemplateName] = useState(templateKeys[0]);
   const [templateParams, setTemplateParams] = useState<Record<string, string>>({});
@@ -215,11 +207,6 @@ export default function TestingPage() {
     })();
   }
 
-  function handleModeChange(newMode: EmailMode) {
-    setMode(newMode);
-    setResult(null);
-  }
-
   function handleTemplateChange(name: string) {
     setTemplateName(name);
     setTemplateParams({});
@@ -236,34 +223,16 @@ export default function TestingPage() {
     setResult(null);
 
     try {
-      let response: Response;
-
-      if (mode === "custom") {
-        response = await fetch("/api/admin/send-test-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mode: "custom",
-            provider,
-            toEmail,
-            subject,
-            body,
-            ...(replyToEmail && { replyToEmail }),
-          }),
-        });
-      } else {
-        response = await fetch("/api/admin/send-test-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mode: "template",
-            template: templateName,
-            toEmail,
-            locale: templateLocale,
-            params: templateApiParams(selectedTemplate, templateParams),
-          }),
-        });
-      }
+      const response = await fetch("/api/admin/send-test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          template: templateName,
+          toEmail,
+          locale: templateLocale,
+          params: templateApiParams(selectedTemplate, templateParams),
+        }),
+      });
 
       const data = await response.json();
 
@@ -304,192 +273,104 @@ export default function TestingPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Provider + Mode */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label={t('provider')} htmlFor="provider">
+            {/* What a send is addressed by, in one row: who it goes to, which
+                language it is composed in, and which mail it is. There is no
+                mode and no provider to pick — the harness sends registered
+                templates through Brevo, which is every mail the product can
+                produce — so the three answers a send actually needs sit
+                together above the parameters of whichever template is chosen.
+                Three columns on a desktop, an ordinary stack below `md`. */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Field label={t('toEmail')} htmlFor="toEmail">
+                <Input
+                  id="toEmail"
+                  type="text"
+                  required
+                  value={toEmail}
+                  onChange={(e) => setToEmail(e.target.value)}
+                  placeholder={t('toEmailPlaceholder')}
+                />
+              </Field>
+              <Field label={t('language')} htmlFor="templateLocale">
                 <select
-                  id="provider"
-                  value={provider}
+                  id="templateLocale"
+                  value={templateLocale}
                   onChange={(e) => {
-                    const value = findOption(EMAIL_PROVIDERS, e.target.value);
-                    if (value) setProvider(value);
+                    if (isSupportedLocale(e.target.value)) {
+                      setTemplateLocale(e.target.value);
+                    }
                   }}
                   className={selectClass}
                 >
-                  <option value="brevo">{t('brevo')}</option>
-                  <option value="klaviyo" disabled>
-                    {t('klaviyoComingSoon')}
-                  </option>
+                  {SUPPORTED_LOCALES.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {LOCALE_CONFIG[opt].nativeLabel} ({languageName(opt, LOCALE_CONFIG[opt].label)})
+                    </option>
+                  ))}
                 </select>
               </Field>
-              <Field label={t('content')} htmlFor="mode">
+              <Field label={t('template')} htmlFor="template">
                 <select
-                  id="mode"
-                  value={mode}
-                  onChange={(e) => {
-                    const value = findOption(EMAIL_MODES, e.target.value);
-                    if (value) handleModeChange(value);
-                  }}
+                  id="template"
+                  value={templateName}
+                  onChange={(e) => handleTemplateChange(e.target.value)}
                   className={selectClass}
                 >
-                  <option value="template">{t('template')}</option>
-                  <option value="custom">{t('custom')}</option>
+                  {Object.entries(templateRegistry).map(([key, def]) => (
+                    <option key={key} value={key}>
+                      {def.label}
+                    </option>
+                  ))}
                 </select>
               </Field>
             </div>
 
-            {/* To Email */}
-            <Field label={t('toEmail')} htmlFor="toEmail">
-              <Input
-                id="toEmail"
-                type="text"
-                required
-                value={toEmail}
-                onChange={(e) => setToEmail(e.target.value)}
-                placeholder={t('toEmailPlaceholder')}
-              />
-            </Field>
-
-            {/* Template mode fields */}
-            {mode === "template" && (
-              <>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label={t('template')} htmlFor="template">
-                    <select
-                      id="template"
-                      value={templateName}
-                      onChange={(e) => handleTemplateChange(e.target.value)}
-                      className={selectClass}
-                    >
-                      {Object.entries(templateRegistry).map(([key, def]) => (
-                        <option key={key} value={key}>
-                          {def.label}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field label={t('language')} htmlFor="templateLocale">
-                    <select
-                      id="templateLocale"
-                      value={templateLocale}
-                      onChange={(e) => {
-                        if (isSupportedLocale(e.target.value)) {
-                          setTemplateLocale(e.target.value);
-                        }
-                      }}
-                      className={selectClass}
-                    >
-                      {SUPPORTED_LOCALES.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {LOCALE_CONFIG[opt].nativeLabel} ({languageName(opt, LOCALE_CONFIG[opt].label)})
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                </div>
-
-                {/* A template with no parameters gets no panel: an empty bordered
-                    box under a "parameters" heading reads as a form that failed
-                    to load, rather than as a template that takes none. */}
-                {selectedTemplate.fields.length > 0 && (
-                  <div className="space-y-3 rounded-md border border-border p-4">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      {t('templateParameters')}
-                    </p>
-                    {selectedTemplate.fields.map((field) => (
-                      <Field
-                        key={field.key}
-                        label={field.label}
-                        htmlFor={`param-${field.key}`}
+            {/* A template with no parameters gets no panel: an empty bordered
+                box under a "parameters" heading reads as a form that failed
+                to load, rather than as a template that takes none. */}
+            {selectedTemplate.fields.length > 0 && (
+              <div className="space-y-3 rounded-md border border-border p-4">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  {t('templateParameters')}
+                </p>
+                {selectedTemplate.fields.map((field) => (
+                  <Field
+                    key={field.key}
+                    label={field.label}
+                    htmlFor={`param-${field.key}`}
+                  >
+                    {field.type === "select" ? (
+                      <select
+                        id={`param-${field.key}`}
+                        value={templateParams[field.key] ?? field.options[0].value}
+                        onChange={(e) => updateParam(field.key, e.target.value)}
+                        className={selectClass}
                       >
-                        {field.type === "select" ? (
-                          <select
-                            id={`param-${field.key}`}
-                            value={templateParams[field.key] ?? field.options[0].value}
-                            onChange={(e) => updateParam(field.key, e.target.value)}
-                            className={selectClass}
-                          >
-                            {field.options.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        ) : field.type === "textarea" ? (
-                          <Textarea
-                            id={`param-${field.key}`}
-                            rows={10}
-                            value={templateParams[field.key] ?? ""}
-                            onChange={(e) => updateParam(field.key, e.target.value)}
-                            placeholder={field.placeholder}
-                          />
-                        ) : (
-                          <Input
-                            id={`param-${field.key}`}
-                            value={templateParams[field.key] ?? ""}
-                            onChange={(e) => updateParam(field.key, e.target.value)}
-                            placeholder={field.placeholder}
-                          />
-                        )}
-                      </Field>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Custom mode fields */}
-            {mode === "custom" && (
-              <>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label={t('fromEmail')} htmlFor="fromEmail">
-                    <Input
-                      id="fromEmail"
-                      type="email"
-                      value={SENDER_EMAIL}
-                      disabled
-                    />
+                        {field.options.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : field.type === "textarea" ? (
+                      <Textarea
+                        id={`param-${field.key}`}
+                        rows={10}
+                        value={templateParams[field.key] ?? ""}
+                        onChange={(e) => updateParam(field.key, e.target.value)}
+                        placeholder={field.placeholder}
+                      />
+                    ) : (
+                      <Input
+                        id={`param-${field.key}`}
+                        value={templateParams[field.key] ?? ""}
+                        onChange={(e) => updateParam(field.key, e.target.value)}
+                        placeholder={field.placeholder}
+                      />
+                    )}
                   </Field>
-                  <Field label={t('fromName')} htmlFor="fromName">
-                    <Input
-                      id="fromName"
-                      value={SENDER_NAME}
-                      disabled
-                    />
-                  </Field>
-                </div>
-
-                <Field label={t('subject')} htmlFor="subject">
-                  <Input
-                    id="subject"
-                    required
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    placeholder={t('subjectPlaceholder')}
-                  />
-                </Field>
-
-                <Field label={t('body')} htmlFor="body">
-                  <Textarea
-                    id="body"
-                    required
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    placeholder={t('bodyPlaceholder')}
-                    rows={5}
-                  />
-                </Field>
-
-                <Field label={t('replyTo')} htmlFor="replyToEmail" optional>
-                  <Input
-                    id="replyToEmail"
-                    type="email"
-                    value={replyToEmail}
-                    onChange={(e) => setReplyToEmail(e.target.value)}
-                    placeholder={t('replyToPlaceholder')}
-                  />
-                </Field>
-              </>
+                ))}
+              </div>
             )}
 
             {/* Result banner, and under it what the send actually carried. The
@@ -525,21 +406,14 @@ export default function TestingPage() {
             {/* The action row, authored DOM-order [secondary…, affirmative]:
                 the send is the answer this form exists to give, so it is the
                 last child — rightmost in a row, and topmost once the row
-                stacks. The preview button is template-mode only, exactly as
-                the preview always was: free-form mode's body is the typed
-                text with its line breaks, which the textarea above already
-                shows, while a registered template is the case where what you
-                asked for and what arrives are two different documents. One
-                button, not one per viewport: the dialog carries its own
-                desktop/mobile toggle, so a second opener would only duplicate
-                it. */}
+                stacks. One preview button, not one per viewport: the dialog
+                carries its own desktop/mobile toggle, so a second opener would
+                only duplicate it. */}
             <div className="flex flex-col-reverse gap-2 sm:flex-row">
-              {mode === "template" && (
-                <Button type="button" variant="outline" onClick={openPreview}>
-                  <MonitorPlay />
-                  {t('preview')}
-                </Button>
-              )}
+              <Button type="button" variant="outline" onClick={openPreview}>
+                <MonitorPlay />
+                {t('preview')}
+              </Button>
               <Button type="submit" disabled={sending}>
                 {sending ? c('sending') : t('sendTestEmail')}
               </Button>

@@ -1151,41 +1151,61 @@ supported UI locale needs none — English is the default. **Nor does an
 English-speaking country**: `en` is the default label language, so a UK entry with `i18n`
 would be the same words written twice.
 
+**A country is in `SUPPORTED_COUNTRIES` only once its rows are seeded, and there is no
+flag saying which entries are real.** The list held speculative entries once — a declared
+hierarchy with nothing beneath it, marked `seeded: false` — and the cost was a shape
+nobody could see: an admin could region-lock a product to a country no family's stored
+location could ever match, every reader had to remember which of the two lists it wanted,
+and the speculation was wrong anyway. So the flag is gone, the unseeded entries with it,
+and the one list is the answer to every question about which countries we operate in.
+
 **A country's level labels are the words that country uses, not the words that make its
-shape look like another country's.** The UK's speculative entry read Nation → City →
-Borough until it was seeded, which is how the UK looks from outside and not how it is
+shape look like another country's.** The UK's entry read Nation → City → Borough for as
+long as it was speculation, which is how the UK looks from outside and not how it is
 governed: there is no administrative city level, and "borough" is one of several words
 for the same rung (Scotland has council areas, Wales principal areas, Northern Ireland
 districts, England a mixture of counties, unitaries and metropolitan boroughs). "Local
 Authority" is the term that covers all four nations and the one a parent reads on a
 council letter. The anchor tripwire is what forced the question — the entry anchored at
-`district`, and every seeded country must anchor at `municipality`.
+`district`, and every country in the list must anchor at `municipality`. That story is the
+reason speculative entries are not kept: a sketch of a country nobody has seeded is a
+sketch nothing checks.
 
-Adding a country end to end is now three things: hierarchy config, an ingestion config
-entry whose generated seed migration supplies its rows, and the country's list of IANA
-timezones. It appears in the picker, in search and in coverage the moment its rows exist —
-there is no asset to generate, no loader arm to add, and no bundle-size judgement call
-about whether it is small enough to ship.
+Adding a country end to end is four things in one change: hierarchy config, an ingestion
+config entry whose generated seed migration supplies its rows, the country's list of IANA
+timezones, and the calendar invitation's `VTIMEZONE` transition rules for those zones. All
+four are held together — the compiler refuses a missing timezone list and a zone with no
+transition rules, and unit tests hold the hierarchy config and the ingestion config to the
+same set of countries in both directions. The country appears in the picker, in search and
+in coverage the moment its rows exist — there is no asset to generate, no loader arm to
+add, and no bundle-size judgement call about whether it is small enough to ship.
 
 **The timezone list is a required field on the country entry, and that is the whole
 mechanism.** It is a non-empty tuple, so a new country that forgets it does not compile;
-the admin product form's timezone dropdown is derived from the *seeded* countries' lists
-flattened and deduped (`PRODUCT_TIMEZONES`, with `DEFAULT_PRODUCT_TIMEZONE` leading), so
-seeding a country widens the dropdown on the same commit and the two facts cannot drift.
-**Country↔timezone is not 1:1**, which is why the field is a list rather than one string:
-a country spanning several zones names all of them, primary first, and the primary is the
-one an admin should read as that country's ordinary answer. An unseeded country's list is
-allowed to be representative rather than complete — nothing offers it yet — and the day it
-is seeded, filling in the rest is part of the same work the anchor tripwire already forces.
+the admin product form's timezone dropdown is those lists flattened and deduped
+(`PRODUCT_TIMEZONES`, with `DEFAULT_PRODUCT_TIMEZONE` leading), so adding a country widens
+the dropdown on the same commit and the two facts cannot drift. **Country↔timezone is not
+1:1**, which is why the field is a list rather than one string: a country spanning several
+zones names all of them, primary first, and the primary is the one an admin should read as
+that country's ordinary answer. A country's list is complete or it is wrong — there is no
+"representative" list any more, because there is no unseeded entry for one to belong to.
 
-**Un-seeding a country is therefore not a harmless config edit.** The admin product form
-offers the seeded countries' zones and the products contract refines the stored zone
-against that same list, so dropping a country — or removing one zone from its list —
-makes every existing product sitting in that zone unsavable through the form until its
-zone is changed: the form still shows the stored zone as an extra option so the admin can
-see what the row holds, and the save is refused loudly with the contract's message rather
-than silently rewriting the product into a zone nobody chose. Retire or re-zone a
-country's products before removing it, or leave its zones listed.
+**The same tuples are also the type of a product zone.** `ProductTimezone` is the union of
+every zone any entry declares, and the calendar invitation's hand-written `VTIMEZONE`
+table is a total `Record` over it — so a zone added here does not build until its
+transition rules are written, and a rule for a zone no country declares does not build
+either. That is a real constraint on adding a country, not a formality: the rules are the
+transition dates and offsets the zone actually follows, and getting one wrong moves every
+session in a mailed calendar by an hour.
+
+**Removing a country is therefore not a harmless config edit.** The admin product form
+offers these zones and the products contract refines the stored zone against the same
+list, so dropping a country — or removing one zone from its list — makes every existing
+product sitting in that zone unsavable through the form until its zone is changed: the
+form still shows the stored zone as an extra option so the admin can see what the row
+holds, and the save is refused loudly with the contract's message rather than silently
+rewriting the product into a zone nobody chose. Retire or re-zone a country's products
+before removing it, or leave its zones listed.
 
 ## Localized display names (`name_i18n`)
 

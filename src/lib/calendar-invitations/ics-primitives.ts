@@ -1,4 +1,8 @@
 import { formatInTimeZone } from "date-fns-tz";
+import {
+  PRODUCT_TIMEZONES,
+  type ProductTimezone,
+} from "@/lib/constants/location-hierarchies";
 
 /**
  * The hard parts of RFC 5545, and nothing else.
@@ -12,11 +16,12 @@ import { formatInTimeZone } from "date-fns-tz";
  *
  * **`VTIMEZONE` is a hand-written table, not a transition database.** Emitting a
  * correct block for an arbitrary IANA zone means shipping the whole of tzdata;
- * what is here instead is one block per zone the explorer offers, each written
- * from the rule the zone actually follows. Anything else still gets its `TZID`
- * reference plus a note saying no rules travel with it — clients generally
- * resolve a well-known TZID from their own database, so the reference alone is
- * usually enough, and *usually* is exactly why the note exists.
+ * what is here instead is one block per zone **a product can be authored in**,
+ * each written from the rule the zone actually follows. A stored zone outside
+ * that set still gets its `TZID` reference plus a note saying no rules travel
+ * with it — clients generally resolve a well-known TZID from their own
+ * database, so the reference alone is usually enough, and *usually* is exactly
+ * why the note exists.
  */
 
 export const ICS_PRODID = "-//School of Gaming//Sogverse//EN";
@@ -147,20 +152,29 @@ interface ZoneRule {
 /**
  * The zones this module can describe in full, and the rule each one follows.
  *
- * Four of the five are the **one** European rule seen from four offsets: the
- * switch happens at 01:00 UTC on the last Sunday of March and again on the last
- * Sunday of October, so each zone's local wall clock for it is 01:00 plus
- * whatever offset it is standing in at the time. That is why London switches at
- * 01:00 local, Paris and Stockholm at 02:00, and Helsinki at 03:00, and why the
- * autumn clock is one hour later in each — it is read in the summer offset.
+ * **The key set is exactly the zones a product can be authored in, and the
+ * compiler is what holds it there.** `ProductTimezone` is the admin form's own
+ * list, so a zone added to a seeded country does not build until its transition
+ * rules are written here, and a rule for a zone no seeded country declares does
+ * not build either — the table cannot drift from the picker in either
+ * direction, which is the whole reason it is typed rather than listed. (The
+ * runtime half of the same statement is a unit test, because a `Record` type
+ * cannot stop a computed key.)
  *
- * New York is the fifth and it is a genuinely different rule, which is the
- * point of having it here: the second Sunday of March and the first Sunday of
- * November, both at 02:00 *local*, so the two hemispherically-shaped ends of
- * the year land on dates no European zone shares. A document that only ever
- * described the EU rule could not show a client getting a US transition wrong.
+ * All four are the **one** European rule seen from four offsets: the switch
+ * happens at 01:00 UTC on the last Sunday of March and again on the last Sunday
+ * of October, so each zone's local wall clock for it is 01:00 plus whatever
+ * offset it is standing in at the time. That is why London switches at 01:00
+ * local, Paris and Stockholm at 02:00, and Helsinki at 03:00, and why the
+ * autumn clock is one hour later in each — it is read in the summer offset.
+ * They agree today because everywhere we operate is in the EU rule; a zone with
+ * a different rule joins this table by its country being seeded, not by being
+ * interesting.
+ *
+ * UTC is deliberately not here and is not a product zone: it is the builder's
+ * absolute-instant exception, a zone with no transitions to describe.
  */
-const ZONE_RULES: Record<string, [daylight: ZoneRule, standard: ZoneRule] | undefined> = {
+const ZONE_RULES: Record<ProductTimezone, [daylight: ZoneRule, standard: ZoneRule]> = {
   "Europe/Helsinki": [
     {
       from: "+0200",
@@ -225,34 +239,46 @@ const ZONE_RULES: Record<string, [daylight: ZoneRule, standard: ZoneRule] | unde
       rule: "FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU",
     },
   ],
-  "America/New_York": [
-    {
-      from: "-0500",
-      to: "-0400",
-      name: "EDT",
-      start: "19700308T020000",
-      rule: "FREQ=YEARLY;BYMONTH=3;BYDAY=2SU",
-    },
-    {
-      from: "-0400",
-      to: "-0500",
-      name: "EST",
-      start: "19701101T020000",
-      rule: "FREQ=YEARLY;BYMONTH=11;BYDAY=1SU",
-    },
-  ],
 };
 
 /**
- * Every zone the explorer offers: the five with rules, and UTC.
+ * The same table, reachable by a string that may not be a product zone.
  *
- * Derived from the table rather than listed beside it, so a zone gains its form
- * field by gaining its transition rules and never the other way round — a
- * selectable zone with no block is the one combination that would put an
- * unexplained note in front of the reader.
+ * `ZONE_RULES` is keyed by the union on purpose — that is what makes the table
+ * and the picker move together — but `zoneBlock` is handed whatever a stored
+ * `products.timezone` holds, which is a text column and may name a zone the
+ * form no longer offers. A `Map` answers `undefined` for those without a cast
+ * and without widening the declaration that does the compile-time work.
+ */
+const zoneRulesByName: ReadonlyMap<string, [daylight: ZoneRule, standard: ZoneRule]> =
+  new Map(Object.entries(ZONE_RULES));
+
+/**
+ * The zones the table actually holds rules for, at runtime.
+ *
+ * Two readers, and they want the same list for different reasons. **A test**
+ * holds it equal to `PRODUCT_TIMEZONES` both ways — the runtime half of the
+ * lockstep the `Record<ProductTimezone, …>` type states, since a `Record` type
+ * checks the keys written in the literal and nothing stops one being computed
+ * or deleted afterwards. **The signup confirmation's composer** asks it whether
+ * a stored `products.timezone` still has rules, and composes no invitation at
+ * all when it does not: the note below is a diagnostic for whoever typed a
+ * zone, and there is nobody of that description reading a family's mail.
+ */
+export const ZONE_RULE_TIMEZONES: readonly string[] = [...zoneRulesByName.keys()];
+
+/**
+ * Every zone the explorer's form offers: the product zones, and UTC.
+ *
+ * Derived from `PRODUCT_TIMEZONES` rather than from the rule table, so there is
+ * one list of zones in the codebase and the explorer cannot offer one the admin
+ * form does not — while `ZONE_RULES`'s own key type keeps every entry of that
+ * list supplied with a block. **UTC is the one addition and is not a product
+ * zone**: no product is authored in it, and it is here because writing a
+ * document as absolute instants is a property of the format worth exploring.
  */
 export const SUPPORTED_TIMEZONES: readonly string[] = [
-  ...Object.keys(ZONE_RULES),
+  ...PRODUCT_TIMEZONES,
   UTC_TIMEZONE,
 ];
 
@@ -278,22 +304,26 @@ function ruleLines(kind: "DAYLIGHT" | "STANDARD", rule: ZoneRule): string[] {
  * database, but a document that says nothing about the gap reads as one that
  * has no gap, and the reader comparing clients is exactly the person who needs
  * to know which case they are looking at.
+ *
+ * **The third answer is unreachable for a zone the admin form offers**, because
+ * the table is keyed by exactly that list. What reaches it is the explorer's
+ * own form, which can be handed anything — and the note is written for exactly
+ * that reader. A stored `products.timezone` naming a zone the form no longer
+ * offers would reach it too; the signup confirmation's composer refuses such a
+ * zone before it gets here, because a diagnostic sentence inside a family's
+ * calendar entry is not a thing to send.
  */
 export function zoneBlock(zone: string): string[] {
   if (isUtcZone(zone)) return [];
-  // The value type carries the `undefined` because `zone` is any string a
-  // caller cares to hand over, so this lookup genuinely misses — a plain
-  // `Record<string, T>` would claim otherwise and make the branch below read
-  // as dead code.
-  const rules = ZONE_RULES[zone];
+  const rules = zoneRulesByName.get(zone);
   if (rules === undefined) {
     return [
       property(
         "X-SOGVERSE-NOTE",
         escapeText(
-          `No VTIMEZONE is emitted for ${zone}: this build ships transition rules for ${Object.keys(
-            ZONE_RULES,
-          ).join(", ")} only, so the TZID reference relies on the client's own timezone database.`,
+          `No VTIMEZONE is emitted for ${zone}: this build ships transition rules for ${[
+            ...zoneRulesByName.keys(),
+          ].join(", ")} only, so the TZID reference relies on the client's own timezone database.`,
         ),
       ),
     ];

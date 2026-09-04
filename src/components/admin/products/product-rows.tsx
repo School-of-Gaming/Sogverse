@@ -24,7 +24,7 @@ import {
   formatProductSchedule,
   joinScheduleGroups,
   type ProductScheduleSummary,
-} from "@/components/public/products/format-product-schedule";
+} from "@/lib/products/format-product-schedule";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import { productWhereLine } from "./product-where-line";
 import type { ProductWithDetails } from "@/services/products";

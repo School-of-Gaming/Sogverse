@@ -272,6 +272,7 @@ export const POST = defineRoute({
           customerId: user.id,
           participantId,
           productId,
+          participationId: rpcJson.participation_id,
           mode: rpcJson.kind === "external_active" ? "external" : "free",
         }),
       );

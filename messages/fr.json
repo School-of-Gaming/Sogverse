@@ -30,10 +30,10 @@
       "terms": "Conditions générales",
       "antiBullying": "Lutte contre le harcèlement et discipline",
       "attributions": "Crédits et licences",
-      "roblox": "Programme de création de jeux Roblox",
-      "robloxPrivacy": "Politique de confidentialité du Programme Roblox",
-      "robloxSafeguarding": "Politique de protection de l’enfance du Programme Roblox",
-      "robloxTerms": "Conditions générales du Programme Roblox",
+      "roblox": "Académie des Créateurs",
+      "robloxPrivacy": "Politique de confidentialité de l’Académie des Créateurs",
+      "robloxSafeguarding": "Politique de protection de l’enfance de l’Académie des Créateurs",
+      "robloxTerms": "Conditions générales d’utilisation de l’Académie des Créateurs",
       "geduContract": "Contrat Gedu",
       "seatOffer": "Proposition de place"
     }
@@ -1042,24 +1042,12 @@
       "description": "Outils internes de test et de développement",
       "emailTool": "Outil de test e-mail",
       "emailToolDescription": "Envoyez des e-mails de test via Brevo (SMTP) pour vérifier la délivrabilité et les modèles.",
-      "provider": "Fournisseur",
-      "brevo": "Brevo (SMTP)",
-      "klaviyoComingSoon": "Klaviyo (bientôt disponible)",
-      "content": "Contenu",
       "template": "Modèle",
       "language": "Langue",
-      "custom": "Personnalisé",
       "toEmail": "Destinataire",
       "toEmailPlaceholder": "destinataire@exemple.com",
       "templateParameters": "Paramètres du modèle",
-      "fromEmail": "Adresse d’expéditeur",
-      "fromName": "Nom de l’expéditeur",
       "subject": "Objet",
-      "subjectPlaceholder": "Objet de l’e-mail de test",
-      "body": "Corps du message",
-      "bodyPlaceholder": "Saisissez le corps de l’e-mail (HTML pris en charge)",
-      "replyTo": "Répondre à (facultatif)",
-      "replyToPlaceholder": "reponse@exemple.com",
       "sendTestEmail": "Envoyer l’e-mail de test",
       "emailSentSuccess": "E-mail envoyé ! ID du message : {messageId}",
       "failedToSendRequest": "Échec de l’envoi de la requête",
@@ -1990,7 +1978,7 @@
         "heading": "Consentement",
         "agree": "J’ai lu et j’accepte ces documents.",
         "bundles": {
-          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> du Programme Roblox."
+          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> de l’Académie des Créateurs."
         },
         "marketing": {
           "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres.",
@@ -2641,7 +2629,7 @@
         "consumer_club": "L’inscription de {participantName} à {productName} est confirmée.",
         "municipality_club": "L’inscription de {participantName} à {productName} est confirmée.",
         "camp": "L’inscription de {participantName} à {productName} est confirmée.",
-        "event": "La participation de {participantName} à {productName} est confirmée."
+        "event": "L’inscription de {participantName} à {productName} est confirmée."
       },
       "self": {
         "subject": {
@@ -2654,10 +2642,16 @@
           "consumer_club": "Votre inscription à {productName} est confirmée.",
           "municipality_club": "Votre inscription à {productName} est confirmée.",
           "camp": "Votre inscription à {productName} est confirmée.",
-          "event": "Votre participation à {productName} est confirmée."
+          "event": "Votre inscription à {productName} est confirmée."
         },
         "waitlist": {
-          "subheading": "Vous êtes sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère."
+          "subheading": "Vous êtes sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère.",
+          "next2": {
+            "consumer_club": "Vous conservez votre place dans la file pendant toute la période.",
+            "municipality_club": "Vous conservez votre place dans la file pendant toute la période.",
+            "camp": "Vous conservez votre place dans la file pendant toute la durée du stage.",
+            "event": "Vous conservez votre place dans la file jusqu’à l’événement."
+          }
         }
       },
       "typeLabel": {
@@ -2677,9 +2671,9 @@
       "next": {
         "placement": "Nous placerons {participantName} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
         "placementSelf": "Nous vous placerons dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
-        "subscription": "Le prélèvement a lieu chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
+        "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
         "upfront": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
-        "free": "Il n’y a rien à régler pour cette inscription."
+        "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}."
       },
       "waitlist": {
         "subject": "{participantName} est sur la liste d’attente pour {productName}",
@@ -2687,12 +2681,53 @@
         "heading": "Vous êtes sur la liste d’attente",
         "subheading": "{participantName} est sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère.",
         "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
-        "next2": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
+        "summaryTitle": "Votre place en liste d’attente",
+        "forLabel": "En liste d’attente",
+        "next2": {
+          "consumer_club": "{participantName} conserve sa place dans la file pendant toute la période.",
+          "municipality_club": "{participantName} conserve sa place dans la file pendant toute la période.",
+          "camp": "{participantName} conserve sa place dans la file pendant toute la durée du stage.",
+          "event": "{participantName} conserve sa place dans la file jusqu’à l’événement."
+        },
+        "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
       },
       "gamer": {
-        "greeting": "Bonjour {participantName} !"
+        "greeting": "Bonjour {participantName} !",
+        "summaryTitle": "Votre inscription"
       },
-      "dashboardButton": "Aller à Mon SOG"
+      "invite": {
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "En ligne – Mon SOG",
+        "locationInPerson": "{site}, {address}",
+        "whereOnline": "Les sessions ont lieu en ligne dans Mon SOG, et le salon vocal ouvre {minutes} minutes avant le début de chaque session.",
+        "whereInPerson": "Les sessions ont lieu à {site}.",
+        "whereAddress": "Adresse : {address}",
+        "link": "Tout sur cette inscription se trouve dans Mon SOG : {url}",
+        "questions": "Une question ? Écrivez à {supportEmail}."
+      },
+      "dashboardButton": "Aller à Mon SOG",
+      "summaryTitle": "Votre commande",
+      "forLabel": {
+        "consumer_club": "Inscription",
+        "municipality_club": "Inscription",
+        "camp": "Inscription",
+        "event": "Participation"
+      },
+      "overview": {
+        "title": "Bon à savoir",
+        "schedule": "Planning",
+        "where": "Où",
+        "format": "Format",
+        "online": "En ligne",
+        "tbd": "À confirmer",
+        "ageRange": "Tranche d’âge",
+        "audience": "Public",
+        "language": "Langue",
+        "ages": "{min}–{max} ans",
+        "audienceParents": "Pour les parents",
+        "audienceFamilies": "Pour les familles",
+        "audienceFamiliesWithAges": "Pour les familles, {min}–{max} ans"
+      }
     },
     "verifyEmail": {
       "subject": "Confirmez votre adresse e-mail",
@@ -3102,7 +3137,7 @@
   "roblox": {
     "hero": {
       "title": "Construisez<br></br><primary>Jouez</primary><br></br><secondary>Publiez</secondary>",
-      "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
+      "subtitle": "Un programme gratuit de création de jeux pour les ados, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
       "cta": "Lancez-vous !"
     },
     "lockup": {
@@ -3237,15 +3272,16 @@
       "button": "Commencer"
     },
     "legal": {
-      "roblox": "© 2024 Roblox Corporation. Roblox, le logo Roblox et Roblox Tilt font partie des marques déposées et non déposées de Roblox Corporation aux États-Unis et dans d’autres pays. Utilisées avec autorisation.",
+      "roblox": "Roblox, le logo Roblox et Roblox Tilt font partie des marques déposées et non déposées de Roblox Corporation aux États-Unis et dans d’autres pays. Utilisées avec autorisation.",
       "lynx": "Lynx Educate et le logo Lynx Educate sont des marques de Lynx Educate. Utilisées avec autorisation.",
-      "privacy": "Politique de confidentialité du Programme Roblox",
-      "safeguarding": "Politique de protection de l’enfance du Programme Roblox",
-      "terms": "Conditions générales du Programme Roblox"
+      "documents": "Documents de l’Académie des Créateurs",
+      "privacy": "Politique de confidentialité",
+      "safeguarding": "Politique de protection de l’enfance",
+      "terms": "Conditions générales"
     }
   },
   "robloxPrivacy": {
-    "title": "Politique de confidentialité du Programme Roblox",
+    "title": "Politique de confidentialité de l’Académie des Créateurs",
     "subtitle": "À l’attention des familles qui inscrivent leur enfant au Programme de créativité numérique pour les jeunes en France, proposé par Lynx Educate et School of Gaming et parrainé par Roblox.",
     "lastUpdated": "Dernière mise à jour : {date}",
     "intro": {
@@ -3274,7 +3310,7 @@
       "applies": {
         "heading": "À qui s’applique cette politique",
         "blocks": [
-          "Cette politique s’applique aux parents, aux représentants légaux et aux jeunes qui s’inscrivent au Programme Roblox de créativité numérique pour les jeunes en France (le Programme).",
+          "Cette politique s’applique aux parents, aux représentants légaux et aux jeunes qui s’inscrivent à l’Académie des Créateurs, le programme de créativité numérique pour les jeunes en France (le Programme).",
           "Le Programme s’adresse aux jeunes de 8–17 ans. Un parent ou un représentant légal doit effectuer l’inscription et confirmer qu’il a bien qualité pour inscrire l’enfant.",
           "Cette politique couvre l’inscription au Programme, son administration, les sessions d’apprentissage, les événements, l’assistance, la protection de l’enfance et l’évaluation d’impact. Elle complète la <linkPrivacy>politique de confidentialité générale</linkPrivacy> de School of Gaming. En cas de contradiction entre les deux textes concernant ce Programme, la présente politique spécifique au Programme prévaut.",
           "L’utilisation, par l’enfant, d’un compte Roblox, de Roblox Studio ou d’un autre service Roblox relève de la politique de confidentialité et des conditions propres à Roblox.",
@@ -3642,7 +3678,7 @@
     }
   },
   "robloxSafeguarding": {
-    "title": "Politique de protection de l’enfance du Programme Roblox",
+    "title": "Politique de protection de l’enfance de l’Académie des Créateurs",
     "subtitle": "Ce document complète la <linkDiscipline>politique de lutte contre le harcèlement</linkDiscipline> de School of Gaming, qui continue de s’appliquer aux comportements du quotidien pendant les sessions. Il couvre les responsabilités plus larges de Lynx Educate et de School of Gaming en matière de protection de l’enfance dans le cadre du Programme, y compris lors des événements en présentiel.",
     "lastUpdated": "Dernière révision : {date}",
     "pendingContact": "Une adresse de contact School of Gaming pour les questions de protection de l’enfance est en cours de confirmation et sera ajoutée ici.",
@@ -3701,7 +3737,7 @@
       "data": {
         "heading": "Données et photos",
         "blocks": [
-          "Toute photographie, tout enregistrement vidéo et toute utilisation de l’image d’un enfant sont régis par les choix de consentement décrits dans la <linkRobloxPrivacy>Politique de confidentialité du Programme Roblox</linkRobloxPrivacy> — jamais présumés, toujours facultatifs, toujours modifiables."
+          "Toute photographie, tout enregistrement vidéo et toute utilisation de l’image d’un enfant sont régis par les choix de consentement décrits dans la <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy> — jamais présumés, toujours facultatifs, toujours modifiables."
         ]
       },
       "review": {
@@ -3713,14 +3749,14 @@
     }
   },
   "robloxTerms": {
-    "title": "Conditions générales du Programme Roblox",
-    "subtitle": "S’applique aux familles qui inscrivent leur enfant au programme Lynx Educate × School of Gaming × Roblox en France.",
+    "title": "Conditions générales d’utilisation de l’Académie des Créateurs",
+    "subtitle": "S’applique aux familles qui inscrivent leur enfant à l’Académie des Créateurs en France — Lynx Educate × School of Gaming, en collaboration avec Roblox.",
     "lastUpdated": "Mise à jour : {date}",
     "pendingContact": "Une adresse de contact School of Gaming est en cours de confirmation et sera ajoutée ici.",
     "intro": {
       "heading": "En bref",
       "blocks": [
-        "Ce document explique ce à quoi vous inscrivez votre enfant lorsque vous vous enregistrez au Programme Roblox. Il s’agit d’un programme commun à Lynx Educate et à School of Gaming, parrainé par Roblox. Si quelque chose n’est pas clair, écrivez à support@lynxeducate.com."
+        "Ce document explique ce à quoi vous inscrivez votre enfant lorsque vous vous enregistrez à l’Académie des Créateurs. Il s’agit d’un programme commun à Lynx Educate et à School of Gaming, parrainé par Roblox. Si quelque chose n’est pas clair, écrivez à support@lynxeducate.com."
       ]
     },
     "sections": {
@@ -3761,8 +3797,8 @@
       "information": {
         "heading": "Vos informations",
         "blocks": [
-          "La manière dont nous utilisons vos informations et celles de votre enfant est expliquée dans notre <linkRobloxPrivacy>Politique de confidentialité du Programme Roblox</linkRobloxPrivacy>. En vous inscrivant, vous confirmez en avoir pris connaissance et l’avoir comprise.",
-          "Lors de l’inscription à un programme Roblox, les informations associées à votre compte School of Gaming (y compris vos coordonnées et les informations du compte de votre enfant) seront également communiquées à Lynx Educate aux fins de la mise en œuvre du programme et à Roblox aux fins de la recherche sur l’impact du programme."
+          "La manière dont nous utilisons vos informations et celles de votre enfant est expliquée dans notre <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy>. En vous inscrivant, vous confirmez en avoir pris connaissance et l’avoir comprise.",
+          "Lors de l’inscription à l’Académie des Créateurs, les informations associées à votre compte School of Gaming (y compris vos coordonnées et les informations du compte de votre enfant) seront également communiquées à Lynx Educate aux fins de la mise en œuvre du programme et à Roblox aux fins de la recherche sur l’impact du programme."
         ]
       },
       "media": {
@@ -3841,11 +3877,11 @@
   },
   "consentDocuments": {
     "names": {
-      "robloxProgrammeTerms": "Conditions générales du Programme Roblox",
-      "robloxPrivacyPolicy": "Politique de confidentialité du Programme Roblox"
+      "robloxProgrammeTerms": "Conditions générales d’utilisation de l’Académie des Créateurs",
+      "robloxPrivacyPolicy": "Politique de confidentialité de l’Académie des Créateurs"
     },
     "bundles": {
-      "robloxProgramme": "Documents du Programme Roblox"
+      "robloxProgramme": "Documents de l’Académie des Créateurs"
     }
   },
   "chat": {

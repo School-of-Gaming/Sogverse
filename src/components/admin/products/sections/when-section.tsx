@@ -44,19 +44,23 @@ export function WhenSection({
   // could disagree by an hour on the two days a year that matters.
   const now = useNow();
 
-  // What the picker offers: the zones the seeded countries declare, plus the
+  // What the picker offers: the zones the supported countries declare, plus the
   // product's own stored zone when the row arrived carrying one that is no
-  // longer offered (a country un-seeded since, or a value written before the
-  // picker existed). A `<select>` whose value matches no option shows the admin
-  // the first one while state holds something else, which is how an admin ends
-  // up "correcting" a field into a value they never chose.
+  // longer offered (a country dropped from the list since, or a value written
+  // before the picker existed). A `<select>` whose value matches no option
+  // shows the admin the first one while state holds something else, which is
+  // how an admin ends up "correcting" a field into a value they never chose.
   //
   // The extra option is seeded from the value the form opened with and pinned
   // for the life of the form, never re-derived from the live field: derived
   // live, it would vanish the moment the admin selected one of the offered
   // zones, and a mis-click would be unrecoverable short of reloading the page.
   const [storedZone] = useState(() => state.timezone);
-  const timezoneOptions = PRODUCT_TIMEZONES.includes(storedZone)
+  // `.some` rather than `.includes`: the offered list is typed as the union of
+  // zones a country declares, and a stored zone is whatever the column holds.
+  const timezoneOptions: readonly string[] = PRODUCT_TIMEZONES.some(
+    (zone) => zone === storedZone,
+  )
     ? PRODUCT_TIMEZONES
     : [...PRODUCT_TIMEZONES, storedZone];
 

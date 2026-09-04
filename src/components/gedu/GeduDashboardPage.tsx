@@ -8,7 +8,7 @@ import { CreateInstantRoomCard } from "@/components/voice/instant/CreateInstantR
 import {
   formatProductSchedule,
   scheduleCardLines,
-} from "@/components/public/products/format-product-schedule";
+} from "@/lib/products/format-product-schedule";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import {

@@ -301,7 +301,7 @@ describe("every catalog's legal namespaces", () => {
     // A sample rather than a census: enough that deleting the tags wholesale,
     // or losing the subtitle's tag support, fails here.
     expect(messages.robloxTerms.sections.information.blocks[0]).toContain(
-      "<linkRobloxPrivacy>Roblox Programme Privacy Policy</linkRobloxPrivacy>",
+      "<linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy>",
     );
     expect(messages.robloxSafeguarding.subtitle).toContain(
       "<linkDiscipline>Anti-Bullying policy</linkDiscipline>",

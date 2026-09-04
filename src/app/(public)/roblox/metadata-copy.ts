@@ -45,4 +45,4 @@ export const ROBLOX_OG_DESCRIPTION =
  * card is set in.
  */
 export const ROBLOX_TRADEMARK_NOTICE =
-  "© 2024 Roblox Corporation. Roblox, le logo Roblox et Roblox Tilt font partie des marques déposées et non déposées de Roblox Corporation aux États-Unis et dans d’autres pays. Utilisées avec autorisation.";
+  "Roblox, le logo Roblox et Roblox Tilt font partie des marques déposées et non déposées de Roblox Corporation aux États-Unis et dans d’autres pays. Utilisées avec autorisation.";

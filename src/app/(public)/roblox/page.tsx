@@ -119,8 +119,8 @@ export default function RobloxPage() {
 
   // The Programme's own legal documents, in the order a family meets them:
   // what you are agreeing to, how your child is kept safe, what happens to your
-  // information. This footer is the only link to any of them while the whole
-  // Programme surface is unpublished.
+  // information. The labels are the bare document names — the block that
+  // renders them names the Programme once, in its heading; see there for why.
   const programmeDocuments = [
     { href: ROUTES.robloxTerms, label: t("legal.terms") },
     { href: ROUTES.robloxSafeguarding, label: t("legal.safeguarding") },
@@ -242,19 +242,41 @@ export default function RobloxPage() {
 
       <ProgrammeCta />
 
-      {/* Trademark attribution. Required wherever the Roblox mark appears, and
-          the courteous equivalent for Lynx. Small and quiet, but on the page —
-          alongside the Programme's own legal documents, which are linked from
-          here and nowhere else while the whole surface stays unpublished. */}
+      {/* The Programme's own legal documents — linked from here and nowhere
+          else while the whole surface stays unpublished — and beneath them the
+          trademark attribution required wherever the Roblox mark appears, plus
+          the courteous equivalent for Lynx.
+
+          Two things about this block are load-bearing, and both answer the same
+          problem: the site footer renders immediately below it, carrying its own
+          "Privacy Policy" and "Terms & Conditions" for School of Gaming.
+
+          First, the heading. The three labels below it are the bare document
+          names, so the Programme is named once above them rather than repeated
+          into every row. A reader's question here is not which box a link sits
+          in, it is which document governs them — and only a heading answers
+          that. Putting the scope in the labels instead is what this replaces:
+          three rows each opening "Creator Academy …" read as a wall and still
+          leave the grouping implicit.
+
+          Second, the order. The fine print sits *under* the links rather than
+          over them, which puts the Programme's rows as far from the footer's as
+          this section can, and reads the right way round anyway — boilerplate
+          belongs at the bottom of the page, not above the thing it qualifies. */}
       <section className="container mx-auto px-4 pb-16">
-        <div className="mx-auto max-w-3xl space-y-2 border-t pt-8 text-xs leading-relaxed text-muted-foreground/70">
-          <p>{t("legal.roblox")}</p>
-          <p>{t("legal.lynx")}</p>
-          {/* A step more present than the trademark boilerplate above — a
-              parent looking for the terms has to be able to find them. Still
-              quiet (muted, not primary): three primary-coloured rows would
-              shout from the bottom of the page. */}
-          <div className="space-y-1.5 pt-4 text-sm text-muted-foreground">
+        <div className="mx-auto max-w-3xl border-t pt-8">
+          {/* Furniture, not voice: a small tracked marker a reader scans as
+              structure, so caps are the right treatment here. Muted rather than
+              the page's primary-coloured Eyebrow — three primary-coloured rows
+              would shout from the bottom of the page, and a primary label over
+              them shouts just as loudly. An h2 because it genuinely heads the
+              list below it in the outline, whatever its size says. */}
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            {t("legal.documents")}
+          </h2>
+          {/* A step more present than the trademark boilerplate below — a
+              parent looking for the terms has to be able to find them. */}
+          <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
             {programmeDocuments.map((document) => (
               <p key={document.href}>
                 <Link
@@ -265,6 +287,10 @@ export default function RobloxPage() {
                 </Link>
               </p>
             ))}
+          </div>
+          <div className="mt-8 space-y-2 text-xs leading-relaxed text-muted-foreground/70">
+            <p>{t("legal.roblox")}</p>
+            <p>{t("legal.lynx")}</p>
           </div>
         </div>
       </section>

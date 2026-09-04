@@ -10,7 +10,7 @@ import {
   PROGRAMME_LANGUAGE,
   PROGRAMME_TOPIC,
 } from "@/components/roblox/programme-filters";
-import { isAudienceFilterValue } from "@/components/public/products/product-audience";
+import { isAudienceFilterValue } from "@/lib/products/product-audience";
 import { isSpokenLanguageCode } from "@/lib/constants/spoken-languages";
 import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
 import type { ProductType } from "@/types";

@@ -477,11 +477,10 @@ describe("POST /api/admin/products/create", () => {
   });
 
   it("returns 400 for a country the lock cannot point at", async () => {
-    // The contract narrows to the SEEDED countries, not to the column CHECK's
-    // alpha-2 shape. "ES" is a real, well-formed code and a declared entry in
-    // SUPPORTED_COUNTRIES — it is simply not seeded, so a lock on it could
-    // never match any family's stored location. Refusing here is the only place
-    // that distinction is enforced.
+    // The contract narrows to the countries we operate in, not to the column
+    // CHECK's alpha-2 shape. "ES" is a real, well-formed code and not one of
+    // them, so a lock on it could never match any family's stored location.
+    // Refusing here is the only place that distinction is enforced.
     mockAuthenticatedAdmin();
     const response = await POST(
       createRequest({ data: { ...validBody, region_lock_country: "ES" } }),

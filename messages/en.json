@@ -30,10 +30,10 @@
       "terms": "Terms and Conditions",
       "antiBullying": "Anti-Bullying and Discipline",
       "attributions": "Attributions",
-      "roblox": "Roblox Game Design Programme",
-      "robloxPrivacy": "Roblox Programme Privacy Policy",
-      "robloxSafeguarding": "Roblox Programme Child Safeguarding Policy",
-      "robloxTerms": "Roblox Programme Terms & Conditions",
+      "roblox": "Creator Academy",
+      "robloxPrivacy": "Creator Academy Privacy Policy",
+      "robloxSafeguarding": "Creator Academy Child Safeguarding Policy",
+      "robloxTerms": "Creator Academy Terms & Conditions",
       "geduContract": "Gedu contract",
       "seatOffer": "Seat offer"
     }
@@ -1042,24 +1042,12 @@
       "description": "Internal tools for testing and development",
       "emailTool": "Email Testing Tool",
       "emailToolDescription": "Send test emails via Brevo (SMTP) to verify delivery and templates.",
-      "provider": "Provider",
-      "brevo": "Brevo (SMTP)",
-      "klaviyoComingSoon": "Klaviyo (coming soon)",
-      "content": "Content",
       "template": "Template",
       "language": "Language",
-      "custom": "Custom",
       "toEmail": "To Email",
       "toEmailPlaceholder": "recipient@example.com",
       "templateParameters": "Template Parameters",
-      "fromEmail": "From Email",
-      "fromName": "From Name",
       "subject": "Subject",
-      "subjectPlaceholder": "Test email subject",
-      "body": "Body",
-      "bodyPlaceholder": "Enter email body (HTML supported)",
-      "replyTo": "Reply-To (optional)",
-      "replyToPlaceholder": "reply@example.com",
       "sendTestEmail": "Send Test Email",
       "emailSentSuccess": "Email sent! Message ID: {messageId}",
       "failedToSendRequest": "Failed to send request",
@@ -1990,7 +1978,7 @@
         "heading": "Consent",
         "agree": "I have read and agree to these documents.",
         "bundles": {
-          "robloxProgramme": "I have read and agree to the Roblox Programme <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>."
+          "robloxProgramme": "I have read and agree to the Creator Academy <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>."
         },
         "marketing": {
           "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers.",
@@ -2115,7 +2103,7 @@
   "roblox": {
     "hero": {
       "title": "Build It<br></br><primary>Play It</primary><br></br><secondary>Own It</secondary>",
-      "subtitle": "A free Roblox game design programme for teens — brought to you by Lynx Educate and School of Gaming, in collaboration with Roblox.",
+      "subtitle": "A free game design programme for teens — brought to you by Lynx Educate and School of Gaming, in collaboration with Roblox.",
       "cta": "Jump in!"
     },
     "lockup": {
@@ -2250,15 +2238,16 @@
       "button": "Get started"
     },
     "legal": {
-      "roblox": "© 2024 Roblox Corporation. The Roblox word mark, Roblox Logo and Roblox Tilt are among the registered and unregistered trademarks of Roblox Corporation in the U.S. and other countries. Used with permission.",
+      "roblox": "The Roblox word mark, Roblox Logo and Roblox Tilt are among the registered and unregistered trademarks of Roblox Corporation in the U.S. and other countries. Used with permission.",
       "lynx": "Lynx Educate and the Lynx Educate logo are trademarks of Lynx Educate. Used with permission.",
-      "privacy": "Roblox Programme Privacy Policy",
-      "safeguarding": "Roblox Programme Child Safeguarding Policy",
-      "terms": "Roblox Programme Terms & Conditions"
+      "documents": "Creator Academy documents",
+      "privacy": "Privacy Policy",
+      "safeguarding": "Child Safeguarding Policy",
+      "terms": "Terms & Conditions"
     }
   },
   "robloxPrivacy": {
-    "title": "Roblox Programme Privacy Policy",
+    "title": "Creator Academy Privacy Policy",
     "subtitle": "For families registering for the youth digital creativity Programme in France delivered by Lynx Educate and School of Gaming and sponsored by Roblox.",
     "lastUpdated": "Last updated: {date}",
     "intro": {
@@ -2287,7 +2276,7 @@
       "applies": {
         "heading": "Who this policy applies to",
         "blocks": [
-          "This policy applies to parents, legal guardians and young people registering for the Roblox youth digital creativity Programme in France (The Programme).",
+          "This policy applies to parents, legal guardians and young people registering for the Creator Academy, the youth digital creativity programme in France (The Programme).",
           "The Programme is for young people aged 8–17. A parent or legal guardian must complete registration and confirm that they have authority to register the child.",
           "The policy covers Programme registration, administration, learning sessions, events, support, safeguarding and impact evaluation. It supplements School of Gaming’s <linkPrivacy>general Privacy Policy</linkPrivacy>. Where the two policies conflict in relation to this Programme, this Programme-specific policy applies.",
           "The child’s separate use of a Roblox account, Roblox Studio or another Roblox service is governed by Roblox’s own privacy policy and terms.",
@@ -2655,7 +2644,7 @@
     }
   },
   "robloxSafeguarding": {
-    "title": "Roblox Programme Child Safeguarding Policy",
+    "title": "Creator Academy Child Safeguarding Policy",
     "subtitle": "This sits alongside School of Gaming’s <linkDiscipline>Anti-Bullying policy</linkDiscipline>, which continues to apply to day-to-day behaviour in sessions. This document covers Lynx Educate and School of Gaming’s broader safeguarding responsibilities for the Programme, including in-person events.",
     "lastUpdated": "Last reviewed: {date}",
     "pendingContact": "A School of Gaming contact address for safeguarding concerns is still being confirmed and will be added here.",
@@ -2714,7 +2703,7 @@
       "data": {
         "heading": "Data and photos",
         "blocks": [
-          "Any photography, filming, or use of a child’s image is governed by the consent choices set out in the <linkRobloxPrivacy>Roblox Programme Privacy Policy</linkRobloxPrivacy> — never assumed, always optional, always changeable."
+          "Any photography, filming, or use of a child’s image is governed by the consent choices set out in the <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> — never assumed, always optional, always changeable."
         ]
       },
       "review": {
@@ -2726,14 +2715,14 @@
     }
   },
   "robloxTerms": {
-    "title": "Roblox Programme Terms & Conditions",
-    "subtitle": "Applies to families registering for the Lynx Educate × School of Gaming × Roblox programme in France.",
+    "title": "Creator Academy Terms & Conditions",
+    "subtitle": "Applies to families registering for the Creator Academy in France — Lynx Educate × School of Gaming, in collaboration with Roblox.",
     "lastUpdated": "Updated: {date}",
     "pendingContact": "A School of Gaming contact address is still being confirmed and will be added here.",
     "intro": {
       "heading": "The short version",
       "blocks": [
-        "This explains what you’re signing your child up for when you register for the Roblox Programme. It’s a joint programme between Lynx Educate and School of Gaming, sponsored by Roblox. If anything’s unclear, email support@lynxeducate.com."
+        "This explains what you’re signing your child up for when you register for the Creator Academy. It’s a joint programme between Lynx Educate and School of Gaming, sponsored by Roblox. If anything’s unclear, email support@lynxeducate.com."
       ]
     },
     "sections": {
@@ -2774,8 +2763,8 @@
       "information": {
         "heading": "Your information",
         "blocks": [
-          "How we use your and your child’s information is explained in our <linkRobloxPrivacy>Roblox Programme Privacy Policy</linkRobloxPrivacy>. By registering, you confirm you’ve read and understood it.",
-          "When enrolling in a Roblox programme, the information associated with your School of Gaming account (including your contact details and your child’s account information) will also be shared with Lynx Educate for the purposes of delivering the programme and with Roblox for the purposes of programme impact research."
+          "How we use your and your child’s information is explained in our <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy>. By registering, you confirm you’ve read and understood it.",
+          "When enrolling in the Creator Academy, the information associated with your School of Gaming account (including your contact details and your child’s account information) will also be shared with Lynx Educate for the purposes of delivering the programme and with Roblox for the purposes of programme impact research."
         ]
       },
       "media": {
@@ -3343,7 +3332,13 @@
           "event": "You’re joining {productName}."
         },
         "waitlist": {
-          "subheading": "You’re on the waitlist for {productName}. We’ll let you know if a seat opens."
+          "subheading": "You’re on the waitlist for {productName}. We’ll let you know if a seat opens.",
+          "next2": {
+            "consumer_club": "You keep your place in line for the whole term.",
+            "municipality_club": "You keep your place in line for the whole term.",
+            "camp": "You keep your place in line for the camp.",
+            "event": "You keep your place in line for the event."
+          }
         }
       },
       "typeLabel": {
@@ -3361,11 +3356,11 @@
       },
       "nextTitle": "What happens next",
       "next": {
-        "placement": "We’ll place {participantName} in a group with a Gedu. The sessions will then appear in My SOG.",
-        "placementSelf": "We’ll place you in a group with a Gedu. The sessions will then appear in My SOG.",
+        "placement": "We’ll place {participantName} in a group with a Gedu. The sessions will then appear under My SOG.",
+        "placementSelf": "We’ll place you in a group with a Gedu. The sessions will then appear under My SOG.",
         "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
         "upfront": "This was a one-time payment — there’s nothing more to pay.",
-        "free": "There’s nothing to pay for this one."
+        "firstCharge": "Nothing was charged today. Your first payment is on {date}."
       },
       "waitlist": {
         "subject": "{participantName} is on the waitlist for {productName}",
@@ -3373,12 +3368,53 @@
         "heading": "You’re on the waitlist",
         "subheading": "{participantName} is on the waitlist for {productName}. We’ll let you know if a seat opens.",
         "next1": "We’ll email you the moment a seat opens.",
-        "next2": "You can see where you stand in My SOG at any time."
+        "summaryTitle": "Your waitlist spot",
+        "forLabel": "Waitlisted",
+        "next2": {
+          "consumer_club": "{participantName} keeps their place in line for the whole term.",
+          "municipality_club": "{participantName} keeps their place in line for the whole term.",
+          "camp": "{participantName} keeps their place in line for the camp.",
+          "event": "{participantName} keeps their place in line for the event."
+        },
+        "next3": "You can keep track of your waitlist spot anytime in My SOG."
       },
       "gamer": {
-        "greeting": "Hi {participantName}!"
+        "greeting": "Hi {participantName}!",
+        "summaryTitle": "Your signup"
       },
-      "dashboardButton": "Go to My SOG"
+      "invite": {
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "Online – My SOG",
+        "locationInPerson": "{site}, {address}",
+        "whereOnline": "Sessions run online in My SOG, and the voice room opens {minutes} minutes before each session starts.",
+        "whereInPerson": "Sessions run at {site}.",
+        "whereAddress": "Address: {address}",
+        "link": "Everything about this signup is in My SOG: {url}",
+        "questions": "Questions? Write to {supportEmail}."
+      },
+      "dashboardButton": "Go to My SOG",
+      "summaryTitle": "Your order",
+      "forLabel": {
+        "consumer_club": "Enrolled",
+        "municipality_club": "Registered",
+        "camp": "Signed up",
+        "event": "Joined"
+      },
+      "overview": {
+        "title": "Good to know",
+        "schedule": "Schedule",
+        "where": "Where",
+        "format": "Format",
+        "online": "Online",
+        "tbd": "To be confirmed",
+        "ageRange": "Age range",
+        "audience": "Audience",
+        "language": "Language",
+        "ages": "Ages {min}–{max}",
+        "audienceParents": "For parents",
+        "audienceFamilies": "For families",
+        "audienceFamiliesWithAges": "For families, ages {min}–{max}"
+      }
     },
     "verifyEmail": {
       "subject": "Verify your email address",
@@ -3841,11 +3877,11 @@
   },
   "consentDocuments": {
     "names": {
-      "robloxProgrammeTerms": "Roblox Programme Terms & Conditions",
-      "robloxPrivacyPolicy": "Roblox Programme Privacy Policy"
+      "robloxProgrammeTerms": "Creator Academy Terms & Conditions",
+      "robloxPrivacyPolicy": "Creator Academy Privacy Policy"
     },
     "bundles": {
-      "robloxProgramme": "Roblox Programme documents"
+      "robloxProgramme": "Creator Academy documents"
     }
   },
   "chat": {

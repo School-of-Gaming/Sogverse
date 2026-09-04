@@ -30,10 +30,10 @@
       "terms": "Käyttöehdot",
       "antiBullying": "Kiusaamisen ehkäisy ja kurinpito",
       "attributions": "Lähteet ja lisenssit",
-      "roblox": "Roblox-pelisuunnitteluohjelma",
-      "robloxPrivacy": "Roblox-ohjelman tietosuojaseloste",
-      "robloxSafeguarding": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
-      "robloxTerms": "Roblox-ohjelman käyttöehdot",
+      "roblox": "Luojien akatemia",
+      "robloxPrivacy": "Luojien akatemian tietosuojaseloste",
+      "robloxSafeguarding": "Luojien akatemian lasten turvallisuuden toimintaohje",
+      "robloxTerms": "Luojien akatemian käyttöehdot",
       "geduContract": "Gedu-sopimus",
       "seatOffer": "Paikkatarjous"
     }
@@ -1042,24 +1042,12 @@
       "description": "Sisäiset testaus- ja kehitystyökalut",
       "emailTool": "Sähköpostin testaustyökalu",
       "emailToolDescription": "Lähetä testisähköposteja Brevo-palvelun (SMTP) kautta toimituksen ja mallien varmistamiseksi.",
-      "provider": "Palveluntarjoaja",
-      "brevo": "Brevo (SMTP)",
-      "klaviyoComingSoon": "Klaviyo (tulossa pian)",
-      "content": "Sisältö",
       "template": "Malli",
       "language": "Kieli",
-      "custom": "Mukautettu",
       "toEmail": "Vastaanottajan sähköposti",
       "toEmailPlaceholder": "vastaanottaja@example.com",
       "templateParameters": "Malliparametrit",
-      "fromEmail": "Lähettäjän sähköposti",
-      "fromName": "Lähettäjän nimi",
       "subject": "Aihe",
-      "subjectPlaceholder": "Testisähköpostin aihe",
-      "body": "Sisältö",
-      "bodyPlaceholder": "Kirjoita sähköpostin sisältö (HTML tuettu)",
-      "replyTo": "Vastausosoite (valinnainen)",
-      "replyToPlaceholder": "vastaus@example.com",
       "sendTestEmail": "Lähetä testisähköposti",
       "emailSentSuccess": "Sähköposti lähetetty! Viestin tunnus: {messageId}",
       "failedToSendRequest": "Pyynnön lähettäminen epäonnistui",
@@ -1990,7 +1978,7 @@
         "heading": "Suostumus",
         "agree": "Olen lukenut nämä asiakirjat ja hyväksyn ne.",
         "bundles": {
-          "robloxProgramme": "Olen lukenut ja hyväksyn Roblox-ohjelman <terms>käyttöehdot</terms> ja <privacy>tietosuojaselosteen</privacy>."
+          "robloxProgramme": "Olen lukenut ja hyväksyn Luojien akatemian <terms>käyttöehdot</terms> ja <privacy>tietosuojaselosteen</privacy>."
         },
         "marketing": {
           "lynxEducate": "Yhteystietoni saa jakaa luotetun kumppanimme <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia ja tarjouksia.",
@@ -2638,10 +2626,10 @@
       },
       "heading": "Valmista tuli!",
       "subheading": {
-        "consumer_club": "{participantName} on ilmoitettu kerhoon {productName}.",
-        "municipality_club": "{participantName} on ilmoitettu kerhoon {productName}.",
-        "camp": "{participantName} on ilmoitettu leirille {productName}.",
-        "event": "{participantName} osallistuu tapahtumaan {productName}."
+        "consumer_club": "{participantName} on ilmoitettu toimintaan {productName}.",
+        "municipality_club": "{participantName} on ilmoitettu toimintaan {productName}.",
+        "camp": "{participantName} on ilmoitettu toimintaan {productName}.",
+        "event": "{participantName} on liittynyt toimintaan {productName}."
       },
       "self": {
         "subject": {
@@ -2651,13 +2639,19 @@
           "event": "Osallistut tapahtumaan {productName}"
         },
         "subheading": {
-          "consumer_club": "Sinut on ilmoitettu kerhoon {productName}.",
-          "municipality_club": "Sinut on ilmoitettu kerhoon {productName}.",
-          "camp": "Sinut on ilmoitettu leirille {productName}.",
-          "event": "Osallistut tapahtumaan {productName}."
+          "consumer_club": "Sinut on ilmoitettu toimintaan {productName}.",
+          "municipality_club": "Sinut on ilmoitettu toimintaan {productName}.",
+          "camp": "Sinut on ilmoitettu toimintaan {productName}.",
+          "event": "Olet liittynyt toimintaan {productName}."
         },
         "waitlist": {
-          "subheading": "Olet jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu."
+          "subheading": "Olet jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu.",
+          "next2": {
+            "consumer_club": "Säilytät paikkasi jonossa koko kauden ajan.",
+            "municipality_club": "Säilytät paikkasi jonossa koko kauden ajan.",
+            "camp": "Säilytät paikkasi jonossa koko leirin ajan.",
+            "event": "Säilytät paikkasi jonossa koko tapahtuman ajan."
+          }
         }
       },
       "typeLabel": {
@@ -2675,11 +2669,11 @@
       },
       "nextTitle": "Mitä seuraavaksi tapahtuu",
       "next": {
-        "placement": "{participantName} liitetään Gedun ohjaamaan ryhmään. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
-        "placementSelf": "Sinut liitetään Gedun ohjaamaan ryhmään. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+        "placement": "{participantName} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+        "placementSelf": "Sinut sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
         "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
         "upfront": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
-        "free": "Tästä ei veloiteta mitään."
+        "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksu veloitetaan {date}."
       },
       "waitlist": {
         "subject": "{participantName} on jonotuslistalla – {productName}",
@@ -2687,12 +2681,53 @@
         "heading": "Olet jonotuslistalla",
         "subheading": "{participantName} on jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu.",
         "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
-        "next2": "Näet jonotustilanteesi milloin tahansa Oma SOG -sivulla."
+        "summaryTitle": "Jonotuspaikkasi",
+        "forLabel": "Jonotuslistalla",
+        "next2": {
+          "consumer_club": "{participantName} säilyttää paikkansa jonossa koko kauden ajan.",
+          "municipality_club": "{participantName} säilyttää paikkansa jonossa koko kauden ajan.",
+          "camp": "{participantName} säilyttää paikkansa jonossa koko leirin ajan.",
+          "event": "{participantName} säilyttää paikkansa jonossa koko tapahtuman ajan."
+        },
+        "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
       },
       "gamer": {
-        "greeting": "Hei {participantName}!"
+        "greeting": "Hei {participantName}!",
+        "summaryTitle": "Ilmoittautumisesi"
       },
-      "dashboardButton": "Siirry Oma SOG -sivulle"
+      "invite": {
+        "summary": "{productName} – {participantName}",
+        "locationOnline": "Verkossa – Oma SOG",
+        "locationInPerson": "{site}, {address}",
+        "whereOnline": "Tapaamiset ovat verkossa Oma SOG -sivulla, ja puhehuone avautuu {minutes} minuuttia ennen tapaamisen alkua.",
+        "whereInPerson": "Tapaamispaikka on {site}.",
+        "whereAddress": "Osoite: {address}",
+        "link": "Kaikki tiedot ilmoittautumisesta löytyvät Oma SOG -sivulta: {url}",
+        "questions": "Kysyttävää? Kirjoita osoitteeseen {supportEmail}."
+      },
+      "dashboardButton": "Siirry Oma SOG -sivulle",
+      "summaryTitle": "Tilauksesi",
+      "forLabel": {
+        "consumer_club": "Ilmoitettu",
+        "municipality_club": "Ilmoitettu",
+        "camp": "Ilmoitettu",
+        "event": "Liittynyt"
+      },
+      "overview": {
+        "title": "Hyvä tietää",
+        "schedule": "Aikataulu",
+        "where": "Missä",
+        "format": "Muoto",
+        "online": "Verkossa",
+        "tbd": "Vahvistetaan myöhemmin",
+        "ageRange": "Ikähaarukka",
+        "audience": "Kohderyhmä",
+        "language": "Kieli",
+        "ages": "Ikä {min}–{max}",
+        "audienceParents": "Vanhemmille",
+        "audienceFamilies": "Perheille",
+        "audienceFamiliesWithAges": "Perheille, ikä {min}–{max}"
+      }
     },
     "verifyEmail": {
       "subject": "Vahvista sähköpostiosoitteesi",
@@ -3102,7 +3137,7 @@
   "roblox": {
     "hero": {
       "title": "Rakenna<br></br><primary>Pelaa</primary><br></br><secondary>Omista</secondary>",
-      "subtitle": "Ilmainen Roblox-pelisuunnitteluohjelma nuorille – järjestäjinä Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
+      "subtitle": "Ilmainen pelisuunnitteluohjelma nuorille – järjestäjinä Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
       "cta": "Hyppää mukaan!"
     },
     "lockup": {
@@ -3237,15 +3272,16 @@
       "button": "Aloita"
     },
     "legal": {
-      "roblox": "© 2024 Roblox Corporation. Roblox-sanamerkki, Roblox-logo ja Roblox Tilt ovat Roblox Corporationin rekisteröityjä ja rekisteröimättömiä tavaramerkkejä Yhdysvalloissa ja muissa maissa. Käytetty luvalla.",
+      "roblox": "Roblox-sanamerkki, Roblox-logo ja Roblox Tilt ovat Roblox Corporationin rekisteröityjä ja rekisteröimättömiä tavaramerkkejä Yhdysvalloissa ja muissa maissa. Käytetty luvalla.",
       "lynx": "Lynx Educate ja Lynx Educate -logo ovat Lynx Educaten tavaramerkkejä. Käytetty luvalla.",
-      "privacy": "Roblox-ohjelman tietosuojaseloste",
-      "safeguarding": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
-      "terms": "Roblox-ohjelman käyttöehdot"
+      "documents": "Luojien akatemian asiakirjat",
+      "privacy": "Tietosuojaseloste",
+      "safeguarding": "Lasten turvallisuuden toimintaohje",
+      "terms": "Käyttöehdot"
     }
   },
   "robloxPrivacy": {
-    "title": "Roblox-ohjelman tietosuojaseloste",
+    "title": "Luojien akatemian tietosuojaseloste",
     "subtitle": "Perheille, jotka ilmoittautuvat Ranskassa järjestettävään nuorten digitaalisen luovuuden Ohjelmaan, jonka toteuttavat Lynx Educate ja School of Gaming ja jota Roblox tukee.",
     "lastUpdated": "Päivitetty viimeksi: {date}",
     "intro": {
@@ -3274,7 +3310,7 @@
       "applies": {
         "heading": "Keitä tämä seloste koskee",
         "blocks": [
-          "Tämä seloste koskee vanhempia, huoltajia ja nuoria, jotka ilmoittautuvat Ranskassa järjestettävään Robloxin nuorten digitaalisen luovuuden Ohjelmaan (Ohjelma).",
+          "Tämä seloste koskee vanhempia, huoltajia ja nuoria, jotka ilmoittautuvat Luojien akatemiaan, Ranskassa järjestettävään nuorten digitaalisen luovuuden Ohjelmaan (Ohjelma).",
           "Ohjelma on tarkoitettu 8–17-vuotiaille nuorille. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja vahvistettava, että hänellä on oikeus ilmoittaa lapsi mukaan.",
           "Seloste kattaa Ohjelmaan ilmoittautumisen, hallinnoinnin, oppimistapaamiset, tapahtumat, tuen, lasten turvallisuuden ja vaikuttavuuden arvioinnin. Se täydentää School of Gamingin <linkPrivacy>yleistä tietosuojaselostetta</linkPrivacy>. Jos selosteet ovat tämän Ohjelman osalta ristiriidassa, sovelletaan tätä Ohjelmaa koskevaa selostetta.",
           "Lapsen omaan Roblox-tilin, Roblox Studion tai muun Roblox-palvelun käyttöön sovelletaan Robloxin omaa tietosuojaselostetta ja käyttöehtoja.",
@@ -3642,7 +3678,7 @@
     }
   },
   "robloxSafeguarding": {
-    "title": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
+    "title": "Luojien akatemian lasten turvallisuuden toimintaohje",
     "subtitle": "Tämä toimintaohje täydentää School of Gamingin <linkDiscipline>kiusaamisen ehkäisyn ohjetta</linkDiscipline>, jota sovelletaan edelleen tapaamisten arkiseen käyttäytymiseen. Tässä asiakirjassa kuvataan Lynx Educaten ja School of Gamingin laajemmat vastuut lasten turvallisuudesta Ohjelmassa, myös lähitapahtumissa.",
     "lastUpdated": "Tarkistettu viimeksi: {date}",
     "pendingContact": "School of Gamingin yhteysosoitetta turvallisuushuolia varten vahvistetaan vielä, ja se lisätään tähän.",
@@ -3701,7 +3737,7 @@
       "data": {
         "heading": "Tiedot ja valokuvat",
         "blocks": [
-          "Kaikkeen valokuvaamiseen, kuvaamiseen ja lapsen kuvan käyttöön sovelletaan <linkRobloxPrivacy>Roblox-ohjelman tietosuojaselosteessa</linkRobloxPrivacy> kuvattuja suostumusvalintoja – suostumusta ei koskaan oleteta, se on aina vapaaehtoinen ja aina muutettavissa."
+          "Kaikkeen valokuvaamiseen, kuvaamiseen ja lapsen kuvan käyttöön sovelletaan <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kuvattuja suostumusvalintoja – suostumusta ei koskaan oleteta, se on aina vapaaehtoinen ja aina muutettavissa."
         ]
       },
       "review": {
@@ -3713,14 +3749,14 @@
     }
   },
   "robloxTerms": {
-    "title": "Roblox-ohjelman käyttöehdot",
-    "subtitle": "Koskee perheitä, jotka ilmoittautuvat Lynx Educaten, School of Gamingin ja Robloxin yhteiseen ohjelmaan Ranskassa.",
+    "title": "Luojien akatemian käyttöehdot",
+    "subtitle": "Koskee perheitä, jotka ilmoittautuvat Luojien akatemiaan Ranskassa – Lynx Educate × School of Gaming, yhteistyössä Robloxin kanssa.",
     "lastUpdated": "Päivitetty: {date}",
     "pendingContact": "School of Gamingin yhteysosoitetta vahvistetaan vielä, ja se lisätään tähän.",
     "intro": {
       "heading": "Lyhyesti",
       "blocks": [
-        "Tässä kerrotaan, mihin ilmoitat lapsesi, kun ilmoittaudut Roblox-ohjelmaan. Kyseessä on Lynx Educaten ja School of Gamingin yhteinen ohjelma, jota Roblox tukee. Jos jokin jää epäselväksi, lähetä sähköpostia osoitteeseen support@lynxeducate.com."
+        "Tässä kerrotaan, mihin ilmoitat lapsesi, kun ilmoittaudut Luojien akatemiaan. Kyseessä on Lynx Educaten ja School of Gamingin yhteinen ohjelma, jota Roblox tukee. Jos jokin jää epäselväksi, lähetä sähköpostia osoitteeseen support@lynxeducate.com."
       ]
     },
     "sections": {
@@ -3761,8 +3797,8 @@
       "information": {
         "heading": "Sinun tietosi",
         "blocks": [
-          "<linkRobloxPrivacy>Roblox-ohjelman tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, miten käytämme sinun ja lapsesi tietoja. Ilmoittautumalla vahvistat lukeneesi ja ymmärtäneesi sen.",
-          "Kun ilmoittaudut Roblox-ohjelmaan, School of Gaming -tiliisi liittyvät tiedot (mukaan lukien yhteystietosi ja lapsesi tilitiedot) jaetaan myös Lynx Educatelle ohjelman toteuttamista varten ja Robloxille ohjelman vaikuttavuustutkimusta varten."
+          "<linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, miten käytämme sinun ja lapsesi tietoja. Ilmoittautumalla vahvistat lukeneesi ja ymmärtäneesi sen.",
+          "Kun ilmoittaudut Luojien akatemiaan, School of Gaming -tiliisi liittyvät tiedot (mukaan lukien yhteystietosi ja lapsesi tilitiedot) jaetaan myös Lynx Educatelle ohjelman toteuttamista varten ja Robloxille ohjelman vaikuttavuustutkimusta varten."
         ]
       },
       "media": {
@@ -3841,11 +3877,11 @@
   },
   "consentDocuments": {
     "names": {
-      "robloxProgrammeTerms": "Roblox-ohjelman käyttöehdot",
-      "robloxPrivacyPolicy": "Roblox-ohjelman tietosuojaseloste"
+      "robloxProgrammeTerms": "Luojien akatemian käyttöehdot",
+      "robloxPrivacyPolicy": "Luojien akatemian tietosuojaseloste"
     },
     "bundles": {
-      "robloxProgramme": "Roblox-ohjelman asiakirjat"
+      "robloxProgramme": "Luojien akatemian asiakirjat"
     }
   },
   "chat": {
