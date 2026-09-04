@@ -13,25 +13,25 @@ import type { GamerSignIn, UserRole } from "@/types";
  * the link is dead. The rest exists for a child in sign-in mode `email`, whose
  * verification is the *first* step of getting an account they can actually use —
  * the second is a password, which they set through the ordinary reset flow, and
- * the page kicks that off. Everything needed to decide that is here, so the page
- * makes no second lookup of its own.
+ * the page offers them the button that starts it. Everything needed to decide
+ * that is here, so the page makes no second lookup of its own.
  *
- * `firstVerification` is the signal that distinguishes redeeming a link from
- * re-visiting one. It is true only for the call that actually moved
- * `email_verified_at` off NULL, so a reload, a second click, or an inbox scanner
- * pre-fetching the URL does not send a fresh password-reset mail each time.
  * Every field but `outcome` is null on an invalid link — there is no account to
  * describe.
+ *
+ * **There is deliberately no "was this the first redemption" signal.** One
+ * existed, and its only reader was a page that mailed a recovery token on the
+ * strength of it — a credential sent by whatever opened the URL, a mail scanner
+ * included. Nothing here now has a side effect to key on, so a first click and a
+ * fiftieth are the same answer, which is what the redemption honestly is.
  */
 export interface EmailVerificationRedemption {
   outcome: "verified" | "invalid";
   role: UserRole | null;
   /** The gamer's sign-in mode; null for every other role, which has none. */
   signIn: GamerSignIn | null;
-  /** The address that was verified — the reset mail's destination. */
+  /** The address that was verified. */
   email: string | null;
-  /** True only when THIS call moved the stamp off NULL. */
-  firstVerification: boolean;
 }
 
 const INVALID: EmailVerificationRedemption = {
@@ -39,7 +39,6 @@ const INVALID: EmailVerificationRedemption = {
   role: null,
   signIn: null,
   email: null,
-  firstVerification: false,
 };
 
 /**
@@ -62,12 +61,6 @@ const INVALID: EmailVerificationRedemption = {
  * pre-fetching the link) neither fails nor rewrites the date. That is what
  * makes doing this write during a GET acceptable: there is no state a repeat
  * can damage, and nothing here depends on the caller.
- *
- * **The same conditional write is what reports `firstVerification`.** Asking the
- * update which rows it touched costs nothing beyond a `select` on the statement
- * already being run, and it is the only signal available that a replay can be
- * told apart by — the row's presence looks identical either way. Anything with a
- * side effect (the child's password-reset mail) keys on it.
  */
 export async function redeemEmailVerificationToken(
   token: string | null | undefined,
@@ -91,14 +84,12 @@ export async function redeemEmailVerificationToken(
 
   // `is("email_verified_at", null)` is what keeps the stamp at the moment the
   // address was first confirmed. A row already carrying one matches nothing,
-  // which is a successful no-op rather than an error — and the empty result is
-  // exactly what says this was a repeat rather than the first click.
-  const { data: stamped, error } = await admin
+  // which is a successful no-op rather than an error.
+  const { error } = await admin
     .from("profiles")
     .update({ email_verified_at: new Date().toISOString() })
     .eq("id", userId)
-    .is("email_verified_at", null)
-    .select("id");
+    .is("email_verified_at", null);
 
   // A failed write is the one case the reader must not be told "verified" — the
   // link is good, the state did not change, and a second click should be able
@@ -109,7 +100,7 @@ export async function redeemEmailVerificationToken(
   }
 
   // Read after the stamp, not before: the mode is what tells the page whether a
-  // password-reset mail follows, and only a gamer has one.
+  // password is still owed, and only a gamer has one.
   let signIn: GamerSignIn | null = null;
   if (profile.role === "gamer") {
     const { data: gamerProfile } = await admin
@@ -125,6 +116,5 @@ export async function redeemEmailVerificationToken(
     role: profile.role,
     signIn,
     email: profile.email,
-    firstVerification: stamped.length > 0,
   };
 }

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { MailCheck, MailX } from "lucide-react";
 import { getTranslations } from "next-intl/server";
@@ -8,7 +7,6 @@ import { RequestPasswordLinkButton } from "@/components/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { redeemEmailVerificationToken } from "@/lib/email-verification.server";
-import { sendPasswordResetEmail } from "@/lib/password-reset.server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -49,13 +47,17 @@ export async function generateMetadata(): Promise<Metadata> {
  * page is not the end of anything.** They have no password at all until the
  * address is confirmed — that is the whole design: a parent gives us an address,
  * the child proves they can read it, and only then may they choose the
- * credential. So the first redemption of their link sends the ordinary
- * password-reset mail on the spot, and the page tells them to go and open it.
+ * credential. So the page says what comes next and hands them the button that
+ * asks for it.
  *
- * The send is keyed on `firstVerification`, never on the mode alone: a reload, a
- * second click, or an inbox scanner pre-fetching the URL must not each mail a
- * fresh recovery token. A revisit gets a button instead — the reader asks, so
- * nothing is sent by a machine passing through.
+ * **Nothing is mailed by arriving here.** This page sends no password link of
+ * its own: a GET that mints a recovery token is a live credential mailed on a
+ * machine's schedule — a reload, a second click, or an inbox scanner
+ * pre-fetching the URL each send one — and a child told "we have sent you one
+ * more email" by a page that could not report a failure is told something the
+ * page does not know. The child asks, and then it goes. That also collapses the
+ * two states this branch used to have: a first redemption and a revisit are one
+ * page, because for the reader they are one situation.
  *
  * The reader here is a child, and the copy is written for one: short sentences,
  * no jargon, and the address is never printed on the page (see
@@ -72,33 +74,17 @@ export default async function VerifyEmailPage({
 
   // A repeated `?token=a&token=b` is not a token. `typeof === "string"` is the
   // idiom the other token landing page uses, and it rejects that case for free.
-  const { outcome, role, signIn, email, firstVerification } =
-    await redeemEmailVerificationToken(
-      typeof token === "string" ? token : null,
-    );
+  const { outcome, role, signIn, email } = await redeemEmailVerificationToken(
+    typeof token === "string" ? token : null,
+  );
 
   const verified = outcome === "verified";
 
   // The one account shape for which verifying is a step rather than a
   // confirmation. Every field is non-null on a verified outcome; the check on
-  // `email` is what narrows the type for the two uses below.
+  // `email` is what narrows the type for the use below.
   const gamerNeedsPassword =
     verified && role === "gamer" && signIn === "email" && email !== null;
-
-  if (gamerNeedsPassword && firstVerification) {
-    // Awaited, not fired and forgotten: the page is about to tell a child that
-    // an email is on its way, and the send has to have been attempted before
-    // that sentence is written. The helper swallows its own failures by design
-    // (it is shared with the enumeration-safe forgot-password route), so this
-    // cannot report one — which is why the page's other branch hands the reader
-    // a button rather than assuming the mail always lands.
-    await sendPasswordResetEmail({
-      email,
-      // A server component has no Request; `getOrigin` reads only the Host
-      // header, and the emailed link's origin has to be the trusted one.
-      requestHeaders: await headers(),
-    });
-  }
 
   if (gamerNeedsPassword) {
     return (
@@ -107,32 +93,24 @@ export default async function VerifyEmailPage({
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">{t("gamerVerifiedTitle")}</h1>
           <p className="text-muted-foreground">
-            {firstVerification
-              ? t("gamerPasswordLinkSentDescription")
-              : t("gamerPasswordLinkAgainDescription")}
+            {t("gamerChoosePasswordDescription")}
           </p>
         </div>
-        {/* **Nothing to click on the first visit, deliberately.** The next step
-            is in the inbox we have just written to, and a Sign in button here
-            would invite a child to try a password they do not have yet. The
-            revisit is the opposite case: the mail may be long gone, so the page
-            offers another copy, with the way in underneath it as a quiet link
-            (a button plus an escape hatch is not a two-answer pair and is not
-            reversed — root `CLAUDE.md`, "Button Order").
+        {/* One button, and the way in underneath it as a quiet link (a button
+            plus an escape hatch is not a two-answer pair and is not reversed —
+            root `CLAUDE.md`, "Button Order").
 
             The link goes *into* the button component rather than beside it, so
             the "Sent." sentence lands below both: a reveal above the link would
             push it down the moment the mail went out. */}
-        {!firstVerification && (
-          <RequestPasswordLinkButton email={email}>
-            <Link
-              href={ROUTES.login}
-              className="text-sm text-muted-foreground hover:text-primary"
-            >
-              {c("signIn")}
-            </Link>
-          </RequestPasswordLinkButton>
-        )}
+        <RequestPasswordLinkButton email={email}>
+          <Link
+            href={ROUTES.login}
+            className="text-sm text-muted-foreground hover:text-primary"
+          >
+            {c("signIn")}
+          </Link>
+        </RequestPasswordLinkButton>
       </div>
     );
   }

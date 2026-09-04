@@ -2357,8 +2357,7 @@
     "invalidDescription": "Vahvistuslinkki lakkaa toimimasta, kun tilin sähköpostiosoite vaihtuu. Avaa asetukset ja lähetä itsellesi uusi linkki.",
     "goToSettings": "Siirry asetuksiin",
     "gamerVerifiedTitle": "Sähköpostiosoitteesi on vahvistettu",
-    "gamerPasswordLinkSentDescription": "Lähetimme sinulle vielä yhden sähköpostin. Avaa se ja valitse salasana – niin kirjaudut jatkossa sisään.",
-    "gamerPasswordLinkAgainDescription": "Voit kirjautua sisään sähköpostiosoitteellasi ja salasanallasi. Unohditko sen? Pyydä uusi linkki ja valitse uusi salasana.",
+    "gamerChoosePasswordDescription": "Seuraavaksi valitse salasanasi – lähetämme sinulle linkin sähköpostitse.",
     "gamerSendPasswordLink": "Lähetä minulle salasanalinkki",
     "gamerPasswordLinkSent": "Lähetetty. Katso sähköpostisi.",
     "gamerPasswordLinkFailed": "Se ei onnistunut. Yritä uudelleen."
@@ -2711,9 +2710,8 @@
     "gamerWelcome": {
       "subject": "School of Gaming -tilisi on valmis",
       "heading": "Tilisi on valmis",
-      "body": "Hei {gamerName}, vanhempasi loi sinulle School of Gaming -tilin. Vahvista alla olevalla painikkeella, että tämä on sinun sähköpostiosoitteesi.",
+      "body": "Hei {gamerName}, vanhempasi loi sinulle School of Gaming -tilin. Jotta voit kirjautua sisään, tarvitset salasanan – vahvista ensin painikkeella, että tämä on sinun sähköpostiosoitteesi, niin pääset valitsemaan salasanan.",
       "button": "Tämä on sähköpostiosoitteeni",
-      "afterConfirming": "Sen jälkeen lähetämme sinulle vielä yhden viestin, jossa on linkki salasanan valintaa varten. Sitten voit kirjautua sisään itse.",
       "ignore": "Jos et odottanut tätä viestiä, voit jättää sen huomiotta. Mitään ei tapahdu."
     },
     "sessionReport": {

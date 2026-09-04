@@ -2401,8 +2401,7 @@
     "invalidDescription": "choHlu’DI’ QIn Daq, Qapbe’choH ngu’meH lInk. DuHmeylIj yIpoSmoH ’ej lInk chu’ yIngeH.",
     "goToSettings": "DuHmey yIghoS",
     "gamerVerifiedTitle": "ngu’lu’pu’ QIn DaqlIj",
-    "gamerPasswordLinkSentDescription": "latlh QIn wIngeHta’. yIpoSmoH ’ej mu’mey yIwIv – vaj bI’elchoH.",
-    "gamerPasswordLinkAgainDescription": "QIn DaqlIj mu’meylIj je Dalo’laH ’elmeH. DalIjpu’’a’? lInk chu’ yItlhob ’ej chu’ yIwIv.",
+    "gamerChoosePasswordDescription": "DaH mu’meylIj yIwIv – lInk wIngeHbej.",
     "gamerSendPasswordLink": "mu’mey lInk HIngeH",
     "gamerPasswordLinkSent": "ngeHta’. QIn yInuD.",
     "gamerPasswordLinkFailed": "Qapbe’. yInIDqa’!"
@@ -2755,9 +2754,8 @@
     "gamerWelcome": {
       "subject": "School of Gaming patlhlIj DaSuqpu’",
       "heading": "patlhlIj DaSuqpu’",
-      "body": "nuqneH {gamerName}! School of Gaming patlhlIj chenmoHpu’ vavlI’. QIn Daqvam Daghaj ’e’ toblu’meH, bIngDaq leQ yIqIp.",
+      "body": "nuqneH {gamerName}! School of Gaming patlhlIj chenmoHpu’ vavlI’. bI’elmeH mu’ pegh DaHutlh — QIn Daqvam Daghaj ’e’ toblu’meH bIngDaq leQ yIqIp, ghIq mu’ pegh DawIvlaH.",
       "button": "QIn Daqwij ’oH",
-      "afterConfirming": "ghIq latlh QIn wIngeH: mu’wIj Sub DawIvmeH Duv qeng. ghIq bIjol laH.",
       "ignore": "QInvam DapIHbe’chugh, yIleghQo’. pagh qaS."
     },
     "sessionReport": {

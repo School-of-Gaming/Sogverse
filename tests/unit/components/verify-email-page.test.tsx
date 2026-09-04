@@ -7,39 +7,39 @@ import type { EmailVerificationRedemption } from "@/lib/email-verification.serve
 /**
  * **For a child in `email` mode, verifying is a step rather than a
  * confirmation** — they have no password at all until the address is confirmed —
- * so this page has to do something for them that it does for nobody else: send
- * the password-reset mail, and say so.
+ * so this page has to say something to them that it says to nobody else: what
+ * comes next, and the button that asks for it.
  *
  * What is pinned:
  *
- *  - the send fires exactly once, on the redemption that actually moved the
- *    stamp. A reload, a second click, or an inbox scanner pre-fetching the link
- *    re-renders this page, and each of those minting a fresh recovery token
- *    would be a live credential mailed on a machine's schedule;
- *  - the revisit gets a button instead, so a child whose mail is long gone can
- *    ask — and only then;
+ *  - the page mails nothing. It used to send the password-reset mail during its
+ *    own GET, which put a live recovery token on whatever opened the URL — a
+ *    reload, a second click, an inbox scanner passing through. The child asks,
+ *    and only then does anything go out;
+ *  - a first redemption and a revisit are the same page. There is no state for
+ *    the reader to be in that the copy has to distinguish, so there is no split;
  *  - the page never prints the address. Anyone holding the link can open it, and
  *    the address belongs to a child;
  *  - every other role and mode goes down the path it always did.
  *
  * The page is an async server component, so it is awaited and rendered to static
- * markup — its two data reads are the only things mocked, and there is no client
- * behaviour in the branches under test.
+ * markup — its one data read is mocked, and the button's own behaviour is pinned
+ * next door in `request-password-link-button.test.tsx`.
  */
 
 const redeem = vi.fn<() => Promise<EmailVerificationRedemption>>();
-const sendPasswordResetEmail =
-  vi.fn<(args: { email: string; requestHeaders: Headers }) => Promise<void>>();
+/**
+ * Mocked even though the page no longer imports it: this spy is the regression
+ * guard for the one thing this page must never do again, and it catches the
+ * import coming back rather than describing the code as it stands.
+ */
+const sendPasswordResetEmail = vi.fn();
 
 vi.mock("@/lib/email-verification.server", () => ({
   redeemEmailVerificationToken: () => redeem(),
 }));
 vi.mock("@/lib/password-reset.server", () => ({
-  sendPasswordResetEmail: (args: { email: string; requestHeaders: Headers }) =>
-    sendPasswordResetEmail(args),
-}));
-vi.mock("next/headers", () => ({
-  headers: () => Promise.resolve(new Headers({ host: "sogverse.sog.gg" })),
+  sendPasswordResetEmail: (...args: unknown[]) => sendPasswordResetEmail(...args),
 }));
 
 // `getTranslations` refuses to run outside a server render, and jsdom is not
@@ -66,7 +66,6 @@ function redemption(
     role: "gamer",
     signIn: "email",
     email: CHILD_ADDRESS,
-    firstVerification: true,
     ...overrides,
   };
 }
@@ -84,60 +83,43 @@ async function pageHtml(): Promise<string> {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  sendPasswordResetEmail.mockResolvedValue(undefined);
 });
 
-describe("a child confirming their address for the first time", () => {
-  it("is sent the password link and told to go and open it", async () => {
+describe("a child confirming their address", () => {
+  it("is told what comes next and offered the button that asks for it", async () => {
     redeem.mockResolvedValue(redemption({}));
 
     const html = await pageHtml();
 
-    expect(sendPasswordResetEmail).toHaveBeenCalledTimes(1);
-    expect(sendPasswordResetEmail.mock.calls[0][0]).toMatchObject({
-      email: CHILD_ADDRESS,
-    });
     expect(html).toContain(messages.verifyEmail.gamerVerifiedTitle);
-    expect(html).toContain(
-      messages.verifyEmail.gamerPasswordLinkSentDescription,
-    );
+    expect(html).toContain(messages.verifyEmail.gamerChoosePasswordDescription);
+    expect(html).toContain(messages.verifyEmail.gamerSendPasswordLink);
   });
 
-  // The next step is in the inbox we have just written to; a Sign in button
-  // would invite a child to try a password they do not have yet.
-  it("is offered nothing to click", async () => {
+  /**
+   * The mail carries a recovery token, and a GET that mints one is a credential
+   * sent by whatever opened the URL — a reload, a second click, an inbox scanner
+   * pre-fetching the link. Rendering this page sends nothing.
+   */
+  it("mails nothing by being rendered", async () => {
+    redeem.mockResolvedValue(redemption({}));
+
+    await pageHtml();
+
+    expect(sendPasswordResetEmail).not.toHaveBeenCalled();
+  });
+
+  // The escape hatch sits beside the button, under it.
+  it("offers the way in beneath the button", async () => {
     redeem.mockResolvedValue(redemption({}));
 
     const html = await pageHtml();
 
-    expect(html).not.toContain(messages.verifyEmail.gamerSendPasswordLink);
-    expect(html).not.toContain(messages.common.signIn);
+    expect(html).toContain(messages.common.signIn);
   });
 
   it("never prints the address on a page anyone with the link can open", async () => {
     redeem.mockResolvedValue(redemption({}));
-
-    const html = await pageHtml();
-
-    expect(html).not.toContain(CHILD_ADDRESS);
-  });
-});
-
-describe("a child opening the same link again", () => {
-  it("sends nothing, and offers to send on request instead", async () => {
-    redeem.mockResolvedValue(redemption({ firstVerification: false }));
-
-    const html = await pageHtml();
-
-    expect(sendPasswordResetEmail).not.toHaveBeenCalled();
-    expect(html).toContain(messages.verifyEmail.gamerSendPasswordLink);
-    expect(html).toContain(
-      messages.verifyEmail.gamerPasswordLinkAgainDescription,
-    );
-  });
-
-  it("still keeps the address off the page", async () => {
-    redeem.mockResolvedValue(redemption({ firstVerification: false }));
 
     const html = await pageHtml();
 
@@ -153,20 +135,19 @@ describe("everybody else", () => {
 
     const html = await pageHtml();
 
-    expect(sendPasswordResetEmail).not.toHaveBeenCalled();
     expect(html).toContain(messages.verifyEmail.successTitle);
     expect(html).toContain(messages.verifyEmail.goToDashboard);
   });
 
   // A switch-only or username-mode child has no mailbox, so this branch can
   // only be reached by a link minted before the mode changed.
-  it("sends nothing for a gamer who is not in email mode", async () => {
+  it("shows the plain confirmation for a gamer who is not in email mode", async () => {
     redeem.mockResolvedValue(redemption({ signIn: "username" }));
 
     const html = await pageHtml();
 
-    expect(sendPasswordResetEmail).not.toHaveBeenCalled();
     expect(html).toContain(messages.verifyEmail.successTitle);
+    expect(html).not.toContain(messages.verifyEmail.gamerSendPasswordLink);
   });
 
   it("shows the dead-link view for a token that does not hold", async () => {
@@ -175,12 +156,10 @@ describe("everybody else", () => {
       role: null,
       signIn: null,
       email: null,
-      firstVerification: false,
     });
 
     const html = await pageHtml();
 
-    expect(sendPasswordResetEmail).not.toHaveBeenCalled();
     expect(html).toContain(messages.verifyEmail.invalidTitle);
   });
 });

@@ -32,11 +32,6 @@ const supabase = vi.hoisted(() => {
     gamerProfile: null as { sign_in: string } | null,
     /** What the conditional update answers. */
     updateError: null as { message: string } | null,
-    /**
-     * How many rows the conditional update touched. One means this call is what
-     * moved the stamp off NULL; zero means it was already set, i.e. a repeat.
-     */
-    rowsStamped: 1,
     /** Everything the module actually asked for, in order. */
     tables: [] as string[],
     selectFilters: [] as [string, unknown][],
@@ -50,7 +45,6 @@ const supabase = vi.hoisted(() => {
     state.profile = null;
     state.gamerProfile = null;
     state.updateError = null;
-    state.rowsStamped = 1;
     state.tables = [];
     state.selectFilters = [];
     state.updatePayloads = [];
@@ -86,21 +80,10 @@ const supabase = vi.hoisted(() => {
               },
               is(column: string, value: unknown) {
                 state.isFilters.push([column, value]);
-                // Terminal on purpose: the chain the module builds ends in the
-                // `select` that reports which rows it touched, so a future edit
-                // dropping either the NULL predicate or the affected-row read
-                // leaves the statement un-awaitable rather than quietly wrong.
-                return {
-                  select: () =>
-                    Promise.resolve({
-                      data: state.updateError
-                        ? null
-                        : Array.from({ length: state.rowsStamped }, () => ({
-                            id: "row",
-                          })),
-                      error: state.updateError,
-                    }),
-                };
+                // Terminal on purpose: the NULL predicate is the last thing the
+                // module's chain says, so an edit that drops it leaves the
+                // statement un-awaitable rather than quietly unconditional.
+                return Promise.resolve({ error: state.updateError });
               },
             };
             return write;
@@ -168,17 +151,13 @@ describe("redeemEmailVerificationToken — the happy path", () => {
     // First click: this is the call that moves the stamp.
     const first = await redeemEmailVerificationToken(token);
     expect(first.outcome).toBe("verified");
-    expect(first.firstVerification).toBe(true);
 
     // Second click, against a row that now carries the original stamp. The
     // write is conditioned on the column being NULL, so it matches zero rows —
-    // and THAT is the signal anything with a side effect keys on. A child's
-    // password-reset mail must not go out again on a reload or an inbox scanner
-    // pre-fetching the link.
-    supabase.state.rowsStamped = 0;
+    // which is a successful no-op and answers exactly what the first click did.
     const second = await redeemEmailVerificationToken(token);
     expect(second.outcome).toBe("verified");
-    expect(second.firstVerification).toBe(false);
+    expect(second).toEqual(first);
 
     expect(
       supabase.state.isFilters,
@@ -293,12 +272,15 @@ describe("redeemEmailVerificationToken — everything it refuses", () => {
 /**
  * What the result carries beyond `outcome`, which exists for one reader: a child
  * in sign-in mode `email`, whose verification is the FIRST half of getting a
- * usable account. The verify page needs the mode, the address and whether this
- * click was the real one, and taking all three from here is what keeps that page
- * from making a second lookup of its own.
+ * usable account. The verify page needs the mode and the address, and taking
+ * both from here is what keeps that page from making a second lookup of its own.
+ *
+ * There is deliberately nothing here saying whether this click was the first: a
+ * page that mailed a credential on the strength of that answer was the only
+ * reader it ever had, and it does not any more.
  */
 describe("redeemEmailVerificationToken — what the verify page is told", () => {
-  it("describes a gamer in email mode, so the page can send the reset link", async () => {
+  it("describes a gamer in email mode, so the page can offer the password step", async () => {
     supabase.state.profile = { email: EMAIL, role: "gamer" };
     supabase.state.gamerProfile = { sign_in: "email" };
     const token = await createEmailVerificationToken(USER, EMAIL);
@@ -310,7 +292,6 @@ describe("redeemEmailVerificationToken — what the verify page is told", () => 
       role: "gamer",
       signIn: "email",
       email: EMAIL,
-      firstVerification: true,
     });
   });
 
@@ -336,7 +317,6 @@ describe("redeemEmailVerificationToken — what the verify page is told", () => 
       role: null,
       signIn: null,
       email: null,
-      firstVerification: false,
     });
   });
 });

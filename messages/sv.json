@@ -2356,9 +2356,8 @@
     "invalidTitle": "Den här länken fungerar inte längre",
     "invalidDescription": "En verifieringslänk slutar fungera så snart kontots e-postadress ändras. Öppna dina inställningar och skicka en ny till dig själv.",
     "goToSettings": "Gå till inställningar",
-    "gamerVerifiedTitle": "Din e-postadress är verifierad",
-    "gamerPasswordLinkSentDescription": "Vi har skickat ett mejl till. Öppna det och välj ett lösenord – så loggar du in i fortsättningen.",
-    "gamerPasswordLinkAgainDescription": "Du kan logga in med din e-postadress och ditt lösenord. Glömt det? Be om en ny länk och välj ett nytt.",
+    "gamerVerifiedTitle": "Din e-postadress är bekräftad",
+    "gamerChoosePasswordDescription": "Nu väljer du ditt lösenord – vi mejlar dig en länk.",
     "gamerSendPasswordLink": "Skicka mig en lösenordslänk",
     "gamerPasswordLinkSent": "Skickat. Titta i din e-post.",
     "gamerPasswordLinkFailed": "Det gick inte. Försök igen."
@@ -2711,9 +2710,8 @@
     "gamerWelcome": {
       "subject": "Ditt School of Gaming-konto är klart",
       "heading": "Ditt konto är klart",
-      "body": "Hej {gamerName}, din förälder har skapat ett School of Gaming-konto åt dig. Tryck på knappen nedan för att bekräfta att det här är din e-postadress.",
+      "body": "Hej {gamerName}, din förälder har skapat ett School of Gaming-konto åt dig. För att logga in behöver du ett lösenord – tryck först på knappen för att bekräfta att det här är din e-postadress, sedan får du välja ett.",
       "button": "Det här är min e-postadress",
-      "afterConfirming": "Sedan skickar vi ett mejl till med en länk där du väljer ditt lösenord. Därefter kan du logga in på egen hand.",
       "ignore": "Om du inte väntade dig det här mejlet kan du bortse från det. Ingenting händer."
     },
     "sessionReport": {

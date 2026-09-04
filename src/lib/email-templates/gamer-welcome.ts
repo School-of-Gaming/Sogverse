@@ -19,11 +19,18 @@ import type { EmailTranslator } from "./translator";
  * mail. "Your parent" is true of every family shape we have, needs no lookup,
  * and is what a child would say themselves.
  *
- * **One action, and the second step is described rather than offered.** The
- * child cannot set a password yet — confirming the address is what causes the
- * password link to be sent — so a second button would be a link to nowhere.
- * Saying plainly that another mail follows is what keeps the child from waiting
- * for a page that never appears.
+ * **One action, and the mail ends after it.** It used to promise a second mail
+ * with a password link in it, which was a promise the product could not keep:
+ * that link is only sent once the child asks for it on the page the button leads
+ * to, so a child who confirmed and then waited for an inbox was waiting for
+ * nothing.
+ *
+ * **What replaced the promise is the reason.** The body says why the button is
+ * there — signing in takes a password, and confirming the address is the first
+ * half of getting one — so the child knows what they are starting rather than
+ * what to expect in their inbox. Dropping the promise without saying that leaves
+ * a mail whose one button means nothing in particular; the page the button opens
+ * states the next step at the moment it is true.
  *
  * No expiry is stated, because the link has none: it stays good until the
  * address on the account changes.
@@ -47,7 +54,6 @@ export function buildGamerWelcomeEmail(
       }),
     )}
     ${ctaButton({ href: verificationUrl, label: t("gamerWelcome.button") })}
-    ${paragraph(t("gamerWelcome.afterConfirming"))}
     ${paragraph(t("gamerWelcome.ignore"))}
   `;
   return wrapInLayout({

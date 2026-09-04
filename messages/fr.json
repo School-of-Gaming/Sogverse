@@ -2356,9 +2356,8 @@
     "invalidTitle": "Ce lien ne fonctionne plus",
     "invalidDescription": "Un lien de vérification cesse de fonctionner dès que l’adresse e-mail du compte change. Ouvrez vos paramètres et envoyez-vous-en un nouveau.",
     "goToSettings": "Aller aux paramètres",
-    "gamerVerifiedTitle": "Ton adresse e-mail est vérifiée",
-    "gamerPasswordLinkSentDescription": "Nous t’avons envoyé un dernier e-mail. Ouvre-le et choisis un mot de passe — c’est ainsi que tu te connecteras désormais.",
-    "gamerPasswordLinkAgainDescription": "Tu peux te connecter avec ton adresse e-mail et ton mot de passe. Tu l’as oublié ? Demande un nouveau lien et choisis-en un autre.",
+    "gamerVerifiedTitle": "Ton adresse e-mail est confirmée",
+    "gamerChoosePasswordDescription": "Ensuite, choisis ton mot de passe — nous t’enverrons un lien par e-mail.",
     "gamerSendPasswordLink": "Envoie-moi un lien pour le mot de passe",
     "gamerPasswordLinkSent": "C’est envoyé. Regarde dans tes e-mails.",
     "gamerPasswordLinkFailed": "Ça n’a pas marché. Réessaie."
@@ -2711,9 +2710,8 @@
     "gamerWelcome": {
       "subject": "Ton compte School of Gaming est prêt",
       "heading": "Ton compte est prêt",
-      "body": "Bonjour {gamerName}, ton parent a créé un compte School of Gaming pour toi. Appuie sur le bouton ci-dessous pour confirmer que c’est bien ton adresse e-mail.",
+      "body": "Bonjour {gamerName}, ton parent a créé un compte School of Gaming pour toi. Pour te connecter, il te faut un mot de passe — appuie d’abord sur le bouton pour confirmer que c’est bien ton adresse e-mail, puis tu pourras en choisir un.",
       "button": "C’est bien mon adresse",
-      "afterConfirming": "Nous t’enverrons ensuite un dernier e-mail avec un lien pour choisir ton mot de passe. Tu pourras alors te connecter par toi-même.",
       "ignore": "Si tu n’attendais pas cet e-mail, tu peux l’ignorer. Rien ne changera."
     },
     "sessionReport": {
