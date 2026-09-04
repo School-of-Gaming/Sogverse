@@ -607,10 +607,18 @@ function quietCatalogue(): ProductSpec[] {
  *
  * Authored as `(product, issue facts)` pairs so the queue reads the way an admin
  * thinks — *this product, these problems* — rather than as ten category lists a
- * reader has to reassemble a product from. Twenty-one products across five kinds
- * of problem, deliberately uneven: three carry a stack of three, most carry one,
- * and two carry two group lines each, because a card whose only shape is "one
- * line" says nothing about how a card with several reads.
+ * reader has to reassemble a product from. Twenty-two products across all six
+ * kinds of problem, deliberately uneven: three carry a stack of three, most
+ * carry one, and two carry two group lines each, because a card whose only shape
+ * is "one line" says nothing about how a card with several reads.
+ *
+ * **The two unstaffed-group kinds appear together on one card and apart on
+ * another**, because that pair is the hardest thing on this panel to get right:
+ * they say almost the same sentence and are ranked and tinted differently, so
+ * the only way to tell whether the difference reads is to see them adjacent. The
+ * card carrying an empty group alone is the other half of that — the same line
+ * with no warning line above it to lend it weight, sitting at the top of the
+ * muted band that the fee-only cards fill out below it.
  *
  * **The facts are structural here for the same reason they are on the wire.** A
  * fixture holding pre-worded English would render the preview scene through a
@@ -672,8 +680,14 @@ const PRODUCT_ISSUE_SPECS: readonly {
     ],
   },
   {
+    // The pair on one card: one unstaffed group somebody is in, one nobody is.
+    // Almost the same sentence twice, ranked apart and tinted apart — which is
+    // only checkable with the two of them adjacent.
     productId: "municipality-club-5",
-    issues: [{ kind: "group-without-gedu", values: { group: "Kerho 1" } }],
+    issues: [
+      { kind: "group-without-gedu", values: { group: "Kerho 1" } },
+      { kind: "empty-group-without-gedu", values: { group: "Kerho 2" } },
+    ],
   },
   {
     productId: "camp-5",
@@ -691,6 +705,16 @@ const PRODUCT_ISSUE_SPECS: readonly {
     // singular form somewhere in the scene.
     productId: "municipality-club-4",
     issues: [{ kind: "waitlist-open-seats", values: { waiting: 4, open: 1, offers: 0 } }],
+  },
+  {
+    // The empty group standing alone: a club that has not started yet, whose
+    // whole problem is one group with nobody teaching it and nobody in it. The
+    // fee-only cards below are all-muted too and rank below this one, so what
+    // this card is here for is the top of the muted band with nothing above it —
+    // the shape that made this kind worth adding, because before it existed this
+    // product was absent from the queue altogether.
+    productId: "municipality-club-17",
+    issues: [{ kind: "empty-group-without-gedu", values: { group: "Ryhmä" } }],
   },
   {
     productId: "consumer-club-6",

@@ -57,6 +57,7 @@ function attentionProduct(
     translations: [{ locale: "en", name: `Product ${overrides.id}` }],
     unassigned_count: 0,
     groups_without_gedu: [],
+    empty_groups_without_gedu: [],
     waitlist: null,
     missing_gedu_fee: false,
     missing_municipality_fee: false,
@@ -500,6 +501,7 @@ describe("the attention queue", () => {
               { id: "g1", name: "Tiistai A" },
               { id: "g2", name: "Tiistai B" },
             ],
+            empty_groups_without_gedu: [{ id: "g3", name: "Tiistai C" }],
             waitlist: { waitlist_count: 3, open_seats: 1, live_offer_count: 0 },
             missing_gedu_fee: true,
           }),
@@ -522,12 +524,49 @@ describe("the attention queue", () => {
       { kind: "group-without-gedu", values: { group: "Tiistai A" } },
       { kind: "group-without-gedu", values: { group: "Tiistai B" } },
       { kind: "waitlist-open-seats", values: { waiting: 3, open: 1, offers: 0 } },
+      // Below the waitlist line and above the fee: an empty unstaffed group is
+      // a loose end rather than a child nobody is looking after, and this is
+      // where the queue says so.
+      { kind: "empty-group-without-gedu", values: { group: "Tiistai C" } },
       { kind: "missing-gedu-fee" },
     ]);
-    // Two group lines on one card need two keys.
-    expect(new Set(data.products[0].issues.map((issue) => issue.id)).size).toBe(
-      5,
+    // The ids are asserted whole rather than counted, because a count only
+    // proves they differ — it does not pin *how*. Each is product, kind and,
+    // where a kind can repeat on one card, the group it is about; that last
+    // part is what keeps three group lines from sharing a React key, and the
+    // kind infix is what keeps a populated and an empty group line legible as
+    // two different lines wherever an id is read back.
+    expect(data.products[0].issues.map((issue) => issue.id)).toEqual([
+      "club-unassigned-gamers",
+      "club-group-without-gedu-g1",
+      "club-group-without-gedu-g2",
+      "club-waitlist-open-seats",
+      "club-empty-group-without-gedu-g3",
+      "club-missing-gedu-fee",
+    ]);
+  });
+
+  it("keeps an empty unstaffed group out of the populated group's line", () => {
+    // The two arrays are disjoint on the wire, and the mapping reads each one
+    // exactly once. A pass that folded them together would produce the right
+    // number of lines with the wrong ranks and the wrong tint — the one failure
+    // mode a count of issues would not catch.
+    const data = build(
+      snapshot({
+        attention_products: [
+          attentionProduct({
+            id: "club",
+            empty_groups_without_gedu: [{ id: "g1", name: "Ryhmä" }],
+          }),
+        ],
+      }),
     );
+
+    expect(
+      data.products[0].issues.map(({ id: _id, ...issue }) => issue),
+    ).toEqual([
+      { kind: "empty-group-without-gedu", values: { group: "Ryhmä" } },
+    ]);
   });
 
   it("carries the live seat-offer count into the waitlist fact", () => {

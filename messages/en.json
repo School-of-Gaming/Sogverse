@@ -250,6 +250,7 @@
         "issues": {
           "unassignedGamers": "{count, plural, one {# unassigned gamer} other {# unassigned gamers}}",
           "groupWithoutGedu": "Group {group} has no Gedu",
+          "emptyGroupWithoutGedu": "Empty group {group} has no Gedu",
           "waitlistOpenSeats": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open",
           "missingGeduFee": "Gedu fee not set",
           "missingMunicipalityFee": "Municipality fee not set",

@@ -25,9 +25,13 @@ import {
  *     "accepted an older version" reads the same as "never accepted", either
  *     equally binding LANGUAGE of the current version counts, and a candidate
  *     holding both languages reports the first of the two signatures
- *   - the five product issues, each flagged only in the situation it names — a
- *     gedu fee of *zero* is a volunteer session, not a missing fee, and an empty
- *     group is not a group without an educator
+ *   - the six product issues, each flagged only in the situation it names — a
+ *     gedu fee of *zero* is a volunteer session, not a missing fee
+ *   - the two unstaffed-group arrays, which are disjoint: a group somebody is in
+ *     is in the first, a group nobody is in is in the second, and a group
+ *     somebody teaches is in neither. Until 00241 the empty one was not reported
+ *     at all, so the cases below are what keep the two halves from collapsing
+ *     back into one
  *   - a live product with nothing wrong is absent from the queue entirely
  *   - a run that ended months ago is in neither product section
  *
@@ -37,7 +41,7 @@ import {
  * platform and would be false for reasons that are not bugs. The document is
  * read once, after seeding, and each test looks up its own row in it.
  *
- * Product UUIDs 620-628 (see the allocation registry in product-helpers.ts).
+ * Product UUIDs 620-629 (see the allocation registry in product-helpers.ts).
  */
 
 const P_UNASSIGNED = "00000000-0000-0000-0000-000000000620";
@@ -46,8 +50,21 @@ const GROUP_NO_GEDU = "00000000-0000-0000-0000-000000000622";
 const P_WAITLIST = "00000000-0000-0000-0000-000000000623";
 const P_MUNI = "00000000-0000-0000-0000-000000000624";
 const P_CLEAN = "00000000-0000-0000-0000-000000000625";
+/**
+ * The product whose ONLY problem is an empty unstaffed group (00241). Its fee is
+ * set and it has no queue, so if it is in the attention list at all, it is there
+ * for the one reason this fixture exists to prove.
+ */
+const P_EMPTY_GROUP = "00000000-0000-0000-0000-000000000626";
 const GROUP_EMPTY = "00000000-0000-0000-0000-000000000627";
 const P_ENDED = "00000000-0000-0000-0000-000000000628";
+/**
+ * A group on P_CLEAN with an educator assigned and nobody in it. It is what
+ * keeps P_CLEAN clean *for a reason* — before 00241 an empty group was ignored
+ * whatever its staffing, so a fixture that left this one unassigned would go on
+ * passing while saying nothing.
+ */
+const GROUP_STAFFED = "00000000-0000-0000-0000-000000000629";
 
 /**
  * A contract version this file adds so it can seed an acceptance of something
@@ -75,6 +92,7 @@ const ALL_PRODUCTS = [
   P_WAITLIST,
   P_MUNI,
   P_CLEAN,
+  P_EMPTY_GROUP,
   P_ENDED,
 ];
 
@@ -202,6 +220,11 @@ describe("get_admin_dashboard", () => {
       startDate: utcDay(-7),
       endDate: utcDay(60),
     });
+    await createTestProduct(admin, {
+      id: P_EMPTY_GROUP,
+      seatCount: null,
+      waitlistEnabled: false,
+    });
     // Effectively over: the start and end are both in the past, so this one is
     // neither pending nor running, and its end date is far outside the window
     // the schedule keeps recent runs in.
@@ -225,6 +248,7 @@ describe("get_admin_dashboard", () => {
       [P_WAITLIST, 5000],
       [P_MUNI, 4000],
       [P_CLEAN, 3000],
+      [P_EMPTY_GROUP, 3500],
     ] as const) {
       const set = await admin
         .from("products")
@@ -246,11 +270,25 @@ describe("get_admin_dashboard", () => {
     expect(names.error).toBeNull();
 
     // --- groups -------------------------------------------------------------
+    //
+    // Three, one per answer the pair of group arrays can give: a group with a
+    // member and no educator, a group with neither, and a group with an educator
+    // and no member. The third is the one that has to be there — it is what
+    // makes "in neither array" a fact about the assignment rather than an
+    // accident of the fixture being empty.
     const groups = await admin.from("product_groups").insert([
       { id: GROUP_NO_GEDU, product_id: P_VOLUNTEER, name: "Orphaned group" },
-      { id: GROUP_EMPTY, product_id: P_CLEAN, name: "Empty group" },
+      { id: GROUP_EMPTY, product_id: P_EMPTY_GROUP, name: "Empty group" },
+      { id: GROUP_STAFFED, product_id: P_CLEAN, name: "Staffed empty group" },
     ]);
     expect(groups.error).toBeNull();
+
+    const assignment = await admin.from("gedu_group_assignments").insert({
+      group_id: GROUP_STAFFED,
+      gedu_id: TEST_IDS.GEDU,
+      product_id: P_CLEAN,
+    });
+    expect(assignment.error).toBeNull();
 
     // --- participations -----------------------------------------------------
     const participations = await admin.from("participations").insert([
@@ -542,6 +580,7 @@ describe("get_admin_dashboard", () => {
       const product = attention(P_UNASSIGNED);
       expect(product?.unassigned_count).toBe(1);
       expect(product?.groups_without_gedu).toEqual([]);
+      expect(product?.empty_groups_without_gedu).toEqual([]);
       expect(product?.waitlist).toBeNull();
       expect(product?.product_type).toBe("consumer_club");
       expect(product?.translations).toEqual([
@@ -556,9 +595,37 @@ describe("get_admin_dashboard", () => {
     });
 
     it("names a group that has members and no educator", () => {
-      expect(attention(P_VOLUNTEER)?.groups_without_gedu).toEqual([
+      const product = attention(P_VOLUNTEER);
+      expect(product?.groups_without_gedu).toEqual([
         { id: GROUP_NO_GEDU, name: "Orphaned group" },
       ]);
+      // Somebody is in it, so it is in one array and not the other. The two
+      // halves are told apart by membership and nothing else.
+      expect(product?.empty_groups_without_gedu).toEqual([]);
+    });
+
+    it("names an empty group with no educator, in its own array", () => {
+      // Until 00241 this group was reported nowhere: the group check skipped it
+      // for having no members, on the reasoning that an admin building next
+      // term's groups has not made a mistake. That reasoning now sets the line's
+      // rank on the page instead of hiding the group.
+      const product = attention(P_EMPTY_GROUP);
+      expect(product?.empty_groups_without_gedu).toEqual([
+        { id: GROUP_EMPTY, name: "Empty group" },
+      ]);
+      expect(product?.groups_without_gedu).toEqual([]);
+    });
+
+    it("puts a product in the queue for an empty unstaffed group alone", () => {
+      // Its fee is set, it has no cap and no queue, and nobody is enrolled on
+      // it — so its presence here is the empty group and nothing else. This is
+      // the whole behaviour change: before 00241 this product was absent.
+      const product = attention(P_EMPTY_GROUP);
+      expect(product).toBeDefined();
+      expect(product?.unassigned_count).toBe(0);
+      expect(product?.waitlist).toBeNull();
+      expect(product?.missing_gedu_fee).toBe(false);
+      expect(product?.missing_municipality_fee).toBe(false);
     });
 
     it("reports a queue against open seats, with the delta", () => {
@@ -580,8 +647,10 @@ describe("get_admin_dashboard", () => {
     });
 
     it("says nothing about a live product with nothing wrong", () => {
-      // P_CLEAN has a fee, no queue, no unassigned seats — and an EMPTY group,
-      // which is an admin building next term rather than a mistake.
+      // P_CLEAN has a fee, no queue, no unassigned seats — and one group that is
+      // empty but ASSIGNED, which is the case both group arrays exclude. Since
+      // 00241 that assignment is load-bearing: an empty group with no educator
+      // would put this product in the queue.
       expect(attention(P_CLEAN)).toBeUndefined();
     });
 

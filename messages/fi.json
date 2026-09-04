@@ -250,6 +250,7 @@
         "issues": {
           "unassignedGamers": "{count, plural, one {# sijoittamaton pelaaja} other {# sijoittamatonta pelaajaa}}",
           "groupWithoutGedu": "Ryhmällä {group} ei ole Gedua",
+          "emptyGroupWithoutGedu": "Tyhjällä ryhmällä {group} ei ole Gedua",
           "waitlistOpenSeats": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana",
           "missingGeduFee": "Gedun palkkio puuttuu",
           "missingMunicipalityFee": "Kunnan maksu puuttuu",

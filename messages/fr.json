@@ -250,6 +250,7 @@
         "issues": {
           "unassignedGamers": "{count, plural, one {# joueur non placé} other {# joueurs non placés}}",
           "groupWithoutGedu": "Le groupe {group} n’a pas de Gedu",
+          "emptyGroupWithoutGedu": "Le groupe vide {group} n’a pas de Gedu",
           "waitlistOpenSeats": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}}",
           "missingGeduFee": "Rémunération Gedu manquante",
           "missingMunicipalityFee": "Montant commune manquant",

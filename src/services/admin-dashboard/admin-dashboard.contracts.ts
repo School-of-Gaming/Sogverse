@@ -31,11 +31,17 @@ const productName = z.object({
  * One role's tile in the users strip. Always four of them (one per `user_role`),
  * including roles nobody holds — a zero tile is a fact, a missing tile is a gap.
  *
- * `verified` is null rather than 0 for gamers, and the difference is the point:
- * a gamer's address is a synthetic `@gamer.sogverse.internal` handle nobody will
- * ever click a link in, so "0 verified" would report a problem that does not
- * exist. Null means the stat has no meaning for this role. `certified` is the
- * same shape for the same reason — only an educator can be certified.
+ * `verified` is null rather than 0 where the stat has no meaning — and what
+ * decides that is the ADDRESS, not the role (00235/00240). A gamer signing in
+ * through their parent or by username carries a synthetic
+ * `@gamer.sogverse.internal` handle nobody will ever click a link in, so "0
+ * verified" would report a problem that does not exist; a gamer whose parent
+ * chose sign-in mode `email` holds a real mailbox and counts exactly like
+ * everyone else. So null means *this role has accounts and none of them is
+ * addressable* — which is every gamer only until one of them is given an email.
+ * A role with no accounts at all reports 0, because an empty tile has nothing to
+ * say either way. `certified` is the same null-means-no-meaning shape for a
+ * simpler reason: only an educator can be certified.
  */
 export const adminDashboardUserStat = z.object({
   role: z.enum(Constants.public.Enums.user_role),
@@ -73,7 +79,11 @@ export const adminDashboardCertificationCandidate = z.object({
   criminal_record_check_at: z.string().nullable(),
 });
 
-/** A group with members and nobody teaching it. */
+/**
+ * A group with nobody teaching it — the shape both unstaffed-group arrays are
+ * built from, because they carry the same fact and differ only in whether
+ * anybody is in the group.
+ */
 export const adminDashboardGroupWithoutGedu = z.object({
   id: z.string(),
   name: z.string(),
@@ -106,7 +116,7 @@ export const adminDashboardWaitlistPressure = z.object({
 /**
  * A live product with at least one thing wrong with it. A product with nothing
  * wrong is absent from the list entirely, so every entry here has at least one
- * of the five issues populated.
+ * of the six issues populated.
  *
  * The issues are facts, not sentences: the page words and orders them, because
  * the wording is translated copy and the order is a ranking the page owns.
@@ -119,6 +129,20 @@ export const adminDashboardAttentionProduct = z.object({
   unassigned_count: z.number(),
   /** Groups with at least one active member and no gedu assigned. */
   groups_without_gedu: z.array(adminDashboardGroupWithoutGedu),
+  /**
+   * Groups with no gedu assigned and nobody in them either (00241).
+   *
+   * A sibling key rather than a flag on the objects above, because the page
+   * ranks the two differently — an empty unstaffed group is a loose end, not a
+   * child nobody is looking after — and the ranking maps one wire fact onto one
+   * kind of issue. The two arrays are disjoint by construction, and a group
+   * somebody is assigned to is in neither.
+   *
+   * It puts a product in the queue on its own: an admin pre-building next
+   * term's groups has not made a mistake, which is what decides where the line
+   * sits rather than whether it is shown at all.
+   */
+  empty_groups_without_gedu: z.array(adminDashboardGroupWithoutGedu),
   waitlist: adminDashboardWaitlistPressure.nullable(),
   /**
    * The primary gedu fee is unset. A fee of *zero* is a volunteer session —

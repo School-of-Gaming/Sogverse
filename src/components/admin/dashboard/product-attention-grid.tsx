@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import {
   Coins,
   Building2,
+  UserMinus,
   UserRoundX,
   UserX,
   Users,
@@ -45,18 +46,36 @@ import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
 interface IssuePresentation {
   icon: LucideIcon;
   /**
-   * `warning` for work, `muted` for a missing configuration value. A missing fee
-   * is real and has to be fixed, but painting it the same colour as a child
-   * nobody is teaching would flatten the ranking the card just spent its
-   * ordering on.
+   * `warning` where somebody is already affected, `muted` where the cost is
+   * still only a loose end — a group nobody is in and nobody teaches, a gedu fee
+   * nobody has set, a municipality fee missing from a form. All three are real
+   * and have to be fixed, but painting them the same colour as a child nobody is
+   * teaching would flatten the ranking the card just spent its ordering on.
+   *
+   * **The split tracks the ranking rather than cutting across it**: the warning
+   * kinds are a prefix of `PRODUCT_ISSUE_KINDS` and the muted ones are the rest,
+   * so the colour and the order tell the same story and a reader who has learnt
+   * one has learnt the other. A new kind therefore does not get to pick its tone
+   * freely — its rank picks it, and a kind that wants a tone its neighbours do
+   * not have is a kind that is ranked wrong.
    */
   tone: "warning" | "muted";
 }
 
-const ISSUE_PRESENTATION: Record<ProductIssueKind, IssuePresentation> = {
+/**
+ * Exported for the invariant test: the prefix property the doc comment above
+ * asserts is a relationship between this map and `PRODUCT_ISSUE_KINDS`, and
+ * nothing in the type system holds it, so a test has to read both.
+ */
+export const ISSUE_PRESENTATION: Record<ProductIssueKind, IssuePresentation> = {
   "unassigned-gamers": { icon: UserRoundX, tone: "warning" },
   "group-without-gedu": { icon: UserX, tone: "warning" },
   "waitlist-open-seats": { icon: Users, tone: "warning" },
+  // Deliberately the near-twin of the `UserX` two entries up: it is the same
+  // fact about the same kind of thing — this group has no educator — and the
+  // tone is what carries the difference between a group somebody is enrolled in
+  // and one with nobody in it at all.
+  "empty-group-without-gedu": { icon: UserMinus, tone: "muted" },
   "missing-gedu-fee": { icon: Coins, tone: "muted" },
   "missing-municipality-fee": { icon: Building2, tone: "muted" },
 };
@@ -185,6 +204,8 @@ function useIssueText(issue: ProductIssue): string {
             waiting: issue.values.waiting,
             open: issue.values.open,
           });
+    case "empty-group-without-gedu":
+      return t("emptyGroupWithoutGedu", { group: issue.values.group });
     case "missing-gedu-fee":
       return t("missingGeduFee");
     case "missing-municipality-fee":

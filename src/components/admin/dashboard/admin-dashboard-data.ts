@@ -26,6 +26,17 @@ import type { ProductType, UserRole } from "@/types";
  * fee. It runs from *a child is enrolled and nobody is looking after them* down
  * to *a number is missing from a form*.
  *
+ * **The two unstaffed-group kinds are the ranking's clearest statement of what
+ * it is measuring.** The same fact — this group has no educator — sits near the
+ * top when somebody is in the group and near the bottom when nobody is, because
+ * what the queue ranks is who is affected rather than what is unset. An empty
+ * unstaffed group is a loose end an admin has to come back to before the term
+ * starts; it is below the waitlist line, where the cost of leaving it is a seat
+ * nobody was offered, and above the fee lines, where the cost is a form. It
+ * used to be invisible altogether, on the reasoning that an admin building next
+ * term's groups ahead of time has not made a mistake — which is true, and is
+ * now the argument for its rank rather than for its absence.
+ *
  * **The queue is product-first, and this list is why.** An admin does not think
  * "show me every unassigned gamer on the platform"; they think "which product
  * needs me, what is wrong with it, and who does that concern". A category-first
@@ -50,6 +61,7 @@ export const PRODUCT_ISSUE_KINDS = [
   "unassigned-gamers",
   "group-without-gedu",
   "waitlist-open-seats",
+  "empty-group-without-gedu",
   "missing-gedu-fee",
   "missing-municipality-fee",
 ] as const;
@@ -85,6 +97,12 @@ export type ProductIssueFact =
       kind: "waitlist-open-seats";
       values: { waiting: number; open: number; offers: number };
     }
+  /**
+   * A group with no educator and nobody in it. Carries the same one value the
+   * populated case does, because it is the same sentence about the same group —
+   * only the stakes, and therefore the rank and the tone, differ.
+   */
+  | { kind: "empty-group-without-gedu"; values: { group: string } }
   | { kind: "missing-gedu-fee" }
   | { kind: "missing-municipality-fee" };
 
