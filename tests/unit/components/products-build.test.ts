@@ -825,7 +825,7 @@ describe("buildCreateInput", () => {
   });
 
   describe("registration_opens_at assembly", () => {
-    it("interprets the picked time as Helsinki, not the runner's timezone", () => {
+    it("interprets the picked time in the product's zone, not the runner's timezone", () => {
       const s = validConsumerState();
       s.registrationOpensMode = "scheduled";
       s.registrationOpensDate = "2026-09-01";
@@ -836,6 +836,30 @@ describe("buildCreateInput", () => {
       // exact ISO would silently start passing if we accidentally reverted
       // to browser-local parsing in any non-UTC test runner.
       expect(out.registration_opens_at).toBe("2026-09-01T07:30:00.000Z");
+    });
+
+    it("follows the picked zone — one wall clock, two instants", () => {
+      // The same date and the same clock face in two zones must not produce the
+      // same instant, or the picker is decorative. January, so both zones are
+      // on standard time and the gap is the plain one-hour offset difference
+      // (Helsinki UTC+2, Paris UTC+1) with no DST asymmetry to explain away.
+      const wallClock = (timezone: string) => {
+        const s = validConsumerState();
+        s.timezone = timezone;
+        s.registrationOpensMode = "scheduled";
+        s.registrationOpensDate = "2026-01-15";
+        s.registrationOpensHour = "09";
+        s.registrationOpensMinute = "00";
+        return buildCreateInput(s, "consumer_club", consumerConfig)
+          .registration_opens_at;
+      };
+
+      expect(wallClock("Europe/Helsinki")).toBe("2026-01-15T07:00:00.000Z");
+      expect(wallClock("Europe/Paris")).toBe("2026-01-15T08:00:00.000Z");
+      expect(
+        new Date(wallClock("Europe/Paris")).getTime() -
+          new Date(wallClock("Europe/Helsinki")).getTime(),
+      ).toBe(60 * 60 * 1000);
     });
 
     it("resolves immediate mode to ~now", () => {
@@ -940,10 +964,19 @@ describe("buildCreateInput", () => {
     expect(out2.signup_threshold).toBe(5);
   });
 
-  it("locks timezone to Europe/Helsinki", () => {
+  it("sends the zone the form holds, not a constant", () => {
+    // The form used to pin every product to Helsinki. It is now a field, and
+    // the whole point is that what the admin picked is what is written — a
+    // build that quietly substituted a default would re-time every session of
+    // a product authored anywhere else.
     const s = validConsumerState();
+    expect(s.timezone).toBe("Europe/Helsinki"); // the create form's default
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
     expect(out.timezone).toBe("Europe/Helsinki");
+
+    s.timezone = "Europe/Paris";
+    const paris = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(paris.timezone).toBe("Europe/Paris");
   });
 });
 
@@ -1431,6 +1464,50 @@ describe("waitlist_enabled is derived from the cap, not copied", () => {
     expect(
       `${state.registrationOpensHour}:${state.registrationOpensMinute}`,
     ).toBe(formatInTimeZone(opensAt, "Europe/Helsinki", "HH:mm"));
+  });
+
+  it("reads the drop's wall clock in the row's OWN zone, and seeds the picker from it", () => {
+    // A Paris product's stored instant must come back as the Paris clock face
+    // an admin typed, with the picker showing Paris. Reading it in a hardcoded
+    // Helsinki would show a time nobody chose, and the next save would write
+    // that misreading back as if they had.
+    const opensAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    opensAt.setUTCHours(8, 15, 0, 0);
+    const state = existingFormState(
+      mockDetailRow({
+        product_type: "municipality_club",
+        timezone: "Europe/Paris",
+        registration_opens_at: opensAt.toISOString(),
+      }),
+      muniConfig,
+      "en",
+    );
+    expect(state.timezone).toBe("Europe/Paris");
+    expect(state.registrationOpensMode).toBe("scheduled");
+    expect(state.registrationOpensDate).toBe(
+      formatInTimeZone(opensAt, "Europe/Paris", "yyyy-MM-dd"),
+    );
+    expect(
+      `${state.registrationOpensHour}:${state.registrationOpensMinute}`,
+    ).toBe(formatInTimeZone(opensAt, "Europe/Paris", "HH:mm"));
+    // And the Paris clock face really is an hour off the Helsinki one, so the
+    // assertion above is not passing on a coincidence.
+    expect(state.registrationOpensHour).not.toBe(
+      formatInTimeZone(opensAt, "Europe/Helsinki", "HH"),
+    );
+  });
+
+  it("round-trips a non-default zone back onto the wire", () => {
+    // Hydrate → build is the edit form's whole path, and an admin who edits the
+    // name of a Paris product must not have its zone reset under them.
+    const state = existingFormState(
+      mockDetailRow({ timezone: "Europe/Paris" }),
+      consumerConfig,
+      "en",
+    );
+    expect(buildUpdateInput(state, consumerConfig).timezone).toBe(
+      "Europe/Paris",
+    );
   });
 });
 

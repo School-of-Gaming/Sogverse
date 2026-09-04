@@ -38,6 +38,14 @@ interface ProductFormShellProps {
    *  picture, and on the empty create form. Derived data, so it is a prop
    *  rather than form state — see `ImagePicker`. */
   initialImage?: ProductImageSelection | null;
+  /**
+   * Whether this shell is editing a product that already exists.
+   *
+   * The wrappers know which they are and nothing else in the shell does, so it
+   * is stated rather than inferred. One field reads it today — the timezone
+   * hint, whose warning is about re-timing sessions that are already stored.
+   */
+  isEdit: boolean;
   /** Submit-button label, e.g. "Create club" or "Save changes". */
   submitLabel: string;
   /** Called when the admin clicks Cancel. Wrapper navigates from here. */
@@ -84,6 +92,7 @@ export function ProductFormShell({
   productType,
   initialFormState,
   initialImage = null,
+  isEdit,
   submitLabel,
   onCancel,
   onSubmit,
@@ -196,7 +205,12 @@ export function ProductFormShell({
       />
       <AudienceSection state={state} setState={setState} config={config} />
       <WhereSection state={state} setState={setState} config={config} />
-      <WhenSection state={state} setState={setState} config={config} />
+      <WhenSection
+        state={state}
+        setState={setState}
+        config={config}
+        isEdit={isEdit}
+      />
       <BillingSection state={state} setState={setState} config={config} />
       <FeesSection state={state} setState={setState} config={config} />
       <RegistrationSection state={state} setState={setState} config={config} />

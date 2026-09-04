@@ -1,11 +1,14 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
+import { PRODUCT_TIMEZONES } from "@/lib/constants";
+import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
-import { FormSection, InfoCallout } from "../form-primitives";
+import { useNow } from "@/providers";
+import { FormSection } from "../form-primitives";
 import { formLocksFor } from "../form-locks";
 import { ScheduleSlotsEditor } from "../schedule-slots-editor";
 import {
@@ -20,10 +23,36 @@ interface WhenSectionProps {
   state: FormState;
   setState: React.Dispatch<React.SetStateAction<FormState>>;
   config: ProductTypeConfig;
+  /** Whether this form is editing a product that already exists. Only the
+   *  timezone hint reads it: on a product with stored sessions, changing the
+   *  zone re-times all of them, which is a consequence a create form has
+   *  nothing to warn about. */
+  isEdit: boolean;
 }
 
-export function WhenSection({ state, setState, config }: WhenSectionProps) {
+export function WhenSection({
+  state,
+  setState,
+  config,
+  isEdit,
+}: WhenSectionProps) {
   const t = useTranslations("admin.products");
+  const locale = useLocale();
+  // The clock the offsets are read at, shared with the rest of the dashboard so
+  // the server render and the first client render agree on which side of a DST
+  // transition "now" is — a label computed from a bare `new Date()` on each end
+  // could disagree by an hour on the two days a year that matters.
+  const now = useNow();
+
+  // What the picker offers: the zones the seeded countries declare, plus the
+  // product's own stored zone when a row carries one that is no longer offered
+  // (a country un-seeded since, or a value written before the picker existed).
+  // A `<select>` whose value matches no option shows the admin the first one
+  // while state holds something else, which is how an admin ends up "correcting"
+  // a field into a value they never chose.
+  const timezoneOptions = PRODUCT_TIMEZONES.includes(state.timezone)
+    ? PRODUCT_TIMEZONES
+    : [...PRODUCT_TIMEZONES, state.timezone];
 
   const productType = config.productType;
   const startTriggerOptions = config.allowedStartModes;
@@ -246,7 +275,29 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
         </Field>
       )}
 
-      <InfoCallout text={t("hints.timezoneFixedHelsinki")} />
+      {/* The zone every wall clock below is entered in. It sits directly above
+          the schedule rather than in its own section: the times are read in it,
+          so it has to be visible while they are being typed. */}
+      <Field
+        label={t("labels.timezone")}
+        htmlFor="p-timezone"
+        hint={
+          isEdit ? t("hints.timezoneChangeMoves") : t("hints.timezoneEntry")
+        }
+      >
+        <select
+          id="p-timezone"
+          value={state.timezone}
+          onChange={(e) => setState({ ...state, timezone: e.target.value })}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          {timezoneOptions.map((zone) => (
+            <option key={zone} value={zone}>
+              {formatTimezoneOptionLabel(zone, now, locale)}
+            </option>
+          ))}
+        </select>
+      </Field>
 
       <Field
         label={

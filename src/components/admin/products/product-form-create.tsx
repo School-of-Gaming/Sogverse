@@ -44,6 +44,7 @@ export function ProductFormCreate({
       productType={productType}
       initialFormState={initialFormState ?? initialState(config, uiLocale)}
       initialImage={initialImage}
+      isEdit={false}
       submitLabel={t("actions.createLabel", { label: label.toLowerCase() })}
       onCancel={() => router.push(`/admin/${config.routeSlug}`)}
       onSubmit={async (state) => {

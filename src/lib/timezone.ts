@@ -34,3 +34,36 @@ export function isValidTimezone(value: unknown): value is string {
 export function resolveTimezone(cookieValue: string | undefined): string {
   return isValidTimezone(cookieValue) ? cookieValue : DEFAULT_TIMEZONE;
 }
+
+/**
+ * A zone rendered the way a picker should show it: `(GMT+03:00) Helsinki`.
+ *
+ * Two halves, neither of which is a translated string. The offset comes from
+ * `Intl`'s `longOffset` at the `now` you pass, so a label read in July says +03
+ * and the same label in January says +02 — a fixed offset baked into a message
+ * file would be wrong for half of every year. `Intl` abbreviates a zero offset
+ * to a bare "GMT" (London in winter), which is the one shape that would make a
+ * list of otherwise identical labels ragged, so it is expanded back to
+ * `GMT+00:00`. The city is the IANA id's last segment with its underscores
+ * opened out, which is why no message key is needed for it: `America/New_York`
+ * reads "New York" in every locale, and translating a city list would be a
+ * per-locale maintenance burden for names families already recognise.
+ *
+ * `now` is a caller's argument rather than a `new Date()` inside, so a React
+ * caller can pass its request-stable clock and the server and first client
+ * render cannot disagree about an offset across a DST boundary.
+ */
+export function formatTimezoneOptionLabel(
+  zone: string,
+  now: Date,
+  locale: string,
+): string {
+  const parts = new Intl.DateTimeFormat(locale, {
+    timeZone: zone,
+    timeZoneName: "longOffset",
+  }).formatToParts(now);
+  const raw = parts.find((p) => p.type === "timeZoneName")?.value ?? "GMT";
+  const offset = raw === "GMT" ? "GMT+00:00" : raw;
+  const city = (zone.split("/").pop() ?? zone).replace(/_/g, " ");
+  return `(${offset}) ${city}`;
+}
