@@ -2,11 +2,15 @@
  * Every colour Sogverse defines today, what it is worth, and what is proposed
  * for it.
  *
- * This is a temporary file behind a temporary page: it exists so an owner can
- * rule on the theme adoption by looking, and it is deleted with the page once
- * the ruling is made. Nothing here is a token and nothing here is imported by
- * the library — the hexes below are Sogverse's current values and this page's
- * candidates, written out so the two can be drawn side by side.
+ * A temporary file behind a temporary page, deleted with it once the ruling is
+ * made. Nothing here is a token and nothing here is imported by the library —
+ * these are Sogverse's current values and this page's candidates, written out
+ * so the two can be drawn side by side.
+ *
+ * **The page renders names, not reasons.** Every justification lives in this
+ * file, in the doc comment above the values it explains. A row carries only
+ * what may appear on screen: the token, its value, its live use count and a
+ * one-phrase verdict.
  *
  * **Where the "today" hexes come from.** Sogverse authors its theme as HSL
  * triples in `src/app/globals.css`. Each hex below is that triple converted at
@@ -19,28 +23,18 @@
  *     grep -rEoh "(bg|text|border|ring|from|to|via|fill|stroke|outline|shadow|decoration|divide|caret|placeholder|accent)-<token>(/[0-9]+)?([^a-zA-Z0-9/_-]|$)" src --include=*.tsx --include=*.ts | wc -l
  *     grep -rEoh "var\(--color-<token>\)" src --include=*.tsx --include=*.ts --include=*.css | wc -l
  *
- * **The bug that changes what "today" means.** `src/app/globals.css` carries an
- * unlayered `* { border-color: hsl(var(--border)) }`, which outranks every
- * `border-*` utility because utilities live in a cascade layer. So no coloured
- * border in Sogverse has ever rendered: `border-yty-harmony/30`,
- * `border-destructive/50` and the rest have all drawn the grey `--border`. This
- * page therefore draws two "today" columns wherever a coloured border is
- * authored — what the code says, and what the reader has actually been seeing.
+ * **Nothing is unused.** The inventory allowed for a delete-because-nobody-
+ * reaches-it bucket and the bucket came back empty, down to the single use of
+ * `sidebar-primary`.
+ *
+ * **The bug that changes what "today" means.** `src/app/globals.css` carried an
+ * unlayered `* { border-color }` rule, which outranks every `border-*` utility
+ * because utilities live in a cascade layer. So no coloured border in Sogverse
+ * had ever rendered: `border-yty-harmony/30`, `border-destructive/50` and the
+ * rest all drew the grey `--border`. That is fixed on this branch, so wherever
+ * a coloured border is authored the page draws three columns: what has been on
+ * screen, what the code always said, and what is proposed.
  */
-
-export type Fate =
-  /** The library already ships this exact value under this exact name. */
-  | "already"
-  /** Sogverse's token duplicates a library token's value; the call sites move to that name. */
-  | "alias"
-  /** A value the library does not have and should take unchanged. */
-  | "admit"
-  /** A value the library should take, but not at the number it has today. */
-  | "retune"
-  /** A choice this page exists to put in front of the owner. */
-  | "ruling"
-  /** Defined and unused — deleted rather than moved. */
-  | "delete";
 
 export interface TokenRow {
   /** The Tailwind token, without the `--color-` prefix. */
@@ -49,185 +43,101 @@ export interface TokenRow {
   readonly today: string;
   /** Utility-class uses in `src/`, at the time of writing. */
   readonly uses: number;
-  readonly fate: Fate;
-  /** One line: the proposal, and what settles it. */
-  readonly note: string;
+  /** The proposal, in one phrase: `keep`, `rename → x`, `delete`, `retune`, `ruling`. */
+  readonly verdict: string;
 }
 
-/** Sogverse's neutrals, which the library already owns at identical values. */
+/**
+ * Sogverse's neutrals and its signature pair.
+ *
+ * Nine of these are already the library's, byte for byte: ground, ink, card,
+ * muted ink, border, the amber pair and the violet pair. Sogverse keeps
+ * fractional HSL triples for the two brand hues precisely so they round-trip to
+ * the authored hexes, which is why they land exactly rather than nearly.
+ *
+ * Two are real values the library does not have and needs. `muted` #262626 and
+ * `accent` #212121 are the two lifts above the card and below the border, and
+ * they carry 241 uses between them; `accent` measures barely above 1:1 against
+ * the card it lifts from, which is the reason the greys section draws a hover
+ * row on each of them rather than quoting the number.
+ *
+ * The rest are second names for a colour the library already ships, and a
+ * rename changes no pixel: `popover` is byte-identical to `card` (a popover is
+ * a card that floats), `input` to `border` (a field's edge is an edge), `ring`
+ * to `primary` (the focus ring is the act colour), and `card-foreground`,
+ * `popover-foreground` and `accent-foreground` to `foreground`.
+ */
 export const NEUTRAL_ROWS: readonly TokenRow[] = [
-  {
-    token: "background",
-    today: "#121212",
-    uses: 63,
-    fate: "already",
-    note: "The library's Ground, to the byte.",
-  },
-  {
-    token: "foreground",
-    today: "#EDEDED",
-    uses: 176,
-    fate: "already",
-    note: "The library's Ink, to the byte.",
-  },
-  {
-    token: "card",
-    today: "#1A1A1A",
-    uses: 45,
-    fate: "already",
-    note: "The library's Card, to the byte.",
-  },
-  {
-    token: "muted-foreground",
-    today: "#A6A6A6",
-    uses: 713,
-    fate: "already",
-    note: "The library's Muted ink, to the byte. The single most-used colour in the app.",
-  },
-  {
-    token: "border",
-    today: "#333333",
-    uses: 154,
-    fate: "already",
-    note: "The library's Border, to the byte.",
-  },
-  {
-    token: "primary",
-    today: "#FAA901",
-    uses: 226,
-    fate: "already",
-    note: "Amber. Sogverse keeps the fractional HSL triple precisely so it round-trips to this hex.",
-  },
-  {
-    token: "primary-foreground",
-    today: "#121212",
-    uses: 21,
-    fate: "already",
-    note: "Ink on amber.",
-  },
-  {
-    token: "secondary",
-    today: "#8F00E2",
-    uses: 19,
-    fate: "already",
-    note: "Violet.",
-  },
-  {
-    token: "secondary-foreground",
-    today: "#FFFFFF",
-    uses: 7,
-    fate: "already",
-    note: "White on violet.",
-  },
+  { token: "background", today: "#121212", uses: 63, verdict: "keep" },
+  { token: "foreground", today: "#EDEDED", uses: 176, verdict: "keep" },
+  { token: "card", today: "#1A1A1A", uses: 45, verdict: "keep" },
+  { token: "muted-foreground", today: "#A6A6A6", uses: 713, verdict: "keep" },
+  { token: "border", today: "#333333", uses: 154, verdict: "keep" },
+  { token: "primary", today: "#FAA901", uses: 226, verdict: "keep" },
+  { token: "primary-foreground", today: "#121212", uses: 21, verdict: "keep" },
+  { token: "secondary", today: "#8F00E2", uses: 19, verdict: "keep" },
+  { token: "secondary-foreground", today: "#FFFFFF", uses: 7, verdict: "keep" },
+  { token: "muted", today: "#262626", uses: 171, verdict: "admit" },
+  { token: "accent", today: "#212121", uses: 70, verdict: "admit" },
   {
     token: "card-foreground",
     today: "#EDEDED",
     uses: 1,
-    fate: "alias",
-    note: "Same value as foreground; the library already emits the alias.",
-  },
-  {
-    token: "muted",
-    today: "#262626",
-    uses: 171,
-    fate: "admit",
-    note: "A second lift above the card. The library has no neutral here and needs one.",
-  },
-  {
-    token: "accent",
-    today: "#212121",
-    uses: 70,
-    fate: "admit",
-    note: "The hover ground, one step under muted. Also new to the library.",
+    verdict: "rename → foreground",
   },
   {
     token: "accent-foreground",
     today: "#EDEDED",
     uses: 33,
-    fate: "alias",
-    note: "Same value as foreground. Not a token, a second name for one.",
+    verdict: "rename → foreground",
   },
-  {
-    token: "popover",
-    today: "#1A1A1A",
-    uses: 6,
-    fate: "alias",
-    note: "Byte-identical to card. A popover is a card that floats.",
-  },
+  { token: "popover", today: "#1A1A1A", uses: 6, verdict: "rename → card" },
   {
     token: "popover-foreground",
     today: "#EDEDED",
     uses: 2,
-    fate: "alias",
-    note: "Same value as foreground.",
+    verdict: "rename → foreground",
   },
-  {
-    token: "input",
-    today: "#333333",
-    uses: 81,
-    fate: "alias",
-    note: "Byte-identical to border. A field's edge is an edge.",
-  },
-  {
-    token: "ring",
-    today: "#FAA901",
-    uses: 55,
-    fate: "alias",
-    note: "Byte-identical to primary. The focus ring is the act colour.",
-  },
+  { token: "input", today: "#333333", uses: 81, verdict: "rename → border" },
+  { token: "ring", today: "#FAA901", uses: 55, verdict: "rename → primary" },
 ];
 
-/** The sidebar's seven, all but one of which are another neutral under a second name. */
+/**
+ * The sidebar's seven, all of which are deleted.
+ *
+ * Ruled: there are no sidebar-scoped tokens. The rail is chrome and composes
+ * from the general neutrals like any other chrome — `border` for its edge,
+ * `foreground` for its ink, `primary` and `primary-foreground` for the active
+ * item, and `muted` for the hovered and current ones, which is the value
+ * `sidebar-accent` already held despite its name.
+ *
+ * One value was genuinely its own and it has no successor: `sidebar-background`
+ * #171717 sits between the page ground #121212 and the card #1A1A1A. The rail
+ * takes one of those two, and which is the only question left in this set.
+ */
 export const SIDEBAR_ROWS: readonly TokenRow[] = [
   {
     token: "sidebar-background",
     today: "#171717",
     uses: 2,
-    fate: "ruling",
-    note: "The only sidebar value that is its own. It sits between background (#121212) and card (#1A1A1A).",
+    verdict: "ruling: page or card",
   },
-  {
-    token: "sidebar-foreground",
-    today: "#EDEDED",
-    uses: 3,
-    fate: "alias",
-    note: "foreground.",
-  },
-  {
-    token: "sidebar-primary",
-    today: "#FAA901",
-    uses: 1,
-    fate: "alias",
-    note: "primary.",
-  },
+  { token: "sidebar-foreground", today: "#EDEDED", uses: 3, verdict: "delete" },
+  { token: "sidebar-primary", today: "#FAA901", uses: 1, verdict: "delete" },
   {
     token: "sidebar-primary-foreground",
     today: "#121212",
     uses: 1,
-    fate: "alias",
-    note: "primary-foreground.",
+    verdict: "delete",
   },
-  {
-    token: "sidebar-accent",
-    today: "#262626",
-    uses: 2,
-    fate: "alias",
-    note: "muted — not accent, despite the name.",
-  },
+  { token: "sidebar-accent", today: "#262626", uses: 2, verdict: "delete" },
   {
     token: "sidebar-accent-foreground",
     today: "#EDEDED",
     uses: 2,
-    fate: "alias",
-    note: "foreground.",
+    verdict: "delete",
   },
-  {
-    token: "sidebar-border",
-    today: "#333333",
-    uses: 3,
-    fate: "alias",
-    note: "border.",
-  },
+  { token: "sidebar-border", today: "#333333", uses: 3, verdict: "delete" },
 ];
 
 /** A status colour as Sogverse defines it, and the candidate this page proposes. */
@@ -241,36 +151,55 @@ export interface StatusRow {
   readonly uses: number;
   /** The candidate fill. */
   readonly candidate: string;
-  /** Which library colour it sits nearest in hue, and how far. */
+  /** The library colour it sits nearest in hue, which is the collision to look at. */
   readonly collidesWith: { readonly name: string; readonly hex: string };
-  /** Why this candidate, in one line the owner can argue with. */
-  readonly why: string;
 }
 
 /**
- * The four status colours, today and retuned.
+ * The four status colours, today and retuned. Roughly 390 call sites.
  *
- * Three findings shape every candidate below.
+ * Three separate problems, independent of each other, so they can be ruled on
+ * separately.
  *
- * **One.** Three of the four foregrounds fail the body floor outright today:
- * white on destructive is 3.78:1, white on info 3.48:1, white on success
- * 2.52:1. Only warning's dark label passes. That is not a near miss, it is the
- * wrong label colour on a light fill — exactly the mistake the library's brand
- * pair exists to prevent ("amber is light and takes only a dark label"). So
- * every candidate takes ink, and the white foregrounds go.
+ * **The labels are illegible.** Three of the four foregrounds are white on a
+ * light fill and miss the 4.5:1 body floor: destructive 3.78:1, info 3.48:1,
+ * success 2.52:1. Only warning's dark label passes. The library's brand pair
+ * already states the rule these break — a light fill takes a dark label — so
+ * every candidate takes ink and the white foregrounds go whatever else is
+ * decided. The page shows this by drawing the badge and the button at real size
+ * with each label, today beside candidate.
  *
- * **Two.** Ink is the same hex as the page ground, so one measurement settles
- * two uses: a status colour that clears 4.5:1 against the card also clears it
- * as a fill under ink. Every candidate is therefore tuned against the card, the
- * lighter of the two grounds, and is then safe as text, as a glyph and as a
- * fill.
+ * **Ink is the same hex as the page ground**, so one measurement settles two
+ * uses: a colour clearing the body floor against the card is safe both as text
+ * on the card and as a fill under an ink label. Every candidate below is tuned
+ * against the card, the lighter of the two grounds.
  *
- * **Three.** There is no free hue for info. Wit owns blue at 204 and 220, the
- * product palette owns cyan at 191 and indigo at 243; a blue that reads as
- * information is inside that range wherever it is put. The candidate is
- * honest about it rather than pretending a few degrees fixes it, and the
- * alternative — an informational note drawn as a neutral panel with a glyph and
- * no hue at all — is rendered beside it.
+ * **The hues collide.** One meaning per hue is the tone grammar, and warning
+ * sits 5° from the brand amber, success 12° from Glow's strong green, and info
+ * 6° from Wit's soft blue.
+ *
+ * Candidate by candidate:
+ *
+ * - **destructive #EF4343 → #FF5C5C.** Red is the one status hue with room:
+ *   valor's orange is 25° away and harmony's pink 18°, and red reads as
+ *   neither. What moves is the value, not the hue — today's red clears the card
+ *   by 0.10, so its ink label lands at 4.95 with nothing spare; the candidate
+ *   measures 5.75 on the card and 6.19 under ink.
+ * - **success #2EB88A → #1FC79B.** Pushed from 160° to 164°, off Glow's leaf
+ *   green, into a teal that still reads as done. 8.04 on the card, 8.65 under
+ *   ink.
+ * - **info #308CE8 → #5FA8FF.** There is no free blue: Wit owns 204° and 220°,
+ *   the product palette owns cyan at 191° and indigo at 243°. The candidate
+ *   fixes only the label (white 3.48 becomes ink 7.61) and leaves the
+ *   collision, which is why the hueless alternative is drawn beside it.
+ * - **warning #E7B008 → #DFCB25.** The worst collision in the set: a warning
+ *   badge and a call to action are the same colour today. Moving to 54° and
+ *   dropping the saturation gives a caution yellow visibly not the brand gold;
+ *   going further lands in chartreuse and stops reading as caution. 10.53 on
+ *   the card, 11.34 under ink.
+ *
+ * Every ratio above was computed with the library's `contrastRatio`. None is
+ * rendered.
  */
 export const STATUS_ROWS: readonly StatusRow[] = [
   {
@@ -281,12 +210,6 @@ export const STATUS_ROWS: readonly StatusRow[] = [
     uses: 160,
     candidate: "#FF5C5C",
     collidesWith: { name: "Valor strong", hex: "#FD700D" },
-    // Red is the one status hue with room: valor's orange is 25 degrees away
-    // and harmony's pink 18, and red reads as neither. What moves is the value,
-    // not the hue — today's #EF4343 clears the card by only 0.10, so a dark
-    // label on it lands at 4.95 with nothing to spare and the text variant is
-    // borderline everywhere. Lifting it to #FF5C5C buys 1.2 on both.
-    why: "Hue held at red, value lifted so both the text use and the ink label clear the body floor with room.",
   },
   {
     id: "success",
@@ -296,12 +219,6 @@ export const STATUS_ROWS: readonly StatusRow[] = [
     uses: 85,
     candidate: "#1FC79B",
     collidesWith: { name: "Glow strong", hex: "#1AB061" },
-    // Glow is the growth family and its strong variant is a leaf green at 148.
-    // Today's success sits at 160, twelve degrees off it — close enough that a
-    // success chip beside a Glow badge reads as the same fact twice. Pushing to
-    // 164 and lifting the value turns it into a teal-green that still reads as
-    // "done" and no longer reads as Glow.
-    why: "Pushed off Glow's leaf green toward teal, so a success mark and a Glow mark are not the same colour.",
   },
   {
     id: "info",
@@ -311,11 +228,6 @@ export const STATUS_ROWS: readonly StatusRow[] = [
     uses: 57,
     candidate: "#5FA8FF",
     collidesWith: { name: "Wit soft", hex: "#4DB3F5" },
-    // Wit soft is 204 and wit strong 220; today's info is 210, sitting between
-    // them. No blue escapes that, so the candidate does not pretend to: it only
-    // fixes the legibility (white 3.48 becomes ink 7.61) and leaves the hue
-    // question to the alternative rendered beside it.
-    why: "No free blue exists. The candidate fixes the label and leaves the collision; the neutral alternative beside it removes the hue instead.",
   },
   {
     id: "warning",
@@ -325,13 +237,6 @@ export const STATUS_ROWS: readonly StatusRow[] = [
     uses: 75,
     candidate: "#DFCB25",
     collidesWith: { name: "Amber (primary)", hex: "#FAA901" },
-    // The worst collision in the set: warning at 45 against the brand's act
-    // colour at 40. A warning badge and a call to action are the same colour,
-    // which is the one confusion the tone grammar cannot afford. Moving to 54
-    // and dropping the saturation turns it into a caution yellow that is
-    // visibly not the brand gold; going further lands in chartreuse, which
-    // stops reading as caution at all.
-    why: "Moved off the brand amber toward a caution yellow, because a warning must not read as a call to action.",
   },
 ];
 
@@ -350,14 +255,21 @@ export interface YtyRow {
 /**
  * The four elements.
  *
- * The names and descriptions are the canonical English from Sogverse's Yty
- * constants; the app renders the same words from its message catalogue.
+ * Names and descriptions are the canonical English from Sogverse's Yty
+ * constants; the app renders the same words from its message catalogue, so this
+ * is the card's real copy rather than filler.
  *
- * Every one of the four changes hue family, not shade: Harmony goes green to
- * pink, Glow amber to green, Valor pink to orange, Wit violet to blue. Two of
+ * Every one of the four changes hue family, not shade: Harmony green to pink,
+ * Glow amber to green, Valor pink to orange, Wit violet to blue. Two of
  * today's four are also collisions the library's set removes — today's Glow
- * (#FBBF24) is within a few degrees of the brand amber, and today's Wit
- * (#A78BFA) is a violet sitting beside the brand's own.
+ * #FBBF24 sits a few degrees from the brand amber, and today's Wit #A78BFA is a
+ * violet beside the brand's own.
+ *
+ * Today each hue is spent at four alpha steps: a tile at 10%, a gradient from
+ * 10% to 5%, a border at 30%, and the hue itself as text and as a ring. The
+ * library bans the alpha step outright, so the proposed recipe is a neutral
+ * ground, the strong variant at full value on the edge and the ring, and the
+ * soft variant carrying ink and glyph.
  */
 export const YTY_ROWS: readonly YtyRow[] = [
   {
@@ -405,7 +317,15 @@ export interface PaletteEntry {
   readonly hex: string;
 }
 
-/** The four admin product types. Two utility uses each — a glyph tint and a tile wash. */
+/**
+ * The four admin product types — two utility uses each, a glyph tint and a tile
+ * wash on the admin product key.
+ *
+ * Proposed unchanged: the library owns them as a named palette so that a fifth
+ * type is a decision made in the foundations tier rather than a hex typed into
+ * a page. The wash behind each glyph is a 15% alpha step, which is the one
+ * exemption the library's ban already names — chip-scale icon-accent tiles.
+ */
 export const PRODUCT_PALETTE: readonly PaletteEntry[] = [
   { token: "product-consumer-club", label: "Consumer club", hex: "#20C4E9" },
   { token: "product-municipality-club", label: "Municipality club", hex: "#EB70D0" },
@@ -413,7 +333,16 @@ export const PRODUCT_PALETTE: readonly PaletteEntry[] = [
   { token: "product-event", label: "Event", hex: "#938EF6" },
 ];
 
-/** The sixteen voice-zone colours a moderator picks from. Four utility uses each, plus a glow var. */
+/**
+ * The sixteen voice-zone colours a moderator picks from — four utility uses
+ * each plus a glow variable.
+ *
+ * Proposed unchanged. The palette is deliberately allowed to pass close to a
+ * family hue, on the grounds that a zone is its own zone; the hue strip is
+ * there to test that claim. The three worth reading first are the camp's lime
+ * against Glow's green, the consumer club's cyan against Wit's soft blue, and
+ * the amber zone against the brand amber and the warning colour.
+ */
 export const ZONE_PALETTE: readonly PaletteEntry[] = [
   { token: "zone-red", label: "Red", hex: "#F4504E" },
   { token: "zone-orange", label: "Orange", hex: "#FB8B3C" },
@@ -433,168 +362,111 @@ export const ZONE_PALETTE: readonly PaletteEntry[] = [
   { token: "zone-pink", label: "Pink", hex: "#F767A8" },
 ];
 
-/** Colours Sogverse spells inline, with no token behind them at all. */
+/** A colour Sogverse spells inline, with no token behind it. */
 export interface LooseColour {
   readonly label: string;
   readonly value: string;
+  /** Where it appears, as a locator rather than a description. */
   readonly where: string;
   readonly uses: number;
-  readonly proposal: string;
+  readonly verdict: string;
 }
 
+/**
+ * The colours with no token behind them.
+ *
+ * **Scrim, media ground and on-media ink** are real constructs the library has
+ * no word for, so the proposal is that it name them rather than that the pages
+ * stop using them. The scrim is drawn at two opacities today for one construct;
+ * one is proposed. On-media ink is a separate token from the app's Ink because
+ * over the brightest thing a scrim can cover, one step down from white is the
+ * step that stops it clearing the body floor. The media ground is true black,
+ * which is right behind video and wrong as a page ground — which is why the
+ * library's Ground is not black.
+ *
+ * **The identicon's white and black** become Ink and Ground. Its black square
+ * reads as a hole on a card, being darker than anything else on the page. Its
+ * violet is the weak pairing either way: a dark colour on a dark ground, below
+ * the 3:1 glyph floor on both #121212 and #1A1A1A, which is a separate ruling
+ * worth taking while the avatars are on screen.
+ *
+ * **The Klingon easter egg** keeps `#D00` and `#0A0A0A` under the artwork
+ * exemption — they are the Empire's flag colours, not the brand's. Its eight
+ * `text-white/*` are not artwork: they are ordinary secondary text drawn from a
+ * colour the palette does not name, and they become muted ink.
+ *
+ * **The Lynx cyan is a partner's mark colour.** Our own mark is already drawn
+ * in named tokens; the only file spelling this hex draws the Lynx Educate
+ * wordmark, in the single colourway they supply. Recolouring or re-deriving a
+ * partner mark is what the partner asset rules forbid, so it stays a literal
+ * beside the mark it belongs to and never enters the palette. Worth noting
+ * beside it: the palette has no cyan of its own and the product spends two, the
+ * consumer club's and the cyan zone's, which land adjacent in the hue strip.
+ */
 export const LOOSE_COLOURS: readonly LooseColour[] = [
   {
     label: "Scrim",
     value: "#000000",
-    where: "bg-black/50 on the dialog and sheet overlays; bg-black/60 on a profile tile's busy state",
+    where: "ui/dialog.tsx, ui/sheet.tsx, family/ProfileTiles.tsx",
     uses: 3,
-    proposal: "A named neutral the library owns, with one opacity rather than two.",
+    verdict: "admit",
   },
   {
     label: "Media ground",
     value: "#000000",
-    where: "bg-black behind a shared screen",
+    where: "voice/ScreenShareDisplay.tsx",
     uses: 1,
-    proposal: "A named neutral. True black is right behind video and wrong as a page ground.",
+    verdict: "admit",
   },
   {
     label: "On-media ink",
     value: "#FFFFFF",
-    where: "text-white on a busy tile and on a zone colour swatch",
+    where: "family/ProfileTiles.tsx, voice/ZoneColorPicker.tsx",
     uses: 2,
-    proposal: "A named neutral: the ink that reads on a scrim or a saturated swatch, where the app's Ink is too dim.",
+    verdict: "admit",
   },
   {
     label: "Klingon red",
     value: "#DD0000",
-    where: "the tlh easter egg's heading, table rules and code column",
+    where: "about/about-section.tsx, the tlh easter egg",
     uses: 6,
-    proposal: "Artwork carrying its own palette — the Empire's flag, not the brand's. Stays out of the library.",
+    verdict: "artwork",
   },
   {
     label: "Klingon ground",
     value: "#0A0A0A",
-    where: "the tlh easter egg's card",
+    where: "about/about-section.tsx, the tlh easter egg",
     uses: 1,
-    proposal: "Same exemption as above.",
+    verdict: "artwork",
   },
   {
     label: "Easter-egg ink",
     value: "#FFFFFF",
-    where: "text-white/30 to /70 across the tlh easter egg's table",
+    where: "about/about-section.tsx, text-white/30 to /70",
     uses: 8,
-    proposal: "Not artwork — ordinary secondary text drawn from a colour the palette does not name. Muted ink instead.",
+    verdict: "rename → muted-foreground",
   },
   {
     label: "Identicon white",
     value: "#FFFFFF",
-    where: "the third cell colour, beside amber and violet",
+    where: "lib/identicon.ts",
     uses: 1,
-    proposal: "Ink (#EDEDED), which is what every other light mark in the product is drawn in.",
+    verdict: "rename → foreground",
   },
   {
     label: "Identicon ground",
     value: "#000000",
-    where: "the square behind the cells",
+    where: "ui/identicon.tsx",
     uses: 1,
-    proposal: "Ground (#121212), so an avatar is a hole in the page rather than a hole in the theme.",
+    verdict: "rename → background",
   },
   {
     label: "Lynx cyan",
     value: "#009FE3",
-    where: "the Lynx Educate wordmark in the OG marks and the two partner SVGs",
+    where: "og/marks.tsx, assets/partners/lynx-educate.svg",
     uses: 6,
-    proposal: "A partner's mark colour, not ours. It must not enter the palette — recolouring it is what the partner rules forbid.",
+    verdict: "never enters the palette",
   },
-];
-
-/** One Press Start 2P placement, the copy it renders, and what is proposed for it. */
-export interface FaceSite {
-  readonly where: string;
-  readonly copy: string;
-  /** The library step proposed for it. */
-  readonly step: string;
-  /** The Tailwind utility for that step. */
-  readonly stepClass: string;
-  /** Whether the platform is naming one of its own places, which is Space Mono's whole remit. */
-  readonly worldVoice: boolean;
-  readonly why: string;
-}
-
-/**
- * Every site that sets `font-display`, with the English it renders.
- *
- * The copy is verbatim from `messages/en.json`, with the rich-text tags
- * resolved: `<br>` becomes a line break, and `<primary>` / `<secondary>` mark
- * the words the app tints amber and violet. Two sites render the *same* string
- * — the home hero and the call-ended screen both draw `home.hero.title` — which
- * is why the vision statement appears twice.
- */
-export const FACE_SITES: readonly FaceSite[] = [
-  {
-    where: "Home hero, h1",
-    copy: "Where\nScreen Time\nBecomes\nQuality Time",
-    step: "H1",
-    stepClass: "text-h1",
-    worldVoice: false,
-    why: "The brand's vision statement, spoken to a stranger. The hero step is what it is for; the pixel face made a promise about calm gaming look like an arcade cabinet.",
-  },
-  {
-    where: "Gamer dashboard greeting, h2",
-    copy: "Welcome, Aino!",
-    step: "H2",
-    stepClass: "text-h2",
-    worldVoice: false,
-    why: "A greeting naming a child, not a place. The app face reads it as a welcome; the pixel face makes a name that a translator cannot shorten overflow at 360.",
-  },
-  {
-    where: "Roblox hero, h1",
-    copy: "Build It\nPlay It\nOwn It",
-    step: "H1",
-    stepClass: "text-h1",
-    worldVoice: false,
-    why: "A partner page, and a slogan about the programme rather than about Sogverse. The two size scales the pixel face forced (English fits at 8 characters, French does not) go with it.",
-  },
-  {
-    where: "Call ended screen, h2",
-    copy: "Where\nScreen Time\nBecomes\nQuality Time",
-    step: "H3",
-    stepClass: "text-h3",
-    worldVoice: false,
-    why: "The same vision statement, inside a card rather than across a page, so it takes the card step rather than the hero one.",
-  },
-  {
-    where: "Admin all-clear, card title",
-    copy: "All clear",
-    step: "H3",
-    stepClass: "text-h3",
-    worldVoice: false,
-    why: "A card title that is fighting its own component today — leading, tracking and size are all cancelling what the pixel face does to a heading. At the card step none of that is needed.",
-  },
-  {
-    where: "Admin all-clear, the line beside it",
-    copy: "Sogverse is at peace. You may rest now, admin adventurer.",
-    step: "Body S",
-    stepClass: "text-body-s",
-    worldVoice: true,
-    why: "Not a `font-display` site today, but the one line on the list where the platform names its own place and addresses a reader inside it. If Space Mono is ever spent in the app, this is the sentence it was written for.",
-  },
-];
-
-/**
- * The `font-mono` sites, which are not part of this ruling.
- *
- * The library keeps `--font-mono` as Tailwind's own utility for machine text so
- * it cannot silently become branded. Every site below is machine text — a room
- * code, a Minecraft credential, a raw JSON dump — and the proposal is that they
- * all stay exactly as they are.
- */
-export const MONO_SITES: readonly string[] = [
-  "Instant-room join code chip and the room-not-found screen",
-  "Minecraft password-reset card and its copy button",
-  "A marketing id echoed back on the admin user card",
-  "The admin testing page's two raw output panes",
-  "The Klingon easter egg's transliteration column",
 ];
 
 /**

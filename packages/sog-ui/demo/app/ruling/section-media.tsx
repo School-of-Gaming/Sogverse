@@ -1,32 +1,39 @@
 /**
  * Questions 5, 6 and 7 — the colours with no token behind them.
  *
- * These are the constructs Sogverse spells inline because the palette has no
- * word for them: a scrim over a page, ink that has to read on a photograph or a
- * saturated swatch, true black behind video, and the three colours the identicon
- * draws itself from. They are real and they are not going away, so the proposal
- * is that the library name them rather than that the pages stop using them.
+ * The constructs Sogverse spells inline because the palette has no word for
+ * them: a scrim over a page, ink that has to read on a photograph or a
+ * saturated swatch, true black behind video, and the three colours the
+ * identicon draws itself from. They are real and they are not going away, so
+ * the proposal is that the library name them rather than that the pages stop
+ * using them. The reasoning is in the doc comment on `LOOSE_COLOURS`.
  *
- * The seventh question is different in kind and its answer turned out to be
- * short: the cyan in the OG marks is not our logo's.
+ * Two things are drawn rather than measured. The scrim is drawn over a
+ * deliberately bright layer, because a scrim's job is hardest over the
+ * brightest thing under it, and the on-media ink is drawn there rather than
+ * quoted. The zone picker's check is drawn white and then dark on the same
+ * light swatches: white fails the glyph floor on the lighter entries and is
+ * rescued in the app by a drop shadow, and that is easier to see than to say.
+ *
+ * The seventh question is different in kind and its answer is one swatch: the
+ * cyan in the OG marks is a partner's mark colour, not our logo's.
  */
 
 import { BRAND, NEUTRALS } from "../../../src/tokens/brand";
-import { alpha, over } from "./colour";
-import { IDENTICON_IDS } from "./inventory";
+import { alpha } from "./colour";
+import { IDENTICON_IDS, LOOSE_COLOURS } from "./inventory";
 import {
   CARD,
   Case,
   Compare,
   EDGE,
+  Exemplar,
   GROUND,
   Glyph,
   INK,
   MUTED_INK,
-  Note,
   Panel,
   Question,
-  Ratio,
   Swatch,
 } from "./parts";
 
@@ -39,10 +46,7 @@ const SCRIM_TODAY_DIALOG = 0.5;
 const SCRIM_TODAY_TILE = 0.6;
 const SCRIM_PROPOSED = 0.55;
 
-/**
- * A page fragment for a scrim to sit over — deliberately bright, because a
- * scrim's job is hardest over the brightest thing under it.
- */
+/** A page fragment for a scrim to sit over, bright on purpose. */
 function UnderLayer() {
   return (
     <div className="absolute inset-0">
@@ -52,57 +56,52 @@ function UnderLayer() {
   );
 }
 
-function OverlayDemo({
-  opacity,
-  ink,
-  label,
-}: {
-  opacity: number;
-  ink: string;
-  label: string;
-}) {
+/**
+ * `ui/dialog.tsx` — the scrim is `bg-black/50` with a backdrop blur and the
+ * panel is a card with the neutral border. The footer keeps the app's button
+ * order: negative first in the DOM, affirmative last.
+ */
+function AppDialog({ opacity }: { opacity: number }) {
   return (
-    <div
-      className="relative h-48 overflow-hidden rounded-lg border"
-      style={{ borderColor: EDGE }}
-    >
+    <div className="relative h-56 overflow-hidden rounded-lg">
       <UnderLayer />
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 backdrop-blur-sm"
         style={{ backgroundColor: alpha(BLACK, opacity) }}
       />
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div
-          className="w-full max-w-xs rounded-lg border p-4"
-          style={{ borderColor: EDGE, backgroundColor: CARD }}
+          className="w-full max-w-sm rounded-lg border p-6 shadow-lg"
+          style={{ backgroundColor: CARD, borderColor: EDGE }}
         >
-          <p className="text-h4" style={{ color: INK }}>
+          <p className="text-lg font-semibold" style={{ color: INK }}>
             Remove this seat?
           </p>
-          <p className="mt-1 text-body-s" style={{ color: MUTED_INK }}>
+          <p className="mt-1.5 text-sm" style={{ color: MUTED_INK }}>
             Aino loses her place in Tuesday&rsquo;s club.
           </p>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <span
+              className="inline-flex h-10 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium"
+              style={{ borderColor: EDGE, color: INK }}
+            >
+              Cancel
+            </span>
+            <span
+              className="inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium shadow-sm"
+              style={{ backgroundColor: "#EF4343", color: WHITE }}
+            >
+              Remove seat
+            </span>
+          </div>
         </div>
       </div>
-      <p
-        className="absolute bottom-2 left-3 font-brand-mono text-body-s"
-        style={{ color: ink }}
-      >
-        {label}
-      </p>
     </div>
   );
 }
 
-function MediaTile({
-  scrimOpacity,
-  ink,
-  caption,
-}: {
-  scrimOpacity: number;
-  ink: string;
-  caption: string;
-}) {
+/** `family/ProfileTiles.tsx` — a profile tile's busy state, ink over a scrim. */
+function MediaTile({ opacity, ink }: { opacity: number; ink: string }) {
   return (
     <div
       className="relative h-40 w-full overflow-hidden rounded-lg border"
@@ -111,169 +110,94 @@ function MediaTile({
       <UnderLayer />
       <div
         className="absolute inset-0 flex flex-col items-center justify-center gap-2"
-        style={{ backgroundColor: alpha(BLACK, scrimOpacity) }}
+        style={{ backgroundColor: alpha(BLACK, opacity) }}
       >
         <Glyph name="check" size={28} colour={ink} />
         <p className="text-body-s" style={{ color: ink }}>
-          {caption}
+          Switching to Aino
         </p>
       </div>
     </div>
   );
 }
 
-export function ScrimSection() {
-  const overCard = over(BLACK, SCRIM_PROPOSED, CARD);
-  const overAmber = over(BLACK, SCRIM_PROPOSED, BRAND.primary.hex);
-  const overWhite = over(BLACK, SCRIM_PROPOSED, WHITE);
+const LIGHT_SWATCHES = ["#F4504E", "#E8C21F", "#9FC92E", "#46CF5A", "#38B0F7"];
+
+/** `voice/ZoneColorPicker.tsx` — the selected swatch's check, on the light entries. */
+function PickerChecks({ ink }: { ink: string }) {
   return (
-    <Question
-      n={5}
-      title="Scrim, and ink on media"
-      asks="A scrim over a page, ink that has to read on a photograph or a saturated swatch, and true black behind a shared screen. The library has no word for any of the three. Do they enter as named neutrals — and at one opacity or two?"
-    >
-      <Case title="The overlay under a dialog">
-        <Compare columns={2}>
-          <Panel
-            label="Today"
-            sub="Two opacities for one construct: 50% under a dialog and a sheet, 60% on a busy profile tile."
-          >
-            <div className="space-y-4">
-              <OverlayDemo
-                opacity={SCRIM_TODAY_DIALOG}
-                ink={WHITE}
-                label="black at 50%"
-              />
-              <OverlayDemo
-                opacity={SCRIM_TODAY_TILE}
-                ink={WHITE}
-                label="black at 60%"
-              />
-            </div>
+    <div className="flex flex-wrap gap-2">
+      {LIGHT_SWATCHES.map((hex) => (
+        <span
+          key={hex}
+          className="flex h-10 w-10 items-center justify-center rounded-md"
+          style={{ backgroundColor: hex }}
+        >
+          <Glyph name="checkMark" size={18} colour={ink} />
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function ScrimSection() {
+  return (
+    <Question n={5} title="Scrim, and ink on media">
+      <Case title="The dialog scrim">
+        <Compare columns={3}>
+          <Panel label="Today — black at 50%">
+            <Exemplar file="ui/dialog.tsx" page="the confirm dialog, everywhere">
+              <AppDialog opacity={SCRIM_TODAY_DIALOG} />
+            </Exemplar>
           </Panel>
-          <Panel
-            label="Proposed"
-            sub="One named scrim, one opacity, owned by the overlay primitive rather than typed per surface."
-          >
-            <OverlayDemo
-              opacity={SCRIM_PROPOSED}
-              ink={WHITE}
-              label="scrim"
-            />
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Swatch hex={BLACK} name="Scrim" sub="drawn at one opacity" />
-              <Swatch hex={WHITE} name="On-media ink" sub="the ink that survives a scrim" />
-            </div>
+          <Panel label="Today — black at 60%">
+            <Exemplar
+              file="family/ProfileTiles.tsx"
+              page="/parent, a profile tile mid-switch"
+            >
+              <AppDialog opacity={SCRIM_TODAY_TILE} />
+            </Exemplar>
+          </Panel>
+          <Panel label="Proposed — one scrim">
+            <Exemplar file="ui/dialog.tsx" page="the same dialog, at one opacity">
+              <AppDialog opacity={SCRIM_PROPOSED} />
+            </Exemplar>
           </Panel>
         </Compare>
       </Case>
 
       <Case title="Ink on media">
         <Compare columns={2}>
-          <Panel label="Today" sub="text-white on a busy tile, and on a zone colour swatch.">
+          <Panel label="Today — text-white">
             <div className="space-y-4">
-              <MediaTile
-                scrimOpacity={SCRIM_TODAY_TILE}
-                ink={WHITE}
-                caption="Switching to Aino"
-              />
-              <div className="flex flex-wrap gap-2">
-                {["#F4504E", "#E8C21F", "#46CF5A", "#38B0F7", "#C45FF2"].map(
-                  (hex) => (
-                    <span
-                      key={hex}
-                      className="flex h-10 w-10 items-center justify-center rounded-md"
-                      style={{ backgroundColor: hex }}
-                    >
-                      <Glyph name="check" size={16} colour={WHITE} />
-                    </span>
-                  ),
-                )}
-              </div>
-              <div className="space-y-1">
-                <Ratio
-                  what="white check on the yellow swatch"
-                  foreground={WHITE}
-                  background="#E8C21F"
-                  use="glyph"
-                />
-                <Ratio
-                  what="ink check on the yellow swatch"
-                  foreground={INK}
-                  background="#E8C21F"
-                  use="glyph"
-                />
-                <Ratio
-                  what="ground check on the yellow swatch"
-                  foreground={GROUND}
-                  background="#E8C21F"
-                  use="glyph"
-                />
-              </div>
-              <Note>
-                The check on a light zone swatch is the case white does not
-                solve: it fails the glyph floor on the lighter entries
-                whichever way it is drawn, and the app leans on a drop shadow to
-                rescue it. A dark check on a light swatch is the same decision
-                the brand pair already makes for amber.
-              </Note>
+              <Exemplar
+                file="family/ProfileTiles.tsx"
+                page="/parent, a profile tile mid-switch"
+              >
+                <MediaTile opacity={SCRIM_TODAY_TILE} ink={WHITE} />
+              </Exemplar>
+              <Exemplar
+                file="voice/ZoneColorPicker.tsx"
+                page="the zone appearance dialog, the selected swatch"
+              >
+                <PickerChecks ink={WHITE} />
+              </Exemplar>
             </div>
           </Panel>
-          <Panel
-            label="Proposed"
-            sub="On-media ink is a named neutral; a swatch takes ink or ground by the same rule a fill does."
-          >
+          <Panel label="Proposed — on-media ink, and a dark check on a light swatch">
             <div className="space-y-4">
-              <MediaTile
-                scrimOpacity={SCRIM_PROPOSED}
-                ink={WHITE}
-                caption="Switching to Aino"
-              />
-              <div className="flex flex-wrap gap-2">
-                {["#F4504E", "#E8C21F", "#46CF5A", "#38B0F7", "#C45FF2"].map(
-                  (hex) => (
-                    <span
-                      key={hex}
-                      className="flex h-10 w-10 items-center justify-center rounded-md"
-                      style={{ backgroundColor: hex }}
-                    >
-                      <Glyph name="check" size={16} colour={GROUND} />
-                    </span>
-                  ),
-                )}
-              </div>
-              <div className="space-y-1">
-                <Ratio
-                  what="on-media ink over the scrim, on a card"
-                  foreground={WHITE}
-                  background={overCard}
-                  use="body"
-                />
-                <Ratio
-                  what="on-media ink over the scrim, on amber"
-                  foreground={WHITE}
-                  background={overAmber}
-                  use="body"
-                />
-                <Ratio
-                  what="on-media ink over the scrim, on white"
-                  foreground={WHITE}
-                  background={overWhite}
-                  use="body"
-                />
-                <Ratio
-                  what="the app's own ink over the scrim, on white"
-                  foreground={INK}
-                  background={overWhite}
-                  use="body"
-                />
-              </div>
-              <Note>
-                The last two measurements are the reason on-media ink is a
-                separate token rather than the app&rsquo;s Ink reused: over the
-                brightest thing a scrim can cover, one step down from white is
-                the step that stops it clearing the floor.
-              </Note>
+              <Exemplar
+                file="family/ProfileTiles.tsx"
+                page="the same tile, over the named scrim"
+              >
+                <MediaTile opacity={SCRIM_PROPOSED} ink={WHITE} />
+              </Exemplar>
+              <Exemplar
+                file="voice/ZoneColorPicker.tsx"
+                page="the same swatches, with the check in ground"
+              >
+                <PickerChecks ink={GROUND} />
+              </Exemplar>
             </div>
           </Panel>
         </Compare>
@@ -281,26 +205,27 @@ export function ScrimSection() {
 
       <Case title="The media ground">
         <Compare columns={2}>
-          <Panel label="Today" sub="bg-black behind a shared screen.">
-            <div
-              className="flex h-40 items-center justify-center rounded-lg border"
-              style={{ borderColor: EDGE, backgroundColor: BLACK }}
+          <Panel label="Today — bg-black">
+            <Exemplar
+              file="voice/ScreenShareDisplay.tsx"
+              page="a club's voice room, while a screen is shared"
             >
-              <p className="text-body-s" style={{ color: MUTED_INK }}>
-                Mikko is sharing their screen
-              </p>
-            </div>
+              <div
+                className="flex h-40 items-center justify-center rounded-lg border"
+                style={{ borderColor: EDGE, backgroundColor: BLACK }}
+              >
+                <p className="text-body-s" style={{ color: MUTED_INK }}>
+                  Mikko is sharing their screen
+                </p>
+              </div>
+            </Exemplar>
           </Panel>
-          <Panel
-            label="Proposed"
-            sub="A named neutral. True black is right behind video — it is what letterboxing should disappear into — and wrong as a page ground, which is why the library's Ground is not black."
-          >
+          <Panel label="Proposed — a named neutral">
             <div className="grid gap-4 sm:grid-cols-2">
-              <Swatch hex={BLACK} name="Media ground" sub="behind video only" />
+              <Swatch hex={BLACK} name="Media ground" />
               <Swatch
                 hex={NEUTRALS.background.hex}
                 name={NEUTRALS.background.name}
-                sub="everywhere else"
               />
             </div>
           </Panel>
@@ -321,10 +246,10 @@ interface IdenticonData {
  * The app's identicon, reproduced rather than imported.
  *
  * The demo does not depend on Sogverse, and the generator is fifteen lines of
- * pure arithmetic: a 5x3 half grid read out of the first two bytes of the id,
- * a per-cell colour indexed by the bytes after those, and a mirror to make it
+ * pure arithmetic: a 5x3 half grid read out of the first two bytes of the id, a
+ * per-cell colour indexed by the bytes after those, and a mirror to make it
  * symmetric. Taking the palette as an argument is the only change, and it is
- * the whole point — the two columns below differ in nothing else.
+ * the whole point — the two columns differ in nothing else.
  */
 function identicon(id: string, palette: readonly string[]): IdenticonData {
   const hex = id.replace(/-/g, "");
@@ -393,100 +318,54 @@ function IdenticonSvg({
 const TODAY_PALETTE = [BRAND.primary.hex, BRAND.secondary.hex, WHITE];
 const PROPOSED_PALETTE = [BRAND.primary.hex, BRAND.secondary.hex, INK];
 
+/**
+ * The avatars on the card they sit on, so the black square can be seen against
+ * the surface it is darker than.
+ */
+function AvatarRow({
+  palette,
+  ground,
+}: {
+  palette: readonly string[];
+  ground: string;
+}) {
+  return (
+    <div
+      className="flex flex-wrap items-center gap-4 rounded-lg border p-4"
+      style={{ borderColor: EDGE, backgroundColor: CARD }}
+    >
+      {IDENTICON_IDS.map((id) => (
+        <span
+          key={id}
+          className="overflow-hidden rounded-md border"
+          style={{ borderColor: EDGE }}
+        >
+          <IdenticonSvg id={id} palette={palette} ground={ground} />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function IdenticonSection() {
   return (
-    <Question
-      n={6}
-      title="The identicon"
-      asks="An avatar is drawn from amber, violet and a third colour, on a fourth. Where do the third and the fourth come from — pure white and pure black, or the palette's Ink and Ground?"
-    >
+    <Question n={6} title="The identicon">
       <Compare columns={2}>
-        <Panel
-          label="Today"
-          sub="Amber, violet and #FFFFFF on #000000. Neither of the last two is a token."
-        >
-          <div className="flex flex-wrap gap-4">
-            {IDENTICON_IDS.map((id) => (
-              <span
-                key={id}
-                className="overflow-hidden rounded-md border"
-                style={{ borderColor: EDGE }}
-              >
-                <IdenticonSvg id={id} palette={TODAY_PALETTE} ground={BLACK} />
-              </span>
-            ))}
-          </div>
-          <div className="mt-4 space-y-1">
-            <Ratio
-              what="white cell on the black ground"
-              foreground={WHITE}
-              background={BLACK}
-              use="glyph"
-            />
-            <Ratio
-              what="violet cell on the black ground"
-              foreground={BRAND.secondary.hex}
-              background={BLACK}
-              use="glyph"
-            />
-            <Ratio
-              what="the black ground against the card it sits on"
-              foreground={BLACK}
-              background={CARD}
-              use="glyph"
-            />
-          </div>
-          <Note>
-            The last measurement is the one that matters: on a card the avatar is
-            a black square, darker than anything else on the page, and it reads
-            as a hole rather than as a portrait.
-          </Note>
+        <Panel label="Today — #FFFFFF on #000000">
+          <Exemplar
+            file="lib/identicon.ts with ui/identicon.tsx"
+            page="every avatar without a photo — the voice room, the roster, the switcher"
+          >
+            <AvatarRow palette={TODAY_PALETTE} ground={BLACK} />
+          </Exemplar>
         </Panel>
-        <Panel
-          label="Proposed"
-          sub="Amber, violet and Ink on Ground. Every colour in the mark is then a token."
-        >
-          <div className="flex flex-wrap gap-4">
-            {IDENTICON_IDS.map((id) => (
-              <span
-                key={id}
-                className="overflow-hidden rounded-md border"
-                style={{ borderColor: EDGE }}
-              >
-                <IdenticonSvg
-                  id={id}
-                  palette={PROPOSED_PALETTE}
-                  ground={GROUND}
-                />
-              </span>
-            ))}
-          </div>
-          <div className="mt-4 space-y-1">
-            <Ratio
-              what="ink cell on the ground"
-              foreground={INK}
-              background={GROUND}
-              use="glyph"
-            />
-            <Ratio
-              what="violet cell on the ground"
-              foreground={BRAND.secondary.hex}
-              background={GROUND}
-              use="glyph"
-            />
-            <Ratio
-              what="the ground against the card it sits on"
-              foreground={GROUND}
-              background={CARD}
-              use="glyph"
-            />
-          </div>
-          <Note>
-            Violet against a near-black is the weak pairing either way — it is a
-            dark colour on a dark ground, and it is below the glyph floor on
-            both. That is a separate question from where the third colour comes
-            from, and it is worth ruling on while the avatars are on screen.
-          </Note>
+        <Panel label="Proposed — foreground on background">
+          <Exemplar
+            file="lib/identicon.ts with ui/identicon.tsx"
+            page="the same avatars, drawn from tokens"
+          >
+            <AvatarRow palette={PROPOSED_PALETTE} ground={GROUND} />
+          </Exemplar>
         </Panel>
       </Compare>
     </Question>
@@ -495,44 +374,28 @@ export function IdenticonSection() {
 
 // ------------------------------------------------------------------- cyan
 
+const LYNX = LOOSE_COLOURS.find((colour) => colour.label === "Lynx cyan");
+
 export function LynxSection() {
   return (
-    <Question
-      n={7}
-      title="The cyan in the OG marks"
-      asks="Should the cyan the Open Graph marks draw become a named brand colour? The answer is no, and it is not a close call — the mark carrying it is not ours."
-    >
-      <Note>
-        The brief called this the logo&rsquo;s cyan. It is not: our own mark is
-        already drawn in named tokens — the badge in amber, the lettering in the
-        ink amber carries — and the only file spelling this colour draws the
-        Lynx Educate wordmark, whom School of Gaming partners with. It is their
-        brand colour, in their single supplied colourway, and recolouring or
-        re-deriving a partner mark is precisely what the partner asset rules
-        forbid. It stays a literal beside the mark it belongs to, where a
-        reviewer can see it in a diff, and it must not enter the palette under
-        any name.
-      </Note>
-      <div className="mt-6 grid max-w-2xl gap-4 sm:grid-cols-3">
-        <Swatch hex={LYNX_CYAN} name="Lynx cyan" sub="a partner's, not ours" />
+    <Question n={7} title="The cyan in the OG marks">
+      <div className="grid max-w-2xl gap-4 sm:grid-cols-3">
+        <Swatch
+          hex={LYNX_CYAN}
+          name="Lynx cyan"
+          sub={LYNX === undefined ? undefined : LYNX.where}
+        />
         <Swatch
           hex={BRAND.primary.hex}
           name={BRAND.primary.name}
-          sub="the badge"
+          sub="og/marks.tsx, SogMark badge"
         />
         <Swatch
           hex={BRAND.primary.foreground}
           name="Ink on amber"
-          sub="the lettering"
+          sub="og/marks.tsx, SogMark lettering"
         />
       </div>
-      <Note>
-        The one thing worth ruling on here: the palette has no cyan of its own,
-        and the product spends two — the consumer club&rsquo;s and the cyan
-        voice zone&rsquo;s, which land beside each other in the hue strip above
-        and are all but the same colour. If a cyan is ever wanted it is those two
-        that should be reconciled, not this one adopted.
-      </Note>
     </Question>
   );
 }

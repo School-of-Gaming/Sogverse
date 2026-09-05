@@ -1,42 +1,26 @@
 /**
- * The two pieces of colour arithmetic this page needs and the library does not
- * ship, because the library has no use for either.
+ * The colour arithmetic this page needs and the library does not ship.
  *
- * `over` exists so that an alpha step is drawn and measured from one number:
- * the whole point of the Yty and alert sections is that `bg-x/10` over a
- * near-black ground is not the authored hue any more, and a ratio quoted
- * against the authored hue would be quoting a colour nobody sees. `hueOf` is
- * used only to sort a palette strip, so that two hues a few degrees apart land
- * beside each other instead of being compared from memory.
+ * `alpha` draws a real alpha step, which is the whole subject of the Yty and
+ * alert comparisons: over a near-black ground `bg-x/10` composites to a darker,
+ * duller colour that is no longer the brand, and the only honest way to show
+ * that is to composite it rather than to describe it. `hueOf` is used only to
+ * sort a palette strip, so that two hues a few degrees apart land beside each
+ * other instead of being compared from memory.
  *
- * Every ratio on this page comes from the library's own `contrastRatio`. Nothing
- * here computes one.
+ * Nothing here renders a number, and nothing here decides anything: sorting and
+ * drawing only.
  */
 
 import { hexToRgb } from "../../../src/tokens/contrast";
 
-/**
- * `fg` at `a` opacity composited over an opaque `bg`, as the browser composites
- * it — returned as a hex so the same value can be handed to `contrastRatio`.
- */
-export function over(fg: string, a: number, bg: string): string {
-  const f = hexToRgb(fg);
-  const b = hexToRgb(bg);
-  const channel = (i: 0 | 1 | 2) =>
-    Math.round(f[i] * a + b[i] * (1 - a))
-      .toString(16)
-      .padStart(2, "0")
-      .toUpperCase();
-  return `#${channel(0)}${channel(1)}${channel(2)}`;
-}
-
-/** The same colour as a CSS `rgb()` with an alpha, for drawing a real alpha step. */
+/** A colour as a CSS `rgb()` with an alpha, so the browser does the compositing. */
 export function alpha(hex: string, a: number): string {
   const [r, g, b] = hexToRgb(hex);
   return `rgb(${r} ${g} ${b} / ${a})`;
 }
 
-/** sRGB hue in degrees, 0–360. Sorting only — no decision keys on it. */
+/** sRGB hue in degrees, 0–360. Sorting only — nothing keys a decision on it. */
 export function hueOf(hex: string): number {
   const [r, g, b] = hexToRgb(hex).map((c) => c / 255);
   const max = Math.max(r, g, b);

@@ -15,7 +15,12 @@ Status values: `open` · `ruled` · `landed`.
   by one that is; a colour it defines but does not use is deleted.
 - A token Sogverse spends is a token with a consumer: it may enter the library now,
   ahead of the component that will one day own it.
-- Press Start 2P is dropped from the UI. Each placement takes a SOG-UI face.
+- **This branch is colour only.** Faces and headings are out of scope: Press Start 2P
+  and Sogverse's `--font-display` stay as they are, no heading changes, and the type
+  scale tokens the theme ships stay unconsumed. The root layout still defines every
+  face variable the library names (the theme import requires it), and that is the
+  whole of the face work here. Dropping Press Start 2P and placing the SOG-UI faces
+  is a later adoption.
 - Borders: everything the owner saw before the border fix is correct. Every
   border-colour utility the unlayered default hid is deleted, `border-transparent`
   included; the universal default itself is removed and every bordered element
@@ -52,13 +57,18 @@ note; warning as the brand amber.
 
 **Ruling:** _open_
 
-## 4. The greys — the sidebar ground
+## 4. The greys — the sidebar ground, and accent
 
 **Asked:** `sidebar-background` #171717 sits between the page ground and the card.
 Shown at its own value, at the page ground, at the card ground. Also shown: accent
 against card measures barely above 1:1; a muted-hover alternative sits beside it.
 
-**Ruling:** _open_
+**Ruling (2026-09-05, partial):** _ruled_ — **no sidebar-scoped tokens exist.** The
+sidebar is chrome and composes from the general neutrals like every other surface;
+all seven `sidebar-*` tokens are deleted, not renamed into a sidebar vocabulary. The
+one value with no general twin, the #171717 ground, is not kept: the sidebar sits on
+one of the two grounds the library ships. **Still open:** which ground (page or card),
+to be ruled from the sidebar exemplar; and the accent-hover question.
 
 ## 5. The categorical palettes
 
@@ -85,12 +95,12 @@ floor on any near-black ground.
 
 ## 8. The faces — Press Start 2P placements
 
-**Asked:** per placement, the proposed step (home hero → H1, gamer greeting → H2,
-Roblox hero → H1, call-ended → H3, admin all-clear title → H3), one Space Mono
-candidate (the admin all-clear line, where the platform names its own place), and
-confirmation that the `font-mono` machine-text sites stay unbranded.
-
-**Ruling:** _open_
+**Out of scope for this branch** (ruled 2026-09-05: colour only). The section is
+removed from the page. When the faces adoption comes, the questions were: per
+placement the proposed step (home hero → H1, gamer greeting → H2, Roblox hero → H1,
+call-ended → H3, admin all-clear title → H3), one Space Mono candidate (the admin
+all-clear line, where the platform names its own place), and confirmation that the
+`font-mono` machine-text sites stay unbranded.
 
 ## 9. Brand colour at alpha steps outside the Yty set
 

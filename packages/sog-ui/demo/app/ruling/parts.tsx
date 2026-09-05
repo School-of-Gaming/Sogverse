@@ -1,54 +1,46 @@
 /**
  * The ruling page's furniture.
  *
- * This page is the one place in the demo that is read rather than only seen:
- * it exists to be ruled on, so it carries labels, ratios and pass marks that
- * the rest of the demo is forbidden. It is deleted once the ruling is made.
+ * **The page is seen, not read.** It shows a thing and its name and nothing
+ * else: no prose, no rationale, no ratios, no pass marks. Every reason lives in
+ * a doc comment beside the value it explains, which is where it can be read
+ * next to the thing it governs and cannot rot into a paragraph nobody updates.
+ * A ruling is made by looking at two pictures, so where the point used to be a
+ * measurement it is now a rendering — the pairing drawn at real size on the
+ * real ground, today beside the candidate, and the eye decides.
  *
- * Two things are load-bearing here. Ratios come from the library's own
- * `contrastRatio` and are never typed; and every colour that is not a library
- * token is drawn through an inline `style`, because Tailwind scans source text
- * and a class built from a hex at render time is a class the stylesheet does
- * not contain.
+ * What is allowed on screen: a section title, a thing, and a name. A name may
+ * be a token name, a hex, a short `today` / `as authored` / `proposed` label,
+ * a construct's name, or an exemplar's `component — page` locator, which is
+ * that construct's name in the app rather than a sentence about it.
+ *
+ * Colour that is not a library token is drawn through an inline `style`, never
+ * a class: Tailwind scans source text, so a class assembled from a hex at
+ * render time is a class the stylesheet does not contain.
  */
 
 import type { ReactNode } from "react";
-import { contrastRatio, THRESHOLDS } from "../../../src/tokens/contrast";
-import { NEUTRALS, YTY_FAMILIES } from "../../../src/tokens/brand";
-
-/**
- * The two marks a measurement can carry.
- *
- * Both are library colours the contrast tests already prove as body text on
- * both grounds, so the verdict is never itself an unmeasured pairing.
- */
-const PASS = YTY_FAMILIES.glow.soft;
-const FAIL = YTY_FAMILIES.harmony.soft;
+import { NEUTRALS } from "../../../src/tokens/brand";
 
 export function Question({
   n,
   title,
-  asks,
   children,
 }: {
   n: number;
   title: string;
-  asks: string;
   children: ReactNode;
 }) {
   return (
     <section className="mt-24 border-t border-border pt-10">
       <p className="font-brand-mono text-body-s text-muted-foreground">{`0${n}`}</p>
       <h2 className="mt-1 text-h2">{title}</h2>
-      <p className="mt-3 max-w-[70ch] text-body-l text-muted-foreground">
-        {asks}
-      </p>
       <div className="mt-10 space-y-12">{children}</div>
     </section>
   );
 }
 
-/** A sub-heading inside a question, for one construct being compared. */
+/** A sub-heading inside a question, naming the construct being compared. */
 export function Case({
   title,
   children,
@@ -70,13 +62,6 @@ export function Caps({ children }: { children: ReactNode }) {
     <p className="text-body-s font-semibold tracking-wider text-muted-foreground uppercase">
       {children}
     </p>
-  );
-}
-
-/** A plain paragraph of context, at the page's reading width. */
-export function Note({ children }: { children: ReactNode }) {
-  return (
-    <p className="max-w-[70ch] text-body-s text-muted-foreground">{children}</p>
   );
 }
 
@@ -106,22 +91,17 @@ export function Compare({
   );
 }
 
-/** One labelled column of a comparison. */
+/** One labelled column of a comparison. The label is a name, never a sentence. */
 export function Panel({
   label,
-  sub,
   children,
 }: {
   label: string;
-  sub?: string;
   children: ReactNode;
 }) {
   return (
     <div className="flex flex-col">
       <Caps>{label}</Caps>
-      {sub === undefined ? null : (
-        <p className="mt-1 text-body-s text-muted-foreground">{sub}</p>
-      )}
       <div className="mt-3 flex-1 rounded-lg border border-border p-4">
         {children}
       </div>
@@ -130,33 +110,30 @@ export function Panel({
 }
 
 /**
- * One measured pairing, with the floor it is held to and whether it clears it.
+ * One construct from the app, captioned with where a reader meets it.
  *
- * `use` picks the floor the way the library does: a property of the usage, not
- * of the colour, so the same hue can pass as a mark and fail as a sentence.
+ * The caption is the construct's name in the codebase — the component it was
+ * copied from and a page it appears on — so a colour is ruled on in the thing
+ * it draws rather than as a square.
  */
-export function Ratio({
-  what,
-  foreground,
-  background,
-  use,
+export function Exemplar({
+  file,
+  page,
+  children,
 }: {
-  what: string;
-  foreground: string;
-  background: string;
-  use: "body" | "glyph";
+  file: string;
+  page: string;
+  children: ReactNode;
 }) {
-  const floor =
-    use === "body" ? THRESHOLDS.bodyText : THRESHOLDS.largeTextAndGlyphs;
-  const measured = contrastRatio(foreground, background);
-  const clears = measured >= floor;
   return (
-    <p className="font-brand-mono text-body-s">
-      <span className="text-muted-foreground">{what} </span>
-      <span style={{ color: clears ? PASS : FAIL }}>
-        {`${measured.toFixed(2)}:1 · needs ${floor} · ${clears ? "PASS" : "FAIL"}`}
-      </span>
-    </p>
+    <figure className="m-0">
+      <div>{children}</div>
+      <figcaption className="mt-2 text-body-s text-muted-foreground">
+        <span className="font-brand-mono">{file}</span>
+        {" — "}
+        {page}
+      </figcaption>
+    </figure>
   );
 }
 
@@ -198,9 +175,7 @@ export const EDGE = NEUTRALS.border.hex;
  *
  * The demo does not depend on Sogverse or on its icon package, and the shape of
  * a glyph is not what is being ruled on — its colour is. These mirror the marks
- * the app uses closely enough to recognise: a heart, a sun, a sword and a brain
- * for the four elements, a home for the Clubhouse zone, and the four state
- * marks an alert carries.
+ * the app uses closely enough to recognise.
  */
 const GLYPHS = {
   heart: [
@@ -223,6 +198,9 @@ const GLYPHS = {
     "M12 5a3 3 0 1 1 5.997.125A4 4 0 0 1 19 13a4 4 0 0 1-2 3.5 3 3 0 0 1-5 2.5Z",
   ],
   home: ["m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M9 21v-9h6v9"],
+  checkMark: ["m5 12 5 5L20 7"],
+  chevron: ["m6 9 6 6 6-6"],
+  search: ["M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z", "m20 20-4.5-4.5"],
   gamepad: [
     "M2 12a6 6 0 0 1 6-6h8a6 6 0 0 1 0 12H8a6 6 0 0 1-6-6Z",
     "M6 12h4",
