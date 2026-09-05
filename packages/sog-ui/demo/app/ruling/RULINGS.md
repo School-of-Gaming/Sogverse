@@ -220,3 +220,44 @@ fixed in Sogverse.
    state lost its outline half; fill and ink remain.
 8. `src/components/public/products/signup-panel-view.tsx` — the region-lock blocks'
    "a border means you can act on it" grammar; only the info glyph marks the family now.
+
+## Where the session stands (2026-09-05, end of day)
+
+Read this first when resuming. The branch is `feat/sog-ui-theme-adoption`, in the
+worktree `.claude/worktrees/sog-ui-theme`, pushed to origin after every landing. The
+worktree has its own `node_modules` (this branch changed dependencies). The demo runs
+with `npm run dev --workspace=@sog/ui` on port 3001 and the ruling page is `/ruling`.
+The app preview is not running; start it on 3002 only to spot-check a page.
+
+**Landed and committed:** the theme plumbing; the border sweep (no universal default,
+every edge named, every hidden colour deleted); the Yty tokens; muted and accent in the
+library and the second-name tokens gone; the sidebar on the card ground with no tokens
+of its own; act and world replacing primary and secondary everywhere; the colour rules
+and their reasons codified in `brand.ts`; the deviations doc deleted; the process written
+into `packages/sog-ui/docs/adoption.md`.
+
+**In flight when the owner left:** the product-type landing (the tone grammar table with
+family + glyph in `packages/sog-ui/src/tokens/grammar.ts`, the admin presentation map
+reading it, the four categorical tokens deleted) and the page cleanup for §2 and §5. If
+`git status` shows those files uncommitted, the agent's report was not yet acted on:
+verify the gates and commit.
+
+**Open on the page, in the order they were going to be taken:** the hover fill (§4,
+accent vs muted); the Yty recipe (§2); the status set (§3); the zone palette (§5); scrim
+and on-media ink (§6); the identicon (§7); the alpha steps in the heroes and the sprite
+(§9); the easter egg (§10); coloured text (§11) and the calm-surface budget (§12).
+
+**End-of-branch work, needing no ruling:** the enforcement (a test that Sogverse's
+stylesheet declares no `--color-*`; the hex-literal lint extended to all of `src/` with
+named exemptions — flag SVGs, the easter egg artwork, the partner marks in `og/marks.tsx`,
+the identicon's white/black once ruled; a lint banning raw Tailwind palette classes in
+class strings); the root `CLAUDE.md` Styling rules the adoption retires (never-hardcoded
+colours; the theme paragraphs); adoption.md's step 1 marked done; this page and this
+ledger deleted in one commit; the review (`/code-review` from the merge-base, in a
+subagent); the owner's walk through the app on 3002 before merge; merge via the
+worktree flow's Phase 5.
+
+**Standing agreements not to forget:** the owner rules from the page, in shorthand,
+never from a paragraph; ruled means landed, and the page shrinks by what landed; no
+prose, numbers or pass marks on the page; every ruling's reason goes into a doc comment,
+never a source citation; Sogverse never learns of the Guidebook.
