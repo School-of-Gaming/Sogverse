@@ -162,7 +162,7 @@ export function UserRow({
     user.email_verified_at !== null;
   const warnings = user.role === "gedu" ? standingWarnings ?? null : null;
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-lg border border-border">
       <Link
         href={`${basePath}/${user.id}`}
         className="group flex items-center justify-between p-4 transition-colors hover:bg-accent hover:text-foreground"
@@ -217,13 +217,13 @@ export function UserRow({
       </Link>
 
       {user.role === "customer" && (!linkedGamers || linkedGamers.length === 0) && (
-        <div className="border-t bg-muted/30 py-3 pl-14 pr-4">
+        <div className="border-t border-border bg-muted/30 py-3 pl-14 pr-4">
           <p className="text-sm text-muted-foreground">{t('noConnectedGamers')}</p>
         </div>
       )}
 
       {linkedGamers && linkedGamers.length > 0 && (
-        <div className="border-t bg-muted/30">
+        <div className="border-t border-border bg-muted/30">
           {linkedGamers.map((gamer) => {
             const gamerIdentity = identityLine(gamer, gamerSignIns?.get(gamer.id));
             return (

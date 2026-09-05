@@ -249,7 +249,7 @@ export function ProductFormShell({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-4 border-t pt-6">
+      <div className="flex items-center justify-between gap-4 border-t border-border pt-6">
         <Button type="button" variant="ghost" onClick={onCancel}>
           {c("cancel")}
         </Button>

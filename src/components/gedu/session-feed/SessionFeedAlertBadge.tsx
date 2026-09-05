@@ -108,7 +108,7 @@ export function SessionFeedAlertBadge({
     <Badge
       variant="outline"
       className={cn(
-        "gap-1.5 border-warning/50 bg-warning/10 text-warning",
+        "gap-1.5 bg-warning/10 text-warning",
         className,
       )}
     >

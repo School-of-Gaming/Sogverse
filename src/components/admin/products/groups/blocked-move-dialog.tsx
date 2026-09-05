@@ -62,7 +62,7 @@ export function BlockedMoveDialog({
         </DialogHeader>
         {/* The way forward, not a second warning — so the callout is toned
             warning but the sentence stays in body colour and is readable. */}
-        <div className="mt-4 flex items-start gap-2 rounded-md border border-warning/50 bg-warning/10 px-3 py-2.5 text-sm text-foreground">
+        <div className="mt-4 flex items-start gap-2 rounded-md border border-border bg-warning/10 px-3 py-2.5 text-sm text-foreground">
           <AlertTriangle
             className="mt-0.5 h-4 w-4 shrink-0 text-warning"
             aria-hidden

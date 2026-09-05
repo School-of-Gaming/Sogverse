@@ -67,10 +67,8 @@ export function WeekRows({
         <li
           key={row.date}
           className={cn(
-            "flex flex-col gap-2 rounded-lg border p-2 sm:flex-row sm:gap-3",
-            row.isToday
-              ? "border-primary/60 bg-primary/5"
-              : "border-border bg-card",
+            "flex flex-col gap-2 rounded-lg border border-border p-2 sm:flex-row sm:gap-3",
+            row.isToday ? "bg-primary/5" : "bg-card",
           )}
         >
           <div className="flex shrink-0 items-baseline gap-2 px-1 sm:w-24 sm:flex-col sm:items-start sm:gap-0">
@@ -150,7 +148,7 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
     <Link
       href={chip.href}
       title={title}
-      className="flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:border-foreground/30 hover:bg-accent"
+      className="flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:bg-accent"
     >
       <Icon
         className={cn("h-3.5 w-3.5 shrink-0", presentation.text)}

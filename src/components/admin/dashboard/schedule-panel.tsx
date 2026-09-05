@@ -211,10 +211,10 @@ function ThisWeek({
                 aria-pressed={active}
                 onClick={() => setTypes(toggled(types, productType))}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                  "inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium transition-colors",
                   active
-                    ? "border-foreground/40 bg-accent text-foreground"
-                    : "border-border text-muted-foreground hover:text-foreground",
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {/* The same tinted glyph the chips below wear, so the control

@@ -63,7 +63,7 @@ the zone tile take the no-alpha recipe (neutral ground, strong edge, soft ink, s
 ring) shown in the proposed column. Three columns drawn: today as rendered (grey
 edge), today as authored (never rendered), proposed.
 
-**Ruling (2026-09-05), tokens only:** _ruled_ — clear-cut from the Guidebook, no
+**Ruling (2026-09-05), tokens only:** _landed_ — clear-cut from the Guidebook, no
 decision needed: **the eight tokens, four strong and four soft, exactly as the library
 ships them** (`yty-{harmony,glow,valor,wit}-{strong,soft}`). Sogverse's four
 single-value `--color-yty-*` are deleted. The email mirror already reads the soft
@@ -106,7 +106,7 @@ accent-hover question (accent vs muted as the hover fill).
 library unchanged, as named palettes. Shown beside the Yty and status sets for
 collisions (the two cyans are ~2° apart).
 
-**Ruling (2026-09-05), product types:** _ruled_ — **the four categorical product-type
+**Ruling (2026-09-05), product types:** _ruled_ (exemplar approved) — **the four categorical product-type
 colours are dropped. Product kind is a fact that takes a Yty family, and the mapping is
 the first row of the library's tone grammar table**, defined in the foundations tier
 with the admin product-type presentation as its consumer. Colour-coding product types is
@@ -187,3 +187,31 @@ single-accent budget and marks the relaxation open in one sentence. Does the rel
 return, with its justification written into the source, or does the budget stand?
 
 **Ruling:** _open_
+
+## 13. Edges that were a state's only signal — the queue for SOG-UI edge constructs
+
+The border sweep (landed 2026-09-05) deleted every border-colour utility the unlayered
+default had hidden, so the app renders what it always rendered. These are the sites where
+the deleted edge had been authored as the **only** signal of a state; users never had that
+signal, so nothing regressed, but each is a candidate for a SOG-UI construct (a selection
+edge, an alert edge, a pressed state) to be designed and judged in the demo. Not to be
+fixed in Sogverse.
+
+1. `src/components/public/products/browse-card-shell.tsx` — `active:border-primary/40`
+   was the touch half of the hover/focus signal; a tap now gets no acknowledgement.
+2. `src/components/voice/ZoneColorPicker.tsx` — swatch hover was `hover:border-foreground/40`
+   alone; selection survives on the check glyph.
+3. `src/components/family/ProfileTiles.tsx` (add-gamer tile) — keyboard focus lost its only
+   colour response; the parent's `focus-visible:scale-105` remains.
+4. `FamilySessionFeedItem.tsx` and `SessionFeedItem.tsx` — the next session's card-level
+   `border-info/50` mark; the distinction survives in the badge label.
+5. Admin dashboard `product-attention-grid`, `users-strip`, `week-rows`, `schedule-panel`
+   — `hover:border-foreground/30` gone; `hover:bg-accent` remains and is near-invisible
+   against card (§4's open hover question).
+6. `src/components/admin/products/sections/identity-section.tsx` — the locale tab strip's
+   `border-b-2 border-primary` vs `border-transparent`; every tab now shows the same grey
+   underline and active rests on `bg-primary/5 text-primary`.
+7. `src/components/gedu/session-feed/AttendanceRoster.tsx` — the absent mark's pressed
+   state lost its outline half; fill and ink remain.
+8. `src/components/public/products/signup-panel-view.tsx` — the region-lock blocks'
+   "a border means you can act on it" grammar; only the info glyph marks the family now.

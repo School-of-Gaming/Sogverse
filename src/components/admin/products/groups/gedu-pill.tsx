@@ -34,7 +34,7 @@ export function GeduPill({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-xs transition-opacity",
+        "flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs transition-opacity",
         isSaving && "opacity-50",
       )}
     >

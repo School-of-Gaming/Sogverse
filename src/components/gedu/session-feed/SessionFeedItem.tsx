@@ -367,7 +367,7 @@ export function SessionFeedItem({
   // because nothing about the epoch says this session cannot be written up.
   if (entry.kind === "no_record") {
     return (
-      <div className="rounded-md border border-dashed border-border/60 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <SessionDateLine labels={labels} muted />
           <div className="flex items-center gap-2">
@@ -455,7 +455,6 @@ export function SessionFeedItem({
         // and the chip's size does not change. The ~11px it leaves clears a
         // thumbnail's bottom border exactly as it clears the staff-note box's.
         signedBy !== null && "pb-8 sm:pb-8",
-        entry.kind === "future" && prominent && "border-info/50",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -471,9 +470,7 @@ export function SessionFeedItem({
               variant="outline"
               className={cn(
                 "text-[10px] uppercase tracking-wide",
-                live
-                  ? "border-info bg-info/10 text-info"
-                  : "border-info/50 text-info",
+                live ? "bg-info/10 text-info" : "text-info",
               )}
             >
               {live ? b("live") : prominent ? b("nextSession") : b("upcoming")}

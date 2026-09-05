@@ -240,7 +240,7 @@ function Section({
         <AnchorHeading as="h2" id={slug} className="text-2xl font-bold">
           {title}
         </AnchorHeading>
-        <div className="rounded-lg border p-6 space-y-6">{children}</div>
+        <div className="rounded-lg border border-border p-6 space-y-6">{children}</div>
       </section>
     </SectionSlugContext.Provider>
   );
@@ -1717,7 +1717,7 @@ function SeatAvailabilityDemo() {
               container reports fake overflow bugs. The genuinely tighter case
               (browse-card footer, flex-1 beside a CTA) is shown in the product
               card demos in real context. */}
-          <div className="w-80 max-w-full rounded-md border p-3">
+          <div className="w-80 max-w-full rounded-md border border-border p-3">
             <SeatAvailabilityBar
               seatCount={c.seatCount}
               seatsLeft={c.seatsLeft}
@@ -2131,7 +2131,7 @@ function SessionPhotosDemo() {
               <DemoCaption>{demoCase.caption}</DemoCaption>
               <div
                 className={cn(
-                  "rounded-lg border bg-card p-4",
+                  "rounded-lg border border-border bg-card p-4",
                   demoCase.frameClassName,
                 )}
               >
@@ -3861,7 +3861,7 @@ const DEMO_USERNAME: Readonly<Record<GamePlatform, string>> = {
  * different container widths made that impossible.
  */
 const GAME_DEMO_GRID =
-  "grid max-w-4xl grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)] gap-x-8 rounded-lg border p-4";
+  "grid max-w-4xl grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)] gap-x-8 rounded-lg border border-border p-4";
 
 /**
  * The header row every demo grid opens with. The corner cell names the grid
@@ -4453,7 +4453,7 @@ function ParticipantChipRow() {
     <div className="flex flex-wrap items-start gap-6">
       {/* The real rail width in the groups panel, so the chip is judged at the
           size it actually renders at rather than stretched across the page. */}
-      <div className="w-64 space-y-2 rounded-lg border p-3">
+      <div className="w-64 space-y-2 rounded-lg border border-border p-3">
         <DemoCaption>On a Minecraft product</DemoCaption>
         <ParticipantChip
           participationId="demo-1"
@@ -4509,7 +4509,7 @@ function ParticipantChipRow() {
       {/* The same two children on a Roblox product. The row is the same shape at
           the same height — a Minecraft face render and a Roblox headshot are
           both square — so only the handle and the platform behind it differ. */}
-      <div className="w-64 space-y-2 rounded-lg border p-3">
+      <div className="w-64 space-y-2 rounded-lg border border-border p-3">
         <DemoCaption>On a Roblox product</DemoCaption>
         <ParticipantChip
           participationId="demo-6"
@@ -4538,7 +4538,7 @@ function ParticipantChipRow() {
       {/* Programming, Esports, Game Studio — a topic about no one game account.
           Worth seeing beside the two columns above: the chip is shorter by
           exactly the row it does not draw, and holds no gap where one was. */}
-      <div className="w-64 space-y-2 rounded-lg border p-3">
+      <div className="w-64 space-y-2 rounded-lg border border-border p-3">
         <DemoCaption>On a topic with no game account</DemoCaption>
         <ParticipantChip
           participationId="demo-8"
@@ -4564,7 +4564,7 @@ function ParticipantChipRow() {
         />
       </div>
 
-      <div className="w-64 space-y-2 rounded-lg border p-3">
+      <div className="w-64 space-y-2 rounded-lg border border-border p-3">
         <DemoCaption>Mid-save</DemoCaption>
         <ParticipantChip
           participationId="demo-4"

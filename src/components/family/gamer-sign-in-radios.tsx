@@ -73,10 +73,8 @@ export function GamerSignInRadios({
           <label
             key={mode}
             className={cn(
-              "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
-              selected
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-foreground/30",
+              "flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
+              selected && "bg-primary/5",
               disabled && "cursor-not-allowed opacity-50",
             )}
           >

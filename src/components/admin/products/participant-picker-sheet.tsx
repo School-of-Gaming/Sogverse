@@ -382,7 +382,7 @@ function FamilyBlockRow({
   const t = useTranslations("admin.products.participantPicker");
   const c = useTranslations("common");
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-lg border border-border">
       <div className="flex items-center justify-between gap-3 p-3">
         <div className="flex min-w-0 items-center gap-3">
           <Avatar>
@@ -418,7 +418,7 @@ function FamilyBlockRow({
       </div>
 
       {gamers.length > 0 && (
-        <div className="border-t bg-muted/30">
+        <div className="border-t border-border bg-muted/30">
           {gamers.map((gamer) => (
             <GamerPickerRow
               key={gamer.id}

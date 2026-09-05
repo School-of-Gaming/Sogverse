@@ -333,7 +333,7 @@ export function GamerSignInCard({
             the mode is not changing, and this is the only way that password can
             be replaced — the child has no mailbox to send a reset link to. */}
         {signIn === "username" && !modeChanged && (
-          <form onSubmit={handleSetPassword} className="space-y-4 border-t pt-6">
+          <form onSubmit={handleSetPassword} className="space-y-4 border-t border-border pt-6">
             {/* `h4`, not `h2`: the card's own title is the `h3` a `CardTitle`
                 renders, and this sits under it. Sentence case, no tracking —
                 it is the brand speaking rather than a furniture label. */}
@@ -394,7 +394,7 @@ export function GamerSignInCard({
             stated in words rather than left to be inferred from the presence of
             a button. */}
         {signIn === "email" && !modeChanged && (
-          <div className="space-y-4 border-t pt-6">
+          <div className="space-y-4 border-t border-border pt-6">
             {/* `readOnly`, not `disabled`: the value is the one thing a parent
                 comes here to read back, and a disabled input is skipped by the
                 keyboard entirely — so the address would be unreachable by tab
@@ -551,7 +551,7 @@ function ChangeUsernameForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 border-t pt-6">
+    <form onSubmit={handleSubmit} className="space-y-4 border-t border-border pt-6">
       {/* `h4`, not `h2`: the card's own title is the `h3` a `CardTitle` renders,
           and this sits under it. */}
       <div className="space-y-1">

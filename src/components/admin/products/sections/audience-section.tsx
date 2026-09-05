@@ -100,10 +100,8 @@ export function AudienceSection({
                 <label
                   key={flag}
                   className={cn(
-                    "flex items-start gap-3 rounded-md border p-3 transition-colors",
-                    checked
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-foreground/30",
+                    "flex items-start gap-3 rounded-md border border-border p-3 transition-colors",
+                    checked && "bg-primary/5",
                     locked ? "cursor-default" : "cursor-pointer"
                   )}
                 >
@@ -235,10 +233,8 @@ export function AudienceSection({
                 <label
                   key={option ?? "none"}
                   className={cn(
-                    "inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
-                    selected
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-foreground/30"
+                    "inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm transition-colors",
+                    selected && "bg-primary/5"
                   )}
                 >
                   <input

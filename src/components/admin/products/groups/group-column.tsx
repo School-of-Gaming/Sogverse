@@ -130,7 +130,7 @@ export function GroupColumn({
           "transition-colors",
           isDeleting && "opacity-40",
           isSaving && !isDeleting && "opacity-60",
-          isOver && !busy && "border-primary bg-primary/5",
+          isOver && !busy && "bg-primary/5",
         )}
       >
         <CardHeader className="space-y-3 pb-3">

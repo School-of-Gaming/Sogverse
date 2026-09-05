@@ -235,7 +235,7 @@ export default function AdminUsersPage() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-4 rounded-lg border p-4 animate-pulse"
+                  className="flex items-center gap-4 rounded-lg border border-border p-4 animate-pulse"
                 >
                   <div className="h-10 w-10 rounded-md bg-muted" />
                   <div className="flex-1 space-y-2">

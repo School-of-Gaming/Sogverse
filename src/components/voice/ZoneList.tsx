@@ -241,7 +241,7 @@ export function ZoneList() {
           // grabbing — dnd-kit puts no cursor on the overlay, and it sits right
           // under the pointer mid-drag.
           <div className="drag-ghost flex w-12 flex-col items-center gap-1">
-            <VoiceAvatar userId={activeParticipant.userId} className="border-primary shadow-lg" />
+            <VoiceAvatar userId={activeParticipant.userId} className="shadow-lg" />
             <span className="w-full truncate text-center text-[10px] leading-tight">
               {activeParticipant.userName}
             </span>
@@ -315,11 +315,11 @@ function ZoneCard({
       }}
       aria-label={tappable ? t("joinZone", { zone: accessibleLabel }) : undefined}
       className={cn(
-        "rounded-xl border px-3 py-2.5 transition-colors",
-        // Active zone: high-contrast border to mark "you're here" (vs the muted
-        // grey of the others), with the zone's color spilling in from the edge
-        // via an inset-shadow glow. Non-active: muted grey border.
-        isCurrent ? cn("border-foreground", zone.color.glow) : "border-border",
+        "rounded-xl border border-border px-3 py-2.5 transition-colors",
+        // Active zone: the zone's color spilling in from the edge via an
+        // inset-shadow glow marks "you're here". Non-active: the neutral border
+        // alone, with no glow.
+        isCurrent && zone.color.glow,
         isOver && canDropHere && "ring-2 ring-primary bg-accent/40",
         tappable && "cursor-pointer hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
       )}

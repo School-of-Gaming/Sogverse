@@ -183,7 +183,7 @@ export function ParticipantRow({
         // is a direct child so that `order` can put the game identity in two
         // different places at two widths (see the identity slot below), which
         // no amount of nesting can do.
-        "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border p-2 transition-colors sm:gap-x-3",
+        "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-border p-2 transition-colors sm:gap-x-3",
         p.isLocal && "bg-accent/50",
       )}
     >

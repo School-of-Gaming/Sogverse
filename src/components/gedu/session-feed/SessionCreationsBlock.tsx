@@ -85,8 +85,8 @@ export function SessionCreationsBlock({
   return (
     <div
       className={cn(
-        "space-y-2 rounded-md border p-2.5",
-        owed ? "border-warning/40 bg-warning/5" : "border-border bg-muted/20",
+        "space-y-2 rounded-md border border-border p-2.5",
+        owed ? "bg-warning/5" : "bg-muted/20",
       )}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -138,14 +138,14 @@ export function SessionCreationsBlock({
                     : t("creationsMemberMissing", { name: gamer.firstName })
                 }
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors",
+                  "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   "disabled:cursor-not-allowed disabled:opacity-50",
                   has
-                    ? "border-transparent bg-muted/40 text-muted-foreground hover:text-foreground"
+                    ? "bg-muted/40 text-muted-foreground hover:text-foreground"
                     : owed
-                      ? "border-warning bg-warning/15 font-semibold text-warning"
-                      : "border-border text-foreground hover:bg-muted",
+                      ? "bg-warning/15 font-semibold text-warning"
+                      : "text-foreground hover:bg-muted",
                 )}
               >
                 {has ? (

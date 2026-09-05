@@ -84,7 +84,7 @@ export function RobloxHero() {
           {/* On mobile this lands under the CTA as a full-width centred row, so
               it keeps the hairline rule that separates it from the copy. From
               `md` it is a sibling column and the grid gap does that job. */}
-          <div className="border-t pt-12 md:flex md:justify-end md:border-t-0 md:pt-0">
+          <div className="border-t border-border pt-12 md:flex md:justify-end md:border-t-0 md:pt-0">
             <PartnerLockup />
           </div>
         </div>

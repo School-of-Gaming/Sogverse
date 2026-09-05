@@ -31,12 +31,12 @@ export function ZoneColorPicker({
             aria-label={t(key)}
             aria-pressed={selected}
             // Same box model as ZoneIconPicker (`h-9 w-9 … border`) so the two
-            // grids line up exactly: selection is a high-contrast border, never
-            // a ring-offset/scale that would grow the square past the icon tiles.
+            // grids line up exactly: selection is the check glyph inside the
+            // square, never a ring-offset/scale that would grow the square past
+            // the icon tiles.
             className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-lg border transition-colors",
+              "flex h-9 w-9 items-center justify-center rounded-lg border border-border transition-colors",
               color.solid,
-              selected ? "border-foreground" : "border-transparent hover:border-foreground/40",
             )}
           >
             {/* White check reads on every swatch thanks to the drop shadow. */}

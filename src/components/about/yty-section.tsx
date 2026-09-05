@@ -45,7 +45,7 @@ export function YtySection({ id }: YtySectionProps) {
         <p className="mt-2 text-center text-muted-foreground">{t("elements.subheading")}</p>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {YTY_ELEMENTS.map((el) => (
-            <Card key={el.id} className={`border-2 ${el.color.border}`}>
+            <Card key={el.id} className="border-2 border-border">
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${el.color.bg}`}>

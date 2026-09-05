@@ -179,17 +179,14 @@ export function useBrowseCardShell(
     cardClassName: cn(
       // `group` is what the chevron's nudge reads; `relative` is what the
       // stretched link is positioned against.
-      "group relative flex h-full flex-col overflow-hidden transition-[border-color,box-shadow]",
+      "group relative flex h-full flex-col overflow-hidden transition-[box-shadow]",
       isEnded && "opacity-70 grayscale-[40%]",
       openHref && [
         "cursor-pointer",
-        "hover:border-primary/40 hover:shadow-lg",
+        "hover:shadow-lg",
         // `focus-within` so keyboard focus on the stretched link lights the
-        // whole card, not just the invisible anchor. `active` is the touch
-        // half of the same signal: a phone has no hover, so without it a tap
-        // gets no acknowledgement until the next page paints.
-        "focus-within:border-primary/40 focus-within:shadow-lg",
-        "active:border-primary/40",
+        // whole card, not just the invisible anchor.
+        "focus-within:shadow-lg",
       ],
     ),
   };
@@ -214,7 +211,7 @@ export function BrowseCardFooter({
   const { cta, openHref, isEnded } = shell;
 
   return (
-    <div className="mt-auto border-t pt-3">
+    <div className="mt-auto border-t border-border pt-3">
       {isEnded ? (
         <p className="text-xs italic text-muted-foreground">{t("endedNote")}</p>
       ) : (

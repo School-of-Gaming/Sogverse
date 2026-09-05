@@ -124,10 +124,10 @@ export function IdentitySection({
               <span
                 key={locale}
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-t-md border-b-2 px-3 py-1.5 text-sm transition-colors",
+                  "inline-flex items-center gap-1 rounded-t-md border-b-2 border-border px-3 py-1.5 text-sm transition-colors",
                   isActive
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
+                    ? "bg-primary/5 text-primary"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 <button

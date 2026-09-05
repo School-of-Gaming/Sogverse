@@ -65,15 +65,6 @@
   --color-product-camp: #74C639;               /* lime */
   --color-product-event: #938EF6;              /* indigo */
 
-  /* Yty-Element colours as this app spends them today. @sog/ui ships the four
-     families as `--color-yty-*-strong` / `-soft` pairs, so these single-value
-     names do not collide with them; the recipe that replaces them is the ruling
-     these four are waiting on. */
-  --color-yty-harmony: #34d399;
-  --color-yty-glow: #fbbf24;
-  --color-yty-valor: #fb7185;
-  --color-yty-wit: #a78bfa;
-
   /* Voice-zone palette — the 16 colors a moderator picks for a custom voice
      zone (src/lib/constants/voice-zones.ts maps these to tile/glyph/ring/glow/
      solid classes). A full, even sweep around the color wheel — red → orange →
@@ -115,18 +106,14 @@
   --font-display: var(--font-press-start-2p);
 }
 
-/* The app-wide default border colour, and it MUST stay inside `@layer base`.
-   Tailwind emits every utility inside `@layer utilities`, and an unlayered rule
-   beats any layered rule whatever its specificity — so declared outside a layer
-   this one selector overrides every border-colour utility in the app
-   (`border-primary`, `border-destructive`, `border-yty-*`) and nothing can paint
-   an edge. Inside base it is what it is meant to be: the default a utility
-   overrides. */
-@layer base {
-  * {
-    border-color: var(--color-border);
-  }
-}
+/* There is no universal border-colour default here, on purpose. Tailwind 4's
+   own default is `currentColor`, so an edge whose colour nobody named is
+   visibly wrong rather than silently grey — which is exactly what a universal
+   default hid for seven months, when an unlayered `*` rule here beat every
+   `border-*` utility in the app. Every bordered element names its edge
+   (`border-border` unless it says otherwise), and coloured edges return as
+   @sog/ui constructs. tests/unit/styling/globals-border-layer.test.ts holds
+   this and the library's theme to it. */
 
 /* All interactive elements should show a pointer cursor — except dnd-kit
    draggables, which are tagged role="button" for keyboard a11y but should read

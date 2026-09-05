@@ -39,7 +39,7 @@ export function CopyAllEmailsButton({ emails }: { emails: string[] }) {
       variant="outline"
       size="sm"
       onClick={() => void copy(emails.join(", "))}
-      className={cn("gap-1.5", copied && "border-success/40 text-success")}
+      className={cn("gap-1.5", copied && "text-success")}
     >
       {copied ? (
         <Check className="h-4 w-4" aria-hidden />

@@ -114,12 +114,8 @@ export function PinPad({
             <span
               key={i}
               className={cn(
-                "h-4 w-4 rounded-full border-2 transition-colors",
-                shaking
-                  ? "border-destructive bg-destructive"
-                  : filled
-                    ? "border-primary bg-primary"
-                    : "border-muted-foreground/40",
+                "h-4 w-4 rounded-full border-2 border-border transition-colors",
+                shaking ? "bg-destructive" : filled ? "bg-primary" : "",
               )}
             />
           );

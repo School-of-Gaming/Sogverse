@@ -104,10 +104,10 @@ export function ProfileTile(props: ProfileTileProps) {
     <>
       <div
         className={cn(
-          "relative aspect-square w-full overflow-hidden rounded-lg border-2 ring-offset-2 ring-offset-background transition-[border,box-shadow] duration-150",
+          "relative aspect-square w-full overflow-hidden rounded-lg border-2 border-border ring-offset-2 ring-offset-background transition-[box-shadow] duration-150",
           isActive
-            ? "border-transparent ring-4 ring-primary"
-            : "border-border ring-0 ring-primary/50 group-hover:border-transparent group-hover:ring-4 group-focus-visible:border-transparent group-focus-visible:ring-4",
+            ? "ring-4 ring-primary"
+            : "ring-0 ring-primary/50 group-hover:ring-4 group-focus-visible:ring-4",
         )}
       >
         <Identicon id={member.id} size={112} />
@@ -174,7 +174,7 @@ export function AddGamerTile({
       )}
       aria-label={t("addGamer")}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/40 transition-colors duration-150 group-hover:border-primary group-hover:bg-primary/5 group-focus-visible:border-primary">
+      <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors duration-150 group-hover:bg-primary/5">
         <div className="absolute inset-0 flex items-center justify-center">
           <Plus
             className={cn(

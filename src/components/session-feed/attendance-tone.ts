@@ -41,22 +41,23 @@ export type AttendanceMarkState = AttendanceMark | "unmarked";
 export interface AttendanceTone {
   /** Text (and icon) colour. */
   text: string;
-  /** Border colour, for the chip forms that draw one. */
+  /** The chip's edge, for the forms that draw one — the neutral border in
+   *  every state, dashed on the one still waiting for an answer. */
   border: string;
 }
 
 export const ATTENDANCE_TONE: Record<AttendanceMarkState, AttendanceTone> = {
-  present: { text: "text-success", border: "border-success/40" },
+  present: { text: "text-success", border: "border-border" },
   // Warning, not muted: absent and unmarked sat one shade of grey apart and
   // could not be told apart at a glance (owner ruling, 2026-08-25). Warning is
   // still deliberately short of destructive — an absence is a fact to notice,
   // not a fault to punish, on the family surface as much as the staff ones.
-  absent: { text: "text-warning", border: "border-warning/40" },
+  absent: { text: "text-warning", border: "border-border" },
   // The state still asking for something, so it is the one that stays faint and
   // keeps a dashed edge instead of settling in beside the answered chips.
   unmarked: {
     text: "text-muted-foreground/70",
-    border: "border-dashed border-border/70",
+    border: "border-dashed border-border",
   },
 };
 

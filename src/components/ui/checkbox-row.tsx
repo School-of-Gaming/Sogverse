@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * re-invent the composition this component exists to stop being re-invented.
  */
 const checkboxRowVariants = cva(
-  "flex items-start gap-3 rounded-md border p-3 transition-colors",
+  "flex items-start gap-3 rounded-md border border-border p-3 transition-colors",
   {
     variants: {
       size: {
@@ -20,8 +20,8 @@ const checkboxRowVariants = cva(
         xs: "text-xs",
       },
       checked: {
-        true: "border-primary bg-primary/5",
-        false: "border-border",
+        true: "bg-primary/5",
+        false: "",
       },
       disabled: {
         true: "cursor-not-allowed opacity-60",

@@ -35,7 +35,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none flex h-4 w-4 items-center justify-center rounded-sm border border-border bg-transparent transition-colors peer-checked:border-primary peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-disabled:opacity-50"
+          className="pointer-events-none flex h-4 w-4 items-center justify-center rounded-sm border border-border bg-transparent transition-colors peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-disabled:opacity-50"
         >
           {checked && (
             <Check

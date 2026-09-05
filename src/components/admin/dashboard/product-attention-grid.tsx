@@ -142,7 +142,7 @@ function ProductCard({ product }: { product: ProductAttention }) {
     <Link
       href={product.href}
       title={title}
-      className="flex h-full flex-col gap-2 rounded-lg border border-border bg-card p-3 transition-colors hover:border-foreground/30 hover:bg-accent"
+      className="flex h-full flex-col gap-2 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-accent"
     >
       <span className="flex items-start gap-2">
         {/* The same tinted sidebar glyph the schedule chips and the key wear.

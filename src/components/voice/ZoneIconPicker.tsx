@@ -34,10 +34,8 @@ export function ZoneIconPicker({
             aria-label={t(key)}
             aria-pressed={selected}
             className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-lg border transition-colors",
-              selected
-                ? cn("border-foreground", color.tile, color.glow)
-                : "border-border hover:bg-accent",
+              "flex h-9 w-9 items-center justify-center rounded-lg border border-border transition-colors",
+              selected ? cn(color.tile, color.glow) : "hover:bg-accent",
             )}
           >
             <Icon className={cn("h-5 w-5", selected && color.glyph)} />

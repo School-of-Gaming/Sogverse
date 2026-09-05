@@ -304,20 +304,20 @@ export const LOBBY_PRESENTATION: VirtualZonePresentation = {
  *  because the inset-shadow blur is a voice-room presentational choice, not a
  *  brand token. Literal strings so Tailwind generates each utility. */
 const YTY_ZONE_GLOW: Record<YtyElementId, string> = {
-  harmony: "zone-glow [--glow-color:var(--color-yty-harmony)]",
-  glow: "zone-glow [--glow-color:var(--color-yty-glow)]",
-  valor: "zone-glow [--glow-color:var(--color-yty-valor)]",
-  wit: "zone-glow [--glow-color:var(--color-yty-wit)]",
+  harmony: "zone-glow [--glow-color:var(--color-yty-harmony-strong)]",
+  glow: "zone-glow [--glow-color:var(--color-yty-glow-strong)]",
+  valor: "zone-glow [--glow-color:var(--color-yty-valor-strong)]",
+  wit: "zone-glow [--glow-color:var(--color-yty-wit-strong)]",
 };
 
-/** Yty solid fills, keyed by element id — literal `bg-yty-*` so Tailwind scans
- *  them. Yty zones never appear in the picker (only custom colors do), but
- *  `ZoneColorClasses` requires `solid`, so they carry their full-saturation fill. */
+/** Yty solid fills, keyed by element id — literal `bg-yty-*-strong` so Tailwind
+ *  scans them. Yty zones never appear in the picker (only custom colors do), but
+ *  `ZoneColorClasses` requires `solid`, so they carry the family's strong fill. */
 const YTY_ZONE_SOLID: Record<YtyElementId, string> = {
-  harmony: "bg-yty-harmony",
-  glow: "bg-yty-glow",
-  valor: "bg-yty-valor",
-  wit: "bg-yty-wit",
+  harmony: "bg-yty-harmony-strong",
+  glow: "bg-yty-glow-strong",
+  valor: "bg-yty-valor-strong",
+  wit: "bg-yty-wit-strong",
 };
 
 /** The 4 Yty zones, reusing the existing Yty icons + theme tokens (yty.ts) and

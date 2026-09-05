@@ -588,10 +588,10 @@ function ProblemNotice({
   return (
     <p
       className={cn(
-        "mt-5 flex items-start gap-2 rounded-md border px-3 py-2.5 text-sm",
+        "mt-5 flex items-start gap-2 rounded-md border border-border px-3 py-2.5 text-sm",
         tone === "destructive"
-          ? "border-destructive/40 bg-destructive/10 text-destructive"
-          : "border-border bg-muted/40 text-muted-foreground",
+          ? "bg-destructive/10 text-destructive"
+          : "bg-muted/40 text-muted-foreground",
       )}
     >
       <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />

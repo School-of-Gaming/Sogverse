@@ -54,7 +54,7 @@ export function ScreenShareDisplay({
   if (!effectiveSharerSessionId || !sharer) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-lg border bg-black">
+    <div className="relative overflow-hidden rounded-lg border border-border bg-black">
       <div className="aspect-video">
         <video
           ref={videoRef}

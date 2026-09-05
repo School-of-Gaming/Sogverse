@@ -46,17 +46,9 @@ export function RegistrationSection({
             <label
               key={option}
               className={cn(
-                "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
-                state.registrationOpensMode === option
-                  ? "border-primary bg-primary/5"
-                  : "border-border",
-                lockTiming
-                  ? "cursor-not-allowed opacity-60"
-                  : cn(
-                      "cursor-pointer",
-                      state.registrationOpensMode !== option &&
-                        "hover:border-foreground/30"
-                    )
+                "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
+                state.registrationOpensMode === option && "bg-primary/5",
+                lockTiming ? "cursor-not-allowed opacity-60" : "cursor-pointer"
               )}
             >
               <input

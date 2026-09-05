@@ -43,7 +43,7 @@ export function NewcomerBadge({
     <span
       title={t("newcomerTooltip", { days })}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full border border-success/40 bg-success/15 px-1.5 py-0 text-[10px] font-medium leading-4 text-success",
+        "inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-success/15 px-1.5 py-0 text-[10px] font-medium leading-4 text-success",
         className,
       )}
     >

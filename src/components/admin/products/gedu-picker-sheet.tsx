@@ -140,10 +140,10 @@ export function GeduPickerSheet({
               type="button"
               onClick={() => setLanguageFilter(null)}
               className={cn(
-                "rounded-full border px-2 py-0.5 transition-colors",
+                "rounded-full border border-border px-2 py-0.5 transition-colors",
                 languageFilter === null
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:text-foreground"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {t("any")}
@@ -156,10 +156,10 @@ export function GeduPickerSheet({
                   setLanguageFilter((prev) => (prev === code ? null : code))
                 }
                 className={cn(
-                  "rounded-full border px-2 py-0.5 transition-colors",
+                  "rounded-full border border-border px-2 py-0.5 transition-colors",
                   languageFilter === code
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:text-foreground"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {languageName(code)}
@@ -248,9 +248,9 @@ function GeduRow({
       disabled={isDisabled}
       onClick={onClick}
       className={cn(
-        "flex w-full items-start gap-3 rounded-md border p-3 text-left text-sm transition-colors",
+        "flex w-full items-start gap-3 rounded-md border border-border p-3 text-left text-sm transition-colors",
         isDisabled ? "cursor-default opacity-60" : "hover:bg-accent",
-        isCurrent && "border-primary bg-primary/5 opacity-100"
+        isCurrent && "bg-primary/5 opacity-100"
       )}
     >
       <Avatar className="h-9 w-9 shrink-0">

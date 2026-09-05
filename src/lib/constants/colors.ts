@@ -99,7 +99,7 @@ export const STATUS = {
 /**
  * The app's `Alert` in its `info` variant, pre-composited for email.
  *
- * The component's `border-info/50` and `bg-info/10` are flattened against the
+ * The component's `bg-info/10` is flattened against the
  * ground they actually sit on — the message panel, not the shell's darker
  * background behind it. Composite over the wrong ground and the tint is a
  * visible rectangle rather than a wash.

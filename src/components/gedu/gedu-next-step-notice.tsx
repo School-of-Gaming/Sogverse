@@ -53,7 +53,7 @@ function GeduNextStepBand({
     <div className="mx-auto mb-10 max-w-5xl">
       <Link
         href={ROUTES.gedu.contract}
-        className="flex items-start gap-4 rounded-lg border-2 border-warning/60 bg-warning/10 p-5 transition-colors hover:bg-warning/20"
+        className="flex items-start gap-4 rounded-lg border-2 border-border bg-warning/10 p-5 transition-colors hover:bg-warning/20"
       >
         <Icon className="mt-0.5 h-6 w-6 shrink-0 text-warning" aria-hidden />
         <div className="min-w-0 space-y-1">

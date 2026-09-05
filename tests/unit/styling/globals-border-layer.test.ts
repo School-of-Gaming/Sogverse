@@ -13,18 +13,23 @@ import { describe, expect, it } from "vitest";
  *
  * Nothing looked broken, which is why it lasted: borders rendered, just always
  * in one colour, so every coloured border in the codebase was authored blind
- * and reviewed against a render that never showed it. The correct form — the
- * same declaration wrapped in `@layer base`, where it is the default a utility
- * overrides — is a one-word difference invisible to any review that is not
- * looking for it. `packages/sog-ui/docs/origins-2026-09.md` tells the story.
+ * and reviewed against a render that never showed it.
  *
- * So this test asserts the shape, not the text: a universal `border-color`
- * rule must exist (it is the app's default and its absence is its own bug) and
- * every one of them must sit inside an `@layer` block.
+ * The fix was not to layer the default but to delete it. A default border
+ * colour is a safety net that lets a missing colour hide; Tailwind 4 ships
+ * `currentColor` instead precisely so an unnamed edge is visibly wrong. So
+ * every hidden colour utility was removed (what the owner saw is what the app
+ * shows), every bordered element now names its own edge, and coloured edges
+ * come back only as SOG-UI constructs.
+ *
+ * This test asserts the shape, not the text: neither Sogverse's stylesheet nor
+ * the library's theme may declare `border-color` on a universal selector, in a
+ * layer or out of one.
  */
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const globalsPath = join(repoRoot, "src", "app", "globals.css");
+const themePath = join(repoRoot, "packages", "sog-ui", "src", "tokens", "theme.css");
 
 type Declaration = { property: string; selector: string; layered: boolean };
 
@@ -32,7 +37,7 @@ type Declaration = { property: string; selector: string; layered: boolean };
  * Walks the stylesheet keeping a stack of the blocks a declaration sits in, so
  * "is this inside a layer?" is answered by the ancestry rather than by where a
  * string happens to appear. Comments are stripped first — a comment explaining
- * the rule (there is one, directly above it) must not read as the rule.
+ * the rule (there is one, where the rule used to be) must not read as the rule.
  */
 function declarations(css: string): Declaration[] {
   const source = css.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -69,32 +74,39 @@ function declarations(css: string): Declaration[] {
   return found;
 }
 
-/** `*`, and the `*, ::before, ::after` list a reset writes it as. */
+/**
+ * `*`, and the pseudo-element lists a reset writes it as — including Tailwind's
+ * own five-part preflight selector, `*, ::after, ::before, ::backdrop,
+ * ::file-selector-button`, whose parts are bare pseudo-elements rather than
+ * `*::before`. Either spelling reaches every box on the page, so either counts.
+ */
 const isUniversal = (selector: string) =>
   selector
     .split(",")
     .map((part) => part.trim())
     // Deliberately one pseudo, not a repeatable group: a nested quantifier here
     // is a ReDoS shape, and `*` chained with several pseudo-elements is not a
-    // selector any reset writes.
-    .some((part) => part === "*" || /^\*::?[\w-]+$/.test(part));
+    // selector any reset writes. A bare pseudo-*class* (`:root`) stays out of
+    // it: that selects one element, not every box.
+    .some(
+      (part) => part === "*" || /^\*::?[\w-]+$/.test(part) || /^::[\w-]+$/.test(part),
+    );
 
-describe("globals.css — the universal border-colour default", () => {
-  const universalBorderColour = declarations(readFileSync(globalsPath, "utf8")).filter(
-    ({ property, selector }) => property === "border-color" && isUniversal(selector),
-  );
+/** The universal `border-color` rules a stylesheet declares, layered or not. */
+const universalBorderColour = (css: string) =>
+  declarations(css)
+    .filter(({ property, selector }) => property === "border-color" && isUniversal(selector))
+    .map(({ selector, layered }) => `${selector}${layered ? " (layered)" : " (unlayered)"}`);
 
-  it("still declares one", () => {
-    expect(
-      universalBorderColour.length,
-      "The app's border utilities are written against a neutral default; removing it does not un-break anything, it just moves the surprise.",
-    ).toBeGreaterThan(0);
+const WHY =
+  "A universal `border-color` is the safety net that hid every coloured border in this app for seven months — unlayered it beats every utility Tailwind emits, and layered it still lets an element with no colour of its own look deliberate. Delete it and name the edge on the element instead (`border-border`, or the construct that owns that edge).";
+
+describe("no universal border-colour default", () => {
+  it("src/app/globals.css declares none", () => {
+    expect(universalBorderColour(readFileSync(globalsPath, "utf8")), WHY).toEqual([]);
   });
 
-  it("declares every one of them inside an @layer block", () => {
-    expect(
-      universalBorderColour.filter(({ layered }) => !layered).map(({ selector }) => selector),
-      "An unlayered universal `border-color` beats every `@layer utilities` rule Tailwind emits, silently killing every border-colour utility in the app. Wrap it in `@layer base`, where it is a default a utility can override.",
-    ).toEqual([]);
+  it("packages/sog-ui/src/tokens/theme.css declares none", () => {
+    expect(universalBorderColour(readFileSync(themePath, "utf8")), WHY).toEqual([]);
   });
 });

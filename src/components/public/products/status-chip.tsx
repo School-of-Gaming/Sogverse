@@ -15,12 +15,13 @@ export type ChipTone = "primary" | "warning" | "info" | "muted";
 // product's chip next to a paid one's "€250").
 export type ChipSize = "sm" | "md";
 
-// Semantic tone per chip. Keeps the colour decision in one place.
-const TONE_OUTLINE: Record<ChipTone, string> = {
-  primary: "border-primary/40 text-primary",
-  warning: "border-warning/50 text-warning",
-  info: "border-info/40 text-info",
-  muted: "border-border text-muted-foreground",
+// Semantic tone per chip — ink only; the outline is the neutral border every
+// chip wears. Keeps the colour decision in one place.
+const TONE_INK: Record<ChipTone, string> = {
+  primary: "text-primary",
+  warning: "text-warning",
+  info: "text-info",
+  muted: "text-muted-foreground",
 };
 
 const SIZE_CHIP: Record<ChipSize, string> = {
@@ -49,9 +50,9 @@ export function StatusChip({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border bg-background font-medium",
+        "inline-flex items-center rounded-full border border-border bg-background font-medium",
         SIZE_CHIP[size],
-        TONE_OUTLINE[tone],
+        TONE_INK[tone],
         className,
       )}
     >

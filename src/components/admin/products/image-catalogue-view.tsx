@@ -183,10 +183,8 @@ export function ImageCatalogueView({
                       onClick={() => onSelectTile(image.id)}
                       aria-pressed={isSelected}
                       className={cn(
-                        "w-full rounded-md border p-2 text-left transition-colors hover:bg-accent",
-                        isSelected
-                          ? "border-primary bg-primary/5"
-                          : "border-border",
+                        "w-full rounded-md border border-border p-2 text-left transition-colors hover:bg-accent",
+                        isSelected && "bg-primary/5",
                       )}
                     >
                       <ProductBanner

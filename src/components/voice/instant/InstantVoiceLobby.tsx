@@ -324,7 +324,7 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: Inst
             )}
 
             {error && (
-              <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div className="rounded-md border border-border bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
               </div>
             )}

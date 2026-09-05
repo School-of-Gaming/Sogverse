@@ -143,7 +143,7 @@ async function AdminDashboardLoadFailure({ reason }: { reason: string | null }) 
       {/* The reason is a message off the wire, never translated copy — it is
           spliced into a sentence that is, which is why there are two keys rather
           than one with an optionally-empty argument. */}
-      <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+      <p className="rounded-lg border border-border bg-destructive/5 p-4 text-sm text-destructive">
         {reason === null ? t("loadError") : t("loadErrorWithReason", { reason })}
       </p>
     </div>

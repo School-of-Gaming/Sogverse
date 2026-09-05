@@ -163,7 +163,7 @@ export function UserMarketingCard({
                 return (
                   <div
                     key={consentType}
-                    className="flex items-center justify-between gap-3 rounded-lg border p-3"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
                   >
                     <p className="min-w-0 truncate text-sm font-medium">
                       {labels[consentType]}

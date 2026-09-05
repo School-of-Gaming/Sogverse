@@ -264,7 +264,7 @@ export default function RobloxPage() {
           this section can, and reads the right way round anyway — boilerplate
           belongs at the bottom of the page, not above the thing it qualifies. */}
       <section className="container mx-auto px-4 pb-16">
-        <div className="mx-auto max-w-3xl border-t pt-8">
+        <div className="mx-auto max-w-3xl border-t border-border pt-8">
           {/* Furniture, not voice: a small tracked marker a reader scans as
               structure, so caps are the right treatment here. Muted rather than
               the page's primary-coloured Eyebrow — three primary-coloured rows

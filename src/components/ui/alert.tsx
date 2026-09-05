@@ -3,16 +3,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "relative flex rounded-lg border text-sm",
+  "relative flex rounded-lg border border-border text-sm",
   {
     variants: {
       variant: {
-        default: "border-border bg-muted/50 text-foreground",
-        destructive:
-          "border-destructive/50 bg-destructive/10 text-destructive",
-        success: "border-success/50 bg-success/10 text-success",
-        info: "border-info/50 bg-info/10 text-info",
-        warning: "border-warning/50 bg-warning/10 text-warning",
+        default: "bg-muted/50 text-foreground",
+        destructive: "bg-destructive/10 text-destructive",
+        success: "bg-success/10 text-success",
+        info: "bg-info/10 text-info",
+        warning: "bg-warning/10 text-warning",
       },
       align: {
         left: "items-start gap-3 p-3",

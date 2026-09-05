@@ -55,7 +55,7 @@ export default function AdminUIPreviewsPage() {
         {PREVIEW_SCENE_LIST.map((scene) => (
           <section
             key={scene.surface}
-            className="space-y-3 rounded-lg border p-6"
+            className="space-y-3 rounded-lg border border-border p-6"
           >
             <div className="space-y-1">
               <h2 className="text-xl font-semibold">{scene.title}</h2>

@@ -128,7 +128,7 @@ export function ImagePicker({
         }}
         className={cn(
           "rounded-md border border-border bg-background p-4 transition-colors",
-          dragging && "border-primary bg-primary/5",
+          dragging && "bg-primary/5",
         )}
       >
         {/* The one 3:2 frame every product picture is painted in — the same
@@ -139,7 +139,7 @@ export function ImagePicker({
         <ProductBanner
           src={productImageSrc(selected?.path)}
           sizes="240px"
-          className="mx-auto w-60 rounded-md border"
+          className="mx-auto w-60 rounded-md border border-border"
         />
 
         {/* No reserved slot for the label: an unselected card has nothing to

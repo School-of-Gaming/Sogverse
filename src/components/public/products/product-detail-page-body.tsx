@@ -377,7 +377,7 @@ export function ProductDetailPageBody({
             design. `relative` is what the chips position against. A product with
             no picture gets the wordmark banner at the same ratio — and wears the
             chips on it, exactly as an un-imaged card does. */}
-        <div className="relative overflow-hidden rounded-lg border">
+        <div className="relative overflow-hidden rounded-lg border border-border">
           {/* Eager: the hero is the page's picture and reliably above the
               fold — the one banner that must not wait for a scroll. */}
           {/* The reading column's width: capped at 44rem from `lg`, and below

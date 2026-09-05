@@ -672,12 +672,12 @@ function GenderButton({
         // Hyphenation first (the document carries the locale's `lang`, so a
         // browser that can hyphenate does it properly), a hard word break only
         // as the fallback.
-        "flex min-h-10 items-center justify-center rounded-md border px-2 py-1.5 text-center text-xs font-medium leading-tight transition-colors hyphens-auto break-words sm:px-3 sm:text-sm",
+        "flex min-h-10 items-center justify-center rounded-md border border-border px-2 py-1.5 text-center text-xs font-medium leading-tight transition-colors hyphens-auto break-words sm:px-3 sm:text-sm",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed disabled:opacity-50",
         selected
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-background hover:bg-accent hover:text-foreground",
+          ? "bg-primary text-primary-foreground"
+          : "bg-background hover:bg-accent hover:text-foreground",
       )}
     >
       {label}

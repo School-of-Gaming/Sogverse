@@ -142,7 +142,7 @@ export function GeduContractPageBody({
             </CardContent>
           </Card>
         ) : (
-          <Card className="border-success/40 bg-success/5">
+          <Card className="bg-success/5">
             <CardContent className="space-y-4 p-6">
               <p className="flex items-center gap-2 font-medium text-success">
                 <BadgeCheck className="h-5 w-5 shrink-0" aria-hidden />

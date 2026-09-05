@@ -147,7 +147,7 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
           <Link
             key={p.id}
             href={`/admin/${config.routeSlug}/${p.id}`}
-            className="group flex items-center justify-between gap-4 rounded-lg border p-4 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="group flex items-center justify-between gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <div className="flex min-w-0 flex-1 items-center gap-4">
               {/* The project ratio at row-thumb size (owner rule — one aspect

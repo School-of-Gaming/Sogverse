@@ -118,16 +118,23 @@ const setLocationButton = (c: HTMLElement) =>
   );
 
 /**
- * The tinted blocks the region-lock surfaces render inside.
+ * The blocks the region-lock surfaces render inside.
  *
- * Matched on the class attribute by substring rather than as a CSS class,
- * because a Tailwind opacity modifier carries a `/` that a class selector would
- * have to escape — and the escaping, not the assertion, is what would break
- * first.
+ * These used to be found by their `border-info/*` edge. The border sweep left
+ * every block in the app on the one neutral border, so the family is found the
+ * way a reader now finds it: the block's own geometry (`rounded-md`, `border`,
+ * `p-4`) plus the info-coloured glyph anchoring it. A wrapper around one of
+ * these carries the anchor too — see `anchorGlyphs` — which is what the
+ * geometry filter is for.
  */
-const infoBlocks = (c: HTMLElement) => [
-  ...c.querySelectorAll<HTMLElement>('[class*="border-info/"]'),
-];
+const infoBlocks = (c: HTMLElement) =>
+  [...c.querySelectorAll<HTMLElement>("div")].filter((el) => {
+    const tokens = new Set((el.getAttribute("class") ?? "").split(/\s+/));
+    return (
+      ["rounded-md", "border", "p-4"].every((token) => tokens.has(token)) &&
+      anchorGlyphs(el).length === 1
+    );
+  });
 
 /**
  * The info-coloured lucide glyph *anchoring* `block` — the family's shared voice.
@@ -412,15 +419,15 @@ describe("eligible", () => {
  * moments — this product is a bit different, it wants your attention, nothing
  * is wrong. A parent who meets two of them in one visit (asked for a location,
  * then told it fits) should recognise the second as the same voice as the
- * first, so all three wear the `info` surface, its hairline border and an
- * `info`-coloured glyph anchoring the block. The eligible line in particular
- * used to carry the panel's *action* colour, which said "you can act on this"
- * about the one state that offers nothing to act on.
+ * first, so all three wear the same bordered block and an `info`-coloured
+ * glyph anchoring it. The eligible line in particular used to carry the panel's
+ * *action* colour, which said "you can act on this" about the one state that
+ * offers nothing to act on.
  *
  * The hue marks the *subject*, not inactionability — the question's block holds
- * a button and wears the same border — so what is pinned per surface is that
- * the anchor sits in anchor position, and that the action colour appears
- * nowhere in the block. A control inside one keeps announcing itself the way
+ * a button and wears the same edge — so what is pinned per surface is that the
+ * anchor sits in anchor position, and that the action colour appears nowhere in
+ * the block. A control inside one keeps announcing itself the way
  * every other control on the panel does, from its own affordance.
  *
  * Asserted on the semantic tokens rather than on any literal colour: the point
@@ -438,7 +445,6 @@ describe("the info family", () => {
       says: "regionLock.wrongCountry",
       // The loud tier: the refusal replaces the form and is the one thing on
       // the panel, so it carries the full tinted surface.
-      border: "border-info/30",
       tinted: true,
     },
     {
@@ -449,21 +455,19 @@ describe("the info family", () => {
       },
       says: "regionLock.note",
       // The quiet tier: a section inside a working form carries the family's
-      // hue on its border alone (the EnrollmentCard "awaiting" opacity), so
-      // the form stays the loudest thing on its own panel.
-      border: "border-info/40",
+      // hue on its glyph alone, so the form stays the loudest thing on its own
+      // panel.
       tinted: false,
     },
     {
       name: "the confirmation",
       regionGate: eligible,
       says: "regionLock.eligible",
-      border: "border-info/40",
       tinted: false,
     },
   ];
 
-  for (const { name, regionGate, says, border, tinted } of surfaces) {
+  for (const { name, regionGate, says, tinted } of surfaces) {
     it(`marks ${name} as information, anchored by an info-coloured glyph`, () => {
       const { container } = render(
         <SignupPanelView {...panel({ regionGate })} />,
@@ -475,7 +479,6 @@ describe("the info family", () => {
       expect(blocks).toHaveLength(1);
       const block = blocks[0];
       expect(block.textContent).toContain(says);
-      expect(block.className).toContain(border);
       // Volume follows stakes: only the refusal fills its surface.
       expect(block.className.includes("bg-info/")).toBe(tinted);
       // One anchor, and in anchor position — see `anchorGlyphs`.
@@ -506,12 +509,9 @@ describe("the info family", () => {
     // One family, one geometry, one hue — the tiers differ only in volume,
     // which the per-surface cases above pin.
     for (const tokens of shared) {
-      for (const token of ["rounded-md", "border", "p-4"]) {
+      for (const token of ["rounded-md", "border", "border-border", "p-4"]) {
         expect(tokens).toContain(token);
       }
-      expect(
-        [...tokens].some((t) => t.startsWith("border-info/")),
-      ).toBe(true);
     }
   });
 

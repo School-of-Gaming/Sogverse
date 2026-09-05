@@ -20,9 +20,9 @@ function Code({ children }: { children: React.ReactNode }) {
 
 function CodeBlock({ children, title }: { children: string; title?: string }) {
   return (
-    <div className="overflow-x-auto rounded-lg border bg-muted/50">
+    <div className="overflow-x-auto rounded-lg border border-border bg-muted/50">
       {title && (
-        <div className="border-b px-4 py-2 text-xs font-medium text-muted-foreground">
+        <div className="border-b border-border px-4 py-2 text-xs font-medium text-muted-foreground">
           {title}
         </div>
       )}
@@ -43,7 +43,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1 border-b py-3 last:border-0">
+    <div className="flex flex-col gap-1 border-b border-border py-3 last:border-0">
       <div className="flex items-baseline gap-2">
         <Code>{name}</Code>
         <span className="text-xs text-muted-foreground">{type}</span>
@@ -107,7 +107,7 @@ export default function MinecraftApiDocsPage() {
             The contract below is what it will return once rebuilt — say so here
             rather than let an integrator match against responses nothing can
             currently produce. */}
-        <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 p-4">
+        <div className="mt-4 rounded-lg border border-border bg-warning/10 p-4">
           <p className="text-sm font-medium text-warning">
             {t('responses.notImplementedTitle')}
           </p>

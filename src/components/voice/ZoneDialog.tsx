@@ -85,7 +85,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("border-foreground", colorClasses.glow)}>
+      <DialogContent className={colorClasses.glow}>
         <DialogHeader>
           <DialogTitle>{isEdit ? t("editZone") : t("newZone")}</DialogTitle>
         </DialogHeader>
@@ -116,8 +116,8 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
               role="switch"
               aria-checked={isLocked}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
-                isLocked ? "border-primary bg-primary/5" : "border-border hover:bg-accent",
+                "flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors",
+                isLocked ? "bg-primary/5" : "hover:bg-accent",
               )}
             >
               <Lock className={cn("h-4 w-4 shrink-0", isLocked ? "text-primary" : "text-muted-foreground")} />

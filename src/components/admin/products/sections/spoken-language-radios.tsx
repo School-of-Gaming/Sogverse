@@ -57,10 +57,8 @@ export function SpokenLanguageRadios({
           <label
             key={code}
             className={cn(
-              "inline-flex cursor-pointer items-center gap-2 rounded-full border py-1.5 pl-2.5 pr-3.5 text-sm transition-colors",
-              selected
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-foreground/30"
+              "inline-flex cursor-pointer items-center gap-2 rounded-full border border-border py-1.5 pl-2.5 pr-3.5 text-sm transition-colors",
+              selected && "bg-primary/5"
             )}
           >
             {/* A visible native radio, as every other radio group in this form

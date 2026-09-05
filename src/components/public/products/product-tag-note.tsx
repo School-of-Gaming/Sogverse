@@ -42,7 +42,7 @@ export function ProductTagNote({ tag }: { tag: ProductTag }) {
   const key = productTagLabelKey(tag);
 
   return (
-    <div className="rounded-lg border bg-muted/30 p-4">
+    <div className="rounded-lg border border-border bg-muted/30 p-4">
       <p className="text-sm text-muted-foreground">
         <span className="font-medium text-foreground after:mx-1.5 after:font-normal after:text-muted-foreground/50 after:content-['—']">
           <TagGlyph

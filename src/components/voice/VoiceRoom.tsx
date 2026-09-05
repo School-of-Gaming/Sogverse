@@ -240,7 +240,7 @@ export function VoiceRoom({
         className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-2"
         style={{ paddingBottom: DOCK_FLOAT_OFFSET }}
       >
-        <div className="glass-panel pointer-events-auto flex max-w-[calc(100vw-1rem)] items-end gap-3 rounded-2xl border px-4 py-3 shadow-lg">
+        <div className="glass-panel pointer-events-auto flex max-w-[calc(100vw-1rem)] items-end gap-3 rounded-2xl border border-border px-4 py-3 shadow-lg">
           <VoiceControls />
 
           <Button

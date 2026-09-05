@@ -202,7 +202,7 @@ function HeaderParticipantAction({ onAdd }: { onAdd: () => void }) {
       <div
         ref={setNodeRef}
         className={cn(
-          "flex items-center gap-1.5 rounded-md border border-dashed border-destructive px-3 py-1.5 text-sm font-medium text-destructive transition-colors",
+          "flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-sm font-medium text-destructive transition-colors",
           isOver && "bg-destructive/10",
         )}
       >
@@ -590,7 +590,7 @@ export function GroupsPanelView({
           confirmLabel={t("removeParticipant.confirmCta")}
           onConfirm={() => actions.onRemoveParticipant(removing.id)}
         >
-          <div className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/10 px-3 py-2.5 text-sm font-semibold text-destructive">
+          <div className="flex items-start gap-2 rounded-md border border-border bg-destructive/10 px-3 py-2.5 text-sm font-semibold text-destructive">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <span>{t("removeParticipant.noRefundWarning")}</span>
           </div>

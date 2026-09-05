@@ -188,7 +188,7 @@ export function SeatOfferBlock({
     //
     // The Accept button below keeps the default (primary) variant: the block is
     // the notice, the button is the action, and they are not the same claim.
-    <div className="w-full space-y-3 border-t border-info/25 pt-4 text-left">
+    <div className="w-full space-y-3 border-t border-border pt-4 text-left">
       <div className="flex items-start gap-2">
         <CalendarClock
           className="mt-0.5 h-4 w-4 shrink-0 text-info"

@@ -122,7 +122,7 @@ export function AboutSection({ id }: AboutSectionProps) {
       {locale === "tlh" && (
         <div className="mx-auto mt-16 max-w-3xl">
           <Card
-            className="overflow-hidden border"
+            className="overflow-hidden border border-border"
             style={{ borderColor: "rgba(221,0,0,0.4)", backgroundColor: "#0a0a0a" }}
           >
             <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #d00, transparent)" }} />
@@ -138,7 +138,7 @@ export function AboutSection({ id }: AboutSectionProps) {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b text-left" style={{ borderColor: "rgba(221,0,0,0.3)" }}>
+                    <tr className="border-b border-border text-left" style={{ borderColor: "rgba(221,0,0,0.3)" }}>
                       <th className="pb-2 pr-4 font-medium text-white/50">English</th>
                       <th className="pb-2 pr-4 font-medium text-white/50">tlhIngan Hol</th>
                       <th className="pb-2 font-medium text-white/50">Literal meaning</th>
@@ -146,7 +146,7 @@ export function AboutSection({ id }: AboutSectionProps) {
                   </thead>
                   <tbody>
                     {easterEggRows.map((row) => (
-                      <tr key={row} className="border-b" style={{ borderColor: "rgba(221,0,0,0.1)" }}>
+                      <tr key={row} className="border-b border-border" style={{ borderColor: "rgba(221,0,0,0.1)" }}>
                         {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
                         <td className="py-2 pr-4 text-white/70">{t(`easterEgg.${row}Label`)}</td>
                         {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
