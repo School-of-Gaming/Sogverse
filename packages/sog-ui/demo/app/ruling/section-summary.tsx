@@ -14,6 +14,7 @@
 
 import {
   LOOSE_COLOURS,
+  PRODUCT_FAMILY,
   PRODUCT_PALETTE,
   STATUS_ROWS,
   YTY_ROWS,
@@ -108,7 +109,7 @@ const PALETTE_SUMMARY: readonly Row[] = [
     token: entry.token,
     hex: entry.hex,
     uses: 2,
-    verdict: "admit",
+    verdict: `delete → yty-${PRODUCT_FAMILY[entry.token]}`,
   })),
   ...ZONE_PALETTE.map((entry) => ({
     token: entry.token,

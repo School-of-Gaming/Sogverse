@@ -214,13 +214,19 @@ export interface PaletteEntry {
 }
 
 /**
- * The four admin product types — two utility uses each, a glyph tint and a tile
- * wash on the admin product key.
+ * The four admin product types, as Sogverse colours them today — two utility
+ * uses each, a glyph tint and a tile wash.
  *
- * Proposed unchanged: the library owns them as a named palette so that a fifth
- * type is a decision made in the foundations tier rather than a hex typed into
- * a page. The wash behind each glyph is a 15% alpha step, which is the one
- * exemption the library's ban already names — chip-scale icon-accent tiles.
+ * **Ruled: these four categorical colours are dropped.** A product kind is a
+ * fact, and a fact takes a Yty family; the mapping below is the first row of
+ * the tone grammar table. Colour-coding product types is an admin-only
+ * operational convenience and is never shown to a family, which is what lets
+ * the two meanings share a hue: one-meaning-per-hue holds per surface, an admin
+ * table shows no Yty elements, and where an admin does meet both — the voice
+ * page's Yty zones — the glyph-and-label rule carries the meaning.
+ *
+ * These hexes stay here because the inventory still has to name what is being
+ * dropped, and because the exemplar draws them in the "today" column.
  */
 export const PRODUCT_PALETTE: readonly PaletteEntry[] = [
   { token: "product-consumer-club", label: "Consumer club", hex: "#20C4E9" },
@@ -228,6 +234,29 @@ export const PRODUCT_PALETTE: readonly PaletteEntry[] = [
   { token: "product-camp", label: "Camp", hex: "#74C639" },
   { token: "product-event", label: "Event", hex: "#938EF6" },
 ];
+
+/**
+ * Which Yty family each product kind takes, and why.
+ *
+ * - **camp → Valor.** The brand's own content coding already puts challenges,
+ *   camps and courage under Valor, so this row is not a new decision, it is the
+ *   existing one applied.
+ * - **consumer club → Harmony.** The relationship with people: the community a
+ *   family chooses for itself, week after week.
+ * - **municipality club → Wit.** The relationship with technology and learning:
+ *   the school-hours offering, bought by a municipality.
+ * - **event → Glow.** Growth and milestones: the one-off occasion.
+ *
+ * Strong and soft follow the standing rule wherever these are spent — soft
+ * carries text and glyphs, strong carries fills, edges and rings — so the key
+ * rail's tile derives from strong and the glyph inside it is soft.
+ */
+export const PRODUCT_FAMILY: Record<string, string> = {
+  "product-consumer-club": "harmony",
+  "product-municipality-club": "wit",
+  "product-camp": "valor",
+  "product-event": "glow",
+};
 
 /**
  * The sixteen voice-zone colours a moderator picks from — four utility uses

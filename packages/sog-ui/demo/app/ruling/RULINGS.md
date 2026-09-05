@@ -106,7 +106,28 @@ accent-hover question (accent vs muted as the hover fill).
 library unchanged, as named palettes. Shown beside the Yty and status sets for
 collisions (the two cyans are ~2° apart).
 
-**Ruling:** _open_
+**Ruling (2026-09-05), product types:** _ruled_ — **the four categorical product-type
+colours are dropped. Product kind is a fact that takes a Yty family, and the mapping is
+the first row of the library's tone grammar table**, defined in the foundations tier
+with the admin product-type presentation as its consumer. Colour-coding product types is
+an admin-only operational convenience, never shown to families. The mapping, ruled as
+proposed and to be confirmed on the exemplar before it lands:
+
+| kind | family | why |
+|---|---|---|
+| camp | Valor | the brand's own content coding: challenges, camps, courage |
+| consumer club | Harmony | the relationship with people: community, the club a family chooses |
+| municipality club | Wit | the relationship with technology and learning: the school-hours offering |
+| event | Glow | growth and milestones: the one-off occasion |
+
+The table's doc comment states the sharing as a decision: one-meaning-per-hue holds per
+surface, admin tables show no Yty elements, and where an admin meets both (the voice
+page's Yty zones) the glyph-and-label rule carries the meaning. Strong/soft follow the
+standing rule (soft for text and glyphs, strong for fills, edges, rings).
+
+**Still open — the zone palette.** The sixteen voice-zone colours are a gamer-facing
+picker whose requirement is sixteen distinguishable hues; they stay a named palette and
+are ruled separately.
 
 ## 6. Scrim, and ink on media
 
