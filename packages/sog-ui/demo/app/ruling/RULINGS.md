@@ -141,3 +141,23 @@ an alpha step. What replaces each.
 eight `text-white/*` become muted ink.
 
 **Ruling:** _open_
+
+## 11. Coloured text
+
+**Asked:** the brand rule is that text is always ink or white, never coloured text on a
+coloured background. The library offers a Yty family's **soft** variant as text on a
+**neutral** ground, measured on all four grounds. Is that within the rule because the
+ground is neutral rather than coloured, or a departure that needs a ruling? The brand
+source states the rule as the brand states it and marks this open in one sentence.
+
+**Ruling:** _open_
+
+## 12. The colour budget on calm surfaces
+
+**Asked:** the brand budget gives parent, partner, safety and billing surfaces amber as
+the single accent on neutral grounds. An earlier relaxation ("colour wherever a mark has
+a job, decorative colour stays out") is void until re-declared. The brand source holds the
+single-accent budget and marks the relaxation open in one sentence. Does the relaxation
+return, with its justification written into the source, or does the budget stand?
+
+**Ruling:** _open_

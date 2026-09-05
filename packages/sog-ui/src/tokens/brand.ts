@@ -27,39 +27,118 @@
  * ## How colour is spent
  *
  * The palette is loud on purpose, and the loudness is placed rather than
- * banned. A surface written for parents, partners, safety or billing takes
- * amber as its single accent, on neutral grounds with grey for support: colour
- * arrives there only where a mark has a job — a state, a date, a name — and
- * decorative colour stays out, because calm surfaces are what carry
- * credibility. A surface telling a story to a mixed audience takes amber plus
- * one family, two accents at most. A surface built for gamers, the community,
- * the shop or the world itself takes the full palette; that is where the
- * loudness belongs.
+ * banned. How much of it a surface may spend is decided by who is reading, not
+ * by what the surface is made of.
+ *
+ * **A surface written for parents, partners, safety or billing takes amber as
+ * its single accent**, on neutral grounds with grey for support. A second
+ * palette family enters only with intent, and never as decoration. Calm
+ * surfaces are what carry credibility: a parent deciding whether to hand us a
+ * child reads the restraint before they read a word of the copy, and a page
+ * awash in six vivid hues undercuts the steady register the brand speaks in
+ * everywhere else — it makes the page look like it is selling to the child
+ * rather than answering the adult.
+ *
+ * *Open: whether these surfaces may instead spend colour wherever a mark has a
+ * job — a state, a date, a name — with only decorative colour kept out, is a
+ * question for the owner. Until it is ruled, the single-accent budget above is
+ * what the library holds.*
+ *
+ * **A surface telling a story to a mixed audience takes amber plus one
+ * family.** Two accents at most. The second colour is there to give the story a
+ * subject; a third makes the palette itself the subject.
+ *
+ * **A surface built for gamers, the community, the shop or the world itself
+ * takes the full palette.** That is where the loudness belongs. These readers
+ * came for the world, the palette is the world's, and restraint here reads as a
+ * duller product than the one we actually run.
  *
  * ## The rules that hold everywhere
  *
- * - Amber wins the primary call to action and the moments meant to feel like
- *   us.
- * - Violet sets the tone of the world, for electric, high-energy moments, and
- *   never for quiet, safety-focused or trust-building copy addressed to a
- *   parent.
- * - A family accents content; it is never the ground under a long passage of
- *   text.
- * - Never all six colours on one page. Amber plus one supporting family is the
- *   default.
- * - Text is ink, white, or a family's soft variant on a neutral ground — never
- *   coloured text on a coloured ground, and never at a ratio nobody measured.
- * - Meaning never travels by hue alone. A colour-coded element also carries a
- *   glyph and a label, because a meaningful share of gamers are colourblind.
- * - A brand colour exists at exactly the values authored below, never at an
- *   alpha step: over a near-black ground an alpha step composites to a darker,
- *   duller hue, so what the reader sees is no longer the brand. A ground that
- *   needs to lift goes to a neutral.
+ * - **Amber wins the primary call to action** and the moments meant to feel
+ *   like us. It is the colour most associated with School of Gaming, so one
+ *   amber thing on a screen is read as the thing to do — and two make neither
+ *   of them it.
+ * - **Violet sets the tone of the world**: launches, big news, lore, display
+ *   and identity, the electric and high-energy moments. It is never the colour
+ *   of quiet, safety or trust-building copy addressed to a parent, because it
+ *   is loud exactly where that copy has to be steady, and excitement is the
+ *   wrong promise to make about a child's safety.
+ * - **A family accents content; it is never the ground under a long passage of
+ *   text.** A family's job is to say which relationship a piece serves, and a
+ *   hue spread under a paragraph stops being a signal and becomes the
+ *   conditions the reader is reading in.
+ * - **Never all six colours on one page.** Amber plus one supporting family is
+ *   the default. Six hues in one frame is not a code a reader can decode; it is
+ *   noise wearing brand colours.
+ * - **Colour-coding follows the value a piece serves**, wherever colour codes
+ *   anything: harmony for community, friendship and testimonials; glow for
+ *   growth, milestones and progress; valor for challenges, camps and courage;
+ *   wit for learning, tips and how-to; violet for launches and announcements;
+ *   amber for general brand and calls to action. A club page carries its
+ *   dominant element's colour as a cue on the same mapping. One mapping
+ *   everywhere is the only thing that makes the cue legible: a hue meaning one
+ *   thing on a card and another in a feed means nothing in either.
+ * - **Meaning never travels by hue alone.** A colour-coded element also carries
+ *   a glyph and a label, because a meaningful share of gamers are colourblind,
+ *   and a cue they cannot see is a cue that is not there.
+ * - **Text is ink or white, never coloured text on a coloured ground**, and
+ *   never at a ratio nobody measured. The library offers one thing beyond that:
+ *   a family's soft variant as text on a neutral ground, measured on every
+ *   ground it can land on. *Open: whether a neutral ground keeps that inside
+ *   the rule, or makes it a departure needing the owner's ruling, is not
+ *   settled here.*
+ * - **A brand colour exists at exactly the values authored below, never at an
+ *   alpha step**: over a near-black ground an alpha step composites to a
+ *   darker, duller hue, so what the reader sees is no longer the brand. A
+ *   ground that needs to lift goes to a neutral.
  *
  * These are opinions with no renderable form, which is why they are written
  * here rather than exported as data. Each one the API can enforce — a component
  * that takes a meaning instead of a hue, a variant that cannot be handed an
  * alpha — is enforced there instead of restated in a page.
+ *
+ * ## The dark ground
+ *
+ * The palette's rules are written for white and off-white grounds carrying ink
+ * text. This theme is dark. It is one deliberate reading of that palette rather
+ * than a second palette: not a hue moves, and what changes is which hues are
+ * safe to set text in and which neutrals exist at all. Every change the reading
+ * makes is listed here; a change not listed here is not a change the library
+ * makes.
+ *
+ * **The neutrals are the theme's own.** Ground `#121212`, ink `#EDEDED`, card
+ * `#1A1A1A`, the hover fill `#212121`, the de-emphasised ground `#262626`,
+ * muted ink `#A6A6A6` and border `#333333` are not derived from light values
+ * and have no light counterparts to be derived from — a light palette has a
+ * page, a card tint, a divider grey and a secondary-text grey, and none of them
+ * is one of these. Two of them are the light palette's own ends put to
+ * different work: the ground is the brand's ink, used as a surface, and the ink
+ * is one step down from white so a full page of body copy does not glare back.
+ * The rest are the ladder that a dark page needs and a light one does not.
+ *
+ * **Amber keeps its intent and loses its arithmetic.** On a light ground amber
+ * misses the body floor by a wide margin, which is why it is a fill and a
+ * large-graphic colour there and never body copy or a small link. On this
+ * ground it clears that floor easily, and it is still not body copy: amber is a
+ * fill and a mark. It is the one colour on the screen that says *press this*,
+ * and a paragraph set in it spends that signal on a paragraph. So the
+ * restriction stands here for the reason the brand holds it, rather than for
+ * the measurement that used to enforce it.
+ *
+ * **Strong and soft swap roles.** On a light ground the soft variants are
+ * decorative and not text-safe. On these grounds soft is the text-safe half and
+ * strong is the fill, the edge and the ring — strong fills, borders, rings and
+ * glows; soft carries text and glyphs. That is a measured result rather than a
+ * preference, and it is the whole reason the split is a rule instead of a
+ * habit. `contrast.ts` holds every pairing the library ships and the floor each
+ * one is held to.
+ *
+ * **Every text-on-ground pairing is re-proven on these grounds.** Nothing is
+ * inherited from the light reading, including the pairings that would have been
+ * safe there: each is measured again against the four grounds this theme
+ * actually fills, and a pairing the library does not list is a pairing it does
+ * not offer.
  */
 
 /** A six-digit uppercase hex colour. The only colour literal shape this package accepts. */
@@ -112,16 +191,32 @@ export const NEUTRALS = {
   /**
    * The page. A soft near-black rather than pure black, which is harsh under a
    * full screen of type and reads as a hole rather than as a surface.
+   *
+   * Reach for it for the page and for anything meant to read as the page: a
+   * full-bleed section, a sheet that fills the viewport. Never as a lift on top
+   * of another surface — it is the floor, and a patch of floor inside a card
+   * reads as a hole punched through it. It is also the ink every amber and
+   * family fill carries, which is what its darkness is for.
    */
   background: { name: "Ground", hex: "#121212", on: "foreground" },
   /**
    * Primary text. Not pure white: one step down, so a full page of body copy
    * does not glare against the near-black ground.
+   *
+   * Reach for it for body copy, headings and anything the reader is meant to
+   * actually read. Never as a fill or an edge: a near-white block is the
+   * loudest thing a dark page can show, and it takes the eye off whatever the
+   * page wanted pressed.
    */
   foreground: { name: "Ink", hex: "#EDEDED" },
   /**
    * Section backgrounds and cards — the first lift off the page, and the
    * surface most of a dashboard is built from.
+   *
+   * Reach for it whenever content has to read as a block with an inside and an
+   * outside. Never for a hover or a selection: those are transient, and a row
+   * that climbs to card height under the pointer announces a new surface every
+   * time the cursor crosses it.
    */
   card: { name: "Card", hex: "#1A1A1A", on: "foreground" },
   /**
@@ -129,6 +224,10 @@ export const NEUTRALS = {
    * pointer**. The smallest lift the theme ships, on purpose: a hover has to
    * read as a change of state, not as a new surface arriving. It is transient
    * and never the ground a block of content is authored on — that is the card.
+   *
+   * Never the only mark of a selected state either. A lift this small is a hint
+   * the pointer takes with it when it leaves, and a selection has to survive
+   * the pointer leaving.
    */
   accent: { name: "Accent", hex: "#212121", on: "foreground" },
   /**
@@ -144,13 +243,29 @@ export const NEUTRALS = {
    * below is *not* this token's companion. That one is secondary text, which
    * reads on every ground rather than on this one, so no `muted-foreground`
    * companion is generated for `muted`.
+   *
+   * Never under the reading column a page exists to show. This is the ground
+   * that sets content back, and setting back the thing the reader came for is a
+   * contradiction the eye notices before the mind does.
    */
   muted: { name: "Muted", hex: "#262626", on: "foreground" },
-  /** Secondary text: captions, metadata, the line under a title. */
+  /**
+   * Secondary text: captions, metadata, the line under a title.
+   *
+   * Reach for it for what accompanies the sentence, never for the sentence
+   * itself — a surface whose main line is set in it is a surface asking to be
+   * skipped. It is measured only against the four neutral grounds, so it is
+   * never text on a brand or family fill; those fills carry their own ink.
+   */
   mutedForeground: { name: "Muted ink", hex: "#A6A6A6" },
   /**
    * Borders and dividers. Furniture edges are neutral; colour arrives on an
    * edge only where the border is the construct.
+   *
+   * Reach for it for any edge that is furniture: a card's outline, a divider, a
+   * field's rest state. Never as text and never as a fill — at this value it is
+   * an edge and nothing else, and a block of it is a dead grey panel a reader
+   * cannot place.
    */
   border: { name: "Border", hex: "#333333" },
 } as const satisfies { readonly [Id in NeutralId]: NeutralEntry<Id> };
@@ -172,6 +287,13 @@ export const BRAND = {
    * The signature colour, and the one most associated with School of Gaming:
    * the logo badge, the primary call to action, the highlights and the moments
    * meant to feel like us. Amber always wins the main action.
+   *
+   * Never twice on one screen: two amber calls to action make neither of them
+   * the one to press, and the colour's whole value is that a reader does not
+   * have to look for the answer. Never body copy or a small link — it is a fill
+   * and a mark, and a paragraph set in it spends the palette's one *press this*
+   * signal on prose. Never recoloured, gradiented or stepped down with alpha;
+   * it is the mark's own colour and it exists at this value or not at all.
    */
   primary: { name: "Amber", hex: "#FAA901", foreground: "#121212" },
   /**
@@ -180,7 +302,13 @@ export const BRAND = {
    * The energy colour, the force that powers Sogverse. Launches, big news,
    * anything electric. It carries lore, display and identity, and nothing else:
    * it is never the colour of quiet, safety or trust-building copy written for
-   * a parent.
+   * a parent, where its loudness promises excitement about the one subject that
+   * has to read as steady.
+   *
+   * Never the primary call to action — that is amber's everywhere, and a violet
+   * button on a page with an amber one asks the reader to guess. Never a fifth
+   * element colour either: the four relationships below are spoken for, and a
+   * hue that also codes a value stops being the world's colour.
    */
   secondary: { name: "Violet", hex: "#8F00E2", foreground: "#FFFFFF" },
 } as const satisfies Record<
@@ -201,6 +329,15 @@ export type BrandId = keyof typeof BRAND;
  * glyph floor on both grounds and the body floor on neither — so wit's text and
  * ink always take soft, and the same recipe then holds for the other three so
  * that one rule covers the set. See `contrast.ts`.
+ *
+ * A family says which of the four relationships a piece serves, and that is the
+ * whole of its job. So a family accents — a badge, an edge, a glyph, a fill
+ * behind a short label — and never grounds a long passage of text, where the
+ * cue stops being read as a cue and becomes the conditions the reader is
+ * reading in. And a family is never a status: green here is the relationship
+ * with others, not success, and a hue that also means *this worked* means
+ * nothing in either job. Whichever a piece takes, it carries a glyph and a
+ * label beside it, because the colour is never the only copy of the meaning.
  */
 export const YTY_FAMILIES = {
   /**
@@ -208,6 +345,10 @@ export const YTY_FAMILIES = {
    *
    * The relationship with yourself: balance, emotional control, rest. Reach for
    * it for community, friendship and testimonials.
+   *
+   * Never as a pink that is merely wanted. A piece that is not about knowing
+   * yourself and the people around you takes another family or none, because
+   * every decorative use of it costs a real one its meaning.
    */
   harmony: { name: "Harmony", hue: "Pink", strong: "#F55B9A", soft: "#FA7FA3" },
   /**
@@ -215,6 +356,10 @@ export const YTY_FAMILIES = {
    *
    * The relationship with others: empathy, kindness, belonging. Reach for it
    * for growth, milestones and progress.
+   *
+   * Never as the colour of success, saved, healthy or online. Green is the
+   * loudest false friend in the set, and a status borrowing it teaches a reader
+   * that this hue reports the system rather than naming a value.
    */
   glow: { name: "Glow", hue: "Green", strong: "#1AB061", soft: "#6AC66B" },
   /**
@@ -222,6 +367,11 @@ export const YTY_FAMILIES = {
    *
    * The relationship with society: teamwork, innovation, civic courage. Reach
    * for it for challenges, camps and courage.
+   *
+   * Never as a warning, and never in amber's place. It sits close enough to the
+   * signature colour that a page spending both without a reason reads as one
+   * colour rendered twice, and close enough to a caution hue that a warning
+   * drawn in it claims a value is being reported.
    */
   valor: { name: "Valor", hue: "Orange", strong: "#FD700D", soft: "#FF993D" },
   /**
@@ -229,6 +379,12 @@ export const YTY_FAMILIES = {
    *
    * The relationship with technology: critical thinking, media literacy. Reach
    * for it for learning, tips and how-to.
+   *
+   * Never as a link colour or an informational blue. Blue arrives with a
+   * lifetime of interface meaning attached, and letting wit carry any of it
+   * turns the one family about thinking into chrome. Its strong variant is
+   * never text either: it clears the glyph floor and not the body floor, so
+   * text and ink take soft.
    */
   wit: { name: "Wit", hue: "Blue", strong: "#3A71DE", soft: "#4DB3F5" },
 } as const satisfies Record<

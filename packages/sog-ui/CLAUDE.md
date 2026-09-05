@@ -73,6 +73,9 @@ chip-scale icon-accent tiles and artwork carrying its own palette, and the list 
 Every text-on-ground pairing the library ships is proven in the contrast tests, and a
 consumer trusts the library to have done that arithmetic: a colour the library offers for
 text on a ground is safe there, and a pairing the library does not offer is not available.
+The dark theme is one deliberate reading of a palette whose rules are written light-first:
+every inversion that reading makes, and every departure from the brand's colour rules, is
+declared and justified in the colour source's doc comments, or it does not exist.
 
 **Faces.** The library owns the faces School of Gaming uses, and the list is exhaustive and
 defined by grammar: Poppins is the app face, body and every heading; Space Mono is the world
