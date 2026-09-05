@@ -26,6 +26,11 @@ Status values: `open` · `ruled` · `landed`.
   included; the universal default itself is removed and every bordered element
   names its edge; anything that looked intentional is unseen and returns only
   after it is seen in context.
+- **The signature pair is named by meaning: `act` (amber) and `world` (violet).** `primary`
+  and `secondary` are retired everywhere — the library keys, the generated tokens, the
+  contrast ledger, the email mirror and every Sogverse spelling — because a token named
+  by role is a meaning a component can take, and "secondary" told a developer the loudest
+  colour we own was the quiet option.
 - The Lynx Educate cyan in the OG marks is a partner's mark colour and never enters
   the palette.
 
