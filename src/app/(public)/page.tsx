@@ -23,7 +23,7 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]">
+      <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_var(--color-background)_100%),linear-gradient(to_right,_color-mix(in_oklab,var(--color-primary)_20%,transparent),_transparent_50%,_color-mix(in_oklab,var(--color-secondary)_10%,transparent))] pt-[var(--header-height)]">
         <div className="container mx-auto px-4 py-24 sm:py-32">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-display text-2xl font-bold tracking-tight md:text-6xl">

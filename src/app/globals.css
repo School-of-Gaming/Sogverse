@@ -1,20 +1,32 @@
 @import "tailwindcss";
 
+/* The brand's theme, generated from @sog/ui's typed token source. It is the only
+   place the grounds, the ink, the brand pair, the Yty families and the faces are
+   defined: a new visual identity for School of Gaming is a change to that package
+   and Sogverse takes it whole. Nothing below re-declares a token it ships. */
+@import "@sog/ui/theme.css";
+
 /* Tailwind 4 anchors its automatic content scan on the nearest package.json, which
    for this file is the repo root, so without this line every class the UI package
    and its demo write is compiled into Sogverse's stylesheet against a theme that
    cannot resolve the package's tokens. */
 @source not "../../packages";
 
-/* Layout — single source of truth for the sticky header's height.
-   Consumed by the header itself, the dashboard sidebar's sticky offset,
-   the home hero's bleed-under-header trick, and hash-anchor scroll
-   margins. Declared inside @theme (not just :root) because Tailwind v4 /
-   Lightning CSS tree-shakes custom properties that aren't reachable from
-   the theme — and this one is only referenced from arbitrary-value
-   utilities like `h-[var(--header-height)]`, which the optimizer doesn't
-   track as references. @theme guarantees the variable lands in :root. */
+/* Everything Sogverse still declares for itself — which is, by definition, the
+   list of tokens @sog/ui does not own yet (the backlog in
+   packages/sog-ui/docs/adoption.md). Each one leaves this file in the adoption
+   that moves it into the library; nothing new is added here.
+
+   Declared inside @theme (rather than :root) because Tailwind v4 / Lightning CSS
+   tree-shakes custom properties that aren't reachable from the theme — and the
+   layout values below are only referenced from arbitrary-value utilities like
+   `h-[var(--header-height)]`, which the optimizer doesn't track as references.
+   @theme guarantees the variable lands in :root. */
 @theme {
+  /* Layout — single source of truth for the sticky header's height.
+     Consumed by the header itself, the dashboard sidebar's sticky offset,
+     the home hero's bleed-under-header trick, and hash-anchor scroll
+     margins. */
   --header-height: 4rem;
 
   /* The measured height of the product page's sticky signup rail, written onto
@@ -22,85 +34,41 @@
      (`min(header offset, 100vh - this - gap)`) — CSS cannot measure a box, so
      this is the one number JS has to supply.
 
-     Declared here so it always resolves: an undefined custom property inside a
-     `calc()` invalidates the whole declaration, which would leave the rail with
-     no sticky inset at all in the server-rendered frame. Zero is the value that
-     makes the clamp a no-op, so the default IS the old pin-under-the-header
-     behaviour, and the first measurement only ever lowers it. Same @theme
-     reason as the header height above: it is only ever read from an
-     arbitrary-value utility, which the optimizer does not track. */
+     It always resolves: an undefined custom property inside a `calc()`
+     invalidates the whole declaration, which would leave the rail with no sticky
+     inset at all in the server-rendered frame. Zero is the value that makes the
+     clamp a no-op, so the default IS the pin-under-the-header behaviour, and the
+     first measurement only ever lowers it. */
   --signup-rail-height: 0px;
-}
 
-/* SOG Brand Theme - Dark by default */
-:root {
-  /* Tell the browser to render native form-control internals in dark mode:
-     the date input's calendar-picker glyph, autofill fill backgrounds (the
-     sign-in email/password fields), native dropdowns, and scrollbars. Without
-     this the UA defaults to light rendering — a black calendar glyph that
-     vanishes against our dark input, and a white autofill background — even
-     though our own tokens (bg-background, etc.) are dark. There is one
-     theme, so this is stated once and never switched. */
-  color-scheme: dark;
+  /* Popover surfaces — the same lift a card takes off the page, named separately
+     because a floating surface is free to diverge from an inline one. */
+  --color-popover: #1A1A1A;
+  --color-popover-foreground: #EDEDED;
 
-  /* Background colors */
-  --background: 0 0% 7%;           /* #121212 */
-  --foreground: 0 0% 93%;          /* #ededed */
+  /* Muted surface: the ground under a de-emphasised block. */
+  --color-muted: #262626;
 
-  /* Card/Surface colors */
-  --card: 0 0% 10%;                /* #1a1a1a */
-  --card-foreground: 0 0% 93%;
-
-  /* Popover colors */
-  --popover: 0 0% 10%;
-  --popover-foreground: 0 0% 93%;
-
-  /* Primary - SOG Yellow.
-     The two brand triples are computed from the brand hexes and round-trip back
-     to them exactly — the fractional parts are the point, not noise to tidy up.
-     Rounding them to whole numbers is how these tokens drifted a full shade off
-     brand once already (42 98% 49% renders #F7AE02, not #FAA901), so any change
-     here is made by converting the hex with a script. The same two hexes are
-     spelled literally in src/lib/constants/colors.ts for the non-CSS contexts
-     (email, canvas) that cannot read a token; both halves move together. */
-  --primary: 40.48 99.20% 49.22%;  /* #FAA901 */
-  --primary-foreground: 0 0% 7%;
-
-  /* Secondary - SOG Purple */
-  --secondary: 277.96 100% 44.31%; /* #8F00E2 */
-  --secondary-foreground: 0 0% 100%;
-
-  /* Muted colors */
-  --muted: 0 0% 15%;
-  --muted-foreground: 0 0% 65%;
-
-  /* Accent colors - neutral surface for subtle hovers (matches shadcn convention).
+  /* Accent — a neutral surface for subtle hovers (matches shadcn convention).
      Tuned to approximate the visual of the old `hover:bg-muted/50` workaround
-     rendered over a card: 50%-alpha 15% over 10% ≈ 12.5%. Set slightly above
+     rendered over a card: 50%-alpha 15% over 10% ≈ 12.5%. Sits slightly above
      card so hover still reads on `bg-background` surfaces too. */
-  --accent: 0 0% 13%;
-  --accent-foreground: 0 0% 93%;
+  --color-accent: #212121;
+  --color-accent-foreground: #EDEDED;
 
-  /* Destructive colors */
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
+  /* State colours, each with the ink that reads on it. */
+  --color-destructive: #EF4343;
+  --color-destructive-foreground: #FFFFFF;
+  --color-success: #2EB88A;
+  --color-success-foreground: #FFFFFF;
+  --color-info: #308CE8;
+  --color-info-foreground: #FFFFFF;
+  --color-warning: #E7B008;
+  --color-warning-foreground: #121212;
 
-  /* Success colors */
-  --success: 160 60% 45%;
-  --success-foreground: 0 0% 100%;
-
-  /* Info colors */
-  --info: 210 80% 55%;
-  --info-foreground: 0 0% 100%;
-
-  /* Warning colors */
-  --warning: 45 93% 47%;
-  --warning-foreground: 0 0% 7%;
-
-  /* Border colors */
-  --border: 0 0% 20%;
-  --input: 0 0% 20%;
-  --ring: 40.48 99.20% 49.22%;     /* #FAA901 — see --primary */
+  /* Form-control edge, and the focus ring, which is the brand's amber. */
+  --color-input: #333333;
+  --color-ring: #FAA901;
 
   /* Product-type categorical palette — the four admin product types, as a
      colour each. The reasoning that placed them, and the rule that a surface
@@ -108,80 +76,41 @@
      with that map in src/components/admin/dashboard/. What matters here is
      that these are the palette's own tokens rather than borrowed ramp entries:
      they are placed to clear the hues admin surfaces actually spend, so that no
-     categorical colour can be mistaken for a state colour. Saturation and
-     lightness are tuned per hue for roughly equal apparent brightness on the
-     dark ground rather than being numerically equal, the same way the
-     voice-zone ring below is tuned. */
-  --product-consumer-club: 191 82% 52%;      /* #20C4E9 cyan */
-  --product-municipality-club: 313 75% 68%;  /* #EB70D0 magenta */
-  --product-camp: 95 55% 50%;                /* #74C639 lime */
-  --product-event: 243 85% 76%;              /* #938EF6 indigo */
+     categorical colour can be mistaken for a state colour. Each hue is tuned
+     for roughly equal apparent brightness on the dark ground rather than for
+     numerically equal saturation, the same way the voice-zone ring below is. */
+  --color-product-consumer-club: #20C4E9;      /* cyan */
+  --color-product-municipality-club: #EB70D0;  /* magenta */
+  --color-product-camp: #74C639;               /* lime */
+  --color-product-event: #938EF6;              /* indigo */
 
-  /* Radius */
-  --radius: 0.5rem;
+  /* Sidebar chrome — a ground one step off the page, with the brand's amber for
+     the active entry. */
+  --color-sidebar-background: #171717;
+  --color-sidebar-foreground: #EDEDED;
+  --color-sidebar-primary: #FAA901;
+  --color-sidebar-primary-foreground: #121212;
+  --color-sidebar-accent: #262626;
+  --color-sidebar-accent-foreground: #EDEDED;
+  --color-sidebar-border: #333333;
 
-  /* Sidebar */
-  --sidebar-background: 0 0% 9%;
-  --sidebar-foreground: 0 0% 93%;
-  --sidebar-primary: 40.48 99.20% 49.22%; /* #FAA901 — see --primary */
-  --sidebar-primary-foreground: 0 0% 7%;
-  --sidebar-accent: 0 0% 15%;
-  --sidebar-accent-foreground: 0 0% 93%;
-  --sidebar-border: 0 0% 20%;
-}
-
-@theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-success: hsl(var(--success));
-  --color-success-foreground: hsl(var(--success-foreground));
-  --color-info: hsl(var(--info));
-  --color-info-foreground: hsl(var(--info-foreground));
-  --color-warning: hsl(var(--warning));
-  --color-warning-foreground: hsl(var(--warning-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  /* Product-type categorical palette — see :root above. */
-  --color-product-consumer-club: hsl(var(--product-consumer-club));
-  --color-product-municipality-club: hsl(var(--product-municipality-club));
-  --color-product-camp: hsl(var(--product-camp));
-  --color-product-event: hsl(var(--product-event));
-  --color-sidebar-background: hsl(var(--sidebar-background));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
-  /* YTY Element colors */
+  /* Yty-Element colours as this app spends them today. @sog/ui ships the four
+     families as `--color-yty-*-strong` / `-soft` pairs, so these single-value
+     names do not collide with them; the recipe that replaces them is the ruling
+     these four are waiting on. */
   --color-yty-harmony: #34d399;
   --color-yty-glow: #fbbf24;
   --color-yty-valor: #fb7185;
   --color-yty-wit: #a78bfa;
+
   /* Voice-zone palette — the 16 colors a moderator picks for a custom voice
      zone (src/lib/constants/voice-zones.ts maps these to tile/glyph/ring/glow/
      solid classes). A full, even sweep around the color wheel — red → orange →
      yellow → green → teal → blue → violet → pink — so the picker reads as a
      vibrant rainbow. Spanning the spectrum is the priority: a few hues land
-     near a fixed Yty element color (harmony/glow/valor/wit above), which is
-     fine — the Yty zones are their own zones, so a custom zone sharing a
-     similar hue doesn't collide. Lightness sits ~L55-70% so each reads as a
-     glyph on the dark ground. */
+     near a fixed Yty element color above, which is fine — the Yty zones are
+     their own zones, so a custom zone sharing a similar hue doesn't collide.
+     Lightness sits ~L55-70% so each reads as a glyph on the dark ground. */
   --color-zone-red: #f4504e;
   --color-zone-orange: #fb8b3c;
   --color-zone-amber: #f7a31f;
@@ -198,28 +127,34 @@
   --color-zone-purple: #c45ff2;
   --color-zone-fuchsia: #e85fe0;
   --color-zone-pink: #f767a8;
+
+  /* Corner radii, as one base step and the four utilities derived from it. */
+  --radius: 0.5rem;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  /* The app face. Poppins is the brand's workhorse typeface, so it is what body
-     copy and every heading not claimed by --font-display renders in; the
-     fallbacks are the UA's own sans, never a second webfont. This block emits
-     at :root, so the face variable it points at has to be defined at :root too —
-     see the note beside the <html> className in src/app/layout.tsx for why that
-     is load-bearing and not a stylistic preference. The Open Graph cards are
-     drawn by satori, which cannot read CSS at all and fetches its own copy of
-     Poppins (src/components/og/fonts.ts). */
-  --font-sans: var(--font-poppins);
+
+  /* The arcade display face, for the rare placements approved for it. The
+     indirection is the point — a component asks for "the display face" and never
+     for a family — and the face variable it points at is defined on <html> in
+     src/app/layout.tsx. The Open Graph cards are drawn by satori, which cannot
+     read CSS at all and fetches its own copy of Poppins
+     (src/components/og/fonts.ts). */
   --font-display: var(--font-press-start-2p);
-  /* Handwriting, for a signature and nothing else — a name typed into a
-     signing field, rendered the way it would be signed. Not a body or display
-     face: anything longer than a name in it is unreadable. */
-  --font-cursive: var(--font-dancing-script);
 }
 
-* {
-  border-color: hsl(var(--border));
+/* The app-wide default border colour, and it MUST stay inside `@layer base`.
+   Tailwind emits every utility inside `@layer utilities`, and an unlayered rule
+   beats any layered rule whatever its specificity — so declared outside a layer
+   this one selector overrides every border-colour utility in the app
+   (`border-primary`, `border-destructive`, `border-yty-*`) and nothing can paint
+   an edge. Inside base it is what it is meant to be: the default a utility
+   overrides. */
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
 }
 
 /* All interactive elements should show a pointer cursor — except dnd-kit
@@ -283,9 +218,9 @@ html:has([data-reserve-scroll-gutter]) {
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  font-family: var(--font-sans), system-ui, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
 }
 
 /* Frosted-glass surface — a translucent background plus a backdrop blur, shared
@@ -296,16 +231,16 @@ body {
    more of the blur show) where the browser supports it. Pair with border /
    rounded / shadow utilities per use site. */
 .glass-panel {
-  /* color-mix(... transparent) mirrors what Tailwind's `bg-background/90`
-     compiles to — a plain `hsl(var(--background) / 0.9)` slash-alpha gets
-     dropped by Lightning CSS and leaves no background at all. */
-  background-color: color-mix(in oklab, hsl(var(--background)) 90%, transparent);
+  /* color-mix(... transparent) is what Tailwind's own `bg-background/90`
+     compiles to, and the form that survives Lightning CSS — a slash-alpha
+     written by hand gets dropped and leaves no background at all. */
+  background-color: color-mix(in oklab, var(--color-background) 90%, transparent);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 @supports ((backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px))) {
   .glass-panel {
-    background-color: color-mix(in oklab, hsl(var(--background)) 70%, transparent);
+    background-color: color-mix(in oklab, var(--color-background) 70%, transparent);
   }
 }
 
@@ -338,39 +273,39 @@ body {
   .animate-shake { animation: none; }
 }
 
-/* Scrollbar styling for dark theme */
+/* Scrollbar styling for the dark theme */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
+  background: var(--color-muted);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
+  background: var(--color-border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
+  background: var(--color-muted-foreground);
 }
 
 /* react-phone-number-input dark theme overrides */
 .PhoneInputCountrySelect {
-  background: hsl(var(--card));
-  color: hsl(var(--foreground));
+  background: var(--color-card);
+  color: var(--color-foreground);
 }
 
 .PhoneInputCountrySelect option {
-  background: hsl(var(--card));
-  color: hsl(var(--foreground));
+  background: var(--color-card);
+  color: var(--color-foreground);
 }
 
 .PhoneInputInput {
   background: transparent;
-  color: hsl(var(--foreground));
+  color: var(--color-foreground);
   border: none;
   outline: none;
 }

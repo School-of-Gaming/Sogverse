@@ -218,12 +218,13 @@ const eslintConfig = defineConfig([
       }],
     },
   },
-  // The email house style, made mechanical at the point of typing. Colours and
-  // corners in a mail come from the modules that mirror globals.css — an email
-  // cannot use a Tailwind class, so a literal is the easy path and the whole
-  // reason the mail and the app drifted apart in the first place. Two radii and
-  // a footer grey diverged this way and nobody could see it, because a number
-  // typed into markup cannot disagree with anything.
+  // The email house style, made mechanical at the point of typing. Colours in a
+  // mail come from @/lib/constants/colors, which derives them from @sog/ui, and
+  // corners from the module that carries the radius scale — an email cannot use
+  // a Tailwind class, so a literal is the easy path and the whole reason the
+  // mail and the app drifted apart in the first place. Two radii and a footer
+  // grey diverged this way and nobody could see it, because a number typed into
+  // markup cannot disagree with anything.
   //
   // This catches the literal as it is written, with a pointer to the constant.
   // It does not catch a template that bypasses the helpers entirely — those
@@ -248,12 +249,12 @@ const eslintConfig = defineConfig([
           // are not nodes, so the directory's explanatory hexes are untouched.
           selector: String.raw`Literal[value=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
           message:
-            "No colour literals in an email. Import BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors, which mirror globals.css.",
+            "No colour literals in an email. Import BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors, which derives the palette from @sog/ui.",
         },
         {
           selector: String.raw`TemplateElement[value.raw=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
           message:
-            "No colour literals in an email. Import BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors, which mirror globals.css.",
+            "No colour literals in an email. Import BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors, which derives the palette from @sog/ui.",
         },
         {
           selector: String.raw`TemplateElement[value.raw=/border-radius\s*:\s*[0-9]/]`,

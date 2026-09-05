@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import {
+  Crimson_Pro,
   Dancing_Script,
   Poppins,
   Press_Start_2P,
@@ -20,27 +21,38 @@ import {
 } from "@/components/consent";
 import "./globals.css";
 
-// The brand's workhorse face, and the one every page's body and headings are
-// set in — `--font-sans` in globals.css points at it, so nothing outside that
-// one line names the family. Poppins is not a variable font on Google Fonts, so
-// each weight is a separate file and has to be asked for by name: 400/500/600/
-// 700 are what `font-normal`/`font-medium`/`font-semibold`/`font-bold` render,
-// and a weight not listed here is synthesised by the browser rather than drawn.
-// `latin-ext` is not optional — the product ships Finnish, Swedish and French.
+// The face contract, honoured on the consumer's side.
+//
+// @sog/ui names the faces and the semantic tokens that point at them
+// (`packages/sog-ui/src/tokens/typography.ts` — weights, subsets and the
+// variable each token reads are all stated there); Sogverse loads the files and
+// defines those variables. next/font reads its options statically, so the values
+// below cannot be imported from the token source, and
+// tests/unit/theme/face-contract.test.ts asserts this file names every one of
+// them instead. Every face in `FACES` is loaded here, whether or not a surface
+// renders it yet: the contract is the whole list, not the used part of it.
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
   subsets: ["latin", "latin-ext"],
   variable: "--font-poppins",
 });
 
-// DELIBERATELY UNUSED IN THIS BRANCH — do not remove it as dead weight. Space
-// Mono is a sanctioned brand face; where it is actually placed is decided by the
-// companion design-pass plan, and this load exists so that plan is a styling
-// change rather than a styling change plus a font wiring change. It is loaded,
-// its variable is on <html>, and nothing reads it yet. That is the intended
-// state. `preload: false` follows from that: a preload link for a face no
-// element renders costs every visitor a font download for nothing, so preload
-// turns back on in the same change that first places the face.
+// The editorial voice, and nothing renders it yet — the library owns where it
+// may be placed (quotes and pull-quotes, never UI or body copy), and Sogverse
+// has no editorial surface asking for one. `preload: false` follows: a preload
+// link for a face no element renders costs every visitor a font download for
+// nothing, so preload turns on in the change that first places it.
+const crimsonPro = Crimson_Pro({
+  weight: ["400", "600"],
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-crimson-pro",
+  preload: false,
+});
+
+// The world voice, spent where the platform names one of its own places. The
+// library owns that placement rule; Sogverse loads the face because the contract
+// requires every face defined, and no surface here reaches for it yet — hence
+// `preload: false`, for the same reason as Crimson Pro above.
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin", "latin-ext"],
@@ -48,6 +60,8 @@ const spaceMono = Space_Mono({
   preload: false,
 });
 
+// The arcade display face, an approved exception outside the library's four and
+// so still Sogverse's to load; `--font-display` in globals.css points at it.
 const pressStart2P = Press_Start_2P({
   weight: "400",
   subsets: ["latin"],
@@ -60,9 +74,6 @@ const pressStart2P = Press_Start_2P({
 const dancingScript = Dancing_Script({
   weight: "600",
   subsets: ["latin", "latin-ext"],
-  // The face's own variable; `--font-cursive` in globals.css points at it, the
-  // same indirection `--font-display` uses for Press Start 2P, so a component
-  // asks for "the cursive font" and never for a specific family.
   variable: "--font-dancing-script",
 });
 
@@ -161,19 +172,17 @@ export default async function RootLayout({
     (await getMessages()) as Record<string, unknown>;
 
   // Every next/font variable class goes on <html> — that is, on `:root` — never
-  // on <body>. globals.css declares its font tokens inside `@theme`, which emits
+  // on <body>. The theme declares its font tokens inside `@theme`, which emits
   // them at `:root`, so a face variable defined one element lower is invisible
-  // there: `--font-sans: var(--font-poppins)` would compute to the
-  // guaranteed-invalid value and take the whole `font-family` declaration down
-  // with it, leaving the UA stack. An earlier Inter attempt was wired exactly
-  // that way and silently never applied for as long as it shipped. The utility
-  // classes (`font-display`, `font-cursive`) survived that mistake only because
-  // `@theme inline` inlines their `var()` at the use site, where <body> is an
-  // ancestor — which is precisely why the failure was invisible.
+  // there: `--font-sans: var(--font-poppins), system-ui, sans-serif` computes
+  // with the first entry invalid and falls through to the UA stack while the
+  // page still looks styled, which is the failure mode that hides best. An
+  // earlier Inter attempt was wired exactly that way and silently never applied
+  // for as long as it shipped.
   return (
     <html
       lang={locale}
-      className={`${poppins.variable} ${spaceMono.variable} ${pressStart2P.variable} ${dancingScript.variable}`}
+      className={`${poppins.variable} ${crimsonPro.variable} ${spaceMono.variable} ${pressStart2P.variable} ${dancingScript.variable}`}
     >
       <body className="antialiased bg-background text-foreground">
         <Providers

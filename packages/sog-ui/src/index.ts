@@ -11,5 +11,6 @@
  */
 
 export * from "./tokens/brand";
+export * from "./tokens/composite";
 export * from "./tokens/contrast";
 export * from "./tokens/typography";
