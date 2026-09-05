@@ -640,7 +640,7 @@ function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
  * **Info, not warning and not error.** Nothing has gone wrong and nothing is
  * their fault: the product is sold somewhere else, which is a fact about the
  * product. So the tint is the `info` semantic pair, never `destructive` or
- * `warning` (which would tell them to fix something) and never `primary`
+ * `warning` (which would tell them to fix something) and never `act`
  * (which is the panel's *act on this* colour, and there is nothing to act on).
  * The `Globe` anchors it — the same subject the sections' `MapPin` /
  * `MapPinCheck` mark, one scale up because this block is the panel's entire
@@ -966,7 +966,7 @@ function SignupForm(
                           // a thin distinction. An inset ring doubles the row's
                           // own line without changing the box, so selecting a
                           // row cannot nudge its own text by a pixel.
-                          "bg-primary/10 ring-1 ring-inset ring-primary/50"
+                          "bg-act/10 ring-1 ring-inset ring-act/50"
                         : "hover:bg-accent hover:text-foreground",
                   )}
                 >
@@ -1008,7 +1008,7 @@ function SignupForm(
                     </span>
                   ) : (
                     selected && (
-                      <span className="shrink-0 text-xs font-semibold text-primary">
+                      <span className="shrink-0 text-xs font-semibold text-act">
                         {t("selected")}
                       </span>
                     )
@@ -1427,7 +1427,7 @@ function ConsentSentenceLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-medium text-primary underline-offset-2 hover:underline"
+      className="font-medium text-act underline-offset-2 hover:underline"
     >
       {children}
     </a>

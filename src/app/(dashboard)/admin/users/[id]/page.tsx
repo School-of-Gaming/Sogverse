@@ -40,7 +40,7 @@ const STATUS_BADGE_STYLES: Record<ParticipationStatus, string> = {
   active: "bg-success text-success-foreground",
   waitlisted: "bg-warning text-warning-foreground",
   reserving: "bg-muted text-muted-foreground",
-  completed: "bg-secondary text-secondary-foreground",
+  completed: "bg-world text-world-foreground",
 };
 
 /**
@@ -344,7 +344,7 @@ export default async function AdminUserDetailPage({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
+              <Users className="h-5 w-5 text-act" />
               {isCustomer ? t('linkedGamers') : t('linkedParents')}
             </CardTitle>
           </CardHeader>
@@ -440,7 +440,7 @@ export default async function AdminUserDetailPage({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-primary" />
+              <Package className="h-5 w-5 text-act" />
               {t('assignedProducts')}
             </CardTitle>
           </CardHeader>

@@ -293,7 +293,7 @@ function ActionButton({
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
     >
       {children}
     </button>

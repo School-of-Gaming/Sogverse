@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
  * until 2026-09-01: `globals.css` declared the app's default border colour on
  * a universal selector, unlayered. Tailwind 4 emits every utility inside
  * `@layer utilities`, and unlayered CSS beats layered CSS regardless of
- * specificity — so `border-primary`, `border-destructive` and every
+ * specificity — so `border-act`, `border-destructive` and every
  * `border-yty-*` in the app resolved to the neutral default and drew nothing.
  *
  * Nothing looked broken, which is why it lasted: borders rendered, just always

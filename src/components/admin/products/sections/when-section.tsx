@@ -94,7 +94,7 @@ export function WhenSection({
                 key={option}
                 className={cn(
                   "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
-                  state.startMode === option && "bg-primary/5",
+                  state.startMode === option && "bg-act/5",
                   lockStartMode ? "cursor-not-allowed opacity-60" : "cursor-pointer"
                 )}
               >
@@ -200,7 +200,7 @@ export function WhenSection({
                       key={option}
                       className={cn(
                         "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
-                        active && "bg-primary/5",
+                        active && "bg-act/5",
                         "cursor-pointer"
                       )}
                     >

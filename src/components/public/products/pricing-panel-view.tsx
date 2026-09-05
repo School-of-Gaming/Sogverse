@@ -83,7 +83,7 @@ function MoneyBackGuarantee() {
             link: (chunks) => (
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
-                className="text-primary hover:underline"
+                className="text-act hover:underline"
               >
                 {chunks}
               </a>
@@ -126,7 +126,7 @@ function OptionRow({
               mistake. Rendered from data present on first paint, so it never
               arrives late and pushes the CTA down. */}
           {firstChargeDate !== null && (
-            <p className="mt-1.5 text-xs font-medium text-primary">
+            <p className="mt-1.5 text-xs font-medium text-act">
               {t("firstChargeOn", { date: firstChargeDate })}
             </p>
           )}

@@ -42,7 +42,7 @@ export function ProfileTilesRow({ children }: { children: React.ReactNode }) {
 type ProfileTileCommonProps = {
   member: FamilyMember;
   size?: TileSize;
-  /** Adds the primary-colored ring used to mark the active viewer. */
+  /** Adds the act-colored ring used to mark the active viewer. */
   isActive?: boolean;
 };
 
@@ -106,8 +106,8 @@ export function ProfileTile(props: ProfileTileProps) {
         className={cn(
           "relative aspect-square w-full overflow-hidden rounded-lg border-2 border-border ring-offset-2 ring-offset-background transition-[box-shadow] duration-150",
           isActive
-            ? "ring-4 ring-primary"
-            : "ring-0 ring-primary/50 group-hover:ring-4 group-focus-visible:ring-4",
+            ? "ring-4 ring-act"
+            : "ring-0 ring-act/50 group-hover:ring-4 group-focus-visible:ring-4",
         )}
       >
         <Identicon id={member.id} size={112} />
@@ -174,11 +174,11 @@ export function AddGamerTile({
       )}
       aria-label={t("addGamer")}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors duration-150 group-hover:bg-primary/5">
+      <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors duration-150 group-hover:bg-act/5">
         <div className="absolute inset-0 flex items-center justify-center">
           <Plus
             className={cn(
-              "text-muted-foreground transition group-hover:text-primary",
+              "text-muted-foreground transition group-hover:text-act",
               ADD_ICON_SIZE[size],
             )}
             strokeWidth={1.5}

@@ -20,10 +20,10 @@
   --color-card-foreground: #EDEDED;
 
   /* The signature pair. A fill and its foreground are one decision — amber is light and takes only a dark label, violet is dark and takes only a light one. */
-  --color-primary: #FAA901;
-  --color-primary-foreground: #121212;
-  --color-secondary: #8F00E2;
-  --color-secondary-foreground: #FFFFFF;
+  --color-act: #FAA901;
+  --color-act-foreground: #121212;
+  --color-world: #8F00E2;
+  --color-world-foreground: #FFFFFF;
 
   /* The four Yty-Element families. Strong fills, borders, rings and glows; soft carries text and glyphs. That split is a contrast result — see src/tokens/contrast.ts. */
   --color-yty-harmony-strong: #F55B9A;

@@ -349,7 +349,7 @@ export function ProductDetailPageBody({
             {/* Unconditional, because every topic resolves to a label. The
                 middot separator is a CSS pseudo-element rather than a text
                 node, so it stays out of the message files. */}
-            <span className="normal-case text-primary before:mx-1.5 before:text-muted-foreground/50 before:content-['·']">
+            <span className="normal-case text-act before:mx-1.5 before:text-muted-foreground/50 before:content-['·']">
               {topicLabel}
             </span>
           </span>

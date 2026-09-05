@@ -107,8 +107,8 @@ describe("buildSessionReportEmail", () => {
     expect(from).toBeGreaterThanOrEqual(0);
     expect(to).toBeGreaterThan(from);
     const body = html.slice(from, to);
-    expect(body).not.toContain(BRAND.primary);
-    expect(body).not.toContain(BRAND.secondary);
+    expect(body).not.toContain(BRAND.act);
+    expect(body).not.toContain(BRAND.world);
   });
 });
 
@@ -188,8 +188,8 @@ describe("the staff copy's banner", () => {
       `background-color:${STATUS_TINT.infoSurface};background-image:linear-gradient(${STATUS_TINT.infoSurface},${STATUS_TINT.infoSurface})`,
     );
     // No brand colour anywhere in it: the accent moved, it did not move over.
-    expect(banner).not.toContain(BRAND.primary);
-    expect(banner).not.toContain(BRAND.secondary);
+    expect(banner).not.toContain(BRAND.act);
+    expect(banner).not.toContain(BRAND.world);
     // Every colour the banner's own text carries is the body's — the app's
     // Alert tints its title with the accent, and at this size that pairing is
     // below AA (`palette-contrast.test.ts` pins it as rejected).

@@ -235,7 +235,7 @@ function PasswordChip({ upn, password }: { upn: string; password: string }) {
       type="button"
       onClick={() => void copy(password)}
       className={cn(
-        "flex shrink-0 items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 font-mono text-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        "flex shrink-0 items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 font-mono text-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
         copied && "text-success",
       )}
       // The visible content is the password itself, which a screen reader would

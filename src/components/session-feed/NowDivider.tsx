@@ -76,7 +76,7 @@ export function NowDivider({
         onClick={onToggle}
         aria-expanded={open}
         aria-controls={controls}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-info/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-info transition-colors hover:bg-info/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-info/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-info transition-colors hover:bg-info/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <ChevronUp
           aria-hidden

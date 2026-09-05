@@ -31,8 +31,8 @@ const BLENDS: {
   ground: Hex;
   expected: Hex;
 }[] = [
-  { name: "the hero's amber glow on the page", fg: BRAND.primary.hex, alpha: 0.2, ground: GROUND, expected: "#40300F" },
-  { name: "the hero's violet glow on the page", fg: BRAND.secondary.hex, alpha: 0.1, ground: GROUND, expected: "#1F1027" },
+  { name: "the hero's amber glow on the page", fg: BRAND.act.hex, alpha: 0.2, ground: GROUND, expected: "#40300F" },
+  { name: "the hero's violet glow on the page", fg: BRAND.world.hex, alpha: 0.1, ground: GROUND, expected: "#1F1027" },
   { name: "the info callout's border on a panel", fg: INFO, alpha: 0.5, ground: PANEL, expected: "#255381" },
   { name: "the info callout's wash on a panel", fg: INFO, alpha: 0.1, ground: PANEL, expected: "#1C252F" },
 ];
@@ -43,15 +43,15 @@ describe("composite", () => {
   });
 
   it("returns the foreground at full alpha", () => {
-    expect(composite(BRAND.primary.hex, 1, GROUND)).toBe(BRAND.primary.hex);
+    expect(composite(BRAND.act.hex, 1, GROUND)).toBe(BRAND.act.hex);
   });
 
   it("returns the ground at zero alpha", () => {
-    expect(composite(BRAND.primary.hex, 0, GROUND)).toBe(GROUND);
+    expect(composite(BRAND.act.hex, 0, GROUND)).toBe(GROUND);
   });
 
   it("refuses an alpha outside 0 to 1", () => {
-    expect(() => composite(BRAND.primary.hex, 1.5, GROUND)).toThrow(RangeError);
-    expect(() => composite(BRAND.primary.hex, -0.1, GROUND)).toThrow(RangeError);
+    expect(() => composite(BRAND.act.hex, 1.5, GROUND)).toThrow(RangeError);
+    expect(() => composite(BRAND.act.hex, -0.1, GROUND)).toThrow(RangeError);
   });
 });

@@ -240,8 +240,8 @@ interface StripEntry {
 }
 
 const STRIP: readonly StripEntry[] = [
-  { hex: BRAND.primary.hex, label: BRAND.primary.name, source: "brand" },
-  { hex: BRAND.secondary.hex, label: BRAND.secondary.name, source: "brand" },
+  { hex: BRAND.act.hex, label: BRAND.act.name, source: "brand" },
+  { hex: BRAND.world.hex, label: BRAND.world.name, source: "brand" },
   ...Object.values(YTY_FAMILIES).flatMap((family) => [
     { hex: family.strong, label: `${family.name} strong`, source: "family" },
     { hex: family.soft, label: `${family.name} soft`, source: "family" },

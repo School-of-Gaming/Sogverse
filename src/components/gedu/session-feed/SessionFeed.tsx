@@ -812,7 +812,7 @@ export function SessionFeed({
  * The loud markers are deliberately on **different hues** rather than different
  * saturations of one: info blue for what is coming, warning amber for what is
  * owed, success green for what is finished end to end. When "next" was
- * primary-toned the rail read as one graded run of warm dots, and the single
+ * act-toned the rail read as one graded run of warm dots, and the single
  * most useful thing a glance down it can tell you — where the gaps are — was the
  * thing hardest to see.
  *

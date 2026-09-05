@@ -50,7 +50,7 @@ const SCRIM_PROPOSED = 0.55;
 function UnderLayer() {
   return (
     <div className="absolute inset-0">
-      <div className="h-1/2" style={{ backgroundColor: BRAND.primary.hex }} />
+      <div className="h-1/2" style={{ backgroundColor: BRAND.act.hex }} />
       <div className="h-1/2" style={{ backgroundColor: CARD }} />
     </div>
   );
@@ -315,8 +315,8 @@ function IdenticonSvg({
   );
 }
 
-const TODAY_PALETTE = [BRAND.primary.hex, BRAND.secondary.hex, WHITE];
-const PROPOSED_PALETTE = [BRAND.primary.hex, BRAND.secondary.hex, INK];
+const TODAY_PALETTE = [BRAND.act.hex, BRAND.world.hex, WHITE];
+const PROPOSED_PALETTE = [BRAND.act.hex, BRAND.world.hex, INK];
 
 /**
  * The avatars on the card they sit on, so the black square can be seen against
@@ -386,12 +386,12 @@ export function LynxSection() {
           sub={LYNX === undefined ? undefined : LYNX.where}
         />
         <Swatch
-          hex={BRAND.primary.hex}
-          name={BRAND.primary.name}
+          hex={BRAND.act.hex}
+          name={BRAND.act.name}
           sub="og/marks.tsx, SogMark badge"
         />
         <Swatch
-          hex={BRAND.primary.foreground}
+          hex={BRAND.act.foreground}
           name="Ink on amber"
           sub="og/marks.tsx, SogMark lettering"
         />

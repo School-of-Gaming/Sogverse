@@ -55,7 +55,7 @@
  *
  * ## The rules that hold everywhere
  *
- * - **Amber wins the primary call to action** and the moments meant to feel
+ * - **Amber wins the main call to action** and the moments meant to feel
  *   like us. It is the colour most associated with School of Gaming, so one
  *   amber thing on a screen is read as the thing to do — and two make neither
  *   of them it.
@@ -275,6 +275,15 @@ export const NEUTRALS = {
 /**
  * The two signature colours and the ink each one carries.
  *
+ * **Each is named for what it means, never for its rank.** `act` is the colour
+ * of the thing to do; `world` is the colour of Sogverse itself. Neither is the
+ * other's junior, and a rank name is what this pair is decided against: it
+ * makes the loudest colour the brand owns read as the low-emphasis option, and
+ * it hands a component an emphasis tier where it should be taking a meaning. A
+ * name carries the rule with it — the act colour wins the main action, and the
+ * world colour is never the quiet one — so a use that contradicts the rule is
+ * a use that contradicts the name, and reads wrong before it is measured.
+ *
  * A fill and its foreground are one decision, not two: amber is a light colour
  * and only a dark label reads on it, violet is a dark colour and only a light
  * label reads on it. A button that swaps its fill and keeps its label has not
@@ -282,11 +291,11 @@ export const NEUTRALS = {
  */
 export const BRAND = {
   /**
-   * **Act.**
+   * **Act.** The colour of the thing to do.
    *
    * The signature colour, and the one most associated with School of Gaming:
-   * the logo badge, the primary call to action, the highlights and the moments
-   * meant to feel like us. Amber always wins the main action.
+   * the logo badge, the main call to action, the highlights and the moments
+   * meant to feel like us. Act always wins the main action.
    *
    * Never twice on one screen: two amber calls to action make neither of them
    * the one to press, and the colour's whole value is that a reader does not
@@ -295,9 +304,9 @@ export const BRAND = {
    * signal on prose. Never recoloured, gradiented or stepped down with alpha;
    * it is the mark's own colour and it exists at this value or not at all.
    */
-  primary: { name: "Amber", hex: "#FAA901", foreground: "#121212" },
+  act: { name: "Amber", hex: "#FAA901", foreground: "#121212" },
   /**
-   * **World.**
+   * **World.** The colour of Sogverse itself.
    *
    * The energy colour, the force that powers Sogverse. Launches, big news,
    * anything electric. It carries lore, display and identity, and nothing else:
@@ -305,12 +314,15 @@ export const BRAND = {
    * a parent, where its loudness promises excitement about the one subject that
    * has to read as steady.
    *
-   * Never the primary call to action — that is amber's everywhere, and a violet
-   * button on a page with an amber one asks the reader to guess. Never a fifth
-   * element colour either: the four relationships below are spoken for, and a
-   * hue that also codes a value stops being the world's colour.
+   * World sets the tone of Sogverse and is never the quiet option — it is the
+   * loudest colour the brand owns, and a surface that reaches for it to
+   * de-emphasise something gets the opposite of what it asked for. Never the
+   * main call to action either — that is act's everywhere, and a violet button
+   * on a page with an amber one asks the reader to guess. Never a fifth element
+   * colour: the four relationships below are spoken for, and a hue that also
+   * codes a value stops being the world's colour.
    */
-  secondary: { name: "Violet", hex: "#8F00E2", foreground: "#FFFFFF" },
+  world: { name: "Violet", hex: "#8F00E2", foreground: "#FFFFFF" },
 } as const satisfies Record<
   string,
   { name: string; hex: Hex; foreground: Hex }

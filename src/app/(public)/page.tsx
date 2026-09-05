@@ -23,14 +23,14 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_var(--color-background)_100%),linear-gradient(to_right,_color-mix(in_oklab,var(--color-primary)_20%,transparent),_transparent_50%,_color-mix(in_oklab,var(--color-secondary)_10%,transparent))] pt-[var(--header-height)]">
+      <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_var(--color-background)_100%),linear-gradient(to_right,_color-mix(in_oklab,var(--color-act)_20%,transparent),_transparent_50%,_color-mix(in_oklab,var(--color-world)_10%,transparent))] pt-[var(--header-height)]">
         <div className="container mx-auto px-4 py-24 sm:py-32">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-display text-2xl font-bold tracking-tight md:text-6xl">
               {t.rich('hero.title', {
                 br: () => <br />,
-                primary: (chunks) => <span className="text-primary">{chunks}</span>,
-                secondary: (chunks) => <span className="text-secondary">{chunks}</span>,
+                primary: (chunks) => <span className="text-act">{chunks}</span>,
+                secondary: (chunks) => <span className="text-world">{chunks}</span>,
               })}
             </h1>
             <p className="mt-6 text-lg leading-8 text-muted-foreground">
@@ -76,8 +76,8 @@ export default function HomePage() {
             <Card key={feature.key} className="bg-card/50">
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-act/10">
+                    <feature.icon className="h-6 w-6 text-act" />
                   </div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
                 </div>
@@ -105,7 +105,7 @@ export default function HomePage() {
           </div>
           <div className="mx-auto mt-16 grid max-w-4xl gap-8 md:grid-cols-3">
             <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-act text-2xl font-bold text-act-foreground">
                 1
               </div>
               <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step1.title')}</h3>
@@ -114,7 +114,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-2xl font-bold text-secondary-foreground">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-world text-2xl font-bold text-world-foreground">
                 2
               </div>
               <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step2.title')}</h3>
@@ -123,7 +123,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-act text-2xl font-bold text-act-foreground">
                 3
               </div>
               <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step3.title')}</h3>
@@ -137,7 +137,7 @@ export default function HomePage() {
 
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-24">
-        <Card className="mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10">
+        <Card className="mx-auto max-w-3xl bg-gradient-to-r from-act/10 to-world/10">
           <CardContent className="flex flex-col items-center py-12 text-center">
             <h2 className="text-2xl font-bold sm:text-3xl">
               {t('cta.heading')}

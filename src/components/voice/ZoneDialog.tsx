@@ -117,10 +117,10 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
               aria-checked={isLocked}
               className={cn(
                 "flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors",
-                isLocked ? "bg-primary/5" : "hover:bg-accent",
+                isLocked ? "bg-act/5" : "hover:bg-accent",
               )}
             >
-              <Lock className={cn("h-4 w-4 shrink-0", isLocked ? "text-primary" : "text-muted-foreground")} />
+              <Lock className={cn("h-4 w-4 shrink-0", isLocked ? "text-act" : "text-muted-foreground")} />
               <span className="flex-1 space-y-0.5">
                 <span className="block text-sm font-medium">{t("makePrivate")}</span>
                 <span className="block text-xs text-muted-foreground">{t("makePrivateHint")}</span>
@@ -131,7 +131,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
                 aria-hidden
                 className={cn(
                   "relative h-5 w-9 shrink-0 rounded-full transition-colors",
-                  isLocked ? "bg-primary" : "bg-muted-foreground/30",
+                  isLocked ? "bg-act" : "bg-muted-foreground/30",
                 )}
               >
                 <span

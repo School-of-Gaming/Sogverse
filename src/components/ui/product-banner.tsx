@@ -133,7 +133,7 @@ function SogFallback({ className }: { className?: string }) {
         fontWeight="900"
         letterSpacing="-2"
         fontFamily="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        className="fill-primary"
+        className="fill-act"
       >
         SOG
       </text>

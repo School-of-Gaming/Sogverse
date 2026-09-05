@@ -450,9 +450,9 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
         className={cn(
           "group relative overflow-hidden transition-[box-shadow,opacity]",
           opensAPage && "hover:shadow-lg focus-within:shadow-lg",
-          live && "bg-gradient-to-r from-primary/5 to-transparent",
+          live && "bg-gradient-to-r from-act/5 to-transparent",
           // The awaiting tone: the same lit-card treatment in `info` rather than
-          // `primary`, because this *is* a card with something happening on it
+          // `act`, because this *is* a card with something happening on it
           // — a purchase has landed and placement is under way — and it must
           // read as that rather than as a fault or as a waitlist place. Blue is
           // already this product's colour for "we are telling you something",
@@ -785,7 +785,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               if (openHref === "#") e.preventDefault();
             }}
             aria-label={productName}
-            className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+            className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
           />
         )}
       </Card>
@@ -854,7 +854,7 @@ function LeaveWaitlistLink({
         type="button"
         onClick={() => setOpen(true)}
         disabled={leaving}
-        className="rounded text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-default disabled:hover:text-muted-foreground"
+        className="rounded text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:cursor-default disabled:hover:text-muted-foreground"
       >
         {t("trigger")}
       </button>

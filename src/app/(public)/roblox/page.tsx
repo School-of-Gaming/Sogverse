@@ -94,7 +94,7 @@ const stepKeys = ["step1", "step2", "step3", "step4"] as const;
 /** Small uppercase section label — the [WHAT IS THIS] / [WHY JOIN] markers. */
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+    <p className="text-xs font-semibold uppercase tracking-widest text-act">
       {children}
     </p>
   );
@@ -159,7 +159,7 @@ export default function RobloxPage() {
           <div className="mx-auto mt-14 grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((step) => (
               <div key={step.key} className="text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-act text-xl font-bold text-act-foreground">
                   {step.number}
                 </div>
                 <h3 className="mt-4 text-lg font-semibold">{step.title}</h3>
@@ -189,8 +189,8 @@ export default function RobloxPage() {
               <Card key={reason.key} className="bg-card/50">
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <reason.icon className="h-5 w-5 text-primary" />
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-act/10">
+                      <reason.icon className="h-5 w-5 text-act" />
                     </div>
                     <CardTitle className="text-lg">{reason.title}</CardTitle>
                   </div>
@@ -267,8 +267,8 @@ export default function RobloxPage() {
         <div className="mx-auto max-w-3xl border-t border-border pt-8">
           {/* Furniture, not voice: a small tracked marker a reader scans as
               structure, so caps are the right treatment here. Muted rather than
-              the page's primary-coloured Eyebrow — three primary-coloured rows
-              would shout from the bottom of the page, and a primary label over
+              the page's act-coloured Eyebrow — three act-coloured rows
+              would shout from the bottom of the page, and an act label over
               them shouts just as loudly. An h2 because it genuinely heads the
               list below it in the outline, whatever its size says. */}
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">

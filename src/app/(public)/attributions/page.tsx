@@ -119,7 +119,7 @@ function OutboundLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="inline-flex items-center gap-1 rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
     >
       {children}
       <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />

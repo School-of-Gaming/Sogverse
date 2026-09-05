@@ -257,9 +257,9 @@ export function BrowseCardFooter({
               lone child at the start. */}
           {cta &&
             (openHref ? (
-              <span className="ml-auto inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-sm font-medium text-primary">
+              <span className="ml-auto inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-sm font-medium text-act">
                 {cta.labelText}
-                <NavChevron size="sm" className="text-primary" />
+                <NavChevron size="sm" className="text-act" />
               </span>
             ) : (
               /* A dead end states a fact rather than offering an action, so
@@ -312,7 +312,7 @@ export function StretchedCardLink({
     <Link
       href={openHref}
       aria-label={t("cardLink", { action: cta.labelText, name })}
-      className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+      className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
     />
   );
 }

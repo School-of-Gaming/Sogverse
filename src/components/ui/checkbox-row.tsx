@@ -20,7 +20,7 @@ const checkboxRowVariants = cva(
         xs: "text-xs",
       },
       checked: {
-        true: "bg-primary/5",
+        true: "bg-act/5",
         false: "",
       },
       disabled: {

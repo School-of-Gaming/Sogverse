@@ -18,8 +18,8 @@ import type { EffectiveProductStatus } from "@/lib/products/effective-status";
  * place looking different from the other.
  */
 const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
-  pending: "bg-primary/20 text-primary",
-  running: "bg-primary text-primary-foreground",
+  pending: "bg-act/20 text-act",
+  running: "bg-act text-act-foreground",
   completed: "bg-muted text-muted-foreground",
   cancelled: "bg-destructive/20 text-destructive",
   expired: "bg-muted text-muted-foreground",

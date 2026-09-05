@@ -358,7 +358,7 @@ function VoiceAvatarDemo() {
             max="100"
             value={Math.round(level * 100)}
             onChange={(e) => setLevel(Number(e.target.value) / 100)}
-            className="w-48 accent-primary"
+            className="w-48 accent-act"
           />
         </div>
         <div className="flex items-center gap-4">
@@ -2203,8 +2203,8 @@ export default function AdminUIComponentsPage() {
       <Section title="Color Palette">
         <SubSection title="Brand Colors">
           <div className="flex flex-wrap gap-4">
-            <Swatch label="Primary" className="bg-primary" />
-            <Swatch label="Secondary" className="bg-secondary" />
+            <Swatch label="Primary" className="bg-act" />
+            <Swatch label="Secondary" className="bg-world" />
             <Swatch label="Destructive" className="bg-destructive" />
             <Swatch label="Success" className="bg-success" />
             <Swatch label="Info" className="bg-info" />
@@ -2230,8 +2230,8 @@ export default function AdminUIComponentsPage() {
             <span className="text-sm font-medium text-muted-foreground">
               Muted Foreground
             </span>
-            <span className="text-sm font-medium text-primary">Primary</span>
-            <span className="text-sm font-medium text-secondary">
+            <span className="text-sm font-medium text-act">Primary</span>
+            <span className="text-sm font-medium text-world">
               Secondary
             </span>
             <span className="text-sm font-medium text-destructive">
@@ -2657,7 +2657,7 @@ export default function AdminUIComponentsPage() {
                       also a gamer.{" "}
                       <a
                         href={ROUTES.about}
-                        className="text-primary underline underline-offset-4 hover:no-underline"
+                        className="text-act underline underline-offset-4 hover:no-underline"
                       >
                         Read more about us
                       </a>

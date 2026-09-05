@@ -227,8 +227,8 @@ interface SessionFeedItemProps {
  * "future session", and all of them are the same blue —
  * the boundary between what has happened and what has not is the one thing a
  * reader must never have to work out from a date. The tone is info rather than
- * the primary brand one because the two signals in this feed sit inches apart
- * ("this is coming up" and "this owes you work") and primary is close enough to
+ * the brand's act because the two signals in this feed sit inches apart
+ * ("this is coming up" and "this owes you work") and act is close enough to
  * the warning amber that a column of cards read as one wash of attention. Info
  * separates on hue, so the two are told apart from across the room.
  *

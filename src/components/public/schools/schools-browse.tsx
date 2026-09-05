@@ -261,7 +261,7 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
       <div className="space-y-4">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           {t.rich("hero.title", {
-            primary: (chunks) => <span className="text-primary">{chunks}</span>,
+            primary: (chunks) => <span className="text-act">{chunks}</span>,
           })}
         </h1>
         <p className="text-lg text-muted-foreground">{t("hero.subtitle")}</p>
@@ -335,7 +335,7 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
           {t("notListed.body")}{" "}
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-act hover:underline"
           >
             {SUPPORT_EMAIL}
           </a>
@@ -489,7 +489,7 @@ function StatusPill({ hasClubs, t }: { hasClubs: boolean; t: Translate }) {
       className={cn(
         "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium",
         hasClubs
-          ? "bg-primary/10 text-primary"
+          ? "bg-act/10 text-act"
           : "bg-muted text-muted-foreground",
       )}
     >

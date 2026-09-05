@@ -245,7 +245,7 @@ export function GeduAssignmentCard({
           // short ones floating.
           "group relative h-full cursor-pointer overflow-hidden transition-[box-shadow,transform]",
           "hover:shadow-lg focus-within:shadow-lg",
-          live && "bg-gradient-to-r from-primary/5 to-transparent",
+          live && "bg-gradient-to-r from-act/5 to-transparent",
         )}
       >
         <CardContent className="flex h-full flex-col gap-4 p-5">
@@ -457,7 +457,7 @@ export function GeduAssignmentCard({
             if (openHref === "#") e.preventDefault();
           }}
           aria-label={productName}
-          className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+          className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
         />
       </Card>
 

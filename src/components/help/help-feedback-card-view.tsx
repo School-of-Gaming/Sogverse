@@ -110,7 +110,7 @@ export function HelpFeedbackCardView({
             is for. */}
         <div className="flex items-start gap-3">
           <MessageSquare
-            className="mt-0.5 h-5 w-5 shrink-0 text-primary"
+            className="mt-0.5 h-5 w-5 shrink-0 text-act"
             aria-hidden
           />
           <div className="space-y-1 text-sm text-muted-foreground">
@@ -130,7 +130,7 @@ export function HelpFeedbackCardView({
                   link: (chunks) => (
                     <a
                       href={`mailto:${SUPPORT_EMAIL}`}
-                      className="text-primary hover:underline"
+                      className="text-act hover:underline"
                     >
                       {chunks}
                     </a>

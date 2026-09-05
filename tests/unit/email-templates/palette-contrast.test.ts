@@ -46,12 +46,12 @@ const PAIRS: { name: string; fg: string; bg: string }[] = [
   { name: "muted text on the message panel", fg: DARK_THEME.mutedFg, bg: DARK_THEME.card },
   { name: "footer text on the ground", fg: DARK_THEME.mutedFg, bg: DARK_THEME.bg },
   { name: "body text on the ground", fg: DARK_THEME.foreground, bg: DARK_THEME.bg },
-  { name: "primary button label", fg: BRAND.primaryForeground, bg: BRAND.primary },
-  { name: "secondary button label", fg: BRAND.secondaryForeground, bg: BRAND.secondary },
+  { name: "primary button label", fg: BRAND.actForeground, bg: BRAND.act },
+  { name: "secondary button label", fg: BRAND.worldForeground, bg: BRAND.world },
   { name: "outline button label", fg: DARK_THEME.foreground, bg: DARK_THEME.card },
   // The header lockup and any brand-orange inline text, both ≥18px bold or
   // used as emphasis at body size — it clears AA_BODY anyway, comfortably.
-  { name: "brand orange on the ground", fg: BRAND.primary, bg: DARK_THEME.bg },
+  { name: "brand orange on the ground", fg: BRAND.act, bg: DARK_THEME.bg },
   // The callout panel: both its uppercase label and its paragraphs, which carry
   // the same colour on the washed info surface. 13.24:1 — the reason the panel
   // can drop the accent-coloured title the app's Alert uses and lose nothing.
@@ -90,20 +90,20 @@ describe("the pairs we rejected are still worth rejecting", () => {
   }[] = [
     {
       name: "brand purple as body text",
-      fg: BRAND.secondary,
+      fg: BRAND.world,
       bg: DARK_THEME.card,
       why: "the original reason purple was pulled out of body copy",
     },
     {
-      name: "the primary's dark label on the secondary's fill",
-      fg: BRAND.primaryForeground,
-      bg: BRAND.secondary,
+      name: "act's dark label on the world fill",
+      fg: BRAND.actForeground,
+      bg: BRAND.world,
       why: "copying a working button and changing only its fill",
     },
     {
-      name: "white on the primary fill",
-      fg: BRAND.secondaryForeground,
-      bg: BRAND.primary,
+      name: "white on the act fill",
+      fg: BRAND.worldForeground,
+      bg: BRAND.act,
       why: "the same mistake in the other direction",
     },
     {

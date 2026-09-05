@@ -18,8 +18,8 @@ import { BRAND as SOG_BRAND, NEUTRALS, YTY_FAMILIES, composite } from "@sog/ui";
  * The brand fills and the foreground each one carries.
  *
  * The two are always named together because they are not independent choices:
- * the primary is a light colour and only a dark label reads on it (#121212 at
- * 9.6:1; white is 2.0:1), the secondary is a dark colour and only a light label
+ * act is a light colour and only a dark label reads on it (#121212 at 9.6:1;
+ * white is 2.0:1), world is a dark colour and only a light label
  * reads on it (#ffffff at 6.4:1; the dark label is 2.9:1). They are mirror
  * images, so a button that swaps its fill and keeps its label has not changed
  * colour, it has broken. That pairing is the library's own — a fill and its
@@ -27,10 +27,10 @@ import { BRAND as SOG_BRAND, NEUTRALS, YTY_FAMILIES, composite } from "@sog/ui";
  * decision the app's button renders, rather than from a value that matches today.
  */
 export const BRAND = {
-  primary: SOG_BRAND.primary.hex,
-  primaryForeground: SOG_BRAND.primary.foreground,
-  secondary: SOG_BRAND.secondary.hex,
-  secondaryForeground: SOG_BRAND.secondary.foreground,
+  act: SOG_BRAND.act.hex,
+  actForeground: SOG_BRAND.act.foreground,
+  world: SOG_BRAND.world.hex,
+  worldForeground: SOG_BRAND.world.foreground,
 } as const;
 
 /** The grounds, the ink on them, and the greys between. */
@@ -50,8 +50,8 @@ export const DARK_THEME = {
  * which is what the gradient is painted over.
  */
 export const GRADIENT = {
-  primaryGlow: composite(BRAND.primary, 0.2, DARK_THEME.bg),
-  secondaryGlow: composite(BRAND.secondary, 0.1, DARK_THEME.bg),
+  actGlow: composite(BRAND.act, 0.2, DARK_THEME.bg),
+  worldGlow: composite(BRAND.world, 0.1, DARK_THEME.bg),
 } as const;
 
 /**

@@ -135,7 +135,7 @@ export function SessionPhotoGallery({
               // picture inside it. A block button would take the whole row's
               // width and put a focus ring around empty space beside a
               // portrait photo.
-              className="inline-flex max-w-full rounded-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="inline-flex max-w-full rounded-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
             >
               <Image
                 src={sessionImageUrl(photo.id)}

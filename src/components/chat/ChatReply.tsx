@@ -60,7 +60,7 @@ export function ChatQuotedMessage({
       {/* One line, clipped: the quote is a pointer to the original, and a
           quoted paragraph would push the reply's own words off the screen. */}
       <span className="flex min-w-0 flex-1 gap-1 overflow-hidden">
-        <span className="shrink-0 font-medium text-primary">{name}</span>
+        <span className="shrink-0 font-medium text-act">{name}</span>
         <span className="truncate text-muted-foreground">
           {quotedPreview(message, t)}
         </span>
@@ -99,7 +99,7 @@ export function ChatReplyStrip({
     >
       <CornerUpLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-primary">
+        <p className="font-medium text-act">
           {t("banner", { name: sender?.name ?? "" })}
         </p>
         <p className="truncate text-muted-foreground">

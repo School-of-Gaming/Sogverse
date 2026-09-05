@@ -109,7 +109,7 @@ export function ForgotPasswordForm() {
           </Button>
           <Link
             href="/login"
-            className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary"
+            className="flex items-center justify-center text-sm text-muted-foreground hover:text-act"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             {c('backToLogin')}

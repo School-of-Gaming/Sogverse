@@ -304,7 +304,7 @@ export function SessionPhotoStrip({
         // Tinted and ringed rather than resized: the answer to "will this land
         // here" has to be visible without the block growing under a pointer
         // that is mid-gesture.
-        dragging && "bg-primary/10 ring-2 ring-primary",
+        dragging && "bg-act/10 ring-2 ring-act",
         // Greyed with the rest of the editor while the card commits, because
         // what is on this strip is part of what that Save is carrying.
         disabled && "opacity-60",
@@ -509,7 +509,7 @@ function StripThumbnail({
         aria-label={label}
         disabled={disabled}
         onClick={onRemove}
-        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50"
+        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:pointer-events-none disabled:opacity-50"
       >
         <X className="h-3.5 w-3.5" aria-hidden />
       </button>

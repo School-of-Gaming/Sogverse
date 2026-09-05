@@ -44,7 +44,7 @@ export default async function Image() {
           // so it stays a flat, banding-free fill once it is a PNG. It fades out
           // well above the type, which leaves the tagline on plain background.
           backgroundColor: DARK_THEME.bg,
-          backgroundImage: `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.bg} 78%), linear-gradient(to right, ${GRADIENT.primaryGlow}, ${DARK_THEME.bg} 50%, ${GRADIENT.secondaryGlow})`,
+          backgroundImage: `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.bg} 78%), linear-gradient(to right, ${GRADIENT.actGlow}, ${DARK_THEME.bg} 50%, ${GRADIENT.worldGlow})`,
           padding: "48px 80px",
         }}
       >
@@ -77,7 +77,7 @@ export default async function Image() {
           <span>Where Screen Time Becomes</span>
           {/* The payoff half in the mark's own yellow — the only accent below
               the badge, so the eye finishes the line. */}
-          <span style={{ color: BRAND.primary }}>Quality Time</span>
+          <span style={{ color: BRAND.act }}>Quality Time</span>
         </div>
 
         <div

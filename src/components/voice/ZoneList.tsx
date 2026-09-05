@@ -320,8 +320,8 @@ function ZoneCard({
         // inset-shadow glow marks "you're here". Non-active: the neutral border
         // alone, with no glow.
         isCurrent && zone.color.glow,
-        isOver && canDropHere && "ring-2 ring-primary bg-accent/40",
-        tappable && "cursor-pointer hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        isOver && canDropHere && "ring-2 ring-act bg-accent/40",
+        tappable && "cursor-pointer hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
       )}
     >
       <div className="flex items-center gap-2">

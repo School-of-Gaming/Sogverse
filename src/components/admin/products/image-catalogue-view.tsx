@@ -184,7 +184,7 @@ export function ImageCatalogueView({
                       aria-pressed={isSelected}
                       className={cn(
                         "w-full rounded-md border border-border p-2 text-left transition-colors hover:bg-accent",
-                        isSelected && "bg-primary/5",
+                        isSelected && "bg-act/5",
                       )}
                     >
                       <ProductBanner

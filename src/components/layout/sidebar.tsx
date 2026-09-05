@@ -122,7 +122,7 @@ export function Sidebar() {
                 `flex items-center overflow-hidden whitespace-nowrap rounded-lg py-2 text-sm font-medium ${navTransition}`,
                 collapsed ? "gap-0 px-2.5" : "gap-0 px-2.5 md:gap-3 md:px-3",
                 isActive
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-act text-act-foreground"
                   : "text-foreground hover:bg-muted"
               )}
               title={label}

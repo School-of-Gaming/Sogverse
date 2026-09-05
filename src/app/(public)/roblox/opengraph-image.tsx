@@ -51,7 +51,7 @@ export default async function Image() {
           alignItems: "center",
           justifyContent: "space-between",
           backgroundColor: DARK_THEME.bg,
-          backgroundImage: `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.bg} 62%), linear-gradient(to right, ${GRADIENT.primaryGlow}, ${DARK_THEME.bg} 50%, ${GRADIENT.secondaryGlow})`,
+          backgroundImage: `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.bg} 62%), linear-gradient(to right, ${GRADIENT.actGlow}, ${DARK_THEME.bg} 50%, ${GRADIENT.worldGlow})`,
           padding: "48px 80px",
         }}
       >
@@ -80,7 +80,7 @@ export default async function Image() {
             }}
           >
             <span>Crée</span>
-            <span style={{ color: BRAND.primary }}>ton propre jeu</span>
+            <span style={{ color: BRAND.act }}>ton propre jeu</span>
             <span>Roblox</span>
           </div>
 

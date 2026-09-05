@@ -60,7 +60,7 @@ export function ChatReactionRow({
             "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs leading-none transition-colors",
             "disabled:cursor-default disabled:opacity-60",
             tally.mine
-              ? "bg-primary/15 text-primary"
+              ? "bg-act/15 text-act"
               : "bg-muted text-muted-foreground hover:bg-accent",
           )}
         >
@@ -104,7 +104,7 @@ export function ChatReactionPicker({
           onClick={() => onPick(code)}
           aria-label={t(code)}
           title={t(code)}
-          className="rounded-full px-2 py-1 text-2xl leading-none transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="rounded-full px-2 py-1 text-2xl leading-none transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
         >
           <span aria-hidden>{CHAT_REACTION_GLYPHS[code]}</span>
         </button>

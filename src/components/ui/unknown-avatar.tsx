@@ -20,13 +20,13 @@ export function UnknownAvatar({
     <div
       aria-hidden
       className={cn(
-        "absolute inset-0 flex items-center justify-center bg-primary",
+        "absolute inset-0 flex items-center justify-center bg-act",
         faded && "opacity-40",
         className,
       )}
     >
       <User
-        className="h-[62%] w-[62%] text-primary-foreground"
+        className="h-[62%] w-[62%] text-act-foreground"
         strokeWidth={2}
       />
     </div>

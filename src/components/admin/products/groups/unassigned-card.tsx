@@ -40,7 +40,7 @@ export function UnassignedCard({
       ref={setNodeRef}
       className={cn(
         "border-dashed transition-colors",
-        isOver && "bg-primary/5",
+        isOver && "bg-act/5",
       )}
     >
       <CardHeader className="pb-3">

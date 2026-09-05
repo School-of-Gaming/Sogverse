@@ -94,8 +94,8 @@ const GROUNDS = [
 
 const INK: PairingSide = { token: "background", hex: NEUTRALS.background.hex };
 const WHITE: PairingSide = {
-  token: "secondary-foreground",
-  hex: BRAND.secondary.foreground,
+  token: "world-foreground",
+  hex: BRAND.world.foreground,
 };
 
 const YTY_IDS = [
@@ -134,18 +134,18 @@ const appTextOnGrounds: Pairing[] = (
 /** The two signature colours, each under the ink it carries. */
 const brandPairings: Pairing[] = [
   {
-    id: "ink-on-primary",
+    id: "ink-on-act",
     foreground: INK,
-    background: { token: "primary", hex: BRAND.primary.hex },
+    background: { token: "act", hex: BRAND.act.hex },
     threshold: THRESHOLDS.bodyText,
-    why: "Dark ink on the amber fill — the primary call to action. Its label is body size, so it takes the body floor.",
+    why: "Dark ink on the amber act fill — the main call to action. Its label is body size, so it takes the body floor.",
   },
   {
-    id: "white-on-secondary",
+    id: "white-on-world",
     foreground: WHITE,
-    background: { token: "secondary", hex: BRAND.secondary.hex },
+    background: { token: "world", hex: BRAND.world.hex },
     threshold: THRESHOLDS.bodyText,
-    why: "White on the violet fill, a body-size label. Violet is a dark colour, so only a light label reads on it — the exact mirror of amber, which takes only a dark one.",
+    why: "White on the violet world fill, a body-size label. Violet is a dark colour, so only a light label reads on it — the exact mirror of amber, which takes only a dark one.",
   },
 ];
 

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
  * markup than as any image file, needs no network round trip on a page whose
  * whole design is that it has no loading state, and — the part that decides it —
  * inherits the palette. An exported PNG would freeze today's gold into a file no
- * token change can reach, so the day `--primary` moves, every surface follows
+ * token change can reach, so the day `--color-act` moves, every surface follows
  * except this one.
  *
  * **Nothing here animates, and that is a property of the surface rather than an
@@ -42,9 +42,9 @@ import { cn } from "@/lib/utils";
  */
 const PIXEL_COLORS: Partial<Record<string, string>> = {
   ".": "",
-  P: "bg-primary",
-  p: "bg-primary/55",
-  M: "bg-secondary",
+  P: "bg-act",
+  p: "bg-act/55",
+  M: "bg-world",
   F: "bg-foreground",
   f: "bg-muted-foreground",
 };

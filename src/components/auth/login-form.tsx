@@ -160,7 +160,7 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
             labelAction={
               <Link
                 href={ROUTES.forgotPassword}
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-act hover:underline"
               >
                 {c('forgotPassword')}
               </Link>
@@ -187,7 +187,7 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
                 link: (chunks) => (
                   <Link
                     href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
-                    className="text-primary hover:underline"
+                    className="text-act hover:underline"
                   >
                     {chunks}
                   </Link>
@@ -198,7 +198,7 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
               {t.rich('needHelp', {
                 email: SUPPORT_EMAIL,
                 link: (chunks) => (
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-act hover:underline">
                     {chunks}
                   </a>
                 ),

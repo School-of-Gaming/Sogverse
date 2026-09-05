@@ -68,14 +68,14 @@ export function WeekRows({
           key={row.date}
           className={cn(
             "flex flex-col gap-2 rounded-lg border border-border p-2 sm:flex-row sm:gap-3",
-            row.isToday ? "bg-primary/5" : "bg-card",
+            row.isToday ? "bg-act/5" : "bg-card",
           )}
         >
           <div className="flex shrink-0 items-baseline gap-2 px-1 sm:w-24 sm:flex-col sm:items-start sm:gap-0">
             <span
               className={cn(
                 "text-sm font-semibold",
-                row.isToday ? "text-primary" : "text-foreground",
+                row.isToday ? "text-act" : "text-foreground",
               )}
             >
               {row.label}

@@ -332,7 +332,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
             <div>
               {t.rich('register.alreadyHaveAccount', {
                 link: (chunks) => (
-                  <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-primary hover:underline">
+                  <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-act hover:underline">
                     {chunks}
                   </Link>
                 ),
@@ -342,7 +342,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               {t.rich('needHelp', {
                 email: SUPPORT_EMAIL,
                 link: (chunks) => (
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-act hover:underline">
                     {chunks}
                   </a>
                 ),

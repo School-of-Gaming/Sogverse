@@ -113,14 +113,14 @@ export function HomeLocationField({
           onClick={() => setOpen(true)}
           disabled={disabled}
           className={cn(
-            "flex h-full min-w-0 flex-1 items-center gap-2.5 px-3 text-left outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:cursor-not-allowed",
+            "flex h-full min-w-0 flex-1 items-center gap-2.5 px-3 text-left outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act disabled:cursor-not-allowed",
             value ? "rounded-l-md" : "rounded-md",
           )}
         >
           <MapPin
             className={cn(
               "h-4 w-4 shrink-0",
-              value ? "text-primary" : "text-muted-foreground",
+              value ? "text-act" : "text-muted-foreground",
             )}
           />
           {value ? (
@@ -157,7 +157,7 @@ export function HomeLocationField({
             disabled={disabled}
             aria-label={c("clear")}
             title={c("clear")}
-            className="flex h-full w-12 shrink-0 items-center justify-center rounded-r-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:cursor-not-allowed"
+            className="flex h-full w-12 shrink-0 items-center justify-center rounded-r-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act disabled:cursor-not-allowed"
           >
             <X className="h-4 w-4" />
           </button>

@@ -18,7 +18,7 @@ interface LayoutOptions {
 }
 
 /** Hero gradient: vertical fade over a horizontal brand-color glow. */
-const HERO_GRADIENT = `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.bg} 70%), linear-gradient(to right, ${GRADIENT.primaryGlow}, ${DARK_THEME.bg} 50%, ${GRADIENT.secondaryGlow})`;
+const HERO_GRADIENT = `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.bg} 70%), linear-gradient(to right, ${GRADIENT.actGlow}, ${DARK_THEME.bg} 50%, ${GRADIENT.worldGlow})`;
 
 /**
  * The brand mark above the lockup — the one image in any mail this codebase
@@ -168,17 +168,17 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
     .hero-gradient {
       background-image: ${HERO_GRADIENT} !important;
     }
-    .brand-primary { color: ${BRAND.primary} !important; }
+    .brand-act { color: ${BRAND.act} !important; }
     /* Gmail-only: color text via gradient + background-clip instead of the "color" property,
        because Gmail Android dark mode shifts "color" values but preserves gradient values.
        "u + .body" only matches Gmail's rendering wrapper. Outlook doesn't support
        background-clip:text at all, so it must stay Gmail-targeted.
 
-       Only the primary has a rule: the brand secondary was retired from inline text
-       because Gmail's rewriting left it unreadable, so no builder emits a secondary
+       Only act has a rule: the brand's world colour was retired from inline text
+       because Gmail's rewriting left it unreadable, so no builder emits a world
        brand class any more and a rule for one would be dead weight. */
-    u + .body .brand-primary {
-      background-image: linear-gradient(${BRAND.primary}, ${BRAND.primary}) !important;
+    u + .body .brand-act {
+      background-image: linear-gradient(${BRAND.act}, ${BRAND.act}) !important;
       -webkit-background-clip: text !important;
       background-clip: text !important;
       color: transparent !important;
@@ -245,7 +245,7 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
                that every mail carried before the mark existed. See BRAND_MARK
                and brandMarkRow() for why an image here is allowed to vanish. -->
           ${brandMarkRow()}<!-- Lockup: brand first, platform second, spaced en dash between them.
-               "brand-primary" is what puts the brand half through the Gmail
+               "brand-act" is what puts the brand half through the Gmail
                background-clip rule above — this header is one of the two places
                brand color still survives Gmail's dark-theme rewriting (the other
                is a button fill), so it is the one place the full lockup is set.
@@ -258,7 +258,7 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
                asserts the two spans still read as BRAND_LOCKUP exactly. -->
           <tr>
             <td align="center" style="padding-bottom:24px;">
-              <span class="brand-primary" style="font-size:24px;font-weight:bold;color:${BRAND.primary};letter-spacing:0.5px;">${SENDER_NAME}</span><span style="font-size:24px;font-weight:bold;color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>
+              <span class="brand-act" style="font-size:24px;font-weight:bold;color:${BRAND.act};letter-spacing:0.5px;">${SENDER_NAME}</span><span style="font-size:24px;font-weight:bold;color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>
             </td>
           </tr>
           <!-- The message panel: the app's Card, rendered in a table cell. It

@@ -160,7 +160,7 @@ function SceneControls({
               className={cn(
                 "ml-1 text-[10px] uppercase tracking-wide",
                 store.viewerId === account.id
-                  ? "text-primary-foreground/70"
+                  ? "text-act-foreground/70"
                   : "text-muted-foreground",
               )}
             >

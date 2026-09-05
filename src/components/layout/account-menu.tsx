@@ -490,7 +490,7 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
           // here instead.
           aria-label={menuLabel}
           onClick={() => (open ? setOpen(false) : openMenu())}
-          className="rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          className="rounded-md focus:outline-none focus:ring-2 focus:ring-act"
         >
           {/* The open state takes the ring the avatar used to wear when the page
               it linked to was the current one. It links nowhere now, so "you are
@@ -498,7 +498,7 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
           <Avatar
             className={cn(
               "h-8 w-8 transition-shadow",
-              open && "ring-2 ring-primary",
+              open && "ring-2 ring-act",
             )}
           >
             <Identicon id={userId} size={32} />
@@ -742,7 +742,7 @@ function MenuLinkRow({
         ACTIONABLE_ROW_CLASS,
         // Primary here means what it means everywhere else in the chrome: you
         // are on this page.
-        active && "text-primary",
+        active && "text-act",
         disabled && "pointer-events-none opacity-60",
       )}
     >

@@ -83,7 +83,7 @@ export function SessionReport({
           onClick={() => setExpanded((open) => !open)}
           aria-expanded={expanded}
           aria-controls={bodyId}
-          className="mb-1.5 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="mb-1.5 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-act hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
         >
           {expanded ? t("showLess") : t("readMore")}
           {/* The chevron points at where the change lands: down into the body

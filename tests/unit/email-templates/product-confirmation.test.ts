@@ -110,7 +110,7 @@ describe("buildProductConfirmationEmail", () => {
     const html = render(base);
     expect(html).toContain(`href="${DASHBOARD_URL}"`);
     expect(html).toContain("Go to My SOG");
-    expect(html).toContain(BRAND.primary);
+    expect(html).toContain(BRAND.act);
     expect(html).not.toContain("Keep browsing");
     expect(html).not.toContain("/shop");
   });
@@ -124,8 +124,8 @@ describe("buildProductConfirmationEmail", () => {
   });
 
   /**
-   * The product name is emphasised by weight, not by the brand secondary it used
-   * to carry: Gmail's dark-theme rewriting left that purple unreadable against
+   * The product name is emphasised by weight, not by the brand's world colour it
+   * used to carry: Gmail's dark-theme rewriting left that purple unreadable against
    * the card, and weight is the emphasis every client renders the same way.
    * The brand purple is still in the mail — it fills the My SOG button — so the
    * assertion is on the name's own markup rather than on the colour's absence.
@@ -133,7 +133,7 @@ describe("buildProductConfirmationEmail", () => {
   it("emphasises the product name by weight, in the body's own color", () => {
     const html = render(base);
     expect(html).toContain(`<strong style="color:${DARK_THEME.foreground};">Minecraft 101</strong>`);
-    expect(html).not.toContain("brand-secondary");
+    expect(html).not.toContain("brand-world");
   });
 
   it("escapes HTML in every value it is handed", () => {

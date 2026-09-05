@@ -41,7 +41,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
           aria-label={visible ? c("hidePassword") : c("showPassword")}
           aria-pressed={visible}
           tabIndex={-1}
-          className="absolute inset-y-0 right-0 flex items-center justify-center px-3 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md disabled:cursor-not-allowed disabled:opacity-50"
+          className="absolute inset-y-0 right-0 flex items-center justify-center px-3 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 rounded-md disabled:cursor-not-allowed disabled:opacity-50"
         >
           {visible ? (
             <EyeOff className="h-4 w-4" aria-hidden="true" />

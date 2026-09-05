@@ -17,7 +17,7 @@ interface VoiceAvatarProps {
   /** When true, `children` (the participant's `<video>`) renders in place of the
    *  identicon. */
   videoOn?: boolean;
-  /** Marks the local participant with a subtle primary ring. */
+  /** Marks the local participant with a subtle act ring. */
   isLocal?: boolean;
   /** Inline glow style. The live room drives the speaking glow imperatively
    *  through the forwarded ref; the style-guide demo passes a computed style. */
@@ -46,7 +46,7 @@ export const VoiceAvatar = forwardRef<HTMLDivElement, VoiceAvatarProps>(
         style={glowStyle}
         className={cn(
           "relative h-11 w-11 overflow-hidden rounded-md border-2 border-border transition-shadow",
-          isLocal && "ring-1 ring-primary/30",
+          isLocal && "ring-1 ring-act/30",
           className,
         )}
       >

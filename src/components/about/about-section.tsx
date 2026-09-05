@@ -38,7 +38,7 @@ export function AboutSection({ id }: AboutSectionProps) {
       <div className="mx-auto max-w-3xl text-center">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
           {t.rich("hero.title", {
-            primary: (chunks) => <span className="text-primary">{chunks}</span>,
+            primary: (chunks) => <span className="text-act">{chunks}</span>,
           })}
         </h2>
         <p className="mt-6 text-lg leading-8 text-muted-foreground">
@@ -58,7 +58,7 @@ export function AboutSection({ id }: AboutSectionProps) {
 
       {/* Mission */}
       <div className="mx-auto mt-16 max-w-4xl">
-        <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
+        <Card className="bg-gradient-to-r from-act/5 to-world/5">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">{t("mission.heading")}</CardTitle>
           </CardHeader>
@@ -78,8 +78,8 @@ export function AboutSection({ id }: AboutSectionProps) {
             <Card key={value.key}>
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <value.icon className="h-6 w-6 text-primary" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-act/10">
+                    <value.icon className="h-6 w-6 text-act" />
                   </div>
                   <CardTitle className="text-lg">{value.title}</CardTitle>
                 </div>

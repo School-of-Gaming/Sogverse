@@ -50,7 +50,7 @@ const FAQ_ITEM_KEYS = [
 
 /** Inline link styling shared by the three links the answers can carry. */
 const ANSWER_LINK_CLASS =
-  "text-primary underline underline-offset-4 hover:no-underline";
+  "text-act underline underline-offset-4 hover:no-underline";
 
 /**
  * The Programme's FAQ: the signed-off Lynx Educate copy, translated in every

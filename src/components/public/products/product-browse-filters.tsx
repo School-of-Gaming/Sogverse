@@ -24,7 +24,7 @@ const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 // The filter control — chip rows (type, audience, designed-for, subject,
 // format, language, age, days).
-// Chips are pill-shaped with a clear active state (filled primary) so taps
+// Chips are pill-shaped with a clear active state (filled act) so taps
 // register on small phone screens.
 //
 // One component, two shapes, one DOM instance — never a phone copy and a
@@ -408,7 +408,7 @@ function Chip({
       className={cn(
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-all",
         active
-          ? "bg-primary text-primary-foreground shadow-sm"
+          ? "bg-act text-act-foreground shadow-sm"
           : "bg-background text-foreground/80 hover:bg-accent",
         className,
       )}

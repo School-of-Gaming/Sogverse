@@ -349,7 +349,7 @@ export function ChatMessageList({
                       className={cn(
                         "text-sm font-semibold",
                         group.senderId === viewer.id
-                          ? "text-primary"
+                          ? "text-act"
                           : "text-foreground",
                       )}
                     >
@@ -452,7 +452,7 @@ export function ChatMessageList({
           // Over the log rather than under it: a control that appeared *below*
           // the box would push the composer down the moment a message arrived
           // while somebody was reading history.
-          className="absolute bottom-2 right-3 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-lg"
+          className="absolute bottom-2 right-3 flex items-center gap-1.5 rounded-full bg-act px-3 py-1 text-xs font-medium text-act-foreground shadow-lg"
         >
           <ArrowDown className="h-3 w-3" aria-hidden />
           {t("unread", { count: behind })}
@@ -571,7 +571,7 @@ function ChatImageRunItem({
         // A ring and a tint, never a border: the run keeps exactly the box it
         // had, so flashing it after a jump moves nothing around it.
         "mt-1 rounded transition-colors",
-        flashing && "bg-primary/20 ring-1 ring-primary",
+        flashing && "bg-act/20 ring-1 ring-act",
       )}
     >
       {quoted !== null && (

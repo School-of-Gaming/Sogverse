@@ -82,7 +82,7 @@ interface FamilyProfileSelectorProps {
  *
  * One centered, wrap-on-every-breakpoint row: parents first, then gamers,
  * then the "Add Gamer" tile. Never horizontal-scrolls. The active viewer's
- * tile gets a primary-colored ring; clicking another tile signs out and
+ * tile gets an act-colored ring; clicking another tile signs out and
  * signs in as that account with no confirmation dialog.
  *
  * The "Add Gamer" tile opens AddGamerDialog. useCreateGamer's onSuccess

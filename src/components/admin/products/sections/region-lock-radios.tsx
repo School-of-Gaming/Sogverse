@@ -82,7 +82,7 @@ export function RegionLockRadios({
             key={option.code ?? "none"}
             className={cn(
               "flex cursor-pointer items-center gap-3 rounded-md border border-border p-3 text-sm transition-colors",
-              selected && "bg-primary/5"
+              selected && "bg-act/5"
             )}
           >
             <input
@@ -108,7 +108,7 @@ export function RegionLockRadios({
                 <Globe
                   className={cn(
                     "h-5 w-5",
-                    selected ? "text-primary" : "text-muted-foreground"
+                    selected ? "text-act" : "text-muted-foreground"
                   )}
                 />
               )}

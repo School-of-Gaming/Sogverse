@@ -542,7 +542,7 @@ function OperationalFacts({
               href={product.product_staff_details.material_url}
               target="_blank"
               rel="noreferrer"
-              className="break-all text-primary underline-offset-2 hover:underline"
+              className="break-all text-act underline-offset-2 hover:underline"
             >
               {product.product_staff_details.material_url}
             </a>
@@ -654,7 +654,7 @@ function PublicProductLink({ path }: { path: string }) {
         href={url}
         target="_blank"
         rel="noreferrer"
-        className="min-w-0 break-all text-primary underline-offset-2 hover:underline"
+        className="min-w-0 break-all text-act underline-offset-2 hover:underline"
       >
         {url}
       </a>

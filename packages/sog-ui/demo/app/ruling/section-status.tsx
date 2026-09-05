@@ -351,9 +351,9 @@ export function StatusSection() {
                   glyph="alert"
                   title={STATUS_COPY.warning.title}
                   body={STATUS_COPY.warning.body}
-                  edge={BRAND.primary.hex}
+                  edge={BRAND.act.hex}
                   ground={CARD}
-                  ink={BRAND.primary.hex}
+                  ink={BRAND.act.hex}
                   bodyInk={MUTED_INK}
                 />
               </Exemplar>
@@ -364,13 +364,13 @@ export function StatusSection() {
                 <div className="flex flex-wrap items-center gap-3">
                   <FilledButton
                     label="Buy a seat"
-                    fill={BRAND.primary.hex}
-                    ink={BRAND.primary.foreground}
+                    fill={BRAND.act.hex}
+                    ink={BRAND.act.foreground}
                   />
                   <FilledButton
                     label={STATUS_COPY.warning.action}
-                    fill={BRAND.primary.hex}
-                    ink={BRAND.primary.foreground}
+                    fill={BRAND.act.hex}
+                    ink={BRAND.act.foreground}
                   />
                 </div>
               </Exemplar>

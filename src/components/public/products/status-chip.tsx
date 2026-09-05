@@ -18,7 +18,7 @@ export type ChipSize = "sm" | "md";
 // Semantic tone per chip — ink only; the outline is the neutral border every
 // chip wears. Keeps the colour decision in one place.
 const TONE_INK: Record<ChipTone, string> = {
-  primary: "text-primary",
+  primary: "text-act",
   warning: "text-warning",
   info: "text-info",
   muted: "text-muted-foreground",

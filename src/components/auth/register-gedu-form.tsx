@@ -172,7 +172,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
         {/* The brand slogan for the people this page is addressed to, placed
             once and only here — lower and smaller than the title it sits
             under, which is the sanctioned shape for a slogan on a page. */}
-        <p className="text-center text-sm font-medium text-primary">
+        <p className="text-center text-sm font-medium text-act">
           {t("registerGedu.slogan")}
         </p>
       </CardHeader>
@@ -327,7 +327,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
             <div>
               {t.rich("registerGedu.alreadyHaveAccount", {
                 link: (chunks) => (
-                  <Link href={ROUTES.login} className="text-primary hover:underline">
+                  <Link href={ROUTES.login} className="text-act hover:underline">
                     {chunks}
                   </Link>
                 ),
@@ -337,7 +337,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
               {t.rich("needHelp", {
                 email: SUPPORT_EMAIL,
                 link: (chunks) => (
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-act hover:underline">
                     {chunks}
                   </a>
                 ),

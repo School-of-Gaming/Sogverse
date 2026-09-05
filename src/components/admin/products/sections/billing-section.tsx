@@ -85,7 +85,7 @@ export function BillingSection({
                   key={mode}
                   className={cn(
                     "flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 transition-colors",
-                    active && "bg-primary/5"
+                    active && "bg-act/5"
                   )}
                 >
                   <input
@@ -97,7 +97,7 @@ export function BillingSection({
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 font-medium">
-                      <Icon className="h-4 w-4 text-primary" />
+                      <Icon className="h-4 w-4 text-act" />
                       {t(`labels.${mode}`)}
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -167,7 +167,7 @@ export function BillingSection({
                   key={mode}
                   className={cn(
                     "flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
-                    active && "bg-primary/5"
+                    active && "bg-act/5"
                   )}
                 >
                   <input

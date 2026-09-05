@@ -93,7 +93,7 @@ const STATUS_SUMMARY: readonly Row[] = STATUS_ROWS.flatMap((status) => [
     verdict:
       status.todayForeground === "#FFFFFF"
         ? "retune → ink"
-        : "rename → primary-foreground",
+        : "rename → act-foreground",
   },
 ]);
 

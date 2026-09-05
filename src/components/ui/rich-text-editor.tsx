@@ -343,7 +343,7 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        "rounded-md border border-border bg-background focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-background",
+        "rounded-md border border-border bg-background focus-within:ring-2 focus-within:ring-act focus-within:ring-offset-2 focus-within:ring-offset-background",
         disabled && "cursor-not-allowed opacity-50",
         className,
       )}
@@ -407,7 +407,7 @@ export function RichTextEditor({
               aria-label={t("linkUrl")}
               aria-invalid={linkRejected || undefined}
               aria-describedby={linkRejected ? linkErrorId : undefined}
-              className="h-8 min-w-0 flex-1 rounded-sm bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="h-8 min-w-0 flex-1 rounded-sm bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
             />
             {/* Cancel, Remove link, Apply — the three-or-more spine from the
                 root `CLAUDE.md` "Button Order" rule: negative first,
@@ -557,7 +557,7 @@ const MARKETING_PROSE = cn(
   "[&_h1]:mt-5 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:leading-snug",
   "[&_h2]:mt-5 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:leading-snug",
   "[&_h3]:mt-5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:leading-snug",
-  "[&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4",
+  "[&_a]:font-medium [&_a]:text-act [&_a]:underline [&_a]:underline-offset-4",
 );
 
 /**
@@ -696,7 +696,7 @@ function IconButton({
       aria-pressed={active}
       title={label}
       className={cn(
-        "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:pointer-events-none disabled:opacity-50",
         active === true
           ? "bg-accent text-foreground"
           : "text-muted-foreground hover:bg-accent hover:text-foreground",

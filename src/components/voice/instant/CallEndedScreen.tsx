@@ -54,10 +54,10 @@ export function CallEndedScreen({ reason, code, copyright }: CallEndedScreenProp
             {tHome.rich("title", {
               br: () => <br />,
               primary: (chunks) => (
-                <span className="text-primary">{chunks}</span>
+                <span className="text-act">{chunks}</span>
               ),
               secondary: (chunks) => (
-                <span className="text-secondary">{chunks}</span>
+                <span className="text-world">{chunks}</span>
               ),
             })}
           </h2>

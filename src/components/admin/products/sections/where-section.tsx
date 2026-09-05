@@ -36,7 +36,7 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
             className={cn(
               "rounded px-4 py-1.5 text-sm transition-colors",
               state.isRemote
-                ? "bg-primary text-primary-foreground"
+                ? "bg-act text-act-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -48,7 +48,7 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
             className={cn(
               "rounded px-4 py-1.5 text-sm transition-colors",
               !state.isRemote
-                ? "bg-primary text-primary-foreground"
+                ? "bg-act text-act-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >

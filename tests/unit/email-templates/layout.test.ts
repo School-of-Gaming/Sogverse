@@ -90,7 +90,7 @@ describe("the header's text lockup", () => {
    */
   it("reads as BRAND_LOCKUP exactly, built from two coloured spans", () => {
     const spans =
-      /<span class="brand-primary"[^>]*>([^<]*)<\/span><span[^>]*>([^<]*)<\/span>/.exec(render());
+      /<span class="brand-act"[^>]*>([^<]*)<\/span><span[^>]*>([^<]*)<\/span>/.exec(render());
     expect(spans, "the lockup's two spans are no longer adjacent").not.toBeNull();
     // Every character of the lockup, the en dash above all, still comes from
     // the constants module — nothing about either name is typed in the markup.

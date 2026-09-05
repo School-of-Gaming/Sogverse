@@ -116,7 +116,7 @@ function AllClearPanel() {
             this face is Swedish's ä (U+00E4), which is inside the `latin`
             subset the font is loaded with, so it renders in the pixel face
             rather than falling back mid-word. */}
-        <CardTitle className="font-display text-sm leading-relaxed tracking-normal text-primary sm:text-base">
+        <CardTitle className="font-display text-sm leading-relaxed tracking-normal text-act sm:text-base">
           {t("allClearTitle")}
         </CardTitle>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">

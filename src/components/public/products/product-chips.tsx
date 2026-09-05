@@ -153,7 +153,7 @@ function TagChip({
 }) {
   return (
     <MediaChip
-      className={cn("bg-primary text-primary-foreground", className)}
+      className={cn("bg-act text-act-foreground", className)}
       icon={TAG_ICON[tag.value]}
     >
       {tag.label}
@@ -164,13 +164,13 @@ function TagChip({
 /**
  * Who may hold the seat, or how old they should be — the exclusive pair. The
  * caller resolves which of the two it is; this only guarantees that both wear
- * the same secondary fill wherever they appear, so the corner keeps meaning one
+ * the same world fill wherever they appear, so the corner keeps meaning one
  * thing.
  */
 function WhoChip({ label, className }: { label: string; className?: string }) {
   return (
     <MediaChip
-      className={cn("bg-secondary text-secondary-foreground", className)}
+      className={cn("bg-world text-world-foreground", className)}
       icon={UserRound}
     >
       {label}

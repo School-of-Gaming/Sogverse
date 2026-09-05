@@ -140,7 +140,7 @@ export function SectionPill() {
                 // bar hits its max.
                 "block whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] sm:px-4 sm:text-sm",
                 activeSection === id
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-act text-act-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >

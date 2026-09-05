@@ -50,16 +50,16 @@ export function RobloxHero() {
     // Same gradient treatment as the home page hero, pulled up under the
     // translucent header, so the programme page reads as part of the same site
     // rather than a microsite bolted on.
-    <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_var(--color-background)_100%),linear-gradient(to_right,_color-mix(in_oklab,var(--color-primary)_20%,transparent),_transparent_50%,_color-mix(in_oklab,var(--color-secondary)_10%,transparent))] pt-[var(--header-height)]">
+    <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_var(--color-background)_100%),linear-gradient(to_right,_color-mix(in_oklab,var(--color-act)_20%,transparent),_transparent_50%,_color-mix(in_oklab,var(--color-world)_10%,transparent))] pt-[var(--header-height)]">
       <div className="container mx-auto max-w-6xl px-4 py-20 sm:py-28">
         <div className="grid items-center gap-14 md:grid-cols-2 md:gap-12">
           <div className="text-center md:text-left">
             <h1 className={`font-display font-bold leading-snug ${sloganSize}`}>
               {t.rich("hero.title", {
                 br: () => <br />,
-                primary: (chunks) => <span className="text-primary">{chunks}</span>,
+                primary: (chunks) => <span className="text-act">{chunks}</span>,
                 secondary: (chunks) => (
-                  <span className="text-secondary">{chunks}</span>
+                  <span className="text-world">{chunks}</span>
                 ),
               })}
             </h1>

@@ -469,7 +469,7 @@ function ChoosePlaceButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-2.5 rounded-md border border-border bg-background px-3 py-3 text-left outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+      className="flex w-full items-center gap-2.5 rounded-md border border-border bg-background px-3 py-3 text-left outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
     >
       <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
@@ -535,7 +535,7 @@ function SelectedLocationCard({
       <div className="rounded-md border border-border bg-card p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-act" />
             <div className="min-w-0">
               {/* Both lines keep their height while the row is resolving, so
                   the name and the path appear *in place* and the card's own

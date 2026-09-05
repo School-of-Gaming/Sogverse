@@ -106,7 +106,7 @@ export default async function VerifyEmailPage({
         <RequestPasswordLinkButton email={email}>
           <Link
             href={ROUTES.login}
-            className="text-sm text-muted-foreground hover:text-primary"
+            className="text-sm text-muted-foreground hover:text-act"
           >
             {c("signIn")}
           </Link>

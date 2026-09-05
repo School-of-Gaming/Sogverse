@@ -130,7 +130,7 @@ function MarkOption({
       onClick={onToggle}
       className={cn(
         "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:cursor-not-allowed disabled:opacity-50",
         pressed
           ? cn("font-semibold", pressedClassName)

@@ -132,7 +132,7 @@ export const STATUS_ROWS: readonly StatusRow[] = [
     todayForeground: "#121212",
     uses: 75,
     candidate: "#DFCB25",
-    collidesWith: { name: "Amber (primary)", hex: "#FAA901" },
+    collidesWith: { name: "Amber (act)", hex: "#FAA901" },
   },
 ];
 

@@ -55,8 +55,8 @@ const RADII = new Set(Object.values(RADIUS));
  * so the result is unreadable rather than merely off-brand.
  */
 const LEGAL_ON_FILL: Record<string, string> = {
-  [BRAND.primary.toLowerCase()]: BRAND.primaryForeground.toLowerCase(),
-  [BRAND.secondary.toLowerCase()]: BRAND.secondaryForeground.toLowerCase(),
+  [BRAND.act.toLowerCase()]: BRAND.actForeground.toLowerCase(),
+  [BRAND.world.toLowerCase()]: BRAND.worldForeground.toLowerCase(),
 };
 
 /**
@@ -406,7 +406,7 @@ describe("house style, over every mail we can send", () => {
         const isButton = /^display:(inline-)?block;padding:12px (8|32)px;font-size:14px;font-weight:bold;color:#[0-9a-fA-F]{6};text-decoration:none;$/.test(
           style,
         );
-        const isInlineLink = style === `color:${BRAND.primary};text-decoration:underline;`;
+        const isInlineLink = style === `color:${BRAND.act};text-decoration:underline;`;
         expect(
           isButton || isInlineLink,
           `${name}: hand-rolled anchor — use ctaButton/ctaButtonRow/inlineLink.\n  ${style}`,
@@ -543,12 +543,12 @@ describe("house style, over every mail we can send", () => {
 describe("every pinned colour has been verified, not reasoned about", () => {
   /** Pinned colours seen to survive, and where that was seen. */
   const VERIFIED_PINS: Record<string, { hex: string; evidence: string }> = {
-    "brand-primary": {
-      hex: BRAND.primary,
+    "brand-act": {
+      hex: BRAND.act,
       evidence: "Gmail Android, dark system theme, 2026-08-22 — components reference, header lockup and V7.",
     },
     "cta-on-brand": {
-      hex: BRAND.primaryForeground,
+      hex: BRAND.actForeground,
       evidence: "Gmail Android, dark system theme, 2026-08-22 — C1. Fixed a real white/black flip.",
     },
   };

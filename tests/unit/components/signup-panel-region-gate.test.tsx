@@ -162,8 +162,8 @@ const anchorGlyphs = (block: HTMLElement) => {
 /**
  * Every class token on `el` and on everything inside it, as a set.
  *
- * Tokens rather than a substring search of the markup: `text-primary` is a
- * prefix of `text-primary-foreground`, so `innerHTML.not.toContain` reported a
+ * Tokens rather than a substring search of the markup: `text-act` is a
+ * prefix of `text-act-foreground`, so `innerHTML.not.toContain` reported a
  * violation for a class that is not the one being forbidden — and it could not
  * see the block's own classes at all.
  */
@@ -432,7 +432,7 @@ describe("eligible", () => {
  *
  * Asserted on the semantic tokens rather than on any literal colour: the point
  * is that the three agree, and that they agree on `info` rather than on
- * `primary`, `warning` or `destructive`.
+ * `act`, `warning` or `destructive`.
  */
 describe("the info family", () => {
   const surfaces = [
@@ -485,11 +485,11 @@ describe("the info family", () => {
       expect(anchorGlyphs(block)).toHaveLength(1);
       // Never the action colour, never an alarm colour: nothing here has gone
       // wrong, and the hue marks the subject rather than a control. Asserted as
-      // exact class tokens, so a `text-primary-foreground` on a control inside
+      // exact class tokens, so a `text-act-foreground` on a control inside
       // the block is not mistaken for the action colour on the block.
       const tokens = classTokens(block);
       for (const forbidden of [
-        "text-primary",
+        "text-act",
         "text-destructive",
         "text-warning",
       ]) {

@@ -38,10 +38,10 @@ export function ChatBodyText({
         ) : (
           <span
             key={index}
-            // **Info, not primary** *(owner ruling)*. A mention is one concept
+            // **Info, not act** *(owner ruling)*. A mention is one concept
             // and wears one colour wherever it shows: the chip here and the
             // tint on a row that names the reader are the same token, so
-            // learning it once is enough. Primary is the surface's own
+            // learning it once is enough. Act is the surface's own
             // emphasis — the sender's name, a reply's quote bar, the jump
             // flash — and a mention borrowing it made "about you" and "this is
             // ours" the same colour.

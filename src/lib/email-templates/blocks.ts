@@ -22,9 +22,9 @@ import { BODY_TEXT_STYLE, pinnedFill } from "./utils";
 /**
  * The same three names the app's `Button` uses, meaning the same three things,
  * because a mail is the app's style in an inbox and a shared vocabulary is half
- * of that. `secondary` is the brand purple — it used to name the outlined
- * button here, which left the app's secondary colour with no way to be spelled
- * and made "secondary" mean two different things in two places.
+ * of that. `secondary` is the brand purple, the world colour — it used to name
+ * the outlined button here, which left the world colour with no way to be
+ * spelled and made "secondary" mean two different things in two places.
  */
 type CtaVariant = "primary" | "secondary" | "outline";
 
@@ -107,15 +107,15 @@ interface RowButtonOptions extends CtaButtonOptions {
  */
 const VARIANTS = {
   primary: {
-    fill: BRAND.primary,
-    label: BRAND.primaryForeground,
+    fill: BRAND.act,
+    label: BRAND.actForeground,
     bordered: false,
     // The only label dark enough for the pin to help rather than hurt.
     labelClass: "cta-on-brand",
   },
   secondary: {
-    fill: BRAND.secondary,
-    label: BRAND.secondaryForeground,
+    fill: BRAND.world,
+    label: BRAND.worldForeground,
     bordered: false,
     labelClass: "",
   },
@@ -237,7 +237,7 @@ export function inlineLink(href: string, label: string): string {
   // wrong here. The underline is the affordance that says "link", so it
   // outranks matching the name's orange exactly; that mismatch is real, and it
   // is the cheaper of the two faults until a screenshot settles a fix for it.
-  return `<a href="${href}" target="_blank" style="color:${BRAND.primary};text-decoration:underline;">${label}</a>`;
+  return `<a href="${href}" target="_blank" style="color:${BRAND.act};text-decoration:underline;">${label}</a>`;
 }
 
 /** A bulleted list of already-composed (and already-escaped) HTML snippets. */
@@ -327,7 +327,7 @@ interface CalloutPanelOptions {
  * (`STATUS_TINT`, in `colors.ts`, with the derivation beside them). The earlier
  * version of this panel was a 3px brand-orange rule down one edge, which is a
  * treatment that exists nowhere in the app and read as a warning besides — the
- * brand primary is the colour that means *ours*, not *careful*.
+ * act is the colour that means *ours*, not *careful*.
  *
  * **The border is what draws the panel, and it is allowed to be quiet.** At
  * 2.18:1 against the card it would not carry a control boundary on its own, and

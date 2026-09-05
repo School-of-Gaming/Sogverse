@@ -68,7 +68,7 @@ function StatusIndicator({ status }: { status: string }) {
     return <CheckCheck className="h-3 w-3" />;
   }
   if (status === WHATSAPP_MESSAGE_STATUS.READ) {
-    return <CheckCheck className="h-3 w-3 text-secondary" />;
+    return <CheckCheck className="h-3 w-3 text-world" />;
   }
   return null;
 }
@@ -121,7 +121,7 @@ function ContactList({
               selectedPhone === contact.phone && "bg-muted"
             )}
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-act/20 text-sm font-medium text-act">
               {(contact.wa_name ?? contact.phone).slice(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
@@ -192,7 +192,7 @@ function ChatThread({
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-act/20 text-sm font-medium text-act">
           {(contactName ?? phone).slice(0, 2).toUpperCase()}
         </div>
         <div>
@@ -227,7 +227,7 @@ function ChatThread({
                         : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
                           ? "bg-muted/50 text-muted-foreground"
                           : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
-                            ? "bg-primary text-primary-foreground"
+                            ? "bg-act text-act-foreground"
                             : "bg-muted text-foreground"
                     )}
                   >
@@ -246,7 +246,7 @@ function ChatThread({
                           : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
                             ? "text-muted-foreground"
                             : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
-                              ? "text-primary-foreground/70"
+                              ? "text-act-foreground/70"
                               : "text-muted-foreground"
                       )}
                     >

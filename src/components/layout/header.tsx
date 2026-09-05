@@ -36,7 +36,7 @@ const LOGO_INTRINSIC = { width: 379, height: 207.5 } as const;
  * fixed once rather than lived with.
  */
 const NAV_LINK_CLASS =
-  "inline-flex min-h-11 items-center whitespace-nowrap rounded-md px-2 text-sm font-medium transition-colors hover:text-primary";
+  "inline-flex min-h-11 items-center whitespace-nowrap rounded-md px-2 text-sm font-medium transition-colors hover:text-act";
 
 export function Header() {
   const pathname = usePathname();
@@ -136,7 +136,7 @@ export function Header() {
         // onward to their own account — and it stays role-agnostic, because the
         // profile that would say which dashboard is the thing that is missing.
         aria-label={t("continueToAccount")}
-        className="rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        className="rounded-md focus:outline-none focus:ring-2 focus:ring-act"
       >
         <Avatar className="h-8 w-8">
           <Identicon id={user.id} size={32} />
@@ -147,7 +147,7 @@ export function Header() {
     <Link
       href={ROUTES.login}
       aria-label={c("signIn")}
-      className="rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+      className="rounded-md focus:outline-none focus:ring-2 focus:ring-act"
     >
       <Avatar className="h-8 w-8">
         <UnknownAvatar />
@@ -191,8 +191,8 @@ export function Header() {
       className={cn(
         "hidden whitespace-nowrap text-base font-semibold transition-colors sm:inline",
         isOnLogoTarget
-          ? "text-primary"
-          : "text-muted-foreground group-hover:text-primary",
+          ? "text-act"
+          : "text-muted-foreground group-hover:text-act",
       )}
     >
       {dashboardLabel}
@@ -296,7 +296,7 @@ export function Header() {
                   href={link.href}
                   className={cn(
                     NAV_LINK_CLASS,
-                    isActive ? "text-primary" : "text-muted-foreground",
+                    isActive ? "text-act" : "text-muted-foreground",
                   )}
                   aria-current={isActive ? "page" : undefined}
                 >

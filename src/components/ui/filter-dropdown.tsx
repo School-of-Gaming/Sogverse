@@ -101,7 +101,7 @@ export function FilterDropdown<T extends string>({
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
           onClick={() => (open ? close() : setOpen(true))}
-          className="flex h-10 w-full items-center gap-2 rounded-md border border-border bg-background py-2 pl-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="flex h-10 w-full items-center gap-2 rounded-md border border-border bg-background py-2 pl-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
         >
           {selected?.adornment}
           <span
@@ -178,7 +178,7 @@ export function OptionButton({
     >
       {adornment}
       <span className="min-w-0 flex-1 truncate">{label}</span>
-      {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
+      {active && <Check className="h-4 w-4 shrink-0 text-act" />}
     </button>
   );
 }

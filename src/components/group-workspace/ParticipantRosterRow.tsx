@@ -513,7 +513,7 @@ function GameIdentityCell({
           name: participant.first_name,
           platform: platformName,
         })}
-        className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-50 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group-hover/game:opacity-100"
+        className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-50 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act group-hover/game:opacity-100"
       >
         <Pencil className="h-3 w-3" aria-hidden />
       </button>
@@ -545,7 +545,7 @@ function ContactEmailCell({ email }: { email: string }) {
       onClick={() => void copy(email)}
       aria-label={copied ? t("emailCopied") : t("copyContactEmail", { email })}
       className={cn(
-        "group flex w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-left text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        "group flex w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-left text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
         copied && "text-success",
       )}
     >

@@ -142,7 +142,7 @@ export function GeduPickerSheet({
               className={cn(
                 "rounded-full border border-border px-2 py-0.5 transition-colors",
                 languageFilter === null
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-act/10 text-act"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -158,7 +158,7 @@ export function GeduPickerSheet({
                 className={cn(
                   "rounded-full border border-border px-2 py-0.5 transition-colors",
                   languageFilter === code
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-act/10 text-act"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -250,7 +250,7 @@ function GeduRow({
       className={cn(
         "flex w-full items-start gap-3 rounded-md border border-border p-3 text-left text-sm transition-colors",
         isDisabled ? "cursor-default opacity-60" : "hover:bg-accent",
-        isCurrent && "bg-primary/5 opacity-100"
+        isCurrent && "bg-act/5 opacity-100"
       )}
     >
       <Avatar className="h-9 w-9 shrink-0">

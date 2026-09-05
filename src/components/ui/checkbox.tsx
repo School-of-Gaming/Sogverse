@@ -10,7 +10,7 @@ export type CheckboxProps = Omit<
 /**
  * Themed checkbox primitive. A visually-hidden native `<input type="checkbox">`
  * (keeps keyboard/focus/label behavior for free) overlays a styled box that
- * lights to `primary` and reveals a lucide check when checked.
+ * lights to `act` and reveals a lucide check when checked.
  *
  * Controlled only — every call site passes `checked` — so the check glyph is
  * rendered from the `checked` prop rather than a `peer-checked:` descendant
@@ -35,11 +35,11 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none flex h-4 w-4 items-center justify-center rounded-sm border border-border bg-transparent transition-colors peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-disabled:opacity-50"
+          className="pointer-events-none flex h-4 w-4 items-center justify-center rounded-sm border border-border bg-transparent transition-colors peer-checked:bg-act peer-focus-visible:ring-2 peer-focus-visible:ring-act peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-disabled:opacity-50"
         >
           {checked && (
             <Check
-              className="h-3 w-3 text-primary-foreground"
+              className="h-3 w-3 text-act-foreground"
               strokeWidth={3}
             />
           )}

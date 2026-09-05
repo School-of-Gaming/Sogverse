@@ -41,7 +41,7 @@ import type { ProductType } from "@/types";
  * the same reason — an unnamed palette sitting in the stylesheet is one nobody
  * can tell they are misusing.
  *
- * **The hues clear what admin surfaces actually spend.** Destructive, primary
+ * **The hues clear what admin surfaces actually spend.** Destructive, act
  * and warning, and success are used heavily across `admin/` and are cleared by
  * 25–30°; info appears four times in the whole of it and is treated as cheap
  * ground to sit beside. Saturation and lightness are tuned per hue for roughly
