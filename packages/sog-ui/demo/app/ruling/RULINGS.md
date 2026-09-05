@@ -123,7 +123,12 @@ proposed and to be confirmed on the exemplar before it lands:
 The table's doc comment states the sharing as a decision: one-meaning-per-hue holds per
 surface, admin tables show no Yty elements, and where an admin meets both (the voice
 page's Yty zones) the glyph-and-label rule carries the meaning. Strong/soft follow the
-standing rule (soft for text and glyphs, strong for fills, edges, rings).
+standing rule (soft for text and glyphs, strong for fills, edges, rings). **The table carries a
+glyph slot from day one** (kind → family + glyph): the glyph is the other half of the
+tone grammar, and deciding it in Sogverse while the family is decided in the library
+would split one fact across two places. It makes the icon set a library dependency, and
+the two glyphs it names are the first icons SOG-UI owns, arriving with their consumer; the
+icon vocabulary proper is a later project.
 
 **Still open — the zone palette.** The sixteen voice-zone colours are a gamer-facing
 picker whose requirement is sixteen distinguishable hues; they stay a named palette and

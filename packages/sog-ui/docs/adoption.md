@@ -18,6 +18,59 @@ before merge.
 Adoption order is decided by what each adoption proves for the ones after it, not by
 visual impact alone.
 
+## How the owner rules on an adoption
+
+The theme adoption is the first that needed the owner to decide values rather than
+accept plumbing, and it settled the shape every later adoption reuses — faces, headings,
+icons, spacing, each of which will put a set of decisions in front of the owner. The
+shape, in the order it runs:
+
+1. **Read what the brand says about the topic before anything is built**, including what
+   it does not say. The Guidebook is light-first and says almost nothing about dark
+   grounds; knowing that up front is what made the dark theme a declared reading rather
+   than a series of surprises. Bring the exact words, not a paraphrase.
+2. **Enumerate the surface with a regeneration command.** Every value Sogverse defines
+   for the topic, every place it spends one, counted. The count is what turns "we should
+   look at colour" into a finite list, and re-running the command at the end is the proof
+   the sweep is complete.
+3. **Find and neutralise anything that has been hiding state.** Colour had a seven-month
+   bug that made every coloured edge invisible; rulings made before it was found were made
+   on renders that lied. Before the owner rules, the thing on screen has to be the thing
+   in source, and a bug that hides part of it is fixed in a way that changes nothing the
+   owner has seen (everything seen before the fix is correct; what the fix would newly
+   reveal is deleted and returns only after it is seen in context).
+4. **Build a temporary ruling page in the demo, held to the demo's own rule.** A thing
+   and its name and nothing else: no prose, no ratios, no pass marks. Every rationale goes
+   into a doc comment in the page's source. Every token is shown in use, reproduced
+   class-for-class from the component that spends it and labelled with the component and
+   a page it appears on; a rename is drawn twice from one recipe so the eye confirms
+   nothing moves; a value change is drawn today beside proposed. A swatch with a name
+   under it is not a decision the owner can make.
+5. **Keep a ledger beside the page.** One entry per question: what is asked, what is
+   shown, the ruling, its status (`open`, `ruled`, `landed`). The owner rules in shorthand
+   in rounds; the ledger is the record, so no round depends on the conversation that
+   produced it, and a fresh session picks it up from disk.
+6. **Ruled means landed.** A ruling is applied in full as it is made — the library value
+   with its doc comment and its measured pairings, the demo's living floor, the Sogverse
+   call sites and stylesheet — and the ruling page shrinks by exactly that much. A value
+   still needed as a comparison stays visible, drawn from the library rather than as a
+   question. Nothing waits for a later sweep, which is the failure of every review sheet
+   that came before this one.
+7. **Codify the rules and their reasons in the source, not the values alone.** Each token
+   says what it is for, what it is never for, and why. Where the theme departs from the
+   brand's rules, the departure is declared as a decision with its justification, or it is
+   flagged open for the owner; no justification is invented, and no source is cited.
+8. **Keep the by-products.** A sweep turns up sites where a deleted thing had been the
+   only signal of a state, or a construct with no library home yet. They go into the
+   ledger as a queue for the library, never as fixes in Sogverse.
+9. **Delete the page and the ledger before merge**, in one commit, once every entry is
+   landed and the living demo shows the result. Their history stays in git.
+
+Two habits that made the rounds cheap: the owner rules from the page, never from a
+paragraph; and the session records, delegates and relays, holding the ledger rather than
+the diff, so the owner's context and the session's both survive the number of rounds a
+real topic takes.
+
 ## The order
 
 ### 1. The theme
