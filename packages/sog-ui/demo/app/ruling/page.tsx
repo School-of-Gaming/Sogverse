@@ -3,7 +3,9 @@
  *
  * **Temporary, and linked from nowhere.** It exists so one set of open
  * questions can be ruled on by looking, and it is deleted with this directory
- * once the ruling is made.
+ * once the last of them is ruled. It shrinks as rulings land: a question that
+ * has been decided and built leaves the page, and what stays is only what is
+ * still being asked.
  *
  * It obeys the demo's own rule: it is seen, not read. Each question is a title,
  * the things it is about, and their names — a token, a hex, a `today` /

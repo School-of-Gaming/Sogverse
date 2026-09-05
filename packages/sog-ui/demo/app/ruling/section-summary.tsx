@@ -5,21 +5,16 @@
  * has, and the verdict in one phrase. Every reason behind a verdict is in the
  * doc comments in `inventory.ts`, beside the values it explains.
  *
- * The neutrals and the signature pair have left the table. Those rows are ruled
- * and landed — the tokens are the library's now — so the gallery that made
- * their names legible has gone with them. What is left is what is still open:
- * the status colours, the four Yty families, the categorical palettes, and the
+ * The neutrals, the signature pair and the four Yty families have left the
+ * table. Those rows are ruled and landed — the tokens are the library's now —
+ * so the gallery that made their names legible has gone with them. The four
+ * product-type colours have left it with nothing in their place: a product kind
+ * takes a Yty family now, so it is not a colour Sogverse defines. What is left
+ * is what is still open: the status colours, the voice-zone palette, and the
  * colours with no token behind them.
  */
 
-import {
-  LOOSE_COLOURS,
-  PRODUCT_FAMILY,
-  PRODUCT_PALETTE,
-  STATUS_ROWS,
-  YTY_ROWS,
-  ZONE_PALETTE,
-} from "./inventory";
+import { LOOSE_COLOURS, STATUS_ROWS, ZONE_PALETTE } from "./inventory";
 import { Caps, Question } from "./parts";
 
 interface Row {
@@ -97,27 +92,12 @@ const STATUS_SUMMARY: readonly Row[] = STATUS_ROWS.flatMap((status) => [
   },
 ]);
 
-const YTY_SUMMARY: readonly Row[] = YTY_ROWS.map((family) => ({
-  token: `yty-${family.id}`,
-  hex: family.today,
-  uses: family.uses,
-  verdict: `retune → ${family.name.toLowerCase()} strong / soft`,
+const PALETTE_SUMMARY: readonly Row[] = ZONE_PALETTE.map((entry) => ({
+  token: entry.token,
+  hex: entry.hex,
+  uses: 5,
+  verdict: "admit",
 }));
-
-const PALETTE_SUMMARY: readonly Row[] = [
-  ...PRODUCT_PALETTE.map((entry) => ({
-    token: entry.token,
-    hex: entry.hex,
-    uses: 2,
-    verdict: `delete → yty-${PRODUCT_FAMILY[entry.token]}`,
-  })),
-  ...ZONE_PALETTE.map((entry) => ({
-    token: entry.token,
-    hex: entry.hex,
-    uses: 5,
-    verdict: "admit",
-  })),
-];
 
 const LOOSE_SUMMARY: readonly Row[] = LOOSE_COLOURS.map((colour) => ({
   token: `${colour.label} — ${colour.where}`,
@@ -131,8 +111,7 @@ export function SummarySection() {
     <Question n={0} title="The inventory">
       <div className="space-y-10">
         <Group title="Status" rows={STATUS_SUMMARY} />
-        <Group title="The four Yty families" rows={YTY_SUMMARY} />
-        <Group title="Categorical palettes" rows={PALETTE_SUMMARY} />
+        <Group title="The voice-zone palette" rows={PALETTE_SUMMARY} />
         <Group title="Colours with no token behind them" rows={LOOSE_SUMMARY} />
       </div>
     </Question>

@@ -2,9 +2,12 @@
  * Every colour Sogverse still defines, what it is worth, and what is proposed
  * for it.
  *
- * The neutrals and the signature pair have left this file: those rows are ruled
- * and landed, so their values are the library's and are imported from
- * `src/tokens/brand.ts` wherever a section below still needs one.
+ * The neutrals, the signature pair and the four Yty families have left this
+ * file: those rows are ruled and landed, so their values are the library's and
+ * are imported from `src/tokens/brand.ts` wherever a section below still needs
+ * one. The four product-type colours have left it too, with nothing to replace
+ * them — a product kind takes a Yty family now, decided in the library's tone
+ * grammar, so it is no longer a colour Sogverse defines.
  *
  * A temporary file behind a temporary page, deleted with it once the ruling is
  * made. Nothing here is a token and nothing here is imported by the library —
@@ -136,76 +139,6 @@ export const STATUS_ROWS: readonly StatusRow[] = [
   },
 ];
 
-/** Sogverse's four Yty hues today, and the library family that replaces each. */
-export interface YtyRow {
-  readonly id: string;
-  readonly name: string;
-  readonly description: string;
-  /** Sogverse's single hue, spent at alpha steps. */
-  readonly today: string;
-  readonly strong: string;
-  readonly soft: string;
-  readonly uses: number;
-}
-
-/**
- * The four elements.
- *
- * Names and descriptions are the canonical English from Sogverse's Yty
- * constants; the app renders the same words from its message catalogue, so this
- * is the card's real copy rather than filler.
- *
- * Every one of the four changes hue family, not shade: Harmony green to pink,
- * Glow amber to green, Valor pink to orange, Wit violet to blue. Two of
- * today's four are also collisions the library's set removes — today's Glow
- * #FBBF24 sits a few degrees from the brand amber, and today's Wit #A78BFA is a
- * violet beside the brand's own.
- *
- * Today each hue is spent at four alpha steps: a tile at 10%, a gradient from
- * 10% to 5%, a border at 30%, and the hue itself as text and as a ring. The
- * library bans the alpha step outright, so the proposed recipe is a neutral
- * ground, the strong variant at full value on the edge and the ring, and the
- * soft variant carrying ink and glyph.
- */
-export const YTY_ROWS: readonly YtyRow[] = [
-  {
-    id: "harmony",
-    name: "Harmony",
-    description: "Your relationship with yourself",
-    today: "#34D399",
-    strong: "#F55B9A",
-    soft: "#FA7FA3",
-    uses: 8,
-  },
-  {
-    id: "glow",
-    name: "Glow",
-    description: "Your relationship with others",
-    today: "#FBBF24",
-    strong: "#1AB061",
-    soft: "#6AC66B",
-    uses: 8,
-  },
-  {
-    id: "valor",
-    name: "Valor",
-    description: "Your relationship with society",
-    today: "#FB7185",
-    strong: "#FD700D",
-    soft: "#FF993D",
-    uses: 8,
-  },
-  {
-    id: "wit",
-    name: "Wit",
-    description: "Your relationship with technology",
-    today: "#A78BFA",
-    strong: "#3A71DE",
-    soft: "#4DB3F5",
-    uses: 8,
-  },
-];
-
 /** A named entry in a categorical palette. */
 export interface PaletteEntry {
   readonly token: string;
@@ -214,59 +147,14 @@ export interface PaletteEntry {
 }
 
 /**
- * The four admin product types, as Sogverse colours them today — two utility
- * uses each, a glyph tint and a tile wash.
- *
- * **Ruled: these four categorical colours are dropped.** A product kind is a
- * fact, and a fact takes a Yty family; the mapping below is the first row of
- * the tone grammar table. Colour-coding product types is an admin-only
- * operational convenience and is never shown to a family, which is what lets
- * the two meanings share a hue: one-meaning-per-hue holds per surface, an admin
- * table shows no Yty elements, and where an admin does meet both — the voice
- * page's Yty zones — the glyph-and-label rule carries the meaning.
- *
- * These hexes stay here because the inventory still has to name what is being
- * dropped, and because the exemplar draws them in the "today" column.
- */
-export const PRODUCT_PALETTE: readonly PaletteEntry[] = [
-  { token: "product-consumer-club", label: "Consumer club", hex: "#20C4E9" },
-  { token: "product-municipality-club", label: "Municipality club", hex: "#EB70D0" },
-  { token: "product-camp", label: "Camp", hex: "#74C639" },
-  { token: "product-event", label: "Event", hex: "#938EF6" },
-];
-
-/**
- * Which Yty family each product kind takes, and why.
- *
- * - **camp → Valor.** The brand's own content coding already puts challenges,
- *   camps and courage under Valor, so this row is not a new decision, it is the
- *   existing one applied.
- * - **consumer club → Harmony.** The relationship with people: the community a
- *   family chooses for itself, week after week.
- * - **municipality club → Wit.** The relationship with technology and learning:
- *   the school-hours offering, bought by a municipality.
- * - **event → Glow.** Growth and milestones: the one-off occasion.
- *
- * Strong and soft follow the standing rule wherever these are spent — soft
- * carries text and glyphs, strong carries fills, edges and rings — so the key
- * rail's tile derives from strong and the glyph inside it is soft.
- */
-export const PRODUCT_FAMILY: Record<string, string> = {
-  "product-consumer-club": "harmony",
-  "product-municipality-club": "wit",
-  "product-camp": "valor",
-  "product-event": "glow",
-};
-
-/**
  * The sixteen voice-zone colours a moderator picks from — four utility uses
  * each plus a glow variable.
  *
  * Proposed unchanged. The palette is deliberately allowed to pass close to a
  * family hue, on the grounds that a zone is its own zone; the hue strip is
- * there to test that claim. The three worth reading first are the camp's lime
- * against Glow's green, the consumer club's cyan against Wit's soft blue, and
- * the amber zone against the brand amber and the warning colour.
+ * there to test that claim. The two worth reading first are the lime zone
+ * against Glow's green and the amber zone against the brand amber and the
+ * warning colour.
  */
 export const ZONE_PALETTE: readonly PaletteEntry[] = [
   { token: "zone-red", label: "Red", hex: "#F4504E" },

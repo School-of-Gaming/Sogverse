@@ -51,26 +51,12 @@
   --color-warning: #E7B008;
   --color-warning-foreground: #121212;
 
-  /* Product-type categorical palette — the four admin product types, as a
-     colour each. The reasoning that placed them, and the rule that a surface
-     naming a type inherits both its glyph and its colour from one map, live
-     with that map in src/components/admin/dashboard/. What matters here is
-     that these are the palette's own tokens rather than borrowed ramp entries:
-     they are placed to clear the hues admin surfaces actually spend, so that no
-     categorical colour can be mistaken for a state colour. Each hue is tuned
-     for roughly equal apparent brightness on the dark ground rather than for
-     numerically equal saturation, the same way the voice-zone ring below is. */
-  --color-product-consumer-club: #20C4E9;      /* cyan */
-  --color-product-municipality-club: #EB70D0;  /* magenta */
-  --color-product-camp: #74C639;               /* lime */
-  --color-product-event: #938EF6;              /* indigo */
-
   /* Voice-zone palette — the 16 colors a moderator picks for a custom voice
      zone (src/lib/constants/voice-zones.ts maps these to tile/glyph/ring/glow/
      solid classes). A full, even sweep around the color wheel — red → orange →
      yellow → green → teal → blue → violet → pink — so the picker reads as a
      vibrant rainbow. Spanning the spectrum is the priority: a few hues land
-     near a fixed Yty element color above, which is fine — the Yty zones are
+     near a fixed Yty element color, which is fine — the Yty zones are
      their own zones, so a custom zone sharing a similar hue doesn't collide.
      Lightness sits ~L55-70% so each reads as a glyph on the dark ground. */
   --color-zone-red: #f4504e;

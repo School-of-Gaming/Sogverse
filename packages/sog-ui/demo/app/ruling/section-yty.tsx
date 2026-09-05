@@ -1,24 +1,25 @@
 /**
- * Question 1 — the four Yty families.
+ * Question 1 — how the Yty pair is spent.
  *
- * Three columns per element, because the middle one has never been on screen:
- * Sogverse's stylesheet carried an unlayered `* { border-color }` rule that
- * outranked every `border-*` utility, so the authored `border-yty-harmony/30`
- * always drew grey. The left column is what a reader has been looking at, the
- * middle is what the code has always said, and the right is the proposal.
+ * **The tokens are ruled and landed.** The eight hues, four strong and four
+ * soft, are the library's, and Sogverse's four single-value `--color-yty-*` are
+ * gone. What is left open is the recipe: how a surface spends the pair it has
+ * been given.
  *
- * Today each hue is spent at alpha steps — 10% for the tile, 30% for the edge,
- * the hue itself as text and ring. Those steps are drawn with a real `rgb()`
- * alpha rather than a pre-mixed hex, so what is on screen is what the browser
- * composites and the dulling is visible rather than asserted.
+ * Two columns per construct. **Today** is what the app renders right now — the
+ * pre-library recipe, pointed at the new hues but still spending them at alpha
+ * steps: a tile at 10%, the soft variant as glyph and as ink, and a neutral
+ * edge. Those steps are drawn with a real `rgb()` alpha rather than a pre-mixed
+ * hex, so what is on screen is what the browser composites and the dulling is
+ * visible rather than asserted.
  *
- * The proposed recipe is the one the library's grammar implies: a neutral
- * ground, the strong variant at full value on the edge and the ring, the soft
- * variant carrying ink and glyph. Nothing arrives at a fraction of itself.
+ * **Proposed** is the recipe the library's grammar implies: a neutral ground,
+ * the strong variant at full value on the edge and the ring, the soft variant
+ * carrying ink and glyph. Nothing arrives at a fraction of itself.
  *
- * The zone tile is the second surface spending these hues, at 15%. Its border
- * is not part of the border bug — an active zone is marked with the neutral ink
- * edge and an inset glow — so two columns are enough there.
+ * No swatches here. The hues are the library's now, so a strip of them would be
+ * a foundations floor drawn on a ruling page; what this question needs on screen
+ * is the two constructs that spend them.
  */
 
 import {
@@ -36,14 +37,29 @@ import {
   type GlyphName,
 } from "./parts";
 import { alpha } from "./colour";
-import { YTY_ROWS } from "./inventory";
+import { YTY_FAMILIES, type YtyFamilyId } from "../../../src/tokens/brand";
 
-const ELEMENT_GLYPH: Record<string, GlyphName> = {
-  harmony: "heart",
-  glow: "sun",
-  valor: "sword",
-  wit: "brain",
-};
+/**
+ * The element card's real copy.
+ *
+ * The names come from the library; the one-line descriptions are the canonical
+ * English the app renders from its message catalogue, which the library has no
+ * word for and no reason to.
+ */
+const ELEMENTS: readonly {
+  id: YtyFamilyId;
+  description: string;
+  glyph: GlyphName;
+}[] = [
+  {
+    id: "harmony",
+    description: "Your relationship with yourself",
+    glyph: "heart",
+  },
+  { id: "glow", description: "Your relationship with others", glyph: "sun" },
+  { id: "valor", description: "Your relationship with society", glyph: "sword" },
+  { id: "wit", description: "Your relationship with technology", glyph: "brain" },
+];
 
 /**
  * The element card as `about/yty-section.tsx` composes it: a two-pixel border,
@@ -128,42 +144,25 @@ function ZoneTile({
 
 export function YtySection() {
   return (
-    <Question n={1} title="The four Yty families">
-      {YTY_ROWS.map((family) => {
-        const glyph = ELEMENT_GLYPH[family.id];
+    <Question n={1} title="How a Yty family is spent">
+      {ELEMENTS.map((element) => {
+        const family = YTY_FAMILIES[element.id];
         return (
-          <Case key={family.id} title={family.name}>
-            <Compare columns={3}>
-              <Panel label="Today, as rendered">
+          <Case key={element.id} title={family.name}>
+            <Compare columns={2}>
+              <Panel label="Today">
                 <Exemplar
                   file="about/yty-section.tsx"
                   page="/about, the Four Yty-Elements grid"
                 >
                   <ElementCard
                     name={family.name}
-                    description={family.description}
-                    glyph={glyph}
+                    description={element.description}
+                    glyph={element.glyph}
                     edge={EDGE}
-                    tile={alpha(family.today, 0.1)}
-                    glyphColour={family.today}
-                    accent={family.today}
-                  />
-                </Exemplar>
-              </Panel>
-
-              <Panel label="Today, as authored">
-                <Exemplar
-                  file="about/yty-section.tsx"
-                  page="the same card, with its authored edge"
-                >
-                  <ElementCard
-                    name={family.name}
-                    description={family.description}
-                    glyph={glyph}
-                    edge={alpha(family.today, 0.3)}
-                    tile={alpha(family.today, 0.1)}
-                    glyphColour={family.today}
-                    accent={family.today}
+                    tile={alpha(family.strong, 0.1)}
+                    glyphColour={family.soft}
+                    accent={family.soft}
                   />
                 </Exemplar>
               </Panel>
@@ -175,8 +174,8 @@ export function YtySection() {
                 >
                   <ElementCard
                     name={family.name}
-                    description={family.description}
-                    glyph={glyph}
+                    description={element.description}
+                    glyph={element.glyph}
                     edge={family.strong}
                     tile={GROUND}
                     glyphColour={family.soft}
@@ -197,20 +196,20 @@ export function YtySection() {
               page="a club's voice room — the zone list"
             >
               <div className="space-y-2">
-                {YTY_ROWS.map((family) => (
+                {ELEMENTS.map((element) => (
                   <ZoneTile
-                    key={family.id}
-                    label={family.name}
-                    glyph={ELEMENT_GLYPH[family.id]}
+                    key={element.id}
+                    label={YTY_FAMILIES[element.id].name}
+                    glyph={element.glyph}
                     edge={EDGE}
-                    tile={alpha(family.today, 0.15)}
-                    glyphColour={family.today}
+                    tile={alpha(YTY_FAMILIES[element.id].strong, 0.1)}
+                    glyphColour={YTY_FAMILIES[element.id].soft}
                   />
                 ))}
                 <ZoneTile
                   label="Clubhouse"
                   glyph="home"
-                  edge={INK}
+                  edge={EDGE}
                   tile={alpha(INK, 0.1)}
                   glyphColour={INK}
                 />
@@ -224,14 +223,14 @@ export function YtySection() {
               page="the same zone list, on the no-alpha recipe"
             >
               <div className="space-y-2">
-                {YTY_ROWS.map((family) => (
+                {ELEMENTS.map((element) => (
                   <ZoneTile
-                    key={family.id}
-                    label={family.name}
-                    glyph={ELEMENT_GLYPH[family.id]}
-                    edge={family.strong}
+                    key={element.id}
+                    label={YTY_FAMILIES[element.id].name}
+                    glyph={element.glyph}
+                    edge={YTY_FAMILIES[element.id].strong}
                     tile={GROUND}
-                    glyphColour={family.soft}
+                    glyphColour={YTY_FAMILIES[element.id].soft}
                   />
                 ))}
                 <ZoneTile

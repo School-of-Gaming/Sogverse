@@ -106,7 +106,7 @@ accent-hover question (accent vs muted as the hover fill).
 library unchanged, as named palettes. Shown beside the Yty and status sets for
 collisions (the two cyans are ~2° apart).
 
-**Ruling (2026-09-05), product types:** _ruled_ (exemplar approved) — **the four categorical product-type
+**Ruling (2026-09-05), product types:** _landed_ — **the four categorical product-type
 colours are dropped. Product kind is a fact that takes a Yty family, and the mapping is
 the first row of the library's tone grammar table**, defined in the foundations tier
 with the admin product-type presentation as its consumer. Colour-coding product types is
@@ -236,11 +236,11 @@ of its own; act and world replacing primary and secondary everywhere; the colour
 and their reasons codified in `brand.ts`; the deviations doc deleted; the process written
 into `packages/sog-ui/docs/adoption.md`.
 
-**In flight when the owner left:** the product-type landing (the tone grammar table with
+**Landed after the owner left (2026-09-06):** the product-type landing (the tone grammar table with
 family + glyph in `packages/sog-ui/src/tokens/grammar.ts`, the admin presentation map
 reading it, the four categorical tokens deleted) and the page cleanup for §2 and §5. If
-`git status` shows those files uncommitted, the agent's report was not yet acted on:
-verify the gates and commit.
+`git status` is clean and `git log` shows it, nothing is outstanding from that pass; the demo
+server was stopped at the end of the day and needs starting again.
 
 **Open on the page, in the order they were going to be taken:** the hover fill (§4,
 accent vs muted); the Yty recipe (§2); the status set (§3); the zone palette (§5); scrim

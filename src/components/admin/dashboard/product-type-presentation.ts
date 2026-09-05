@@ -1,29 +1,29 @@
 import {
-  CalendarDays,
-  Joystick,
-  School,
-  Tent,
-  type LucideIcon,
-} from "lucide-react";
+  PRODUCT_KIND_GRAMMAR,
+  type GrammarRow,
+  type ProductKindId,
+  type YtyFamilyId,
+} from "@sog/ui";
+import type { LucideIcon } from "lucide-react";
 import type { ProductType } from "@/types";
 
 /**
  * **The site-wide product-type signal: an icon and a colour, together.**
  *
- * This map is the single place either half is decided, and it is deliberately
- * more than a dashboard detail — it establishes the convention. A surface that
- * later needs to say "this is a camp" inherits *both* halves from here rather
- * than picking a colour of its own; a second mapping would mean the same green
- * meaning camps on one page and something else on the next, which is precisely
- * the failure a categorical palette exists to prevent.
+ * Neither half is decided here. A product kind is a fact, and a fact takes a
+ * Yty family: the mapping from kind to family *and* to glyph is the first row
+ * of SOG-UI's tone grammar (`PRODUCT_KIND_GRAMMAR`), in the library's
+ * foundations tier, with this module as its consumer. What is left here is the
+ * translation of that fact into what an admin surface paints — the family's own
+ * utilities — and the message key that names the type in the reader's locale,
+ * which is the one half of the signal the library has no word for.
  *
- * **The icons are not new.** The admin sidebar already taught this grammar —
- * Joystick for consumer clubs, School for municipality clubs, Tent for camps,
- * CalendarDays for events — and an admin has been navigating by those glyphs
- * since before this page existed. Reusing them means the dashboard is legible
- * with no legend at all to anyone who has clicked the sidebar once, and it means
- * the key on this page teaches something that transfers rather than something
- * local to it.
+ * **Colour-coding product types is an admin-only operational convenience and is
+ * never shown to a family.** That is what lets these hues be the Yty families'
+ * own rather than a categorical palette of their own: one-meaning-per-hue holds
+ * per surface, an admin table shows no Yty elements, and where an admin does
+ * meet both the glyph-and-label rule carries the meaning. The reason each kind
+ * takes the family it takes lives with the table in the library.
  *
  * **Icon and colour travel as a pair, everywhere.** Either alone is weaker than
  * both: a colour is fast but needs a key, and a glyph is self-describing but
@@ -31,32 +31,15 @@ import type { ProductType } from "@/types";
  * — so a chip, a product card, a filter chip, a feed row and the key itself all
  * carry the same tinted glyph, and none of them carries a bare swatch.
  *
- * **The four colours are the palette's own, named for the concept** — the
- * `--product-*` tokens in `globals.css` — rather than drawn from a
- * general-purpose ramp. A ramp promises nothing about what its entries mean, so
- * an entry picked for one slot of it is free to hold the same value as a state
- * colour, and a categorical colour a reader can mistake for a state colour is
- * worse than no colour at all: they have to check which of the two they are
- * looking at every time. A chart that later wants a ramp declares its own for
- * the same reason — an unnamed palette sitting in the stylesheet is one nobody
- * can tell they are misusing.
- *
- * **The hues clear what admin surfaces actually spend.** Destructive, act
- * and warning, and success are used heavily across `admin/` and are cleared by
- * 25–30°; info appears four times in the whole of it and is treated as cheap
- * ground to sit beside. Saturation and lightness are tuned per hue for roughly
- * equal apparent brightness on the dark background rather than being
- * numerically equal — the hues that are dark by nature carry more of both — so
- * no one type's glyph reads fainter than the rest at a glance.
- *
- * **Only the ordering is a choice.** The two *club* types take the pair
- * furthest apart, because they are the two that co-occur most in a dense week
- * row and are therefore the pair it matters most to tell apart at a glance.
+ * **Strong and soft follow the library's standing rule**: soft carries text and
+ * glyphs, strong carries fills, edges and rings. The tile is the strong variant
+ * at chip scale, which is the icon-accent tile the library's alpha ban names as
+ * an exemption.
  *
  * **Every class is written out in full.** Tailwind scans source text for
- * complete class names, so a template-built `bg-product-${type}` compiles to
- * nothing at all — the map has to hold the literal strings even though that
- * makes it repetitive.
+ * complete class names, so a class assembled from a family id at render time
+ * compiles to nothing at all — the map below has to hold the literal strings
+ * even though that makes it repetitive.
  */
 /**
  * The message-catalog name of a product type, under `admin.products.types`.
@@ -72,15 +55,49 @@ export type ProductTypeMessageKey =
   | "camp"
   | "event";
 
-export interface ProductTypePresentation {
+/** How a Yty family is spent on an admin surface: the glyph's ink, and the tile behind it. */
+interface FamilyClasses {
+  /** The family's soft variant as a foreground colour — how the glyph is tinted. */
+  text: string;
+  /** A chip-scale wash of the family's strong variant, for the tile the glyph sits in. */
+  tint: string;
+}
+
+/** The four families, each as the pair of utilities an admin surface draws it with. */
+const FAMILY_CLASSES: Record<YtyFamilyId, FamilyClasses> = {
+  harmony: { text: "text-yty-harmony-soft", tint: "bg-yty-harmony-strong/15" },
+  glow: { text: "text-yty-glow-soft", tint: "bg-yty-glow-strong/15" },
+  valor: { text: "text-yty-valor-soft", tint: "bg-yty-valor-strong/15" },
+  wit: { text: "text-yty-wit-soft", tint: "bg-yty-wit-strong/15" },
+};
+
+/**
+ * The library's table, re-keyed by Sogverse's own enum — and the first half of
+ * the check that the two agree.
+ *
+ * SOG-UI depends on nothing in Sogverse, so it spells the four kinds as a
+ * string-literal union of its own rather than importing the generated
+ * `product_type`. This annotation is what stops the two drifting: a kind added
+ * to the database enum and not to the grammar fails to compile here. The
+ * mirror-image direction — a grammar key the enum does not have — is caught by
+ * `MESSAGE_KEYS` below, which is keyed by the library's union and holds the
+ * same four literals `PRODUCT_TYPE_PRESENTATION` is checked against.
+ */
+const GRAMMAR: Record<ProductType, GrammarRow> = PRODUCT_KIND_GRAMMAR;
+
+/** Which `admin.products.types` entry names each type. Keyed by the library's union — see above. */
+const MESSAGE_KEYS: Record<ProductKindId, ProductTypeMessageKey> = {
+  consumer_club: "consumerClub",
+  municipality_club: "municipalityClub",
+  camp: "camp",
+  event: "event",
+};
+
+export interface ProductTypePresentation extends FamilyClasses {
   /** Which `admin.products.types` entry names this type. */
   i18nKey: ProductTypeMessageKey;
-  /** The glyph, borrowed from the admin sidebar's existing nav grammar. */
+  /** The glyph, from the library's tone grammar. */
   icon: LucideIcon;
-  /** The hue as a foreground colour — how the glyph is tinted. */
-  text: string;
-  /** A wash of the same hue, for the tile the glyph sits in on the key. */
-  tint: string;
 }
 
 export const PRODUCT_TYPE_PRESENTATION: Record<
@@ -88,28 +105,24 @@ export const PRODUCT_TYPE_PRESENTATION: Record<
   ProductTypePresentation
 > = {
   consumer_club: {
-    i18nKey: "consumerClub",
-    icon: Joystick,
-    text: "text-product-consumer-club",
-    tint: "bg-product-consumer-club/15",
+    i18nKey: MESSAGE_KEYS.consumer_club,
+    icon: GRAMMAR.consumer_club.glyph,
+    ...FAMILY_CLASSES[GRAMMAR.consumer_club.family],
   },
   municipality_club: {
-    i18nKey: "municipalityClub",
-    icon: School,
-    text: "text-product-municipality-club",
-    tint: "bg-product-municipality-club/15",
+    i18nKey: MESSAGE_KEYS.municipality_club,
+    icon: GRAMMAR.municipality_club.glyph,
+    ...FAMILY_CLASSES[GRAMMAR.municipality_club.family],
   },
   camp: {
-    i18nKey: "camp",
-    icon: Tent,
-    text: "text-product-camp",
-    tint: "bg-product-camp/15",
+    i18nKey: MESSAGE_KEYS.camp,
+    icon: GRAMMAR.camp.glyph,
+    ...FAMILY_CLASSES[GRAMMAR.camp.family],
   },
   event: {
-    i18nKey: "event",
-    icon: CalendarDays,
-    text: "text-product-event",
-    tint: "bg-product-event/15",
+    i18nKey: MESSAGE_KEYS.event,
+    icon: GRAMMAR.event.glyph,
+    ...FAMILY_CLASSES[GRAMMAR.event.family],
   },
 };
 
