@@ -61,7 +61,7 @@ function PolicyText({ text }: { text: string }) {
           <Link
             key={i}
             href={segment.href}
-            className="rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             {segment.text}
           </Link>

@@ -60,7 +60,7 @@ export function SpokenLanguageRadios({
               "inline-flex cursor-pointer items-center gap-2 rounded-full border py-1.5 pl-2.5 pr-3.5 text-sm transition-colors",
               selected
                 ? "border-primary bg-primary/5"
-                : "border-input hover:border-foreground/30"
+                : "border-border hover:border-foreground/30"
             )}
           >
             {/* A visible native radio, as every other radio group in this form

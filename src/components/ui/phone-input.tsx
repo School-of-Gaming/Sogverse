@@ -40,7 +40,7 @@ export function InternationalPhoneInput({
         className ??
         // text-base (16px): matches the shared Input — a sub-16px field makes
         // iOS Safari auto-zoom on focus and horizontal-scroll the page.
-        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+        "flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-base ring-offset-background focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2"
       }
     />
   );

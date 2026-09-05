@@ -135,7 +135,7 @@ export function ChatMessageActions({
           // position is what lets the hand learn it. Straddling the boundary
           // is what visually attaches the bar to *this* row at full width,
           // and keeps it off the row's own first line on narrow screens.
-          "absolute -top-3 right-0 flex items-center gap-0.5 rounded-md border border-border bg-popover p-0.5 shadow-sm",
+          "absolute -top-3 right-0 flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5 shadow-sm",
           // Present for a pointer on hover, for a finger on a tap, for a
           // keyboard on focus, and whenever one of its own overlays is up —
           // otherwise opening the menu would hide the button that opened it.
@@ -191,7 +191,7 @@ export function ChatMessageActions({
 
       {menuOpen && (
         <ChatPopover anchor={menuAnchor} onClose={() => setMenuAnchor(null)}>
-          <div className="min-w-48 rounded-md border border-border bg-popover p-1 shadow-lg">
+          <div className="min-w-48 rounded-md border border-border bg-card p-1 shadow-lg">
             {capabilities.canEdit && (
               <MenuItem
                 icon={<Pencil className="h-3.5 w-3.5" aria-hidden />}
@@ -293,7 +293,7 @@ function ActionButton({
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {children}
     </button>

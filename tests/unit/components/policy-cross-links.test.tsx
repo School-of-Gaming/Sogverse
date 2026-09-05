@@ -398,7 +398,7 @@ describe("the rendered page", () => {
 
   it("links the document's name and leaves the sentence around it alone", () => {
     expect(html).toContain(
-      `<a class="rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href="${ROUTES.robloxSafeguarding}">Child Safeguarding Policy</a>, available upon request.`,
+      `<a class="rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" href="${ROUTES.robloxSafeguarding}">Child Safeguarding Policy</a>, available upon request.`,
     );
   });
 

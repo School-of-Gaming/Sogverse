@@ -278,7 +278,7 @@ export function ParticipantPickerSheet({
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="h-20 animate-pulse rounded-lg border border-input bg-muted"
+                  className="h-20 animate-pulse rounded-lg border border-border bg-muted"
                 />
               ))}
             </div>

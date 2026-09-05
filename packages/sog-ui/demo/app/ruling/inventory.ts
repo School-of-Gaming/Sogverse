@@ -1,6 +1,10 @@
 /**
- * Every colour Sogverse defines today, what it is worth, and what is proposed
+ * Every colour Sogverse still defines, what it is worth, and what is proposed
  * for it.
+ *
+ * The neutrals and the signature pair have left this file: those rows are ruled
+ * and landed, so their values are the library's and are imported from
+ * `src/tokens/brand.ts` wherever a section below still needs one.
  *
  * A temporary file behind a temporary page, deleted with it once the ruling is
  * made. Nothing here is a token and nothing here is imported by the library —
@@ -12,20 +16,16 @@
  * what may appear on screen: the token, its value, its live use count and a
  * one-phrase verdict.
  *
- * **Where the "today" hexes come from.** Sogverse authors its theme as HSL
+ * **Where the "today" hexes come from.** Sogverse authored its theme as HSL
  * triples in `src/app/globals.css`. Each hex below is that triple converted at
- * eight bits per channel, which is what the browser renders — so `0 0% 15%` is
- * `#262626` here rather than a value read off a screenshot.
+ * eight bits per channel, which is what the browser renders, rather than a
+ * value read off a screenshot.
  *
  * **Where the use counts come from.** Regenerate them rather than trusting the
  * numbers, which are a snapshot:
  *
  *     grep -rEoh "(bg|text|border|ring|from|to|via|fill|stroke|outline|shadow|decoration|divide|caret|placeholder|accent)-<token>(/[0-9]+)?([^a-zA-Z0-9/_-]|$)" src --include=*.tsx --include=*.ts | wc -l
  *     grep -rEoh "var\(--color-<token>\)" src --include=*.tsx --include=*.ts --include=*.css | wc -l
- *
- * **Nothing is unused.** The inventory allowed for a delete-because-nobody-
- * reaches-it bucket and the bucket came back empty, down to the single use of
- * `sidebar-primary`.
  *
  * **The bug that changes what "today" means.** `src/app/globals.css` carried an
  * unlayered `* { border-color }` rule, which outranks every `border-*` utility
@@ -35,110 +35,6 @@
  * a coloured border is authored the page draws three columns: what has been on
  * screen, what the code always said, and what is proposed.
  */
-
-export interface TokenRow {
-  /** The Tailwind token, without the `--color-` prefix. */
-  readonly token: string;
-  /** What the browser paints for it today. */
-  readonly today: string;
-  /** Utility-class uses in `src/`, at the time of writing. */
-  readonly uses: number;
-  /** The proposal, in one phrase: `keep`, `rename → x`, `delete`, `retune`, `ruling`. */
-  readonly verdict: string;
-}
-
-/**
- * Sogverse's neutrals and its signature pair.
- *
- * Nine of these are already the library's, byte for byte: ground, ink, card,
- * muted ink, border, the amber pair and the violet pair. Sogverse keeps
- * fractional HSL triples for the two brand hues precisely so they round-trip to
- * the authored hexes, which is why they land exactly rather than nearly.
- *
- * Two are real values the library does not have and needs. `muted` #262626 and
- * `accent` #212121 are the two lifts above the card and below the border, and
- * they carry 241 uses between them; `accent` measures barely above 1:1 against
- * the card it lifts from, which is the reason the greys section draws a hover
- * row on each of them rather than quoting the number.
- *
- * The rest are second names for a colour the library already ships, and a
- * rename changes no pixel: `popover` is byte-identical to `card` (a popover is
- * a card that floats), `input` to `border` (a field's edge is an edge), `ring`
- * to `primary` (the focus ring is the act colour), and `card-foreground`,
- * `popover-foreground` and `accent-foreground` to `foreground`.
- */
-export const NEUTRAL_ROWS: readonly TokenRow[] = [
-  { token: "background", today: "#121212", uses: 63, verdict: "keep" },
-  { token: "foreground", today: "#EDEDED", uses: 176, verdict: "keep" },
-  { token: "card", today: "#1A1A1A", uses: 45, verdict: "keep" },
-  { token: "muted-foreground", today: "#A6A6A6", uses: 713, verdict: "keep" },
-  { token: "border", today: "#333333", uses: 154, verdict: "keep" },
-  { token: "primary", today: "#FAA901", uses: 226, verdict: "keep" },
-  { token: "primary-foreground", today: "#121212", uses: 21, verdict: "keep" },
-  { token: "secondary", today: "#8F00E2", uses: 19, verdict: "keep" },
-  { token: "secondary-foreground", today: "#FFFFFF", uses: 7, verdict: "keep" },
-  { token: "muted", today: "#262626", uses: 171, verdict: "admit" },
-  { token: "accent", today: "#212121", uses: 70, verdict: "admit" },
-  {
-    token: "card-foreground",
-    today: "#EDEDED",
-    uses: 1,
-    verdict: "rename → foreground",
-  },
-  {
-    token: "accent-foreground",
-    today: "#EDEDED",
-    uses: 33,
-    verdict: "rename → foreground",
-  },
-  { token: "popover", today: "#1A1A1A", uses: 6, verdict: "rename → card" },
-  {
-    token: "popover-foreground",
-    today: "#EDEDED",
-    uses: 2,
-    verdict: "rename → foreground",
-  },
-  { token: "input", today: "#333333", uses: 81, verdict: "rename → border" },
-  { token: "ring", today: "#FAA901", uses: 55, verdict: "rename → primary" },
-];
-
-/**
- * The sidebar's seven, all of which are deleted.
- *
- * Ruled: there are no sidebar-scoped tokens. The rail is chrome and composes
- * from the general neutrals like any other chrome — `border` for its edge,
- * `foreground` for its ink, `primary` and `primary-foreground` for the active
- * item, and `muted` for the hovered and current ones, which is the value
- * `sidebar-accent` already held despite its name.
- *
- * One value was genuinely its own and it has no successor: `sidebar-background`
- * #171717 sits between the page ground #121212 and the card #1A1A1A. The rail
- * takes one of those two, and which is the only question left in this set.
- */
-export const SIDEBAR_ROWS: readonly TokenRow[] = [
-  {
-    token: "sidebar-background",
-    today: "#171717",
-    uses: 2,
-    verdict: "ruling: page or card",
-  },
-  { token: "sidebar-foreground", today: "#EDEDED", uses: 3, verdict: "delete" },
-  { token: "sidebar-primary", today: "#FAA901", uses: 1, verdict: "delete" },
-  {
-    token: "sidebar-primary-foreground",
-    today: "#121212",
-    uses: 1,
-    verdict: "delete",
-  },
-  { token: "sidebar-accent", today: "#262626", uses: 2, verdict: "delete" },
-  {
-    token: "sidebar-accent-foreground",
-    today: "#EDEDED",
-    uses: 2,
-    verdict: "delete",
-  },
-  { token: "sidebar-border", today: "#333333", uses: 3, verdict: "delete" },
-];
 
 /** A status colour as Sogverse defines it, and the candidate this page proposes. */
 export interface StatusRow {

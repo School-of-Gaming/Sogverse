@@ -174,7 +174,7 @@ function CreationEntry({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="break-words rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="break-words rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {creation.title}
       {/* Inline rather than a flex sibling, so on a title that wraps the glyph

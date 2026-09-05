@@ -85,7 +85,7 @@ const ROW_CLASS =
 
 /** Added to the rows that do something when clicked — which is all of them. */
 const ACTIONABLE_ROW_CLASS =
-  "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none";
+  "hover:bg-accent hover:text-foreground focus:bg-accent focus:text-foreground focus:outline-none";
 
 /**
  * Every row carries `data-account-menu-item` so arrow-key navigation can find
@@ -490,7 +490,7 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
           // here instead.
           aria-label={menuLabel}
           onClick={() => (open ? setOpen(false) : openMenu())}
-          className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+          className="rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
         >
           {/* The open state takes the ring the avatar used to wear when the page
               it linked to was the current one. It links nowhere now, so "you are

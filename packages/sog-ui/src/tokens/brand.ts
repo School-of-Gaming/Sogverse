@@ -79,6 +79,8 @@ export type NeutralId =
   | "background"
   | "foreground"
   | "card"
+  | "accent"
+  | "muted"
   | "mutedForeground"
   | "border";
 
@@ -86,10 +88,12 @@ export type NeutralId =
  * The neutrals a component **fills** — a ground with text on it — and so the
  * exact set that carries an `on`.
  *
- * Two, because two are what a page is built from: the page itself and the lift
- * a card takes off it. A third ground arrives with the component that needs one.
+ * Four, and together they are the whole ladder a dark page climbs: the page
+ * itself, the lift a card takes off it, and two smaller lifts above the card —
+ * the fill a row takes under the pointer, and the ground a de-emphasised block
+ * sits on. Everything else in the set is ink or an edge, and neither is filled.
  */
-type SurfaceId = "background" | "card";
+type SurfaceId = "background" | "card" | "accent" | "muted";
 
 /**
  * A surface names the token that reads *on* it; anything else does not.
@@ -116,11 +120,32 @@ export const NEUTRALS = {
    */
   foreground: { name: "Ink", hex: "#EDEDED" },
   /**
-   * Section backgrounds and cards — the one lift off the page, and the lighter
-   * of the two grounds, which makes it the one every contrast measurement is
-   * bound by. A colour safe here is safe on the page.
+   * Section backgrounds and cards — the first lift off the page, and the
+   * surface most of a dashboard is built from.
    */
   card: { name: "Card", hex: "#1A1A1A", on: "foreground" },
+  /**
+   * The fill a row, a menu option or a ghost button takes **under the
+   * pointer**. The smallest lift the theme ships, on purpose: a hover has to
+   * read as a change of state, not as a new surface arriving. It is transient
+   * and never the ground a block of content is authored on — that is the card.
+   */
+  accent: { name: "Accent", hex: "#212121", on: "foreground" },
+  /**
+   * The ground under a **de-emphasised block**: a skeleton's bars while a list
+   * loads, an unselected filter pill, an inset panel that has to sit back from
+   * the content around it.
+   *
+   * It is the lightest ground the library ships, which makes it the one every
+   * text pairing is bound by: a colour that clears its threshold here clears it
+   * on all four grounds.
+   *
+   * Its ink is `foreground`, like every other ground here — `mutedForeground`
+   * below is *not* this token's companion. That one is secondary text, which
+   * reads on every ground rather than on this one, so no `muted-foreground`
+   * companion is generated for `muted`.
+   */
+  muted: { name: "Muted", hex: "#262626", on: "foreground" },
   /** Secondary text: captions, metadata, the line under a title. */
   mutedForeground: { name: "Muted ink", hex: "#A6A6A6" },
   /**

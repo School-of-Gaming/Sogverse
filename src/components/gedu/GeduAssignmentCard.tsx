@@ -458,7 +458,7 @@ export function GeduAssignmentCard({
             if (openHref === "#") e.preventDefault();
           }}
           aria-label={productName}
-          className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
         />
       </Card>
 

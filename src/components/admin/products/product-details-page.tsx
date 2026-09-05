@@ -95,8 +95,8 @@ export function ProductDetailsPage({
           <ArrowLeft className="h-4 w-4" />
           {t("newPage.back", { plural })}
         </Link>
-        <div className="h-40 animate-pulse rounded-lg border border-input bg-muted" />
-        <div className="h-24 animate-pulse rounded-lg border border-input bg-muted" />
+        <div className="h-40 animate-pulse rounded-lg border border-border bg-muted" />
+        <div className="h-24 animate-pulse rounded-lg border border-border bg-muted" />
       </div>
     );
   }

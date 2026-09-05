@@ -21,7 +21,7 @@ export function VisibilitySection({
       title={t("sections.visibility")}
       description={t("sections.visibilityDescription")}
     >
-      <label className="flex cursor-pointer items-start gap-3 rounded-md border border-input p-3">
+      <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3">
         <Checkbox
           className="mt-0.5"
           checked={state.isVisible}

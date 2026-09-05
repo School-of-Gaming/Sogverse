@@ -788,7 +788,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               if (openHref === "#") e.preventDefault();
             }}
             aria-label={productName}
-            className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
           />
         )}
       </Card>
@@ -857,7 +857,7 @@ function LeaveWaitlistLink({
         type="button"
         onClick={() => setOpen(true)}
         disabled={leaving}
-        className="rounded text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:text-muted-foreground"
+        className="rounded text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-default disabled:hover:text-muted-foreground"
       >
         {t("trigger")}
       </button>

@@ -96,7 +96,7 @@ export function WhenSection({
                   "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
                   state.startMode === option
                     ? "border-primary bg-primary/5"
-                    : "border-input",
+                    : "border-border",
                   lockStartMode
                     ? "cursor-not-allowed opacity-60"
                     : cn(
@@ -210,7 +210,7 @@ export function WhenSection({
                         "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
                         active
                           ? "border-primary bg-primary/5"
-                          : "border-input",
+                          : "border-border",
                         "cursor-pointer",
                         !active && "hover:border-foreground/30"
                       )}
@@ -301,7 +301,7 @@ export function WhenSection({
           id="p-timezone"
           value={state.timezone}
           onChange={(e) => setState({ ...state, timezone: e.target.value })}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         >
           {timezoneOptions.map((zone) => (
             <option key={zone} value={zone}>

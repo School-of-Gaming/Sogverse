@@ -246,20 +246,20 @@ function GroupDetailsSkeleton() {
           <div className="h-4 w-48 animate-pulse rounded bg-muted" />
         </header>
 
-        <div className="mt-6 h-32 animate-pulse rounded-lg border border-input bg-muted" />
+        <div className="mt-6 h-32 animate-pulse rounded-lg border border-border bg-muted" />
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-3 lg:gap-8">
           <div className="min-w-0 space-y-3 lg:col-span-2">
             {[0, 1, 2, 3].map((row) => (
               <div
                 key={row}
-                className="h-24 animate-pulse rounded-lg border border-input bg-muted"
+                className="h-24 animate-pulse rounded-lg border border-border bg-muted"
               />
             ))}
           </div>
           <aside className="min-w-0 space-y-4">
-            <div className="h-64 animate-pulse rounded-lg border border-input bg-muted" />
-            <div className="h-32 animate-pulse rounded-lg border border-input bg-muted" />
+            <div className="h-64 animate-pulse rounded-lg border border-border bg-muted" />
+            <div className="h-32 animate-pulse rounded-lg border border-border bg-muted" />
           </aside>
         </div>
       </div>

@@ -14,7 +14,7 @@ const KEYS: ReadonlyArray<string | "blank" | "backspace"> = [
 
 /** Shared key styling for both the digit keys and the backspace key. */
 const KEY_BASE =
-  "flex h-16 w-16 touch-manipulation select-none items-center justify-center rounded-full transition hover:bg-accent hover:text-accent-foreground active:scale-90 active:bg-accent active:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
+  "flex h-16 w-16 touch-manipulation select-none items-center justify-center rounded-full transition hover:bg-accent hover:text-foreground active:scale-90 active:bg-accent active:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none";
 
 interface PinPadProps {
   /** Current digits entered (0..PIN_LENGTH characters). Controlled by the parent. */
@@ -152,7 +152,7 @@ export function PinPad({
               disabled={locked || value.length >= PIN_LENGTH}
               className={cn(
                 KEY_BASE,
-                "border border-input bg-background text-2xl font-semibold tabular-nums shadow-sm disabled:opacity-40",
+                "border border-border bg-background text-2xl font-semibold tabular-nums shadow-sm disabled:opacity-40",
               )}
             >
               {key}

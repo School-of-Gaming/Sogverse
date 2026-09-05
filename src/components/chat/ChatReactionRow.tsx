@@ -93,7 +93,7 @@ export function ChatReactionPicker({
   return (
     <div
       className={cn(
-        "flex gap-0.5 rounded-full border border-border bg-popover p-1 shadow-lg",
+        "flex gap-0.5 rounded-full border border-border bg-card p-1 shadow-lg",
         className,
       )}
     >
@@ -104,7 +104,7 @@ export function ChatReactionPicker({
           onClick={() => onPick(code)}
           aria-label={t(code)}
           title={t(code)}
-          className="rounded-full px-2 py-1 text-2xl leading-none transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-full px-2 py-1 text-2xl leading-none transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <span aria-hidden>{CHAT_REACTION_GLYPHS[code]}</span>
         </button>

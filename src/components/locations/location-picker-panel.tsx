@@ -388,7 +388,7 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
           behind it are small indexed lookups, so the loading state is simply
           the empty box: a skeleton would be on screen for less time than it
           takes to read it. */}
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-input bg-background p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-background p-2">
         {active.loading ? null : active.rows.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             {searching ? t("noResults", { query: trimmed }) : t("nothingHere")}
@@ -509,7 +509,7 @@ function PickRow({
         "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm",
         selected
           ? "bg-primary/10 text-primary"
-          : "hover:bg-accent hover:text-accent-foreground",
+          : "hover:bg-accent hover:text-foreground",
       )}
     >
       <RowLabel name={name} detail={detail} />
@@ -551,7 +551,7 @@ function TickRow({
   // row toggles.
   if (!onDrill) {
     return (
-      <div className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+      <div className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-foreground">
         <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left">
           <Checkbox checked={checked} onChange={onToggle} />
           <RowLabel name={name} detail={detail} />
@@ -563,7 +563,7 @@ function TickRow({
     );
   }
   return (
-    <div className="flex w-full items-center gap-2 rounded-md pl-2 text-sm hover:bg-accent hover:text-accent-foreground">
+    <div className="flex w-full items-center gap-2 rounded-md pl-2 text-sm hover:bg-accent hover:text-foreground">
       <Checkbox checked={checked} onChange={onToggle} aria-label={name} />
       <button
         type="button"

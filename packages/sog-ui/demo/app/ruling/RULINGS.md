@@ -32,12 +32,24 @@ Status values: `open` · `ruled` · `landed`.
 ## 1. The inventory — renames and admissions
 
 **Asked:** the second-name tokens are renamed to the library token with no visual
-change (`card-foreground`, `accent-foreground`, `popover` → card, `popover-foreground`,
-`input` → border, `ring` → primary, `sidebar-foreground`, `sidebar-primary`,
-`sidebar-primary-foreground`, `sidebar-accent` → muted, `sidebar-accent-foreground`,
-`sidebar-border`). `muted` #262626 and `accent` #212121 are admitted as neutrals.
+change; `muted` and `accent` are admitted as neutrals.
 
-**Ruling:** _open_
+**Ruling (2026-09-05):** _landed_ — the page's verdicts for the "Neutrals and the
+signature pair" table are accepted as shown:
+
+| token | today | verdict |
+|---|---|---|
+| background, foreground, card, muted-foreground, border, primary, primary-foreground, secondary, secondary-foreground | as today | **keep** (the library's, byte-identical; Sogverse declares none of them) |
+| muted | #262626 | **admit** to the library as a neutral |
+| accent | #212121 | **admit** to the library as a neutral (the hover-visibility question stays in §4) |
+| card-foreground, accent-foreground, popover-foreground | #EDEDED | **rename → foreground** at every Sogverse call site. (The library goes on generating `card-foreground` as the card's companion under the surface contract; Sogverse simply declares nothing.) |
+| popover | #1A1A1A | **rename → card** |
+| input | #333333 | **rename → border** |
+| ring | #FAA901 | **rename → primary** |
+| sidebar-* (all seven) | — | **delete** — see §4 |
+
+A rename is a class-string substitution with no visual change; each was drawn twice
+from one recipe on the page and the eye confirmed it.
 
 ## 2. The four Yty families
 
@@ -46,7 +58,18 @@ the zone tile take the no-alpha recipe (neutral ground, strong edge, soft ink, s
 ring) shown in the proposed column. Three columns drawn: today as rendered (grey
 edge), today as authored (never rendered), proposed.
 
-**Ruling:** _open_
+**Ruling (2026-09-05), tokens only:** _ruled_ — clear-cut from the Guidebook, no
+decision needed: **the eight tokens, four strong and four soft, exactly as the library
+ships them** (`yty-{harmony,glow,valor,wit}-{strong,soft}`). Sogverse's four
+single-value `--color-yty-*` are deleted. The email mirror already reads the soft
+variant.
+
+**Still open — the recipe.** How the element card, the zone tile and every other Yty
+consumer spend the pair (today's alpha steps `bg-yty-x/10`, `from/10 to/5`,
+`border/30` versus the no-alpha recipe of neutral ground, strong edge, soft ink, strong
+ring) needs its own attention and is ruled separately. Until then the consumers keep
+their current class shapes pointed at the new tokens in whatever way changes the least,
+and the section stays on the page with the recipe as its remaining question.
 
 ## 3. Status colours
 
@@ -63,12 +86,14 @@ note; warning as the brand amber.
 Shown at its own value, at the page ground, at the card ground. Also shown: accent
 against card measures barely above 1:1; a muted-hover alternative sits beside it.
 
-**Ruling (2026-09-05, partial):** _ruled_ — **no sidebar-scoped tokens exist.** The
+**Ruling (2026-09-05, partial):** _landed_ (sidebar) — **no sidebar-scoped tokens exist.** The
 sidebar is chrome and composes from the general neutrals like every other surface;
 all seven `sidebar-*` tokens are deleted, not renamed into a sidebar vocabulary. The
 one value with no general twin, the #171717 ground, is not kept: the sidebar sits on
-one of the two grounds the library ships. **Still open:** which ground (page or card),
-to be ruled from the sidebar exemplar; and the accent-hover question.
+one of the two grounds the library ships. **Ruled from the exemplar: the sidebar sits
+on the card ground (#1A1A1A, `bg-card`).** Its active fill is `muted`, its edge
+`border`, its accents `primary` / `primary-foreground`. **Still open:** the
+accent-hover question (accent vs muted as the hover fill).
 
 ## 5. The categorical palettes
 

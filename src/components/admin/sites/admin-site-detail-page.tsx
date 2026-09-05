@@ -343,7 +343,7 @@ function ConnectedProductRow({ product }: { product: SiteProductRow }) {
   return (
     <Link
       href={ROUTES.admin.product(product.product_type, product.id)}
-      className="group flex items-center justify-between gap-2 rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
+      className="group flex items-center justify-between gap-2 rounded-lg border p-3 transition-colors hover:bg-accent hover:text-foreground"
     >
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">{name}</p>

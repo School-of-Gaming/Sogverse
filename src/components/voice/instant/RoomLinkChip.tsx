@@ -56,7 +56,7 @@ export function RoomLinkChip({
         type="button"
         onClick={handleCopy}
         className={cn(
-          "flex shrink-0 items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "flex shrink-0 items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
           copied && "border-success text-success",
         )}
         // The aria-label carries the code because a screen reader gets the
@@ -88,7 +88,7 @@ export function RoomLinkChip({
         type="button"
         onClick={handleCopy}
         className={cn(
-          "group flex w-full max-w-md items-center justify-center gap-3 rounded-lg border border-border bg-muted/40 px-5 py-4 text-base font-mono font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "group flex w-full max-w-md items-center justify-center gap-3 rounded-lg border border-border bg-muted/40 px-5 py-4 text-base font-mono font-medium transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
           copied && "border-success text-success",
         )}
         aria-label={copied ? t("copied") : displayUrl}

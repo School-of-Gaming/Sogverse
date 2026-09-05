@@ -77,10 +77,19 @@ export type Pairing = {
   readonly why: string;
 };
 
-/** The two grounds a page is built from. The card is the lighter one, so it binds. */
+/**
+ * Every ground the library fills — the complete set a text token can land on.
+ *
+ * `muted` is the lightest of the four, so it binds: a foreground that clears
+ * its threshold there clears it on the hover fill, on the card and on the page.
+ * Measuring all four rather than only the binding one is what makes that claim
+ * checkable instead of remembered.
+ */
 const GROUNDS = [
   { token: "background", hex: NEUTRALS.background.hex, label: "the page" },
   { token: "card", hex: NEUTRALS.card.hex, label: "a card" },
+  { token: "accent", hex: NEUTRALS.accent.hex, label: "a row under the pointer" },
+  { token: "muted", hex: NEUTRALS.muted.hex, label: "a de-emphasised block" },
 ] as const;
 
 const INK: PairingSide = { token: "background", hex: NEUTRALS.background.hex };
@@ -97,10 +106,10 @@ const YTY_IDS = [
 ] as const satisfies readonly YtyFamilyId[];
 
 /**
- * The app's own text tokens, on both grounds a page is built from.
+ * The app's own text tokens, on every ground the library fills.
  *
  * Body size, so the body floor: these are the pairings a whole paragraph is set
- * in, and secondary text on the lighter ground is where the set comes closest
+ * in, and secondary text on the lightest ground is where the set comes closest
  * to that floor.
  */
 const appTextOnGrounds: Pairing[] = (
@@ -141,7 +150,7 @@ const brandPairings: Pairing[] = [
 ];
 
 /**
- * Every Yty family's **soft** variant as text, on both grounds. Soft is what
+ * Every Yty family's **soft** variant as text, on every ground. Soft is what
  * carries text and glyphs in this palette; strong is for fills and edges.
  */
 const softAsText: Pairing[] = YTY_IDS.flatMap((id) =>

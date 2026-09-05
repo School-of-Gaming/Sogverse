@@ -34,11 +34,15 @@ function kebab(name: string): string {
 /**
  * The surfaces that ship a `-foreground` companion token.
  *
- * Not every surface, and the difference is naming rather than use: the page
- * ground is filled every bit as much as the card, but the token its text reads
- * from already ships under its own name (`--color-foreground`), so a companion
- * would be a second name for a declaration that is already there. The card is
- * the ground with no such name of its own.
+ * One of the four, and the difference is naming rather than use: every surface
+ * reads `foreground`, so for the page ground, the hover fill and the muted
+ * block a companion would only be a second name for `--color-foreground`,
+ * which is already in the stylesheet. For `muted` it would be worse than
+ * redundant — `--color-muted-foreground` already ships as the secondary-text
+ * token, which reads on every ground rather than on that one, so generating a
+ * companion would emit a second, different value under a name that is taken.
+ * The card keeps its companion because it is the ground a component is handed
+ * as a pair, and a pair wants both halves named.
  */
 const SURFACES_WITH_FOREGROUND = ["card"] as const satisfies readonly NeutralId[];
 

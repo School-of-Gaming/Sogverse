@@ -158,7 +158,7 @@ export function IdentitySection({
                 const locale = findOption(addableLocales, e.target.value);
                 if (locale) addLocaleTab(locale);
               }}
-              className="ml-1 mb-1 h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+              className="ml-1 mb-1 h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
             >
               <option value="">{t("translations.addLocale")}</option>
               {addableLocales.map((l) => (
@@ -243,7 +243,7 @@ export function IdentitySection({
             })
           }
           required
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         >
           <option value="">{t("placeholders.selectTopic")}</option>
           {PRODUCT_TOPIC_VALUES.map((topic) => (

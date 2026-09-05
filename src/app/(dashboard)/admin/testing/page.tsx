@@ -69,7 +69,7 @@ interface EmailResult {
 }
 
 const selectClass =
-  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+  "flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 
 /**
  * What an untouched field posts: a select its first option, a text input its
@@ -443,7 +443,7 @@ export default function TestingPage() {
               <div
                 role="group"
                 aria-label={t('previewWidth.label')}
-                className="inline-flex shrink-0 rounded-md border border-input p-1"
+                className="inline-flex shrink-0 rounded-md border border-border p-1"
               >
                 {PREVIEW_WIDTHS.map((option) => (
                   <button

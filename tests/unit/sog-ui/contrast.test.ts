@@ -20,7 +20,7 @@ describe("shipped pairings", () => {
   // Vitest's `it.each([])` registers nothing and the suite passes green, so every
   // table in this file is floored: an emptied list must fail rather than vanish.
   it("has the whole shipped list to walk", () => {
-    expect(PAIRINGS.length).toBeGreaterThanOrEqual(18);
+    expect(PAIRINGS.length).toBeGreaterThanOrEqual(30);
   });
 
   it.each(PAIRINGS.map((pairing) => [pairing.id, pairing] as const))(
@@ -48,11 +48,13 @@ describe("shipped pairings", () => {
 const GROUNDS: [string, string][] = [
   ["the page", NEUTRALS.background.hex],
   ["a card", NEUTRALS.card.hex],
+  ["a row under the pointer", NEUTRALS.accent.hex],
+  ["a de-emphasised block", NEUTRALS.muted.hex],
 ];
 
 describe("the wit-strong band", () => {
   it("has every ground to measure against", () => {
-    expect(GROUNDS).toHaveLength(2);
+    expect(GROUNDS).toHaveLength(4);
   });
 
   it.each(GROUNDS)(

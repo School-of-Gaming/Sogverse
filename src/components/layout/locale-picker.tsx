@@ -86,7 +86,7 @@ export function LocalePicker({ className }: { className?: string }) {
           }
           setOpen(!open);
         }}
-        className="flex items-center gap-1 rounded-md border border-border bg-muted/50 px-2 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="flex items-center gap-1 rounded-md border border-border bg-muted/50 px-2 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-foreground"
         aria-label={c('selectLanguage')}
       >
         <span className="h-4 w-6 [&>svg]:h-full">
@@ -107,7 +107,7 @@ export function LocalePicker({ className }: { className?: string }) {
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground",
+                  "flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent hover:text-foreground",
                   opt === locale && "font-semibold text-primary",
                 )}
               >

@@ -399,7 +399,7 @@ export function GameUsernameEditableRow({
               ? t("edit", { platform: descriptor.name })
               : t("editFor", { platform: descriptor.name, name: personName })
           }
-          className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-50 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/game:opacity-100"
+          className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-50 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group-hover/game:opacity-100"
         >
           {/* Always the pencil: the row's status square already owns the loading
               affordance, and a second spinner beside it says the same thing

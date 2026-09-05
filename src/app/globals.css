@@ -41,21 +41,6 @@
      first measurement only ever lowers it. */
   --signup-rail-height: 0px;
 
-  /* Popover surfaces — the same lift a card takes off the page, named separately
-     because a floating surface is free to diverge from an inline one. */
-  --color-popover: #1A1A1A;
-  --color-popover-foreground: #EDEDED;
-
-  /* Muted surface: the ground under a de-emphasised block. */
-  --color-muted: #262626;
-
-  /* Accent — a neutral surface for subtle hovers (matches shadcn convention).
-     Tuned to approximate the visual of the old `hover:bg-muted/50` workaround
-     rendered over a card: 50%-alpha 15% over 10% ≈ 12.5%. Sits slightly above
-     card so hover still reads on `bg-background` surfaces too. */
-  --color-accent: #212121;
-  --color-accent-foreground: #EDEDED;
-
   /* State colours, each with the ink that reads on it. */
   --color-destructive: #EF4343;
   --color-destructive-foreground: #FFFFFF;
@@ -65,10 +50,6 @@
   --color-info-foreground: #FFFFFF;
   --color-warning: #E7B008;
   --color-warning-foreground: #121212;
-
-  /* Form-control edge, and the focus ring, which is the brand's amber. */
-  --color-input: #333333;
-  --color-ring: #FAA901;
 
   /* Product-type categorical palette — the four admin product types, as a
      colour each. The reasoning that placed them, and the rule that a surface
@@ -83,16 +64,6 @@
   --color-product-municipality-club: #EB70D0;  /* magenta */
   --color-product-camp: #74C639;               /* lime */
   --color-product-event: #938EF6;              /* indigo */
-
-  /* Sidebar chrome — a ground one step off the page, with the brand's amber for
-     the active entry. */
-  --color-sidebar-background: #171717;
-  --color-sidebar-foreground: #EDEDED;
-  --color-sidebar-primary: #FAA901;
-  --color-sidebar-primary-foreground: #121212;
-  --color-sidebar-accent: #262626;
-  --color-sidebar-accent-foreground: #EDEDED;
-  --color-sidebar-border: #333333;
 
   /* Yty-Element colours as this app spends them today. @sog/ui ships the four
      families as `--color-yty-*-strong` / `-soft` pairs, so these single-value

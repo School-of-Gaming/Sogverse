@@ -165,7 +165,7 @@ export function UserRow({
     <div className="rounded-lg border">
       <Link
         href={`${basePath}/${user.id}`}
-        className="group flex items-center justify-between p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="group flex items-center justify-between p-4 transition-colors hover:bg-accent hover:text-foreground"
       >
         <div className="flex items-center gap-4">
           <Avatar>
@@ -230,7 +230,7 @@ export function UserRow({
             <Link
               key={gamer.id}
               href={`${basePath}/${gamer.id}`}
-              className="group flex items-center justify-between py-3 pr-4 pl-14 transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="group flex items-center justify-between py-3 pr-4 pl-14 transition-colors hover:bg-accent hover:text-foreground"
             >
               <div className="flex items-center gap-3">
                 <Avatar className="h-7 w-7">

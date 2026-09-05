@@ -329,7 +329,7 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
         <p>{t("waitlistNote")}</p>
       </div>
 
-      <div className="mt-6 rounded-md border border-input bg-card px-4 py-5 text-center">
+      <div className="mt-6 rounded-md border border-border bg-card px-4 py-5 text-center">
         <p className="font-semibold">{t("notListed.title")}</p>
         <p className="mx-auto mt-1 max-w-prose text-sm text-muted-foreground">
           {t("notListed.body")}{" "}
@@ -398,7 +398,7 @@ function RegionSection({ group, t }: { group: RegionGroup; t: Translate }) {
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 rounded-md border border-input bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
+        className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
       >
         <span className="flex min-w-0 items-center gap-2.5 font-medium">
           <Chevron className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -464,7 +464,7 @@ function MunicipalityRow({
   if (!hasClubs) {
     return (
       <li>
-        <div className="flex items-center justify-between gap-3 rounded-md border border-input bg-card px-4 py-3 text-muted-foreground">
+        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 text-muted-foreground">
           {inner}
         </div>
       </li>
@@ -475,7 +475,7 @@ function MunicipalityRow({
     <li>
       <Link
         href={ROUTES.schoolMunicipality(entry.slug)}
-        className="flex items-center justify-between gap-3 rounded-md border border-input bg-card px-4 py-3 transition-colors hover:bg-accent"
+        className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 transition-colors hover:bg-accent"
       >
         {inner}
       </Link>

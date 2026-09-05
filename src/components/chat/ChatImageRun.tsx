@@ -159,7 +159,7 @@ export function ChatImageRun({
                 setOpenIndex(index);
               }}
               className={cn(
-                "inline-flex max-w-full rounded-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "inline-flex max-w-full rounded-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 // The same dimming a pending text bubble wears, on the one
                 // thing a pending picture has to show it with.
                 deliveries?.[index] === "pending" && "opacity-60",

@@ -356,7 +356,7 @@ export function ChatComposer({
       {suggestions.length > 0 && (
         <ul
           aria-label={t("mentionList")}
-          className="absolute inset-x-0 bottom-full z-20 mb-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-lg"
+          className="absolute inset-x-0 bottom-full z-20 mb-1 max-h-48 overflow-y-auto rounded-md border border-border bg-card shadow-lg"
         >
           {suggestions.map((account, index) => (
             <li key={account.id}>
@@ -371,7 +371,7 @@ export function ChatComposer({
                 className={cn(
                   "flex w-full items-center px-2 py-1.5 text-left text-sm transition-colors",
                   index === activeIndex
-                    ? "bg-accent text-accent-foreground"
+                    ? "bg-accent text-foreground"
                     : "hover:bg-accent",
                 )}
               >

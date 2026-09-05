@@ -210,7 +210,7 @@ export function AdminSitesPage() {
                     <td className="px-3 py-2">
                       <Link
                         href={ROUTES.admin.site(row.id)}
-                        className="rounded font-medium after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="rounded font-medium after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       >
                         {localizedLocationName(row, locale)}
                       </Link>

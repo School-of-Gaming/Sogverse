@@ -289,7 +289,7 @@ function PickedSitePanel({
   if (notes === undefined) return null;
 
   return (
-    <div className="rounded-md border border-input bg-card p-4">
+    <div className="rounded-md border border-border bg-card p-4">
       <SitePanel
         siteName={siteName}
         address={notes.address}
@@ -469,7 +469,7 @@ function ChoosePlaceButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-2.5 rounded-md border border-input bg-background px-3 py-3 text-left outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      className="flex w-full items-center gap-2.5 rounded-md border border-border bg-background px-3 py-3 text-left outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
     >
       <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
@@ -532,7 +532,7 @@ function SelectedLocationCard({
 
   return (
     <div className="space-y-2">
-      <div className="rounded-md border border-input bg-card p-4">
+      <div className="rounded-md border border-border bg-card p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />

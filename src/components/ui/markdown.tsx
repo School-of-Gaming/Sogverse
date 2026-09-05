@@ -212,7 +212,7 @@ const MARKETING_COMPONENTS: Components = {
       <a
         href={href}
         rel="noreferrer"
-        className="rounded-sm font-medium text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="rounded-sm font-medium text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {children}
       </a>

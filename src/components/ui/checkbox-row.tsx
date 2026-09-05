@@ -21,7 +21,7 @@ const checkboxRowVariants = cva(
       },
       checked: {
         true: "border-primary bg-primary/5",
-        false: "border-input",
+        false: "border-border",
       },
       disabled: {
         true: "cursor-not-allowed opacity-60",

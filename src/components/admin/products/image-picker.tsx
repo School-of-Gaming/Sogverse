@@ -127,7 +127,7 @@ export function ImagePicker({
           if (file) void addFile(file);
         }}
         className={cn(
-          "rounded-md border border-input bg-background p-4 transition-colors",
+          "rounded-md border border-border bg-background p-4 transition-colors",
           dragging && "border-primary bg-primary/5",
         )}
       >

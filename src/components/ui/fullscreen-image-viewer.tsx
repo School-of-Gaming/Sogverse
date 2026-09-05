@@ -218,7 +218,7 @@ export function FullscreenImageViewer({
             type="button"
             onClick={onClose}
             aria-label={labels.close}
-            className="absolute right-2 top-2 rounded-full bg-background/80 p-2 text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="absolute right-2 top-2 rounded-full bg-background/80 p-2 text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <X className="h-5 w-5" aria-hidden />
           </button>
@@ -257,7 +257,7 @@ function ViewerNavButton({
         onActivate();
       }}
       className={cn(
-        "absolute top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "absolute top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         side === "left" ? "left-2" : "right-2",
       )}
     >

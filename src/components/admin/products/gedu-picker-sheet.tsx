@@ -143,7 +143,7 @@ export function GeduPickerSheet({
                 "rounded-full border px-2 py-0.5 transition-colors",
                 languageFilter === null
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-input text-muted-foreground hover:text-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground"
               )}
             >
               {t("any")}
@@ -159,7 +159,7 @@ export function GeduPickerSheet({
                   "rounded-full border px-2 py-0.5 transition-colors",
                   languageFilter === code
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-input text-muted-foreground hover:text-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground"
                 )}
               >
                 {languageName(code)}

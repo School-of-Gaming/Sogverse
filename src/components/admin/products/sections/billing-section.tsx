@@ -87,7 +87,7 @@ export function BillingSection({
                     "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors",
                     active
                       ? "border-primary bg-primary/5"
-                      : "border-input hover:border-foreground/30"
+                      : "border-border hover:border-foreground/30"
                   )}
                 >
                   <input
@@ -171,7 +171,7 @@ export function BillingSection({
                     "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
                     active
                       ? "border-primary bg-primary/5"
-                      : "border-input hover:border-foreground/30"
+                      : "border-border hover:border-foreground/30"
                   )}
                 >
                   <input

@@ -82,7 +82,7 @@ export function ScheduleSlotsEditor({
         return (
         <div
           key={i}
-          className="grid grid-cols-12 gap-2 rounded-md border border-input bg-muted/20 p-3"
+          className="grid grid-cols-12 gap-2 rounded-md border border-border bg-muted/20 p-3"
         >
           <div className="col-span-12 sm:col-span-4">
             {productType === "event" ? (
@@ -97,7 +97,7 @@ export function ScheduleSlotsEditor({
                   updateSlot(i, { weekday: Number(e.target.value) })
                 }
                 disabled={disabled}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
               >
                 {WEEKDAY_KEYS.map((key, day) => (
                   <option key={day} value={day}>
@@ -118,7 +118,7 @@ export function ScheduleSlotsEditor({
                   })
                 }
                 disabled={disabled}
-                className="flex h-10 w-16 rounded-md border border-input bg-background px-2 text-sm"
+                className="flex h-10 w-16 rounded-md border border-border bg-background px-2 text-sm"
               >
                 {HOUR_OPTIONS.map((h) => (
                   <option key={h} value={h}>
@@ -139,7 +139,7 @@ export function ScheduleSlotsEditor({
                   })
                 }
                 disabled={disabled}
-                className="flex h-10 w-16 rounded-md border border-input bg-background px-2 text-sm"
+                className="flex h-10 w-16 rounded-md border border-border bg-background px-2 text-sm"
               >
                 {MINUTE_OPTIONS.map((m) => (
                   <option key={m} value={m}>
@@ -157,7 +157,7 @@ export function ScheduleSlotsEditor({
                   setEndTime(i, slot, withHour(endTime, Number(e.target.value)))
                 }
                 disabled={disabled}
-                className="flex h-10 w-16 rounded-md border border-input bg-background px-2 text-sm"
+                className="flex h-10 w-16 rounded-md border border-border bg-background px-2 text-sm"
               >
                 {HOUR_OPTIONS.map((h) => (
                   <option key={h} value={h}>
@@ -173,7 +173,7 @@ export function ScheduleSlotsEditor({
                   setEndTime(i, slot, withMinute(endTime, Number(e.target.value)))
                 }
                 disabled={disabled}
-                className="flex h-10 w-16 rounded-md border border-input bg-background px-2 text-sm"
+                className="flex h-10 w-16 rounded-md border border-border bg-background px-2 text-sm"
               >
                 {MINUTE_OPTIONS.map((m) => (
                   <option key={m} value={m}>

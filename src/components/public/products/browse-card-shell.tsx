@@ -315,7 +315,7 @@ export function StretchedCardLink({
     <Link
       href={openHref}
       aria-label={t("cardLink", { action: cta.labelText, name })}
-      className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
     />
   );
 }

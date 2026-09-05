@@ -136,7 +136,7 @@ export function Header() {
         // onward to their own account — and it stays role-agnostic, because the
         // profile that would say which dashboard is the thing that is missing.
         aria-label={t("continueToAccount")}
-        className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+        className="rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
       >
         <Avatar className="h-8 w-8">
           <Identicon id={user.id} size={32} />
@@ -147,7 +147,7 @@ export function Header() {
     <Link
       href={ROUTES.login}
       aria-label={c("signIn")}
-      className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+      className="rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
     >
       <Avatar className="h-8 w-8">
         <UnknownAvatar />

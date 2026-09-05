@@ -81,14 +81,19 @@ export function Sidebar() {
         // header itself uses. Height is pinned to the visible viewport
         // below the header so the user-info section stays anchored to the
         // bottom while the dashboard <main> scrolls with the document.
-        `sticky top-[var(--header-height)] flex h-[calc(100vh-var(--header-height))] flex-col self-start border-r border-sidebar-border bg-sidebar-background ${collapseTransition}`,
+        //
+        // The rail has no palette of its own: it is chrome, and composes from
+        // the general neutrals like every other surface. Its ground is the
+        // card, its edge the general border, its hover fill `muted`, and the
+        // active entry the brand pair.
+        `sticky top-[var(--header-height)] flex h-[calc(100vh-var(--header-height))] flex-col self-start border-r border-border bg-card ${collapseTransition}`,
         collapsed ? "w-18" : "w-18 md:w-64"
       )}
     >
       {/* Collapse Toggle — desktop only, mobile is always icon-only via CSS */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-6 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:flex"
+        className="absolute -right-3 top-6 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm hover:bg-muted md:flex"
         aria-label={collapsed ? t('expandSidebar') : t('collapseSidebar')}
       >
         {collapsed ? (
@@ -117,8 +122,8 @@ export function Sidebar() {
                 `flex items-center overflow-hidden whitespace-nowrap rounded-lg py-2 text-sm font-medium ${navTransition}`,
                 collapsed ? "gap-0 px-2.5" : "gap-0 px-2.5 md:gap-3 md:px-3",
                 isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-foreground hover:bg-muted"
               )}
               title={label}
             >
@@ -137,9 +142,9 @@ export function Sidebar() {
       </nav>
 
       {/* User Info */}
-      <div className="overflow-hidden border-t border-sidebar-border p-4">
+      <div className="overflow-hidden border-t border-border p-4">
         <div className="whitespace-nowrap text-sm">
-          <p className="overflow-hidden text-ellipsis font-medium text-sidebar-foreground">
+          <p className="overflow-hidden text-ellipsis font-medium text-foreground">
             {profile.first_name}
           </p>
           <p className="overflow-hidden text-ellipsis text-xs text-muted-foreground">

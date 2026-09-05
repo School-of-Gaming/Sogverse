@@ -188,7 +188,7 @@ export function SitePickerDialog({
               empty box — there is nothing long enough to skeleton, and the
               undefined case is deliberately not the empty one: "no sites
               here" is a claim, and it must not be made before the answer. */}
-          <div className="h-[180px] overflow-y-auto rounded-md border border-input bg-background p-2">
+          <div className="h-[180px] overflow-y-auto rounded-md border border-border bg-background p-2">
             {sites === undefined ? null : sites.length > 0 ? (
               <div className="space-y-0.5">
                 {sites.map((site) => (
@@ -196,7 +196,7 @@ export function SitePickerDialog({
                     key={site.id}
                     type="button"
                     onClick={() => pick(site.id)}
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-foreground"
                   >
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     <span className="min-w-0 flex-1 truncate font-medium">

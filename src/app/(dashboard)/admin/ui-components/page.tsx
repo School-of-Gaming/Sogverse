@@ -2219,7 +2219,6 @@ export default function AdminUIComponentsPage() {
             <Swatch label="Muted" className="bg-muted" />
             <Swatch label="Accent" className="bg-accent" />
             <Swatch label="Border" className="bg-border" />
-            <Swatch label="Ring" className="bg-ring" />
           </div>
         </SubSection>
 
@@ -3519,7 +3518,7 @@ function LocationPickerDemo() {
   // is why the picker never has to re-enable its confirm button.
   if (confirmed) {
     return (
-      <div className="space-y-3 rounded-md border border-input bg-card p-4">
+      <div className="space-y-3 rounded-md border border-border bg-card p-4">
         <p className="text-sm">
           Confirmed <span className="font-medium">{confirmed}</span> — the site
           flow would now list the sites already in it, with that row as the
@@ -3537,7 +3536,7 @@ function LocationPickerDemo() {
   }
 
   return (
-    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+    <div className="max-w-2xl rounded-md border border-border bg-card p-4">
       <LocationPickerPanel
         query={query}
         onQueryChange={setQuery}
@@ -3573,7 +3572,7 @@ function LocationCoverageDemo() {
 
   return (
     <div className="space-y-2">
-      <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+      <div className="max-w-2xl rounded-md border border-border bg-card p-4">
         <LocationPickerPanel
           query={query}
           onQueryChange={setQuery}
@@ -3614,7 +3613,7 @@ function LocationSearchDemo() {
   const [query, setQuery] = useState("nimes");
 
   return (
-    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+    <div className="max-w-2xl rounded-md border border-border bg-card p-4">
       <LocationPickerPanel
         query={query}
         onQueryChange={setQuery}
@@ -3657,7 +3656,7 @@ function LocationBoundCountryDemo() {
   const fixture = useFixtureBrowse([FR]);
 
   return (
-    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+    <div className="max-w-2xl rounded-md border border-border bg-card p-4">
       <LocationPickerPanel
         query={query}
         onQueryChange={setQuery}
@@ -3704,7 +3703,7 @@ function HomeLocationFieldDemo() {
   const [place, setPlace] = useState<LocationPick | null>(null);
 
   return (
-    <div className="max-w-md space-y-4 rounded-md border border-input bg-card p-4">
+    <div className="max-w-md space-y-4 rounded-md border border-border bg-card p-4">
       <div className="space-y-2">
         <HomeLocationField value={place} onChange={setPlace} />
         <p className="text-xs text-muted-foreground">
@@ -3807,7 +3806,7 @@ function RichTextEditorDemo() {
       </div>
       <div className="space-y-2">
         <DemoCaption>Serialised markdown</DemoCaption>
-        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
+        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
           {markdown}
         </pre>
       </div>
@@ -3824,7 +3823,7 @@ function RichTextEditorDemo() {
       </div>
       <div className="space-y-2">
         <DemoCaption>Serialised markdown</DemoCaption>
-        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
+        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
           {marketingMarkdown}
         </pre>
       </div>

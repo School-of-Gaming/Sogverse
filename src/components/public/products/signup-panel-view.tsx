@@ -741,7 +741,7 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
       <button
         type="button"
         onClick={onSetLocation}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
       >
         <MapPin className="h-4 w-4" />
         {t("regionLock.setLocation")}
@@ -959,7 +959,7 @@ function SignupForm(
                     // gives the name/age/status line the room it needs at rail
                     // width.
                     alreadyOn !== null
-                      ? "cursor-not-allowed border-input bg-muted/40 opacity-60"
+                      ? "cursor-not-allowed border-border bg-muted/40 opacity-60"
                       : selected
                         ? // With no outer box to sit inside, a 1px primary
                           // border against a 1px input border is a thin
@@ -967,7 +967,7 @@ function SignupForm(
                           // changing the box, so selecting a row cannot nudge
                           // its own text by a pixel.
                           "border-primary bg-primary/10 ring-1 ring-inset ring-primary/50"
-                        : "border-input hover:bg-accent hover:text-accent-foreground",
+                        : "border-border hover:bg-accent hover:text-foreground",
                   )}
                 >
                   <span className="flex min-w-0 items-center gap-2.5">
@@ -1029,7 +1029,7 @@ function SignupForm(
             <button
               type="button"
               onClick={props.onAddGamer}
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
             >
               <Plus className="h-4 w-4" />
               {tFamily("addGamer")}

@@ -76,7 +76,7 @@ export function GamerSignInRadios({
               "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
               selected
                 ? "border-primary bg-primary/5"
-                : "border-input hover:border-foreground/30",
+                : "border-border hover:border-foreground/30",
               disabled && "cursor-not-allowed opacity-50",
             )}
           >

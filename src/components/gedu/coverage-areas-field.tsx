@@ -142,7 +142,7 @@ function CoverageChip({
         disabled={disabled}
         aria-label={removeLabel}
         title={removeLabel}
-        className="shrink-0 rounded-full p-0.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        className="shrink-0 rounded-full p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
       >
         <X className="h-3 w-3" />
       </button>

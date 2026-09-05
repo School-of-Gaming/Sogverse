@@ -57,7 +57,7 @@ export function FaqAccordion({ items }: FaqAccordionProps) {
               `::-webkit-details-marker` rule in WebKit; the chevron below
               replaces it so the affordance sits on the side the reader's thumb
               is already on. */}
-          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-4 py-4 text-left font-semibold transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-6 sm:py-5 [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-4 py-4 text-left font-semibold transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 sm:py-5 [&::-webkit-details-marker]:hidden">
             <span>{item.question}</span>
             <ChevronDown
               aria-hidden="true"

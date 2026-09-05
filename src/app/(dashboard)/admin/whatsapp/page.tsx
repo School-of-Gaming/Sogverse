@@ -117,7 +117,7 @@ function ContactList({
             key={contact.phone}
             onClick={() => onSelect(contact.phone)}
             className={cn(
-              "flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-accent hover:text-accent-foreground",
+              "flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-accent hover:text-foreground",
               selectedPhone === contact.phone && "bg-muted"
             )}
           >

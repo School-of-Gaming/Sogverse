@@ -130,7 +130,7 @@ export function ProductBrowseFilters({
           aria-hidden={!showClear}
           tabIndex={showClear ? 0 : -1}
           className={cn(
-            "inline-flex items-center gap-1 rounded-full border border-input px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+            "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-foreground",
             !showClear && "invisible pointer-events-none",
           )}
         >
@@ -409,7 +409,7 @@ function Chip({
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
         active
           ? "border-primary bg-primary text-primary-foreground shadow-sm"
-          : "border-input bg-background text-foreground/80 hover:border-primary/40 hover:bg-accent",
+          : "border-border bg-background text-foreground/80 hover:border-primary/40 hover:bg-accent",
         className,
       )}
     >

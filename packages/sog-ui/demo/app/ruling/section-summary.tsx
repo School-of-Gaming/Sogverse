@@ -5,33 +5,21 @@
  * has, and the verdict in one phrase. Every reason behind a verdict is in the
  * doc comments in `inventory.ts`, beside the values it explains.
  *
- * Under the neutrals sits the gallery that makes the table legible: each of
- * those tokens in the construct that actually spends it, copied from the
- * component named in its caption. A swatch labelled `popover-foreground` tells
- * nobody anything; an open menu does.
+ * The neutrals and the signature pair have left the table. Those rows are ruled
+ * and landed — the tokens are the library's now — so the gallery that made
+ * their names legible has gone with them. What is left is what is still open:
+ * the status colours, the four Yty families, the categorical palettes, and the
+ * colours with no token behind them.
  */
 
-import type { ReactNode } from "react";
 import {
   LOOSE_COLOURS,
-  NEUTRAL_ROWS,
   PRODUCT_PALETTE,
-  SIDEBAR_ROWS,
   STATUS_ROWS,
   YTY_ROWS,
   ZONE_PALETTE,
 } from "./inventory";
-import { CARD, Caps, EDGE, Exemplar, Question } from "./parts";
-import {
-  AppButtons,
-  AppCard,
-  AppField,
-  AppMenu,
-  AppPills,
-  AppRow,
-  AppSkeleton,
-  TODAY,
-} from "./recipes";
+import { Caps, Question } from "./parts";
 
 interface Row {
   readonly token: string;
@@ -90,101 +78,6 @@ function Group({ title, rows }: { title: string; rows: readonly Row[] }) {
   );
 }
 
-/** A framed exemplar, on the card ground most of these constructs really sit on. */
-function Framed({ children }: { children: ReactNode }) {
-  return (
-    <div
-      className="rounded-lg border p-4"
-      style={{ borderColor: EDGE, backgroundColor: CARD }}
-    >
-      {children}
-    </div>
-  );
-}
-
-/**
- * The neutrals and the signature pair, in the constructs that spend them.
- *
- * Every value here is already the library's, so there is nothing to compare —
- * the gallery exists so that the names in the table above stop being names.
- * Each recipe is copied class-for-class from the component in its caption, with
- * only the colour moved to an inline style, because the demo's stylesheet is
- * the library's theme and has no `bg-popover` to compile.
- *
- * States a static page cannot show are drawn as their own copies: the hovered
- * row, the focused field, the selected menu option.
- */
-function NeutralExemplars() {
-  return (
-    <div>
-      <Caps>The same tokens, in the things they draw</Caps>
-      <div className="mt-4 grid gap-8 lg:grid-cols-2">
-        <Exemplar
-          file="ui/card.tsx"
-          page="every dashboard section — card, card-foreground, border, muted-foreground"
-        >
-          <AppCard palette={TODAY} />
-        </Exemplar>
-        <Exemplar
-          file="ui/button.tsx"
-          page="every action — primary, secondary, input, accent, destructive"
-        >
-          <Framed>
-            <AppButtons palette={TODAY} />
-          </Framed>
-        </Exemplar>
-        <Exemplar
-          file="ui/input.tsx with ui/label.tsx"
-          page="/login and every admin search box — input, background, ring"
-        >
-          <Framed>
-            <div className="space-y-5">
-              <AppField palette={TODAY} focused={false} empty={false} />
-              <AppField palette={TODAY} focused empty />
-            </div>
-          </Framed>
-        </Exemplar>
-        <Exemplar
-          file="ui/filter-dropdown.tsx"
-          page="/admin/products — popover, popover-foreground, accent"
-        >
-          <Framed>
-            <AppMenu palette={TODAY} />
-          </Framed>
-        </Exemplar>
-        <Exemplar
-          file="admin/users/page.tsx"
-          page="/admin/users, the role filter strip — info, muted"
-        >
-          <Framed>
-            <AppPills palette={TODAY} />
-          </Framed>
-        </Exemplar>
-        <Exemplar
-          file="admin/users/page.tsx"
-          page="/admin/users while the list loads — muted as a solid fill"
-        >
-          <Framed>
-            <AppSkeleton palette={TODAY} />
-          </Framed>
-        </Exemplar>
-        <Exemplar
-          file="admin/users/[id]/page.tsx"
-          page="/admin/users/[id] — border, accent on hover, success and warning badges"
-        >
-          <Framed>
-            <div className="space-y-2">
-              <AppRow palette={TODAY} state="rest" />
-              <AppRow palette={TODAY} state="hover" />
-              <AppRow palette={TODAY} state="warning" />
-            </div>
-          </Framed>
-        </Exemplar>
-      </div>
-    </div>
-  );
-}
-
 const STATUS_SUMMARY: readonly Row[] = STATUS_ROWS.flatMap((status) => [
   {
     token: status.id,
@@ -236,9 +129,6 @@ export function SummarySection() {
   return (
     <Question n={0} title="The inventory">
       <div className="space-y-10">
-        <Group title="Neutrals and the signature pair" rows={NEUTRAL_ROWS.map(toRow)} />
-        <NeutralExemplars />
-        <Group title="The sidebar's seven" rows={SIDEBAR_ROWS.map(toRow)} />
         <Group title="Status" rows={STATUS_SUMMARY} />
         <Group title="The four Yty families" rows={YTY_SUMMARY} />
         <Group title="Categorical palettes" rows={PALETTE_SUMMARY} />
@@ -246,18 +136,4 @@ export function SummarySection() {
       </div>
     </Question>
   );
-}
-
-function toRow(row: {
-  token: string;
-  today: string;
-  uses: number;
-  verdict: string;
-}): Row {
-  return {
-    token: row.token,
-    hex: row.today,
-    uses: row.uses,
-    verdict: row.verdict,
-  };
 }

@@ -49,7 +49,7 @@ export function RegistrationSection({
                 "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
                 state.registrationOpensMode === option
                   ? "border-primary bg-primary/5"
-                  : "border-input",
+                  : "border-border",
                 lockTiming
                   ? "cursor-not-allowed opacity-60"
                   : cn(
@@ -110,7 +110,7 @@ export function RegistrationSection({
                       registrationOpensHour: e.target.value,
                     })
                   }
-                  className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+                  className="flex h-10 flex-1 rounded-md border border-border bg-background px-2 text-sm"
                 >
                   {HOUR_OPTIONS.map((h) => (
                     <option key={h} value={h}>
@@ -128,7 +128,7 @@ export function RegistrationSection({
                       registrationOpensMinute: e.target.value,
                     })
                   }
-                  className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+                  className="flex h-10 flex-1 rounded-md border border-border bg-background px-2 text-sm"
                 >
                   {MINUTE_OPTIONS.map((m) => (
                     <option key={m} value={m}>

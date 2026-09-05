@@ -19,6 +19,8 @@ export const FILL: TokenClasses = {
   background: "bg-background",
   foreground: "bg-foreground",
   card: "bg-card",
+  accent: "bg-accent",
+  muted: "bg-muted",
   "muted-foreground": "bg-muted-foreground",
   border: "bg-border",
   primary: "bg-primary",
