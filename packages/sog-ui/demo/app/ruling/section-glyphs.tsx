@@ -1,13 +1,10 @@
 /**
- * The glyphs — which mark rides with each Yty family, and with each product kind.
+ * The element glyphs — which mark rides with each Yty family.
  *
- * Two tables, one question. The tone grammar holds a fact's colour and its mark
- * together, and neither half is decided by the consumer; the families' hues are
- * ruled and their marks are not, and the kind rows have marks that were taken
- * along with the family and never looked at on their own. So the section runs
- * the elements first, then the kinds, and each ends in a set view.
- *
- * ## The element glyphs
+ * The product-kind half of this section is gone: `consumer_club` → `Gamepad2`,
+ * `municipality_club` → `School`, `camp` → `Tent` and `event` → `PartyPopper`
+ * are ruled and landed in `tokens/grammar.ts`, and the page shrinks by what
+ * lands. What is left is the family table, and within it one open seat.
  *
  * The four families' hues are ruled and landed; their **glyphs** were not, and
  * Sogverse had been picking them itself. Colour and glyph are one fact — the
@@ -52,12 +49,13 @@
  * second Glow round is drawn against and the reason its two hand candidates are
  * drawn at all: the collision is shown rather than asserted.
  *
- * **What lands when this is ruled.** The four marks join the library beside the
- * product-kind glyphs — a second table in `tokens/grammar.ts` or a sibling of it,
- * keyed by family id — and Sogverse's `lib/constants/yty.ts` reads them from
- * there instead of importing from `lucide-react` itself, the way the admin
- * product-type presentation already reads its row. The set then cannot drift:
- * a family's hue and its mark are edited in one place.
+ * **What lands when Glow is ruled.** The four marks join the library beside the
+ * product-kind glyphs that landed before them — a second table in
+ * `tokens/grammar.ts` or a sibling of it, keyed by family id — and Sogverse's
+ * `lib/constants/yty.ts` reads them from there instead of importing from
+ * `lucide-react` itself, the way the admin product-type presentation already
+ * reads its row. The set then cannot drift: a family's hue and its mark are
+ * edited in one place.
  *
  * The set view draws the four **together**, today's set beside the ruled three
  * with the best-fit Glow in the open seat, at both scales they appear at. A
@@ -67,55 +65,34 @@
  */
 
 import {
-  Backpack,
-  BookOpen,
   Brain,
-  Building2,
-  Calendar,
-  Computer,
   Ear,
-  Flame,
   Flower2,
-  Gamepad,
-  Gamepad2,
   Gift,
-  GraduationCap,
   Hand,
   HandHeart,
   HandHelping,
   Handshake,
-  Headset,
   Heart,
-  Keyboard,
-  Landmark,
-  Laptop,
+  Lamp,
   MessageCircleHeart,
-  Monitor,
-  MonitorSmartphone,
-  Mountain,
-  Mouse,
   Origami,
-  PartyPopper,
-  PcCase,
+  RadioTower,
   Rainbow,
-  School,
   Smile,
   Sparkles,
   Speech,
   Sprout,
   Sun,
   Sword,
-  Tent,
-  TentTree,
   ThumbsUp,
-  Ticket,
   Users,
   UsersRound,
+  createLucideIcon,
   type LucideIcon,
 } from "lucide-react";
 
 import {
-  Caps,
   Case,
   Compare,
   Exemplar,
@@ -125,14 +102,9 @@ import {
   CARD,
   EDGE,
   INK,
-  MUTED_INK,
 } from "./parts";
 import { alpha } from "./colour";
 import { YTY_FAMILIES, type YtyFamilyId } from "../../../src/tokens/brand";
-import {
-  PRODUCT_KIND_GRAMMAR,
-  type ProductKindId,
-} from "../../../src/tokens/grammar";
 
 /** One candidate mark: the component that draws it, and the name it is known by. */
 interface Candidate {
@@ -213,6 +185,40 @@ const ELEMENTS: readonly {
 ];
 
 /**
+ * A lighthouse, because lucide does not ship one.
+ *
+ * The nearest real marks in the set are `RadioTower` — a beacon that broadcasts
+ * outward, which is the right *behaviour* on a mast rather than a tower — and
+ * `Lamp`, which is warm but domestic and throws its light downward. Neither is
+ * the thing, so the thing is drawn, here, beside them: a picture of an idea is
+ * worth more to a ruling than a description of it.
+ *
+ * **It is drawn to be judged, not to be landed.** A custom mark would be the
+ * first icon SOG-UI draws itself, and that is a different piece of work with
+ * different consequences — an owned mark has to be maintained, sized, and made
+ * to sit beside a set the library does not control. If it is chosen it belongs
+ * to the later icon project, which is where a house icon set gets designed as a
+ * set; nothing lands out of this row.
+ *
+ * Built through lucide's own `createLucideIcon` rather than a hand-rolled
+ * `<svg>`, so the conventions are inherited instead of restated: the 24-unit
+ * grid, a 2px stroke, round caps and joins, no fill. That is what makes the
+ * comparison fair — the candidate differs from its neighbours in shape and in
+ * nothing else.
+ *
+ * Six strokes: a closed lantern room with a peaked roof, two tapered tower
+ * walls, a plinth, and one ray to each side at the lantern's own height.
+ */
+const LighthouseCustom = createLucideIcon("LighthouseCustom", [
+  ["path", { d: "M9 11V8l3-3 3 3v3z" }],
+  ["path", { d: "M9.5 11 8 21" }],
+  ["path", { d: "M14.5 11 16 21" }],
+  ["path", { d: "M6 21h12" }],
+  ["path", { d: "M6.5 8.5H4" }],
+  ["path", { d: "M17.5 8.5H20" }],
+]);
+
+/**
  * Glow, a second round.
  *
  * Nothing in the first round landed, and two of it are now unavailable on their
@@ -255,6 +261,12 @@ const GLOW_SECOND_ROUND: readonly Candidate[] = [
   { name: "Rainbow", icon: Rainbow },
   /** Friendship as a thing made by hand for someone else. */
   { name: "Origami", icon: Origami },
+  /** A beacon on a mast: the nearest real lucide mark for a light that reaches others. */
+  { name: "RadioTower", icon: RadioTower },
+  /** A light you sit under; warm, but domestic and pointed down rather than out. */
+  { name: "Lamp", icon: Lamp },
+  /** The idea itself, drawn — see `LighthouseCustom`. */
+  { name: "Lighthouse (custom)", icon: LighthouseCustom },
 ];
 
 /**
@@ -423,215 +435,6 @@ function ElementSet({ pick }: { pick: (element: Element) => Candidate }) {
   );
 }
 
-/**
- * The four product kinds, each with the mark the tone grammar gives it today
- * and the alternatives drawn beside it.
- *
- * **The criterion for the consumer club is the owner's own:** something closer
- * to a keyboard and mouse, or a laptop or a desktop — the thing a family's
- * child actually plays on — and the gamepad only if none of those exist. The
- * joystick is not the right fit: it is an arcade stick nobody in a club has
- * touched, so it says "games" as a category rather than naming the machine a
- * child sits at. lucide carries **no keyboard-and-mouse pairing**, so the pair
- * can only arrive as one half or the other; `Computer` is drawn as the closest
- * thing to a desktop and was not on the owner's list.
- *
- * The other three kinds are not being questioned; they are drawn because a
- * change to one row is judged against the three it has to sit beside, which is
- * the whole reason the set view below exists.
- *
- * `today` takes its icon from `PRODUCT_KIND_GRAMMAR` rather than naming the
- * component a second time, so this table cannot go on drawing a glyph the
- * grammar has already moved off.
- *
- * **What lands when this is ruled:** the ruled mark replaces that row's `glyph`
- * in `tokens/grammar.ts`, and every admin surface follows with no edit of its
- * own — the schedule panel's filter chips, the week rows, the attention grid's
- * card mark and the key rail all read the row.
- */
-const KINDS: readonly {
-  readonly id: ProductKindId;
-  /** The plural the admin surfaces render, from `admin.products.types`. */
-  readonly label: string;
-  readonly today: Candidate;
-  readonly alternatives: readonly Candidate[];
-  readonly bestFit: Candidate;
-}[] = [
-  {
-    id: "consumer_club",
-    label: "Consumer clubs",
-    /** An arcade stick: games as a category, not the machine a child plays on. */
-    today: { name: "Joystick", icon: PRODUCT_KIND_GRAMMAR.consumer_club.glyph },
-    alternatives: [
-      /** Half of the owner's pairing, and the half a PC player's hands are on. */
-      { name: "Keyboard", icon: Keyboard },
-      /** The other half; simple at 14px, but a bare mouse reads as a peripheral. */
-      { name: "Mouse", icon: Mouse },
-      /** The whole machine in one silhouette, and the one most families own. */
-      { name: "Laptop", icon: Laptop },
-      /** The desktop screen: the setup a gamer sits down at rather than carries. */
-      { name: "Monitor", icon: Monitor },
-      /** Screen and tower together — the fullest "desktop", and the busiest. */
-      { name: "Computer", icon: Computer },
-      /** The tower alone: hardware rather than play. */
-      { name: "PcCase", icon: PcCase },
-      /** Two screens: playing across devices, which is what a club actually is. */
-      { name: "MonitorSmartphone", icon: MonitorSmartphone },
-      /** The modern controller — the owner's fallback if no machine fits. */
-      { name: "Gamepad2", icon: Gamepad2 },
-      /** The older controller; blockier, and clearer at chip scale than Gamepad2. */
-      { name: "Gamepad", icon: Gamepad },
-      /** What everyone in a club is wearing, and the only mark that says "together". */
-      { name: "Headset", icon: Headset },
-    ],
-    bestFit: { name: "Laptop", icon: Laptop },
-  },
-  {
-    id: "municipality_club",
-    label: "Municipality clubs",
-    /** The school building: the school-hours offering, named by where it happens. */
-    today: {
-      name: "School",
-      icon: PRODUCT_KIND_GRAMMAR.municipality_club.glyph,
-    },
-    alternatives: [
-      /** Learning rather than the building — but it says graduation, which this is not. */
-      { name: "GraduationCap", icon: GraduationCap },
-      /** The institution that buys it, rather than the pupils who attend. */
-      { name: "Building2", icon: Building2 },
-      /** The municipality as civic body; heavier, and easily read as government. */
-      { name: "Landmark", icon: Landmark },
-      /** The lesson itself, at the cost of looking like documentation. */
-      { name: "BookOpen", icon: BookOpen },
-    ],
-    bestFit: { name: "School", icon: School },
-  },
-  {
-    id: "camp",
-    label: "Camps",
-    /** The camp, named by the thing you sleep under. */
-    today: { name: "Tent", icon: PRODUCT_KIND_GRAMMAR.camp.glyph },
-    alternatives: [
-      /** The same tent with its setting; more scene, less legible at 14px. */
-      { name: "TentTree", icon: TentTree },
-      /** The campfire — the evening rather than the week. */
-      { name: "Flame", icon: Flame },
-      /** The hard thing, tried: the intensive rather than the accommodation. */
-      { name: "Mountain", icon: Mountain },
-      /** What a child arrives carrying, which is how a camp starts. */
-      { name: "Backpack", icon: Backpack },
-    ],
-    bestFit: { name: "Tent", icon: Tent },
-  },
-  {
-    id: "event",
-    label: "Events",
-    /** A dated occasion — and a calendar on a panel already made of calendars. */
-    today: { name: "CalendarDays", icon: PRODUCT_KIND_GRAMMAR.event.glyph },
-    alternatives: [
-      /** The same mark without the day dots; quieter, and the same collision. */
-      { name: "Calendar", icon: Calendar },
-      /** The one-off you turn up to: an occasion rather than a date. */
-      { name: "Ticket", icon: Ticket },
-      /** The occasion at its loudest; too jolly for a row of twenty. */
-      { name: "PartyPopper", icon: PartyPopper },
-      /** The special thing, unspecific — and already spoken for in the element set. */
-      { name: "Sparkles", icon: Sparkles },
-    ],
-    bestFit: { name: "Ticket", icon: Ticket },
-  },
-];
-
-type Kind = (typeof KINDS)[number];
-
-/** The soft variant the admin surfaces tint a kind's glyph with, via the grammar's family. */
-function kindInk(id: ProductKindId): string {
-  return YTY_FAMILIES[PRODUCT_KIND_GRAMMAR[id].family].soft;
-}
-
-/**
- * The filter chip as `admin/dashboard/schedule-panel.tsx` composes it, in its
- * resting state: a bordered pill, a 14px tinted glyph and the kind's plural.
- * Selected fills with `accent`, which is a state of this chip rather than a
- * second construct, so resting is what a glyph is judged in.
- */
-function TypeChip({
-  icon,
-  label,
-  ink,
-}: {
-  icon: LucideIcon;
-  label: string;
-  ink: string;
-}) {
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap"
-      style={{ borderColor: EDGE, color: MUTED_INK }}
-    >
-      <Glyph icon={icon} size={14} colour={ink} />
-      {label}
-    </span>
-  );
-}
-
-/**
- * One candidate mark for a product kind, at both sizes the admin surfaces spend
- * it at — 14px in the schedule panel's chips and the week rows, 16px as the
- * attention grid's card mark — and once inside the chip itself.
- */
-function KindGlyphCell({
-  candidate,
-  label,
-  ink,
-}: {
-  candidate: Candidate;
-  label: string;
-  ink: string;
-}) {
-  return (
-    <figure className="m-0 flex flex-col items-stretch">
-      <div
-        className="flex items-end justify-center gap-3 rounded-lg p-3"
-        style={{ backgroundColor: CARD }}
-      >
-        <Glyph icon={candidate.icon} size={14} colour={ink} />
-        <Glyph icon={candidate.icon} size={16} colour={ink} />
-      </div>
-      <div className="mt-3 flex justify-center">
-        <TypeChip icon={candidate.icon} label={label} ink={ink} />
-      </div>
-      <figcaption className="mt-2 text-center font-brand-mono text-body-s text-muted-foreground">
-        {candidate.name}
-      </figcaption>
-    </figure>
-  );
-}
-
-/** The four kinds' chips as the schedule panel's filter row shows them. */
-function KindSet({ pick }: { pick: (kind: Kind) => Candidate }) {
-  return (
-    <Exemplar
-      file="admin/dashboard/schedule-panel.tsx"
-      page="/admin — the schedule panel's type filters"
-    >
-      <div className="flex flex-wrap items-center gap-1.5">
-        {KINDS.map((kind) => (
-          <TypeChip
-            key={kind.id}
-            icon={pick(kind).icon}
-            label={kind.label}
-            ink={kindInk(kind.id)}
-          />
-        ))}
-      </div>
-    </Exemplar>
-  );
-}
-
-const TODAY_KIND_GLYPH = (kind: Kind): Candidate => kind.today;
-const BEST_FIT_KIND_GLYPH = (kind: Kind): Candidate => kind.bestFit;
-
 const TODAY_GLYPH = (element: Element): Candidate => element.today;
 
 /**
@@ -650,12 +453,23 @@ const RULED_GLYPH = (element: Element): Candidate =>
   element.ruled ?? GLOW_BEST_FIT;
 
 /**
+ * The same three ruled marks with the lighthouse in Glow's seat.
+ *
+ * The set view carries it as a third column because "let's try lighthouse" is a
+ * thing to be tried in the set, not only in a row of candidates: a mark that is
+ * charming on its own has to survive sitting next to a heart, a handshake and
+ * a brain, and this is the only drawing that asks it that question.
+ */
+const LIGHTHOUSE_GLYPH = (element: Element): Candidate =>
+  element.ruled ?? { name: "Lighthouse (custom)", icon: LighthouseCustom };
+
+/**
  * The section number is a prop because the page renumbers as rulings land and
  * sections leave; where this one sits is the page's decision, not this file's.
  */
 export function GlyphsSection({ n = 2 }: { n?: number }) {
   return (
-    <Question n={n} title="The glyphs">
+    <Question n={n} title="The element glyphs">
       {ELEMENTS.map((element) => {
         const family = YTY_FAMILIES[element.id];
         const ruled = element.ruled;
@@ -704,7 +518,7 @@ export function GlyphsSection({ n = 2 }: { n?: number }) {
 
       <Case title="Glow, another round">
         <Panel label="Candidates">
-          <div className="grid grid-cols-3 gap-4 sm:grid-cols-5 lg:grid-cols-10">
+          <div className="grid grid-cols-3 gap-4 sm:grid-cols-5 lg:grid-cols-7">
             {GLOW_SECOND_ROUND.map((candidate) => (
               <GlyphCell
                 key={candidate.name}
@@ -718,66 +532,17 @@ export function GlyphsSection({ n = 2 }: { n?: number }) {
       </Case>
 
       <Case title="The four elements together">
-        <Compare columns={2}>
+        <Compare columns={3}>
           <Panel label="Today">
             <ElementSet pick={TODAY_GLYPH} />
           </Panel>
-          <Panel label="Ruled">
+          <Panel label="Ruled, with Smile">
             <ElementSet pick={RULED_GLYPH} />
           </Panel>
+          <Panel label="Ruled, with Lighthouse">
+            <ElementSet pick={LIGHTHOUSE_GLYPH} />
+          </Panel>
         </Compare>
-      </Case>
-
-      <Case title="The kind glyphs">
-        <div className="space-y-10">
-          {KINDS.map((kind) => {
-            const ink = kindInk(kind.id);
-            return (
-              <div key={kind.id}>
-                <Caps>{kind.label}</Caps>
-                <div className="mt-3 flex flex-col gap-6 lg:flex-row lg:items-stretch">
-                  <div className="lg:w-56 lg:shrink-0">
-                    <Panel label="Today">
-                      <KindGlyphCell
-                        candidate={kind.today}
-                        label={kind.label}
-                        ink={ink}
-                      />
-                    </Panel>
-                  </div>
-                  <div className="min-w-0 lg:flex-1">
-                    <Panel label="Candidates">
-                      <div className="flex flex-wrap gap-4">
-                        {kind.alternatives.map((candidate) => (
-                          <KindGlyphCell
-                            key={candidate.name}
-                            candidate={candidate}
-                            label={kind.label}
-                            ink={ink}
-                          />
-                        ))}
-                      </div>
-                    </Panel>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          <div>
-            <Caps>The four kinds together</Caps>
-            <div className="mt-3">
-              <Compare columns={2}>
-                <Panel label="Today">
-                  <KindSet pick={TODAY_KIND_GLYPH} />
-                </Panel>
-                <Panel label="Best fit">
-                  <KindSet pick={BEST_FIT_KIND_GLYPH} />
-                </Panel>
-              </Compare>
-            </div>
-          </div>
-        </div>
       </Case>
     </Question>
   );
