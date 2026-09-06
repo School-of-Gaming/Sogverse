@@ -1091,11 +1091,18 @@ every commit.
 
 **Still needing the owner (small, and none blocks the end of the branch):**
 
-- **The figure-and-fill exhibit** (ten colours × filled button / filled badge / figure
-  chip), to confirm the rule the construct pass applied provisionally; on confirmation the
-  19 filled badges take the chip's shape and the rule enters `packages/sog-ui/CLAUDE.md`.
-- **§10 the Klingon easter egg**: its `#d00`/`#0a0a0a` artwork colours under the artwork
-  exemption; its eight `text-white/*` → quiet ink. Not drawn; rulable from the words.
+- **The figure-and-fill exhibit**, drawn (page section 1): ten colours × the real filled
+  button / filled badge / figure chip, on both grounds; live hover only on the three
+  filled buttons the app ships. Finding: violet cannot be a figure (2.71 on the card,
+  2.91 on the page as ink), which is why the rule names families and statuses. On
+  confirmation the 19 filled badges take the chip's shape and the rule enters
+  `packages/sog-ui/CLAUDE.md`'s no-alpha paragraph; buttons are the Button adoption's.
+- **§10 the Klingon easter egg**, drawn (page section 2): the card today beside proposed,
+  artwork unchanged (`#d00`, `#0a0a0a`, its red edges), the eight `text-white/*` sorted:
+  the English column → `foreground`, the other seven → `muted-foreground` (both beat four
+  of the five steps they retire on the card's own ground). On ruling: the file keeps its
+  hex exemption for the artwork, its palette-class exemption narrows, the alpha allowlist
+  loses its easter-egg entry, and the only `/n` left in `src` is the Button hover pair.
 - **§12 the colour budget**: written as a paragraph in `packages/sog-ui/CLAUDE.md` (amber
   plus one on parent surfaces, the palette on gamer surfaces, never all six); the owner
   confirms the wording.

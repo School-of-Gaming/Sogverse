@@ -11,19 +11,24 @@
  * rationale, no ratio and no pass mark on screen; every reason lives in a doc
  * comment beside the value it explains, in `inventory.ts`.
  *
- * **What is left is the inventory alone.** Every question that was drawn here
- * — the alpha steps, the greys, the Yty recipe, the status set, the picks, the
- * identicon, act as a figure, the gradients, the role chip — has been ruled and
- * built, so each left the page as it landed, which is the whole shape of this
- * page's life. What the two tables still hold is what no ruling has reached:
- * the colours with no token behind them, and the handful of alpha steps that
- * belong to a later question. When those are answered the page goes, and this
- * directory with it.
+ * **The inventory, and the last two questions.** Every question that was drawn
+ * here — the alpha steps, the greys, the Yty recipe, the status set, the picks,
+ * the identicon, act as a figure, the gradients, the role chip — has been ruled
+ * and built, so each left the page as it landed, which is the whole shape of
+ * this page's life. Two are left, and both are the tail of that work rather
+ * than new ground: **figure and fill**, which confirms the sentence the status
+ * and act sweeps already applied and decides what the nineteen filled badges
+ * wear, and **the Klingon easter egg**, the last file in `src` still spending a
+ * colour the palette does not name. The two tables above them hold what those
+ * two questions are about, which is why they are the last rows in either. When
+ * both are answered the page goes, and this directory with it.
  *
  * Scope: colour only. Faces and headings are a later adoption.
  */
 
 import type { Metadata } from "next";
+import { EasterEggSection } from "./section-easter-egg";
+import { FigureAndFillSection } from "./section-figure-and-fill";
 import { SummarySection } from "./section-summary";
 
 export const metadata: Metadata = {
@@ -36,6 +41,8 @@ export default function RulingPage() {
     <main className="mx-auto max-w-[92rem] px-6 py-16">
       <h1 className="text-h1-mobile sm:text-h1">Theme ruling</h1>
       <SummarySection />
+      <FigureAndFillSection />
+      <EasterEggSection />
     </main>
   );
 }

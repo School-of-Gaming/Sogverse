@@ -70,7 +70,11 @@ export interface LooseColour {
  * **The Klingon easter egg** keeps `#D00` and `#0A0A0A` under the artwork
  * exemption — they are the Empire's flag colours, not the brand's. Its eight
  * `text-white/*` are not artwork: they are ordinary secondary text drawn from a
- * colour the palette does not name, and they become muted ink.
+ * colour the palette does not name, and they take the app's two inks. Seven go
+ * to the quiet one; the deepest step is the glossary table's English column,
+ * which is what a reader scans, and it takes `foreground` so the table keeps the
+ * ranking its four alpha strengths were approximating. Section 2 of the page
+ * draws the block both ways and lists the step-by-step decision.
  *
  * **The Lynx cyan is a partner's mark colour.** Our own mark is already drawn
  * in named tokens; the only file spelling this hex draws the Lynx Educate
@@ -101,7 +105,7 @@ export const LOOSE_COLOURS: readonly LooseColour[] = [
     value: "#FFFFFF",
     where: "about/about-section.tsx, text-white/30 to /70",
     uses: 8,
-    verdict: "rename → muted-foreground",
+    verdict: "rename → foreground ×1, muted-foreground ×7",
   },
   {
     label: "Lynx cyan",
