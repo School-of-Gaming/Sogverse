@@ -20,6 +20,21 @@ export function alpha(hex: string, a: number): string {
   return `rgb(${r} ${g} ${b} / ${a})`;
 }
 
+/**
+ * What Tailwind's `/n` modifier actually emits, for a colour the theme has no
+ * token for.
+ *
+ * `bg-x/10` compiles to `color-mix(in oklab, var(--color-x) 10%, transparent)`,
+ * so a demo that wants to draw the *real* rendering of an alpha step — rather
+ * than its own arithmetic dressed up as one — has to spell it the same way.
+ * Only the status colours need this: `destructive`, `success`, `info` and
+ * `warning` are not library tokens yet, so there is no class to write and the
+ * value has to be built here.
+ */
+export function tailwindAlpha(hex: string, percent: number): string {
+  return `color-mix(in oklab, ${hex} ${percent}%, transparent)`;
+}
+
 /** sRGB hue in degrees, 0–360. Sorting only — nothing keys a decision on it. */
 export function hueOf(hex: string): number {
   const [r, g, b] = hexToRgb(hex).map((c) => c / 255);

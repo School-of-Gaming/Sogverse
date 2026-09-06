@@ -282,6 +282,190 @@ export const LOOSE_COLOURS: readonly LooseColour[] = [
   },
 ];
 
+/** One row of the alpha-step surface: a class shape, where it is spent, and what is under it. */
+export interface AlphaSite {
+  /** The utility as it is written, or the token when the row collects every step of one. */
+  readonly step: string;
+  /** Where it appears, as a locator rather than a description. */
+  readonly where: string;
+  readonly uses: number;
+  /** What the blend lands on, in one phrase. */
+  readonly ground: string;
+}
+
+/**
+ * Every utility carrying a `/n` modifier, classified by what is underneath it.
+ *
+ * Regenerate the surface rather than trusting the counts, which are a snapshot:
+ *
+ *     grep -rhoE "\b(bg|from|to|via|text|border|ring|shadow|divide|outline|fill|stroke)-[a-z-]+/[0-9]+" src --include=*.tsx --include=*.ts | sed -E 's/^([a-z]+)-(.*)\/([0-9]+)$/\2/' | sort | uniq -c | sort -rn
+ *
+ * 270 sites in 120 files. Drop the `sed` to see the steps rather than the
+ * tokens; the fifteen media and scrolling rows below are the whole of what that
+ * unsedded output holds for `black` and `background`, and they are listed at
+ * that granularity because they are the rows the section draws one by one.
+ * Everything else is collected per token, which is the granularity the
+ * regeneration command itself reports.
+ *
+ * **Why the classification is the answer.** Over a ground the system did not
+ * choose there is no pairing to measure and no token to name, so blending at
+ * render time is the only mechanism there is. Over a ground the system did
+ * choose the blend lands on one fixed colour every time, and that colour is a
+ * token nobody named. Fifteen sites are the first kind. The other 255 are the
+ * second, and most of them are already in front of the owner under another
+ * question: the eight `text-white/*` are the Klingon easter egg, the sixteen
+ * Yty strong steps are the element recipe, the sixteen zone steps are the zone
+ * tile, and the status tints ride with the status set.
+ *
+ * **The one shape that is neither.** Four sites — the amber, violet and red
+ * button hovers in `ui/button.tsx`, and the same red on the payment-problem
+ * badge — spend an alpha step as a *state shade*: the fill darkening under the
+ * pointer, not a tint over a ground. That is the same construct as `opacity-50`
+ * on a disabled control, which this grep does not even match, and it belongs to
+ * a component's recipe rather than to colour. They are counted in the `act`,
+ * `world` and `destructive` rows below and are not what those rows are about.
+ */
+export const ALPHA_SITES: readonly AlphaSite[] = [
+  {
+    step: "bg-black/50",
+    where: "ui/dialog.tsx, ui/sheet.tsx",
+    uses: 2,
+    ground: "media",
+  },
+  {
+    step: "bg-black/60",
+    where: "family/ProfileTiles.tsx",
+    uses: 1,
+    ground: "media",
+  },
+  {
+    step: "bg-background/80",
+    where: "ui/fullscreen-image-viewer.tsx, voice/ScreenShareDisplay.tsx",
+    uses: 4,
+    ground: "media",
+  },
+  {
+    step: "bg-background/85",
+    where: "voice/VoiceAvatar.tsx, chat/ChatComposer.tsx",
+    uses: 2,
+    ground: "media",
+  },
+  {
+    step: "bg-background/90",
+    where: "gedu/session-feed/SessionPhotoStrip.tsx",
+    uses: 1,
+    ground: "media",
+  },
+  {
+    step: "bg-background/70",
+    where: "voice/instant/InstantVoiceLobby.tsx",
+    uses: 1,
+    ground: "media",
+  },
+  {
+    step: "bg-background/90, bg-background/70",
+    where: "layout/dashboard-section-pill.tsx",
+    uses: 2,
+    ground: "scrolling content",
+  },
+  {
+    step: "bg-background/80",
+    where: "voice/ZoneList.tsx, the member strip's scroll arrows",
+    uses: 2,
+    ground: "scrolling content",
+  },
+  {
+    step: "act",
+    where: "tinted bands, icon tiles, active chips, focus rings, two gradients, the admin sprite, the button hover",
+    uses: 52,
+    ground: "a token",
+  },
+  {
+    step: "muted",
+    where: "quiet blocks, code samples, reply strips, every skeleton",
+    uses: 44,
+    ground: "a token",
+  },
+  {
+    step: "destructive",
+    where: "the inline error, the danger row, the destructive hover",
+    uses: 37,
+    ground: "a token",
+  },
+  {
+    step: "muted-foreground",
+    where: "faded ink, pseudo-element separators, a quiet glyph",
+    uses: 18,
+    ground: "a token",
+  },
+  {
+    step: "warning",
+    where: "the caution note and its chip",
+    uses: 16,
+    ground: "a token",
+  },
+  {
+    step: "info",
+    where: "the informational note, a ring, a gradient, the now divider",
+    uses: 16,
+    ground: "a token",
+  },
+  {
+    step: "success",
+    where: "the confirmed note and its chip",
+    uses: 12,
+    ground: "a token",
+  },
+  {
+    step: "white",
+    where: "about/about-section.tsx, the tlh easter egg",
+    uses: 8,
+    ground: "a token",
+  },
+  {
+    step: "yty-*-strong",
+    where: "the element card and the zone tile",
+    uses: 16,
+    ground: "a token",
+  },
+  {
+    step: "zone-*",
+    where: "voice/ZoneList.tsx, the zone tile fill",
+    uses: 16,
+    ground: "a token",
+  },
+  {
+    step: "card",
+    where: "the home features, the Roblox reasons and events cards, the browse filters, the FAQ list",
+    uses: 5,
+    ground: "a token",
+  },
+  {
+    step: "world",
+    where: "two gradients, and the violet button hover",
+    uses: 5,
+    ground: "a token",
+  },
+  {
+    step: "accent",
+    where: "the checkbox row, the filter dropdown, two voice rows",
+    uses: 5,
+    ground: "a token",
+  },
+  {
+    step: "foreground",
+    where: "the absent mark, the zone glow, one faded chip label",
+    uses: 3,
+    ground: "a token",
+  },
+  {
+    step: "act-foreground",
+    where: "faded ink on an amber fill",
+    uses: 2,
+    ground: "a token",
+  },
+];
+
 /**
  * Identicon fixtures.
  *

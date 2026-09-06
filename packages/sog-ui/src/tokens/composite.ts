@@ -16,11 +16,14 @@
  * the darker page behind it, and against the wrong ground the wash renders as a
  * visible rectangle.
  *
- * The blend is plain sRGB per channel, which is what a browser does for `rgba`
- * over an opaque backdrop: `result = foreground × alpha + ground × (1 − alpha)`,
- * rounded to the nearest 8-bit step. Deliberately not oklab — `color-mix(in
- * oklab, … transparent)`, which is what Tailwind's `/10` modifier compiles to,
- * is a different blend and would put the emailed tint a shade off the app's.
+ * The blend is plain sRGB per channel, which is what a browser does for a colour
+ * with alpha over an opaque backdrop: `result = foreground × alpha + ground ×
+ * (1 − alpha)`, rounded to the nearest 8-bit step. Tailwind's `/10` modifier
+ * compiles to `color-mix(in oklab, colour 10%, transparent)`, and that is not a
+ * blend of two colours: mixing with transparent is done on premultiplied alpha,
+ * so the transparent half contributes no colour and the result is the colour at
+ * 10% alpha, which the browser then composites over the ground in sRGB exactly
+ * as above. The app's alpha step and the emailed composite land on one pixel.
  *
  * A composited value is not a new brand colour and does not become one: it is a
  * derivation of a colour that already exists, spent where alpha is unavailable.

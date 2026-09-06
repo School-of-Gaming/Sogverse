@@ -10,11 +10,17 @@
  * so the gallery that made their names legible has gone with them. The four
  * product-type colours have left it with nothing in their place: a product kind
  * takes a Yty family now, so it is not a colour Sogverse defines. What is left
- * is what is still open: the status colours, the voice-zone palette, and the
- * colours with no token behind them.
+ * is what is still open: the status colours, the voice-zone palette, the
+ * colours with no token behind them, and the alpha steps.
+ *
+ * The alpha steps get a table of their own shape, because the question about
+ * them is not what colour they are — most of them are a token the library
+ * already owns — but what is underneath them. So its columns are the step, the
+ * locator, the count and the ground, and it carries no swatch: an alpha step
+ * has no colour of its own to show, which is the point question 8 draws.
  */
 
-import { LOOSE_COLOURS, STATUS_ROWS, ZONE_PALETTE } from "./inventory";
+import { ALPHA_SITES, LOOSE_COLOURS, STATUS_ROWS, ZONE_PALETTE } from "./inventory";
 import { Caps, Question } from "./parts";
 
 interface Row {
@@ -74,6 +80,50 @@ function Group({ title, rows }: { title: string; rows: readonly Row[] }) {
   );
 }
 
+/** The same table without the swatch column, for rows whose subject is a ground rather than a colour. */
+function AlphaGroup({ title }: { title: string }) {
+  return (
+    <div>
+      <Caps>{title}</Caps>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[40rem] border-collapse text-body-s">
+          <thead>
+            <tr className="border-b border-border text-left align-bottom">
+              <th className="py-2 pr-4 font-semibold tracking-wider uppercase">
+                Step
+              </th>
+              <th className="py-2 pr-4 font-semibold tracking-wider uppercase">
+                Where
+              </th>
+              <th className="py-2 pr-4 text-right font-semibold tracking-wider uppercase">
+                Uses
+              </th>
+              <th className="py-2 font-semibold tracking-wider uppercase">
+                Ground
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {ALPHA_SITES.map((site) => (
+              <tr
+                key={`${site.step} ${site.where}`}
+                className="border-b border-border align-top"
+              >
+                <td className="py-2 pr-4 font-brand-mono">{site.step}</td>
+                <td className="py-2 pr-4 text-muted-foreground">{site.where}</td>
+                <td className="py-2 pr-4 text-right font-brand-mono text-muted-foreground">
+                  {site.uses}
+                </td>
+                <td className="py-2 font-brand-mono">{site.ground}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 const STATUS_SUMMARY: readonly Row[] = STATUS_ROWS.flatMap((status) => [
   {
     token: status.id,
@@ -113,6 +163,7 @@ export function SummarySection() {
         <Group title="Status" rows={STATUS_SUMMARY} />
         <Group title="The voice-zone palette" rows={PALETTE_SUMMARY} />
         <Group title="Colours with no token behind them" rows={LOOSE_SUMMARY} />
+        <AlphaGroup title="Colour at an alpha step" />
       </div>
     </Question>
   );

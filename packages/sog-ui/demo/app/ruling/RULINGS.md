@@ -158,11 +158,49 @@ call-ended → H3, admin all-clear title → H3), one Space Mono candidate (the 
 all-clear line, where the platform names its own place), and confirmation that the
 `font-mono` machine-text sites stay unbranded.
 
-## 9. Brand colour at alpha steps outside the Yty set
+## 9. Colour at an alpha step
 
-**Asked:** the home and Roblox hero gradients spend the brand pair at 20% / 10%; the
-admin pixel-art sprite uses the primary at 55%. The library forbids a brand colour at
-an alpha step. What replaces each.
+**Asked** (widened 2026-09-06 from "brand colour at alpha steps outside the Yty set"
+to every token at a `/n` step, because the same question is being answered 270 times
+and the brand pair is only 57 of them): 270 sites in 120 files carry an alpha
+modifier — act 52, muted 44, destructive 37, muted-foreground 18, warning 16, info 16,
+success 12, background 12, white 8, world 5, card 5, accent 5, the four Yty strong 4
+each, foreground 3, black 3, act-foreground 2, sixteen zone hues 1 each. Regenerate
+with the grep in the doc comment on `ALPHA_SITES` in `inventory.ts`.
+
+**Shown** (page section 8, "Colour at an alpha step"), four rows in real exemplars:
+
+1. **Scrims over media** — the dialog and sheet backdrop `bg-black/50`, the profile
+   tile's `bg-black/60`, the fullscreen viewer's `bg-background/80`, each over a real
+   photograph carrying a dark corner and a bright one.
+2. **Translucent chips over media** — the photo-strip close, the viewer's close and
+   two arrows, the screen-share badge, the voice avatar's muted mark, the chat
+   composer's remove control. Each drawn twice: as it is today, and with a solid
+   `bg-background`.
+3. **Glass over scrolling content** — the dashboard section pill's `bg-background/90`,
+   over a strip of card, body copy and an amber button.
+4. **Alpha over a known ground** — four constructs drawn three ways in a row: the
+   step as the app paints it, the same value pre-mixed with `composite()` as one
+   opaque hex, and the plain token. `bg-card/50` (the browse filters), `bg-act/10`
+   (the gedu picker's language chips), `bg-destructive/10` (the login form's inline
+   error), `text-muted-foreground/50` (the assignment card's separator). The first
+   two columns of each triple are the same colour, and that identity is the argument.
+
+**The line being put:** _a token may carry an alpha step only where the ground is not a
+token (media, video, scrolling content), and the library owns that construct; over a
+known ground the alpha becomes a named token with measured pairings or the site takes
+the plain token; opacity applied to a whole element as a state (disabled) is a
+component-recipe matter, not a colour._ Confirm or reject.
+
+The brand-colour instances stay in this entry as instances: the home and Roblox hero
+gradients spend the pair at 20% / 10% (and go to §14 with the rest of the gradients),
+and the admin pixel-art sprite uses `bg-act/55` over the card.
+
+**One shape fits none of the four rows.** `ui/button.tsx`'s three hover fills
+(`hover:bg-act/90`, `hover:bg-destructive/90`, `hover:bg-world/80`) and the same red on
+`parent/PaymentProblemBadge.tsx` spend an alpha step as a *state shade* — the fill
+darkening under the pointer, not a tint over a ground. The proposed line's third clause
+is what covers them; the hover ruling in §4 is where they land.
 
 **Ruling:** _open_
 
@@ -221,6 +259,39 @@ fixed in Sogverse.
 8. `src/components/public/products/signup-panel-view.tsx` — the region-lock blocks'
    "a border means you can act on it" grammar; only the info glyph marks the family now.
 
+## 14. Gradients
+
+**Asked:** a gradient is a colour construct the library has no word for, and every one
+of them spends the signature pair. Does the library own a gradient (as a token, a
+surface recipe, or a primitive), and at what values — or does the construct go? Not
+drawn on the page yet; this entry is the site list the section will be built from.
+
+Nine gradients in Tailwind classes and raw CSS, two OG images, one mail, one easter egg:
+
+| where | what it spends |
+|---|---|
+| `src/app/(public)/page.tsx` ~26 | the hero, raw CSS: `color-mix` of act at 20% and world at 10% over a ground fade |
+| `src/components/roblox/roblox-hero.tsx` ~53 | the same hero recipe, byte for byte |
+| `src/app/(public)/page.tsx` ~140 | `bg-gradient-to-r from-act/10 to-world/10` on the closing card |
+| `src/components/roblox/programme-cta.tsx` ~29 | the same, on the programme CTA |
+| `src/components/about/about-section.tsx` ~61 | `from-act/5 to-world/5` |
+| `src/components/about/yty-section.tsx` ~31 | the same |
+| `src/components/family/EnrollmentCard.tsx` ~453 | `from-act/5 to-transparent`, the live card |
+| `src/components/family/EnrollmentCard.tsx` ~460 | `from-info/5 to-transparent`, the awaiting card |
+| `src/components/gedu/GeduAssignmentCard.tsx` ~248 | `from-act/5 to-transparent`, the live card |
+| `src/app/opengraph-image.tsx` ~47 and `src/app/(public)/roblox/opengraph-image.tsx` ~54 | the hero recipe again, built from `GRADIENT.actGlow` / `worldGlow` — the pair already **composited** to opaque hexes, because a renderer with no alpha needs the flat colour |
+| `src/lib/email-templates/layout.ts` ~21 | the same composited pair, for the same reason |
+| `src/components/about/about-section.tsx` ~128 | the Klingon divider, `transparent → #d00 → transparent`; artwork exemption, §10 |
+
+Two things the list makes visible before anything is drawn. The hero exists in four
+places and two spellings — raw `color-mix` in the app, `composite()` in the OG images
+and the mail — which is one recipe with two implementations that can drift. And
+`src/lib/constants/roles.ts` ~23 carries a **full-value** `bg-gradient-to-r from-act
+to-world` for the gedu role chip, which the alpha grep does not match and which is the
+only gradient in the app spending the pair at its authored values.
+
+**Ruling:** _open_
+
 ## Where the session stands (2026-09-05, end of day)
 
 Read this first when resuming. The branch is `feat/sog-ui-theme-adoption`, in the
@@ -242,10 +313,22 @@ reading it, the four categorical tokens deleted) and the page cleanup for §2 an
 `git status` is clean and `git log` shows it, nothing is outstanding from that pass; the demo
 server was stopped at the end of the day and needs starting again.
 
+**Added after the owner left (2026-09-06), needing no ruling to build:** the page's
+section 8, "Colour at an alpha step" (`section-alpha.tsx`), which draws §9's widened
+question — scrims and chips over real photographs, the section pill over scrolling
+content, and four alpha-over-a-known-ground triples where the step and its composited
+solid land on the same pixels. `ALPHA_SITES` in `inventory.ts` classifies all 270
+sites and the summary table lists them. The two photographs are copies of Sogverse's
+`public/preview-art/session-arena.jpg` and `session-badge.jpg` in the demo's own
+`public/ruling-art/`, because the demo is a separate Next app with a separate static
+root; they are deleted with this directory. **§14, gradients, is ledgered but not
+drawn** — the site list is there, the page section is a separate piece of work.
+
 **Open on the page, in the order they were going to be taken:** the hover fill (§4,
 accent vs muted); the Yty recipe (§2); the status set (§3); the zone palette (§5); scrim
-and on-media ink (§6); the identicon (§7); the alpha steps in the heroes and the sprite
-(§9); the easter egg (§10); coloured text (§11) and the calm-surface budget (§12).
+and on-media ink (§6); the identicon (§7); colour at an alpha step (§9, page section 8);
+the easter egg (§10); coloured text (§11) and the calm-surface budget (§12). Gradients
+(§14) has no section yet.
 
 **End-of-branch work, needing no ruling:** the enforcement (a test that Sogverse's
 stylesheet declares no `--color-*`; the hex-literal lint extended to all of `src/` with
