@@ -91,7 +91,12 @@ Needs in the library first: nothing beyond what exists.
 
 Changes in Sogverse: the stylesheet imports the theme and deletes the tokens it now
 receives; the root layout's font loads match the library's face contract; the package is
-added to the root dependencies so Vercel's install links it. The Yty hues are consumed at
+added to the root dependencies so Vercel's install links it. That install has to be told
+to include the workspace: Vercel's install command had been `npm ci --workspaces=false`
+to keep the bedrock portal's dependencies off the app's build, and under it a workspace
+dependency is simply absent, so the first preview builds of this adoption failed with the
+package unresolvable. The command is now scoped to this one workspace plus the root,
+which links the package and still leaves the portal out. The Yty hues are consumed at
 alpha steps on three surfaces today, so those tints composite differently the moment the
 hues change; review them with page-capture and correct them in the same PR.
 

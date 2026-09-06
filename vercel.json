@@ -1,4 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm ci --workspaces=false"
+  "installCommand": "npm ci --workspace=@sog/ui --include-workspace-root"
 }
