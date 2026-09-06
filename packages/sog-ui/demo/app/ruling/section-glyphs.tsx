@@ -185,37 +185,43 @@ const ELEMENTS: readonly {
 ];
 
 /**
- * A lighthouse, because lucide does not ship one.
+ * `Lighthouse` — lucide's own mark, from a release later than the one installed
+ * here.
  *
- * The nearest real marks in the set are `RadioTower` — a beacon that broadcasts
- * outward, which is the right *behaviour* on a mast rather than a tower — and
- * `Lamp`, which is warm but domestic and throws its light downward. Neither is
- * the thing, so the thing is drawn, here, beside them: a picture of an idea is
- * worth more to a ruling than a description of it.
+ * lucide added it after 0.563.0, which is what this repo has, so the component
+ * cannot be imported and the icon is instead assembled from the upstream path
+ * data (lucide-static 1.41.0, ISC) through lucide's own `createLucideIcon`.
+ * That is not a redrawing: the paths are the real ones, and the renderer is the
+ * real one, so the 24-unit grid, the 2px stroke, the round caps and joins and
+ * the absent fill all come from lucide rather than from a house imitation of
+ * it. What is on screen is the icon, pixel for pixel, and it differs from its
+ * neighbours in shape and in nothing else.
  *
- * **It is drawn to be judged, not to be landed.** A custom mark would be the
- * first icon SOG-UI draws itself, and that is a different piece of work with
- * different consequences — an owned mark has to be maintained, sized, and made
- * to sit beside a set the library does not control. If it is chosen it belongs
- * to the later icon project, which is where a house icon set gets designed as a
- * set; nothing lands out of this row.
+ * The two nearest marks the installed version *does* ship are drawn beside it:
+ * `RadioTower`, a beacon broadcasting outward, which has the right behaviour on
+ * a mast rather than a tower; and `Lamp`, warm but domestic, throwing its light
+ * downward.
  *
- * Built through lucide's own `createLucideIcon` rather than a hand-rolled
- * `<svg>`, so the conventions are inherited instead of restated: the 24-unit
- * grid, a 2px stroke, round caps and joins, no fill. That is what makes the
- * comparison fair — the candidate differs from its neighbours in shape and in
- * nothing else.
- *
- * Six strokes: a closed lantern room with a peaked roof, two tapered tower
- * walls, a plinth, and one ray to each side at the lantern's own height.
+ * **Landing it is a decision beyond the glyph, and the row does not make it.**
+ * Either `lucide-react` moves to a release that ships the icon — a dependency
+ * change with its own review, because the 1.x line renamed and removed icons
+ * and every existing call site has to survive it — or the library vendors these
+ * paths under lucide's ISC licence until that upgrade happens. Both are real
+ * options; neither is settled by liking the mark.
  */
-const LighthouseCustom = createLucideIcon("LighthouseCustom", [
-  ["path", { d: "M9 11V8l3-3 3 3v3z" }],
-  ["path", { d: "M9.5 11 8 21" }],
-  ["path", { d: "M14.5 11 16 21" }],
-  ["path", { d: "M6 21h12" }],
-  ["path", { d: "M6.5 8.5H4" }],
-  ["path", { d: "M17.5 8.5H20" }],
+const Lighthouse = createLucideIcon("Lighthouse", [
+  ["path", { d: "M12 3V2" }],
+  ["path", { d: "M16.066 16.865 7 22l2-11V6a3 3 0 016 0v5l2 11" }],
+  ["path", { d: "m19.792 4.5.866-.5" }],
+  ["path", { d: "m19.797 13.5.866.5" }],
+  ["path", { d: "M21 9h1" }],
+  ["path", { d: "M3 9H2" }],
+  ["path", { d: "m4.203 13.5-.866.5" }],
+  ["path", { d: "M4.208 4.5 3.342 4" }],
+  ["path", { d: "M5.5 22h13" }],
+  ["path", { d: "m7.932 16.875 7.377-4.178" }],
+  ["path", { d: "M8 11h8" }],
+  ["path", { d: "M8 7h8" }],
 ]);
 
 /**
@@ -265,8 +271,8 @@ const GLOW_SECOND_ROUND: readonly Candidate[] = [
   { name: "RadioTower", icon: RadioTower },
   /** A light you sit under; warm, but domestic and pointed down rather than out. */
   { name: "Lamp", icon: Lamp },
-  /** The idea itself, drawn — see `LighthouseCustom`. */
-  { name: "Lighthouse (custom)", icon: LighthouseCustom },
+  /** The mark the owner asked for, from a lucide release newer than the installed one. */
+  { name: "Lighthouse", icon: Lighthouse },
 ];
 
 /**
@@ -461,7 +467,7 @@ const RULED_GLYPH = (element: Element): Candidate =>
  * a brain, and this is the only drawing that asks it that question.
  */
 const LIGHTHOUSE_GLYPH = (element: Element): Candidate =>
-  element.ruled ?? { name: "Lighthouse (custom)", icon: LighthouseCustom };
+  element.ruled ?? { name: "Lighthouse", icon: Lighthouse };
 
 /**
  * The section number is a prop because the page renumbers as rulings land and
