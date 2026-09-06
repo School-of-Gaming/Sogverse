@@ -287,6 +287,16 @@ ground, derived from the brand's pair", justified by orange losing its chroma wh
 lightened where pink, green and blue do not; Valor stays one colour used twice, like the
 other three. Draws after the greys landing releases the status files.
 
+**Ruled 2026-09-06: Valor is `#FF8F31`.** The 75% step: OKLCH L 0.757, C 0.168, h 55°,
+against strong (0.706, 0.194, 46°) and soft (0.774, 0.159, 58°): nearly soft's
+lightness with the most chroma sRGB allows there, which is what soft gave away. Ink on
+card 7.65, on lifted 6.65; under an ink label 8.23. **So the recipe is closed: one colour
+per element** — Harmony `#FA7FA3`, Glow `#6AC66B`, Valor `#FF8F31`, Wit `#4DB3F5` — and
+Valor is the first declared departure on a hue: "Valor's orange on the dark ground,
+derived from the brand's pair", both authored values and the reason recorded beside it in
+the colour source; the other three families' second authored values recorded in the doc
+comment as the brand's white-ground values, not emitted.
+
 **Ruling:** _tinted ground and lit card ruled; the recipe's Valor cell and the one-colour
 direction to confirm from the redraw_
 
@@ -449,7 +459,21 @@ ground** (true black behind video) and the **on-media ink** (white, or one step 
 over the brightest thing a scrim covers), plus the picker's check; one exemplar each,
 drawn over the library's scrim.
 
-**Ruling:** _open — media ground and on-media ink only_
+**Ruled 2026-09-06.** **Ink on media → the app's own ink (`foreground`), never pure
+white** ("we can't render text using pure white"); as a general consequence no Sogverse
+text is `text-white`, the only white in the system being the label on the violet fill.
+**The picker's check → drawn in ink.** **The media ground was a false choice**: the black
+is the letterboxing behind a screen share shown at its own aspect inside a 16:9 box; the
+bars are needed whenever the share is not 16:9 (a share cannot be cropped), but their
+colour never needed to be a fourth neutral — **they take the card ground**, the surface
+the tile sits in; true black leaves Sogverse's palette. Sizing the box to the share's own
+aspect (no bars) is a layout change with a shift when a share changes shape and is left to
+the voice room's own pass. Landing: `text-white` sites → `text-foreground` (the easter
+egg's eight alpha steps stay §10's); the picker's check → ink; `ScreenShareDisplay`'s
+`bg-black` → `bg-card`; `LOOSE_COLOURS`' media rows landed; the media section leaves the
+page.
+
+**Ruling:** _ruled, landing_
 
 **The cyan in the OG marks (page question, ruled 2026-09-06).** The owner asked why a
 colour was being defined for a partner at all. It is not: the social images inline the
@@ -460,6 +484,21 @@ lint exempts the mark functions in `og/marks.tsx` by name** (the partner-artwork
 the library already grants). Lands with the enforcement pass; the swatch leaves the page.
 
 ## 7. The identicon
+
+**Ruled 2026-09-06, to land.** The owner: SOG-UI will eventually own the whole avatar
+concept; until then the colours are sorted the way the zone colours were sorted into
+picks. An identicon is a person's identity, randomly arranged; the app does not care
+which arrangement of act, world, black and white it gets. Act and world are brand in the
+sense of being on brand; black and white are artwork, they are what make it read as a
+pixel face. **So: a numbered palette of four, ids 1–4, in the library, exactly today's
+values**: 1 and 2 read `BRAND.act` and `BRAND.world` (a face follows the brand), 3 and 4
+are literal `#000000` and `#FFFFFF` (the artwork's own). Meaning: "the colours valid for
+an identicon", nothing more, so nobody reaches for one because of its hue. Landing: an
+`identicon.ts` module beside `picks.ts`; Sogverse's identicon reads the list by id and
+names no colour; no CSS tokens (nothing spends them as a class; emitted the day something
+does); the hex-literal lint needs no identicon exemption; the "black square reads as a
+hole on a card" note moves to the module's doc comment for the avatar project to inherit;
+the identicon section leaves the page. Queued behind the token landing.
 
 **Asked:** where its white and black come from; its violet measures below the glyph
 floor on any near-black ground.
@@ -619,7 +658,21 @@ is the easter egg's eight `text-white/*` (§10, open); the only blur left outsid
 is `voice/PrivacyScreen.tsx`'s 1.5px blur, which lays down no colour and is a signal over
 a locked zone, not a surface (§13, item 9).
 
-**Ruling:** _scrim and glass landed; the act/world replacements still to see._
+**Proposed 2026-09-06, evening — act as a figure.** The owner saw that the act/world jobs
+are the waitlist chip's lesson again: every job exists because someone wanted act to mark
+something and reached for a tint, when on the dark ground act as the figure (edge, ring,
+glyph, word) marks it better and keeps its colour. Proposal, being drawn per job as today
+beside it: a selected option → neutral ground with an act edge, ring or check (three
+variants drawn); a highlighted row → the 2px act leading edge; a callout → neutral panel
+with act glyph and title (status B); an icon tile → the act glyph on a `lifted` tile, no
+tint, which would retire the library's last exemption on the no-alpha rule; a drop target
+→ an act ring; a selected item with act as its ink and the status chip → unchanged;
+faded ink on amber → the meta line off the fill; the hover shade → Button's, later (drawn
+live without the shade so the cost is seen); the hover tint → `hover:bg-lifted`; a ring →
+act at full value. If accepted, one sentence runs the sweep: act is a figure on the dark
+ground, never a tint of it.
+
+**Ruling:** _scrim and glass landed; the act/world proposal drawn, awaiting the owner._
 
 ## 10. The Klingon easter egg
 

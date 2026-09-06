@@ -113,7 +113,7 @@ export function ProfileTile(props: ProfileTileProps) {
         <Identicon id={member.id} size={112} />
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-scrim">
-            <Loader2 className="h-8 w-8 animate-spin text-white" />
+            <Loader2 className="h-8 w-8 animate-spin text-foreground" />
           </div>
         )}
       </div>

@@ -49,10 +49,15 @@ export function ZoneColorPicker({
               color.solid,
             )}
           >
-            {/* White check reads on every swatch thanks to the drop shadow. */}
-            {selected && (
-              <Check className="h-4 w-4 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.55)]" />
-            )}
+            {/* The check is drawn in ink, not in white: every pick is a light,
+                saturated fill, so the mark that sits on one is the same dark
+                the app puts on any light fill. `background` is that ink — the
+                page ground's own value — rather than `act-foreground`, which
+                names the ink belonging to the amber fill and would be claiming
+                a pairing these sixteen swatches are not part of. Ink on a light
+                fill needs no drop shadow to be found; the shadow was there to
+                rescue white, and white is gone. */}
+            {selected && <Check className="h-4 w-4 text-background" />}
           </button>
         );
       })}

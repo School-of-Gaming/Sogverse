@@ -54,7 +54,14 @@ export function ScreenShareDisplay({
   if (!effectiveSharerSessionId || !sharer) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-border bg-black">
+    // The tile is a fixed 16:9 box and the share is drawn inside it at its own
+    // aspect (`object-contain`), because a share cannot be cropped — a shared
+    // window is whatever shape its owner's window is, and cutting a strip off it
+    // can cut off the thing being pointed at. So the letterbox bars are real and
+    // needed. What they are *not* is a colour of their own: they are the surface
+    // the tile is sitting in, which is the card. Sogverse has no fourth neutral
+    // below the ground, and true black is not one it is going to grow.
+    <div className="relative overflow-hidden rounded-lg border border-border bg-card">
       <div className="aspect-video">
         <video
           ref={videoRef}
