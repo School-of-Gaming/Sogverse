@@ -2450,7 +2450,6 @@
       "ice-cream": "Jäätelö",
       "coffee": "Kahvi"
     },
-    "zoneColor": "Väri {number}",
     "instant": {
       "joinFailed": "Huoneeseen liittyminen epäonnistui. Yritä uudelleen.",
       "share": {

@@ -2450,7 +2450,6 @@
       "ice-cream": "Glass",
       "coffee": "Kaffe"
     },
-    "zoneColor": "Färg {number}",
     "instant": {
       "joinFailed": "Kunde inte gå med i rummet. Försök igen.",
       "share": {

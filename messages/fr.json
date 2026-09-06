@@ -2450,7 +2450,6 @@
       "ice-cream": "Glace",
       "coffee": "Café"
     },
-    "zoneColor": "Couleur {number}",
     "instant": {
       "joinFailed": "Impossible de rejoindre la salle. Veuillez réessayer.",
       "share": {

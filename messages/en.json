@@ -3137,7 +3137,6 @@
       "ice-cream": "Ice cream",
       "coffee": "Coffee"
     },
-    "zoneColor": "Color {number}",
     "instant": {
       "joinFailed": "Couldn’t join the room. Please try again.",
       "share": {

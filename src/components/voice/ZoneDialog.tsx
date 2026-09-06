@@ -106,7 +106,9 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
           </Field>
 
           <Field label={t("chooseColor")}>
-            <ZoneColorPicker value={color} onChange={setColor} />
+            {({ labelId }) => (
+              <ZoneColorPicker value={color} onChange={setColor} labelledBy={labelId} />
+            )}
           </Field>
 
           {!isEdit && (
