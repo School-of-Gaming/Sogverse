@@ -1,158 +1,171 @@
+"use client";
+
 /**
  * Question 3 — the greys.
  *
- * **The question.** `accent` #212121 and `muted` #262626 are both library
- * neutrals now, and the seven `sidebar-*` tokens are gone — the rail is chrome
- * and composes from the general neutrals, on the card ground. What is left open
- * is one fill: **is the hover `accent`, as it is today, or `muted`?** And if
- * `muted` takes the hover, does `accent` have any job left?
+ * **Why this section was rebuilt (2026-09-06).** It used to draw Sogverse's own
+ * call sites, today beside a one-token patch on them: a rail that hovers to one
+ * grey beside a list that hovers to another, a pill whose hover runs *darker*
+ * than its rest state, a chosen option one alpha step from a hovered one. The
+ * owner's reading of that page was the finding: *"I don't think Sogverse is
+ * correctly using muted and accent as it is. And the current examples in the
+ * rulings page are confusing me."* Comparing a muddle to a patch on the muddle
+ * cannot be ruled on, because neither column is a system. So the page stopped
+ * drawing the sites and started drawing the **systems**: two complete,
+ * correctly-built miniatures, each with the same constructs, each built from
+ * the role definitions rather than from any class string the app carries today.
+ * Nothing below is copied from Sogverse. What is ruled here is which ladder the
+ * library ships; the sweep that moves ~250 call sites onto it follows the
+ * ruling and is not what the ruling is made from.
  *
- * **The counts, regenerated with**
+ * **The roles, in the owner's words.**
+ *
+ * - **card** is *depth*: "a thing on the page". It is authored, not transient —
+ *   a block with an inside and an outside.
+ * - **accent** is *the response ground*: "you are here". It is what a surface
+ *   paints when it is answering you — the row under the pointer, the option the
+ *   keyboard has landed on, the thing you chose.
+ * - **muted** is *the quiet ground*: "I matter less than my neighbours". Never
+ *   a state. A skeleton's bars, an inset, a read-only field, an unselected pill.
+ * - **disabled is opacity**, not a grey, in both systems. It is drawn in the
+ *   menu and beside the buttons so that quiet, disabled and editable can be
+ *   told apart at a glance — three ideas one grey ladder is often asked to
+ *   carry, and only one of them is a ground.
+ *
+ * **What each column is.**
+ *
+ * - **Four steps** — page, card, accent, muted. Two grounds above the card: one
+ *   for the response, one for the quiet block.
+ * - **Three steps** — page, card, and one grey above them, drawn at muted's
+ *   value because that is the larger of the two lifts and the one a hover on a
+ *   card can actually be seen at. It is named only "lifted" here: if this column
+ *   is ruled, what the token is called is decided at landing, and a page that
+ *   pre-named it would be arguing for one of the two answers.
+ *
+ * **The measured lifts, off page.** accent over card 1.08, muted over card
+ * 1.15; accent over page 1.16, muted over page 1.24. That arithmetic is why
+ * every construct here is drawn on the ground it really sits on, and why the
+ * list is drawn twice — once inside a card, which is where most of a dashboard's
+ * lists live, and once on the page ground, where the same class is a much
+ * clearer change. The numbers are not on screen and are not meant to be: if the
+ * lift cannot be seen in the row, a ratio would not have helped.
+ *
+ * **The rule three steps runs on: a ground lifts once.** There is one step
+ * above the card, so a thing resting *on* that step has nowhere further to go,
+ * and everything a second grey used to say has to be said another way — an
+ * edge, a mark, or ink. That is not a workaround; it is the whole shape of the
+ * system, so the column draws it as the design rather than as a concession: the
+ * chosen row is a 2px leading edge in act (or a check), and the pill that
+ * already rests on the lifted grey answers the pointer with its ink and its
+ * border.
+ *
+ * **Which way round the four-step list is drawn, and why.** Hover is `accent`
+ * and the chosen row is `muted`. Accent is the response ground, and the most
+ * literal reading of "the ground answering you" is the ground under the pointer
+ * that is on it right now; a selection has to survive the pointer leaving, so
+ * it takes the one step the ladder has left above that. The inversion is drawn
+ * directly beneath, because it differs visibly and it is the honest case
+ * against: with hover on muted the transient state is the *lighter*, louder of
+ * the two, and a row shouts while you pass over it and whispers once you pick
+ * it.
+ *
+ * **The tension the four-step column has to be ruled with open eyes about.**
+ * Muted's own definition says *never a state*, and a chosen row is a state. So
+ * the second state grey is bought by spending the quiet ground on one, and the
+ * four-step system is not "two grounds and two states" but "one response ground
+ * plus the quiet ground, part-time". Both variants above show it; neither hides
+ * it.
+ *
+ * **The one construct where neither ladder has a ground to give.** A filter
+ * pill *rests* on the quiet grey, so in four steps its only lift is `accent`,
+ * which is **darker** than where it started, and in three steps there is no
+ * step above at all. Both columns therefore answer the pointer with ink, and
+ * the three-step column moves its border too; the four-step column draws the
+ * lift-to-accent variant beneath so the drop is seen rather than described. The
+ * selected pill is act with act ink in both columns, because a selection is
+ * brand, not grey.
+ *
+ * **What each ruling lands.**
+ *
+ * - **Four steps.** Both tokens stay in the library. Sogverse's ~250 grey sites
+ *   are swept to spend them *by role*: every pointer response and every chosen
+ *   item on accent, every de-emphasised block on muted, and the sites that today
+ *   have it backwards (a rest state on muted hovering to accent, a chosen option
+ *   at an alpha step of the hover) are corrected rather than preserved.
+ * - **Three steps.** One token, named at landing; `accent` and `muted` both
+ *   leave `brand.ts`, the generated theme and the demo's foundations floor. The
+ *   sweep maps hover, selection and quiet onto the one grey, and adds the edge,
+ *   mark or ink signal at every site where the second grey was carrying a
+ *   distinction on its own.
+ *
+ * **The ledger's counts, regenerated with**
  *
  *     grep -rno "bg-accent" src --include=*.tsx --include=*.ts | wc -l
  *     grep -rno "hover:bg-accent" src --include=*.tsx --include=*.ts | wc -l
  *     grep -rno "bg-muted\b" src --include=*.tsx --include=*.ts | wc -l
  *     grep -rno "hover:bg-muted" src --include=*.tsx --include=*.ts | wc -l
  *
- * `bg-accent` is spent 70 times: 60 of them are `hover:`, three more are
- * another pointer or keyboard state (`focus:`, `focus-within:`, `active:`), and
- * seven hold the fill as a state that outlives the pointer. `bg-muted` is spent
- * 177 times and nine of those are hovers; the rest are quiet blocks — a
- * skeleton's bars, an unselected pill, a read-only field, a chip. So accent is
- * very nearly the hover token already, and muted is very nearly the quiet-block
- * token already. The overlap is the nine and the seven.
+ * `bg-accent` is spent 70 times: 60 `hover:`, three more a pointer or keyboard
+ * state, and seven holding the fill as a state that outlives the pointer.
+ * `bg-muted` is spent 177 times, nine of them hovers and the rest quiet blocks.
+ * That is the size of either sweep, and it is the same order of work whichever
+ * column wins.
  *
- * **Why the question exists at all.** Nobody reported a problem; it came out of
- * measuring. Over the card ground — which is where most of the app's lists,
- * tables and menus actually sit, because they sit inside cards — accent lifts
- * by 1.08:1 and muted by 1.15:1. Over the page ground the same two lift by
- * 1.16:1 and 1.24:1. That is the whole of it: a hover inside a card is a very
- * faint change today, and on the page ground it is a clear one. The numbers are
- * not on screen and are not meant to be; if the lift cannot be seen in the row,
- * a ratio would not have helped.
- *
- * **Two rulings are legitimate.**
- *
- * - *Today is fine, both stay.* Accent is the hover, muted is the quiet block,
- *   the seven held-accent sites keep their fill, the rail keeps its `muted`
- *   hover as a rail-shaped exception, and the library ships four grounds.
- * - *Muted takes the hover, accent is deleted.* Every `hover:bg-accent` becomes
- *   `hover:bg-muted`, the seven held sites become muted too, `accent` leaves
- *   `brand.ts`, the generated theme and the demo's foundations floor, and the
- *   library ships three grounds. The rail does not change: it already reads
- *   `muted`.
- *
- * **What the section draws.** Every exemplar below is copied class for class
- * from the component that spends the fill, on the ground that component really
- * sits on, twice: the grey it wears today beside the grey the proposal would
- * give it. Where a construct has a state that survives the pointer leaving —
- * an active rail entry, a selected row, a chosen option, a pressed chip — that
- * state is drawn *and is live*, because the thing being judged is whether hover
- * and selection can still be told apart. Those constructs are in
- * `section-greys-live.tsx`; the hover-only ones are in this file.
- *
- * **What the drawing has already surfaced, for the ledger.**
- *
- * - The conversation list is the one construct that spends both greys at once:
- *   hover `accent`, selected `muted`. Under the proposal its hovered row and
- *   its selected row become the same colour.
- * - The reaction pill rests on `muted` and hovers to `accent`, so its hover
- *   runs *darker*. Under the proposal it stops answering the pointer.
- * - Three of the seven held-accent sites are drawn (the open list, the mention
- *   list, the type-filter row); the other four are the rich-text toolbar's
- *   pressed button, the voice roster's own-row tint, the zone list's drop
- *   target, and the participant row's local highlight. All seven pair the held
- *   fill with a `hover:` of the same colour or one step away, so accent's real
- *   job on them is "the highlight", not "the hover" — which is the half of the
- *   question a hover-only page could not show.
- * - Sogverse has no tab and no segmented-control primitive. The type-filter row
- *   is the nearest thing to one, and its pressed state is a bare fill with no
- *   border or ink change — 1.08:1 from an unpressed chip and nothing else. That
- *   is a state whose only signal is a colour, and it belongs in the edge-and-
- *   state queue whichever grey wins.
- *
- * Both fills are real theme tokens, so both columns are drawn in classes rather
- * than inline styles: what is on screen is what the app paints.
+ * **Everything on screen is painted in real theme classes**, never inline
+ * styles: what is drawn is what the app would paint. The three-step column
+ * writes `bg-muted` because that is the value it is proposing; the page calls it
+ * "lifted", which is the only place the two disagree, and deliberately.
  */
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
-  ChevronRight,
-  Joystick,
+  ArrowLeftRight,
+  Check,
   LayoutDashboard,
   LogOut,
-  User,
+  Settings,
   Users,
   type LucideIcon,
 } from "lucide-react";
 
-import { NEUTRALS } from "../../../src/tokens/brand";
-import {
-  Caps,
-  Case,
-  Compare,
-  Exemplar,
-  Glyph,
-  Question,
-} from "./parts";
-import {
-  ContactList,
-  DropdownList,
-  type Fill,
-  MentionList,
-  PickerTiles,
-  RailNav,
-  ReactionPills,
-  TypeChips,
-} from "./section-greys-live";
+import { Caps, Case, Glyph, Question } from "./parts";
 
 // ------------------------------------------------------------------ furniture
 
-/** The two grounds an exemplar can be judged on. */
+/** The two grounds every construct here is drawn on, both shared by both systems. */
 type Ground = "background" | "card";
 
 const GROUND_BOX: Record<Ground, string> = {
-  background: "mt-2 flex-1 rounded-lg border border-border bg-background p-4",
-  card: "mt-2 flex-1 rounded-lg border border-border bg-card p-4",
+  background: "mt-2 rounded-lg border border-border bg-background p-4",
+  card: "mt-2 rounded-lg border border-border bg-card p-4",
 };
 
 const GROUND_NAME: Record<Ground, string> = {
-  background: "bg-background",
-  card: "bg-card",
+  background: "background",
+  card: "card",
 };
-
-/** The class each column is drawn with, as the column's own name. */
-const HOVER_NAME: Record<Fill, string> = {
-  accent: "hover:bg-accent",
-  muted: "hover:bg-muted",
-};
-
-const FILLS: Fill[] = ["accent", "muted"];
 
 /**
- * One column: what it is, what it is drawn in, and the thing.
+ * One construct, named, on the ground it is being judged on.
  *
- * Two names rather than one sentence. The first says which of the two columns
- * this is — what is deployed, and what is being asked about. The second is in
- * mono because both halves of it are classes a page would write to get exactly
- * this: the fill, and the ground under it.
+ * Two names and no sentence: the construct, and the ground under it. The ground
+ * is named because the same fill is a different change on each — that is most
+ * of what this section is about.
  */
-function GroundPanel({
-  state,
-  fillName,
+function Block({
+  title,
   ground,
   children,
 }: {
-  state: string;
-  fillName: string;
+  title: string;
   ground: Ground;
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col">
-      <Caps>{state}</Caps>
+    <div>
+      <Caps>{title}</Caps>
       <p className="font-brand-mono text-body-s text-muted-foreground">
-        {`${fillName} · ${GROUND_NAME[ground]}`}
+        {GROUND_NAME[ground]}
       </p>
       <div className={GROUND_BOX[ground]}>{children}</div>
     </div>
@@ -160,107 +173,75 @@ function GroundPanel({
 }
 
 /**
- * One construct, drawn with each grey on each ground it lives on.
+ * One way of drawing a construct inside its block, named by the recipe.
  *
- * `today` is per construct rather than per page: the rail already hovers to
- * `muted`, so for it accent is the alternative rather than the proposal, and
- * calling it "proposed" there would be the page lying about what is deployed.
- *
- * Two grounds make a row of four, one ground a row of two, and the panels are
- * ordered so the pair sharing a ground is adjacent — a lift is judged against
- * the other lift on the same ground, never against the same lift elsewhere.
+ * The name is the recipe in the system's own words — "hover accent · selected
+ * muted", "hover lifted · selected edge" — so two variants stacked in one block
+ * are told apart by what they are rather than by an ordinal.
  */
-function GreyCase({
-  title,
-  grounds,
-  today,
-  name,
-  render,
-}: {
-  title: string;
-  grounds: Ground[];
-  today: Fill;
-  /** What to call each column. Defaults to the hover class each one writes. */
-  name?: Record<Fill, string>;
-  render: (fill: Fill) => ReactNode;
-}) {
-  const columns = grounds.length === 1 ? 2 : 4;
-  const other = today === "accent" ? "proposed" : "alternative";
+function Variant({ name, children }: { name: string; children: ReactNode }) {
+  return (
+    <div>
+      <p className="font-brand-mono text-body-s text-muted-foreground">{name}</p>
+      <div className="mt-2">{children}</div>
+    </div>
+  );
+}
+
+/** A system: its name, then its constructs in the same order as its neighbour's. */
+function Column({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Case title={title}>
-      <Compare columns={columns}>
-        {grounds.flatMap((ground) =>
-          FILLS.map((fill) => (
-            <GroundPanel
-              key={`${ground}-${fill}`}
-              state={fill === today ? "today" : other}
-              fillName={name === undefined ? HOVER_NAME[fill] : name[fill]}
-              ground={ground}
-            >
-              {render(fill)}
-            </GroundPanel>
-          )),
-        )}
-      </Compare>
+      <div className="space-y-10">{children}</div>
     </Case>
   );
 }
 
-// -------------------------------------------------------------- the four grounds
+// ----------------------------------------------------------------- the ladder
 
 /**
- * The ladder a dark page climbs, in order, with no gap between the steps.
+ * The steps of one system, adjacent and unseparated.
  *
- * Adjacent and unseparated on purpose: an edge between two greys is a third
+ * No gap between the squares on purpose: an edge between two greys is a third
  * value, and it is exactly what makes two near-identical fills look further
- * apart than they are. The second row is the same four carrying ink, because a
- * ground is never seen empty.
+ * apart than they are. The second strip is the same steps carrying ink, because
+ * a ground is never seen empty.
  */
-const LADDER: { fill: string; token: string; name: string }[] = [
-  {
-    fill: "flex h-16 items-center justify-center bg-background text-foreground",
-    token: "background",
-    name: NEUTRALS.background.name,
-  },
-  {
-    fill: "flex h-16 items-center justify-center bg-card text-foreground",
-    token: "card",
-    name: NEUTRALS.card.name,
-  },
-  {
-    fill: "flex h-16 items-center justify-center bg-accent text-foreground",
-    token: "accent",
-    name: NEUTRALS.accent.name,
-  },
-  {
-    fill: "flex h-16 items-center justify-center bg-muted text-foreground",
-    token: "muted",
-    name: NEUTRALS.muted.name,
-  },
-];
-
-function Ladder() {
+function Ladder({
+  grid,
+  steps,
+}: {
+  grid: string;
+  steps: readonly { readonly fill: string; readonly name: string }[];
+}) {
   return (
-    <div className="max-w-xl">
-      <div className="grid grid-cols-4 overflow-hidden rounded-lg border border-border">
-        {LADDER.map((step) => (
-          <div key={step.token} className={step.fill} />
+    <div>
+      <div className={`${grid} overflow-hidden rounded-lg border border-border`}>
+        {steps.map((step) => (
+          <div key={step.name} className={`h-16 ${step.fill}`} />
         ))}
       </div>
-      <div className="mt-2 grid grid-cols-4 gap-2">
-        {LADDER.map((step) => (
+      <div className={`${grid} mt-2 gap-2`}>
+        {steps.map((step) => (
           <p
-            key={step.token}
+            key={step.name}
             className="font-brand-mono text-body-s text-muted-foreground"
           >
-            {step.token}
+            {step.name}
           </p>
         ))}
       </div>
-      <div className="mt-6 grid grid-cols-4 overflow-hidden rounded-lg border border-border">
-        {LADDER.map((step) => (
-          <div key={step.token} className={step.fill}>
-            <span className="text-body-s font-medium">{step.name}</span>
+      <div
+        className={`${grid} mt-6 overflow-hidden rounded-lg border border-border`}
+      >
+        {steps.map((step) => (
+          <div
+            key={step.name}
+            className={`flex h-16 items-center justify-center ${step.fill}`}
+          >
+            <span className="text-body-s font-medium text-foreground">
+              {step.name}
+            </span>
           </div>
         ))}
       </div>
@@ -268,171 +249,153 @@ function Ladder() {
   );
 }
 
-// ------------------------------------------------------- hover-only exemplars
+const FOUR_STEPS = [
+  { fill: "bg-background", name: "background" },
+  { fill: "bg-card", name: "card" },
+  { fill: "bg-accent", name: "accent" },
+  { fill: "bg-muted", name: "muted" },
+] as const;
+
+const THREE_STEPS = [
+  { fill: "bg-background", name: "background" },
+  { fill: "bg-card", name: "card" },
+  { fill: "bg-muted", name: "lifted" },
+] as const;
+
+// -------------------------------------------------------------------- a list
 
 /**
- * The "Active" badge's fill and its label — Sogverse's `success` pair.
+ * The non-grey half of a selection's signal.
  *
- * The status colours are question 2's and are not the library's, so they are
- * spelled here rather than named. The row is drawn whole because a hover is
- * judged against the row it lifts, not against a stripped copy of it.
+ * `none` is the four-step claim — the second grey carries the distinction
+ * alone. `edge` and `check` are what three steps has instead, and both are
+ * drawn because they are genuinely different to live with: the edge is visible
+ * in peripheral vision down a long list, and the check reads at a glance but
+ * only where the eye already is.
  */
-const SUCCESS = "#2EB88A";
-const SUCCESS_INK = "#FFFFFF";
+type Mark = "none" | "edge" | "check";
 
-/** Sogverse's `info` pair, spelled for the same reason. */
-const INFO = "#308CE8";
-const INFO_INK = "#FFFFFF";
+const ROW =
+  "relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors";
+
+const ROWS: readonly {
+  readonly id: string;
+  readonly name: string;
+  readonly meta: string;
+}[] = [
+  { id: "aino", name: "Aino Virtanen", meta: "Wednesdays, 17:00" },
+  { id: "mikael", name: "Mikael Korhonen", meta: "Wednesdays, 17:00" },
+  { id: "sofia", name: "Sofia Lindgren", meta: "Thursdays, 16:00" },
+  { id: "elias", name: "Elias Nieminen", meta: "Thursdays, 16:00" },
+  { id: "venla", name: "Venla Mäkinen", meta: "Saturdays, 10:00" },
+  { id: "onni", name: "Onni Salo", meta: "Saturdays, 10:00" },
+];
 
 /**
- * `admin/users/[id]/page.tsx` — an assigned-product row.
+ * Six rows, one of them chosen, every row answering the pointer.
  *
- * The plainest hover in the app: a bordered row with no fill of its own, so it
- * takes whatever is behind it and its lift is the whole of its hover. It lives
- * inside a `Card`, which is why the card column is the real one — but the row
- * is drawn on both grounds because a fill-less row is the shape the app repeats
- * everywhere, and the two columns are what show how much the ground decides.
+ * Click a row to move the selection: a hover and a selection are told apart by
+ * moving the pointer between them, never by reading two screenshots, so the
+ * selection is live even though only the hover strictly has to be.
  *
- * Every clickable exemplar on this page is a `button` where the app writes a
- * `Link`. A demo row that navigates would leave the page being ruled on, and
- * the two elements take the same fill, the same focus ring and the same
- * pointer; `w-full` is the one class the swap costs, because an anchor fills
- * its line and a button shrinks to its content.
+ * Neither mark moves the layout. The edge is absolutely positioned, and the
+ * check's slot is reserved on every row, so choosing a row cannot shift the row
+ * under the pointer out from under it.
  */
-const ASSIGNED_ROW =
-  "group flex w-full items-center justify-between rounded-lg border border-border p-3 transition-colors";
-
-function AssignedRows({ fill }: { fill: Fill }) {
+function RowList({
+  hover,
+  selected,
+  mark,
+}: {
+  /** The fill a row takes under the pointer. */
+  hover: string;
+  /** The fill a chosen row keeps once the pointer has left. */
+  selected: string;
+  mark: Mark;
+}) {
+  const [chosen, setChosen] = useState("sofia");
   return (
-    <div className="space-y-2">
-      {["Minecraft club — Espoo", "Summer camp — Tampere"].map((name) => (
-        <button
-          key={name}
-          type="button"
-          className={
-            fill === "accent"
-              ? `${ASSIGNED_ROW} hover:bg-accent hover:text-foreground`
-              : `${ASSIGNED_ROW} hover:bg-muted hover:text-foreground`
-          }
-        >
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-medium">{name}</span>
-            <span className="block truncate text-xs text-muted-foreground">
-              Wednesdays, 17:00
+    <div className="space-y-0.5">
+      {ROWS.map((row) => {
+        const isChosen = row.id === chosen;
+        return (
+          <button
+            key={row.id}
+            type="button"
+            aria-pressed={isChosen}
+            onClick={() => setChosen(row.id)}
+            className={
+              isChosen ? `${ROW} ${selected} ${hover}` : `${ROW} ${hover}`
+            }
+          >
+            {isChosen && mark === "edge" ? (
+              <span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-act" />
+            ) : null}
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium text-foreground">
+                {row.name}
+              </span>
+              <span
+                className={
+                  isChosen && mark !== "none"
+                    ? "block truncate text-xs text-foreground"
+                    : "block truncate text-xs text-muted-foreground"
+                }
+              >
+                {row.meta}
+              </span>
             </span>
-          </span>
-          <span className="flex shrink-0 items-center gap-2">
-            <span
-              className="inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-              style={{
-                backgroundColor: SUCCESS,
-                color: SUCCESS_INK,
-                borderColor: SUCCESS,
-              }}
-            >
-              Active
-            </span>
-            <span className="text-muted-foreground transition-transform group-hover:translate-x-0.5 group-focus-within:translate-x-0.5">
-              <Glyph icon={ChevronRight} size={16} colour="currentColor" />
-            </span>
-          </span>
-        </button>
-      ))}
+            {mark === "check" ? (
+              <span className="flex w-4 shrink-0 justify-end text-act">
+                {isChosen ? (
+                  <Glyph icon={Check} size={16} colour="currentColor" />
+                ) : null}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-/**
- * `components/admin/sites/admin-sites-page.tsx` — the sites table.
- *
- * The only exemplar here whose fill answers the keyboard as well as the
- * pointer: the row carries `focus-within` beside `hover`, so tabbing into a
- * cell lights the whole row. Tab through the column to see it. The table's
- * `min-w-[34rem]` and its scroll container are dropped — that is page geometry,
- * not colour — and two of the four columns are kept.
- */
-const SITES_ROW =
-  "group relative border-b border-border transition-colors last:border-b-0";
+// -------------------------------------------------------------------- a menu
 
-function SitesTable({ fill }: { fill: Fill }) {
-  return (
-    <table className="w-full border-collapse text-sm">
-      <thead>
-        <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
-          <th scope="col" className="px-3 py-2 font-medium">
-            Site
-          </th>
-          <th scope="col" className="w-8 px-3 py-2" />
-        </tr>
-      </thead>
-      <tbody>
-        {["Espoo, Otaniemi", "Helsinki, Kallio", "Tampere, Hervanta"].map(
-          (site) => (
-            <tr
-              key={site}
-              className={
-                fill === "accent"
-                  ? `${SITES_ROW} hover:bg-accent focus-within:bg-accent`
-                  : `${SITES_ROW} hover:bg-muted focus-within:bg-muted`
-              }
-            >
-              <td className="px-3 py-2">
-                <button
-                  type="button"
-                  className="rounded font-medium after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-                >
-                  {site}
-                </button>
-              </td>
-              <td className="w-8 px-3 py-2">
-                <span className="text-muted-foreground transition-transform group-hover:translate-x-0.5 group-focus-within:translate-x-0.5">
-                  <Glyph icon={ChevronRight} size={16} colour="currentColor" />
-                </span>
-              </td>
-            </tr>
-          ),
-        )}
-      </tbody>
-    </table>
-  );
-}
-
-/**
- * `components/layout/account-menu.tsx` — the header menu.
- *
- * Drawn on the card ground only, because the menu panel paints `bg-card`
- * itself. Its rows carry `focus:` beside `hover:` with the same fill, which is
- * the pattern the whole overlay family follows: one highlight, two ways to
- * reach it.
- */
 const MENU_ROW =
-  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors";
+  "flex w-full items-center gap-2 rounded-sm px-3 py-2 text-left text-sm text-foreground transition-colors disabled:pointer-events-none disabled:opacity-50";
 
-/**
- * The panel's three rows, each carrying the mark its own row carries.
- *
- * `Users` is the one stand-in: a household member's row wears that person's
- * identicon rather than an icon, and nothing in lucide is an identicon, so the
- * nearest mark for "the people in this household" stands where the face goes.
- */
-const MENU_ITEMS: { label: string; glyph: LucideIcon }[] = [
+const MENU_ITEMS: readonly {
+  readonly label: string;
+  readonly glyph: LucideIcon;
+  readonly disabled?: true;
+}[] = [
   { label: "My SOG", glyph: LayoutDashboard },
   { label: "Family", glyph: Users },
+  { label: "Switch account", glyph: ArrowLeftRight, disabled: true },
+  { label: "Settings", glyph: Settings },
   { label: "Sign out", glyph: LogOut },
 ];
 
-function MenuRows({ fill }: { fill: Fill }) {
+/**
+ * A menu panel, floating on the page ground.
+ *
+ * It is drawn on the page rather than in a card because that is where a menu
+ * really is: it paints its own card panel and opens over whatever summoned it,
+ * so its rows lift from the card and its panel lifts from the page. One item is
+ * disabled by opacity and not by a grey — which is the whole reason it is here.
+ * A disabled row and a quiet block have to be told apart, and in both systems
+ * the answer is the same: the quiet block keeps its ink and changes ground, the
+ * disabled row keeps its ground and loses its ink.
+ */
+function Menu({ hover }: { hover: string }) {
   return (
-    <div className="w-56 rounded-md border border-border bg-card py-1 shadow-lg">
+    <div className="w-60 rounded-md border border-border bg-card p-1 shadow-lg">
       {MENU_ITEMS.map((item) => (
         <button
           key={item.label}
           type="button"
-          className={
-            fill === "accent"
-              ? `${MENU_ROW} hover:bg-accent hover:text-foreground focus:bg-accent focus:text-foreground focus:outline-none`
-              : `${MENU_ROW} hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground focus:outline-none`
-          }
+          disabled={item.disabled}
+          className={`${MENU_ROW} ${hover}`}
         >
           <Glyph icon={item.glyph} size={16} colour="currentColor" />
           {item.label}
@@ -442,38 +405,167 @@ function MenuRows({ fill }: { fill: Fill }) {
   );
 }
 
-/**
- * `components/ui/button.tsx` — the `outline` and `ghost` variants.
- *
- * The two variants are the same hover on two different rest states: `outline`
- * paints `bg-background` and lifts from the page ground wherever it is put,
- * `ghost` paints nothing and lifts from whatever is behind it. So the pair is
- * the cleanest reading of what the ground does to the fill — on a card, ghost
- * lifts by 1.08:1 and outline by 1.16:1, from the same class.
- */
-const BUTTON_BASE =
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2";
+// -------------------------------------------------------------- a filter row
 
-function Buttons({ fill }: { fill: Fill }) {
+const PILL =
+  "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors";
+
+const PILLS = ["All", "Clubs", "Camps", "Events", "Schools"] as const;
+
+/**
+ * Five pills, one selected, resting on the quiet ground.
+ *
+ * The construct that has no ground to lift to in either system, and the reason
+ * both columns answer it with ink. The selected pill is act with act ink in
+ * both, because a selection is brand rather than grey — which is also what
+ * keeps the pill honest under three steps, where a chosen pill and a hovered
+ * pill would otherwise be the same value.
+ */
+function FilterPills({ rest }: { rest: string }) {
+  const [chosen, setChosen] = useState("Camps");
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {PILLS.map((pill) => (
+        <button
+          key={pill}
+          type="button"
+          aria-pressed={pill === chosen}
+          onClick={() => setChosen(pill)}
+          className={
+            pill === chosen
+              ? `${PILL} border-act bg-act text-act-foreground`
+              : `${PILL} ${rest}`
+          }
+        >
+          {pill}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// --------------------------------------------------- the quiet-ground blocks
+
+/**
+ * Four bars while a list loads.
+ *
+ * Both systems paint them on the quiet ground, and in three steps that is the
+ * same value a row takes under the pointer — which is not a defect and is worth
+ * seeing next to the list above: a skeleton is not interactive, so nothing is
+ * being confused, and the cost of the collapse is paid only where a *hoverable*
+ * thing rests on the quiet ground.
+ */
+function Skeleton({ quiet }: { quiet: string }) {
+  return (
+    <div className="space-y-2">
+      <div className={`h-4 w-40 animate-pulse rounded ${quiet}`} />
+      <div className={`h-4 w-64 max-w-full animate-pulse rounded ${quiet}`} />
+      <div className={`h-4 w-52 max-w-full animate-pulse rounded ${quiet}`} />
+      <div className={`h-4 w-32 animate-pulse rounded ${quiet}`} />
+    </div>
+  );
+}
+
+/**
+ * A quoted message inside a card — the plainest inset there is.
+ *
+ * An inset is the clearest case for the quiet ground: a block set back from the
+ * content around it, which is exactly what "I matter less than my neighbours"
+ * describes, and it is never a state.
+ */
+function Inset({ quiet }: { quiet: string }) {
+  return (
+    <div>
+      <div className={`rounded-md p-3 ${quiet}`}>
+        <p className="text-xs font-medium text-muted-foreground">
+          Aino Virtanen
+        </p>
+        <p className="mt-1 text-sm text-foreground">
+          Can we move Wednesday&rsquo;s session to 18:00?
+        </p>
+      </div>
+      <p className="mt-3 text-sm text-foreground">
+        That works &mdash; I&rsquo;ll let the group know.
+      </p>
+    </div>
+  );
+}
+
+const FIELD =
+  "mt-2 flex h-10 w-full rounded-md border border-border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2";
+
+const BUTTON =
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+
+/**
+ * Quiet, disabled and editable, in one frame.
+ *
+ * The three ideas a grey ladder is most often asked to carry, drawn together so
+ * they can be told apart: the read-only field is quiet (a ground change, full
+ * ink), the disabled button is disabled (no ground change, less ink), and the
+ * editable field is neither — it sits on the page ground because a well is a
+ * hole in the card rather than a lift off it.
+ */
+function QuietDisabledEditable({ quiet }: { quiet: string }) {
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Each control is nested inside its own label rather than named by an
+            `htmlFor`: the block is drawn twice on this page, and two copies of
+            one id is a defect the page would be introducing itself. */}
+        <label className="block text-sm font-medium leading-none text-foreground">
+          Email
+          <input
+            defaultValue="aino@example.com"
+            className={`${FIELD} bg-background text-foreground`}
+          />
+        </label>
+        <label className="block text-sm font-medium leading-none text-foreground">
+          Sign-in address
+          <input
+            readOnly
+            value="aino@gamer.sogverse.internal"
+            className={`${FIELD} ${quiet} text-muted-foreground`}
+          />
+        </label>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className={`${BUTTON} bg-act text-act-foreground`}>
+          Save changes
+        </button>
+        <button
+          type="button"
+          disabled
+          className={`${BUTTON} bg-act text-act-foreground`}
+        >
+          Save changes
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A ghost button — a control with no ground of its own until the pointer arrives.
+ *
+ * The cleanest reading of what a hover fill is worth, because there is nothing
+ * else in the frame: no border, no rest fill, no ink change. Whatever the hover
+ * is, it is the whole of the button's answer. Two of them, because a lift this
+ * small is judged against the control beside it rather than against a memory of
+ * the same control a moment ago.
+ */
+function GhostButton({ hover }: { hover: string }) {
   return (
     <div className="flex flex-wrap gap-2">
       <button
         type="button"
-        className={
-          fill === "accent"
-            ? `${BUTTON_BASE} border border-border bg-background shadow-sm hover:bg-accent hover:text-foreground`
-            : `${BUTTON_BASE} border border-border bg-background shadow-sm hover:bg-muted hover:text-foreground`
-        }
+        className={`${BUTTON} text-foreground ${hover} hover:text-foreground`}
       >
-        Outline
+        Ghost
       </button>
       <button
         type="button"
-        className={
-          fill === "accent"
-            ? `${BUTTON_BASE} hover:bg-accent hover:text-foreground`
-            : `${BUTTON_BASE} hover:bg-muted hover:text-foreground`
-        }
+        className={`${BUTTON} text-foreground ${hover} hover:text-foreground`}
       >
         Ghost
       </button>
@@ -481,347 +573,126 @@ function Buttons({ fill }: { fill: Fill }) {
   );
 }
 
-/**
- * `components/admin/dashboard/product-attention-grid.tsx` — a card that is one
- * link.
- *
- * Drawn on its own ground only: the card paints `bg-card` and hovers to accent,
- * so this is the card-to-accent step with nothing else in the frame. It is the
- * faintest hover the app has and the one an admin meets first every morning.
- */
-const ATTENTION_CARD =
-  "flex h-full flex-col gap-2 rounded-lg border border-border bg-card p-3 transition-colors";
+// --------------------------------------------------------------- the columns
 
-function AttentionCard({ fill }: { fill: Fill }) {
+/** Page, card, accent, muted: one ground for the response, one for the quiet block. */
+function FourSteps() {
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      {["Minecraft club — Espoo", "Roblox club — Vantaa"].map((name) => (
-        <button
-          key={name}
-          type="button"
-          className={
-            fill === "accent"
-              ? `${ATTENTION_CARD} hover:bg-accent`
-              : `${ATTENTION_CARD} hover:bg-muted`
-          }
-        >
-          <span className="flex items-start gap-2">
-            <span className="mt-0.5 text-yty-harmony-soft">
-              <Glyph icon={Joystick} size={16} colour="currentColor" />
-            </span>
-            <span className="text-sm font-medium leading-snug">{name}</span>
-          </span>
-          <span className="block text-left text-xs text-muted-foreground">
-            No gedu assigned
-          </span>
-        </button>
-      ))}
-    </div>
+    <Column title="Four steps">
+      <Block title="The steps" ground="background">
+        <Ladder grid="grid grid-cols-4" steps={FOUR_STEPS} />
+      </Block>
+
+      <Block title="A list" ground="card">
+        <div className="space-y-6">
+          <Variant name="hover accent · selected muted">
+            <RowList hover="hover:bg-accent" selected="bg-muted" mark="none" />
+          </Variant>
+          <Variant name="hover muted · selected accent">
+            <RowList hover="hover:bg-muted" selected="bg-accent" mark="none" />
+          </Variant>
+        </div>
+      </Block>
+
+      <Block title="A list, on the page" ground="background">
+        <RowList hover="hover:bg-accent" selected="bg-muted" mark="none" />
+      </Block>
+
+      <Block title="A menu" ground="background">
+        <Menu hover="hover:bg-accent" />
+      </Block>
+
+      <Block title="A filter row" ground="card">
+        <div className="space-y-6">
+          <Variant name="hover ink">
+            <FilterPills rest="border-border bg-muted text-muted-foreground hover:text-foreground" />
+          </Variant>
+          <Variant name="hover accent">
+            <FilterPills rest="border-border bg-muted text-muted-foreground hover:bg-accent hover:text-foreground" />
+          </Variant>
+        </div>
+      </Block>
+
+      <Block title="A skeleton" ground="card">
+        <Skeleton quiet="bg-muted" />
+      </Block>
+
+      <Block title="An inset" ground="card">
+        <Inset quiet="bg-muted" />
+      </Block>
+
+      <Block title="Quiet, disabled, editable" ground="card">
+        <QuietDisabledEditable quiet="bg-muted" />
+      </Block>
+
+      <Block title="A ghost button" ground="card">
+        <GhostButton hover="hover:bg-accent" />
+      </Block>
+    </Column>
   );
 }
 
-// ------------------------------------------------------ muted, held statically
-
-/**
- * The quiet blocks, in one set.
- *
- * **The set is mixed on purpose.** Five of the six wear `muted` today and are
- * untouched by either ruling; the sixth — the type-filter row — wears `accent`
- * held as a pressed state, and is one of the seven sites the proposal would
- * move. Drawing them together is what makes the today column and the proposed
- * column differ at all: two columns of identical muted blocks would say
- * nothing, and the point worth seeing is that the proposal costs the quiet
- * blocks nothing and costs the pressed chip its distinctness from the fill
- * beside it.
- *
- * There is no solid-`muted` *inset panel* to draw: every inset the app has —
- * the reply quote strip, the photo strip, the participant tile — is a `muted`
- * at an alpha step and belongs to question 7 rather than here. What the token
- * really grounds is bars, chips and fields, which is what is drawn.
- */
-function QuietBlocks({ fill }: { fill: Fill }) {
+/** Page, card, and one grey above them, which every state and every quiet block shares. */
+function ThreeSteps() {
   return (
-    <div className="space-y-6">
-      <Exemplar
-        file="family/product-page/FamilyProductPageSkeleton.tsx"
-        page="/parent/products/[id], while it loads"
-      >
-        <div>
-          <div className="h-3 w-16 animate-pulse rounded bg-muted" />
-          <div className="mt-2 h-8 w-64 max-w-full animate-pulse rounded-md bg-muted" />
-          <div className="mt-3 h-4 w-40 animate-pulse rounded bg-muted" />
-          <div className="mt-2 h-4 w-32 animate-pulse rounded bg-muted" />
-          <div className="mt-4 h-10 w-44 animate-pulse rounded-md bg-muted" />
+    <Column title="Three steps">
+      <Block title="The steps" ground="background">
+        <Ladder grid="grid grid-cols-3" steps={THREE_STEPS} />
+      </Block>
+
+      <Block title="A list" ground="card">
+        <div className="space-y-6">
+          <Variant name="hover lifted · selected edge">
+            <RowList hover="hover:bg-muted" selected="bg-muted" mark="edge" />
+          </Variant>
+          <Variant name="hover lifted · selected check">
+            <RowList hover="hover:bg-muted" selected="bg-muted" mark="check" />
+          </Variant>
         </div>
-      </Exemplar>
+      </Block>
 
-      <Exemplar
-        file="admin/products/product-status-chip.tsx"
-        page="/admin/products, a product row"
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="shrink-0 rounded-full bg-act px-2 py-0.5 text-xs text-act-foreground">
-            Running
-          </span>
-          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-            Completed
-          </span>
-          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-            Expired
-          </span>
-        </div>
-      </Exemplar>
+      <Block title="A list, on the page" ground="background">
+        <RowList hover="hover:bg-muted" selected="bg-muted" mark="edge" />
+      </Block>
 
-      <Exemplar
-        file="admin/users/page.tsx"
-        page="/admin/users, the role filter"
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors"
-            style={{ backgroundColor: INFO, color: INFO_INK }}
-          >
-            All
-          </span>
-          {["Admin", "Customer", "Gamer", "Gedu"].map((role) => (
-            <span
-              key={role}
-              className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground transition-colors"
-            >
-              {role}
-            </span>
-          ))}
-        </div>
-      </Exemplar>
+      <Block title="A menu" ground="background">
+        <Menu hover="hover:bg-muted" />
+      </Block>
 
-      <Exemplar
-        file="family/gamer-sign-in-card.tsx"
-        page="/parent/gamers/[id], the address a parent reads back"
-      >
-        {/* The control is nested inside its own label rather than named by an
-            `htmlFor`: the block is drawn four times on this page, and four
-            copies of one id is a defect the page would be introducing itself. */}
-        <label className="block text-sm font-medium leading-none">
-          Email
-          <input
-            readOnly
-            value="aino@example.com"
-            className="mt-2 flex h-10 w-full rounded-md border border-border bg-muted px-3 py-2 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2"
-          />
-        </label>
-      </Exemplar>
+      <Block title="A filter row" ground="card">
+        <Variant name="hover ink and edge">
+          <FilterPills rest="border-border bg-muted text-muted-foreground hover:border-foreground hover:text-foreground" />
+        </Variant>
+      </Block>
 
-      {/* `User` is the chip's own mark, moved: in the app it heads the parent's
-          name on the chip's second line, and the chip is drawn here as the one
-          line the muted fill is being ruled on. */}
-      <Exemplar
-        file="admin/products/groups/participant-chip.tsx"
-        page="/admin/products/[type]/[id], the groups board"
-      >
-        <div className="flex flex-wrap gap-2">
-          {["Aino, 11", "Elias, 9"].map((who) => (
-            <span
-              key={who}
-              className="flex items-center gap-2 rounded-lg border border-border bg-muted px-2.5 py-2 text-xs font-medium text-foreground transition-colors"
-            >
-              <Glyph icon={User} size={14} colour="currentColor" />
-              {who}
-            </span>
-          ))}
-        </div>
-      </Exemplar>
+      <Block title="A skeleton" ground="card">
+        <Skeleton quiet="bg-muted" />
+      </Block>
 
-      <Exemplar
-        file="admin/dashboard/schedule-panel.tsx"
-        page="/admin, the schedule filter"
-      >
-        <TypeChips fill={fill} />
-      </Exemplar>
-    </div>
+      <Block title="An inset" ground="card">
+        <Inset quiet="bg-muted" />
+      </Block>
+
+      <Block title="Quiet, disabled, editable" ground="card">
+        <QuietDisabledEditable quiet="bg-muted" />
+      </Block>
+
+      <Block title="A ghost button" ground="card">
+        <GhostButton hover="hover:bg-muted" />
+      </Block>
+    </Column>
   );
 }
-
-/**
- * The two overlays that hold accent as a highlight.
- *
- * Both paint their own `bg-card` panel, so there is no ground to vary — the
- * question they answer is the other one: what accent does when it is *not* a
- * hover. On the open list the held fill sits one alpha step from the hover; on
- * the mention list the two are the same value and the pointer is one of the two
- * ways of setting it. Neither distinction is lost by moving to muted, which is
- * the argument for deleting accent rather than keeping it for these.
- */
-function HeldOverlays({ fill }: { fill: Fill }) {
-  return (
-    <div className="space-y-6">
-      <Exemplar
-        file="components/ui/filter-dropdown.tsx"
-        page="/admin/products, the filter row"
-      >
-        <DropdownList fill={fill} />
-      </Exemplar>
-      <Exemplar
-        file="components/chat/ChatComposer.tsx"
-        page="a group chat, typing a mention"
-      >
-        <MentionList fill={fill} />
-      </Exemplar>
-    </div>
-  );
-}
-
-const HELD_NAME: Record<Fill, string> = {
-  accent: "bg-accent",
-  muted: "bg-muted",
-};
 
 // --------------------------------------------------------------- the section
 
 export function GreysSection() {
   return (
     <Question n={3} title="The greys">
-      <Case title="The four grounds">
-        <Ladder />
-      </Case>
-
-      <GreyCase
-        title="The rail entry"
-        grounds={["background"]}
-        today="muted"
-        render={(fill) => (
-          <Exemplar
-            file="components/layout/sidebar.tsx"
-            page="/parent, /gedu, /admin — the rail"
-          >
-            <RailNav fill={fill} />
-          </Exemplar>
-        )}
-      />
-
-      <GreyCase
-        title="The conversation list — hover and selected in one construct"
-        grounds={["card"]}
-        today="accent"
-        render={(fill) => (
-          <Exemplar
-            file="admin/whatsapp/page.tsx"
-            page="/admin/whatsapp, the conversation list"
-          >
-            <ContactList fill={fill} />
-          </Exemplar>
-        )}
-      />
-
-      <GreyCase
-        title="A list row"
-        grounds={["background", "card"]}
-        today="accent"
-        render={(fill) => (
-          <Exemplar
-            file="admin/users/[id]/page.tsx"
-            page="/admin/users/[id], the assigned-products list"
-          >
-            <AssignedRows fill={fill} />
-          </Exemplar>
-        )}
-      />
-
-      <GreyCase
-        title="A table row"
-        grounds={["card"]}
-        today="accent"
-        render={(fill) => (
-          <Exemplar
-            file="admin/sites/admin-sites-page.tsx"
-            page="/admin/sites, the sites table"
-          >
-            <SitesTable fill={fill} />
-          </Exemplar>
-        )}
-      />
-
-      <GreyCase
-        title="A menu row"
-        grounds={["background"]}
-        today="accent"
-        render={(fill) => (
-          <Exemplar
-            file="components/layout/account-menu.tsx"
-            page="the header, on every dashboard"
-          >
-            <MenuRows fill={fill} />
-          </Exemplar>
-        )}
-      />
-
-      <GreyCase
-        title="The ghost and outline buttons"
-        grounds={["background", "card"]}
-        today="accent"
-        render={(fill) => (
-          <Exemplar file="components/ui/button.tsx" page="every surface">
-            <Buttons fill={fill} />
-          </Exemplar>
-        )}
-      />
-
-      <GreyCase
-        title="A card that is one link"
-        grounds={["background"]}
-        today="accent"
-        render={(fill) => (
-          <Exemplar
-            file="admin/dashboard/product-attention-grid.tsx"
-            page="/admin, the attention grid"
-          >
-            <AttentionCard fill={fill} />
-          </Exemplar>
-        )}
-      />
-
-      <GreyCase
-        title="A picker tile"
-        grounds={["card"]}
-        today="accent"
-        render={(fill) => (
-          <Exemplar
-            file="components/family/AddGamerDialog.tsx"
-            page="/parent/gamers, adding a gamer"
-          >
-            <PickerTiles fill={fill} />
-          </Exemplar>
-        )}
-      />
-
-      <GreyCase
-        title="A pill that rests on muted"
-        grounds={["card"]}
-        today="accent"
-        render={(fill) => (
-          <Exemplar
-            file="components/chat/ChatReactionRow.tsx"
-            page="a group chat, under a message"
-          >
-            <ReactionPills fill={fill} />
-          </Exemplar>
-        )}
-      />
-
-      <GreyCase
-        title="The quiet blocks"
-        grounds={["background", "card"]}
-        today="accent"
-        name={HELD_NAME}
-        render={(fill) => <QuietBlocks fill={fill} />}
-      />
-
-      <GreyCase
-        title="Accent held, rather than hovered"
-        grounds={["background"]}
-        today="accent"
-        name={HELD_NAME}
-        render={(fill) => <HeldOverlays fill={fill} />}
-      />
+      <div className="grid gap-12 xl:grid-cols-2">
+        <FourSteps />
+        <ThreeSteps />
+      </div>
     </Question>
   );
 }

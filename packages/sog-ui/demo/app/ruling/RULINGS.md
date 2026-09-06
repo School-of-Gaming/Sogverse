@@ -237,21 +237,31 @@ on the card ground (#1A1A1A, `bg-card`).** Its active fill is `muted`, its edge
 `border`, its accents `primary` / `primary-foreground`. **Still open:** the
 accent-hover question (accent vs muted as the hover fill).
 
-**Shown (2026-09-06), live.** The owner asked to see hover and muted in action, today
-beside proposed, interactive. Section 3 now draws the four grounds as a strip, then nine
-real constructs under the pointer in each grey on the grounds they sit on (rail entry
-with its active state, the WhatsApp conversation list with its selected row, two table
-rows, the account menu, ghost and outline buttons, an attention card, a picker tile, a
-reaction pill), then muted in its own job (skeleton bars, chips, filter pills, a
-read-only field) with the one held-accent site that would visibly move. Counts: `bg-accent`
-70 (60 hover, 3 other states, 7 held); `bg-muted` 177 (9 hover). Measured, off page:
-accent over card 1.08:1, muted over card 1.15:1, accent over page 1.16:1, muted over page
-1.24:1. Two findings: the conversation list is the only construct spending both greys at
-once (hover accent, selected muted), and under the proposal hover and selected become one
-colour; and every held accent pairs with a hover of the same colour, so accent's job there
-is the highlight, not the hover. The two rulings on offer: **both stay as they are**
-(nobody reported a problem), or **muted takes the hover and the highlight, accent is
-deleted** from the library and the theme.
+**Shown (2026-09-06), twice.** First as nine real Sogverse constructs under the pointer,
+today beside proposed. The owner worked through what the four tokens mean (card is depth,
+"a thing on the page"; accent is the response ground, "you are here"; muted is the quiet
+ground, "I matter less than my neighbours", never a state; disabled is opacity, not a
+grey) and concluded that **Sogverse is not using accent and muted correctly today**, so
+today-beside-proposed was comparing a muddle to a patch on it. Section 3 is now **two
+clean systems side by side, built from the role definitions and not from any Sogverse
+class string, interactive:** *Four steps* (background, card, accent, muted) and *Three
+steps* (background, card, one lifted grey, drawn at muted's value and named only at
+landing). Same nine blocks in each: the ladder, a list with hover and a click-to-select
+row (four steps: hover accent, selected muted, with the inversion beneath; three steps:
+hover lifted, selected by a 2px act edge or an act check, both drawn), the list on the
+page ground, a menu with a disabled item, a filter row with an act-filled selected pill, a
+skeleton, an inset, quiet/disabled/editable together, a ghost button. Counts for the
+sweep: `bg-accent` 70 (60 hover, 3 other states, 7 held); `bg-muted` 177 (9 hover).
+Measured, off page: accent over card 1.08:1, muted over card 1.15:1, accent over page
+1.16:1, muted over page 1.24:1. What the clean drawing shows: a thing resting on the quiet
+grey has no ground to lift to in *either* system (four steps' only lift, accent, is
+darker; three steps has no step above), so both answer hover with ink and edge; in four
+steps hovering a selected row makes it darker, and the ladder buys its second state grey
+by spending the quiet ground on a state, against muted's own definition. **Rule on the
+system:** four steps stay and Sogverse's ~250 grey sites are swept to use them by role, or
+three steps, one token named at landing, accent and muted deleted, the sweep mapping
+hover/selection/quiet to it with an edge or ink signal where a second grey was doing the
+work. Either way the landing classifies every site by role; the audit is the sweep.
 
 ## 5. The categorical palettes
 
@@ -468,8 +478,23 @@ character class `[a-z0-9-]+` because the sixteen zone hues are `pick-1` to
   palette offers exactly one ink for an amber fill — so its third candidate is not a
   colour at all but the meta line moved off the fill.
 
-**Ruling:** _part ruled, part open_ — scrim and glass strengths, and the act/world
-replacements, are the two things still to see.
+**Ruled 2026-09-06, the scrim and the glass.** The owner: a scrim is not a brand and must
+not be defined in a brand or theme token; it is a tint, and black is the purest thing to
+tint with; defining it in the page ground would be misleading (and would tint a
+photograph toward the theme, and would invert under any light ground). **Scrim = black at
+70%**, one construct, no blur; it dims what is behind it and nothing sits inside it.
+**Glass is a surface, not a scrim with blur**: a thing in its own right with contents
+that must stay legible over what scrolls beneath, so it takes a theme surface at high
+opacity plus a blur. The owner likes what the Sogverse header does, which is already a
+named construct in `globals.css` (`.glass-panel`): **the page ground at 70% with an 8px
+backdrop blur, falling back to 90% with no blur where the browser cannot blur.** Ruled:
+glass = that recipe, moved into the library. Landing: two library constructs, scrim and
+glass; the class leaves Sogverse's stylesheet; every translucent site takes one or the
+other (dialog/sheet backdrops, the viewer ground and the avatar overlay → scrim; the
+header, the section pill, the media chips → glass, or a solid chip where a site never
+needed to see through); nothing else in Sogverse composites.
+
+**Ruling:** _scrim and glass ruled (to land); the act/world replacements still to see._
 
 ## 10. The Klingon easter egg
 
