@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { BRAND, NEUTRALS, YTY_FAMILIES } from "../../src/tokens/brand";
 import { PRODUCT_KIND_GRAMMAR, type ProductKindId } from "../../src/tokens/grammar";
 import { PICKS } from "../../src/tokens/picks";
@@ -49,6 +51,27 @@ const KIND_NAME: Record<ProductKindId, string> = {
 
 function Label({ children }: { children: React.ReactNode }) {
   return <p className="text-body-s text-muted-foreground">{children}</p>;
+}
+
+/**
+ * A photograph, because the two constructs below can only be seen over one.
+ *
+ * Both are drawn over the brightest thing they have to cover: a scrim shown
+ * over the page's own ground is a slightly darker ground, and glass shown over
+ * a flat colour is a flat colour. What each one does to a picture — the scrim
+ * taking the light out of it, the blur destroying its detail while keeping its
+ * colour — is the whole of what there is to look at.
+ */
+function Photograph() {
+  return (
+    <Image
+      src="/photograph.jpg"
+      alt=""
+      fill
+      sizes="(min-width: 1024px) 24rem, 100vw"
+      className="object-cover"
+    />
+  );
 }
 
 function Section({
@@ -168,6 +191,70 @@ export default function FoundationsPage() {
               hex={pick.hex}
             />
           ))}
+        </div>
+      </Section>
+
+      <Section title="The scrim and the glass">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <div className="relative h-64 overflow-hidden rounded-lg border border-border">
+              <Photograph />
+              <div className="absolute inset-0 bg-scrim" />
+              <div className="absolute inset-0 flex items-center justify-center p-6">
+                <div className="w-full rounded-lg border border-border bg-card p-4">
+                  <p className="text-h4">{SPECIMEN}</p>
+                  <p className="mt-2 text-body-s text-muted-foreground">
+                    {SPECIMEN}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p className="mt-2 text-h4 font-medium">Scrim</p>
+            <p className="font-brand-mono text-body-s text-muted-foreground">
+              bg-scrim
+            </p>
+          </div>
+
+          <div>
+            <div className="relative h-64 overflow-hidden rounded-lg border border-border">
+              <Photograph />
+              <div className="glass absolute inset-x-0 top-0 border-b border-border px-4 py-3">
+                <p className="text-h4">{SPECIMEN}</p>
+              </div>
+            </div>
+            <p className="mt-2 text-h4 font-medium">Glass over media</p>
+            <p className="font-brand-mono text-body-s text-muted-foreground">
+              glass
+            </p>
+          </div>
+
+          {/* Really scrolls, because a panel that stays legible over whatever
+              passes under it is a claim that only moves when the thing moves. */}
+          <div>
+            <div className="relative h-64 overflow-y-auto rounded-lg border border-border">
+              <div className="glass sticky top-0 z-10 border-b border-border px-4 py-3">
+                <p className="text-h4">{SPECIMEN}</p>
+              </div>
+              <div className="space-y-4 p-4">
+                <div className="rounded-lg border border-border bg-card p-4">
+                  <p className="text-body-s">{SPECIMEN}</p>
+                </div>
+                <p className="text-body-l">{SPECIMEN}</p>
+                <p className="w-fit rounded-lg bg-act px-4 py-2 text-cta text-act-foreground">
+                  {SIGNATURE}
+                </p>
+                <p className="text-body-l">{SPECIMEN}</p>
+                <div className="rounded-lg border border-border bg-muted p-4">
+                  <p className="text-body-s">{SPECIMEN}</p>
+                </div>
+                <p className="text-body-l">{SPECIMEN}</p>
+              </div>
+            </div>
+            <p className="mt-2 text-h4 font-medium">Glass over content</p>
+            <p className="font-brand-mono text-body-s text-muted-foreground">
+              glass
+            </p>
+          </div>
         </div>
       </Section>
 

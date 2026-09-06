@@ -547,7 +547,7 @@ function MemberArea({
           onPointerUp={() => endHold(-1)}
           onPointerCancel={() => endHold(-1)}
           onClick={(e) => e.stopPropagation()}
-          className="absolute left-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-background/80 text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-accent touch-none"
+          className="glass absolute left-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-accent touch-none"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -564,7 +564,7 @@ function MemberArea({
           onPointerUp={() => endHold(1)}
           onPointerCancel={() => endHold(1)}
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-background/80 text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-accent touch-none"
+          className="glass absolute right-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-accent touch-none"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

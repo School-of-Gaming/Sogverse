@@ -61,7 +61,7 @@ export const VoiceAvatar = forwardRef<HTMLDivElement, VoiceAvatarProps>(
             the red readable over any identicon or live video; anchored flush in
             the corner so the tile's rounding crops it cleanly. */}
         {audioOn === false && (
-          <span className="absolute right-0 bottom-0 flex items-center justify-center rounded-tl-md bg-background/85 p-[3px]">
+          <span className="glass absolute right-0 bottom-0 flex items-center justify-center rounded-tl-md p-[3px]">
             <MicOff className="h-3 w-3 text-destructive" />
           </span>
         )}

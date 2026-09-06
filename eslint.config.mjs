@@ -300,10 +300,14 @@ const eslintConfig = defineConfig([
     // grounds, the signature pair, the families. `picks.ts` holds the sixteen
     // colours a person may choose for their own thing, which are not the
     // brand's and would be wrong sitting among its hues, and which is why the
-    // list is a second file rather than a section of the first.
+    // list is a second file rather than a section of the first. `surfaces.ts`
+    // holds the scrim's black, which is not a palette colour at all — it is the
+    // absence of light, spelled where the construct that spends it is defined
+    // precisely so it cannot be mistaken for a hue the brand owns.
     files: [
       "packages/*/src/tokens/brand.ts",
       "packages/*/src/tokens/picks.ts",
+      "packages/*/src/tokens/surfaces.ts",
     ],
     rules: {
       "no-restricted-syntax": "off",

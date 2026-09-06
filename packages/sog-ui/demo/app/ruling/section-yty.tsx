@@ -58,7 +58,7 @@ import { YTY_FAMILIES, type YtyFamilyId } from "../../../src/tokens/brand";
  * The names come from the library; the one-line descriptions are the canonical
  * English the app renders from its message catalogue, which the library has no
  * word for and no reason to. The marks are the four `lib/constants/yty.ts`
- * imports from `lucide-react` today, which is the set section 10 is ruling on —
+ * imports from `lucide-react` today, which is the set section 9 is ruling on —
  * drawn here as they ship, so this question's recipe is judged against the
  * glyphs actually on screen.
  */

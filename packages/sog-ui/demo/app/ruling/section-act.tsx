@@ -1,5 +1,5 @@
 /**
- * Question 8 — act and world at an alpha step.
+ * Question 7 — act and world at an alpha step.
  *
  * **The ruling this section serves.** Act and world carry no alpha, at any
  * step, anywhere; there is no soft act and there will not be one. That half is
@@ -13,7 +13,7 @@
  *     grep -rnoE "\b(bg|from|to|via|text|border|ring|shadow|divide|outline)-(act|world)(-foreground)?/[0-9]+" src --include=*.tsx --include=*.ts
  *
  * 58 matches: 48 drawn here as eleven jobs, and ten that are gradients and
- * belong to question 9. `ACT_ALPHA_JOBS` in `inventory.ts` carries the
+ * belong to question 8. `ACT_ALPHA_JOBS` in `inventory.ts` carries the
  * classification and the locators; the summary table lists them.
  *
  * **Why the grouping is by job and not by file.** A sweep that replaces
@@ -989,7 +989,7 @@ function FormHints({ candidate }: { candidate: Candidate }) {
 
 export function ActSection() {
   return (
-    <Question n={8} title="Act and world at an alpha step">
+    <Question n={7} title="Act and world at an alpha step">
       <Case title="A selected option in a form">
         <div className="space-y-10">
           <Candidates

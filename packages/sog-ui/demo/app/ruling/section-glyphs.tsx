@@ -9,12 +9,10 @@
  *
  * ## The element glyphs
  *
- * The four families' hues are ruled and landed; their **glyphs** are not. Today
- * Sogverse picks them itself, and two of the four are being questioned: Glow's
- * sun was chosen when Glow was yellow and now sits on a green, and Valor's
- * sword says combat where the element means civic courage. Colour and glyph are
- * one fact — the grammar table already holds both halves for a product kind —
- * so the glyph is decided here, in the library, and not in the consumer.
+ * The four families' hues are ruled and landed; their **glyphs** were not, and
+ * Sogverse had been picking them itself. Colour and glyph are one fact — the
+ * grammar table already holds both halves for a product kind — so the glyph is
+ * decided here, in the library, and not in the consumer.
  *
  * **The criteria are the elements' own meanings**, and every candidate below is
  * measured against the one it belongs to:
@@ -40,6 +38,20 @@
  * because a colour ruled on a mark the app does not carry is a colour ruled on
  * the wrong picture.
  *
+ * **Three of the four are ruled, and their rows have shrunk to the one mark
+ * each was given: Harmony `Heart`, Valor `Handshake`, Wit `Brain`.** Valor is
+ * the one that moved — the sword is gone, and the element that means working
+ * with people you did not choose is drawn as two people agreeing rather than as
+ * a weapon.
+ *
+ * **Glow is open, and Valor's ruling narrowed it.** `Handshake` is now spent, so
+ * `HeartHandshake` — the same clasped hands with a heart added — is out and no
+ * longer drawn: two marks a reader meets in one set, one of them the other with
+ * a decoration, teach that Glow is a variant of Valor rather than its own value.
+ * The exclusion generalises to hands as a whole, which is the constraint the
+ * second Glow round is drawn against and the reason its two hand candidates are
+ * drawn at all: the collision is shown rather than asserted.
+ *
  * **What lands when this is ruled.** The four marks join the library beside the
  * product-kind glyphs — a second table in `tokens/grammar.ts` or a sibling of it,
  * keyed by family id — and Sogverse's `lib/constants/yty.ts` reads them from
@@ -47,66 +59,58 @@
  * product-type presentation already reads its row. The set then cannot drift:
  * a family's hue and its mark are edited in one place.
  *
- * The last case draws the four **together**, today's set beside the best-fit
- * set, at both scales they appear at. A glyph that is right on its own can still
- * be wrong in the set — four marks a reader meets in one row have to look like
- * siblings — and that is a thing only the row can show.
+ * The set view draws the four **together**, today's set beside the ruled three
+ * with the best-fit Glow in the open seat, at both scales they appear at. A
+ * glyph that is right on its own can still be wrong in the set — four marks a
+ * reader meets in one row have to look like siblings, and no two of them may be
+ * the same object — and that is a thing only the row can show.
  */
 
 import {
   Backpack,
   BookOpen,
   Brain,
-  BrainCircuit,
   Building2,
   Calendar,
-  CircleDot,
   Computer,
-  Cpu,
-  Feather,
-  Flag,
+  Ear,
   Flame,
   Flower2,
   Gamepad,
   Gamepad2,
-  Glasses,
+  Gift,
   GraduationCap,
+  Hand,
   HandHeart,
+  HandHelping,
   Handshake,
   Headset,
   Heart,
-  HeartHandshake,
-  HeartPulse,
   Keyboard,
   Landmark,
   Laptop,
-  Leaf,
-  Lightbulb,
-  Megaphone,
   MessageCircleHeart,
   Monitor,
   MonitorSmartphone,
-  Moon,
   Mountain,
   Mouse,
+  Origami,
   PartyPopper,
   PcCase,
-  Puzzle,
-  Rocket,
-  Scale,
+  Rainbow,
   School,
-  Search,
-  Shield,
+  Smile,
   Sparkles,
+  Speech,
   Sprout,
   Sun,
   Sword,
-  Telescope,
   Tent,
   TentTree,
+  ThumbsUp,
   Ticket,
   Users,
-  Waves,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -137,11 +141,14 @@ interface Candidate {
 }
 
 /**
- * The four elements, each with the mark it carries today and the alternatives
- * drawn beside it.
+ * The four elements: the mark each has been given, or — for the one still open
+ * — what it draws today and what is being offered instead.
  *
- * Seven alternatives per element, uniformly, so the four rows are one grid and
- * a reader comparing across elements is not also compensating for row length.
+ * **A ruled family shows one cell and no candidates.** The alternatives were
+ * there to be chosen between, and once the choice is made they are a row of
+ * rejected marks competing for the eye of someone deciding something else. The
+ * page shrinks by what lands, so they go.
+ *
  * Every name was checked against the installed `lucide-react`.
  *
  * The `description` is the app's canonical English one-liner for the element,
@@ -151,45 +158,32 @@ interface Candidate {
 const ELEMENTS: readonly {
   readonly id: YtyFamilyId;
   readonly description: string;
+  /** What the app draws right now, which the set view's first column needs. */
   readonly today: Candidate;
+  /** The mark this family has been given; `null` while the family is still open. */
+  readonly ruled: Candidate | null;
+  /** Drawn only while the family is open — a ruled row shows its one mark. */
   readonly alternatives: readonly Candidate[];
-  readonly bestFit: Candidate;
 }[] = [
   {
     id: "harmony",
     description: "Your relationship with yourself",
     /** Affection turned inward: self-acceptance, the plainest reading of the element. */
     today: { name: "Heart", icon: Heart },
-    alternatives: [
-      /** The body's own rhythm — self-regulation as something you can feel. */
-      { name: "HeartPulse", icon: HeartPulse },
-      /** Balance, stated outright; the risk is that scales read as law, not as self. */
-      { name: "Scale", icon: Scale },
-      /** Rest, and knowing when to stop: the half of the element a heart never says. */
-      { name: "Moon", icon: Moon },
-      /** Emotional weather handled steadily rather than stilled. */
-      { name: "Waves", icon: Waves },
-      /** Self-kindness as lightness rather than as care. */
-      { name: "Feather", icon: Feather },
-      /** Calm and quiet growth, though green claims this shape elsewhere in the set. */
-      { name: "Leaf", icon: Leaf },
-      /** Centred: the element's own middle, with nothing borrowed from another idea. */
-      { name: "CircleDot", icon: CircleDot },
-    ],
-    bestFit: { name: "Heart", icon: Heart },
+    ruled: { name: "Heart", icon: Heart },
+    alternatives: [],
   },
   {
     id: "glow",
     description: "Your relationship with others",
     /** The outward light — chosen when Glow was yellow, and a sun on a green is the question. */
     today: { name: "Sun", icon: Sun },
+    ruled: null,
     alternatives: [
       /** Becoming and flourishing, in green's own shape rather than the sun's. */
       { name: "Sprout", icon: Sprout },
       /** Flourishing at its fullest; softer and less about effort than a sprout. */
       { name: "Flower2", icon: Flower2 },
-      /** Kindness offered and taken: the reciprocal half of the relationship. */
-      { name: "HeartHandshake", icon: HeartHandshake },
       /** Kindness given, one-way — empathy before it is returned. */
       { name: "HandHeart", icon: HandHeart },
       /** Belonging: the group you are inside, which is what the element is about. */
@@ -199,54 +193,68 @@ const ELEMENTS: readonly {
       /** Communication, the one part of the meaning no light or plant carries. */
       { name: "MessageCircleHeart", icon: MessageCircleHeart },
     ],
-    bestFit: { name: "Sprout", icon: Sprout },
   },
   {
     id: "valor",
     description: "Your relationship with society",
-    /** Courage as combat — which is the half of the meaning the element does not have. */
+    /** Courage as combat — the half of the meaning the element does not have. */
     today: { name: "Sword", icon: Sword },
-    alternatives: [
-      /** Courage as protection: standing in front of something rather than swinging at it. */
-      { name: "Shield", icon: Shield },
-      /** The standard you plant — speaking up, and taking a position in public. */
-      { name: "Flag", icon: Flag },
-      /** The hard thing, tried: effort without an opponent. */
-      { name: "Mountain", icon: Mountain },
-      /** Speaking up, stated literally. */
-      { name: "Megaphone", icon: Megaphone },
-      /** Working with people you did not choose — the teamwork half, exactly. */
-      { name: "Handshake", icon: Handshake },
-      /** Innovation and the leap; the element's forward-leaning half. */
-      { name: "Rocket", icon: Rocket },
-      /** Society itself, as the institution a civic act is aimed at. */
-      { name: "Landmark", icon: Landmark },
-    ],
-    bestFit: { name: "Shield", icon: Shield },
+    /** Working with people you did not choose: the teamwork half, exactly. */
+    ruled: { name: "Handshake", icon: Handshake },
+    alternatives: [],
   },
   {
     id: "wit",
     description: "Your relationship with technology",
-    /** Thinking — but biological thinking, where the element is about technology. */
+    ruled: { name: "Brain", icon: Brain },
     today: { name: "Brain", icon: Brain },
-    alternatives: [
-      /** Thinking and the machine in one mark: both halves of the meaning at once. */
-      { name: "BrainCircuit", icon: BrainCircuit },
-      /** The idea — curiosity's payoff rather than curiosity itself. */
-      { name: "Lightbulb", icon: Lightbulb },
-      /** The technology half, plainly; says nothing about the thinker. */
-      { name: "Cpu", icon: Cpu },
-      /** Problem-solving, and the piece that only fits one way. */
-      { name: "Puzzle", icon: Puzzle },
-      /** Media literacy: looking closely at what you are being shown. */
-      { name: "Glasses", icon: Glasses },
-      /** The questioning move itself — navigating rather than knowing. */
-      { name: "Search", icon: Search },
-      /** Curiosity aimed outward, at something further off than the screen. */
-      { name: "Telescope", icon: Telescope },
-    ],
-    bestFit: { name: "BrainCircuit", icon: BrainCircuit },
+    alternatives: [],
   },
+];
+
+/**
+ * Glow, a second round.
+ *
+ * Nothing in the first round landed, and two of it are now unavailable on their
+ * own account: `Handshake` is **Valor's**, ruled, and `HeartHandshake` is the
+ * same clasped hands with a heart added — a reader meeting both in one set
+ * would read Glow as a variant of Valor rather than as its own value, so it is
+ * out and is no longer drawn.
+ *
+ * That exclusion generalises, and it is what shapes this round: **Glow may not
+ * be a pair of hands.** The set now holds a heart, a handshake and a brain, so
+ * anything hand-shaped is spoken for, which takes `HandHeart`, `HandHelping`
+ * and `Hand` off the table however well each reads alone. Two of them are drawn
+ * anyway — the row is where that is demonstrated rather than asserted, and the
+ * owner may weigh the collision differently.
+ *
+ * The candidates are aimed at the brand's own examples of Glow behaviour —
+ * noticing when someone needs help, asking for help without embarrassment,
+ * being generous with credit — as well as the element's stated meaning:
+ * empathy, kindness, belonging, friendship, communication, a warm outward
+ * light.
+ */
+const GLOW_SECOND_ROUND: readonly Candidate[] = [
+  /** Warmth with a face: the one mark a reader does not have to interpret. */
+  { name: "Smile", icon: Smile },
+  /** Noticing someone needs help and going to them — but hands are Valor's now. */
+  { name: "HandHelping", icon: HandHelping },
+  /** Asking for help without embarrassment: the hand you put up. Hands again. */
+  { name: "Hand", icon: Hand },
+  /** Listening, which is how you notice that someone needs help at all. */
+  { name: "Ear", icon: Ear },
+  /** Generosity, given rather than owed. */
+  { name: "Gift", icon: Gift },
+  /** Being generous with credit, in the gesture a gamer already makes. */
+  { name: "ThumbsUp", icon: ThumbsUp },
+  /** Belonging — the group you are inside, rounder and warmer than `Users`. */
+  { name: "UsersRound", icon: UsersRound },
+  /** Communication as talking to someone, not as a notification. */
+  { name: "Speech", icon: Speech },
+  /** A warm outward light that is not a sun, and green lives inside it. */
+  { name: "Rainbow", icon: Rainbow },
+  /** Friendship as a thing made by hand for someone else. */
+  { name: "Origami", icon: Origami },
 ];
 
 /**
@@ -625,7 +633,21 @@ const TODAY_KIND_GLYPH = (kind: Kind): Candidate => kind.today;
 const BEST_FIT_KIND_GLYPH = (kind: Kind): Candidate => kind.bestFit;
 
 const TODAY_GLYPH = (element: Element): Candidate => element.today;
-const BEST_FIT_GLYPH = (element: Element): Candidate => element.bestFit;
+
+/**
+ * The best fit for the one family still open, so the set view can be drawn with
+ * all four seats filled rather than with a hole where Glow will go.
+ *
+ * `Smile` is the only candidate in either round that is a *person* rather than
+ * an act, which is what makes the set cohere: a heart, a face, a handshake and a
+ * brain read as four human things — how you feel, how you meet someone, how you
+ * work with people you did not choose, how you think — and it is the one strong
+ * candidate that does not repeat the hands the ruled Valor mark now owns.
+ */
+const GLOW_BEST_FIT: Candidate = { name: "Smile", icon: Smile };
+
+const RULED_GLYPH = (element: Element): Candidate =>
+  element.ruled ?? GLOW_BEST_FIT;
 
 /**
  * The section number is a prop because the page renumbers as rulings land and
@@ -636,44 +658,72 @@ export function GlyphsSection({ n = 2 }: { n?: number }) {
     <Question n={n} title="The glyphs">
       {ELEMENTS.map((element) => {
         const family = YTY_FAMILIES[element.id];
+        const ruled = element.ruled;
         return (
           <Case key={element.id} title={family.name}>
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
-              <div className="lg:w-44 lg:shrink-0">
-                <Panel label="Today">
+            {ruled === null ? (
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
+                <div className="lg:w-44 lg:shrink-0">
+                  <Panel label="Today">
+                    <GlyphCell
+                      candidate={element.today}
+                      strong={family.strong}
+                      soft={family.soft}
+                    />
+                  </Panel>
+                </div>
+                <div className="min-w-0 lg:flex-1">
+                  <Panel label="Candidates">
+                    <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-7">
+                      {element.alternatives.map((candidate) => (
+                        <GlyphCell
+                          key={candidate.name}
+                          candidate={candidate}
+                          strong={family.strong}
+                          soft={family.soft}
+                        />
+                      ))}
+                    </div>
+                  </Panel>
+                </div>
+              </div>
+            ) : (
+              <div className="lg:w-44">
+                <Panel label="Ruled">
                   <GlyphCell
-                    candidate={element.today}
+                    candidate={ruled}
                     strong={family.strong}
                     soft={family.soft}
                   />
                 </Panel>
               </div>
-              <div className="min-w-0 lg:flex-1">
-                <Panel label="Candidates">
-                  <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-7">
-                    {element.alternatives.map((candidate) => (
-                      <GlyphCell
-                        key={candidate.name}
-                        candidate={candidate}
-                        strong={family.strong}
-                        soft={family.soft}
-                      />
-                    ))}
-                  </div>
-                </Panel>
-              </div>
-            </div>
+            )}
           </Case>
         );
       })}
+
+      <Case title="Glow, another round">
+        <Panel label="Candidates">
+          <div className="grid grid-cols-3 gap-4 sm:grid-cols-5 lg:grid-cols-10">
+            {GLOW_SECOND_ROUND.map((candidate) => (
+              <GlyphCell
+                key={candidate.name}
+                candidate={candidate}
+                strong={YTY_FAMILIES.glow.strong}
+                soft={YTY_FAMILIES.glow.soft}
+              />
+            ))}
+          </div>
+        </Panel>
+      </Case>
 
       <Case title="The four elements together">
         <Compare columns={2}>
           <Panel label="Today">
             <ElementSet pick={TODAY_GLYPH} />
           </Panel>
-          <Panel label="Best fit">
-            <ElementSet pick={BEST_FIT_GLYPH} />
+          <Panel label="Ruled">
+            <ElementSet pick={RULED_GLYPH} />
           </Panel>
         </Compare>
       </Case>

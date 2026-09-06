@@ -186,7 +186,7 @@ export default function RobloxPage() {
           </div>
           <div className="mx-auto mt-14 grid max-w-5xl gap-6 sm:grid-cols-2">
             {reasons.map((reason) => (
-              <Card key={reason.key} className="bg-card/50">
+              <Card key={reason.key}>
                 <CardHeader>
                   <div className="flex items-center gap-4">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-act/10">

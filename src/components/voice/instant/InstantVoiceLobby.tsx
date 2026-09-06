@@ -271,7 +271,7 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: Inst
                   <Identicon id={lobbyIdenticonId} size={192} />
                 )}
                 {/* Mic indicator overlay — same idea as VoiceAvatar */}
-                <div className="absolute bottom-2 right-2 rounded-full bg-background/70 p-1.5">
+                <div className="glass absolute bottom-2 right-2 rounded-full p-1.5">
                   {micOn ? (
                     <Mic className="h-4 w-4 text-success" />
                   ) : (

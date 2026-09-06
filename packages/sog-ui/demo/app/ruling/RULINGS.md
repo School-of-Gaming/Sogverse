@@ -99,10 +99,18 @@ cards and the zone tiles. Criteria are the elements' own meanings: Harmony, with
 yourself (balance, rest, knowing when to stop); Glow, with others (empathy, belonging,
 friendship, a warm outward light, flourishing); Valor, with society (teamwork, civic
 courage, trying the hard thing, speaking up); Wit, with technology (critical thinking,
-curiosity). **Ruled: Harmony keeps `Heart`, Wit keeps `Brain`.** Open: Glow (the sun was
-chosen when Glow was yellow) and Valor (a sword carries courage and none of the
-teamwork). When all four are ruled they land as a library table beside the product-kind
-glyphs, and `yty.ts` reads them from there.
+curiosity). **Ruled: Harmony keeps `Heart`, Wit keeps `Brain`, Valor takes `Handshake`**
+(working with people you did not choose; the sword carried courage and none of the
+teamwork). **Open: Glow.** The sun was chosen when Glow was yellow; nothing in the first
+round (Sprout, Flower2, HeartHandshake, HandHeart, Users, Sparkles, MessageCircleHeart)
+landed for the owner, and HeartHandshake now collides with Valor. A second round is drawn
+aimed at the brand's own Glow behaviours (noticing when someone needs help, asking for
+help, being generous with credit): Smile, HandHelping, Gift, Ear, UsersRound, Waves, Bird,
+Rainbow, Star and kin. When all four are ruled they land as a library table beside the
+product-kind glyphs, and `yty.ts` reads them from there. **Kind glyphs**: the owner does
+not think the joystick fits the consumer club and asked for something closer to what a
+family's child plays on (keyboard and mouse, laptop, desktop, else a gamepad); a case on
+the page draws those with alternatives for the other three kinds; open.
 
 **The recipe, called 2026-09-06, awaiting final confirmation from a redraw.** From the
 "Strong and soft" grid the owner found the **soft** variant pops best off the dark ground
@@ -220,7 +228,38 @@ longer drawn on both grounds**: the tint was the only reason to, because a 10% w
 composites differently over the card than over the page, and a neutral ground under a
 full-value edge renders identically on both.
 
-**Ruling:** _open — the three things above_
+**Ruled 2026-09-06, two of the three:**
+
+- **The tinted ground → B, glyph and title in status ink.** The 121 sites lose their tint
+  and sit on the neutral ground they are on; the glyph and the title take the status
+  colour, the body stays `muted-foreground`. With §11, the title must be a label
+  ("Payment failed", "Report sent"); where a site's title is a sentence today it goes to
+  ink and the glyph carries the colour alone. The inline form error, which has no glyph
+  today, gains one. C (a solid fill under a sentence) was rejected on sight: bright under
+  ink it shouts, and the strong values under white fail the body floor (Harmony 3.05,
+  Glow 2.83, Valor 2.80, destructive 3.03, warning 1.65; only Wit 4.57 passes), so the
+  construct is a bad fit on this theme either way. A solid fill under a one-word label
+  (a badge) is fine and is a different construct.
+- **The card lit from its leading edge → a rule down the leading edge**, full value, on
+  the plain card: `act` for the live card, the status colour for the awaiting one. The
+  gradient goes.
+
+**Still open — the recipe's last cell.** From "Area and ink" the owner confirmed Harmony,
+Glow and Wit at soft for area and ink; Valor at strong area / soft ink "doesn't feel
+right" (soft ink looks weak, strong for the others looks out of sync). Valor strong as
+ink passes (6.22 on card, clears all four grounds; it was Wit strong that failed), and
+orange loses its chroma when lightened where pink, green and blue do not. Proposed and
+to be seen: **Valor one colour twice, strong**, so every family spends exactly one
+colour. If it holds, **SOG-UI defines one colour per element, not a strong/soft pair**
+(the owner: two per element is more confusing; the direction says each element has one
+colour): tokens `yty-harmony`, `yty-glow`, `yty-valor`, `yty-wit` with no suffix, the
+brand's other four values recorded in the doc comment as its white-ground values, not
+emitted. Buttons: on the dark ground the lighter colour is the louder one, so a Yty
+button prefers the same colour as everything else; the primary CTA is `act` regardless. A
+filled button per family, both ways, is drawn in the confirmation pass.
+
+**Ruling:** _tinted ground and lit card ruled; the recipe's Valor cell and the one-colour
+direction to confirm from the redraw_
 
 ## 4. The greys — the sidebar ground, and accent
 
@@ -262,6 +301,19 @@ system:** four steps stay and Sogverse's ~250 grey sites are swept to use them b
 three steps, one token named at landing, accent and muted deleted, the sweep mapping
 hover/selection/quiet to it with an edge or ink signal where a second grey was doing the
 work. Either way the landing classifies every site by role; the audit is the sweep.
+
+**Ruling (2026-09-06):** _ruled, to land_ — **three steps.** Background, card, and one
+lifted grey at muted's value, named `lifted` in the library (a hover lifts; a quiet block
+is lifted off its card). `accent`, `accent-foreground` and `muted` leave the library and
+the theme; `muted-foreground` stays, as ink, its doc comment saying it is unrelated to the
+deleted ground. The sweep classifies all 247 grey sites by role: hover and focus grounds,
+quiet grounds and the seven held accents → `lifted`; a selection signalled by grey alone
+(the WhatsApp conversation list) takes the 2px `act` leading edge from the drawing; a
+hoverable thing resting on `lifted` signals hover by ink and edge, never by ground. The
+contrast ledger regenerates for three grounds; the demo floor shows the ladder of three;
+the page's greys section leaves. (The owner also noticed the drawing's focused field
+carried two fighting focus treatments, an act ring and a white border: a mistake in the
+page, not the app, deleted with the section.)
 
 ## 5. The categorical palettes
 
@@ -346,7 +398,14 @@ today's order. The column stays text and gains no CHECK.
 ground and the on-media ink. The picker's white check fails the glyph floor on light
 swatches today and is rescued by a shadow.
 
-**Ruling:** _open_
+**Narrowed 2026-09-06.** The scrim half is answered by §9 (black at 70%, landed as the
+library's `SCRIM`); the page's dialog-scrim case (50 / 60 / 55) is deleted with the
+landing and `LOOSE_COLOURS`' scrim row is landed. What remains here is the **media
+ground** (true black behind video) and the **on-media ink** (white, or one step down,
+over the brightest thing a scrim covers), plus the picker's check; one exemplar each,
+drawn over the library's scrim.
+
+**Ruling:** _open — media ground and on-media ink only_
 
 ## 7. The identicon
 
@@ -494,7 +553,21 @@ other (dialog/sheet backdrops, the viewer ground and the avatar overlay → scri
 header, the section pill, the media chips → glass, or a solid chip where a site never
 needed to see through); nothing else in Sogverse composites.
 
-**Ruling:** _scrim and glass ruled (to land); the act/world replacements still to see._
+**Landed 2026-09-06, the scrim and the glass.** `packages/sog-ui/src/tokens/surfaces.ts`
+authors `SCRIM` (black, 0.7) and `GLASS` (ground at 0.7 with an 8px blur, 0.9 without);
+the generator emits `--color-scrim` as a token carrying its own alpha (no `/n` a call
+site could vary) and `glass` as a Tailwind 4 `@utility`, which the Sogverse production
+build confirmed reaches the consumer. 23 sites in 20 files: 4 scrim (dialog and sheet
+backdrops, the profile-tile overlay, the viewer ground), 14 glass (the header, the About
+and dashboard pills, the voice dock, the viewer's controls, the media chips, the zone-list
+arrows), 5 known-ground `bg-card/50` → `bg-card`. `.glass-panel` left `globals.css`; a
+test holds that Sogverse declares no glass. The alpha section left the page; the demo
+floor shows both over a photograph. Two greps: the only `/n` on a neutral left in `src`
+is the easter egg's eight `text-white/*` (§10, open); the only blur left outside `glass`
+is `voice/PrivacyScreen.tsx`'s 1.5px blur, which lays down no colour and is a signal over
+a locked zone, not a surface (§13, item 9).
+
+**Ruling:** _scrim and glass landed; the act/world replacements still to see._
 
 ## 10. The Klingon easter egg
 
@@ -588,6 +661,10 @@ fixed in Sogverse.
    state lost its outline half; fill and ink remain.
 8. `src/components/public/products/signup-panel-view.tsx` — the region-lock blocks'
    "a border means you can act on it" grammar; only the info glyph marks the family now.
+9. `src/components/voice/PrivacyScreen.tsx` — a 1.5px backdrop blur over a locked zone,
+   deliberately weak so the members stay readable: neither scrim nor glass, no colour laid
+   down, a *signal* with no library construct behind it. Its doc comment says so, so no
+   sweep converts it on pattern.
 
 ## 14. Gradients
 
@@ -673,136 +750,68 @@ same change as the ruling lands.
 
 **Ruling:** _open_
 
-## Where the session stands (2026-09-05, end of day)
+## Where the session stands (2026-09-06, evening)
 
 Read this first when resuming. The branch is `feat/sog-ui-theme-adoption`, in the
 worktree `.claude/worktrees/sog-ui-theme`, pushed to origin after every landing. The
 worktree has its own `node_modules` (this branch changed dependencies). The demo runs
 with `npm run dev --workspace=@sog/ui` on port 3001 and the ruling page is `/ruling`.
-The app preview is not running; start it on 3002 only to spot-check a page.
+The app preview is not running; start it on 3002 only to spot-check a page. The Vercel
+preview builds again since the install command was scoped to the UI workspace.
 
-**Landed and committed:** the theme plumbing; the border sweep (no universal default,
-every edge named, every hidden colour deleted); the Yty tokens; muted and accent in the
-library and the second-name tokens gone; the sidebar on the card ground with no tokens
-of its own; act and world replacing primary and secondary everywhere; the colour rules
-and their reasons codified in `brand.ts`; the deviations doc deleted; the process written
-into `packages/sog-ui/docs/adoption.md`.
+**Landed:** the theme plumbing; the border sweep; the eight Yty tokens; muted and accent
+in the library and the second-name tokens gone; the sidebar on the card ground; act and
+world replacing primary and secondary; the colour rules codified in `brand.ts`; the
+deviations doc deleted; the process in `packages/sog-ui/docs/adoption.md`; the product
+kinds as the tone grammar's first rows, re-matched on the elements' meanings and shown on
+the demo floor; the sixteen picks, numbered, with unlabelled swatches and the stored keys
+migrated (`00242`); the trophy sprite as gold artwork; the scrim and the glass as library
+constructs with every translucent site converted. The page draws the real lucide icons.
 
-**Landed 2026-09-06, the picks (§5).** `packages/sog-ui/src/tokens/picks.ts` holds the
-ordered list and `PickId`; the generator emits `--color-pick-1` … `-16`; the demo's
-foundations floor shows all sixteen; `tests/unit/sog-ui/picks.test.ts` holds the set and
-its parity with the theme. In Sogverse the sixteen `--color-zone-*` tokens are deleted,
-`lib/constants/voice-zones.ts` keys its colour map by pick id (text, because the column
-is), the picker's swatch labels are one numbered string per locale, and every fixture and
-db-test literal spells a pick id. The tile's `/15` step stays, pending §9, as the Yty
-steps do.
+**Ruled, to land (in this order, one agent each, the greys first):**
 
-**Landed after the owner left (2026-09-06):** the product-type landing (the tone grammar table with
-family + glyph in `packages/sog-ui/src/tokens/grammar.ts`, the admin presentation map
-reading it, the four categorical tokens deleted) and the page cleanup for §2 and §5. If
-`git status` is clean and `git log` shows it, nothing is outstanding from that pass; the demo
-server was stopped at the end of the day and needs starting again.
+1. **§4 the greys → three steps.** One `lifted` grey at muted's value; `accent`,
+   `accent-foreground`, `muted` deleted; `muted-foreground` stays as ink; all 247 grey
+   sites classified by role and converted; the WhatsApp list's selection takes a 2px act
+   edge; hover on a thing resting on `lifted` is ink and edge. Contrast ledger for three
+   grounds; demo floor; the page's greys section leaves. Also with this landing: narrow
+   the page's §6 case to media ground and on-media ink over the library's scrim (the
+   dialog-scrim case goes; `LOOSE_COLOURS` scrim row landed).
+2. **§2/§3 the recipe and the status set**, once the owner confirms the Valor flip on the
+   page (Valor strong for both roles is drawn now; a filled button per family both ways
+   is to be added to the context cases): **one colour per element** (`yty-harmony`,
+   `yty-glow`, `yty-valor`, `yty-wit`, no suffix; the brand's other four values in the doc
+   comment, not emitted); four status tokens (destructive `#FF5C5C`, warning `#DFCB25`,
+   success = Glow, info = Wit) with ink labels and measured pairings; two grammar rows;
+   §11 coloured text as the label rule with a label primitive; the 121 tinted sites → B
+   (glyph and title in status ink; sentence titles go to ink); the lit card → a leading
+   rule; the 166 status-as-text sites sorted into labels and sentences; Sogverse's status
+   tokens deleted and the email mirror reading the library; `yty.ts`, `voice-zones.ts`
+   and the presentation map repointed; the demo floor updated; the page's status and Yty
+   sections leave.
+3. **§2 the element and kind glyphs**, once Glow and the consumer club are picked
+   (Harmony Heart, Wit Brain, Valor Handshake ruled): a library glyph table; `yty.ts` and
+   the grammar rows read it; the glyph section leaves.
 
-**Added after the owner left (2026-09-06), needing no ruling to build:** the page's
-section 8, "Colour at an alpha step" (`section-alpha.tsx`), which draws §9's widened
-question — scrims and chips over real photographs, the section pill over scrolling
-content, and four alpha-over-a-known-ground triples where the step and its composited
-solid land on the same pixels. `ALPHA_SITES` in `inventory.ts` classifies the whole
-surface and the summary table lists it. The two photographs are copies of Sogverse's
-`public/preview-art/session-arena.jpg` and `session-badge.jpg` in the demo's own
-`public/ruling-art/`, joined later the same day by a copy of
-`src/assets/brand/sog-logo-full.svg` for the OG cards, because the demo is a separate
-Next app with a separate static root; all three are deleted with this directory. That
-section has since been ruled in parts and shrunk — see the next paragraph but one.
-
-**Ruled 2026-09-06 from the alpha section (§9):** one scrim and one glass replace the six
-alpha strengths; disabled-as-opacity stays; act and world carry no alpha at any step
-(no soft act exists); the admin trophy sprite is artwork and is painted gold (landed).
-
-**Built 2026-09-06 to those rulings, needing no further ruling to draw.** The page now
-runs 0 to 9 and holds three sections where it held one:
-
-- **Section 7 shrank to "The scrim and the glass"** — the known-ground triples and the
-  state cases are gone, their argument having been made and accepted. Open on it: one
-  strength and one colour for the scrim (50/60/70/80 × black or the page ground, each
-  drawn over a dialog's card, the viewer's control, and the page a dialog really opens
-  from), and one strength for the glass (80/85/90 or solid, with and without the blur).
-- **Section 8, "Act and world at an alpha step"**, is new — the 58 matches in eleven
-  jobs plus the ten gradients, each job today beside its candidates. Open on it: the
-  owner rules per job and the sweep applies the ruling per site. Two live findings it
-  put on screen: the icon-tile job *is* `brand.ts`'s own chip-scale exemption, so the
-  ruling and the shipped rule cannot both stand; and `text-act-foreground/70` has no
-  quieter ink to move to.
-- **Section 9, "Gradients"**, is new — §14's whole site list drawn, in five cases.
-  Open on it: the whole question. The Roblox card is drawn without its two partner
-  marks, because a new surface carrying the Roblox mark is a fresh approval and this
-  page is not it. It also surfaced a contradiction between the §9 ruling and
-  `composite.ts`'s doc comment, ledgered under §14 and left in place for the gradient
-  ruling to resolve.
-
-**Rebuilt twice on 2026-09-06, and the status section is the focus.** The first rebuild
-keyed section 2 on the **surface** rather than on four colours — seven constructs, each
-with all four statuses in it, today above proposed. Seeing that, the owner ruled the
-tints out (§3): success and info are Yty families now, a brand colour cannot be tinted,
-and even destructive and warning do not look good washed. So the section was rebuilt
-again, this time **cut to the three things that resolve it**:
-
-1. **The tinted ground under its own ink** (121 sites), reworked with no tint. Three
-   real constructs — the alert panel, the confirm dialog's flagged line, the auth forms'
-   inline error block — each with all four statuses, today's row above four candidates:
-   a leading-edge rule (plus a top-rule variant on the alert), glyph-and-title in status
-   ink, a solid fill drawn loud enough to reject on sight, and nothing but the glyph.
-2. **The card lit from its leading edge** (1 site), the real card header today beside a
-   leading rule, a top rule, the glyph alone and nothing, with the live (act) and
-   awaiting (info) cards drawn together in every candidate.
-3. **Strong versus soft**, six hues × six constructs (fill under a label, edge, ring,
-   unlabelled mark, ink, glyph), the proposed direction with the inverted one beneath
-   it. This is §2's open recipe as well as the Wit question, and it is the next thing to
-   rule after the set.
-
-Everything else in the section is one compact proposed-only row per construct (ink on a
-neutral ground, a solid fill under a label, a solid mark) plus the three collision
-exemplars drawn once instead of three times. The tinted pill and the 40% ring are folded
-into the two reworked constructs rather than redrawn. On screen the section went from 28
-comparison rows carrying 126 panels, plus the three collision exemplars drawn three
-times, to 20 rows carrying 85 panels, the 72-cell recipe grid, and the three collision
-exemplars drawn once. Its source grew from 1047 lines to 1394 in the same move: the grid
-is new work and the reasoning that used to sit in seven construct sections is now
-concentrated in four, and on this page the reasoning is the doc comments.
-
-**What lands when §3 is ruled:** four status tokens in the library, each with the ink or
-white companion that reads on it and its measured pairings in the contrast ledger; two
-more rows of the tone grammar, because success and info are facts taking families rather
-than new colours; **the strong/soft recipe as a library rule** — the grid is its proof,
-and `brand.ts` states it as a habit today rather than as a measured direction; Sogverse's
-four `--color-*` deleted and the email hex mirror reading the library; `brand.ts`'s
-`glow` doc comment rewritten, since it currently says green is never the colour of
-success; **the 121 tinted sites and the lit-edge card converted to whatever construct is
-ruled**, which is the largest single sweep left on this branch. The token names do not
-move, so no Sogverse call site changes spelling.
-
-**Open on the page, with the status set first because that is where the focus is:** the
-status set (§3 — the two reworked constructs, and then the strong/soft direction, which
-is also §2's recipe and the answer to "when do we use wit-strong and wit-soft"); the
-hover fill (§4, accent vs muted); scrim and on-media ink (§6);
-the identicon (§7); colour at an alpha step (§9, the two parts above); the easter egg
-(§10); coloured text (§11) and the calm-surface budget (§12); gradients (§14). The page's
-sections were renumbered when the picks left it and run 0 to 9 with no gap: 0 the
-inventory, 1 Yty, 2 status, 3 the greys, 4 scrim and ink on media, 5 the identicon,
-6 the Lynx cyan, 7 the scrim and the glass, 8 act and world at an alpha step,
-9 gradients.
+**Open on the page:** Glow's glyph and the consumer club's (section 9); the recipe's Valor
+confirmation (status section, "Area and ink" and the context cases); the act/world
+replacements per job (§9, page section 7) and the icon-tile exemption the owner has not
+ruled out; gradients (§14, page section 8, its own review); media ground and on-media ink
+(§6); the identicon (§7); the easter egg (§10); the calm-surface budget (§12).
 
 **End-of-branch work, needing no ruling:** the enforcement (a test that Sogverse's
 stylesheet declares no `--color-*`; the hex-literal lint extended to all of `src/` with
 named exemptions — flag SVGs, the easter egg artwork, the partner marks in `og/marks.tsx`,
-the identicon's white/black once ruled; a lint banning raw Tailwind palette classes in
-class strings); the root `CLAUDE.md` Styling rules the adoption retires (never-hardcoded
-colours; the theme paragraphs); adoption.md's step 1 marked done; this page and this
-ledger deleted in one commit; the review (`/code-review` from the merge-base, in a
-subagent); the owner's walk through the app on 3002 before merge; merge via the
-worktree flow's Phase 5.
+the identicon once ruled; a lint banning raw Tailwind palette classes; the seam rule that
+no alpha suffix appears on a colour utility in Sogverse); `composite.ts`'s doc comment
+reconciled with the act ruling when gradients are ruled; the root `CLAUDE.md` Styling rules
+the adoption retires; adoption.md's step 1 marked done; this page, this ledger and
+`demo/public/ruling-art/` deleted in one commit; the review (`/code-review` from the
+merge-base, in a subagent); the owner's walk through the app on 3002 before merge; merge
+via the worktree flow's Phase 5; delete the session memory file.
 
 **Standing agreements not to forget:** the owner rules from the page, in shorthand,
 never from a paragraph; ruled means landed, and the page shrinks by what landed; no
 prose, numbers or pass marks on the page; every ruling's reason goes into a doc comment,
-never a source citation; Sogverse never learns of the Guidebook.
+never a source citation; Sogverse never learns of the Guidebook; the audit of whether a
+site spends a token for its own role is done as each ruling's sweep, never separately.

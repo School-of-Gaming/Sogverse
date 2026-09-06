@@ -190,7 +190,7 @@ export const STATUS_GLYPH: Record<StatusId, LucideIcon> = {
 /**
  * The four family marks Sogverse draws today (`lib/constants/yty.ts`).
  *
- * Two of them are themselves open — section 10 is ruling on Glow's sun and
+ * Two of them are themselves open — section 9 is ruling on Glow's sun and
  * Valor's sword — so what is drawn here is what ships, not what is proposed
  * there. A colour ruled against a mark the app does not carry would be a colour
  * ruled on the wrong picture, and a colour ruled against a mark that is itself

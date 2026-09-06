@@ -1,11 +1,16 @@
 /**
  * The brand's colours, defined once.
  *
- * This is the foundations tier's single typed source of truth for colour, and
- * the only file in the package that spells a hex. `theme.css` beside it is
- * generated from here (`npm run tokens --workspace=@sog/ui`), so a value moves
- * in one place; anything that cannot read CSS — an email, a canvas, an OG image
- * — imports these constants instead.
+ * This is the foundations tier's single typed source of truth for the colours
+ * the brand *speaks* — the grounds, the ink, the signature pair, the families.
+ * Two siblings spell a hex and neither is a brand colour: `picks.ts` holds the
+ * sixteen a person may choose for their own thing, and `surfaces.ts` holds the
+ * black the scrim dims with, which is not a hue at all but the absence of one.
+ * A colour anywhere else in the package is a defect lint catches.
+ *
+ * `theme.css` beside this file is generated from here (`npm run tokens
+ * --workspace=@sog/ui`), so a value moves in one place; anything that cannot
+ * read CSS — an email, a canvas, an OG image — imports these constants instead.
  *
  * Every colour is authored as hex, uppercase, six digits. Anything derived from
  * one — a contrast ratio, an HSL triple, a composited tint — is computed by a
@@ -91,7 +96,10 @@
  * - **A brand colour exists at exactly the values authored below, never at an
  *   alpha step**: over a near-black ground an alpha step composites to a
  *   darker, duller hue, so what the reader sees is no longer the brand. A
- *   ground that needs to lift goes to a neutral.
+ *   ground that needs to lift goes to a neutral, and a surface that genuinely
+ *   has to see through — over a photograph, a video, a page scrolling beneath
+ *   it — takes one of the two constructs in `surfaces.ts`, neither of which is
+ *   a colour the brand speaks.
  *
  * These are opinions with no renderable form, which is why they are written
  * here rather than exported as data. Each one the API can enforce — a component

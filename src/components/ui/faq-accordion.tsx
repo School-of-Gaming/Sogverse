@@ -50,7 +50,7 @@ export function FaqAccordion({ items }: FaqAccordionProps) {
   if (items.length === 0) return null;
 
   return (
-    <div className="divide-y divide-border overflow-hidden rounded-lg border bg-card/50">
+    <div className="divide-y divide-border overflow-hidden rounded-lg border bg-card">
       {items.map((item) => (
         <details key={item.key} className="group">
           {/* `list-none` kills the disclosure triangle in Gecko and Blink, the

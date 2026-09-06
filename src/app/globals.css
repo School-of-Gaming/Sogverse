@@ -142,26 +142,15 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Frosted-glass surface — a translucent background plus a backdrop blur, shared
-   by every floating/overlay chrome that sits over scrolling content: the sticky
-   site header, the home section pill, and the voice control dock. Defined once
-   so the look stays identical across all three. Progressive enhancement: a more
-   opaque background when backdrop-filter is unavailable, a lighter one (letting
-   more of the blur show) where the browser supports it. Pair with border /
-   rounded / shadow utilities per use site. */
-.glass-panel {
-  /* color-mix(... transparent) is what Tailwind's own `bg-background/90`
-     compiles to, and the form that survives Lightning CSS — a slash-alpha
-     written by hand gets dropped and leaves no background at all. */
-  background-color: color-mix(in oklab, var(--color-background) 90%, transparent);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-}
-@supports ((backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px))) {
-  .glass-panel {
-    background-color: color-mix(in oklab, var(--color-background) 70%, transparent);
-  }
-}
+/* There is no glass rule here, on purpose. Compositing is @sog/ui's: the
+   library ships exactly two constructs that see through — `bg-scrim`, the
+   black tint that dims what is behind it, and the `glass` utility, the page
+   ground thinned and blurred for a surface carrying its own contents over
+   whatever moves beneath it. Nothing else in this app composites: these two
+   replaced six translucent strengths spread across five files, and a third
+   recipe declared here would be the seventh and would look every bit as
+   deliberate. Pair `glass` with border / rounded / shadow utilities per site.
+   tests/unit/styling/glass-belongs-to-the-library.test.ts holds this. */
 
 /* Active voice-zone glow — the zone's color spilling in from the border and
    fading toward the center (paired with a high-contrast border on the active

@@ -20,17 +20,18 @@
  * different things of the same hex. The construct is the unit the owner rules
  * in, so it is the unit the table is keyed on.
  *
- * The alpha steps get a table of their own shape, because the question about
- * them is not what colour they are — most of them are a token the library
- * already owns — but what is underneath them. So its columns are the step, the
- * locator, the count and the ground, and it carries no swatch: an alpha step
- * has no colour of its own to show, which is the point question 7 draws.
+ * The alpha steps get a table of their own shape, carrying no swatch: an alpha
+ * step has no colour of its own to show. It had a fourth column naming what
+ * each step lands on, and that column has gone with the ruling — the fifteen
+ * sites that blended over a ground the system had not chosen are the library's
+ * scrim and glass now, so every row left over sits on a token and the column
+ * would say one thing on every line.
  *
  * The act and world steps get a third shape again. They are ruled — neither
  * carries alpha anywhere — so what is open is what stands in each place, and
  * that is a question per *job* rather than per token or per ground. Its first
  * column is therefore the job, which is the unit the owner rules on and the
- * unit question 8 draws.
+ * unit question 7 draws.
  */
 
 import {
@@ -99,7 +100,7 @@ function Group({ title, rows }: { title: string; rows: readonly Row[] }) {
   );
 }
 
-/** The same table without the swatch column, for rows whose subject is a ground rather than a colour. */
+/** The same table without the swatch column, for rows whose subject is a step rather than a colour. */
 function AlphaGroup({ title }: { title: string }) {
   return (
     <div>
@@ -114,11 +115,8 @@ function AlphaGroup({ title }: { title: string }) {
               <th className="py-2 pr-4 font-semibold tracking-wider uppercase">
                 Where
               </th>
-              <th className="py-2 pr-4 text-right font-semibold tracking-wider uppercase">
+              <th className="py-2 text-right font-semibold tracking-wider uppercase">
                 Uses
-              </th>
-              <th className="py-2 font-semibold tracking-wider uppercase">
-                Ground
               </th>
             </tr>
           </thead>
@@ -130,10 +128,9 @@ function AlphaGroup({ title }: { title: string }) {
               >
                 <td className="py-2 pr-4 font-brand-mono">{site.step}</td>
                 <td className="py-2 pr-4 text-muted-foreground">{site.where}</td>
-                <td className="py-2 pr-4 text-right font-brand-mono text-muted-foreground">
+                <td className="py-2 text-right font-brand-mono text-muted-foreground">
                   {site.uses}
                 </td>
-                <td className="py-2 font-brand-mono">{site.ground}</td>
               </tr>
             ))}
           </tbody>

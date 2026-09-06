@@ -25,7 +25,6 @@
 
 import type { Metadata } from "next";
 import { ActSection } from "./section-act";
-import { AlphaSection } from "./section-alpha";
 import { GradientsSection } from "./section-gradients";
 import { GreysSection } from "./section-greys";
 import {
@@ -49,13 +48,12 @@ export default function RulingPage() {
       <h1 className="text-h1-mobile sm:text-h1">Theme ruling</h1>
       <SummarySection />
       <YtySection />
-      <GlyphsSection n={10} />
+      <GlyphsSection n={9} />
       <StatusSection />
       <GreysSection />
       <ScrimSection />
       <IdenticonSection />
       <LynxSection />
-      <AlphaSection />
       <ActSection />
       <GradientsSection />
     </main>

@@ -543,7 +543,7 @@ function CardHeader({
  * schedule and a chevron, and the gradient is the least of what tells a parent
  * which card is which.
  *
- * The act sites in section 8's "callout ground" and "highlighted row" jobs are
+ * The act sites in section 7's "callout ground" and "highlighted row" jobs are
  * the same question asked of a panel and of a list row; whichever construct is
  * ruled here should be the one ruled there, and neither is redrawn in the
  * other's section.

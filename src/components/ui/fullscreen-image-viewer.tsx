@@ -175,11 +175,11 @@ export function FullscreenImageViewer({
           aria-modal="true"
           aria-label={labels.viewer(index + 1, count)}
           onClick={onClose}
-          // The dark ground the picture is read against — the theme's own
-          // background over the primitive's backdrop, filling the whole box so
-          // a 16:9 screenshot on a tall screen sits in darkness rather than in
-          // a bright band of dashboard.
-          className="relative flex h-full w-full items-center justify-center bg-background/80"
+          // The dark ground the picture is read against — a second scrim over
+          // the primitive's own, filling the whole box so a 16:9 screenshot on
+          // a tall screen sits in darkness rather than in a bright band of
+          // dashboard.
+          className="relative flex h-full w-full items-center justify-center bg-scrim"
         >
           <Image
             src={image.src}
@@ -218,7 +218,7 @@ export function FullscreenImageViewer({
             type="button"
             onClick={onClose}
             aria-label={labels.close}
-            className="absolute right-2 top-2 rounded-full bg-background/80 p-2 text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+            className="glass absolute right-2 top-2 rounded-full p-2 text-foreground transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
           >
             <X className="h-5 w-5" aria-hidden />
           </button>
@@ -257,7 +257,7 @@ function ViewerNavButton({
         onActivate();
       }}
       className={cn(
-        "absolute top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 text-foreground backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+        "glass absolute top-1/2 -translate-y-1/2 rounded-full p-2 text-foreground transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
         side === "left" ? "left-2" : "right-2",
       )}
     >

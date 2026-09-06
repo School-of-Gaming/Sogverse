@@ -93,8 +93,15 @@ export const YTY_ROLES: Record<YtyFamilyId, Roles> = {
     ink: YTY_FAMILIES.harmony.soft,
   },
   glow: { area: YTY_FAMILIES.glow.soft, ink: YTY_FAMILIES.glow.soft },
-  /** The one family that fills at its strong value — see the table's comment. */
-  valor: { area: YTY_FAMILIES.valor.strong, ink: YTY_FAMILIES.valor.soft },
+  /**
+   * Valor spends its strong value for both roles. Orange loses its chroma when
+   * lightened where pink, green and blue do not, so soft Valor read as weak
+   * ink and a strong edge beside soft ink read as two oranges; strong as ink
+   * clears the body floor on all four grounds. With this, every family spends
+   * exactly one colour, which is the direction the owner asked to see: one
+   * colour per element, not a pair.
+   */
+  valor: { area: YTY_FAMILIES.valor.strong, ink: YTY_FAMILIES.valor.strong },
   wit: { area: YTY_FAMILIES.wit.soft, ink: YTY_FAMILIES.wit.soft },
 };
 
@@ -533,44 +540,44 @@ export const LOOSE_COLOURS: readonly LooseColour[] = [
   },
 ];
 
-/** One row of the alpha-step surface: a class shape, where it is spent, and what is under it. */
+/** One row of the alpha-step surface: a class shape, where it is spent, how often. */
 export interface AlphaSite {
   /** The utility as it is written, or the token when the row collects every step of one. */
   readonly step: string;
   /** Where it appears, as a locator rather than a description. */
   readonly where: string;
   readonly uses: number;
-  /** What the blend lands on, in one phrase. */
-  readonly ground: string;
 }
 
 /**
- * Every utility carrying a `/n` modifier, classified by what is underneath it.
+ * Every utility still carrying a `/n` modifier, and where it is spent.
  *
  * Regenerate the surface rather than trusting the counts, which are a snapshot:
  *
  *     grep -rhoE "\b(bg|from|to|via|text|border|ring|shadow|divide|outline|fill|stroke)-[a-z0-9-]+/[0-9]+" src --include=*.tsx --include=*.ts | sed -E 's/^([a-z]+)-(.*)\/([0-9]+)$/\2/' | sort | uniq -c | sort -rn
  *
- * 269 sites in 119 files. The character class takes digits as well as letters
+ * 249 sites in 112 files. The character class takes digits as well as letters
  * because the sixteen zone hues are `pick-1` to `pick-16` now: a letters-only
  * class silently drops all sixteen and reports a total that looks plausible,
  * which is the failure mode a regeneration command exists to prevent.
  *
- * Drop the `sed` to see the steps rather than the tokens; the fifteen media and
- * scrolling rows below are the whole of what that unsedded output holds for
- * `black` and `background`, and they are listed at that granularity because they
- * are the rows the section draws one by one. Everything else is collected per
- * token, which is the granularity the regeneration command itself reports.
+ * **The table used to have a `ground` column, and losing it is the ruling.**
+ * The question this list opened with was what is *underneath* each step, and
+ * the answer split it in two: fifteen sites blended over a ground the system
+ * had not chosen — a photograph, a video frame, a page scrolling beneath a
+ * pinned bar — and the rest blend over a token, landing on one fixed colour
+ * every time that nobody has named. The first kind was the only kind that
+ * needed alpha at all, and it is now two library constructs (`bg-scrim` and
+ * the `glass` utility) rather than six strengths in five files. So those rows
+ * have left this table, the five `bg-card/50` sites over a known ground have
+ * gone to the plain token, and every row that is left sits over a ground the
+ * system chose — which is why the column is gone: it would say the same thing
+ * on every line.
  *
- * **Why the classification is the answer.** Over a ground the system did not
- * choose there is no pairing to measure and no token to name, so blending at
- * render time is the only mechanism there is. Over a ground the system did
- * choose the blend lands on one fixed colour every time, and that colour is a
- * token nobody named. Fifteen sites are the first kind. The other 254 are the
- * second, and most of them are already in front of the owner under another
- * question: the eight `text-white/*` are the Klingon easter egg, the sixteen
- * Yty strong steps are the element recipe, the sixteen pick steps are the zone
- * tile, and the status tints ride with the status set.
+ * What remains is open under another question rather than this one: the eight
+ * `text-white/*` are the Klingon easter egg, the sixteen Yty strong steps are
+ * the element recipe, the sixteen pick steps are the zone tile, the neutrals
+ * ride the greys and the status tints ride the status set.
  *
  * **The one shape that is neither.** Four sites — the amber, violet and red
  * button hovers in `ui/button.tsx`, and the same red on the payment-problem
@@ -587,142 +594,74 @@ export interface AlphaSite {
  */
 export const ALPHA_SITES: readonly AlphaSite[] = [
   {
-    step: "bg-black/50",
-    where: "ui/dialog.tsx, ui/sheet.tsx",
-    uses: 2,
-    ground: "media",
-  },
-  {
-    step: "bg-black/60",
-    where: "family/ProfileTiles.tsx",
-    uses: 1,
-    ground: "media",
-  },
-  {
-    step: "bg-background/80",
-    where: "ui/fullscreen-image-viewer.tsx, voice/ScreenShareDisplay.tsx",
-    uses: 4,
-    ground: "media",
-  },
-  {
-    step: "bg-background/85",
-    where: "voice/VoiceAvatar.tsx, chat/ChatComposer.tsx",
-    uses: 2,
-    ground: "media",
-  },
-  {
-    step: "bg-background/90",
-    where: "gedu/session-feed/SessionPhotoStrip.tsx",
-    uses: 1,
-    ground: "media",
-  },
-  {
-    step: "bg-background/70",
-    where: "voice/instant/InstantVoiceLobby.tsx",
-    uses: 1,
-    ground: "media",
-  },
-  {
-    step: "bg-background/90, bg-background/70",
-    where: "layout/dashboard-section-pill.tsx",
-    uses: 2,
-    ground: "scrolling content",
-  },
-  {
-    step: "bg-background/80",
-    where: "voice/ZoneList.tsx, the member strip's scroll arrows",
-    uses: 2,
-    ground: "scrolling content",
-  },
-  {
     step: "act",
     where: "eleven jobs — see the act and world table",
     uses: 51,
-    ground: "a token",
   },
   {
     step: "muted",
     where: "quiet blocks, code samples, reply strips, every skeleton",
     uses: 44,
-    ground: "a token",
   },
   {
     step: "destructive",
     where: "the inline error, the danger row, the destructive hover",
     uses: 37,
-    ground: "a token",
   },
   {
     step: "muted-foreground",
     where: "faded ink, pseudo-element separators, a quiet glyph",
     uses: 18,
-    ground: "a token",
   },
   {
     step: "warning",
     where: "the caution note and its chip",
     uses: 16,
-    ground: "a token",
   },
   {
     step: "info",
     where: "the informational note, a ring, a gradient, the now divider",
     uses: 16,
-    ground: "a token",
   },
   {
     step: "success",
     where: "the confirmed note and its chip",
     uses: 12,
-    ground: "a token",
   },
   {
     step: "white",
     where: "about/about-section.tsx, the tlh easter egg",
     uses: 8,
-    ground: "a token",
   },
   {
     step: "yty-*-strong",
     where: "the element card and the zone tile",
     uses: 16,
-    ground: "a token",
   },
   {
     step: "pick-*",
     where: "voice/ZoneList.tsx, the zone tile fill",
     uses: 16,
-    ground: "a token",
-  },
-  {
-    step: "card",
-    where: "the home features, the Roblox reasons and events cards, the browse filters, the FAQ list",
-    uses: 5,
-    ground: "a token",
   },
   {
     step: "world",
     where: "four gradients, and the violet button hover",
     uses: 5,
-    ground: "a token",
   },
   {
     step: "accent",
     where: "the checkbox row, the filter dropdown, two voice rows",
     uses: 5,
-    ground: "a token",
   },
   {
     step: "foreground",
     where: "the absent mark, the zone glow, one faded chip label",
     uses: 3,
-    ground: "a token",
   },
   {
     step: "act-foreground",
     where: "faded ink on an amber fill — see the act and world table",
     uses: 2,
-    ground: "a token",
   },
 ];
 

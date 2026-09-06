@@ -1,5 +1,5 @@
 /**
- * Question 9 — gradients.
+ * Question 8 — gradients.
  *
  * A gradient is a colour construct the library has no word for, and every one
  * of them in Sogverse spends the signature pair. The act/world ruling binds
@@ -553,7 +553,7 @@ const OG_PANELS: readonly { label: string; ground: OgGround }[] = [
 
 export function GradientsSection() {
   return (
-    <Question n={9} title="Gradients">
+    <Question n={8} title="Gradients">
       <Case title="The hero">
         <Compare columns={3}>
           {HERO_PANELS.map((panel) => (

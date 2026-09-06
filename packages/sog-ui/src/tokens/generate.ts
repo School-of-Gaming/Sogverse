@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 
 import { BRAND, NEUTRALS, YTY_FAMILIES, type NeutralId } from "./brand.ts";
 import { PICKS } from "./picks.ts";
+import { GLASS, SCRIM } from "./surfaces.ts";
 import { FACES, TYPE_SCALE } from "./typography.ts";
 
 /** CSS pixels → rem at the 16px root, with no trailing zeros. */
@@ -89,6 +90,68 @@ function pickLines(): string[] {
   return PICKS.map((pick) => declaration(`--color-pick-${pick.id}`, pick.hex));
 }
 
+/** `0.7` → `70%`, with no trailing zeros. The form a `color-mix` percentage takes. */
+function percent(fraction: number): string {
+  return `${Number((fraction * 100).toFixed(5))}%`;
+}
+
+/**
+ * The scrim, as one colour token that carries its own alpha.
+ *
+ * The alpha belongs to the value, not to the call site: `bg-scrim` is the
+ * whole construct, and a site able to write `bg-scrim/40` would be picking a
+ * strength again, which is the drift a single scrim exists to end.
+ *
+ * Written as a `color-mix` with `transparent` — the form Tailwind's own `/n`
+ * modifier compiles to — so the authored hex and the authored fraction reach
+ * the stylesheet verbatim and nothing is converted on the way. Mixing with
+ * `transparent` is done on premultiplied alpha, so the transparent half
+ * contributes no colour and the result is exactly the hex at that alpha.
+ */
+function scrimLines(): string[] {
+  return [
+    declaration(
+      "--color-scrim",
+      `color-mix(in oklab, ${SCRIM.hex} ${percent(SCRIM.alpha)}, transparent)`,
+    ),
+  ];
+}
+
+/**
+ * The glass, as a Tailwind utility rather than a token.
+ *
+ * It is three declarations and a fallback, not a colour, so there is no token
+ * shape that can hold it: emitted as `@utility` it is a real utility, scanned
+ * like any other, able to take variants, and it lands in the utilities layer
+ * where a consumer's own utilities can sit beside it. A plain `.glass` rule
+ * would be unlayered and would beat every utility on the same element.
+ *
+ * The `color-mix(… , transparent)` form is what Tailwind's own `/n` modifier
+ * compiles to and the form that survives Lightning CSS; a hand-written slash
+ * alpha inside a `var()` fill is dropped by the optimiser and leaves the panel
+ * with no background at all.
+ */
+function glassUtility(): string {
+  const ground = `var(--color-${kebab(GLASS.ground)})`;
+  const blur = `blur(${GLASS.blurPx}px)`;
+  const fill = (opacity: number) =>
+    `color-mix(in oklab, ${ground} ${percent(opacity)}, transparent)`;
+  return [
+    "/* Glass — the page's own ground, thinned and blurred, for a surface that",
+    "   carries its own contents over whatever moves beneath it. The stronger",
+    "   fill is the base: where the browser cannot blur, opacity is the only",
+    "   thing left holding those contents legible, so it goes up. */",
+    "@utility glass {",
+    `  background-color: ${fill(GLASS.fallbackOpacity)};`,
+    `  -webkit-backdrop-filter: ${blur};`,
+    `  backdrop-filter: ${blur};`,
+    `  @supports ((backdrop-filter: ${blur}) or (-webkit-backdrop-filter: ${blur})) {`,
+    `    background-color: ${fill(GLASS.opacity)};`,
+    "  }",
+    "}",
+  ].join("\n");
+}
+
 function faceLines(): string[] {
   return Object.values(FACES).map((face) =>
     declaration(face.token, `var(${face.variable}), ${face.fallback}`),
@@ -153,6 +216,11 @@ export function renderTheme(): string {
     ),
     "",
     section(
+      "The scrim — the one colour in the theme that carries its own alpha. It dims what is behind it and nothing sits inside it; black, because a tint that adds a hue is a tint that recolours a photograph. See src/tokens/surfaces.ts.",
+      scrimLines(),
+    ),
+    "",
+    section(
       "Faces. The package owns the names; the consumer loads the files and defines the var() each token points at, on <html> and never on <body>.",
       faceLines(),
     ),
@@ -174,7 +242,7 @@ export function renderTheme(): string {
     "}",
   ].join("\n");
 
-  return `${header}\n\n${theme}\n\n${root}\n`;
+  return `${header}\n\n${theme}\n\n${glassUtility()}\n\n${root}\n`;
 }
 
 function main(): void {

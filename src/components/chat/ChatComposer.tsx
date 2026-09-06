@@ -334,7 +334,7 @@ export function ChatComposer({
                   );
                   setRefused(0);
                 }}
-                className="absolute right-1 top-1 rounded-full bg-background/85 p-0.5 text-foreground shadow-sm transition-colors hover:bg-background"
+                className="glass absolute right-1 top-1 rounded-full p-0.5 text-foreground shadow-sm transition-colors hover:bg-background"
               >
                 <X className="h-3.5 w-3.5" aria-hidden />
               </button>

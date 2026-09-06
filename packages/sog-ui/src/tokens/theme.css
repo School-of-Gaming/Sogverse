@@ -53,6 +53,9 @@
   --color-pick-15: #E85FE0;
   --color-pick-16: #F767A8;
 
+  /* The scrim — the one colour in the theme that carries its own alpha. It dims what is behind it and nothing sits inside it; black, because a tint that adds a hue is a tint that recolours a photograph. See src/tokens/surfaces.ts. */
+  --color-scrim: color-mix(in oklab, #000000 70%, transparent);
+
   /* Faces. The package owns the names; the consumer loads the files and defines the var() each token points at, on <html> and never on <body>. */
   --font-sans: var(--font-poppins), system-ui, sans-serif;
   --font-serif: var(--font-crimson-pro), Georgia, serif;
@@ -84,6 +87,19 @@
   --text-cta: 1rem;
   --text-cta--line-height: 1;
   --text-cta--font-weight: 600;
+}
+
+/* Glass — the page's own ground, thinned and blurred, for a surface that
+   carries its own contents over whatever moves beneath it. The stronger
+   fill is the base: where the browser cannot blur, opacity is the only
+   thing left holding those contents legible, so it goes up. */
+@utility glass {
+  background-color: color-mix(in oklab, var(--color-background) 90%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  @supports ((backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px))) {
+    background-color: color-mix(in oklab, var(--color-background) 70%, transparent);
+  }
 }
 
 /* Render native form-control internals dark too: the date input's picker glyph,

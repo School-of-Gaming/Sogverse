@@ -64,9 +64,12 @@ export function ScreenShareDisplay({
         />
       </div>
 
-      {/* Sharer name badge */}
+      {/* Sharer name badge. `outline` is the variant with no fill of its own,
+          which is what the glass needs: a filled variant would keep its own
+          `bg-*` beside the glass — tailwind-merge cannot see that the two are
+          the same property — and the fill would win. */}
       <div className="absolute left-2 top-2">
-        <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
+        <Badge variant="outline" className="glass">
           {t('sharerScreen', { name: sharer.userName })}
         </Badge>
       </div>

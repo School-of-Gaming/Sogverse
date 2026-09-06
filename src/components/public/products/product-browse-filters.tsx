@@ -115,7 +115,7 @@ export function ProductBrowseFilters({
   const showClear = hasAny || (showTypeFilter && categories.length > 0);
 
   return (
-    <div className="rounded-xl border border-border bg-card/50 p-3 sm:p-4">
+    <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
       <div className="mb-2 flex items-center justify-between gap-3">
         <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           <Sliders className="h-3.5 w-3.5" aria-hidden />

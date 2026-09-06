@@ -73,7 +73,7 @@ export default function HomePage() {
         </div>
         <div className="mx-auto mt-16 grid max-w-5xl gap-8 sm:grid-cols-2">
           {features.map((feature) => (
-            <Card key={feature.key} className="bg-card/50">
+            <Card key={feature.key}>
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-act/10">
