@@ -50,7 +50,7 @@
  *
  * The home page is a parent surface, so its answer is **colourful by
  * saturation, not by count**: amber at full strength plus one bold colour on a
- * calm ground, with the mark. Violet is the one to pair with amber for a brand
+ * calm ground. Violet is the one to pair with amber for a brand
  * moment — a hero and a social card are exactly the display, launch-shaped
  * placement violet is for, and neither is quiet safety copy. The blast belongs
  * on the gamer surfaces and the shop, which is a later pass.
@@ -82,8 +82,9 @@
  * the only place a brand colour is allowed a soft edge. It takes a hue and a
  * size and is spent from a real element, never from an empty box, and it is the
  * only answer to "make this surface colourful" that does not reopen the alpha
- * question. Sogverse then spends it on the mark and on one violet figure per
- * surface, and nothing else composites.
+ * question. Sogverse then spends it on the full-value figures a surface already
+ * has — the violet element and the amber primary in the hero, the mark and the
+ * violet band on the social card — and nothing else composites.
  *
  * **The OG card cannot carry a CSS blur.** `next/og` renders through satori,
  * which has no blur filter and no box-shadow, so the card's glow — if a glow is
@@ -96,8 +97,16 @@
  *
  * **Sizes.** A gradient is a fact about a large area, so the hero candidates
  * are stacked at full page width with the app's real headline and copy over
- * them, and the card is drawn as the 1200×630 composition at the size a link
+ * them, one variant is drawn again at the 360px design floor with the fold
+ * marked, and the card is drawn as the 1200×630 composition at the size a link
  * preview shows. A wash judged in a swatch is not judged.
+ *
+ * **No hero here carries the mark; the social card does.** The hero's mark is
+ * the header's, one element above it, and where the mark may be placed and at
+ * what size belongs to the mark adoption rather than to a colour ruling — so
+ * every hero panel is on production's terms and none of them draws it. The OG
+ * card is the opposite case: the mark is the card's whole first line, it is
+ * there in production, and a card drawn without it would not be the card.
  *
  * **What this section stopped drawing, and why.** The Roblox hero is the home
  * hero byte for byte, and the Roblox OG card is the home card's recipe with
@@ -146,7 +155,13 @@ const INK = NEUTRALS.foreground.hex;
 const ACT_GLOW = composite(BRAND.act.hex, 0.2, NEUTRALS.background.hex);
 const WORLD_GLOW = composite(BRAND.world.hex, 0.1, NEUTRALS.background.hex);
 
-/** The mark, copied into the demo's own static root beside the photographs. */
+/**
+ * The mark, copied into the demo's own static root beside the photographs.
+ *
+ * Spent by the social card alone. The hero drawings carry no mark, for the
+ * reason in this file's header: in the hero it is the header's, and its
+ * placement is the mark adoption's; on the card it is production's first line.
+ */
 const MARK = "/ruling-art/sog-logo-full.svg";
 const MARK_RATIO = 379 / 207.5;
 
@@ -181,78 +196,102 @@ const HERO_COPY =
 const HERO_WASH =
   "bg-[linear-gradient(to_bottom,_transparent_0%,_var(--color-background)_100%),linear-gradient(to_right,_color-mix(in_oklab,var(--color-act)_20%,transparent),_transparent_50%,_color-mix(in_oklab,var(--color-world)_10%,transparent))]";
 
-const HERO_MARK_HEIGHT = 72;
-
 /**
  * The hero's candidates.
  *
- * **The headline is the same in every column, including today's**, because it
- * is the app's own copy treatment: the vision statement broken across four
- * lines with no full stop, "Screen Time" in act and "Quality Time" in world.
- * That is why "the vision line set in violet" is not drawn as a separate
- * violet element — half of it already is, in production, in every column. What
- * the candidates ask is what violet does *besides* that.
+ * **No hero on this page carries the mark, including the proposals.** The owner
+ * asked for the mark in the hero and then decided against it, and the reason is
+ * the safer one: the mark is already in the header directly above the hero, and
+ * its size, its clearspace and where it may be placed are the mark adoption's
+ * to write rather than a colour branch's to invent. So every panel is on the
+ * same terms as production, and what is ruled here stays what it says it is —
+ * what colour does behind the words. (A drawing with the mark on the left of a
+ * split hero stood here briefly. Its one finding worth keeping: two glow
+ * sources side by side are separated only by the gutter, so a narrow gutter
+ * caps both glows at about half its width, which makes a glow's size a layout
+ * decision before it is a colour one.)
  *
- * **The mark is in the candidates and not in today's**, which is not an
- * oversight: today's hero carries no mark because the sticky header directly
- * above it does, and putting the mark inside the hero is part of what the
- * amber-plus-one composition proposes. It is also what emits the act glow, so
- * the two arrive together or not at all.
+ * **The composition is the app's, unchanged**: `container mx-auto px-4 py-24
+ * sm:py-32`, the inner `mx-auto max-w-3xl text-center`, the real subtitle, and
+ * the button row's `flex-col-reverse … sm:flex-row`. Only the ground and the
+ * violet element differ between panels.
+ *
+ * **The headline is the same in every panel, including today's**, because it is
+ * the app's own copy treatment: the vision statement broken across four lines
+ * with no full stop, "Screen Time" in act and "Quality Time" in world. That is
+ * why "the vision line set in violet" is not drawn as a separate violet element
+ * — half of it already is, in production, in every panel. What the candidates
+ * ask is what violet does *besides* that.
  *
  * **Two violet elements, because they read differently.** A `rule` is
- * typographic punctuation inside the composition — a short, thick bar under the
- * headline, colour as a figure. A `band` is architecture at the section's edge —
- * full-bleed, and it does the job the wash's vertical fade was doing, which is
- * to end the hero. A third candidate, a violet block behind the mark, is not
- * drawn: what ground the mark may sit on is the mark's own rule and belongs to
- * the mark adoption, not to a colour ruling.
+ * typographic punctuation inside the composition — a thick bar under the
+ * headline at the headline's own measure, colour as a figure. A `band` is
+ * architecture at the section's edge — full-bleed, doing the job the wash's
+ * vertical fade was doing, which is to end the hero.
  *
- * **The glow columns are the same two compositions with the two glows added**,
- * and the geometry is the constraint. The act glow is emitted by the mark,
- * which is itself an act-coloured shape at full value, and the world glow by
- * the violet element. They are sized so their haloes never meet: the mark's
- * fades out roughly 95px below it, the headline is four lines of h1 between
- * them, and the violet element's reaches no more than 80px up. Two hues that
- * never touch cannot mix, which is the whole difference between this and the
- * wash in column one.
+ * **The glows, without a mark to emit one.** A glow needs a source at full
+ * value, and a mark-free hero contains exactly two: the violet element and the
+ * amber primary button. So those are the two sources — the world glow from the
+ * rule or the band, the act glow from the button — which is the constraint
+ * choosing the composition rather than the other way round. A blur carries
+ * about half its radius past its own edge, so the pair reaches roughly 85px in
+ * total, against the room the layout leaves between the two sources: the
+ * subtitle and two margins under the rule (about 155px at desktop, about 310px
+ * at 360), and the container's own bottom padding under the band (128px at
+ * desktop). Both clear at both widths, and neither hue ever touches the other.
  *
  * **`wide` is the line being drawn.** The same two glows, blurred and spread
  * until they meet in the middle of the hero — at which point there is no
  * neutral ground between them, two hues are mixing, and it is today's wash
  * again with extra steps. It is here so the owner can see where a glow stops
  * being a glow rather than take it on trust.
+ *
+ * **The 360 pair, drawn for the rule variant.** The mobile drawing resolves the
+ * responsive variants by hand and has to: a viewport media query cannot be
+ * scoped to a 360px box inside a wide page, so a panel carrying `sm:` classes
+ * would silently draw the desktop layout at mobile width and lie about both.
+ * Resolved out: `sm:py-32` (stays `py-24`), `sm:flex-row` (stays
+ * `flex-col-reverse`, so the primary sits on top, which is the button-order
+ * rule's stacked half), and the headline's step, which drops from `text-h1` to
+ * `text-h1-mobile`.
+ *
+ * **The 360 headline was checked in the widest locale and does not overflow.**
+ * The app's hero has no min-height to reserve. The longest line any locale sets
+ * here is French's "Du temps d'écran" at sixteen characters, which at the
+ * mobile h1 step runs about 265px inside the 328px the floor leaves after
+ * `px-4` — Swedish's "kvalitetstid" and Finnish's "Ruutuajasta" are shorter
+ * still. The drawing is in English because the ruling is about what is behind
+ * the words; the arithmetic is the French one.
  */
-type HeroCandidate = "today" | "rule" | "band" | "ruleGlow" | "bandGlow" | "wide";
+type HeroCandidate = "today" | "rule" | "ruleGlow" | "band" | "bandGlow" | "wide";
+
+type HeroWidth = "desktop" | "mobile";
 
 type HeroSpec = {
   readonly ground: string;
-  readonly mark: boolean;
   readonly violet: "none" | "rule" | "band";
   readonly actGlow?: string;
   readonly worldGlow?: string;
 };
 
 const HERO_SPECS: Record<HeroCandidate, HeroSpec> = {
-  today: { ground: HERO_WASH, mark: false, violet: "none" },
-  rule: { ground: "bg-background", mark: true, violet: "rule" },
-  band: { ground: "bg-background", mark: true, violet: "band" },
+  today: { ground: HERO_WASH, violet: "none" },
+  rule: { ground: "bg-background", violet: "rule" },
   ruleGlow: {
     ground: "bg-background",
-    mark: true,
     violet: "rule",
-    actGlow: glow(ACT, 90, 4),
-    worldGlow: glow(WORLD, 70, 0),
+    actGlow: glow(ACT, 90, 2),
+    worldGlow: glow(WORLD, 80, 0),
   },
+  band: { ground: "bg-background", violet: "band" },
   bandGlow: {
     ground: "bg-background",
-    mark: true,
     violet: "band",
-    actGlow: glow(ACT, 90, 4),
+    actGlow: glow(ACT, 90, 2),
     worldGlow: glow(WORLD, 80, 0),
   },
   wide: {
     ground: "bg-background",
-    mark: true,
     violet: "band",
     actGlow: glow(ACT, 320, 60),
     worldGlow: glow(WORLD, 320, 60),
@@ -289,131 +328,23 @@ function HeroCtas({
   );
 }
 
-/** `app/(public)/page.tsx` — the home hero, and `roblox/roblox-hero.tsx` byte for byte. */
-function Hero({ candidate }: { candidate: HeroCandidate }) {
-  const spec = HERO_SPECS[candidate];
-  return (
-    <div className={`relative overflow-hidden rounded-lg ${spec.ground}`}>
-      <div className="px-6 py-20 text-center">
-        {spec.mark ? (
-          <span
-            className="mb-10 inline-block"
-            style={{ borderRadius: 12, boxShadow: spec.actGlow }}
-          >
-            <Image
-              src={MARK}
-              alt=""
-              width={Math.round(HERO_MARK_HEIGHT * MARK_RATIO)}
-              height={HERO_MARK_HEIGHT}
-              className="block"
-              unoptimized
-            />
-          </span>
-        ) : null}
-        <h4 className="text-h1 tracking-tight">
-          Where
-          <br />
-          <span className="text-act">Screen Time</span>
-          <br />
-          Becomes
-          <br />
-          <span className="text-world">Quality Time</span>
-        </h4>
-        {spec.violet === "rule" ? (
-          <span
-            className="mx-auto mt-10 block h-[6px] w-56 rounded-full"
-            style={{ backgroundColor: WORLD, boxShadow: spec.worldGlow }}
-          />
-        ) : null}
-        <p className="mx-auto mt-8 max-w-3xl text-body-l text-muted-foreground">
-          {HERO_COPY}
-        </p>
-        <HeroCtas className="mt-10 flex flex-col-reverse items-center justify-center gap-4 sm:flex-row" />
-      </div>
-      {spec.violet === "band" ? (
-        <span
-          className="absolute inset-x-0 bottom-0 block h-[10px]"
-          style={{ backgroundColor: WORLD, boxShadow: spec.worldGlow }}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-// ------------------------------------------------ the hero without the mark
-
 /**
- * The hero with the mark taken out of it.
+ * The fold, drawn on the 360 panels only.
  *
- * **What the owner meant by the two-column sketch**, corrected after the first
- * drawing got it wrong: not a mark beside the whole hero, but two rows — row
- * one split, the mark on the left and the slogan with its violet rule on the
- * right; row two the subtitle and the buttons, full width.
+ * `--header-height` is `4rem`, and the app's hero is pulled up under the header
+ * (`-mt-[var(--header-height)]`) and pads its own content back down (`pt-…`),
+ * so the top of the box drawn here is where the app's hero *content* starts,
+ * 64px below the top of the viewport. The two dashed lines are therefore at
+ * 640 − 64 = 576 and 844 − 64 = 780 from the top of the drawing, named by the
+ * device height each stands for: a small Android and an iPhone 14-class screen.
  *
- * **And then the safer decision, which is why neither is drawn.** The mark is
- * already in the header directly above the hero, and its size, its clearspace
- * and where it may be placed are the mark adoption's to write rather than a
- * colour branch's to invent — so the mark comes out of the hero altogether and
- * what is ruled here stays what it says it is: what colour does behind the
- * words. (The mark-left drawing that stood here briefly is gone with it. Its
- * one finding worth keeping: two glow sources side by side are separated only
- * by the gutter, so a narrow gutter caps both glows at about half its width,
- * which makes the glow's size a layout decision before it is a colour one.)
- *
- * **So this is the app's own hero, unchanged in structure**, with the wash
- * replaced by the ground and one full-value violet rule added under the
- * headline: `container mx-auto px-4 py-24 sm:py-32`, the inner `mx-auto
- * max-w-3xl text-center`, the subtitle, and the button row's `flex-col-reverse
- * … sm:flex-row`. The headline is the app's four-line vision statement with
- * "Screen Time" in act and "Quality Time" in world, and the rule is drawn at
- * the headline's own measure — the headline sits in a shrink-to-fit wrapper and
- * the rule is `w-full` inside it, so nothing is measured at runtime.
- *
- * **The glows, without a mark to emit one.** A glow needs a source at full
- * value, and with the mark gone this hero contains exactly two: the violet rule
- * and the amber primary button. So those are the two sources — the world glow
- * from the rule, the act glow from the button — which is the constraint
- * choosing the composition rather than the other way round. They are far apart
- * by construction, because the subtitle and two margins sit between them: about
- * 155px at desktop and about 310px at 360, against roughly 85px of combined
- * reach (a blur carries about half its radius past its own edge). Both fit at
- * both widths and neither hue ever touches the other, so the 360 panel needs no
- * fallback to the world glow alone.
- *
- * **The fold, drawn on the 360 panels only.** `--header-height` is `4rem`, and
- * the app's hero is pulled up under the header (`-mt-[var(--header-height)]`)
- * and pads its own content back down (`pt-…`), so the top of the box drawn here
- * is where the app's hero *content* starts, 64px below the top of the viewport.
- * The two dashed lines are therefore at 640 − 64 = 576 and 844 − 64 = 780 from
- * the top of the drawing, labelled with the device height each stands for: a
- * small Android and an iPhone 14-class screen.
- *
- * **The fold is drawn to be seen, not designed for here.** Where the CTA row
- * falls against it is a real question about this hero, and it is not this
+ * **They are drawn to be seen, not designed for here.** Where the CTA row falls
+ * against the fold is a real question about this hero and it is not this
  * branch's to answer: this is a colour branch, and moving type or trimming copy
  * to win a fold is a composition change nobody has asked for. The line is on
  * the page so that whatever is ruled about colour is ruled with the fold in
  * view.
- *
- * **The 360 drawing resolves the responsive variants by hand**, and has to: a
- * viewport media query cannot be scoped to a 360px box inside a wide page, so a
- * panel carrying `sm:` classes would silently draw the desktop layout at mobile
- * width and lie about both. The variants resolved out are `sm:py-32` (stays
- * `py-24`), `sm:flex-row` (stays `flex-col-reverse`, so the primary sits on
- * top, which is the button-order rule's stacked half), and the headline's step,
- * which drops from `text-h1` to `text-h1-mobile`.
- *
- * **The 360 headline was checked in the widest locale and does not overflow.**
- * The app's hero has no min-height to reserve. The longest line any locale sets
- * here is French's "Du temps d'écran" at sixteen characters, which at the
- * mobile h1 step runs about 265px inside the 328px the floor leaves after
- * `px-4` — Swedish's "kvalitetstid" and Finnish's "Ruutuajasta" are shorter
- * still. The drawing is in English because the ruling is about what is behind
- * the words; the arithmetic is the French one.
  */
-type HeroWidth = "desktop" | "mobile";
-
-/** The two device heights the fold is drawn at, less the 4rem header. */
 const HEADER_HEIGHT = 64;
 
 const FOLDS: readonly { device: number; top: number }[] = [
@@ -421,17 +352,6 @@ const FOLDS: readonly { device: number; top: number }[] = [
   { device: 844, top: 844 - HEADER_HEIGHT },
 ];
 
-const PLAIN_ACT_GLOW: Record<HeroWidth, string> = {
-  desktop: glow(ACT, 90, 2),
-  mobile: glow(ACT, 70, 2),
-};
-
-const PLAIN_WORLD_GLOW: Record<HeroWidth, string> = {
-  desktop: glow(WORLD, 80, 0),
-  mobile: glow(WORLD, 70, 0),
-};
-
-/** One dashed fold marker, named by the device height it stands for. */
 function Fold({ device, top }: { device: number; top: number }) {
   return (
     <div
@@ -445,13 +365,19 @@ function Fold({ device, top }: { device: number; top: number }) {
   );
 }
 
-function PlainHero({ width, glowing }: { width: HeroWidth; glowing: boolean }) {
+/** `app/(public)/page.tsx` — the home hero, and `roblox/roblox-hero.tsx` byte for byte. */
+function Hero({
+  candidate,
+  width = "desktop",
+}: {
+  candidate: HeroCandidate;
+  width?: HeroWidth;
+}) {
+  const spec = HERO_SPECS[candidate];
   const desktop = width === "desktop";
-  const actGlow = glowing ? PLAIN_ACT_GLOW[width] : undefined;
-  const worldGlow = glowing ? PLAIN_WORLD_GLOW[width] : undefined;
 
   const hero = (
-    <div className="relative overflow-hidden rounded-lg bg-background">
+    <div className={`relative overflow-hidden rounded-lg ${spec.ground}`}>
       <div
         className={
           desktop
@@ -479,14 +405,16 @@ function PlainHero({ width, glowing }: { width: HeroWidth; glowing: boolean }) {
               <br />
               <span className="text-world">Quality Time</span>
             </h4>
-            <span
-              className={
-                desktop
-                  ? "mt-8 block h-[6px] w-full rounded-full"
-                  : "mt-6 block h-[6px] w-full rounded-full"
-              }
-              style={{ backgroundColor: WORLD, boxShadow: worldGlow }}
-            />
+            {spec.violet === "rule" ? (
+              <span
+                className={
+                  desktop
+                    ? "mt-8 block h-[6px] w-full rounded-full"
+                    : "mt-6 block h-[6px] w-full rounded-full"
+                }
+                style={{ backgroundColor: WORLD, boxShadow: spec.worldGlow }}
+              />
+            ) : null}
           </div>
           <p className="mt-6 text-body-l text-muted-foreground">{HERO_COPY}</p>
           <HeroCtas
@@ -495,10 +423,16 @@ function PlainHero({ width, glowing }: { width: HeroWidth; glowing: boolean }) {
                 ? "mt-10 flex flex-col-reverse items-center justify-center gap-4 sm:flex-row"
                 : "mt-10 flex flex-col-reverse items-center justify-center gap-4"
             }
-            actGlow={actGlow}
+            actGlow={spec.actGlow}
           />
         </div>
       </div>
+      {spec.violet === "band" ? (
+        <span
+          className="absolute inset-x-0 bottom-0 block h-[10px]"
+          style={{ backgroundColor: WORLD, boxShadow: spec.worldGlow }}
+        />
+      ) : null}
     </div>
   );
 
@@ -862,24 +796,19 @@ function HomeOg({ candidate }: { candidate: OgCandidate }) {
 
 // ---------------------------------------------------------------- section
 
-const PLAIN_PANELS: readonly {
+const HERO_PANELS: readonly {
   label: string;
-  width: HeroWidth;
-  glowing: boolean;
+  candidate: HeroCandidate;
+  width?: HeroWidth;
 }[] = [
-  { label: "desktop", width: "desktop", glowing: false },
-  { label: "360", width: "mobile", glowing: false },
-  { label: "desktop, glowing", width: "desktop", glowing: true },
-  { label: "360, glowing", width: "mobile", glowing: true },
-];
-
-const HERO_PANELS: readonly { label: string; candidate: HeroCandidate }[] = [
   { label: "act 20% / world 10%, a wash", candidate: "today" },
   { label: "a violet rule under the headline", candidate: "rule" },
+  { label: "the rule and the button, glowing", candidate: "ruleGlow" },
   { label: "a violet band on the bottom edge", candidate: "band" },
-  { label: "the rule and the mark, glowing", candidate: "ruleGlow" },
-  { label: "the band and the mark, glowing", candidate: "bandGlow" },
+  { label: "the band and the button, glowing", candidate: "bandGlow" },
   { label: "the same two glows, wide and soft", candidate: "wide" },
+  { label: "the rule at 360", candidate: "rule", width: "mobile" },
+  { label: "the rule at 360, glowing", candidate: "ruleGlow", width: "mobile" },
 ];
 
 const CARD_PANELS: readonly { label: string; ground: CardGround }[] = [
@@ -907,21 +836,6 @@ const OG_PANELS: readonly { label: string; candidate: OgCandidate }[] = [
 export function GradientsSection() {
   return (
     <Question n={2} title="Gradients">
-      <Case title="The hero, without the mark">
-        <div className="space-y-10">
-          {PLAIN_PANELS.map((panel) => (
-            <Panel key={panel.label} label={panel.label}>
-              <Exemplar
-                file="app/(public)/page.tsx, roblox/roblox-hero.tsx"
-                page="the home page and /roblox, above the fold"
-              >
-                <PlainHero width={panel.width} glowing={panel.glowing} />
-              </Exemplar>
-            </Panel>
-          ))}
-        </div>
-      </Case>
-
       <Case title="The hero">
         <div className="space-y-10">
           {HERO_PANELS.map((panel) => (
@@ -930,7 +844,7 @@ export function GradientsSection() {
                 file="app/(public)/page.tsx, roblox/roblox-hero.tsx"
                 page="the home page and /roblox, above the fold"
               >
-                <Hero candidate={panel.candidate} />
+                <Hero candidate={panel.candidate} width={panel.width} />
               </Exemplar>
             </Panel>
           ))}

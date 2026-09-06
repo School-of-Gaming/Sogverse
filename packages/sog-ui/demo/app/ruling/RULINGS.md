@@ -952,7 +952,24 @@ people (gamer act, gedu world, parent and admin neutral; as figure chips and as 
 fills), and the families as the reference branch had them. Whatever wins retires the
 gedu gradient and lands as a `ROLE_GRAMMAR` row with a glyph.
 
-**Ruling:** _open — the hero drawing decides it; the role chip drawn beside it_
+**Ruled 2026-09-06, night.** The owner first asked for the mark large in a left column
+with the slogan right, then took the mark out as the safer option for a colour branch
+(it is in the header directly above; its size, clearspace and placement are the mark
+adoption's). **The hero is "the hero, without the mark": the app's own structure, the
+wash gone, one full-value violet rule under the headline, no glow.** The owner's words:
+dropping the gradient is correct but it drops the only visually interesting thing on
+the page; a glow does not help and no more colours can come in on a parent page; making
+the page nicer is its own task, this is about colours and this corrects them. The fold
+was drawn to be seen (the CTA row clears an iPhone viewport and misses a small Android
+one by ~20px at 360) and is not designed for here. **Lands:** home and Roblox heroes →
+ground + rule; both social cards → the same recipe, so `GRADIENT.actGlow/worldGlow`
+and `composite()` (and its test) go, nothing in the system composites, and the
+contradiction in its doc comment goes with it; the About washes → ground; the closing
+card → a rule, violet unless the owner says act; the cards lit from a leading edge are
+already ruled (§3); the gedu chip waits on the role chip. The visual-interest task is
+proposed for `TODO.md` pending the owner's approval.
+
+**Ruling:** _the heroes, cards and social images ruled; the role chip open_
 
 ## Where the session stands (2026-09-06, evening)
 
