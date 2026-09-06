@@ -42,105 +42,323 @@
  * screen, what the code always said, and what is proposed.
  */
 
-/** A status colour as Sogverse defines it, and the candidate this page proposes. */
+import { BRAND, NEUTRALS, YTY_FAMILIES } from "../../../src/tokens/brand";
+
+/**
+ * The four states, which are the keys everything about status is held under.
+ *
+ * A union rather than a string so no drawing can key on a state that does not
+ * exist, and so the record below is checked for completeness rather than
+ * trusted: the whole point of a four-member set is that all four are present in
+ * every construct that draws it.
+ */
+export type StatusId = "destructive" | "success" | "info" | "warning";
+
+/** A status colour as Sogverse defines it today, and the one phrase the summary prints for it. */
 export interface StatusRow {
-  readonly id: string;
+  readonly id: StatusId;
   readonly label: string;
   /** Today's fill. */
   readonly today: string;
   /** Today's label colour on that fill. */
   readonly todayForeground: string;
   readonly uses: number;
-  /** The candidate fill. */
-  readonly candidate: string;
-  /** The library colour it sits nearest in hue, which is the collision to look at. */
-  readonly collidesWith: { readonly name: string; readonly hex: string };
+  /** The verdict, in one phrase. */
+  readonly verdict: string;
+  /** The verdict for the matching `-foreground`, in one phrase. */
+  readonly foregroundVerdict: string;
+  /** How many sites the `-foreground` has. */
+  readonly foregroundUses: number;
 }
 
 /**
- * The four status colours, today and retuned. Roughly 390 call sites.
+ * The four status colours as Sogverse defines them today. Roughly 335 call
+ * sites, classified by construct in `STATUS_SITES` below.
  *
- * Three separate problems, independent of each other, so they can be ruled on
- * separately.
+ * **What today's set gets wrong, and what the owner has chosen instead.**
  *
  * **The labels are illegible.** Three of the four foregrounds are white on a
  * light fill and miss the 4.5:1 body floor: destructive 3.78:1, info 3.48:1,
  * success 2.52:1. Only warning's dark label passes. The library's brand pair
- * already states the rule these break — a light fill takes a dark label — so
- * every candidate takes ink and the white foregrounds go whatever else is
- * decided. The page shows this by drawing the badge and the button at real size
- * with each label, today beside candidate.
+ * already states the rule these break — a light fill takes a dark label — so a
+ * proposed fill takes ink wherever it can, and takes white only where the
+ * arithmetic forces it.
  *
  * **Ink is the same hex as the page ground**, so one measurement settles two
  * uses: a colour clearing the body floor against the card is safe both as text
- * on the card and as a fill under an ink label. Every candidate below is tuned
- * against the card, the lighter of the two grounds.
+ * on the card and as a fill under an ink label.
  *
- * **The hues collide.** One meaning per hue is the tone grammar, and warning
- * sits 5° from the brand amber, success 12° from Glow's strong green, and info
- * 6° from Wit's soft blue.
+ * **The hues collide with the library's own.** One meaning per hue is the tone
+ * grammar, and warning sits 5° from the brand amber, success 12° from Glow's
+ * strong green, and info 6° from Wit's soft blue.
  *
- * Candidate by candidate:
+ * **The owner's ruling on what replaces them, and why two of the four are not
+ * new colours at all.** Retuning success and info away from their neighbours
+ * was drawn and rejected: a retuned info sits beside Wit as two shades of blue
+ * on one page, and a retuned success beside Glow as two greens, and a reader
+ * meeting two near-identical hues learns that neither of them means anything.
+ * A smaller palette carrying one hue with two related meanings is the better
+ * trade — the glyph and the label carry the difference, which is the rule the
+ * library already holds for every colour-coded thing. So:
  *
- * - **destructive #EF4343 → #FF5C5C.** Red is the one status hue with room:
- *   valor's orange is 25° away and harmony's pink 18°, and red reads as
- *   neither. What moves is the value, not the hue — today's red clears the card
- *   by 0.10, so its ink label lands at 4.95 with nothing spare; the candidate
- *   measures 5.75 on the card and 6.19 under ink.
- * - **success #2EB88A → #1FC79B.** Pushed from 160° to 164°, off Glow's leaf
- *   green, into a teal that still reads as done. 8.04 on the card, 8.65 under
- *   ink.
- * - **info #308CE8 → #5FA8FF.** There is no free blue: Wit owns 204° and 220°.
- *   Two picks sit at 191° and 243°, which is a different kind of neighbour —
- *   a pick says only that somebody chose it — but the eye still has to tell
- *   them apart on a screen carrying both. The candidate
- *   fixes only the label (white 3.48 becomes ink 7.61) and leaves the
- *   collision, which is why the hueless alternative is drawn beside it.
- * - **warning #E7B008 → #DFCB25.** The worst collision in the set: a warning
- *   badge and a call to action are the same colour today. Moving to 54° and
- *   dropping the saturation gives a caution yellow visibly not the brand gold;
- *   going further lands in chartreuse and stops reading as caution. 10.53 on
- *   the card, 11.34 under ink.
+ * - **destructive → `#FF5C5C`, a new colour of its own.** Red is the one status
+ *   hue with room: valor's orange is 25° away and harmony's pink 18°, and red
+ *   reads as neither. What moves is the value, not the hue — today's red clears
+ *   the card by 0.10, so its ink label lands at 4.95 with nothing spare; the
+ *   candidate measures 5.75 on the card and 6.19 under ink.
+ * - **warning → `#DFCB25`, a new colour of its own.** The worst collision in the
+ *   set: a warning badge and a call to action are the same colour today. Moving
+ *   to 54° and dropping the saturation gives a caution yellow visibly not the
+ *   brand gold; going further lands in chartreuse and stops reading as caution.
+ *   10.53 on the card, 11.34 under ink.
+ * - **success → Glow strong.** Not a near-green beside Glow, but Glow itself.
+ *   6.16 on the card and 6.63 under ink, so it carries text on a neutral ground
+ *   and an ink label on a fill with room to spare. This is the one place the
+ *   library's own doc comment on `glow` has to change when it lands, because it
+ *   currently says green is never the colour of success.
+ * - **info → Wit, and the ruling forks on which half.** Wit strong `#3A71DE`
+ *   measures 4.10 under ink and 4.57 under white — it fails the body floor with
+ *   an ink label and clears it with a white one by 0.07 — and as *text* on the
+ *   card it measures 3.81, which is under the body floor outright. Wit soft
+ *   `#4DB3F5` measures 8.10 under ink and 7.53 as text on the card, so it
+ *   carries both jobs comfortably, but spending the soft variant as a fill is
+ *   the open recipe question in §2 rather than a settled move. So info is drawn
+ *   **both ways in every construct**: strong under a white label, and soft under
+ *   an ink one.
+ *
+ * The largest construct decides more than the fill does. `text-x` on a neutral
+ * ground is 166 of the 335 sites, and Wit strong cannot be text there — the
+ * library's own rule already says wit's text and ink take soft — so the fork is
+ * not only about which label reads on a fill.
  *
  * Every ratio above was computed with the library's `contrastRatio`. None is
  * rendered.
+ *
+ * **When this lands** the four become library tokens with their ink or white
+ * companions and their measured pairings, and success and info become two more
+ * rows of the tone grammar rather than two more colours — a status is a fact,
+ * and a fact takes a family. The token *names* do not move, so no Sogverse call
+ * site changes spelling.
  */
-export const STATUS_ROWS: readonly StatusRow[] = [
-  {
+export const STATUS_BY_ID: Record<StatusId, StatusRow> = {
+  destructive: {
     id: "destructive",
     label: "Destructive",
     today: "#EF4343",
     todayForeground: "#FFFFFF",
     uses: 160,
-    candidate: "#FF5C5C",
-    collidesWith: { name: "Valor strong", hex: "#FD700D" },
+    verdict: "retune → #FF5C5C",
+    foregroundVerdict: "retune → ink",
+    foregroundUses: 3,
   },
-  {
+  success: {
     id: "success",
     label: "Success",
     today: "#2EB88A",
     todayForeground: "#FFFFFF",
     uses: 85,
-    candidate: "#1FC79B",
-    collidesWith: { name: "Glow strong", hex: "#1AB061" },
+    verdict: "→ yty-glow-strong",
+    foregroundVerdict: "retune → ink",
+    foregroundUses: 3,
   },
-  {
+  info: {
     id: "info",
     label: "Info",
     today: "#308CE8",
     todayForeground: "#FFFFFF",
     uses: 57,
-    candidate: "#5FA8FF",
-    collidesWith: { name: "Wit soft", hex: "#4DB3F5" },
+    verdict: "→ yty-wit-strong or -soft",
+    foregroundVerdict: "retune → white or ink",
+    foregroundUses: 1,
   },
-  {
+  warning: {
     id: "warning",
     label: "Warning",
     today: "#E7B008",
     todayForeground: "#121212",
     uses: 75,
-    candidate: "#DFCB25",
-    collidesWith: { name: "Amber (act)", hex: "#FAA901" },
+    verdict: "retune → #DFCB25",
+    foregroundVerdict: "rename → ink",
+    foregroundUses: 2,
+  },
+};
+
+/**
+ * The same four in the order the summary table and every comparison row print
+ * them: worst first, then the two that report something going right, then the
+ * caution. The record above is the source and this is only its order, so a row
+ * cannot exist in one and not the other.
+ */
+export const STATUS_ROWS: readonly StatusRow[] = [
+  STATUS_BY_ID.destructive,
+  STATUS_BY_ID.success,
+  STATUS_BY_ID.info,
+  STATUS_BY_ID.warning,
+];
+
+/**
+ * One construct that spends a status colour, and every site drawing it.
+ *
+ * Regenerate the surface rather than trusting the counts, which are a snapshot:
+ *
+ *     grep -rhoE "\b(bg|text|border|ring|from|to|via|fill|stroke|outline|shadow|divide|decoration|caret|placeholder|accent)-(destructive|success|info|warning)(-foreground)?(/[0-9]+)?\b" src --include=*.tsx --include=*.ts | sort | uniq -c | sort -rn
+ *
+ * 335 utility occurrences in 116 files. A **site** here is one occurrence, so a
+ * line writing `bg-destructive/10 text-destructive` counts two; the constructs
+ * below partition the 335 exactly.
+ *
+ * **No `border-*` row exists, and its absence is not an oversight.** The border
+ * sweep deleted every coloured border utility the unlayered default had hidden,
+ * so a status colour reaches an edge nowhere in the app today. An alert edge is
+ * one of the constructs queued for the library in §13.
+ *
+ * **Why the classification is by construct.** A status colour is not one thing
+ * spent 335 times: it is ink under a field, a wash behind a paragraph, a solid
+ * disc on a card's corner, a 2px dot on a timeline rail. Those ask different
+ * things of the same hex — ink needs the body floor against a neutral ground, a
+ * fill needs a label that reads on it, a dot needs neither and only has to be
+ * told apart from its neighbour — so a set that works as a badge can fail as a
+ * sentence, and the only way to see that is to draw each construct with all
+ * four statuses in it at once.
+ *
+ * Each line is assigned to the construct it draws, by the shape of its own
+ * class string:
+ *
+ * - a `from-x/n` stop → the lit card;
+ * - a `ring-x` → the ring;
+ * - an `x-foreground` → a fill under a label;
+ * - a `bg-x` at full value with no label → a solid mark;
+ * - a `rounded-full` carrying the colour → a pill;
+ * - a `bg-x/n` → a tinted ground;
+ * - anything else → ink.
+ */
+export interface StatusSite {
+  /** The construct, which is the unit the set is judged in. */
+  readonly construct: string;
+  /** The class shapes it is written as. */
+  readonly step: string;
+  /** Where it appears, as locators rather than a description. */
+  readonly where: string;
+  readonly uses: number;
+  readonly files: number;
+}
+
+export const STATUS_SITES: readonly StatusSite[] = [
+  {
+    construct: "Ink on a neutral ground",
+    step: "text-destructive, text-success, text-info, text-warning",
+    where:
+      "the inline field error (family/gamer-sign-in-card.tsx, family/gamer-credential-fields.tsx, every auth form), the tinted glyph beside a label (admin/dashboard/product-attention-grid.tsx, voice/ParticipantRow.tsx), the card's meta line (gedu/session-feed/SessionFeedItem.tsx, session-feed/attendance-tone.ts), public/products/status-chip.tsx",
+    uses: 166,
+    files: 78,
+  },
+  {
+    construct: "A tinted ground under its own ink",
+    step: "bg-destructive/10 text-destructive, bg-info/10 text-info, bg-warning/10, bg-success/10",
+    where:
+      "ui/alert.tsx (all four variants), the auth forms' error block, public/products/topic-info-card.tsx, voice/MediaErrorNotice.tsx, app/(public)/docs/minecraft-api/page.tsx, admin/products/product-status-chip.tsx",
+    uses: 121,
+    files: 45,
+  },
+  {
+    construct: "A solid fill under a label",
+    step: "bg-destructive text-destructive-foreground, bg-success text-success-foreground, bg-warning text-warning-foreground, bg-info text-info-foreground",
+    where:
+      "ui/badge.tsx, ui/button.tsx, parent/PaymentProblemBadge.tsx, gedu/session-feed/SessionFeedAlertBadge.tsx, admin/users/[id] the participation pill, admin/gedu-certification-card.tsx",
+    uses: 19,
+    files: 8,
+  },
+  {
+    construct: "A solid mark with no label",
+    step: "bg-success, bg-info, bg-warning, bg-destructive",
+    where:
+      "gedu/session-feed/SessionFeed.tsx and family/product-page/FamilySessionFeed.tsx (the rail dot), public/products/seat-availability-bar.tsx, voice/MicLevelIndicator.tsx, member-flair/NewcomerBadge.tsx, pin/pin-pad.tsx",
+    uses: 15,
+    files: 7,
+  },
+  {
+    construct: "A tinted pill",
+    step: "rounded-full bg-info/10 text-info, rounded-full bg-warning/15 text-warning",
+    where:
+      "session-feed/NowDivider.tsx, admin/dashboard/needs-attention-panel.tsx, member-flair/NewcomerBadge.tsx",
+    uses: 9,
+    files: 3,
+  },
+  {
+    construct: "A ring",
+    step: "ring-1 ring-info/40, focus:ring-destructive",
+    where: "chat/ChatMessageRow.tsx, parent/PaymentProblemBadge.tsx",
+    uses: 4,
+    files: 2,
+  },
+  {
+    construct: "A card lit from its leading edge",
+    step: "bg-gradient-to-r from-info/5 to-transparent",
+    where: "family/EnrollmentCard.tsx, the awaiting card",
+    uses: 1,
+    files: 1,
+  },
+];
+
+/**
+ * The proposed status set, as a fill and the label that reads on it.
+ *
+ * Five entries for four statuses: info is the open fork and is drawn both ways
+ * everywhere, so it appears twice and the page never has to say which one is
+ * meant.
+ *
+ * Two of the five are the library's own hues rather than values of this set's:
+ * they are read from `YTY_FAMILIES` rather than spelled here, so a retune of a
+ * family moves the status with it and the two cannot drift into being near
+ * neighbours by accident — which is the exact failure the owner ruled against.
+ */
+export interface ProposedStatus {
+  /** The entry's own key, which is not the state: info has two entries. */
+  readonly id: string;
+  /** The state this entry is a candidate for. */
+  readonly status: StatusId;
+  /** The name on screen: the token, and the label it carries. */
+  readonly label: string;
+  readonly hex: string;
+  /** The label colour on a solid fill of it. */
+  readonly onFill: string;
+}
+
+export const PROPOSED_STATUSES: readonly ProposedStatus[] = [
+  {
+    id: "destructive",
+    status: "destructive",
+    label: "destructive #FF5C5C · ink",
+    hex: "#FF5C5C",
+    onFill: NEUTRALS.background.hex,
+  },
+  {
+    id: "success",
+    status: "success",
+    label: "success = yty-glow-strong · ink",
+    hex: YTY_FAMILIES.glow.strong,
+    onFill: NEUTRALS.background.hex,
+  },
+  {
+    id: "info-strong",
+    status: "info",
+    label: "info = yty-wit-strong · white",
+    hex: YTY_FAMILIES.wit.strong,
+    onFill: BRAND.world.foreground,
+  },
+  {
+    id: "info-soft",
+    status: "info",
+    label: "info = yty-wit-soft · ink",
+    hex: YTY_FAMILIES.wit.soft,
+    onFill: NEUTRALS.background.hex,
+  },
+  {
+    id: "warning",
+    status: "warning",
+    label: "warning #DFCB25 · ink",
+    hex: "#DFCB25",
+    onFill: NEUTRALS.background.hex,
   },
 ];
 

@@ -13,6 +13,13 @@
  * defines. What is left is what is still open: the status colours, the colours
  * with no token behind them, and the alpha steps.
  *
+ * The status set gets a second table beside its first, keyed on the construct
+ * rather than on the token. Which of the four a site spends is not the
+ * interesting axis — a status colour is ink under a field, a wash behind a
+ * paragraph, a solid disc on a corner and a dot on a rail, and those ask
+ * different things of the same hex. The construct is the unit the owner rules
+ * in, so it is the unit the table is keyed on.
+ *
  * The alpha steps get a table of their own shape, because the question about
  * them is not what colour they are — most of them are a token the library
  * already owns — but what is underneath them. So its columns are the step, the
@@ -31,6 +38,7 @@ import {
   ALPHA_SITES,
   LOOSE_COLOURS,
   STATUS_ROWS,
+  STATUS_SITES,
 } from "./inventory";
 import { Caps, Question } from "./parts";
 
@@ -135,6 +143,61 @@ function AlphaGroup({ title }: { title: string }) {
   );
 }
 
+/**
+ * The status surface, keyed on the construct rather than on the token.
+ *
+ * A status colour is not one thing spent 335 times — it is ink under a field, a
+ * wash behind a paragraph, a solid disc on a card's corner, a dot on a rail —
+ * and each of those asks something different of the same hex. So the unit here
+ * is the construct, which is the unit question 2 draws and the unit the set is
+ * judged in.
+ */
+function StatusSiteGroup({ title }: { title: string }) {
+  return (
+    <div>
+      <Caps>{title}</Caps>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[40rem] border-collapse text-body-s">
+          <thead>
+            <tr className="border-b border-border text-left align-bottom">
+              <th className="py-2 pr-4 font-semibold tracking-wider uppercase">
+                Construct
+              </th>
+              <th className="py-2 pr-4 font-semibold tracking-wider uppercase">
+                Step
+              </th>
+              <th className="py-2 pr-4 font-semibold tracking-wider uppercase">
+                Where
+              </th>
+              <th className="py-2 pr-4 text-right font-semibold tracking-wider uppercase">
+                Uses
+              </th>
+              <th className="py-2 text-right font-semibold tracking-wider uppercase">
+                Files
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {STATUS_SITES.map((site) => (
+              <tr key={site.construct} className="border-b border-border align-top">
+                <td className="py-2 pr-4">{site.construct}</td>
+                <td className="py-2 pr-4 font-brand-mono">{site.step}</td>
+                <td className="py-2 pr-4 text-muted-foreground">{site.where}</td>
+                <td className="py-2 pr-4 text-right font-brand-mono text-muted-foreground">
+                  {site.uses}
+                </td>
+                <td className="py-2 text-right font-brand-mono text-muted-foreground">
+                  {site.files}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 /** The same table again, keyed on the job rather than on the ground. */
 function ActGroup({ title }: { title: string }) {
   return (
@@ -181,16 +244,13 @@ const STATUS_SUMMARY: readonly Row[] = STATUS_ROWS.flatMap((status) => [
     token: status.id,
     hex: status.today,
     uses: status.uses,
-    verdict: "retune",
+    verdict: status.verdict,
   },
   {
     token: `${status.id}-foreground`,
     hex: status.todayForeground,
-    uses: status.id === "warning" ? 2 : status.id === "info" ? 1 : 3,
-    verdict:
-      status.todayForeground === "#FFFFFF"
-        ? "retune → ink"
-        : "rename → act-foreground",
+    uses: status.foregroundUses,
+    verdict: status.foregroundVerdict,
   },
 ]);
 
@@ -206,6 +266,7 @@ export function SummarySection() {
     <Question n={0} title="The inventory">
       <div className="space-y-10">
         <Group title="Status" rows={STATUS_SUMMARY} />
+        <StatusSiteGroup title="Status, by construct" />
         <Group title="Colours with no token behind them" rows={LOOSE_SUMMARY} />
         <AlphaGroup title="Colour at an alpha step" />
         <ActGroup title="Act and world at an alpha step, by job" />
