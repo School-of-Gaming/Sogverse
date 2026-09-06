@@ -221,6 +221,22 @@ on the card ground (#1A1A1A, `bg-card`).** Its active fill is `muted`, its edge
 `border`, its accents `primary` / `primary-foreground`. **Still open:** the
 accent-hover question (accent vs muted as the hover fill).
 
+**Shown (2026-09-06), live.** The owner asked to see hover and muted in action, today
+beside proposed, interactive. Section 3 now draws the four grounds as a strip, then nine
+real constructs under the pointer in each grey on the grounds they sit on (rail entry
+with its active state, the WhatsApp conversation list with its selected row, two table
+rows, the account menu, ghost and outline buttons, an attention card, a picker tile, a
+reaction pill), then muted in its own job (skeleton bars, chips, filter pills, a
+read-only field) with the one held-accent site that would visibly move. Counts: `bg-accent`
+70 (60 hover, 3 other states, 7 held); `bg-muted` 177 (9 hover). Measured, off page:
+accent over card 1.08:1, muted over card 1.15:1, accent over page 1.16:1, muted over page
+1.24:1. Two findings: the conversation list is the only construct spending both greys at
+once (hover accent, selected muted), and under the proposal hover and selected become one
+colour; and every held accent pairs with a hover of the same colour, so accent's job there
+is the highlight, not the hover. The two rulings on offer: **both stay as they are**
+(nobody reported a problem), or **muted takes the hover and the highlight, accent is
+deleted** from the library and the theme.
+
 ## 5. The categorical palettes
 
 **Asked:** the four product-type colours and the sixteen zone colours enter the
@@ -468,7 +484,31 @@ sites and every Yty soft word; under strict, all become ink beside a coloured ma
 glyph-and-label rule), and the recipe grid loses its ink column (soft only for glyphs).
 Recommended: strict.
 
-**Ruling:** _open_
+**Ruling (2026-09-06):** _ruled, to land with the status and recipe landing_ — **neither
+reading; the owner's own line, which names the reader.** "The heart of the rule is that a
+parent shouldn't be *talked to* in these colours. Something a parent has to read through
+is ink or white." Coloured text is allowed, and useful, as a **short label** that
+reinforces a Yty value or brings attention to a status. Codified as:
+
+- Coloured ink exists only on a **label**: the name of a state or a value ("Cancelled",
+  "Glow", "Past due", "3 seats left"), no verb, no sentence punctuation, short because
+  names are.
+- A label **never carries the meaning alone**: it sits beside a glyph or a mark in the
+  same hue, so removing the colour loses nothing. Colour reinforces, never informs
+  (the glyph-and-label rule, stated the other way round).
+- Everything a reader **reads through** is ink or white: body, descriptions, headings,
+  links, error sentences, help text.
+- Coloured ink is always the **soft** variant on a **neutral** ground, measured; never on
+  a coloured ground.
+
+Held mechanically in three layers: the library owns the only way to write coloured text
+(a status label and an element name are primitives that choose their colour; Sogverse
+never writes a coloured text utility, the seam lint at lockdown, the sweep until then);
+the primitive refuses a sentence (a label containing a full stop, a question mark or more
+than a few words fails in development); and the soft variants' doc comment states the
+rule in the owner's words. Consequences: the recipe grid keeps its ink column, headed
+"label"; info's label ink is Wit soft, no white anywhere; the 166 status-as-text sites are
+sorted once into labels (keep colour) and sentences (ink, with a mark beside them).
 
 ## 12. The colour budget on calm surfaces
 

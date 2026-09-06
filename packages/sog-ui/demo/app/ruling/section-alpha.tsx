@@ -54,6 +54,7 @@
  */
 
 import Image from "next/image";
+import { ChevronLeft, ChevronRight, MicOff, X } from "lucide-react";
 import { NEUTRALS } from "../../../src/tokens/brand";
 import { alpha } from "./colour";
 import {
@@ -191,7 +192,7 @@ function ViewerOverArt({ fill }: { fill: string }) {
         <Media art={BADGE} frame="h-28 w-24 rounded-lg" />
       </div>
       <span className="absolute right-2 top-2 rounded-full bg-background/80 p-2 backdrop-blur-sm">
-        <Glyph name="close" size={18} colour={INK} />
+        <Glyph icon={X} size={18} colour={INK} />
       </span>
     </Media>
   );
@@ -290,13 +291,13 @@ function ViewerChips({ fill, blur }: { fill: string; blur: boolean }) {
   return (
     <Media art={ARENA} frame="h-32 w-full rounded-lg">
       <span className={`absolute right-2 top-2 ${chip}`}>
-        <Glyph name="close" size={20} colour={INK} />
+        <Glyph icon={X} size={20} colour={INK} />
       </span>
       <span className={`absolute left-2 top-1/2 -translate-y-1/2 ${chip}`}>
-        <Glyph name="chevronLeft" size={24} colour={INK} />
+        <Glyph icon={ChevronLeft} size={24} colour={INK} />
       </span>
       <span className={`absolute right-2 top-1/2 -translate-y-1/2 ${chip}`}>
-        <Glyph name="chevronRight" size={24} colour={INK} />
+        <Glyph icon={ChevronRight} size={24} colour={INK} />
       </span>
     </Media>
   );
@@ -313,7 +314,7 @@ function VoiceAvatarChip({ fill, blur }: { fill: string; blur: boolean }) {
             : `absolute right-0 bottom-0 flex items-center justify-center rounded-tl-md ${fill} p-[3px]`
         }
       >
-        <Glyph name="micOff" size={12} colour={DESTRUCTIVE} />
+        <Glyph icon={MicOff} size={12} colour={DESTRUCTIVE} />
       </span>
     </Media>
   );

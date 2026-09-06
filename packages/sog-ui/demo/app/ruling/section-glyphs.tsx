@@ -22,14 +22,15 @@
  * - **Wit** — the relationship with technology. Critical thinking, media
  *   literacy, curiosity, sharp thinking, navigating the digital world. Blue.
  *
- * **This section draws the real icons.** Every other section on this page draws
- * approximate glyph paths of its own, because there the shape is scenery and
- * the colour is the subject. Here the shape *is* the subject, so an approximation
- * would be a picture of a decision nobody is making: each candidate is the actual
- * `lucide-react` component, at the two sizes the app spends a glyph at — the 16px
- * chip mark and the 24px card mark — in the family's soft variant on the card
- * ground, and once more inside the chip-scale tile as Sogverse draws it today
- * (`bg-yty-<family>-strong/10`, the pre-library alpha step that rides §2).
+ * **The page draws real icons throughout, and here the icon is the subject.**
+ * Every candidate is the actual `lucide-react` component, at the two sizes the
+ * app spends a glyph at — the 16px chip mark and the 24px card mark — in the
+ * family's soft variant on the card ground, and once more inside the chip-scale
+ * tile as Sogverse draws it today (`bg-yty-<family>-strong/10`, the pre-library
+ * alpha step that rides §2). Elsewhere on the page a glyph is scenery around
+ * the colour being ruled on; it is drawn from the same set all the same,
+ * because a colour ruled on a mark the app does not carry is a colour ruled on
+ * the wrong picture.
  *
  * **What lands when this is ruled.** The four marks join the library beside the
  * product-kind glyphs — a second table in `tokens/grammar.ts` or a sibling of it,

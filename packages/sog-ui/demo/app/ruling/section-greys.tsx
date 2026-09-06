@@ -76,6 +76,16 @@
  */
 
 import type { ReactNode } from "react";
+import {
+  ChevronRight,
+  Joystick,
+  LayoutDashboard,
+  LogOut,
+  User,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+
 import { NEUTRALS } from "../../../src/tokens/brand";
 import {
   Caps,
@@ -323,7 +333,7 @@ function AssignedRows({ fill }: { fill: Fill }) {
               Active
             </span>
             <span className="text-muted-foreground transition-transform group-hover:translate-x-0.5 group-focus-within:translate-x-0.5">
-              <Glyph name="chevronRight" size={16} colour="currentColor" />
+              <Glyph icon={ChevronRight} size={16} colour="currentColor" />
             </span>
           </span>
         </button>
@@ -376,7 +386,7 @@ function SitesTable({ fill }: { fill: Fill }) {
               </td>
               <td className="w-8 px-3 py-2">
                 <span className="text-muted-foreground transition-transform group-hover:translate-x-0.5 group-focus-within:translate-x-0.5">
-                  <Glyph name="chevronRight" size={16} colour="currentColor" />
+                  <Glyph icon={ChevronRight} size={16} colour="currentColor" />
                 </span>
               </td>
             </tr>
@@ -398,10 +408,17 @@ function SitesTable({ fill }: { fill: Fill }) {
 const MENU_ROW =
   "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors";
 
-const MENU_ITEMS: { label: string; glyph: "users" | "home" | "close" }[] = [
-  { label: "My SOG", glyph: "home" },
-  { label: "Family", glyph: "users" },
-  { label: "Sign out", glyph: "close" },
+/**
+ * The panel's three rows, each carrying the mark its own row carries.
+ *
+ * `Users` is the one stand-in: a household member's row wears that person's
+ * identicon rather than an icon, and nothing in lucide is an identicon, so the
+ * nearest mark for "the people in this household" stands where the face goes.
+ */
+const MENU_ITEMS: { label: string; glyph: LucideIcon }[] = [
+  { label: "My SOG", glyph: LayoutDashboard },
+  { label: "Family", glyph: Users },
+  { label: "Sign out", glyph: LogOut },
 ];
 
 function MenuRows({ fill }: { fill: Fill }) {
@@ -417,7 +434,7 @@ function MenuRows({ fill }: { fill: Fill }) {
               : `${MENU_ROW} hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground focus:outline-none`
           }
         >
-          <Glyph name={item.glyph} size={16} colour="currentColor" />
+          <Glyph icon={item.glyph} size={16} colour="currentColor" />
           {item.label}
         </button>
       ))}
@@ -490,7 +507,7 @@ function AttentionCard({ fill }: { fill: Fill }) {
         >
           <span className="flex items-start gap-2">
             <span className="mt-0.5 text-yty-harmony-soft">
-              <Glyph name="gamepad" size={16} colour="currentColor" />
+              <Glyph icon={Joystick} size={16} colour="currentColor" />
             </span>
             <span className="text-sm font-medium leading-snug">{name}</span>
           </span>
@@ -594,6 +611,9 @@ function QuietBlocks({ fill }: { fill: Fill }) {
         </label>
       </Exemplar>
 
+      {/* `User` is the chip's own mark, moved: in the app it heads the parent's
+          name on the chip's second line, and the chip is drawn here as the one
+          line the muted fill is being ruled on. */}
       <Exemplar
         file="admin/products/groups/participant-chip.tsx"
         page="/admin/products/[type]/[id], the groups board"
@@ -604,7 +624,7 @@ function QuietBlocks({ fill }: { fill: Fill }) {
               key={who}
               className="flex items-center gap-2 rounded-lg border border-border bg-muted px-2.5 py-2 text-xs font-medium text-foreground transition-colors"
             >
-              <Glyph name="users" size={14} colour="currentColor" />
+              <Glyph icon={User} size={14} colour="currentColor" />
               {who}
             </span>
           ))}

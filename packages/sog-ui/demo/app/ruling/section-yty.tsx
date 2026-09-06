@@ -32,6 +32,8 @@
  * recipe the grid proposes, which is the part a grid of squares cannot show.
  */
 
+import { Brain, Heart, Home, Sun, Sword, type LucideIcon } from "lucide-react";
+
 import {
   Case,
   Compare,
@@ -44,7 +46,6 @@ import {
   GROUND,
   INK,
   MUTED_INK,
-  type GlyphName,
 } from "./parts";
 import { alpha } from "./colour";
 import { YTY_FAMILIES, type YtyFamilyId } from "../../../src/tokens/brand";
@@ -54,21 +55,24 @@ import { YTY_FAMILIES, type YtyFamilyId } from "../../../src/tokens/brand";
  *
  * The names come from the library; the one-line descriptions are the canonical
  * English the app renders from its message catalogue, which the library has no
- * word for and no reason to.
+ * word for and no reason to. The marks are the four `lib/constants/yty.ts`
+ * imports from `lucide-react` today, which is the set section 10 is ruling on —
+ * drawn here as they ship, so this question's recipe is judged against the
+ * glyphs actually on screen.
  */
 const ELEMENTS: readonly {
   id: YtyFamilyId;
   description: string;
-  glyph: GlyphName;
+  glyph: LucideIcon;
 }[] = [
   {
     id: "harmony",
     description: "Your relationship with yourself",
-    glyph: "heart",
+    glyph: Heart,
   },
-  { id: "glow", description: "Your relationship with others", glyph: "sun" },
-  { id: "valor", description: "Your relationship with society", glyph: "sword" },
-  { id: "wit", description: "Your relationship with technology", glyph: "brain" },
+  { id: "glow", description: "Your relationship with others", glyph: Sun },
+  { id: "valor", description: "Your relationship with society", glyph: Sword },
+  { id: "wit", description: "Your relationship with technology", glyph: Brain },
 ];
 
 /**
@@ -87,7 +91,7 @@ function ElementCard({
 }: {
   name: string;
   description: string;
-  glyph: GlyphName;
+  glyph: LucideIcon;
   edge: string;
   tile: string;
   glyphColour: string;
@@ -103,7 +107,7 @@ function ElementCard({
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg"
           style={{ backgroundColor: tile }}
         >
-          <Glyph name={glyph} size={24} colour={glyphColour} />
+          <Glyph icon={glyph} size={24} colour={glyphColour} />
         </span>
         <span className="min-w-0">
           <span className="block text-h4 font-semibold" style={{ color: INK }}>
@@ -127,7 +131,7 @@ function ZoneTile({
   glyphColour,
 }: {
   label: string;
-  glyph: GlyphName;
+  glyph: LucideIcon;
   edge: string;
   tile: string;
   glyphColour: string;
@@ -142,7 +146,7 @@ function ZoneTile({
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
           style={{ backgroundColor: tile }}
         >
-          <Glyph name={glyph} size={20} colour={glyphColour} />
+          <Glyph icon={glyph} size={20} colour={glyphColour} />
         </span>
         <span className="text-body-s" style={{ color: INK }}>
           {label}
@@ -218,7 +222,7 @@ export function YtySection() {
                 ))}
                 <ZoneTile
                   label="Clubhouse"
-                  glyph="home"
+                  glyph={Home}
                   edge={EDGE}
                   tile={alpha(INK, 0.1)}
                   glyphColour={INK}
@@ -245,7 +249,7 @@ export function YtySection() {
                 ))}
                 <ZoneTile
                   label="Clubhouse"
-                  glyph="home"
+                  glyph={Home}
                   edge={MUTED_INK}
                   tile={GROUND}
                   glyphColour={INK}

@@ -17,14 +17,26 @@
  * text, so `hover:bg-${fill}` is a class the stylesheet does not contain. The
  * branches below spell both greys out and pick between them.
  *
- * **The glyphs are the demo's, not the app's.** The demo depends on neither
- * Sogverse nor its icon set, and a mark's shape is not what is being ruled on;
- * the marks here stand in for the ones the real construct wears, which is the
- * same substitution `parts.tsx` makes everywhere else on this page.
+ * **The marks are the app's own.** Every construct here draws the icon its real
+ * file imports — or, where the real mark is not an icon at all, what the app
+ * puts in that slot: the reaction pill carries the emoji Sogverse renders, not
+ * a lucide stand-in for one.
  */
 
 import { useState } from "react";
-import { Glyph, type GlyphName } from "./parts";
+import {
+  CalendarDays,
+  Check,
+  Joystick,
+  LayoutDashboard,
+  MapPin,
+  School,
+  Tent,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+
+import { Glyph } from "./parts";
 
 /** Which of the two greys a construct is drawn with. */
 export type Fill = "accent" | "muted";
@@ -52,11 +64,19 @@ const RAIL_TRANSITION =
 const RAIL_ENTRY =
   "flex w-full items-center gap-3 overflow-hidden whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium";
 
-const RAIL_ITEMS: { id: string; label: string; glyph: GlyphName }[] = [
-  { id: "dashboard", label: "Dashboard", glyph: "home" },
-  { id: "products", label: "Products", glyph: "calendar" },
-  { id: "users", label: "Users", glyph: "users" },
-  { id: "sites", label: "Sites", glyph: "school" },
+/**
+ * Four entries, condensed from the admin rail's thirteen.
+ *
+ * Dashboard, Users and Sites carry the rail's own marks. Products is the one
+ * stand-in: the rail has no such entry but four — consumer clubs, municipality
+ * clubs, camps and events — and `CalendarDays`, the last of that run, stands
+ * here for all four.
+ */
+const RAIL_ITEMS: { id: string; label: string; glyph: LucideIcon }[] = [
+  { id: "dashboard", label: "Dashboard", glyph: LayoutDashboard },
+  { id: "products", label: "Products", glyph: CalendarDays },
+  { id: "users", label: "Users", glyph: Users },
+  { id: "sites", label: "Sites", glyph: MapPin },
 ];
 
 export function RailNav({ fill }: { fill: Fill }) {
@@ -77,7 +97,7 @@ export function RailNav({ fill }: { fill: Fill }) {
                   : `${RAIL_ENTRY} ${RAIL_TRANSITION} text-foreground hover:bg-muted`
             }
           >
-            <Glyph name={item.glyph} size={20} colour="currentColor" />
+            <Glyph icon={item.glyph} size={20} colour="currentColor" />
             <span className="overflow-hidden text-ellipsis">{item.label}</span>
           </button>
         ))}
@@ -159,10 +179,19 @@ export function ContactList({ fill }: { fill: Fill }) {
 const REACTION_PILL =
   "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs leading-none transition-colors";
 
-const REACTIONS: { code: string; glyph: GlyphName; count: number }[] = [
-  { code: "heart", glyph: "heart", count: 3 },
-  { code: "check", glyph: "checkMark", count: 1 },
-  { code: "sun", glyph: "sun", count: 2 },
+/**
+ * Three of the app's six reactions, drawn as the app draws them.
+ *
+ * A reaction is an emoji and never an icon — `lib/constants/chat.ts` holds the
+ * character each code renders — so this is the one construct on the page whose
+ * mark is not a lucide component, and it keeps colours of its own because a
+ * colour-emoji font is drawing them. `text-xl leading-none` is the row's own
+ * class for the glyph, kept so this is the app's pill rather than a redraw.
+ */
+const REACTIONS: { code: string; glyph: string; count: number }[] = [
+  { code: "heart", glyph: "❤️", count: 3 },
+  { code: "thumbs_up", glyph: "👍", count: 1 },
+  { code: "laugh", glyph: "😄", count: 2 },
 ];
 
 export function ReactionPills({ fill }: { fill: Fill }) {
@@ -185,7 +214,9 @@ export function ReactionPills({ fill }: { fill: Fill }) {
                   : `${REACTION_PILL} bg-muted text-muted-foreground hover:bg-muted`
             }
           >
-            <Glyph name={tally.glyph} size={16} colour="currentColor" />
+            <span aria-hidden className="text-xl leading-none">
+              {tally.glyph}
+            </span>
             <span className="tabular-nums">{tally.count}</span>
           </button>
         );
@@ -278,7 +309,7 @@ export function DropdownList({ fill }: { fill: Fill }) {
             >
               <span className="min-w-0 flex-1 truncate">{option}</span>
               {active ? (
-                <Glyph name="checkMark" size={16} colour="currentColor" />
+                <Glyph icon={Check} size={16} colour="currentColor" />
               ) : null}
             </button>
           </li>
@@ -344,24 +375,25 @@ export function MentionList({ fill }: { fill: Fill }) {
 const TYPE_CHIP =
   "inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium transition-colors";
 
-const TYPES: { id: string; label: string; glyph: GlyphName; tint: string }[] = [
+/** The four kinds, each with the glyph the tone grammar gives it. */
+const TYPES: { id: string; label: string; glyph: LucideIcon; tint: string }[] = [
   {
     id: "club",
     label: "Clubs",
-    glyph: "gamepad",
+    glyph: Joystick,
     tint: "text-yty-harmony-soft",
   },
-  { id: "camp", label: "Camps", glyph: "tent", tint: "text-yty-valor-soft" },
+  { id: "camp", label: "Camps", glyph: Tent, tint: "text-yty-valor-soft" },
   {
     id: "event",
     label: "Events",
-    glyph: "calendar",
+    glyph: CalendarDays,
     tint: "text-yty-glow-soft",
   },
   {
     id: "school",
     label: "Schools",
-    glyph: "school",
+    glyph: School,
     tint: "text-yty-wit-soft",
   },
 ];
@@ -393,7 +425,7 @@ export function TypeChips({ fill }: { fill: Fill }) {
             }
           >
             <span className={type.tint}>
-              <Glyph name={type.glyph} size={14} colour="currentColor" />
+              <Glyph icon={type.glyph} size={14} colour="currentColor" />
             </span>
             {type.label}
           </button>

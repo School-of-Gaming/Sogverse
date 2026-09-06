@@ -19,6 +19,8 @@
  * cyan in the OG marks is a partner's mark colour, not our logo's.
  */
 
+import { Check, Loader2 } from "lucide-react";
+
 import { BRAND, NEUTRALS } from "../../../src/tokens/brand";
 import { alpha } from "./colour";
 import { IDENTICON_IDS, LOOSE_COLOURS } from "./inventory";
@@ -100,7 +102,14 @@ function AppDialog({ opacity }: { opacity: number }) {
   );
 }
 
-/** `family/ProfileTiles.tsx` — a profile tile's busy state, ink over a scrim. */
+/**
+ * `family/ProfileTiles.tsx` — a profile tile's busy state, ink over a scrim.
+ *
+ * The mark is the tile's real one: the spinner the tile puts over the identicon
+ * while a switch commits. It is drawn still, because what is being ruled on is
+ * how its stroke reads against the scrim and a rotating mark is the same stroke
+ * at every angle.
+ */
 function MediaTile({ opacity, ink }: { opacity: number; ink: string }) {
   return (
     <div
@@ -112,7 +121,7 @@ function MediaTile({ opacity, ink }: { opacity: number; ink: string }) {
         className="absolute inset-0 flex flex-col items-center justify-center gap-2"
         style={{ backgroundColor: alpha(BLACK, opacity) }}
       >
-        <Glyph name="check" size={28} colour={ink} />
+        <Glyph icon={Loader2} size={28} colour={ink} />
         <p className="text-body-s" style={{ color: ink }}>
           Switching to Aino
         </p>
@@ -133,7 +142,7 @@ function PickerChecks({ ink }: { ink: string }) {
           className="flex h-10 w-10 items-center justify-center rounded-md"
           style={{ backgroundColor: hex }}
         >
-          <Glyph name="checkMark" size={18} colour={ink} />
+          <Glyph icon={Check} size={18} colour={ink} />
         </span>
       ))}
     </div>

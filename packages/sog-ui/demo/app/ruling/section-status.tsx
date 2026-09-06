@@ -57,6 +57,31 @@ import {
   YTY_FAMILIES,
   type YtyFamilyId,
 } from "../../../src/tokens/brand";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Brain,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Coins,
+  Heart,
+  Info,
+  Joystick,
+  Mic,
+  MicOff,
+  Radio,
+  School,
+  Sun,
+  Sword,
+  Tent,
+  UserRoundSearch,
+  UserRoundX,
+  UserX,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+
 import { THRESHOLDS, contrastRatio } from "../../../src/tokens/contrast";
 import { tailwindAlpha } from "./colour";
 import {
@@ -78,7 +103,6 @@ import {
   MUTED_INK,
   Panel,
   Question,
-  type GlyphName,
 } from "./parts";
 
 /**
@@ -170,11 +194,21 @@ const SOLID: readonly Tone[] = PROPOSED.flatMap((tone) =>
     : [{ ...tone, label: `${tone.label} · ink` }],
 );
 
-const STATUS_GLYPH: Record<StatusId, GlyphName> = {
-  destructive: "cross",
-  success: "check",
-  info: "info",
-  warning: "alert",
+/**
+ * The mark each state carries, as `ui/alert.tsx`'s own call sites draw it.
+ *
+ * The alert is what settles the four for the whole section: it is the one
+ * construct in the app that renders all four states from one component, so its
+ * marks are the set, and the shorter constructs below borrow them rather than
+ * each proposing a mark of its own. Elsewhere a site may reach for a near
+ * relative — a session-feed line uses the ringed check where the alert uses the
+ * bare one — and that is a difference between sites, not between states.
+ */
+const STATUS_GLYPH: Record<StatusId, LucideIcon> = {
+  destructive: AlertCircle,
+  success: Check,
+  info: Info,
+  warning: AlertTriangle,
 };
 
 /**
@@ -303,7 +337,7 @@ function AlertPanel({ tone, paint }: { tone: Tone; paint: Paint }) {
       {paint.glyph === null ? null : (
         <span className="pt-0.5">
           <Glyph
-            name={STATUS_GLYPH[tone.status]}
+            icon={STATUS_GLYPH[tone.status]}
             size={18}
             colour={paint.glyph}
           />
@@ -350,7 +384,7 @@ function FlaggedLine({ tone, paint }: { tone: Tone; paint: Paint }) {
       {paint.glyph === null ? null : (
         <span className="mt-0.5">
           <Glyph
-            name={STATUS_GLYPH[tone.status]}
+            icon={STATUS_GLYPH[tone.status]}
             size={16}
             colour={paint.glyph}
           />
@@ -386,7 +420,7 @@ function FormError({ tone, paint }: { tone: Tone; paint: Paint }) {
       {paint.glyph === null ? null : (
         <span className="mt-0.5">
           <Glyph
-            name={STATUS_GLYPH[tone.status]}
+            icon={STATUS_GLYPH[tone.status]}
             size={16}
             colour={paint.glyph}
           />
@@ -563,6 +597,12 @@ function Candidates({
  * Act has no soft half and will not get one — that is ruled — so its line and
  * its glyph are both plain act. A 16px glyph is a mark rather than a sentence,
  * which is the whole of why amber may carry it.
+ *
+ * Both marks are the card's own. `Radio` is the live badge in the header, where
+ * it is drawn here. `UserRoundSearch` is the awaiting line's mark, which the
+ * card sets in its footer in `text-info` — the candidate that keeps the glyph
+ * and drops the gradient is asking whether that mark can move up beside the
+ * chevron and carry the state on its own, so it is drawn where it would land.
  */
 const LIT_CARDS: readonly {
   key: string;
@@ -574,7 +614,7 @@ const LIT_CARDS: readonly {
   area: string;
   /** What the glyph takes. */
   ink: string;
-  glyph: GlyphName;
+  glyph: LucideIcon;
 }[] = [
   {
     key: "live",
@@ -583,7 +623,7 @@ const LIT_CARDS: readonly {
     today: BRAND.act.hex,
     area: BRAND.act.hex,
     ink: BRAND.act.hex,
-    glyph: "radio",
+    glyph: Radio,
   },
   {
     key: "awaiting",
@@ -592,7 +632,7 @@ const LIT_CARDS: readonly {
     today: STATUS_BY_ID.info.today,
     area: YTY_FAMILIES.wit.strong,
     ink: YTY_FAMILIES.wit.soft,
-    glyph: "info",
+    glyph: UserRoundSearch,
   },
 ];
 
@@ -622,7 +662,7 @@ function CardHeader({
   image: string | null;
   rule: Rule;
   ruleColour: string;
-  glyph: GlyphName | null;
+  glyph: LucideIcon | null;
   glyphInk: string;
 }) {
   return (
@@ -644,9 +684,9 @@ function CardHeader({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {glyph === null ? null : (
-              <Glyph name={glyph} size={16} colour={glyphInk} />
+              <Glyph icon={glyph} size={16} colour={glyphInk} />
             )}
-            <Glyph name="chevronRight" size={20} colour={MUTED_INK} />
+            <Glyph icon={ChevronRight} size={20} colour={MUTED_INK} />
           </div>
         </div>
       </div>
@@ -674,7 +714,7 @@ interface LitPaint {
   readonly image: string | null;
   readonly rule: Rule;
   readonly ruleColour: string;
-  readonly glyph: GlyphName | null;
+  readonly glyph: LucideIcon | null;
 }
 
 /** The card with nothing on it, which four of the five candidates start from. */
@@ -734,15 +774,15 @@ interface Hue {
   readonly name: string;
   readonly strong: string;
   readonly soft: string;
-  readonly glyph: GlyphName;
+  readonly glyph: LucideIcon;
 }
 
 const FAMILY_GLYPH = {
-  harmony: "heart",
-  glow: "sun",
-  valor: "sword",
-  wit: "brain",
-} as const satisfies Record<YtyFamilyId, GlyphName>;
+  harmony: Heart,
+  glow: Sun,
+  valor: Sword,
+  wit: Brain,
+} as const satisfies Record<YtyFamilyId, LucideIcon>;
 
 /**
  * The four families in the order the grid draws them, as a list rather than as
@@ -779,7 +819,7 @@ interface Cell {
   readonly area: string;
   readonly ink: string;
   readonly onArea: string;
-  readonly glyph: GlyphName;
+  readonly glyph: LucideIcon;
 }
 
 /**
@@ -879,7 +919,7 @@ const RECIPE_COLUMNS: readonly {
   {
     key: "glyph",
     name: "Glyph",
-    render: (cell) => <Glyph name={cell.glyph} size={20} colour={cell.ink} />,
+    render: (cell) => <Glyph icon={cell.glyph} size={20} colour={cell.ink} />,
   },
 ];
 
@@ -1000,7 +1040,7 @@ function MetaLine({ tone }: { tone: Tone }) {
       className="flex items-center gap-1.5 text-xs font-medium"
       style={{ color: tone.soft }}
     >
-      <Glyph name={STATUS_GLYPH[tone.status]} size={14} colour={tone.soft} />
+      <Glyph icon={STATUS_GLYPH[tone.status]} size={14} colour={tone.soft} />
       {COPY[tone.status].meta}
     </span>
   );
@@ -1075,12 +1115,12 @@ function proposedOnly(tones: readonly Tone[]): readonly Candidate[] {
 
 const ZONES: readonly {
   id: "harmony" | "glow" | "valor" | "wit";
-  glyph: GlyphName;
+  glyph: LucideIcon;
 }[] = [
-  { id: "harmony", glyph: "heart" },
-  { id: "glow", glyph: "sun" },
-  { id: "valor", glyph: "sword" },
-  { id: "wit", glyph: "brain" },
+  { id: "harmony", glyph: Heart },
+  { id: "glow", glyph: Sun },
+  { id: "valor", glyph: Sword },
+  { id: "wit", glyph: Brain },
 ];
 
 /**
@@ -1104,7 +1144,7 @@ function ZoneTiles() {
             className="flex items-center gap-2 rounded-xl border px-3 py-2.5"
             style={{ borderColor: family.strong, backgroundColor: GROUND }}
           >
-            <Glyph name={zone.glyph} size={20} colour={family.soft} />
+            <Glyph icon={zone.glyph} size={20} colour={family.soft} />
             <span className="text-body-s" style={{ color: INK }}>
               {family.name}
             </span>
@@ -1157,9 +1197,9 @@ function ParticipantRows({
           </span>
           <span className="ml-auto flex shrink-0 items-center gap-1.5">
             {person.open ? (
-              <Glyph name="mic" size={14} colour={success} />
+              <Glyph icon={Mic} size={14} colour={success} />
             ) : (
-              <Glyph name="micOff" size={14} colour={destructive} />
+              <Glyph icon={MicOff} size={14} colour={destructive} />
             )}
           </span>
         </div>
@@ -1168,36 +1208,49 @@ function ParticipantRows({
   );
 }
 
-/** The product kinds, each with the family and the glyph the tone grammar gives it. */
+/**
+ * The product kinds, each with the family and the glyph the tone grammar gives
+ * it, and each carrying one real problem with that problem's own mark.
+ *
+ * The issue marks are not one mark repeated: the grid keys them by issue kind,
+ * so an unplaced gamer, a group with no educator, a waitlist against open seats
+ * and a missing fee each arrive drawn differently. Four cards holding one glyph
+ * would have made the grid look like it says less than it does.
+ */
 const KINDS: readonly {
   label: string;
   family: "harmony" | "glow" | "valor" | "wit";
-  glyph: GlyphName;
+  glyph: LucideIcon;
   issue: string;
+  issueGlyph: LucideIcon;
 }[] = [
   {
     label: "Minecraft Tuesdays",
     family: "harmony",
-    glyph: "gamepad",
+    glyph: Joystick,
     issue: "4 gamers in no group",
+    issueGlyph: UserRoundX,
   },
   {
     label: "Espoo school club",
     family: "wit",
-    glyph: "school",
+    glyph: School,
     issue: "Group B has no gedu",
+    issueGlyph: UserX,
   },
   {
     label: "Autumn build camp",
     family: "valor",
-    glyph: "tent",
+    glyph: Tent,
     issue: "6 waiting, 2 seats open",
+    issueGlyph: Users,
   },
   {
     label: "Roblox creator night",
     family: "glow",
-    glyph: "calendar",
+    glyph: CalendarDays,
     issue: "No gedu fee set",
+    issueGlyph: Coins,
   },
 ];
 
@@ -1224,7 +1277,7 @@ function AttentionCards({ warning }: { warning: string }) {
           >
             <span className="flex items-start gap-2">
               <span className="mt-0.5">
-                <Glyph name={kind.glyph} size={16} colour={family.soft} />
+                <Glyph icon={kind.glyph} size={16} colour={family.soft} />
               </span>
               <span className="text-sm leading-snug font-medium">
                 {kind.label}
@@ -1232,7 +1285,7 @@ function AttentionCards({ warning }: { warning: string }) {
             </span>
             <span className="flex items-start gap-1.5 text-xs leading-snug">
               <span className="mt-0.5">
-                <Glyph name="users" size={14} colour={warning} />
+                <Glyph icon={kind.issueGlyph} size={14} colour={warning} />
               </span>
               <span>{kind.issue}</span>
             </span>
@@ -1262,7 +1315,7 @@ function WitBesideInfo({ info, onInfo }: { info: string; onInfo: string }) {
         className="inline-flex items-center gap-2 rounded-xl border px-3 py-2.5"
         style={{ borderColor: family.strong, backgroundColor: GROUND }}
       >
-        <Glyph name="brain" size={20} colour={family.soft} />
+        <Glyph icon={Brain} size={20} colour={family.soft} />
         <span className="text-body-s" style={{ color: INK }}>
           {family.name}
         </span>

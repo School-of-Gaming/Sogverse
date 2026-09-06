@@ -54,6 +54,16 @@
  * leaves the library with this ruling.
  */
 
+import {
+  Check,
+  Gamepad2,
+  ImagePlus,
+  Images,
+  Info,
+  Plus,
+  User,
+} from "lucide-react";
+
 import { BRAND, NEUTRALS } from "../../../src/tokens/brand";
 import { tailwindAlpha } from "./colour";
 import {
@@ -156,7 +166,7 @@ function ConsentRows({ candidate }: { candidate: Candidate }) {
         className={`flex items-start gap-3 rounded-md border p-3 text-sm transition-colors ${candidate.fill}`}
       >
         <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-border bg-act">
-          <Glyph name="checkMark" size={12} colour={ACT_INK} />
+          <Glyph icon={Check} size={12} colour={ACT_INK} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block">Open to adults</span>
@@ -404,7 +414,7 @@ function FeatureCard({ candidate }: { candidate: Candidate }) {
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-lg ${candidate.fill}`}
           >
-            <Glyph name="gamepad" size={24} colour={candidate.ink} />
+            <Glyph icon={Gamepad2} size={24} colour={candidate.ink} />
           </div>
           <h4 className="text-xl font-semibold leading-none tracking-tight">
             Clubs in many games
@@ -576,16 +586,22 @@ const DROP_TARGET: readonly Candidate[] = [
   { label: "no fill", fill: "bg-muted/40", ink: MUTED_INK },
 ];
 
-/** `gedu/session-feed/SessionPhotoStrip.tsx` — the strip mid-drag. */
+/**
+ * `gedu/session-feed/SessionPhotoStrip.tsx` — the strip mid-drag.
+ *
+ * `ImagePlus` is the strip's own add control. `Images` is a stand-in: the tile
+ * beside it holds a photograph in the app, and the strip's section mark is the
+ * nearest thing it has to a picture of one.
+ */
 function PhotoStripTarget({ candidate }: { candidate: Candidate }) {
   return (
     <div className={`rounded-md p-3 transition-colors sm:p-3.5 ${candidate.fill}`}>
       <div className="flex items-center gap-2">
         <span className="flex h-16 w-20 items-center justify-center rounded border border-border bg-background">
-          <Glyph name="image" size={20} colour={candidate.ink} />
+          <Glyph icon={Images} size={20} colour={candidate.ink} />
         </span>
         <span className="flex h-16 w-20 items-center justify-center rounded border border-dashed border-border">
-          <Glyph name="plus" size={20} colour={candidate.ink} />
+          <Glyph icon={ImagePlus} size={20} colour={candidate.ink} />
         </span>
       </div>
     </div>
@@ -663,7 +679,7 @@ function AddGamerTile({ candidate }: { candidate: Candidate }) {
         <span
           className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors duration-150 ${candidate.fill}`}
         >
-          <Glyph name="plus" size={32} colour={candidate.ink} />
+          <Glyph icon={Plus} size={32} colour={candidate.ink} />
         </span>
         <span className="text-sm text-muted-foreground">Add a gamer</span>
       </span>
@@ -794,26 +810,32 @@ const RING_THICK: readonly Candidate[] = [
   },
 ];
 
-/** `voice/VoiceAvatar.tsx` — the local speaker's tile in the grid. */
+/**
+ * `voice/VoiceAvatar.tsx` — the local speaker's tile in the grid.
+ *
+ * The tile holds an identicon (or live video), which is artwork with its own
+ * palette rather than an icon; `User` stands in it, so what is on screen beside
+ * the ring is a person-shaped mark and not a second set of colours.
+ */
 function AvatarRing({ candidate }: { candidate: Candidate }) {
   return (
     <div className="flex items-center gap-3">
       <span
         className={`relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-muted transition-shadow ${candidate.fill}`}
       >
-        <Glyph name="users" size={20} colour={candidate.ink} />
+        <Glyph icon={User} size={20} colour={candidate.ink} />
       </span>
       <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-muted">
-        <Glyph name="users" size={20} colour={candidate.ink} />
+        <Glyph icon={User} size={20} colour={candidate.ink} />
       </span>
       <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-muted">
-        <Glyph name="users" size={20} colour={candidate.ink} />
+        <Glyph icon={User} size={20} colour={candidate.ink} />
       </span>
     </div>
   );
 }
 
-/** `family/ProfileTiles.tsx` — the active family tile. */
+/** `family/ProfileTiles.tsx` — the active family tile, `User` standing in for its identicon. */
 function TileRing({ candidate }: { candidate: Candidate }) {
   return (
     <div className="flex justify-center py-2">
@@ -821,7 +843,7 @@ function TileRing({ candidate }: { candidate: Candidate }) {
         <span
           className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border-2 border-border bg-muted transition-[box-shadow] duration-150 ${candidate.fill}`}
         >
-          <Glyph name="users" size={28} colour={candidate.ink} />
+          <Glyph icon={User} size={28} colour={candidate.ink} />
         </span>
         <span className="text-sm">Aino</span>
       </span>
@@ -870,7 +892,7 @@ function WhatsAppBubble({ draw }: { draw: "today" | "full" | "outside" }) {
               }
             >
               <span>17:04</span>
-              <Glyph name="checkMark" size={10} colour={ACT_INK} />
+              <Glyph icon={Check} size={10} colour={ACT_INK} />
             </div>
           )}
         </div>
@@ -914,6 +936,10 @@ function ViewerChip({ faded }: { faded: boolean }) {
  * One site, and it is drawn beside its own `info` sibling because that sibling
  * is what settles the answer: the two variants exist to be told apart, and
  * `bg-muted/30` versus `bg-act/5` is what tells them apart today.
+ *
+ * Both rows carry `Info`, because the component does: one mark serves both
+ * variants, so the ground is the *only* thing telling them apart. That is the
+ * finding, and drawing a triangle on the warn row would have hidden it.
  */
 const CALLOUT: readonly Candidate[] = [
   {
@@ -945,7 +971,7 @@ function FormHints({ candidate }: { candidate: Candidate }) {
     <div className="space-y-2 rounded-lg border border-border bg-card p-4">
       <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
         <span className="mt-0.5">
-          <Glyph name="info" size={14} colour={MUTED_INK} />
+          <Glyph icon={Info} size={14} colour={MUTED_INK} />
         </span>
         <span>Registration opens when the product is published.</span>
       </div>
@@ -953,7 +979,7 @@ function FormHints({ candidate }: { candidate: Candidate }) {
         className={`flex items-start gap-2 rounded-md border border-dashed px-3 py-2 text-xs ${candidate.fill}`}
       >
         <span className="mt-0.5">
-          <Glyph name="alert" size={14} colour={candidate.ink} />
+          <Glyph icon={Info} size={14} colour={candidate.ink} />
         </span>
         <span>Changing the start date moves every session on the calendar.</span>
       </div>
