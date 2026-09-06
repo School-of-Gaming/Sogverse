@@ -703,7 +703,27 @@ live without the shade so the cost is seen); the hover tint → `hover:bg-lifted
 act at full value. If accepted, one sentence runs the sweep: act is a figure on the dark
 ground, never a tint of it.
 
-**Ruling:** _scrim and glass landed; the act/world proposal drawn, awaiting the owner._
+**Ruled 2026-09-06, night, from the reordered section (three decisions first, the rest as
+a strip):** **a selected option takes `border-act`** on the neutral ground it sits on (all
+14 sites; ring and check rejected); **the monogram tile and the glyph tile take
+`bg-lifted`, the initials and the glyph staying `act`** (the seven icon-tile sites; the
+tint goes; the library's chip-scale exemption is therefore retired, since the glyph on a
+lifted tile carries it without a tint). The weekday decision waits on the week-row
+exemplar being redrawn class-for-class (the page had simplified the session chip and the
+owner did not recognise it). The principle itself is accepted by these picks; the strip
+stands unless the owner objects to a row of it. **One objection: the status chip row,
+"quite bad, today and proposed."** Diagnosis: the five product lifecycle states (pending,
+running, completed, cancelled, expired) mix the CTA colour (act tint, act fill), a
+neutral and a status colour to say five things about one lifecycle; the proposal kept
+the mixture. A lifecycle state is not the thing to do, so act appears in none of the
+candidates; the row is promoted to a case, "A lifecycle chip", drawn as a set in the
+products table row: today; a neutral chip with an ink label and a status dot (running
+success, pending info, completed/expired no dot and quiet ink, cancelled destructive);
+the same with a status glyph; and glyph plus coloured label for comparison. If the set
+still reads wrong the fault is the chip's shape, which is the chip adoption's.
+
+**Ruling:** _scrim and glass landed; act as a figure ruled except the weekday; the sweep
+runs after the construct pass._
 
 ## 10. The Klingon easter egg
 

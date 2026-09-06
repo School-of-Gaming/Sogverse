@@ -26,6 +26,7 @@
 import type { Metadata } from "next";
 import { ActSection } from "./section-act";
 import { GradientsSection } from "./section-gradients";
+import { RolesSection } from "./section-roles";
 import { SummarySection } from "./section-summary";
 
 export const metadata: Metadata = {
@@ -40,6 +41,7 @@ export default function RulingPage() {
       <SummarySection />
       <ActSection />
       <GradientsSection />
+      <RolesSection />
     </main>
   );
 }
