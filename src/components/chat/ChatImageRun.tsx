@@ -36,7 +36,7 @@ function ChatThumbnail({ image }: { image: ChatImageRef }) {
       height={CHAT_IMAGE_THUMB_HEIGHT}
       unoptimized
       style={{ height: CHAT_IMAGE_THUMB_HEIGHT }}
-      className="w-auto max-w-full rounded-md border border-border bg-muted object-contain"
+      className="w-auto max-w-full rounded-md border border-border bg-lifted object-contain"
     />
   );
 }

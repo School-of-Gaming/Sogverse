@@ -148,7 +148,7 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
     <Link
       href={chip.href}
       title={title}
-      className="flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:bg-accent"
+      className="flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:bg-lifted"
     >
       <Icon
         className={cn("h-3.5 w-3.5 shrink-0", presentation.text)}

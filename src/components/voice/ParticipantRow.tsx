@@ -184,7 +184,7 @@ export function ParticipantRow({
         // different places at two widths (see the identity slot below), which
         // no amount of nesting can do.
         "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-border p-2 transition-colors sm:gap-x-3",
-        p.isLocal && "bg-accent/50",
+        p.isLocal && "bg-lifted",
       )}
     >
       {/* Avatar — the ref div is the element the speaking glow writes box-shadow
@@ -567,7 +567,7 @@ function MenuItem({
       onClick={onClick}
       className={cn(
         "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors",
-        "hover:bg-accent disabled:pointer-events-none disabled:opacity-40",
+        "hover:bg-lifted disabled:pointer-events-none disabled:opacity-40",
         active ? "text-destructive" : "text-foreground",
       )}
     >

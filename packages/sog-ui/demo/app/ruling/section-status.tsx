@@ -599,40 +599,39 @@ const LIT_CANDIDATES: readonly {
 // ------------------------------------------------- area and ink (§2, §3)
 
 /**
- * The four grounds the ruled row is drawn on, in the order they lighten.
+ * The three grounds the ruled row is drawn on, in the order they lighten.
  *
  * **The owner's question: does the call depend on the surface?** The old grid
  * drew every cell on the card and nothing else, so a reader had to trust that a
- * value winning on `#1A1A1A` also wins on the page and in a muted block. These
- * four are the *complete* set of grounds a family colour can sit on in the dark
- * theme — the library ships no fifth neutral, and there is no light one — so a
- * call that holds across all four holds everywhere, and the surface-dependent
+ * value winning on `#1A1A1A` also wins on the page and in a lifted block. These
+ * three are the *complete* set of grounds a family colour can sit on in the dark
+ * theme — the library ships no fourth neutral, and there is no light one — so a
+ * call that holds across all three holds everywhere, and the surface-dependent
  * exception either shows itself here or does not exist.
  *
  * **A label on an area fill is not part of that question**, because it never
  * sees the ground: the fill covers it, so ink on Glow measures the same 8.83
- * whether the badge sits on the page or in a muted block. What actually moves
- * between the four stacks is the *ink* column and the shapes — an area's
+ * whether the badge sits on the page or in a lifted block. What actually moves
+ * between the three stacks is the *ink* column and the shapes — an area's
  * separation from what is behind it — and both move in the same direction and
- * by the same small amount, because the four grounds span 1.24:1 end to end.
+ * by the same small amount, because the grounds span 1.24:1 end to end.
  *
- * **Ink on each ground**, body floor 4.5: Harmony 7.70 / 7.15 / 6.62 / 6.22,
- * Glow 8.83 / 8.21 / 7.59 / 7.14, Valor 8.81 / 8.18 / 7.57 / 7.12, Wit 8.10 /
- * 7.53 / 6.96 / 6.54, destructive 6.19 / 5.75 / 5.32 / 5.00, warning 11.34 /
- * 10.53 / 9.74 / 9.16. The tightest cell in the whole grid is destructive as
- * ink on muted at 5.00, which still clears the floor by half a point.
+ * **Ink on each ground**, body floor 4.5: Harmony 7.70 / 7.15 / 6.22, Glow 8.83
+ * / 8.21 / 7.14, Valor 8.81 / 8.18 / 7.12, Wit 8.10 / 7.53 / 6.54, destructive
+ * 6.19 / 5.75 / 5.00, warning 11.34 / 10.53 / 9.16. The tightest cell in the
+ * whole grid is destructive as ink on the lifted grey at 5.00, which still
+ * clears the floor by half a point.
  *
  * **Area as a shape against each ground**, non-text floor 3: Harmony 7.70 /
- * 7.15 / 6.62 / 6.22, Glow 8.83 / 8.21 / 7.59 / 7.14, Valor 6.69 / 6.22 / 5.75
- * / 5.40, Wit 8.10 / 7.53 / 6.96 / 6.54, destructive 6.19 / 5.75 / 5.32 / 5.00,
- * warning 11.34 / 10.53 / 9.74 / 9.16. Nothing comes close to the floor on any
- * ground, so no edge, ring or mark disappears into any surface the app has.
+ * 7.15 / 6.22, Glow 8.83 / 8.21 / 7.14, Valor 6.69 / 6.22 / 5.40, Wit 8.10 /
+ * 7.53 / 6.54, destructive 6.19 / 5.75 / 5.00, warning 11.34 / 10.53 / 9.16.
+ * Nothing comes close to the floor on any ground, so no edge, ring or mark
+ * disappears into any surface the app has.
  */
 const GROUNDS: readonly { token: string; hex: string }[] = [
   { token: "background", hex: NEUTRALS.background.hex },
   { token: "card", hex: NEUTRALS.card.hex },
-  { token: "accent", hex: NEUTRALS.accent.hex },
-  { token: "muted", hex: NEUTRALS.muted.hex },
+  { token: "lifted", hex: NEUTRALS.lifted.hex },
 ];
 
 /** One hue's two roles, ready to draw, with the label that reads on its area. */
@@ -827,7 +826,7 @@ function RuledRow({ ground }: { ground: string }) {
   );
 }
 
-/** The same table on each of the four grounds, labelled with the ground's token. */
+/** The same table on each of the three grounds, labelled with the ground's token. */
 function AreaAndInk() {
   return (
     <div className="space-y-10">

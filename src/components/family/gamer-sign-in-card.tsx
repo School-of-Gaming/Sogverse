@@ -406,7 +406,7 @@ export function GamerSignInCard({
                 id={GAMER_EMAIL_FIELD_ID}
                 value={email ?? ""}
                 readOnly
-                className="bg-muted"
+                className="bg-lifted"
               />
             </Field>
             {emailVerifiedAt ? (

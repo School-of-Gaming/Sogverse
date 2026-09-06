@@ -300,7 +300,7 @@ export function SessionPhotoStrip({
         handleDrop(Array.from(event.dataTransfer.files));
       }}
       className={cn(
-        "rounded-md bg-muted/40 p-3 transition-colors sm:p-3.5",
+        "rounded-md bg-lifted p-3 transition-colors sm:p-3.5",
         // Tinted and ringed rather than resized: the answer to "will this land
         // here" has to be visible without the block growing under a pointer
         // that is mid-gesture.
@@ -481,7 +481,7 @@ function StripThumbnail({
   // the rounding costs — and a clamped extreme ratio — into a letterbox rather
   // than a crop.
   const imageClass =
-    "h-20 w-auto max-w-full rounded-md border border-border bg-muted object-contain sm:h-24";
+    "h-20 w-auto max-w-full rounded-md border border-border bg-lifted object-contain sm:h-24";
 
   return (
     <li className="relative max-w-full shrink-0">

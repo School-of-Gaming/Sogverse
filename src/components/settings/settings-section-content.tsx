@@ -606,7 +606,7 @@ export function SettingsSectionContent({
                   id={GAMER_USERNAME_FIELD_ID}
                   value={gamerUsername}
                   readOnly
-                  className="bg-muted"
+                  className="bg-lifted"
                   aria-describedby={hintId}
                 />
               )}
@@ -618,7 +618,7 @@ export function SettingsSectionContent({
               <Input
                 value={profile?.email || ""}
                 disabled
-                className="bg-muted"
+                className="bg-lifted"
               />
               {isEmailVerified ? (
                 <p className="flex items-center gap-1.5 text-sm text-success">

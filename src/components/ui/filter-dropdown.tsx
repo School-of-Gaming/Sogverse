@@ -172,8 +172,11 @@ export function OptionButton({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent hover:text-foreground",
-        active && "bg-accent/60",
+        "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm transition-colors hover:bg-lifted hover:text-foreground",
+        // A ground lifts once: the chosen option already rests on the lifted
+        // grey, so the hover above is a no-op on it and the act check beside
+        // the label is what says "chosen" once the pointer has gone.
+        active && "bg-lifted text-foreground",
       )}
     >
       {adornment}

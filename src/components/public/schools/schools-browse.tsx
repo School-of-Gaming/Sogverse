@@ -324,7 +324,7 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
         )}
       </div>
 
-      <div className="mt-10 flex items-start gap-2.5 rounded-md bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+      <div className="mt-10 flex items-start gap-2.5 rounded-md bg-lifted px-4 py-3 text-sm text-muted-foreground">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <p>{t("waitlistNote")}</p>
       </div>
@@ -398,13 +398,13 @@ function RegionSection({ group, t }: { group: RegionGroup; t: Translate }) {
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
+        className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-lifted"
       >
         <span className="flex min-w-0 items-center gap-2.5 font-medium">
           <Chevron className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="truncate">{group.regionName}</span>
         </span>
-        <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+        <span className="shrink-0 rounded-full bg-lifted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
           {group.municipalities.length}
         </span>
       </button>
@@ -475,7 +475,7 @@ function MunicipalityRow({
     <li>
       <Link
         href={ROUTES.schoolMunicipality(entry.slug)}
-        className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 transition-colors hover:bg-accent"
+        className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 transition-colors hover:bg-lifted"
       >
         {inner}
       </Link>
@@ -490,7 +490,7 @@ function StatusPill({ hasClubs, t }: { hasClubs: boolean; t: Translate }) {
         "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium",
         hasClubs
           ? "bg-act/10 text-act"
-          : "bg-muted text-muted-foreground",
+          : "bg-lifted text-muted-foreground",
       )}
     >
       {hasClubs ? t("status.available") : t("status.noClubs")}

@@ -1,5 +1,5 @@
 /**
- * Question 7 — act and world at an alpha step.
+ * Question 6 — act and world at an alpha step.
  *
  * **The ruling this section serves.** Act and world carry no alpha, at any
  * step, anywhere; there is no soft act and there will not be one. That half is
@@ -13,7 +13,7 @@
  *     grep -rnoE "\b(bg|from|to|via|text|border|ring|shadow|divide|outline)-(act|world)(-foreground)?/[0-9]+" src --include=*.tsx --include=*.ts
  *
  * 58 matches: 48 drawn here as eleven jobs, and ten that are gradients and
- * belong to question 8. `ACT_ALPHA_JOBS` in `inventory.ts` carries the
+ * belong to question 7. `ACT_ALPHA_JOBS` in `inventory.ts` carries the
  * classification and the locators; the summary table lists them.
  *
  * **Why the grouping is by job and not by file.** A sweep that replaces
@@ -25,9 +25,11 @@
  * rules per job and the sweep applies the ruling per site.
  *
  * **The four candidates every job is offered**, from the ruling that widened
- * this question: a neutral ground from the greys that already exist (`accent`
- * and `muted`, drawn as two panels wherever they differ visibly for that job);
- * plain act at full value with `act-foreground` ink, for the places where the
+ * this question: the neutral ground the greys ruling left standing (`lifted`,
+ * one panel now — it used to be two, `accent` beside `muted`, and the ruling
+ * that collapsed them collapsed these panels with them, which is the clearest
+ * thing this section can say about what that ruling was worth); plain act at
+ * full value with `act-foreground` ink, for the places where the
  * element really is the thing to do; an act edge at full value — `border-act`
  * or `ring-act` — on a neutral ground, which is the shape the library's colour
  * rule already names for a brand colour that has to mark something without
@@ -138,15 +140,14 @@ function Candidates({
  * at once: a radio or a checkbox row that is currently the chosen one.
  *
  * Every one of them is `bg-act/5` — the faintest step in the app, and over the
- * card ground it composites to a grey a shade warmer than `accent`. The
+ * card ground it composites to a grey a shade warmer than the lifted grey. The
  * question the row is really answering is "which of these is picked", and the
  * native control beside it is already answering that; the fill is there to make
  * the answer readable at a glance across a tall form.
  */
 const FORM_OPTION: readonly Candidate[] = [
   { label: "bg-act/5", fill: "border-border bg-act/5", ink: ACT },
-  { label: "bg-accent", fill: "border-border bg-accent", ink: ACT },
-  { label: "bg-muted", fill: "border-border bg-muted", ink: ACT },
+  { label: "bg-lifted", fill: "border-border bg-lifted", ink: ACT },
   {
     label: "bg-act text-act-foreground",
     fill: "border-border bg-act text-act-foreground",
@@ -159,7 +160,7 @@ const FORM_OPTION: readonly Candidate[] = [
 /** `ui/checkbox-row.tsx` — the shared consent row, with one of three ticked. */
 function ConsentRows({ candidate }: { candidate: Candidate }) {
   const rest =
-    "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors hover:bg-accent/50";
+    "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors hover:bg-lifted";
   return (
     <div className="space-y-2">
       <span
@@ -246,13 +247,8 @@ function LanguagePills({ candidate }: { candidate: Candidate }) {
 const SELECTED_INK: readonly Candidate[] = [
   { label: "bg-act/10 text-act", fill: "border-border bg-act/10 text-act", ink: ACT },
   {
-    label: "bg-accent text-foreground",
-    fill: "border-border bg-accent text-foreground",
-    ink: ACT,
-  },
-  {
-    label: "bg-muted text-foreground",
-    fill: "border-border bg-muted text-foreground",
+    label: "bg-lifted text-foreground",
+    fill: "border-border bg-lifted text-foreground",
     ink: ACT,
   },
   {
@@ -322,10 +318,10 @@ function LocaleTabs({ candidate }: { candidate: Candidate }) {
  */
 const STATUS_CHIP: readonly Candidate[] = [
   { label: "bg-act/20 text-act", fill: "bg-act/20 text-act", ink: ACT },
-  { label: "bg-accent text-foreground", fill: "bg-accent text-foreground", ink: ACT },
+  { label: "bg-lifted text-foreground", fill: "bg-lifted text-foreground", ink: ACT },
   {
-    label: "bg-muted text-muted-foreground",
-    fill: "bg-muted text-muted-foreground",
+    label: "bg-lifted text-muted-foreground",
+    fill: "bg-lifted text-muted-foreground",
     ink: MUTED_INK,
   },
   {
@@ -349,7 +345,7 @@ function StatusChips({ candidate }: { candidate: Candidate }) {
       <div className="flex flex-wrap items-center gap-2">
         <span className={`${chip} ${candidate.fill}`}>Pending</span>
         <span className={`${chip} bg-act text-act-foreground`}>Running</span>
-        <span className={`${chip} bg-muted text-muted-foreground`}>Completed</span>
+        <span className={`${chip} bg-lifted text-muted-foreground`}>Completed</span>
         <span
           className={chip}
           style={{
@@ -359,7 +355,7 @@ function StatusChips({ candidate }: { candidate: Candidate }) {
         >
           Cancelled
         </span>
-        <span className={`${chip} bg-muted text-muted-foreground`}>Expired</span>
+        <span className={`${chip} bg-lifted text-muted-foreground`}>Expired</span>
       </div>
     </div>
   );
@@ -378,7 +374,7 @@ function SchoolPills({ candidate }: { candidate: Candidate }) {
       </div>
       <div className={row}>
         <span className="min-w-0 text-sm font-medium">Otaniemen koulu</span>
-        <span className={`${pill} bg-muted text-muted-foreground`}>No clubs yet</span>
+        <span className={`${pill} bg-lifted text-muted-foreground`}>No clubs yet</span>
       </div>
     </div>
   );
@@ -398,8 +394,7 @@ function SchoolPills({ candidate }: { candidate: Candidate }) {
  */
 const ICON_TILE: readonly Candidate[] = [
   { label: "bg-act/10", fill: "bg-act/10 text-act", ink: ACT },
-  { label: "bg-accent", fill: "bg-accent text-act", ink: ACT },
-  { label: "bg-muted", fill: "bg-muted text-act", ink: ACT },
+  { label: "bg-lifted", fill: "bg-lifted text-act", ink: ACT },
   { label: "bg-act", fill: "bg-act text-act-foreground", ink: ACT_INK },
   { label: "border border-act", fill: "border border-act text-act", ink: ACT },
   { label: "no tile", fill: "text-act", ink: ACT },
@@ -429,7 +424,7 @@ function FeatureCard({ candidate }: { candidate: Candidate }) {
 function ContactRows({ candidate }: { candidate: Candidate }) {
   return (
     <div className="rounded-lg border border-border bg-card">
-      <div className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-accent hover:text-foreground">
+      <div className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-lifted hover:text-foreground">
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-medium ${candidate.fill}`}
         >
@@ -468,8 +463,7 @@ function ContactRows({ candidate }: { candidate: Candidate }) {
  */
 const HIGHLIGHT_ROW: readonly Candidate[] = [
   { label: "bg-act/5", fill: "border-border bg-act/5 text-act", ink: ACT },
-  { label: "bg-accent", fill: "border-border bg-accent text-foreground", ink: ACT },
-  { label: "bg-muted", fill: "border-border bg-muted text-foreground", ink: ACT },
+  { label: "bg-lifted", fill: "border-border bg-lifted text-foreground", ink: ACT },
   {
     label: "bg-act text-act-foreground",
     fill: "border-border bg-act text-act-foreground",
@@ -526,8 +520,7 @@ function WeekRows({ candidate }: { candidate: Candidate }) {
  */
 const FLASH_ROW: readonly Candidate[] = [
   { label: "bg-act/20 ring-1 ring-act", fill: "bg-act/20 ring-1 ring-act", ink: ACT },
-  { label: "bg-accent", fill: "bg-accent", ink: ACT },
-  { label: "bg-muted", fill: "bg-muted", ink: ACT },
+  { label: "bg-lifted", fill: "bg-lifted", ink: ACT },
   {
     label: "bg-act text-act-foreground",
     fill: "bg-act text-act-foreground",
@@ -569,9 +562,16 @@ function ChatFlash({ candidate }: { candidate: Candidate }) {
  * dragged over it.
  *
  * The most transient statement in the set: it exists for as long as a pointer
- * is held down and never survives the gesture. Two of the six add a full-value
+ * is held down and never survives the gesture. Two of them add a full-value
  * `ring-act` on top of the tint already, which makes them the one job where
  * part of the answer is already drawn in the app.
+ *
+ * **This job has no grey candidate, and that is the greys ruling showing.** The
+ * strip and the column both *rest* on the lifted grey, and a ground lifts once,
+ * so there is no further step for a drop target to climb to: a candidate that
+ * lit the target by changing its ground would be drawing the ground it already
+ * has. What is left is what a lifted thing has instead — a ring, a fill in the
+ * brand's own colour, or nothing.
  */
 const DROP_TARGET: readonly Candidate[] = [
   {
@@ -579,11 +579,9 @@ const DROP_TARGET: readonly Candidate[] = [
     fill: "bg-act/10 ring-2 ring-act",
     ink: MUTED_INK,
   },
-  { label: "bg-accent", fill: "bg-accent", ink: MUTED_INK },
-  { label: "bg-muted", fill: "bg-muted", ink: MUTED_INK },
   { label: "bg-act", fill: "bg-act", ink: ACT_INK },
-  { label: "ring-2 ring-act", fill: "bg-muted/40 ring-2 ring-act", ink: MUTED_INK },
-  { label: "no fill", fill: "bg-muted/40", ink: MUTED_INK },
+  { label: "ring-2 ring-act", fill: "bg-lifted ring-2 ring-act", ink: MUTED_INK },
+  { label: "no fill", fill: "bg-lifted", ink: MUTED_INK },
 ];
 
 /**
@@ -645,13 +643,8 @@ const HOVER_TILE: readonly Candidate[] = [
     ink: "currentColor",
   },
   {
-    label: "group-hover:bg-accent",
-    fill: "group-hover:bg-accent text-muted-foreground group-hover:text-act",
-    ink: "currentColor",
-  },
-  {
-    label: "group-hover:bg-muted",
-    fill: "group-hover:bg-muted text-muted-foreground group-hover:text-act",
+    label: "group-hover:bg-lifted",
+    fill: "group-hover:bg-lifted text-muted-foreground group-hover:text-act",
     ink: "currentColor",
   },
   {
@@ -821,14 +814,14 @@ function AvatarRing({ candidate }: { candidate: Candidate }) {
   return (
     <div className="flex items-center gap-3">
       <span
-        className={`relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-muted transition-shadow ${candidate.fill}`}
+        className={`relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-lifted transition-shadow ${candidate.fill}`}
       >
         <Glyph icon={User} size={20} colour={candidate.ink} />
       </span>
-      <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-muted">
+      <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-lifted">
         <Glyph icon={User} size={20} colour={candidate.ink} />
       </span>
-      <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-muted">
+      <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-lifted">
         <Glyph icon={User} size={20} colour={candidate.ink} />
       </span>
     </div>
@@ -841,7 +834,7 @@ function TileRing({ candidate }: { candidate: Candidate }) {
     <div className="flex justify-center py-2">
       <span className="flex w-24 flex-col items-center gap-2">
         <span
-          className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border-2 border-border bg-muted transition-[box-shadow] duration-150 ${candidate.fill}`}
+          className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border-2 border-border bg-lifted transition-[box-shadow] duration-150 ${candidate.fill}`}
         >
           <Glyph icon={User} size={28} colour={candidate.ink} />
         </span>
@@ -869,7 +862,7 @@ function WhatsAppBubble({ draw }: { draw: "today" | "full" | "outside" }) {
   return (
     <div className="space-y-2 rounded-lg border border-border bg-card p-4">
       <div className="flex justify-start">
-        <div className="max-w-[70%] rounded-lg bg-muted px-3 py-2 text-sm text-foreground">
+        <div className="max-w-[70%] rounded-lg bg-lifted px-3 py-2 text-sm text-foreground">
           <p className="whitespace-pre-wrap break-words">
             Is Tuesday&rsquo;s club still on?
           </p>
@@ -935,7 +928,7 @@ function ViewerChip({ faded }: { faded: boolean }) {
  *
  * One site, and it is drawn beside its own `info` sibling because that sibling
  * is what settles the answer: the two variants exist to be told apart, and
- * `bg-muted/30` versus `bg-act/5` is what tells them apart today.
+ * `bg-lifted` versus `bg-act/5` is what tells them apart today.
  *
  * Both rows carry `Info`, because the component does: one mark serves both
  * variants, so the ground is the *only* thing telling them apart. That is the
@@ -948,13 +941,8 @@ const CALLOUT: readonly Candidate[] = [
     ink: ACT,
   },
   {
-    label: "bg-accent text-foreground",
-    fill: "border-border bg-accent text-foreground",
-    ink: ACT,
-  },
-  {
-    label: "bg-muted text-foreground",
-    fill: "border-border bg-muted text-foreground",
+    label: "bg-lifted text-foreground",
+    fill: "border-border bg-lifted text-foreground",
     ink: ACT,
   },
   {
@@ -969,7 +957,7 @@ const CALLOUT: readonly Candidate[] = [
 function FormHints({ candidate }: { candidate: Candidate }) {
   return (
     <div className="space-y-2 rounded-lg border border-border bg-card p-4">
-      <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+      <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-lifted px-3 py-2 text-xs text-muted-foreground">
         <span className="mt-0.5">
           <Glyph icon={Info} size={14} colour={MUTED_INK} />
         </span>
@@ -989,18 +977,18 @@ function FormHints({ candidate }: { candidate: Candidate }) {
 
 export function ActSection() {
   return (
-    <Question n={7} title="Act and world at an alpha step">
+    <Question n={6} title="Act and world at an alpha step">
       <Case title="A selected option in a form">
         <div className="space-y-10">
           <Candidates
-            columns={6}
+            columns={5}
             options={FORM_OPTION}
             file="ui/checkbox-row.tsx"
             page="/admin/products/[id], the audience section"
             render={(candidate) => <ConsentRows candidate={candidate} />}
           />
           <Candidates
-            columns={6}
+            columns={5}
             options={FORM_OPTION}
             file="admin/products/sections/spoken-language-radios.tsx"
             page="/admin/products/[id], the identity section"
@@ -1012,14 +1000,14 @@ export function ActSection() {
       <Case title="A selected item, with act as its ink">
         <div className="space-y-10">
           <Candidates
-            columns={6}
+            columns={5}
             options={SELECTED_INK}
             file="admin/products/gedu-picker-sheet.tsx"
             page="/admin/products/[id], assigning a gedu"
             render={(candidate) => <FilterChips candidate={candidate} />}
           />
           <Candidates
-            columns={6}
+            columns={5}
             options={SELECTED_INK}
             file="admin/products/sections/identity-section.tsx"
             page="/admin/products/[id], the locale tabs"
@@ -1088,14 +1076,14 @@ export function ActSection() {
       <Case title="A drop target">
         <div className="space-y-10">
           <Candidates
-            columns={6}
+            columns={4}
             options={DROP_TARGET}
             file="gedu/session-feed/SessionPhotoStrip.tsx"
             page="/gedu, writing a session report"
             render={(candidate) => <PhotoStripTarget candidate={candidate} />}
           />
           <Candidates
-            columns={6}
+            columns={4}
             options={DROP_TARGET}
             file="admin/products/groups/group-column.tsx"
             page="/admin/products/[id], the groups board"
@@ -1106,7 +1094,7 @@ export function ActSection() {
 
       <Case title="A hover tint on an empty tile">
         <Candidates
-          columns={6}
+          columns={5}
           options={HOVER_TILE}
           file="family/ProfileTiles.tsx"
           page="/parent, the add-gamer tile"

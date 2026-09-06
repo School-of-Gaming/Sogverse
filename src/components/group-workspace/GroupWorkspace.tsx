@@ -890,7 +890,7 @@ function OtherGroupsRailCard({
           {peerGroups.map((group) => (
             <li
               key={group.id}
-              className="space-y-1.5 rounded-md border border-border bg-muted/30 p-2.5"
+              className="space-y-1.5 rounded-md border border-border bg-lifted p-2.5"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <p className="min-w-0 flex-1 truncate text-sm font-medium leading-tight">

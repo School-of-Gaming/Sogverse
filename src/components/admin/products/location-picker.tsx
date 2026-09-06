@@ -469,7 +469,7 @@ function ChoosePlaceButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-2.5 rounded-md border border-border bg-background px-3 py-3 text-left outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
+      className="flex w-full items-center gap-2.5 rounded-md border border-border bg-background px-3 py-3 text-left outline-none hover:bg-lifted hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
     >
       <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
@@ -550,7 +550,7 @@ function SelectedLocationCard({
                       {localizedLocationName(location, locale)}
                     </span>
                     {!picksSite && (
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      <span className="rounded-full bg-lifted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                         {location.type}
                       </span>
                     )}

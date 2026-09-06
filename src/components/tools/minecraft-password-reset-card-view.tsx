@@ -178,7 +178,7 @@ export function MinecraftPasswordResetCardView({
                   key={`${result.username}-${index}`}
                   className={cn(
                     "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-md border border-border px-3 py-2",
-                    result.ok ? "bg-muted/30" : "bg-destructive/5",
+                    result.ok ? "bg-lifted" : "bg-destructive/5",
                   )}
                 >
                   {result.ok ? (
@@ -235,7 +235,7 @@ function PasswordChip({ upn, password }: { upn: string; password: string }) {
       type="button"
       onClick={() => void copy(password)}
       className={cn(
-        "flex shrink-0 items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 font-mono text-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+        "flex shrink-0 items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 font-mono text-sm transition-colors hover:bg-lifted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
         copied && "text-success",
       )}
       // The visible content is the password itself, which a screen reader would

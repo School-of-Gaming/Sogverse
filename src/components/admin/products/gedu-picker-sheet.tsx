@@ -249,7 +249,7 @@ function GeduRow({
       onClick={onClick}
       className={cn(
         "flex w-full items-start gap-3 rounded-md border border-border p-3 text-left text-sm transition-colors",
-        isDisabled ? "cursor-default opacity-60" : "hover:bg-accent",
+        isDisabled ? "cursor-default opacity-60" : "hover:bg-lifted",
         isCurrent && "bg-act/5 opacity-100"
       )}
     >
@@ -284,7 +284,7 @@ function GeduRow({
             {gedu.spoken_languages.map((code) => (
               <span
                 key={code}
-                className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                className="rounded bg-lifted px-1.5 py-0.5 text-[10px] text-muted-foreground"
               >
                 {languageName(code)}
               </span>

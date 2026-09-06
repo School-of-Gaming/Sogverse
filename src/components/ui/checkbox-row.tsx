@@ -32,7 +32,7 @@ const checkboxRowVariants = cva(
       // The hover fill is the border's promise being kept — it lights the same
       // area the click will act on. A ticked row already carries its own fill
       // and a disabled one is not a target, so neither takes it.
-      { checked: false, disabled: false, class: "hover:bg-accent/50" },
+      { checked: false, disabled: false, class: "hover:bg-lifted" },
     ],
     defaultVariants: { size: "sm", checked: false, disabled: false },
   },

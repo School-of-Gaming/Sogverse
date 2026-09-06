@@ -145,7 +145,7 @@ function SceneControls({
   setHeight: (height: ChatHeight) => void;
 }) {
   return (
-    <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/30 p-3 text-sm">
+    <div className="space-y-3 rounded-lg border border-dashed border-border bg-lifted p-3 text-sm">
       <ControlRow label="Acting as">
         {CHAT_SCENE_ACCOUNTS.map((account) => (
           <Button

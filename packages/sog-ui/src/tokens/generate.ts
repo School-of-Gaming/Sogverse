@@ -36,15 +36,15 @@ function kebab(name: string): string {
 /**
  * The surfaces that ship a `-foreground` companion token.
  *
- * One of the four, and the difference is naming rather than use: every surface
- * reads `foreground`, so for the page ground, the hover fill and the muted
- * block a companion would only be a second name for `--color-foreground`,
- * which is already in the stylesheet. For `muted` it would be worse than
- * redundant — `--color-muted-foreground` already ships as the secondary-text
- * token, which reads on every ground rather than on that one, so generating a
- * companion would emit a second, different value under a name that is taken.
- * The card keeps its companion because it is the ground a component is handed
- * as a pair, and a pair wants both halves named.
+ * One of the three, and the difference is naming rather than use: every surface
+ * reads `foreground`, so for the page ground and the lifted ground a companion
+ * would only be a second name for `--color-foreground`, which is already in the
+ * stylesheet. The card keeps its companion because it is the ground a component
+ * is handed as a pair, and a pair wants both halves named.
+ *
+ * `--color-muted-foreground` is emitted from the neutrals like any other token
+ * and is **not** a companion of anything: it is the quiet ink, it reads on all
+ * three grounds, and no surface names it as its `on`.
  */
 const SURFACES_WITH_FOREGROUND = ["card"] as const satisfies readonly NeutralId[];
 

@@ -42,7 +42,7 @@ export function InfoCallout({
       className={cn(
         "flex items-start gap-2 rounded-md border border-dashed border-border px-3 py-2 text-xs",
         variant === "info"
-          ? "bg-muted/30 text-muted-foreground"
+          ? "bg-lifted text-muted-foreground"
           : "bg-act/5 text-foreground"
       )}
     >

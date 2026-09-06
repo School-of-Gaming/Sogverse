@@ -82,7 +82,7 @@ export function ScheduleSlotsEditor({
         return (
         <div
           key={i}
-          className="grid grid-cols-12 gap-2 rounded-md border border-border bg-muted/20 p-3"
+          className="grid grid-cols-12 gap-2 rounded-md border border-border bg-lifted p-3"
         >
           <div className="col-span-12 sm:col-span-4">
             {productType === "event" ? (

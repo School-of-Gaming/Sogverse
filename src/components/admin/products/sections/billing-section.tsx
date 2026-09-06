@@ -112,7 +112,7 @@ export function BillingSection({
       )}
 
       {showExternalInfo && (
-        <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
+        <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-lifted px-3 py-2 text-sm">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div>
             <div className="font-medium">{t("labels.paidByMunicipality")}</div>
@@ -143,7 +143,7 @@ export function BillingSection({
       {/* Read-only by design: the treatment follows from the product type, and
           an admin who could pick it is an admin who could pick the wrong one. */}
       {isPaid && (
-        <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
+        <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-lifted px-3 py-2 text-sm">
           <Percent className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="space-y-1">
             <div className="font-medium">

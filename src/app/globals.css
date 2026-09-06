@@ -188,7 +188,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-muted);
+  background: var(--color-lifted);
 }
 
 ::-webkit-scrollbar-thumb {

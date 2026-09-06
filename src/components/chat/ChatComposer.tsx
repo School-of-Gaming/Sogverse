@@ -271,7 +271,7 @@ export function ChatComposer({
     return (
       <div
         className={cn(
-          "flex items-start gap-2 rounded-md border border-border bg-muted/60 px-3 py-2 text-sm text-muted-foreground",
+          "flex items-start gap-2 rounded-md border border-border bg-lifted px-3 py-2 text-sm text-muted-foreground",
           className,
         )}
       >
@@ -322,7 +322,7 @@ export function ChatComposer({
                 height={CHAT_IMAGE_THUMB_HEIGHT}
                 unoptimized
                 style={{ height: CHAT_IMAGE_THUMB_HEIGHT }}
-                className="w-auto rounded border border-border bg-muted object-contain"
+                className="w-auto rounded border border-border bg-lifted object-contain"
               />
               <button
                 type="button"
@@ -371,8 +371,8 @@ export function ChatComposer({
                 className={cn(
                   "flex w-full items-center px-2 py-1.5 text-left text-sm transition-colors",
                   index === activeIndex
-                    ? "bg-accent text-foreground"
-                    : "hover:bg-accent",
+                    ? "bg-lifted text-foreground"
+                    : "hover:bg-lifted",
                 )}
               >
                 {account.name}

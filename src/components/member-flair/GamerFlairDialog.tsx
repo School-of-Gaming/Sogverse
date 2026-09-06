@@ -433,7 +433,7 @@ function StaffOnlyBlock({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-md border border-dashed border-border bg-muted/60 p-3">
+    <div className="rounded-md border border-dashed border-border bg-lifted p-3">
       <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         <Lock className="h-3 w-3" aria-hidden />
         {label}

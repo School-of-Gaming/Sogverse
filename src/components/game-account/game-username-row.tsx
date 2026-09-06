@@ -74,7 +74,7 @@ export function GameAvatarBox({
   return (
     <div
       className={cn(
-        "shrink-0 overflow-hidden rounded-sm bg-muted",
+        "shrink-0 overflow-hidden rounded-sm bg-lifted",
         gameFigureHeight(figure),
         model.widthClass,
       )}

@@ -241,25 +241,25 @@ function GroupDetailsSkeleton() {
 
       <div aria-hidden>
         <header className="space-y-2 border-b border-border pb-5">
-          <div className="h-3 w-16 animate-pulse rounded bg-muted" />
-          <div className="h-8 w-72 max-w-full animate-pulse rounded-md bg-muted" />
-          <div className="h-4 w-48 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-16 animate-pulse rounded bg-lifted" />
+          <div className="h-8 w-72 max-w-full animate-pulse rounded-md bg-lifted" />
+          <div className="h-4 w-48 animate-pulse rounded bg-lifted" />
         </header>
 
-        <div className="mt-6 h-32 animate-pulse rounded-lg border border-border bg-muted" />
+        <div className="mt-6 h-32 animate-pulse rounded-lg border border-border bg-lifted" />
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-3 lg:gap-8">
           <div className="min-w-0 space-y-3 lg:col-span-2">
             {[0, 1, 2, 3].map((row) => (
               <div
                 key={row}
-                className="h-24 animate-pulse rounded-lg border border-border bg-muted"
+                className="h-24 animate-pulse rounded-lg border border-border bg-lifted"
               />
             ))}
           </div>
           <aside className="min-w-0 space-y-4">
-            <div className="h-64 animate-pulse rounded-lg border border-border bg-muted" />
-            <div className="h-32 animate-pulse rounded-lg border border-border bg-muted" />
+            <div className="h-64 animate-pulse rounded-lg border border-border bg-lifted" />
+            <div className="h-32 animate-pulse rounded-lg border border-border bg-lifted" />
           </aside>
         </div>
       </div>

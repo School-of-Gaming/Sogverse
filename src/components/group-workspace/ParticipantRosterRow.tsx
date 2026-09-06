@@ -545,7 +545,7 @@ function ContactEmailCell({ email }: { email: string }) {
       onClick={() => void copy(email)}
       aria-label={copied ? t("emailCopied") : t("copyContactEmail", { email })}
       className={cn(
-        "group flex w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-left text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+        "group flex w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-lifted px-2 py-1 text-left text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
         copied && "text-success",
       )}
     >

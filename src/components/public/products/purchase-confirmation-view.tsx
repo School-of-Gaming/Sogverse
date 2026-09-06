@@ -427,10 +427,10 @@ export function PurchaseConfirmationNotice({
             {/* Ghosts shaped like the summary card that replaces them. */}
             <Card className="mt-8">
               <CardContent className="space-y-3 p-5 sm:p-6">
-                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-                <div className="h-16 animate-pulse rounded-lg bg-muted" />
-                <div className="h-4 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-32 animate-pulse rounded bg-lifted" />
+                <div className="h-16 animate-pulse rounded-lg bg-lifted" />
+                <div className="h-4 animate-pulse rounded bg-lifted" />
+                <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
               </CardContent>
             </Card>
             <p className="mt-6 text-center text-sm text-muted-foreground">

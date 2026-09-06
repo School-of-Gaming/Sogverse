@@ -406,18 +406,18 @@ function DetailLoadingSkeleton() {
       {/* The header band: back link, eyebrow, title, each over its own column,
           mirroring the outer content tracks exactly as the body's band does. */}
       <div className="lg:col-start-2 lg:col-span-2 lg:row-start-1 lg:grid lg:grid-cols-[minmax(0,44rem)_20rem] lg:gap-6 2xl:col-start-2 2xl:col-span-3 2xl:grid-cols-[16rem_minmax(0,44rem)_20rem]">
-        <div className="h-4 w-32 animate-pulse rounded bg-muted lg:hidden" />
+        <div className="h-4 w-32 animate-pulse rounded bg-lifted lg:hidden" />
         <div className="hidden 2xl:col-start-1 2xl:row-start-1 2xl:flex 2xl:h-9 2xl:items-center 2xl:justify-self-end">
-          <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-32 animate-pulse rounded bg-lifted" />
         </div>
         <div className="mt-6 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:flex lg:h-9 lg:items-center 2xl:col-start-3">
-          <div className="h-3 w-40 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-40 animate-pulse rounded bg-lifted" />
         </div>
         <div className="lg:col-start-1 lg:row-start-1 lg:flex lg:min-w-0 lg:items-start lg:gap-6 2xl:col-start-2">
           <div className="hidden lg:flex lg:h-9 lg:shrink-0 lg:items-center 2xl:hidden">
-            <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-32 animate-pulse rounded bg-lifted" />
           </div>
-          <div className="mt-1 h-9 w-3/4 animate-pulse rounded bg-muted lg:mt-0 lg:min-w-0 lg:flex-1" />
+          <div className="mt-1 h-9 w-3/4 animate-pulse rounded bg-lifted lg:mt-0 lg:min-w-0 lg:flex-1" />
         </div>
       </div>
 
@@ -426,32 +426,32 @@ function DetailLoadingSkeleton() {
           is known without the data, which is what keeps the column's height
           roughly right while it waits. */}
       <div className="lg:col-start-2 lg:row-start-2 lg:min-w-0 2xl:col-start-3">
-        <div className="aspect-[3/2] w-full animate-pulse rounded-lg bg-muted" />
+        <div className="aspect-[3/2] w-full animate-pulse rounded-lg bg-lifted" />
         <div className="mt-4 space-y-2">
-          <div className="h-4 w-full animate-pulse rounded bg-muted" />
-          <div className="h-4 w-5/6 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-full animate-pulse rounded bg-lifted" />
+          <div className="h-4 w-5/6 animate-pulse rounded bg-lifted" />
         </div>
         <div className="mt-8 space-y-2">
-          <div className="h-5 w-48 animate-pulse rounded bg-muted" />
-          <div className="h-4 w-full animate-pulse rounded bg-muted" />
-          <div className="h-4 w-full animate-pulse rounded bg-muted" />
-          <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+          <div className="h-5 w-48 animate-pulse rounded bg-lifted" />
+          <div className="h-4 w-full animate-pulse rounded bg-lifted" />
+          <div className="h-4 w-full animate-pulse rounded bg-lifted" />
+          <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
         </div>
       </div>
 
       {/* The facts card — reading flow below `2xl`, left rail from it. */}
       <div className="lg:col-start-2 lg:row-start-3 lg:min-w-0 lg:self-start 2xl:col-start-2 2xl:row-start-2 2xl:row-span-2">
-        <div className="h-56 animate-pulse rounded-lg bg-muted" />
+        <div className="h-56 animate-pulse rounded-lg bg-lifted" />
       </div>
 
       {/* Reading block 2: the topic card. */}
       <div className="lg:col-start-2 lg:row-start-4 lg:min-w-0 2xl:col-start-3 2xl:row-start-3">
-        <div className="h-32 animate-pulse rounded-lg bg-muted" />
+        <div className="h-32 animate-pulse rounded-lg bg-lifted" />
       </div>
 
       {/* The signup rail. */}
       <div className="lg:col-start-3 lg:row-start-2 lg:row-span-3 lg:self-start 2xl:col-start-4 2xl:row-span-2">
-        <div className="h-96 animate-pulse rounded-lg bg-muted" />
+        <div className="h-96 animate-pulse rounded-lg bg-lifted" />
       </div>
     </div>
   );

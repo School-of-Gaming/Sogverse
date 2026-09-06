@@ -116,14 +116,26 @@
  * makes.
  *
  * **The neutrals are the theme's own.** Ground `#121212`, ink `#EDEDED`, card
- * `#1A1A1A`, the hover fill `#212121`, the de-emphasised ground `#262626`,
- * muted ink `#A6A6A6` and border `#333333` are not derived from light values
- * and have no light counterparts to be derived from — a light palette has a
- * page, a card tint, a divider grey and a secondary-text grey, and none of them
- * is one of these. Two of them are the light palette's own ends put to
- * different work: the ground is the brand's ink, used as a surface, and the ink
- * is one step down from white so a full page of body copy does not glare back.
- * The rest are the ladder that a dark page needs and a light one does not.
+ * `#1A1A1A`, the lifted ground `#262626`, quiet ink `#A6A6A6` and border
+ * `#333333` are not derived from light values and have no light counterparts
+ * to be derived from — a light palette has a page, a card tint, a divider grey
+ * and a secondary-text grey, and none of them is one of these. Two of them are
+ * the light palette's own ends put to different work: the ground is the brand's
+ * ink, used as a surface, and the ink is one step down from white so a full
+ * page of body copy does not glare back. The rest are the ladder that a dark
+ * page needs and a light one does not.
+ *
+ * **The ladder is three grounds, and that is a decision rather than an
+ * inventory.** It ran to four — the page, the card, a hover fill and a quieter
+ * one above it — and the four steps sat between 1.08 and 1.24 apart, which is
+ * a difference the eye does not reliably find. The hover step in particular was
+ * invisible on the card, which is where most of a dashboard's lists live, so
+ * the one state it existed to draw was the one it could not draw. And the
+ * fourth step only bought its second state grey by spending the quiet ground on
+ * a state, against that ground's own definition. Three steps buy back a lift
+ * that can actually be seen and cost one distinction, which is now carried by
+ * an edge, a mark or ink — signals that survive a reader who cannot separate
+ * two near-black greys at all.
  *
  * **Amber keeps its intent and loses its arithmetic.** On a light ground amber
  * misses the body floor by a wide margin, which is why it is a fill and a
@@ -144,7 +156,7 @@
  *
  * **Every text-on-ground pairing is re-proven on these grounds.** Nothing is
  * inherited from the light reading, including the pairings that would have been
- * safe there: each is measured again against the four grounds this theme
+ * safe there: each is measured again against the three grounds this theme
  * actually fills, and a pairing the library does not list is a pairing it does
  * not offer.
  */
@@ -166,8 +178,7 @@ export type NeutralId =
   | "background"
   | "foreground"
   | "card"
-  | "accent"
-  | "muted"
+  | "lifted"
   | "mutedForeground"
   | "border";
 
@@ -175,12 +186,12 @@ export type NeutralId =
  * The neutrals a component **fills** — a ground with text on it — and so the
  * exact set that carries an `on`.
  *
- * Four, and together they are the whole ladder a dark page climbs: the page
- * itself, the lift a card takes off it, and two smaller lifts above the card —
- * the fill a row takes under the pointer, and the ground a de-emphasised block
- * sits on. Everything else in the set is ink or an edge, and neither is filled.
+ * Three, and together they are the whole ladder a dark page climbs: the page
+ * itself, the lift a card takes off it, and one further lift above both, for
+ * anything raised off what is behind it. Everything else in the set is ink or
+ * an edge, and neither is filled.
  */
-type SurfaceId = "background" | "card" | "accent" | "muted";
+type SurfaceId = "background" | "card" | "lifted";
 
 /**
  * A surface names the token that reads *on* it; anything else does not.
@@ -218,54 +229,69 @@ export const NEUTRALS = {
    */
   foreground: { name: "Ink", hex: "#EDEDED" },
   /**
-   * Section backgrounds and cards — the first lift off the page, and the
-   * surface most of a dashboard is built from.
+   * **Depth: a thing on the page.** Section backgrounds and cards — the first
+   * lift off the page, and the surface most of a dashboard is built from.
    *
    * Reach for it whenever content has to read as a block with an inside and an
-   * outside. Never for a hover or a selection: those are transient, and a row
-   * that climbs to card height under the pointer announces a new surface every
-   * time the cursor crosses it.
+   * outside. It is authored rather than transient, so never for a hover or a
+   * selection: a row that climbs to card height under the pointer announces a
+   * new surface every time the cursor crosses it.
    */
   card: { name: "Card", hex: "#1A1A1A", on: "foreground" },
   /**
-   * The fill a row, a menu option or a ghost button takes **under the
-   * pointer**. The smallest lift the theme ships, on purpose: a hover has to
-   * read as a change of state, not as a new surface arriving. It is transient
-   * and never the ground a block of content is authored on — that is the card.
+   * **The ground that is lifted off what is behind it**, for either of the two
+   * reasons a thing is: because a pointer or the keyboard is on it — a hovered
+   * row, a focused menu option, a ghost button under the cursor — or because it
+   * is set back from its neighbours — a skeleton's bars while a list loads, an
+   * unselected filter pill, a read-only field, an inset panel, a quoted reply.
    *
-   * Never the only mark of a selected state either. A lift this small is a hint
-   * the pointer takes with it when it leaves, and a selection has to survive
-   * the pointer leaving.
-   */
-  accent: { name: "Accent", hex: "#212121", on: "foreground" },
-  /**
-   * The ground under a **de-emphasised block**: a skeleton's bars while a list
-   * loads, an unselected filter pill, an inset panel that has to sit back from
-   * the content around it.
+   * One grey for both, because they are one statement: this is raised from the
+   * surface it sits on. A ladder that spent a separate step on each had two
+   * greys nobody could tell apart, and it had to spend the quiet one on a state
+   * to get them — so the distinction it bought was imaginary and the cost was
+   * real.
+   *
+   * **A ground lifts once.** A thing already resting on this grey has nowhere
+   * further to go, so it answers the pointer with its ink (to `foreground`) and
+   * its edge (to `foreground`), never with a second lift. And a selection that
+   * has to survive the pointer leaving takes a mark rather than a fill: the
+   * brand's own act colour on a leading edge, a check, or a filled chip. A
+   * ground alone cannot say *chosen* here, and pretending it can is what the
+   * fourth step used to be for.
+   *
+   * **Disabled is opacity, never this grey.** A disabled control keeps its
+   * ground and loses its ink; a quiet block keeps its ink and changes ground.
+   * Drawing both with one fill makes an unavailable thing and a de-emphasised
+   * thing look identical, which is the one confusion a grey ladder must not
+   * introduce.
    *
    * It is the lightest ground the library ships, which makes it the one every
    * text pairing is bound by: a colour that clears its threshold here clears it
-   * on all four grounds.
+   * on all three grounds.
    *
    * Its ink is `foreground`, like every other ground here — `mutedForeground`
-   * below is *not* this token's companion. That one is secondary text, which
-   * reads on every ground rather than on this one, so no `muted-foreground`
-   * companion is generated for `muted`.
+   * below is *not* this token's companion, so no `lifted-foreground` is
+   * generated.
    *
-   * Never under the reading column a page exists to show. This is the ground
-   * that sets content back, and setting back the thing the reader came for is a
-   * contradiction the eye notices before the mind does.
+   * Never under the reading column a page exists to show. Setting back the
+   * thing the reader came for is a contradiction the eye notices before the
+   * mind does.
    */
-  muted: { name: "Muted", hex: "#262626", on: "foreground" },
+  lifted: { name: "Lifted", hex: "#262626", on: "foreground" },
   /**
-   * Secondary text: captions, metadata, the line under a title.
+   * **The quiet ink**: captions, metadata, the line under a title.
    *
    * Reach for it for what accompanies the sentence, never for the sentence
    * itself — a surface whose main line is set in it is a surface asking to be
-   * skipped. It is measured only against the four neutral grounds, so it is
+   * skipped. It is measured only against the three neutral grounds, so it is
    * never text on a brand or family fill; those fills carry their own ink.
+   *
+   * **It is ink, and it is not the companion of any ground.** Its name is a
+   * historical accident of a deleted grey; nothing is authored *on* it and no
+   * surface names it as its `on`. It reads on every ground the theme ships,
+   * which is the whole of what it is for.
    */
-  mutedForeground: { name: "Muted ink", hex: "#A6A6A6" },
+  mutedForeground: { name: "Quiet ink", hex: "#A6A6A6" },
   /**
    * Borders and dividers. Furniture edges are neutral; colour arrives on an
    * edge only where the border is the construct.
@@ -274,6 +300,13 @@ export const NEUTRALS = {
    * field's rest state. Never as text and never as a fill — at this value it is
    * an edge and nothing else, and a block of it is a dead grey panel a reader
    * cannot place.
+   *
+   * It is the **rest** value of an edge that also carries a state. Where a
+   * thing resting on `lifted` answers the pointer, it does so by taking its
+   * border up to `foreground`; where it is chosen, the edge goes to `act`. Both
+   * start here, which is why an edge that will ever move is drawn at this value
+   * from the beginning rather than added when the state arrives — an edge that
+   * appears on hover is two pixels of layout landing under the cursor.
    */
   border: { name: "Border", hex: "#333333" },
 } as const satisfies { readonly [Id in NeutralId]: NeutralEntry<Id> };

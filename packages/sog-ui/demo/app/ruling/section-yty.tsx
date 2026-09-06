@@ -27,7 +27,7 @@
  * constructs show; and whether area takes strong and ink takes soft or the
  * other way round, which needed every hue against every construct at once. The
  * second is **ruled** — it is a per-family role table now, `YTY_ROLES` in
- * `inventory.ts`, drawn on all four grounds in section 2 — so the proposed
+ * `inventory.ts`, drawn on all three grounds in section 2 — so the proposed
  * column here simply reads the roles rather than naming a variant. What is left
  * open on this page is the first half, which is the part a grid of squares
  * cannot show: whether the tile behind a glyph may be a wash of the hue at all.

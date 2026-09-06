@@ -14,13 +14,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 function Code({ children }: { children: React.ReactNode }) {
   return (
-    <code className="rounded bg-muted px-1.5 py-0.5 text-sm">{children}</code>
+    <code className="rounded bg-lifted px-1.5 py-0.5 text-sm">{children}</code>
   );
 }
 
 function CodeBlock({ children, title }: { children: string; title?: string }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-muted/50">
+    <div className="overflow-x-auto rounded-lg border border-border bg-lifted">
       {title && (
         <div className="border-b border-border px-4 py-2 text-xs font-medium text-muted-foreground">
           {title}

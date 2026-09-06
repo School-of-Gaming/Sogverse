@@ -161,7 +161,7 @@ export function SessionPhotoGallery({
                 // JPEG decodes and the row wraps on real widths. `max-w-full`
                 // is the narrow-viewport backstop, and `contain` is what turns
                 // it into a letterbox rather than a crop.
-                className="h-28 w-auto max-w-full rounded-md border border-border bg-muted object-contain sm:h-36"
+                className="h-28 w-auto max-w-full rounded-md border border-border bg-lifted object-contain sm:h-36"
               />
             </button>
           </li>

@@ -149,7 +149,7 @@ function Cohort({ cohort }: { cohort: ComingUpCohort }) {
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="flex w-full items-center gap-1.5 rounded-md px-1 py-1 text-left text-sm transition-colors hover:bg-accent"
+        className="flex w-full items-center gap-1.5 rounded-md px-1 py-1 text-left text-sm transition-colors hover:bg-lifted"
       >
         {open ? (
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
@@ -199,7 +199,7 @@ function ItemRow({
     <Link
       href={item.href}
       title={title}
-      className="flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-accent"
+      className="flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-lifted"
     >
       <Icon
         className={cn("h-3.5 w-3.5 shrink-0", presentation.text)}

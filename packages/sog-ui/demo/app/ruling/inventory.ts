@@ -97,7 +97,7 @@ export const YTY_ROLES: Record<YtyFamilyId, Roles> = {
    * Valor spends its strong value for both roles. Orange loses its chroma when
    * lightened where pink, green and blue do not, so soft Valor read as weak
    * ink and a strong edge beside soft ink read as two oranges; strong as ink
-   * clears the body floor on all four grounds. With this, every family spends
+   * clears the body floor on all three grounds. With this, every family spends
    * exactly one colour, which is the direction the owner asked to see: one
    * colour per element, not a pair.
    */
@@ -445,14 +445,18 @@ export interface LooseColour {
 /**
  * The colours with no token behind them.
  *
- * **Scrim, media ground and on-media ink** are real constructs the library has
- * no word for, so the proposal is that it name them rather than that the pages
- * stop using them. The scrim is drawn at two opacities today for one construct;
- * one is proposed. On-media ink is a separate token from the app's Ink because
- * over the brightest thing a scrim can cover, one step down from white is the
- * step that stops it clearing the body floor. The media ground is true black,
- * which is right behind video and wrong as a page ground — which is why the
- * library's Ground is not black.
+ * **Media ground and on-media ink** are real constructs the library has no word
+ * for, so the proposal is that it name them rather than that the pages stop
+ * using them. On-media ink is a separate token from the app's Ink because over
+ * the brightest thing a scrim can cover, one step down from white is the step
+ * that stops it clearing the body floor. The media ground is true black, which
+ * is right behind video and wrong as a page ground — which is why the library's
+ * Ground is not black.
+ *
+ * **The scrim's own row has left this table.** It was admitted, and it is the
+ * library's `SCRIM` now — one black at one strength — so it is no longer a
+ * colour with no token behind it. What its ruling did not settle is what reads
+ * on it, which is the on-media ink row above.
  *
  * **The identicon's white and black** become Ink and Ground. Its black square
  * reads as a hole on a card, being darker than anything else on the page. Its
@@ -475,13 +479,6 @@ export interface LooseColour {
  * ours.
  */
 export const LOOSE_COLOURS: readonly LooseColour[] = [
-  {
-    label: "Scrim",
-    value: "#000000",
-    where: "ui/dialog.tsx, ui/sheet.tsx, family/ProfileTiles.tsx",
-    uses: 3,
-    verdict: "admit",
-  },
   {
     label: "Media ground",
     value: "#000000",
@@ -556,7 +553,7 @@ export interface AlphaSite {
  *
  *     grep -rhoE "\b(bg|from|to|via|text|border|ring|shadow|divide|outline|fill|stroke)-[a-z0-9-]+/[0-9]+" src --include=*.tsx --include=*.ts | sed -E 's/^([a-z]+)-(.*)\/([0-9]+)$/\2/' | sort | uniq -c | sort -rn
  *
- * 249 sites in 112 files. The character class takes digits as well as letters
+ * 200 sites in 94 files. The character class takes digits as well as letters
  * because the sixteen zone hues are `pick-1` to `pick-16` now: a letters-only
  * class silently drops all sixteen and reports a total that looks plausible,
  * which is the failure mode a regeneration command exists to prevent.
@@ -576,8 +573,15 @@ export interface AlphaSite {
  *
  * What remains is open under another question rather than this one: the eight
  * `text-white/*` are the Klingon easter egg, the sixteen Yty strong steps are
- * the element recipe, the sixteen pick steps are the zone tile, the neutrals
- * ride the greys and the status tints ride the status set.
+ * the element recipe, the sixteen pick steps are the zone tile, and the status
+ * tints ride the status set.
+ *
+ * **The grey rows have left this table with the greys.** `bg-muted/*` and
+ * `bg-accent/*` were 49 of these sites, and none of them was layering over a
+ * ground the system had not chosen: they were the quiet ground drawn faint, or
+ * a hover drawn fainter, on a card whose colour was known all along. With one
+ * lifted grey there is nothing to draw a fraction of, so every one of them is
+ * the plain token now.
  *
  * **The one shape that is neither.** Four sites — the amber, violet and red
  * button hovers in `ui/button.tsx`, and the same red on the payment-problem
@@ -597,11 +601,6 @@ export const ALPHA_SITES: readonly AlphaSite[] = [
     step: "act",
     where: "eleven jobs — see the act and world table",
     uses: 51,
-  },
-  {
-    step: "muted",
-    where: "quiet blocks, code samples, reply strips, every skeleton",
-    uses: 44,
   },
   {
     step: "destructive",
@@ -646,11 +645,6 @@ export const ALPHA_SITES: readonly AlphaSite[] = [
   {
     step: "world",
     where: "four gradients, and the violet button hover",
-    uses: 5,
-  },
-  {
-    step: "accent",
-    where: "the checkbox row, the filter dropdown, two voice rows",
     uses: 5,
   },
   {

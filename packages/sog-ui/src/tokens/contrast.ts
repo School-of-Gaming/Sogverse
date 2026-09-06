@@ -80,16 +80,15 @@ export type Pairing = {
 /**
  * Every ground the library fills — the complete set a text token can land on.
  *
- * `muted` is the lightest of the four, so it binds: a foreground that clears
- * its threshold there clears it on the hover fill, on the card and on the page.
- * Measuring all four rather than only the binding one is what makes that claim
- * checkable instead of remembered.
+ * `lifted` is the lightest of the three, so it binds: a foreground that clears
+ * its threshold there clears it on the card and on the page. Measuring all
+ * three rather than only the binding one is what makes that claim checkable
+ * instead of remembered.
  */
-const GROUNDS = [
+export const GROUNDS = [
   { token: "background", hex: NEUTRALS.background.hex, label: "the page" },
   { token: "card", hex: NEUTRALS.card.hex, label: "a card" },
-  { token: "accent", hex: NEUTRALS.accent.hex, label: "a row under the pointer" },
-  { token: "muted", hex: NEUTRALS.muted.hex, label: "a de-emphasised block" },
+  { token: "lifted", hex: NEUTRALS.lifted.hex, label: "a lifted block" },
 ] as const;
 
 const INK: PairingSide = { token: "background", hex: NEUTRALS.background.hex };

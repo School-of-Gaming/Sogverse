@@ -198,8 +198,8 @@ export function SkeletonTile({ size = "default" }: { size?: TileSize }) {
       aria-hidden
       className={cn("flex flex-col items-center gap-2", TILE_WIDTH[size])}
     >
-      <div className="aspect-square w-full animate-pulse rounded-lg bg-muted" />
-      <div className={cn("animate-pulse rounded bg-muted", SKELETON_LABEL[size])} />
+      <div className="aspect-square w-full animate-pulse rounded-lg bg-lifted" />
+      <div className={cn("animate-pulse rounded bg-lifted", SKELETON_LABEL[size])} />
     </div>
   );
 }

@@ -20,9 +20,9 @@ import type { EffectiveProductStatus } from "@/lib/products/effective-status";
 const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
   pending: "bg-act/20 text-act",
   running: "bg-act text-act-foreground",
-  completed: "bg-muted text-muted-foreground",
+  completed: "bg-lifted text-muted-foreground",
   cancelled: "bg-destructive/20 text-destructive",
-  expired: "bg-muted text-muted-foreground",
+  expired: "bg-lifted text-muted-foreground",
 };
 
 export function ProductStatusChip({

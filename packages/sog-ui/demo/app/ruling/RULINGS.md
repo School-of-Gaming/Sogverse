@@ -429,6 +429,14 @@ drawn over the library's scrim.
 
 **Ruling:** _open — media ground and on-media ink only_
 
+**The cyan in the OG marks (page question, ruled 2026-09-06).** The owner asked why a
+colour was being defined for a partner at all. It is not: the social images inline the
+partner SVGs verbatim because the image renderer cannot import a file, and Lynx's cyan is
+baked into Lynx's own paths. The audit found the hex because it enumerated every literal.
+**Ruled: a colour inside a partner's mark is the partner's, never a token; the hex-literal
+lint exempts the mark functions in `og/marks.tsx` by name** (the partner-artwork exemption
+the library already grants). Lands with the enforcement pass; the swatch leaves the page.
+
 ## 7. The identicon
 
 **Asked:** where its white and black come from; its violet measures below the glyph

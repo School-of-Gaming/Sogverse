@@ -64,7 +64,7 @@ function UnlockSkeleton() {
       </div>
       <div className="grid grid-cols-3 place-items-center gap-4">
         {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="h-16 w-16 animate-pulse rounded-full bg-muted" />
+          <div key={i} className="h-16 w-16 animate-pulse rounded-full bg-lifted" />
         ))}
       </div>
     </div>

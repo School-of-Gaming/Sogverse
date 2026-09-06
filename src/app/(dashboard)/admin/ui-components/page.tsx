@@ -2216,8 +2216,7 @@ export default function AdminUIComponentsPage() {
           <div className="flex flex-wrap gap-4">
             <Swatch label="Background" className="bg-background" />
             <Swatch label="Card" className="bg-card" />
-            <Swatch label="Muted" className="bg-muted" />
-            <Swatch label="Accent" className="bg-accent" />
+            <Swatch label="Lifted" className="bg-lifted" />
             <Swatch label="Border" className="bg-border" />
           </div>
         </SubSection>
@@ -3806,7 +3805,7 @@ function RichTextEditorDemo() {
       </div>
       <div className="space-y-2">
         <DemoCaption>Serialised markdown</DemoCaption>
-        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-lifted p-3 text-xs text-muted-foreground">
           {markdown}
         </pre>
       </div>
@@ -3823,7 +3822,7 @@ function RichTextEditorDemo() {
       </div>
       <div className="space-y-2">
         <DemoCaption>Serialised markdown</DemoCaption>
-        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-lifted p-3 text-xs text-muted-foreground">
           {marketingMarkdown}
         </pre>
       </div>

@@ -39,7 +39,7 @@ import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@
 const STATUS_BADGE_STYLES: Record<ParticipationStatus, string> = {
   active: "bg-success text-success-foreground",
   waitlisted: "bg-warning text-warning-foreground",
-  reserving: "bg-muted text-muted-foreground",
+  reserving: "bg-lifted text-muted-foreground",
   completed: "bg-world text-world-foreground",
 };
 
@@ -76,7 +76,7 @@ function AssignedProductRow({
     <Link
       href={ROUTES.admin.product(productType, productId)}
       className={cn(
-        "group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-accent hover:text-foreground",
+        "group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-lifted hover:text-foreground",
         needsGroup && "bg-warning/5",
       )}
     >
@@ -357,7 +357,7 @@ export default async function AdminUserDetailPage({
                     <div key={gamer.id} className="space-y-2">
                       <Link
                         href={ROUTES.admin.user(gamer.id)}
-                        className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-accent hover:text-foreground"
+                        className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-lifted hover:text-foreground"
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
@@ -405,7 +405,7 @@ export default async function AdminUserDetailPage({
                   <Link
                     key={parent.id}
                     href={ROUTES.admin.user(parent.id)}
-                    className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-accent hover:text-foreground"
+                    className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-lifted hover:text-foreground"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">

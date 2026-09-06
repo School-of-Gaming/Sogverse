@@ -67,7 +67,7 @@ export function AttendanceRoster({
               "flex items-center justify-between gap-3 rounded-md border border-border px-2.5 py-1.5",
               // An unmarked row is the one that still wants something from you,
               // so it is the one that doesn't fade into the panel behind it.
-              mark === undefined ? "bg-transparent" : "bg-muted/30",
+              mark === undefined ? "bg-transparent" : "bg-lifted",
             )}
           >
             <span className="min-w-0 truncate text-sm">{gamer.firstName}</span>
@@ -92,7 +92,7 @@ export function AttendanceRoster({
                 icon={<X className="h-3 w-3" aria-hidden />}
                 // Neutral rather than destructive: an absence is a fact about
                 // the afternoon, not an error the gedu made. Neutral still has
-                // to *read* as chosen, though — a plain `bg-muted` pill sitting
+                // to *read* as chosen, though — a plain `bg-lifted` pill sitting
                 // on a muted row was near-invisible, so the selected state is a
                 // foreground-tinted fill under full-strength foreground ink,
                 // which lands as unmistakably filled without borrowing an alarm

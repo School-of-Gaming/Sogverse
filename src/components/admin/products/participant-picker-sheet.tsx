@@ -278,7 +278,7 @@ export function ParticipantPickerSheet({
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="h-20 animate-pulse rounded-lg border border-border bg-muted"
+                  className="h-20 animate-pulse rounded-lg border border-border bg-lifted"
                 />
               ))}
             </div>
@@ -418,7 +418,7 @@ function FamilyBlockRow({
       </div>
 
       {gamers.length > 0 && (
-        <div className="border-t border-border bg-muted/30">
+        <div className="border-t border-border bg-lifted">
           {gamers.map((gamer) => (
             <GamerPickerRow
               key={gamer.id}

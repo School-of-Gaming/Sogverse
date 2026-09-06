@@ -320,8 +320,8 @@ function ZoneCard({
         // inset-shadow glow marks "you're here". Non-active: the neutral border
         // alone, with no glow.
         isCurrent && zone.color.glow,
-        isOver && canDropHere && "ring-2 ring-act bg-accent/40",
-        tappable && "cursor-pointer hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+        isOver && canDropHere && "ring-2 ring-act bg-lifted",
+        tappable && "cursor-pointer hover:bg-lifted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
       )}
     >
       <div className="flex items-center gap-2">
@@ -330,7 +330,7 @@ function ZoneCard({
         </span>
         <span className="flex-1 truncate text-sm font-medium">{label}</span>
         {zone.isLocked && (
-          <span className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <span className="flex shrink-0 items-center gap-1 rounded-full bg-lifted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
             <Lock className="h-2.5 w-2.5" />
             {t("privateZone")}
           </span>
@@ -547,7 +547,7 @@ function MemberArea({
           onPointerUp={() => endHold(-1)}
           onPointerCancel={() => endHold(-1)}
           onClick={(e) => e.stopPropagation()}
-          className="glass absolute left-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-accent touch-none"
+          className="glass absolute left-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-lifted touch-none"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -564,7 +564,7 @@ function MemberArea({
           onPointerUp={() => endHold(1)}
           onPointerCancel={() => endHold(1)}
           onClick={(e) => e.stopPropagation()}
-          className="glass absolute right-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-accent touch-none"
+          className="glass absolute right-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-lifted touch-none"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

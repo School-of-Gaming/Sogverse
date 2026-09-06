@@ -47,7 +47,7 @@ export function StaffNoteBlock({
   return (
     <div
       className={cn(
-        "rounded-md border border-dashed border-border bg-muted/60 p-3",
+        "rounded-md border border-dashed border-border bg-lifted p-3",
         className,
       )}
     >

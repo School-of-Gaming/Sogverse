@@ -97,8 +97,7 @@ import {
   Panel,
 } from "./parts";
 
-const ACCENT = NEUTRALS.accent.hex;
-const MUTED = NEUTRALS.muted.hex;
+const LIFTED = NEUTRALS.lifted.hex;
 
 /** Today's four families as Sogverse spends them, and the roles as ruled. */
 interface FamilyPaint {
@@ -305,7 +304,7 @@ function ParticipantRows({ success, destructive }: { success: string; destructiv
         >
           <span
             className="h-8 w-8 shrink-0 rounded-md"
-            style={{ backgroundColor: MUTED }}
+            style={{ backgroundColor: LIFTED }}
           />
           <span className="min-w-0 max-w-fit flex-1 truncate text-sm font-medium">
             {person.name}
@@ -447,13 +446,13 @@ function AttentionCard({
 /**
  * `admin/dashboard/schedule-panel.tsx` — the type filter chips,
  * class-for-class: `inline-flex items-center gap-1.5 rounded-full border
- * border-border px-2.5 py-1 text-xs font-medium`, active on `bg-accent
+ * border-border px-2.5 py-1 text-xs font-medium`, active on `bg-lifted
  * text-foreground` and resting on `text-muted-foreground`, with the same
  * tinted glyph at `h-3.5 w-3.5`.
  *
  * The first two are drawn active and the last two resting, because that is the
  * state an admin's filter is usually in and because a chip's glyph reads
- * differently on the accent fill than on the card.
+ * differently on the lifted fill than on the card.
  */
 function TypeChips({ ink }: { ink: (kind: ProductKindId) => string }) {
   return (
@@ -465,7 +464,7 @@ function TypeChips({ ink }: { ink: (kind: ProductKindId) => string }) {
             key={kind}
             className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium"
             style={{
-              backgroundColor: active ? ACCENT : "transparent",
+              backgroundColor: active ? LIFTED : "transparent",
               color: active ? INK : MUTED_INK,
             }}
           >

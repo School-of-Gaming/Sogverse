@@ -205,7 +205,7 @@ export function AdminSitesPage() {
                    */
                   <tr
                     key={row.id}
-                    className="group relative border-b border-border transition-colors last:border-b-0 hover:bg-accent focus-within:bg-accent"
+                    className="group relative border-b border-border transition-colors last:border-b-0 hover:bg-lifted focus-within:bg-lifted"
                   >
                     <td className="px-3 py-2">
                       <Link

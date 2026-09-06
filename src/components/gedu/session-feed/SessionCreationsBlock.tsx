@@ -86,7 +86,7 @@ export function SessionCreationsBlock({
     <div
       className={cn(
         "space-y-2 rounded-md border border-border p-2.5",
-        owed ? "bg-warning/5" : "bg-muted/20",
+        owed ? "bg-warning/5" : "bg-lifted",
       )}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -142,10 +142,10 @@ export function SessionCreationsBlock({
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   "disabled:cursor-not-allowed disabled:opacity-50",
                   has
-                    ? "bg-muted/40 text-muted-foreground hover:text-foreground"
+                    ? "bg-lifted text-muted-foreground hover:text-foreground"
                     : owed
                       ? "bg-warning/15 font-semibold text-warning"
-                      : "text-foreground hover:bg-muted",
+                      : "text-foreground hover:bg-lifted",
                 )}
               >
                 {has ? (

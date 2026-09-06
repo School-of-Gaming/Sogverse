@@ -119,7 +119,7 @@ export function labelOn(fill: string): string {
 }
 
 /** The neutral panel every no-tint candidate sits on inside a card. */
-export const NEUTRAL_PANEL = NEUTRALS.muted.hex;
+export const NEUTRAL_PANEL = NEUTRALS.lifted.hex;
 
 /**
  * One status, as the two roles it is spent in.

@@ -147,7 +147,7 @@ export default function RobloxPage() {
 
       {/* How it works — ahead of the events list, so a reader knows what the
           four steps are before meeting the thing they take those steps on. */}
-      <section className="bg-muted/30 py-16 sm:py-24">
+      <section className="bg-lifted py-16 sm:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <Eyebrow>{t("how.eyebrow")}</Eyebrow>
@@ -176,7 +176,7 @@ export default function RobloxPage() {
 
       {/* Why join — after the events, where it answers the hesitation a reader
           has once they have seen what is actually on offer. */}
-      <section className="bg-muted/30 py-16 sm:py-24">
+      <section className="bg-lifted py-16 sm:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <Eyebrow>{t("why.eyebrow")}</Eyebrow>

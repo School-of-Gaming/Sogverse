@@ -157,7 +157,7 @@ const CARD_GROUNDS = {
   ten: "bg-gradient-to-r from-act/10 to-world/10",
   five: "bg-gradient-to-r from-act/5 to-world/5",
   none: "bg-card",
-  neutral: "bg-gradient-to-r from-card to-muted",
+  neutral: "bg-gradient-to-r from-card to-lifted",
   rule: "bg-card",
   wash: "bg-gradient-to-r from-act to-world",
 } as const;
@@ -233,7 +233,7 @@ type LitGround = "today" | "none" | "neutral" | "rule" | "wash";
 const LIT_ACT: Record<LitGround, string> = {
   today: "bg-gradient-to-r from-act/5 to-transparent",
   none: "bg-card",
-  neutral: "bg-gradient-to-r from-muted to-transparent",
+  neutral: "bg-gradient-to-r from-lifted to-transparent",
   rule: "bg-card",
   wash: "bg-gradient-to-r from-act to-transparent",
 };
@@ -241,7 +241,7 @@ const LIT_ACT: Record<LitGround, string> = {
 const LIT_INFO_CLASS: Record<LitGround, string> = {
   today: "bg-card",
   none: "bg-card",
-  neutral: "bg-gradient-to-r from-muted to-transparent",
+  neutral: "bg-gradient-to-r from-lifted to-transparent",
   rule: "bg-card",
   wash: "bg-card",
 };
@@ -305,7 +305,7 @@ const GEDU_CHIPS: readonly { label: string; fill: string }[] = [
   },
   { label: "bg-act", fill: "bg-act text-act-foreground shadow" },
   { label: "bg-world", fill: "bg-world text-world-foreground" },
-  { label: "bg-muted text-act", fill: "bg-muted text-act" },
+  { label: "bg-lifted text-act", fill: "bg-lifted text-act" },
 ];
 
 function RoleChips({ gedu }: { gedu: string }) {
@@ -502,8 +502,8 @@ function RobloxOg({ ground }: { ground: OgGround }) {
           height={118}
           unoptimized
         />
-        <span className="block w-[220px] rounded bg-muted" style={{ height: "68px" }} />
-        <span className="block w-[290px] rounded bg-muted" style={{ height: "54px" }} />
+        <span className="block w-[220px] rounded bg-lifted" style={{ height: "68px" }} />
+        <span className="block w-[290px] rounded bg-lifted" style={{ height: "54px" }} />
       </div>
     </OgFrame>
   );
@@ -522,7 +522,7 @@ const HERO_PANELS: readonly { label: string; ground: HeroGround }[] = [
 const CARD_PANELS: readonly { label: string; ground: CardGround }[] = [
   { label: "from-act/10 to-world/10", ground: "ten" },
   { label: "bg-card", ground: "none" },
-  { label: "from-card to-muted", ground: "neutral" },
+  { label: "from-card to-lifted", ground: "neutral" },
   { label: "from-act to-world, a 3px rule", ground: "rule" },
   { label: "from-act to-world, a wash", ground: "wash" },
 ];
@@ -530,7 +530,7 @@ const CARD_PANELS: readonly { label: string; ground: CardGround }[] = [
 const ABOUT_PANELS: readonly { label: string; ground: CardGround }[] = [
   { label: "from-act/5 to-world/5", ground: "five" },
   { label: "bg-card", ground: "none" },
-  { label: "from-card to-muted", ground: "neutral" },
+  { label: "from-card to-lifted", ground: "neutral" },
   { label: "from-act to-world, a 3px rule", ground: "rule" },
   { label: "from-act to-world, a wash", ground: "wash" },
 ];
@@ -538,7 +538,7 @@ const ABOUT_PANELS: readonly { label: string; ground: CardGround }[] = [
 const LIT_PANELS: readonly { label: string; ground: LitGround }[] = [
   { label: "from-act/5 to-transparent", ground: "today" },
   { label: "bg-card", ground: "none" },
-  { label: "from-muted to-transparent", ground: "neutral" },
+  { label: "from-lifted to-transparent", ground: "neutral" },
   { label: "a 3px leading rule", ground: "rule" },
   { label: "from-act to-transparent", ground: "wash" },
 ];
@@ -553,7 +553,7 @@ const OG_PANELS: readonly { label: string; ground: OgGround }[] = [
 
 export function GradientsSection() {
   return (
-    <Question n={8} title="Gradients">
+    <Question n={7} title="Gradients">
       <Case title="The hero">
         <Compare columns={3}>
           {HERO_PANELS.map((panel) => (

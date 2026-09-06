@@ -117,8 +117,12 @@ function ContactList({
             key={contact.phone}
             onClick={() => onSelect(contact.phone)}
             className={cn(
-              "flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-accent hover:text-foreground",
-              selectedPhone === contact.phone && "bg-muted"
+              // The 2px leading edge is drawn on every row, in the neutral
+              // border colour, and only its colour moves when a conversation is
+              // chosen: an edge that appears with the selection would land two
+              // pixels of layout under the pointer that just clicked it.
+              "flex w-full items-center gap-3 border-b border-l-2 border-border px-4 py-3 text-left transition-colors hover:bg-lifted hover:text-foreground",
+              selectedPhone === contact.phone && "border-l-act text-foreground"
             )}
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-act/20 text-sm font-medium text-act">
@@ -206,7 +210,7 @@ function ChatThread({
         {dateGroups.map((group) => (
           <div key={group.date}>
             <div className="flex justify-center py-2">
-              <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+              <span className="rounded-full bg-lifted px-3 py-1 text-xs text-muted-foreground">
                 {group.date}
               </span>
             </div>
@@ -225,10 +229,10 @@ function ChatThread({
                       msg.status === WHATSAPP_MESSAGE_STATUS.FAILED
                         ? "bg-destructive/15 text-destructive"
                         : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
-                          ? "bg-muted/50 text-muted-foreground"
+                          ? "bg-lifted text-muted-foreground"
                           : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
                             ? "bg-act text-act-foreground"
-                            : "bg-muted text-foreground"
+                            : "bg-lifted text-foreground"
                     )}
                   >
                     <p className="whitespace-pre-wrap break-words">{msg.body}</p>

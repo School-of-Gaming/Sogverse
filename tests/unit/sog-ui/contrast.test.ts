@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { NEUTRALS, YTY_FAMILIES } from "../../../packages/sog-ui/src/tokens/brand";
+import { YTY_FAMILIES } from "../../../packages/sog-ui/src/tokens/brand";
 import {
+  GROUNDS,
   PAIRINGS,
   contrastRatio,
   measure,
@@ -20,7 +21,7 @@ describe("shipped pairings", () => {
   // Vitest's `it.each([])` registers nothing and the suite passes green, so every
   // table in this file is floored: an emptied list must fail rather than vanish.
   it("has the whole shipped list to walk", () => {
-    expect(PAIRINGS.length).toBeGreaterThanOrEqual(30);
+    expect(PAIRINGS.length).toBeGreaterThanOrEqual(24);
   });
 
   it.each(PAIRINGS.map((pairing) => [pairing.id, pairing] as const))(
@@ -45,19 +46,17 @@ describe("shipped pairings", () => {
  * If a retune ever lifted it over the body floor, the rule would have lost the
  * case that forces it and would have to be re-argued rather than inherited.
  */
-const GROUNDS: [string, string][] = [
-  ["the page", NEUTRALS.background.hex],
-  ["a card", NEUTRALS.card.hex],
-  ["a row under the pointer", NEUTRALS.accent.hex],
-  ["a de-emphasised block", NEUTRALS.muted.hex],
-];
+const GROUND_CASES: [string, string][] = GROUNDS.map((ground) => [
+  ground.label,
+  ground.hex,
+]);
 
 describe("the wit-strong band", () => {
   it("has every ground to measure against", () => {
-    expect(GROUNDS).toHaveLength(4);
+    expect(GROUND_CASES.length).toBeGreaterThanOrEqual(3);
   });
 
-  it.each(GROUNDS)(
+  it.each(GROUND_CASES)(
     "wit-strong on %s clears the glyph floor and misses the body floor",
     (_label, ground) => {
       const ratio = contrastRatio(YTY_FAMILIES.wit.strong, ground);

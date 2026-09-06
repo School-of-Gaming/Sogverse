@@ -33,6 +33,9 @@ import {
 const SPECIMEN = "Sogverse ABCÄÖ abcäö 0123";
 const SIGNATURE = "Aino Virtanen";
 
+/** Three rows, so the lift can be seen against the rows that are not lifted. */
+const PEOPLE = ["Aino Virtanen", "Mikael Korhonen", "Sofia Lindgren"];
+
 /** The kinds in the order the grammar table declares them. */
 const KINDS = [
   "consumer_club",
@@ -71,6 +74,54 @@ function Photograph() {
       sizes="(min-width: 1024px) 24rem, 100vw"
       className="object-cover"
     />
+  );
+}
+
+/**
+ * The lifted grey doing both of its jobs, live, on the card it really sits on.
+ *
+ * A swatch cannot show this one. The grey is the ground a thing takes when it
+ * is raised off what is behind it, and there are exactly two reasons a thing is
+ * — a pointer is on it, or it is set back from its neighbours — so the pair is
+ * drawn together and the hover is real: the lift has to be findable by moving a
+ * cursor, not by comparing two squares. The skeleton beside it is the same
+ * value at rest, which is the point rather than a collision: one is transient
+ * and one is not, and nothing is confused by them agreeing, because a skeleton
+ * bar is not something a pointer can be on.
+ */
+function LiftedInUse() {
+  return (
+    <div className="grid gap-6 sm:grid-cols-2">
+      <div>
+        <div className="rounded-lg border border-border bg-card p-2">
+          {PEOPLE.map((person) => (
+            <button
+              key={person}
+              type="button"
+              className="flex w-full items-center rounded-md px-3 py-2 text-left text-body-s transition-colors hover:bg-lifted"
+            >
+              {person}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-h4 font-medium">Under the pointer</p>
+        <p className="font-brand-mono text-body-s text-muted-foreground">
+          hover:bg-lifted
+        </p>
+      </div>
+
+      <div>
+        <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+          <div className="h-4 w-40 max-w-full animate-pulse rounded bg-lifted" />
+          <div className="h-4 w-56 max-w-full animate-pulse rounded bg-lifted" />
+          <div className="h-4 w-32 max-w-full animate-pulse rounded bg-lifted" />
+        </div>
+        <p className="mt-2 text-h4 font-medium">Set back</p>
+        <p className="font-brand-mono text-body-s text-muted-foreground">
+          bg-lifted
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -122,6 +173,9 @@ export default function FoundationsPage() {
               hex={neutral.hex}
             />
           ))}
+        </div>
+        <div className="mt-10">
+          <LiftedInUse />
         </div>
       </Section>
 
@@ -244,7 +298,7 @@ export default function FoundationsPage() {
                   {SIGNATURE}
                 </p>
                 <p className="text-body-l">{SPECIMEN}</p>
-                <div className="rounded-lg border border-border bg-muted p-4">
+                <div className="rounded-lg border border-border bg-lifted p-4">
                   <p className="text-body-s">{SPECIMEN}</p>
                 </div>
                 <p className="text-body-l">{SPECIMEN}</p>

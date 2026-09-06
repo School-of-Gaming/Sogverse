@@ -357,8 +357,8 @@ export function GroupsPanelView({
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="h-20 animate-pulse rounded-lg bg-muted" />
-            <div className="h-20 animate-pulse rounded-lg bg-muted" />
+            <div className="h-20 animate-pulse rounded-lg bg-lifted" />
+            <div className="h-20 animate-pulse rounded-lg bg-lifted" />
           </div>
         </CardContent>
       </Card>

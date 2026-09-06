@@ -137,7 +137,7 @@ export function UserMarketingCard({
                     // machine-authored site-wide. `break-all` because a UTM
                     // value can be an expanded ad name of up to 200 characters
                     // with no break opportunity in it.
-                    <dd className="break-all rounded-md border border-border bg-muted/50 px-2 py-0.5 font-mono font-semibold">
+                    <dd className="break-all rounded-md border border-border bg-lifted px-2 py-0.5 font-mono font-semibold">
                       {value}
                     </dd>
                   )}
@@ -194,7 +194,7 @@ export function UserMarketingCard({
                           className={
                             row?.granted
                               ? "bg-success text-success-foreground"
-                              : "bg-muted text-muted-foreground"
+                              : "bg-lifted text-muted-foreground"
                           }
                         >
                           {row?.granted ? t("granted") : t("notGranted")}

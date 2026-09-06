@@ -209,7 +209,7 @@ export default function AdminUsersPage() {
               className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 roleFilter === null
                   ? "bg-info text-info-foreground"
-                  : "bg-muted text-muted-foreground"
+                  : "bg-lifted text-muted-foreground"
               }`}
             >
               {t('all')}
@@ -221,7 +221,7 @@ export default function AdminUsersPage() {
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   roleFilter === rf.value
                     ? ROLE_BADGE_STYLES[rf.value]
-                    : "bg-muted text-muted-foreground"
+                    : "bg-lifted text-muted-foreground"
                 }`}
               >
                 {rf.label}
@@ -237,10 +237,10 @@ export default function AdminUsersPage() {
                   key={i}
                   className="flex items-center gap-4 rounded-lg border border-border p-4 animate-pulse"
                 >
-                  <div className="h-10 w-10 rounded-md bg-muted" />
+                  <div className="h-10 w-10 rounded-md bg-lifted" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32 rounded bg-muted" />
-                    <div className="h-3 w-48 rounded bg-muted" />
+                    <div className="h-4 w-32 rounded bg-lifted" />
+                    <div className="h-3 w-48 rounded bg-lifted" />
                   </div>
                 </div>
               ))}

@@ -123,7 +123,7 @@ function SogFallback({ className }: { className?: string }) {
       preserveAspectRatio="xMidYMid meet"
       className={cn("h-full w-full", className)}
     >
-      <rect width="100%" height="100%" className="fill-muted" />
+      <rect width="100%" height="100%" className="fill-lifted" />
       <text
         x="50%"
         y="50%"

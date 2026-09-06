@@ -61,12 +61,12 @@ export function GeduDashboardSkeleton({
       {/* The section pill's bar, at the height the real one occupies. */}
       <div
         aria-hidden
-        className="mx-auto mb-8 h-10 w-64 animate-pulse rounded-full bg-muted"
+        className="mx-auto mb-8 h-10 w-64 animate-pulse rounded-full bg-lifted"
       />
 
       <div aria-hidden className="space-y-24 pb-24">
         <section className="mx-auto max-w-5xl space-y-6">
-          <div className="h-9 w-40 animate-pulse rounded-md bg-muted" />
+          <div className="h-9 w-40 animate-pulse rounded-md bg-lifted" />
           {/* Three ghost cards on the same grid the real ones tile on, so the
               column count and the gutters are already right when they land. */}
           <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -77,8 +77,8 @@ export function GeduDashboardSkeleton({
         </section>
 
         <section className="mx-auto max-w-5xl space-y-6">
-          <div className="h-9 w-56 animate-pulse rounded-md bg-muted" />
-          <div className="h-40 animate-pulse rounded-lg border border-border bg-muted/40" />
+          <div className="h-9 w-56 animate-pulse rounded-md bg-lifted" />
+          <div className="h-40 animate-pulse rounded-lg border border-border bg-lifted" />
         </section>
 
         {/* Help & feedback: two cards under a heading. Ghosted like the rest
@@ -87,9 +87,9 @@ export function GeduDashboardSkeleton({
             be pushed down the page by the sections landing above it, which is
             the one shift the layout rules forbid. */}
         <section className="mx-auto max-w-5xl space-y-6">
-          <div className="h-9 w-48 animate-pulse rounded-md bg-muted" />
-          <div className="h-28 animate-pulse rounded-lg border border-border bg-muted/40" />
-          <div className="h-64 animate-pulse rounded-lg border border-border bg-muted/40" />
+          <div className="h-9 w-48 animate-pulse rounded-md bg-lifted" />
+          <div className="h-28 animate-pulse rounded-lg border border-border bg-lifted" />
+          <div className="h-64 animate-pulse rounded-lg border border-border bg-lifted" />
         </section>
       </div>
     </>
@@ -106,14 +106,14 @@ function GhostCard() {
   return (
     <div className="h-full space-y-4 rounded-lg border border-border p-5">
       <div className="space-y-2">
-        <div className="h-3 w-16 animate-pulse rounded bg-muted" />
-        <div className="h-5 w-3/4 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+        <div className="h-3 w-16 animate-pulse rounded bg-lifted" />
+        <div className="h-5 w-3/4 animate-pulse rounded bg-lifted" />
+        <div className="h-4 w-1/2 animate-pulse rounded bg-lifted" />
       </div>
-      <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-      <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+      <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
+      <div className="h-3 w-1/2 animate-pulse rounded bg-lifted" />
       <div className="flex justify-center pt-2">
-        <div className="h-8 w-28 animate-pulse rounded-md bg-muted" />
+        <div className="h-8 w-28 animate-pulse rounded-md bg-lifted" />
       </div>
     </div>
   );
