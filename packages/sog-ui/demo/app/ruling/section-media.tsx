@@ -1,5 +1,5 @@
 /**
- * Questions 5, 6 and 7 — the colours with no token behind them.
+ * Questions 4, 5 and 6 — the colours with no token behind them.
  *
  * The constructs Sogverse spells inline because the palette has no word for
  * them: a scrim over a page, ink that has to read on a photograph or a
@@ -142,7 +142,7 @@ function PickerChecks({ ink }: { ink: string }) {
 
 export function ScrimSection() {
   return (
-    <Question n={5} title="Scrim, and ink on media">
+    <Question n={4} title="Scrim, and ink on media">
       <Case title="The dialog scrim">
         <Compare columns={3}>
           <Panel label="Today — black at 50%">
@@ -349,7 +349,7 @@ function AvatarRow({
 
 export function IdenticonSection() {
   return (
-    <Question n={6} title="The identicon">
+    <Question n={5} title="The identicon">
       <Compare columns={2}>
         <Panel label="Today — #FFFFFF on #000000">
           <Exemplar
@@ -378,7 +378,7 @@ const LYNX = LOOSE_COLOURS.find((colour) => colour.label === "Lynx cyan");
 
 export function LynxSection() {
   return (
-    <Question n={7} title="The cyan in the OG marks">
+    <Question n={6} title="The cyan in the OG marks">
       <div className="grid max-w-2xl gap-4 sm:grid-cols-3">
         <Swatch
           hex={LYNX_CYAN}

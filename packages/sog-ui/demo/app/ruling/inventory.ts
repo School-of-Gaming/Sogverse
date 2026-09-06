@@ -7,7 +7,10 @@
  * are imported from `src/tokens/brand.ts` wherever a section below still needs
  * one. The four product-type colours have left it too, with nothing to replace
  * them — a product kind takes a Yty family now, decided in the library's tone
- * grammar, so it is no longer a colour Sogverse defines.
+ * grammar, so it is no longer a colour Sogverse defines. The sixteen voice-zone
+ * hues have left it as the library's picks: they are the colours a person
+ * chooses for their own thing, numbered rather than named, and a zone is one
+ * consumer of them rather than their definition.
  *
  * A temporary file behind a temporary page, deleted with it once the ruling is
  * made. Nothing here is a token and nothing here is imported by the library —
@@ -87,8 +90,10 @@ export interface StatusRow {
  * - **success #2EB88A → #1FC79B.** Pushed from 160° to 164°, off Glow's leaf
  *   green, into a teal that still reads as done. 8.04 on the card, 8.65 under
  *   ink.
- * - **info #308CE8 → #5FA8FF.** There is no free blue: Wit owns 204° and 220°,
- *   the product palette owns cyan at 191° and indigo at 243°. The candidate
+ * - **info #308CE8 → #5FA8FF.** There is no free blue: Wit owns 204° and 220°.
+ *   Two picks sit at 191° and 243°, which is a different kind of neighbour —
+ *   a pick says only that somebody chose it — but the eye still has to tell
+ *   them apart on a screen carrying both. The candidate
  *   fixes only the label (white 3.48 becomes ink 7.61) and leaves the
  *   collision, which is why the hueless alternative is drawn beside it.
  * - **warning #E7B008 → #DFCB25.** The worst collision in the set: a warning
@@ -139,42 +144,6 @@ export const STATUS_ROWS: readonly StatusRow[] = [
   },
 ];
 
-/** A named entry in a categorical palette. */
-export interface PaletteEntry {
-  readonly token: string;
-  readonly label: string;
-  readonly hex: string;
-}
-
-/**
- * The sixteen voice-zone colours a moderator picks from — four utility uses
- * each plus a glow variable.
- *
- * Proposed unchanged. The palette is deliberately allowed to pass close to a
- * family hue, on the grounds that a zone is its own zone; the hue strip is
- * there to test that claim. The two worth reading first are the lime zone
- * against Glow's green and the amber zone against the brand amber and the
- * warning colour.
- */
-export const ZONE_PALETTE: readonly PaletteEntry[] = [
-  { token: "zone-red", label: "Red", hex: "#F4504E" },
-  { token: "zone-orange", label: "Orange", hex: "#FB8B3C" },
-  { token: "zone-amber", label: "Amber", hex: "#F7A31F" },
-  { token: "zone-yellow", label: "Yellow", hex: "#E8C21F" },
-  { token: "zone-lime", label: "Lime", hex: "#9FC92E" },
-  { token: "zone-green", label: "Green", hex: "#46CF5A" },
-  { token: "zone-emerald", label: "Emerald", hex: "#18CF86" },
-  { token: "zone-teal", label: "Teal", hex: "#1CCCBE" },
-  { token: "zone-cyan", label: "Cyan", hex: "#25CFEE" },
-  { token: "zone-sky", label: "Sky", hex: "#38B0F7" },
-  { token: "zone-blue", label: "Blue", hex: "#5B86F0" },
-  { token: "zone-indigo", label: "Indigo", hex: "#7A72F5" },
-  { token: "zone-violet", label: "Violet", hex: "#A36BF6" },
-  { token: "zone-purple", label: "Purple", hex: "#C45FF2" },
-  { token: "zone-fuchsia", label: "Fuchsia", hex: "#E85FE0" },
-  { token: "zone-pink", label: "Pink", hex: "#F767A8" },
-];
-
 /** A colour Sogverse spells inline, with no token behind it. */
 export interface LooseColour {
   readonly label: string;
@@ -213,8 +182,9 @@ export interface LooseColour {
  * wordmark, in the single colourway they supply. Recolouring or re-deriving a
  * partner mark is what the partner asset rules forbid, so it stays a literal
  * beside the mark it belongs to and never enters the palette. Worth noting
- * beside it: the palette has no cyan of its own and the product spends two, the
- * consumer club's and the cyan zone's, which land adjacent in the hue strip.
+ * beside it: the palette has no cyan of its own, and the nearest thing the
+ * product spends is a pick, which is somebody's choice rather than a colour of
+ * ours.
  */
 export const LOOSE_COLOURS: readonly LooseColour[] = [
   {
@@ -314,7 +284,7 @@ export interface AlphaSite {
  * token nobody named. Fifteen sites are the first kind. The other 255 are the
  * second, and most of them are already in front of the owner under another
  * question: the eight `text-white/*` are the Klingon easter egg, the sixteen
- * Yty strong steps are the element recipe, the sixteen zone steps are the zone
+ * Yty strong steps are the element recipe, the sixteen pick steps are the zone
  * tile, and the status tints ride with the status set.
  *
  * **The one shape that is neither.** Four sites — the amber, violet and red
@@ -429,7 +399,7 @@ export const ALPHA_SITES: readonly AlphaSite[] = [
     ground: "a token",
   },
   {
-    step: "zone-*",
+    step: "pick-*",
     where: "voice/ZoneList.tsx, the zone tile fill",
     uses: 16,
     ground: "a token",

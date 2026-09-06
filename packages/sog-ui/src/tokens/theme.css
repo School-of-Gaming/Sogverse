@@ -35,6 +35,24 @@
   --color-yty-wit-strong: #3A71DE;
   --color-yty-wit-soft: #4DB3F5;
 
+  /* The sixteen picks — the colours a person chooses for their own thing. Numbered because a pick means nothing but whose it is; the number is a stable id, never a position. */
+  --color-pick-1: #F4504E;
+  --color-pick-2: #FB8B3C;
+  --color-pick-3: #F7A31F;
+  --color-pick-4: #E8C21F;
+  --color-pick-5: #9FC92E;
+  --color-pick-6: #46CF5A;
+  --color-pick-7: #18CF86;
+  --color-pick-8: #1CCCBE;
+  --color-pick-9: #25CFEE;
+  --color-pick-10: #38B0F7;
+  --color-pick-11: #5B86F0;
+  --color-pick-12: #7A72F5;
+  --color-pick-13: #A36BF6;
+  --color-pick-14: #C45FF2;
+  --color-pick-15: #E85FE0;
+  --color-pick-16: #F767A8;
+
   /* Faces. The package owns the names; the consumer loads the files and defines the var() each token points at, on <html> and never on <body>. */
   --font-sans: var(--font-poppins), system-ui, sans-serif;
   --font-serif: var(--font-crimson-pro), Georgia, serif;

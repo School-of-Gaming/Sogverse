@@ -31,7 +31,6 @@ import {
   LynxSection,
   ScrimSection,
 } from "./section-media";
-import { PalettesSection } from "./section-palettes";
 import { StatusSection } from "./section-status";
 import { SummarySection } from "./section-summary";
 import { YtySection } from "./section-yty";
@@ -49,7 +48,6 @@ export default function RulingPage() {
       <YtySection />
       <StatusSection />
       <GreysSection />
-      <PalettesSection />
       <ScrimSection />
       <IdenticonSection />
       <LynxSection />

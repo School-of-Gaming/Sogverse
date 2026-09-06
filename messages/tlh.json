@@ -2494,24 +2494,7 @@
       "ice-cream": "bIQ’a’ nay’",
       "coffee": "qa’vIn"
     },
-    "zoneColor": {
-      "red": "Doq",
-      "orange": "qIm",
-      "amber": "SuD Doq",
-      "yellow": "SuD wov",
-      "lime": "SuD’a’",
-      "green": "SuD",
-      "emerald": "SuDqu’",
-      "teal": "SuD chal",
-      "cyan": "Sayan",
-      "sky": "chal",
-      "blue": "SuD qIj",
-      "indigo": "indigo",
-      "violet": "morgh",
-      "purple": "morghqu’",
-      "fuchsia": "pIQqu’",
-      "pink": "pIQ"
-    },
+    "zoneColor": "{number}DIch nguv",
     "instant": {
       "joinFailed": "Daq muv Dabe’lu’. yItoH’egh!",
       "share": {

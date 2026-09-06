@@ -3137,24 +3137,7 @@
       "ice-cream": "Ice cream",
       "coffee": "Coffee"
     },
-    "zoneColor": {
-      "red": "Red",
-      "orange": "Orange",
-      "amber": "Amber",
-      "yellow": "Yellow",
-      "lime": "Lime",
-      "green": "Green",
-      "emerald": "Emerald",
-      "teal": "Teal",
-      "cyan": "Cyan",
-      "sky": "Sky",
-      "blue": "Blue",
-      "indigo": "Indigo",
-      "violet": "Violet",
-      "purple": "Purple",
-      "fuchsia": "Fuchsia",
-      "pink": "Pink"
-    },
+    "zoneColor": "Color {number}",
     "instant": {
       "joinFailed": "Couldn’t join the room. Please try again.",
       "share": {

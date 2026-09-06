@@ -2450,24 +2450,7 @@
       "ice-cream": "Glass",
       "coffee": "Kaffe"
     },
-    "zoneColor": {
-      "red": "Röd",
-      "orange": "Orange",
-      "amber": "Bärnsten",
-      "yellow": "Gul",
-      "lime": "Lime",
-      "green": "Grön",
-      "emerald": "Smaragd",
-      "teal": "Turkos",
-      "cyan": "Cyan",
-      "sky": "Himmelsblå",
-      "blue": "Blå",
-      "indigo": "Indigo",
-      "violet": "Violett",
-      "purple": "Lila",
-      "fuchsia": "Fuchsia",
-      "pink": "Rosa"
-    },
+    "zoneColor": "Färg {number}",
     "instant": {
       "joinFailed": "Kunde inte gå med i rummet. Försök igen.",
       "share": {

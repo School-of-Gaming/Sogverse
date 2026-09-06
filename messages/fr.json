@@ -2450,24 +2450,7 @@
       "ice-cream": "Glace",
       "coffee": "Café"
     },
-    "zoneColor": {
-      "red": "Rouge",
-      "orange": "Orange",
-      "amber": "Ambre",
-      "yellow": "Jaune",
-      "lime": "Vert citron",
-      "green": "Vert",
-      "emerald": "Émeraude",
-      "teal": "Bleu sarcelle",
-      "cyan": "Cyan",
-      "sky": "Bleu ciel",
-      "blue": "Bleu",
-      "indigo": "Indigo",
-      "violet": "Violet",
-      "purple": "Pourpre",
-      "fuchsia": "Fuchsia",
-      "pink": "Rose"
-    },
+    "zoneColor": "Couleur {number}",
     "instant": {
       "joinFailed": "Impossible de rejoindre la salle. Veuillez réessayer.",
       "share": {

@@ -42,6 +42,7 @@ import {
   Coffee,
   type LucideIcon,
 } from "lucide-react";
+import { PICKS, type PickId } from "@sog/ui";
 import { YTY_ELEMENTS, type YtyElementId } from "./yty";
 
 /**
@@ -79,15 +80,22 @@ export type YtyZoneId = (typeof YTY_ZONE_IDS)[number];
 export const AVATAR_SIZE = 56;
 
 // ---------------------------------------------------------------------------
-// Custom-zone palette — the icons + colors a moderator can pick, chosen to be
-// instantly recognizable to a 7-year-old.
+// Custom-zone appearance — the icon and the colour a moderator picks for a zone
+// they made, chosen to be instantly recognizable to a 7-year-old.
 //
-// THIS IS THE SOURCE OF TRUTH for the valid icon/color sets. The `voice_zones`
-// `icon`/`color` columns are plain `text` (not DB enums), so adding, removing,
-// or renaming an entry here is a pure code change — no migration. The KEYS tuple
+// THIS FILE IS THE SOURCE OF TRUTH FOR THE ICONS. It is NOT the source of the
+// colours: those are @sog/ui's sixteen picks — the colours a person may choose
+// for their own thing — and all this file decides is how one of them is painted
+// onto a zone. A zone colour therefore means "a moderator picked this", never a
+// status, a kind or a meaning the app assigned.
+//
+// The `voice_zones` `icon`/`color` columns are plain `text` (not DB enums), so
+// adding, removing, or renaming an entry is a pure code change — no migration
+// (docs/investigations/enum-candidates.md §D, which still holds: the value set
+// is presentational and mod-gated, not a security boundary). The KEYS tuple
 // drives both the type and the picker order; the map below must cover exactly
 // those keys (the `Record<…>` type enforces it, so the two can't drift). The
-// renderer falls back to a default glyph/color for any key not in the map
+// renderer falls back to a default glyph/colour for any key not in the map
 // (`zoneIconFor` / `zoneColorFor`), so a row pointing at a removed key is safe.
 // ---------------------------------------------------------------------------
 
@@ -164,16 +172,16 @@ export const VOICE_ZONE_ICONS: Record<VoiceZoneIcon, LucideIcon> = {
   sailboat: Sailboat,
 };
 
-/** A custom-zone color, expressed as five literal class strings (never built by
+/** A custom-zone colour, expressed as five literal class strings (never built by
  *  string templating, so Tailwind's source scanner can see every utility):
- *  - `tile`  — soft-tint background for the zone-card icon tile (`bg-zone-X/15`)
- *  - `glyph` — the icon color (`text-zone-X`), readable on the dark ground
- *  - `ring`  — the picker's selection ring (`ring-zone-X`)
+ *  - `tile`  — soft-tint background for the zone-card icon tile (`bg-pick-N/15`)
+ *  - `glyph` — the icon colour (`text-pick-N`), readable on the dark ground
+ *  - `ring`  — the picker's selection ring (`ring-pick-N`)
  *  - `glow`  — the active-zone treatment: the shared `.zone-glow` class (the
  *              inset-shadow geometry, defined once in globals.css) plus an
- *              arbitrary-property class binding this color into `--glow-color`,
- *              so the color spills in from the border and fades toward center
- *  - `solid` — the full-saturation fill (`bg-zone-X`) the picker shows as a
+ *              arbitrary-property class binding this colour into `--glow-color`,
+ *              so the colour spills in from the border and fades toward center
+ *  - `solid` — the full-saturation fill (`bg-pick-N`) the picker shows as a
  *              vibrant swatch (the card uses the soft `tile` tint instead) */
 export interface ZoneColorClasses {
   tile: string;
@@ -183,45 +191,58 @@ export interface ZoneColorClasses {
   solid: string;
 }
 
-/** Ordered color keys — source of truth for the valid set and picker order.
- *  A vibrant warm→cool rainbow that fills the picker's 2 rows of 8. See the
- *  `--color-zone-*` tokens in globals.css for the hues and why they avoid the
- *  Yty element colors. */
-export const VOICE_ZONE_COLOR_KEYS = [
-  // warm
-  "red", "orange", "amber", "yellow",
-  // green
-  "lime", "green", "emerald", "teal",
-  // blue
-  "cyan", "sky", "blue", "indigo",
-  // violet → pink
-  "violet", "purple", "fuchsia", "pink",
-] as const;
+/**
+ * A custom-zone colour key: the id of one of @sog/ui's sixteen picks, spelled
+ * as text.
+ *
+ * **Text rather than a number, because the column is text.** `voice_zones.color`
+ * is `text NOT NULL` by design, and a stored value arrives as free text at every
+ * read; keying the map by exactly the strings that can be stored means the
+ * `Record` below is exhaustive over the storable set, the guard is a plain
+ * `hasOwn` on the value as it comes out of the database, and nothing converts at
+ * the boundary. Numeric keys would put a `String()` on every write and a
+ * `Number()` on every read, and would leave the guard hand-rejecting the
+ * spellings that parse to a valid id but are not one (`"07"`, `"1.0"`, `" 1"`).
+ *
+ * The id is a stable identifier and not a position: a pick retuned to a
+ * different hue keeps its id, so every zone that chose it keeps its choice.
+ */
+export type VoiceZoneColor = `${PickId}`;
 
-/** A custom-zone color key — derived from the key tuple so the type can't drift. */
-export type VoiceZoneColor = (typeof VOICE_ZONE_COLOR_KEYS)[number];
+/** Ordered colour keys — the valid set and the picker order, both from the
+ *  library's list, which is already in picker order. */
+export const VOICE_ZONE_COLOR_KEYS: readonly VoiceZoneColor[] = PICKS.map(
+  // `as const` keeps the template literal at its literal type; without it the
+  // expression widens to `string` and the key type stops meaning anything.
+  (pick) => `${pick.id}` as const,
+);
 
-// Literal per-key class strings — NOT built as `bg-zone-${key}` (Tailwind can't
+// Literal per-key class strings — NOT built as `bg-pick-${id}` (Tailwind can't
 // scan a template); every value is a literal the source scanner sees. The glow
 // pairs the shared `.zone-glow` class (geometry — defined once in globals.css)
-// with an arbitrary-property class that binds this color into `--glow-color`.
+// with an arbitrary-property class that binds this colour into `--glow-color`.
+//
+// The `/15` tile step is the pre-library recipe: a pick exists at its authored
+// value, and a fraction of it over the dark ground is a duller colour than the
+// one the moderator chose. It stays until the alpha ruling (§9) settles what a
+// tinted tile is made of, exactly as the Yty element steps do in ./yty.ts.
 export const VOICE_ZONE_COLORS: Record<VoiceZoneColor, ZoneColorClasses> = {
-  red: { tile: "bg-zone-red/15", glyph: "text-zone-red", ring: "ring-zone-red", glow: "zone-glow [--glow-color:var(--color-zone-red)]", solid: "bg-zone-red" },
-  orange: { tile: "bg-zone-orange/15", glyph: "text-zone-orange", ring: "ring-zone-orange", glow: "zone-glow [--glow-color:var(--color-zone-orange)]", solid: "bg-zone-orange" },
-  amber: { tile: "bg-zone-amber/15", glyph: "text-zone-amber", ring: "ring-zone-amber", glow: "zone-glow [--glow-color:var(--color-zone-amber)]", solid: "bg-zone-amber" },
-  yellow: { tile: "bg-zone-yellow/15", glyph: "text-zone-yellow", ring: "ring-zone-yellow", glow: "zone-glow [--glow-color:var(--color-zone-yellow)]", solid: "bg-zone-yellow" },
-  lime: { tile: "bg-zone-lime/15", glyph: "text-zone-lime", ring: "ring-zone-lime", glow: "zone-glow [--glow-color:var(--color-zone-lime)]", solid: "bg-zone-lime" },
-  green: { tile: "bg-zone-green/15", glyph: "text-zone-green", ring: "ring-zone-green", glow: "zone-glow [--glow-color:var(--color-zone-green)]", solid: "bg-zone-green" },
-  emerald: { tile: "bg-zone-emerald/15", glyph: "text-zone-emerald", ring: "ring-zone-emerald", glow: "zone-glow [--glow-color:var(--color-zone-emerald)]", solid: "bg-zone-emerald" },
-  teal: { tile: "bg-zone-teal/15", glyph: "text-zone-teal", ring: "ring-zone-teal", glow: "zone-glow [--glow-color:var(--color-zone-teal)]", solid: "bg-zone-teal" },
-  cyan: { tile: "bg-zone-cyan/15", glyph: "text-zone-cyan", ring: "ring-zone-cyan", glow: "zone-glow [--glow-color:var(--color-zone-cyan)]", solid: "bg-zone-cyan" },
-  sky: { tile: "bg-zone-sky/15", glyph: "text-zone-sky", ring: "ring-zone-sky", glow: "zone-glow [--glow-color:var(--color-zone-sky)]", solid: "bg-zone-sky" },
-  blue: { tile: "bg-zone-blue/15", glyph: "text-zone-blue", ring: "ring-zone-blue", glow: "zone-glow [--glow-color:var(--color-zone-blue)]", solid: "bg-zone-blue" },
-  indigo: { tile: "bg-zone-indigo/15", glyph: "text-zone-indigo", ring: "ring-zone-indigo", glow: "zone-glow [--glow-color:var(--color-zone-indigo)]", solid: "bg-zone-indigo" },
-  violet: { tile: "bg-zone-violet/15", glyph: "text-zone-violet", ring: "ring-zone-violet", glow: "zone-glow [--glow-color:var(--color-zone-violet)]", solid: "bg-zone-violet" },
-  purple: { tile: "bg-zone-purple/15", glyph: "text-zone-purple", ring: "ring-zone-purple", glow: "zone-glow [--glow-color:var(--color-zone-purple)]", solid: "bg-zone-purple" },
-  fuchsia: { tile: "bg-zone-fuchsia/15", glyph: "text-zone-fuchsia", ring: "ring-zone-fuchsia", glow: "zone-glow [--glow-color:var(--color-zone-fuchsia)]", solid: "bg-zone-fuchsia" },
-  pink: { tile: "bg-zone-pink/15", glyph: "text-zone-pink", ring: "ring-zone-pink", glow: "zone-glow [--glow-color:var(--color-zone-pink)]", solid: "bg-zone-pink" },
+  "1": { tile: "bg-pick-1/15", glyph: "text-pick-1", ring: "ring-pick-1", glow: "zone-glow [--glow-color:var(--color-pick-1)]", solid: "bg-pick-1" },
+  "2": { tile: "bg-pick-2/15", glyph: "text-pick-2", ring: "ring-pick-2", glow: "zone-glow [--glow-color:var(--color-pick-2)]", solid: "bg-pick-2" },
+  "3": { tile: "bg-pick-3/15", glyph: "text-pick-3", ring: "ring-pick-3", glow: "zone-glow [--glow-color:var(--color-pick-3)]", solid: "bg-pick-3" },
+  "4": { tile: "bg-pick-4/15", glyph: "text-pick-4", ring: "ring-pick-4", glow: "zone-glow [--glow-color:var(--color-pick-4)]", solid: "bg-pick-4" },
+  "5": { tile: "bg-pick-5/15", glyph: "text-pick-5", ring: "ring-pick-5", glow: "zone-glow [--glow-color:var(--color-pick-5)]", solid: "bg-pick-5" },
+  "6": { tile: "bg-pick-6/15", glyph: "text-pick-6", ring: "ring-pick-6", glow: "zone-glow [--glow-color:var(--color-pick-6)]", solid: "bg-pick-6" },
+  "7": { tile: "bg-pick-7/15", glyph: "text-pick-7", ring: "ring-pick-7", glow: "zone-glow [--glow-color:var(--color-pick-7)]", solid: "bg-pick-7" },
+  "8": { tile: "bg-pick-8/15", glyph: "text-pick-8", ring: "ring-pick-8", glow: "zone-glow [--glow-color:var(--color-pick-8)]", solid: "bg-pick-8" },
+  "9": { tile: "bg-pick-9/15", glyph: "text-pick-9", ring: "ring-pick-9", glow: "zone-glow [--glow-color:var(--color-pick-9)]", solid: "bg-pick-9" },
+  "10": { tile: "bg-pick-10/15", glyph: "text-pick-10", ring: "ring-pick-10", glow: "zone-glow [--glow-color:var(--color-pick-10)]", solid: "bg-pick-10" },
+  "11": { tile: "bg-pick-11/15", glyph: "text-pick-11", ring: "ring-pick-11", glow: "zone-glow [--glow-color:var(--color-pick-11)]", solid: "bg-pick-11" },
+  "12": { tile: "bg-pick-12/15", glyph: "text-pick-12", ring: "ring-pick-12", glow: "zone-glow [--glow-color:var(--color-pick-12)]", solid: "bg-pick-12" },
+  "13": { tile: "bg-pick-13/15", glyph: "text-pick-13", ring: "ring-pick-13", glow: "zone-glow [--glow-color:var(--color-pick-13)]", solid: "bg-pick-13" },
+  "14": { tile: "bg-pick-14/15", glyph: "text-pick-14", ring: "ring-pick-14", glow: "zone-glow [--glow-color:var(--color-pick-14)]", solid: "bg-pick-14" },
+  "15": { tile: "bg-pick-15/15", glyph: "text-pick-15", ring: "ring-pick-15", glow: "zone-glow [--glow-color:var(--color-pick-15)]", solid: "bg-pick-15" },
+  "16": { tile: "bg-pick-16/15", glyph: "text-pick-16", ring: "ring-pick-16", glow: "zone-glow [--glow-color:var(--color-pick-16)]", solid: "bg-pick-16" },
 };
 
 /** Type guard: is this free-text key a valid icon? Body is a literal `hasOwn`
@@ -230,10 +251,16 @@ export function isZoneIcon(key: string): key is VoiceZoneIcon {
   return Object.hasOwn(VOICE_ZONE_ICONS, key);
 }
 
-/** Type guard: is this free-text key a valid color? */
+/** Type guard: is this free-text key a valid colour? */
 export function isZoneColor(key: string): key is VoiceZoneColor {
   return Object.hasOwn(VOICE_ZONE_COLORS, key);
 }
+
+/** The colour a zone falls back to: the first pick, which is simply the first
+ *  swatch in the picker. Nothing is being said by it — an unresolvable key means
+ *  we do not know what the moderator chose, and the fallback only has to render
+ *  something a person could have chosen. */
+const DEFAULT_ZONE_COLOR: VoiceZoneColor = VOICE_ZONE_COLOR_KEYS[0];
 
 /** Resolve an icon key (free text from the DB) to its glyph, falling back to a
  *  default for an unknown/removed key so an old row never renders nothing. */
@@ -241,10 +268,10 @@ export function zoneIconFor(key: string): LucideIcon {
   return isZoneIcon(key) ? VOICE_ZONE_ICONS[key] : VOICE_ZONE_ICONS.gamepad;
 }
 
-/** Resolve a color key (free text from the DB) to its class set, falling back to
- *  a default for an unknown/removed key. */
+/** Resolve a colour key (free text from the DB) to its class set, falling back
+ *  to the default for an unknown/removed key. */
 export function zoneColorFor(key: string): ZoneColorClasses {
-  return isZoneColor(key) ? VOICE_ZONE_COLORS[key] : VOICE_ZONE_COLORS.sky;
+  return VOICE_ZONE_COLORS[isZoneColor(key) ? key : DEFAULT_ZONE_COLOR];
 }
 
 /** Narrow a free-text icon key to a valid `VoiceZoneIcon`, defaulting to the
@@ -254,9 +281,9 @@ export function asZoneIcon(key: string): VoiceZoneIcon {
   return isZoneIcon(key) ? key : VOICE_ZONE_ICON_KEYS[0];
 }
 
-/** Narrow a free-text color key to a valid `VoiceZoneColor`. */
+/** Narrow a free-text colour key to a valid `VoiceZoneColor`. */
 export function asZoneColor(key: string): VoiceZoneColor {
-  return isZoneColor(key) ? key : VOICE_ZONE_COLOR_KEYS[0];
+  return isZoneColor(key) ? key : DEFAULT_ZONE_COLOR;
 }
 
 /** A random icon + color for a *new* custom zone — each new zone opens on a

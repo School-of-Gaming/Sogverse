@@ -283,21 +283,28 @@ const eslintConfig = defineConfig([
           // escaped `\b` written in a plain string reaches it as a backspace.
           selector: String.raw`Literal[value=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
           message:
-            "No colour literals outside the brand source. Import the token from src/tokens/brand.ts, which is the one place a colour is spelled.",
+            "No colour literals outside the colour sources. Import the token from src/tokens/brand.ts or src/tokens/picks.ts, the only two files a colour is spelled in.",
         },
         {
           selector: String.raw`TemplateElement[value.raw=/(?<!&)#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/]`,
           message:
-            "No colour literals outside the brand source. Import the token from src/tokens/brand.ts, which is the one place a colour is spelled.",
+            "No colour literals outside the colour sources. Import the token from src/tokens/brand.ts or src/tokens/picks.ts, the only two files a colour is spelled in.",
         },
       ],
     },
   },
   {
-    // The one exemption, and the reason the rule above is worth having: the
-    // brand source is where every hex in the package is authored, so it is the
-    // single file the ban cannot apply to.
-    files: ["packages/*/src/tokens/brand.ts"],
+    // The exemptions, and the reason the rule above is worth having: these are
+    // the files a colour is *authored* in, so they are the ones the ban cannot
+    // apply to. `brand.ts` holds everything the brand says in colour — the
+    // grounds, the signature pair, the families. `picks.ts` holds the sixteen
+    // colours a person may choose for their own thing, which are not the
+    // brand's and would be wrong sitting among its hues, and which is why the
+    // list is a second file rather than a section of the first.
+    files: [
+      "packages/*/src/tokens/brand.ts",
+      "packages/*/src/tokens/picks.ts",
+    ],
     rules: {
       "no-restricted-syntax": "off",
     },

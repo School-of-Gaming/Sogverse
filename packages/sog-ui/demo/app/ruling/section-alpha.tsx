@@ -1,5 +1,5 @@
 /**
- * Question 8 — colour at an alpha step.
+ * Question 7 — colour at an alpha step.
  *
  * The surface is every utility carrying a `/n` modifier: 270 sites in 120
  * files, regenerated with
@@ -9,7 +9,7 @@
  * which today reports act 52, muted 44, destructive 37, muted-foreground 18,
  * warning 16, info 16, success 12, background 12, white 8, world 5, card 5,
  * accent 5, the four Yty strong 4 each, foreground 3, black 3, act-foreground
- * 2, and sixteen zone hues at 1 each. `ALPHA_SITES` in `inventory.ts` carries
+ * 2, and the sixteen picks at 1 each. `ALPHA_SITES` in `inventory.ts` carries
  * the classification of that list; this file draws the four shapes it splits
  * into.
  *
@@ -622,7 +622,7 @@ function Triple({
 
 export function AlphaSection() {
   return (
-    <Question n={8} title="Colour at an alpha step">
+    <Question n={7} title="Colour at an alpha step">
       <Case title="A scrim over media">
         <Compare columns={3}>
           <Panel label="Black at 50%">

@@ -16,19 +16,24 @@ export function ZoneColorPicker({
   value: VoiceZoneColor;
   onChange: (value: VoiceZoneColor) => void;
 }) {
-  const t = useTranslations("voice.zoneColor");
+  const t = useTranslations("voice");
   return (
     <div className="grid grid-cols-8 gap-2">
       {VOICE_ZONE_COLOR_KEYS.map((key) => {
         const color = VOICE_ZONE_COLORS[key];
         const selected = key === value;
+        // A swatch is named by its number, not by its hue. A colour a person
+        // picks for themselves means only "this one is mine", so there is
+        // nothing to name it after; the number is what the picker shows and
+        // what is stored, and it is the same in every locale.
+        const label = t("zoneColor", { number: key });
         return (
           <button
             key={key}
             type="button"
             onClick={() => onChange(key)}
-            title={t(key)}
-            aria-label={t(key)}
+            title={label}
+            aria-label={label}
             aria-pressed={selected}
             // Same box model as ZoneIconPicker (`h-9 w-9 … border`) so the two
             // grids line up exactly: selection is the check glyph inside the

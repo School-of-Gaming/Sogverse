@@ -15,4 +15,5 @@ export * from "./tokens/brand";
 export * from "./tokens/composite";
 export * from "./tokens/contrast";
 export * from "./tokens/grammar";
+export * from "./tokens/picks";
 export * from "./tokens/typography";

@@ -18,6 +18,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { BRAND, NEUTRALS, YTY_FAMILIES, type NeutralId } from "./brand.ts";
+import { PICKS } from "./picks.ts";
 import { FACES, TYPE_SCALE } from "./typography.ts";
 
 /** CSS pixels → rem at the 16px root, with no trailing zeros. */
@@ -84,6 +85,10 @@ function ytyLines(): string[] {
   ]);
 }
 
+function pickLines(): string[] {
+  return PICKS.map((pick) => declaration(`--color-pick-${pick.id}`, pick.hex));
+}
+
 function faceLines(): string[] {
   return Object.values(FACES).map((face) =>
     declaration(face.token, `var(${face.variable}), ${face.fallback}`),
@@ -140,6 +145,11 @@ export function renderTheme(): string {
     section(
       "The four Yty-Element families. Strong fills, borders, rings and glows; soft carries text and glyphs. That split is a contrast result — see src/tokens/contrast.ts.",
       ytyLines(),
+    ),
+    "",
+    section(
+      "The sixteen picks — the colours a person chooses for their own thing. Numbered because a pick means nothing but whose it is; the number is a stable id, never a position.",
+      pickLines(),
     ),
     "",
     section(

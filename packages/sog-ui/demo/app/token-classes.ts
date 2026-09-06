@@ -33,6 +33,22 @@ export const FILL: TokenClasses = {
   "yty-valor-soft": "bg-yty-valor-soft",
   "yty-wit-strong": "bg-yty-wit-strong",
   "yty-wit-soft": "bg-yty-wit-soft",
+  "pick-1": "bg-pick-1",
+  "pick-2": "bg-pick-2",
+  "pick-3": "bg-pick-3",
+  "pick-4": "bg-pick-4",
+  "pick-5": "bg-pick-5",
+  "pick-6": "bg-pick-6",
+  "pick-7": "bg-pick-7",
+  "pick-8": "bg-pick-8",
+  "pick-9": "bg-pick-9",
+  "pick-10": "bg-pick-10",
+  "pick-11": "bg-pick-11",
+  "pick-12": "bg-pick-12",
+  "pick-13": "bg-pick-13",
+  "pick-14": "bg-pick-14",
+  "pick-15": "bg-pick-15",
+  "pick-16": "bg-pick-16",
 };
 
 /** Face id → the family utility the theme generates for its token. */

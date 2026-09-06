@@ -130,9 +130,41 @@ would split one fact across two places. It makes the icon set a library dependen
 the two glyphs it names are the first icons SOG-UI owns, arriving with their consumer; the
 icon vocabulary proper is a later project.
 
-**Still open — the zone palette.** The sixteen voice-zone colours are a gamer-facing
-picker whose requirement is sixteen distinguishable hues; they stay a named palette and
-are ruled separately.
+**Ruling (2026-09-06), the sixteen picker colours:** _landed_ — **they are not a
+voice-zone palette and not brand colours. They are the sixteen colours a person may pick
+for themselves** — a Gedu, a parent, a gamer choosing the colour of their own thing, the
+way a player picks a shirt — and they carry no meaning beyond "this is mine". **Sogverse
+never spends one on its own behalf:** never in chrome, never for status, never for a
+product kind, never as a default the app assigns by meaning. The only path to one on
+screen is a person choosing it or a person's identity deriving it. The custom voice zone
+is the first consumer, a use and not the definition.
+
+**Name: `pick`, numbered, not named.** Tokens are `pick-1` to `pick-16`. A consumer may
+have no opinion about a pick's hue — it is always a list, any pick can be replaced by any
+other, or it is not a real pick — so the **number is a stable id, not a position**:
+retuning pick 7's hue keeps it pick 7, reordering never renumbers, and a shrunken palette
+leaves the missing ids missing. The library exposes them as an ordered list (the picker
+order) whose entries carry the id.
+
+**Hex values unchanged, in today's order:** zone-red is pick 1 … zone-pink is pick 16.
+
+**Why a complete rainbow.** The sixteen were designed to be told apart at a glance,
+saturated enough to sit on the dark ground without dulling or clashing with the theme,
+and a complete rainbow with no gap a child would notice. Steering them away from the
+brand's own hues was tried first and produced a palette with holes that felt *less*
+connected to the brand, not more — so the rainbow is complete and two of the picks sit
+near the signature pair on purpose.
+
+**Deferred, declared in one sentence in the module and not decided:** each pick's `on:`
+companion — what ink or glyph reads on it — is measured together with the Yty element
+recipe (§2). No pick is in the contrast ledger's grounds and no pairing is invented.
+
+**The identicon is untouched by this** and stays §7: its colours are derived from an id
+rather than picked by a person.
+
+**Stored keys migrate.** `voice_zones.color` is `text` by design and held hue words;
+`00242_a_voice_zone_colour_becomes_a_pick_id.sql` re-keys every row onto the pick id in
+today's order. The column stays text and gains no CHECK.
 
 ## 6. Scrim, and ink on media
 
@@ -307,6 +339,15 @@ of its own; act and world replacing primary and secondary everywhere; the colour
 and their reasons codified in `brand.ts`; the deviations doc deleted; the process written
 into `packages/sog-ui/docs/adoption.md`.
 
+**Landed 2026-09-06, the picks (§5).** `packages/sog-ui/src/tokens/picks.ts` holds the
+ordered list and `PickId`; the generator emits `--color-pick-1` … `-16`; the demo's
+foundations floor shows all sixteen; `tests/unit/sog-ui/picks.test.ts` holds the set and
+its parity with the theme. In Sogverse the sixteen `--color-zone-*` tokens are deleted,
+`lib/constants/voice-zones.ts` keys its colour map by pick id (text, because the column
+is), the picker's swatch labels are one numbered string per locale, and every fixture and
+db-test literal spells a pick id. The tile's `/15` step stays, pending §9, as the Yty
+steps do.
+
 **Landed after the owner left (2026-09-06):** the product-type landing (the tone grammar table with
 family + glyph in `packages/sog-ui/src/tokens/grammar.ts`, the admin presentation map
 reading it, the four categorical tokens deleted) and the page cleanup for §2 and §5. If
@@ -325,10 +366,11 @@ root; they are deleted with this directory. **§14, gradients, is ledgered but n
 drawn** — the site list is there, the page section is a separate piece of work.
 
 **Open on the page, in the order they were going to be taken:** the hover fill (§4,
-accent vs muted); the Yty recipe (§2); the status set (§3); the zone palette (§5); scrim
-and on-media ink (§6); the identicon (§7); colour at an alpha step (§9, page section 8);
-the easter egg (§10); coloured text (§11) and the calm-surface budget (§12). Gradients
-(§14) has no section yet.
+accent vs muted); the Yty recipe (§2); the status set (§3); scrim and on-media ink (§6);
+the identicon (§7); colour at an alpha step (§9, page section 7); the easter egg (§10);
+coloured text (§11) and the calm-surface budget (§12). Gradients (§14) has no section
+yet. The page's remaining sections were renumbered when the picks left it, so the
+sections now run 0 to 7 with no gap.
 
 **End-of-branch work, needing no ruling:** the enforcement (a test that Sogverse's
 stylesheet declares no `--color-*`; the hex-literal lint extended to all of `src/` with

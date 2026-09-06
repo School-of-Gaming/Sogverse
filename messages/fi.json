@@ -2450,24 +2450,7 @@
       "ice-cream": "Jäätelö",
       "coffee": "Kahvi"
     },
-    "zoneColor": {
-      "red": "Punainen",
-      "orange": "Oranssi",
-      "amber": "Keltaoranssi",
-      "yellow": "Keltainen",
-      "lime": "Limetti",
-      "green": "Vihreä",
-      "emerald": "Smaragdinvihreä",
-      "teal": "Turkoosi",
-      "cyan": "Syaani",
-      "sky": "Taivaansininen",
-      "blue": "Sininen",
-      "indigo": "Indigo",
-      "violet": "Violetti",
-      "purple": "Purppura",
-      "fuchsia": "Fuksia",
-      "pink": "Pinkki"
-    },
+    "zoneColor": "Väri {number}",
     "instant": {
       "joinFailed": "Huoneeseen liittyminen epäonnistui. Yritä uudelleen.",
       "share": {

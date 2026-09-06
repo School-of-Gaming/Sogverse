@@ -1,4 +1,5 @@
 import { BRAND, NEUTRALS, YTY_FAMILIES } from "../../src/tokens/brand";
+import { PICKS } from "../../src/tokens/picks";
 import {
   FACES,
   MOBILE_FLOOR_PX,
@@ -113,6 +114,19 @@ export default function FoundationsPage() {
                 ))}
               </div>
             </article>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="The picks">
+        <div className="grid gap-6 grid-cols-2 sm:grid-cols-4 lg:grid-cols-8">
+          {PICKS.map((pick) => (
+            <Swatch
+              key={pick.id}
+              token={`pick-${pick.id}`}
+              name={`Pick ${pick.id}`}
+              hex={pick.hex}
+            />
           ))}
         </div>
       </Section>

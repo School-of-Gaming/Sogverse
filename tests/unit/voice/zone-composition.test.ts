@@ -4,7 +4,9 @@ import { composeZones, selfMovableZoneIds } from "@/lib/voice/zone-composition";
 import {
   VOICE_ZONE_ICON_KEYS,
   VOICE_ZONE_COLOR_KEYS,
+  VOICE_ZONE_COLORS,
   pickRandomZoneAppearance,
+  zoneColorFor,
 } from "@/lib/constants/voice-zones";
 
 function zone(overrides: Partial<VoiceZone> = {}): VoiceZone {
@@ -13,7 +15,7 @@ function zone(overrides: Partial<VoiceZone> = {}): VoiceZone {
     group_id: "g-1",
     name: "Zone 1",
     icon: "rocket",
-    color: "red",
+    color: "1",
     is_locked: false,
     sort_order: 0,
     created_by: "u-1",
@@ -78,6 +80,28 @@ describe("composeZones", () => {
       name: "",
       nameIsKey: false,
     });
+  });
+});
+
+describe("zoneColorFor", () => {
+  /**
+   * A stored colour is free text on the way out of the database, and two kinds
+   * of it exist in the wild: a pick id, and — until every row has been through
+   * the re-keying migration, or if one ever escapes it — the hue word the
+   * column used to hold. Both have to render a zone rather than nothing, which
+   * is the whole reason the resolver takes a `string` and not a key type.
+   */
+  it("resolves a stored pick id to that pick's own classes", () => {
+    const key = VOICE_ZONE_COLOR_KEYS[6];
+    expect(zoneColorFor(key)).toBe(VOICE_ZONE_COLORS[key]);
+  });
+
+  it("falls back to the first pick for a key it does not know", () => {
+    const first = VOICE_ZONE_COLORS[VOICE_ZONE_COLOR_KEYS[0]];
+    // A row written before the colours were re-keyed, and a key that was never
+    // valid at all.
+    expect(zoneColorFor("emerald")).toBe(first);
+    expect(zoneColorFor("17")).toBe(first);
   });
 });
 

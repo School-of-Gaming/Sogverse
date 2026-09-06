@@ -5,13 +5,13 @@
  * has, and the verdict in one phrase. Every reason behind a verdict is in the
  * doc comments in `inventory.ts`, beside the values it explains.
  *
- * The neutrals, the signature pair and the four Yty families have left the
- * table. Those rows are ruled and landed — the tokens are the library's now —
- * so the gallery that made their names legible has gone with them. The four
- * product-type colours have left it with nothing in their place: a product kind
- * takes a Yty family now, so it is not a colour Sogverse defines. What is left
- * is what is still open: the status colours, the voice-zone palette, the
- * colours with no token behind them, and the alpha steps.
+ * The neutrals, the signature pair, the four Yty families and the sixteen
+ * picks have left the table. Those rows are ruled and landed — the tokens are
+ * the library's now — so the gallery that made their names legible has gone
+ * with them. The four product-type colours have left it with nothing in their
+ * place: a product kind takes a Yty family now, so it is not a colour Sogverse
+ * defines. What is left is what is still open: the status colours, the colours
+ * with no token behind them, and the alpha steps.
  *
  * The alpha steps get a table of their own shape, because the question about
  * them is not what colour they are — most of them are a token the library
@@ -20,7 +20,7 @@
  * has no colour of its own to show, which is the point question 8 draws.
  */
 
-import { ALPHA_SITES, LOOSE_COLOURS, STATUS_ROWS, ZONE_PALETTE } from "./inventory";
+import { ALPHA_SITES, LOOSE_COLOURS, STATUS_ROWS } from "./inventory";
 import { Caps, Question } from "./parts";
 
 interface Row {
@@ -142,13 +142,6 @@ const STATUS_SUMMARY: readonly Row[] = STATUS_ROWS.flatMap((status) => [
   },
 ]);
 
-const PALETTE_SUMMARY: readonly Row[] = ZONE_PALETTE.map((entry) => ({
-  token: entry.token,
-  hex: entry.hex,
-  uses: 5,
-  verdict: "admit",
-}));
-
 const LOOSE_SUMMARY: readonly Row[] = LOOSE_COLOURS.map((colour) => ({
   token: `${colour.label} — ${colour.where}`,
   hex: colour.value,
@@ -161,7 +154,6 @@ export function SummarySection() {
     <Question n={0} title="The inventory">
       <div className="space-y-10">
         <Group title="Status" rows={STATUS_SUMMARY} />
-        <Group title="The voice-zone palette" rows={PALETTE_SUMMARY} />
         <Group title="Colours with no token behind them" rows={LOOSE_SUMMARY} />
         <AlphaGroup title="Colour at an alpha step" />
       </div>

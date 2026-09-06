@@ -51,31 +51,6 @@
   --color-warning: #E7B008;
   --color-warning-foreground: #121212;
 
-  /* Voice-zone palette — the 16 colors a moderator picks for a custom voice
-     zone (src/lib/constants/voice-zones.ts maps these to tile/glyph/ring/glow/
-     solid classes). A full, even sweep around the color wheel — red → orange →
-     yellow → green → teal → blue → violet → pink — so the picker reads as a
-     vibrant rainbow. Spanning the spectrum is the priority: a few hues land
-     near a fixed Yty element color, which is fine — the Yty zones are
-     their own zones, so a custom zone sharing a similar hue doesn't collide.
-     Lightness sits ~L55-70% so each reads as a glyph on the dark ground. */
-  --color-zone-red: #f4504e;
-  --color-zone-orange: #fb8b3c;
-  --color-zone-amber: #f7a31f;
-  --color-zone-yellow: #e8c21f;
-  --color-zone-lime: #9fc92e;
-  --color-zone-green: #46cf5a;
-  --color-zone-emerald: #18cf86;
-  --color-zone-teal: #1cccbe;
-  --color-zone-cyan: #25cfee;
-  --color-zone-sky: #38b0f7;
-  --color-zone-blue: #5b86f0;
-  --color-zone-indigo: #7a72f5;
-  --color-zone-violet: #a36bf6;
-  --color-zone-purple: #c45ff2;
-  --color-zone-fuchsia: #e85fe0;
-  --color-zone-pink: #f767a8;
-
   /* Corner radii, as one base step and the four utilities derived from it. */
   --radius: 0.5rem;
   --radius-sm: calc(var(--radius) - 4px);
@@ -194,7 +169,7 @@ body {
    or spread once and every custom zone, the Clubhouse/lobby, and the 4 Yty
    zones follow. Each zone supplies its own color through the `--glow-color`
    custom property, set with a Tailwind arbitrary-property class alongside this
-   one, e.g. `zone-glow [--glow-color:var(--color-zone-red)]` (see the `glow`
+   one, e.g. `zone-glow [--glow-color:var(--color-pick-1)]` (see the `glow`
    fields in src/lib/constants/voice-zones.ts). */
 .zone-glow {
   box-shadow: inset 0 0 1.25rem -0.25rem var(--glow-color, transparent);
