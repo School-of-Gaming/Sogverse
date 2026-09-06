@@ -268,20 +268,24 @@ export interface AlphaSite {
  *
  * Regenerate the surface rather than trusting the counts, which are a snapshot:
  *
- *     grep -rhoE "\b(bg|from|to|via|text|border|ring|shadow|divide|outline|fill|stroke)-[a-z-]+/[0-9]+" src --include=*.tsx --include=*.ts | sed -E 's/^([a-z]+)-(.*)\/([0-9]+)$/\2/' | sort | uniq -c | sort -rn
+ *     grep -rhoE "\b(bg|from|to|via|text|border|ring|shadow|divide|outline|fill|stroke)-[a-z0-9-]+/[0-9]+" src --include=*.tsx --include=*.ts | sed -E 's/^([a-z]+)-(.*)\/([0-9]+)$/\2/' | sort | uniq -c | sort -rn
  *
- * 270 sites in 120 files. Drop the `sed` to see the steps rather than the
- * tokens; the fifteen media and scrolling rows below are the whole of what that
- * unsedded output holds for `black` and `background`, and they are listed at
- * that granularity because they are the rows the section draws one by one.
- * Everything else is collected per token, which is the granularity the
- * regeneration command itself reports.
+ * 269 sites in 119 files. The character class takes digits as well as letters
+ * because the sixteen zone hues are `pick-1` to `pick-16` now: a letters-only
+ * class silently drops all sixteen and reports a total that looks plausible,
+ * which is the failure mode a regeneration command exists to prevent.
+ *
+ * Drop the `sed` to see the steps rather than the tokens; the fifteen media and
+ * scrolling rows below are the whole of what that unsedded output holds for
+ * `black` and `background`, and they are listed at that granularity because they
+ * are the rows the section draws one by one. Everything else is collected per
+ * token, which is the granularity the regeneration command itself reports.
  *
  * **Why the classification is the answer.** Over a ground the system did not
  * choose there is no pairing to measure and no token to name, so blending at
  * render time is the only mechanism there is. Over a ground the system did
  * choose the blend lands on one fixed colour every time, and that colour is a
- * token nobody named. Fifteen sites are the first kind. The other 255 are the
+ * token nobody named. Fifteen sites are the first kind. The other 254 are the
  * second, and most of them are already in front of the owner under another
  * question: the eight `text-white/*` are the Klingon easter egg, the sixteen
  * Yty strong steps are the element recipe, the sixteen pick steps are the zone
@@ -294,6 +298,11 @@ export interface AlphaSite {
  * on a disabled control, which this grep does not even match, and it belongs to
  * a component's recipe rather than to colour. They are counted in the `act`,
  * `world` and `destructive` rows below and are not what those rows are about.
+ *
+ * **The act and world rows have a table of their own below.** They are ruled —
+ * neither carries alpha anywhere — so the open question for their 58 sites is
+ * not what is under them but what stands in each place, which is a question per
+ * *job* rather than per token. `ACT_ALPHA_JOBS` is that breakdown.
  */
 export const ALPHA_SITES: readonly AlphaSite[] = [
   {
@@ -346,8 +355,8 @@ export const ALPHA_SITES: readonly AlphaSite[] = [
   },
   {
     step: "act",
-    where: "tinted bands, icon tiles, active chips, focus rings, two gradients, the admin sprite, the button hover",
-    uses: 52,
+    where: "eleven jobs — see the act and world table",
+    uses: 51,
     ground: "a token",
   },
   {
@@ -412,7 +421,7 @@ export const ALPHA_SITES: readonly AlphaSite[] = [
   },
   {
     step: "world",
-    where: "two gradients, and the violet button hover",
+    where: "four gradients, and the violet button hover",
     uses: 5,
     ground: "a token",
   },
@@ -430,9 +439,133 @@ export const ALPHA_SITES: readonly AlphaSite[] = [
   },
   {
     step: "act-foreground",
-    where: "faded ink on an amber fill",
+    where: "faded ink on an amber fill — see the act and world table",
     uses: 2,
     ground: "a token",
+  },
+];
+
+/** One job the act/world alpha steps are doing, and every site doing it. */
+export interface ActAlphaJob {
+  /** What the alpha was for, which is the unit the owner rules on. */
+  readonly job: string;
+  /** The class shapes it is written as. */
+  readonly step: string;
+  /** Where it appears, as locators rather than a description. */
+  readonly where: string;
+  readonly uses: number;
+}
+
+/**
+ * The 58 act and world alpha steps, grouped by the job the alpha was doing.
+ *
+ * Regenerate the surface rather than trusting the counts:
+ *
+ *     grep -rnoE "\b(bg|from|to|via|text|border|ring|shadow|divide|outline)-(act|world)(-foreground)?/[0-9]+" src --include=*.tsx --include=*.ts
+ *
+ * **Grouped by job, not by file, because the ruling is per job.** Act and world
+ * carry no alpha anywhere — that is decided — so every one of these 58 sites
+ * changes. What they change *to* is not one answer: `bg-act/5` is a persistent
+ * selection in a form, a transient "it will land here" under a drag, and a fact
+ * about today's date in an admin week, and a sweep that replaced all three with
+ * one thing would be deciding, silently, that they are the same statement.
+ *
+ * **The ten gradient sites are listed and not drawn here.** They are question
+ * 9's, they are the only place the pair appears at *full* value as well
+ * (`lib/constants/roles.ts`, which this grep does not even match), and drawing
+ * them twice would put the same decision on the page in two places.
+ *
+ * **The hover shade has two more sites this grep cannot see.**
+ * `hover:bg-destructive/90` in `ui/button.tsx` and in
+ * `parent/PaymentProblemBadge.tsx` is the same construct in a status colour, so
+ * it rides question 2 and is listed rather than drawn beside the act one.
+ *
+ * **Two of these jobs sit against a rule the library already ships.**
+ * `brand.ts` exempts chip-scale icon-accent tiles from the no-alpha rule, which
+ * is the icon-tile job below at seven sites; and the four hover shades were
+ * ruled to fall here rather than to wait for the Button adoption. Both are
+ * drawn rather than argued.
+ */
+export const ACT_ALPHA_JOBS: readonly ActAlphaJob[] = [
+  {
+    job: "A selected option in a form",
+    step: "bg-act/5",
+    where:
+      "ui/checkbox-row.tsx, admin/products/sections/{audience ×2, billing ×2, region-lock, registration, spoken-language, when ×2}, admin/products/gedu-picker-sheet.tsx, admin/products/image-catalogue-view.tsx, family/gamer-sign-in-radios.tsx, voice/ZoneDialog.tsx",
+    uses: 14,
+  },
+  {
+    job: "A selected item, with act as its ink",
+    step: "bg-act/5, bg-act/10, bg-act/15",
+    where:
+      "admin/products/gedu-picker-sheet.tsx ×2, admin/products/sections/identity-section.tsx, locations/location-picker-panel.tsx, chat/ChatReactionRow.tsx, public/products/signup-panel-view.tsx",
+    uses: 6,
+  },
+  {
+    job: "An icon tile behind a glyph",
+    step: "bg-act/10, bg-act/20",
+    where:
+      "app/(public)/page.tsx, app/(public)/roblox/page.tsx, about/about-section.tsx, public/products/purchase-confirmation-view.tsx ×2, app/(dashboard)/admin/whatsapp/page.tsx ×2",
+    uses: 7,
+  },
+  {
+    job: "A drop target",
+    step: "bg-act/5, bg-act/10 ring-2 ring-act",
+    where:
+      "admin/products/groups/{group-column, unassigned-card, waitlist-card}.tsx, admin/products/image-picker.tsx, chat/ChatComposer.tsx, gedu/session-feed/SessionPhotoStrip.tsx",
+    uses: 6,
+  },
+  {
+    job: "A ring",
+    step: "ring-act/30, ring-act/50",
+    where:
+      "voice/VoiceAvatar.tsx, voice/instant/InstantVoiceLobby.tsx, family/ProfileTiles.tsx, public/products/signup-panel-view.tsx",
+    uses: 4,
+  },
+  {
+    job: "A highlighted row",
+    step: "bg-act/5, bg-act/20 ring-1 ring-act",
+    where:
+      "admin/dashboard/week-rows.tsx, chat/ChatMessageRow.tsx, chat/ChatMessageList.tsx",
+    uses: 3,
+  },
+  {
+    job: "A status chip",
+    step: "bg-act/10 text-act, bg-act/20 text-act",
+    where:
+      "admin/products/product-status-chip.tsx, public/schools/schools-browse.tsx",
+    uses: 2,
+  },
+  {
+    job: "A hover shade on a filled control",
+    step: "hover:bg-act/90, hover:bg-world/80",
+    where: "ui/button.tsx (destructive twice more, with parent/PaymentProblemBadge.tsx)",
+    uses: 2,
+  },
+  {
+    job: "Faded ink on an amber fill",
+    step: "text-act-foreground/70",
+    where:
+      "app/(dashboard)/admin/whatsapp/page.tsx, preview/scenes/chat-scene.tsx",
+    uses: 2,
+  },
+  {
+    job: "A hover tint on an empty tile",
+    step: "group-hover:bg-act/5",
+    where: "family/ProfileTiles.tsx, the add-gamer tile",
+    uses: 1,
+  },
+  {
+    job: "A callout ground",
+    step: "bg-act/5 text-foreground",
+    where: "admin/products/form-primitives.tsx, the warn hint",
+    uses: 1,
+  },
+  {
+    job: "A gradient",
+    step: "from-act/5, from-act/10, to-world/5, to-world/10",
+    where: "see gradients",
+    uses: 10,
   },
 ];
 

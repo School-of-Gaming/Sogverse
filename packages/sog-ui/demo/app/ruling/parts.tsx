@@ -66,29 +66,34 @@ export function Caps({ children }: { children: ReactNode }) {
 }
 
 /**
- * Two or three columns on a wide viewport, stacked on a narrow one.
+ * Two to six columns on a wide viewport, stacked on a narrow one.
  *
  * The count is a literal class per branch rather than an interpolation, for the
  * same reason every other class on this page is.
+ *
+ * Four, five and six exist for the candidate rows: a job that has a `today`
+ * plus four or five replacements has to put all of them in one row, because
+ * adjacent candidates compare themselves and candidates split across two rows
+ * are compared from memory. They step down through `sm` and `lg` so a narrow
+ * viewport gets pairs rather than a six-across squeeze, and the widest step is
+ * `xl` because six panels only earn their width on a desk.
  */
+const COLUMN_CLASSES: Record<2 | 3 | 4 | 5 | 6, string> = {
+  2: "grid gap-6 lg:grid-cols-2",
+  3: "grid gap-6 lg:grid-cols-3",
+  4: "grid gap-6 sm:grid-cols-2 xl:grid-cols-4",
+  5: "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5",
+  6: "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6",
+};
+
 export function Compare({
   columns,
   children,
 }: {
-  columns: 2 | 3;
+  columns: 2 | 3 | 4 | 5 | 6;
   children: ReactNode;
 }) {
-  return (
-    <div
-      className={
-        columns === 2
-          ? "grid gap-6 lg:grid-cols-2"
-          : "grid gap-6 lg:grid-cols-3"
-      }
-    >
-      {children}
-    </div>
-  );
+  return <div className={COLUMN_CLASSES[columns]}>{children}</div>;
 }
 
 /** One labelled column of a comparison. The label is a name, never a sentence. */
@@ -199,6 +204,12 @@ const GLYPHS = {
   ],
   home: ["m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M9 21v-9h6v9"],
   checkMark: ["m5 12 5 5L20 7"],
+  plus: ["M12 5v14", "M5 12h14"],
+  image: [
+    "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+    "M8.5 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3",
+    "m21 15-5-5L5 21",
+  ],
   chevron: ["m6 9 6 6 6-6"],
   chevronLeft: ["m15 18-6-6 6-6"],
   chevronRight: ["m9 18 6-6-6-6"],

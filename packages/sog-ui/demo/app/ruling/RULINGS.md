@@ -257,6 +257,48 @@ component-recipe matter, not a colour._
   §2; **the white steps** are §10; **gradients** are §14, and the act/world ruling binds
   them too.
 
+**Shown now** — the page's sections 7 and 8, rebuilt to the two open parts above.
+The counts moved with the trophy landing: the surface is 269 sites in 119 files,
+act 51 and world 5, and the regeneration command in `ALPHA_SITES` now spells its
+character class `[a-z0-9-]+` because the sixteen zone hues are `pick-1` to
+`pick-16` and a letters-only class silently dropped all sixteen.
+
+- **Section 7, "The scrim and the glass."** What is left of the original four rows.
+  The known-ground triples and the state cases are gone: their argument was made,
+  accepted and recorded above, so the drawings have done their work. What remains is
+  a strength and a colour. The **scrim** is drawn at 50, 60, 70 and 80 in *both*
+  black and the page ground, and every candidate carries the three jobs one value
+  has to do at once — a dialog's card over a photograph, the fullscreen viewer's own
+  control over a photograph, and the same scrim over the page a dialog is really
+  opened from, which is the common case a picture-only comparison would have missed.
+  The **glass** is drawn at 80, 85 and 90 beside a solid `bg-background`, with and
+  without the `backdrop-blur-sm` the sites already carry, over a photograph and over
+  scrolling content. The pill's `supports-[backdrop-filter]:bg-background/70` is not
+  drawn: it is a sixth strength that exists only because nobody picked a first one.
+
+- **Section 8, "Act and world at an alpha step."** The 58 matches the act/world grep
+  reports, grouped into **eleven jobs** plus the ten gradients, which are listed as
+  "see gradients" and left to §14 rather than drawn twice. Each job is drawn today
+  beside its candidates in one row — a neutral ground at `accent` and at `muted`,
+  plain act with `act-foreground` ink, an act edge at full value on a neutral ground,
+  and nothing at all — in one or two exemplars copied class-for-class from the
+  components that spend them. The jobs, with counts: a selected option in a form 14,
+  an icon tile behind a glyph 7, a selected item with act as its ink 6, a drop target
+  6, a ring 4, a highlighted row 3, a status chip 2, a hover shade on a filled
+  control 2, faded ink on an amber fill 2, a hover tint on an empty tile 1, a callout
+  ground 1. `ACT_ALPHA_JOBS` in `inventory.ts` carries the classification and the
+  summary table lists it.
+
+  Three things the grouping made visible, each drawn rather than argued. The **two
+  hover jobs are live on the page** and are ruled on by pointing at them, because a
+  hover held still is a picture of a state nobody meets. The **icon-tile job is the
+  library's own exemption**: `brand.ts` exempts chip-scale icon-accent tiles from the
+  no-alpha rule, which is exactly these seven sites, so the ruling above and the rule
+  the library already ships cannot both stand and the drawing is what settles which.
+  And **`text-act-foreground/70` has no quieter member of its pair to move to** — the
+  palette offers exactly one ink for an amber fill — so its third candidate is not a
+  colour at all but the meta line moved off the fill.
+
 **Ruling:** _part ruled, part open_ — scrim and glass strengths, and the act/world
 replacements, are the two things still to see.
 
@@ -346,6 +388,57 @@ and the mail — which is one recipe with two implementations that can drift. An
 to-world` for the gedu role chip, which the alpha grep does not match and which is the
 only gradient in the app spending the pair at its authored values.
 
+**Shown** (page section 9, "Gradients"), five cases, each drawn today beside the same
+four candidates: the ground alone with no gradient; a neutral gradient between two
+greys the palette already ships; the pair at full value as a thin rule rather than a
+wash; and the pair at full value as a wash, drawn loud so it can be rejected on sight.
+
+1. **The hero** — the app's own arbitrary-value class verbatim, at a wide aspect with
+   a real headline, two buttons and a sub-line over it. One drawing covers both
+   `page.tsx` and `roblox-hero.tsx`, which are byte for byte the same recipe.
+2. **The closing card** — drawn at *both* strengths the app uses, `/10` on the home
+   and programme call to action and `/5` on the two About cards. Nobody chose 10 over
+   5 on either surface, and the ruling that the pair carries no alpha makes the
+   difference moot either way.
+3. **A card lit from its leading edge** — the family enrollment card and the gedu
+   assignment card, with the live (act) and awaiting (info) cards drawn together in
+   every candidate, because the two exist to be told apart at a glance in one list.
+   Its "rule" candidate is a single-hue 3px leading band rather than an act→world
+   one: this construct never spends the pair.
+4. **The gedu role chip** — the one full-value gradient, drawn beside the other three
+   role chips because a role chip's whole job is to be told apart from the other
+   roles in an admin table. Candidates: today, plain act, plain world, and a neutral
+   chip with act ink.
+5. **The social card** — both OG images at link-preview size, the real 1200×630
+   composition built from each source's own pixel values and scaled to fit. They are
+   a *transcription*, not the component: `next/og` renders through satori at build
+   time and cannot run in a page, and the demo may not import from Sogverse. The
+   gradient is the one part that is not transcribed — it is built with `composite()`
+   here exactly as `GRADIENT` builds it there, so the two are one piece of arithmetic
+   rather than two hexes that agree today. `src/lib/email-templates/layout.ts` spends
+   the identical pair in the identical shape at a 70% fade stop rather than 78%, so
+   the mail's header is these panels with one number nudged and is ruled by them.
+
+Two things the section does not draw, and both are deliberate. The Klingon divider is
+artwork and rides §10. And **the Roblox card's two partner marks are absent**: the
+Roblox mark is approved per placement, this page is a placement nobody has approved,
+and the gradient being ruled on has faded to flat ground long before it reaches the
+lockup — so the two marks' heights are held by plain neutral bars, which keeps the
+composition's geometry honest without carrying a mark that needs sign-off.
+
+**The contradiction the OG cards expose, for this ruling to resolve.**
+`GRADIENT.actGlow` is act at 20% over the ground, flattened to an opaque hex because
+neither satori nor an email client can be trusted with alpha. It is therefore the
+brand colour at an alpha step wearing a solid's clothes, in four files, and the
+act/world ruling in §9 reaches it. The doc comment on
+`packages/sog-ui/src/tokens/composite.ts` currently says the opposite in as many
+words — "A composited value is not a new brand colour and does not become one … The
+rule that a brand colour exists only at its authored values is unaffected." Both
+cannot stand. `composite.ts` was left untouched on purpose: which of the two gives way
+is decided by whatever this section is ruled, and a helper's doc comment is not where
+a colour rule gets settled. Whichever way it goes, that paragraph is rewritten in the
+same change as the ruling lands.
+
 **Ruling:** _open_
 
 ## Where the session stands (2026-09-05, end of day)
@@ -382,26 +475,47 @@ server was stopped at the end of the day and needs starting again.
 section 8, "Colour at an alpha step" (`section-alpha.tsx`), which draws §9's widened
 question — scrims and chips over real photographs, the section pill over scrolling
 content, and four alpha-over-a-known-ground triples where the step and its composited
-solid land on the same pixels. `ALPHA_SITES` in `inventory.ts` classifies all 270
-sites and the summary table lists them. The two photographs are copies of Sogverse's
+solid land on the same pixels. `ALPHA_SITES` in `inventory.ts` classifies the whole
+surface and the summary table lists it. The two photographs are copies of Sogverse's
 `public/preview-art/session-arena.jpg` and `session-badge.jpg` in the demo's own
-`public/ruling-art/`, because the demo is a separate Next app with a separate static
-root; they are deleted with this directory. **§14, gradients, is ledgered but not
-drawn** — the site list is there, the page section is a separate piece of work.
+`public/ruling-art/`, joined later the same day by a copy of
+`src/assets/brand/sog-logo-full.svg` for the OG cards, because the demo is a separate
+Next app with a separate static root; all three are deleted with this directory. That
+section has since been ruled in parts and shrunk — see the next paragraph but one.
 
 **Ruled 2026-09-06 from the alpha section (§9):** one scrim and one glass replace the six
 alpha strengths; disabled-as-opacity stays; act and world carry no alpha at any step
 (no soft act exists); the admin trophy sprite is artwork and is painted gold (landed).
-**Still to see before the sweep lands:** the scrim and glass strengths, and what stands
-in each of the 57 act/world alpha sites, per job. The next page work draws both, plus
-the gradients section (§14, its own review and ruling), and shrinks the alpha section to
-scrim and glass.
+
+**Built 2026-09-06 to those rulings, needing no further ruling to draw.** The page now
+runs 0 to 9 and holds three sections where it held one:
+
+- **Section 7 shrank to "The scrim and the glass"** — the known-ground triples and the
+  state cases are gone, their argument having been made and accepted. Open on it: one
+  strength and one colour for the scrim (50/60/70/80 × black or the page ground, each
+  drawn over a dialog's card, the viewer's control, and the page a dialog really opens
+  from), and one strength for the glass (80/85/90 or solid, with and without the blur).
+- **Section 8, "Act and world at an alpha step"**, is new — the 58 matches in eleven
+  jobs plus the ten gradients, each job today beside its candidates. Open on it: the
+  owner rules per job and the sweep applies the ruling per site. Two live findings it
+  put on screen: the icon-tile job *is* `brand.ts`'s own chip-scale exemption, so the
+  ruling and the shipped rule cannot both stand; and `text-act-foreground/70` has no
+  quieter ink to move to.
+- **Section 9, "Gradients"**, is new — §14's whole site list drawn, in five cases.
+  Open on it: the whole question. The Roblox card is drawn without its two partner
+  marks, because a new surface carrying the Roblox mark is a fresh approval and this
+  page is not it. It also surfaced a contradiction between the §9 ruling and
+  `composite.ts`'s doc comment, ledgered under §14 and left in place for the gradient
+  ruling to resolve.
 
 **Open on the page, in the order they were going to be taken:** the hover fill (§4,
 accent vs muted); the Yty recipe (§2); the status set (§3); scrim and on-media ink (§6);
 the identicon (§7); colour at an alpha step (§9, the two parts above); the easter egg
 (§10); coloured text (§11) and the calm-surface budget (§12); gradients (§14). The page's
-sections were renumbered when the picks left it, so they run 0 to 7 with no gap.
+sections were renumbered when the picks left it and run 0 to 9 with no gap: 0 the
+inventory, 1 Yty, 2 status, 3 the greys, 4 scrim and ink on media, 5 the identicon,
+6 the Lynx cyan, 7 the scrim and the glass, 8 act and world at an alpha step,
+9 gradients.
 
 **End-of-branch work, needing no ruling:** the enforcement (a test that Sogverse's
 stylesheet declares no `--color-*`; the hex-literal lint extended to all of `src/` with

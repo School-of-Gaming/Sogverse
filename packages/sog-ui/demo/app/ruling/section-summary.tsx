@@ -17,10 +17,21 @@
  * them is not what colour they are — most of them are a token the library
  * already owns — but what is underneath them. So its columns are the step, the
  * locator, the count and the ground, and it carries no swatch: an alpha step
- * has no colour of its own to show, which is the point question 8 draws.
+ * has no colour of its own to show, which is the point question 7 draws.
+ *
+ * The act and world steps get a third shape again. They are ruled — neither
+ * carries alpha anywhere — so what is open is what stands in each place, and
+ * that is a question per *job* rather than per token or per ground. Its first
+ * column is therefore the job, which is the unit the owner rules on and the
+ * unit question 8 draws.
  */
 
-import { ALPHA_SITES, LOOSE_COLOURS, STATUS_ROWS } from "./inventory";
+import {
+  ACT_ALPHA_JOBS,
+  ALPHA_SITES,
+  LOOSE_COLOURS,
+  STATUS_ROWS,
+} from "./inventory";
 import { Caps, Question } from "./parts";
 
 interface Row {
@@ -124,6 +135,47 @@ function AlphaGroup({ title }: { title: string }) {
   );
 }
 
+/** The same table again, keyed on the job rather than on the ground. */
+function ActGroup({ title }: { title: string }) {
+  return (
+    <div>
+      <Caps>{title}</Caps>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[40rem] border-collapse text-body-s">
+          <thead>
+            <tr className="border-b border-border text-left align-bottom">
+              <th className="py-2 pr-4 font-semibold tracking-wider uppercase">
+                Job
+              </th>
+              <th className="py-2 pr-4 font-semibold tracking-wider uppercase">
+                Step
+              </th>
+              <th className="py-2 pr-4 font-semibold tracking-wider uppercase">
+                Where
+              </th>
+              <th className="py-2 text-right font-semibold tracking-wider uppercase">
+                Uses
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {ACT_ALPHA_JOBS.map((row) => (
+              <tr key={row.job} className="border-b border-border align-top">
+                <td className="py-2 pr-4">{row.job}</td>
+                <td className="py-2 pr-4 font-brand-mono">{row.step}</td>
+                <td className="py-2 pr-4 text-muted-foreground">{row.where}</td>
+                <td className="py-2 text-right font-brand-mono text-muted-foreground">
+                  {row.uses}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 const STATUS_SUMMARY: readonly Row[] = STATUS_ROWS.flatMap((status) => [
   {
     token: status.id,
@@ -156,6 +208,7 @@ export function SummarySection() {
         <Group title="Status" rows={STATUS_SUMMARY} />
         <Group title="Colours with no token behind them" rows={LOOSE_SUMMARY} />
         <AlphaGroup title="Colour at an alpha step" />
+        <ActGroup title="Act and world at an alpha step, by job" />
       </div>
     </Question>
   );

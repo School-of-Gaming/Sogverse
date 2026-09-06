@@ -24,7 +24,9 @@
  */
 
 import type { Metadata } from "next";
+import { ActSection } from "./section-act";
 import { AlphaSection } from "./section-alpha";
+import { GradientsSection } from "./section-gradients";
 import { GreysSection } from "./section-greys";
 import {
   IdenticonSection,
@@ -52,6 +54,8 @@ export default function RulingPage() {
       <IdenticonSection />
       <LynxSection />
       <AlphaSection />
+      <ActSection />
+      <GradientsSection />
     </main>
   );
 }
