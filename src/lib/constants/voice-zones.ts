@@ -172,9 +172,8 @@ export const VOICE_ZONE_ICONS: Record<VoiceZoneIcon, LucideIcon> = {
   sailboat: Sailboat,
 };
 
-/** A custom-zone colour, expressed as five literal class strings (never built by
+/** A custom-zone colour, expressed as four literal class strings (never built by
  *  string templating, so Tailwind's source scanner can see every utility):
- *  - `tile`  — soft-tint background for the zone-card icon tile (`bg-pick-N/15`)
  *  - `glyph` — the icon colour (`text-pick-N`), readable on the dark ground
  *  - `ring`  — the picker's selection ring (`ring-pick-N`)
  *  - `glow`  — the active-zone treatment: the shared `.zone-glow` class (the
@@ -184,12 +183,12 @@ export const VOICE_ZONE_ICONS: Record<VoiceZoneIcon, LucideIcon> = {
  *  - `solid` — the full-saturation fill (`bg-pick-N`) the picker shows as a
  *              vibrant swatch
  *
- *  **There is no `tile` any more.** A zone's glyph used to sit on a 15% wash of
- *  its own colour; a colour exists at its authored value or not at all, and a
- *  fraction of it over the dark ground is a duller colour than the one the
- *  moderator chose. The glyph carries the colour at full value and the square
- *  behind it is the lifted grey every other tile in the app sits on, written
- *  where it is drawn rather than repeated sixteen times here. */
+ *  **A fifth entry, `tile`, is deliberately absent.** A zone's glyph used to sit
+ *  on a 15% wash of its own colour; a colour exists at its authored value or not
+ *  at all, and a fraction of it over the dark ground is a duller colour than the
+ *  one the moderator chose. The glyph carries the colour at full value and the
+ *  square behind it is the lifted grey every other tile in the app sits on,
+ *  written where it is drawn rather than repeated sixteen times here. */
 export interface ZoneColorClasses {
   glyph: string;
   ring: string;

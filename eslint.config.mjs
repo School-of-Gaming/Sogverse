@@ -303,7 +303,7 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-syntax": ["error",
         ...noHexColourLiterals(
-          "No colour literals in Sogverse. Every colour arrives from @sog/ui as a semantic token — a Tailwind class in a component, or BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors where there is no class to write (email, canvas, OG).",
+          "No colour literals in Sogverse. Every colour arrives from @sog/ui as a semantic token — a Tailwind class in a component, or BRAND / DARK_THEME from @/lib/constants/colors where there is no class to write (email, canvas, OG).",
         ),
         ...noPaletteColourClasses,
       ],
@@ -374,7 +374,7 @@ const eslintConfig = defineConfig([
       // radii and a footer grey drifted away from the app in the first place.
       "no-restricted-syntax": ["error",
         ...noHexColourLiterals(
-          "No colour literals in an email. Import BRAND / DARK_THEME / GRADIENT from @/lib/constants/colors, which derives the palette from @sog/ui.",
+          "No colour literals in an email. Import BRAND / DARK_THEME from @/lib/constants/colors, which derives the palette from @sog/ui.",
         ),
         ...noPaletteColourClasses,
         {

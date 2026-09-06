@@ -12,10 +12,6 @@ import {
   MessageCircle,
   ChevronLeft,
   ChevronRight,
-  Joystick,
-  School,
-  Tent,
-  CalendarDays,
   MapPin,
   Wrench,
 } from "lucide-react";
@@ -24,7 +20,8 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
-import type { UserRole } from "@/types";
+import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
+import type { ProductType, UserRole } from "@/types";
 
 type SidebarKey =
   | "dashboard" | "users"
@@ -38,6 +35,21 @@ interface NavItemDef {
   icon: React.ReactNode;
 }
 
+/**
+ * The rail's glyph for a product kind, read from the one table that owns it.
+ *
+ * A kind's glyph is a fact the library's tone grammar decides, not a choice
+ * this file makes: the four entries below used to spell their own lucide
+ * icons, which agreed with the grammar only by coincidence and drifted the
+ * moment the grammar picked a different mark. The rail takes the glyph
+ * uninked — the sidebar is chrome and composes from the neutrals, so the
+ * family's colour stays with the surfaces that key on it.
+ */
+function kindIcon(kind: ProductType) {
+  const Icon = PRODUCT_TYPE_PRESENTATION[kind].icon;
+  return <Icon className="h-5 w-5" />;
+}
+
 // Only admin renders the sidebar (see DashboardRootLayout). Parents, gamers,
 // and gedus get to their dashboards via the SOG logo in the header and have
 // no nested sub-routes that need sidebar nav.
@@ -45,10 +57,10 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
   admin: [
     { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
-    { href: ROUTES.admin.consumerClubs, labelKey: "consumerClubs", icon: <Joystick className="h-5 w-5" /> },
-    { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: <School className="h-5 w-5" /> },
-    { href: ROUTES.admin.camps, labelKey: "camps", icon: <Tent className="h-5 w-5" /> },
-    { href: ROUTES.admin.events, labelKey: "events", icon: <CalendarDays className="h-5 w-5" /> },
+    { href: ROUTES.admin.consumerClubs, labelKey: "consumerClubs", icon: kindIcon("consumer_club") },
+    { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: kindIcon("municipality_club") },
+    { href: ROUTES.admin.camps, labelKey: "camps", icon: kindIcon("camp") },
+    { href: ROUTES.admin.events, labelKey: "events", icon: kindIcon("event") },
     { href: ROUTES.admin.sites, labelKey: "sites", icon: <MapPin className="h-5 w-5" /> },
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },

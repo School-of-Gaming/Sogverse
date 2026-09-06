@@ -31,11 +31,6 @@ import type { ProductType } from "@/types";
  * — so a chip, a product card, a filter chip, a feed row and the key itself all
  * carry the same tinted glyph, and none of them carries a bare swatch.
  *
- * **A family is one colour**, so the glyph's ink and the tile behind it are the
- * same token. The tile is that colour at chip scale, which is the icon-accent
- * tile the library's alpha ban names as an exemption and the one step of alpha
- * left on this surface.
- *
  * **Every class is written out in full.** Tailwind scans source text for
  * complete class names, so a class assembled from a family id at render time
  * compiles to nothing at all — the map below has to hold the literal strings

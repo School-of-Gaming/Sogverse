@@ -692,8 +692,8 @@ needed to see through); nothing else in Sogverse composites.
 authors `SCRIM` (black, 0.7) and `GLASS` (ground at 0.7 with an 8px blur, 0.9 without);
 the generator emits `--color-scrim` as a token carrying its own alpha (no `/n` a call
 site could vary) and `glass` as a Tailwind 4 `@utility`, which the Sogverse production
-build confirmed reaches the consumer. 23 sites in 20 files: 4 scrim (dialog and sheet
-backdrops, the profile-tile overlay, the viewer ground), 14 glass (the header, the About
+build confirmed reaches the consumer. 22 sites in 20 files: 4 scrim (dialog and sheet
+backdrops, the profile-tile overlay, the viewer ground), 13 glass (the header, the About
 and dashboard pills, the voice dock, the viewer's controls, the media chips, the zone-list
 arrows), 5 known-ground `bg-card/50` → `bg-card`. `.glass-panel` left `globals.css`; a
 test holds that Sogverse declares no glass. The alpha section left the page; the demo
@@ -828,6 +828,11 @@ a job, decorative colour stays out") is void until re-declared. The brand source
 single-accent budget and marks the relaxation open in one sentence. Does the relaxation
 return, with its justification written into the source, or does the budget stand?
 
+**Written 2026-09-07.** The budget paragraph now lives in `packages/sog-ui/CLAUDE.md` —
+amber plus one on a parent surface, the palette on a gamer surface, never all six — and
+`brand.ts` states it in two sentences and points there for the full rule, its open
+sentence deleted; the entry is landed except the owner's confirmation of the wording.
+
 **Ruling:** _open_
 
 ## 13. Edges that were a state's only signal — the queue for SOG-UI edge constructs
@@ -848,11 +853,13 @@ fixed in Sogverse.
 4. `FamilySessionFeedItem.tsx` and `SessionFeedItem.tsx` — the next session's card-level
    `border-info/50` mark; the distinction survives in the badge label.
 5. Admin dashboard `product-attention-grid`, `users-strip`, `week-rows`, `schedule-panel`
-   — `hover:border-foreground/30` gone; `hover:bg-accent` remains and is near-invisible
-   against card (§4's open hover question).
+   — `hover:border-foreground/30` gone; the hover that remains is §4's ruling,
+   `hover:bg-lifted` on `border-border bg-card`, so the pointer response is a ground
+   step and the edge holds still.
 6. `src/components/admin/products/sections/identity-section.tsx` — the locale tab strip's
-   `border-b-2 border-primary` vs `border-transparent`; every tab now shows the same grey
-   underline and active rests on `bg-primary/5 text-primary`.
+   `border-b-2 border-primary` vs `border-transparent`; every tab now carries the same
+   `border-b-2 border-border` underline and the active one is marked by its ink alone,
+   `text-act` against `text-muted-foreground`.
 7. `src/components/gedu/session-feed/AttendanceRoster.tsx` — the absent mark's pressed
    state lost its outline half; fill and ink remain.
 8. `src/components/public/products/signup-panel-view.tsx` — the region-lock blocks'
@@ -1089,39 +1096,50 @@ every commit.
   19 filled badges take the chip's shape and the rule enters `packages/sog-ui/CLAUDE.md`.
 - **§10 the Klingon easter egg**: its `#d00`/`#0a0a0a` artwork colours under the artwork
   exemption; its eight `text-white/*` → quiet ink. Not drawn; rulable from the words.
-- **§12 the colour budget**: amber plus one on parent surfaces, the full palette on gamer
-  surfaces, never all six on one page; applied on the home page already; to be written as
-  a paragraph in `packages/sog-ui/CLAUDE.md` (the owner agreed concept rules live there).
+- **§12 the colour budget**: written as a paragraph in `packages/sog-ui/CLAUDE.md` (amber
+  plus one on parent surfaces, the palette on gamer surfaces, never all six); the owner
+  confirms the wording.
+- **The hero headline's coloured words** (from the audit): "Screen Time" in act and
+  "Quality Time" in world, in both heroes and the OG card, is coloured text inside a
+  heading, which §11's landed rule reads as ink. Fork: declare a display headline a
+  departure (a mark, not prose) beside the label rule in `brand.ts`, or take both
+  headlines to ink and let the violet rule carry the colour; also which word is amber
+  differs between the page and the OG card and must agree.
 - **The backlog line** on the home page's visual interest (proposed, awaiting a yes).
 - **Pending's colour** landed as info; one token to flip if the owner says warning.
 - **The owner's walk** on 3002: the demo floor, UI Components, UI Previews, home, Roblox,
   a login error, the gedu dashboard (the warning-edged band), an attendance roster (the
   pressed pill), the admin products table. Three judgement calls to see are listed in §3.
 
+**Landed 2026-09-07, the enforcement pass.** The mechanisms are in place, so nothing
+below rests on habit: `tests/unit/styling/globals-declares-no-colour.test.ts` holds that
+Sogverse's stylesheet declares no `--color-*`;
+`tests/unit/styling/no-colour-at-an-alpha-step.test.ts` holds that no colour utility in
+Sogverse carries an alpha suffix except the two named Button hover shades and the easter
+egg (until §10); `tests/unit/styling/glass-belongs-to-the-library.test.ts`,
+`tests/unit/styling/globals-border-layer.test.ts`, `tests/unit/theme/face-contract.test.ts`
+and the nine files under `tests/unit/sog-ui/` hold the rest of the theme. The 24 neutral
+ink `/n` sites took the plain token; the hex-literal lint covers all of `src/` with its
+exemptions named (the locale picker's flag SVGs, the easter egg artwork, the partner marks
+in `og/marks.tsx`, the trophy sprite) and a second rule bans raw Tailwind palette classes;
+the UI Components page's colour section is gone with nothing in its place; the root
+`CLAUDE.md`'s replaced Styling colour rules are retired and the style guide's description
+no longer promises a palette; `packages/sog-ui/CLAUDE.md` lost its Vercel sentence and
+gained the budget paragraph; `adoption.md` has step 1 marked done and the ledger-audit
+step in "How the owner rules on an adoption".
+
 **Running or next, needing no ruling (in order):**
 
-1. **The enforcement pass** (one agent): a test that Sogverse's stylesheet declares no
-   `--color-*`; a test that no colour utility in Sogverse carries an alpha suffix except
-   the two Button hover shades (named) and the easter egg (until §10); the 24 neutral ink
-   `/n` sites → the plain token; the hex-literal lint extended to all of `src/` with named
-   exemptions (flag SVGs in the locale picker, the easter egg artwork, the partner marks in
-   `og/marks.tsx`, the trophy sprite); a lint banning raw Tailwind palette classes; the
-   UI Components page's colour section deleted with nothing in its place; the root
-   `CLAUDE.md` Styling colour rules the adoption replaced retired and the style guide's
-   description losing "and the color palette"; `packages/sog-ui/CLAUDE.md`'s Vercel
-   sentence corrected (the demo runs on its own dev server; deployment is a later step)
-   and the budget paragraph added; `adoption.md` step 1 marked done and the ledger-audit
-   step added to "How the owner rules on an adoption".
-2. **The ledger audit** (a fresh agent, read-only): every entry marked landed checked
+1. **The ledger audit** (a fresh agent, read-only): every entry marked landed checked
    against the code, the token at its hex, the sites converted, the recorded greps
    returning nothing; findings reported, fixed by the session, committed.
-3. **The review**: `/code-review` from `git merge-base dev HEAD` in a fresh agent, scoped
+2. **The review**: `/code-review` from `git merge-base dev HEAD` in a fresh agent, scoped
    in three piles (the library and its tests read line by line; the load-bearing Sogverse
    files, those whose hunks change more than class strings, read as code; the mechanical
    pile verified by the greps, the suite and the builds); findings triaged per the flow.
-4. **Delete this page, this ledger and `demo/public/ruling-art/`** in one commit once the
+3. **Delete this page, this ledger and `demo/public/ruling-art/`** in one commit once the
    owner's remaining rulings are landed.
-5. **Phase 5** on the owner's word: gates on the exact commit, the 3002 server killed by
+4. **Phase 5** on the owner's word: gates on the exact commit, the 3002 server killed by
    port with a tree kill, `ExitWorktree` keep, `dev` fast-forwarded, `git merge --no-ff`
    titled "Merge the SOG-UI theme adoption into dev", push, worktree removed (`rm -rf` the
    directory since it has its own `node_modules`, then `git worktree prune`), branch

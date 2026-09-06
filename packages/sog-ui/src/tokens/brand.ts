@@ -35,28 +35,11 @@
  * banned. How much of it a surface may spend is decided by who is reading, not
  * by what the surface is made of.
  *
- * **A surface written for parents, partners, safety or billing takes amber as
- * its single accent**, on neutral grounds with grey for support. A second
- * palette family enters only with intent, and never as decoration. Calm
- * surfaces are what carry credibility: a parent deciding whether to hand us a
- * child reads the restraint before they read a word of the copy, and a page
- * awash in six vivid hues undercuts the steady register the brand speaks in
- * everywhere else — it makes the page look like it is selling to the child
- * rather than answering the adult.
- *
- * *Open: whether these surfaces may instead spend colour wherever a mark has a
- * job — a state, a date, a name — with only decorative colour kept out, is a
- * question for the owner. Until it is ruled, the single-accent budget above is
- * what the library holds.*
- *
- * **A surface telling a story to a mixed audience takes amber plus one
- * family.** Two accents at most. The second colour is there to give the story a
- * subject; a third makes the palette itself the subject.
- *
- * **A surface built for gamers, the community, the shop or the world itself
- * takes the full palette.** That is where the loudness belongs. These readers
- * came for the world, the palette is the world's, and restraint here reads as a
- * duller product than the one we actually run.
+ * **A parent surface spends amber plus one other colour, a gamer surface may
+ * spend the palette, and no page spends all six.** The budget is stated in full
+ * — with the reasoning behind each half of it — in the package's `CLAUDE.md`,
+ * which is where a concept rule lives; this file holds the values, not the rule
+ * for how many of them one page may reach for.
  *
  * ## The rules that hold everywhere
  *
