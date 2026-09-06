@@ -14,18 +14,25 @@
  * family here and the glyph in the consumer would split one fact across two
  * files, and the two would drift the first time either was edited alone.
  *
- * **This is why the icon set is a library dependency.** `lucide-react` is a peer
- * dependency from this module onward, and the four glyphs below are the first
- * icons SOG-UI owns. They arrive with their consumer rather than ahead of it: an
- * icon vocabulary proper — every mark the brand uses, named and ruled — is a
- * later project, and nothing is defined here before something spends it.
+ * **This is why the icon set is a library dependency.** `lucide-react` is a
+ * dependency of the library itself from this module onward, pinned to the
+ * release the library chooses rather than borrowed from whatever the consumer
+ * happens to install: the glyphs below are part of the grammar, so the version
+ * they come from is the library's decision. The rows here are the first icons
+ * SOG-UI owns. They arrive with their consumer rather than ahead of it: an icon
+ * vocabulary proper — every mark the brand uses, named and ruled — is a later
+ * project, and nothing is defined here before something spends it.
  *
  * Strong and soft follow the standing rule wherever a row is spent: **soft
  * carries text and glyphs, strong carries fills, edges and rings.**
  */
 
 import {
+  Brain,
   Gamepad2,
+  Handshake,
+  Heart,
+  Lighthouse,
   PartyPopper,
   School,
   Tent,
@@ -101,3 +108,52 @@ export const PRODUCT_KIND_GRAMMAR = {
    */
   event: { family: "harmony", glyph: PartyPopper },
 } as const satisfies Record<ProductKindId, GrammarRow>;
+
+/**
+ * The mark a Yty element carries.
+ *
+ * The kind rows above hold a family and a glyph because a product kind is a
+ * fact that has to be *given* a tone. An element is not: it **is** its family,
+ * so the family half of the row is the key, and what is left to decide is the
+ * mark. That keeps one idea across both tables — a fact takes a family and a
+ * glyph — without writing `harmony: { family: "harmony" }`, which is a line
+ * that can only ever be wrong.
+ */
+export interface ElementGlyphRow {
+  readonly glyph: LucideIcon;
+}
+
+/**
+ * Yty element → glyph.
+ *
+ * Each element names a relationship, and the mark is chosen on that
+ * relationship rather than on anything the element is coloured or ranked by.
+ * The four are drawn together as often as they are drawn apart — the About
+ * cards, the voice room's zones — so they also have to read as one set at a
+ * glance and never be mistaken for one another.
+ */
+export const YTY_ELEMENT_GRAMMAR = {
+  /**
+   * Harmony is the relationship with yourself: balance, rest, knowing when to
+   * stop. A heart is what a reader already reads as feeling turned inward.
+   */
+  harmony: { glyph: Heart },
+  /**
+   * Glow is the relationship with others: noticing when someone needs help,
+   * asking for it, being generous with credit. A lighthouse is a warm light
+   * put out for other people to steer by, which is the behaviour rather than
+   * the mood.
+   */
+  glow: { glyph: Lighthouse },
+  /**
+   * Valor is the relationship with society: working with people you did not
+   * choose, speaking up, trying the hard thing. A handshake is that agreement
+   * between strangers; a weapon carries the courage and none of the teamwork.
+   */
+  valor: { glyph: Handshake },
+  /**
+   * Wit is the relationship with technology: curiosity and thinking a problem
+   * through. A brain says thinking with nothing else attached to it.
+   */
+  wit: { glyph: Brain },
+} as const satisfies Record<YtyFamilyId, ElementGlyphRow>;

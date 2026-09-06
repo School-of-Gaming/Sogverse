@@ -23,7 +23,7 @@
  *    same tinted effect at card scale and failing for the same reason.
  * 3. **Area and ink** — the role table, drawn once for every hue against every
  *    construct a hue is spent on, and then again in the places a reader really
- *    meets them.
+ *    meets them, and finally the one hue it could not close.
  *
  * **The third thing used to be a question and is now a drawing of an answer.**
  * It was "strong versus soft", six hues × six constructs with the inverted
@@ -36,6 +36,17 @@
  * reasoning; `status-tones.ts` holds the vocabulary both this file and its
  * in-context drawings are built from. The inverted rows are gone, because there
  * is nothing left for them to argue.
+ *
+ * **The one cell still open is Valor's, and it is the last row of that case.**
+ * The role table was confirmed for Harmony, Glow and Wit at soft in both roles;
+ * Valor was tried at strong area with soft ink and then at strong for both, and
+ * the owner's words on the second were that strong reads "quite dark" as text
+ * and as a glyph and soft reads as "a peach". Both are the brand's own values
+ * and both were authored against a white page, so the third option is a colour
+ * the brand did not author: three oranges stepped between the pair in OKLCH,
+ * drawn with strong and soft at either end. `VALOR_CANDIDATES` in
+ * `status-tones.ts` derives them and carries the reasoning, the measurements
+ * and what lands whichever of the five wins.
  *
  * Everything else the section used to draw has gone. The constructs nobody
  * questioned keep **one compact row of the ruled set each**, because the
@@ -63,7 +74,7 @@
  */
 
 import type { CSSProperties, ReactNode } from "react";
-import { BRAND, NEUTRALS } from "../../../src/tokens/brand";
+import { BRAND, NEUTRALS, YTY_FAMILIES } from "../../../src/tokens/brand";
 import {
   ChevronRight,
   Radio,
@@ -76,12 +87,14 @@ import { STATUS_BY_ID, YTY_ROLES } from "./inventory";
 import { InContextCases } from "./section-status-context";
 import {
   COPY,
+  FAMILY_GLYPH,
   FILLED,
   NEUTRAL_PANEL,
   RULED,
   RULED_HUES,
   STATUS_GLYPH,
   TODAY,
+  VALOR_CANDIDATES,
   labelOn,
   type Hue,
   type Tone,
@@ -826,7 +839,202 @@ function RuledRow({ ground }: { ground: string }) {
   );
 }
 
-/** The same table on each of the three grounds, labelled with the ground's token. */
+// ------------------------------------------- Valor on the dark ground
+
+/**
+ * The five Valor oranges, drawn in every construct a hue is spent on.
+ *
+ * **Why this row exists at all.** The role table above is confirmed for
+ * Harmony, Glow and Wit, and Valor is the cell it could not close: strong reads
+ * dark as text and as a glyph, soft reads as a peach, and both are the brand's
+ * own values authored against a white page. `VALOR_CANDIDATES` in
+ * `status-tones.ts` carries the arithmetic and the whole of the reasoning —
+ * three colours stepped between the pair in OKLCH, each holding as much of
+ * strong's chroma as the gamut allows at its lightness.
+ *
+ * **Five columns, one candidate each, headed by nothing but the hex.** The
+ * question is which orange, so a column may not carry a word that argues for
+ * it: `strong` and `soft` as captions would put the brand's own vocabulary on
+ * the two ends of a comparison the brand's vocabulary is what failed.
+ *
+ * **Seven rows, and each is one construct across all five**, because a
+ * candidate is judged against its neighbours rather than against the row above
+ * it. The six are the same six the ruled table draws, so a reader who has just
+ * looked down that table meets the same shapes here; the label and glyph are
+ * drawn twice, on the card and on the page ground, because ink is where the
+ * owner's two words land and it is the one construct whose reading moves with
+ * the surface. The seventh is the filled button, which the ruled table has no
+ * column for: it is the loudest thing a family colour can become, and on a dark
+ * ground the lighter value is the louder one, so the fade from strong to soft
+ * shows there before it shows anywhere else.
+ */
+const VALOR_LABEL = YTY_FAMILIES.valor.name;
+
+const VALOR_ROWS: readonly {
+  key: string;
+  name: string;
+  ground: { token: string; hex: string };
+  render: (hex: string, ground: string) => ReactNode;
+}[] = [
+  {
+    key: "fill",
+    name: "Fill under a label",
+    ground: { token: "card", hex: CARD },
+    render: (hex) => (
+      <span
+        className="inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-xs font-semibold"
+        style={{ backgroundColor: hex, color: labelOn(hex) }}
+      >
+        {VALOR_LABEL}
+      </span>
+    ),
+  },
+  {
+    key: "edge",
+    name: "Edge",
+    ground: { token: "card", hex: CARD },
+    render: (hex, ground) => (
+      <div
+        className="w-full rounded-md border border-border px-2 py-1.5 text-xs"
+        style={{
+          backgroundColor: ground,
+          color: INK,
+          borderLeftWidth: 4,
+          borderLeftColor: hex,
+        }}
+      >
+        {VALOR_LABEL}
+      </div>
+    ),
+  },
+  {
+    key: "ring",
+    name: "Ring",
+    ground: { token: "card", hex: CARD },
+    render: (hex, ground) => (
+      <div
+        className="w-full rounded-md px-2 py-1.5 text-xs"
+        style={{ backgroundColor: ground, color: INK, boxShadow: `0 0 0 2px ${hex}` }}
+      >
+        {VALOR_LABEL}
+      </div>
+    ),
+  },
+  {
+    key: "mark",
+    name: "Unlabelled mark",
+    ground: { token: "card", hex: CARD },
+    render: (hex) => (
+      <span className="flex items-center gap-3">
+        <span
+          aria-hidden
+          className="h-2.5 w-2.5 rounded-full"
+          style={{ backgroundColor: hex }}
+        />
+        <span
+          aria-hidden
+          className="h-4 w-10 rounded"
+          style={{ backgroundColor: hex }}
+        />
+      </span>
+    ),
+  },
+  {
+    key: "label-card",
+    name: "Label and glyph",
+    ground: { token: "card", hex: CARD },
+    render: (hex) => (
+      <span
+        className="flex items-center gap-1.5 text-sm font-medium"
+        style={{ color: hex }}
+      >
+        <Glyph icon={FAMILY_GLYPH.valor} size={14} colour={hex} />
+        {VALOR_LABEL}
+      </span>
+    ),
+  },
+  {
+    key: "label-ground",
+    name: "Label and glyph",
+    ground: { token: "background", hex: GROUND },
+    render: (hex) => (
+      <span
+        className="flex items-center gap-1.5 text-sm font-medium"
+        style={{ color: hex }}
+      >
+        <Glyph icon={FAMILY_GLYPH.valor} size={14} colour={hex} />
+        {VALOR_LABEL}
+      </span>
+    ),
+  },
+  {
+    key: "button",
+    name: "Filled button",
+    ground: { token: "card", hex: CARD },
+    render: (hex) => (
+      <button
+        type="button"
+        className="focus-visible:ring-act inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap shadow transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+        style={{ backgroundColor: hex, color: labelOn(hex) }}
+      >
+        {VALOR_LABEL}
+      </button>
+    ),
+  },
+];
+
+/**
+ * The comparison as a table, for the reason every other comparison on this page
+ * is one: a column has to stay a column, or the five stop being five.
+ */
+function ValorRow() {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[60rem] border-collapse text-body-s">
+        <thead>
+          <tr className="border-b border-border text-left align-bottom">
+            <th className="w-48 py-2 pr-4" />
+            {VALOR_CANDIDATES.map((candidate) => (
+              <th
+                key={candidate.key}
+                className="px-2 py-2 font-brand-mono font-normal"
+              >
+                {candidate.hex}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {VALOR_ROWS.map((row) => (
+            <tr key={row.key} className="border-b border-border align-middle">
+              <th className="py-2 pr-4 text-left font-medium">
+                {row.name}
+                <span className="block font-brand-mono font-normal text-muted-foreground">
+                  {row.ground.token}
+                </span>
+              </th>
+              {VALOR_CANDIDATES.map((candidate) => (
+                <td key={candidate.key} className="px-2 py-2">
+                  <div
+                    className="flex min-h-14 items-center justify-center rounded-md p-2"
+                    style={{ backgroundColor: row.ground.hex }}
+                  >
+                    {row.render(candidate.hex, row.ground.hex)}
+                  </div>
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
+ * The same table on each of the three grounds, labelled with the ground's
+ * token, and then the one hue the table could not close.
+ */
 function AreaAndInk() {
   return (
     <div className="space-y-10">
@@ -838,6 +1046,12 @@ function AreaAndInk() {
           </div>
         </div>
       ))}
+      <div>
+        <Caps>{VALOR_LABEL}</Caps>
+        <div className="mt-3">
+          <ValorRow />
+        </div>
+      </div>
     </div>
   );
 }

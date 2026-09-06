@@ -100,6 +100,15 @@ export const YTY_ROLES: Record<YtyFamilyId, Roles> = {
    * clears the body floor on all three grounds. With this, every family spends
    * exactly one colour, which is the direction the owner asked to see: one
    * colour per element, not a pair.
+   *
+   * **Seen, and not ruled.** Strong for both roles reads "quite dark" as text
+   * and as a glyph, and soft reads as "a peach" — so the shape is settled (one
+   * colour, twice) and the value is not. Three oranges between the authored
+   * pair are drawn beside them in the Area-and-ink case; `VALOR_CANDIDATES` in
+   * `status-tones.ts` derives them and says what lands whichever wins. This
+   * entry stays at strong until the owner rules, because every other drawing on
+   * the page reads it and a table that moved first would put an answer into
+   * every picture the question is being asked in.
    */
   valor: { area: YTY_FAMILIES.valor.strong, ink: YTY_FAMILIES.valor.strong },
   wit: { area: YTY_FAMILIES.wit.soft, ink: YTY_FAMILIES.wit.soft },

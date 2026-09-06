@@ -114,6 +114,13 @@ at the current release (it was a peer, borrowing Sogverse's older copy; SOG-UI o
 icon vocabulary, so it owns the version; Sogverse keeps its copy for its own icons until
 the icon adoption, when one lucide remains and it is the library's); an element glyph
 table in the library beside the kind rows; `yty.ts` reads it; the glyph section leaves
+the page. **Landed 2026-09-06:** `lucide-react ^1.41.0` is a dependency of `@sog/ui`
+(npm nests it: the library and the demo resolve 1.41.0, Sogverse's root stays 0.563.0;
+the scoped `npm ci` Vercel runs produces the same); `YTY_ELEMENT_GRAMMAR` in `grammar.ts`
+beside the kind rows (an element *is* its family, so the family is the key and only the
+glyph is decided); `yty.ts` reads it with no adapter (the two versions' `LucideIcon`
+types are structurally identical, documented at that seam); the demo floor draws each
+family's mark beside its swatches; the grammar test holds the set; the glyph section left
 the page. **Kind glyphs**: the owner does
 not think the joystick fits the consumer club and asked for something closer to what a
 family's child plays on (keyboard and mouse, laptop, desktop, else a gamepad); a case on
@@ -324,7 +331,22 @@ three steps, one token named at landing, accent and muted deleted, the sweep map
 hover/selection/quiet to it with an edge or ink signal where a second grey was doing the
 work. Either way the landing classifies every site by role; the audit is the sweep.
 
-**Ruling (2026-09-06):** _ruled, to land_ — **three steps.** Background, card, and one
+**Landed 2026-09-06.** 115 files. `lifted` (#262626, on foreground) replaces accent and
+muted in `brand.ts`; `GROUNDS` is three and exported; `PAIRINGS` 30 → 24, all passing;
+the theme drops `--color-accent`, `--color-accent-foreground`, `--color-muted` and keeps
+`--color-muted-foreground`; `tests/unit/sog-ui/neutrals.test.ts` holds the set. 243 grey
+sites classified: 66 hover/focus grounds, 162 quiet grounds, 6 held highlights, 1
+selection by grey alone (the WhatsApp list, now a 2px `act` leading edge whose rest state
+is drawn in `border` from the start so nothing lands under the pointer), 6 things resting
+on `lifted` that hover by ink and edge, 1 SVG fill, 1 scrollbar track, the style guide's
+two swatches merged; 49 of them shed an `/n` step. The demo floor shows the lifted grey
+under the pointer and set back. The page's greys section left; §6's case narrowed to
+"Media ground, and ink on media" over the library's scrim; page sections renumbered
+(status 2, media 3, identicon 4, Lynx 5, act 6, gradients 7, glyphs 8). Queued for the
+library (§13): the selection edge, hover on a lifted thing, and the drop target that
+rests on `lifted`. Full `npm run test` green (4761 tests); both production builds green.
+
+**Ruling (2026-09-06):** _landed_ — **three steps.** Background, card, and one
 lifted grey at muted's value, named `lifted` in the library (a hover lifts; a quiet block
 is lifted off its card). `accent`, `accent-foreground` and `muted` leave the library and
 the theme; `muted-foreground` stays, as ink, its doc comment saying it is unrelated to the
@@ -798,18 +820,18 @@ the demo floor; the sixteen picks, numbered, with unlabelled swatches and the st
 migrated (`00242`); the trophy sprite as gold artwork; the scrim and the glass as library
 constructs with every translucent site converted. The page draws the real lucide icons.
 
-**Ruled, to land (in this order, one agent each, the greys first):**
+**Landed later on 2026-09-06:** §4 the greys as three steps (see §4), the kind glyphs
+(Gamepad2, School, Tent, PartyPopper in `grammar.ts`).
 
-1. **§4 the greys → three steps.** One `lifted` grey at muted's value; `accent`,
-   `accent-foreground`, `muted` deleted; `muted-foreground` stays as ink; all 247 grey
-   sites classified by role and converted; the WhatsApp list's selection takes a 2px act
-   edge; hover on a thing resting on `lifted` is ink and edge. Contrast ledger for three
-   grounds; demo floor; the page's greys section leaves. Also with this landing: narrow
-   the page's §6 case to media ground and on-media ink over the library's scrim (the
-   dialog-scrim case goes; `LOOSE_COLOURS` scrim row landed).
-2. **§2/§3 the recipe and the status set**, once the owner confirms the Valor flip on the
-   page (Valor strong for both roles is drawn now; a filled button per family both ways
-   is to be added to the context cases): **one colour per element** (`yty-harmony`,
+**Landed later still on 2026-09-06:** the element glyphs (Heart, Lighthouse, Handshake,
+Brain) with lucide as the library's own dependency (see §2).
+
+**Ruled, to land (one agent):**
+
+1. **§2/§3 the recipe and the status set**, once the owner rules Valor's colour from the
+   derived-orange drawing (strong reads dark, soft reads peach; three candidates between
+   the pair are drawn in the Valor cells and the four-together view, page section 2), and
+   confirms the figure-and-fill rule (below): **one colour per element** (`yty-harmony`,
    `yty-glow`, `yty-valor`, `yty-wit`, no suffix; the brand's other four values in the doc
    comment, not emitted); four status tokens (destructive `#FF5C5C`, warning `#DFCB25`,
    success = Glow, info = Wit) with ink labels and measured pairings; two grammar rows;
@@ -819,15 +841,28 @@ constructs with every translucent site converted. The page draws the real lucide
    tokens deleted and the email mirror reading the library; `yty.ts`, `voice-zones.ts`
    and the presentation map repointed; the demo floor updated; the page's status and Yty
    sections leave.
-3. **§2 the element and kind glyphs**, once Glow and the consumer club are picked
-   (Harmony Heart, Wit Brain, Valor Handshake ruled): a library glyph table; `yty.ts` and
-   the grammar rows read it; the glyph section leaves.
+**Put to the owner 2026-09-06, evening — the figure-and-fill rule.** The owner pointed
+at the product card's waitlist chip (`public/products/status-chip.tsx`: a neutral edge,
+the page ground, an hourglass and the word in `act`, no fill) and said the brand colours
+look bad under either white or black text, and that the chip gets around it by putting
+the colour on the dark ground where it has its greatest contrast and vibrancy. Proposed
+and refined with the owner (a first draft, "never a ground", broke on buttons): **a
+family or status colour is a figure on the dark ground wherever it names something, and
+a fill only where it is pressed.** Badges, chips, status labels and element marks spend
+colour as ink, glyph, edge, ring or dot on a neutral ground; a button may take a fill,
+with the label the measurement gives it (ink on act, white on world, ink on every
+family), and which colours a button may wear is the Button adoption's decision, made with
+the fills drawn. If confirmed: the 19 solid fills under a label and the 9 tinted pills
+become the chip's shape; the recipe grid loses its fill column for families and statuses;
+the library's chip starts from the waitlist chip's file. Awaiting the owner's word.
 
-**Open on the page:** Glow's glyph and the consumer club's (section 9); the recipe's Valor
-confirmation (status section, "Area and ink" and the context cases); the act/world
-replacements per job (§9, page section 7) and the icon-tile exemption the owner has not
-ruled out; gradients (§14, page section 8, its own review); media ground and on-media ink
-(§6); the identicon (§7); the easter egg (§10); the calm-surface budget (§12).
+**Open on the page:** Valor's colour (status section 2, "Area and ink" and the context
+cases); the act/world replacements per job (§9, page section 6) and the icon-tile
+exemption the owner has not ruled out; gradients (§14, page section 7, its own review);
+media ground and on-media ink (§6, page section 3); the identicon (§7, page section 4);
+the easter egg (§10, not drawn); the calm-surface budget (§12, not drawn). The Lynx cyan
+(page section 5) is ruled and leaves with the enforcement pass; the glyph section (8)
+leaves with the glyph landing.
 
 **End-of-branch work, needing no ruling:** the enforcement (a test that Sogverse's
 stylesheet declares no `--color-*`; the hex-literal lint extended to all of `src/` with

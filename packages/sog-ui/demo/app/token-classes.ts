@@ -50,6 +50,19 @@ export const FILL: TokenClasses = {
   "pick-16": "bg-pick-16",
 };
 
+/**
+ * The same tokens as foreground colours, for the marks and labels drawn in
+ * them. Only the family softs are listed: a glyph is ink, and the standing rule
+ * is that soft carries text and glyphs while strong carries fills, edges and
+ * rings — so no family's strong has an ink utility to reach for here.
+ */
+export const INK: TokenClasses = {
+  "yty-harmony-soft": "text-yty-harmony-soft",
+  "yty-glow-soft": "text-yty-glow-soft",
+  "yty-valor-soft": "text-yty-valor-soft",
+  "yty-wit-soft": "text-yty-wit-soft",
+};
+
 /** Face id → the family utility the theme generates for its token. */
 export const FACE_CLASS: TokenClasses = {
   sans: "font-sans",

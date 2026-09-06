@@ -1,7 +1,16 @@
 import Image from "next/image";
 
-import { BRAND, NEUTRALS, YTY_FAMILIES } from "../../src/tokens/brand";
-import { PRODUCT_KIND_GRAMMAR, type ProductKindId } from "../../src/tokens/grammar";
+import {
+  BRAND,
+  NEUTRALS,
+  YTY_FAMILIES,
+  type YtyFamilyId,
+} from "../../src/tokens/brand";
+import {
+  PRODUCT_KIND_GRAMMAR,
+  YTY_ELEMENT_GRAMMAR,
+  type ProductKindId,
+} from "../../src/tokens/grammar";
 import { PICKS } from "../../src/tokens/picks";
 import {
   FACES,
@@ -11,6 +20,7 @@ import {
 import {
   FACE_CLASS,
   FILL,
+  INK,
   STEP_CLASS,
   STEP_MOBILE_CLASS,
   WEIGHT_CLASS,
@@ -35,6 +45,14 @@ const SIGNATURE = "Aino Virtanen";
 
 /** Three rows, so the lift can be seen against the rows that are not lifted. */
 const PEOPLE = ["Aino Virtanen", "Mikael Korhonen", "Sofia Lindgren"];
+
+/** The families in the order the palette declares them. */
+const FAMILIES = [
+  "harmony",
+  "glow",
+  "valor",
+  "wit",
+] as const satisfies readonly YtyFamilyId[];
 
 /** The kinds in the order the grammar table declares them. */
 const KINDS = [
@@ -194,21 +212,31 @@ export default function FoundationsPage() {
 
       <Section title="The four families">
         <div className="space-y-8">
-          {Object.entries(YTY_FAMILIES).map(([id, family]) => (
-            <article key={id}>
-              <h3 className="text-h3">{family.name}</h3>
-              <div className="mt-4 grid gap-6 sm:grid-cols-2">
-                {(["strong", "soft"] as const).map((variant) => (
-                  <Swatch
-                    key={variant}
-                    token={`yty-${id}-${variant}`}
-                    name={`${family.name} ${variant}`}
-                    hex={family[variant]}
+          {FAMILIES.map((id) => {
+            const family = YTY_FAMILIES[id];
+            const Glyph = YTY_ELEMENT_GRAMMAR[id].glyph;
+            return (
+              <article key={id}>
+                <div className="flex items-center gap-3">
+                  <Glyph
+                    className={`h-7 w-7 ${INK[`yty-${id}-soft`] ?? ""}`}
+                    aria-hidden
                   />
-                ))}
-              </div>
-            </article>
-          ))}
+                  <h3 className="text-h3">{family.name}</h3>
+                </div>
+                <div className="mt-4 grid gap-6 sm:grid-cols-2">
+                  {(["strong", "soft"] as const).map((variant) => (
+                    <Swatch
+                      key={variant}
+                      token={`yty-${id}-${variant}`}
+                      name={`${family.name} ${variant}`}
+                      hex={family[variant]}
+                    />
+                  ))}
+                </div>
+              </article>
+            );
+          })}
         </div>
       </Section>
 

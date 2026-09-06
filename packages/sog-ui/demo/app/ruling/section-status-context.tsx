@@ -13,19 +13,23 @@
  * 1. **The About cards and the voice zones** — the two surfaces where all four
  *    families appear at once, which is the only place the four areas are
  *    compared with each other rather than with a neutral.
- * 2. **The admin surfaces** — where the *product kinds* are the families, under
+ * 2. **Valor on the dark ground** — the one cell the role table could not
+ *    close. The five candidate oranges drawn in the element card, in the four
+ *    cards together with the other three families held at soft, and in the zone
+ *    list with Valor as the joined zone so a candidate lights a card.
+ * 3. **The admin surfaces** — where the *product kinds* are the families, under
  *    the re-matched grammar, so Glow (consumer club) and Wit (municipality
  *    club) sit side by side on the two surfaces an admin reads all day.
- * 3. **A status as a badge, a label and a sentence** — §11's two forms drawn
+ * 4. **A status as a badge, a label and a sentence** — §11's two forms drawn
  *    against each other: the label keeps its colour, the sentence loses it.
- * 4. **A family name beside its glyph** — the chip-scale tile question, which
+ * 5. **A family name beside its glyph** — the chip-scale tile question, which
  *    §2 left open, now visible under the role table.
- * 5. **Where a hue meets itself** — the adjacency the ruling creates: success
+ * 6. **Where a hue meets itself** — the adjacency the ruling creates: success
  *    *is* Glow and info *is* Wit, exactly, so a family fill and a status badge
  *    of the same hue can land on one card.
- * 6. **At scale** — eight rows and eight cards, because density is a property
+ * 7. **At scale** — eight rows and eight cards, because density is a property
  *    of a set and a single cell cannot show it.
- * 7. **A ring** — the one construct in the ruled row that Sogverse authors and
+ * 8. **A ring** — the one construct in the ruled row that Sogverse authors and
  *    has never rendered.
  *
  * **The odd cell this drawing turned up, drawn and not resolved.** Under the
@@ -41,20 +45,20 @@
  * the mark, so it is drawn here at density, in the feed rail and in the marks
  * row, for the owner to look at. Nothing is proposed for it.
  *
- * **A second one, smaller.** Valor is the only family whose area and ink
- * differ, so a Valor edge beside a Valor label is two oranges in one construct
- * where every other family is one colour twice. The element card is where that
- * shows, and it is drawn there.
+ * **A second one, and it is why case 2 exists.** Valor is the only family whose
+ * area and ink differ, so a Valor edge beside a Valor label is two oranges in
+ * one construct where every other family is one colour twice. The element card
+ * is where that showed, and the owner's answer to it was that neither authored
+ * value carries alone: strong reads dark, soft reads as a peach. So case 2
+ * draws the same card five times, each with **one** orange doing both jobs.
  */
 
 import type { ReactNode } from "react";
 import {
-  Brain,
   Coins,
   Home,
   Mic,
   MicOff,
-  Sun,
   UserRoundX,
   UserX,
   Users,
@@ -81,6 +85,7 @@ import {
   RULED,
   STATUS_GLYPH,
   TODAY,
+  VALOR_CANDIDATES,
   type Tone,
 } from "./status-tones";
 import {
@@ -134,6 +139,20 @@ function ruledPaint(id: YtyFamilyId): FamilyPaint {
     edge: YTY_ROLES[id].area,
     ink: YTY_ROLES[id].ink,
   };
+}
+
+/**
+ * The set with one Valor candidate in it, the other three families as ruled.
+ *
+ * The candidate is spent as **one colour twice** — the edge and the ink both —
+ * which is the shape the ruling would land in: every family spends exactly one
+ * colour, and the only thing still open is which orange Valor's is. Holding
+ * the other three at soft is what makes the drawing about Valor: change five
+ * things and the eye reports on the picture rather than on the colour.
+ */
+function valorPaint(hex: string): (id: YtyFamilyId) => FamilyPaint {
+  return (id) =>
+    id === "valor" ? { tile: GROUND, edge: hex, ink: hex } : ruledPaint(id);
 }
 
 /** The elements' canonical English one-liners, which the library has no word for. */
@@ -248,8 +267,22 @@ function ZoneTile({
   );
 }
 
-/** The four zones plus the Clubhouse, which is the neutral one and is drawn to keep the set honest. */
-function ZoneList({ paint }: { paint: (id: YtyFamilyId) => FamilyPaint }) {
+/**
+ * The four zones plus the Clubhouse, which is the neutral one and is drawn to
+ * keep the set honest.
+ *
+ * One zone is joined, because the inset glow is a family colour spent as a
+ * shape and a list with nobody in it never draws it. Which one is a parameter
+ * rather than a constant: the Valor comparison has to see its own candidate
+ * lighting a card, and Glow lighting one proves nothing about an orange.
+ */
+function ZoneList({
+  paint,
+  active = "glow",
+}: {
+  paint: (id: YtyFamilyId) => FamilyPaint;
+  active?: YtyFamilyId;
+}) {
   return (
     <div className="space-y-2">
       {FAMILY_ORDER.map((id) => (
@@ -258,7 +291,7 @@ function ZoneList({ paint }: { paint: (id: YtyFamilyId) => FamilyPaint }) {
           label={YTY_FAMILIES[id].name}
           glyph={FAMILY_GLYPH[id]}
           paint={paint(id)}
-          active={id === "glow"}
+          active={id === active}
         />
       ))}
       <ZoneTile
@@ -779,6 +812,58 @@ export function InContextCases() {
         </div>
       </Case>
 
+      <Case title="Valor on the dark ground">
+        <div className="space-y-10">
+          <Exemplar
+            file="about/yty-section.tsx"
+            page="/about, the Valor card"
+          >
+            <Compare columns={5}>
+              {VALOR_CANDIDATES.map((candidate) => (
+                <Panel key={candidate.key} label={candidate.hex}>
+                  <ElementCard
+                    id="valor"
+                    paint={valorPaint(candidate.hex)("valor")}
+                  />
+                </Panel>
+              ))}
+            </Compare>
+          </Exemplar>
+          <Exemplar
+            file="about/yty-section.tsx"
+            page="/about, the Four Yty-Elements grid"
+          >
+            <Compare columns={5}>
+              {VALOR_CANDIDATES.map((candidate) => (
+                <Panel key={candidate.key} label={candidate.hex}>
+                  <div className="grid gap-4">
+                    {FAMILY_ORDER.map((id) => (
+                      <ElementCard
+                        key={id}
+                        id={id}
+                        paint={valorPaint(candidate.hex)(id)}
+                      />
+                    ))}
+                  </div>
+                </Panel>
+              ))}
+            </Compare>
+          </Exemplar>
+          <Exemplar
+            file="voice/ZoneList.tsx"
+            page="a club's voice room — the zones, Valor joined"
+          >
+            <Compare columns={5}>
+              {VALOR_CANDIDATES.map((candidate) => (
+                <Panel key={candidate.key} label={candidate.hex}>
+                  <ZoneList paint={valorPaint(candidate.hex)} active="valor" />
+                </Panel>
+              ))}
+            </Compare>
+          </Exemplar>
+        </div>
+      </Case>
+
       <Case title="The admin surfaces, under the re-matched grammar">
         <div className="space-y-10">
           <Pair
@@ -953,7 +1038,7 @@ export function InContextCases() {
                   backgroundColor: GROUND,
                 }}
               >
-                <Glyph icon={Sun} size={20} colour={YTY_ROLES.glow.ink} />
+                <Glyph icon={FAMILY_GLYPH.glow} size={20} colour={YTY_ROLES.glow.ink} />
                 <span className="text-body-s" style={{ color: INK }}>
                   {YTY_FAMILIES.glow.name}
                 </span>
@@ -969,7 +1054,7 @@ export function InContextCases() {
                   backgroundColor: GROUND,
                 }}
               >
-                <Glyph icon={Brain} size={20} colour={YTY_ROLES.wit.ink} />
+                <Glyph icon={FAMILY_GLYPH.wit} size={20} colour={YTY_ROLES.wit.ink} />
                 <span className="text-body-s" style={{ color: INK }}>
                   {YTY_FAMILIES.wit.name}
                 </span>

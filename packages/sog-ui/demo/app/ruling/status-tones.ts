@@ -76,12 +76,8 @@
 import {
   AlertCircle,
   AlertTriangle,
-  Brain,
   Check,
-  Heart,
   Info,
-  Sun,
-  Sword,
   type LucideIcon,
 } from "lucide-react";
 
@@ -91,7 +87,8 @@ import {
   YTY_FAMILIES,
   type YtyFamilyId,
 } from "../../../src/tokens/brand";
-import { THRESHOLDS, contrastRatio } from "../../../src/tokens/contrast";
+import { THRESHOLDS, contrastRatio, hexToRgb } from "../../../src/tokens/contrast";
+import { YTY_ELEMENT_GRAMMAR } from "../../../src/tokens/grammar";
 import { PROPOSED_STATUSES, STATUS_BY_ID, STATUS_ROWS, YTY_ROLES, type StatusId } from "./inventory";
 
 /**
@@ -188,19 +185,20 @@ export const STATUS_GLYPH: Record<StatusId, LucideIcon> = {
 };
 
 /**
- * The four family marks Sogverse draws today (`lib/constants/yty.ts`).
+ * The four family marks, read off the library's own element grammar.
  *
- * Two of them are themselves open — section 9 is ruling on Glow's sun and
- * Valor's sword — so what is drawn here is what ships, not what is proposed
- * there. A colour ruled against a mark the app does not carry would be a colour
- * ruled on the wrong picture, and a colour ruled against a mark that is itself
- * a candidate would be two questions in one drawing.
+ * They used to be listed here, because the marks were themselves a question and
+ * a colour ruled against a candidate mark would have been two questions in one
+ * drawing. That question is ruled and landed, so the list is gone: the page
+ * draws whatever the library says an element's mark is, and a later retune of a
+ * glyph moves every Valor in this section with it rather than leaving a sword
+ * behind in one file.
  */
 export const FAMILY_GLYPH = {
-  harmony: Heart,
-  glow: Sun,
-  valor: Sword,
-  wit: Brain,
+  harmony: YTY_ELEMENT_GRAMMAR.harmony.glyph,
+  glow: YTY_ELEMENT_GRAMMAR.glow.glyph,
+  valor: YTY_ELEMENT_GRAMMAR.valor.glyph,
+  wit: YTY_ELEMENT_GRAMMAR.wit.glyph,
 } as const satisfies Record<YtyFamilyId, LucideIcon>;
 
 /**
@@ -266,6 +264,212 @@ export const RULED_HUES: readonly Hue[] = [
     recipe: "one value · both roles",
     glyph: STATUS_GLYPH[tone.status],
   })),
+];
+
+// ------------------------------------------- Valor on the dark ground
+
+/**
+ * The five Valor oranges the owner picks from, and the arithmetic that makes
+ * the middle three.
+ *
+ * # Why there is a third option at all
+ *
+ * Valor is the one family whose colour is still open, and it is open because
+ * **both authored values were rejected on sight**. Seen at strong in both
+ * roles, the owner found it "quite dark" as text and as a glyph; seen at soft,
+ * "a peach". Neither reading is a mistake in the drawing: `#FD700D` and
+ * `#FF993D` are the brand's own pair, and **the brand authored them against a
+ * white page**, where strong is the value that separates from the ground and
+ * soft is the decorative one. Our single theme is dark, and on `#121212` the
+ * pair lands between two failures rather than either side of one success.
+ *
+ * The other three families had no such problem, and the reason is the hue.
+ * **Orange loses its chroma when it is lightened, where pink, green and blue do
+ * not.** The sRGB gamut is at its widest for orange right about where the
+ * strong value already sits, so every step toward soft's lightness is a step
+ * the colour cannot take without giving up saturation — which is exactly what
+ * "a peach" describes. Harmony, Glow and Wit lighten with their chroma intact,
+ * which is why soft answered both roles for all three at once.
+ *
+ * # What the middle three are
+ *
+ * Three colours between the pair, derived in **OKLCH**, which is the space that
+ * separates the three things the eye is judging here: lightness, chroma and
+ * hue. Each candidate steps the lightness a quarter, a half and three quarters
+ * of the way from strong's `L 0.7062` to soft's `L 0.7744`, carries the hue the
+ * same fraction of the way from `h 46.46` to `h 58.48`, and asks for **strong's
+ * chroma, `C 0.1938`** — strong's saturation at soft's brightness, which is the
+ * colour neither authored value is.
+ *
+ * **All three clamp, and the clamping is the finding rather than a caveat.**
+ * `C 0.1938` is out of the sRGB gamut at every one of the three lightnesses, so
+ * each candidate takes the most chroma its lightness and hue can hold:
+ *
+ * | step | L | h | chroma asked | chroma held | hex |
+ * |---|---|---|---|---|---|
+ * | 25% | 0.7233 | 49.47 | 0.1938 | 0.1879 | `#FF7A13` |
+ * | 50% | 0.7403 | 52.47 | 0.1938 | 0.1777 | `#FF8524` |
+ * | 75% | 0.7574 | 55.48 | 0.1938 | 0.1681 | `#FF8F31` |
+ *
+ * That the ceiling falls as the lightness rises **is** the claim about orange,
+ * measured rather than asserted: the three candidates are the brightest,
+ * most saturated oranges that exist at those lightnesses, and if the fade from
+ * strong to soft still reads as a fade, no colour in sRGB can stop it.
+ *
+ * # Measured
+ *
+ * All five against the three grounds as **ink**, body floor 4.5 —
+ * `#FD700D` 6.69 / 6.22 / 5.40, `#FF7A13` 7.18 / 6.67 / 5.80, `#FF8524` 7.70 /
+ * 7.15 / 6.22, `#FF8F31` 8.23 / 7.65 / 6.65, `#FF993D` 8.81 / 8.18 / 7.12.
+ * **Nothing fails**: the tightest cell in the set is strong as ink on the
+ * lifted grey at 5.40, half a point clear of the floor, and every step toward
+ * soft only widens it. So contrast decides nothing here and the eye decides
+ * everything, which is the honest position to put the drawing in.
+ *
+ * As a **fill under a label** the five measure 6.69, 7.18, 7.70, 8.23 and 8.81
+ * under ink `#121212` and 2.80, 2.61, 2.43, 2.28 and 2.13 under white. The
+ * first column is the same arithmetic as ink-on-background — the page colour
+ * and the label ink are one value — and the second says what it says about
+ * every member of this set: **no Valor fill takes a white label**, at any point
+ * between the authored pair.
+ *
+ * # What lands, either way
+ *
+ * **If a derived value wins**, it is the first declared departure on a hue. A
+ * `valor` entry in `brand.ts` whose one colour is the derived hex, declared as
+ * "Valor's orange on the dark ground, derived from the brand's pair", with the
+ * reason beside it — orange loses its chroma when lightened where pink, green
+ * and blue do not, so the brand's white-ground pair has no member that both
+ * carries and reads on `#121212` — and **both authored values recorded beside
+ * it** as the brand's white-ground pair, so nothing is lost by not being
+ * emitted. Valor stays one colour used twice, exactly like the other three: the
+ * departure is on the value, never on the shape of the table.
+ *
+ * **If strong or soft wins**, there is no departure. The winner becomes
+ * `valor`'s single colour the way Harmony, Glow and Wit take soft, the other
+ * authored value is recorded in the doc comment as its white-ground twin, and
+ * the library goes on holding that a brand colour exists only at its authored
+ * values with no exception on any hue.
+ */
+export interface ValorCandidate {
+  readonly key: string;
+  /** The candidate's name on the page, which is its hex and nothing else. */
+  readonly hex: string;
+}
+
+/** OKLCH as the three numbers the derivation steps: lightness, chroma, hue in degrees. */
+type Oklch = readonly [l: number, c: number, h: number];
+
+/** sRGB 0–255 → linear-light 0–1. */
+function toLinear(channel: number): number {
+  const c = channel / 255;
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+}
+
+/** Linear-light 0–1 → sRGB 0–1. */
+function toSrgb(value: number): number {
+  return value <= 0.0031308 ? value * 12.92 : 1.055 * value ** (1 / 2.4) - 0.055;
+}
+
+/** A hex, as the OKLCH the steps are taken in. */
+function hexToOklch(hex: string): Oklch {
+  const [r, g, b] = hexToRgb(hex).map(toLinear);
+  const long = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const medium = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const short = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  const l = 0.2104542553 * long + 0.793617785 * medium - 0.0040720468 * short;
+  const a = 1.9779984951 * long - 2.428592205 * medium + 0.4505937099 * short;
+  const bb = 0.0259040371 * long + 0.7827717662 * medium - 0.808675766 * short;
+  const hue = (Math.atan2(bb, a) * 180) / Math.PI;
+  return [l, Math.hypot(a, bb), hue < 0 ? hue + 360 : hue];
+}
+
+/** An OKLCH back to linear-light sRGB, which may fall outside 0–1. */
+function oklchToLinearRgb([l, c, h]: Oklch): readonly [number, number, number] {
+  const radians = (h * Math.PI) / 180;
+  const a = c * Math.cos(radians);
+  const b = c * Math.sin(radians);
+  const long = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const medium = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const short = (l - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  return [
+    4.0767416621 * long - 3.3077115913 * medium + 0.2309699292 * short,
+    -1.2684380046 * long + 2.6097574011 * medium - 0.3413193965 * short,
+    -0.0041960863 * long - 0.7034186147 * medium + 1.707614701 * short,
+  ];
+}
+
+/** Whether an OKLCH names a colour sRGB can actually show. */
+function inGamut(lch: Oklch): boolean {
+  return oklchToLinearRgb(lch).every(
+    (channel) => channel >= -1e-6 && channel <= 1 + 1e-6,
+  );
+}
+
+/**
+ * The most chroma a lightness and a hue can hold in sRGB, bisected.
+ *
+ * This is the function that makes the claim about orange checkable rather than
+ * rhetorical: run it up Valor's hue and the ceiling falls as the lightness
+ * rises, which is what a peach is.
+ */
+function maxChroma(l: number, h: number): number {
+  let low = 0;
+  let high = 0.4;
+  for (let step = 0; step < 60; step += 1) {
+    const middle = (low + high) / 2;
+    if (inGamut([l, middle, h])) low = middle;
+    else high = middle;
+  }
+  return low;
+}
+
+/** An OKLCH as `#RRGGBB`, clipped to the gamut it was already clamped into. */
+function oklchToHex(lch: Oklch): string {
+  const channels = oklchToLinearRgb(lch).map((channel) =>
+    Math.round(Math.min(1, Math.max(0, toSrgb(channel))) * 255)
+      .toString(16)
+      .padStart(2, "0")
+      .toUpperCase(),
+  );
+  return `#${channels.join("")}`;
+}
+
+/**
+ * A colour `fraction` of the way from `from` to `to` in lightness and hue,
+ * holding `from`'s chroma for as long as the gamut allows it.
+ *
+ * Pure, and the only arithmetic behind the three middle candidates: nothing on
+ * the page spells a derived hex, so a retuned authored pair moves its
+ * candidates with it rather than leaving three stale literals behind.
+ */
+export function towards(from: string, to: string, fraction: number): string {
+  const [fromL, fromC, fromH] = hexToOklch(from);
+  const [toL, , toH] = hexToOklch(to);
+  const l = fromL + fraction * (toL - fromL);
+  const h = fromH + fraction * (toH - fromH);
+  return oklchToHex([l, Math.min(fromC, maxChroma(l, h)), h]);
+}
+
+/**
+ * The five, in the order they lighten: the brand's strong, three derived, the
+ * brand's soft.
+ *
+ * The authored pair sits at the ends rather than in a column of its own so the
+ * set reads as one gradient and the eye can find the place it stops being dark
+ * and has not yet become a peach.
+ */
+export const VALOR_CANDIDATES: readonly ValorCandidate[] = [
+  { key: "strong", hex: YTY_FAMILIES.valor.strong },
+  ...[
+    { key: "quarter", fraction: 0.25 },
+    { key: "half", fraction: 0.5 },
+    { key: "three-quarters", fraction: 0.75 },
+  ].map(({ key, fraction }) => ({
+    key,
+    hex: towards(YTY_FAMILIES.valor.strong, YTY_FAMILIES.valor.soft, fraction),
+  })),
+  { key: "soft", hex: YTY_FAMILIES.valor.soft },
 ];
 
 /**
