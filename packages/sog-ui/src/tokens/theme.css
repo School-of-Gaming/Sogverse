@@ -24,15 +24,21 @@
   --color-world: #8F00E2;
   --color-world-foreground: #FFFFFF;
 
-  /* The four Yty-Element families. Strong fills, borders, rings and glows; soft carries text and glyphs. That split is a contrast result — see src/tokens/contrast.ts. */
-  --color-yty-harmony-strong: #F55B9A;
-  --color-yty-harmony-soft: #FA7FA3;
-  --color-yty-glow-strong: #1AB061;
-  --color-yty-glow-soft: #6AC66B;
-  --color-yty-valor-strong: #FD700D;
-  --color-yty-valor-soft: #FF993D;
-  --color-yty-wit-strong: #3A71DE;
-  --color-yty-wit-soft: #4DB3F5;
+  /* The four Yty-Element families, one colour each. The same value fills, edges, rings, marks, inks a label and draws a glyph — see src/tokens/brand.ts for why a family has one colour and not a pair. */
+  --color-yty-harmony: #FA7FA3;
+  --color-yty-glow: #6AC66B;
+  --color-yty-valor: #FF8F31;
+  --color-yty-wit: #4DB3F5;
+
+  /* The four statuses, each with the ink its fill carries. Success is Glow and info is Wit, resolved through the family rather than copied from it: a status is a fact, and a fact takes a family. */
+  --color-destructive: #FF5C5C;
+  --color-destructive-foreground: #121212;
+  --color-success: #6AC66B;
+  --color-success-foreground: #121212;
+  --color-info: #4DB3F5;
+  --color-info-foreground: #121212;
+  --color-warning: #DFCB25;
+  --color-warning-foreground: #121212;
 
   /* The sixteen picks — the colours a person chooses for their own thing. Numbered because a pick means nothing but whose it is; the number is a stable id, never a position. */
   --color-pick-1: #F4504E;

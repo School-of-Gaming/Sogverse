@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { YTY_FAMILIES } from "../../../packages/sog-ui/src/tokens/brand";
+import {
+  STATUS_IDS,
+  YTY_FAMILIES,
+} from "../../../packages/sog-ui/src/tokens/brand";
 import {
   GROUNDS,
   PAIRINGS,
-  contrastRatio,
   measure,
 } from "../../../packages/sog-ui/src/tokens/contrast";
 
@@ -21,7 +23,7 @@ describe("shipped pairings", () => {
   // Vitest's `it.each([])` registers nothing and the suite passes green, so every
   // table in this file is floored: an emptied list must fail rather than vanish.
   it("has the whole shipped list to walk", () => {
-    expect(PAIRINGS.length).toBeGreaterThanOrEqual(24);
+    expect(PAIRINGS.length).toBeGreaterThanOrEqual(40);
   });
 
   it.each(PAIRINGS.map((pairing) => [pairing.id, pairing] as const))(
@@ -37,31 +39,39 @@ describe("shipped pairings", () => {
 });
 
 /**
- * The band wit-strong sits in, on every ground the library ships.
+ * The ledger is complete, which is the claim the whole module rests on.
  *
- * This is not a value restating itself: it is the measurement the whole
- * strong/soft doctrine rests on, expressed as the logic it implies. Wit-strong
- * clears the glyph floor everywhere and the body floor nowhere, which is what
- * makes "strong fills and draws, soft carries text" a rule rather than a habit.
- * If a retune ever lifted it over the body floor, the rule would have lost the
- * case that forces it and would have to be re-argued rather than inherited.
+ * Walking the list proves that what is *in* it passes; it says nothing about
+ * what was left out, and a pairing left out is exactly how an unmeasured colour
+ * reaches a screen. Every hue the palette offers as a label — the four families
+ * and the four statuses — can land on any of the three grounds the theme fills,
+ * and every one of them can also be filled under its ink. So the ledger has to
+ * carry four entries per hue, and a hue added to either set without its
+ * measurements fails here rather than at the first surface that spends it.
  */
-const GROUND_CASES: [string, string][] = GROUNDS.map((ground) => [
-  ground.label,
-  ground.hex,
-]);
+const HUE_TOKENS: readonly string[] = [
+  ...Object.keys(YTY_FAMILIES).map((id) => `yty-${id}`),
+  ...STATUS_IDS,
+];
 
-describe("the wit-strong band", () => {
-  it("has every ground to measure against", () => {
-    expect(GROUND_CASES.length).toBeGreaterThanOrEqual(3);
+describe("the ledger covers every hue it offers", () => {
+  it("has hues to cover", () => {
+    expect(HUE_TOKENS.length).toBeGreaterThanOrEqual(8);
   });
 
-  it.each(GROUND_CASES)(
-    "wit-strong on %s clears the glyph floor and misses the body floor",
-    (_label, ground) => {
-      const ratio = contrastRatio(YTY_FAMILIES.wit.strong, ground);
-      expect(ratio).toBeGreaterThanOrEqual(3);
-      expect(ratio).toBeLessThan(4.5);
-    },
-  );
+  it.each(HUE_TOKENS)("%s is measured as ink on all three grounds", (token) => {
+    const grounds = PAIRINGS.filter(
+      (pairing) => pairing.foreground.token === token,
+    ).map((pairing) => pairing.background.token);
+    expect([...grounds].sort()).toEqual(
+      GROUNDS.map((ground) => ground.token).sort(),
+    );
+  });
+
+  it.each(HUE_TOKENS)("%s is measured as a fill under its ink", (token) => {
+    const fills = PAIRINGS.filter(
+      (pairing) => pairing.background.token === token,
+    );
+    expect(fills).toHaveLength(1);
+  });
 });

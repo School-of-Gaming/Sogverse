@@ -2,15 +2,20 @@
  * Every colour Sogverse still defines, what it is worth, and what is proposed
  * for it.
  *
- * The neutrals, the signature pair and the four Yty families have left this
- * file: those rows are ruled and landed, so their values are the library's and
- * are imported from `src/tokens/brand.ts` wherever a section below still needs
- * one. The four product-type colours have left it too, with nothing to replace
- * them — a product kind takes a Yty family now, decided in the library's tone
- * grammar, so it is no longer a colour Sogverse defines. The sixteen voice-zone
- * hues have left it as the library's picks: they are the colours a person
- * chooses for their own thing, numbered rather than named, and a zone is one
- * consumer of them rather than their definition.
+ * The neutrals, the signature pair, the four Yty families and the four status
+ * colours have left this file: those rows are ruled and landed, so their values
+ * are the library's and are imported from `src/tokens/brand.ts` wherever a
+ * section below still needs one. The four product-type colours have left it too,
+ * with nothing to replace them — a product kind takes a Yty family now, decided
+ * in the library's tone grammar, so it is no longer a colour Sogverse defines.
+ * The sixteen voice-zone hues have left it as the library's picks: they are the
+ * colours a person chooses for their own thing, numbered rather than named, and
+ * a zone is one consumer of them rather than their definition.
+ *
+ * What the status half leaves behind is the **surface**, not the values:
+ * `STATUS_SITES` still classifies every call site by construct and carries the
+ * command that regenerates it, because the constructs those sites are swept into
+ * are a later pass and that pass needs the list.
  *
  * A temporary file behind a temporary page, deleted with it once the ruling is
  * made. Nothing here is a token and nothing here is imported by the library —
@@ -42,228 +47,17 @@
  * screen, what the code always said, and what is proposed.
  */
 
-import {
-  NEUTRALS,
-  YTY_FAMILIES,
-  type YtyFamilyId,
-} from "../../../src/tokens/brand";
-
-/** What a hue is asked for, which is the only thing a consumer ever names. */
-export interface Roles {
-  /** Fills, edges, rings, unlabelled marks — everything that is a shape. */
-  readonly area: string;
-  /** Labels and glyphs on a neutral ground — everything that is read. */
-  readonly ink: string;
-}
-
 /**
- * The role table: which authored value each family spends in each role.
+ * The four states, which are the keys the status surface is classified under.
  *
- * **Consumers never name strong or soft.** A surface asks for a family's area
- * or its ink; this table is the only place that knows which of the two authored
- * values answers. That is what makes the pair a library decision rather than a
- * habit repeated at 335 call sites — and it is why the two halves can differ
- * per family without any consumer having to know that they do.
- *
- * **The dark ground is what inverts the pair.** The brand authors strong and
- * soft against a white page, where strong is the value that separates from the
- * ground. On `#121212` the lighter value is the one that lifts, and a strong
- * mid-tone tuned to hold its own against white sinks into a near-black card and
- * reads as a duller version of the hue. Drawn side by side in every construct,
- * the lighter value won both roles for Harmony, Glow and Wit.
- *
- * **Valor is the exception, and it is a property of the hue rather than of the
- * rule.** Its strong `#FD700D` is already a bright orange that carries an area
- * on the dark ground, and its soft is pale enough to read as a wash rather than
- * a shape — so Valor is the one family whose two roles take different values.
- * That single asymmetry is the whole reason this is a table and not a sentence.
- *
- * **Every area value carries an ink label**, measured: 7.70, 8.83, 6.69 and
- * 8.10 against `#121212`, against 2.43, 2.12, 2.80 and 2.31 against white. No
- * family fill takes a white label, which is what removes the last white from
- * the status set.
- *
- * Success and info are not new colours: they take Glow's roles and Wit's roles
- * unchanged, which is what the owner ruled when the retuned near-duplicates
- * were refused.
- */
-export const YTY_ROLES: Record<YtyFamilyId, Roles> = {
-  harmony: {
-    area: YTY_FAMILIES.harmony.soft,
-    ink: YTY_FAMILIES.harmony.soft,
-  },
-  glow: { area: YTY_FAMILIES.glow.soft, ink: YTY_FAMILIES.glow.soft },
-  /**
-   * Valor spends its strong value for both roles. Orange loses its chroma when
-   * lightened where pink, green and blue do not, so soft Valor read as weak
-   * ink and a strong edge beside soft ink read as two oranges; strong as ink
-   * clears the body floor on all three grounds. With this, every family spends
-   * exactly one colour, which is the direction the owner asked to see: one
-   * colour per element, not a pair.
-   *
-   * **Seen, and not ruled.** Strong for both roles reads "quite dark" as text
-   * and as a glyph, and soft reads as "a peach" — so the shape is settled (one
-   * colour, twice) and the value is not. Three oranges between the authored
-   * pair are drawn beside them in the Area-and-ink case; `VALOR_CANDIDATES` in
-   * `status-tones.ts` derives them and says what lands whichever wins. This
-   * entry stays at strong until the owner rules, because every other drawing on
-   * the page reads it and a table that moved first would put an answer into
-   * every picture the question is being asked in.
-   */
-  valor: { area: YTY_FAMILIES.valor.strong, ink: YTY_FAMILIES.valor.strong },
-  wit: { area: YTY_FAMILIES.wit.soft, ink: YTY_FAMILIES.wit.soft },
-};
-
-/**
- * The four states, which are the keys everything about status is held under.
- *
- * A union rather than a string so no drawing can key on a state that does not
- * exist, and so the record below is checked for completeness rather than
- * trusted: the whole point of a four-member set is that all four are present in
- * every construct that draws it.
+ * The colours themselves have left this file. All four are the library's now —
+ * `destructive` and `warning` as hues of their own, `success` and `info`
+ * resolving through Glow and Wit, because a status is a fact and a fact takes a
+ * family — so a drawing that needs one reads `statusHex` rather than a candidate
+ * spelled here. What is left is the id, which is what the construct table below
+ * is keyed on.
  */
 export type StatusId = "destructive" | "success" | "info" | "warning";
-
-/** A status colour as Sogverse defines it today, and the one phrase the summary prints for it. */
-export interface StatusRow {
-  readonly id: StatusId;
-  readonly label: string;
-  /** Today's fill. */
-  readonly today: string;
-  /** Today's label colour on that fill. */
-  readonly todayForeground: string;
-  readonly uses: number;
-  /** The verdict, in one phrase. */
-  readonly verdict: string;
-  /** The verdict for the matching `-foreground`, in one phrase. */
-  readonly foregroundVerdict: string;
-  /** How many sites the `-foreground` has. */
-  readonly foregroundUses: number;
-}
-
-/**
- * The four status colours as Sogverse defines them today. Roughly 335 call
- * sites, classified by construct in `STATUS_SITES` below.
- *
- * **What today's set gets wrong, and what the owner has chosen instead.**
- *
- * **The labels are illegible.** Three of the four foregrounds are white on a
- * light fill and miss the 4.5:1 body floor: destructive 3.78:1, info 3.48:1,
- * success 2.52:1. Only warning's dark label passes. The library's brand pair
- * already states the rule these break — a light fill takes a dark label — so a
- * proposed fill takes ink wherever it can, and takes white only where the
- * arithmetic forces it.
- *
- * **Ink is the same hex as the page ground**, so one measurement settles two
- * uses: a colour clearing the body floor against the card is safe both as text
- * on the card and as a fill under an ink label.
- *
- * **The hues collide with the library's own.** One meaning per hue is the tone
- * grammar, and warning sits 5° from the brand amber, success 12° from Glow's
- * strong green, and info 6° from Wit's soft blue.
- *
- * **The owner's ruling on what replaces them, and why two of the four are not
- * new colours at all.** Retuning success and info away from their neighbours
- * was drawn and rejected: a retuned info sits beside Wit as two shades of blue
- * on one page, and a retuned success beside Glow as two greens, and a reader
- * meeting two near-identical hues learns that neither of them means anything.
- * A smaller palette carrying one hue with two related meanings is the better
- * trade — the glyph and the label carry the difference, which is the rule the
- * library already holds for every colour-coded thing. So:
- *
- * - **destructive → `#FF5C5C`, a new colour of its own.** Red is the one status
- *   hue with room: valor's orange is 25° away and harmony's pink 18°, and red
- *   reads as neither. What moves is the value, not the hue — today's red clears
- *   the card by 0.10, so its ink label lands at 4.95 with nothing spare; the
- *   candidate measures 5.75 on the card and 6.19 under ink.
- * - **warning → `#DFCB25`, a new colour of its own.** The worst collision in the
- *   set: a warning badge and a call to action are the same colour today. Moving
- *   to 54° and dropping the saturation gives a caution yellow visibly not the
- *   brand gold; going further lands in chartreuse and stops reading as caution.
- *   10.53 on the card, 11.34 under ink.
- * - **success → Glow, in both roles.** Not a near-green beside Glow, but Glow
- *   itself: `#6AC66B`, 8.21 as ink on the card and 8.83 under an ink label as an
- *   area. This is the one place the library's own doc comment on `glow` has to
- *   change when it lands, because it currently says green is never the colour of
- *   success.
- * - **info → Wit, in both roles, and the fork is closed.** It used to be drawn
- *   both ways: Wit strong `#3A71DE` under a white label (4.57, clearing the body
- *   floor by 0.07 and failing it under ink at 4.10, and failing outright as text
- *   on the card at 3.81), against Wit soft `#4DB3F5` under an ink one. The role
- *   table answers it without a second question — Wit's area *is* soft — so info
- *   is `#4DB3F5` wherever it lands: 8.10 under an ink label, 7.53 as ink on the
- *   card. Wit strong is spent in neither role, and the white label goes with it.
- *
- * The largest construct is what made that the right way round. `text-x` on a
- * neutral ground is 166 of the 335 sites, and Wit strong could never have been
- * text there, so a set whose fill and whose ink were two different values would
- * have been two colours wearing one name at the biggest construct in the
- * inventory.
- *
- * Every ratio above was computed with the library's `contrastRatio`. None is
- * rendered.
- *
- * **When this lands** the four become library tokens with their ink companion
- * and their measured pairings, and success and info become two more rows of the
- * tone grammar rather than two more colours — a status is a fact, and a fact
- * takes a family. The token *names* do not move, so no Sogverse call site
- * changes spelling.
- */
-export const STATUS_BY_ID: Record<StatusId, StatusRow> = {
-  destructive: {
-    id: "destructive",
-    label: "Destructive",
-    today: "#EF4343",
-    todayForeground: "#FFFFFF",
-    uses: 160,
-    verdict: "retune → #FF5C5C",
-    foregroundVerdict: "retune → ink",
-    foregroundUses: 3,
-  },
-  success: {
-    id: "success",
-    label: "Success",
-    today: "#2EB88A",
-    todayForeground: "#FFFFFF",
-    uses: 85,
-    verdict: "→ yty-glow, area and ink",
-    foregroundVerdict: "retune → ink",
-    foregroundUses: 3,
-  },
-  info: {
-    id: "info",
-    label: "Info",
-    today: "#308CE8",
-    todayForeground: "#FFFFFF",
-    uses: 57,
-    verdict: "→ yty-wit, area and ink",
-    foregroundVerdict: "retune → ink",
-    foregroundUses: 1,
-  },
-  warning: {
-    id: "warning",
-    label: "Warning",
-    today: "#E7B008",
-    todayForeground: "#121212",
-    uses: 75,
-    verdict: "retune → #DFCB25",
-    foregroundVerdict: "rename → ink",
-    foregroundUses: 2,
-  },
-};
-
-/**
- * The same four in the order the summary table and every comparison row print
- * them: worst first, then the two that report something going right, then the
- * caution. The record above is the source and this is only its order, so a row
- * cannot exist in one and not the other.
- */
-export const STATUS_ROWS: readonly StatusRow[] = [
-  STATUS_BY_ID.destructive,
-  STATUS_BY_ID.success,
-  STATUS_BY_ID.info,
-  STATUS_BY_ID.warning,
-];
 
 /**
  * One construct that spends a status colour, and every site drawing it.
@@ -366,78 +160,6 @@ export const STATUS_SITES: readonly StatusSite[] = [
     where: "family/EnrollmentCard.tsx, the awaiting card",
     uses: 1,
     files: 1,
-  },
-];
-
-/**
- * The proposed status set, each entry as the **two roles** a hue is spent in
- * rather than as a single fill.
- *
- * Four entries for four statuses. It used to hold five, because info was drawn
- * as a strong fill under white and as a soft fill under ink and the choice was
- * live; the role table closes that fork. Success takes Glow's roles and info
- * takes Wit's, unchanged, which is what the owner ruled when the retuned
- * near-duplicates were refused — a status is a fact and a fact takes a family.
- *
- * `destructive` and `warning` belong to no family and have one value each,
- * which serves both roles. That is not a placeholder: a colour with one value
- * spends it everywhere, and writing it twice is what lets a construct read the
- * roles without asking which kind of colour it is holding.
- *
- * Two of the four are the library's own hues rather than values of this set's:
- * they are read through `YTY_ROLES` rather than spelled here, so a retune of a
- * family — or a change to which variant a role takes — moves the status with it
- * and the two cannot drift into being near neighbours by accident, which is the
- * exact failure the owner ruled against.
- *
- * **The measured floors behind `onArea`.** Against dark ink the area fills
- * measure 6.19 (destructive), 8.83 (Glow), 11.34 (warning) and 8.10 (Wit);
- * against white 3.03, 2.12, 1.65 and 2.31. Every one of them clears the 4.5
- * body floor under ink and none clears it under white, so the whole set carries
- * an ink label and **no white survives anywhere in it**. That is a consequence
- * of the role table rather than a separate decision: the value that failed
- * under ink was Wit strong (4.10), and Wit strong is no longer spent.
- */
-export interface ProposedStatus {
-  readonly status: StatusId;
-  /** The name on screen: the token, or the hex where there is no token yet. */
-  readonly label: string;
-  /** A fill, an edge, a ring, an unlabelled mark. */
-  readonly area: string;
-  /** A label or a glyph on a neutral ground. */
-  readonly ink: string;
-  /** The label that reads on a solid fill of `area`. */
-  readonly onArea: string;
-}
-
-export const PROPOSED_STATUSES: readonly ProposedStatus[] = [
-  {
-    status: "destructive",
-    label: "destructive #FF5C5C",
-    area: "#FF5C5C",
-    ink: "#FF5C5C",
-    onArea: NEUTRALS.background.hex,
-  },
-  {
-    status: "success",
-    label: "success = yty-glow",
-    area: YTY_ROLES.glow.area,
-    ink: YTY_ROLES.glow.ink,
-    onArea: NEUTRALS.background.hex,
-  },
-  {
-    status: "info",
-    label: "info = yty-wit",
-    area: YTY_ROLES.wit.area,
-    ink: YTY_ROLES.wit.ink,
-    onArea: NEUTRALS.background.hex,
-  },
-  {
-    status: "warning",
-    label: "warning #DFCB25",
-    area: "#DFCB25",
-    ink: "#DFCB25",
-    onArea: NEUTRALS.background.hex,
   },
 ];
 

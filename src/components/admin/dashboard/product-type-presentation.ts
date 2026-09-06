@@ -31,10 +31,10 @@ import type { ProductType } from "@/types";
  * — so a chip, a product card, a filter chip, a feed row and the key itself all
  * carry the same tinted glyph, and none of them carries a bare swatch.
  *
- * **Strong and soft follow the library's standing rule**: soft carries text and
- * glyphs, strong carries fills, edges and rings. The tile is the strong variant
- * at chip scale, which is the icon-accent tile the library's alpha ban names as
- * an exemption.
+ * **A family is one colour**, so the glyph's ink and the tile behind it are the
+ * same token. The tile is that colour at chip scale, which is the icon-accent
+ * tile the library's alpha ban names as an exemption and the one step of alpha
+ * left on this surface.
  *
  * **Every class is written out in full.** Tailwind scans source text for
  * complete class names, so a class assembled from a family id at render time
@@ -57,18 +57,18 @@ export type ProductTypeMessageKey =
 
 /** How a Yty family is spent on an admin surface: the glyph's ink, and the tile behind it. */
 interface FamilyClasses {
-  /** The family's soft variant as a foreground colour — how the glyph is tinted. */
+  /** The family's colour as a foreground — how the glyph is tinted. */
   text: string;
-  /** A chip-scale wash of the family's strong variant, for the tile the glyph sits in. */
+  /** A chip-scale wash of the same colour, for the tile the glyph sits in. */
   tint: string;
 }
 
 /** The four families, each as the pair of utilities an admin surface draws it with. */
 const FAMILY_CLASSES: Record<YtyFamilyId, FamilyClasses> = {
-  harmony: { text: "text-yty-harmony-soft", tint: "bg-yty-harmony-strong/15" },
-  glow: { text: "text-yty-glow-soft", tint: "bg-yty-glow-strong/15" },
-  valor: { text: "text-yty-valor-soft", tint: "bg-yty-valor-strong/15" },
-  wit: { text: "text-yty-wit-soft", tint: "bg-yty-wit-strong/15" },
+  harmony: { text: "text-yty-harmony", tint: "bg-yty-harmony/15" },
+  glow: { text: "text-yty-glow", tint: "bg-yty-glow/15" },
+  valor: { text: "text-yty-valor", tint: "bg-yty-valor/15" },
+  wit: { text: "text-yty-wit", tint: "bg-yty-wit/15" },
 };
 
 /**

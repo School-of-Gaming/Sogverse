@@ -139,7 +139,7 @@ function AvatarRow({
 
 export function IdenticonSection() {
   return (
-    <Question n={2} title="The identicon">
+    <Question n={1} title="The identicon">
       <Compare columns={2}>
         <Panel label="Today — #FFFFFF on #000000">
           <Exemplar

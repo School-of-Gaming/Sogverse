@@ -1,18 +1,24 @@
 // The palette as a hex, for the renderers that cannot read a CSS variable:
 // email clients, the identicon, the satori-drawn Open Graph cards.
 //
-// It no longer mirrors globals.css by hand. Every value the brand owns is
-// derived here from `@sog/ui`, which is the one place a School of Gaming colour
-// is authored, so a hue moves in the package and this module follows without an
-// edit. Anything still spelled as a literal below is a colour the library does
-// not own yet — the status colours — and it is spelled once, here, until the
-// ruling that moves it into the package.
+// It no longer mirrors globals.css by hand, and it no longer spells a colour of
+// its own: every value below is derived from `@sog/ui`, which is the one place a
+// School of Gaming colour is authored, so a hue moves in the package and this
+// module follows without an edit. No value below is spelled here any more, and a
+// hex typed into one would be a colour Sogverse had defined for itself.
 //
 // Nothing in this file is typed by conversion or by eye: a composited tint is
 // computed by `composite()` from the colour, its alpha and the ground it sits
 // on, because a tint hand-blended once is a value nobody can re-derive.
 
-import { BRAND as SOG_BRAND, NEUTRALS, YTY_FAMILIES, composite } from "@sog/ui";
+import {
+  BRAND as SOG_BRAND,
+  NEUTRALS,
+  STATUS_INK,
+  YTY_FAMILIES,
+  composite,
+  statusHex,
+} from "@sog/ui";
 
 /**
  * The brand fills and the foreground each one carries.
@@ -57,52 +63,57 @@ export const GRADIENT = {
 /**
  * The four Yty-Element colours.
  *
- * Taken at each family's **soft** variant, which is the library's rule for the
- * job these do: strong fills, borders, rings and glows; soft carries text and
- * glyphs, and a mail spends an element colour as ink beside a name.
+ * One value per family, which is the library's own shape: the same colour fills,
+ * edges, rings, marks and inks a label, so a renderer that cannot read a CSS
+ * variable has nothing to choose between. Where one of these is set as type it
+ * is on a **label** — an element's name beside its mark — and never on a
+ * sentence.
  */
 export const YTY_ELEMENT = {
-  harmony: YTY_FAMILIES.harmony.soft,
-  glow: YTY_FAMILIES.glow.soft,
-  valor: YTY_FAMILIES.valor.soft,
-  wit: YTY_FAMILIES.wit.soft,
+  harmony: YTY_FAMILIES.harmony.hex,
+  glow: YTY_FAMILIES.glow.hex,
+  valor: YTY_FAMILIES.valor.hex,
+  wit: YTY_FAMILIES.wit.hex,
 } as const;
 
 /**
  * The status fills, and the foreground each carries.
  *
- * Literal, and the only literal left in this module: the status colours are the
- * one part of the palette `@sog/ui` does not own yet, so they are spelled here
- * until the ruling that moves them in. The values match `--color-info` and
- * `--color-info-foreground` in globals.css, which is the pairing this replaces
- * one day rather than a second source of truth to keep in step forever.
+ * Derived, not spelled: the four status colours are the library's now, and
+ * `info` resolves through Wit — a status is a fact and a fact takes a family —
+ * so a retune of Wit moves this mail's callout with it.
  *
  * Only `info` is here, because only `info` has been needed. Mirroring a colour
  * no mail uses would put an unmeasured value in the palette and read as an
  * invitation to reach for it; add `destructive`/`success`/`warning` when a mail
- * actually needs one, and measure it in the same change.
+ * actually needs one.
  *
  * The foreground is named beside the fill because a fill and its foreground are
- * one decision — but this particular pair is **not a legible one at body size**:
- * white on this blue is 3.48:1, under the 4.5:1 floor. So `info` never becomes a
- * fill under a label here — a ruling this comment carries, not a guard any sweep
- * enforces: the palette check accepts the colour anywhere in a mail. It is used
- * the way the app's `Alert` uses it, through the composited tints below, and
- * `palette-contrast.test.ts` pins the white pairing as rejected so the
- * measurement, at least, stays measured rather than remembered.
+ * one decision, and under the library that decision is **ink**: every status
+ * fill is light enough to take a dark label and none of them is dark enough to
+ * take a white one, so the white this pair used to carry is gone from the
+ * palette entirely. `palette-contrast.test.ts` keeps white-on-info pinned as a
+ * rejected pairing so the reason survives the value that used to force it.
  */
 export const STATUS = {
-  info: "#308CE8",
-  infoForeground: "#ffffff",
+  info: statusHex("info"),
+  infoForeground: STATUS_INK,
 } as const;
 
 /**
- * The app's `Alert` in its `info` variant, pre-composited for email.
+ * The mail's own note panel, pre-composited for email.
  *
- * The component's `bg-info/10` is flattened against the
- * ground they actually sit on — the message panel, not the shell's darker
- * background behind it. Composite over the wrong ground and the tint is a
- * visible rectangle rather than a wash.
+ * A mail client cannot be relied on for alpha, so the wash and its edge are
+ * flattened against the ground they actually sit on — the message panel, not the
+ * shell's darker background behind it. Composite over the wrong ground and the
+ * tint is a visible rectangle rather than a wash.
+ *
+ * **The tint itself is ruled against and has not yet been removed.** No status
+ * colour is to be tinted anywhere — for `info` it is forced, because info is
+ * Wit's blue and a brand colour exists at its authored value or not at all — and
+ * the app's `Alert` and this panel are the same construct with one renderer's
+ * worth of difference between them. They are reworked together in the construct
+ * pass, not separately here, or they stop being the same construct.
  */
 export const STATUS_TINT = {
   infoBorder: composite(STATUS.info, 0.5, DARK_THEME.card),

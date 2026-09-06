@@ -17,7 +17,15 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { BRAND, NEUTRALS, YTY_FAMILIES, type NeutralId } from "./brand.ts";
+import {
+  BRAND,
+  NEUTRALS,
+  STATUS_IDS,
+  STATUS_INK,
+  YTY_FAMILIES,
+  statusHex,
+  type NeutralId,
+} from "./brand.ts";
 import { PICKS } from "./picks.ts";
 import { GLASS, SCRIM } from "./surfaces.ts";
 import { FACES, TYPE_SCALE } from "./typography.ts";
@@ -80,9 +88,26 @@ function brandLines(): string[] {
 }
 
 function ytyLines(): string[] {
-  return Object.entries(YTY_FAMILIES).flatMap(([id, family]) => [
-    declaration(`--color-yty-${id}-strong`, family.strong),
-    declaration(`--color-yty-${id}-soft`, family.soft),
+  return Object.entries(YTY_FAMILIES).map(([id, family]) =>
+    declaration(`--color-yty-${id}`, family.hex),
+  );
+}
+
+/**
+ * The four statuses, each with the ink its fill carries.
+ *
+ * `statusHex` is what makes success and info *equal* Glow and Wit rather than
+ * agree with them: the two rows resolve through the family entry, so a retuned
+ * family moves its status in the same regeneration and no literal is left behind
+ * to drift. The `-foreground` companions are all one value, which is why they
+ * are generated from `STATUS_INK` rather than authored per status — a consumer
+ * writing `text-destructive-foreground` is naming the decision the measurement
+ * made, not a grey it picked.
+ */
+function statusLines(): string[] {
+  return STATUS_IDS.flatMap((id) => [
+    declaration(`--color-${id}`, statusHex(id)),
+    declaration(`--color-${id}-foreground`, STATUS_INK),
   ]);
 }
 
@@ -206,8 +231,13 @@ export function renderTheme(): string {
     ),
     "",
     section(
-      "The four Yty-Element families. Strong fills, borders, rings and glows; soft carries text and glyphs. That split is a contrast result — see src/tokens/contrast.ts.",
+      "The four Yty-Element families, one colour each. The same value fills, edges, rings, marks, inks a label and draws a glyph — see src/tokens/brand.ts for why a family has one colour and not a pair.",
       ytyLines(),
+    ),
+    "",
+    section(
+      "The four statuses, each with the ink its fill carries. Success is Glow and info is Wit, resolved through the family rather than copied from it: a status is a fact, and a fact takes a family.",
+      statusLines(),
     ),
     "",
     section(

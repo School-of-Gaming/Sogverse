@@ -23,8 +23,17 @@
  * vocabulary proper — every mark the brand uses, named and ruled — is a later
  * project, and nothing is defined here before something spends it.
  *
- * Strong and soft follow the standing rule wherever a row is spent: **soft
- * carries text and glyphs, strong carries fills, edges and rings.**
+ * **A family is one colour**, so a row decides a meaning and never a variant:
+ * whatever construct a row is spent in — a tinted glyph, a chip, an edge, a
+ * label — takes the family's single hex from `brand.ts`.
+ *
+ * **The status rows are not here, and that is on purpose.** A status is a fact
+ * that takes a family too — success is Glow, info is Wit — but only two of the
+ * four are: destructive and warning are hues in their own right. Splitting one
+ * four-row table so that half of it sat in the colour source and half here would
+ * put two rows in each file, so the whole of it lives in `brand.ts` as `STATUS`,
+ * beside the hues the other two rows carry. Read that table as a third one of
+ * these, with its own doc comment saying why each row is the kind of row it is.
  */
 
 import {

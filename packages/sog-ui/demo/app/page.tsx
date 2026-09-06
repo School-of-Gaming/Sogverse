@@ -1,9 +1,20 @@
 import Image from "next/image";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Check,
+  Info,
+  type LucideIcon,
+} from "lucide-react";
 
 import {
   BRAND,
   NEUTRALS,
+  STATUS,
+  STATUS_IDS,
   YTY_FAMILIES,
+  statusHex,
+  type StatusId,
   type YtyFamilyId,
 } from "../../src/tokens/brand";
 import {
@@ -21,6 +32,7 @@ import {
   FACE_CLASS,
   FILL,
   INK,
+  ON_FILL,
   STEP_CLASS,
   STEP_MOBILE_CLASS,
   WEIGHT_CLASS,
@@ -68,6 +80,34 @@ const KIND_NAME: Record<ProductKindId, string> = {
   municipality_club: "Municipality club",
   camp: "Camp",
   event: "Event",
+};
+
+/**
+ * The mark each status is drawn beside, chosen here rather than in the library.
+ *
+ * An element's mark is grammar and lives in `YTY_ELEMENT_GRAMMAR`, because an
+ * element *is* its family and the pair is one fact. A status mark is not settled
+ * yet: it belongs to the alert, the badge and the chip that will carry it, and
+ * nothing is defined in the library before the component that spends it. So the
+ * floor picks four marks to draw the label rule with, exactly as a consumer
+ * would today.
+ */
+const STATUS_GLYPH: Record<StatusId, LucideIcon> = {
+  destructive: AlertCircle,
+  success: Check,
+  info: Info,
+  warning: AlertTriangle,
+};
+
+/**
+ * The words a status label is allowed to be: the name of a state, and nothing
+ * a reader reads through.
+ */
+const STATUS_LABEL: Record<StatusId, string> = {
+  destructive: "Payment failed",
+  success: "Seat confirmed",
+  info: "Next session",
+  warning: "Two seats left",
 };
 
 function Label({ children }: { children: React.ReactNode }) {
@@ -211,30 +251,58 @@ export default function FoundationsPage() {
       </Section>
 
       <Section title="The four families">
-        <div className="space-y-8">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {FAMILIES.map((id) => {
             const family = YTY_FAMILIES[id];
             const Glyph = YTY_ELEMENT_GRAMMAR[id].glyph;
             return (
-              <article key={id}>
-                <div className="flex items-center gap-3">
+              <div key={id}>
+                <div className={`h-16 border border-border ${FILL[`yty-${id}`] ?? ""}`} />
+                <div className="mt-2 flex items-center gap-2">
                   <Glyph
-                    className={`h-7 w-7 ${INK[`yty-${id}-soft`] ?? ""}`}
+                    className={`h-5 w-5 ${INK[`yty-${id}`] ?? ""}`}
                     aria-hidden
                   />
-                  <h3 className="text-h3">{family.name}</h3>
+                  <p className={`text-h4 font-medium ${INK[`yty-${id}`] ?? ""}`}>
+                    {family.name}
+                  </p>
                 </div>
-                <div className="mt-4 grid gap-6 sm:grid-cols-2">
-                  {(["strong", "soft"] as const).map((variant) => (
-                    <Swatch
-                      key={variant}
-                      token={`yty-${id}-${variant}`}
-                      name={`${family.name} ${variant}`}
-                      hex={family[variant]}
-                    />
-                  ))}
+                <p className="font-brand-mono text-body-s text-muted-foreground">
+                  {family.hex}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* The badge and the label are the two shapes a status colour is allowed
+          to take, drawn together: filled under its own ink, and inked beside a
+          mark in the same hue on the card it really sits on. */}
+      <Section title="Status">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {STATUS_IDS.map((id) => {
+            const Glyph = STATUS_GLYPH[id];
+            return (
+              <div key={id}>
+                <div className="rounded-lg border border-border bg-card p-4">
+                  <span
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-body-s font-medium ${FILL[id] ?? ""} ${ON_FILL[id] ?? ""}`}
+                  >
+                    {STATUS_LABEL[id]}
+                  </span>
+                  <span
+                    className={`mt-4 flex items-center gap-2 text-body-s font-medium ${INK[id] ?? ""}`}
+                  >
+                    <Glyph className="h-4 w-4 shrink-0" aria-hidden />
+                    {STATUS_LABEL[id]}
+                  </span>
                 </div>
-              </article>
+                <p className="mt-2 text-h4 font-medium">{STATUS[id].name}</p>
+                <p className="font-brand-mono text-body-s text-muted-foreground">
+                  {statusHex(id)}
+                </p>
+              </div>
             );
           })}
         </div>
@@ -249,7 +317,7 @@ export default function FoundationsPage() {
             return (
               <div key={kind}>
                 <div
-                  className={`flex h-16 items-center justify-center border border-border ${FILL[`yty-${row.family}-strong`] ?? ""}`}
+                  className={`flex h-16 items-center justify-center border border-border ${FILL[`yty-${row.family}`] ?? ""}`}
                 >
                   <Icon className="h-7 w-7" style={{ color: NEUTRALS.background.hex }} aria-hidden />
                 </div>

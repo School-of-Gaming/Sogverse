@@ -20,9 +20,12 @@ import { YTY_ELEMENT_GRAMMAR } from "@sog/ui";
  * seam to adapt at, and it stays a single seam because no Sogverse module
  * reaches past this one for an element's mark.
  *
- * Each element's classes name the @sog/ui family pair — `-strong` for fills,
- * rings and glows, `-soft` for ink and glyphs. These alpha steps are the
- * pre-library recipe and are replaced when the Yty recipe is ruled.
+ * Each element's classes name the @sog/ui family, which is one colour: the same
+ * token inks the accent line, tints the tile and draws the ring. The `/10` and
+ * `/5` steps on the tile and the gradient are the pre-library recipe — a family
+ * exists at its authored value, and a fraction of it over the dark ground is a
+ * duller colour than the family — and they stay until the icon-tile question
+ * (§9's chip-scale exemption) is ruled.
  */
 export const YTY_ELEMENTS = [
   {
@@ -31,10 +34,10 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with yourself",
     icon: YTY_ELEMENT_GRAMMAR.harmony.glyph,
     color: {
-      bg: "bg-yty-harmony-strong/10",
-      bgGradient: "from-yty-harmony-strong/10 to-yty-harmony-strong/5",
-      accent: "text-yty-harmony-soft",
-      ring: "ring-yty-harmony-strong",
+      bg: "bg-yty-harmony/10",
+      bgGradient: "from-yty-harmony/10 to-yty-harmony/5",
+      accent: "text-yty-harmony",
+      ring: "ring-yty-harmony",
     },
   },
   {
@@ -43,10 +46,10 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with others",
     icon: YTY_ELEMENT_GRAMMAR.glow.glyph,
     color: {
-      bg: "bg-yty-glow-strong/10",
-      bgGradient: "from-yty-glow-strong/10 to-yty-glow-strong/5",
-      accent: "text-yty-glow-soft",
-      ring: "ring-yty-glow-strong",
+      bg: "bg-yty-glow/10",
+      bgGradient: "from-yty-glow/10 to-yty-glow/5",
+      accent: "text-yty-glow",
+      ring: "ring-yty-glow",
     },
   },
   {
@@ -55,10 +58,10 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with society",
     icon: YTY_ELEMENT_GRAMMAR.valor.glyph,
     color: {
-      bg: "bg-yty-valor-strong/10",
-      bgGradient: "from-yty-valor-strong/10 to-yty-valor-strong/5",
-      accent: "text-yty-valor-soft",
-      ring: "ring-yty-valor-strong",
+      bg: "bg-yty-valor/10",
+      bgGradient: "from-yty-valor/10 to-yty-valor/5",
+      accent: "text-yty-valor",
+      ring: "ring-yty-valor",
     },
   },
   {
@@ -67,10 +70,10 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with technology",
     icon: YTY_ELEMENT_GRAMMAR.wit.glyph,
     color: {
-      bg: "bg-yty-wit-strong/10",
-      bgGradient: "from-yty-wit-strong/10 to-yty-wit-strong/5",
-      accent: "text-yty-wit-soft",
-      ring: "ring-yty-wit-strong",
+      bg: "bg-yty-wit/10",
+      bgGradient: "from-yty-wit/10 to-yty-wit/5",
+      accent: "text-yty-wit",
+      ring: "ring-yty-wit",
     },
   },
 ] as const;

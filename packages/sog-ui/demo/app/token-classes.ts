@@ -24,14 +24,14 @@ export const FILL: TokenClasses = {
   border: "bg-border",
   act: "bg-act",
   world: "bg-world",
-  "yty-harmony-strong": "bg-yty-harmony-strong",
-  "yty-harmony-soft": "bg-yty-harmony-soft",
-  "yty-glow-strong": "bg-yty-glow-strong",
-  "yty-glow-soft": "bg-yty-glow-soft",
-  "yty-valor-strong": "bg-yty-valor-strong",
-  "yty-valor-soft": "bg-yty-valor-soft",
-  "yty-wit-strong": "bg-yty-wit-strong",
-  "yty-wit-soft": "bg-yty-wit-soft",
+  "yty-harmony": "bg-yty-harmony",
+  "yty-glow": "bg-yty-glow",
+  "yty-valor": "bg-yty-valor",
+  "yty-wit": "bg-yty-wit",
+  destructive: "bg-destructive",
+  success: "bg-success",
+  info: "bg-info",
+  warning: "bg-warning",
   "pick-1": "bg-pick-1",
   "pick-2": "bg-pick-2",
   "pick-3": "bg-pick-3",
@@ -51,16 +51,32 @@ export const FILL: TokenClasses = {
 };
 
 /**
- * The same tokens as foreground colours, for the marks and labels drawn in
- * them. Only the family softs are listed: a glyph is ink, and the standing rule
- * is that soft carries text and glyphs while strong carries fills, edges and
- * rings — so no family's strong has an ink utility to reach for here.
+ * The same tokens as foreground colours, for the glyphs and labels drawn in
+ * them. Every hue has one, because every hue is one colour: the value that
+ * fills a chip is the value that inks the label beside it, and there is no
+ * second variant to reach for.
+ *
+ * A `-foreground` has no entry here. It is the ink a fill carries, so it is only
+ * ever written on top of that fill and never on a neutral ground, which is the
+ * one thing this map is for.
  */
 export const INK: TokenClasses = {
-  "yty-harmony-soft": "text-yty-harmony-soft",
-  "yty-glow-soft": "text-yty-glow-soft",
-  "yty-valor-soft": "text-yty-valor-soft",
-  "yty-wit-soft": "text-yty-wit-soft",
+  "yty-harmony": "text-yty-harmony",
+  "yty-glow": "text-yty-glow",
+  "yty-valor": "text-yty-valor",
+  "yty-wit": "text-yty-wit",
+  destructive: "text-destructive",
+  success: "text-success",
+  info: "text-info",
+  warning: "text-warning",
+};
+
+/** A status fill's own label colour, for the badges the status floor draws. */
+export const ON_FILL: TokenClasses = {
+  destructive: "text-destructive-foreground",
+  success: "text-success-foreground",
+  info: "text-info-foreground",
+  warning: "text-warning-foreground",
 };
 
 /** Face id → the family utility the theme generates for its token. */

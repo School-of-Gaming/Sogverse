@@ -5,20 +5,21 @@
  * has, and the verdict in one phrase. Every reason behind a verdict is in the
  * doc comments in `inventory.ts`, beside the values it explains.
  *
- * The neutrals, the signature pair, the four Yty families and the sixteen
- * picks have left the table. Those rows are ruled and landed — the tokens are
- * the library's now — so the gallery that made their names legible has gone
- * with them. The four product-type colours have left it with nothing in their
- * place: a product kind takes a Yty family now, so it is not a colour Sogverse
- * defines. What is left is what is still open: the status colours, the colours
- * with no token behind them, and the alpha steps.
+ * The neutrals, the signature pair, the four Yty families, the four statuses and
+ * the sixteen picks have left the table. Those rows are ruled and landed — the
+ * tokens are the library's now — so the gallery that made their names legible
+ * has gone with them. The four product-type colours have left it with nothing in
+ * their place: a product kind takes a Yty family now, so it is not a colour
+ * Sogverse defines. What is left is what is still open: the colours with no
+ * token behind them, and the alpha steps.
  *
- * The status set gets a second table beside its first, keyed on the construct
- * rather than on the token. Which of the four a site spends is not the
- * interesting axis — a status colour is ink under a field, a wash behind a
- * paragraph, a solid disc on a corner and a dot on a rail, and those ask
- * different things of the same hex. The construct is the unit the owner rules
- * in, so it is the unit the table is keyed on.
+ * The status set keeps one table, and it is keyed on the **construct** rather
+ * than on the token. The values are ruled; what is not yet swept is the 335 call
+ * sites, and which of the four a site spends is not the interesting axis — a
+ * status colour is ink under a field, a wash behind a paragraph, a solid disc on
+ * a corner and a dot on a rail, and those ask different things of the same hex.
+ * The construct is the unit the sweep runs in, so it is the unit the table is
+ * keyed on.
  *
  * The alpha steps get a table of their own shape, carrying no swatch: an alpha
  * step has no colour of its own to show. It had a fourth column naming what
@@ -38,7 +39,6 @@ import {
   ACT_ALPHA_JOBS,
   ALPHA_SITES,
   LOOSE_COLOURS,
-  STATUS_ROWS,
   STATUS_SITES,
 } from "./inventory";
 import { Caps, Question } from "./parts";
@@ -236,21 +236,6 @@ function ActGroup({ title }: { title: string }) {
   );
 }
 
-const STATUS_SUMMARY: readonly Row[] = STATUS_ROWS.flatMap((status) => [
-  {
-    token: status.id,
-    hex: status.today,
-    uses: status.uses,
-    verdict: status.verdict,
-  },
-  {
-    token: `${status.id}-foreground`,
-    hex: status.todayForeground,
-    uses: status.foregroundUses,
-    verdict: status.foregroundVerdict,
-  },
-]);
-
 const LOOSE_SUMMARY: readonly Row[] = LOOSE_COLOURS.map((colour) => ({
   token: `${colour.label} — ${colour.where}`,
   hex: colour.value,
@@ -262,7 +247,6 @@ export function SummarySection() {
   return (
     <Question n={0} title="The inventory">
       <div className="space-y-10">
-        <Group title="Status" rows={STATUS_SUMMARY} />
         <StatusSiteGroup title="Status, by construct" />
         <Group title="Colours with no token behind them" rows={LOOSE_SUMMARY} />
         <AlphaGroup title="Colour at an alpha step" />

@@ -53,7 +53,7 @@ const PAIRS: { name: string; fg: string; bg: string }[] = [
   // used as emphasis at body size — it clears AA_BODY anyway, comfortably.
   { name: "brand orange on the ground", fg: BRAND.act, bg: DARK_THEME.bg },
   // The callout panel: both its uppercase label and its paragraphs, which carry
-  // the same colour on the washed info surface. 13.24:1 — the reason the panel
+  // the same colour on the washed info surface. 12.65:1 — the reason the panel
   // can drop the accent-coloured title the app's Alert uses and lose nothing.
   { name: "callout text on the info tint", fg: DARK_THEME.foreground, bg: STATUS_TINT.infoSurface },
 ];
@@ -76,18 +76,18 @@ describe("every colour pair a mail may emit is legible", () => {
  * and the rule that excludes it would read as arbitrary caution. Each of these
  * is a real mistake someone made or nearly made, kept measurable so the reason
  * survives the reasoning.
+ *
+ * One pair has left the list because it stopped being a mistake. The info colour
+ * set as the callout's own label used to measure 4.46:1 on its own wash — a hair
+ * under the floor, which was the whole reason the mail's callout titles itself
+ * in `foreground` where the app's Alert titles itself in the accent. Under
+ * @sog/ui, info is Wit's blue and the same pairing measures 6.40:1, so the
+ * arithmetic no longer forbids it. The mail's callout still does not do it, but
+ * that is a construct decision now rather than a contrast one, and a rejected
+ * pair that has stopped being rejectable cannot go on being asserted here.
  */
 describe("the pairs we rejected are still worth rejecting", () => {
-  // `atLeast` pins a pair whose *nearness* to the floor is load-bearing for the
-  // prose around it: the number lives where the build fails when it stops being
-  // true, instead of rotting in a comment.
-  const FORBIDDEN: {
-    name: string;
-    fg: string;
-    bg: string;
-    why: string;
-    atLeast?: number;
-  }[] = [
+  const FORBIDDEN: { name: string; fg: string; bg: string; why: string }[] = [
     {
       name: "brand purple as body text",
       fg: BRAND.world,
@@ -108,35 +108,21 @@ describe("the pairs we rejected are still worth rejecting", () => {
     },
     {
       name: "white on the info fill",
-      fg: STATUS.infoForeground,
+      fg: BRAND.worldForeground,
       bg: STATUS.info,
-      // 3.48:1. The pair globals.css names (--info / --info-foreground) and the
-      // reason `info` is never a fill under a label in a mail: it is mirrored so
-      // the fill and its foreground stay one decision, not so a caller can use
-      // them together at body size.
-      why: "the info colour is an accent here, never a surface with text on it",
-    },
-    {
-      name: "the info colour as the callout's own label",
-      fg: STATUS.info,
-      bg: STATUS_TINT.infoSurface,
-      // 4.46:1 — a hair under the floor, which is the interesting part. The
-      // app's Alert colours its title with the accent and the mail cannot copy
-      // that: at 12px bold there is no large-text exemption to reach for, so the
-      // label is `foreground` and the accent stays in the border and the wash.
-      why: "the one thing the mail's callout does not inherit from the app's Alert",
-      atLeast: 4.4,
+      // 2.31:1. White was `info`'s foreground until the library measured the
+      // whole status set and gave every one of them dark ink instead — each
+      // status fill is light enough to take a dark label and none is dark enough
+      // to take a white one. So this is the pairing the palette used to name,
+      // kept as the mistake a copied button would reintroduce.
+      // `STATUS.infoForeground` is deliberately not spelled here: it is ink now,
+      // so writing the entry in terms of it would assert the opposite of what it
+      // says.
+      why: "the foreground the status set used to carry, and the one it can never carry",
     },
   ];
 
-  it.each(FORBIDDEN)("$name stays below AA — $why", ({ fg, bg, atLeast }) => {
-    const ratio = contrast(fg, bg);
-    expect(ratio).toBeLessThan(AA_BODY);
-    if (atLeast !== undefined) {
-      expect(
-        ratio,
-        `the "hair under the floor" claim beside this pair assumes at least ${atLeast}:1`,
-      ).toBeGreaterThan(atLeast);
-    }
+  it.each(FORBIDDEN)("$name stays below AA — $why", ({ fg, bg }) => {
+    expect(contrast(fg, bg)).toBeLessThan(AA_BODY);
   });
 });

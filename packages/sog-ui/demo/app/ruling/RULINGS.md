@@ -297,8 +297,32 @@ derived from the brand's pair", both authored values and the reason recorded bes
 the colour source; the other three families' second authored values recorded in the doc
 comment as the brand's white-ground values, not emitted.
 
-**Ruling:** _tinted ground and lit card ruled; the recipe's Valor cell and the one-colour
-direction to confirm from the redraw_
+**Landed 2026-09-06 (tokens).** `YTY_FAMILIES` is `{ name, hue, hex }`, one colour per
+family, each entry recording the brand's other value as its white-ground half and Valor
+carrying the declared departure with its derivation; the theme emits `--color-yty-<f>`
+and no strong/soft token; `PAIRINGS` 24 → 40 with a completeness check (every hue the
+palette offers is measured as ink on all three grounds and as a fill under its ink, so a
+hue added without measurements fails there); the demo floor shows one swatch per family
+with its glyph. In Sogverse every strong/soft class repointed; `yty.ts`, `voice-zones.ts`
+and the presentation map read the one hex; `YTY_ELEMENT` in `colors.ts` has no consumer
+(deletion candidate under the standing rule). Still carrying a Yty alpha step, pending the
+icon-tile question in the act section: `yty.ts` (12) and `product-type-presentation.ts`
+(4), plus the sixteen `bg-pick-N/15` tiles. The Yty section left the page. §2 is
+**landed** except the tile.
+
+**Landed 2026-09-06 (tokens).** The status set lives in `brand.ts` as a four-row table
+over a union: destructive `#FF5C5C` and warning `#DFCB25` own a hue, success and info name
+a family (Glow, Wit), read only through `statusHex(id)`, so "borrows a family" and "owns a
+hue" are mutually exclusive by construction; `STATUS_INK` is the one ink and the four
+`-foreground` tokens are generated from it (Sogverse writes them at 9 sites). The theme
+emits the four; `--color-success` equals Glow's hex. Sogverse's stylesheet declares no
+`--color-*` at all. The email mirror reads the library; `STATUS_TINT` stays only because
+the mail's note panel still spends it and is ruled against with the app's Alert in the
+construct pass. The status cases left the page; `STATUS_SITES` stays in `inventory.ts` as
+the construct pass's regeneration command.
+
+**Ruling:** _tokens landed; the construct pass (tinted ground → B, lit card → leading
+rule, labels and sentences sorted, tinted pills → the chip's shape) is the next landing._
 
 ## 4. The greys — the sidebar ground, and accent
 
@@ -902,21 +926,22 @@ constructs with every translucent site converted. The page draws the real lucide
 **Landed later still on 2026-09-06:** the element glyphs (Heart, Lighthouse, Handshake,
 Brain) with lucide as the library's own dependency (see §2).
 
-**Ruled, to land (one agent):**
+**Landed 2026-09-06, night: the tokens for §2/§3** (one colour per element with Valor
+`#FF8F31`; the status set in the library; Sogverse's stylesheet declares no colour; see
+§2 and §3), and the media rulings (§6).
 
-1. **§2/§3 the recipe and the status set**, once the owner rules Valor's colour from the
-   derived-orange drawing (strong reads dark, soft reads peach; three candidates between
-   the pair are drawn in the Valor cells and the four-together view, page section 2), and
-   confirms the figure-and-fill rule (below): **one colour per element** (`yty-harmony`,
-   `yty-glow`, `yty-valor`, `yty-wit`, no suffix; the brand's other four values in the doc
-   comment, not emitted); four status tokens (destructive `#FF5C5C`, warning `#DFCB25`,
-   success = Glow, info = Wit) with ink labels and measured pairings; two grammar rows;
-   §11 coloured text as the label rule with a label primitive; the 121 tinted sites → B
-   (glyph and title in status ink; sentence titles go to ink); the lit card → a leading
-   rule; the 166 status-as-text sites sorted into labels and sentences; Sogverse's status
-   tokens deleted and the email mirror reading the library; `yty.ts`, `voice-zones.ts`
-   and the presentation map repointed; the demo floor updated; the page's status and Yty
-   sections leave.
+**In flight (three agents, disjoint files):** the **status construct pass** (§3: tinted
+grounds → B, the lit cards → a leading rule, the 166 text sites sorted into labels and
+sentences, the tinted pills → the chip's shape, the filled badges untouched pending the
+figure-and-fill word, the mail's note panel converted and `STATUS_TINT`/`YTY_ELEMENT`
+deleted if unspent); the **identicon landing** (§7: `identicon.ts`, ids 1–4, the
+component reading it, the section leaving the page); the **hero drawing** (§14: today,
+amber+one with no glow, amber+one with glows, at hero width and at card size).
+
+**Ruled, to land after those:** the act sweep if the owner accepts "act as a figure"
+(§9, page section); the figure-and-fill exhibit to draw (ten colours × button / badge /
+chip) before that rule is confirmed; the Klingon easter egg (§10) and the calm-surface
+budget (§12), not yet drawn.
 **Put to the owner 2026-09-06, evening — the figure-and-fill rule.** The owner pointed
 at the product card's waitlist chip (`public/products/status-chip.tsx`: a neutral edge,
 the page ground, an hourglass and the word in `act`, no fill) and said the brand colours

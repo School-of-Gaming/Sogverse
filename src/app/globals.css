@@ -41,16 +41,6 @@
      first measurement only ever lowers it. */
   --signup-rail-height: 0px;
 
-  /* State colours, each with the ink that reads on it. */
-  --color-destructive: #EF4343;
-  --color-destructive-foreground: #FFFFFF;
-  --color-success: #2EB88A;
-  --color-success-foreground: #FFFFFF;
-  --color-info: #308CE8;
-  --color-info-foreground: #FFFFFF;
-  --color-warning: #E7B008;
-  --color-warning-foreground: #121212;
-
   /* Corner radii, as one base step and the four utilities derived from it. */
   --radius: 0.5rem;
   --radius-sm: calc(var(--radius) - 4px);

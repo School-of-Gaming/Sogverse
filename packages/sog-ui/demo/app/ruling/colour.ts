@@ -23,11 +23,11 @@ export function alpha(hex: string, a: number): string {
  * token for.
  *
  * `bg-x/10` compiles to `color-mix(in oklab, var(--color-x) 10%, transparent)`,
- * so a demo that wants to draw the *real* rendering of an alpha step — rather
- * than its own arithmetic dressed up as one — has to spell it the same way.
- * Only the status colours need this: `destructive`, `success`, `info` and
- * `warning` are not library tokens yet, so there is no class to write and the
- * value has to be built here.
+ * so a drawing that wants the *real* rendering of an alpha step — rather than
+ * its own arithmetic dressed up as one — has to spell it the same way. The
+ * candidate rows need it because a candidate is a value the theme has no token
+ * for: a step nobody has ruled on yet cannot be written as a class, so it is
+ * built here and passed as a style.
  */
 export function tailwindAlpha(hex: string, percent: number): string {
   return `color-mix(in oklab, ${hex} ${percent}%, transparent)`;

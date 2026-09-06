@@ -87,12 +87,16 @@
  * - **Meaning never travels by hue alone.** A colour-coded element also carries
  *   a glyph and a label, because a meaningful share of gamers are colourblind,
  *   and a cue they cannot see is a cue that is not there.
- * - **Text is ink or white, never coloured text on a coloured ground**, and
- *   never at a ratio nobody measured. The library offers one thing beyond that:
- *   a family's soft variant as text on a neutral ground, measured on every
- *   ground it can land on. *Open: whether a neutral ground keeps that inside
- *   the rule, or makes it a departure needing the owner's ruling, is not
- *   settled here.*
+ * - **Anything a reader reads through is ink or white**, and never at a ratio
+ *   nobody measured. Colour reaches a reader as a fill, an edge, a ring, a mark
+ *   or a **label**, and the label is the one place colour is set as type: the
+ *   name of a state or a value — "Cancelled", "Glow", "Past due", "3 seats
+ *   left" — short because names are, with no verb and no sentence punctuation,
+ *   on a neutral ground, beside a glyph in the same hue so that removing the
+ *   colour loses nothing. Body copy, descriptions, headings, links, error
+ *   sentences and help text stay ink or white, because a parent is never
+ *   *talked to* in these colours. The rule is restated on each family and each
+ *   status below, beside the value it binds.
  * - **A brand colour exists at exactly the values authored below, never at an
  *   alpha step**: over a near-black ground an alpha step composites to a
  *   darker, duller hue, so what the reader sees is no longer the brand. A
@@ -146,13 +150,18 @@
  * restriction stands here for the reason the brand holds it, rather than for
  * the measurement that used to enforce it.
  *
- * **Strong and soft swap roles.** On a light ground the soft variants are
- * decorative and not text-safe. On these grounds soft is the text-safe half and
- * strong is the fill, the edge and the ring — strong fills, borders, rings and
- * glows; soft carries text and glyphs. That is a measured result rather than a
- * preference, and it is the whole reason the split is a rule instead of a
- * habit. `contrast.ts` holds every pairing the library ships and the floor each
- * one is held to.
+ * **The brand's strong/soft pair does not survive the reading, and each family
+ * is one colour.** The brand fixes two values per family, tuned against a white
+ * page, where the darker half is the one that separates from the ground and the
+ * lighter half is decorative. On `#121212` that turns over: the lighter value is
+ * the one that lifts, and a saturated mid-tone chosen to hold its own against
+ * white sinks into a near-black card and reads as a duller version of the hue.
+ * Drawn in every construct, one value per family carried every role — fill,
+ * edge, ring, mark, label ink, glyph — and a second value bought nothing but a
+ * choice repeated at each call site. So the theme emits one token per family,
+ * and each entry records the brand's other value rather than shipping it.
+ * `contrast.ts` holds every pairing the library ships and the floor each one is
+ * held to.
  *
  * **Every text-on-ground pairing is re-proven on these grounds.** Nothing is
  * inherited from the light reading, including the pairings that would have been
@@ -374,23 +383,30 @@ export type BrandId = keyof typeof BRAND;
 // ---------------------------------------------------------- Yty families
 
 /**
- * The four Yty-Element colours, as the strong/soft pairs the brand fixes.
- *
- * Which variant a use reaches for is settled by measurement, not taste:
- * **strong fills, borders, rings and glows; soft carries text and glyphs.**
- * Wit is what makes that a rule rather than a habit — wit-strong clears the
- * glyph floor on both grounds and the body floor on neither — so wit's text and
- * ink always take soft, and the same recipe then holds for the other three so
- * that one rule covers the set. See `contrast.ts`.
+ * The four Yty-Element colours, one apiece.
  *
  * A family says which of the four relationships a piece serves, and that is the
- * whole of its job. So a family accents — a badge, an edge, a glyph, a fill
- * behind a short label — and never grounds a long passage of text, where the
- * cue stops being read as a cue and becomes the conditions the reader is
- * reading in. And a family is never a status: green here is the relationship
- * with others, not success, and a hue that also means *this worked* means
- * nothing in either job. Whichever a piece takes, it carries a glyph and a
- * label beside it, because the colour is never the only copy of the meaning.
+ * whole of its job. So a family **accents** — a fill under an ink label, an
+ * edge, a ring, an unlabelled mark, a glyph, a label — and never grounds a long
+ * passage of text, where the cue stops being read as a cue and becomes the
+ * conditions the reader is reading in.
+ *
+ * **One colour, every role.** There is no second value to choose between, and
+ * that is the point: a family is a meaning, and a meaning with two colours is a
+ * decision handed to every call site that spends it. The same hex fills, edges,
+ * rings, marks, inks and draws.
+ *
+ * **Coloured text is a label.** A family's hex is set as type only on the name
+ * of a value — "Glow", "Wit" — beside a glyph in the same hue, on a neutral
+ * ground. Never a sentence, never a heading a reader reads through, never on a
+ * coloured ground. And whichever role a piece takes it carries a glyph and a
+ * label, because the colour is never the only copy of the meaning.
+ *
+ * **The brand fixes two values per family and this theme ships one.** The pair
+ * is authored for a white page. Each entry records the value that is not
+ * emitted, so nothing is lost by leaving it out of the stylesheet. Three
+ * families take the brand's own lighter value unchanged; Valor is the one
+ * departure on a hue this theme makes, declared in its own entry.
  */
 export const YTY_FAMILIES = {
   /**
@@ -402,19 +418,32 @@ export const YTY_FAMILIES = {
    * Never as a pink that is merely wanted. A piece that is not about knowing
    * yourself and the people around you takes another family or none, because
    * every decorative use of it costs a real one its meaning.
+   *
+   * As type it appears only on the element's own name beside its mark. The
+   * brand's other value is `#F55B9A`, its white-ground half, not emitted: pink
+   * lightens with its chroma intact, so the lighter value carries every role
+   * here and the darker one carries none.
    */
-  harmony: { name: "Harmony", hue: "Pink", strong: "#F55B9A", soft: "#FA7FA3" },
+  harmony: { name: "Harmony", hue: "Pink", hex: "#FA7FA3" },
   /**
    * **Growth.**
    *
    * The relationship with others: empathy, kindness, belonging. Reach for it
    * for growth, milestones and progress.
    *
-   * Never as the colour of success, saved, healthy or online. Green is the
-   * loudest false friend in the set, and a status borrowing it teaches a reader
-   * that this hue reports the system rather than naming a value.
+   * **It is also the colour of success**, and that is a decision rather than a
+   * slip: a status is a fact and a fact takes a family, so `STATUS` below points
+   * at this entry rather than carrying a green of its own. A second green tuned
+   * to sit beside this one was drawn and refused — two near shades of one hue on
+   * a page teach a reader that neither of them means anything, where one hue
+   * carrying two related meanings is survivable, because the glyph and the label
+   * carry the difference everywhere the library colour-codes anything.
+   *
+   * As type it appears only on a label — an element's name, a state's name —
+   * beside a glyph in the same green. The brand's other value is `#1AB061`, its
+   * white-ground half, not emitted.
    */
-  glow: { name: "Glow", hue: "Green", strong: "#1AB061", soft: "#6AC66B" },
+  glow: { name: "Glow", hue: "Green", hex: "#6AC66B" },
   /**
    * **Adventure.**
    *
@@ -425,24 +454,169 @@ export const YTY_FAMILIES = {
    * signature colour that a page spending both without a reason reads as one
    * colour rendered twice, and close enough to a caution hue that a warning
    * drawn in it claims a value is being reported.
+   *
+   * **Declared departure: Valor's orange on the dark ground, derived from the
+   * brand's pair.** The brand authors `#FD700D` and `#FF993D`, both tuned for a
+   * white page, and on `#121212` neither is this family's colour: the darker
+   * value reads as ink that has gone dark, and the lighter one reads as a peach.
+   * The reason is the hue. **Orange loses its chroma when it is lightened, where
+   * pink, green and blue do not** — the sRGB gamut is at its widest for orange
+   * right about where the darker value already sits, so every step toward the
+   * lighter one is a step the colour cannot take without giving up saturation,
+   * which is what a peach is. The value below is OKLCH `L 0.757, C 0.168,
+   * h 55°`: nearly the lighter value's lightness, carrying the most chroma sRGB
+   * allows there, which is exactly what the lighter value gave away. Both
+   * authored values are recorded here and neither is emitted. The departure is
+   * on the value and never on the shape — Valor is one colour in every role,
+   * like the other three.
    */
-  valor: { name: "Valor", hue: "Orange", strong: "#FD700D", soft: "#FF993D" },
+  valor: { name: "Valor", hue: "Orange", hex: "#FF8F31" },
   /**
    * **Knowledge.**
    *
    * The relationship with technology: critical thinking, media literacy. Reach
    * for it for learning, tips and how-to.
    *
-   * Never as a link colour or an informational blue. Blue arrives with a
-   * lifetime of interface meaning attached, and letting wit carry any of it
-   * turns the one family about thinking into chrome. Its strong variant is
-   * never text either: it clears the glyph floor and not the body floor, so
-   * text and ink take soft.
+   * Never as a link colour. Blue arrives with a lifetime of interface meaning
+   * attached, and letting wit carry any of it turns the one family about
+   * thinking into chrome. **It is the colour of info**, on the same reasoning
+   * that makes Glow the colour of success: a status is a fact and a fact takes a
+   * family, and a second blue beside this one would be two shades of one hue
+   * doing two jobs the glyph and the label already tell apart.
+   *
+   * As type it appears only on a label beside a glyph in the same blue. The
+   * brand's other value is `#3A71DE`, its white-ground half, not emitted — it
+   * clears the glyph floor on these grounds and the body floor on none of them,
+   * so it could never have carried the label anyway.
    */
-  wit: { name: "Wit", hue: "Blue", strong: "#3A71DE", soft: "#4DB3F5" },
-} as const satisfies Record<
-  string,
-  { name: string; hue: string; strong: Hex; soft: Hex }
->;
+  wit: { name: "Wit", hue: "Blue", hex: "#4DB3F5" },
+} as const satisfies Record<string, { name: string; hue: string; hex: Hex }>;
 
 export type YtyFamilyId = keyof typeof YTY_FAMILIES;
+
+// ---------------------------------------------------------------- status
+
+/** The four things the product reports about itself. */
+export type StatusId = "destructive" | "success" | "info" | "warning";
+
+/**
+ * A status either owns a hue or takes a family's, and never both.
+ *
+ * The union is the grammar made unwriteable-wrong: an entry naming a family
+ * cannot also spell a hex, so a status that borrows a meaning cannot drift into
+ * a near neighbour of the colour it borrowed. `statusHex` is the only way to
+ * read the colour out, so nothing downstream has to know which of the two kinds
+ * it is holding.
+ */
+export type StatusEntry =
+  | { readonly name: string; readonly hex: Hex }
+  | { readonly name: string; readonly family: YtyFamilyId };
+
+/**
+ * The four status colours.
+ *
+ * **A status is a fact, and a fact takes a family — where a family means it.**
+ * That is the tone grammar's own sentence (`grammar.ts`), and two of the four
+ * rows below are exactly that: success is Glow and info is Wit, pointing at the
+ * family entry rather than carrying a value. Retuning Glow moves success with
+ * it, and no arithmetic anywhere can leave the two as near neighbours. The rows
+ * live here rather than beside the product kinds because two of the four are
+ * hues in their own right, and splitting one table so that half of it sat in the
+ * colour source and half in the grammar would put two rows in each file.
+ *
+ * **Why success and info are not their own colours.** Retuned near-duplicates
+ * were drawn and refused: a fresh blue beside Wit reads as two shades of blue on
+ * one page, a fresh green beside Glow as two greens, and a reader who meets two
+ * near-identical hues learns that neither of them means anything. One hue
+ * carrying two related meanings is the cheaper trade, because the glyph and the
+ * label already carry the difference everywhere the library colour-codes
+ * anything.
+ *
+ * **Why destructive and warning are their own colours.** Red is the one status
+ * hue with room — Valor's orange is 25° away and Harmony's pink 18°, and red
+ * reads as neither — so it is free to be a colour of its own. Warning is the
+ * opposite case: it was the brand amber's near twin, which made a caution badge
+ * and a call to action the same colour, and moving it off the gold is what makes
+ * a warning and *press this* two different things on one screen. Neither hue
+ * codes a Yty value, so neither takes a family.
+ *
+ * **Error and warning stay two colours.** They are far enough from each other
+ * and from everything else in the palette that merging them would only cost the
+ * distinction a reader already reads.
+ *
+ * **Coloured text is a label here too.** A status hex is set as type on the name
+ * of a state — "Payment failed", "Past due", "Waitlisted" — beside a glyph in
+ * the same hue, on a neutral ground. An error *sentence* is ink with the mark
+ * beside it carrying the colour: a parent reading a sentence about their child's
+ * seat is being talked to, and this is not the register to talk to them in.
+ */
+export const STATUS = {
+  /**
+   * Something failed, or is about to be destroyed.
+   *
+   * Its own hue, neither the brand's nor a family's. Tuned to this ground: a red
+   * that clears the body floor as a label on all three grounds and carries dark
+   * ink where it is filled.
+   */
+  destructive: { name: "Destructive", hex: "#FF5C5C" },
+  /**
+   * Something worked.
+   *
+   * Glow's green, whole. The family entry carries the reason this is not a green
+   * of its own.
+   */
+  success: { name: "Success", family: "glow" },
+  /**
+   * Something a reader needs to know and did not ask about.
+   *
+   * Wit's blue, whole. The family entry carries the reason this is not a blue of
+   * its own.
+   */
+  info: { name: "Info", family: "wit" },
+  /**
+   * Something needs attention before it becomes a failure.
+   *
+   * Its own hue, and deliberately **not** the brand amber: amber is the colour
+   * of the thing to do, and a warning drawn in it makes a caution and a call to
+   * action indistinguishable on the one screen where telling them apart matters.
+   * A caution yellow at a lower saturation reads as caution and reads as not the
+   * brand; going further lands in chartreuse and stops reading as caution at
+   * all.
+   */
+  warning: { name: "Warning", hex: "#DFCB25" },
+} as const satisfies Record<StatusId, StatusEntry>;
+
+/** The four in the order the palette declares them. */
+export const STATUS_IDS = [
+  "destructive",
+  "success",
+  "info",
+  "warning",
+] as const satisfies readonly StatusId[];
+
+/**
+ * The colour a status draws in, whichever kind of entry it is.
+ *
+ * The one reader of the union, so no consumer — the generator, the ledger, an
+ * email, a canvas — ever branches on whether a status owns its hue or borrows
+ * one. That is what makes `success` and Glow the same value by construction
+ * rather than by two literals that happen to agree today.
+ */
+export function statusHex(id: StatusId): Hex {
+  const entry: StatusEntry = STATUS[id];
+  return "hex" in entry ? entry.hex : YTY_FAMILIES[entry.family].hex;
+}
+
+/**
+ * The label every status fill carries.
+ *
+ * One value for all four, and it is measured rather than chosen: against dark
+ * ink the four fills clear the body floor with room to spare, and against white
+ * not one of them clears it. So no white survives anywhere in the status set,
+ * and a `-foreground` companion is generated for each so that a consumer's
+ * `text-<status>-foreground` keeps naming a decision instead of a hard-coded
+ * grey. It is the page ground doing its other job — the same hex reads as the
+ * surface a page is built from and as the ink a bright fill carries — which is
+ * what lets one measurement settle both uses. `contrast.ts` holds the proof.
+ */
+export const STATUS_INK: Hex = NEUTRALS.background.hex;
