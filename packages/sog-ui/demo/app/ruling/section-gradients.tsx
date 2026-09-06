@@ -87,13 +87,17 @@
  * violet band on the social card — and nothing else composites.
  *
  * **The OG card cannot carry a CSS blur.** `next/og` renders through satori,
- * which has no blur filter and no box-shadow, so the card's glow — if a glow is
- * what is ruled — is rendered pre-blurred: a radial from a full-value core out
- * to the ground, in one hue, drawn from behind the element that emits it. That
- * is a glow by all three constraints, not a wash: it has a source, it is one
- * hue, and it never starts translucent. It is a gradient only in the way a
- * blurred shadow is a gradient — the falloff is the blur. The two radials sit
- * in boxes that do not overlap, so the two hues never meet and never mix.
+ * which has no blur filter and no box-shadow, so if a glow is what is ruled,
+ * the card's is rendered pre-blurred: a radial from a full-value core out to
+ * the ground, in one hue, drawn from behind the element that emits it, each in
+ * a box that does not overlap the other's so the two hues never meet. That is a
+ * glow by all three constraints, not a wash — it has a source, it is one hue,
+ * and it never starts translucent; it is a gradient only in the way a blurred
+ * shadow is one, because the falloff *is* the blur. It is not drawn: whether
+ * there is a glow at all is decided on the hero above, and the card inherits
+ * that answer. What the card panels ask is the question only the card has —
+ * where a full-value violet element can sit on an image that preview surfaces
+ * crop.
  *
  * **Sizes.** A gradient is a fact about a large area, so the hero candidates
  * are stacked at full page width with the app's real headline and copy over
@@ -458,27 +462,25 @@ function Hero({
  * The two are one construct at two values — `/10` on the home page's and the
  * programme's call to action, `/5` on the two About cards — and nobody chose 10
  * over 5 on either surface. The ruling that the pair carries no alpha makes the
- * difference moot, so each is drawn once beside what the ledger names for it:
- * the closing card takes the ground alone with a full-value rule, in act or in
- * violet, and the About cards take the ground alone.
+ * difference moot, so each is drawn once beside what it is ruled to be: the
+ * closing card takes the ground alone with a full-value violet rule, and the
+ * About cards take the ground alone.
  *
- * The rule is drawn in both colours because the card is where the two answers
- * genuinely differ: act on a call to action is the colour of the thing to do
- * and repeats the button below it; violet is the world's colour and says
- * nothing about the button. The owner picks one.
+ * **Ruled: the violet rule, not an act one.** Act on a call to action repeats
+ * the colour of the button directly below it and spends the card's one accent
+ * on a thing that already has it; violet marks the card as ours without
+ * competing with the action. The act candidate is gone with the ruling.
  */
 const CARD_GROUNDS = {
   ten: "bg-gradient-to-r from-act/10 to-world/10",
   five: "bg-gradient-to-r from-act/5 to-world/5",
   none: "bg-card",
-  ruleAct: "bg-card",
   ruleWorld: "bg-card",
 } as const;
 
 type CardGround = keyof typeof CARD_GROUNDS;
 
 const CARD_RULES: Partial<Record<CardGround, string>> = {
-  ruleAct: ACT,
   ruleWorld: WORLD,
 };
 
@@ -643,43 +645,59 @@ function RoleChips({ gedu }: { gedu: string }) {
  * ruled by this drawing rather than drawn again.
  */
 const OG_SCALE = 0.35;
-const OG_BAND_HEIGHT = 14;
 
 /**
- * The pre-blurred glow, which is what a glow has to be in satori.
+ * Where a violet element can sit on a card that preview surfaces trim.
  *
- * Satori has no blur filter and no box-shadow, so the falloff has to be drawn
- * rather than computed: a radial from the hue at full value out to the ground,
- * one hue per shape, with the core small enough to sit behind the element that
- * emits it. The act core is 30% of a 500×300 ellipse centred on the mark, which
- * is well inside the mark's own amber plate, so what shows is the ramp escaping
- * from behind it. The world core is a wide, shallow ellipse sitting on the
- * card's bottom edge, directly above the full-value band that emits it.
+ * **The owner's worry, and it is correct:** a band on the very bottom edge is
+ * the first thing a preview eats. X/Twitter renders a link card at 2:1 and
+ * centre-crops a 1200×630 file to 1200×600, so 15px comes off the top and 15px
+ * off the bottom — a 14px band on the edge is gone entirely, and one just above
+ * it is half gone. iMessage and Slack round the card's corners, which takes the
+ * ends off any full-bleed band. WhatsApp's square thumbnail crops the *sides*
+ * rather than the bottom, so it costs a full-bleed band nothing and costs a
+ * side-inset one its ends. There is no placement that survives every surface,
+ * which is why the candidates are drawn cropped as well as whole.
  *
- * **The two blooms never overlap**, which is what keeps them from mixing: the
- * act ramp reaches the ground by y=510, and the world bloom begins at y=566.
- * Every pixel of each layer's rim is the ground colour, so the layers have no
- * visible edges and the 56px between the two blooms is plain ground. Two hues
- * that never touch cannot blend, which is the difference between this and the
- * wash beside it.
+ * **The inset band's two numbers.** It is lifted 30px, not the 48 first
+ * suggested: the card's centred content block already ends 57px from the bottom
+ * edge, so a 48px lift would run the band through the sub-line's descenders.
+ * 30px is the largest lift that clears the type above it and still leaves 15px
+ * between the band's top and X's crop line — the whole band survives the 2:1
+ * frame with its own height to spare. Its sides are inset by 80px, which is the
+ * card's own horizontal padding rather than a new number: the band then lines
+ * up with the margins the composition already has, and its ends are far enough
+ * in that a rounded corner cannot reach them.
+ *
+ * **The rule under the headline is crop-immune by nature**, which is the reason
+ * it is drawn here at all: it sits in the middle of the card, where nothing
+ * trims, and it is the same construct the hero uses at the same place in the
+ * composition — so choosing it makes the two surfaces one idea rather than two
+ * decisions that happen to share a colour.
+ *
+ * The crop row draws the trimmed strips as a scrim over the whole card, so the
+ * file and what X shows of it are visible at once. The scrim is the page's own
+ * furniture, not a colour being ruled.
  */
-const OG_ACT_GLOW = `radial-gradient(500px 300px at 600px 210px, ${ACT} 0%, ${ACT} 30%, ${GROUND} 100%)`;
-const OG_WORLD_GLOW = `radial-gradient(700px 50px at 600px 50px, ${WORLD} 0%, ${WORLD} 20%, ${GROUND} 100%)`;
+const OG_BAND_HEIGHT = 14;
+const OG_BAND_LIFT = 30;
+const OG_BAND_INSET = 80;
+const OG_CROP_TRIM = 15;
 
 const OG_WASH = `linear-gradient(to bottom, transparent 0%, ${GROUND} 78%), linear-gradient(to right, ${ACT_GLOW}, ${GROUND} 50%, ${WORLD_GLOW})`;
 
-type OgCandidate = "today" | "band" | "glow";
+type OgCandidate = "today" | "band" | "inset" | "rule";
 
 /** A 1200×630 card drawn at real size and scaled into a link-preview box. */
 function OgFrame({
   candidate,
+  cropped,
   children,
 }: {
   candidate: OgCandidate;
+  cropped: boolean;
   children: React.ReactNode;
 }) {
-  const today = candidate === "today";
-  const glowing = candidate === "glow";
   return (
     <div
       className="overflow-hidden rounded-lg border border-border"
@@ -697,34 +715,10 @@ function OgFrame({
           height: "630px",
           transform: `scale(${OG_SCALE})`,
           backgroundColor: GROUND,
-          backgroundImage: today ? OG_WASH : undefined,
+          backgroundImage: candidate === "today" ? OG_WASH : undefined,
           padding: "48px 80px",
         }}
       >
-        {glowing ? (
-          <>
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                top: 0,
-                height: "580px",
-                backgroundImage: OG_ACT_GLOW,
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                bottom: `${OG_BAND_HEIGHT}px`,
-                height: "50px",
-                backgroundImage: OG_WORLD_GLOW,
-              }}
-            />
-          </>
-        ) : null}
         <div
           style={{
             position: "relative",
@@ -735,7 +729,7 @@ function OgFrame({
         >
           {children}
         </div>
-        {today ? null : (
+        {candidate === "band" ? (
           <div
             style={{
               position: "absolute",
@@ -746,16 +740,47 @@ function OgFrame({
               backgroundColor: WORLD,
             }}
           />
-        )}
+        ) : null}
+        {candidate === "inset" ? (
+          <div
+            style={{
+              position: "absolute",
+              left: `${OG_BAND_INSET}px`,
+              right: `${OG_BAND_INSET}px`,
+              bottom: `${OG_BAND_LIFT}px`,
+              height: `${OG_BAND_HEIGHT}px`,
+              borderRadius: "999px",
+              backgroundColor: WORLD,
+            }}
+          />
+        ) : null}
+        {cropped ? (
+          <>
+            <div
+              className="absolute inset-x-0 top-0 bg-scrim"
+              style={{ height: `${OG_CROP_TRIM}px` }}
+            />
+            <div
+              className="absolute inset-x-0 bottom-0 bg-scrim"
+              style={{ height: `${OG_CROP_TRIM}px` }}
+            />
+          </>
+        ) : null}
       </div>
     </div>
   );
 }
 
 /** `app/opengraph-image.tsx` — the site-wide card. */
-function HomeOg({ candidate }: { candidate: OgCandidate }) {
+function HomeOg({
+  candidate,
+  cropped = false,
+}: {
+  candidate: OgCandidate;
+  cropped?: boolean;
+}) {
   return (
-    <OgFrame candidate={candidate}>
+    <OgFrame candidate={candidate} cropped={cropped}>
       <Image
         src={MARK}
         alt=""
@@ -778,6 +803,20 @@ function HomeOg({ candidate }: { candidate: OgCandidate }) {
       >
         <span>Where Screen Time Becomes</span>
         <span style={{ color: ACT }}>Quality Time</span>
+        {/* `width: 100%` of a shrink-to-fit column is the headline's own
+            measure, which is the same trick the hero's rule uses. */}
+        {candidate === "rule" ? (
+          <div
+            style={{
+              display: "flex",
+              width: "100%",
+              height: "10px",
+              marginTop: "28px",
+              borderRadius: "999px",
+              backgroundColor: WORLD,
+            }}
+          />
+        ) : null}
       </div>
       <div
         style={{
@@ -813,7 +852,6 @@ const HERO_PANELS: readonly {
 
 const CARD_PANELS: readonly { label: string; ground: CardGround }[] = [
   { label: "from-act/10 to-world/10", ground: "ten" },
-  { label: "bg-card, an act rule", ground: "ruleAct" },
   { label: "bg-card, a violet rule", ground: "ruleWorld" },
 ];
 
@@ -830,7 +868,14 @@ const LIT_PANELS: readonly { label: string; ground: LitGround }[] = [
 const OG_PANELS: readonly { label: string; candidate: OgCandidate }[] = [
   { label: "actGlow → worldGlow, a wash", candidate: "today" },
   { label: "a violet band on the bottom edge", candidate: "band" },
-  { label: "the band and the mark, glowing", candidate: "glow" },
+  { label: "the band inset from the edge", candidate: "inset" },
+  { label: "a violet rule under the headline", candidate: "rule" },
+];
+
+const OG_CROP_PANELS: readonly { label: string; candidate: OgCandidate }[] = [
+  { label: "the band, as X crops it", candidate: "band" },
+  { label: "the band inset, as X crops it", candidate: "inset" },
+  { label: "the rule, as X crops it", candidate: "rule" },
 ];
 
 export function GradientsSection() {
@@ -852,18 +897,32 @@ export function GradientsSection() {
       </Case>
 
       <Case title="The social card">
-        <Compare columns={3}>
-          {OG_PANELS.map((panel) => (
-            <Panel key={panel.label} label={panel.label}>
-              <Exemplar
-                file="app/opengraph-image.tsx"
-                page="any share of the site"
-              >
-                <HomeOg candidate={panel.candidate} />
-              </Exemplar>
-            </Panel>
-          ))}
-        </Compare>
+        <div className="space-y-10">
+          <Compare columns={2}>
+            {OG_PANELS.map((panel) => (
+              <Panel key={panel.label} label={panel.label}>
+                <Exemplar
+                  file="app/opengraph-image.tsx"
+                  page="any share of the site"
+                >
+                  <HomeOg candidate={panel.candidate} />
+                </Exemplar>
+              </Panel>
+            ))}
+          </Compare>
+          <Compare columns={3}>
+            {OG_CROP_PANELS.map((panel) => (
+              <Panel key={panel.label} label={panel.label}>
+                <Exemplar
+                  file="app/opengraph-image.tsx"
+                  page="a share on X, cropped to 2:1"
+                >
+                  <HomeOg candidate={panel.candidate} cropped />
+                </Exemplar>
+              </Panel>
+            ))}
+          </Compare>
+        </div>
       </Case>
 
       <Case title="The closing card">

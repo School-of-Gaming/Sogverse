@@ -952,6 +952,23 @@ people (gamer act, gedu world, parent and admin neutral; as figure chips and as 
 fills), and the families as the reference branch had them. Whatever wins retires the
 gedu gradient and lands as a `ROLE_GRAMMAR` row with a glyph.
 
+**Ruled 2026-09-06, night: the families as figure chips, the coloured word alone, no
+glyph.** Gamer Glow, parent Harmony, gedu Wit, admin the quiet ink; the gedu gradient
+goes. Verified for the owner: the only non-admin surfaces that badge a role, the voice
+room's participant row and the gedu's group roster, badge **the parent and nobody else**,
+so a family meets exactly one role chip anywhere, "Parent" in Harmony; the drawing's gedu
+and gamer chips in the roster were the drawing's, not the app's. The residual collision
+is one pink word near a Harmony zone tile, accepted by the owner in ruling. **Lands:**
+`ROLE_GRAMMAR` rows in the library, role → family + glyph (User, Users, Compass,
+KeyRound; the chips do not draw the glyph, the admin users strip does, replacing its
+unruled map whose gamepad is now the consumer club's); `ROLE_BADGE_STYLES` reads the
+library and takes the chip shape (neutral edge, ground beneath, word in the family's
+colour; admin in `muted-foreground`); the role section leaves the page. Runs with the act
+and gradient sweep. The owner does not like how the parent chip is used on those two
+rosters at all; from a colour standpoint it is correct after this change, and whether a
+parent should be marked by a chip there is the roster's own question, queued (§13) beside
+the other constructs.
+
 **Ruled 2026-09-06, night.** The owner first asked for the mark large in a left column
 with the slogan right, then took the mark out as the safer option for a colour branch
 (it is in the header directly above; its size, clearspace and placement are the mark
@@ -969,7 +986,20 @@ card → a rule, violet unless the owner says act; the cards lit from a leading 
 already ruled (§3); the gedu chip waits on the role chip. The visual-interest task is
 proposed for `TODO.md` pending the owner's approval.
 
-**Ruling:** _the heroes, cards and social images ruled; the role chip open_
+**Also ruled 2026-09-06, night:** **the closing card → `bg-card` with a violet rule**
+(rhyming with the hero rather than repeating the act button beneath it). **The social
+card:** the owner likes the violet band on the bottom edge but fears preview renders clip
+it; they do (X shows 2:1, trimming ~15px top and bottom of 1200×630; rounded-corner
+previews nibble corners). Drawn: the band as is, the band inset 48px, and the hero's rule
+under the headline (crop-immune, matches the page), each with a 2:1 crop overlay showing
+what X displays. **The email header** carries the same wash as a class-based background
+(Gmail rewrites inline gradients); the sweep converts it to the ground and a solid violet
+rule cell, the most robust construct email has; the flat amber-to-amber gradient that
+delivers act as text colour past Gmail's dark mode is a mechanism, not a smear, and stays.
+Client dark-mode colour shifting is its own topic, already documented in the layout.
+
+**Ruling:** _the heroes, closing card and email header ruled; the social card to pick from
+the crop drawing; the role chip open_
 
 ## Where the session stands (2026-09-06, evening)
 
