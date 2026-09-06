@@ -106,8 +106,15 @@ round (Sprout, Flower2, HeartHandshake, HandHeart, Users, Sparkles, MessageCircl
 landed for the owner, and HeartHandshake now collides with Valor. A second round is drawn
 aimed at the brand's own Glow behaviours (noticing when someone needs help, asking for
 help, being generous with credit): Smile, HandHelping, Gift, Ear, UsersRound, Waves, Bird,
-Rainbow, Star and kin. When all four are ruled they land as a library table beside the
-product-kind glyphs, and `yty.ts` reads them from there. **Kind glyphs**: the owner does
+Rainbow, Star and kin, then RadioTower, Lamp and lucide's own `Lighthouse` (added
+upstream after the 0.563 release Sogverse installs; drawn from the 1.41 source).
+**Ruled 2026-09-06: Glow takes `Lighthouse`.** The four element marks are ruled: Heart,
+Lighthouse, Handshake, Brain. **Landing:** lucide-react becomes SOG-UI's own dependency
+at the current release (it was a peer, borrowing Sogverse's older copy; SOG-UI owns the
+icon vocabulary, so it owns the version; Sogverse keeps its copy for its own icons until
+the icon adoption, when one lucide remains and it is the library's); an element glyph
+table in the library beside the kind rows; `yty.ts` reads it; the glyph section leaves
+the page. **Kind glyphs**: the owner does
 not think the joystick fits the consumer club and asked for something closer to what a
 family's child plays on (keyboard and mouse, laptop, desktop, else a gamepad); a case on
 the page drew those with alternatives for the other three kinds. **Ruled and landed
@@ -261,6 +268,17 @@ brand's other four values recorded in the doc comment as its white-ground values
 emitted. Buttons: on the dark ground the lighter colour is the louder one, so a Yty
 button prefers the same colour as everything else; the primary CTA is `act` regardless. A
 filled button per family, both ways, is drawn in the confirmation pass.
+
+**Seen 2026-09-06, Valor strong for both roles:** the owner finds strong "quite dark" as
+text and glyph, and soft "a peach". The values are the brand's exactly (strong `#FD700D`,
+soft `#FF993D`); neither was tuned for a dark ground. **Third option, to draw:** a Valor
+orange for the dark ground, between the authored pair, keeping strong's saturation at
+soft's brightness, three candidates stepped in a colour space that holds chroma as it
+brightens, in the Valor cells and the four-together view with strong and soft at either
+end. If one wins it is the first declared departure on a hue: "Valor's orange on the dark
+ground, derived from the brand's pair", justified by orange losing its chroma when
+lightened where pink, green and blue do not; Valor stays one colour used twice, like the
+other three. Draws after the greys landing releases the status files.
 
 **Ruling:** _tinted ground and lit card ruled; the recipe's Valor cell and the one-colour
 direction to confirm from the redraw_
