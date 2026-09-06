@@ -243,9 +243,13 @@ export function GeduAssignmentCard({
           // `group` for the chevron's nudge, `h-full` so a grid row of cards
           // stretches every one of them to the tallest rather than leaving the
           // short ones floating.
-          "group relative h-full cursor-pointer overflow-hidden transition-[box-shadow,transform]",
+          // The lit card is lit from its leading edge: a 2px rule at full
+          // value on the plain card ground, drawn in the neutral edge on every
+          // card from the start so a card that goes live changes colour without
+          // moving its neighbours.
+          "group relative h-full cursor-pointer overflow-hidden border-l-2 transition-[box-shadow,transform,border-color]",
           "hover:shadow-lg focus-within:shadow-lg",
-          live && "bg-gradient-to-r from-act/5 to-transparent",
+          live && "border-l-act",
         )}
       >
         <CardContent className="flex h-full flex-col gap-4 p-5">
@@ -324,7 +328,7 @@ export function GeduAssignmentCard({
                 <Badge
                   variant="outline"
                   className={cn(
-                    "gap-1 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
+                    "gap-1 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
                     !live && "invisible",
                   )}
                 >

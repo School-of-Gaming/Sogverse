@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ChevronRight, Search, X } from "lucide-react";
+import { AlertCircle, ChevronRight, Search, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -275,14 +275,17 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
     if (searching) onQueryChange("");
   }
 
+  // One quiet line in one ink, whatever it says. A failure is marked by the
+  // glyph in front of it rather than by recolouring the sentence: colour
+  // reinforces, the mark informs.
   const statusLine = error
-    ? { text: error, tone: "text-destructive" }
+    ? { text: error, failed: true }
     : // Typing below the threshold leaves the browse list where it is and says
       // why nothing is happening, rather than replacing what the user can see.
       trimmed.length > 0 && !searching
       ? {
           text: t("keepTyping", { count: minQueryLength }),
-          tone: "text-muted-foreground",
+          failed: false,
         }
       : searching && active.total > active.rows.length
         ? {
@@ -290,7 +293,7 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
               shown: active.rows.length,
               total: active.total,
             }),
-            tone: "text-muted-foreground",
+            failed: false,
           }
         : null;
 
@@ -415,7 +418,13 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
 
       {/* One reserved line for the truncation hint or a failure message, so
           neither one can push the buttons around when it appears. */}
-      <p className={cn("min-h-[20px] text-xs", statusLine?.tone)}>
+      <p className="flex min-h-[20px] items-center gap-1.5 text-xs text-muted-foreground">
+        {statusLine?.failed === true && (
+          <AlertCircle
+            className="h-3.5 w-3.5 shrink-0 text-destructive"
+            aria-hidden
+          />
+        )}
         {statusLine?.text}
       </p>
 

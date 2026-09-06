@@ -91,7 +91,7 @@ describe("CheckboxRow", () => {
     );
   });
 
-  it("tones the hint muted by default and info on request, without touching the size", () => {
+  it("marks the hint with a glyph on request, without recolouring the sentence", () => {
     const optionality = "Optional — you can change this anytime in your settings.";
     const { rerender } = render(
       <CheckboxRow
@@ -117,14 +117,18 @@ describe("CheckboxRow", () => {
       />,
     );
 
-    // Info: the quiet tier of the app's info family — coloured text, no fill
-    // and no border, because the row already has an edge of its own. The size
-    // does not move with the tone; a marker that changed scale would read as a
-    // different kind of thing rather than the same note said in colour.
+    // Info: a mark, no fill and no border, because the row already has an edge
+    // of its own. The hint is a sentence the reader reads through, so it stays
+    // in the same muted ink either way and the glyph beside it is what carries
+    // the tone. The size does not move with the tone; a marker that changed
+    // scale would read as a different kind of thing rather than the same note
+    // with a mark on it.
     const hint = screen.getByText(optionality);
-    expect(hint.className).toContain("text-info");
-    expect(hint.className).not.toContain("text-muted-foreground");
+    expect(hint.className).toContain("text-muted-foreground");
+    expect(hint.className).not.toContain("text-info ");
     expect(hint.className).toContain("text-xs");
+    const glyph = hint.querySelector("svg");
+    expect(glyph?.getAttribute("class")).toContain("text-info");
   });
 
   it("points at no description when there is no hint", () => {

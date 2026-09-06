@@ -15,7 +15,6 @@ import {
   BRAND as SOG_BRAND,
   NEUTRALS,
   STATUS_INK,
-  YTY_FAMILIES,
   composite,
   statusHex,
 } from "@sog/ui";
@@ -60,21 +59,12 @@ export const GRADIENT = {
   worldGlow: composite(BRAND.world, 0.1, DARK_THEME.bg),
 } as const;
 
-/**
- * The four Yty-Element colours.
- *
- * One value per family, which is the library's own shape: the same colour fills,
- * edges, rings, marks and inks a label, so a renderer that cannot read a CSS
- * variable has nothing to choose between. Where one of these is set as type it
- * is on a **label** — an element's name beside its mark — and never on a
- * sentence.
- */
-export const YTY_ELEMENT = {
-  harmony: YTY_FAMILIES.harmony.hex,
-  glow: YTY_FAMILIES.glow.hex,
-  valor: YTY_FAMILIES.valor.hex,
-  wit: YTY_FAMILIES.wit.hex,
-} as const;
+// The four Yty-Element colours used to be mirrored here for the renderers that
+// cannot read a CSS variable. None of them draws one today — the mail, the
+// identicon and the OG cards all spend brand and neutral values only — and a
+// mirror with no consumer is a value nobody can check, so it is gone. A
+// renderer that needs a family reads `YTY_FAMILIES` from the library directly,
+// which is where the colour is authored.
 
 /**
  * The status fills, and the foreground each carries.
@@ -100,25 +90,12 @@ export const STATUS = {
   infoForeground: STATUS_INK,
 } as const;
 
-/**
- * The mail's own note panel, pre-composited for email.
- *
- * A mail client cannot be relied on for alpha, so the wash and its edge are
- * flattened against the ground they actually sit on — the message panel, not the
- * shell's darker background behind it. Composite over the wrong ground and the
- * tint is a visible rectangle rather than a wash.
- *
- * **The tint itself is ruled against and has not yet been removed.** No status
- * colour is to be tinted anywhere — for `info` it is forced, because info is
- * Wit's blue and a brand colour exists at its authored value or not at all — and
- * the app's `Alert` and this panel are the same construct with one renderer's
- * worth of difference between them. They are reworked together in the construct
- * pass, not separately here, or they stop being the same construct.
- */
-export const STATUS_TINT = {
-  infoBorder: composite(STATUS.info, 0.5, DARK_THEME.card),
-  infoSurface: composite(STATUS.info, 0.1, DARK_THEME.card),
-} as const;
+// The mail's note panel used to carry a composited pair here — the info colour
+// at a tenth for its wash and at a half for its edge, flattened against the
+// message panel because a mail client cannot be relied on for alpha. No status
+// colour is tinted anywhere now: the panel wears the neutral border every other
+// panel wears and sits on the ground it is already on, so both values have no
+// consumer and are gone.
 
 // A footer grey of #555555 used to live here. It mirrored no token in
 // globals.css — the only value in this module that did not — and it was 2.51:1

@@ -4,6 +4,7 @@ import { useId, useRef, useState } from "react";
 import Image from "next/image";
 import { ImagePlus, Images, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   sessionThumbnailWidth,
@@ -430,9 +431,14 @@ export function SessionPhotoStrip({
         </p>
       )}
       {error !== null && (
-        <p role="alert" className="mt-2 text-xs text-destructive">
+        <StatusLine
+          status="destructive"
+          size="xs"
+          role="alert"
+          className="mt-2"
+        >
           {t(PHOTO_ERROR_KEY[error])}
-        </p>
+        </StatusLine>
       )}
     </section>
   );

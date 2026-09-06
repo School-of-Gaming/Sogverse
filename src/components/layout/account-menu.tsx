@@ -12,6 +12,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { LayoutDashboard, Loader2, LogOut, Settings } from "lucide-react";
+import { StatusLine } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { NavChevron } from "@/components/ui/nav-chevron";
@@ -660,13 +661,15 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
                 everything already painted rather than displacing a row
                 mid-list. */}
             {switchError && (
-              <p
+              <StatusLine
                 ref={errorRef}
+                status="destructive"
+                size="xs"
                 role="alert"
-                className="px-3 pb-1 pt-2 text-xs text-destructive"
+                className="px-3 pb-1 pt-2"
               >
                 {switchError}
-              </p>
+              </StatusLine>
             )}
           </div>
         )}

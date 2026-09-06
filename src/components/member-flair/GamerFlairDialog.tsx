@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { Eye, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -360,9 +361,14 @@ export function GamerFlairDialog({
                   />
 
                   {incomplete && (
-                    <p role="alert" className="pt-0.5 text-xs text-destructive">
+                    <StatusLine
+                      status="destructive"
+                      size="xs"
+                      role="alert"
+                      className="pt-0.5"
+                    >
                       {t("creationIncomplete")}
-                    </p>
+                    </StatusLine>
                   )}
                 </div>
               )}
@@ -395,7 +401,9 @@ export function GamerFlairDialog({
             )}
           </StaffOnlyBlock>
 
-          {error !== null && <p className="text-sm text-destructive">{error}</p>}
+          {error !== null && (
+            <StatusLine status="destructive">{error}</StatusLine>
+          )}
         </div>
 
         <DialogFooter>

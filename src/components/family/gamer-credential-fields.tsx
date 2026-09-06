@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
@@ -221,9 +222,9 @@ export function GamerCredentialFields({
                   aria-describedby={message !== null ? errorId : undefined}
                 />
                 {message !== null && (
-                  <p id={errorId} role="alert" className="text-sm text-destructive">
+                  <StatusLine id={errorId} role="alert" status="destructive">
                     {message}
-                  </p>
+                  </StatusLine>
                 )}
               </>
             );
@@ -247,9 +248,9 @@ export function GamerCredentialFields({
                   aria-describedby={message !== null ? errorId : undefined}
                 />
                 {message !== null && (
-                  <p id={errorId} role="alert" className="text-sm text-destructive">
+                  <StatusLine id={errorId} role="alert" status="destructive">
                     {message}
-                  </p>
+                  </StatusLine>
                 )}
               </>
             );
@@ -279,9 +280,9 @@ export function GamerCredentialFields({
                 aria-describedby={message !== null ? errorId : undefined}
               />
               {message !== null && (
-                <p id={errorId} role="alert" className="text-sm text-destructive">
+                <StatusLine id={errorId} role="alert" status="destructive">
                   {message}
-                </p>
+                </StatusLine>
               )}
             </>
           );

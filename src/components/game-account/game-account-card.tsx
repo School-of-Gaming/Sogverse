@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Gamepad2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Card,
   CardContent,
@@ -147,9 +148,9 @@ export function GameAccountField({
           here and it did not take. On the ordinary path nothing appears at all
           and nothing moves. */}
       {error && (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Loader2, Plus, Search } from "lucide-react";
+import { AlertCircle, Check, Loader2, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -398,7 +398,13 @@ function FamilyBlockRow({
               </p>
             )}
             {errorById[parent.id] && (
-              <p className="text-xs text-destructive">{errorById[parent.id]}</p>
+              <p className="flex items-center gap-1.5 text-xs text-foreground">
+                <AlertCircle
+                  className="h-3.5 w-3.5 shrink-0 text-destructive"
+                  aria-hidden
+                />
+                <span className="truncate">{errorById[parent.id]}</span>
+              </p>
             )}
           </div>
         </div>
@@ -475,7 +481,13 @@ function GamerPickerRow({
             {gamer.first_name || t("unnamedGamer")}
           </p>
           {error && (
-            <p className="truncate text-xs text-destructive">{error}</p>
+            <p className="flex items-center gap-1.5 text-xs text-foreground">
+              <AlertCircle
+                className="h-3.5 w-3.5 shrink-0 text-destructive"
+                aria-hidden
+              />
+              <span className="truncate">{error}</span>
+            </p>
           )}
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, PenLine } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -125,7 +126,9 @@ export function GeduContractSigningDialog({
             permits it, and reserving a line for a message most signers never
             see would leave a hole under every ceremony instead. */}
         {acceptFailed && (
-          <p className="mt-4 text-sm text-destructive">{t("error")}</p>
+          <StatusLine status="destructive" className="mt-4">
+            {t("error")}
+          </StatusLine>
         )}
 
         <DialogFooter>

@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -179,14 +178,17 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <Alert variant="info">
-            <Info className="h-4 w-4 shrink-0" />
             <div>
-              <AlertTitle>{t("registerGedu.certificationAlertTitle")}</AlertTitle>
+              <AlertTitle sentence>
+                {t("registerGedu.certificationAlertTitle")}
+              </AlertTitle>
               <AlertDescription>{t("registerGedu.certificationAlertDescription")}</AlertDescription>
             </div>
           </Alert>
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={c("firstName")} htmlFor="firstName">

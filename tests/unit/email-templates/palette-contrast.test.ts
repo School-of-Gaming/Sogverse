@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { BRAND, DARK_THEME, STATUS, STATUS_TINT } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 
 /**
  * Contrast, asserted on the palette itself rather than on any rendering.
@@ -52,10 +52,10 @@ const PAIRS: { name: string; fg: string; bg: string }[] = [
   // The header lockup and any brand-orange inline text, both ≥18px bold or
   // used as emphasis at body size — it clears AA_BODY anyway, comfortably.
   { name: "brand orange on the ground", fg: BRAND.act, bg: DARK_THEME.bg },
-  // The callout panel: both its uppercase label and its paragraphs, which carry
-  // the same colour on the washed info surface. 12.65:1 — the reason the panel
-  // can drop the accent-coloured title the app's Alert uses and lose nothing.
-  { name: "callout text on the info tint", fg: DARK_THEME.foreground, bg: STATUS_TINT.infoSurface },
+  // The callout panel, which is now the app's Alert exactly: its uppercase
+  // label in the status colour and its paragraphs in ink, both on the message
+  // panel the panel sits on rather than on a wash of their own.
+  { name: "callout label on the message panel", fg: STATUS.info, bg: DARK_THEME.card },
 ];
 
 describe("every colour pair a mail may emit is legible", () => {

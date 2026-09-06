@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Globe, MapPin, MapPinCheck, Plus } from "lucide-react";
+import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
@@ -679,7 +680,7 @@ function WrongCountryOverlay({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="flex items-start gap-3 rounded-md border border-border bg-info/10 p-4">
+    <div className="flex items-start gap-3 rounded-md border border-border p-4">
       <Globe className="mt-0.5 h-5 w-5 shrink-0 text-info" />
       <p className="text-sm text-foreground">
         {t.rich("regionLock.wrongCountry", {
@@ -1091,9 +1092,9 @@ function SignupForm(
       </Button>
 
       {props.submitError && (
-        <p className="text-xs text-destructive" role="alert">
+        <StatusLine status="destructive" size="xs" role="alert">
           {props.submitError}
-        </p>
+        </StatusLine>
       )}
     </div>
   );

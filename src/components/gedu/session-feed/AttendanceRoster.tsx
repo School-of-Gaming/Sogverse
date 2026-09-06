@@ -82,7 +82,10 @@ export function AttendanceRoster({
                 onToggle={() => toggle("present")}
                 label={t("presentLabel")}
                 icon={<Check className="h-3 w-3" aria-hidden />}
-                pressedClassName="bg-success/20 text-success"
+                // Pressed is the one place a status hue is a ground rather
+                // than a figure, and it is a full-value fill under the ink the
+                // pairing measured: a wash of the same green is not that green.
+                pressedClassName="bg-success text-success-foreground"
               />
               <MarkOption
                 pressed={mark === "absent"}

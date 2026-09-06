@@ -220,16 +220,17 @@ describe("wrong country", () => {
   it("states it as information, with the country weighted", () => {
     // The treatment is the point of this state, not decoration: a parent who
     // came to buy meets an inert panel, so the one thing left on it has to
-    // read as an answer rather than as a page that failed to load. Info tint
-    // (nothing is wrong and nothing is theirs to fix), and the country — the
-    // single fact they are scanning for — goes through a weighted wrapper.
+    // read as an answer rather than as a page that failed to load. The info
+    // glyph says it (nothing is wrong and nothing is theirs to fix) on the
+    // neutral edge every panel wears, and the country — the single fact they
+    // are scanning for — goes through a weighted wrapper.
     //
     // The panel's own type header is weighted too, so the assertion is which
     // weighted element the country landed in rather than that one exists.
     const { container } = render(
       <SignupPanelView {...panel({ regionGate: wrongCountry })} />,
     );
-    expect(container.innerHTML).toContain("bg-info/10");
+    expect(container.innerHTML).not.toContain("bg-info");
     const weighted = [...container.querySelectorAll(".font-semibold")].filter(
       (el) => el.textContent.includes("Finland"),
     );
@@ -443,9 +444,6 @@ describe("the info family", () => {
         onSetLocation: () => {},
       },
       says: "regionLock.wrongCountry",
-      // The loud tier: the refusal replaces the form and is the one thing on
-      // the panel, so it carries the full tinted surface.
-      tinted: true,
     },
     {
       name: "the question",
@@ -454,20 +452,15 @@ describe("the info family", () => {
         onSetLocation: () => {},
       },
       says: "regionLock.note",
-      // The quiet tier: a section inside a working form carries the family's
-      // hue on its glyph alone, so the form stays the loudest thing on its own
-      // panel.
-      tinted: false,
     },
     {
       name: "the confirmation",
       regionGate: eligible,
       says: "regionLock.eligible",
-      tinted: false,
     },
   ];
 
-  for (const { name, regionGate, says, tinted } of surfaces) {
+  for (const { name, regionGate, says } of surfaces) {
     it(`marks ${name} as information, anchored by an info-coloured glyph`, () => {
       const { container } = render(
         <SignupPanelView {...panel({ regionGate })} />,
@@ -479,8 +472,9 @@ describe("the info family", () => {
       expect(blocks).toHaveLength(1);
       const block = blocks[0];
       expect(block.textContent).toContain(says);
-      // Volume follows stakes: only the refusal fills its surface.
-      expect(block.className.includes("bg-info/")).toBe(tinted);
+      // No status colour is ever a ground: every one of these blocks carries
+      // the hue on its glyph and sits on the ground it is already on.
+      expect(block.className).not.toContain("bg-info");
       // One anchor, and in anchor position — see `anchorGlyphs`.
       expect(anchorGlyphs(block)).toHaveLength(1);
       // Never the action colour, never an alarm colour: nothing here has gone

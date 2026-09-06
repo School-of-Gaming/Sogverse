@@ -94,10 +94,11 @@ export function FamilySessionFeed({
     const quiet = isQuiet(entry, showAttendance);
     return cn(
       quiet ? "top-3.5" : "top-5",
-      entry.kind === "future"
-        ? prominent
-          ? "bg-info"
-          : "bg-info/40"
+      // Only the next session is blue; a later date takes the ordinary
+      // neutral dot, because a status hue has one value and a weakened one
+      // is not that hue.
+      entry.kind === "future" && prominent
+        ? "bg-info"
         : quiet
           ? "bg-muted-foreground/25"
           : "bg-muted-foreground/60",

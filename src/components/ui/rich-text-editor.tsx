@@ -25,6 +25,7 @@ import {
 } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown as MarkdownExtension } from "tiptap-markdown";
+import { StatusLine } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 /**
@@ -430,13 +431,15 @@ export function RichTextEditor({
               line held open under every address they type would be a hole
               waiting for a failure that mostly never comes. */}
           {linkRejected && (
-            <p
+            <StatusLine
               id={linkErrorId}
               role="alert"
-              className="px-2 pb-0.5 pt-1 text-xs text-destructive"
+              status="destructive"
+              size="xs"
+              className="px-2 pb-0.5 pt-1"
             >
               {t("linkInvalid")}
-            </p>
+            </StatusLine>
           )}
         </div>
       )}

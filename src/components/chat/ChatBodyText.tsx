@@ -45,7 +45,7 @@ export function ChatBodyText({
             // emphasis — the sender's name, a reply's quote bar, the jump
             // flash — and a mention borrowing it made "about you" and "this is
             // ours" the same colour.
-            className="rounded bg-info/15 px-1 font-medium text-info"
+            className="rounded px-1 font-medium text-info"
           >
             {`@${accounts.get(segment.id)?.name ?? segment.name}`}
           </span>

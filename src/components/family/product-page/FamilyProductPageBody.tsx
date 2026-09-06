@@ -590,11 +590,17 @@ function ProblemNotice({
       className={cn(
         "mt-5 flex items-start gap-2 rounded-md border border-border px-3 py-2.5 text-sm",
         tone === "destructive"
-          ? "bg-destructive/10 text-destructive"
+          ? "text-foreground"
           : "bg-lifted text-muted-foreground",
       )}
     >
-      <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+      <Icon
+        className={cn(
+          "mt-0.5 h-4 w-4 shrink-0",
+          tone === "destructive" && "text-destructive",
+        )}
+        aria-hidden
+      />
       <span className="min-w-0">{children}</span>
     </p>
   );

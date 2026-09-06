@@ -3,6 +3,11 @@
 import { useRef, useState } from "react";
 import { Mail, MonitorPlay } from "lucide-react";
 import { useTranslations } from "next-intl";
+import {
+  Alert,
+  AlertDescription,
+  StatusLine,
+} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -381,15 +386,11 @@ export default function TestingPage() {
                 moves when it appears. */}
             {result && (
               <div className="space-y-2">
-                <div
-                  className={`rounded-md p-3 text-sm ${
-                    result.type === "success"
-                      ? "bg-success/10 text-success"
-                      : "bg-destructive/10 text-destructive"
-                  }`}
+                <Alert
+                  variant={result.type === "success" ? "success" : "destructive"}
                 >
-                  {result.message}
-                </div>
+                  <AlertDescription>{result.message}</AlertDescription>
+                </Alert>
                 {result.attachments?.map((attachment) => (
                   <details key={attachment.name} className="rounded-md border border-border">
                     <summary className="cursor-pointer px-3 py-2 text-sm">
@@ -495,9 +496,9 @@ export default function TestingPage() {
                 copy would leave an admin told only that something is wrong
                 with a form of twenty fields. */}
             {previewError ? (
-              <p className="p-4 text-sm text-destructive">
+              <StatusLine status="destructive" className="p-4">
                 {t('previewError', { message: previewError })}
-              </p>
+              </StatusLine>
             ) : preview ? (
               <iframe
                 title={t('preview')}

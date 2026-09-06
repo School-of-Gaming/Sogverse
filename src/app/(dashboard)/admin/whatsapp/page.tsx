@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { formatInTimeZone } from "date-fns-tz";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, formatTime, formatDate } from "@/lib/utils";
@@ -227,7 +228,7 @@ function ChatThread({
                     className={cn(
                       "max-w-[70%] rounded-lg px-3 py-2 text-sm",
                       msg.status === WHATSAPP_MESSAGE_STATUS.FAILED
-                        ? "bg-destructive/15 text-destructive"
+                        ? "bg-lifted text-foreground"
                         : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
                           ? "bg-lifted text-muted-foreground"
                           : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
@@ -237,8 +238,8 @@ function ChatThread({
                   >
                     <p className="whitespace-pre-wrap break-words">{msg.body}</p>
                     {msg.status === WHATSAPP_MESSAGE_STATUS.FAILED && (
-                      <div className="mt-1 flex items-center gap-1 text-[10px] text-destructive">
-                        <AlertCircle className="h-3 w-3" />
+                      <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <AlertCircle className="h-3 w-3 text-destructive" />
                         <span>{msg.status_error ?? t("notDelivered")}</span>
                       </div>
                     )}
@@ -246,7 +247,7 @@ function ChatThread({
                       className={cn(
                         "mt-1 flex items-center justify-end gap-1 text-[10px]",
                         msg.status === WHATSAPP_MESSAGE_STATUS.FAILED
-                          ? "text-destructive/70"
+                          ? "text-muted-foreground"
                           : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
                             ? "text-muted-foreground"
                             : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
@@ -270,9 +271,9 @@ function ChatThread({
 
       {/* Error banner */}
       {sendError && (
-        <div className="mx-4 mb-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {sendError}
-        </div>
+        <Alert variant="destructive" className="mx-4 mb-2">
+          <AlertDescription>{sendError}</AlertDescription>
+        </Alert>
       )}
 
       {/* Input */}

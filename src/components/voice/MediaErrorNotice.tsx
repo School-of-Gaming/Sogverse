@@ -32,13 +32,13 @@ export function MediaErrorNotice({ category, className }: MediaErrorNoticeProps)
   return (
     <div
       className={cn(
-        "rounded-md border border-border bg-destructive/10 px-3 py-2 text-sm text-destructive",
+        "rounded-md border border-border px-3 py-2 text-sm text-foreground",
         className,
       )}
       role="alert"
     >
       <p className="flex items-start gap-1.5">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
         <span>{t(category)}</span>
       </p>
       <Button

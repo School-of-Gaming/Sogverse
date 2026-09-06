@@ -107,10 +107,7 @@ export function SessionFeedAlertBadge({
   return (
     <Badge
       variant="outline"
-      className={cn(
-        "gap-1.5 bg-warning/10 text-warning",
-        className,
-      )}
+      className={cn("gap-1.5 text-warning", className)}
     >
       <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
       {label}

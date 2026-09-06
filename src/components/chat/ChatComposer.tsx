@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ImagePlus, Lock, Send, X } from "lucide-react";
+import { StatusLine } from "@/components/ui/alert";
 import { useTranslations } from "next-intl";
 import {
   MAX_CHAT_MESSAGE_LENGTH,
@@ -494,9 +495,9 @@ export function ChatComposer({
       </form>
 
       {refused > 0 && (
-        <p className="px-2 pb-2 text-xs text-destructive">
+        <StatusLine status="destructive" size="xs" className="px-2 pb-2">
           {t("imagesRefused", { count: MAX_STAGED_CHAT_IMAGES })}
-        </p>
+        </StatusLine>
       )}
     </div>
   );

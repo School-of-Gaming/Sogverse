@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -192,17 +193,19 @@ export function HelpFeedbackCardView({
         {/* The answer, last in the card — see the component docblock for why it
             can only go here. */}
         {succeeded && (
-          <p className="rounded-md bg-success/10 p-3 text-sm text-success">
-            {t(`${audience}.thankYou`)}
-          </p>
+          <Alert variant="success">
+            <AlertDescription>{t(`${audience}.thankYou`)}</AlertDescription>
+          </Alert>
         )}
 
         {error !== null && (
-          <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            {error === "rateLimited"
-              ? t(`${audience}.tooManyRequests`)
-              : t(`${audience}.failed`)}
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription>
+              {error === "rateLimited"
+                ? t(`${audience}.tooManyRequests`)
+                : t(`${audience}.failed`)}
+            </AlertDescription>
+          </Alert>
         )}
       </CardContent>
     </Card>

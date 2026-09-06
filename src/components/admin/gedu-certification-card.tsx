@@ -48,6 +48,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -272,9 +273,9 @@ export function GeduCertificationCard({
           </Button>
         </div>
         {setCertified.isError && (
-          <p className="text-sm text-destructive">
+          <StatusLine status="destructive">
             {setCertified.error instanceof Error ? setCertified.error.message : t("error")}
-          </p>
+          </StatusLine>
         )}
 
         {/* The criminal record check: the standing, and the one control that
@@ -351,11 +352,11 @@ export function GeduCertificationCard({
                 <span>{rt("recordLabel")}</span>
               </label>
               {setCriminalRecordCheck.isError && (
-                <p className="text-sm text-destructive">
+                <StatusLine status="destructive">
                   {setCriminalRecordCheck.error instanceof Error
                     ? setCriminalRecordCheck.error.message
                     : rt("error")}
-                </p>
+                </StatusLine>
               )}
             </>
           )}
@@ -399,8 +400,11 @@ export function GeduCertificationCard({
             </>
           ) : (
             <>
-              <p className="flex items-center gap-2 text-sm font-medium text-warning">
-                <FileWarning className="h-4 w-4 shrink-0" aria-hidden />
+              <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <FileWarning
+                  className="h-4 w-4 shrink-0 text-warning"
+                  aria-hidden
+                />
                 {previous === null
                   ? ct("notAccepted")
                   : ct("notCurrentVersion", {

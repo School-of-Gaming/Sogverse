@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, type ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Pencil, Radio } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -462,17 +462,16 @@ export function SessionFeedItem({
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {entry.kind === "future" && (
             // The live tag is the same shared `sessionBadge` copy the family
-            // feed reads, in a filled tone rather than an outline one: a
-            // session happening right now is the one thing on this feed worth
-            // finding from across the room. "Next session" on a club that is
-            // running would be technically true and read as a mistake.
+            // feed reads, marked by a broadcast dot rather than by a ground
+            // behind the word: a session happening right now is the one thing
+            // on this feed worth finding from across the room. "Next session"
+            // on a club that is running would be technically true and read as
+            // a mistake.
             <Badge
               variant="outline"
-              className={cn(
-                "text-[10px] uppercase tracking-wide",
-                live ? "bg-info/10 text-info" : "text-info",
-              )}
+              className="gap-1 text-[10px] uppercase tracking-wide text-info"
             >
+              {live && <Radio className="h-3 w-3" aria-hidden />}
               {live ? b("live") : prominent ? b("nextSession") : b("upcoming")}
             </Badge>
           )}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { KeyRound, MailCheck, MailX } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -313,14 +314,14 @@ export function GamerSignInCard({
               button that still says "Saving…" would be two answers to one
               click. It appears with the redraw that makes it true. */}
           {modeOutcome === "saved" && !awaitingModeRefetch && (
-            <p role="status" className="text-sm text-success">
+            <StatusLine status="success" role="status">
               {t("saved")}
-            </p>
+            </StatusLine>
           )}
           {modeOutcome === "failed" && (
-            <p role="alert" className="text-sm text-destructive">
+            <StatusLine status="destructive" role="alert">
               {t("saveFailed")}
-            </p>
+            </StatusLine>
           )}
 
           <Button type="submit" disabled={!modeChanged || modeBusy}>
@@ -361,19 +362,19 @@ export function GamerSignInCard({
               )}
             </Field>
             {passwordOutcome === "tooShort" && (
-              <p role="alert" className="text-sm text-destructive">
+              <StatusLine status="destructive" role="alert">
                 {s("passwordTooShort", { count: GAMER_PASSWORD_MIN_LENGTH })}
-              </p>
+              </StatusLine>
             )}
             {passwordOutcome === "saved" && (
-              <p role="status" className="text-sm text-success">
+              <StatusLine status="success" role="status">
                 {t("newPasswordSaved")}
-              </p>
+              </StatusLine>
             )}
             {passwordOutcome === "failed" && (
-              <p role="alert" className="text-sm text-destructive">
+              <StatusLine status="destructive" role="alert">
                 {t("saveFailed")}
-              </p>
+              </StatusLine>
             )}
             <Button type="submit" disabled={savingPassword}>
               {savingPassword ? c("saving") : t("newPasswordSubmit")}
@@ -410,13 +411,16 @@ export function GamerSignInCard({
               />
             </Field>
             {emailVerifiedAt ? (
-              <p className="flex items-center gap-1.5 text-sm text-success">
-                <MailCheck className="h-4 w-4 shrink-0" aria-hidden />
+              <p className="flex items-center gap-1.5 text-sm text-foreground">
+                <MailCheck
+                  className="h-4 w-4 shrink-0 text-success"
+                  aria-hidden
+                />
                 {t("verified")}
               </p>
             ) : (
-              <p className="flex items-center gap-1.5 text-sm text-warning">
-                <MailX className="h-4 w-4 shrink-0" aria-hidden />
+              <p className="flex items-center gap-1.5 text-sm text-foreground">
+                <MailX className="h-4 w-4 shrink-0 text-warning" aria-hidden />
                 {t("notVerified", { name: firstName })}
               </p>
             )}
@@ -424,23 +428,23 @@ export function GamerSignInCard({
               {resending ? c("sending") : t("resend")}
             </Button>
             {resendOutcome === "sent" && (
-              <p role="status" className="text-sm text-success">
+              <StatusLine status="success" role="status">
                 {t("resendSent", { name: firstName })}
-              </p>
+              </StatusLine>
             )}
             {/* Warning rather than destructive: nothing broke and the wait is
                 short, but no mail went out, so it cannot read as success. It is
                 still an outcome the reader has to act on, so it is announced as
                 one. */}
             {resendOutcome === "rateLimited" && (
-              <p role="alert" className="text-sm text-warning">
+              <StatusLine status="warning" role="alert">
                 {t("resendRateLimited")}
-              </p>
+              </StatusLine>
             )}
             {resendOutcome === "failed" && (
-              <p role="alert" className="text-sm text-destructive">
+              <StatusLine status="destructive" role="alert">
                 {t("resendFailed")}
-              </p>
+              </StatusLine>
             )}
           </div>
         )}
@@ -590,13 +594,13 @@ function ChangeUsernameForm({
               aria-invalid={problem !== null || undefined}
             />
             {problem && (
-              <p
+              <StatusLine
                 id={`${labelId}-error`}
                 role="alert"
-                className="text-sm text-destructive"
+                status="destructive"
               >
                 {s(problem.key, { count: GAMER_PASSWORD_MIN_LENGTH })}
-              </p>
+              </StatusLine>
             )}
           </>
         )}
@@ -604,14 +608,14 @@ function ChangeUsernameForm({
       {/* Held back until the new value is the one the placeholder shows — the
           same reasoning as the mode form's line above. */}
       {outcome === "saved" && !awaitingRefetch && (
-        <p role="status" className="text-sm text-success">
+        <StatusLine status="success" role="status">
           {t("change.username.saved")}
-        </p>
+        </StatusLine>
       )}
       {outcome === "failed" && (
-        <p role="alert" className="text-sm text-destructive">
+        <StatusLine status="destructive" role="alert">
           {t("saveFailed")}
-        </p>
+        </StatusLine>
       )}
       <Button type="submit" disabled={busy}>
         {busy ? c("saving") : t("change.username.submit")}

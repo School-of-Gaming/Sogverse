@@ -998,8 +998,13 @@ rule cell, the most robust construct email has; the flat amber-to-amber gradient
 delivers act as text colour past Gmail's dark mode is a mechanism, not a smear, and stays.
 Client dark-mode colour shifting is its own topic, already documented in the layout.
 
-**Ruling:** _the heroes, closing card and email header ruled; the social card to pick from
-the crop drawing; the role chip open_
+**The social card, ruled from the crop drawing: the violet rule under the headline**, the
+hero's construct, crop-immune by nature (X trims 15px from each end of 1200×630; rounded
+previews eat corners; square thumbnails trim the sides). Both social cards and the email
+header take it, so page, card and mail say one thing.
+
+**Ruling:** _all of §14 ruled: heroes, closing card, About washes, social cards, email
+header; the gedu chip by the role ruling; the sweep runs with act and roles_
 
 ## Where the session stands (2026-09-06, evening)
 
@@ -1029,18 +1034,52 @@ Brain) with lucide as the library's own dependency (see §2).
 `#FF8F31`; the status set in the library; Sogverse's stylesheet declares no colour; see
 §2 and §3), and the media rulings (§6).
 
-**In flight (three agents, disjoint files):** the **status construct pass** (§3: tinted
-grounds → B, the lit cards → a leading rule, the 166 text sites sorted into labels and
-sentences, the tinted pills → the chip's shape, the filled badges untouched pending the
-figure-and-fill word, the mail's note panel converted and `STATUS_TINT`/`YTY_ELEMENT`
-deleted if unspent); the **identicon landing** (§7: `identicon.ts`, ids 1–4, the
-component reading it, the section leaving the page); the **hero drawing** (§14: today,
-amber+one with no glow, amber+one with glows, at hero width and at card size).
+**Landed since (2026-09-06, night):** the identicon (§7). **In flight (one agent):** the
+**status construct pass** (§3: tinted grounds → B, the lit cards → a leading rule, the
+166 text sites sorted into labels and sentences, the tinted pills → the chip's shape, the
+filled badges untouched pending the figure-and-fill word, the mail's note panel converted
+and `STATUS_TINT`/`YTY_ELEMENT` deleted if unspent). It owns `src/**` and `tests/**`; do
+not start the next sweep until it reports and is committed.
 
-**Ruled, to land after those:** the act sweep if the owner accepts "act as a figure"
-(§9, page section); the figure-and-fill exhibit to draw (ten colours × button / badge /
-chip) before that rule is confirmed; the Klingon easter egg (§10) and the calm-surface
-budget (§12), not yet drawn.
+**Ruled, to land next (one agent, after the construct pass; every item is specified in
+its entry):**
+
+- **§9 act as a figure** (all rulings in §9's "Ruled … from the reordered section"
+  paragraphs): the 48 sites by job; a selected option → `border-act`; a highlighted row
+  → `border-l-2 border-l-act` with the weekday in `act`; icon and monogram tiles →
+  `bg-lifted` with the glyph/initials in `act` (the library's chip-scale exemption
+  retired in `brand.ts`); drop targets → `ring-2 ring-act`; callout → neutral panel,
+  act glyph and label; faded ink on amber → the meta line off the fill; the hover tint →
+  `hover:bg-lifted`; rings → `ring-act`; the two `hover:bg-act/90` stay with a
+  transitional note. **The lifecycle chip** (`product-status-chip.tsx`): one shape,
+  neutral edge + the word in the status colour, no glyph; running success, pending
+  **info** (the recommendation; the owner may say warning), completed quiet ink,
+  cancelled destructive, expired quiet ink. The Yty tile alpha steps in `yty.ts`,
+  `product-type-presentation.ts` and the sixteen `bg-pick-N/15` follow the tile ruling:
+  `bg-lifted` tiles, glyph in the family/pick colour.
+- **§14 gradients**: home and Roblox heroes → the app's structure, wash gone, one 6px
+  full-value violet rule under the headline at its measure; the About washes → ground;
+  the closing card → `bg-card` + violet rule; both social cards → the same rule under
+  the headline, `GRADIENT` deleted; the email header → ground + a solid violet rule cell
+  (the flat act→act text-colour gradient stays); `composite.ts` and its test deleted
+  (nothing composites); the gedu chip by the role ruling.
+- **The role chip** (§14's role paragraph): `ROLE_GRAMMAR` in the library (gamer Glow
+  `User`, parent Harmony `Users`, gedu Wit `Compass`, admin quiet ink `KeyRound`);
+  `ROLE_BADGE_STYLES` → the chip shape, word in the family colour; the users strip's
+  glyph map reads the row; the act, gradients and roles sections leave the page, which
+  then holds only the inventory.
+
+**Then, needing the owner:** the figure-and-fill exhibit (ten colours × button / badge /
+chip); the Klingon easter egg (§10) and the calm-surface budget (§12), small, drawn
+together; the owner's backlog line on the home page's visual interest (proposed, not
+approved).
+
+**Then, needing no ruling: the end of the branch.** (1) A fresh agent audits the ledger
+against the code: every entry marked landed is checked, the token at its hex, the sites
+converted, the recorded greps returning nothing; findings fixed before review. (2) The
+enforcement pass (see below). (3) `/code-review` from the merge-base in a fresh agent.
+(4) The owner's walk through the app on 3002. (5) Delete this page, this ledger and
+`demo/public/ruling-art/`; Phase 5 merge.
 **Put to the owner 2026-09-06, evening — the figure-and-fill rule.** The owner pointed
 at the product card's waitlist chip (`public/products/status-chip.tsx`: a neutral edge,
 the page ground, an hourglass and the word in `act`, no fill) and said the brand colours

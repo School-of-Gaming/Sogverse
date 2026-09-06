@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Minus } from "lucide-react";
+import { Check, Minus, Radio } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -172,13 +172,14 @@ export function FamilySessionFeedItem({
           // and no space is held for it — but whoever adds it should know this
           // row was written expecting them, and that its right-hand slot is
           // where the affordance is meant to go.
+          // A running session is marked by its own glyph rather than by a
+          // ground behind the word: the tag is one label in one blue either
+          // way, and the broadcast dot is what says it is happening now.
           <Badge
             variant="outline"
-            className={cn(
-              "shrink-0 text-[10px] uppercase tracking-wide",
-              live ? "bg-info/10 text-info" : "text-info",
-            )}
+            className="shrink-0 gap-1 text-[10px] uppercase tracking-wide text-info"
           >
+            {live && <Radio className="h-3 w-3" aria-hidden />}
             {live
               ? b("live")
               : prominent

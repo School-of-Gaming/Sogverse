@@ -65,12 +65,15 @@ export function CertifyWithWarningsDialog({
           one callout and no hole where the other would have gone. */}
       <div className="space-y-2">
         {contractMissing && (
-          <WarningLine icon={<FileWarning className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />}>
+          <WarningLine icon={<FileWarning
+                className="mt-0.5 h-4 w-4 shrink-0 text-warning"
+                aria-hidden
+              />}>
             {t("contractWarning")}
           </WarningLine>
         )}
         {criminalRecordCheckMissing && (
-          <WarningLine icon={<Scale className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />}>
+          <WarningLine icon={<Scale className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />}>
             {t("checkWarning")}
           </WarningLine>
         )}
@@ -87,7 +90,7 @@ function WarningLine({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start gap-2 rounded-md border border-border bg-warning/10 px-3 py-2.5 text-sm font-medium text-warning">
+    <div className="flex items-start gap-2 rounded-md border border-border px-3 py-2.5 text-sm font-medium text-foreground">
       {icon}
       <span>{children}</span>
     </div>

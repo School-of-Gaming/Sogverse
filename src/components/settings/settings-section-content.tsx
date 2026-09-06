@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Lock, LogOut, MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
+import {
+  Alert,
+  AlertDescription,
+  StatusLine,
+} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -501,15 +506,15 @@ export function SettingsSectionContent({
           </div>
 
           {successMessage && (
-            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-              {successMessage}
-            </div>
+            <Alert variant="success">
+              <AlertDescription>{successMessage}</AlertDescription>
+            </Alert>
           )}
 
           {errorMessage && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {errorMessage}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
           )}
 
           <Field label={c('firstName')} htmlFor="firstName">
@@ -621,8 +626,11 @@ export function SettingsSectionContent({
                 className="bg-lifted"
               />
               {isEmailVerified ? (
-                <p className="flex items-center gap-1.5 text-sm text-success">
-                  <MailCheck className="h-4 w-4 shrink-0" aria-hidden />
+                <p className="flex items-center gap-1.5 text-sm text-foreground">
+                  <MailCheck
+                    className="h-4 w-4 shrink-0 text-success"
+                    aria-hidden
+                  />
                   {t('emailVerified')}
                 </p>
               ) : (
@@ -643,22 +651,22 @@ export function SettingsSectionContent({
                     </Button>
                   </div>
                   {verificationOutcome === "sent" && (
-                    <p className="text-sm text-success">
+                    <StatusLine status="success">
                       {t('verificationEmailSent')}
-                    </p>
+                    </StatusLine>
                   )}
                   {/* Warning rather than destructive: nothing broke, and the
                       wait is short — but no mail went out, so it cannot read as
                       success either. */}
                   {verificationOutcome === "rate_limited" && (
-                    <p className="text-sm text-warning">
+                    <StatusLine status="warning">
                       {t('verificationEmailRateLimited')}
-                    </p>
+                    </StatusLine>
                   )}
                   {verificationOutcome === "failed" && (
-                    <p className="text-sm text-destructive">
+                    <StatusLine status="destructive">
                       {t('verificationEmailFailed')}
-                    </p>
+                    </StatusLine>
                   )}
                 </div>
               )}
@@ -766,14 +774,14 @@ export function SettingsSectionContent({
             </form>
           </div>
           {passwordResetOutcome === "sent" && (
-            <p className="text-sm text-success">
+            <StatusLine status="success">
               {t('resetPasswordEmailSent', { email: profile?.email ?? "" })}
-            </p>
+            </StatusLine>
           )}
           {passwordResetOutcome === "failed" && (
-            <p className="text-sm text-destructive">
+            <StatusLine status="destructive">
               {t('resetPasswordEmailFailed')}
-            </p>
+            </StatusLine>
           )}
         </CardContent>
       </Card>

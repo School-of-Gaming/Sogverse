@@ -84,10 +84,9 @@ export function SessionCreationsBlock({
 
   return (
     <div
-      className={cn(
-        "space-y-2 rounded-md border border-border p-2.5",
-        owed ? "bg-warning/5" : "bg-lifted",
-      )}
+      // One ground either way: what an owed block changes is its mark and its
+      // title, never the panel behind them.
+      className="space-y-2 rounded-md border border-border bg-lifted p-2.5"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         {/* The eye is the dialog's own mark for the family-visible half, so the
@@ -144,7 +143,7 @@ export function SessionCreationsBlock({
                   has
                     ? "bg-lifted text-muted-foreground hover:text-foreground"
                     : owed
-                      ? "bg-warning/15 font-semibold text-warning"
+                      ? "font-semibold text-warning"
                       : "text-foreground hover:bg-lifted",
                 )}
               >

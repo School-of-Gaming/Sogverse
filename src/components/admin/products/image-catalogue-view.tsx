@@ -3,6 +3,11 @@
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Loader2, Pencil, Upload, X } from "lucide-react";
+import {
+  Alert,
+  AlertDescription,
+  StatusLine,
+} from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -153,9 +158,9 @@ export function ImageCatalogueView({
       </DialogHeader>
 
       {error && (
-        <p className="mx-6 mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {error}
-        </p>
+        <Alert variant="destructive" className="mx-6 mt-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 p-6 pt-4 sm:flex-row">
@@ -399,7 +404,9 @@ function SelectedImagePanel({
           </div>
         )}
         {renameError && (
-          <p className="mt-2 text-xs text-destructive">{renameError}</p>
+          <StatusLine status="destructive" size="xs" className="mt-2">
+            {renameError}
+          </StatusLine>
         )}
       </div>
 

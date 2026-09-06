@@ -11,7 +11,7 @@ import {
   calendarInvitationStartDate,
   calendarInvitationUntilDate,
 } from "@/lib/email-templates/calendar-invitation";
-import { BRAND, DARK_THEME, GRADIENT, STATUS, STATUS_TINT } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, GRADIENT, STATUS } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 
 /**
@@ -42,7 +42,6 @@ const PALETTE = new Set(
     ...Object.values(DARK_THEME),
     ...Object.values(GRADIENT),
     ...Object.values(STATUS),
-    ...Object.values(STATUS_TINT),
   ].map((hex) => hex.toLowerCase()),
 );
 

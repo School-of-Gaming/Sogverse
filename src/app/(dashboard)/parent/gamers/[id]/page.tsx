@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, User } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -186,15 +187,15 @@ export default function GamerDetailsPage() {
           </div>
 
           {profileSuccess && (
-            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-              {profileSuccess}
-            </div>
+            <Alert variant="success">
+              <AlertDescription>{profileSuccess}</AlertDescription>
+            </Alert>
           )}
 
           {profileError && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {profileError}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{profileError}</AlertDescription>
+            </Alert>
           )}
 
           <form onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }} className="space-y-6">

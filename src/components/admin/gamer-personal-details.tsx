@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, type RefObject } from "react";
 import { formatInTimeZone } from "date-fns-tz";
 import { Loader2, Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -338,12 +339,9 @@ function GamerPersonalDetailsForm({
               push the very selects the admin just used. It only ever appears
               after they pressed Save and it did not take. */}
           {failed && (
-            <div
-              role="alert"
-              className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-            >
-              {t("saveError")}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{t("saveError")}</AlertDescription>
+            </Alert>
           )}
         </div>
 

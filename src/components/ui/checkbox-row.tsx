@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cva } from "class-variance-authority";
+import { Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
@@ -225,13 +226,21 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
             <span
               id={hintId}
               className={cn(
-                "mt-1 block text-xs",
-                // Quiet info: coloured text, no fill and no border. The row is
-                // already bordered, so a second edge here would read as a box
-                // inside a box rather than as a note.
-                hintTone === "info" ? "text-info" : "text-muted-foreground",
+                // Quiet info: a mark, no fill and no border. The row is already
+                // bordered, so a second edge here would read as a box inside a
+                // box rather than as a note — and the hint itself is something
+                // the reader reads through, so it stays ink and the glyph
+                // beside it is what carries the tone.
+                "mt-1 block text-xs text-muted-foreground",
+                hintTone === "info" && "flex items-start gap-1.5",
               )}
             >
+              {hintTone === "info" && (
+                <Info
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info"
+                  aria-hidden
+                />
+              )}
               {hint}
             </span>
           )}

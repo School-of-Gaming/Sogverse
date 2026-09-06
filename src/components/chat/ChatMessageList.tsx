@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Lock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ChatReactionCode } from "@/lib/constants/chat";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
@@ -361,7 +361,8 @@ export function ChatMessageList({
                       </span>
                     )}
                     {lockedAccountIds.has(group.senderId) && (
-                      <span className="text-[10px] uppercase tracking-wide text-destructive">
+                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-destructive">
+                        <Lock className="h-2.5 w-2.5 shrink-0" aria-hidden />
                         {t("moderation.lockedTag")}
                       </span>
                     )}

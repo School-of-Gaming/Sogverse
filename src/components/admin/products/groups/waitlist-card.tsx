@@ -160,11 +160,16 @@ export function WaitlistCard({
             above this card. A product that charges for its seat says nothing at
             all, because nothing an admin does here would change the answer. */}
         {seatOffers.kind === "needsOneGroup" && participations.length > 0 && (
-          // Info tone, not muted: this line explains why the Invite control the
-          // admin may be looking for is absent, and the fix it names is on this
-          // very page — the owner wants that legible as guidance, not footnote.
-          <p className="mt-3 flex items-start gap-1.5 text-xs text-info">
-            <MailQuestion className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          // Ink, with the mark in the info tone: this line explains why the
+          // Invite control the admin may be looking for is absent, and the fix
+          // it names is on this very page — the owner wants that legible as
+          // guidance, not footnote, and a sentence is read through, so it is
+          // the glyph that carries the tone.
+          <p className="mt-3 flex items-start gap-1.5 text-xs text-foreground">
+            <MailQuestion
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info"
+              aria-hidden
+            />
             <span>
               {t("waitlist.seatOffer.needsOneGroup", {
                 count: seatOffers.groupCount,

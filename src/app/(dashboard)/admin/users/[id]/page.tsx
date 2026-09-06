@@ -16,7 +16,7 @@ import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card
 import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { gamerUsernameFromEmail, hasRealEmail } from "@/lib/gamer-sign-in";
-import { cn, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
@@ -75,10 +75,7 @@ function AssignedProductRow({
   return (
     <Link
       href={ROUTES.admin.product(productType, productId)}
-      className={cn(
-        "group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-lifted hover:text-foreground",
-        needsGroup && "bg-warning/5",
-      )}
+      className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-lifted hover:text-foreground"
     >
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">{name}</p>

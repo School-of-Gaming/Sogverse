@@ -14,7 +14,6 @@ import {
   Pencil,
   Trash,
   Check,
-  AlertCircle,
   AlertTriangle,
   Info,
   Eye,
@@ -2700,14 +2699,12 @@ export default function AdminUIComponentsPage() {
             </div>
           </Alert>
           <Alert variant="success">
-            <Check className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <AlertTitle>Success</AlertTitle>
               <AlertDescription>Profile updated successfully!</AlertDescription>
             </div>
           </Alert>
           <Alert variant="destructive">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <AlertTitle>Destructive</AlertTitle>
               <AlertDescription>
@@ -2716,7 +2713,6 @@ export default function AdminUIComponentsPage() {
             </div>
           </Alert>
           <Alert variant="info">
-            <Info className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <AlertTitle>Info</AlertTitle>
               <AlertDescription>
@@ -2725,7 +2721,6 @@ export default function AdminUIComponentsPage() {
             </div>
           </Alert>
           <Alert variant="warning">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <AlertTitle>Warning</AlertTitle>
               <AlertDescription>
@@ -2738,28 +2733,23 @@ export default function AdminUIComponentsPage() {
               the purchase banners use them — one prop apart each, so they
               only mean anything read against the five above. */}
           <Alert variant="success">
-            <Check className="mt-0.5 h-4 w-4 shrink-0" />
             <AlertDescription>Profile updated successfully!</AlertDescription>
           </Alert>
           <Alert variant="destructive">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <AlertDescription>
               Something went wrong. Please try again.
             </AlertDescription>
           </Alert>
 
           <Alert variant="success" align="center">
-            <Check className="h-4 w-4 shrink-0" />
             <AlertDescription>Purchase successful!</AlertDescription>
           </Alert>
           <Alert variant="warning" align="center">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
             <AlertDescription>
               Purchase canceled. No charges were made.
             </AlertDescription>
           </Alert>
           <Alert variant="destructive" align="center">
-            <AlertCircle className="h-4 w-4 shrink-0" />
             <AlertDescription>
               Something went wrong starting checkout. Please try again.
             </AlertDescription>

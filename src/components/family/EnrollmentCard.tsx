@@ -448,16 +448,20 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
       <Card
         aria-busy={leaving}
         className={cn(
-          "group relative overflow-hidden transition-[box-shadow,opacity]",
+          // A card is lit from its leading edge: a 2px rule at full value, on
+          // the plain card ground. The rule is drawn in the neutral edge on
+          // every card from the start, so a card that lights up changes colour
+          // and nothing beside it moves.
+          "group relative overflow-hidden border-l-2 transition-[box-shadow,opacity,border-color]",
           opensAPage && "hover:shadow-lg focus-within:shadow-lg",
-          live && "bg-gradient-to-r from-act/5 to-transparent",
-          // The awaiting tone: the same lit-card treatment in `info` rather than
-          // `act`, because this *is* a card with something happening on it
-          // — a purchase has landed and placement is under way — and it must
-          // read as that rather than as a fault or as a waitlist place. Blue is
+          live && "border-l-act",
+          // The awaiting tone: the same lit edge in `info` rather than `act`,
+          // because this *is* a card with something happening on it — a
+          // purchase has landed and placement is under way — and it must read
+          // as that rather than as a fault or as a waitlist place. Blue is
           // already this product's colour for "we are telling you something",
-          // and the two gradients are mutually exclusive by `running`.
-          awaiting && "bg-gradient-to-r from-info/5 to-transparent",
+          // and the two rules are mutually exclusive by `running`.
+          awaiting && "border-l-info",
           // Dimmed in place while the leave is in flight, so the card that is
           // about to disappear says so without moving. Matches the treatment
           // the badge-era waitlist card used, for continuity.
@@ -500,7 +504,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                 <Badge
                   variant="outline"
                   className={cn(
-                    "gap-1 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
+                    "gap-1 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
                     !live && "invisible",
                   )}
                 >
@@ -874,8 +878,11 @@ function LeaveWaitlistLink({
         confirmLabel={t("confirmCta")}
         onConfirm={onConfirm}
       >
-        <div className="flex items-start gap-2 rounded-md border border-border bg-destructive/10 px-3 py-2.5 text-sm font-semibold text-destructive">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+        <div className="flex items-start gap-2 rounded-md border border-border px-3 py-2.5 text-sm font-semibold text-foreground">
+          <AlertTriangle
+            className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
+            aria-hidden
+          />
           <span>{t("backOfLineWarning")}</span>
         </div>
       </ConfirmDialog>

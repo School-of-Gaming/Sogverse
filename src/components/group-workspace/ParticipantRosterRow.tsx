@@ -5,6 +5,7 @@ import { Check, Copy, Loader2, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
@@ -488,9 +489,14 @@ function GameIdentityCell({
           </Button>
         </div>
         {failed && (
-          <p role="alert" className="text-[11px] text-destructive">
+          <StatusLine
+            status="destructive"
+            size="xs"
+            role="alert"
+            className="text-[11px]"
+          >
             {t("gameSaveFailed")}
-          </p>
+          </StatusLine>
         )}
       </div>
     );

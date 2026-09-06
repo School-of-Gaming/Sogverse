@@ -9,7 +9,7 @@ import {
   sessionPhotoBox,
   type SessionReportPhoto,
 } from "@/lib/email-templates/session-photos";
-import { BRAND, DARK_THEME, STATUS_TINT } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
 
@@ -180,21 +180,25 @@ describe("the staff copy's banner", () => {
     const start = html.lastIndexOf("<td ", html.indexOf(LABEL));
     const banner = html.slice(start, html.indexOf("</td>", start));
 
-    // The Alert's full 1px border, in the info colour flattened out of alpha.
-    expect(banner).toContain(`border:1px solid ${STATUS_TINT.infoBorder}`);
+    // The Alert's full 1px border, in the neutral edge every panel wears.
+    expect(banner).toContain(`border:1px solid ${DARK_THEME.border}`);
     expect(banner).not.toContain("border-left:");
-    // The wash, declared twice so Gmail's dark theme leaves the fill alone.
-    expect(banner).toContain(
-      `background-color:${STATUS_TINT.infoSurface};background-image:linear-gradient(${STATUS_TINT.infoSurface},${STATUS_TINT.infoSurface})`,
-    );
+    // No ground of its own: a status colour is never a wash, so the panel sits
+    // on the message panel it is already on.
+    expect(banner).not.toContain("background-color:");
+    expect(banner).not.toContain("background-image:");
     // No brand colour anywhere in it: the accent moved, it did not move over.
     expect(banner).not.toContain(BRAND.act);
     expect(banner).not.toContain(BRAND.world);
-    // Every colour the banner's own text carries is the body's — the app's
-    // Alert tints its title with the accent, and at this size that pairing is
-    // below AA (`palette-contrast.test.ts` pins it as rejected).
-    for (const color of banner.matchAll(/<p style="[^"]*color:(#[0-9a-fA-F]{6})/g)) {
-      expect(color[1]).toBe(DARK_THEME.foreground);
+    // The label takes the status colour and every sentence under it stays ink,
+    // which is the app's Alert under the label rule: colour on a label, never
+    // on something the reader reads through.
+    const colors = [
+      ...banner.matchAll(/<p style="[^"]*color:(#[0-9a-fA-F]{6})/g),
+    ].map((match) => match[1]);
+    expect(colors[0]).toBe(STATUS.info);
+    for (const color of colors.slice(1)) {
+      expect(color).toBe(DARK_THEME.foreground);
     }
   });
 });
@@ -423,7 +427,7 @@ describe("the child's own copy", () => {
 
   it("carries no staff banner", () => {
     expect(child()).not.toContain("Gedu and Admin copy");
-    expect(child()).not.toContain(`border:1px solid ${STATUS_TINT.infoBorder}`);
+    expect(child()).not.toContain(`color:${STATUS.info}`);
   });
 
   it("renders the family mail when the flag is absent or false", () => {

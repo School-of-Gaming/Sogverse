@@ -806,8 +806,10 @@ export function SessionFeed({
  * Timeline marker tone per state. The rail is scanned before anything is read,
  * so the markers carry the same hierarchy the cards do: the next session and the
  * outstanding work stand out, the ordinary weeks are neutral, and the
- * nothing-owed rows all but disappear. A future session is only fully toned when
- * it is the next one — a later date is not a thing to walk into.
+ * nothing-owed rows all but disappear. A future session is toned only when it is
+ * the next one — a later date is not a thing to walk into, so it takes the
+ * ordinary neutral dot rather than a weakened blue: a status hue is spent at the
+ * value it is authored at or not at all.
  *
  * The loud markers are deliberately on **different hues** rather than different
  * saturations of one: info blue for what is coming, warning amber for what is
@@ -830,7 +832,7 @@ function markerTone(
 ): string {
   switch (entry.kind) {
     case "future":
-      return prominent ? "bg-info" : "bg-info/40";
+      return prominent ? "bg-info" : "bg-muted-foreground/60";
     case "past":
       switch (completeness) {
         case "needs_attention":

@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES } from "@/lib/constants";
@@ -239,9 +240,9 @@ export function ResetPasswordForm() {
             className="sr-only"
           />
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           <Field
             label={c('newPassword')}

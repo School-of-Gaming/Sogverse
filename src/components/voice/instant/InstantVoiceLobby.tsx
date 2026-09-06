@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mic, MicOff } from "lucide-react";
+import { AlertCircle, Loader2, Mic, MicOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -324,9 +324,13 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: Inst
             )}
 
             {error && (
-              <div className="rounded-md border border-border bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
-              </div>
+              <p className="flex items-start gap-2 rounded-md border border-border px-3 py-2 text-sm text-foreground">
+                <AlertCircle
+                  className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
+                  aria-hidden
+                />
+                <span>{error}</span>
+              </p>
             )}
 
             <div className="flex justify-end">

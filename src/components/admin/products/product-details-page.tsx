@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  AlertTriangle,
   ArrowLeft,
   Calendar,
   Check,
@@ -339,10 +340,13 @@ function OperationalFacts({
         <span
           className={
             nullStatus === "unknown"
-              ? "text-destructive"
+              ? "inline-flex items-center gap-1 text-destructive"
               : "text-muted-foreground"
           }
         >
+          {nullStatus === "unknown" && (
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          )}
           {t(`fees.status.${nullStatus}`)}
         </span>
       );

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -185,9 +186,9 @@ export function GroupColumn({
                     </Button>
                   </div>
                   {!draft.trim() && (
-                    <p className="text-xs text-destructive">
+                    <StatusLine status="destructive" size="xs">
                       {t("group.nameRequired")}
-                    </p>
+                    </StatusLine>
                   )}
                 </div>
               ) : (

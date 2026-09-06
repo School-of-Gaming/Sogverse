@@ -135,6 +135,8 @@ export function PaymentProblemBadge({
       className={cn(
         BADGE_BASE,
         showAlert ? "gap-1 px-2" : "w-7",
+        // The hover shade waits on the Button adoption's hover ruling, like
+        // the button's own; it is the last alpha step on a status colour.
         "transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2",
         "disabled:opacity-70",
         className,

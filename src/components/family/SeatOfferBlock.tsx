@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CalendarClock, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SUPPORT_EMAIL } from "@/lib/constants";
@@ -195,10 +196,11 @@ export function SeatOfferBlock({
           aria-hidden
         />
         <div className="min-w-0 space-y-1">
-          {/* The heading takes the tone the border box used to carry. With no
-              fill behind it, the icon alone is a small mark to hang a section
-              on; the icon and the title together are the section's marker. */}
-          <p className="text-sm font-semibold leading-snug text-info">
+          {/* The mark takes the tone the border box used to carry. The title is
+              a sentence, so it is read in ink and the icon beside it is the
+              section's marker; the two together are what says which kind of
+              thing this block is. */}
+          <p className="text-sm font-semibold leading-snug text-foreground">
             {t("title")}
           </p>
           <p className="text-sm leading-snug text-muted-foreground">
@@ -215,9 +217,9 @@ export function SeatOfferBlock({
       </div>
 
       {failed && (
-        <p className="text-sm font-medium text-destructive">
+        <StatusLine status="destructive" className="font-medium">
           {t("error", { supportEmail: SUPPORT_EMAIL })}
-        </p>
+        </StatusLine>
       )}
 
       {onRespond !== undefined && (

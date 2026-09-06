@@ -16,12 +16,18 @@ import type { EffectiveProductStatus } from "@/lib/products/effective-status";
  * the other. A product's state is one fact and it has one colour, so both
  * surfaces render this component now and a fifth status cannot arrive in one
  * place looking different from the other.
+ *
+ * **Cancelled is the chip's shape and the act rows are not, yet.** A status
+ * colour is never a wash, so cancelled spends its red as ink inside the neutral
+ * edge every outline chip wears. The two act rows still carry a fill and an
+ * alpha step, which is the act question's to answer; when it is, the whole map
+ * lands on one shape.
  */
 const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
   pending: "bg-act/20 text-act",
   running: "bg-act text-act-foreground",
   completed: "bg-lifted text-muted-foreground",
-  cancelled: "bg-destructive/20 text-destructive",
+  cancelled: "border border-border text-destructive",
   expired: "bg-lifted text-muted-foreground",
 };
 
