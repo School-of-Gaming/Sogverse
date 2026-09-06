@@ -222,19 +222,43 @@ with the grep in the doc comment on `ALPHA_SITES` in `inventory.ts`.
 token (media, video, scrolling content), and the library owns that construct; over a
 known ground the alpha becomes a named token with measured pairings or the site takes
 the plain token; opacity applied to a whole element as a state (disabled) is a
-component-recipe matter, not a colour._ Confirm or reject.
+component-recipe matter, not a colour._
 
-The brand-colour instances stay in this entry as instances: the home and Roblox hero
-gradients spend the pair at 20% / 10% (and go to §14 with the rest of the gradients),
-and the admin pixel-art sprite uses `bg-act/55` over the card.
+**Ruled 2026-09-06, in parts:**
 
-**One shape fits none of the four rows.** `ui/button.tsx`'s three hover fills
-(`hover:bg-act/90`, `hover:bg-destructive/90`, `hover:bg-world/80`) and the same red on
-`parent/PaymentProblemBadge.tsx` spend an alpha step as a *state shade* — the fill
-darkening under the pointer, not a tint over a ground. The proposed line's third clause
-is what covers them; the hover ruling in §4 is where they land.
+- **What the page showed, in the owner's words: the only real use is a translucent
+  dark layer dimming something behind something else.** The fifteen unknown-ground
+  sites are one move at four sizes; the 255 known-ground sites are not layering at all
+  (the triples prove it). The six strengths in use (50, 60, 70, 80, 85, 90) are drift,
+  not design. **Ruled: the library defines one scrim and one glass**, and Sogverse
+  writes no `/n`. Their strengths and whether the scrim is black or background are
+  chosen on the page over the brightest artwork; that part is _open_ and the alpha
+  section shrinks to it.
+- **Opacity on a whole element as a state (disabled) stays.** Ruled; a component
+  matter, not a colour.
+- **Act and world carry no alpha, at any step, anywhere. Ruled.** There is no soft act
+  and there will not be one. **What stands in each place is _open_ and must be seen:**
+  the 57 sites are grouped by the job they were doing (selected or active item,
+  highlighted row, callout ground, focus ring, hover shade) and each job is drawn today
+  beside its candidates (a neutral ground from the greys that exist, plain act with ink
+  where the element truly is the act, an act edge on a neutral ground, nothing). The
+  owner rules per job; the sweep applies it per site. The four hover shades
+  (`ui/button.tsx` ×3, `parent/PaymentProblemBadge.tsx`) fall under this ruling rather
+  than waiting for Button: whatever hover becomes, it is not a derived shade of act.
+- **The admin pixel-art trophy is artwork, and takes the artwork exemption. Landed.**
+  It is a gold trophy and is painted gold; its earlier borrowing of act and a 55% shade
+  of it was a mistake, not a brand placement. `admin/dashboard/pixel-art.tsx` now
+  carries its own literal palette (trophy gold, a darker gold for the bowl's shadow,
+  stone grey for the plinth, white core and ember sparks for the unrendered burst) and
+  spends no token.
+- **Soft status tints** (~81 sites) ride §3; **neutrals at alpha** (muted, accent,
+  card, foreground, muted-foreground; ~75 sites) ride §4 and collapse to the greys that
+  exist unless a site shows it needs a grey the palette lacks; **Yty and pick tiles** are
+  §2; **the white steps** are §10; **gradients** are §14, and the act/world ruling binds
+  them too.
 
-**Ruling:** _open_
+**Ruling:** _part ruled, part open_ — scrim and glass strengths, and the act/world
+replacements, are the two things still to see.
 
 ## 10. The Klingon easter egg
 
@@ -365,12 +389,19 @@ sites and the summary table lists them. The two photographs are copies of Sogver
 root; they are deleted with this directory. **§14, gradients, is ledgered but not
 drawn** — the site list is there, the page section is a separate piece of work.
 
+**Ruled 2026-09-06 from the alpha section (§9):** one scrim and one glass replace the six
+alpha strengths; disabled-as-opacity stays; act and world carry no alpha at any step
+(no soft act exists); the admin trophy sprite is artwork and is painted gold (landed).
+**Still to see before the sweep lands:** the scrim and glass strengths, and what stands
+in each of the 57 act/world alpha sites, per job. The next page work draws both, plus
+the gradients section (§14, its own review and ruling), and shrinks the alpha section to
+scrim and glass.
+
 **Open on the page, in the order they were going to be taken:** the hover fill (§4,
 accent vs muted); the Yty recipe (§2); the status set (§3); scrim and on-media ink (§6);
-the identicon (§7); colour at an alpha step (§9, page section 7); the easter egg (§10);
-coloured text (§11) and the calm-surface budget (§12). Gradients (§14) has no section
-yet. The page's remaining sections were renumbered when the picks left it, so the
-sections now run 0 to 7 with no gap.
+the identicon (§7); colour at an alpha step (§9, the two parts above); the easter egg
+(§10); coloured text (§11) and the calm-surface budget (§12); gradients (§14). The page's
+sections were renumbered when the picks left it, so they run 0 to 7 with no gap.
 
 **End-of-branch work, needing no ruling:** the enforcement (a test that Sogverse's
 stylesheet declares no `--color-*`; the hex-literal lint extended to all of `src/` with
