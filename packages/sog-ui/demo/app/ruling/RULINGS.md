@@ -722,6 +722,16 @@ success, pending info, completed/expired no dot and quiet ink, cancelled destruc
 the same with a status glyph; and glyph plus coloured label for comparison. If the set
 still reads wrong the fault is the chip's shape, which is the chip adoption's.
 
+**Ruled 2026-09-06, night, from the redraw:** **the weekday → act edge, act weekday** (a
+name beside its hue, per §11). **The lifecycle chip → the coloured label alone, no glyph**
+(the word carries the meaning, the colour reinforces, which satisfies §11's "never by
+colour alone"; it is the shape today's cancelled chip already has, so the whole set lands
+on one shape): running success, completed quiet ink, cancelled destructive, expired quiet
+ink; **pending: info recommended** (a neutral fact; the attention queue is what nudges;
+warning on every not-yet-started product would be table noise), awaiting the owner's
+word. Act appears in no lifecycle state. With this, every act job is ruled and the act
+sweep can run: the two `hover:bg-act/90` shades stay for Button with a transitional note.
+
 **Ruling:** _scrim and glass landed; act as a figure ruled except the weekday; the sweep
 runs after the construct pass._
 

@@ -259,14 +259,30 @@ const HERO_SPECS: Record<HeroCandidate, HeroSpec> = {
   },
 };
 
-/** The hero's two buttons, in the app's own order: the alternative, then the primary. */
-function HeroCtas({ className }: { className: string }) {
+/**
+ * The hero's two buttons, in the app's own order: the alternative, then the
+ * primary.
+ *
+ * `actGlow` is spent on the primary, which is the hero's amber shape at full
+ * value and therefore the only thing in a mark-free hero that can emit an act
+ * glow. The outline button never glows: it carries no colour to glow with.
+ */
+function HeroCtas({
+  className,
+  actGlow,
+}: {
+  className: string;
+  actGlow?: string;
+}) {
   return (
     <div className={className}>
       <span className="inline-flex h-11 items-center justify-center rounded-md border border-border bg-background px-5 text-cta shadow-sm">
         Learn more about us
       </span>
-      <span className="inline-flex h-11 items-center justify-center rounded-md bg-act px-5 text-cta text-act-foreground shadow">
+      <span
+        className="inline-flex h-11 items-center justify-center rounded-md bg-act px-5 text-cta text-act-foreground shadow"
+        style={actGlow === undefined ? undefined : { boxShadow: actGlow }}
+      >
         Get started
       </span>
     </div>
@@ -324,63 +340,60 @@ function Hero({ candidate }: { candidate: HeroCandidate }) {
   );
 }
 
-// ------------------------------------------- the hero, mark left, slogan right
+// ------------------------------------------------ the hero without the mark
 
 /**
- * The hero re-laid as two columns.
+ * The hero with the mark taken out of it.
  *
- * **The owner, on seeing the candidates above, verbatim:** "let's play with 'a
- * violet rule under the headline', but place the slogan in the right column and
- * the brand icon in the left column, larger. I need to see it both desktop and
- * mobile."
+ * **What the owner meant by the two-column sketch**, corrected after the first
+ * drawing got it wrong: not a mark beside the whole hero, but two rows — row
+ * one split, the mark on the left and the slogan with its violet rule on the
+ * right; row two the subtitle and the buttons, full width.
  *
- * So this is candidate 2's ingredients — the ground alone, the mark, the
- * headline as the app sets it, the full-value violet rule, the real subtitle
- * and the real button row — arranged as a split rather than a stack, drawn at
- * the two widths that decide whether a layout is real, and then drawn again
- * with the two glows so the glow can be judged at this layout rather than
- * inferred from the stacked one.
+ * **And then the safer decision, which is why neither is drawn.** The mark is
+ * already in the header directly above the hero, and its size, its clearspace
+ * and where it may be placed are the mark adoption's to write rather than a
+ * colour branch's to invent — so the mark comes out of the hero altogether and
+ * what is ruled here stays what it says it is: what colour does behind the
+ * words. (The mark-left drawing that stood here briefly is gone with it. Its
+ * one finding worth keeping: two glow sources side by side are separated only
+ * by the gutter, so a narrow gutter caps both glows at about half its width,
+ * which makes the glow's size a layout decision before it is a colour one.)
  *
- * **The classes are the app's where the app has them.** The section, the
- * container and the type steps come from `app/(public)/page.tsx`: `container
- * mx-auto px-4 py-24 sm:py-32`, the subtitle capped at the hero's own
- * `max-w-3xl`, the button row's `flex-col-reverse … sm:flex-row`. Three things
- * are not the app's, because the app has no two-column hero to copy: the grid
- * itself, its gutter, and the right column's left alignment (the app's single
- * column is centred, and centring a column that has a mark beside it reads as
- * two things that missed each other).
+ * **So this is the app's own hero, unchanged in structure**, with the wash
+ * replaced by the ground and one full-value violet rule added under the
+ * headline: `container mx-auto px-4 py-24 sm:py-32`, the inner `mx-auto
+ * max-w-3xl text-center`, the subtitle, and the button row's `flex-col-reverse
+ * … sm:flex-row`. The headline is the app's four-line vision statement with
+ * "Screen Time" in act and "Quality Time" in world, and the rule is drawn at
+ * the headline's own measure — the headline sits in a shrink-to-fit wrapper and
+ * the rule is `w-full` inside it, so nothing is measured at runtime.
  *
- * **The gutter is the glow's whole budget, and that is why it is `gap-24`.**
- * Stacked, the two sources are separated by four lines of headline and can each
- * carry a 90px blur without meeting. Side by side they are separated only by
- * the gutter, and a blur reaches about half its radius past its own edge — so a
- * 48px gutter caps both glows at roughly 40px, which on a 380px mark is not a
- * glow anybody would notice. 96px buys back the radius the stacked hero uses.
- * That is the one real cost this layout carries, and it is a layout decision
- * before it is a colour one.
+ * **The glows, without a mark to emit one.** A glow needs a source at full
+ * value, and with the mark gone this hero contains exactly two: the violet rule
+ * and the amber primary button. So those are the two sources — the world glow
+ * from the rule, the act glow from the button — which is the constraint
+ * choosing the composition rather than the other way round. They are far apart
+ * by construction, because the subtitle and two margins sit between them: about
+ * 155px at desktop and about 310px at 360, against roughly 85px of combined
+ * reach (a blur carries about half its radius past its own edge). Both fit at
+ * both widths and neither hue ever touches the other, so the 360 panel needs no
+ * fallback to the world glow alone.
  *
- * **The stack order at 360: mark, then headline.** The app's hero does not
- * stack today — it is one centred column with no mark in it, because the sticky
- * header immediately above carries the mark — so there is no existing order to
- * inherit, and the order is chosen. It is the order the app already puts these
- * two things in down the page (mark above, claim below), and the order the OG
- * card states outright in its own source: who we are, then what we promise. A
- * hero that opens with the claim and identifies itself underneath asks a cold
- * visitor to hold a promise from nobody. The rule stays under the headline at
- * both widths, because it is punctuation on the headline and not on the
- * composition.
+ * **The fold, drawn on the 360 panels only.** `--header-height` is `4rem`, and
+ * the app's hero is pulled up under the header (`-mt-[var(--header-height)]`)
+ * and pads its own content back down (`pt-…`), so the top of the box drawn here
+ * is where the app's hero *content* starts, 64px below the top of the viewport.
+ * The two dashed lines are therefore at 640 − 64 = 576 and 844 − 64 = 780 from
+ * the top of the drawing, labelled with the device height each stands for: a
+ * small Android and an iPhone 14-class screen.
  *
- * **Mark size: 380px wide on the desktop drawing, 208px at 360.** Nothing
- * governs those numbers but the composition — **no minimum size and no
- * clearspace is stated for our own mark anywhere yet**, in the library or in
- * Sogverse (`packages/sog-ui/CLAUDE.md` says the mark's clearspace and minimum
- * size are the library's to own; no value exists to own yet, and the 20px
- * minimum in `src/assets/partners/CLAUDE.md` is Roblox's constraint on Roblox's
- * wordmark). So: 380 is a hair under the third-width column the owner asked
- * for, leaving the column's own breathing room; 208 is a little under two
- * thirds of the 328px measure at 360, which is as large as it goes before it
- * competes with the headline directly beneath it. Both are placeholders for a
- * rule the mark adoption has to write.
+ * **The fold is drawn to be seen, not designed for here.** Where the CTA row
+ * falls against it is a real question about this hero, and it is not this
+ * branch's to answer: this is a colour branch, and moving type or trimming copy
+ * to win a fold is a composition change nobody has asked for. The line is on
+ * the page so that whatever is ruled about colour is ruled with the fold in
+ * view.
  *
  * **The 360 drawing resolves the responsive variants by hand**, and has to: a
  * viewport media query cannot be scoped to a 360px box inside a wide page, so a
@@ -400,88 +413,105 @@ function Hero({ candidate }: { candidate: HeroCandidate }) {
  */
 type HeroWidth = "desktop" | "mobile";
 
-const SPLIT_MARK_WIDTH: Record<HeroWidth, number> = { desktop: 380, mobile: 208 };
-const SPLIT_MARK_RADIUS: Record<HeroWidth, number> = { desktop: 28, mobile: 16 };
-const SPLIT_ACT_GLOW: Record<HeroWidth, string> = {
-  desktop: glow(ACT, 90, 4),
-  mobile: glow(ACT, 60, 2),
+/** The two device heights the fold is drawn at, less the 4rem header. */
+const HEADER_HEIGHT = 64;
+
+const FOLDS: readonly { device: number; top: number }[] = [
+  { device: 640, top: 640 - HEADER_HEIGHT },
+  { device: 844, top: 844 - HEADER_HEIGHT },
+];
+
+const PLAIN_ACT_GLOW: Record<HeroWidth, string> = {
+  desktop: glow(ACT, 90, 2),
+  mobile: glow(ACT, 70, 2),
 };
-const SPLIT_WORLD_GLOW: Record<HeroWidth, string> = {
+
+const PLAIN_WORLD_GLOW: Record<HeroWidth, string> = {
   desktop: glow(WORLD, 80, 0),
-  mobile: glow(WORLD, 60, 0),
+  mobile: glow(WORLD, 70, 0),
 };
 
-function SplitHero({ width, glowing }: { width: HeroWidth; glowing: boolean }) {
-  const desktop = width === "desktop";
-  const markWidth = SPLIT_MARK_WIDTH[width];
-  const actGlow = glowing ? SPLIT_ACT_GLOW[width] : undefined;
-  const worldGlow = glowing ? SPLIT_WORLD_GLOW[width] : undefined;
-
-  const mark = (
-    <span
-      className="inline-block"
-      style={{ borderRadius: SPLIT_MARK_RADIUS[width], boxShadow: actGlow }}
+/** One dashed fold marker, named by the device height it stands for. */
+function Fold({ device, top }: { device: number; top: number }) {
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-0 border-t border-dashed border-muted-foreground"
+      style={{ top }}
     >
-      <Image
-        src={MARK}
-        alt=""
-        width={markWidth}
-        height={Math.round(markWidth / MARK_RATIO)}
-        className="block"
-        unoptimized
-      />
-    </span>
+      <span className="absolute -top-6 right-1 text-body-s text-muted-foreground">
+        {device}
+      </span>
+    </div>
   );
+}
 
-  /* The wrapper shrinks to the headline's longest line, so the rule beneath it
-     is exactly the headline's measure without anything being measured. */
-  const headline = (
-    <div className="inline-block">
-      <h4 className={desktop ? "text-h1 tracking-tight" : "text-h1-mobile tracking-tight"}>
-        Where
-        <br />
-        <span className="text-act">Screen Time</span>
-        <br />
-        Becomes
-        <br />
-        <span className="text-world">Quality Time</span>
-      </h4>
-      <span
+function PlainHero({ width, glowing }: { width: HeroWidth; glowing: boolean }) {
+  const desktop = width === "desktop";
+  const actGlow = glowing ? PLAIN_ACT_GLOW[width] : undefined;
+  const worldGlow = glowing ? PLAIN_WORLD_GLOW[width] : undefined;
+
+  const hero = (
+    <div className="relative overflow-hidden rounded-lg bg-background">
+      <div
         className={
           desktop
-            ? "mt-8 block h-[6px] w-full rounded-full"
-            : "mt-6 block h-[6px] w-full rounded-full"
+            ? "container mx-auto px-4 py-24 sm:py-32"
+            : "container mx-auto px-4 py-24"
         }
-        style={{ backgroundColor: WORLD, boxShadow: worldGlow }}
-      />
+      >
+        <div className="mx-auto max-w-3xl text-center">
+          {/* The wrapper shrinks to the headline's longest line, so the rule
+              beneath it is exactly the headline's measure with nothing
+              measured at runtime. */}
+          <div className="inline-block">
+            <h4
+              className={
+                desktop
+                  ? "text-h1 tracking-tight"
+                  : "text-h1-mobile tracking-tight"
+              }
+            >
+              Where
+              <br />
+              <span className="text-act">Screen Time</span>
+              <br />
+              Becomes
+              <br />
+              <span className="text-world">Quality Time</span>
+            </h4>
+            <span
+              className={
+                desktop
+                  ? "mt-8 block h-[6px] w-full rounded-full"
+                  : "mt-6 block h-[6px] w-full rounded-full"
+              }
+              style={{ backgroundColor: WORLD, boxShadow: worldGlow }}
+            />
+          </div>
+          <p className="mt-6 text-body-l text-muted-foreground">{HERO_COPY}</p>
+          <HeroCtas
+            className={
+              desktop
+                ? "mt-10 flex flex-col-reverse items-center justify-center gap-4 sm:flex-row"
+                : "mt-10 flex flex-col-reverse items-center justify-center gap-4"
+            }
+            actGlow={actGlow}
+          />
+        </div>
+      </div>
     </div>
   );
 
   if (desktop) {
-    return (
-      <div className="relative overflow-hidden rounded-lg bg-background">
-        <div className="container mx-auto grid grid-cols-3 items-center gap-24 px-4 py-24 sm:py-32">
-          <div className="flex justify-center">{mark}</div>
-          <div className="col-span-2 text-left">
-            {headline}
-            <p className="mt-6 max-w-3xl text-body-l text-muted-foreground">
-              {HERO_COPY}
-            </p>
-            <HeroCtas className="mt-10 flex flex-col-reverse items-center gap-4 sm:flex-row" />
-          </div>
-        </div>
-      </div>
-    );
+    return hero;
   }
 
   return (
-    <div className="w-[360px] max-w-full overflow-hidden rounded-lg bg-background">
-      <div className="container mx-auto flex flex-col items-center px-4 py-24 text-center">
-        <div className="mb-8">{mark}</div>
-        {headline}
-        <p className="mt-6 text-body-l text-muted-foreground">{HERO_COPY}</p>
-        <HeroCtas className="mt-10 flex flex-col-reverse items-center gap-4" />
-      </div>
+    <div className="relative w-[360px] max-w-full pb-10">
+      {hero}
+      {FOLDS.map((fold) => (
+        <Fold key={fold.device} device={fold.device} top={fold.top} />
+      ))}
     </div>
   );
 }
@@ -832,7 +862,7 @@ function HomeOg({ candidate }: { candidate: OgCandidate }) {
 
 // ---------------------------------------------------------------- section
 
-const SPLIT_PANELS: readonly {
+const PLAIN_PANELS: readonly {
   label: string;
   width: HeroWidth;
   glowing: boolean;
@@ -877,15 +907,15 @@ const OG_PANELS: readonly { label: string; candidate: OgCandidate }[] = [
 export function GradientsSection() {
   return (
     <Question n={2} title="Gradients">
-      <Case title="The hero: mark left, slogan right">
+      <Case title="The hero, without the mark">
         <div className="space-y-10">
-          {SPLIT_PANELS.map((panel) => (
+          {PLAIN_PANELS.map((panel) => (
             <Panel key={panel.label} label={panel.label}>
               <Exemplar
                 file="app/(public)/page.tsx, roblox/roblox-hero.tsx"
                 page="the home page and /roblox, above the fold"
               >
-                <SplitHero width={panel.width} glowing={panel.glowing} />
+                <PlainHero width={panel.width} glowing={panel.glowing} />
               </Exemplar>
             </Panel>
           ))}
