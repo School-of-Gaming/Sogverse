@@ -1,64 +1,98 @@
 /**
- * Question 6 — act and world at an alpha step.
+ * Question 4 — act as a figure.
  *
- * **The ruling this section serves.** Act and world carry no alpha, at any
- * step, anywhere; there is no soft act and there will not be one. That half is
- * decided. What is open, and what this section exists to put on screen, is what
- * stands in each place instead — which is not one answer but one answer per
- * job, because the same `bg-act/5` is doing five unrelated things across the
- * app and only some of them are asking for a colour at all.
+ * **The observation this section is built on, in the owner's words.** Pointing
+ * at the product card's waitlist chip (`public/products/status-chip.tsx`: a
+ * neutral edge, the page ground, an hourglass and the word in `act`, no fill):
+ * the brand colours look bad under either white or black text, and that chip
+ * gets around it by putting the colour on the dark ground, where it keeps its
+ * greatest contrast and its vibrancy.
  *
- * **Regenerate the surface rather than trusting the counts below:**
+ * **The principle, in one sentence, which is what the owner is being asked to
+ * accept or reject:** _act is a figure on the dark ground, never a tint of it;
+ * a selection or a highlight is an edge, a ring or an ink, never a wash._
+ *
+ * **Why the section changed shape.** The previous build offered every job the
+ * same four candidates — a neutral ground, plain act, an act edge, nothing —
+ * and asked the owner to rule eleven times. The observation above answers all
+ * eleven at once, so the page now states one proposal per job and draws it
+ * beside what the app does today: two columns, `today | proposed`, with the
+ * proposal's own variants as further columns where a job genuinely has more
+ * than one shape available. A candidate the principle rules out is not drawn.
+ * This is a proposal to look at, not a menu.
+ *
+ * **The eleven jobs, what each is proposed, and why.**
+ *
+ * | job | sites | proposed | why |
+ * |---|---|---|---|
+ * | A selected option in a form | 14 | an act edge, an act ring, or the check alone | the largest job, and the one where geometry decides: an edge is free on a row that is already bordered, a ring adds a second line without changing the box, and where the site has a native control the control is already saying which one is picked. All three are drawn. |
+ * | A highlighted row | 3 | the 2px act leading edge, ink to foreground | the construct the greys landing already put into the WhatsApp list, with its rest state drawn in `border` from the start so nothing appears under a pointer. The chat flash keeps the ring it already has and loses only the wash. |
+ * | A callout ground | 1 | a neutral panel, act glyph and act label, body in muted ink | candidate B, which the owner has already ruled for the 121 status sites. A hint under a field is that construct in the brand colour, so it takes that answer. |
+ * | An icon tile behind a glyph | 7 | the act glyph on a `lifted` tile | the glyph is already `text-act`, so the tint is a second statement of the same accent behind the first. This row decides the library's last exemption — see below. |
+ * | A drop target | 6 | an act ring, or a dashed act edge | the most transient statement in the set, and a ring is the one figure that can appear and vanish without moving what is being dragged over. |
+ * | A selected item, with act as its ink | 6 | unchanged but for the wash | act is already the figure here, as the word. Drawn once so the owner can see the principle takes nothing away from it. |
+ * | A status chip | 2 | the waitlist chip's shape | the chip the observation came from, at its `primary` tone. Nothing to invent: the shape is already in the app. |
+ * | Faded ink on an amber fill | 2 | the meta line moved off the fill | the palette offers exactly one ink for an amber fill, so there is no quieter member of the pair to move to. Where the label cannot leave the fill it goes to full value instead. |
+ * | A hover shade on a filled control | 2 | Button's, later | the one job the principle does not answer, because a filled button is the one place a brand colour is a ground on purpose. Drawn live with and without the shade so the cost of deleting it is visible. |
+ * | A hover tint on an empty tile | 1 | `hover:bg-lifted` | a hover is a lift and the lift has a grey. Drawn live. |
+ * | A ring | 4 | act at full value | a ring is already an edge rather than a ground; the alpha was only ever taking the colour out of the figure. |
+ *
+ * **The consequence for the library, stated because the tile row is where it
+ * lands.** `brand.ts` exempts "chip-scale icon-accent tiles" from the rule that
+ * a brand colour exists only at its authored values. That exemption is this
+ * icon-tile job, at seven sites, and the owner has not ruled it out ("a tinted
+ * brand colour that accents a glyph might still be allowed, because it is
+ * accenting an icon and not text"). If the tile row is accepted the exemption
+ * leaves the library and the no-alpha rule has no exception left but artwork;
+ * if it is rejected the exemption stays and is the one place act carries an
+ * alpha step. The two panels are the whole of that argument.
+ *
+ * **What lands if the owner accepts.** The act sweep, applied per job to the 48
+ * sites drawn here (the other ten are gradients and belong to the gradients
+ * question):
+ *
+ * - 14 selected form options take whichever of the three shapes is picked.
+ * - 3 highlighted rows: the admin week takes the leading edge; the two chat
+ *   sites keep their ring and drop the wash.
+ * - 1 callout takes glyph and label in act on the lifted ground its own info
+ *   sibling already sits on.
+ * - 7 icon tiles go to `lifted`, and `brand.ts` loses its last exemption.
+ * - 6 drop targets take `ring-2 ring-act`.
+ * - 6 act-ink selections and 2 status chips lose their wash, the chips taking
+ *   the waitlist chip's shape.
+ * - 4 rings go to full value.
+ * - 1 hover tint becomes `hover:bg-lifted`.
+ * - `text-act-foreground/70` on the WhatsApp bubble becomes a muted line under
+ *   the bubble; the preview scene's role label goes to full value.
+ * - The two `hover:bg-act/90` and `hover:bg-world/80` sites in `ui/button.tsx`
+ *   stay, with a transitional comment saying the shade is Button's to decide
+ *   and is the one act alpha step the sweep deliberately left standing.
+ *
+ * **Regenerate the surface rather than trusting the counts:**
  *
  *     grep -rnoE "\b(bg|from|to|via|text|border|ring|shadow|divide|outline)-(act|world)(-foreground)?/[0-9]+" src --include=*.tsx --include=*.ts
  *
- * 58 matches: 48 drawn here as eleven jobs, and ten that are gradients and
- * belong to question 7. `ACT_ALPHA_JOBS` in `inventory.ts` carries the
- * classification and the locators; the summary table lists them.
+ * `ACT_ALPHA_JOBS` in `inventory.ts` carries the classification and the
+ * locators; the summary table lists them.
  *
- * **Why the grouping is by job and not by file.** A sweep that replaces
- * `bg-act/5` with one thing everywhere would be a sweep that decided, without
- * anybody noticing, that a checked consent row and a drag-and-drop target and
- * today's row in an admin calendar are the same statement. They are not: one is
- * a persistent selection that has to survive the pointer leaving, one is a
- * transient "it will land here", one is a fact about the date. So the owner
- * rules per job and the sweep applies the ruling per site.
+ * **Every class string below is the app's**, with one mechanical edit: the
+ * border *colour* moves out of the base string and into each column, because
+ * two `border-*` utilities in one class list resolve by stylesheet order rather
+ * than by the order they are written, so a `border-border border-act` column
+ * would be a coin flip rather than a drawing. The leading-edge rows are the
+ * exception and keep both, because `border-border` and `border-l-act` set
+ * different properties — which is exactly the pairing the WhatsApp list ships.
  *
- * **The four candidates every job is offered**, from the ruling that widened
- * this question: the neutral ground the greys ruling left standing (`lifted`,
- * one panel now — it used to be two, `accent` beside `muted`, and the ruling
- * that collapsed them collapsed these panels with them, which is the clearest
- * thing this section can say about what that ruling was worth); plain act at
- * full value with `act-foreground` ink, for the places where the
- * element really is the thing to do; an act edge at full value — `border-act`
- * or `ring-act` — on a neutral ground, which is the shape the library's colour
- * rule already names for a brand colour that has to mark something without
- * becoming a ground; and nothing at all, which is a real answer wherever the
- * mark was never carrying the meaning on its own.
- *
- * **Two exemplars per job at most, and both real.** Every class string below is
- * the app's, with one mechanical edit: the border *colour* moves out of the
- * base string and into each candidate, because two `border-*` utilities in one
- * class list resolve by stylesheet order rather than by the order they are
- * written, so a `border-border border-act` candidate would be a coin flip
- * rather than a drawing.
- *
- * **What is drawn in its own hover state and what is not.** The demo is a live
- * page, so the two hover jobs carry the real `hover:` and `group-hover:`
- * classes and are ruled on by pointing at them. Everything else is a state the
- * page can hold still.
- *
- * **The one place this section contradicts a rule the library already ships.**
- * `brand.ts` exempts "chip-scale icon-accent tiles" from the no-alpha rule, and
- * job four is exactly that exemption, at seven sites. The ruling says act
- * carries no alpha anywhere. Both cannot stand, and the drawing is what settles
- * it rather than a paragraph: the exemption is either confirmed on screen or it
- * leaves the library with this ruling.
+ * **Three things are drawn live** — the two hover jobs and the profile tile's
+ * hover ring — because a hover held still is a picture of a state nobody meets.
+ * Everything else is a state the page can hold still.
  */
 
+import Image from "next/image";
 import {
   Check,
   Gamepad2,
+  Hourglass,
   ImagePlus,
   Images,
   Info,
@@ -66,66 +100,74 @@ import {
   User,
 } from "lucide-react";
 
-import { BRAND, NEUTRALS } from "../../../src/tokens/brand";
+import { BRAND } from "../../../src/tokens/brand";
 import { tailwindAlpha } from "./colour";
 import {
   Case,
   Compare,
   Exemplar,
   Glyph,
+  MUTED_INK,
   Panel,
   Question,
 } from "./parts";
 
 /**
- * One replacement, named by the tokens it spends and drawn by the classes it
- * writes.
+ * One column of a job: what the app does today, or one shape of the proposal.
  *
- * `fill` is the whole of what changes between panels, so a candidate can carry
- * a ground, an edge and an ink together — which is what most of them are: a
- * fill and its foreground are one decision, not two.
+ * `fill` is the whole of what changes between columns, so a column can carry a
+ * ground, an edge, a ring and an ink together — which is what most of them are:
+ * a fill and its foreground are one decision, not two.
  *
  * `ink` is the same decision for a glyph, which cannot take a class here: the
- * page's glyphs are drawn as SVG with an explicit stroke, so a candidate that
- * moves a tile to plain act has to move the mark inside it to `act-foreground`
- * in the same step. `currentColor` is what a candidate uses when the exemplar's
- * own text colour should carry the glyph — which is how the hover jobs get a
- * glyph that recolours under the pointer.
+ * page's glyphs are drawn as SVG with an explicit stroke, so a column that
+ * moves a tile to a different ground has to move the mark inside it in the same
+ * step. `currentColor` is what a column uses when the exemplar's own text
+ * colour should carry the glyph — which is how the hover jobs get a glyph that
+ * recolours under the pointer.
+ *
+ * `check` is set on the one proposal shape that adds a mark rather than moving
+ * a colour, and only an exemplar with no control of its own draws it: a
+ * checkbox row and a radio pill are already showing which one is picked.
  */
-interface Candidate {
+interface Variant {
   readonly label: string;
   readonly fill: string;
   readonly ink: string;
+  readonly check?: boolean;
 }
 
-/** Sogverse's `destructive`, which is question 2's and is not a library token. */
+/** Sogverse's `destructive`, which is the status question's and is not a library token. */
 const DESTRUCTIVE = "#EF4343";
 
 const ACT = BRAND.act.hex;
 const ACT_INK = BRAND.act.foreground;
 const WORLD_INK = BRAND.world.foreground;
-const MUTED_INK = NEUTRALS.mutedForeground.hex;
 
-/** One exemplar drawn once per candidate, in a row so the candidates compare themselves. */
-function Candidates({
+/** The filled button's own base classes, shared by two jobs. */
+const BUTTON_BASE =
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors";
+
+/** One exemplar drawn once per column, in a row so the columns compare themselves. */
+function Row({
   columns,
-  options,
+  variants,
   file,
   page,
   render,
 }: {
-  columns: 2 | 3 | 4 | 5 | 6;
-  options: readonly Candidate[];
+  columns: 2 | 3 | 4;
+  variants: readonly Variant[];
   file: string;
   page: string;
-  render: (candidate: Candidate) => React.ReactNode;
+  render: (variant: Variant) => React.ReactNode;
 }) {
   return (
     <Compare columns={columns}>
-      {options.map((candidate) => (
-        <Panel key={candidate.label} label={candidate.label}>
+      {variants.map((variant) => (
+        <Panel key={variant.label} label={variant.label}>
           <Exemplar file={file} page={page}>
-            {render(candidate)}
+            {render(variant)}
           </Exemplar>
         </Panel>
       ))}
@@ -133,38 +175,52 @@ function Candidates({
   );
 }
 
-// ------------------------------------------- job 1: a selected form option
+// ----------------------------------------- job 1: a selected option in a form
 
 /**
- * The largest job in the set, and the one whose answer decides fourteen sites
- * at once: a radio or a checkbox row that is currently the chosen one.
+ * Fourteen sites, every one of them `bg-act/5` — the faintest step in the app,
+ * which over the card composites to a grey a shade warmer than the lifted grey.
  *
- * Every one of them is `bg-act/5` — the faintest step in the app, and over the
- * card ground it composites to a grey a shade warmer than the lifted grey. The
- * question the row is really answering is "which of these is picked", and the
- * native control beside it is already answering that; the fill is there to make
- * the answer readable at a glance across a tall form.
+ * Three proposal shapes, because the geometry decides which of them reads. An
+ * **edge** costs nothing on a row that already has a border, and it is the
+ * shape the library's colour rule already names for a brand colour marking
+ * something without becoming a ground. A **ring** doubles the row's own line
+ * without changing its box, so a selection cannot nudge its own text by a pixel
+ * — which is why the signup panel reached for one already. **The check alone**
+ * is the answer wherever the site has a control that is already saying which
+ * one is picked, and two of the three exemplars show that column costing
+ * nothing at all: the consent row's box is `bg-act` with a tick in it today,
+ * and the pill's radio is a radio.
+ *
+ * So the third exemplar is what decides that column. The image catalogue's tile
+ * has no control of any kind — selection is carried by the fill and by nothing
+ * else — so it is the one site in the job where an added act check is a new
+ * mark rather than a mark that was already on screen.
  */
-const FORM_OPTION: readonly Candidate[] = [
-  { label: "bg-act/5", fill: "border-border bg-act/5", ink: ACT },
-  { label: "bg-lifted", fill: "border-border bg-lifted", ink: ACT },
+const FORM_OPTION: readonly Variant[] = [
+  { label: "today · bg-act/5", fill: "border-border bg-act/5", ink: ACT },
+  { label: "proposed · border-act", fill: "border-act", ink: ACT },
   {
-    label: "bg-act text-act-foreground",
-    fill: "border-border bg-act text-act-foreground",
-    ink: ACT_INK,
+    label: "proposed · ring-2 ring-act",
+    fill: "border-border ring-2 ring-act",
+    ink: ACT,
   },
-  { label: "border-act", fill: "border-act", ink: ACT },
-  { label: "no fill", fill: "border-border", ink: ACT },
+  {
+    label: "proposed · an act check",
+    fill: "border-border",
+    ink: ACT,
+    check: true,
+  },
 ];
 
 /** `ui/checkbox-row.tsx` — the shared consent row, with one of three ticked. */
-function ConsentRows({ candidate }: { candidate: Candidate }) {
+function ConsentRows({ variant }: { variant: Variant }) {
   const rest =
     "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors hover:bg-lifted";
   return (
     <div className="space-y-2">
       <span
-        className={`flex items-start gap-3 rounded-md border p-3 text-sm transition-colors ${candidate.fill}`}
+        className={`flex items-start gap-3 rounded-md border p-3 text-sm transition-colors ${variant.fill}`}
       >
         <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-border bg-act">
           <Glyph icon={Check} size={12} colour={ACT_INK} />
@@ -189,13 +245,13 @@ function ConsentRows({ candidate }: { candidate: Candidate }) {
 }
 
 /** `admin/products/sections/spoken-language-radios.tsx` — the pill radio group. */
-function LanguagePills({ candidate }: { candidate: Candidate }) {
+function LanguagePills({ variant }: { variant: Variant }) {
   const rest =
     "inline-flex cursor-pointer items-center gap-2 rounded-full border border-border py-1.5 pl-2.5 pr-3.5 text-sm transition-colors";
   return (
     <div className="flex flex-wrap gap-2">
       <span
-        className={`inline-flex cursor-pointer items-center gap-2 rounded-full border py-1.5 pl-2.5 pr-3.5 text-sm transition-colors ${candidate.fill}`}
+        className={`inline-flex cursor-pointer items-center gap-2 rounded-full border py-1.5 pl-2.5 pr-3.5 text-sm transition-colors ${variant.fill}`}
       >
         <input
           type="radio"
@@ -233,254 +289,96 @@ function LanguagePills({ candidate }: { candidate: Candidate }) {
   );
 }
 
-// ------------------------------------- job 2: a selected item with act ink
-
 /**
- * The same "this one is picked" statement, spent louder: a fill *and* act as
- * the label's colour.
+ * `admin/products/image-catalogue-view.tsx` — the catalogue grid, one tile
+ * chosen.
  *
- * These are the sites where the alpha step is not a faint lift but a visible
- * amber patch — `/10` and `/15` — with amber text on it. Over the card that
- * composites to a dull brown carrying a light amber label, which is the
- * pairing the library never measured because it never named the ground.
+ * The banner is the demo's own photograph rather than a grey block, because
+ * this is the job's only exemplar that has a picture in it and an amber line
+ * reads one way against flat grey and another against a photograph's own
+ * colours.
  */
-const SELECTED_INK: readonly Candidate[] = [
-  { label: "bg-act/10 text-act", fill: "border-border bg-act/10 text-act", ink: ACT },
-  {
-    label: "bg-lifted text-foreground",
-    fill: "border-border bg-lifted text-foreground",
-    ink: ACT,
-  },
-  {
-    label: "bg-act text-act-foreground",
-    fill: "border-border bg-act text-act-foreground",
-    ink: ACT_INK,
-  },
-  { label: "border-act text-act", fill: "border-act text-act", ink: ACT },
-  {
-    label: "no fill",
-    fill: "border-border text-muted-foreground",
-    ink: MUTED_INK,
-  },
-];
-
-/** `admin/products/gedu-picker-sheet.tsx` — the spoken-language filter strip. */
-function FilterChips({ candidate }: { candidate: Candidate }) {
-  const rest =
-    "rounded-full border border-border px-2 py-0.5 transition-colors text-muted-foreground";
+function CatalogueTiles({ variant }: { variant: Variant }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-muted-foreground">Speaks:</span>
+    <ul className="grid grid-cols-2 gap-3">
+      <li>
         <span
-          className={`rounded-full border px-2 py-0.5 transition-colors ${candidate.fill}`}
+          className={`block w-full rounded-md border p-2 text-left transition-colors ${variant.fill}`}
         >
-          Any
+          <span className="relative block aspect-video overflow-hidden rounded">
+            <Image
+              src="/photograph.jpg"
+              alt=""
+              fill
+              sizes="200px"
+              className="object-cover"
+            />
+          </span>
+          <span className="mt-2 flex items-center gap-1 text-xs font-medium">
+            {variant.check === true ? (
+              <Glyph icon={Check} size={12} colour={ACT} />
+            ) : null}
+            <span className="truncate">Camp banner</span>
+          </span>
         </span>
-        <span className={rest}>Finnish</span>
-        <span className={rest}>Swedish</span>
-        <span className={rest}>English</span>
-      </div>
-    </div>
+      </li>
+      <li>
+        <span className="block w-full rounded-md border border-border p-2 text-left transition-colors">
+          <span className="relative block aspect-video overflow-hidden rounded">
+            <Image
+              src="/photograph.jpg"
+              alt=""
+              fill
+              sizes="200px"
+              className="object-cover"
+            />
+          </span>
+          <span className="mt-2 flex items-center gap-1 text-xs font-medium">
+            <span className="truncate">Club banner</span>
+          </span>
+        </span>
+      </li>
+    </ul>
   );
 }
 
-/** `admin/products/sections/identity-section.tsx` — the locale tab strip. */
-function LocaleTabs({ candidate }: { candidate: Candidate }) {
+// ---------------------------------------------------- job 2: a highlighted row
+
+/**
+ * Two rows marked out from the rows around them: today's date in an admin week,
+ * and the message a reply-jump just landed on.
+ *
+ * **The week takes the leading edge, drawn on every row from the start.** That
+ * is the construct the greys landing already put into the WhatsApp conversation
+ * list, and the reason the edge is on every row rather than added to one is the
+ * layout rule: an edge that arrives with the mark lands two pixels of layout
+ * under whatever the reader was pointing at.
+ *
+ * **What the proposal also takes off the week row is its amber weekday.** The
+ * WhatsApp construct pairs the act edge with `text-foreground`, so the sweep
+ * follows it. The coloured-text ruling would allow "Tue" to stay amber — it is
+ * a name, not a sentence — so the two do not point the same way here, and the
+ * two columns are where that gets settled.
+ *
+ * **The chat flash keeps its ring and loses only the wash.** It already carries
+ * `ring-1 ring-act` at full value, so it is a figure already; and a grey leading
+ * edge down every line of a chat log would be a permanent mark paying for a
+ * state that lasts a second.
+ */
+function WeekRows({ draw }: { draw: "today" | "proposed" }) {
+  const shell = "flex flex-col gap-2 rounded-lg p-2 sm:flex-row sm:gap-3";
   const rest =
-    "inline-flex items-center gap-1 rounded-t-md border-b-2 border-border px-3 py-1.5 text-sm transition-colors text-muted-foreground";
-  return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex flex-wrap items-end">
-        <span
-          className={`inline-flex items-center gap-1 rounded-t-md border-b-2 px-3 py-1.5 text-sm transition-colors ${candidate.fill}`}
-        >
-          English
-        </span>
-        <span className={rest}>Suomi</span>
-        <span className={rest}>Svenska</span>
-        <span className={rest}>Français</span>
-      </div>
-    </div>
-  );
-}
-
-// ------------------------------------------------------ job 3: a status chip
-
-/**
- * A chip whose colour *is* the fact it states, which is what makes this job
- * different from a selection: nothing else in the row says "pending".
- *
- * The exemplar draws all five product statuses together on purpose. `running`
- * is already `bg-act text-act-foreground` at full value, so the plain-act
- * candidate for `pending` is drawn beside the chip it would then be
- * indistinguishable from — the collision is the picture, not a caveat.
- */
-const STATUS_CHIP: readonly Candidate[] = [
-  { label: "bg-act/20 text-act", fill: "bg-act/20 text-act", ink: ACT },
-  { label: "bg-lifted text-foreground", fill: "bg-lifted text-foreground", ink: ACT },
-  {
-    label: "bg-lifted text-muted-foreground",
-    fill: "bg-lifted text-muted-foreground",
-    ink: MUTED_INK,
-  },
-  {
-    label: "bg-act text-act-foreground",
-    fill: "bg-act text-act-foreground",
-    ink: ACT_INK,
-  },
-  {
-    label: "border border-act text-act",
-    fill: "border border-act text-act",
-    ink: ACT,
-  },
-  { label: "text-muted-foreground", fill: "text-muted-foreground", ink: MUTED_INK },
-];
-
-/** `admin/products/product-status-chip.tsx` — the five statuses, side by side. */
-function StatusChips({ candidate }: { candidate: Candidate }) {
-  const chip = "shrink-0 rounded-full px-2 py-0.5 text-xs";
-  return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className={`${chip} ${candidate.fill}`}>Pending</span>
-        <span className={`${chip} bg-act text-act-foreground`}>Running</span>
-        <span className={`${chip} bg-lifted text-muted-foreground`}>Completed</span>
-        <span
-          className={chip}
-          style={{
-            backgroundColor: tailwindAlpha(DESTRUCTIVE, 20),
-            color: DESTRUCTIVE,
-          }}
-        >
-          Cancelled
-        </span>
-        <span className={`${chip} bg-lifted text-muted-foreground`}>Expired</span>
-      </div>
-    </div>
-  );
-}
-
-/** `public/schools/schools-browse.tsx` — the "clubs here" pill on a school row. */
-function SchoolPills({ candidate }: { candidate: Candidate }) {
-  const row =
-    "flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3";
-  const pill = "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium";
-  return (
-    <div className="space-y-2">
-      <div className={row}>
-        <span className="min-w-0 text-sm font-medium">Tapiolan koulu</span>
-        <span className={`${pill} ${candidate.fill}`}>Clubs here</span>
-      </div>
-      <div className={row}>
-        <span className="min-w-0 text-sm font-medium">Otaniemen koulu</span>
-        <span className={`${pill} bg-lifted text-muted-foreground`}>No clubs yet</span>
-      </div>
-    </div>
-  );
-}
-
-// --------------------------------------------- job 4: an icon-accent tile
-
-/**
- * A square of colour behind a glyph, at chip scale, on a marketing card or
- * beside a name.
- *
- * This is the job the library's own rule exempts, and it is also the job with
- * the weakest case for a fill: the glyph is already `text-act`, so the tile is
- * a second statement of the same accent behind the first. Two of the seven are
- * not glyph tiles at all but initials in a circle — a monogram avatar, where
- * the tile is standing in for a face.
- */
-const ICON_TILE: readonly Candidate[] = [
-  { label: "bg-act/10", fill: "bg-act/10 text-act", ink: ACT },
-  { label: "bg-lifted", fill: "bg-lifted text-act", ink: ACT },
-  { label: "bg-act", fill: "bg-act text-act-foreground", ink: ACT_INK },
-  { label: "border border-act", fill: "border border-act text-act", ink: ACT },
-  { label: "no tile", fill: "text-act", ink: ACT },
-];
-
-/** `app/(public)/page.tsx` — a home feature card. */
-function FeatureCard({ candidate }: { candidate: Candidate }) {
-  return (
-    <div className="rounded-lg border border-border bg-card/50 text-foreground shadow-sm">
-      <div className="flex flex-col space-y-1.5 p-6">
-        <div className="flex items-center gap-4">
-          <div
-            className={`flex h-12 w-12 items-center justify-center rounded-lg ${candidate.fill}`}
-          >
-            <Glyph icon={Gamepad2} size={24} colour={candidate.ink} />
-          </div>
-          <h4 className="text-xl font-semibold leading-none tracking-tight">
-            Clubs in many games
-          </h4>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** `app/(dashboard)/admin/whatsapp/page.tsx` — the contact list's monogram. */
-function ContactRows({ candidate }: { candidate: Candidate }) {
-  return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-lifted hover:text-foreground">
-        <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-medium ${candidate.fill}`}
-        >
-          MK
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">Mikko Korhonen</p>
-          <p className="truncate text-xs text-muted-foreground">+358 40 123 4567</p>
-        </div>
-      </div>
-      <div className="flex w-full items-center gap-3 px-4 py-3 text-left">
-        <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-medium ${candidate.fill}`}
-        >
-          AV
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">Aino Virtanen</p>
-          <p className="truncate text-xs text-muted-foreground">+358 50 765 4321</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ------------------------------------------- job 5: a highlighted row
-
-/**
- * A row in a list that is marked out from the rows around it — today's date in
- * an admin week, and the message a reply-jump just landed on.
- *
- * The two are drawn together because they are the same shape doing different
- * work: one is permanent and reads all day, the other is a flash that fades
- * after a second. A colour that is too quiet for the first may be exactly right
- * for the second, and the ruling can differ between them.
- */
-const HIGHLIGHT_ROW: readonly Candidate[] = [
-  { label: "bg-act/5", fill: "border-border bg-act/5 text-act", ink: ACT },
-  { label: "bg-lifted", fill: "border-border bg-lifted text-foreground", ink: ACT },
-  {
-    label: "bg-act text-act-foreground",
-    fill: "border-border bg-act text-act-foreground",
-    ink: ACT_INK,
-  },
-  {
-    label: "bg-card ring-1 ring-act",
-    fill: "border-border bg-card text-act ring-1 ring-act",
-    ink: ACT,
-  },
-  { label: "bg-card", fill: "border-border bg-card text-foreground", ink: ACT },
-];
-
-/** `admin/dashboard/week-rows.tsx` — the week list, with today marked. */
-function WeekRows({ candidate }: { candidate: Candidate }) {
-  const rest =
-    "flex flex-col gap-2 rounded-lg border border-border bg-card p-2 sm:flex-row sm:gap-3";
+    draw === "today"
+      ? `${shell} border border-border bg-card`
+      : `${shell} border border-l-2 border-border bg-card`;
+  const marked =
+    draw === "today"
+      ? `${shell} border border-border bg-act/5`
+      : `${shell} border border-l-2 border-border border-l-act bg-card`;
+  const markedLabel =
+    draw === "today"
+      ? "text-sm font-semibold text-act"
+      : "text-sm font-semibold text-foreground";
   return (
     <ul className="space-y-1.5">
       <li className={rest}>
@@ -490,11 +388,9 @@ function WeekRows({ candidate }: { candidate: Candidate }) {
         </div>
         <p className="px-1 text-xs text-muted-foreground">Nothing on</p>
       </li>
-      <li
-        className={`flex flex-col gap-2 rounded-lg border p-2 sm:flex-row sm:gap-3 ${candidate.fill}`}
-      >
+      <li className={marked}>
         <div className="flex shrink-0 items-baseline gap-2 px-1 sm:w-24 sm:flex-col sm:items-start sm:gap-0">
-          <span className="text-sm font-semibold">Tue</span>
+          <span className={markedLabel}>Tue</span>
           <span className="text-xs tabular-nums text-muted-foreground">9.9.</span>
         </div>
         <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5">
@@ -515,24 +411,13 @@ function WeekRows({ candidate }: { candidate: Candidate }) {
 }
 
 /**
- * The flash a jump leaves behind — `chat/ChatMessageRow.tsx` and
- * `chat/ChatMessageList.tsx`, one recipe in two files.
+ * `chat/ChatMessageRow.tsx` and `chat/ChatMessageList.tsx` — one recipe in two
+ * files, drawn as a log with the jumped-to message flashing.
  */
-const FLASH_ROW: readonly Candidate[] = [
-  { label: "bg-act/20 ring-1 ring-act", fill: "bg-act/20 ring-1 ring-act", ink: ACT },
-  { label: "bg-lifted", fill: "bg-lifted", ink: ACT },
-  {
-    label: "bg-act text-act-foreground",
-    fill: "bg-act text-act-foreground",
-    ink: ACT_INK,
-  },
-  { label: "ring-1 ring-act", fill: "ring-1 ring-act", ink: ACT },
-  { label: "no fill", fill: "", ink: ACT },
-];
-
-/** `chat/ChatMessageRow.tsx` — a log with the jumped-to message flashing. */
-function ChatFlash({ candidate }: { candidate: Candidate }) {
+function ChatFlash({ draw }: { draw: "today" | "proposed" }) {
   const line = "rounded px-1.5 py-0.5 text-sm leading-snug transition-colors";
+  const flash =
+    draw === "today" ? "bg-act/20 ring-1 ring-act" : "ring-1 ring-act";
   return (
     <div className="rounded-lg border border-border bg-card p-3">
       <div className={line}>
@@ -541,7 +426,7 @@ function ChatFlash({ candidate }: { candidate: Candidate }) {
           the tower district is finished
         </span>
       </div>
-      <div className={`mt-1 ${line} ${candidate.fill}`}>
+      <div className={`mt-1 ${line} ${flash}`}>
         <span className="font-medium">Mikko</span>{" "}
         <span className="text-muted-foreground">
           can we build the harbour next week?
@@ -555,33 +440,195 @@ function ChatFlash({ candidate }: { candidate: Candidate }) {
   );
 }
 
-// ---------------------------------------------------- job 6: a drop target
+// ----------------------------------------------------- job 3: a callout ground
 
 /**
- * "It will land here" — a card, a column or a strip lit while something is
- * dragged over it.
+ * `admin/products/form-primitives.tsx` — the hint box a product form puts under
+ * a field, in its `warn` variant, drawn beside its own `info` sibling because
+ * the sibling is what settles the answer: the two variants exist to be told
+ * apart, and `bg-lifted` versus `bg-act/5` is what tells them apart today.
  *
- * The most transient statement in the set: it exists for as long as a pointer
- * is held down and never survives the gesture. Two of them add a full-value
- * `ring-act` on top of the tint already, which makes them the one job where
- * part of the answer is already drawn in the app.
+ * Both rows carry `Info`, because the component does: one mark serves both
+ * variants, so the ground really is the only thing separating them.
  *
- * **This job has no grey candidate, and that is the greys ruling showing.** The
- * strip and the column both *rest* on the lifted grey, and a ground lifts once,
- * so there is no further step for a drop target to climb to: a candidate that
- * lit the target by changing its ground would be drawing the ground it already
- * has. What is left is what a lifted thing has instead — a ring, a fill in the
- * brand's own colour, or nothing.
+ * The proposal is candidate B, already ruled for the 121 status sites: the same
+ * neutral panel, with the colour arriving as the glyph and the title. So all
+ * three proposed columns sit on `bg-lifted`, exactly where the info sibling
+ * sits, and what changes between them is how much act is spent.
+ *
+ * - **The glyph alone** is all this component can do as it stands, because its
+ *   single line is a sentence and a sentence stays in ink.
+ * - **An act label** means giving the hint a short name it does not have today
+ *   and moving its sentence to muted ink — a real change to the component's
+ *   props, drawn so the cost is looked at rather than described.
+ * - **The same plus a leading rule** is the construct ruled for a lit card,
+ *   borrowed here to see whether a hint needs it.
  */
-const DROP_TARGET: readonly Candidate[] = [
+function FormHints({ draw }: { draw: "today" | "glyph" | "label" | "rule" }) {
+  const warn =
+    draw === "today"
+      ? "flex items-start gap-2 rounded-md border border-dashed border-border bg-act/5 px-3 py-2 text-xs text-foreground"
+      : draw === "rule"
+        ? "flex items-start gap-2 rounded-md border border-dashed border-l-2 border-border border-l-act bg-lifted px-3 py-2 text-xs"
+        : "flex items-start gap-2 rounded-md border border-dashed border-border bg-lifted px-3 py-2 text-xs";
+  return (
+    <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+      <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-lifted px-3 py-2 text-xs text-muted-foreground">
+        <span className="mt-0.5">
+          <Glyph icon={Info} size={14} colour={MUTED_INK} />
+        </span>
+        <span>Registration opens when the product is published.</span>
+      </div>
+      <div className={warn}>
+        <span className="mt-0.5">
+          <Glyph icon={Info} size={14} colour={ACT} />
+        </span>
+        {draw === "today" || draw === "glyph" ? (
+          <span className="text-foreground">
+            Changing the start date moves every session on the calendar.
+          </span>
+        ) : (
+          <span>
+            <span className="block font-medium text-act">Start date</span>
+            <span className="mt-1 block text-muted-foreground">
+              Changing it moves every session on the calendar.
+            </span>
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------- job 4: an icon tile behind a glyph
+
+/**
+ * A square of colour behind a glyph, at chip scale, on a marketing card or
+ * beside a name.
+ *
+ * This is the job the library's own rule exempts, and the job with the weakest
+ * case for a fill: the glyph is already `text-act`, so the tile is a second
+ * statement of the same accent behind the first. The proposal leaves the glyph
+ * exactly where it is and moves the tile to the grey every other lifted thing
+ * sits on.
+ *
+ * **Two of the seven sites are not glyph tiles at all**, and the second
+ * exemplar is one of them: the WhatsApp contact list's tile holds a person's
+ * initials, so what the proposal leaves on the lifted grey is two amber letters
+ * standing in for a face. Whether that is a mark or coloured text is the one
+ * thing this row asks that the principle does not answer by itself.
+ */
+const ICON_TILE: readonly Variant[] = [
+  { label: "today · bg-act/10", fill: "bg-act/10 text-act", ink: ACT },
+  { label: "proposed · bg-lifted", fill: "bg-lifted text-act", ink: ACT },
+];
+
+const MONOGRAM_TILE: readonly Variant[] = [
+  { label: "today · bg-act/20", fill: "bg-act/20 text-act", ink: ACT },
+  { label: "proposed · bg-lifted", fill: "bg-lifted text-act", ink: ACT },
+];
+
+/** `app/(public)/page.tsx` — a home feature card. */
+function FeatureCard({ variant }: { variant: Variant }) {
+  return (
+    <div className="rounded-lg border border-border bg-card/50 text-foreground shadow-sm">
+      <div className="flex flex-col space-y-1.5 p-6">
+        <div className="flex items-center gap-4">
+          <div
+            className={`flex h-12 w-12 items-center justify-center rounded-lg ${variant.fill}`}
+          >
+            <Glyph icon={Gamepad2} size={24} colour={variant.ink} />
+          </div>
+          <h4 className="text-xl font-semibold leading-none tracking-tight">
+            Clubs in many games
+          </h4>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** `app/(dashboard)/admin/whatsapp/page.tsx` — the contact list's monogram. */
+function ContactRows({ variant }: { variant: Variant }) {
+  return (
+    <div className="rounded-lg border border-border bg-card">
+      <div className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-lifted hover:text-foreground">
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-medium ${variant.fill}`}
+        >
+          MK
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">Mikko Korhonen</p>
+          <p className="truncate text-xs text-muted-foreground">+358 40 123 4567</p>
+        </div>
+      </div>
+      <div className="flex w-full items-center gap-3 px-4 py-3 text-left">
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-medium ${variant.fill}`}
+        >
+          AV
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">Aino Virtanen</p>
+          <p className="truncate text-xs text-muted-foreground">+358 50 765 4321</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ------------------------------------------------------- job 5: a drop target
+
+/**
+ * "It will land here" — a strip or a column lit while something is dragged over
+ * it, and the most transient statement in the set: it exists for as long as a
+ * pointer is held down and never survives the gesture.
+ *
+ * Two of the six sites already carry a full-value `ring-act` on top of their
+ * tint, so part of the proposal is already in the app and what it drops is the
+ * wash underneath.
+ *
+ * **The dashed variant is drawn as an outline rather than a border**, and that
+ * is not a cosmetic choice: neither target has a border at rest, so a border
+ * appearing under a drag would resize the target mid-gesture — the very thing
+ * the photo strip's own comment says it chose a tint to avoid. An outline takes
+ * no layout, so both proposed columns leave the target exactly where it was.
+ *
+ * **This job has no grey column, and that is the greys ruling showing.** Both
+ * targets already rest on a neutral, and a ground lifts once, so there is no
+ * further step for a drop target to climb to.
+ */
+const DROP_TARGET: readonly Variant[] = [
   {
-    label: "bg-act/10 ring-2 ring-act",
+    label: "today · bg-act/10 ring-2 ring-act",
     fill: "bg-act/10 ring-2 ring-act",
     ink: MUTED_INK,
   },
-  { label: "bg-act", fill: "bg-act", ink: ACT_INK },
-  { label: "ring-2 ring-act", fill: "bg-lifted ring-2 ring-act", ink: MUTED_INK },
-  { label: "no fill", fill: "bg-lifted", ink: MUTED_INK },
+  {
+    label: "proposed · ring-2 ring-act",
+    fill: "bg-lifted ring-2 ring-act",
+    ink: MUTED_INK,
+  },
+  {
+    label: "proposed · a dashed act edge",
+    fill: "bg-lifted outline-2 outline-dashed outline-act -outline-offset-2",
+    ink: MUTED_INK,
+  },
+];
+
+const DROP_COLUMN: readonly Variant[] = [
+  { label: "today · bg-act/5", fill: "bg-act/5", ink: MUTED_INK },
+  {
+    label: "proposed · ring-2 ring-act",
+    fill: "ring-2 ring-act",
+    ink: MUTED_INK,
+  },
+  {
+    label: "proposed · a dashed act edge",
+    fill: "outline-2 outline-dashed outline-act -outline-offset-2",
+    ink: MUTED_INK,
+  },
 ];
 
 /**
@@ -591,15 +638,15 @@ const DROP_TARGET: readonly Candidate[] = [
  * beside it holds a photograph in the app, and the strip's section mark is the
  * nearest thing it has to a picture of one.
  */
-function PhotoStripTarget({ candidate }: { candidate: Candidate }) {
+function PhotoStripTarget({ variant }: { variant: Variant }) {
   return (
-    <div className={`rounded-md p-3 transition-colors sm:p-3.5 ${candidate.fill}`}>
+    <div className={`rounded-md p-3 transition-colors sm:p-3.5 ${variant.fill}`}>
       <div className="flex items-center gap-2">
         <span className="flex h-16 w-20 items-center justify-center rounded border border-border bg-background">
-          <Glyph icon={Images} size={20} colour={candidate.ink} />
+          <Glyph icon={Images} size={20} colour={variant.ink} />
         </span>
         <span className="flex h-16 w-20 items-center justify-center rounded border border-dashed border-border">
-          <Glyph icon={ImagePlus} size={20} colour={candidate.ink} />
+          <Glyph icon={ImagePlus} size={20} colour={variant.ink} />
         </span>
       </div>
     </div>
@@ -607,10 +654,10 @@ function PhotoStripTarget({ candidate }: { candidate: Candidate }) {
 }
 
 /** `admin/products/groups/group-column.tsx` — a group column with a gamer over it. */
-function GroupColumn({ candidate }: { candidate: Candidate }) {
+function GroupColumn({ variant }: { variant: Variant }) {
   return (
     <div
-      className={`rounded-lg border border-border text-foreground shadow-sm transition-colors ${candidate.fill}`}
+      className={`rounded-lg border border-border text-foreground shadow-sm transition-colors ${variant.fill}`}
     >
       <div className="space-y-3 p-6 pb-3">
         <p className="text-sm font-semibold">Tuesday group</p>
@@ -628,223 +675,104 @@ function GroupColumn({ candidate }: { candidate: Candidate }) {
   );
 }
 
-// --------------------------------------- job 7: a hover tint on an empty tile
+// -------------------------------- job 6: a selected item, with act as its ink
 
 /**
- * The add-gamer tile's `group-hover:bg-act/5`, and the only site of its shape.
+ * `admin/products/gedu-picker-sheet.tsx` — the spoken-language filter strip,
+ * whose chosen chip is `bg-act/10 text-act`.
  *
- * Drawn with the real `group-hover:` classes and ruled on by pointing at them:
- * a hover treatment held still is a picture of a state nobody meets.
+ * Drawn once, and drawn at all, because it is the job where the principle takes
+ * nothing away: act is already the figure here, as the word. What the proposal
+ * removes is the wash behind it, which over the card composites to a dull brown
+ * carrying a light amber label — the pairing the library never measured because
+ * it never named the ground.
+ *
+ * The other five sites are the same statement in a different box: a locale
+ * tab's underline, a location row, a chat reaction, a gedu row in this same
+ * sheet, a gamer row in the signup panel.
  */
-const HOVER_TILE: readonly Candidate[] = [
+const SELECTED_INK: readonly Variant[] = [
   {
-    label: "group-hover:bg-act/5",
-    fill: "group-hover:bg-act/5 text-muted-foreground group-hover:text-act",
-    ink: "currentColor",
+    label: "today · bg-act/10 text-act",
+    fill: "border-border bg-act/10 text-act",
+    ink: ACT,
   },
-  {
-    label: "group-hover:bg-lifted",
-    fill: "group-hover:bg-lifted text-muted-foreground group-hover:text-act",
-    ink: "currentColor",
-  },
-  {
-    label: "group-hover:bg-act",
-    fill: "group-hover:bg-act text-muted-foreground group-hover:text-act-foreground",
-    ink: "currentColor",
-  },
-  {
-    label: "group-hover:border-act",
-    fill: "group-hover:border-act text-muted-foreground group-hover:text-act",
-    ink: "currentColor",
-  },
-  {
-    label: "no fill",
-    fill: "text-muted-foreground group-hover:text-act",
-    ink: "currentColor",
-  },
+  { label: "proposed · text-act", fill: "border-border text-act", ink: ACT },
 ];
 
-/** `family/ProfileTiles.tsx` — the add-gamer tile. */
-function AddGamerTile({ candidate }: { candidate: Candidate }) {
+function FilterChips({ variant }: { variant: Variant }) {
+  const rest =
+    "rounded-full border border-border px-2 py-0.5 transition-colors text-muted-foreground";
   return (
-    <div className="flex justify-center">
-      <span className="group flex w-28 flex-col items-center gap-2 transition-transform duration-150 hover:scale-105">
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <span className="text-muted-foreground">Speaks:</span>
         <span
-          className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors duration-150 ${candidate.fill}`}
+          className={`rounded-full border px-2 py-0.5 transition-colors ${variant.fill}`}
         >
-          <Glyph icon={Plus} size={32} colour={candidate.ink} />
+          Any
         </span>
-        <span className="text-sm text-muted-foreground">Add a gamer</span>
-      </span>
+        <span className={rest}>Finnish</span>
+        <span className={rest}>Swedish</span>
+        <span className={rest}>English</span>
+      </div>
     </div>
   );
 }
 
-// -------------------------------- job 8: a hover shade on a filled control
+// -------------------------------------------------------- job 7: a status chip
 
 /**
- * The one job where the alpha step is not a tint over a ground but a *shade of
- * the fill itself*: `hover:bg-act/90` on the amber button, `hover:bg-world/80`
- * on the violet one.
+ * `admin/products/product-status-chip.tsx` — the five product statuses, of which
+ * `pending` is `bg-act/20 text-act`.
  *
- * Ruled to fall here rather than to wait for the Button adoption, because
- * whatever hover becomes, it is not a derived shade of act. So the candidates
- * are the three things a filled button can do under a pointer without inventing
- * a colour: lift, ring, or nothing — and the button already owns a shadow, so
- * the lift is a change of degree rather than a new construct.
+ * The proposal is the chip the observation came from, at its `primary` tone:
+ * `public/products/status-chip.tsx` — a neutral edge, the page ground, a glyph
+ * and the word in act. Nothing here is invented; the column is that component's
+ * own class string with this chip's word in it.
  *
- * The same shape at two more sites is `hover:bg-destructive/90`
- * (`ui/button.tsx`, `parent/PaymentProblemBadge.tsx`). Those are status, they
- * ride question 2, and they are listed rather than drawn here.
+ * The glyph comes with the shape rather than being an addition to it: the
+ * coloured-text ruling has a coloured word never carrying the meaning alone,
+ * and the waitlist chip's hourglass is exactly that mark. The four chips beside
+ * it are drawn unchanged because they are not act alpha sites, which puts the
+ * proposed chip next to `running`'s full amber fill — and that neighbouring is
+ * the picture.
+ *
+ * The job's second site is `public/schools/schools-browse.tsx`, the "clubs here"
+ * pill on a school row: the same statement in a smaller box, taking whatever
+ * this one takes.
  */
-const BUTTON_BASE =
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors";
-
-const ACT_HOVER: readonly Candidate[] = [
-  {
-    label: "hover:bg-act/90",
-    fill: "bg-act text-act-foreground shadow hover:bg-act/90",
-    ink: ACT_INK,
-  },
-  {
-    label: "hover:shadow-lg",
-    fill: "bg-act text-act-foreground shadow transition-shadow hover:shadow-lg",
-    ink: ACT_INK,
-  },
-  {
-    label: "hover:ring-2 ring-act",
-    fill: "bg-act text-act-foreground shadow hover:ring-2 hover:ring-act hover:ring-offset-2 hover:ring-offset-background",
-    ink: ACT_INK,
-  },
-  { label: "no change", fill: "bg-act text-act-foreground shadow", ink: ACT_INK },
-];
-
-const WORLD_HOVER: readonly Candidate[] = [
-  {
-    label: "hover:bg-world/80",
-    fill: "bg-world text-world-foreground shadow-sm hover:bg-world/80",
-    ink: WORLD_INK,
-  },
-  {
-    label: "hover:shadow-lg",
-    fill: "bg-world text-world-foreground shadow-sm transition-shadow hover:shadow-lg",
-    ink: WORLD_INK,
-  },
-  {
-    label: "hover:ring-2 ring-world",
-    fill: "bg-world text-world-foreground shadow-sm hover:ring-2 hover:ring-world hover:ring-offset-2 hover:ring-offset-background",
-    ink: WORLD_INK,
-  },
-  {
-    label: "no change",
-    fill: "bg-world text-world-foreground shadow-sm",
-    ink: WORLD_INK,
-  },
-];
-
-/** `ui/button.tsx` — the filled button, hovered on the page. */
-function FilledButton({
-  candidate,
-  label,
-}: {
-  candidate: Candidate;
-  label: string;
-}) {
+function StatusChips({ draw }: { draw: "today" | "proposed" }) {
+  const chip = "shrink-0 rounded-full px-2 py-0.5 text-xs";
   return (
-    <div className="flex justify-center py-2">
-      <button
-        type="button"
-        className={`${BUTTON_BASE} h-10 px-4 py-2 text-sm ${candidate.fill}`}
-      >
-        {label}
-      </button>
-    </div>
-  );
-}
-
-// -------------------------------------------------------- job 9: the ring
-
-/**
- * Four rings drawn at an alpha step, three of them at `/30` or `/50` around
- * something a reader is meant to notice: their own avatar in a call, their own
- * tile in the family switcher, the row they have selected in a signup panel.
- *
- * The candidates here are narrower than the other jobs' by design. A ring is
- * already an edge rather than a ground, so the neutral-ground and plain-fill
- * answers do not apply: the only question is whether the edge is the colour it
- * says it is, and whether it needs a gap between the ring and the thing it
- * rings for the full value not to sit on top of the picture.
- */
-const RING_THIN: readonly Candidate[] = [
-  { label: "ring-1 ring-act/30", fill: "ring-1 ring-act/30", ink: MUTED_INK },
-  { label: "ring-1 ring-act", fill: "ring-1 ring-act", ink: MUTED_INK },
-  {
-    label: "ring-1 ring-act ring-offset-1",
-    fill: "ring-1 ring-act ring-offset-1 ring-offset-background",
-    ink: MUTED_INK,
-  },
-];
-
-const RING_THICK: readonly Candidate[] = [
-  {
-    label: "ring-4 ring-act/50",
-    fill: "ring-4 ring-act/50 ring-offset-2 ring-offset-background",
-    ink: MUTED_INK,
-  },
-  {
-    label: "ring-4 ring-act",
-    fill: "ring-4 ring-act ring-offset-2 ring-offset-background",
-    ink: MUTED_INK,
-  },
-  {
-    label: "ring-4 ring-act ring-offset-1",
-    fill: "ring-4 ring-act ring-offset-1 ring-offset-background",
-    ink: MUTED_INK,
-  },
-];
-
-/**
- * `voice/VoiceAvatar.tsx` — the local speaker's tile in the grid.
- *
- * The tile holds an identicon (or live video), which is artwork with its own
- * palette rather than an icon; `User` stands in it, so what is on screen beside
- * the ring is a person-shaped mark and not a second set of colours.
- */
-function AvatarRing({ candidate }: { candidate: Candidate }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span
-        className={`relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-lifted transition-shadow ${candidate.fill}`}
-      >
-        <Glyph icon={User} size={20} colour={candidate.ink} />
-      </span>
-      <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-lifted">
-        <Glyph icon={User} size={20} colour={candidate.ink} />
-      </span>
-      <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-lifted">
-        <Glyph icon={User} size={20} colour={candidate.ink} />
-      </span>
-    </div>
-  );
-}
-
-/** `family/ProfileTiles.tsx` — the active family tile, `User` standing in for its identicon. */
-function TileRing({ candidate }: { candidate: Candidate }) {
-  return (
-    <div className="flex justify-center py-2">
-      <span className="flex w-24 flex-col items-center gap-2">
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        {draw === "today" ? (
+          <span className={`${chip} bg-act/20 text-act`}>Pending</span>
+        ) : (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-act">
+            <Glyph icon={Hourglass} size={12} colour={ACT} />
+            Pending
+          </span>
+        )}
+        <span className={`${chip} bg-act text-act-foreground`}>Running</span>
+        <span className={`${chip} bg-lifted text-muted-foreground`}>Completed</span>
         <span
-          className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border-2 border-border bg-lifted transition-[box-shadow] duration-150 ${candidate.fill}`}
+          className={chip}
+          style={{
+            backgroundColor: tailwindAlpha(DESTRUCTIVE, 20),
+            color: DESTRUCTIVE,
+          }}
         >
-          <Glyph icon={User} size={28} colour={candidate.ink} />
+          Cancelled
         </span>
-        <span className="text-sm">Aino</span>
-      </span>
+        <span className={`${chip} bg-lifted text-muted-foreground`}>Expired</span>
+      </div>
     </div>
   );
 }
 
-// -------------------------------- job 10: faded ink on an amber fill
+// ----------------------------------- job 8: faded ink on an amber fill
 
 /**
  * `text-act-foreground/70` — the timestamp on an outbound WhatsApp bubble, and
@@ -853,11 +781,15 @@ function TileRing({ candidate }: { candidate: Candidate }) {
  * The token is the ground's own near-black, so this is not amber at an alpha
  * step; it is the *ink* on amber stepped down, which composites to a warm grey
  * on the fill. The palette offers exactly one ink for an amber fill, so there
- * is no quieter member of the pair to move to — the third candidate is
- * therefore not a colour at all but the meta line moved off the fill, which is
- * the only other way to make it quieter.
+ * is no quieter member of the pair to move to, and the proposal is therefore
+ * not a colour at all: the meta line leaves the fill and becomes muted ink
+ * under the bubble, where a quieter grey exists.
+ *
+ * The viewer chip cannot do that — its role label is inside the button and has
+ * nowhere below to go — so its proposal is the only other thing available, the
+ * ink at full value.
  */
-function WhatsAppBubble({ draw }: { draw: "today" | "full" | "outside" }) {
+function WhatsAppBubble({ draw }: { draw: "today" | "proposed" }) {
   const bubble = "max-w-[70%] rounded-lg bg-act px-3 py-2 text-sm text-act-foreground";
   return (
     <div className="space-y-2 rounded-lg border border-border bg-card p-4">
@@ -876,21 +808,18 @@ function WhatsAppBubble({ draw }: { draw: "today" | "full" | "outside" }) {
           <p className="whitespace-pre-wrap break-words">
             Yes — 17:00 at the Espoo site.
           </p>
-          {draw === "outside" ? null : (
-            <div
-              className={
-                draw === "today"
-                  ? "mt-1 flex items-center justify-end gap-1 text-[10px] text-act-foreground/70"
-                  : "mt-1 flex items-center justify-end gap-1 text-[10px] text-act-foreground"
-              }
-            >
+          {draw === "today" ? (
+            <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-act-foreground/70">
               <span>17:04</span>
               <Glyph icon={Check} size={10} colour={ACT_INK} />
             </div>
-          )}
+          ) : null}
         </div>
-        {draw === "outside" ? (
-          <span className="mt-1 text-[10px] text-muted-foreground">17:04</span>
+        {draw === "proposed" ? (
+          <span className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span>17:04</span>
+            <Glyph icon={Check} size={10} colour={MUTED_INK} />
+          </span>
         ) : null}
       </div>
     </div>
@@ -898,7 +827,7 @@ function WhatsAppBubble({ draw }: { draw: "today" | "full" | "outside" }) {
 }
 
 /** `preview/scenes/chat-scene.tsx` — the viewer switcher's role label. */
-function ViewerChip({ faded }: { faded: boolean }) {
+function ViewerChip({ draw }: { draw: "today" | "proposed" }) {
   return (
     <div className="flex justify-center py-2">
       <button
@@ -908,7 +837,7 @@ function ViewerChip({ faded }: { faded: boolean }) {
         Mikko
         <span
           className={
-            faded
+            draw === "today"
               ? "ml-1 text-[10px] uppercase tracking-wide text-act-foreground/70"
               : "ml-1 text-[10px] uppercase tracking-wide text-act-foreground"
           }
@@ -920,273 +849,275 @@ function ViewerChip({ faded }: { faded: boolean }) {
   );
 }
 
-// ------------------------------------------------- job 11: a callout ground
+// --------------------------------- job 9: a hover shade on a filled control
 
 /**
- * `admin/products/form-primitives.tsx` — the hint box a product form puts under
- * a field, in its `warn` variant.
+ * The one job where the alpha step is not a tint over a ground but a *shade of
+ * the fill itself*: `hover:bg-act/90` on the amber button, `hover:bg-world/80`
+ * on the violet one.
  *
- * One site, and it is drawn beside its own `info` sibling because that sibling
- * is what settles the answer: the two variants exist to be told apart, and
- * `bg-lifted` versus `bg-act/5` is what tells them apart today.
+ * **This is the one job the principle does not answer**, because a filled
+ * button is the one place a brand colour is deliberately a ground: the
+ * figure-and-fill rule already allows a button its fill, and what a filled
+ * button does under a pointer is the Button adoption's decision, made with the
+ * fills drawn.
  *
- * Both rows carry `Info`, because the component does: one mark serves both
- * variants, so the ground is the *only* thing telling them apart. That is the
- * finding, and drawing a triangle on the warn row would have hidden it.
+ * So this row is a note rather than a proposal, and it is drawn live for one
+ * reason: to show what simply deleting the shade costs. Point at both. If the
+ * unshaded button is dead under the pointer, then leaving these two sites alone
+ * is the right call and Button inherits the question.
+ *
+ * The same shape at two more sites is `hover:bg-destructive/90`
+ * (`ui/button.tsx`, `parent/PaymentProblemBadge.tsx`). Those are status, they
+ * ride the status question, and they are listed rather than drawn here.
  */
-const CALLOUT: readonly Candidate[] = [
+const ACT_HOVER: readonly Variant[] = [
   {
-    label: "bg-act/5 text-foreground",
-    fill: "border-border bg-act/5 text-foreground",
-    ink: ACT,
-  },
-  {
-    label: "bg-lifted text-foreground",
-    fill: "border-border bg-lifted text-foreground",
-    ink: ACT,
-  },
-  {
-    label: "bg-act text-act-foreground",
-    fill: "border-border bg-act text-act-foreground",
+    label: "today · hover:bg-act/90",
+    fill: "bg-act text-act-foreground shadow hover:bg-act/90",
     ink: ACT_INK,
   },
-  { label: "border-act text-foreground", fill: "border-act text-foreground", ink: ACT },
-  { label: "no fill", fill: "border-border text-foreground", ink: ACT },
+  {
+    label: "no hover shade",
+    fill: "bg-act text-act-foreground shadow",
+    ink: ACT_INK,
+  },
 ];
 
-function FormHints({ candidate }: { candidate: Candidate }) {
+const WORLD_HOVER: readonly Variant[] = [
+  {
+    label: "today · hover:bg-world/80",
+    fill: "bg-world text-world-foreground shadow-sm hover:bg-world/80",
+    ink: WORLD_INK,
+  },
+  {
+    label: "no hover shade",
+    fill: "bg-world text-world-foreground shadow-sm",
+    ink: WORLD_INK,
+  },
+];
+
+/** `ui/button.tsx` — the filled button, hovered on the page. */
+function FilledButton({
+  variant,
+  label,
+}: {
+  variant: Variant;
+  label: string;
+}) {
   return (
-    <div className="space-y-2 rounded-lg border border-border bg-card p-4">
-      <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-lifted px-3 py-2 text-xs text-muted-foreground">
-        <span className="mt-0.5">
-          <Glyph icon={Info} size={14} colour={MUTED_INK} />
-        </span>
-        <span>Registration opens when the product is published.</span>
-      </div>
-      <div
-        className={`flex items-start gap-2 rounded-md border border-dashed px-3 py-2 text-xs ${candidate.fill}`}
+    <div className="flex justify-center py-2">
+      <button
+        type="button"
+        className={`${BUTTON_BASE} h-10 px-4 py-2 text-sm ${variant.fill}`}
       >
-        <span className="mt-0.5">
-          <Glyph icon={Info} size={14} colour={candidate.ink} />
+        {label}
+      </button>
+    </div>
+  );
+}
+
+// ----------------------------- job 10: a hover tint on an empty tile
+
+/**
+ * The add-gamer tile's `group-hover:bg-act/5`, and the only site of its shape.
+ *
+ * A hover is a lift and the lift has a grey, so the proposal is the same
+ * `hover:bg-lifted` the other 66 hover grounds took in the greys landing. The
+ * act does not leave the tile: the plus glyph already goes amber under the
+ * pointer and stays that way, which is the figure doing the work the wash was
+ * doing.
+ *
+ * Drawn with the real `group-hover:` classes and ruled on by pointing at them.
+ */
+const HOVER_TILE: readonly Variant[] = [
+  {
+    label: "today · group-hover:bg-act/5",
+    fill: "group-hover:bg-act/5 text-muted-foreground group-hover:text-act",
+    ink: "currentColor",
+  },
+  {
+    label: "proposed · group-hover:bg-lifted",
+    fill: "group-hover:bg-lifted text-muted-foreground group-hover:text-act",
+    ink: "currentColor",
+  },
+];
+
+/** `family/ProfileTiles.tsx` — the add-gamer tile. */
+function AddGamerTile({ variant }: { variant: Variant }) {
+  return (
+    <div className="flex justify-center">
+      <span className="group flex w-28 flex-col items-center gap-2 transition-transform duration-150 hover:scale-105">
+        <span
+          className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors duration-150 ${variant.fill}`}
+        >
+          <Glyph icon={Plus} size={32} colour={variant.ink} />
         </span>
-        <span>Changing the start date moves every session on the calendar.</span>
-      </div>
+        <span className="text-sm text-muted-foreground">Add a gamer</span>
+      </span>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------ job 11: a ring
+
+/**
+ * Four rings drawn at an alpha step around something a reader is meant to
+ * notice: their own avatar in a call, their own avatar in the instant lobby,
+ * their own tile in the family switcher, the row they have selected in a signup
+ * panel.
+ *
+ * A ring is already an edge rather than a ground, so the principle has almost
+ * nothing to decide here: the alpha was only ever taking the colour out of the
+ * figure. The proposal is act at full value, and the two columns are otherwise
+ * the same pixels.
+ *
+ * **The profile tile's ring is a hover ring, and is drawn live.** The active
+ * tile already carries `ring-4 ring-act` at full value; it is the *other* tiles
+ * that carry `ring-0 ring-act/50 group-hover:ring-4`. So the pair is drawn
+ * together and pointed at — a hovered inactive tile is the only place the `/50`
+ * is ever on screen, and what it is compared against is the active tile beside
+ * it.
+ */
+const AVATAR_RING: readonly Variant[] = [
+  {
+    label: "today · ring-1 ring-act/30",
+    fill: "ring-1 ring-act/30",
+    ink: MUTED_INK,
+  },
+  { label: "proposed · ring-1 ring-act", fill: "ring-1 ring-act", ink: MUTED_INK },
+];
+
+const TILE_RING: readonly Variant[] = [
+  {
+    label: "today · ring-act/50 on hover",
+    fill: "ring-0 ring-act/50 group-hover:ring-4",
+    ink: MUTED_INK,
+  },
+  {
+    label: "proposed · ring-act on hover",
+    fill: "ring-0 ring-act group-hover:ring-4",
+    ink: MUTED_INK,
+  },
+];
+
+/**
+ * `voice/VoiceAvatar.tsx` — the local speaker's tile in the grid, beside two
+ * remote ones.
+ *
+ * The tile holds an identicon (or live video), which is artwork with its own
+ * palette rather than an icon; `User` stands in it, so what is on screen beside
+ * the ring is a person-shaped mark and not a second set of colours.
+ */
+function AvatarRing({ variant }: { variant: Variant }) {
+  const tile =
+    "flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border-2 border-border bg-lifted";
+  return (
+    <div className="flex items-center gap-3">
+      <span className={`relative transition-shadow ${tile} ${variant.fill}`}>
+        <Glyph icon={User} size={20} colour={variant.ink} />
+      </span>
+      <span className={tile}>
+        <Glyph icon={User} size={20} colour={variant.ink} />
+      </span>
+      <span className={tile}>
+        <Glyph icon={User} size={20} colour={variant.ink} />
+      </span>
+    </div>
+  );
+}
+
+/**
+ * `family/ProfileTiles.tsx` — the switcher, with the active tile beside a
+ * hoverable one. `User` stands in for each tile's identicon.
+ */
+function TileRing({ variant }: { variant: Variant }) {
+  const face =
+    "relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border-2 border-border ring-offset-2 ring-offset-background transition-[box-shadow] duration-150";
+  return (
+    <div className="flex justify-center gap-4 py-2">
+      <span className="group flex w-20 cursor-pointer flex-col items-center gap-2 transition-transform duration-150 hover:scale-105">
+        <span className={`${face} ring-4 ring-act`}>
+          <Glyph icon={User} size={24} colour={variant.ink} />
+        </span>
+        <span className="text-xs font-medium text-foreground">Aino</span>
+      </span>
+      <span className="group flex w-20 cursor-pointer flex-col items-center gap-2 transition-transform duration-150 hover:scale-105">
+        <span className={`${face} ${variant.fill}`}>
+          <Glyph icon={User} size={24} colour={variant.ink} />
+        </span>
+        <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">
+          Mikko
+        </span>
+      </span>
     </div>
   );
 }
 
 export function ActSection() {
   return (
-    <Question n={6} title="Act and world at an alpha step">
+    <Question n={2} title="Act as a figure">
       <Case title="A selected option in a form">
         <div className="space-y-10">
-          <Candidates
-            columns={5}
-            options={FORM_OPTION}
+          <Row
+            columns={4}
+            variants={FORM_OPTION}
             file="ui/checkbox-row.tsx"
             page="/admin/products/[id], the audience section"
-            render={(candidate) => <ConsentRows candidate={candidate} />}
+            render={(variant) => <ConsentRows variant={variant} />}
           />
-          <Candidates
-            columns={5}
-            options={FORM_OPTION}
+          <Row
+            columns={4}
+            variants={FORM_OPTION}
             file="admin/products/sections/spoken-language-radios.tsx"
             page="/admin/products/[id], the identity section"
-            render={(candidate) => <LanguagePills candidate={candidate} />}
+            render={(variant) => <LanguagePills variant={variant} />}
           />
-        </div>
-      </Case>
-
-      <Case title="A selected item, with act as its ink">
-        <div className="space-y-10">
-          <Candidates
-            columns={5}
-            options={SELECTED_INK}
-            file="admin/products/gedu-picker-sheet.tsx"
-            page="/admin/products/[id], assigning a gedu"
-            render={(candidate) => <FilterChips candidate={candidate} />}
-          />
-          <Candidates
-            columns={5}
-            options={SELECTED_INK}
-            file="admin/products/sections/identity-section.tsx"
-            page="/admin/products/[id], the locale tabs"
-            render={(candidate) => <LocaleTabs candidate={candidate} />}
-          />
-        </div>
-      </Case>
-
-      <Case title="A status chip">
-        <div className="space-y-10">
-          <Candidates
-            columns={3}
-            options={STATUS_CHIP}
-            file="admin/products/product-status-chip.tsx"
-            page="/admin/products, the list and the details page"
-            render={(candidate) => <StatusChips candidate={candidate} />}
-          />
-          <Candidates
-            columns={3}
-            options={STATUS_CHIP}
-            file="public/schools/schools-browse.tsx"
-            page="/schools, the school list"
-            render={(candidate) => <SchoolPills candidate={candidate} />}
-          />
-        </div>
-      </Case>
-
-      <Case title="An icon tile behind a glyph">
-        <div className="space-y-10">
-          <Candidates
-            columns={3}
-            options={ICON_TILE}
-            file="app/(public)/page.tsx"
-            page="the home page, the feature cards"
-            render={(candidate) => <FeatureCard candidate={candidate} />}
-          />
-          <Candidates
-            columns={3}
-            options={ICON_TILE}
-            file="app/(dashboard)/admin/whatsapp/page.tsx"
-            page="/admin/whatsapp, the contact list"
-            render={(candidate) => <ContactRows candidate={candidate} />}
+          <Row
+            columns={4}
+            variants={FORM_OPTION}
+            file="admin/products/image-catalogue-view.tsx"
+            page="/admin/product-images, the catalogue grid"
+            render={(variant) => <CatalogueTiles variant={variant} />}
           />
         </div>
       </Case>
 
       <Case title="A highlighted row">
         <div className="space-y-10">
-          <Candidates
-            columns={3}
-            options={HIGHLIGHT_ROW}
-            file="admin/dashboard/week-rows.tsx"
-            page="/admin, this week"
-            render={(candidate) => <WeekRows candidate={candidate} />}
-          />
-          <Candidates
-            columns={3}
-            options={FLASH_ROW}
-            file="chat/ChatMessageRow.tsx"
-            page="any chat, after a reply jump"
-            render={(candidate) => <ChatFlash candidate={candidate} />}
-          />
-        </div>
-      </Case>
-
-      <Case title="A drop target">
-        <div className="space-y-10">
-          <Candidates
-            columns={4}
-            options={DROP_TARGET}
-            file="gedu/session-feed/SessionPhotoStrip.tsx"
-            page="/gedu, writing a session report"
-            render={(candidate) => <PhotoStripTarget candidate={candidate} />}
-          />
-          <Candidates
-            columns={4}
-            options={DROP_TARGET}
-            file="admin/products/groups/group-column.tsx"
-            page="/admin/products/[id], the groups board"
-            render={(candidate) => <GroupColumn candidate={candidate} />}
-          />
-        </div>
-      </Case>
-
-      <Case title="A hover tint on an empty tile">
-        <Candidates
-          columns={5}
-          options={HOVER_TILE}
-          file="family/ProfileTiles.tsx"
-          page="/parent, the add-gamer tile"
-          render={(candidate) => <AddGamerTile candidate={candidate} />}
-        />
-      </Case>
-
-      <Case title="A hover shade on a filled control">
-        <div className="space-y-10">
-          <Candidates
-            columns={4}
-            options={ACT_HOVER}
-            file="ui/button.tsx"
-            page="every page, the default button"
-            render={(candidate) => (
-              <FilledButton candidate={candidate} label="Buy a seat" />
-            )}
-          />
-          <Candidates
-            columns={4}
-            options={WORLD_HOVER}
-            file="ui/button.tsx"
-            page="every page, the secondary variant"
-            render={(candidate) => (
-              <FilledButton candidate={candidate} label="Enter Sogverse" />
-            )}
-          />
-        </div>
-      </Case>
-
-      <Case title="A ring">
-        <div className="space-y-10">
-          <Candidates
-            columns={3}
-            options={RING_THIN}
-            file="voice/VoiceAvatar.tsx"
-            page="a club's voice room, your own tile"
-            render={(candidate) => <AvatarRing candidate={candidate} />}
-          />
-          <Candidates
-            columns={3}
-            options={RING_THICK}
-            file="family/ProfileTiles.tsx"
-            page="/parent, the active family tile"
-            render={(candidate) => <TileRing candidate={candidate} />}
-          />
-        </div>
-      </Case>
-
-      <Case title="Faded ink on an amber fill">
-        <div className="space-y-10">
-          <Compare columns={3}>
-            <Panel label="text-act-foreground/70">
+          <Compare columns={2}>
+            <Panel label="today · bg-act/5">
               <Exemplar
-                file="app/(dashboard)/admin/whatsapp/page.tsx"
-                page="/admin/whatsapp, an outbound message"
+                file="admin/dashboard/week-rows.tsx"
+                page="/admin, this week"
               >
-                <WhatsAppBubble draw="today" />
+                <WeekRows draw="today" />
               </Exemplar>
             </Panel>
-            <Panel label="text-act-foreground">
+            <Panel label="proposed · border-l-2 border-l-act">
               <Exemplar
-                file="app/(dashboard)/admin/whatsapp/page.tsx"
-                page="/admin/whatsapp, an outbound message"
+                file="admin/dashboard/week-rows.tsx"
+                page="/admin, this week"
               >
-                <WhatsAppBubble draw="full" />
-              </Exemplar>
-            </Panel>
-            <Panel label="text-muted-foreground, off the fill">
-              <Exemplar
-                file="app/(dashboard)/admin/whatsapp/page.tsx"
-                page="/admin/whatsapp, an outbound message"
-              >
-                <WhatsAppBubble draw="outside" />
+                <WeekRows draw="proposed" />
               </Exemplar>
             </Panel>
           </Compare>
           <Compare columns={2}>
-            <Panel label="text-act-foreground/70">
+            <Panel label="today · bg-act/20 ring-1 ring-act">
               <Exemplar
-                file="preview/scenes/chat-scene.tsx"
-                page="/preview/chat, the viewer switcher"
+                file="chat/ChatMessageRow.tsx"
+                page="any chat, after a reply jump"
               >
-                <ViewerChip faded />
+                <ChatFlash draw="today" />
               </Exemplar>
             </Panel>
-            <Panel label="text-act-foreground">
+            <Panel label="proposed · ring-1 ring-act">
               <Exemplar
-                file="preview/scenes/chat-scene.tsx"
-                page="/preview/chat, the viewer switcher"
+                file="chat/ChatMessageRow.tsx"
+                page="any chat, after a reply jump"
               >
-                <ViewerChip faded={false} />
+                <ChatFlash draw="proposed" />
               </Exemplar>
             </Panel>
           </Compare>
@@ -1194,13 +1125,202 @@ export function ActSection() {
       </Case>
 
       <Case title="A callout ground">
-        <Candidates
-          columns={3}
-          options={CALLOUT}
-          file="admin/products/form-primitives.tsx"
-          page="/admin/products/[id], a field hint"
-          render={(candidate) => <FormHints candidate={candidate} />}
+        <Compare columns={4}>
+          <Panel label="today · bg-act/5">
+            <Exemplar
+              file="admin/products/form-primitives.tsx"
+              page="/admin/products/[id], a field hint"
+            >
+              <FormHints draw="today" />
+            </Exemplar>
+          </Panel>
+          <Panel label="proposed · the glyph alone">
+            <Exemplar
+              file="admin/products/form-primitives.tsx"
+              page="/admin/products/[id], a field hint"
+            >
+              <FormHints draw="glyph" />
+            </Exemplar>
+          </Panel>
+          <Panel label="proposed · an act label">
+            <Exemplar
+              file="admin/products/form-primitives.tsx"
+              page="/admin/products/[id], a field hint"
+            >
+              <FormHints draw="label" />
+            </Exemplar>
+          </Panel>
+          <Panel label="proposed · an act label, leading rule">
+            <Exemplar
+              file="admin/products/form-primitives.tsx"
+              page="/admin/products/[id], a field hint"
+            >
+              <FormHints draw="rule" />
+            </Exemplar>
+          </Panel>
+        </Compare>
+      </Case>
+
+      <Case title="An icon tile behind a glyph">
+        <div className="space-y-10">
+          <Row
+            columns={2}
+            variants={ICON_TILE}
+            file="app/(public)/page.tsx"
+            page="the home page, the feature cards"
+            render={(variant) => <FeatureCard variant={variant} />}
+          />
+          <Row
+            columns={2}
+            variants={MONOGRAM_TILE}
+            file="app/(dashboard)/admin/whatsapp/page.tsx"
+            page="/admin/whatsapp, the contact list"
+            render={(variant) => <ContactRows variant={variant} />}
+          />
+        </div>
+      </Case>
+
+      <Case title="A drop target">
+        <div className="space-y-10">
+          <Row
+            columns={3}
+            variants={DROP_TARGET}
+            file="gedu/session-feed/SessionPhotoStrip.tsx"
+            page="/gedu, writing a session report"
+            render={(variant) => <PhotoStripTarget variant={variant} />}
+          />
+          <Row
+            columns={3}
+            variants={DROP_COLUMN}
+            file="admin/products/groups/group-column.tsx"
+            page="/admin/products/[id], the groups board"
+            render={(variant) => <GroupColumn variant={variant} />}
+          />
+        </div>
+      </Case>
+
+      <Case title="A selected item, with act as its ink">
+        <Row
+          columns={2}
+          variants={SELECTED_INK}
+          file="admin/products/gedu-picker-sheet.tsx"
+          page="/admin/products/[id], assigning a gedu"
+          render={(variant) => <FilterChips variant={variant} />}
         />
+      </Case>
+
+      <Case title="A status chip">
+        <Compare columns={2}>
+          <Panel label="today · bg-act/20 text-act">
+            <Exemplar
+              file="admin/products/product-status-chip.tsx"
+              page="/admin/products, the list and the details page"
+            >
+              <StatusChips draw="today" />
+            </Exemplar>
+          </Panel>
+          <Panel label="proposed · the waitlist chip">
+            <Exemplar
+              file="public/products/status-chip.tsx"
+              page="/clubs/[slug], the seat bar"
+            >
+              <StatusChips draw="proposed" />
+            </Exemplar>
+          </Panel>
+        </Compare>
+      </Case>
+
+      <Case title="Faded ink on an amber fill">
+        <div className="space-y-10">
+          <Compare columns={2}>
+            <Panel label="today · text-act-foreground/70">
+              <Exemplar
+                file="app/(dashboard)/admin/whatsapp/page.tsx"
+                page="/admin/whatsapp, an outbound message"
+              >
+                <WhatsAppBubble draw="today" />
+              </Exemplar>
+            </Panel>
+            <Panel label="proposed · off the fill">
+              <Exemplar
+                file="app/(dashboard)/admin/whatsapp/page.tsx"
+                page="/admin/whatsapp, an outbound message"
+              >
+                <WhatsAppBubble draw="proposed" />
+              </Exemplar>
+            </Panel>
+          </Compare>
+          <Compare columns={2}>
+            <Panel label="today · text-act-foreground/70">
+              <Exemplar
+                file="preview/scenes/chat-scene.tsx"
+                page="/preview/chat, the viewer switcher"
+              >
+                <ViewerChip draw="today" />
+              </Exemplar>
+            </Panel>
+            <Panel label="proposed · text-act-foreground">
+              <Exemplar
+                file="preview/scenes/chat-scene.tsx"
+                page="/preview/chat, the viewer switcher"
+              >
+                <ViewerChip draw="proposed" />
+              </Exemplar>
+            </Panel>
+          </Compare>
+        </div>
+      </Case>
+
+      <Case title="A hover shade on a filled control">
+        <div className="space-y-10">
+          <Row
+            columns={2}
+            variants={ACT_HOVER}
+            file="ui/button.tsx"
+            page="every page, the default button"
+            render={(variant) => (
+              <FilledButton variant={variant} label="Buy a seat" />
+            )}
+          />
+          <Row
+            columns={2}
+            variants={WORLD_HOVER}
+            file="ui/button.tsx"
+            page="every page, the secondary variant"
+            render={(variant) => (
+              <FilledButton variant={variant} label="Enter Sogverse" />
+            )}
+          />
+        </div>
+      </Case>
+
+      <Case title="A hover tint on an empty tile">
+        <Row
+          columns={2}
+          variants={HOVER_TILE}
+          file="family/ProfileTiles.tsx"
+          page="/parent, the add-gamer tile"
+          render={(variant) => <AddGamerTile variant={variant} />}
+        />
+      </Case>
+
+      <Case title="A ring">
+        <div className="space-y-10">
+          <Row
+            columns={2}
+            variants={AVATAR_RING}
+            file="voice/VoiceAvatar.tsx"
+            page="a club's voice room, your own tile"
+            render={(variant) => <AvatarRing variant={variant} />}
+          />
+          <Row
+            columns={2}
+            variants={TILE_RING}
+            file="family/ProfileTiles.tsx"
+            page="/parent, the family switcher"
+            render={(variant) => <TileRing variant={variant} />}
+          />
+        </div>
       </Case>
     </Question>
   );

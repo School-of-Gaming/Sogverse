@@ -853,7 +853,30 @@ is decided by whatever this section is ruled, and a helper's doc comment is not 
 a colour rule gets settled. Whichever way it goes, that paragraph is rewritten in the
 same change as the ruling lands.
 
-**Ruling:** _open_
+**The owner's three ideas (2026-09-06, evening), and the brand's answer.** (1) "We
+shouldn't smear our brand colours": a brand colour is never blended into another and
+never starts at a lower alpha; it **may glow** (the voice zones). (2) The home page, the
+Roblox page and the OG images should be colourful: the brand is colourful, vibrant, fun,
+and a first impression should say so. (3) Tempted to blast every colour, but the brand has
+a rule. The brand's rule, quoted: L0/L1 (public, parents) amber as a single accent; L2
+(families, a mixed audience) amber plus one palette family, two accents maximum; L3
+(gamers, community, store, in-world) the full palette, "this is where the loudness
+belongs"; "never use all six colours on one page; amber plus one supporting colour is the
+default"; violet "sets the tone of the Sogverse world … never for quiet, safety-focused or
+trust-building parent content". So colourful by **saturation, not count**: a parent's
+first impression is amber at full strength plus one bold colour on a calm ground with the
+mark; the blast belongs on the gamer surfaces and the shop, a later pass. **Glow versus
+wash**: a glow has a source at full value, soft edges from blur, one hue, on a neutral
+ground (the zone glow); a wash has no source, mixes two hues and starts translucent. The
+library can own a glow construct with those three constraints, the only place a brand
+colour gets a soft edge. Applied: heroes and OG images lose the two-hue wash and take
+full-value figures (the mark, the act CTA, one bold violet element, optionally an act
+glow and a world glow from real shapes, kept apart); the gedu chip's act→world gradient is
+a smear and goes; the lit cards are already a rule; the About washes go. **To draw:** the
+home hero and the home social card as today, as amber+one at full value with no glow, and
+as amber+one with glows emitted from the mark and the violet element, at hero width.
+
+**Ruling:** _open — the hero drawing decides it_
 
 ## Where the session stands (2026-09-06, evening)
 
