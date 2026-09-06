@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { generateIdenticon } from "@/lib/identicon";
+import { generateIdenticon, IDENTICON_GROUND } from "@/lib/identicon";
 import { cn } from "@/lib/utils";
 interface IdenticonProps {
   id: string;
@@ -7,7 +7,6 @@ interface IdenticonProps {
   className?: string;
 }
 
-const BACKGROUND = "#000000";
 const CELL_COUNT = 5;
 
 export const Identicon = memo(function Identicon({ id, size = 40, className }: IdenticonProps) {
@@ -23,7 +22,7 @@ export const Identicon = memo(function Identicon({ id, size = 40, className }: I
       role="img"
       aria-label="User avatar"
     >
-      <rect width={size} height={size} fill={BACKGROUND} />
+      <rect width={size} height={size} fill={IDENTICON_GROUND} />
       {grid.map((row, rowIdx) =>
         row.map(
           (active, colIdx) =>

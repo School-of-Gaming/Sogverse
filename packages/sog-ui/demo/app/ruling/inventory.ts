@@ -189,11 +189,15 @@ export interface LooseColour {
  * colour with no token behind it. What its ruling did not settle is what reads
  * on it, which is the on-media ink row above.
  *
- * **The identicon's white and black** become Ink and Ground. Its black square
- * reads as a hole on a card, being darker than anything else on the page. Its
- * violet is the weak pairing either way: a dark colour on a dark ground, below
- * the 3:1 glyph floor on both #121212 and #1A1A1A, which is a separate ruling
- * worth taking while the avatars are on screen.
+ * **The identicon's two rows have left this table.** They were sorted the way
+ * the zone colours were sorted into picks: a numbered palette of four in the
+ * library, exactly today's values, meaning "the colours valid for an
+ * identicon" and nothing more. Two of them read the signature pair, and the
+ * black and the white are the artwork's own — so they are no longer colours
+ * with no token behind them, and the app names none of them. What the ruling
+ * did not settle went with them into the library's doc comment, for the avatar
+ * project to inherit: the black square reads as a hole on a card, and the dark
+ * colour of the pair is the weak one on a dark ground either way.
  *
  * **The Klingon easter egg** keeps `#D00` and `#0A0A0A` under the artwork
  * exemption — they are the Empire's flag colours, not the brand's. Its eight
@@ -244,20 +248,6 @@ export const LOOSE_COLOURS: readonly LooseColour[] = [
     where: "about/about-section.tsx, text-white/30 to /70",
     uses: 8,
     verdict: "rename → muted-foreground",
-  },
-  {
-    label: "Identicon white",
-    value: "#FFFFFF",
-    where: "lib/identicon.ts",
-    uses: 1,
-    verdict: "rename → foreground",
-  },
-  {
-    label: "Identicon ground",
-    value: "#000000",
-    where: "ui/identicon.tsx",
-    uses: 1,
-    verdict: "rename → background",
   },
   {
     label: "Lynx cyan",
@@ -512,20 +502,4 @@ export const ACT_ALPHA_JOBS: readonly ActAlphaJob[] = [
     where: "see gradients",
     uses: 10,
   },
-];
-
-/**
- * Identicon fixtures.
- *
- * Real generated UUIDs, hardcoded as literals: the identicon derives its grid
- * and its per-cell colours from the id's hex bytes, so a readable stand-in
- * renders a degenerate pattern rather than a different-looking one, and a
- * generator called at render time gives the same person a different face on
- * every reload.
- */
-export const IDENTICON_IDS: readonly string[] = [
-  "f6c7f52f-f644-4d2b-aee6-ffa5cbbe3a09",
-  "45f1d090-c4e6-432c-852d-d5c3a159d994",
-  "9a328d11-3fe2-41f4-8698-183caee9c0ac",
-  "fdab6467-8c20-4be8-87ee-a148824c119e",
 ];

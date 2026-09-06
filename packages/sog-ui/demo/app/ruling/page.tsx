@@ -26,11 +26,6 @@
 import type { Metadata } from "next";
 import { ActSection } from "./section-act";
 import { GradientsSection } from "./section-gradients";
-import {
-  IdenticonSection,
-  LynxSection,
-  ScrimSection,
-} from "./section-media";
 import { SummarySection } from "./section-summary";
 
 export const metadata: Metadata = {
@@ -43,9 +38,6 @@ export default function RulingPage() {
     <main className="mx-auto max-w-[92rem] px-6 py-16">
       <h1 className="text-h1-mobile sm:text-h1">Theme ruling</h1>
       <SummarySection />
-      <ScrimSection />
-      <IdenticonSection />
-      <LynxSection />
       <ActSection />
       <GradientsSection />
     </main>

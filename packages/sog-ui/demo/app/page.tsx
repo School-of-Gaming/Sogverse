@@ -22,6 +22,7 @@ import {
   YTY_ELEMENT_GRAMMAR,
   type ProductKindId,
 } from "../../src/tokens/grammar";
+import { IDENTICON } from "../../src/tokens/identicon";
 import { PICKS } from "../../src/tokens/picks";
 import {
   FACES,
@@ -202,14 +203,29 @@ function Swatch({
   token,
   name,
   hex,
+  fill,
 }: {
-  token: string;
+  /** The token, when the theme emits a class for it. */
+  token?: string;
   name: string;
   hex: string;
+  /**
+   * The colour, painted inline, for a value the theme emits no class for.
+   *
+   * The identicon's four are the case: nothing spends one as a class, so the
+   * generator emits none, and a class assembled from a hex at render time is a
+   * class the stylesheet does not contain. Passing it here rather than falling
+   * back to `hex` on a missing entry keeps a token whose class went missing
+   * looking as wrong as it is.
+   */
+  fill?: string;
 }) {
   return (
     <div>
-      <div className={`h-16 border border-border ${FILL[token] ?? ""}`} />
+      <div
+        className={`h-16 border border-border ${token === undefined ? "" : (FILL[token] ?? "")}`}
+        style={fill === undefined ? undefined : { backgroundColor: fill }}
+      />
       <p className="mt-2 text-h4 font-medium">{name}</p>
       <p className="font-brand-mono text-body-s text-muted-foreground">{hex}</p>
     </div>
@@ -339,6 +355,19 @@ export default function FoundationsPage() {
               token={`pick-${pick.id}`}
               name={`Pick ${pick.id}`}
               hex={pick.hex}
+            />
+          ))}
+        </div>
+      </Section>
+
+      <Section title="The identicon's four">
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+          {IDENTICON.map((colour) => (
+            <Swatch
+              key={colour.id}
+              name={`Identicon ${colour.id}`}
+              hex={colour.hex}
+              fill={colour.hex}
             />
           ))}
         </div>

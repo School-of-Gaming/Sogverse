@@ -304,8 +304,13 @@ const eslintConfig = defineConfig([
     // holds the scrim's black, which is not a palette colour at all — it is the
     // absence of light, spelled where the construct that spends it is defined
     // precisely so it cannot be mistaken for a hue the brand owns.
+    // `identicon.ts` is the same shape one more time: two of its four read the
+    // signature pair, and the black and the white it spells are the artwork's
+    // own — the two that make a five-by-five grid read as a pixel face rather
+    // than a coloured square, and neither is the app's ground or its ink.
     files: [
       "packages/*/src/tokens/brand.ts",
+      "packages/*/src/tokens/identicon.ts",
       "packages/*/src/tokens/picks.ts",
       "packages/*/src/tokens/surfaces.ts",
     ],

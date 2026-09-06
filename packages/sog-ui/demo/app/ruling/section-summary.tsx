@@ -10,8 +10,11 @@
  * tokens are the library's now — so the gallery that made their names legible
  * has gone with them. The four product-type colours have left it with nothing in
  * their place: a product kind takes a Yty family now, so it is not a colour
- * Sogverse defines. What is left is what is still open: the colours with no
- * token behind them, and the alpha steps.
+ * Sogverse defines. The identicon's white and black have gone the same way, out
+ * of the loose-colour table and into a numbered palette of four, so the question
+ * that drew avatars beside each other has left the page with them. What is left
+ * is what is still open: the colours with no token behind them, and the alpha
+ * steps.
  *
  * The status set keeps one table, and it is keyed on the **construct** rather
  * than on the token. The values are ruled; what is not yet swept is the 335 call

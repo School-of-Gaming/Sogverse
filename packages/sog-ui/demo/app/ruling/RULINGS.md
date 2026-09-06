@@ -524,6 +524,13 @@ does); the hex-literal lint needs no identicon exemption; the "black square read
 hole on a card" note moves to the module's doc comment for the avatar project to inherit;
 the identicon section leaves the page. Queued behind the token landing.
 
+**Landed 2026-09-06, night.** `packages/sog-ui/src/tokens/identicon.ts` holds the four by
+id; `src/lib/identicon.ts` splits the list by id (3 is the ground, the other three the
+cell palette in library order) so the byte-to-colour arithmetic is untouched and every id
+renders the same face; the component spells no hex; the demo floor shows "The
+identicon's four"; a test holds the set and that 1 and 2 are the brand pair. The media
+section is deleted whole; the page holds the inventory, act as a figure, and gradients.
+
 **Asked:** where its white and black come from; its violet measures below the glyph
 floor on any near-black ground.
 

@@ -1,6 +1,30 @@
-import { BRAND } from "@/lib/constants/colors";
+import { IDENTICON, type IdenticonColourId } from "@sog/ui";
 
-const COLORS = [BRAND.act, BRAND.world, "#FFFFFF"];
+/**
+ * The library's four, split by id.
+ *
+ * A colour is read by its id and never by its hue. The four are "the colours
+ * valid for an identicon" and nothing more; which of them a cell gets is decided
+ * by a byte of the person's id, and this file has no opinion about it. All the
+ * split says is that one of the four is the ground the face sits on and the
+ * other three are what its cells are drawn from.
+ */
+const GROUND_ID = 3 satisfies IdenticonColourId;
+
+/** The ground, for the renderer that draws the square behind the cells. */
+const [GROUND] = IDENTICON.filter((colour) => colour.id === GROUND_ID);
+export const IDENTICON_GROUND = GROUND.hex;
+
+/**
+ * The three a cell may take, in the library's order.
+ *
+ * The order and the length are the face itself — a cell's colour is a byte
+ * modulo this array's length — so adding, removing or reordering an entry
+ * redraws every person's avatar.
+ */
+const COLORS = IDENTICON.filter((colour) => colour.id !== GROUND_ID).map(
+  (colour) => colour.hex,
+);
 
 export interface IdenticonData {
   grid: boolean[][];
