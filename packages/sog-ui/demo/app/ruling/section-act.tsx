@@ -43,11 +43,34 @@
  *    glyph tile beside it at two, where the tint has the weaker case and the
  *    difference between the two cases is visible in one glance.
  *
+ * A fourth case joined them after the first review: **the lifecycle chip**. It
+ * is not a fourth reading of the sentence but the one place the sentence was
+ * not enough — the owner rejected today *and* the proposal, because the
+ * question there is not what shape act takes but why act is on a lifecycle
+ * state at all. It is drawn as a set, in the list row where the states live,
+ * and the reasoning is on the drawing itself.
+ *
  * Everything after them is proof that the sentence covers the rest: one strip,
  * one row per job, today beside the single proposal the table below names, at a
  * smaller scale, with no alternatives to choose between. A job with two
  * exemplars keeps both, because a second exemplar is a different construct and
  * not a second proposal. The two hover jobs stay live there.
+ *
+ * **Ruled by the owner, 2026-09-06, on two of the three.**
+ *
+ * 1. **A selected option takes `border-act`.** The edge, not the ring and not
+ *    the check: it costs nothing on a row that is already bordered, and it is
+ *    one shape for all fourteen sites rather than a shape per geometry.
+ * 2. The weekday is **still open**, and is the only thing this section is now
+ *    asking.
+ * 3. **A tile behind a mark takes `bg-lifted`, and the initials stay `act`.**
+ *    Both halves of the case go the same way — the glyph tile and the monogram
+ *    tile take the grey — and the monogram's two letters keep their amber, so
+ *    they are read as the mark they stand in for rather than as text. The
+ *    library's last alpha exemption goes with it.
+ *
+ * The two ruled cases stay drawn until the sweep lands, because the page shrinks
+ * by what has landed rather than by what has been said.
  *
  * **What the strip dropped, and why.** Three proposal variants left the page
  * with the reorganisation. Each is a shape to raise again if its primary is
@@ -79,7 +102,7 @@
  * | An icon tile behind a glyph | 7 | the act glyph on a `lifted` tile | the glyph is already `text-act`, so the tint is a second statement of the same accent behind the first. This row decides the library's last exemption — see below. |
  * | A drop target | 6 | an act ring | the most transient statement in the set, and a ring is the one figure that can appear and vanish without moving what is being dragged over. |
  * | A selected item, with act as its ink | 6 | unchanged but for the wash | act is already the figure here, as the word. Drawn once so the owner can see the principle takes nothing away from it. |
- * | A status chip | 2 | the waitlist chip's shape | the chip the observation came from, at its `primary` tone. Nothing to invent: the shape is already in the app. |
+ * | A status chip | 2 | a neutral chip carrying a status mark, and no act | the one job the sentence did not settle. Act on a lifecycle state is the call-to-action colour spent on "has not started yet", so the chip is redrawn as a set — the three states an admin can actually reach, in the list row, with the status colours doing the work. Its own case. |
  * | Faded ink on an amber fill | 2 | the meta line moved off the fill | the palette offers exactly one ink for an amber fill, so there is no quieter member of the pair to move to. Where the label cannot leave the fill it goes to full value instead. |
  * | A hover shade on a filled control | 2 | Button's, later | the one job the principle does not answer, because a filled button is the one place a brand colour is a ground on purpose. Drawn live with and without the shade so the cost of deleting it is visible. |
  * | A hover tint on an empty tile | 1 | `hover:bg-lifted` | a hover is a lift and the lift has a grey. Drawn live. |
@@ -100,15 +123,18 @@
  * sites drawn here (the other ten are gradients and belong to the gradients
  * question):
  *
- * - 14 selected form options take whichever of the three shapes is picked.
+ * - 14 selected form options take `border-act` (ruled).
  * - 3 highlighted rows: the admin week takes the leading edge; the two chat
  *   sites keep their ring and drop the wash.
  * - 1 callout takes glyph and label in act on the lifted ground its own info
  *   sibling already sits on.
- * - 7 icon tiles go to `lifted`, and `brand.ts` loses its last exemption.
+ * - 7 icon tiles go to `lifted`, keeping their act mark and, on the monogram,
+ *   their act initials; `brand.ts` loses its last exemption (ruled).
  * - 6 drop targets take `ring-2 ring-act`.
- * - 6 act-ink selections and 2 status chips lose their wash, the chips taking
- *   the waitlist chip's shape.
+ * - 6 act-ink selections lose their wash.
+ * - The 2 status chips leave act altogether: the lifecycle map is rewritten
+ *   around the three reachable states, with `cancelled` and `expired` kept as
+ *   the fallback the flow does not produce.
  * - 4 rings go to full value.
  * - 1 hover tint becomes `hover:bg-lifted`.
  * - `text-act-foreground/70` on the WhatsApp bubble becomes a muted line under
@@ -139,18 +165,25 @@
 
 import Image from "next/image";
 import {
+  Ban,
+  Calendar,
+  CalendarOff,
   Check,
+  ChevronRight,
   Gamepad2,
   Hourglass,
   ImagePlus,
   Images,
   Info,
   Plus,
+  Radio,
+  Ticket,
   User,
+  type LucideIcon,
 } from "lucide-react";
 
-import { BRAND } from "../../../src/tokens/brand";
-import { tailwindAlpha } from "./colour";
+import { BRAND, YTY_FAMILIES, statusHex } from "../../../src/tokens/brand";
+import { PRODUCT_KIND_GRAMMAR } from "../../../src/tokens/grammar";
 import {
   Caps,
   Case,
@@ -188,12 +221,19 @@ interface Variant {
   readonly check?: boolean;
 }
 
-/** Sogverse's `destructive`, which is the status question's and is not a library token. */
-const DESTRUCTIVE = "#EF4343";
-
 const ACT = BRAND.act.hex;
 const ACT_INK = BRAND.act.foreground;
 const WORLD_INK = BRAND.world.foreground;
+
+/**
+ * The week row's session chip carries its product kind as one tinted mark, and
+ * both halves of that mark are read from the library's own grammar row rather
+ * than picked here: a consumer club is `Gamepad2` in Glow. Drawing it any other
+ * way would put a colour on the page that the tone grammar does not give it,
+ * which is the one thing a ruling page must never do.
+ */
+const CLUB_GLYPH = PRODUCT_KIND_GRAMMAR.consumer_club.glyph;
+const CLUB_INK = YTY_FAMILIES[PRODUCT_KIND_GRAMMAR.consumer_club.family].hex;
 
 /** The filled button's own base classes, shared by two jobs. */
 const BUTTON_BASE =
@@ -523,6 +563,17 @@ function CatalogueTiles({ variant }: { variant: Variant }) {
  * edge down every line of a chat log would be a permanent mark paying for a
  * state that lasts a second. It is the job's second exemplar and it asks
  * nothing, so it is drawn in the strip.
+ *
+ * **The session chip is the app's, class for class, and it matters here.** The
+ * row was first drawn with a bare bordered box reading "17:00 Espoo club",
+ * which is nothing the app contains: a real chip is a bordered pill carrying
+ * its kind's tinted glyph, the time in muted tabular ink and the whole product
+ * name, and it hovers to `lifted`. What the week case is really asking — how
+ * much amber a marked row needs — cannot be judged against a row whose contents
+ * are not the row's contents, because the chip is the colour the edge and the
+ * weekday are competing with. The kind's mark comes from the library's grammar
+ * row (a consumer club is Glow's `Gamepad2`), so the page cannot drift from the
+ * tone grammar even if the mapping changes.
  */
 function WeekRows({ draw }: { draw: "today" | "edge" | "edge-act" }) {
   const shell = "flex flex-col gap-2 rounded-lg p-2 sm:flex-row sm:gap-3";
@@ -553,8 +604,14 @@ function WeekRows({ draw }: { draw: "today" | "edge" | "edge-act" }) {
           <span className="text-xs tabular-nums text-muted-foreground">9.9.</span>
         </div>
         <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-          <li className="rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground">
-            17:00 Espoo club
+          <li>
+            <span className="flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:bg-lifted">
+              <Glyph icon={CLUB_GLYPH} size={14} colour={CLUB_INK} />
+              <span className="shrink-0 font-medium tabular-nums text-muted-foreground">
+                17:00
+              </span>
+              <span className="whitespace-nowrap">Espoo Minecraft club</span>
+            </span>
           </li>
         </ul>
       </li>
@@ -899,54 +956,290 @@ function FilterChips({ variant }: { variant: Variant }) {
   );
 }
 
-// -------------------------------------------------------- job 7: a status chip
+// ------------------------------------------------------ job 7: a lifecycle chip
 
 /**
- * `admin/products/product-status-chip.tsx` — the five product statuses, of which
- * `pending` is `bg-act/20 text-act`.
+ * `admin/products/product-status-chip.tsx` — what state a product is in, drawn
+ * in the list row it lives on.
  *
- * The proposal is the chip the observation came from, at its `primary` tone:
- * `public/products/status-chip.tsx` — a neutral edge, the page ground, a glyph
- * and the word in act. Nothing here is invented; the column is that component's
- * own class string with this chip's word in it.
+ * **The owner, on the first drawing: "A status chip looks quite bad. I don't
+ * like today nor proposed."** Both were the same mistake wearing two shapes.
+ * Today's map says five things about one lifecycle in three unrelated
+ * languages: the CTA colour as a tint (`pending`), the CTA colour as a fill
+ * (`running`), a neutral (`completed`, `expired`) and a status colour
+ * (`cancelled`). The first proposal changed the shape and kept the mixture, so
+ * it could not fix what was wrong. **Act appears in none of the candidates: a
+ * lifecycle state is not the thing to do**, and spending the call-to-action
+ * colour on "this product has not started yet" is the clearest case of that in
+ * the app.
  *
- * The glyph comes with the shape rather than being an addition to it: the
- * coloured-text ruling has a coloured word never carrying the meaning alone,
- * and the waitlist chip's hourglass is exactly that mark. The four chips beside
- * it are drawn unchanged because they are not act alpha sites, which puts the
- * proposed chip next to `running`'s full amber fill — and that neighbouring is
- * the picture.
+ * **The set is three, not five, and that is the owner's own correction —
+ * verified rather than assumed.** A product is created `pending` and nothing in
+ * the admin UI writes `products.status` at all, so:
+ *
+ * - **`cancelled` is unreachable.** The only `"cancelled"` written anywhere is
+ *   `family_subscriptions.status`, from the Stripe webhook's mapping of
+ *   `canceled` / `unpaid` / `incomplete_expired`. That is a subscription, not a
+ *   product.
+ * - **`expired` is a derivation branch, not a state an admin leaves a product
+ *   in.** `effectiveStatus` returns it only for a *pending* product whose end
+ *   date has passed without its start conditions ever being met — a product
+ *   nobody started and nobody cancelled, which the flow does not produce on
+ *   purpose.
+ *
+ * So the three states an admin actually meets are drawn as the set, in the row
+ * where they live, and the other two are drawn once at the end as the fallback:
+ * defined, so the type has no member without a look, and not designed as peers
+ * of states that happen every week.
+ *
+ * **The mapping the candidates carry, and why.** `running` is success, because
+ * it is the state where the thing is working. `pending` is info — a fact the
+ * admin needs and did not ask for — with a warning variant drawn beneath it,
+ * because "not started yet" can be read either as neutral information or as
+ * something to chase, and the two hues say different things about whose problem
+ * it is. `completed` spends no colour at all: it is the quiet end of the
+ * lifecycle, and a green tick on every finished club would be the loudest thing
+ * in a list of thirty.
+ *
+ * **Three shapes, and the difference between them is how much a state is
+ * allowed to say.** A dot is the smallest mark that can carry a hue; a glyph
+ * says the state without needing its colour, which is the coloured-text
+ * ruling's own requirement; the fourth column keeps the first proposal's
+ * coloured label so the cost of colouring the word is visible beside the two
+ * that do not.
+ *
+ * **If the set still reads wrong with act gone, the fault is the chip's shape
+ * rather than its colours, and it belongs to the chip adoption** — the pill's
+ * proportions, its border, where it sits in the row — not to this question,
+ * which is only about what colour a lifecycle state may spend.
  *
  * The job's second site is `public/schools/schools-browse.tsx`, the "clubs here"
- * pill on a school row: the same statement in a smaller box, taking whatever
+ * pill on a school row: a different fact in the same box, taking whatever shape
  * this one takes.
  */
-function StatusChips({ draw }: { draw: "today" | "proposed" }) {
-  const chip = "shrink-0 rounded-full px-2 py-0.5 text-xs";
+interface LifecycleState {
+  /** The chip's word. */
+  readonly word: string;
+  /** `product-status-chip.tsx`'s class for this state today. */
+  readonly today: string;
+  /** The mark the candidates draw, and the colour it carries. */
+  readonly glyph: LucideIcon;
+  readonly glyphInk: string;
+  /**
+   * The dot's `bg-*` and the coloured label's `text-*`, written out as literals
+   * because Tailwind scans source text. `dot` is `null` for a state that spends
+   * no colour, which is also what makes its label quiet.
+   */
+  readonly dot: string | null;
+  readonly labelInk: string;
+  /** The product this state is drawn on, so the set reads as a real list. */
+  readonly name: string;
+  readonly blurb: string;
+  readonly when: string;
+  readonly seats: string;
+}
+
+const PENDING_INFO: LifecycleState = {
+  word: "Pending",
+  today: "bg-act/20 text-act",
+  glyph: Hourglass,
+  glyphInk: statusHex("info"),
+  dot: "bg-info",
+  labelInk: "text-info",
+  name: "Kalasataman Minecraft-kerho",
+  blurb: "Tuesdays after school, ages 9–12",
+  when: "6.10.2026 – 15.12.2026",
+  seats: "16 seats",
+};
+
+const PENDING_WARNING: LifecycleState = {
+  ...PENDING_INFO,
+  glyphInk: statusHex("warning"),
+  dot: "bg-warning",
+  labelInk: "text-warning",
+  name: "Tapiolan Roblox-kerho",
+  blurb: "Thursdays after school, ages 9–12",
+  when: "8.10.2026 – 17.12.2026",
+  seats: "12 seats",
+};
+
+const RUNNING: LifecycleState = {
+  word: "Running",
+  today: "bg-act text-act-foreground",
+  glyph: Radio,
+  glyphInk: statusHex("success"),
+  dot: "bg-success",
+  labelInk: "text-success",
+  name: "Espoon Minecraft-kerho",
+  blurb: "Mondays after school, ages 7–10",
+  when: "1.9.2026 – 8.12.2026",
+  seats: "16 seats",
+};
+
+const COMPLETED: LifecycleState = {
+  word: "Completed",
+  today: "bg-lifted text-muted-foreground",
+  glyph: Check,
+  glyphInk: MUTED_INK,
+  dot: null,
+  labelInk: "text-muted-foreground",
+  name: "Herttoniemen Fortnite-kerho",
+  blurb: "Wednesdays after school, ages 11–14",
+  when: "13.1.2026 – 20.5.2026",
+  seats: "12 seats",
+};
+
+/** The three an admin meets, in lifecycle order, with pending drawn both ways. */
+const LIFECYCLE: readonly LifecycleState[] = [
+  PENDING_INFO,
+  PENDING_WARNING,
+  RUNNING,
+  COMPLETED,
+];
+
+/**
+ * The two the admin flow cannot produce, kept so the type has no member without
+ * a look. `Ban` rather than an `X`: a cancelled club is stopped, and an X is the
+ * mark this app uses for closing things.
+ */
+const CANCELLED: LifecycleState = {
+  ...COMPLETED,
+  word: "Cancelled",
+  today: "border border-border text-destructive",
+  glyph: Ban,
+  glyphInk: statusHex("destructive"),
+  dot: "bg-destructive",
+  labelInk: "text-destructive",
+};
+
+const EXPIRED: LifecycleState = {
+  ...COMPLETED,
+  word: "Expired",
+  glyph: CalendarOff,
+};
+
+/** The chip as `product-status-chip.tsx` draws it today. */
+function TodayChip({ state }: { state: LifecycleState }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {draw === "today" ? (
-          <span className={`${chip} bg-act/20 text-act`}>Pending</span>
-        ) : (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-act">
-            <Glyph icon={Hourglass} size={12} colour={ACT} />
-            Pending
-          </span>
-        )}
-        <span className={`${chip} bg-act text-act-foreground`}>Running</span>
-        <span className={`${chip} bg-lifted text-muted-foreground`}>Completed</span>
-        <span
-          className={chip}
-          style={{
-            backgroundColor: tailwindAlpha(DESTRUCTIVE, 20),
-            color: DESTRUCTIVE,
-          }}
-        >
-          Cancelled
+    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${state.today}`}>
+      {state.word}
+    </span>
+  );
+}
+
+/**
+ * The neutral figure chip: the waitlist chip's shape, carrying whichever mark
+ * the column spends. `mark` is the whole of what changes between the three
+ * candidate columns.
+ */
+function LifecycleChip({
+  state,
+  mark,
+  colouredLabel,
+}: {
+  state: LifecycleState;
+  mark: "dot" | "glyph";
+  colouredLabel: boolean;
+}) {
+  const quiet = state.dot === null;
+  let ink = "text-foreground";
+  if (colouredLabel) ink = state.labelInk;
+  else if (quiet) ink = "text-muted-foreground";
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium ${ink}`}
+    >
+      {mark === "glyph" ? (
+        <Glyph icon={state.glyph} size={12} colour={state.glyphInk} />
+      ) : null}
+      {mark === "dot" && state.dot !== null ? (
+        <span className={`h-2 w-2 shrink-0 rounded-full ${state.dot}`} />
+      ) : null}
+      {state.word}
+    </span>
+  );
+}
+
+/**
+ * `admin/products/product-rows.tsx` — one product in the admin list.
+ *
+ * Drawn because a chip is judged by what it sits next to: a name it must not
+ * outweigh, a picture, a muted meta line, and the same chip four rows down.
+ * The row is the app's class string; the photograph is the demo's own, standing
+ * in for the product banner, and the chevron nudges on hover as the real one
+ * does.
+ */
+function ProductRow({
+  state,
+  chip,
+}: {
+  state: LifecycleState;
+  chip: React.ReactNode;
+}) {
+  return (
+    <span className="group flex items-center justify-between gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-lifted hover:text-foreground">
+      <span className="flex min-w-0 flex-1 items-center gap-4">
+        <span className="relative block aspect-[3/2] w-24 shrink-0 overflow-hidden rounded-md">
+          <Image
+            src="/photograph.jpg"
+            alt=""
+            fill
+            sizes="96px"
+            className="object-cover"
+          />
         </span>
-        <span className={`${chip} bg-lifted text-muted-foreground`}>Expired</span>
-      </div>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="truncate font-medium">{state.name}</span>
+            {chip}
+          </span>
+          <span className="block truncate text-sm text-muted-foreground">
+            {state.blurb}
+          </span>
+          <span className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Glyph icon={Calendar} size={12} colour={MUTED_INK} />
+              {state.when}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Glyph icon={Ticket} size={12} colour={MUTED_INK} />
+              {state.seats}
+            </span>
+          </span>
+        </span>
+      </span>
+      <span className="shrink-0 transition-transform group-hover:translate-x-0.5">
+        <Glyph icon={ChevronRight} size={20} colour={MUTED_INK} />
+      </span>
+    </span>
+  );
+}
+
+/** One column of the lifecycle case: the same four rows, one chip treatment. */
+function LifecycleRows({
+  draw,
+}: {
+  draw: "today" | "dot" | "glyph" | "coloured";
+}) {
+  return (
+    <div className="space-y-2">
+      {LIFECYCLE.map((state) => (
+        <ProductRow
+          key={state.name}
+          state={state}
+          chip={
+            draw === "today" ? (
+              <TodayChip state={state} />
+            ) : (
+              <LifecycleChip
+                state={state}
+                mark={draw === "dot" ? "dot" : "glyph"}
+                colouredLabel={draw === "coloured"}
+              />
+            )
+          }
+        />
+      ))}
     </div>
   );
 }
@@ -1328,6 +1621,56 @@ export function ActSection() {
         </Compare>
       </Case>
 
+      <Case title="A lifecycle chip">
+        <Compare columns={4}>
+          <Panel label="today">
+            <Exemplar
+              file="admin/products/product-rows.tsx"
+              page="/admin/consumer-clubs, the list"
+            >
+              <LifecycleRows draw="today" />
+            </Exemplar>
+          </Panel>
+          <Panel label="proposed · a status dot">
+            <Exemplar
+              file="admin/products/product-rows.tsx"
+              page="/admin/consumer-clubs, the list"
+            >
+              <LifecycleRows draw="dot" />
+            </Exemplar>
+          </Panel>
+          <Panel label="proposed · a status glyph">
+            <Exemplar
+              file="admin/products/product-rows.tsx"
+              page="/admin/consumer-clubs, the list"
+            >
+              <LifecycleRows draw="glyph" />
+            </Exemplar>
+          </Panel>
+          <Panel label="proposed · glyph and coloured label">
+            <Exemplar
+              file="admin/products/product-rows.tsx"
+              page="/admin/consumer-clubs, the list"
+            >
+              <LifecycleRows draw="coloured" />
+            </Exemplar>
+          </Panel>
+        </Compare>
+        <div className="mt-8 max-w-sm">
+          <StripPanel label="the fallback">
+            <Exemplar
+              file="admin/products/product-status-chip.tsx"
+              page="/admin/consumer-clubs, the list and the details page"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <LifecycleChip state={CANCELLED} mark="glyph" colouredLabel />
+                <LifecycleChip state={EXPIRED} mark="glyph" colouredLabel />
+              </div>
+            </Exemplar>
+          </StripPanel>
+        </div>
+      </Case>
+
       <Case title="The rest follows">
         <div className="max-w-2xl space-y-8">
           <StripJob name="A selected option in a form">
@@ -1390,17 +1733,6 @@ export function ActSection() {
               proposedLabel={SELECTED_INK_PROPOSED.label}
               today={<FilterChips variant={SELECTED_INK_TODAY} />}
               proposed={<FilterChips variant={SELECTED_INK_PROPOSED} />}
-            />
-          </StripJob>
-
-          <StripJob name="A status chip">
-            <StripPair
-              file="admin/products/product-status-chip.tsx"
-              page="/admin/products, the list and the details page"
-              todayLabel="today · bg-act/20 text-act"
-              proposedLabel="proposed · the waitlist chip"
-              today={<StatusChips draw="today" />}
-              proposed={<StatusChips draw="proposed" />}
             />
           </StripJob>
 
