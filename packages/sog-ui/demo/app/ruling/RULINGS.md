@@ -907,7 +907,22 @@ a smear and goes; the lit cards are already a rule; the About washes go. **To dr
 home hero and the home social card as today, as amber+one at full value with no glow, and
 as amber+one with glows emitted from the mark and the violet element, at hero width.
 
-**Ruling:** _open — the hero drawing decides it_
+**The role chip (added 2026-09-06, night).** The owner: the reference branch's role badges
+in Yty colours (gamer act, parent Harmony, gedu Wit, admin ink) looked nice and raised the
+question whether roles could take Yty colours as a UI grammar throughout the app; role
+colours are seen mostly by admins, "but that's not to say it's a rule". Facts: role
+badges also render on the gedu's group roster and in the **voice room's participant row,
+seen by gamers and parents, beside the Yty zone tiles**, which is where a role hue and a
+zone hue would collide; and the four families are already spent on product kinds. A role
+is a fact the grammar's own text names first, so it takes a row; the question is what it
+wears. Drawn as a new page section "The role chip": today's badges (with the gedu
+gradient) beside three shapes, each on the admin users table and in the voice roster
+beside the zone tiles: neutral figure chips (glyph + word in ink), the brand pair for
+people (gamer act, gedu world, parent and admin neutral; as figure chips and as today's
+fills), and the families as the reference branch had them. Whatever wins retires the
+gedu gradient and lands as a `ROLE_GRAMMAR` row with a glyph.
+
+**Ruling:** _open — the hero drawing decides it; the role chip drawn beside it_
 
 ## Where the session stands (2026-09-06, evening)
 

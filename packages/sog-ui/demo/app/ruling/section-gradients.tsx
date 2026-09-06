@@ -259,6 +259,20 @@ const HERO_SPECS: Record<HeroCandidate, HeroSpec> = {
   },
 };
 
+/** The hero's two buttons, in the app's own order: the alternative, then the primary. */
+function HeroCtas({ className }: { className: string }) {
+  return (
+    <div className={className}>
+      <span className="inline-flex h-11 items-center justify-center rounded-md border border-border bg-background px-5 text-cta shadow-sm">
+        Learn more about us
+      </span>
+      <span className="inline-flex h-11 items-center justify-center rounded-md bg-act px-5 text-cta text-act-foreground shadow">
+        Get started
+      </span>
+    </div>
+  );
+}
+
 /** `app/(public)/page.tsx` — the home hero, and `roblox/roblox-hero.tsx` byte for byte. */
 function Hero({ candidate }: { candidate: HeroCandidate }) {
   const spec = HERO_SPECS[candidate];
@@ -298,14 +312,7 @@ function Hero({ candidate }: { candidate: HeroCandidate }) {
         <p className="mx-auto mt-8 max-w-3xl text-body-l text-muted-foreground">
           {HERO_COPY}
         </p>
-        <div className="mt-10 flex flex-col-reverse items-center justify-center gap-4 sm:flex-row">
-          <span className="inline-flex h-11 items-center justify-center rounded-md border border-border bg-background px-5 text-cta shadow-sm">
-            Learn more about us
-          </span>
-          <span className="inline-flex h-11 items-center justify-center rounded-md bg-act px-5 text-cta text-act-foreground shadow">
-            Get started
-          </span>
-        </div>
+        <HeroCtas className="mt-10 flex flex-col-reverse items-center justify-center gap-4 sm:flex-row" />
       </div>
       {spec.violet === "band" ? (
         <span
@@ -313,6 +320,168 @@ function Hero({ candidate }: { candidate: HeroCandidate }) {
           style={{ backgroundColor: WORLD, boxShadow: spec.worldGlow }}
         />
       ) : null}
+    </div>
+  );
+}
+
+// ------------------------------------------- the hero, mark left, slogan right
+
+/**
+ * The hero re-laid as two columns.
+ *
+ * **The owner, on seeing the candidates above, verbatim:** "let's play with 'a
+ * violet rule under the headline', but place the slogan in the right column and
+ * the brand icon in the left column, larger. I need to see it both desktop and
+ * mobile."
+ *
+ * So this is candidate 2's ingredients — the ground alone, the mark, the
+ * headline as the app sets it, the full-value violet rule, the real subtitle
+ * and the real button row — arranged as a split rather than a stack, drawn at
+ * the two widths that decide whether a layout is real, and then drawn again
+ * with the two glows so the glow can be judged at this layout rather than
+ * inferred from the stacked one.
+ *
+ * **The classes are the app's where the app has them.** The section, the
+ * container and the type steps come from `app/(public)/page.tsx`: `container
+ * mx-auto px-4 py-24 sm:py-32`, the subtitle capped at the hero's own
+ * `max-w-3xl`, the button row's `flex-col-reverse … sm:flex-row`. Three things
+ * are not the app's, because the app has no two-column hero to copy: the grid
+ * itself, its gutter, and the right column's left alignment (the app's single
+ * column is centred, and centring a column that has a mark beside it reads as
+ * two things that missed each other).
+ *
+ * **The gutter is the glow's whole budget, and that is why it is `gap-24`.**
+ * Stacked, the two sources are separated by four lines of headline and can each
+ * carry a 90px blur without meeting. Side by side they are separated only by
+ * the gutter, and a blur reaches about half its radius past its own edge — so a
+ * 48px gutter caps both glows at roughly 40px, which on a 380px mark is not a
+ * glow anybody would notice. 96px buys back the radius the stacked hero uses.
+ * That is the one real cost this layout carries, and it is a layout decision
+ * before it is a colour one.
+ *
+ * **The stack order at 360: mark, then headline.** The app's hero does not
+ * stack today — it is one centred column with no mark in it, because the sticky
+ * header immediately above carries the mark — so there is no existing order to
+ * inherit, and the order is chosen. It is the order the app already puts these
+ * two things in down the page (mark above, claim below), and the order the OG
+ * card states outright in its own source: who we are, then what we promise. A
+ * hero that opens with the claim and identifies itself underneath asks a cold
+ * visitor to hold a promise from nobody. The rule stays under the headline at
+ * both widths, because it is punctuation on the headline and not on the
+ * composition.
+ *
+ * **Mark size: 380px wide on the desktop drawing, 208px at 360.** Nothing
+ * governs those numbers but the composition — **no minimum size and no
+ * clearspace is stated for our own mark anywhere yet**, in the library or in
+ * Sogverse (`packages/sog-ui/CLAUDE.md` says the mark's clearspace and minimum
+ * size are the library's to own; no value exists to own yet, and the 20px
+ * minimum in `src/assets/partners/CLAUDE.md` is Roblox's constraint on Roblox's
+ * wordmark). So: 380 is a hair under the third-width column the owner asked
+ * for, leaving the column's own breathing room; 208 is a little under two
+ * thirds of the 328px measure at 360, which is as large as it goes before it
+ * competes with the headline directly beneath it. Both are placeholders for a
+ * rule the mark adoption has to write.
+ *
+ * **The 360 drawing resolves the responsive variants by hand**, and has to: a
+ * viewport media query cannot be scoped to a 360px box inside a wide page, so a
+ * panel carrying `sm:` classes would silently draw the desktop layout at mobile
+ * width and lie about both. The variants resolved out are `sm:py-32` (stays
+ * `py-24`), `sm:flex-row` (stays `flex-col-reverse`, so the primary sits on
+ * top, which is the button-order rule's stacked half), and the headline's step,
+ * which drops from `text-h1` to `text-h1-mobile`.
+ *
+ * **The 360 headline was checked in the widest locale and does not overflow.**
+ * The app's hero has no min-height to reserve. The longest line any locale sets
+ * here is French's "Du temps d'écran" at sixteen characters, which at the
+ * mobile h1 step runs about 265px inside the 328px the floor leaves after
+ * `px-4` — Swedish's "kvalitetstid" and Finnish's "Ruutuajasta" are shorter
+ * still. The drawing is in English because the ruling is about what is behind
+ * the words; the arithmetic is the French one.
+ */
+type HeroWidth = "desktop" | "mobile";
+
+const SPLIT_MARK_WIDTH: Record<HeroWidth, number> = { desktop: 380, mobile: 208 };
+const SPLIT_MARK_RADIUS: Record<HeroWidth, number> = { desktop: 28, mobile: 16 };
+const SPLIT_ACT_GLOW: Record<HeroWidth, string> = {
+  desktop: glow(ACT, 90, 4),
+  mobile: glow(ACT, 60, 2),
+};
+const SPLIT_WORLD_GLOW: Record<HeroWidth, string> = {
+  desktop: glow(WORLD, 80, 0),
+  mobile: glow(WORLD, 60, 0),
+};
+
+function SplitHero({ width, glowing }: { width: HeroWidth; glowing: boolean }) {
+  const desktop = width === "desktop";
+  const markWidth = SPLIT_MARK_WIDTH[width];
+  const actGlow = glowing ? SPLIT_ACT_GLOW[width] : undefined;
+  const worldGlow = glowing ? SPLIT_WORLD_GLOW[width] : undefined;
+
+  const mark = (
+    <span
+      className="inline-block"
+      style={{ borderRadius: SPLIT_MARK_RADIUS[width], boxShadow: actGlow }}
+    >
+      <Image
+        src={MARK}
+        alt=""
+        width={markWidth}
+        height={Math.round(markWidth / MARK_RATIO)}
+        className="block"
+        unoptimized
+      />
+    </span>
+  );
+
+  /* The wrapper shrinks to the headline's longest line, so the rule beneath it
+     is exactly the headline's measure without anything being measured. */
+  const headline = (
+    <div className="inline-block">
+      <h4 className={desktop ? "text-h1 tracking-tight" : "text-h1-mobile tracking-tight"}>
+        Where
+        <br />
+        <span className="text-act">Screen Time</span>
+        <br />
+        Becomes
+        <br />
+        <span className="text-world">Quality Time</span>
+      </h4>
+      <span
+        className={
+          desktop
+            ? "mt-8 block h-[6px] w-full rounded-full"
+            : "mt-6 block h-[6px] w-full rounded-full"
+        }
+        style={{ backgroundColor: WORLD, boxShadow: worldGlow }}
+      />
+    </div>
+  );
+
+  if (desktop) {
+    return (
+      <div className="relative overflow-hidden rounded-lg bg-background">
+        <div className="container mx-auto grid grid-cols-3 items-center gap-24 px-4 py-24 sm:py-32">
+          <div className="flex justify-center">{mark}</div>
+          <div className="col-span-2 text-left">
+            {headline}
+            <p className="mt-6 max-w-3xl text-body-l text-muted-foreground">
+              {HERO_COPY}
+            </p>
+            <HeroCtas className="mt-10 flex flex-col-reverse items-center gap-4 sm:flex-row" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-[360px] max-w-full overflow-hidden rounded-lg bg-background">
+      <div className="container mx-auto flex flex-col items-center px-4 py-24 text-center">
+        <div className="mb-8">{mark}</div>
+        {headline}
+        <p className="mt-6 text-body-l text-muted-foreground">{HERO_COPY}</p>
+        <HeroCtas className="mt-10 flex flex-col-reverse items-center gap-4" />
+      </div>
     </div>
   );
 }
@@ -663,6 +832,17 @@ function HomeOg({ candidate }: { candidate: OgCandidate }) {
 
 // ---------------------------------------------------------------- section
 
+const SPLIT_PANELS: readonly {
+  label: string;
+  width: HeroWidth;
+  glowing: boolean;
+}[] = [
+  { label: "desktop", width: "desktop", glowing: false },
+  { label: "360", width: "mobile", glowing: false },
+  { label: "desktop, glowing", width: "desktop", glowing: true },
+  { label: "360, glowing", width: "mobile", glowing: true },
+];
+
 const HERO_PANELS: readonly { label: string; candidate: HeroCandidate }[] = [
   { label: "act 20% / world 10%, a wash", candidate: "today" },
   { label: "a violet rule under the headline", candidate: "rule" },
@@ -697,6 +877,21 @@ const OG_PANELS: readonly { label: string; candidate: OgCandidate }[] = [
 export function GradientsSection() {
   return (
     <Question n={2} title="Gradients">
+      <Case title="The hero: mark left, slogan right">
+        <div className="space-y-10">
+          {SPLIT_PANELS.map((panel) => (
+            <Panel key={panel.label} label={panel.label}>
+              <Exemplar
+                file="app/(public)/page.tsx, roblox/roblox-hero.tsx"
+                page="the home page and /roblox, above the fold"
+              >
+                <SplitHero width={panel.width} glowing={panel.glowing} />
+              </Exemplar>
+            </Panel>
+          ))}
+        </div>
+      </Case>
+
       <Case title="The hero">
         <div className="space-y-10">
           {HERO_PANELS.map((panel) => (
