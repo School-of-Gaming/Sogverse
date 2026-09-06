@@ -23,16 +23,30 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_var(--color-background)_100%),linear-gradient(to_right,_color-mix(in_oklab,var(--color-act)_20%,transparent),_transparent_50%,_color-mix(in_oklab,var(--color-world)_10%,transparent))] pt-[var(--header-height)]">
+      {/* The hero sits on the page ground and marks itself with one violet
+          rule under the headline. It used to carry a two-hue wash — amber at
+          20% blended into violet at 10% under a vertical fade — and a brand
+          colour is never blended into another and never starts at a lower
+          alpha: what that painted was two colours neither of which was ours.
+          The rule is violet at its authored value, which is the display and
+          identity colour, and it is the whole of the colour the hero spends
+          besides the headline's own two words and the amber call to action. */}
+      <section className="relative -mt-[var(--header-height)] overflow-hidden pt-[var(--header-height)]">
         <div className="container mx-auto px-4 py-24 sm:py-32">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="font-display text-2xl font-bold tracking-tight md:text-6xl">
-              {t.rich('hero.title', {
-                br: () => <br />,
-                primary: (chunks) => <span className="text-act">{chunks}</span>,
-                secondary: (chunks) => <span className="text-world">{chunks}</span>,
-              })}
-            </h1>
+            {/* The wrapper shrinks to the headline's longest line, so the rule
+                beneath it runs exactly the headline's measure with nothing
+                measured at runtime. */}
+            <div className="inline-block">
+              <h1 className="font-display text-2xl font-bold tracking-tight md:text-6xl">
+                {t.rich('hero.title', {
+                  br: () => <br />,
+                  primary: (chunks) => <span className="text-act">{chunks}</span>,
+                  secondary: (chunks) => <span className="text-world">{chunks}</span>,
+                })}
+              </h1>
+              <span className="mt-6 block h-1.5 w-full rounded-full bg-world sm:mt-8" />
+            </div>
             <p className="mt-6 text-lg leading-8 text-muted-foreground">
               {t('hero.subtitle')}
             </p>
@@ -76,7 +90,7 @@ export default function HomePage() {
             <Card key={feature.key}>
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-act/10">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-lifted">
                     <feature.icon className="h-6 w-6 text-act" />
                   </div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
@@ -137,7 +151,13 @@ export default function HomePage() {
 
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-24">
-        <Card className="mx-auto max-w-3xl bg-gradient-to-r from-act/10 to-world/10">
+        <Card className="relative mx-auto max-w-3xl overflow-hidden">
+          {/* The card is the plain card ground with one violet rule along its
+              top edge — the hero's construct, so the page opens and closes on
+              the same idea. It used to be washed amber-to-violet; two brand
+              colours blended into each other is a smear, and act here would
+              only repeat the colour of the button inside the card. */}
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
           <CardContent className="flex flex-col items-center py-12 text-center">
             <h2 className="text-2xl font-bold sm:text-3xl">
               {t('cta.heading')}

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { YTY_FAMILIES } from "../../../packages/sog-ui/src/tokens/brand";
 import {
   PRODUCT_KIND_GRAMMAR,
+  ROLE_GRAMMAR,
   YTY_ELEMENT_GRAMMAR,
 } from "../../../packages/sog-ui/src/tokens/grammar";
 
@@ -73,6 +74,63 @@ describe("YTY_ELEMENT_GRAMMAR", () => {
         row.glyph.displayName,
         `${family}'s glyph names itself`,
       ).toEqual(expect.any(String));
+    }
+  });
+});
+
+/**
+ * The role table's mechanisms.
+ *
+ * Which family a role takes is a ruling and may change; that every role has a
+ * row, that a named family is one the palette ships, and that no two roles
+ * share one are what the table has to keep to work at all.
+ *
+ * **The absent glyph is asserted, not skipped.** The two tables above pair a
+ * family with a mark; this one deliberately does not, because a role's own word
+ * is always beside it and a mark would be a third statement of one fact. A
+ * glyph arriving here by copy-paste from the kind rows would be a decision
+ * nobody made, so the shape of the row is pinned rather than left to a type
+ * that a widening could quietly relax.
+ *
+ * Admin's `null` family is pinned for the same reason: an admin taking no
+ * family is a decision — an admin is not a relationship a child has — and a
+ * fourth colour arriving there by accident should fail here.
+ */
+describe("ROLE_GRAMMAR", () => {
+  const rows = Object.entries(ROLE_GRAMMAR);
+
+  it("gives every role a row", () => {
+    expect(rows.map(([role]) => role).sort()).toEqual(
+      ["admin", "customer", "gamer", "gedu"].sort(),
+    );
+  });
+
+  it("names only families the palette ships, and only for the three that take one", () => {
+    for (const [role, row] of rows) {
+      if (role === "admin") {
+        expect(row.family, "admin takes no family").toBeNull();
+        continue;
+      }
+      expect(row.family, `${role} takes a family`).not.toBeNull();
+      expect(YTY_FAMILIES, `${role} names a family that exists`).toHaveProperty(
+        String(row.family),
+      );
+    }
+  });
+
+  it("gives every role a family of its own", () => {
+    const families = rows
+      .map(([, row]) => row.family)
+      .filter((family) => family !== null);
+    expect(new Set(families).size).toBe(families.length);
+  });
+
+  it("carries no mark: a role is its word and its colour", () => {
+    for (const [role, row] of rows) {
+      expect(
+        Object.keys(row),
+        `${role} carries a family and nothing else`,
+      ).toEqual(["family"]);
     }
   });
 });

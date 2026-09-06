@@ -46,7 +46,7 @@ export const VoiceAvatar = forwardRef<HTMLDivElement, VoiceAvatarProps>(
         style={glowStyle}
         className={cn(
           "relative h-11 w-11 overflow-hidden rounded-md border-2 border-border transition-shadow",
-          isLocal && "ring-1 ring-act/30",
+          isLocal && "ring-1 ring-act",
           className,
         )}
       >

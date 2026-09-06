@@ -7,7 +7,10 @@ const buttonVariants = cva(
   {
     variants: {
       // The hover shades are the one place a token still carries an alpha
-      // step: what a hover becomes is the Button adoption's to decide, and
+      // step, and the act sweep left them standing on purpose. Everywhere else
+      // act is a figure on the dark ground and never a tint of it; a filled
+      // button is the one place a brand colour is deliberately a ground, so
+      // what it does under a pointer is the Button adoption's to decide, and
       // until it does they stay exactly as they are.
       variant: {
         default:

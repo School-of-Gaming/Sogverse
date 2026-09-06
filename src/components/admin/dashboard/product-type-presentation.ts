@@ -55,20 +55,28 @@ export type ProductTypeMessageKey =
   | "camp"
   | "event";
 
-/** How a Yty family is spent on an admin surface: the glyph's ink, and the tile behind it. */
+/**
+ * How a Yty family is spent on an admin surface: the glyph's ink, and nothing
+ * else.
+ *
+ * **The tile behind the glyph is not a family's to decide.** It used to be a
+ * 15% wash of the family's own colour, which is a duller colour than the
+ * family over the dark ground and a second statement of an accent the glyph is
+ * already making. The mark carries the family at full value and the square
+ * behind it is the lifted grey, written at the two places that draw one — so a
+ * kind's presentation says the one thing a kind decides.
+ */
 interface FamilyClasses {
-  /** The family's colour as a foreground — how the glyph is tinted. */
+  /** The family's colour as a foreground — how the glyph is inked. */
   text: string;
-  /** A chip-scale wash of the same colour, for the tile the glyph sits in. */
-  tint: string;
 }
 
-/** The four families, each as the pair of utilities an admin surface draws it with. */
+/** The four families, each as the utility an admin surface draws it with. */
 const FAMILY_CLASSES: Record<YtyFamilyId, FamilyClasses> = {
-  harmony: { text: "text-yty-harmony", tint: "bg-yty-harmony/15" },
-  glow: { text: "text-yty-glow", tint: "bg-yty-glow/15" },
-  valor: { text: "text-yty-valor", tint: "bg-yty-valor/15" },
-  wit: { text: "text-yty-wit", tint: "bg-yty-wit/15" },
+  harmony: { text: "text-yty-harmony" },
+  glow: { text: "text-yty-glow" },
+  valor: { text: "text-yty-valor" },
+  wit: { text: "text-yty-wit" },
 };
 
 /**

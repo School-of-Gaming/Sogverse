@@ -293,6 +293,7 @@ export function ParticipantRosterRow({
                  than restated — a second spelling of "Parent" is a second
                  thing to translate and a second thing to forget. */
               <Badge
+                variant="outline"
                 className={cn(
                   ROLE_BADGE_STYLES.customer,
                   "shrink-0 px-1.5 py-0 text-[10px] font-normal",

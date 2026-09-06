@@ -182,9 +182,15 @@ export const VOICE_ZONE_ICONS: Record<VoiceZoneIcon, LucideIcon> = {
  *              arbitrary-property class binding this colour into `--glow-color`,
  *              so the colour spills in from the border and fades toward center
  *  - `solid` — the full-saturation fill (`bg-pick-N`) the picker shows as a
- *              vibrant swatch (the card uses the soft `tile` tint instead) */
+ *              vibrant swatch
+ *
+ *  **There is no `tile` any more.** A zone's glyph used to sit on a 15% wash of
+ *  its own colour; a colour exists at its authored value or not at all, and a
+ *  fraction of it over the dark ground is a duller colour than the one the
+ *  moderator chose. The glyph carries the colour at full value and the square
+ *  behind it is the lifted grey every other tile in the app sits on, written
+ *  where it is drawn rather than repeated sixteen times here. */
 export interface ZoneColorClasses {
-  tile: string;
   glyph: string;
   ring: string;
   glow: string;
@@ -222,27 +228,23 @@ export const VOICE_ZONE_COLOR_KEYS: readonly VoiceZoneColor[] = PICKS.map(
 // pairs the shared `.zone-glow` class (geometry — defined once in globals.css)
 // with an arbitrary-property class that binds this colour into `--glow-color`.
 //
-// The `/15` tile step is the pre-library recipe: a pick exists at its authored
-// value, and a fraction of it over the dark ground is a duller colour than the
-// one the moderator chose. It stays until the alpha ruling (§9) settles what a
-// tinted tile is made of, exactly as the Yty element steps do in ./yty.ts.
 export const VOICE_ZONE_COLORS: Record<VoiceZoneColor, ZoneColorClasses> = {
-  "1": { tile: "bg-pick-1/15", glyph: "text-pick-1", ring: "ring-pick-1", glow: "zone-glow [--glow-color:var(--color-pick-1)]", solid: "bg-pick-1" },
-  "2": { tile: "bg-pick-2/15", glyph: "text-pick-2", ring: "ring-pick-2", glow: "zone-glow [--glow-color:var(--color-pick-2)]", solid: "bg-pick-2" },
-  "3": { tile: "bg-pick-3/15", glyph: "text-pick-3", ring: "ring-pick-3", glow: "zone-glow [--glow-color:var(--color-pick-3)]", solid: "bg-pick-3" },
-  "4": { tile: "bg-pick-4/15", glyph: "text-pick-4", ring: "ring-pick-4", glow: "zone-glow [--glow-color:var(--color-pick-4)]", solid: "bg-pick-4" },
-  "5": { tile: "bg-pick-5/15", glyph: "text-pick-5", ring: "ring-pick-5", glow: "zone-glow [--glow-color:var(--color-pick-5)]", solid: "bg-pick-5" },
-  "6": { tile: "bg-pick-6/15", glyph: "text-pick-6", ring: "ring-pick-6", glow: "zone-glow [--glow-color:var(--color-pick-6)]", solid: "bg-pick-6" },
-  "7": { tile: "bg-pick-7/15", glyph: "text-pick-7", ring: "ring-pick-7", glow: "zone-glow [--glow-color:var(--color-pick-7)]", solid: "bg-pick-7" },
-  "8": { tile: "bg-pick-8/15", glyph: "text-pick-8", ring: "ring-pick-8", glow: "zone-glow [--glow-color:var(--color-pick-8)]", solid: "bg-pick-8" },
-  "9": { tile: "bg-pick-9/15", glyph: "text-pick-9", ring: "ring-pick-9", glow: "zone-glow [--glow-color:var(--color-pick-9)]", solid: "bg-pick-9" },
-  "10": { tile: "bg-pick-10/15", glyph: "text-pick-10", ring: "ring-pick-10", glow: "zone-glow [--glow-color:var(--color-pick-10)]", solid: "bg-pick-10" },
-  "11": { tile: "bg-pick-11/15", glyph: "text-pick-11", ring: "ring-pick-11", glow: "zone-glow [--glow-color:var(--color-pick-11)]", solid: "bg-pick-11" },
-  "12": { tile: "bg-pick-12/15", glyph: "text-pick-12", ring: "ring-pick-12", glow: "zone-glow [--glow-color:var(--color-pick-12)]", solid: "bg-pick-12" },
-  "13": { tile: "bg-pick-13/15", glyph: "text-pick-13", ring: "ring-pick-13", glow: "zone-glow [--glow-color:var(--color-pick-13)]", solid: "bg-pick-13" },
-  "14": { tile: "bg-pick-14/15", glyph: "text-pick-14", ring: "ring-pick-14", glow: "zone-glow [--glow-color:var(--color-pick-14)]", solid: "bg-pick-14" },
-  "15": { tile: "bg-pick-15/15", glyph: "text-pick-15", ring: "ring-pick-15", glow: "zone-glow [--glow-color:var(--color-pick-15)]", solid: "bg-pick-15" },
-  "16": { tile: "bg-pick-16/15", glyph: "text-pick-16", ring: "ring-pick-16", glow: "zone-glow [--glow-color:var(--color-pick-16)]", solid: "bg-pick-16" },
+  "1": { glyph: "text-pick-1", ring: "ring-pick-1", glow: "zone-glow [--glow-color:var(--color-pick-1)]", solid: "bg-pick-1" },
+  "2": { glyph: "text-pick-2", ring: "ring-pick-2", glow: "zone-glow [--glow-color:var(--color-pick-2)]", solid: "bg-pick-2" },
+  "3": { glyph: "text-pick-3", ring: "ring-pick-3", glow: "zone-glow [--glow-color:var(--color-pick-3)]", solid: "bg-pick-3" },
+  "4": { glyph: "text-pick-4", ring: "ring-pick-4", glow: "zone-glow [--glow-color:var(--color-pick-4)]", solid: "bg-pick-4" },
+  "5": { glyph: "text-pick-5", ring: "ring-pick-5", glow: "zone-glow [--glow-color:var(--color-pick-5)]", solid: "bg-pick-5" },
+  "6": { glyph: "text-pick-6", ring: "ring-pick-6", glow: "zone-glow [--glow-color:var(--color-pick-6)]", solid: "bg-pick-6" },
+  "7": { glyph: "text-pick-7", ring: "ring-pick-7", glow: "zone-glow [--glow-color:var(--color-pick-7)]", solid: "bg-pick-7" },
+  "8": { glyph: "text-pick-8", ring: "ring-pick-8", glow: "zone-glow [--glow-color:var(--color-pick-8)]", solid: "bg-pick-8" },
+  "9": { glyph: "text-pick-9", ring: "ring-pick-9", glow: "zone-glow [--glow-color:var(--color-pick-9)]", solid: "bg-pick-9" },
+  "10": { glyph: "text-pick-10", ring: "ring-pick-10", glow: "zone-glow [--glow-color:var(--color-pick-10)]", solid: "bg-pick-10" },
+  "11": { glyph: "text-pick-11", ring: "ring-pick-11", glow: "zone-glow [--glow-color:var(--color-pick-11)]", solid: "bg-pick-11" },
+  "12": { glyph: "text-pick-12", ring: "ring-pick-12", glow: "zone-glow [--glow-color:var(--color-pick-12)]", solid: "bg-pick-12" },
+  "13": { glyph: "text-pick-13", ring: "ring-pick-13", glow: "zone-glow [--glow-color:var(--color-pick-13)]", solid: "bg-pick-13" },
+  "14": { glyph: "text-pick-14", ring: "ring-pick-14", glow: "zone-glow [--glow-color:var(--color-pick-14)]", solid: "bg-pick-14" },
+  "15": { glyph: "text-pick-15", ring: "ring-pick-15", glow: "zone-glow [--glow-color:var(--color-pick-15)]", solid: "bg-pick-15" },
+  "16": { glyph: "text-pick-16", ring: "ring-pick-16", glow: "zone-glow [--glow-color:var(--color-pick-16)]", solid: "bg-pick-16" },
 };
 
 /** Type guard: is this free-text key a valid icon? Body is a literal `hasOwn`
@@ -319,7 +321,6 @@ export const LOBBY_PRESENTATION: VirtualZonePresentation = {
   nameKey: "voice.zoneLobby",
   icon: Home,
   color: {
-    tile: "bg-foreground/10",
     glyph: "text-foreground",
     ring: "ring-foreground",
     glow: "zone-glow [--glow-color:var(--color-foreground)]",
@@ -355,7 +356,6 @@ export const YTY_PRESENTATIONS: VirtualZonePresentation[] = YTY_ELEMENTS.map(
     nameKey: `yty.elements.${e.id}.name`,
     icon: e.icon,
     color: {
-      tile: e.color.bg,
       glyph: e.color.accent,
       // Literal tokens (not `ring-yty-${id}`/`shadow-[...${id}...]` templates) so
       // Tailwind's source scanner generates the utilities — a dynamic class name

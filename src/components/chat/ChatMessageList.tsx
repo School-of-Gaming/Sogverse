@@ -569,10 +569,11 @@ function ChatImageRunItem({
         messages.map((message) => message.id),
       )}
       className={cn(
-        // A ring and a tint, never a border: the run keeps exactly the box it
-        // had, so flashing it after a jump moves nothing around it.
+        // A ring, never a border: the run keeps exactly the box it had, so
+        // flashing it after a jump moves nothing around it. Act is the ring
+        // rather than a wash behind the words — the words stay ink.
         "mt-1 rounded transition-colors",
-        flashing && "bg-act/20 ring-1 ring-act",
+        flashing && "ring-1 ring-act",
       )}
     >
       {quoted !== null && (

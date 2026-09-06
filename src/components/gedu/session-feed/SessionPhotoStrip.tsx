@@ -302,10 +302,10 @@ export function SessionPhotoStrip({
       }}
       className={cn(
         "rounded-md bg-lifted p-3 transition-colors sm:p-3.5",
-        // Tinted and ringed rather than resized: the answer to "will this land
+        // Ringed rather than resized: the answer to "will this land
         // here" has to be visible without the block growing under a pointer
         // that is mid-gesture.
-        dragging && "bg-act/10 ring-2 ring-act",
+        dragging && "ring-2 ring-act",
         // Greyed with the rest of the editor while the card commits, because
         // what is on this strip is part of what that Save is carrying.
         disabled && "opacity-60",

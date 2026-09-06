@@ -281,6 +281,7 @@ export function ParticipantRow({
            flex div — a Badge is a div, and this exact badge inside a <p>
            was a hydration failure once already. */
         <Badge
+          variant="outline"
           className={cn(
             ROLE_BADGE_STYLES.customer,
             "order-3 shrink-0 px-1.5 py-0 text-[10px] font-normal sm:order-4",

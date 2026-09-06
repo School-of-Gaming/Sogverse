@@ -26,7 +26,13 @@ export function ProgrammeCta() {
 
   return (
     <section className="container mx-auto px-4 py-16 sm:py-24">
-      <Card className="mx-auto max-w-3xl bg-gradient-to-r from-act/10 to-world/10">
+      <Card className="relative mx-auto max-w-3xl overflow-hidden">
+        {/* The card is the plain card ground with one violet rule along its
+            top edge — the hero's construct, so the page opens and closes on
+            the same idea. It used to be washed amber-to-violet; two brand
+            colours blended into each other is a smear, and act here would
+            only repeat the colour of the button inside the card. */}
+        <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
         <CardContent className="flex flex-col items-center py-12 text-center">
           <h2 className="text-2xl font-bold sm:text-3xl">{t("heading")}</h2>
           <p className="mt-4 max-w-xl text-muted-foreground">{t("body")}</p>

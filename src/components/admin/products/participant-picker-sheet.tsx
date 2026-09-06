@@ -409,7 +409,7 @@ function FamilyBlockRow({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Badge className={cn(ROLE_BADGE_STYLES[parent.role], "shrink-0")}>
+          <Badge variant="outline" className={cn(ROLE_BADGE_STYLES[parent.role], "shrink-0")}>
             {c(ROLE_LABEL_KEYS[parent.role])}
           </Badge>
           {showsAddButton(parent, audience, enrolledParticipantIds, addedIds) && (

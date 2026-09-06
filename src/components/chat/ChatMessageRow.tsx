@@ -172,7 +172,7 @@ export function ChatMessageRow({
           // is not a mention, it is the log pointing at where a jump landed,
           // and it fades after a second.
           mentionsViewer && "ring-1 ring-info",
-          flashing && "bg-act/20 ring-1 ring-act",
+          flashing && "ring-1 ring-act",
           message.delivery === "pending" && "opacity-60",
         )}
       >

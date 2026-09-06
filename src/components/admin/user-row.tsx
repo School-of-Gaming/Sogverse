@@ -209,7 +209,7 @@ export function UserRow({
               label={t('emailVerified')}
             />
           )}
-          <Badge className={ROLE_BADGE_STYLES[user.role]}>
+          <Badge variant="outline" className={ROLE_BADGE_STYLES[user.role]}>
             {c(ROLE_LABEL_KEYS[user.role])}
           </Badge>
           <NavChevron />
@@ -244,7 +244,7 @@ export function UserRow({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Badge className={`${ROLE_BADGE_STYLES.gamer} text-[10px] px-2 py-0`}>
+                <Badge variant="outline" className={`${ROLE_BADGE_STYLES.gamer} text-[10px] px-2 py-0`}>
                   {c("roleGamer")}
                 </Badge>
                 <NavChevron size="sm" />

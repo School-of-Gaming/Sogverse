@@ -7,17 +7,11 @@
 // module follows without an edit. No value below is spelled here any more, and a
 // hex typed into one would be a colour Sogverse had defined for itself.
 //
-// Nothing in this file is typed by conversion or by eye: a composited tint is
-// computed by `composite()` from the colour, its alpha and the ground it sits
-// on, because a tint hand-blended once is a value nobody can re-derive.
+// Nothing in this file is typed by conversion or by eye, and nothing in it is
+// composited any more either: a flattened tint is the brand colour at an alpha
+// step in a solid's clothes, which is a colour we do not have.
 
-import {
-  BRAND as SOG_BRAND,
-  NEUTRALS,
-  STATUS_INK,
-  composite,
-  statusHex,
-} from "@sog/ui";
+import { BRAND as SOG_BRAND, NEUTRALS, STATUS_INK, statusHex } from "@sog/ui";
 
 /**
  * The brand fills and the foreground each one carries.
@@ -47,17 +41,14 @@ export const DARK_THEME = {
   mutedFg: NEUTRALS.mutedForeground.hex,
 } as const;
 
-/**
- * The hero gradient's two glows, pre-composited over the dark ground.
- *
- * A mail client cannot be relied on for alpha, so the app's translucent wash is
- * flattened against the ground it actually sits on — the shell's background,
- * which is what the gradient is painted over.
- */
-export const GRADIENT = {
-  actGlow: composite(BRAND.act, 0.2, DARK_THEME.bg),
-  worldGlow: composite(BRAND.world, 0.1, DARK_THEME.bg),
-} as const;
+// The hero gradient's two glows used to live here: act at 20% and world at 10%,
+// pre-composited over the dark ground because neither a satori render nor an
+// email client can be relied on for alpha. Flattening is what made them
+// indefensible — a composited value is the brand colour at an alpha step
+// wearing a solid's clothes, and a brand colour exists at its authored value or
+// not at all. The two heroes, both social cards and the mail's header now sit
+// on the ground and mark themselves with a violet rule at full value, so
+// nothing in Sogverse composites and there is no caller left for these.
 
 // The four Yty-Element colours used to be mirrored here for the renderers that
 // cannot read a CSS variable. None of them draws one today — the mail, the

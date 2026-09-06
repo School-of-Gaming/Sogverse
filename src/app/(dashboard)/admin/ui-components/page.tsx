@@ -1959,12 +1959,7 @@ function ProductTypePaletteDemo() {
                 {/* Tile and glyph are one mark, not a swatch beside an icon —
                     two elements would say the same thing twice and imply they
                     were two facts. */}
-                <span
-                  className={cn(
-                    "grid h-7 w-7 shrink-0 place-items-center rounded-md",
-                    presentation.tint,
-                  )}
-                >
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-lifted">
                   <Icon
                     className={cn("h-4 w-4", presentation.text)}
                     aria-hidden
@@ -2317,7 +2312,7 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground mt-4 mb-2">Role badges</p>
         <div className="flex flex-wrap items-center gap-3">
           {ROLE_BADGE_DEMO.map(([role, label]) => (
-            <Badge key={role} className={ROLE_BADGE_STYLES[role]}>
+            <Badge key={role} variant="outline" className={ROLE_BADGE_STYLES[role]}>
               {label}
             </Badge>
           ))}

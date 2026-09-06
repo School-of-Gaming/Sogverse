@@ -1,6 +1,6 @@
 /* eslint-disable i18next/no-literal-string -- OG image is rendered to a PNG by next/og at build time; the text is baked into the image, not a runtime UI string. It is also French for every locale — see `metadata-copy.ts` next door for why the programme's card does not follow the viewer's locale */
 import { ImageResponse } from "next/og";
-import { DARK_THEME, BRAND, GRADIENT } from "@/lib/constants/colors";
+import { DARK_THEME, BRAND } from "@/lib/constants/colors";
 import { LynxEducateMark, RobloxWordmark, SogMark } from "@/components/og/marks";
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
 import { ROBLOX_OG_TITLE, ROBLOX_TRADEMARK_NOTICE } from "./metadata-copy";
@@ -27,8 +27,10 @@ export const contentType = "image/png";
  * colourway, unmodified, and the accent in the headline falls on what the reader
  * would make, never on a partner's name. They require clearspace nothing
  * advances into: the gutters either side, and the notice held down at the bottom
- * padding line. They forbid placing it over a busy background, and the two-tone
- * wash has faded to flat ground long before it reaches the lockup. And they
+ * padding line. They forbid placing it over a busy background, and the card is
+ * the flat ground throughout — the two-tone wash that used to open it is gone,
+ * and the violet rule it is replaced by sits under the headline, well clear of
+ * the lockup. And they
  * require a trademark notice wherever the mark appears — the last line, and it
  * is the same string the programme's pages render, not a retyping of it: it
  * comes from `metadata-copy.ts`, which is pinned to `messages/fr.json` by a
@@ -50,8 +52,11 @@ export default async function Image() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "space-between",
+          // The flat ground, as the home card is. What colours this card is the
+          // amber in the headline and the violet rule under it, both at their
+          // authored values; the pre-blended two-tone wash that used to open it
+          // was the brand pair at an alpha step wearing a solid's clothes.
           backgroundColor: DARK_THEME.bg,
-          backgroundImage: `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.bg} 62%), linear-gradient(to right, ${GRADIENT.actGlow}, ${DARK_THEME.bg} 50%, ${GRADIENT.worldGlow})`,
           padding: "48px 80px",
         }}
       >
@@ -68,20 +73,43 @@ export default async function Image() {
             justifyContent: "center",
           }}
         >
+          {/* The headline and its rule as one shrink-to-fit column, so
+              `alignSelf: stretch` gives the rule the headline's own measure
+              with nothing measured at render time. The rule is the home page
+              hero's construct, and it sits in the middle of the card where no
+              preview crop reaches it. */}
           <div
             style={{
               display: "flex",
-              gap: "18px",
-              fontFamily: OG_FONT_FAMILY,
-              fontSize: "72px",
-              fontWeight: 600,
-              letterSpacing: "-1.5px",
-              color: DARK_THEME.foreground,
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
-            <span>Crée</span>
-            <span style={{ color: BRAND.act }}>ton propre jeu</span>
-            <span>Roblox</span>
+            <div
+              style={{
+                display: "flex",
+                gap: "18px",
+                fontFamily: OG_FONT_FAMILY,
+                fontSize: "72px",
+                fontWeight: 600,
+                letterSpacing: "-1.5px",
+                color: DARK_THEME.foreground,
+              }}
+            >
+              <span>Crée</span>
+              <span style={{ color: BRAND.act }}>ton propre jeu</span>
+              <span>Roblox</span>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignSelf: "stretch",
+                height: "10px",
+                marginTop: "28px",
+                borderRadius: "999px",
+                backgroundColor: BRAND.world,
+              }}
+            />
           </div>
 
           <div

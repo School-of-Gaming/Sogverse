@@ -131,7 +131,7 @@ export function GroupColumn({
           "transition-colors",
           isDeleting && "opacity-40",
           isSaving && !isDeleting && "opacity-60",
-          isOver && !busy && "bg-act/5",
+          isOver && !busy && "ring-2 ring-act",
         )}
       >
         <CardHeader className="space-y-3 pb-3">

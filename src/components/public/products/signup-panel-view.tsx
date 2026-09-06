@@ -963,11 +963,13 @@ function SignupForm(
                     alreadyOn !== null
                       ? "cursor-not-allowed border-border bg-lifted opacity-60"
                       : selected
-                        ? // With no outer box to sit inside, the fill alone is
-                          // a thin distinction. An inset ring doubles the row's
-                          // own line without changing the box, so selecting a
-                          // row cannot nudge its own text by a pixel.
-                          "bg-act/10 ring-1 ring-inset ring-act/50"
+                        ? // With no outer box to sit inside, a fill alone
+                          // would be a thin distinction — and act is a figure
+                          // on the dark ground rather than a wash over it. An
+                          // inset ring at full value doubles the row's own line
+                          // without changing the box, so selecting a row cannot
+                          // nudge its own text by a pixel.
+                          "ring-1 ring-inset ring-act"
                         : "hover:bg-lifted hover:text-foreground",
                   )}
                 >

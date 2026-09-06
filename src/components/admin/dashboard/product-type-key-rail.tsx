@@ -67,12 +67,7 @@ export function ProductTypeKeyRail() {
                     mark — which is the whole convention this key exists to
                     teach. Two separate elements would say the same thing twice
                     and imply they were two facts. */}
-                <span
-                  className={cn(
-                    "grid h-7 w-7 shrink-0 place-items-center rounded-md",
-                    presentation.tint,
-                  )}
-                >
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-lifted">
                   <Icon
                     className={cn("h-4 w-4", presentation.text)}
                     aria-hidden

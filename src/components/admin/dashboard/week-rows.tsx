@@ -67,8 +67,12 @@ export function WeekRows({
         <li
           key={row.date}
           className={cn(
-            "flex flex-col gap-2 rounded-lg border border-border p-2 sm:flex-row sm:gap-3",
-            row.isToday ? "bg-act/5" : "bg-card",
+            // Today is marked by a 2px act edge down its leading side, and the
+            // edge is drawn on every row from the start — in `border` where the
+            // day is not today — so the mark costs no layout when the week
+            // rolls over under a reader.
+            "flex flex-col gap-2 rounded-lg border border-l-2 border-border bg-card p-2 sm:flex-row sm:gap-3",
+            row.isToday && "border-l-act",
           )}
         >
           <div className="flex shrink-0 items-baseline gap-2 px-1 sm:w-24 sm:flex-col sm:items-start sm:gap-0">

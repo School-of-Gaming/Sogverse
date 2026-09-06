@@ -85,7 +85,7 @@ export function BillingSection({
                   key={mode}
                   className={cn(
                     "flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 transition-colors",
-                    active && "bg-act/5"
+                    active && "border-act"
                   )}
                 >
                   <input
@@ -167,7 +167,7 @@ export function BillingSection({
                   key={mode}
                   className={cn(
                     "flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
-                    active && "bg-act/5"
+                    active && "border-act"
                   )}
                 >
                   <input

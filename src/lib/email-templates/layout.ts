@@ -1,4 +1,4 @@
-import { BRAND, DARK_THEME, GRADIENT } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
 import { RADIUS } from "@/lib/constants/radius";
 import { sendableImageOrigin } from "./render-context";
@@ -17,8 +17,26 @@ interface LayoutOptions {
   t?: EmailTranslator;
 }
 
-/** Hero gradient: vertical fade over a horizontal brand-color glow. */
-const HERO_GRADIENT = `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.bg} 70%), linear-gradient(to right, ${GRADIENT.actGlow}, ${DARK_THEME.bg} 50%, ${GRADIENT.worldGlow})`;
+/**
+ * The violet rule under the lockup — the header's one piece of colour besides
+ * the brand half of the lockup itself.
+ *
+ * It is the construct the home hero and both social cards use, so a page, a
+ * shared link and a mail say one thing. It replaces a two-tone wash across the
+ * whole shell: amber and violet pre-blended against the ground, because a mail
+ * client cannot be relied on for alpha — which is exactly what made it the
+ * brand pair at an alpha step wearing a solid's clothes, two colours neither of
+ * which was ours.
+ *
+ * **A filled table cell is the most robust construct email has.** No gradient,
+ * no image, no border trick: a `td` with a height and a background, pinned
+ * through `pinnedFill` like every other background here so a client's dark
+ * theme cannot rewrite it. `font-size` and `line-height` are zeroed and the
+ * cell is fed a non-breaking space, which is what stops Outlook collapsing an
+ * empty cell to nothing and what stops a text line forcing it taller than its
+ * six pixels.
+ */
+const HEADER_RULE_HEIGHT = 6;
 
 /**
  * The brand mark above the lockup — the one image in any mail this codebase
@@ -143,10 +161,15 @@ function brandMarkRow(): string {
  * Table-based with all inline CSS for email client compatibility.
  *
  * Gmail Android quirks addressed in the <style> block:
- * - Gradient is class-based because Gmail Android rewrites inline linear-gradient()
- *   into url(linear-gradient(...)) which breaks it.
  * - Brand text colors use background-clip:text (via "u + .body" Gmail-only selector)
  *   because Gmail Android dark mode shifts the "color" property but preserves gradients.
+ *   That flat act-to-act gradient is a delivery mechanism for a text colour, not a
+ *   blend, which is why it survives a sweep that removed every real gradient here.
+ *
+ * The shell used to carry a class-based hero gradient, on the body and on the
+ * outer table, because Gmail Android rewrites an inline linear-gradient() into
+ * url(linear-gradient(...)) and breaks it. There is no gradient left to place,
+ * so both elements simply carry the ground, pinned like every other background.
  */
 export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions): string {
   // The copyright line names the company that holds the copyright, so it is the
@@ -165,9 +188,6 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
   <meta name="supported-color-schemes" content="dark" />
   <title>${title}</title>
   <style>
-    .hero-gradient {
-      background-image: ${HERO_GRADIENT} !important;
-    }
     .brand-act { color: ${BRAND.act} !important; }
     /* Gmail-only: color text via gradient + background-clip instead of the "color" property,
        because Gmail Android dark mode shifts "color" values but preserves gradient values.
@@ -233,9 +253,9 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
   </style>
 </head>
 <!-- "body" class is required for the "u + .body" Gmail-only selector in the style block above -->
-<body class="body hero-gradient" style="margin:0;padding:0;background-color:${DARK_THEME.bg};font-family:Arial,Helvetica,sans-serif;">
-  <!-- Gradient class on both body and table: body for clients that respect it, table for Gmail which strips body styles -->
-  <table role="presentation" class="hero-gradient" width="100%" cellpadding="0" cellspacing="0" style="background-color:${DARK_THEME.bg};">
+<body class="body" style="margin:0;padding:0;${pinnedFill(DARK_THEME.bg)}font-family:Arial,Helvetica,sans-serif;">
+  <!-- The ground on both body and table: body for clients that respect it, table for Gmail which strips body styles -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${pinnedFill(DARK_THEME.bg)}">
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
@@ -257,9 +277,16 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
                above all not the en dash, is typed here — and a unit test
                asserts the two spans still read as BRAND_LOCKUP exactly. -->
           <tr>
-            <td align="center" style="padding-bottom:24px;">
+            <td align="center" style="padding-bottom:16px;">
               <span class="brand-act" style="font-size:24px;font-weight:bold;color:${BRAND.act};letter-spacing:0.5px;">${SENDER_NAME}</span><span style="font-size:24px;font-weight:bold;color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>
             </td>
+          </tr>
+          <!-- The violet rule under the lockup. See HEADER_RULE_HEIGHT. -->
+          <tr>
+            <td height="${HEADER_RULE_HEIGHT}" style="${pinnedFill(BRAND.world)}height:${HEADER_RULE_HEIGHT}px;line-height:${HEADER_RULE_HEIGHT}px;font-size:0;">&nbsp;</td>
+          </tr>
+          <tr>
+            <td style="height:24px;line-height:24px;font-size:0;">&nbsp;</td>
           </tr>
           <!-- The message panel: the app's Card, rendered in a table cell. It
                takes the same three tokens the component does — the card fill,

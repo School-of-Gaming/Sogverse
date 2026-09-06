@@ -28,7 +28,11 @@ export function YtySection({ id }: YtySectionProps) {
 
       {/* Overview */}
       <div className="mx-auto mt-16 max-w-4xl">
-        <Card className="bg-gradient-to-r from-act/5 to-world/5">
+        {/* The plain card ground: this block used to be washed amber-to-violet,
+            and a brand colour is never blended into another. Nothing replaces
+            it — the card is already lifted off the page, and a rule here would
+            be the hero's mark spent on a paragraph. */}
+        <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">{t("overview.heading")}</CardTitle>
           </CardHeader>
@@ -48,7 +52,7 @@ export function YtySection({ id }: YtySectionProps) {
             <Card key={el.id} className="border-2 border-border">
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${el.color.bg}`}>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-lifted">
                     <el.icon className={`h-6 w-6 ${el.color.accent}`} />
                   </div>
                   <div>

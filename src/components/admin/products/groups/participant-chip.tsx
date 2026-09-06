@@ -93,6 +93,7 @@ const ChipContent = memo(function ChipContent({
                dragging chips between three columns needs "this one is a
                grown-up" to be the same shape everywhere they meet it. */
             <Badge
+              variant="outline"
               className={cn(
                 ROLE_BADGE_STYLES.customer,
                 "shrink-0 px-1 py-0 text-[9px] font-normal leading-tight",

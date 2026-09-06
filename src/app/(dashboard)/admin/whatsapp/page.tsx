@@ -126,7 +126,7 @@ function ContactList({
               selectedPhone === contact.phone && "border-l-act text-foreground"
             )}
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-act/20 text-sm font-medium text-act">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-lifted text-sm font-medium text-act">
               {(contact.wa_name ?? contact.phone).slice(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
@@ -197,7 +197,7 @@ function ChatThread({
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-act/20 text-sm font-medium text-act">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-lifted text-sm font-medium text-act">
           {(contactName ?? phone).slice(0, 2).toUpperCase()}
         </div>
         <div>
@@ -216,53 +216,61 @@ function ChatThread({
               </span>
             </div>
             <div className="space-y-2">
-              {group.messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={cn(
-                    "flex",
-                    msg.direction === WHATSAPP_DIRECTION.OUTBOUND ? "justify-end" : "justify-start"
-                  )}
-                >
+              {group.messages.map((msg) => {
+                const outbound = msg.direction === WHATSAPP_DIRECTION.OUTBOUND;
+                const failed = msg.status === WHATSAPP_MESSAGE_STATUS.FAILED;
+                const pending = msg.status === WHATSAPP_MESSAGE_STATUS.PENDING;
+                // The amber bubble is the one surface in the app whose ink has
+                // no quieter member: `act-foreground` is the single ink the
+                // palette offers on that fill, so a timestamp that wants to be
+                // secondary cannot get there by stepping the ink down. It
+                // leaves the fill instead and sits under the bubble in the
+                // muted grey every other timestamp here is already set in.
+                const metaOnFill = !outbound || failed || pending;
+                const meta = (
                   <div
                     className={cn(
-                      "max-w-[70%] rounded-lg px-3 py-2 text-sm",
-                      msg.status === WHATSAPP_MESSAGE_STATUS.FAILED
-                        ? "bg-lifted text-foreground"
-                        : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
-                          ? "bg-lifted text-muted-foreground"
-                          : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
-                            ? "bg-act text-act-foreground"
-                            : "bg-lifted text-foreground"
+                      "flex items-center justify-end gap-1 text-[10px] text-muted-foreground",
+                      metaOnFill ? "mt-1" : "mt-1 px-1"
                     )}
                   >
-                    <p className="whitespace-pre-wrap break-words">{msg.body}</p>
-                    {msg.status === WHATSAPP_MESSAGE_STATUS.FAILED && (
-                      <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <AlertCircle className="h-3 w-3 text-destructive" />
-                        <span>{msg.status_error ?? t("notDelivered")}</span>
-                      </div>
+                    <span>{formatTime(msg.created_at, locale, timeZone)}</span>
+                    {outbound && !failed && <StatusIndicator status={msg.status} />}
+                  </div>
+                );
+                return (
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      "flex flex-col",
+                      outbound ? "items-end" : "items-start"
                     )}
+                  >
                     <div
                       className={cn(
-                        "mt-1 flex items-center justify-end gap-1 text-[10px]",
-                        msg.status === WHATSAPP_MESSAGE_STATUS.FAILED
-                          ? "text-muted-foreground"
-                          : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
-                            ? "text-muted-foreground"
-                            : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
-                              ? "text-act-foreground/70"
-                              : "text-muted-foreground"
+                        "max-w-[70%] rounded-lg px-3 py-2 text-sm",
+                        failed
+                          ? "bg-lifted text-foreground"
+                          : outbound && pending
+                            ? "bg-lifted text-muted-foreground"
+                            : outbound
+                              ? "bg-act text-act-foreground"
+                              : "bg-lifted text-foreground"
                       )}
                     >
-                      <span>{formatTime(msg.created_at, locale, timeZone)}</span>
-                      {msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status !== WHATSAPP_MESSAGE_STATUS.FAILED && (
-                        <StatusIndicator status={msg.status} />
+                      <p className="whitespace-pre-wrap break-words">{msg.body}</p>
+                      {failed && (
+                        <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <AlertCircle className="h-3 w-3 text-destructive" />
+                          <span>{msg.status_error ?? t("notDelivered")}</span>
+                        </div>
                       )}
+                      {metaOnFill && meta}
                     </div>
+                    {!metaOnFill && meta}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}

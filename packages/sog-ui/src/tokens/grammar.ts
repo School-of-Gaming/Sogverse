@@ -7,12 +7,23 @@
  * colour. That is the whole mechanism behind one-meaning-per-hue: a hue cannot
  * drift into a second meaning if no surface is able to pick one.
  *
- * **Colour and glyph are one fact, decided together.** Meaning never travels by
- * hue alone — a colour-coded element carries a glyph and a label beside it,
- * because a meaningful share of gamers are colourblind and a cue they cannot see
- * is a cue that is not there. So a grammar row holds both halves. Deciding the
+ * **Where a fact has a glyph, the colour and the glyph are decided together.**
+ * Meaning never travels by hue alone — a colour-coded thing carries a label
+ * beside it, because a meaningful share of gamers are colourblind and a cue
+ * they cannot see is a cue that is not there — and where that label is short
+ * enough to want a mark, the mark and the family are one decision. Deciding the
  * family here and the glyph in the consumer would split one fact across two
  * files, and the two would drift the first time either was edited alone.
+ *
+ * **But not every fact has one, so the glyph slot is per table rather than per
+ * fact.** A product kind wears a mark because a kind is met inside a chip, a
+ * calendar cell and a rail where the word is often abbreviated away; an element
+ * wears one because the four are drawn as a set. A role wears none: its own
+ * word is always beside it, so a mark is a third statement of one fact at the
+ * size a role chip is read at, and picking four marks that cleared the kinds,
+ * the elements and forty zone icons made the set worse rather than clearer. So
+ * the role table's row type has no glyph at all, and a glyph is added the day a
+ * surface earns one rather than reserved for the day it might.
  *
  * **This is why the icon set is a library dependency.** `lucide-react` is a
  * dependency of the library itself from this module onward, pinned to the
@@ -166,3 +177,97 @@ export const YTY_ELEMENT_GRAMMAR = {
    */
   wit: { glyph: Brain },
 } as const satisfies Record<YtyFamilyId, ElementGlyphRow>;
+
+/**
+ * The four kinds of person who hold an account.
+ *
+ * Spelled here as a string-literal union of its own, exactly as `ProductKindId`
+ * is and for the same reason: the library depends on nothing in its consumer,
+ * so the names travel as literals and the consumer proves the two agree at
+ * compile time. `customer` is the identifier a parent's account carries.
+ */
+export type RoleId = "admin" | "customer" | "gamer" | "gedu";
+
+/**
+ * One role's tone: the family that carries it, and nothing else.
+ *
+ * **No glyph, unlike the two tables above**, and the absence is the decision —
+ * see the table below. `family` is nullable where the kind rows' is not, and
+ * that null is a decision too.
+ */
+export interface RoleGrammarRow {
+  readonly family: YtyFamilyId | null;
+}
+
+/**
+ * Role → Yty family.
+ *
+ * **The families, spent as figures: a neutral chip and the role's word in its
+ * family's colour.** A role badge used to be a fill — amber for a gamer, violet
+ * for a parent, a blend of the two for a gedu — and a brand colour under a
+ * label is the shape this palette is worst at, because every fill it offers is
+ * light enough that only a dark label reads on it. On the dark ground the
+ * colour is at its most vivid as ink, so the word carries it and the chip's
+ * edge stays neutral. The gedu's amber-to-violet gradient goes with this: two
+ * brand colours blended into each other is a smear, and it was the only one in
+ * the product.
+ *
+ * **The word alone, and there is no role mark anywhere.** The role's own name
+ * is always beside the colour — "Gamer", "Parent" — so the colour reinforces a
+ * word that already says everything, which is what the coloured-label rule asks
+ * for: remove the colour and nothing is lost. A mark would be a third statement
+ * of one fact at the size a role is read at. This row therefore carries no
+ * glyph, and a surface that draws a role draws its word and its colour: a
+ * dashboard tile, a chip, a table cell. That is a statement about today rather
+ * than a ban — if a surface ever earns a role mark, it is decided here, beside
+ * the family, and the row gains the field then.
+ *
+ * **Each row is matched on the element's own meaning.** Glow is the
+ * relationship with others, and a gamer is here for the people they play
+ * beside. Harmony is the relationship with yourself, which is the balance a
+ * parent holds on a child's behalf. Wit is the relationship with technology,
+ * which is what a gedu teaches. An admin takes **no family and the quiet ink**:
+ * an admin is not a relationship a child has, and leaving Valor unspent says so
+ * rather than hiding it behind a fourth colour.
+ *
+ * **The residual collision is one word, and it is accepted.** These hues are
+ * already spent on product kinds, and the four families are the voice room's
+ * zone tiles. Two surfaces outside the admin panel badge a role at all — the
+ * voice room's participant row and the gedu's group roster — and both badge
+ * **the parent and nobody else**, so a family meets exactly one role chip
+ * anywhere: "Parent", in Harmony, occasionally near a Harmony zone tile. The
+ * glyph-and-label rule is what keeps that survivable: the chip says Parent, the
+ * tile says Harmony beside a heart.
+ *
+ * **The glyphs were tried, in the row, and taken back out.** A dashboard's
+ * users strip once keyed one per role, and every candidate had to clear the
+ * kind glyphs, the element glyphs and the forty icons a moderator may pick for
+ * a zone: a gamepad belongs to the consumer club, a schoolhouse to the
+ * municipality club, a shield to gedu certification. What survived that was a
+ * set of four picked by elimination, read at 10–12px, where two variants of one
+ * person mark are the same smudge. Forcing a mark onto a fact whose word is
+ * always present made the fact harder to read, not easier, which is the whole
+ * reason the slot is per table now.
+ */
+export const ROLE_GRAMMAR = {
+  /**
+   * Glow is the relationship with others, and a gamer's whole reason for being
+   * here is the people they play beside.
+   */
+  gamer: { family: "glow" },
+  /**
+   * Harmony is the relationship with yourself, which is the balance a parent
+   * holds on a child's behalf.
+   */
+  customer: { family: "harmony" },
+  /**
+   * Wit is the relationship with technology, which is what a gedu teaches.
+   */
+  gedu: { family: "wit" },
+  /**
+   * No family, and the quiet ink. An admin is not a relationship a child has,
+   * and leaving Valor unspent says so rather than hiding it behind a fourth
+   * colour.
+   */
+  admin: { family: null },
+} as const satisfies Record<RoleId, RoleGrammarRow>;

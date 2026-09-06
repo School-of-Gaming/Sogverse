@@ -13,16 +13,21 @@ import { cn } from "@/lib/utils";
  * re-invent the composition this component exists to stop being re-invented.
  */
 const checkboxRowVariants = cva(
-  "flex items-start gap-3 rounded-md border border-border p-3 transition-colors",
+  "flex items-start gap-3 rounded-md border p-3 transition-colors",
   {
     variants: {
       size: {
         sm: "text-sm",
         xs: "text-xs",
       },
+      // A ticked row is marked by its own edge going act, not by a wash
+      // behind it: on the dark ground act is a figure, and the edge is free
+      // here because the row is bordered already. The border *colour* lives in
+      // this variant rather than in the base string, so the two values can
+      // never both be emitted and resolve by stylesheet order.
       checked: {
-        true: "bg-act/5",
-        false: "",
+        true: "border-act",
+        false: "border-border",
       },
       disabled: {
         true: "cursor-not-allowed opacity-60",
@@ -31,9 +36,10 @@ const checkboxRowVariants = cva(
     },
     compoundVariants: [
       // The hover fill is the border's promise being kept — it lights the same
-      // area the click will act on. A ticked row already carries its own fill
-      // and a disabled one is not a target, so neither takes it.
-      { checked: false, disabled: false, class: "hover:bg-lifted" },
+      // area the click will act on. A disabled row is not a target, so it does
+      // not take it. A ticked row does now: it was excluded while it carried a
+      // wash of its own, and the wash is gone.
+      { disabled: false, class: "hover:bg-lifted" },
     ],
     defaultVariants: { size: "sm", checked: false, disabled: false },
   },

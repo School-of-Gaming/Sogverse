@@ -103,7 +103,17 @@
  *   ground that needs to lift goes to a neutral, and a surface that genuinely
  *   has to see through — over a photograph, a video, a page scrolling beneath
  *   it — takes one of the two constructs in `surfaces.ts`, neither of which is
- *   a colour the brand speaks.
+ *   a colour the brand speaks. **A tile behind a mark is not an exception**,
+ *   and was the last one claimed: a chip-scale square of the hue at a tenth,
+ *   behind a glyph already inked in that hue, is the same colour stated twice
+ *   — once at its authored value and once at a duller one. The mark keeps the
+ *   colour and the square takes the lifted neutral. What is left is artwork
+ *   carrying its own palette, which is not the brand speaking at all.
+ * - **Nothing composites.** A value flattened against a ground so that a
+ *   renderer with no alpha can draw it — a mail client, a satori-rendered
+ *   social card — is still the brand colour at an alpha step; it is simply
+ *   wearing a solid’s clothes, and no reader can tell the difference. Those
+ *   renderers take the authored value on the ground, exactly as the app does.
  *
  * These are opinions with no renderable form, which is why they are written
  * here rather than exported as data. Each one the API can enforce — a component

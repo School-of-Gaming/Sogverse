@@ -321,8 +321,21 @@ the mail's note panel still spends it and is ruled against with the app's Alert 
 construct pass. The status cases left the page; `STATUS_SITES` stays in `inventory.ts` as
 the construct pass's regeneration command.
 
-**Ruling:** _tokens landed; the construct pass (tinted ground → B, lit card → leading
-rule, labels and sentences sorted, tinted pills → the chip's shape) is the next landing._
+**Landed 2026-09-06, night (constructs).** 78 tinted grounds gone; `ui/alert.tsx` paints no
+ground on its status variants, draws its own glyph, colours a label title and not a
+sentence title (`sentence` prop), body in quiet ink; 21 hand-rolled tinted blocks became
+it (the auth forms' inline error gained the glyph it lacked); the two lit cards take
+`border-l-2` with the rest state drawn in `border`; 47 coloured sentences go through one
+shared `StatusLine` (glyph in the hue, sentence in ink); every coloured label sits beside a
+glyph, four gaining one; the nine tinted pills take the chip's shape; the mail's note
+panel is the app's alert; `STATUS_TINT` and `YTY_ELEMENT` deleted. Filled badges untouched
+pending the figure-and-fill word; the two hover shades wait for Button. Three judgement
+calls for the owner's walk: the alert has no fill of its own (the page's B was drawn on a
+lifted panel; one line to change), the gedu next-step band and the legal draft banner
+took a full-value `border-warning` edge, and the attendance roster's pressed "present"
+pill went from a tint to a solid success fill with ink.
+
+**Ruling:** _landed_
 
 ## 4. The greys — the sidebar ground, and accent
 
@@ -732,8 +745,25 @@ warning on every not-yet-started product would be table noise), awaiting the own
 word. Act appears in no lifecycle state. With this, every act job is ruled and the act
 sweep can run: the two `hover:bg-act/90` shades stay for Button with a transitional note.
 
-**Ruling:** _scrim and glass landed; act as a figure ruled except the weekday; the sweep
-runs after the construct pass._
+**Landed 2026-09-07 (act as a figure).** 48 sites by job: 14 selected options
+`border-act` (the colour moved into `checkbox-row`'s checked variant so two edges cannot
+race); 7 tiles `bg-lifted` with the glyph or initials in `act`; 6 drop targets `ring-2
+ring-act`; 6 act-ink items lose the wash; 4 rings at full value; the week row takes
+`border-l-2` from the start with `border-l-act` today and the weekday in `act`, the two
+chat flashes keep their full-value ring; the WhatsApp meta line moved off the fill; the
+empty tile hovers `bg-lifted`; the two hover shades stand with an extended comment. The
+lifecycle chip is one shape, the word in colour on a neutral edge (pending info, the
+rejected warning recorded). The Yty and pick tiles are `bg-lifted` with the glyph in the
+family or pick colour, and the tile field left the class objects since the grey is one
+value. The chip-scale exemption was in `packages/sog-ui/CLAUDE.md`, not `brand.ts`;
+retired there, the reasoning added to `brand.ts`. `InfoCallout`'s `warn` variant, the one
+act callout, had no caller and is deleted under the standing rule rather than given a
+title prop. Left standing and flagged: 24 neutral `/n` sites that are inks, rail dots and
+pseudo-element separators (`muted-foreground` 20, `foreground` 2, plus two status inks),
+which the greys sweep did not take because it took grounds; they go to the plain token
+in the enforcement pass, since nothing in Sogverse composites.
+
+**Ruling:** _landed_
 
 ## 10. The Klingon easter egg
 
@@ -967,7 +997,15 @@ colour; admin in `muted-foreground`); the role section leaves the page. Runs wit
 and gradient sweep. The owner does not like how the parent chip is used on those two
 rosters at all; from a colour standpoint it is correct after this change, and whether a
 parent should be marked by a chip there is the roster's own question, queued (§13) beside
-the other constructs.
+the other constructs. **Amended by the owner the same night: roles have no glyph, anywhere.**
+The row carries a family only; the admin dashboard's users strip drops its role icons and
+each tile carries the role's word in the role's colour with its count ("role should be
+carried by colour, not by icon"; a role icon is not banned forever, there simply is none
+now). And the grammar's shape is corrected: **the glyph slot is per table, not per fact**;
+kinds and elements have glyphs because their surfaces earned them, roles do not, and
+forcing one where none is needed makes things worse. The one place both grammars now meet
+on one screen is the admin dashboard (role tiles beside kind chips), admin-only, the word
+carrying the meaning in both.
 
 **Ruled 2026-09-06, night.** The owner first asked for the mark large in a left column
 with the slogan right, then took the mark out as the safer option for a colour branch
@@ -1003,119 +1041,101 @@ hero's construct, crop-immune by nature (X trims 15px from each end of 1200×630
 previews eat corners; square thumbnails trim the sides). Both social cards and the email
 header take it, so page, card and mail say one thing.
 
-**Ruling:** _all of §14 ruled: heroes, closing card, About washes, social cards, email
-header; the gedu chip by the role ruling; the sweep runs with act and roles_
+**Landed 2026-09-07 (gradients and the role chip).** Heroes: wash gone, the h1 in an
+inline-block wrapper with a 6px `bg-world` rule under it at its measure; About washes →
+`bg-card`; the closing card and the Roblox CTA → `bg-card` with a 3px violet rule on the
+top edge as drawn; both OG images take the rule as a `BRAND.world` div stretched to the
+headline block (a percentage width is unreliable inside a shrink-to-fit satori column),
+verified against the built PNGs, the home card's mark 310 → 270 because the rule took
+the column's slack; the email header's gradient class gone, a 6px violet `td` under the
+lockup, the flat act→act text-colour trick kept with its reason; `GRADIENT` and
+`composite.ts` (+ test, + export) deleted, nothing imports them. Roles: `ROLE_GRAMMAR`
+rows carry a family only (gamer Glow, customer Harmony, gedu Wit, admin null); the glyph
+slot is per table; Sogverse's `ROLE_INK` is typed from the library's row so a family
+reassigned in the library fails to compile in Sogverse; `ROLE_BADGE_STYLES` is the chip
+shape, every consumer on `variant="outline"` so no shadow rides a transparent chip; the
+users strip drops its icons and carries the word in the role's colour; the demo floor
+shows "What each role wears". The act, gradients and roles sections left the page, which
+holds the inventory alone; `ALPHA_SITES` regenerates to 34 sites in 19 files (from 270).
+Closing greps: act/world alpha → the two hover shades only; yty/pick alpha → nothing;
+gradients → the easter egg's divider, two mask-images, the email's colour trick.
 
-## Where the session stands (2026-09-06, evening)
+**Ruling:** _landed_
+
+## Where the session stands (2026-09-07, early morning)
 
 Read this first when resuming. The branch is `feat/sog-ui-theme-adoption`, in the
 worktree `.claude/worktrees/sog-ui-theme`, pushed to origin after every landing. The
-worktree has its own `node_modules` (this branch changed dependencies). The demo runs
-with `npm run dev --workspace=@sog/ui` on port 3001 and the ruling page is `/ruling`.
-The app preview is not running; start it on 3002 only to spot-check a page. The Vercel
-preview builds again since the install command was scoped to the UI workspace.
+worktree has its own `node_modules` (this branch changed dependencies twice). The demo
+runs with `npm run dev --workspace=@sog/ui` on port 3001; the ruling page `/ruling` now
+holds only its inventory. The app preview is not running; start it on 3002 for the
+owner's walk. The Vercel preview builds (the install command is scoped to the UI
+workspace). The session memory file has been deleted at the owner's request; this note is
+the only resume point.
 
-**Landed:** the theme plumbing; the border sweep; the eight Yty tokens; muted and accent
-in the library and the second-name tokens gone; the sidebar on the card ground; act and
-world replacing primary and secondary; the colour rules codified in `brand.ts`; the
-deviations doc deleted; the process in `packages/sog-ui/docs/adoption.md`; the product
-kinds as the tone grammar's first rows, re-matched on the elements' meanings and shown on
-the demo floor; the sixteen picks, numbered, with unlabelled swatches and the stored keys
-migrated (`00242`); the trophy sprite as gold artwork; the scrim and the glass as library
-constructs with every translucent site converted. The page draws the real lucide icons.
+**Every colour ruling is landed.** §1 the inventory; §2 one colour per element, the
+element glyphs, the kind glyphs; §3 the status set and its constructs; §4 three grounds;
+§5 the picks and the kinds; §6 the scrim, the glass, on-media ink, the picker's check, the
+media ground, the Lynx cyan; §7 the identicon; §9 no alpha (act as a figure, the lifecycle
+chip, the tiles); §11 coloured text as a label; §14 the heroes, cards, social images, email
+header and the role chip. The library holds every value with its rule and reason;
+Sogverse's stylesheet declares no colour; the full suite and both builds are green at
+every commit.
 
-**Landed later on 2026-09-06:** §4 the greys as three steps (see §4), the kind glyphs
-(Gamepad2, School, Tent, PartyPopper in `grammar.ts`).
+**Still needing the owner (small, and none blocks the end of the branch):**
 
-**Landed later still on 2026-09-06:** the element glyphs (Heart, Lighthouse, Handshake,
-Brain) with lucide as the library's own dependency (see §2).
+- **The figure-and-fill exhibit** (ten colours × filled button / filled badge / figure
+  chip), to confirm the rule the construct pass applied provisionally; on confirmation the
+  19 filled badges take the chip's shape and the rule enters `packages/sog-ui/CLAUDE.md`.
+- **§10 the Klingon easter egg**: its `#d00`/`#0a0a0a` artwork colours under the artwork
+  exemption; its eight `text-white/*` → quiet ink. Not drawn; rulable from the words.
+- **§12 the colour budget**: amber plus one on parent surfaces, the full palette on gamer
+  surfaces, never all six on one page; applied on the home page already; to be written as
+  a paragraph in `packages/sog-ui/CLAUDE.md` (the owner agreed concept rules live there).
+- **The backlog line** on the home page's visual interest (proposed, awaiting a yes).
+- **Pending's colour** landed as info; one token to flip if the owner says warning.
+- **The owner's walk** on 3002: the demo floor, UI Components, UI Previews, home, Roblox,
+  a login error, the gedu dashboard (the warning-edged band), an attendance roster (the
+  pressed pill), the admin products table. Three judgement calls to see are listed in §3.
 
-**Landed 2026-09-06, night: the tokens for §2/§3** (one colour per element with Valor
-`#FF8F31`; the status set in the library; Sogverse's stylesheet declares no colour; see
-§2 and §3), and the media rulings (§6).
+**Running or next, needing no ruling (in order):**
 
-**Landed since (2026-09-06, night):** the identicon (§7). **In flight (one agent):** the
-**status construct pass** (§3: tinted grounds → B, the lit cards → a leading rule, the
-166 text sites sorted into labels and sentences, the tinted pills → the chip's shape, the
-filled badges untouched pending the figure-and-fill word, the mail's note panel converted
-and `STATUS_TINT`/`YTY_ELEMENT` deleted if unspent). It owns `src/**` and `tests/**`; do
-not start the next sweep until it reports and is committed.
+1. **The enforcement pass** (one agent): a test that Sogverse's stylesheet declares no
+   `--color-*`; a test that no colour utility in Sogverse carries an alpha suffix except
+   the two Button hover shades (named) and the easter egg (until §10); the 24 neutral ink
+   `/n` sites → the plain token; the hex-literal lint extended to all of `src/` with named
+   exemptions (flag SVGs in the locale picker, the easter egg artwork, the partner marks in
+   `og/marks.tsx`, the trophy sprite); a lint banning raw Tailwind palette classes; the
+   UI Components page's colour section deleted with nothing in its place; the root
+   `CLAUDE.md` Styling colour rules the adoption replaced retired and the style guide's
+   description losing "and the color palette"; `packages/sog-ui/CLAUDE.md`'s Vercel
+   sentence corrected (the demo runs on its own dev server; deployment is a later step)
+   and the budget paragraph added; `adoption.md` step 1 marked done and the ledger-audit
+   step added to "How the owner rules on an adoption".
+2. **The ledger audit** (a fresh agent, read-only): every entry marked landed checked
+   against the code, the token at its hex, the sites converted, the recorded greps
+   returning nothing; findings reported, fixed by the session, committed.
+3. **The review**: `/code-review` from `git merge-base dev HEAD` in a fresh agent, scoped
+   in three piles (the library and its tests read line by line; the load-bearing Sogverse
+   files, those whose hunks change more than class strings, read as code; the mechanical
+   pile verified by the greps, the suite and the builds); findings triaged per the flow.
+4. **Delete this page, this ledger and `demo/public/ruling-art/`** in one commit once the
+   owner's remaining rulings are landed.
+5. **Phase 5** on the owner's word: gates on the exact commit, the 3002 server killed by
+   port with a tree kill, `ExitWorktree` keep, `dev` fast-forwarded, `git merge --no-ff`
+   titled "Merge the SOG-UI theme adoption into dev", push, worktree removed (`rm -rf` the
+   directory since it has its own `node_modules`, then `git worktree prune`), branch
+   deleted local and remote; do not watch CI.
 
-**Ruled, to land next (one agent, after the construct pass; every item is specified in
-its entry):**
-
-- **§9 act as a figure** (all rulings in §9's "Ruled … from the reordered section"
-  paragraphs): the 48 sites by job; a selected option → `border-act`; a highlighted row
-  → `border-l-2 border-l-act` with the weekday in `act`; icon and monogram tiles →
-  `bg-lifted` with the glyph/initials in `act` (the library's chip-scale exemption
-  retired in `brand.ts`); drop targets → `ring-2 ring-act`; callout → neutral panel,
-  act glyph and label; faded ink on amber → the meta line off the fill; the hover tint →
-  `hover:bg-lifted`; rings → `ring-act`; the two `hover:bg-act/90` stay with a
-  transitional note. **The lifecycle chip** (`product-status-chip.tsx`): one shape,
-  neutral edge + the word in the status colour, no glyph; running success, pending
-  **info** (the recommendation; the owner may say warning), completed quiet ink,
-  cancelled destructive, expired quiet ink. The Yty tile alpha steps in `yty.ts`,
-  `product-type-presentation.ts` and the sixteen `bg-pick-N/15` follow the tile ruling:
-  `bg-lifted` tiles, glyph in the family/pick colour.
-- **§14 gradients**: home and Roblox heroes → the app's structure, wash gone, one 6px
-  full-value violet rule under the headline at its measure; the About washes → ground;
-  the closing card → `bg-card` + violet rule; both social cards → the same rule under
-  the headline, `GRADIENT` deleted; the email header → ground + a solid violet rule cell
-  (the flat act→act text-colour gradient stays); `composite.ts` and its test deleted
-  (nothing composites); the gedu chip by the role ruling.
-- **The role chip** (§14's role paragraph): `ROLE_GRAMMAR` in the library (gamer Glow
-  `User`, parent Harmony `Users`, gedu Wit `Compass`, admin quiet ink `KeyRound`);
-  `ROLE_BADGE_STYLES` → the chip shape, word in the family colour; the users strip's
-  glyph map reads the row; the act, gradients and roles sections leave the page, which
-  then holds only the inventory.
-
-**Then, needing the owner:** the figure-and-fill exhibit (ten colours × button / badge /
-chip); the Klingon easter egg (§10) and the calm-surface budget (§12), small, drawn
-together; the owner's backlog line on the home page's visual interest (proposed, not
-approved).
-
-**Then, needing no ruling: the end of the branch.** (1) A fresh agent audits the ledger
-against the code: every entry marked landed is checked, the token at its hex, the sites
-converted, the recorded greps returning nothing; findings fixed before review. (2) The
-enforcement pass (see below). (3) `/code-review` from the merge-base in a fresh agent.
-(4) The owner's walk through the app on 3002. (5) Delete this page, this ledger and
-`demo/public/ruling-art/`; Phase 5 merge.
-**Put to the owner 2026-09-06, evening — the figure-and-fill rule.** The owner pointed
-at the product card's waitlist chip (`public/products/status-chip.tsx`: a neutral edge,
-the page ground, an hourglass and the word in `act`, no fill) and said the brand colours
-look bad under either white or black text, and that the chip gets around it by putting
-the colour on the dark ground where it has its greatest contrast and vibrancy. Proposed
-and refined with the owner (a first draft, "never a ground", broke on buttons): **a
-family or status colour is a figure on the dark ground wherever it names something, and
-a fill only where it is pressed.** Badges, chips, status labels and element marks spend
-colour as ink, glyph, edge, ring or dot on a neutral ground; a button may take a fill,
-with the label the measurement gives it (ink on act, white on world, ink on every
-family), and which colours a button may wear is the Button adoption's decision, made with
-the fills drawn. If confirmed: the 19 solid fills under a label and the 9 tinted pills
-become the chip's shape; the recipe grid loses its fill column for families and statuses;
-the library's chip starts from the waitlist chip's file. Awaiting the owner's word.
-
-**Open on the page:** Valor's colour (status section 2, "Area and ink" and the context
-cases); the act/world replacements per job (§9, page section 6) and the icon-tile
-exemption the owner has not ruled out; gradients (§14, page section 7, its own review);
-media ground and on-media ink (§6, page section 3); the identicon (§7, page section 4);
-the easter egg (§10, not drawn); the calm-surface budget (§12, not drawn). The Lynx cyan
-(page section 5) is ruled and leaves with the enforcement pass; the glyph section (8)
-leaves with the glyph landing.
-
-**End-of-branch work, needing no ruling:** the enforcement (a test that Sogverse's
-stylesheet declares no `--color-*`; the hex-literal lint extended to all of `src/` with
-named exemptions — flag SVGs, the easter egg artwork, the partner marks in `og/marks.tsx`,
-the identicon once ruled; a lint banning raw Tailwind palette classes; the seam rule that
-no alpha suffix appears on a colour utility in Sogverse); `composite.ts`'s doc comment
-reconciled with the act ruling when gradients are ruled; the root `CLAUDE.md` Styling rules
-the adoption retires; adoption.md's step 1 marked done; this page, this ledger and
-`demo/public/ruling-art/` deleted in one commit; the review (`/code-review` from the
-merge-base, in a subagent); the owner's walk through the app on 3002 before merge; merge
-via the worktree flow's Phase 5; delete the session memory file.
+**Follow-ups agreed for after the merge, each its own short branch:** split the root
+`CLAUDE.md` (already in `TODO.md`); a mono monogram in the library as the demo's favicon;
+deriving the OG partner marks from the vendored SVGs with a rendered-output check (owner
+to approve as a TODO line); the lint scope inversion (`eslint .` with a skip-list); the
+icon vocabulary project; deploying the demo when the owner wants it off localhost.
 
 **Standing agreements not to forget:** the owner rules from the page, in shorthand,
 never from a paragraph; ruled means landed, and the page shrinks by what landed; no
 prose, numbers or pass marks on the page; every ruling's reason goes into a doc comment,
 never a source citation; Sogverse never learns of the Guidebook; the audit of whether a
-site spends a token for its own role is done as each ruling's sweep, never separately.
+site spends a token for its own role is done as each ruling's sweep, never separately;
+concept-and-intent rules that no lint can hold live in `packages/sog-ui/CLAUDE.md`.

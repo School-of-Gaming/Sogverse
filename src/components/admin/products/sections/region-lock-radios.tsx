@@ -82,7 +82,7 @@ export function RegionLockRadios({
             key={option.code ?? "none"}
             className={cn(
               "flex cursor-pointer items-center gap-3 rounded-md border border-border p-3 text-sm transition-colors",
-              selected && "bg-act/5"
+              selected && "border-act"
             )}
           >
             <input

@@ -2,17 +2,9 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import {
-  BadgeCheck,
-  Gamepad2,
-  GraduationCap,
-  MailCheck,
-  ShieldCheck,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
-import { ROUTES } from "@/lib/constants";
-import type { UserRole } from "@/types";
+import { BadgeCheck, MailCheck } from "lucide-react";
+import { ROLE_INK, ROUTES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { AdminUserRoleStat } from "./admin-dashboard-data";
 
 /**
@@ -45,21 +37,29 @@ import type { AdminUserRoleStat } from "./admin-dashboard-data";
  */
 
 /**
- * The glyph each role wears. The *name* is not here: it is
- * `admin.dashboard.users.roles.<role>`, keyed by the database's own role
- * identifier so a tile cannot be labelled by anything but the role it counts.
+ * How a tile says which role it is counting.
  *
- * A `Record` over the enum rather than a lookup with a fallback, so a role added
- * to `user_role` stops the build here and makes somebody choose its icon. The
- * RPC will already be counting it — it enumerates the enum — but the page's own
- * two lists (this, and the order the strip reads in) are hand-maintained.
+ * **A role is carried by the colour on its word, and by nothing else. There is
+ * no role icon, here or anywhere.** These tiles used to lead with one — a
+ * gamepad for a gamer, which belongs to the consumer club, so an admin met the
+ * same mark as a role on this page and as a product kind on the next; a
+ * graduation cap for a gedu, in a product whose copy will not say "class"; a
+ * shield for an admin, which is already the gedu-certification mark two
+ * sections down. Picking four that cleared the kind glyphs, the element glyphs
+ * and the forty zone icons produced a set chosen by elimination, and a mark
+ * beside a word that already says "Gamer" is a third statement of one fact.
+ *
+ * That is a statement about today rather than a ban: if a surface ever earns a
+ * role mark, it is decided in the library beside the family, and this tile
+ * reads it from there — which is exactly what it does for the colour.
+ *
+ * The ink itself is `ROLE_INK` in the shared role constants, which is typed
+ * against the library's own row so a family reassigned in SOG-UI fails to
+ * compile rather than leaving this tile painting the old one. The *name* is in
+ * neither table — it is `admin.dashboard.users.roles.<role>`, keyed by the
+ * database's own role identifier so a tile cannot be labelled by anything but
+ * the role it counts.
  */
-const ROLE_ICON: Record<UserRole, LucideIcon> = {
-  customer: Users,
-  gamer: Gamepad2,
-  gedu: GraduationCap,
-  admin: ShieldCheck,
-};
 
 export function UsersStrip({ stats }: { stats: readonly AdminUserRoleStat[] }) {
   const t = useTranslations("admin.dashboard.users");
@@ -78,16 +78,16 @@ export function UsersStrip({ stats }: { stats: readonly AdminUserRoleStat[] }) {
 
 function UserRoleTile({ stat }: { stat: AdminUserRoleStat }) {
   const t = useTranslations("admin.dashboard.users");
-  const Icon = ROLE_ICON[stat.role];
 
   return (
     <Link
       href={ROUTES.admin.users}
       className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-lifted"
     >
-      <Icon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium">
+        <span
+          className={cn("block text-sm font-medium", ROLE_INK[stat.role])}
+        >
           {t(`roles.${stat.role}`)}
         </span>
         {(stat.verified !== null || stat.certified !== null) && (

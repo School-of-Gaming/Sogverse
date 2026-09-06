@@ -64,10 +64,13 @@ as hex; every other form of it (an HSL triple, a composited tint for email, a co
 ratio) is computed by a function, never typed by hand, so a value converted twice is the
 same value. No new colour arrives by conversion or by eye.
 
-**A brand colour exists only at its authored values**, a family's strong or soft variant
-or a token's own full value, never at an alpha step. A ground that needs to lift goes to a
-neutral; the brand arrives at full value on an edge, ink or fill. The exemptions are
-chip-scale icon-accent tiles and artwork carrying its own palette, and the list is closed.
+**A brand colour exists only at its authored values**, a family's single hex or a token's
+own full value, never at an alpha step. A ground that needs to lift goes to a neutral; the
+brand arrives at full value on an edge, ink, mark or fill. The one exemption is artwork
+carrying its own palette. Chip-scale icon-accent tiles used to be a second: a square of
+the hue at a tenth behind a glyph already inked in it. It is retired, because the glyph on
+the lifted neutral carries the accent on its own and the tint was the same colour stated
+twice — once at its authored value and once at a duller one.
 
 **There is one theme and it is dark.** No light fallback, no switcher, no `dark:` variant.
 Every text-on-ground pairing the library ships is proven in the contrast tests, and a

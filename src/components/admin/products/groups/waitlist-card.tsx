@@ -88,7 +88,7 @@ export function WaitlistCard({
       ref={setNodeRef}
       className={cn(
         "border-dashed transition-colors",
-        isOver && "bg-act/5",
+        isOver && "ring-2 ring-act",
       )}
     >
       <CardHeader className="pb-3">

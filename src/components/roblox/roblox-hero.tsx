@@ -47,22 +47,29 @@ export function RobloxHero() {
     : "text-2xl sm:text-4xl lg:text-5xl xl:text-6xl";
 
   return (
-    // Same gradient treatment as the home page hero, pulled up under the
-    // translucent header, so the programme page reads as part of the same site
-    // rather than a microsite bolted on.
-    <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_var(--color-background)_100%),linear-gradient(to_right,_color-mix(in_oklab,var(--color-act)_20%,transparent),_transparent_50%,_color-mix(in_oklab,var(--color-world)_10%,transparent))] pt-[var(--header-height)]">
+    // Same treatment as the home page hero, pulled up under the translucent
+    // header, so the programme page reads as part of the same site rather than
+    // a microsite bolted on: the page ground and one violet rule under the
+    // headline, where a two-hue wash used to be.
+    <section className="relative -mt-[var(--header-height)] overflow-hidden pt-[var(--header-height)]">
       <div className="container mx-auto max-w-6xl px-4 py-20 sm:py-28">
         <div className="grid items-center gap-14 md:grid-cols-2 md:gap-12">
           <div className="text-center md:text-left">
-            <h1 className={`font-display font-bold leading-snug ${sloganSize}`}>
-              {t.rich("hero.title", {
-                br: () => <br />,
-                primary: (chunks) => <span className="text-act">{chunks}</span>,
-                secondary: (chunks) => (
-                  <span className="text-world">{chunks}</span>
-                ),
-              })}
-            </h1>
+            {/* Shrink-to-fit, so the rule runs the headline's own measure —
+                centred under it on a phone, left-aligned beside the lockup
+                from `md`, with nothing measured at runtime. */}
+            <div className="inline-block">
+              <h1 className={`font-display font-bold leading-snug ${sloganSize}`}>
+                {t.rich("hero.title", {
+                  br: () => <br />,
+                  primary: (chunks) => <span className="text-act">{chunks}</span>,
+                  secondary: (chunks) => (
+                    <span className="text-world">{chunks}</span>
+                  ),
+                })}
+              </h1>
+              <span className="mt-6 block h-1.5 w-full rounded-full bg-world sm:mt-8" />
+            </div>
             <p className="mt-6 text-lg leading-8 text-muted-foreground md:max-w-xl">
               {t("hero.subtitle")}
             </p>

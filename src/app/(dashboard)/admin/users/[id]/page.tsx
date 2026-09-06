@@ -320,7 +320,7 @@ export default async function AdminUserDetailPage({
                 dialog over the same values, so there is no second home to
                 disagree with. */}
             <div className="mt-2 flex items-center gap-3">
-              <Badge className={ROLE_BADGE_STYLES[profile.role]}>
+              <Badge variant="outline" className={ROLE_BADGE_STYLES[profile.role]}>
                 {c(ROLE_LABEL_KEYS[profile.role])}
               </Badge>
               <span className="text-sm text-muted-foreground">
@@ -367,7 +367,7 @@ export default async function AdminUserDetailPage({
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge className={ROLE_BADGE_STYLES.gamer}>
+                          <Badge variant="outline" className={ROLE_BADGE_STYLES.gamer}>
                             {c("roleGamer")}
                           </Badge>
                           <NavChevron size="sm" />
@@ -418,7 +418,7 @@ export default async function AdminUserDetailPage({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={ROLE_BADGE_STYLES.customer}>
+                      <Badge variant="outline" className={ROLE_BADGE_STYLES.customer}>
                         {c("roleParent")}
                       </Badge>
                       <NavChevron size="sm" />

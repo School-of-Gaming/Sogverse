@@ -21,11 +21,15 @@ import { YTY_ELEMENT_GRAMMAR } from "@sog/ui";
  * reaches past this one for an element's mark.
  *
  * Each element's classes name the @sog/ui family, which is one colour: the same
- * token inks the accent line, tints the tile and draws the ring. The `/10` and
- * `/5` steps on the tile and the gradient are the pre-library recipe — a family
- * exists at its authored value, and a fraction of it over the dark ground is a
- * duller colour than the family — and they stay until the icon-tile question
- * (§9's chip-scale exemption) is ruled.
+ * token inks the accent line and draws the ring, at that value and no other.
+ *
+ * **A family has no ground here, and it used to have two.** The tile behind an
+ * element's mark was a 10% wash of the family and the card behind it a gradient
+ * from 10% to 5% — a colour exists at its authored value or not at all, and a
+ * fraction of it over the dark ground is a duller colour than the family. The
+ * mark carries the family at full value, the square behind it is the lifted
+ * grey every other tile in the app sits on, and the gradient is gone with no
+ * replacement: nothing was reading it.
  */
 export const YTY_ELEMENTS = [
   {
@@ -34,8 +38,6 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with yourself",
     icon: YTY_ELEMENT_GRAMMAR.harmony.glyph,
     color: {
-      bg: "bg-yty-harmony/10",
-      bgGradient: "from-yty-harmony/10 to-yty-harmony/5",
       accent: "text-yty-harmony",
       ring: "ring-yty-harmony",
     },
@@ -46,8 +48,6 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with others",
     icon: YTY_ELEMENT_GRAMMAR.glow.glyph,
     color: {
-      bg: "bg-yty-glow/10",
-      bgGradient: "from-yty-glow/10 to-yty-glow/5",
       accent: "text-yty-glow",
       ring: "ring-yty-glow",
     },
@@ -58,8 +58,6 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with society",
     icon: YTY_ELEMENT_GRAMMAR.valor.glyph,
     color: {
-      bg: "bg-yty-valor/10",
-      bgGradient: "from-yty-valor/10 to-yty-valor/5",
       accent: "text-yty-valor",
       ring: "ring-yty-valor",
     },
@@ -70,8 +68,6 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with technology",
     icon: YTY_ELEMENT_GRAMMAR.wit.glyph,
     color: {
-      bg: "bg-yty-wit/10",
-      bgGradient: "from-yty-wit/10 to-yty-wit/5",
       accent: "text-yty-wit",
       ring: "ring-yty-wit",
     },

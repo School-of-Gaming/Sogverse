@@ -60,7 +60,7 @@ export function ChatReactionRow({
             "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs leading-none transition-colors",
             "disabled:cursor-default disabled:opacity-60",
             tally.mine
-              ? "bg-act/15 text-act"
+              ? "bg-lifted text-act"
               : "bg-lifted text-muted-foreground hover:border-foreground hover:text-foreground",
           )}
         >

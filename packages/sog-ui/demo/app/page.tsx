@@ -19,8 +19,10 @@ import {
 } from "../../src/tokens/brand";
 import {
   PRODUCT_KIND_GRAMMAR,
+  ROLE_GRAMMAR,
   YTY_ELEMENT_GRAMMAR,
   type ProductKindId,
+  type RoleId,
 } from "../../src/tokens/grammar";
 import { IDENTICON } from "../../src/tokens/identicon";
 import { PICKS } from "../../src/tokens/picks";
@@ -81,6 +83,22 @@ const KIND_NAME: Record<ProductKindId, string> = {
   municipality_club: "Municipality club",
   camp: "Camp",
   event: "Event",
+};
+
+/** The roles in the order the grammar table declares them. */
+const ROLES = [
+  "gamer",
+  "customer",
+  "gedu",
+  "admin",
+] as const satisfies readonly RoleId[];
+
+/** The word each role's own chip carries. */
+const ROLE_NAME: Record<RoleId, string> = {
+  gamer: "Gamer",
+  customer: "Parent",
+  gedu: "Gedu",
+  admin: "Admin",
 };
 
 /**
@@ -340,6 +358,40 @@ export default function FoundationsPage() {
                 <p className="mt-2 text-h4 font-medium">{KIND_NAME[kind]}</p>
                 <p className="font-brand-mono text-body-s text-muted-foreground">
                   {family.name}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* A role is its word in its family's colour, and there is no role mark:
+          the word is always present, so a glyph would say the same thing twice.
+          The chip is that word inside the neutral edge the app draws it in. */}
+      <Section title="What each role wears">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {ROLES.map((role) => {
+            const row = ROLE_GRAMMAR[role];
+            const family = row.family === null ? null : YTY_FAMILIES[row.family];
+            const ink =
+              row.family === null
+                ? "text-muted-foreground"
+                : (INK[`yty-${row.family}`] ?? "");
+            return (
+              <div key={role}>
+                <div className="flex h-16 items-center justify-center gap-4 rounded-lg border border-border bg-card">
+                  <span className={`text-h4 font-medium ${ink}`}>
+                    {ROLE_NAME[role]}
+                  </span>
+                  <span
+                    className={`inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-body-s font-semibold ${ink}`}
+                  >
+                    {ROLE_NAME[role]}
+                  </span>
+                </div>
+                <p className="mt-2 text-h4 font-medium">{ROLE_NAME[role]}</p>
+                <p className="font-brand-mono text-body-s text-muted-foreground">
+                  {family === null ? "\u2014" : family.name}
                 </p>
               </div>
             );

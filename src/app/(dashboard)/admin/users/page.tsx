@@ -17,6 +17,7 @@ import {
   useGeduContractAcceptanceMap,
 } from "@/services/gedu";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { Profile, UserRole } from "@/types";
 
 export default function AdminUsersPage() {
@@ -206,7 +207,7 @@ export default function AdminUsersPage() {
             <span className="text-sm text-muted-foreground mr-1">{t('roleFilterLabel')}:</span>
             <button
               onClick={() => setRoleFilter(null)}
-              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              className={`inline-flex items-center rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors ${
                 roleFilter === null
                   ? "bg-info text-info-foreground"
                   : "bg-lifted text-muted-foreground"
@@ -218,11 +219,16 @@ export default function AdminUsersPage() {
               <button
                 key={rf.value}
                 onClick={() => setRoleFilter(roleFilter === rf.value ? null : rf.value)}
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                className={cn(
+                  // Every pill is the same bordered shape; what a chosen one
+                  // does is drop the grey ground and say its own role in its
+                  // own colour, which is the chip these roles wear everywhere
+                  // else on this page.
+                  "inline-flex items-center rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors",
                   roleFilter === rf.value
                     ? ROLE_BADGE_STYLES[rf.value]
-                    : "bg-lifted text-muted-foreground"
-                }`}
+                    : "bg-lifted text-muted-foreground",
+                )}
               >
                 {rf.label}
               </button>

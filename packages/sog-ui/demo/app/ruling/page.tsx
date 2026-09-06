@@ -7,26 +7,23 @@
  * has been decided and built leaves the page, and what stays is only what is
  * still being asked.
  *
- * It obeys the demo's own rule: it is seen, not read. Each question is a title,
- * the things it is about, and their names — a token, a hex, a `today` /
- * `as authored` / `proposed` label, and each exemplar's `component — page`
- * locator. There is no prose, no rationale, no ratio and no pass mark on
- * screen. Every reason lives in a doc comment beside the value it explains, in
- * `inventory.ts` and in each section file; where the point used to be a
- * measurement it is now a rendering, drawn at real size on the real ground with
- * today beside the candidate.
+ * It obeys the demo's own rule: it is seen, not read. There is no prose, no
+ * rationale, no ratio and no pass mark on screen; every reason lives in a doc
+ * comment beside the value it explains, in `inventory.ts`.
+ *
+ * **What is left is the inventory alone.** Every question that was drawn here
+ * — the alpha steps, the greys, the Yty recipe, the status set, the picks, the
+ * identicon, act as a figure, the gradients, the role chip — has been ruled and
+ * built, so each left the page as it landed, which is the whole shape of this
+ * page's life. What the two tables still hold is what no ruling has reached:
+ * the colours with no token behind them, and the handful of alpha steps that
+ * belong to a later question. When those are answered the page goes, and this
+ * directory with it.
  *
  * Scope: colour only. Faces and headings are a later adoption.
- *
- * Colours that are not library tokens are drawn through inline `style` rather
- * than classes, because Tailwind scans source text and a class assembled from a
- * hex at render time is a class the stylesheet does not contain.
  */
 
 import type { Metadata } from "next";
-import { ActSection } from "./section-act";
-import { GradientsSection } from "./section-gradients";
-import { RolesSection } from "./section-roles";
 import { SummarySection } from "./section-summary";
 
 export const metadata: Metadata = {
@@ -39,9 +36,6 @@ export default function RulingPage() {
     <main className="mx-auto max-w-[92rem] px-6 py-16">
       <h1 className="text-h1-mobile sm:text-h1">Theme ruling</h1>
       <SummarySection />
-      <ActSection />
-      <GradientsSection />
-      <RolesSection />
     </main>
   );
 }
