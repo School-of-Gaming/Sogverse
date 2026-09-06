@@ -1,5 +1,13 @@
 /**
- * The element glyphs — which mark rides with each Yty family.
+ * The glyphs — which mark rides with each Yty family, and with each product kind.
+ *
+ * Two tables, one question. The tone grammar holds a fact's colour and its mark
+ * together, and neither half is decided by the consumer; the families' hues are
+ * ruled and their marks are not, and the kind rows have marks that were taken
+ * along with the family and never looked at on their own. So the section runs
+ * the elements first, then the kinds, and each ends in a set view.
+ *
+ * ## The element glyphs
  *
  * The four families' hues are ruled and landed; their **glyphs** are not. Today
  * Sogverse picks them itself, and two of the four are being questioned: Glow's
@@ -46,29 +54,47 @@
  */
 
 import {
+  Backpack,
+  BookOpen,
   Brain,
   BrainCircuit,
+  Building2,
+  Calendar,
   CircleDot,
+  Computer,
   Cpu,
   Feather,
   Flag,
+  Flame,
   Flower2,
+  Gamepad,
+  Gamepad2,
   Glasses,
+  GraduationCap,
   HandHeart,
   Handshake,
+  Headset,
   Heart,
   HeartHandshake,
   HeartPulse,
+  Keyboard,
   Landmark,
+  Laptop,
   Leaf,
   Lightbulb,
   Megaphone,
   MessageCircleHeart,
+  Monitor,
+  MonitorSmartphone,
   Moon,
   Mountain,
+  Mouse,
+  PartyPopper,
+  PcCase,
   Puzzle,
   Rocket,
   Scale,
+  School,
   Search,
   Shield,
   Sparkles,
@@ -76,14 +102,33 @@ import {
   Sun,
   Sword,
   Telescope,
+  Tent,
+  TentTree,
+  Ticket,
   Users,
   Waves,
   type LucideIcon,
 } from "lucide-react";
 
-import { Case, Compare, Exemplar, Panel, Question, CARD, EDGE, INK } from "./parts";
+import {
+  Caps,
+  Case,
+  Compare,
+  Exemplar,
+  Glyph,
+  Panel,
+  Question,
+  CARD,
+  EDGE,
+  INK,
+  MUTED_INK,
+} from "./parts";
 import { alpha } from "./colour";
 import { YTY_FAMILIES, type YtyFamilyId } from "../../../src/tokens/brand";
+import {
+  PRODUCT_KIND_GRAMMAR,
+  type ProductKindId,
+} from "../../../src/tokens/grammar";
 
 /** One candidate mark: the component that draws it, and the name it is known by. */
 interface Candidate {
@@ -221,7 +266,6 @@ function GlyphCell({
   strong: string;
   soft: string;
 }) {
-  const Icon = candidate.icon;
   return (
     <figure className="m-0 flex flex-col items-center">
       <div
@@ -229,14 +273,14 @@ function GlyphCell({
         style={{ backgroundColor: CARD }}
       >
         <span className="flex h-6 items-end gap-3">
-          <Icon size={16} color={soft} aria-hidden />
-          <Icon size={24} color={soft} aria-hidden />
+          <Glyph icon={candidate.icon} size={16} colour={soft} />
+          <Glyph icon={candidate.icon} size={24} colour={soft} />
         </span>
         <span
           className="flex h-9 w-9 items-center justify-center rounded-lg"
           style={{ backgroundColor: alpha(strong, 0.1) }}
         >
-          <Icon size={20} color={soft} aria-hidden />
+          <Glyph icon={candidate.icon} size={20} colour={soft} />
         </span>
       </div>
       <figcaption className="mt-2 text-center font-brand-mono text-body-s text-muted-foreground">
@@ -254,7 +298,7 @@ function GlyphCell({
 function ElementCard({
   name,
   description,
-  icon: Icon,
+  icon,
   strong,
   soft,
 }: {
@@ -274,7 +318,7 @@ function ElementCard({
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg"
           style={{ backgroundColor: alpha(strong, 0.1) }}
         >
-          <Icon size={24} color={soft} aria-hidden />
+          <Glyph icon={icon} size={24} colour={soft} />
         </span>
         <span className="min-w-0">
           <span className="block text-h4 font-semibold" style={{ color: INK }}>
@@ -292,7 +336,7 @@ function ElementCard({
 /** The zone tile as `voice/ZoneList.tsx` composes it: a 36px tile, a 20px glyph and a label. */
 function ZoneTile({
   label,
-  icon: Icon,
+  icon,
   strong,
   soft,
 }: {
@@ -311,7 +355,7 @@ function ZoneTile({
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
           style={{ backgroundColor: alpha(strong, 0.1) }}
         >
-          <Icon size={20} color={soft} aria-hidden />
+          <Glyph icon={icon} size={20} colour={soft} />
         </span>
         <span className="text-body-s" style={{ color: INK }}>
           {label}
@@ -371,6 +415,215 @@ function ElementSet({ pick }: { pick: (element: Element) => Candidate }) {
   );
 }
 
+/**
+ * The four product kinds, each with the mark the tone grammar gives it today
+ * and the alternatives drawn beside it.
+ *
+ * **The criterion for the consumer club is the owner's own:** something closer
+ * to a keyboard and mouse, or a laptop or a desktop — the thing a family's
+ * child actually plays on — and the gamepad only if none of those exist. The
+ * joystick is not the right fit: it is an arcade stick nobody in a club has
+ * touched, so it says "games" as a category rather than naming the machine a
+ * child sits at. lucide carries **no keyboard-and-mouse pairing**, so the pair
+ * can only arrive as one half or the other; `Computer` is drawn as the closest
+ * thing to a desktop and was not on the owner's list.
+ *
+ * The other three kinds are not being questioned; they are drawn because a
+ * change to one row is judged against the three it has to sit beside, which is
+ * the whole reason the set view below exists.
+ *
+ * `today` takes its icon from `PRODUCT_KIND_GRAMMAR` rather than naming the
+ * component a second time, so this table cannot go on drawing a glyph the
+ * grammar has already moved off.
+ *
+ * **What lands when this is ruled:** the ruled mark replaces that row's `glyph`
+ * in `tokens/grammar.ts`, and every admin surface follows with no edit of its
+ * own — the schedule panel's filter chips, the week rows, the attention grid's
+ * card mark and the key rail all read the row.
+ */
+const KINDS: readonly {
+  readonly id: ProductKindId;
+  /** The plural the admin surfaces render, from `admin.products.types`. */
+  readonly label: string;
+  readonly today: Candidate;
+  readonly alternatives: readonly Candidate[];
+  readonly bestFit: Candidate;
+}[] = [
+  {
+    id: "consumer_club",
+    label: "Consumer clubs",
+    /** An arcade stick: games as a category, not the machine a child plays on. */
+    today: { name: "Joystick", icon: PRODUCT_KIND_GRAMMAR.consumer_club.glyph },
+    alternatives: [
+      /** Half of the owner's pairing, and the half a PC player's hands are on. */
+      { name: "Keyboard", icon: Keyboard },
+      /** The other half; simple at 14px, but a bare mouse reads as a peripheral. */
+      { name: "Mouse", icon: Mouse },
+      /** The whole machine in one silhouette, and the one most families own. */
+      { name: "Laptop", icon: Laptop },
+      /** The desktop screen: the setup a gamer sits down at rather than carries. */
+      { name: "Monitor", icon: Monitor },
+      /** Screen and tower together — the fullest "desktop", and the busiest. */
+      { name: "Computer", icon: Computer },
+      /** The tower alone: hardware rather than play. */
+      { name: "PcCase", icon: PcCase },
+      /** Two screens: playing across devices, which is what a club actually is. */
+      { name: "MonitorSmartphone", icon: MonitorSmartphone },
+      /** The modern controller — the owner's fallback if no machine fits. */
+      { name: "Gamepad2", icon: Gamepad2 },
+      /** The older controller; blockier, and clearer at chip scale than Gamepad2. */
+      { name: "Gamepad", icon: Gamepad },
+      /** What everyone in a club is wearing, and the only mark that says "together". */
+      { name: "Headset", icon: Headset },
+    ],
+    bestFit: { name: "Laptop", icon: Laptop },
+  },
+  {
+    id: "municipality_club",
+    label: "Municipality clubs",
+    /** The school building: the school-hours offering, named by where it happens. */
+    today: {
+      name: "School",
+      icon: PRODUCT_KIND_GRAMMAR.municipality_club.glyph,
+    },
+    alternatives: [
+      /** Learning rather than the building — but it says graduation, which this is not. */
+      { name: "GraduationCap", icon: GraduationCap },
+      /** The institution that buys it, rather than the pupils who attend. */
+      { name: "Building2", icon: Building2 },
+      /** The municipality as civic body; heavier, and easily read as government. */
+      { name: "Landmark", icon: Landmark },
+      /** The lesson itself, at the cost of looking like documentation. */
+      { name: "BookOpen", icon: BookOpen },
+    ],
+    bestFit: { name: "School", icon: School },
+  },
+  {
+    id: "camp",
+    label: "Camps",
+    /** The camp, named by the thing you sleep under. */
+    today: { name: "Tent", icon: PRODUCT_KIND_GRAMMAR.camp.glyph },
+    alternatives: [
+      /** The same tent with its setting; more scene, less legible at 14px. */
+      { name: "TentTree", icon: TentTree },
+      /** The campfire — the evening rather than the week. */
+      { name: "Flame", icon: Flame },
+      /** The hard thing, tried: the intensive rather than the accommodation. */
+      { name: "Mountain", icon: Mountain },
+      /** What a child arrives carrying, which is how a camp starts. */
+      { name: "Backpack", icon: Backpack },
+    ],
+    bestFit: { name: "Tent", icon: Tent },
+  },
+  {
+    id: "event",
+    label: "Events",
+    /** A dated occasion — and a calendar on a panel already made of calendars. */
+    today: { name: "CalendarDays", icon: PRODUCT_KIND_GRAMMAR.event.glyph },
+    alternatives: [
+      /** The same mark without the day dots; quieter, and the same collision. */
+      { name: "Calendar", icon: Calendar },
+      /** The one-off you turn up to: an occasion rather than a date. */
+      { name: "Ticket", icon: Ticket },
+      /** The occasion at its loudest; too jolly for a row of twenty. */
+      { name: "PartyPopper", icon: PartyPopper },
+      /** The special thing, unspecific — and already spoken for in the element set. */
+      { name: "Sparkles", icon: Sparkles },
+    ],
+    bestFit: { name: "Ticket", icon: Ticket },
+  },
+];
+
+type Kind = (typeof KINDS)[number];
+
+/** The soft variant the admin surfaces tint a kind's glyph with, via the grammar's family. */
+function kindInk(id: ProductKindId): string {
+  return YTY_FAMILIES[PRODUCT_KIND_GRAMMAR[id].family].soft;
+}
+
+/**
+ * The filter chip as `admin/dashboard/schedule-panel.tsx` composes it, in its
+ * resting state: a bordered pill, a 14px tinted glyph and the kind's plural.
+ * Selected fills with `accent`, which is a state of this chip rather than a
+ * second construct, so resting is what a glyph is judged in.
+ */
+function TypeChip({
+  icon,
+  label,
+  ink,
+}: {
+  icon: LucideIcon;
+  label: string;
+  ink: string;
+}) {
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap"
+      style={{ borderColor: EDGE, color: MUTED_INK }}
+    >
+      <Glyph icon={icon} size={14} colour={ink} />
+      {label}
+    </span>
+  );
+}
+
+/**
+ * One candidate mark for a product kind, at both sizes the admin surfaces spend
+ * it at — 14px in the schedule panel's chips and the week rows, 16px as the
+ * attention grid's card mark — and once inside the chip itself.
+ */
+function KindGlyphCell({
+  candidate,
+  label,
+  ink,
+}: {
+  candidate: Candidate;
+  label: string;
+  ink: string;
+}) {
+  return (
+    <figure className="m-0 flex flex-col items-stretch">
+      <div
+        className="flex items-end justify-center gap-3 rounded-lg p-3"
+        style={{ backgroundColor: CARD }}
+      >
+        <Glyph icon={candidate.icon} size={14} colour={ink} />
+        <Glyph icon={candidate.icon} size={16} colour={ink} />
+      </div>
+      <div className="mt-3 flex justify-center">
+        <TypeChip icon={candidate.icon} label={label} ink={ink} />
+      </div>
+      <figcaption className="mt-2 text-center font-brand-mono text-body-s text-muted-foreground">
+        {candidate.name}
+      </figcaption>
+    </figure>
+  );
+}
+
+/** The four kinds' chips as the schedule panel's filter row shows them. */
+function KindSet({ pick }: { pick: (kind: Kind) => Candidate }) {
+  return (
+    <Exemplar
+      file="admin/dashboard/schedule-panel.tsx"
+      page="/admin — the schedule panel's type filters"
+    >
+      <div className="flex flex-wrap items-center gap-1.5">
+        {KINDS.map((kind) => (
+          <TypeChip
+            key={kind.id}
+            icon={pick(kind).icon}
+            label={kind.label}
+            ink={kindInk(kind.id)}
+          />
+        ))}
+      </div>
+    </Exemplar>
+  );
+}
+
+const TODAY_KIND_GLYPH = (kind: Kind): Candidate => kind.today;
+const BEST_FIT_KIND_GLYPH = (kind: Kind): Candidate => kind.bestFit;
+
 const TODAY_GLYPH = (element: Element): Candidate => element.today;
 const BEST_FIT_GLYPH = (element: Element): Candidate => element.bestFit;
 
@@ -380,7 +633,7 @@ const BEST_FIT_GLYPH = (element: Element): Candidate => element.bestFit;
  */
 export function GlyphsSection({ n = 2 }: { n?: number }) {
   return (
-    <Question n={n} title="The element glyphs">
+    <Question n={n} title="The glyphs">
       {ELEMENTS.map((element) => {
         const family = YTY_FAMILIES[element.id];
         return (
@@ -414,7 +667,7 @@ export function GlyphsSection({ n = 2 }: { n?: number }) {
         );
       })}
 
-      <Case title="The four together">
+      <Case title="The four elements together">
         <Compare columns={2}>
           <Panel label="Today">
             <ElementSet pick={TODAY_GLYPH} />
@@ -423,6 +676,58 @@ export function GlyphsSection({ n = 2 }: { n?: number }) {
             <ElementSet pick={BEST_FIT_GLYPH} />
           </Panel>
         </Compare>
+      </Case>
+
+      <Case title="The kind glyphs">
+        <div className="space-y-10">
+          {KINDS.map((kind) => {
+            const ink = kindInk(kind.id);
+            return (
+              <div key={kind.id}>
+                <Caps>{kind.label}</Caps>
+                <div className="mt-3 flex flex-col gap-6 lg:flex-row lg:items-stretch">
+                  <div className="lg:w-56 lg:shrink-0">
+                    <Panel label="Today">
+                      <KindGlyphCell
+                        candidate={kind.today}
+                        label={kind.label}
+                        ink={ink}
+                      />
+                    </Panel>
+                  </div>
+                  <div className="min-w-0 lg:flex-1">
+                    <Panel label="Candidates">
+                      <div className="flex flex-wrap gap-4">
+                        {kind.alternatives.map((candidate) => (
+                          <KindGlyphCell
+                            key={candidate.name}
+                            candidate={candidate}
+                            label={kind.label}
+                            ink={ink}
+                          />
+                        ))}
+                      </div>
+                    </Panel>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          <div>
+            <Caps>The four kinds together</Caps>
+            <div className="mt-3">
+              <Compare columns={2}>
+                <Panel label="Today">
+                  <KindSet pick={TODAY_KIND_GLYPH} />
+                </Panel>
+                <Panel label="Best fit">
+                  <KindSet pick={BEST_FIT_KIND_GLYPH} />
+                </Panel>
+              </Compare>
+            </div>
+          </div>
+        </div>
       </Case>
     </Question>
   );
