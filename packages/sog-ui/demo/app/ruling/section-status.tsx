@@ -21,75 +21,71 @@
  *    covers.
  * 2. **The card lit from its leading edge**, the one gradient in the set, the
  *    same tinted effect at card scale and failing for the same reason.
- * 3. **Strong versus soft**, drawn once for every hue against every construct a
- *    hue is spent on — which is the question the two above run into on their
- *    first line, and the next one to be ruled.
+ * 3. **Area and ink** — the role table, drawn once for every hue against every
+ *    construct a hue is spent on, and then again in the places a reader really
+ *    meets them.
+ *
+ * **The third thing used to be a question and is now a drawing of an answer.**
+ * It was "strong versus soft", six hues × six constructs with the inverted
+ * direction beneath each row, and the owner ruled on it by looking: the lighter
+ * value carries better on the dark ground for Harmony, Glow and Wit in both
+ * area and ink, and Valor reads best as a strong area with a soft ink. What
+ * that ruling produced is not a direction at all but a **role table** — a
+ * consumer asks for a family's *area* or its *ink*, and the library decides
+ * which authored value answers. `YTY_ROLES` in `inventory.ts` holds it with the
+ * reasoning; `status-tones.ts` holds the vocabulary both this file and its
+ * in-context drawings are built from. The inverted rows are gone, because there
+ * is nothing left for them to argue.
  *
  * Everything else the section used to draw has gone. The constructs nobody
- * questioned keep **one compact row of the proposed set each**, because the
+ * questioned keep **one compact row of the ruled set each**, because the
  * final ruling waits on seeing the four in context and a set is read in the
- * things it fills; the collision scenes keep their three exemplars and are
- * drawn once rather than three times. Today's rows survive only where today is
- * the thing being replaced.
+ * things it fills. Today's rows survive only where today is the thing being
+ * replaced.
  *
  * **Two constructs are folded into the three above rather than drawn again.**
  * The tinted pill (9 sites) is the tinted ground at pill scale — same wash,
  * same ink, smaller box — so it takes whatever the first thing is ruled. The
- * ring (4 sites) is a 40% ring, and a full-value ring is a column of the recipe
- * grid, drawn there for all six hues at once. Redrawing either would be the
- * same picture with a different caption.
+ * ring (4 sites) is a 40% ring, and a full-value ring is a column of the ruled
+ * row, drawn there for all six hues at once and again on a real selected tile
+ * in the contexts.
  *
- * **What lands when this is ruled.** Four status tokens in the library, each
- * with the ink or white companion that reads on it and its measured pairings in
- * the contrast ledger; success and info as two more rows of the tone grammar
- * rather than two more colours, because a status is a fact and a fact takes a
- * family; the strong/soft recipe as a library rule with the grid below as its
- * proof; Sogverse's four `--color-*` deleted and the email hex mirror reading
- * the library; the 121 tinted sites and the lit card converted to whatever
- * construct is ruled here. The token names do not move, so no call site changes
- * spelling.
+ * **What lands when this is ruled.** A `YTY_ROLES` table in the library beside
+ * the tone grammar; a theme that emits `--color-yty-<family>-area` and `-ink`
+ * plus the four status pairs, with strong and soft still authored in TypeScript
+ * and no longer emitted, so a class can only name a role; Sogverse's `yty.ts`,
+ * `voice-zones.ts`, the admin product presentation and every status consumer
+ * repointed at the roles; the twelve new pairings in the contrast ledger; the
+ * label primitive §11 asks for; Sogverse's four `--color-*` deleted and the
+ * email hex mirror reading the library; and the 121 tinted sites and the lit
+ * card converted to whatever construct is ruled here. The status token *names*
+ * do not move, so no call site changes spelling for that half of it.
  */
 
 import type { CSSProperties, ReactNode } from "react";
+import { BRAND, NEUTRALS } from "../../../src/tokens/brand";
 import {
-  BRAND,
-  NEUTRALS,
-  YTY_FAMILIES,
-  type YtyFamilyId,
-} from "../../../src/tokens/brand";
-import {
-  AlertCircle,
-  AlertTriangle,
-  Brain,
-  CalendarDays,
-  Check,
   ChevronRight,
-  Coins,
-  Heart,
-  Info,
-  Joystick,
-  Mic,
-  MicOff,
   Radio,
-  School,
-  Sun,
-  Sword,
-  Tent,
   UserRoundSearch,
-  UserRoundX,
-  UserX,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 
-import { THRESHOLDS, contrastRatio } from "../../../src/tokens/contrast";
 import { tailwindAlpha } from "./colour";
+import { STATUS_BY_ID, YTY_ROLES } from "./inventory";
+import { InContextCases } from "./section-status-context";
 import {
-  PROPOSED_STATUSES,
-  STATUS_BY_ID,
-  STATUS_ROWS,
-  type StatusId,
-} from "./inventory";
+  COPY,
+  FILLED,
+  NEUTRAL_PANEL,
+  RULED,
+  RULED_HUES,
+  STATUS_GLYPH,
+  TODAY,
+  labelOn,
+  type Hue,
+  type Tone,
+} from "./status-tones";
 import {
   CARD,
   Caps,
@@ -104,165 +100,6 @@ import {
   Panel,
   Question,
 } from "./parts";
-
-/**
- * The two labels a fill can carry, named here so no drawing spells a hex.
- *
- * `LABEL_INK` is the Ground value doing its other job: it is the page's colour
- * *and* the dark label every light fill carries, which is what makes one
- * measurement settle two uses.
- */
-const LABEL_INK = NEUTRALS.background.hex;
-const WHITE = BRAND.world.foreground;
-
-/**
- * Which of the two a fill carries, measured rather than chosen.
- *
- * Ink wherever ink clears the body floor, white where it does not. Wit strong
- * is the only value in the whole grid that takes the second branch — 4.10 under
- * ink, 4.57 under white — and computing it here rather than typing it means a
- * retune of any family moves its label with it instead of leaving a hardcoded
- * companion that used to be right.
- */
-function labelOn(fill: string): string {
-  return contrastRatio(fill, LABEL_INK) >= THRESHOLDS.bodyText
-    ? LABEL_INK
-    : WHITE;
-}
-
-/** The neutral panel every no-tint candidate sits on inside a card. */
-const NEUTRAL_PANEL = NEUTRALS.muted.hex;
-
-/**
- * One status, as the pair it is spent in: a value for area and line, a value
- * for ink and glyph, and the label that reads on a solid fill of the first.
- *
- * Today's four collapse into the same shape with both halves equal, which is
- * exactly what today's code says — one hex, spent at whatever alpha the site
- * felt like.
- */
-interface Tone {
-  readonly key: string;
-  readonly status: StatusId;
-  readonly label: string;
-  readonly strong: string;
-  readonly soft: string;
-  readonly onStrong: string;
-}
-
-const TODAY: readonly Tone[] = STATUS_ROWS.map((row) => ({
-  key: row.id,
-  status: row.id,
-  label: `${row.id} ${row.today}`,
-  strong: row.today,
-  soft: row.today,
-  onStrong: row.todayForeground,
-}));
-
-const PROPOSED: readonly Tone[] = PROPOSED_STATUSES.map((status) => ({
-  key: status.status,
-  status: status.status,
-  label: status.label,
-  strong: status.strong,
-  soft: status.soft,
-  onStrong: status.onStrong,
-}));
-
-/**
- * The proposed set with info drawn twice — the one row where the fork is still
- * live.
- *
- * A solid fill is the only construct where the whole panel is area *and* a
- * label has to read on it, so it is the only one where choosing strong costs
- * something: Wit strong under white clears the body floor by 0.07, and Wit soft
- * under ink clears it by 3.6. Everywhere else the recipe answers it — area
- * takes strong, ink takes soft — and a second info column would be the same
- * picture twice.
- */
-const SOLID: readonly Tone[] = PROPOSED.flatMap((tone) =>
-  tone.status === "info"
-    ? [
-        { ...tone, key: "info-strong", label: "info = yty-wit-strong · white" },
-        {
-          ...tone,
-          key: "info-soft",
-          label: "info = yty-wit-soft · ink",
-          strong: tone.soft,
-          onStrong: LABEL_INK,
-        },
-      ]
-    : [{ ...tone, label: `${tone.label} · ink` }],
-);
-
-/**
- * The mark each state carries, as `ui/alert.tsx`'s own call sites draw it.
- *
- * The alert is what settles the four for the whole section: it is the one
- * construct in the app that renders all four states from one component, so its
- * marks are the set, and the shorter constructs below borrow them rather than
- * each proposing a mark of its own. Elsewhere a site may reach for a near
- * relative — a session-feed line uses the ringed check where the alert uses the
- * bare one — and that is a difference between sites, not between states.
- */
-const STATUS_GLYPH: Record<StatusId, LucideIcon> = {
-  destructive: AlertCircle,
-  success: Check,
-  info: Info,
-  warning: AlertTriangle,
-};
-
-/**
- * The words each state carries.
- *
- * Real copy of the kind each construct really holds — a field error is a
- * sentence about the field, a flagged line is one bold clause, a badge is one
- * or two words. Lorem would hide the thing this section is for: whether four
- * marks are legible at the size and length the app actually sets them.
- */
-const COPY: Record<
-  StatusId,
-  {
-    title: string;
-    body: string;
-    line: string;
-    field: string;
-    meta: string;
-    badge: string;
-  }
-> = {
-  destructive: {
-    title: "Payment failed",
-    body: "The card on file was declined, so this month's session is unpaid.",
-    line: "Removing a seat mid-term is not refunded.",
-    field: "That username is already taken.",
-    meta: "Microphone off",
-    badge: "Payment failed",
-  },
-  success: {
-    title: "Seat confirmed",
-    body: "Aino is on the roster for Tuesday's club.",
-    line: "The seat is held until Friday.",
-    field: "Aino's Minecraft account is linked.",
-    meta: "Report complete",
-    badge: "Active",
-  },
-  info: {
-    title: "Times shown in your timezone",
-    body: "This club is run in Helsinki time; the clock faces are converted.",
-    line: "This club is run in Helsinki time.",
-    field: "This club is run in Helsinki time.",
-    meta: "Next session",
-    badge: "Next session",
-  },
-  warning: {
-    title: "Two seats left",
-    body: "This camp closes when the last seat goes, and the waitlist opens after that.",
-    line: "Two seats left on this camp.",
-    field: "Two seats left on this camp.",
-    meta: "Needs attention",
-    badge: "Waitlisted",
-  },
-};
 
 // ------------------------------------------------- painting one construct
 
@@ -450,8 +287,8 @@ interface Candidate {
  * **A — a full-value rule down the leading edge.** The status arrives as a line
  * rather than as a wash, so a brand colour is spent at the value it is
  * authored at, and the panel's ground stays a neutral the palette already
- * ships. The rule takes strong and the glyph takes soft, which is the recipe
- * the third thing in this section is drawn to prove.
+ * ships. The rule takes the hue's area and the glyph takes its ink, which is
+ * the role table the third thing in this section draws.
  *
  * **B — glyph and title in status ink, no rule.** The quietest thing that still
  * colour-codes the panel, and the one candidate that spends no area at all.
@@ -460,7 +297,8 @@ interface Candidate {
  * it is the loudest option in the set, four of these in one column would be a
  * page of traffic lights, and a family used as a ground under a paragraph is
  * the one thing the brand's own rule about families forbids outright. It earns
- * its place because it is the only candidate where info's fork is still live.
+ * its place because it is the only construct in which a hue is both the area
+ * and the ground a label has to read on.
  *
  * **D — nothing.** The plain neutral panel with the status only in the glyph.
  * The floor: if the set reads here, every candidate above it is a choice about
@@ -475,8 +313,8 @@ interface Candidate {
 const neutral = (tone: Tone, title: string, rule: Rule = "none"): Paint => ({
   fill: NEUTRAL_PANEL,
   rule,
-  ruleColour: tone.strong,
-  glyph: tone.soft,
+  ruleColour: tone.area,
+  glyph: tone.ink,
   title,
   body: MUTED_INK,
 });
@@ -487,43 +325,43 @@ const TINT_CANDIDATES: readonly Candidate[] = [
     label: "Today — bg-x/10 under text-x",
     tones: TODAY,
     paint: (tone) => ({
-      fill: tailwindAlpha(tone.strong, 10),
+      fill: tailwindAlpha(tone.area, 10),
       rule: "none",
-      ruleColour: tone.strong,
-      glyph: tone.strong,
-      title: tone.strong,
+      ruleColour: tone.area,
+      glyph: tone.area,
+      title: tone.area,
       body: MUTED_INK,
     }),
   },
   {
     key: "leading",
     label: "A — a rule down the leading edge",
-    tones: PROPOSED,
+    tones: RULED,
     paint: (tone) => neutral(tone, INK, "leading"),
   },
   {
     key: "ink",
     label: "B — glyph and title in status ink",
-    tones: PROPOSED,
-    paint: (tone) => neutral(tone, tone.soft),
+    tones: RULED,
+    paint: (tone) => neutral(tone, tone.ink),
   },
   {
     key: "solid",
     label: "C — a solid fill under its label",
-    tones: SOLID,
+    tones: FILLED,
     paint: (tone) => ({
-      fill: tone.strong,
+      fill: tone.area,
       rule: "none",
-      ruleColour: tone.strong,
-      glyph: tone.onStrong,
-      title: tone.onStrong,
-      body: tone.onStrong,
+      ruleColour: tone.area,
+      glyph: tone.onArea,
+      title: tone.onArea,
+      body: tone.onArea,
     }),
   },
   {
     key: "none",
     label: "D — the status only in the glyph",
-    tones: PROPOSED,
+    tones: RULED,
     paint: (tone) => neutral(tone, INK),
   },
 ];
@@ -539,7 +377,7 @@ const TINT_CANDIDATES: readonly Candidate[] = [
 const TOP_RULE: Candidate = {
   key: "top",
   label: "A — the same rule along the top",
-  tones: PROPOSED,
+  tones: RULED,
   paint: (tone) => neutral(tone, INK, "top"),
 };
 
@@ -564,7 +402,7 @@ function Candidates({
           <div key={candidate.key}>
             <Caps>{candidate.label}</Caps>
             <div className="mt-3">
-              <Compare columns={candidate.tones.length === 5 ? 5 : 4}>
+              <Compare columns={4}>
                 {candidate.tones.map((tone) => (
                   <Panel key={tone.key} label={tone.label}>
                     <div
@@ -630,8 +468,8 @@ const LIT_CARDS: readonly {
     kind: "Camp",
     name: "Roblox summer camp",
     today: STATUS_BY_ID.info.today,
-    area: YTY_FAMILIES.wit.strong,
-    ink: YTY_FAMILIES.wit.soft,
+    area: YTY_ROLES.wit.area,
+    ink: YTY_ROLES.wit.ink,
     glyph: UserRoundSearch,
   },
 ];
@@ -758,62 +596,46 @@ const LIT_CANDIDATES: readonly {
   { key: "none", label: "Nothing", paint: () => PLAIN },
 ];
 
-// ------------------------------------------------ strong versus soft (§2)
+// ------------------------------------------------- area and ink (§2, §3)
 
 /**
- * The six hues the recipe has to cover, in one list.
+ * The four grounds the ruled row is drawn on, in the order they lighten.
  *
- * Four are Yty families with two authored values; two are status colours with
- * one, so their strong and soft are the same hex and their two rows in the grid
- * are identical by construction. That identity is worth seeing rather than
- * hiding: it is what says the recipe costs nothing where a colour has only one
- * value, and it puts the four families' difference next to a control.
+ * **The owner's question: does the call depend on the surface?** The old grid
+ * drew every cell on the card and nothing else, so a reader had to trust that a
+ * value winning on `#1A1A1A` also wins on the page and in a muted block. These
+ * four are the *complete* set of grounds a family colour can sit on in the dark
+ * theme — the library ships no fifth neutral, and there is no light one — so a
+ * call that holds across all four holds everywhere, and the surface-dependent
+ * exception either shows itself here or does not exist.
+ *
+ * **A label on an area fill is not part of that question**, because it never
+ * sees the ground: the fill covers it, so ink on Glow measures the same 8.83
+ * whether the badge sits on the page or in a muted block. What actually moves
+ * between the four stacks is the *ink* column and the shapes — an area's
+ * separation from what is behind it — and both move in the same direction and
+ * by the same small amount, because the four grounds span 1.24:1 end to end.
+ *
+ * **Ink on each ground**, body floor 4.5: Harmony 7.70 / 7.15 / 6.62 / 6.22,
+ * Glow 8.83 / 8.21 / 7.59 / 7.14, Valor 8.81 / 8.18 / 7.57 / 7.12, Wit 8.10 /
+ * 7.53 / 6.96 / 6.54, destructive 6.19 / 5.75 / 5.32 / 5.00, warning 11.34 /
+ * 10.53 / 9.74 / 9.16. The tightest cell in the whole grid is destructive as
+ * ink on muted at 5.00, which still clears the floor by half a point.
+ *
+ * **Area as a shape against each ground**, non-text floor 3: Harmony 7.70 /
+ * 7.15 / 6.62 / 6.22, Glow 8.83 / 8.21 / 7.59 / 7.14, Valor 6.69 / 6.22 / 5.75
+ * / 5.40, Wit 8.10 / 7.53 / 6.96 / 6.54, destructive 6.19 / 5.75 / 5.32 / 5.00,
+ * warning 11.34 / 10.53 / 9.74 / 9.16. Nothing comes close to the floor on any
+ * ground, so no edge, ring or mark disappears into any surface the app has.
  */
-interface Hue {
-  readonly key: string;
-  readonly name: string;
-  readonly strong: string;
-  readonly soft: string;
-  readonly glyph: LucideIcon;
-}
-
-const FAMILY_GLYPH = {
-  harmony: Heart,
-  glow: Sun,
-  valor: Sword,
-  wit: Brain,
-} as const satisfies Record<YtyFamilyId, LucideIcon>;
-
-/**
- * The four families in the order the grid draws them, as a list rather than as
- * the record's key order: a record is checked for completeness and a list
- * carries an order, and this needs both.
- */
-const FAMILY_ORDER = [
-  "harmony",
-  "glow",
-  "valor",
-  "wit",
-] as const satisfies readonly YtyFamilyId[];
-
-const RECIPE_HUES: readonly Hue[] = [
-  ...FAMILY_ORDER.map((id) => ({
-    key: id,
-    name: YTY_FAMILIES[id].name,
-    strong: YTY_FAMILIES[id].strong,
-    soft: YTY_FAMILIES[id].soft,
-    glyph: FAMILY_GLYPH[id],
-  })),
-  ...PROPOSED.filter((tone) => tone.strong === tone.soft).map((tone) => ({
-    key: tone.key,
-    name: STATUS_BY_ID[tone.status].label,
-    strong: tone.strong,
-    soft: tone.soft,
-    glyph: STATUS_GLYPH[tone.status],
-  })),
+const GROUNDS: readonly { token: string; hex: string }[] = [
+  { token: "background", hex: NEUTRALS.background.hex },
+  { token: "card", hex: NEUTRALS.card.hex },
+  { token: "accent", hex: NEUTRALS.accent.hex },
+  { token: "muted", hex: NEUTRALS.muted.hex },
 ];
 
-/** One hue, in one direction: what area takes, what ink takes, what reads on the area. */
+/** One hue's two roles, ready to draw, with the label that reads on its area. */
 interface Cell {
   readonly name: string;
   readonly area: string;
@@ -822,27 +644,42 @@ interface Cell {
   readonly glyph: LucideIcon;
 }
 
+function cellOf(hue: Hue): Cell {
+  return {
+    name: hue.name,
+    area: hue.area,
+    ink: hue.ink,
+    onArea: labelOn(hue.area),
+    glyph: hue.glyph,
+  };
+}
+
 /**
  * The six constructs a hue is ever spent on, each drawn from the recipe a real
  * component uses.
  *
  * The set is exhaustive by shape rather than by count: a hue lands as an area
- * with a label on it, as a line, as a ring, as a mark with no words, as a word,
- * or as an icon. Everything in `STATUS_SITES` and everything in the Yty
+ * with a label on it, as a line, as a ring, as a mark with no words, as a
+ * label, or as an icon. Everything in `STATUS_SITES` and everything in the Yty
  * consumers is one of those six.
+ *
+ * **The fifth column is headed "label" rather than "ink"**, which is §11 in one
+ * word: coloured text exists only as the name of a state or a value, beside a
+ * glyph in the same hue, and never as a sentence. The sentence form is drawn in
+ * the contexts below, in ink, as the rule requires.
  *
  * **Three cells have no site in Sogverse today** and are drawn from the
  * construct's own recipe anyway, because the recipe has to hold for them the
  * moment a component wants one: a Yty family as a ring (nothing rings in a
  * family colour), a Yty family as an edge (the border sweep left the app with
  * no coloured edge anywhere, which is why `STATUS_SITES` has no border row),
- * and a status colour as an unlabelled mark in the *soft* direction. The other
+ * and a status colour as an unlabelled mark that is not a rail dot. The other
  * thirty-three are copied from something that ships.
  */
-const RECIPE_COLUMNS: readonly {
+const RULED_COLUMNS: readonly {
   key: string;
   name: string;
-  render: (cell: Cell) => ReactNode;
+  render: (cell: Cell, ground: string) => ReactNode;
 }[] = [
   {
     key: "fill",
@@ -859,11 +696,11 @@ const RECIPE_COLUMNS: readonly {
   {
     key: "edge",
     name: "Edge",
-    render: (cell) => (
+    render: (cell, ground) => (
       <div
         className="w-full rounded-md border border-border px-2 py-1.5 text-xs"
         style={{
-          backgroundColor: CARD,
+          backgroundColor: ground,
           color: INK,
           borderLeftWidth: 4,
           borderLeftColor: cell.area,
@@ -876,11 +713,11 @@ const RECIPE_COLUMNS: readonly {
   {
     key: "ring",
     name: "Ring",
-    render: (cell) => (
+    render: (cell, ground) => (
       <div
         className="w-full rounded-md px-2 py-1.5 text-xs"
         style={{
-          backgroundColor: CARD,
+          backgroundColor: ground,
           color: INK,
           boxShadow: `0 0 0 2px ${cell.area}`,
         }}
@@ -908,10 +745,14 @@ const RECIPE_COLUMNS: readonly {
     ),
   },
   {
-    key: "ink",
-    name: "Ink",
+    key: "label",
+    name: "Label",
     render: (cell) => (
-      <span className="text-sm font-medium" style={{ color: cell.ink }}>
+      <span
+        className="flex items-center gap-1.5 text-sm font-medium"
+        style={{ color: cell.ink }}
+      >
+        <Glyph icon={cell.glyph} size={14} colour={cell.ink} />
         {cell.name}
       </span>
     ),
@@ -924,42 +765,26 @@ const RECIPE_COLUMNS: readonly {
 ];
 
 /**
- * The grid, drawn as a table because the columns have to stay columns.
+ * The ruled row, drawn as a table because the columns have to stay columns.
  *
- * Every cell sits on the card ground and no second copy is drawn on the page
- * ground, which the brief allowed for: on `#121212` every value in the set
- * measures *higher* than on `#1A1A1A` (Wit strong 4.10 against 3.81, Wit soft
- * 8.10 against 7.53, and so on down the list), so not one cell changes which
- * side of a floor it is on between the two grounds. Drawing the ink and glyph
- * columns twice would have shown the same pass twice.
+ * One row per hue, no alternative beneath it: the direction is ruled, and a
+ * second row would be arguing a question the owner has answered. What is left
+ * to see is whether the answer holds in every construct and on every ground,
+ * which is what the four stacks of this table are for.
  *
- * **What the two rows per hue measure, and where the recipe is forced.** Under
- * the proposed direction — strong for area and line, soft for ink and glyph —
- * every ink cell clears the 4.5 body floor on the card: Harmony 7.15, Glow
- * 8.21, Valor 8.18, Wit 7.53, destructive 5.75, warning 10.53. Every glyph cell
- * clears the 3 glyph floor by the same margins. Every fill's label clears the
- * body floor: 6.11, 6.63, 6.69, 6.19 and 11.34 under ink, and Wit strong at
- * 4.57 under white — the one cell in the grid where the label is not ink, and
- * the reason the `onStrong` field exists.
- *
- * Under the inverted direction the fills all still pass — soft under ink
- * measures 7.70, 8.83, 8.81 and 8.10 — so the inversion cannot be rejected on a
- * fill's arithmetic, and has to be rejected on what a pastel area and a
- * saturated word look like. **One inverted cell fails outright: Wit strong as
- * ink measures 3.81 on the card and 4.10 on the page, under the body floor on
- * both.** It clears the glyph floor, so the inverted glyph cell passes where the
- * inverted ink cell does not — which is the single measured fact that decides
- * the direction for the whole set, and the reason the library's rule is one rule
- * rather than four.
+ * The row's caption carries the recipe in token names — `area soft · ink soft`,
+ * or `one value · both roles` for the two colours that have only one — and the
+ * variant word is read back off the hex rather than typed, so a caption cannot
+ * disagree with the cell beside it.
  */
-function RecipeGrid() {
+function RuledRow({ ground }: { ground: string }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[68rem] border-collapse text-body-s">
         <thead>
           <tr className="border-b border-border text-left align-bottom">
             <th className="w-56 py-2 pr-4 font-semibold tracking-wider uppercase" />
-            {RECIPE_COLUMNS.map((column) => (
+            {RULED_COLUMNS.map((column) => (
               <th
                 key={column.key}
                 className="px-2 py-2 font-semibold tracking-wider uppercase"
@@ -970,55 +795,50 @@ function RecipeGrid() {
           </tr>
         </thead>
         <tbody>
-          {RECIPE_HUES.flatMap((hue) =>
-            (
-              [
-                {
-                  key: "recipe",
-                  label: `${hue.name} — strong area · soft ink`,
-                  cell: {
-                    name: hue.name,
-                    area: hue.strong,
-                    ink: hue.soft,
-                    onArea: labelOn(hue.strong),
-                    glyph: hue.glyph,
-                  },
-                },
-                {
-                  key: "inverted",
-                  label: `${hue.name} — soft area · strong ink`,
-                  cell: {
-                    name: hue.name,
-                    area: hue.soft,
-                    ink: hue.strong,
-                    onArea: labelOn(hue.soft),
-                    glyph: hue.glyph,
-                  },
-                },
-              ] as const
-            ).map((direction) => (
+          {RULED_HUES.map((hue) => {
+            const cell = cellOf(hue);
+            return (
               <tr
-                key={`${hue.key}-${direction.key}`}
+                key={hue.key}
                 className="border-b border-border align-middle"
               >
                 <th className="py-2 pr-4 text-left font-medium">
-                  {direction.label}
+                  {hue.name}
+                  <span className="block font-brand-mono font-normal text-muted-foreground">
+                    {hue.recipe}
+                  </span>
                 </th>
-                {RECIPE_COLUMNS.map((column) => (
+                {RULED_COLUMNS.map((column) => (
                   <td key={column.key} className="px-2 py-2">
                     <div
                       className="flex min-h-12 items-center justify-center rounded-md p-2"
-                      style={{ backgroundColor: CARD }}
+                      style={{ backgroundColor: ground }}
                     >
-                      {column.render(direction.cell)}
+                      {column.render(cell, ground)}
                     </div>
                   </td>
                 ))}
               </tr>
-            )),
-          )}
+            );
+          })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/** The same table on each of the four grounds, labelled with the ground's token. */
+function AreaAndInk() {
+  return (
+    <div className="space-y-10">
+      {GROUNDS.map((ground) => (
+        <div key={ground.token}>
+          <Caps>{ground.token}</Caps>
+          <div className="mt-3">
+            <RuledRow ground={ground.hex} />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1038,9 +858,9 @@ function MetaLine({ tone }: { tone: Tone }) {
   return (
     <span
       className="flex items-center gap-1.5 text-xs font-medium"
-      style={{ color: tone.soft }}
+      style={{ color: tone.ink }}
     >
-      <Glyph icon={STATUS_GLYPH[tone.status]} size={14} colour={tone.soft} />
+      <Glyph icon={STATUS_GLYPH[tone.status]} size={14} colour={tone.ink} />
       {COPY[tone.status].meta}
     </span>
   );
@@ -1051,7 +871,7 @@ function StatusBadge({ tone }: { tone: Tone }) {
   return (
     <span
       className="inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-xs font-semibold shadow"
-      style={{ backgroundColor: tone.strong, color: tone.onStrong }}
+      style={{ backgroundColor: tone.area, color: tone.onArea }}
     >
       {COPY[tone.status].badge}
     </span>
@@ -1076,7 +896,7 @@ function RailDots({ tone }: { tone: Tone }) {
             aria-hidden
             className="ring-background absolute -left-6 h-2.5 w-2.5 -translate-x-1/2 rounded-full ring-4"
             style={{
-              backgroundColor: index === 1 ? tone.strong : MUTED_INK,
+              backgroundColor: index === 1 ? tone.area : MUTED_INK,
             }}
           />
           <div
@@ -1092,248 +912,23 @@ function RailDots({ tone }: { tone: Tone }) {
 }
 
 /**
- * One compact row: the proposed set in one construct, with no today above it
- * and no candidate beside it.
+ * One compact row: the ruled set in one construct, with no today above it and
+ * no candidate beside it.
  *
  * It is a `Candidate` with nothing to decide — the same machinery the reworked
  * constructs use, holding one entry — rather than a second row component. These
  * three constructs are not being ruled on, they are the context the four
  * colours are read in, so the paint they take is simply the recipe.
  */
-function proposedOnly(tones: readonly Tone[]): readonly Candidate[] {
+function ruledOnly(tones: readonly Tone[]): readonly Candidate[] {
   return [
     {
-      key: "proposed",
-      label: "Proposed",
+      key: "ruled",
+      label: "Area and ink",
       tones,
-      paint: (tone) => neutral(tone, tone.soft),
+      paint: (tone) => neutral(tone, tone.ink),
     },
   ];
-}
-
-// ------------------------------------------- the collision, in situ
-
-const ZONES: readonly {
-  id: "harmony" | "glow" | "valor" | "wit";
-  glyph: LucideIcon;
-}[] = [
-  { id: "harmony", glyph: Heart },
-  { id: "glow", glyph: Sun },
-  { id: "valor", glyph: Sword },
-  { id: "wit", glyph: Brain },
-];
-
-/**
- * `voice/ZoneList.tsx` — the zone list, drawn on the no-alpha recipe rather
- * than on the 10% tile it renders today.
- *
- * It used to be drawn as the app renders it, on the ground that a collision is
- * between what is on screen. That reasoning has been overtaken: the tint is the
- * thing this whole section is removing, and putting one back into the frame the
- * status set is judged in would ask the owner to rule on an adjacency that the
- * ruling itself deletes.
- */
-function ZoneTiles() {
-  return (
-    <div className="space-y-2">
-      {ZONES.map((zone) => {
-        const family = YTY_FAMILIES[zone.id];
-        return (
-          <div
-            key={zone.id}
-            className="flex items-center gap-2 rounded-xl border px-3 py-2.5"
-            style={{ borderColor: family.strong, backgroundColor: GROUND }}
-          >
-            <Glyph icon={zone.glyph} size={20} colour={family.soft} />
-            <span className="text-body-s" style={{ color: INK }}>
-              {family.name}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/**
- * `voice/ParticipantRow.tsx` — the roster's trailing group, whose mic state is a
- * 14px glyph: `text-success` when the mic is open, `text-destructive` when it is
- * muted.
- *
- * The collision verbatim and already on screen: the roster and the zone list are
- * two columns of one page, so under the proposal a Glow mic glyph sits a few
- * centimetres from the Glow zone, meaning "this child can be heard" and "the
- * Glow zone" respectively.
- */
-function ParticipantRows({
-  success,
-  destructive,
-}: {
-  success: string;
-  destructive: string;
-}) {
-  const people = [
-    { name: "Aino", open: true },
-    { name: "Mika", open: false },
-    { name: "Sanni", open: true },
-  ];
-  return (
-    <div className="space-y-2">
-      {people.map((person) => (
-        <div
-          key={person.name}
-          className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-border p-2 sm:gap-x-3"
-        >
-          {/* The real row carries an identicon here. A plain muted square stands
-              in for it: the avatar is artwork with its own palette and its own
-              question (§7), and drawing one would put a second set of colours
-              into the frame the collision is judged in. */}
-          <span
-            className="h-8 w-8 shrink-0 rounded-md"
-            style={{ backgroundColor: NEUTRALS.muted.hex }}
-          />
-          <span className="min-w-0 max-w-fit flex-1 truncate text-sm font-medium">
-            {person.name}
-          </span>
-          <span className="ml-auto flex shrink-0 items-center gap-1.5">
-            {person.open ? (
-              <Glyph icon={Mic} size={14} colour={success} />
-            ) : (
-              <Glyph icon={MicOff} size={14} colour={destructive} />
-            )}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/**
- * The product kinds, each with the family and the glyph the tone grammar gives
- * it, and each carrying one real problem with that problem's own mark.
- *
- * The issue marks are not one mark repeated: the grid keys them by issue kind,
- * so an unplaced gamer, a group with no educator, a waitlist against open seats
- * and a missing fee each arrive drawn differently. Four cards holding one glyph
- * would have made the grid look like it says less than it does.
- */
-const KINDS: readonly {
-  label: string;
-  family: "harmony" | "glow" | "valor" | "wit";
-  glyph: LucideIcon;
-  issue: string;
-  issueGlyph: LucideIcon;
-}[] = [
-  {
-    label: "Minecraft Tuesdays",
-    family: "harmony",
-    glyph: Joystick,
-    issue: "4 gamers in no group",
-    issueGlyph: UserRoundX,
-  },
-  {
-    label: "Espoo school club",
-    family: "wit",
-    glyph: School,
-    issue: "Group B has no gedu",
-    issueGlyph: UserX,
-  },
-  {
-    label: "Autumn build camp",
-    family: "valor",
-    glyph: Tent,
-    issue: "6 waiting, 2 seats open",
-    issueGlyph: Users,
-  },
-  {
-    label: "Roblox creator night",
-    family: "glow",
-    glyph: CalendarDays,
-    issue: "No gedu fee set",
-    issueGlyph: Coins,
-  },
-];
-
-/**
- * `admin/dashboard/product-attention-grid.tsx` — the queue's cards, each headed
- * by the product kind's own glyph and carrying its problems as status-toned
- * lines underneath.
- *
- * The second place the collision is already real: the Glow event glyph and the
- * Wit municipality-club glyph sit in the same grid as the warning lines and,
- * four inches up the page, the all-clear's `text-success` check. One card per
- * kind so all four families are present at once, which is how an admin meets
- * them.
- */
-function AttentionCards({ warning }: { warning: string }) {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {KINDS.map((kind) => {
-        const family = YTY_FAMILIES[kind.family];
-        return (
-          <div
-            key={kind.label}
-            className="flex h-full flex-col gap-2 rounded-lg border border-border bg-card p-3"
-          >
-            <span className="flex items-start gap-2">
-              <span className="mt-0.5">
-                <Glyph icon={kind.glyph} size={16} colour={family.soft} />
-              </span>
-              <span className="text-sm leading-snug font-medium">
-                {kind.label}
-              </span>
-            </span>
-            <span className="flex items-start gap-1.5 text-xs leading-snug">
-              <span className="mt-0.5">
-                <Glyph icon={kind.issueGlyph} size={14} colour={warning} />
-              </span>
-              <span>{kind.issue}</span>
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/**
- * The one adjacency this page constructs rather than copies, and why it has to.
- *
- * Wit and info share no surface today: the families are painted on admin
- * product surfaces, on `/about` and in the voice room, and info is painted in
- * feeds, chat and forms — so there is no page to photograph. But the ruling is
- * what removes that guarantee: the moment info *is* Wit, the two meanings are
- * one colour whether or not a page has yet put them side by side, and a
- * decision made on the absence of a screenshot would be a decision made on
- * today's page inventory rather than on the palette.
- */
-function WitBesideInfo({ info, onInfo }: { info: string; onInfo: string }) {
-  const family = YTY_FAMILIES.wit;
-  return (
-    <div className="flex flex-wrap items-center gap-3">
-      <span
-        className="inline-flex items-center gap-2 rounded-xl border px-3 py-2.5"
-        style={{ borderColor: family.strong, backgroundColor: GROUND }}
-      >
-        <Glyph icon={Brain} size={20} colour={family.soft} />
-        <span className="text-body-s" style={{ color: INK }}>
-          {family.name}
-        </span>
-      </span>
-      <span
-        className="inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase"
-        style={{ color: YTY_FAMILIES.wit.soft }}
-      >
-        Next session
-      </span>
-      <span
-        className="inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase"
-        style={{ backgroundColor: info, color: onInfo }}
-      >
-        Live
-      </span>
-    </div>
-  );
 }
 
 export function StatusSection() {
@@ -1396,8 +991,8 @@ export function StatusSection() {
         </Exemplar>
       </Case>
 
-      <Case title="Strong and soft">
-        <RecipeGrid />
+      <Case title="Area and ink">
+        <AreaAndInk />
       </Case>
 
       <Case title="The rest of the set">
@@ -1406,54 +1001,27 @@ export function StatusSection() {
             file="gedu/session-feed/SessionFeedItem.tsx"
             page="a gedu's session feed, the card's status line"
             ground={CARD}
-            candidates={proposedOnly(PROPOSED)}
+            candidates={ruledOnly(RULED)}
             render={(tone) => <MetaLine tone={tone} />}
           />
           <Candidates
             file="ui/badge.tsx"
             page="/admin/users/[id], the participation pill"
             ground={CARD}
-            candidates={proposedOnly(SOLID)}
+            candidates={ruledOnly(FILLED)}
             render={(tone) => <StatusBadge tone={tone} />}
           />
           <Candidates
             file="session-feed/SessionFeedShell.tsx with gedu/session-feed/SessionFeed.tsx"
             page="a session feed, the rail dot"
             ground={GROUND}
-            candidates={proposedOnly(PROPOSED)}
+            candidates={ruledOnly(RULED)}
             render={(tone) => <RailDots tone={tone} />}
           />
         </div>
       </Case>
 
-      <Case title="Where the hue meets itself">
-        <div className="space-y-6">
-          <Exemplar
-            file="voice/ZoneList.tsx with voice/ParticipantRow.tsx"
-            page="a club's voice room — the zones and the roster"
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <ZoneTiles />
-              <ParticipantRows
-                success={YTY_FAMILIES.glow.soft}
-                destructive="#FF5C5C"
-              />
-            </div>
-          </Exemplar>
-          <Exemplar
-            file="admin/dashboard/product-attention-grid.tsx"
-            page="/admin — the attention queue, one card per kind"
-          >
-            <AttentionCards warning="#DFCB25" />
-          </Exemplar>
-          <Exemplar
-            file="voice/ZoneList.tsx with gedu/session-feed/SessionFeedItem.tsx"
-            page="the Wit zone tile and the feed's session tag"
-          >
-            <WitBesideInfo info={YTY_FAMILIES.wit.strong} onInfo={WHITE} />
-          </Exemplar>
-        </div>
-      </Case>
+      <InContextCases />
     </Question>
   );
 }

@@ -21,15 +21,16 @@
  * a foundations floor drawn on a ruling page; what this question needs on screen
  * is the two constructs that spend them.
  *
- * **Which half of a pair a construct takes is drawn in the status section, not
- * here.** The recipe has two halves and they are separate questions: whether a
- * ground may be a tint of the hue, which is what these two constructs show; and
- * whether area takes strong and ink takes soft or the other way round, which
- * needs every hue against every construct at once and is the grid in section 2.
- * The status set forced that grid onto the page — success is Glow and info is
- * Wit now, so half the status palette is a brand pair — and one drawing of it
- * answers both sections. What is drawn here is the two real consumers under the
- * recipe the grid proposes, which is the part a grid of squares cannot show.
+ * **Which half of a pair a construct takes is no longer drawn here, and is no
+ * longer a choice.** The recipe had two halves and they were separate
+ * questions: whether a ground may be a tint of the hue, which is what these two
+ * constructs show; and whether area takes strong and ink takes soft or the
+ * other way round, which needed every hue against every construct at once. The
+ * second is **ruled** — it is a per-family role table now, `YTY_ROLES` in
+ * `inventory.ts`, drawn on all four grounds in section 2 — so the proposed
+ * column here simply reads the roles rather than naming a variant. What is left
+ * open on this page is the first half, which is the part a grid of squares
+ * cannot show: whether the tile behind a glyph may be a wash of the hue at all.
  */
 
 import { Brain, Heart, Home, Sun, Sword, type LucideIcon } from "lucide-react";
@@ -48,6 +49,7 @@ import {
   MUTED_INK,
 } from "./parts";
 import { alpha } from "./colour";
+import { YTY_ROLES } from "./inventory";
 import { YTY_FAMILIES, type YtyFamilyId } from "../../../src/tokens/brand";
 
 /**
@@ -190,10 +192,10 @@ export function YtySection() {
                     name={family.name}
                     description={element.description}
                     glyph={element.glyph}
-                    edge={family.strong}
+                    edge={YTY_ROLES[element.id].area}
                     tile={GROUND}
-                    glyphColour={family.soft}
-                    accent={family.soft}
+                    glyphColour={YTY_ROLES[element.id].ink}
+                    accent={YTY_ROLES[element.id].ink}
                   />
                 </Exemplar>
               </Panel>
@@ -242,9 +244,9 @@ export function YtySection() {
                     key={element.id}
                     label={YTY_FAMILIES[element.id].name}
                     glyph={element.glyph}
-                    edge={YTY_FAMILIES[element.id].strong}
+                    edge={YTY_ROLES[element.id].area}
                     tile={GROUND}
-                    glyphColour={YTY_FAMILIES[element.id].soft}
+                    glyphColour={YTY_ROLES[element.id].ink}
                   />
                 ))}
                 <ZoneTile

@@ -42,7 +42,61 @@
  * screen, what the code always said, and what is proposed.
  */
 
-import { BRAND, NEUTRALS, YTY_FAMILIES } from "../../../src/tokens/brand";
+import {
+  NEUTRALS,
+  YTY_FAMILIES,
+  type YtyFamilyId,
+} from "../../../src/tokens/brand";
+
+/** What a hue is asked for, which is the only thing a consumer ever names. */
+export interface Roles {
+  /** Fills, edges, rings, unlabelled marks — everything that is a shape. */
+  readonly area: string;
+  /** Labels and glyphs on a neutral ground — everything that is read. */
+  readonly ink: string;
+}
+
+/**
+ * The role table: which authored value each family spends in each role.
+ *
+ * **Consumers never name strong or soft.** A surface asks for a family's area
+ * or its ink; this table is the only place that knows which of the two authored
+ * values answers. That is what makes the pair a library decision rather than a
+ * habit repeated at 335 call sites — and it is why the two halves can differ
+ * per family without any consumer having to know that they do.
+ *
+ * **The dark ground is what inverts the pair.** The brand authors strong and
+ * soft against a white page, where strong is the value that separates from the
+ * ground. On `#121212` the lighter value is the one that lifts, and a strong
+ * mid-tone tuned to hold its own against white sinks into a near-black card and
+ * reads as a duller version of the hue. Drawn side by side in every construct,
+ * the lighter value won both roles for Harmony, Glow and Wit.
+ *
+ * **Valor is the exception, and it is a property of the hue rather than of the
+ * rule.** Its strong `#FD700D` is already a bright orange that carries an area
+ * on the dark ground, and its soft is pale enough to read as a wash rather than
+ * a shape — so Valor is the one family whose two roles take different values.
+ * That single asymmetry is the whole reason this is a table and not a sentence.
+ *
+ * **Every area value carries an ink label**, measured: 7.70, 8.83, 6.69 and
+ * 8.10 against `#121212`, against 2.43, 2.12, 2.80 and 2.31 against white. No
+ * family fill takes a white label, which is what removes the last white from
+ * the status set.
+ *
+ * Success and info are not new colours: they take Glow's roles and Wit's roles
+ * unchanged, which is what the owner ruled when the retuned near-duplicates
+ * were refused.
+ */
+export const YTY_ROLES: Record<YtyFamilyId, Roles> = {
+  harmony: {
+    area: YTY_FAMILIES.harmony.soft,
+    ink: YTY_FAMILIES.harmony.soft,
+  },
+  glow: { area: YTY_FAMILIES.glow.soft, ink: YTY_FAMILIES.glow.soft },
+  /** The one family that fills at its strong value — see the table's comment. */
+  valor: { area: YTY_FAMILIES.valor.strong, ink: YTY_FAMILIES.valor.soft },
+  wit: { area: YTY_FAMILIES.wit.soft, ink: YTY_FAMILIES.wit.soft },
+};
 
 /**
  * The four states, which are the keys everything about status is held under.
@@ -111,34 +165,33 @@ export interface StatusRow {
  *   to 54° and dropping the saturation gives a caution yellow visibly not the
  *   brand gold; going further lands in chartreuse and stops reading as caution.
  *   10.53 on the card, 11.34 under ink.
- * - **success → Glow strong.** Not a near-green beside Glow, but Glow itself.
- *   6.16 on the card and 6.63 under ink, so it carries text on a neutral ground
- *   and an ink label on a fill with room to spare. This is the one place the
- *   library's own doc comment on `glow` has to change when it lands, because it
- *   currently says green is never the colour of success.
- * - **info → Wit, and the ruling forks on which half.** Wit strong `#3A71DE`
- *   measures 4.10 under ink and 4.57 under white — it fails the body floor with
- *   an ink label and clears it with a white one by 0.07 — and as *text* on the
- *   card it measures 3.81, which is under the body floor outright. Wit soft
- *   `#4DB3F5` measures 8.10 under ink and 7.53 as text on the card, so it
- *   carries both jobs comfortably, but spending the soft variant as a fill is
- *   the open recipe question in §2 rather than a settled move. So info is drawn
- *   **both ways in every construct**: strong under a white label, and soft under
- *   an ink one.
+ * - **success → Glow, in both roles.** Not a near-green beside Glow, but Glow
+ *   itself: `#6AC66B`, 8.21 as ink on the card and 8.83 under an ink label as an
+ *   area. This is the one place the library's own doc comment on `glow` has to
+ *   change when it lands, because it currently says green is never the colour of
+ *   success.
+ * - **info → Wit, in both roles, and the fork is closed.** It used to be drawn
+ *   both ways: Wit strong `#3A71DE` under a white label (4.57, clearing the body
+ *   floor by 0.07 and failing it under ink at 4.10, and failing outright as text
+ *   on the card at 3.81), against Wit soft `#4DB3F5` under an ink one. The role
+ *   table answers it without a second question — Wit's area *is* soft — so info
+ *   is `#4DB3F5` wherever it lands: 8.10 under an ink label, 7.53 as ink on the
+ *   card. Wit strong is spent in neither role, and the white label goes with it.
  *
- * The largest construct decides more than the fill does. `text-x` on a neutral
- * ground is 166 of the 335 sites, and Wit strong cannot be text there — the
- * library's own rule already says wit's text and ink take soft — so the fork is
- * not only about which label reads on a fill.
+ * The largest construct is what made that the right way round. `text-x` on a
+ * neutral ground is 166 of the 335 sites, and Wit strong could never have been
+ * text there, so a set whose fill and whose ink were two different values would
+ * have been two colours wearing one name at the biggest construct in the
+ * inventory.
  *
  * Every ratio above was computed with the library's `contrastRatio`. None is
  * rendered.
  *
- * **When this lands** the four become library tokens with their ink or white
- * companions and their measured pairings, and success and info become two more
- * rows of the tone grammar rather than two more colours — a status is a fact,
- * and a fact takes a family. The token *names* do not move, so no Sogverse call
- * site changes spelling.
+ * **When this lands** the four become library tokens with their ink companion
+ * and their measured pairings, and success and info become two more rows of the
+ * tone grammar rather than two more colours — a status is a fact, and a fact
+ * takes a family. The token *names* do not move, so no Sogverse call site
+ * changes spelling.
  */
 export const STATUS_BY_ID: Record<StatusId, StatusRow> = {
   destructive: {
@@ -157,7 +210,7 @@ export const STATUS_BY_ID: Record<StatusId, StatusRow> = {
     today: "#2EB88A",
     todayForeground: "#FFFFFF",
     uses: 85,
-    verdict: "→ yty-glow-strong",
+    verdict: "→ yty-glow, area and ink",
     foregroundVerdict: "retune → ink",
     foregroundUses: 3,
   },
@@ -167,8 +220,8 @@ export const STATUS_BY_ID: Record<StatusId, StatusRow> = {
     today: "#308CE8",
     todayForeground: "#FFFFFF",
     uses: 57,
-    verdict: "→ yty-wit-strong or -soft",
-    foregroundVerdict: "retune → white or ink",
+    verdict: "→ yty-wit, area and ink",
+    foregroundVerdict: "retune → ink",
     foregroundUses: 1,
   },
   warning: {
@@ -301,79 +354,74 @@ export const STATUS_SITES: readonly StatusSite[] = [
 ];
 
 /**
- * The proposed status set, each entry as the **pair** a hue is spent in rather
- * than as a single fill.
+ * The proposed status set, each entry as the **two roles** a hue is spent in
+ * rather than as a single fill.
  *
  * Four entries for four statuses. It used to hold five, because info was drawn
- * both ways in every construct; that fork has narrowed to one. The owner has
- * ruled that success is Glow and info is Wit, and a Yty family is a brand
- * colour, which fixes how each of them is spent: **strong carries area and line
- * — a fill, an edge, a ring, an unlabelled mark — and soft carries ink and
- * glyph.** Info's two halves are therefore not two candidates competing for one
- * job, they are one candidate doing two jobs, and the only place the choice is
- * still live is a solid fill, where the whole panel is area and a label has to
- * read on it.
+ * as a strong fill under white and as a soft fill under ink and the choice was
+ * live; the role table closes that fork. Success takes Glow's roles and info
+ * takes Wit's, unchanged, which is what the owner ruled when the retuned
+ * near-duplicates were refused — a status is a fact and a fact takes a family.
  *
- * `destructive` and `warning` belong to no family and have one value each, so
- * their strong and soft are the same hex. That is not a placeholder: a colour
- * with one value spends it everywhere, and writing it twice is what lets a
- * construct read the pair without asking which kind of colour it is holding.
+ * `destructive` and `warning` belong to no family and have one value each,
+ * which serves both roles. That is not a placeholder: a colour with one value
+ * spends it everywhere, and writing it twice is what lets a construct read the
+ * roles without asking which kind of colour it is holding.
  *
  * Two of the four are the library's own hues rather than values of this set's:
- * they are read from `YTY_FAMILIES` rather than spelled here, so a retune of a
- * family moves the status with it and the two cannot drift into being near
- * neighbours by accident — which is the exact failure the owner ruled against.
+ * they are read through `YTY_ROLES` rather than spelled here, so a retune of a
+ * family — or a change to which variant a role takes — moves the status with it
+ * and the two cannot drift into being near neighbours by accident, which is the
+ * exact failure the owner ruled against.
  *
- * **The measured floors behind `onStrong`.** Against dark ink the strong fills
- * measure 6.19 (destructive), 6.63 (Glow), 11.34 (warning) and 4.10 (Wit);
- * against white they measure 3.03, 2.83, 1.65 and 4.57. Wit strong is the one
- * fill in the set that fails the 4.5 body floor under ink and clears it under
- * white, by 0.07 — so it is the one entry whose label is white, and the reason
- * the field exists at all. Every soft variant clears the body floor under ink
- * comfortably (7.70 Harmony, 8.83 Glow, 8.81 Valor, 8.10 Wit), which is why the
- * inverted recipe never fails on a fill and has to be rejected on how it reads
- * rather than on what it measures.
+ * **The measured floors behind `onArea`.** Against dark ink the area fills
+ * measure 6.19 (destructive), 8.83 (Glow), 11.34 (warning) and 8.10 (Wit);
+ * against white 3.03, 2.12, 1.65 and 2.31. Every one of them clears the 4.5
+ * body floor under ink and none clears it under white, so the whole set carries
+ * an ink label and **no white survives anywhere in it**. That is a consequence
+ * of the role table rather than a separate decision: the value that failed
+ * under ink was Wit strong (4.10), and Wit strong is no longer spent.
  */
 export interface ProposedStatus {
   readonly status: StatusId;
   /** The name on screen: the token, or the hex where there is no token yet. */
   readonly label: string;
-  /** What area and line take: a fill, an edge, a ring, an unlabelled mark. */
-  readonly strong: string;
-  /** What ink and glyph take: a title, a word, an icon on a neutral ground. */
-  readonly soft: string;
-  /** The label that reads on a solid fill of `strong`. */
-  readonly onStrong: string;
+  /** A fill, an edge, a ring, an unlabelled mark. */
+  readonly area: string;
+  /** A label or a glyph on a neutral ground. */
+  readonly ink: string;
+  /** The label that reads on a solid fill of `area`. */
+  readonly onArea: string;
 }
 
 export const PROPOSED_STATUSES: readonly ProposedStatus[] = [
   {
     status: "destructive",
     label: "destructive #FF5C5C",
-    strong: "#FF5C5C",
-    soft: "#FF5C5C",
-    onStrong: NEUTRALS.background.hex,
+    area: "#FF5C5C",
+    ink: "#FF5C5C",
+    onArea: NEUTRALS.background.hex,
   },
   {
     status: "success",
     label: "success = yty-glow",
-    strong: YTY_FAMILIES.glow.strong,
-    soft: YTY_FAMILIES.glow.soft,
-    onStrong: NEUTRALS.background.hex,
+    area: YTY_ROLES.glow.area,
+    ink: YTY_ROLES.glow.ink,
+    onArea: NEUTRALS.background.hex,
   },
   {
     status: "info",
     label: "info = yty-wit",
-    strong: YTY_FAMILIES.wit.strong,
-    soft: YTY_FAMILIES.wit.soft,
-    onStrong: BRAND.world.foreground,
+    area: YTY_ROLES.wit.area,
+    ink: YTY_ROLES.wit.ink,
+    onArea: NEUTRALS.background.hex,
   },
   {
     status: "warning",
     label: "warning #DFCB25",
-    strong: "#DFCB25",
-    soft: "#DFCB25",
-    onStrong: NEUTRALS.background.hex,
+    area: "#DFCB25",
+    ink: "#DFCB25",
+    onArea: NEUTRALS.background.hex,
   },
 ];
 
