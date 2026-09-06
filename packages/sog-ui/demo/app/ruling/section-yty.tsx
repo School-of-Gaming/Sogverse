@@ -20,6 +20,16 @@
  * No swatches here. The hues are the library's now, so a strip of them would be
  * a foundations floor drawn on a ruling page; what this question needs on screen
  * is the two constructs that spend them.
+ *
+ * **Which half of a pair a construct takes is drawn in the status section, not
+ * here.** The recipe has two halves and they are separate questions: whether a
+ * ground may be a tint of the hue, which is what these two constructs show; and
+ * whether area takes strong and ink takes soft or the other way round, which
+ * needs every hue against every construct at once and is the grid in section 2.
+ * The status set forced that grid onto the page — success is Glow and info is
+ * Wit now, so half the status palette is a brand pair — and one drawing of it
+ * answers both sections. What is drawn here is the two real consumers under the
+ * recipe the grid proposes, which is the part a grid of squares cannot show.
  */
 
 import {

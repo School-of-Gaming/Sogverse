@@ -76,6 +76,34 @@ ring) needs its own attention and is ruled separately. Until then the consumers 
 their current class shapes pointed at the new tokens in whatever way changes the least,
 and the section stays on the page with the recipe as its remaining question.
 
+**Where the recipe is now drawn (2026-09-06): in the status section, not here.** The
+recipe has two halves and they turned out to be two questions. Whether a *ground* may
+be a tint of the hue is what section 1's two consumers show, and that stays here.
+Whether **area takes strong and ink takes soft, or the other way round**, needs every
+hue against every construct at once, and the status ruling forced it onto the page:
+success is Glow and info is Wit, so half the status palette is a brand pair and every
+status construct runs into the question on its first line. So section 2 carries a grid —
+six hues (the four families plus destructive and warning) × six constructs (fill under
+a label, edge, ring, unlabelled mark, ink, glyph), each drawn under the proposed
+direction with the inverted direction directly beneath it — and one drawing answers both
+sections. Section 1 keeps the two real consumers, which is the part a grid cannot show.
+§2 stays _open_.
+
+**The element glyphs (2026-09-06).** The library owns no element glyphs yet; Sogverse
+draws lucide `Heart`, `Sun`, `Sword`, `Brain`. What the owner saw as a changed Wit glyph
+was this page's own approximate SVG sketch, not a decision; the page is moving to the
+real lucide icons everywhere (SOG-UI will use lucide). Page section 10, "The element
+glyphs", draws today's glyph beside 6–8 real lucide candidates per element at both app
+sizes, in soft on the card and inside the chip tile, plus the four together as the About
+cards and the zone tiles. Criteria are the elements' own meanings: Harmony, with
+yourself (balance, rest, knowing when to stop); Glow, with others (empathy, belonging,
+friendship, a warm outward light, flourishing); Valor, with society (teamwork, civic
+courage, trying the hard thing, speaking up); Wit, with technology (critical thinking,
+curiosity). **Ruled: Harmony keeps `Heart`, Wit keeps `Brain`.** Open: Glow (the sun was
+chosen when Glow was yellow) and Valor (a sword carries courage and none of the
+teamwork). When all four are ruled they land as a library table beside the product-kind
+glyphs, and `yty.ts` reads them from there.
+
 ## 3. Status colours
 
 **Asked:** destructive / success / info / warning enter the library. Shown originally:
@@ -110,46 +138,73 @@ neutral note; warning as the brand amber.
 - **Final ruling pending seeing the four in context:** _"I would want to see these 4
   proposed status colours in their context to make a final ruling."_
 
-**Shown now** — the section rebuilt around the surface rather than around the four
-colours. `STATUS_SITES` in `inventory.ts` carries the classification, its regeneration
-command and the counts; the summary table lists it. 335 utility occurrences in 116
-files, partitioned into **seven constructs**, each drawn with all four statuses in it at
-once, today's row above the proposed row, and info twice in every proposed row:
+**Ruled further (2026-09-06), and it is what the section is now built on.** The owner,
+seeing the four in their constructs: _"Success and info are now tied to Yty colours,
+which are brand colours, which we can't tint. So 'A tinted ground under its own ink'
+needs to change. Even for destructive and warning, the tinted colour doesn't look great.
+Also 'A card lit from its leading edge' is the same tinted effect and won't work. Both
+need reworking while still bringing attention to the eye where needed. After that the
+next tough question is when we use wit-strong and wit-soft."_ Three things follow:
 
-1. **Ink on a neutral ground** (166 sites, 78 files) — the inline field error, and the
-   feed card's glyph-and-label status line, on the card and on the page.
-2. **A tinted ground under its own ink** (121, 45) — `ui/alert.tsx`'s four variants as
-   a real `color-mix` alpha over each ground, so the dulling is composited rather than
-   asserted.
-3. **A solid fill under a label** (19, 8) — the badge, the destructive button, the
-   corner badge's 28px disc.
-4. **A solid mark with no label** (15, 7) — the feed's rail dot and the seats-left bar,
-   the case where the glyph-and-label rule has nothing to work with.
-5. **A tinted pill** (9, 3) — the later-sessions divider at three strengths of one hue,
-   and the queue's count.
-6. **A ring** (4, 2) — the chat message that names the reader.
-7. **A card lit from its leading edge** (1, 1) — the awaiting enrollment card beside
-   the live one.
+- **No status colour is tinted anywhere.** For success and info it is forced — a brand
+  colour exists at its authored values or not at all, and a 10% wash of Glow is not
+  Glow. For destructive and warning it is a judgement, made on the drawing: the tint
+  does not look good even where nothing forbids it. So the whole set moves off `/n`
+  together, which also settles the tinted pill (9 sites) and the 40% ring (4) without
+  their own ruling — same wash, smaller box.
+- **Two constructs are reworked rather than retinted**, and both are on the page as
+  candidates rather than as a proposal.
+- **The strong/soft question is next**, and is drawn now so it can be taken in the same
+  round.
 
-Plus **the collision in situ**, drawn today and then once per info variant: the voice
-room's Yty zone tiles beside its roster's mic glyphs (Glow and success, already on one
-page); `/admin`'s attention cards, one per product kind, so all four families sit beside
-the status-toned issue lines; and the Wit zone tile beside the feed's session tag.
+**Shown now** — the section cut to the three things that resolve it, and to one compact
+row of the proposed set per construct for the rest. `STATUS_SITES` in `inventory.ts`
+still carries the whole classification, its regeneration command and the counts, and the
+summary table still lists all seven constructs; what shrank is what is drawn.
 
-Two things the rebuild made visible and neither is argued on the page. **No
-`border-*` row exists** — the border sweep left the app with no coloured edge anywhere,
-so an alert edge is a §13 construct rather than a status site. And **Wit and info share
-no surface today**: the families are painted on admin product surfaces, on `/about` and
-in the voice room, info in feeds, chat and forms. The third exemplar's adjacency is
-therefore constructed, and the doc comment says so — the ruling is what removes the
-separation, so deciding on the absence of a screenshot would be deciding on today's
-page inventory rather than on the palette.
+1. **The tinted ground under its own ink** (121 sites, 45 files), reworked with no tint
+   anywhere. Three real constructs — `ui/alert.tsx`'s panel, the confirm dialog's
+   flagged line (`groups-panel-view.tsx` and `EnrollmentCard.tsx`, one recipe in two
+   files), and the auth forms' inline error block — each drawn with all four statuses at
+   once, today's row above four candidates: **A** a full-value rule down the leading
+   edge with the glyph in status ink, the title in foreground and the body in muted ink
+   (plus a top-rule variant on the alert, the one construct wide enough for it to read
+   differently); **B** glyph and title in status ink with no rule; **C** a solid fill
+   under its label, drawn loud so it can be rejected on sight; **D** the status only in
+   the glyph. Every candidate sits on `muted` — all three constructs live inside a card
+   — and none of them carries an alpha step.
+2. **The card lit from its leading edge** (1 site, plus the act ones in section 8). The
+   real card header drawn today beside a leading-edge rule, a top rule, the glyph alone
+   and nothing, with the live (act) card and the awaiting (info) card together in every
+   candidate because they exist to be told apart in one list. Act's rule is plain act;
+   act has no soft half and will not get one.
+3. **Strong versus soft, drawn once for every hue** — six hues (Harmony, Glow, Valor,
+   Wit, destructive, warning) × six constructs (fill under a label, edge, ring,
+   unlabelled mark, ink, glyph), each cell under the proposed direction with the
+   inverted direction directly beneath it. This is §2's open recipe as well as the
+   Wit question, answered in one drawing.
 
-**The alert tints** (`bg-x/10`) are drawn under the proposed hues as they were under
-today's, and nothing more is said about them: whether a soft ground may exist at all is
-§9's remaining half.
+Kept, compact, because the final ruling waits on seeing the four in context: one
+proposed-only row each for **ink on a neutral ground** (166 sites, the largest
+construct), **a solid fill under a label** (19, the one row where info is still drawn
+both ways) and **a solid mark with no label** (15). Kept and drawn once rather than three
+times: the three **collision** exemplars — the voice room's zone tiles beside its
+roster's mic glyphs, `/admin`'s attention cards one per kind, and the constructed Wit
+tile beside the feed's session tag.
 
-**Ruling:** _open, to be seen in context_
+Cut: the per-construct today rows for everything nobody questioned, the tinted pill, the
+ring, the destructive button, the corner badge, the seats-left bar, the mention row, and
+the two extra collision passes. Their argument was made and what is left is the set.
+
+Two things the rework put on screen and neither is argued there. **The auth forms' error
+block carries no glyph today** — the tint is doing the whole job alone — so every
+candidate for it adds one; a neutral panel with neither colour nor glyph is not a
+quieter error, it is an error that has stopped saying it is one. And **the alert is no
+longer drawn on both grounds**: the tint was the only reason to, because a 10% wash
+composites differently over the card than over the page, and a neutral ground under a
+full-value edge renders identically on both.
+
+**Ruling:** _open — the three things above_
 
 ## 4. The greys — the sidebar ground, and accent
 
@@ -185,6 +240,17 @@ proposed and to be confirmed on the exemplar before it lands:
 | consumer club | Harmony | the relationship with people: community, the club a family chooses |
 | municipality club | Wit | the relationship with technology and learning: the school-hours offering |
 | event | Glow | growth and milestones: the one-off occasion |
+
+**Re-matched 2026-09-06, landed in `grammar.ts`.** The first mapping leaned on the
+brand's colour-coding of social content (pink for community, green for growth), which
+does not agree with the elements' own meanings (Harmony is the relationship with
+*yourself*; Glow is the relationship with *others*). The owner called the original
+mapping a stretch and approved a better match, noting that the two clubs are used far
+more than camps and events and that the coding is for admins. Matched on meaning:
+**consumer club → Glow** (a community a family chooses), **municipality club → Wit**
+(unchanged), **camp → Valor** (unchanged), **event → Harmony** by elimination, stated as
+such in the doc comment. Glyphs unchanged. Sogverse's presentation map is keyed by
+family and did not move.
 
 The table's doc comment states the sharing as a decision: one-meaning-per-hue holds per
 surface, admin tables show no Yty elements, and where an admin meets both (the voice
@@ -361,6 +427,11 @@ character class `[a-z0-9-]+` because the sixteen zone hues are `pick-1` to
   library's own exemption**: `brand.ts` exempts chip-scale icon-accent tiles from the
   no-alpha rule, which is exactly these seven sites, so the ruling above and the rule
   the library already ships cannot both stand and the drawing is what settles which.
+  **Owner, 2026-09-06: not ruled out.** "A tinted brand colour that accents a glyph
+  might still be allowed, because it is accenting an icon and not text." So the tile
+  exemption stays live as an open question, for brand hues and by the same logic for
+  status hues (the attention grid's kind tiles); the seven sites are drawn with their
+  candidates and nothing is assumed either way.
   And **`text-act-foreground/70` has no quieter member of its pair to move to** — the
   palette offers exactly one ink for an amber fill — so its third candidate is not a
   colour at all but the meta line moved off the fill.
@@ -382,6 +453,20 @@ coloured background. The library offers a Yty family's **soft** variant as text 
 **neutral** ground, measured on all four grounds. Is that within the rule because the
 ground is neutral rather than coloured, or a departure that needs a ruling? The brand
 source states the rule as the brand states it and marks this open in one sentence.
+
+**Put to the owner 2026-09-06.** The brand's exact lines: "Text is always ink or white,
+never coloured text on a coloured background"; "Yty-Element colours accent content, they
+are not backgrounds for long text"; amber "is a background and large-graphic colour, not
+a body-text or small-link colour"; "the soft variants especially are decorative, not
+text-safe on white". Two readings. **Literal:** the ban is on coloured text over a
+coloured ground; on a neutral ground it says nothing, so soft-as-ink on the dark grounds
+is allowed (what the library ships today, measured). **Strict:** text is ink or white,
+full stop; colour reaches the reader through fills, edges, rings, marks and glyphs. The
+strict reading is what the brand's accessibility reasoning implies and it removes every
+coloured-text contrast case at once. What hangs on it: the 166 status ink-on-neutral
+sites and every Yty soft word; under strict, all become ink beside a coloured mark (the
+glyph-and-label rule), and the recipe grid loses its ink column (soft only for glyphs).
+Recommended: strict.
 
 **Ruling:** _open_
 
@@ -574,29 +659,51 @@ runs 0 to 9 and holds three sections where it held one:
   `composite.ts`'s doc comment, ledgered under §14 and left in place for the gradient
   ruling to resolve.
 
-**Rebuilt 2026-09-06 to the partial status ruling (§3), and next to be ruled.** Section
-2 no longer asks which four colours: destructive `#FF5C5C` and warning `#DFCB25` are
-liked, success is Glow and info is Wit, and the owner asked to see the four in context
-before ruling finally. So the section is keyed on the **surface** instead — 335 sites in
-116 files in seven constructs (`STATUS_SITES` in `inventory.ts`, listed in the summary
-table), each drawn with all four statuses at once, today above proposed, plus the
-collision in situ. **Info appears twice in every proposed row** (Wit strong under white,
-Wit soft under ink), because that fork is the only thing left open in the set and the
-arithmetic forces it: Wit strong fails the body floor under ink and as text on a card,
-and clears it under white by 0.07. Both of the section's old alternatives are gone — a
-hueless info and an amber warning are answers to questions that have been answered.
+**Rebuilt twice on 2026-09-06, and the status section is the focus.** The first rebuild
+keyed section 2 on the **surface** rather than on four colours — seven constructs, each
+with all four statuses in it, today above proposed. Seeing that, the owner ruled the
+tints out (§3): success and info are Yty families now, a brand colour cannot be tinted,
+and even destructive and warning do not look good washed. So the section was rebuilt
+again, this time **cut to the three things that resolve it**:
+
+1. **The tinted ground under its own ink** (121 sites), reworked with no tint. Three
+   real constructs — the alert panel, the confirm dialog's flagged line, the auth forms'
+   inline error block — each with all four statuses, today's row above four candidates:
+   a leading-edge rule (plus a top-rule variant on the alert), glyph-and-title in status
+   ink, a solid fill drawn loud enough to reject on sight, and nothing but the glyph.
+2. **The card lit from its leading edge** (1 site), the real card header today beside a
+   leading rule, a top rule, the glyph alone and nothing, with the live (act) and
+   awaiting (info) cards drawn together in every candidate.
+3. **Strong versus soft**, six hues × six constructs (fill under a label, edge, ring,
+   unlabelled mark, ink, glyph), the proposed direction with the inverted one beneath
+   it. This is §2's open recipe as well as the Wit question, and it is the next thing to
+   rule after the set.
+
+Everything else in the section is one compact proposed-only row per construct (ink on a
+neutral ground, a solid fill under a label, a solid mark) plus the three collision
+exemplars drawn once instead of three times. The tinted pill and the 40% ring are folded
+into the two reworked constructs rather than redrawn. On screen the section went from 28
+comparison rows carrying 126 panels, plus the three collision exemplars drawn three
+times, to 20 rows carrying 85 panels, the 72-cell recipe grid, and the three collision
+exemplars drawn once. Its source grew from 1047 lines to 1394 in the same move: the grid
+is new work and the reasoning that used to sit in seven construct sections is now
+concentrated in four, and on this page the reasoning is the doc comments.
 
 **What lands when §3 is ruled:** four status tokens in the library, each with the ink or
 white companion that reads on it and its measured pairings in the contrast ledger; two
 more rows of the tone grammar, because success and info are facts taking families rather
-than new colours; Sogverse's four `--color-*` deleted and the email hex mirror reading
-the library; `brand.ts`'s `glow` doc comment rewritten, since it currently says green is
-never the colour of success. The token names do not move, so no Sogverse call site
-changes spelling. The alert tints stay open with §9.
+than new colours; **the strong/soft recipe as a library rule** — the grid is its proof,
+and `brand.ts` states it as a habit today rather than as a measured direction; Sogverse's
+four `--color-*` deleted and the email hex mirror reading the library; `brand.ts`'s
+`glow` doc comment rewritten, since it currently says green is never the colour of
+success; **the 121 tinted sites and the lit-edge card converted to whatever construct is
+ruled**, which is the largest single sweep left on this branch. The token names do not
+move, so no Sogverse call site changes spelling.
 
-**Open on the page, in the order they were going to be taken:** the hover fill (§4,
-accent vs muted); the Yty recipe (§2); the status set (§3, the info-label fork and the
-final look at the four in context); scrim and on-media ink (§6);
+**Open on the page, with the status set first because that is where the focus is:** the
+status set (§3 — the two reworked constructs, and then the strong/soft direction, which
+is also §2's recipe and the answer to "when do we use wit-strong and wit-soft"); the
+hover fill (§4, accent vs muted); scrim and on-media ink (§6);
 the identicon (§7); colour at an alpha step (§9, the two parts above); the easter egg
 (§10); coloured text (§11) and the calm-surface budget (§12); gradients (§14). The page's
 sections were renumbered when the picks left it and run 0 to 9 with no gap: 0 the

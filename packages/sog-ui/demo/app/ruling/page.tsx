@@ -35,6 +35,7 @@ import {
 } from "./section-media";
 import { StatusSection } from "./section-status";
 import { SummarySection } from "./section-summary";
+import { GlyphsSection } from "./section-glyphs";
 import { YtySection } from "./section-yty";
 
 export const metadata: Metadata = {
@@ -48,6 +49,7 @@ export default function RulingPage() {
       <h1 className="text-h1-mobile sm:text-h1">Theme ruling</h1>
       <SummarySection />
       <YtySection />
+      <GlyphsSection n={10} />
       <StatusSection />
       <GreysSection />
       <ScrimSection />

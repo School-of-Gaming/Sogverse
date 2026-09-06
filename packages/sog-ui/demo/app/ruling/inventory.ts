@@ -301,64 +301,79 @@ export const STATUS_SITES: readonly StatusSite[] = [
 ];
 
 /**
- * The proposed status set, as a fill and the label that reads on it.
+ * The proposed status set, each entry as the **pair** a hue is spent in rather
+ * than as a single fill.
  *
- * Five entries for four statuses: info is the open fork and is drawn both ways
- * everywhere, so it appears twice and the page never has to say which one is
- * meant.
+ * Four entries for four statuses. It used to hold five, because info was drawn
+ * both ways in every construct; that fork has narrowed to one. The owner has
+ * ruled that success is Glow and info is Wit, and a Yty family is a brand
+ * colour, which fixes how each of them is spent: **strong carries area and line
+ * — a fill, an edge, a ring, an unlabelled mark — and soft carries ink and
+ * glyph.** Info's two halves are therefore not two candidates competing for one
+ * job, they are one candidate doing two jobs, and the only place the choice is
+ * still live is a solid fill, where the whole panel is area and a label has to
+ * read on it.
  *
- * Two of the five are the library's own hues rather than values of this set's:
+ * `destructive` and `warning` belong to no family and have one value each, so
+ * their strong and soft are the same hex. That is not a placeholder: a colour
+ * with one value spends it everywhere, and writing it twice is what lets a
+ * construct read the pair without asking which kind of colour it is holding.
+ *
+ * Two of the four are the library's own hues rather than values of this set's:
  * they are read from `YTY_FAMILIES` rather than spelled here, so a retune of a
  * family moves the status with it and the two cannot drift into being near
  * neighbours by accident — which is the exact failure the owner ruled against.
+ *
+ * **The measured floors behind `onStrong`.** Against dark ink the strong fills
+ * measure 6.19 (destructive), 6.63 (Glow), 11.34 (warning) and 4.10 (Wit);
+ * against white they measure 3.03, 2.83, 1.65 and 4.57. Wit strong is the one
+ * fill in the set that fails the 4.5 body floor under ink and clears it under
+ * white, by 0.07 — so it is the one entry whose label is white, and the reason
+ * the field exists at all. Every soft variant clears the body floor under ink
+ * comfortably (7.70 Harmony, 8.83 Glow, 8.81 Valor, 8.10 Wit), which is why the
+ * inverted recipe never fails on a fill and has to be rejected on how it reads
+ * rather than on what it measures.
  */
 export interface ProposedStatus {
-  /** The entry's own key, which is not the state: info has two entries. */
-  readonly id: string;
-  /** The state this entry is a candidate for. */
   readonly status: StatusId;
-  /** The name on screen: the token, and the label it carries. */
+  /** The name on screen: the token, or the hex where there is no token yet. */
   readonly label: string;
-  readonly hex: string;
-  /** The label colour on a solid fill of it. */
-  readonly onFill: string;
+  /** What area and line take: a fill, an edge, a ring, an unlabelled mark. */
+  readonly strong: string;
+  /** What ink and glyph take: a title, a word, an icon on a neutral ground. */
+  readonly soft: string;
+  /** The label that reads on a solid fill of `strong`. */
+  readonly onStrong: string;
 }
 
 export const PROPOSED_STATUSES: readonly ProposedStatus[] = [
   {
-    id: "destructive",
     status: "destructive",
-    label: "destructive #FF5C5C · ink",
-    hex: "#FF5C5C",
-    onFill: NEUTRALS.background.hex,
+    label: "destructive #FF5C5C",
+    strong: "#FF5C5C",
+    soft: "#FF5C5C",
+    onStrong: NEUTRALS.background.hex,
   },
   {
-    id: "success",
     status: "success",
-    label: "success = yty-glow-strong · ink",
-    hex: YTY_FAMILIES.glow.strong,
-    onFill: NEUTRALS.background.hex,
+    label: "success = yty-glow",
+    strong: YTY_FAMILIES.glow.strong,
+    soft: YTY_FAMILIES.glow.soft,
+    onStrong: NEUTRALS.background.hex,
   },
   {
-    id: "info-strong",
     status: "info",
-    label: "info = yty-wit-strong · white",
-    hex: YTY_FAMILIES.wit.strong,
-    onFill: BRAND.world.foreground,
+    label: "info = yty-wit",
+    strong: YTY_FAMILIES.wit.strong,
+    soft: YTY_FAMILIES.wit.soft,
+    onStrong: BRAND.world.foreground,
   },
   {
-    id: "info-soft",
-    status: "info",
-    label: "info = yty-wit-soft · ink",
-    hex: YTY_FAMILIES.wit.soft,
-    onFill: NEUTRALS.background.hex,
-  },
-  {
-    id: "warning",
     status: "warning",
-    label: "warning #DFCB25 · ink",
-    hex: "#DFCB25",
-    onFill: NEUTRALS.background.hex,
+    label: "warning #DFCB25",
+    strong: "#DFCB25",
+    soft: "#DFCB25",
+    onStrong: NEUTRALS.background.hex,
   },
 ];
 

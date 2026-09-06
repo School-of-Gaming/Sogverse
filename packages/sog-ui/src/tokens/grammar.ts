@@ -67,24 +67,37 @@ export interface GrammarRow {
  * The glyphs are the marks an admin already navigates by, which is why the key
  * these rows draw teaches something that transfers rather than something local
  * to one page.
+ *
+ * **Each row is matched on the element's own meaning**, the relationship it
+ * names, and not on any looser colour-coding of content. The two clubs are what
+ * an admin meets all day, so those two rows are the ones that have to be right
+ * and to be told apart at a glance; camps and events are rare by comparison,
+ * and the last row falls to the family that remains once the others are placed,
+ * which is stated rather than dressed up as a fit.
  */
 export const PRODUCT_KIND_GRAMMAR = {
   /**
-   * The relationship with people: the community a family chooses for itself,
-   * week after week.
+   * Glow is the relationship with others: belonging, friendship, the people a
+   * gamer plays beside. A consumer club is exactly that, a community a family
+   * chooses for itself, week after week.
    */
-  consumer_club: { family: "harmony", glyph: Joystick },
+  consumer_club: { family: "glow", glyph: Joystick },
   /**
-   * The relationship with technology and learning: the school-hours offering,
-   * bought by a municipality.
+   * Wit is the relationship with technology, and the learning that goes with
+   * it. A municipality club is the school-hours offering, bought by a
+   * municipality for its pupils.
    */
   municipality_club: { family: "wit", glyph: School },
   /**
-   * The brand's own content coding already puts challenges, camps and courage
-   * under Valor, so this row is not a new decision — it is the existing one
-   * applied.
+   * Valor is the relationship with society: trying the hard thing, courage,
+   * working with people you did not choose. A camp is the intensive, and it is
+   * where a gamer is stretched.
    */
   camp: { family: "valor", glyph: Tent },
-  /** Growth and milestones: the one-off occasion. */
-  event: { family: "glow", glyph: CalendarDays },
+  /**
+   * Harmony is the relationship with yourself, and no product kind is about
+   * that. An event takes it by elimination: it is the one-off occasion, the
+   * rarest kind, and the one family left.
+   */
+  event: { family: "harmony", glyph: CalendarDays },
 } as const satisfies Record<ProductKindId, GrammarRow>;
