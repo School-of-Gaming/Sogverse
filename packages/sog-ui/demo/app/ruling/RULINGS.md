@@ -104,6 +104,22 @@ chosen when Glow was yellow) and Valor (a sword carries courage and none of the
 teamwork). When all four are ruled they land as a library table beside the product-kind
 glyphs, and `yty.ts` reads them from there.
 
+**The recipe, called 2026-09-06, awaiting final confirmation from a redraw.** From the
+"Strong and soft" grid the owner found the **soft** variant pops best off the dark ground
+for Harmony, Glow and Wit, in both area and ink; **Valor** reads best as strong area,
+soft ink. Reconciled as **roles, not variants**: consumers name a family's **area** (fill,
+edge, ring, unlabelled mark) or **ink** (label, glyph on a neutral ground) and never
+strong/soft; a per-family table in the library maps roles onto the authored pair
+(Harmony/Glow/Wit: area soft, ink soft; Valor: area strong, ink soft; destructive and
+warning one value for both; success takes Glow's roles, info Wit's). The doc comment's
+reason: the dark ground inverts which variant carries, strong having been tuned for
+white, and Valor's strong is bright enough to carry alone. The theme emits only the role
+tokens; strong/soft stay authored in TypeScript as the brand's values. Labels on an area
+fill are ink; nothing needs white. The case is redrawn as "Area and ink": one ruled row
+plus in-context exemplars (element cards, zone tiles, attention grid under the re-matched
+kinds, badge rows, label and sentence forms, worst-case adjacencies, a dense list and a
+card grid, a ring) for the owner's final word.
+
 ## 3. Status colours
 
 **Asked:** destructive / success / info / warning enter the library. Shown originally:

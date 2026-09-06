@@ -1,4 +1,5 @@
 import { BRAND, NEUTRALS, YTY_FAMILIES } from "../../src/tokens/brand";
+import { PRODUCT_KIND_GRAMMAR, type ProductKindId } from "../../src/tokens/grammar";
 import { PICKS } from "../../src/tokens/picks";
 import {
   FACES,
@@ -29,6 +30,22 @@ import {
 
 const SPECIMEN = "Sogverse ABCÄÖ abcäö 0123";
 const SIGNATURE = "Aino Virtanen";
+
+/** The kinds in the order the grammar table declares them. */
+const KINDS = [
+  "consumer_club",
+  "municipality_club",
+  "camp",
+  "event",
+] as const satisfies readonly ProductKindId[];
+
+/** The kinds as an admin reads them; literal English is legal on this floor. */
+const KIND_NAME: Record<ProductKindId, string> = {
+  consumer_club: "Consumer club",
+  municipality_club: "Municipality club",
+  camp: "Camp",
+  event: "Event",
+};
 
 function Label({ children }: { children: React.ReactNode }) {
   return <p className="text-body-s text-muted-foreground">{children}</p>;
@@ -115,6 +132,29 @@ export default function FoundationsPage() {
               </div>
             </article>
           ))}
+        </div>
+      </Section>
+
+      <Section title="What each kind wears">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {KINDS.map((kind) => {
+            const row = PRODUCT_KIND_GRAMMAR[kind];
+            const family = YTY_FAMILIES[row.family];
+            const Icon = row.glyph;
+            return (
+              <div key={kind}>
+                <div
+                  className={`flex h-16 items-center justify-center border border-border ${FILL[`yty-${row.family}-strong`] ?? ""}`}
+                >
+                  <Icon className="h-7 w-7" style={{ color: NEUTRALS.background.hex }} aria-hidden />
+                </div>
+                <p className="mt-2 text-h4 font-medium">{KIND_NAME[kind]}</p>
+                <p className="font-brand-mono text-body-s text-muted-foreground">
+                  {family.name}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </Section>
 
