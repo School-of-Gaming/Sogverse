@@ -71,8 +71,12 @@ rule printed below for it still governs Sogverse's code exactly as written; the 
 that retires the construct deletes its rule from this file in the same change. No new UI
 rule is added here: a new opinion goes to SOG-UI, and the construct joins the adoption
 order. The UI sections below (layout and scrolling, loading and disabled state, button
-order, styling, the UI component reference and preview scenes) are that transitional
-state, and the day this file holds none of them, the sweep is done.
+order, the faces and headings rules, the UI component reference and preview scenes) are
+that transitional state, and the day this file holds none of them, the sweep is done.
+Colour is the first thing to have left: the theme adoption moved the tokens, the grounds,
+the one-theme rule and the ban on a hardcoded colour into the library, where they are
+stated in `packages/sog-ui/CLAUDE.md` and held by lint and by
+`tests/unit/styling/`.
 
 ### Key Conventions
 - App routes are grouped: `(auth)`, `(dashboard)`, `(public)`, plus `api/`
@@ -265,10 +269,6 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 
 ### Styling
 
-**Rule: there is exactly one theme and it is dark — never write a light-mode fallback.** Tokens are defined once on `:root` in `src/app/globals.css`; there is no theme provider, no theme switcher, no `.dark` or `.light` selector, and no `dark:` variants anywhere in the codebase. So a `dark:` class never activates, a second palette can never be selected, and a comment reasoning about how something reads "in both themes" is describing a situation that cannot arise. All three are dead weight that still has to be maintained and still misleads the next reader into tuning a value nobody will see. If a light theme is ever wanted it is a project, not a fallback bolted onto one component: `color-scheme: dark` on `:root`, the email templates' `supported-color-schemes`, and every token's tuning all assume the dark ground.
-
-**Rule: Never use hardcoded colors or raw Tailwind color classes (e.g. `text-sky-400`, `bg-red-500`).** All colors must come from CSS custom properties defined in `src/app/globals.css` and referenced via semantic Tailwind classes (`text-act`, `bg-destructive`, etc.). For non-CSS contexts (email templates, canvas), use the hex constants in `src/lib/constants/colors.ts`. This ensures a single source of truth for colors and brand identity.
-
 **Rule: Poppins is the app face — body copy and every heading not claimed by the display-font variable — and every face is loaded through `next/font`.** Space Mono is a sanctioned brand face loaded the same way and placed nowhere yet, pending the design pass; it is intentionally unused, not dead weight to tidy away.
 
 **Rule: a `next/font` variable class goes on `<html>`, never on `<body>`.** The Tailwind theme block emits its font tokens at `:root`, so a face variable defined one element lower is invisible there and the hand-written body `font-family` collapses to the UA stack — while the `font-*` utility classes keep working, because those inline their `var()` at the use site where `<body>` is an ancestor. That asymmetry is the whole danger: the page still looks styled, so nobody notices. An earlier Inter wiring shipped this way and never applied for as long as it was live.
@@ -301,7 +301,7 @@ Some user-authored fields are stored as **markdown** rather than plain text, bec
 **Rule: markdown is edited as rich text, not as syntax.** The people writing these fields are not writing documentation; asking them to remember what `##` does is how a formatting feature ends up unused. The stored value stays markdown either way — the syntax is an implementation detail of the column, not something a writer should ever meet. The editor (`src/components/ui/rich-text-editor.tsx`) is headless and styled with semantic tokens like everything else, is loaded on demand, and is only instantiated once a field is actually opened: a page holding many collapsed editors must not construct one per field.
 
 ### UI Component Reference
-A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant, composite patterns, and the color palette. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
+A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant and composite patterns. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
 
 **What the page is for (two functions):**
 1. **Fast UI iteration.** It renders components with hand-built mock data, so you can see and tweak a component without manually recreating its state through the normal app flow (no logging in as the right role, seeding a DB row, joining a live call, etc.). Demos feed fixtures directly — including a full mock context where a component reads one (e.g. the voice room renders inside a fixture `VoiceRoomContext.Provider`).

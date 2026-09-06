@@ -409,7 +409,7 @@ function Chip({
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-all",
         active
           ? "bg-act text-act-foreground shadow-sm"
-          : "bg-background text-foreground/80 hover:bg-lifted",
+          : "bg-background text-foreground hover:bg-lifted",
         className,
       )}
     >

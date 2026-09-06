@@ -63,8 +63,16 @@ shape, in the order it runs:
 8. **Keep the by-products.** A sweep turns up sites where a deleted thing had been the
    only signal of a state, or a construct with no library home yet. They go into the
    ledger as a queue for the library, never as fixes in Sogverse.
-9. **Delete the page and the ledger before merge**, in one commit, once every entry is
-   landed and the living demo shows the result. Their history stays in git.
+9. **Audit the ledger against the code, before the review.** A fresh agent with no
+   memory of the rounds walks every entry marked landed and checks it against the repo:
+   the token at the hex its ruling names, every site the sweep said it converted, every
+   grep the entry recorded still returning nothing. Ruled-means-landed is a discipline,
+   and a discipline nobody checks is a claim — this is what turns "did it all actually
+   get applied" into a question a reader with no history can answer. The findings go back
+   to the session to fix, and the audit runs *before* the code review rather than inside
+   it, so the review reads code that already agrees with its own ledger.
+10. **Delete the page and the ledger before merge**, in one commit, once every entry is
+    landed and the living demo shows the result. Their history stays in git.
 
 Two habits that made the rounds cheap: the owner rules from the page, never from a
 paragraph; and the session records, delegates and relays, holding the ledger rather than
@@ -73,7 +81,7 @@ real topic takes.
 
 ## The order
 
-### 1. The theme
+### 1. The theme — landed
 
 Sogverse's stylesheet imports the library's generated theme, and its root layout satisfies
 the face contract by defining the face variables the library names. Sogverse's own
@@ -100,10 +108,35 @@ which links the package and still leaves the portal out. The Yty hues are consum
 alpha steps on three surfaces today, so those tints composite differently the moment the
 hues change; review them with page-capture and correct them in the same PR.
 
-Lint: none new. The seam lint comes at lockdown.
+Lint: two, and they were not foreseen when this entry was written. Colour turned out to
+have exactly two spellings the library cannot govern — a hex typed into a style object and
+a raw Tailwind palette class typed into a class string — so both are banned in Sogverse's
+source at the point of typing, with artwork the only exemption. The seam lint, which bans
+utility classes outright, still comes at lockdown.
 
 Done when: Sogverse renders the library's colours and faces, its own stylesheet holds no
 token the library also ships, and the demo and the app agree on every shared value.
+
+**What it landed (2026-09-07).** Colour is authored once, in TypeScript, and the Tailwind
+theme is generated from it: the signature pair named by meaning (`act` and `world`, which
+replaced `primary` and `secondary`), three neutral grounds (`background`, `card`, and one
+`lifted` grey — `accent` and `muted` are gone, `muted-foreground` stays as ink), one
+colour per Yty element, a four-strong status set, the sixteen picks a person may choose
+for their own thing, and the identicon's four. Two constructs composite and nothing else
+does: `bg-scrim`, the black tint that dims what is behind it, and the `glass` utility, the
+ground thinned and blurred for a surface carrying its own contents — they replaced six
+translucent strengths spread across five files, and `.glass-panel` left Sogverse's
+stylesheet with them. Every token carries its rule and its reason in a doc comment, and
+the rules that no value can state — a colour exists only at its authored value, a colour
+is a figure on the dark ground rather than a tint of it, the budget a page spends — are in
+this package's `CLAUDE.md`. Sogverse's own stylesheet now declares no colour at all: two
+layout heights, the radius scale and the display-face pointer are all that is left, and
+each is a line item above. Four things hold it: `tests/unit/sog-ui/` (the generator's
+parity with its committed output, the measured pairings, the neutral set, the picks, the
+identicon), `tests/unit/styling/` (no colour token in the app's stylesheet, no token spent
+at an alpha step, no glass of the app's own, no universal border default), and two lint
+bans in `eslint.config.mjs` — a hex literal and a raw Tailwind palette class — whose only
+exemptions are artwork, named one by one with reasons.
 
 ### 2. Heading
 

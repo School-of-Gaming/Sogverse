@@ -823,7 +823,10 @@ export function SessionFeed({
  * group with nobody in it. A session marked off but never written up is **not**
  * one of them any more — the report is owed work now, so that dot is amber like
  * any other gap. The run of grey is what the green and the amber are measured
- * against, and it is the run that shrinks when the standard rises.
+ * against, and it is the run that shrinks when the standard rises. The two greys
+ * are two tokens, not two steps of one: the ordinary dot is the ink
+ * (`muted-foreground`), and a week with no record at all takes `border`, the
+ * quietest neutral the palette has. Neither is a weakened anything.
  */
 function markerTone(
   entry: SessionFeedEntry,
@@ -832,7 +835,7 @@ function markerTone(
 ): string {
   switch (entry.kind) {
     case "future":
-      return prominent ? "bg-info" : "bg-muted-foreground/60";
+      return prominent ? "bg-info" : "bg-muted-foreground";
     case "past":
       switch (completeness) {
         case "needs_attention":
@@ -840,10 +843,10 @@ function markerTone(
         case "complete":
           return "bg-success";
         default:
-          return "bg-muted-foreground/60";
+          return "bg-muted-foreground";
       }
     case "no_record":
-      return "bg-muted-foreground/25";
+      return "bg-border";
   }
 }
 

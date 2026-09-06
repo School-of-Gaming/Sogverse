@@ -72,6 +72,25 @@ the hue at a tenth behind a glyph already inked in it. It is retired, because th
 the lifted neutral carries the accent on its own and the tint was the same colour stated
 twice — once at its authored value and once at a duller one.
 
+**Colour is spent to a budget, and the budget is set by who the page is for.** A
+**parent surface** — the public pages, the parent's dashboard, the mail — spends **amber
+plus one other colour**, and is loud by *saturation* rather than by count. That is the
+reason, not a restraint dressed up as one: a first impression should be colourful and
+vibrant, and this brand is vibrant by putting two saturated colours on a calm ground, not
+by putting many colours on one page. Six hues competing for the same glance is not six
+times the energy, it is noise, and the ground stops reading as calm. A **gamer surface**
+may spend the palette, because a child's page is a place they are already inside rather
+than an introduction to us. **No page spends all six.** And **violet is never the colour
+of quiet**: it does not carry safety, safeguarding or trust-building copy on a parent
+surface, where the reader is being asked to trust us with a child and the page should
+sound settled rather than energetic.
+
+No lint holds this one. What a page spends is a property of the whole rendered page, and
+no class string can be asked how many colours its neighbours used; the place a check
+becomes possible is the template adoption, where a page is composed from templates and
+the set of colours it spends is knowable from what it composes. Until then it is judged in
+the demo's template floor, on the page, like every other composition question.
+
 **There is one theme and it is dark.** No light fallback, no switcher, no `dark:` variant.
 Every text-on-ground pairing the library ships is proven in the contrast tests, and a
 consumer trusts the library to have done that arithmetic: a colour the library offers for
@@ -161,8 +180,10 @@ string means rung 3 or 4 was needed and the ladder was skipped.
 
 ## The demo
 
-`demo/` is a Next app, run on its own dev server on port 3001 and deployed as its own
-Vercel project with this package as its root directory. **It is seen, not read.** A human
+`demo/` is a Next app, run on its own dev server on port 3001. It is not deployed
+anywhere: it is opened on localhost, and giving it a home of its own on the web is a later
+step, taken when there is a reason to look at it from somewhere other than the machine
+that is building it. **It is seen, not read.** A human
 opens it to check that things look right and that interaction behaves; an agent reads the
 code to understand why. So the page shows a thing and its name and nothing else: no prose,
 no rationale, no numbers, no pass marks. Everything worth knowing about a value or a

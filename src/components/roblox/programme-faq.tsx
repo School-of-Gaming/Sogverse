@@ -112,7 +112,7 @@ export function ProgrammeFaq() {
         {/* The locations answer's closing aside, subordinate in the signed-off
             copy and rendered as one. */}
         {key === "where" && (
-          <p className="text-sm italic text-muted-foreground/80">
+          <p className="text-sm italic text-muted-foreground">
             {t("items.where.answer2")}
           </p>
         )}

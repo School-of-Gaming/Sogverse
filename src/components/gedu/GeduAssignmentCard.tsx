@@ -255,12 +255,7 @@ export function GeduAssignmentCard({
         <CardContent className="flex h-full flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
-              <p
-                className={cn(
-                  "text-xs font-medium uppercase tracking-wider text-muted-foreground",
-                  endedOn !== null && "text-muted-foreground/70",
-                )}
-              >
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {p(productType)}
               </p>
               {/* The identity keeps its weight and loses its tone on a finished
@@ -291,7 +286,7 @@ export function GeduAssignmentCard({
                 {/* The separator is a pseudo-element, not a text node: it is
                     punctuation between two translated strings rather than copy of
                     its own, so it has no business in the message files. */}
-                <span className="inline-flex items-center gap-1 tabular-nums before:mr-1 before:text-muted-foreground/50 before:content-['·']">
+                <span className="inline-flex items-center gap-1 tabular-nums before:mr-1 before:content-['·']">
                   <Users className="h-3.5 w-3.5" aria-hidden />
                   {d("participantCount", { count: groupParticipantCount })}
                 </span>
@@ -362,12 +357,7 @@ export function GeduAssignmentCard({
               missing schedule. That is not a reserved space — a schedule is a
               fact every product has an answer to, and "none set" is the answer
               for a product still being put together. */}
-          <div
-            className={cn(
-              "flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground",
-              endedOn !== null && "text-muted-foreground/70",
-            )}
-          >
+          <div className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
             <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <span className="min-w-0">
               {scheduleLines.length > 0 ? (

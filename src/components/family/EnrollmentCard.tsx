@@ -471,12 +471,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
         <CardContent className="flex flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
-              <p
-                className={cn(
-                  "text-xs font-medium uppercase tracking-wider text-muted-foreground",
-                  endedOn !== null && "text-muted-foreground/70",
-                )}
-              >
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {p(productType)}
               </p>
               {/* The identity keeps its weight and loses its tone on a finished
@@ -529,12 +524,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               Thu 12 Feb at 17:00", and once it starts the corner badge says so.
               The row is always here, and holds the "nothing scheduled yet" line
               for a product still being put together. */}
-          <div
-            className={cn(
-              "flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground",
-              endedOn !== null && "text-muted-foreground/70",
-            )}
-          >
+          <div className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
             <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <span className="min-w-0">
               {scheduleLines.length > 0 ? (

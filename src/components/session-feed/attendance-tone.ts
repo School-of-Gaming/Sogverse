@@ -56,7 +56,7 @@ export const ATTENDANCE_TONE: Record<AttendanceMarkState, AttendanceTone> = {
   // The state still asking for something, so it is the one that stays faint and
   // keeps a dashed edge instead of settling in beside the answered chips.
   unmarked: {
-    text: "text-muted-foreground/70",
+    text: "text-muted-foreground",
     border: "border-dashed border-border",
   },
 };

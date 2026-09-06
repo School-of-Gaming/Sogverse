@@ -96,12 +96,14 @@ export function FamilySessionFeed({
       quiet ? "top-3.5" : "top-5",
       // Only the next session is blue; a later date takes the ordinary
       // neutral dot, because a status hue has one value and a weakened one
-      // is not that hue.
+      // is not that hue. The two neutrals are two tokens rather than two
+      // steps of one: the ink for an ordinary row, `border` — the quietest
+      // neutral there is — for a quiet one.
       entry.kind === "future" && prominent
         ? "bg-info"
         : quiet
-          ? "bg-muted-foreground/25"
-          : "bg-muted-foreground/60",
+          ? "bg-border"
+          : "bg-muted-foreground",
     );
   };
 

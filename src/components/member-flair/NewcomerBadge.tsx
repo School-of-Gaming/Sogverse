@@ -94,7 +94,7 @@ function WeekMeter({ days }: { days: number }) {
             "h-1 w-1 rounded-full",
             // A spent pip goes neutral rather than pale green: the hue is one
             // value, and what is left of the month is what it marks.
-            index < PIPS - spent ? "bg-success" : "bg-muted-foreground/25",
+            index < PIPS - spent ? "bg-success" : "bg-border",
           )}
         />
       ))}

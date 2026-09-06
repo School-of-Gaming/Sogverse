@@ -95,12 +95,12 @@ export function AttendanceRoster({
                 icon={<X className="h-3 w-3" aria-hidden />}
                 // Neutral rather than destructive: an absence is a fact about
                 // the afternoon, not an error the gedu made. Neutral still has
-                // to *read* as chosen, though — a plain `bg-lifted` pill sitting
-                // on a muted row was near-invisible, so the selected state is a
-                // foreground-tinted fill under full-strength foreground ink,
-                // which lands as unmistakably filled without borrowing an alarm
-                // colour it hasn't earned.
-                pressedClassName="bg-foreground/15 text-foreground"
+                // to *read* as chosen, though — and a marked row is already
+                // `bg-lifted`, so a pill on the same grey is invisible. `border`
+                // is the one neutral above lifted, which makes the pill read as
+                // filled under full-strength foreground ink without borrowing an
+                // alarm colour it hasn't earned.
+                pressedClassName="bg-border text-foreground"
               />
             </div>
           </li>

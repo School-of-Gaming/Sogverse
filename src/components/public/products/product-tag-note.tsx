@@ -44,7 +44,7 @@ export function ProductTagNote({ tag }: { tag: ProductTag }) {
   return (
     <div className="rounded-lg border border-border bg-lifted p-4">
       <p className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground after:mx-1.5 after:font-normal after:text-muted-foreground/50 after:content-['—']">
+        <span className="font-medium text-foreground after:mx-1.5 after:font-normal after:text-muted-foreground after:content-['—']">
           <TagGlyph
             tag={tag}
             className="-mt-0.5 mr-1.5 inline h-4 w-4 text-act"

@@ -183,7 +183,7 @@ export function ChatMessageRow({
           <>
             <ChatTombstone withOriginal={capabilities.canSeeHiddenBody} />
             {capabilities.canSeeHiddenBody && (
-              <div className="mt-1 border-l-2 border-border pl-2 text-muted-foreground/70">
+              <div className="mt-1 border-l-2 border-border pl-2 text-muted-foreground">
                 {message.body !== null && (
                   <ChatBodyText body={message.body} accounts={accounts} />
                 )}

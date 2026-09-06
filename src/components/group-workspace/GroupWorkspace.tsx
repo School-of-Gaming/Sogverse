@@ -600,7 +600,7 @@ export function GroupWorkspace({
               {/* Punctuation between two translated strings, so it is a
                   pseudo-element rather than a text node — it does not belong in
                   the message files. */}
-              <span className="inline-flex items-center gap-1 before:mr-1 before:text-muted-foreground/50 before:content-['·']">
+              <span className="inline-flex items-center gap-1 before:mr-1 before:content-['·']">
                 <Users className="h-4 w-4" aria-hidden />
                 {t("participantCount", {
                   count: assignedGroup.participant_count,

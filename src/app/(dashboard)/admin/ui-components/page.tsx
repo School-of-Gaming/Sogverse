@@ -268,15 +268,6 @@ function SubSection({
   );
 }
 
-function Swatch({ label, className }: { label: string; className: string }) {
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className={`h-12 w-12 rounded-lg border ${className}`} />
-      <span className="text-xs text-muted-foreground">{label}</span>
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /*  Voice Room Avatar Demo                                             */
 /* ------------------------------------------------------------------ */
@@ -2189,53 +2180,10 @@ export default function AdminUIComponentsPage() {
       <div>
         <h1 className="text-3xl font-bold">UI Components</h1>
         <p className="text-muted-foreground">
-          Living style guide &mdash; every component variant, composite pattern,
-          and color token used across the app.
+          Living style guide &mdash; every component variant and composite
+          pattern used across the app.
         </p>
       </div>
-
-      <Section title="Color Palette">
-        <SubSection title="Brand Colors">
-          <div className="flex flex-wrap gap-4">
-            <Swatch label="Primary" className="bg-act" />
-            <Swatch label="Secondary" className="bg-world" />
-            <Swatch label="Destructive" className="bg-destructive" />
-            <Swatch label="Success" className="bg-success" />
-            <Swatch label="Info" className="bg-info" />
-            <Swatch label="Warning" className="bg-warning" />
-          </div>
-        </SubSection>
-
-        <SubSection title="Surface Colors">
-          <div className="flex flex-wrap gap-4">
-            <Swatch label="Background" className="bg-background" />
-            <Swatch label="Card" className="bg-card" />
-            <Swatch label="Lifted" className="bg-lifted" />
-            <Swatch label="Border" className="bg-border" />
-          </div>
-        </SubSection>
-
-        <SubSection title="Text Colors">
-          <div className="flex flex-wrap gap-6">
-            <span className="text-sm font-medium text-foreground">
-              Foreground
-            </span>
-            <span className="text-sm font-medium text-muted-foreground">
-              Muted Foreground
-            </span>
-            <span className="text-sm font-medium text-act">Primary</span>
-            <span className="text-sm font-medium text-world">
-              Secondary
-            </span>
-            <span className="text-sm font-medium text-destructive">
-              Destructive
-            </span>
-            <span className="text-sm font-medium text-success">Success</span>
-            <span className="text-sm font-medium text-info">Info</span>
-            <span className="text-sm font-medium text-warning">Warning</span>
-          </div>
-        </SubSection>
-      </Section>
 
       <ProductTypePaletteDemo />
 

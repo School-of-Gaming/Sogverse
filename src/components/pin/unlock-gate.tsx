@@ -56,7 +56,7 @@ export function UnlockGate({ initialPinIsSet }: { initialPinIsSet?: boolean }) {
 function UnlockSkeleton() {
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-8" aria-hidden="true">
-      <Lock className="h-10 w-10 text-muted-foreground/40" />
+      <Lock className="h-10 w-10 text-muted-foreground" />
       <div className="flex gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <span key={i} className="h-14 w-12 rounded-lg border-2 border-border" />

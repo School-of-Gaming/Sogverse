@@ -288,7 +288,7 @@ export default function RobloxPage() {
               </p>
             ))}
           </div>
-          <div className="mt-8 space-y-2 text-xs leading-relaxed text-muted-foreground/70">
+          <div className="mt-8 space-y-2 text-xs leading-relaxed text-muted-foreground">
             <p>{t("legal.roblox")}</p>
             <p>{t("legal.lynx")}</p>
           </div>

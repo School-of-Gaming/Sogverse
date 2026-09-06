@@ -134,7 +134,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
                 aria-hidden
                 className={cn(
                   "relative h-5 w-9 shrink-0 rounded-full transition-colors",
-                  isLocked ? "bg-act" : "bg-muted-foreground/30",
+                  isLocked ? "bg-act" : "bg-border",
                 )}
               >
                 <span
