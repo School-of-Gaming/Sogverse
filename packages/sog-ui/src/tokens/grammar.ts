@@ -25,8 +25,8 @@
  */
 
 import {
-  CalendarDays,
-  Joystick,
+  Gamepad2,
+  PartyPopper,
   School,
   Tent,
   type LucideIcon,
@@ -81,7 +81,7 @@ export const PRODUCT_KIND_GRAMMAR = {
    * gamer plays beside. A consumer club is exactly that, a community a family
    * chooses for itself, week after week.
    */
-  consumer_club: { family: "glow", glyph: Joystick },
+  consumer_club: { family: "glow", glyph: Gamepad2 },
   /**
    * Wit is the relationship with technology, and the learning that goes with
    * it. A municipality club is the school-hours offering, bought by a
@@ -99,5 +99,5 @@ export const PRODUCT_KIND_GRAMMAR = {
    * that. An event takes it by elimination: it is the one-off occasion, the
    * rarest kind, and the one family left.
    */
-  event: { family: "harmony", glyph: CalendarDays },
+  event: { family: "harmony", glyph: PartyPopper },
 } as const satisfies Record<ProductKindId, GrammarRow>;

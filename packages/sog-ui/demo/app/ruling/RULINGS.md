@@ -110,7 +110,11 @@ Rainbow, Star and kin. When all four are ruled they land as a library table besi
 product-kind glyphs, and `yty.ts` reads them from there. **Kind glyphs**: the owner does
 not think the joystick fits the consumer club and asked for something closer to what a
 family's child plays on (keyboard and mouse, laptop, desktop, else a gamepad); a case on
-the page draws those with alternatives for the other three kinds; open.
+the page drew those with alternatives for the other three kinds. **Ruled and landed
+2026-09-06: consumer club `Gamepad2`, municipality club `School`, camp `Tent`, event
+`PartyPopper`** (the calendar glyph said nothing inside a week-calendar panel). Two rows
+of `grammar.ts` changed; the demo floor and the admin surfaces read the table. The kind
+case leaves the page.
 
 **The recipe, called 2026-09-06, awaiting final confirmation from a redraw.** From the
 "Strong and soft" grid the owner found the **soft** variant pops best off the dark ground
