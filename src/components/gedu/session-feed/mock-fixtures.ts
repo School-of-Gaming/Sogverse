@@ -1,6 +1,7 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
+import type { GamerPhotoConsent } from "@/types";
 import type {
   AttendanceMarks,
   SessionEditor,
@@ -96,6 +97,65 @@ export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
   { id: SESSION_FEED_GAMER_IDS.emil, firstName: "Emil" },
   { id: SESSION_FEED_GAMER_IDS.hilda, firstName: "Hilda" },
   { id: SESSION_FEED_ADULT_ID, firstName: "Marja" },
+];
+
+/**
+ * What this roster's parents have answered about photographs of their children
+ * — the stored rows, exactly as the database hands them over, for a scene whose
+ * product asks the consent.
+ *
+ * **Rows, not a resolved answer**, so a scene runs the same resolution the two
+ * live shells run rather than a fixture's opinion of what it should produce.
+ *
+ * The three states a roster really has are all here, and the third is the one
+ * worth the fixture: **granted** (Aino, Elias, Oskar, Hilda), **refused**
+ * (Väinö, Siiri), and **never answered** — Linnéa and Emil, who have no row at
+ * all and must render identically to the refusals. Marja has none either, and
+ * hers is a fourth thing: she is the adult holding her own seat, whom this
+ * consent cannot be about, and the block has no way to tell her apart from a
+ * child nobody has answered for. That is the safe direction to be wrong in and
+ * it is on show here on purpose.
+ *
+ * The dates are absolute rather than derived from `now` — nothing renders them,
+ * and the map the block reads is built from `granted` alone.
+ */
+export const SESSION_FEED_PHOTO_CONSENTS: readonly GamerPhotoConsent[] = [
+  {
+    gamer_id: SESSION_FEED_GAMER_IDS.aino,
+    consent_type: "lynx_educate",
+    granted: true,
+    updated_at: "2026-08-14T09:12:00.000Z",
+  },
+  {
+    gamer_id: SESSION_FEED_GAMER_IDS.vaino,
+    consent_type: "lynx_educate",
+    granted: false,
+    updated_at: "2026-08-15T18:40:00.000Z",
+  },
+  {
+    gamer_id: SESSION_FEED_GAMER_IDS.elias,
+    consent_type: "lynx_educate",
+    granted: true,
+    updated_at: "2026-08-16T07:05:00.000Z",
+  },
+  {
+    gamer_id: SESSION_FEED_GAMER_IDS.oskar,
+    consent_type: "lynx_educate",
+    granted: true,
+    updated_at: "2026-08-18T20:31:00.000Z",
+  },
+  {
+    gamer_id: SESSION_FEED_GAMER_IDS.siiri,
+    consent_type: "lynx_educate",
+    granted: false,
+    updated_at: "2026-08-19T12:02:00.000Z",
+  },
+  {
+    gamer_id: SESSION_FEED_GAMER_IDS.hilda,
+    consent_type: "lynx_educate",
+    granted: true,
+    updated_at: "2026-08-21T16:58:00.000Z",
+  },
 ];
 
 /**

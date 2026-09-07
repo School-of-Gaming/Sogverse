@@ -19,7 +19,9 @@ import {
   buildGroupWorkspaceFixture,
   type GroupWorkspaceScenario,
 } from "@/components/group-workspace/mock-workspace-fixtures";
+import { ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES } from "@/lib/constants/gamer-photo-consents";
 import { useNow } from "@/providers";
+import { resolveGamerPhotoConsents } from "@/services/gamer-photo-consents";
 import type {
   GamerCreation,
   GeduAssignedProductRosterEntry,
@@ -95,6 +97,13 @@ import type {
  * long enough to see the photo block greyed alongside the register and the two
  * written fields, which is exactly what it did not used to do.
  *
+ * **The Roblox scenario is the one whose product asks the photo consent**, so
+ * its editors' photo blocks carry the verbal-ask note over a list of who may be
+ * photographed, and the other four scenarios are the control — their photo
+ * block is exactly what it was before the consent existed. The list is
+ * read-only here as it is on the live page: a gedu is told the answer, and only
+ * the child's own parent can change it.
+ *
  * Every other save resolves immediately, so the in-flight and failure states the
  * live page has are not what this scene is for; the send is the exception on
  * both counts, and its pause is there precisely because the in-flight frame is
@@ -123,6 +132,23 @@ export function GeduProductPageScene({
    */
   const [now] = useState(liveNow);
   const [fixture] = useState(() => buildGroupWorkspaceFixture(now, scenario));
+  /**
+   * The roster's photo permissions, or `null` where the scenario's product asks
+   * nothing — the scene standing in for what both live shells read.
+   *
+   * Held beside the fixture rather than recomputed on every render for the same
+   * reason everything else here is: the rows never change in a scene, and a
+   * fresh map each render would give the block a new prop identity for no
+   * reason at all.
+   */
+  const [photoConsents] = useState(() =>
+    fixture.photoConsentRows === null
+      ? null
+      : resolveGamerPhotoConsents(
+          fixture.photoConsentRows,
+          ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES,
+        ),
+  );
   const [data, setData] = useState(fixture.data);
   const [entries, setEntries] = useState<SessionFeedEntry[]>(fixture.entries);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
@@ -526,6 +552,12 @@ export function GeduProductPageScene({
       // The same frozen instant the fixture's sessions were laid out around.
       feedNow={now}
       feedRoster={fixture.feedRoster}
+      // Resolved from the fixture's stored rows by the very function the two
+      // live shells call, so what the block draws — and in particular that a
+      // gamer with no row is "not allowed" — is the product's own rule rather
+      // than a fixture's opinion of it. `null` on every scenario whose product
+      // asks nothing, which leaves the photo block untouched there.
+      photoConsents={photoConsents}
       sourceTimeZone={fixture.sourceTimeZone}
       materialUrl={fixture.materialUrl}
       groupPublicNote={groupNotes.publicNote}

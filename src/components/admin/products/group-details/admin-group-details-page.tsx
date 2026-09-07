@@ -32,6 +32,11 @@ import {
   type AdminProductSessions,
   type AdminSessionGroup,
 } from "@/services/admin-sessions";
+import {
+  resolveGamerPhotoConsents,
+  useGamerPhotoConsentsForGamers,
+  useProductGamerPhotoConsentTypes,
+} from "@/services/gamer-photo-consents";
 import { useGeduGroupFeed, type GeduGroupFeed } from "@/services/gedu-sessions";
 import { useProductGroups } from "@/services/groups";
 import {
@@ -410,6 +415,32 @@ function Workspace({
   );
 
   /**
+   * Who on this roster may be photographed, or `null` on a product that asks no
+   * photo consent — read here exactly as the gedu shell reads it, because an
+   * admin's claim on this page is that they see what the gedu sees. The two
+   * shells differ in where their documents come from and in nothing else, so a
+   * different answer to this question on one of them would be the drift the
+   * shared body exists to prevent.
+   */
+  const { data: askedPhotoConsents } = useProductGamerPhotoConsentTypes(
+    sessions.product.id,
+  );
+  const rosterIds = useMemo(
+    () => feedRoster.map((member) => member.id),
+    [feedRoster],
+  );
+  const { data: photoConsentRows } = useGamerPhotoConsentsForGamers(rosterIds, {
+    enabled: (askedPhotoConsents?.length ?? 0) > 0,
+  });
+  const photoConsents = useMemo(
+    () =>
+      askedPhotoConsents && askedPhotoConsents.length > 0
+        ? resolveGamerPhotoConsents(photoConsentRows ?? [], askedPhotoConsents)
+        : null,
+    [askedPhotoConsents, photoConsentRows],
+  );
+
+  /**
    * The assignment-shaped document the shared body takes, assembled from the
    * three reads that each own a piece of it.
    *
@@ -621,6 +652,10 @@ function Workspace({
       // card under somebody typing into it.
       feedNow={now}
       feedRoster={feedRoster}
+      // The same answer the gedu shell hands the same body: `null` on a product
+      // that asks no photo consent, and the roster's permissions on one that
+      // does.
+      photoConsents={photoConsents}
       sourceTimeZone={sessions.product.timezone}
       materialUrl={feed.product.material_url}
       groupPublicNote={group.public_note}

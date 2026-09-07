@@ -125,6 +125,16 @@ vi.mock("@/services/gedu-sessions", async (importOriginal) => ({
   useGeduGroupFeed: () => ({ data: reads.feed, isPending: false }),
 }));
 
+// The photo-consent pair, stubbed at the two reads and left with the real
+// resolver: this page asks a product what it wants asked and the roster what
+// their parents answered, and an ordinary product asks nothing — which is the
+// shape every fixture here has.
+vi.mock("@/services/gamer-photo-consents", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/gamer-photo-consents")>()),
+  useProductGamerPhotoConsentTypes: () => ({ data: [] }),
+  useGamerPhotoConsentsForGamers: () => ({ data: [] }),
+}));
+
 vi.mock("@/services/groups", () => ({
   useProductGroups: () => ({ data: reads.snapshot, isPending: false }),
 }));
@@ -218,6 +228,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     locations: null,
     product_required_consents: [],
     product_marketing_consents: [],
+    product_gamer_photo_consents: [],
   };
 }
 

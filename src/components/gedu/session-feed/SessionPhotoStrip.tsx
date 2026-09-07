@@ -21,6 +21,10 @@ import {
 import { cn } from "@/lib/utils";
 import { sessionPhotoErrorCode } from "./photo-failure";
 import {
+  SessionPhotoConsentList,
+  type SessionPhotoConsentState,
+} from "./SessionPhotoConsentList";
+import {
   keptPhotos,
   stagedPhotoCount,
   type SessionPhotoEditing,
@@ -84,6 +88,18 @@ interface SessionPhotoStripProps extends SessionPhotoEditing {
    * card, because a photo is now part of what that Save is carrying.
    */
   disabled: boolean;
+  /**
+   * Who on this roster may be photographed, or `null` on a product that does
+   * not ask the question — which is every product but the one delivered with
+   * Lynx Educate, and where this block is byte-for-byte what it was before the
+   * consent existed.
+   *
+   * It is handed down from the page rather than read here, like every other
+   * datum on this feed: the page asks for the product's ask set and the
+   * roster's answers in the same render as the roster itself, so the block's
+   * presence is settled long before an editor opens.
+   */
+  consent: SessionPhotoConsentState | null;
 }
 
 /**
@@ -153,6 +169,7 @@ export function SessionPhotoStrip({
   staged,
   landed,
   disabled,
+  consent,
   error,
   onStageAdd,
   onUnstageAdd,
@@ -317,6 +334,18 @@ export function SessionPhotoStrip({
         <Images className="h-3 w-3" aria-hidden />
         {t("photosTitle")}
       </p>
+
+      {/* Above the thumbnails and the drop area, because it is the thing to
+          read *before* a photo is taken or picked, not a footnote under the row
+          of the ones already attached. It is absent entirely on a product that
+          asks no photo consent. */}
+      {consent !== null && (
+        <SessionPhotoConsentList
+          roster={consent.roster}
+          allowed={consent.allowed}
+          className="mt-2"
+        />
+      )}
 
       {/* `items-end` so the Add button sits on the thumbnails' baseline
           whatever their heights round to, and the run reads as one row.

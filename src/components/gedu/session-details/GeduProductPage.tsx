@@ -22,6 +22,11 @@ import {
   type GeduGroupFeed,
 } from "@/services/gedu-sessions";
 import {
+  resolveGamerPhotoConsents,
+  useGamerPhotoConsentsForGamers,
+  useProductGamerPhotoConsentTypes,
+} from "@/services/gamer-photo-consents";
+import {
   useSetGamerGroupCreations,
   useSetGamerGroupNote,
 } from "@/services/member-flair";
@@ -285,6 +290,46 @@ function Workspace({
   );
 
   /**
+   * Who on this roster may be photographed — or `null` on a product that does
+   * not ask the question, which is every product but the one delivered with
+   * Lynx Educate.
+   *
+   * **Two small reads, made here rather than in the body**, because the body
+   * takes everything as props and both shells have to answer the same question
+   * the same way. Neither read blocks a paint: the page is already rendered by
+   * the time they land, and both are indexed lookups of a bounded set — the
+   * product's ask set, and one row per roster member.
+   *
+   * **They resolve long before an editor opens**, which is what makes the
+   * block's arrival free of layout cost: the reads start in the same render as
+   * the roster, and the block only exists inside an editor a gedu opens later.
+   * Even in the worst case the marks are the trailing element of rows the
+   * roster already fixed, so a late answer fills a row's own slack.
+   *
+   * The roster read is left disabled on a product that asks nothing, so an
+   * ordinary club never asks the database about children's photo permissions at
+   * all.
+   */
+  const { data: askedPhotoConsents } = useProductGamerPhotoConsentTypes(
+    feed.product.id,
+  );
+  const asksPhotoConsent = (askedPhotoConsents?.length ?? 0) > 0;
+  const rosterIds = useMemo(
+    () => feedRoster.map((member) => member.id),
+    [feedRoster],
+  );
+  const { data: photoConsentRows } = useGamerPhotoConsentsForGamers(rosterIds, {
+    enabled: asksPhotoConsent,
+  });
+  const photoConsents = useMemo(
+    () =>
+      askedPhotoConsents && askedPhotoConsents.length > 0
+        ? resolveGamerPhotoConsents(photoConsentRows ?? [], askedPhotoConsents)
+        : null,
+    [askedPhotoConsents, photoConsentRows],
+  );
+
+  /**
    * The assignment document with this group's roster — **and its headcount** —
    * replaced by the feed's.
    *
@@ -440,6 +485,9 @@ function Workspace({
       // and reclassify a card under a gedu who is typing into it.
       feedNow={now}
       feedRoster={feedRoster}
+      // `null` on every product that does not ask the photo consent, which is
+      // what leaves the session editors' photo block exactly as it was.
+      photoConsents={photoConsents}
       sourceTimeZone={feed.product.timezone}
       materialUrl={feed.product.material_url}
       groupPublicNote={feed.group.public_note}

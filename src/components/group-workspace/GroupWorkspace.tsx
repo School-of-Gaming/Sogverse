@@ -230,6 +230,25 @@ interface GroupWorkspaceProps {
   feedNow: Date;
   /** Attendance roster for the feed — same children as the group roster. */
   feedRoster: readonly SessionFeedGamer[];
+  /**
+   * Who on the roster may be photographed, keyed by roster id — or `null` on a
+   * product that does not ask the photo consent, where every session editor's
+   * photo block is exactly what it was before the consent existed.
+   *
+   * **Required rather than defaulted, unlike the other caller-derived props on
+   * this body**, and for a reason none of them has: the safe-looking default is
+   * the one that hides a safeguard. A new shell that forgot this prop would
+   * silently render a photo block with no permissions on it, on the one product
+   * where a gedu is photographing actual children — so the compiler asks, and
+   * a shell whose product asks nothing answers `null` in so many words.
+   *
+   * **A missing id in the map is a refusal, never a pending answer.** The shell
+   * resolves the stored rows into it and leaves out anybody with nothing on
+   * file, which is what lets the map be handed down the moment the roster is
+   * known: the answers land at the end of rows that already exist, and nothing
+   * on screen moves when they do.
+   */
+  photoConsents: ReadonlyMap<string, boolean> | null;
   /** Zone the schedule was authored in; the feed renders in the viewer's. */
   sourceTimeZone: string;
   /**
@@ -402,6 +421,7 @@ export function GroupWorkspace({
   entries,
   feedNow,
   feedRoster,
+  photoConsents,
   sourceTimeZone,
   materialUrl,
   groupPublicNote,
@@ -724,6 +744,7 @@ export function GroupWorkspace({
               onSendReport={onSendReport}
               onAddPhoto={onAddPhoto}
               onRemovePhoto={onRemovePhoto}
+              photoConsents={photoConsents}
             />
           ) : (
             <Card>

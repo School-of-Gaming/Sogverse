@@ -5,6 +5,7 @@ import {
   SESSION_FEED_EDITORS,
   SESSION_FEED_GAMER_IDS,
   SESSION_FEED_PHOTO_ART,
+  SESSION_FEED_PHOTO_CONSENTS,
   SESSION_FEED_ROSTER,
   SESSION_FEED_TIMEZONE,
   buildSessionFeedFixture,
@@ -18,6 +19,7 @@ import { sessionEntryId } from "@/lib/session-occurrence";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type {
   GamerCreation,
+  GamerPhotoConsent,
   GeduAssignedProduct,
   GeduAssignedProductGroup,
   GeduAssignedProductRosterEntry,
@@ -174,6 +176,17 @@ export interface GroupWorkspaceFixture {
    * all, which is what most real groups look like.
    */
   memberFlair: MemberFlairFixture;
+  /**
+   * What this group's parents have answered about photographs of their
+   * children, as stored rows — or `null` on a scenario whose product does not
+   * ask the photo consent, which is every one but the Roblox Programme's.
+   *
+   * **Rows rather than the resolved map**, so the scene runs the same
+   * resolution the two live shells run: absence is what makes a child "not
+   * allowed", and a fixture that resolved the answer itself would be asserting
+   * that rule instead of exercising it.
+   */
+  photoConsentRows: readonly GamerPhotoConsent[] | null;
 }
 
 /** Gedu ids. Real UUIDs because each one renders as an identicon chip. */
@@ -249,6 +262,19 @@ interface ScenarioConfig {
    * has rows lit by one — because the flag adds the obligation, not the data.
    */
   requiresGamerCreations: boolean;
+  /**
+   * Whether this product asks the per-gamer photo consent — the Lynx Educate
+   * one, which the Roblox Programme's products carry and nothing else does.
+   *
+   * **Exactly one scenario sets it, and it is the Roblox one**, because that is
+   * the product shape the consent belongs to: a page whose topic is Roblox
+   * Studio is the page a gedu photographing children is actually looking at.
+   * Every other scenario leaves it false, which is what keeps the "nothing on
+   * any other product" half of the rule visible rather than merely asserted —
+   * four pages where the session editor's photo block is what it always was,
+   * beside one where it carries the roster's permissions.
+   */
+  asksGamerPhotoConsent: boolean;
   /**
    * Remote products have a voice room; in-person ones have a building. The two
    * are exclusive, and the flag drives both — an in-person page renders **no
@@ -1144,6 +1170,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     startedDaysAgo: 55 * 7,
     endsInDays: null,
     requiresGamerCreations: false,
+    asksGamerPhotoConsent: false,
     isRemote: true,
     // Remote: no building, so no site-notes panel on the page.
     site: null,
@@ -1257,6 +1284,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     // owed and four weeks to go. `owed` below is the same block after the run
     // has ended, and the two are the whole of what the block can look like.
     requiresGamerCreations: true,
+    asksGamerPhotoConsent: false,
     isRemote: false,
     // The site pair is deliberately half-written: the family note is there and
     // the staff note is not, so the partial-fill ghost is reviewable on a real
@@ -1313,6 +1341,16 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
    * and that is a property of previews rather than of Roblox: a scene must not
    * reach a third-party host on load, so no render is resolved. On the live page
    * a verified row's picture arrives from the roster's one batched by-id call.
+   *
+   * **It is also the one product here that asks the photo consent**, and that
+   * costs no scenario of its own: the consent belongs to the Roblox Programme
+   * delivered with Lynx Educate, so a Roblox-topic page is where it genuinely
+   * sits, and it coexists with everything else this page shows. Open any
+   * session's editor and the photo block carries the verbal-ask note over the
+   * roster's permissions — four allowed, two refused, and three (Linnéa, Emil,
+   * and Marja the adult) with no answer on file, which read exactly as the
+   * refusals do. The other four scenarios are the control: their photo block is
+   * untouched.
    */
   roblox: {
     productName: "Roblox Studio Thursday",
@@ -1326,6 +1364,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     startedDaysAgo: 4 * 7,
     endsInDays: null,
     requiresGamerCreations: false,
+    asksGamerPhotoConsent: true,
     isRemote: true,
     site: null,
     materialUrl: "https://drive.sog.gg/roblox-studio-thursday/lesson-plans",
@@ -1376,6 +1415,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     startedDaysAgo: 4 * 7,
     endsInDays: null,
     requiresGamerCreations: false,
+    asksGamerPhotoConsent: false,
     isRemote: true,
     site: null,
     materialUrl: null,
@@ -1457,6 +1497,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     // or the final-session derivation lands on a different day, or on none.
     endsInDays: "last-session",
     requiresGamerCreations: true,
+    asksGamerPhotoConsent: false,
     isRemote: true,
     site: null,
     materialUrl: "https://drive.sog.gg/roblox-programme/autumn",
@@ -1622,6 +1663,9 @@ export function buildGroupWorkspaceFixture(
     site: config.site,
     materialUrl: config.materialUrl,
     memberFlair: config.memberFlair(now),
+    photoConsentRows: config.asksGamerPhotoConsent
+      ? SESSION_FEED_PHOTO_CONSENTS
+      : null,
   };
 }
 
