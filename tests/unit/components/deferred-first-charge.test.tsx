@@ -53,11 +53,10 @@ function clubStarting(startDate: string | null): ProductBrowseRow {
 }
 
 function firstChargeDateFor(product: ProductBrowseRow): string | null {
-  // No consents of either kind, and no seeded account answer: this test is
-  // about the first-charge projection, and both ask sets are different fields
-  // of the same hook.
+  // No consents of any kind: this test is about the first-charge projection,
+  // and the three ask sets are different fields of the same hook.
   const { result } = renderHook(() =>
-    useSignupPanelFields(product, READY, [], [], undefined),
+    useSignupPanelFields(product, READY, [], [], []),
   );
   return result.current.firstChargeDate;
 }

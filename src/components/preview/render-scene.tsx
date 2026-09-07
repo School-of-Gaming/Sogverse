@@ -74,9 +74,10 @@ const SCENE_RENDERERS: Record<
       );
     }
     // Same page again, on a product that asks a parent for something extra —
-    // conditions it must agree to, and a partner's mailing list it may decline.
-    // Like the region-lock trio it shares the surface but not the fixtures: one
-    // club fixture, with the two ask sets as the only things that vary.
+    // conditions it must agree to, a photo permission for their child and a
+    // partner's mailing list, both of which it may decline. Like the region-lock
+    // trio it shares the surface but not the fixtures: one club fixture, with
+    // the three ask sets as the only things that vary.
     if (scenario === REQUIRED_CONSENTS_SCENARIO.slug) {
       return (
         <ProductDetailScene
@@ -84,6 +85,9 @@ const SCENE_RENDERERS: Record<
           requiredConsentSlugs={REQUIRED_CONSENTS_SCENARIO.documentSlugs}
           marketingConsentTypes={
             REQUIRED_CONSENTS_SCENARIO.marketingConsentTypes
+          }
+          gamerPhotoConsentTypes={
+            REQUIRED_CONSENTS_SCENARIO.gamerPhotoConsentTypes
           }
         />
       );

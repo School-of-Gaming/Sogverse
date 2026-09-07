@@ -103,6 +103,7 @@ const validBody = {
   prices: [],
   required_consent_slugs: [],
   marketing_consent_types: [],
+  gamer_photo_consent_types: [],
   primary_gedu_fee_cents: null,
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
@@ -421,6 +422,50 @@ describe("POST /api/admin/products/[id]/update", () => {
     expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
+  it("replaces the photo ask set on every save, empty array included", async () => {
+    // The marketing set's twin: its own writer, its own array, and the same
+    // load-bearing wipe-and-replace on every save.
+    mockAuthenticatedAdmin();
+
+    await POST(
+      updateRequest({
+        data: { ...validBody, gamer_photo_consent_types: ["lynx_educate"] },
+      }),
+      { params },
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "admin_set_product_gamer_photo_consents",
+      { p_product_id: PRODUCT_ID, p_consent_types: ["lynx_educate"] },
+    );
+
+    mockUserRpc.mockClear();
+    await POST(updateRequest({ data: validBody }), { params });
+    expect(mockUserRpc.mock.calls[2]).toEqual([
+      "admin_set_product_gamer_photo_consents",
+      { p_product_id: PRODUCT_ID, p_consent_types: [] },
+    ]);
+  });
+
+  it("returns 400 when the photo field is missing", async () => {
+    mockAuthenticatedAdmin();
+    const { gamer_photo_consent_types: _photo, ...noPhoto } = validBody;
+    const response = await POST(updateRequest({ data: noPhoto }), { params });
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for a photo consent type outside the enum", async () => {
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      updateRequest({
+        data: { ...validBody, gamer_photo_consent_types: ["nonsense"] },
+      }),
+      { params },
+    );
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
   it("warns rather than errors when the marketing write fails", async () => {
     mockAuthenticatedAdmin();
     mockUserRpc.mockImplementation(async (fn: string) =>
@@ -435,6 +480,9 @@ describe("POST /api/admin/products/[id]/update", () => {
     expect(json.product_id).toBe(PRODUCT_ID);
     expect(json.warning).toMatch(/marketing consents were not applied/);
     expect(json.warning).toMatch(/edit page/);
+    // Each post-RPC write contributes its own sentence — they fail
+    // independently and an admin retrying needs to know which set did not land.
+    expect(json.warning).toMatch(/photo consents were not applied/);
   });
 
   it("returns 400 when the region lock field is missing", async () => {
@@ -482,8 +530,8 @@ describe("POST /api/admin/products/[id]/update", () => {
   it("writes the chosen entry after the RPC, and passes no path to it", async () => {
     mockAuthenticatedAdmin();
     const order: string[] = [];
-    // Recorded by name rather than as a bare "rpc": two functions are called
-    // here now, and both of the writes after `update_product` are keyed on the
+    // Recorded by name rather than as a bare "rpc": three functions are called
+    // here now, and every write after `update_product` is keyed on the
     // id it returns — so the ordering claim is about which came first, not just
     // how many there were.
     mockUserRpc.mockImplementation(async (fn: string) => {
@@ -502,6 +550,7 @@ describe("POST /api/admin/products/[id]/update", () => {
     expect(order).toEqual([
       "update_product",
       "admin_set_product_marketing_consents",
+      "admin_set_product_gamer_photo_consents",
       "link",
     ]);
     expect(mockUserUpdate).toHaveBeenCalledWith({ image_id: IMAGE_ID });

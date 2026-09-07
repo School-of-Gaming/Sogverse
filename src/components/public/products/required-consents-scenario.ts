@@ -1,4 +1,4 @@
-import type { MarketingConsentType } from "@/types";
+import type { GamerPhotoConsentType, MarketingConsentType } from "@/types";
 import type { PreviewScenario } from "./mock-detail-fixtures";
 
 /**
@@ -34,6 +34,7 @@ interface RequiredConsentsScenarioMeta {
   baseScenario: PreviewScenario;
   documentSlugs: readonly string[];
   marketingConsentTypes: readonly MarketingConsentType[];
+  gamerPhotoConsentTypes: readonly GamerPhotoConsentType[];
 }
 
 export const REQUIRED_CONSENTS_SCENARIO: RequiredConsentsScenarioMeta = {
@@ -70,4 +71,20 @@ export const REQUIRED_CONSENTS_SCENARIO: RequiredConsentsScenarioMeta = {
    * not two of the same kind.
    */
   marketingConsentTypes: ["lynx_educate"],
+  /**
+   * The photo ask, in the same render again — which is what makes this one
+   * scenario rather than three. The panel now puts two optional questions
+   * between the conditions and the button, and the thing worth judging is
+   * whether they read as two questions a parent may decline rather than as more
+   * of the boxes that hold the button: two identically bordered gates, then two
+   * identically bordered asks whose only marker is an info-toned hint sentence
+   * apiece. Split across scenarios, that comparison happens in somebody's
+   * memory.
+   *
+   * The base scenario is signed in with children, so the selected participant
+   * is a child and the photo row is asked. A parent's own seat — the one state
+   * that withholds it — belongs to a for-parents product, which is a different
+   * fixture and not what this scenario is about.
+   */
+  gamerPhotoConsentTypes: ["lynx_educate"],
 };

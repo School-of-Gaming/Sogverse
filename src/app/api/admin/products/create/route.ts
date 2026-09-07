@@ -53,6 +53,20 @@ function marketingConsentsWarning(err: { message: string }): string {
 }
 
 /**
+ * The same again for the third post-RPC write: the product's gamer photo ask
+ * set. Keyed on the product id the RPC produces, exactly as the marketing set
+ * is, so it is a statement of its own — and a failure leaves the product
+ * created and editable, so it is a sentence on a 200 rather than an error.
+ *
+ * A warning of its own rather than a shared one naming "consents", because the
+ * two sets fail independently and an admin retrying needs to know which box to
+ * look at.
+ */
+function gamerPhotoConsentsWarning(err: { message: string }): string {
+  return `Product created but its photo consents were not applied: ${err.message}. Retry from the edit page.`;
+}
+
+/**
  * POST /api/admin/products/create — plain JSON, validated on the primitive
  * against the same contract schema the calling service builds its body from.
  *
@@ -175,6 +189,22 @@ export const POST = defineRoute({
 
     if (marketingError) {
       warnings.push(marketingConsentsWarning(marketingError));
+    }
+
+    // The photo ask set, on the same terms and immediately after: its own
+    // writer, its own array, unconditionally, and its own warning. Independent
+    // of the call above — a product whose marketing asks landed and whose photo
+    // asks did not should say exactly that.
+    const { error: photoError } = await supabase.rpc(
+      "admin_set_product_gamer_photo_consents",
+      {
+        p_product_id: productId,
+        p_consent_types: body.gamer_photo_consent_types,
+      },
+    );
+
+    if (photoError) {
+      warnings.push(gamerPhotoConsentsWarning(photoError));
     }
 
     // Image-last: the product exists and is editable, so a failure to link its

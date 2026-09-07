@@ -6,7 +6,10 @@ import {
   type SignupPanelViewProps,
   type SignupParticipantChoice,
 } from "@/components/public/products/signup-panel-view";
-import type { MarketingConsentType } from "@/types";
+import type {
+  GamerPhotoConsentType,
+  MarketingConsentType,
+} from "@/types";
 import { ROUTES } from "@/lib/constants";
 
 /**
@@ -110,6 +113,12 @@ function panel(
     marketingConsentTypes: [],
     marketingConsents: new Set<MarketingConsentType>(),
     onMarketingConsentChange: () => {},
+    // No optional photo ask either, and offered as false: the block is absent
+    // both when the product asks nothing and when the seat is the parent's own.
+    gamerPhotoConsentTypes: [],
+    gamerPhotoConsentsOffered: false,
+    gamerPhotoConsents: new Set<GamerPhotoConsentType>(),
+    onGamerPhotoConsentChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",

@@ -431,7 +431,9 @@
           "regionLock": "Region lock",
           "requiredConsents": "Required consents",
           "requiresGamerCreations": "Gamer creations",
-          "visibility": "Visibility"
+          "visibility": "Visibility",
+          "gamerPhotoConsents": "Photo asks",
+          "marketingConsents": "Marketing asks"
         },
         "copyLink": "Copy public link",
         "copied": "Copied"
@@ -476,7 +478,7 @@
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
         "consents": "Consents",
-        "consentsDescription": "What a parent agrees to, and what they are asked, on the way through signup. Required documents must be accepted before a seat can be taken; marketing questions may be declined.",
+        "consentsDescription": "What a parent agrees to, and what they are asked, on the way through signup. Required documents must be accepted before a seat can be taken; the photo question and the marketing question may both be declined.",
         "visibility": "Listing",
         "visibilityDescription": "Decides where this product is advertised, not who may buy it. Sign-ups are opened and closed by the registration date, the seat limit and the product's status — never by this setting."
       },
@@ -608,10 +610,16 @@
         "version": "Version {version}",
         "noVersion": "No published version",
         "none": "None",
+        "gamerPhoto": {
+          "lynxEducate": {
+            "label": "Photos and videos (Lynx Educate)",
+            "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether photos and videos of their child may be taken and used by School of Gaming, Lynx Educate and Roblox. They may decline, and the seat is unaffected. Asked per child, and re-asked on every enrolment."
+          }
+        },
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether to share their contact details with Lynx Educate. They may decline, and the seat is unaffected."
+            "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether to share their email address with Lynx Educate. They may decline, and the seat is unaffected."
           }
         }
       },
@@ -983,6 +991,15 @@
         "preferences": "Preferences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
+        "granted": "Granted",
+        "notGranted": "Not granted",
+        "since": "since {date}"
+      },
+      "photoConsent": {
+        "title": "Photo consent",
+        "labels": {
+          "lynx_educate": "Lynx Educate"
+        },
         "granted": "Granted",
         "notGranted": "Not granted",
         "since": "since {date}"
@@ -1558,6 +1575,10 @@
       "photosEmpty": "Add a photo to this session.",
       "photosDropHint": "You can also drop photos here.",
       "addPhoto": "Add photo",
+      "photoConsentTitle": "Photo permission",
+      "photoConsentNote": "Ask each gamer before taking their photo, even when their parent has consented. A gamer whose parent has not consented must not be in the photo.",
+      "photoConsentAllowed": "Allowed",
+      "photoConsentNotAllowed": "Not allowed",
       "removePhoto": "Remove photo {index}",
       "photosTrimmed": "A report holds up to {cap} photos, so {count, plural, one {only the first one was} other {only the first # were}} added.",
       "photoErrorDecodeFailed": "That file couldn’t be opened. If it came from an iPhone, save it as a JPEG and try again.",
@@ -1979,10 +2000,14 @@
         "heading": "Consent",
         "agree": "I have read and agree to these documents.",
         "bundles": {
-          "robloxProgramme": "I have read and agree to the Creator Academy <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>."
+          "robloxProgramme": "I have read and agree to the Creator Academy <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>, which explain how my and my child's information may be shared between Lynx Educate, School of Gaming and Roblox to deliver the Programme."
+        },
+        "gamerPhoto": {
+          "lynxEducate": "Photos and videos of my child may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming's, Lynx Educate's and Roblox's websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>.",
+          "hint": "Optional — you can change this anytime on your child's page in My SOG."
         },
         "marketing": {
-          "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers.",
+          "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time.",
           "hint": "Optional — you can change this anytime in your settings."
         }
       },
@@ -2866,6 +2891,15 @@
       }
     },
     "gamerDetail": {
+      "photoConsent": {
+        "title": "Photos and videos",
+        "description": "For clubs, camps and events run with Lynx Educate and Roblox.",
+        "sentence": {
+          "lynxEducate": "Photos and videos of {name} may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming’s, Lynx Educate’s and Roblox’s websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>."
+        },
+        "hint": "You are asked this again every time you enrol {name} in one of these; your latest answer is what counts.",
+        "saveFailed": "That answer was not saved. Check your connection and try again."
+      },
       "backToMySog": "Back to My SOG",
       "title": "Gamer settings",
       "subtitle": "Manage settings for {name}",
@@ -2976,10 +3010,15 @@
     "marketing": {
       "title": "Marketing preferences",
       "schoolOfGaming": "School of Gaming may send me news and offers by email.",
-      "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers."
+      "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time."
     },
     "usernameLabel": "Username",
-    "gamerPasswordFromParent": "Your parent can set a new password for you from their My SOG."
+    "gamerPasswordFromParent": "Your parent can set a new password for you from their My SOG.",
+    "photoConsent": {
+      "title": "Photos and videos",
+      "granted": "Your parent has said photos and videos of you may be included in session reports and used by School of Gaming, Lynx Educate and Roblox. A Gedu will still ask you before taking your photo.",
+      "notGranted": "Your parent has said photos and videos of you are not to be used, so a Gedu will keep you out of session photos. Only your parent can change this."
+    }
   },
   "tools": {
     "uncertified": {

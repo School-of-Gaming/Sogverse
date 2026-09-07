@@ -431,7 +431,9 @@
           "regionLock": "Restriction par pays",
           "requiredConsents": "Consentements obligatoires",
           "requiresGamerCreations": "Créations des joueurs",
-          "visibility": "Visibilité"
+          "visibility": "Visibilité",
+          "gamerPhotoConsents": "Questions photo",
+          "marketingConsents": "Questions marketing"
         },
         "copyLink": "Copier le lien public",
         "copied": "Copié"
@@ -476,7 +478,7 @@
         "registration": "Ouverture des inscriptions",
         "registrationDescription": "Choisissez à partir de quand les parents peuvent s’inscrire.",
         "consents": "Consentements",
-        "consentsDescription": "Ce qu’un parent accepte, et ce qui lui est demandé, au moment de l’inscription. Les documents obligatoires doivent être acceptés avant de réserver une place ; les questions marketing peuvent être refusées.",
+        "consentsDescription": "Ce qu’un parent accepte, et ce qui lui est demandé, au moment de l’inscription. Les documents obligatoires doivent être acceptés avant de réserver une place ; la question sur les photos et la question marketing peuvent toutes deux être refusées.",
         "visibility": "Catalogue",
         "visibilityDescription": "Détermine où ce produit est mis en avant, pas qui peut l’acheter. Les inscriptions s’ouvrent et se ferment selon la date d’ouverture, le nombre de places et le statut du produit — jamais selon ce réglage."
       },
@@ -608,10 +610,16 @@
         "version": "Version {version}",
         "noVersion": "Aucune version publiée",
         "none": "Aucun",
+        "gamerPhoto": {
+          "lynxEducate": {
+            "label": "Photos et vidéos (Lynx Educate)",
+            "description": "Cocher cette case ajoute une question facultative à l’inscription à ce produit : il est demandé aux parents si des photos et vidéos de leur enfant peuvent être prises et utilisées par School of Gaming, Lynx Educate et Roblox. Un parent peut refuser, et la place n’est pas affectée. La question est posée pour chaque enfant et reposée à chaque inscription."
+          }
+        },
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "Cocher cette case ajoute une question facultative à l’inscription à ce produit : il est demandé aux parents s’ils souhaitent partager leurs coordonnées avec Lynx Educate. Un parent peut refuser, et la place n’est pas affectée."
+            "description": "Cocher cette case ajoute une question facultative à l’inscription à ce produit : il est demandé aux parents s’ils souhaitent partager leur adresse e-mail avec Lynx Educate. Un parent peut refuser, et la place n’est pas affectée."
           }
         }
       },
@@ -983,6 +991,15 @@
         "preferences": "Préférences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
+        "granted": "Accordé",
+        "notGranted": "Non accordé",
+        "since": "depuis le {date}"
+      },
+      "photoConsent": {
+        "title": "Consentement photo",
+        "labels": {
+          "lynx_educate": "Lynx Educate"
+        },
         "granted": "Accordé",
         "notGranted": "Non accordé",
         "since": "depuis le {date}"
@@ -1558,6 +1575,10 @@
       "photosEmpty": "Ajoutez une photo à cette séance.",
       "photosDropHint": "Vous pouvez aussi déposer des photos ici.",
       "addPhoto": "Ajouter une photo",
+      "photoConsentTitle": "Autorisation photo",
+      "photoConsentNote": "Demandez à chaque gamer avant de le photographier, même lorsque son parent a donné son consentement. Un gamer dont le parent n’a pas donné son consentement ne doit pas figurer sur la photo.",
+      "photoConsentAllowed": "Autorisé",
+      "photoConsentNotAllowed": "Non autorisé",
       "removePhoto": "Supprimer la photo {index}",
       "photosTrimmed": "Un compte rendu accepte {cap} photos au maximum : {count, plural, one {seule la première a été ajoutée} other {seules les # premières ont été ajoutées}}.",
       "photoErrorDecodeFailed": "Ce fichier n’a pas pu être ouvert. S’il vient d’un iPhone, enregistrez-le en JPEG et réessayez.",
@@ -1979,10 +2000,14 @@
         "heading": "Consentement",
         "agree": "J’ai lu et j’accepte ces documents.",
         "bundles": {
-          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> de l’Académie des Créateurs."
+          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> de l’Académie des Créateurs, qui expliquent comment mes informations et celles de mon enfant peuvent être partagées entre Lynx Educate, School of Gaming et Roblox pour mettre en œuvre le programme."
+        },
+        "gamerPhoto": {
+          "lynxEducate": "Les photos et vidéos de mon enfant peuvent figurer dans les comptes rendus de séance, être partagées avec Lynx Educate et Roblox à des fins de rapport d’impact, et être utilisées sur les sites web et les réseaux sociaux de School of Gaming, de Lynx Educate et de Roblox. Les détails figurent dans la <privacy>Politique de confidentialité de l’Académie des Créateurs</privacy>.",
+          "hint": "Facultatif — vous pouvez modifier ce choix à tout moment sur la page de votre enfant dans My SOG."
         },
         "marketing": {
-          "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres.",
+          "lynxEducate": "Partager mon adresse e-mail avec <link>Lynx Educate</link> afin qu’ils puissent m’envoyer des actualités sur les événements à venir et des ressources sur le jeu vidéo. Je peux me désabonner à tout moment.",
           "hint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres."
         }
       },
@@ -2187,6 +2212,15 @@
       }
     },
     "gamerDetail": {
+      "photoConsent": {
+        "title": "Photos et vidéos",
+        "description": "Pour les clubs, camps et événements organisés avec Lynx Educate et Roblox.",
+        "sentence": {
+          "lynxEducate": "Les photos et vidéos où apparaît {name} peuvent figurer dans les comptes rendus de séance, être partagées avec Lynx Educate et Roblox à des fins de rapport d’impact, et être utilisées sur les sites web et les réseaux sociaux de School of Gaming, de Lynx Educate et de Roblox. Les détails figurent dans la <privacy>Politique de confidentialité de l’Académie des Créateurs</privacy>."
+        },
+        "hint": "Nous vous reposons la question à chaque inscription de {name} à l’une de ces activités. Votre dernière réponse est celle qui compte.",
+        "saveFailed": "Cette réponse n’a pas été enregistrée. Vérifiez votre connexion et réessayez."
+      },
       "backToMySog": "Retour à Mon SOG",
       "title": "Paramètres du joueur",
       "subtitle": "Gérer les paramètres de {name}",
@@ -2297,10 +2331,15 @@
     "marketing": {
       "title": "Préférences marketing",
       "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
-      "lynxEducate": "Partager mes coordonnées avec notre partenaire de confiance <link>Lynx Educate</link> afin qu’il puisse m’envoyer des actualités et des offres."
+      "lynxEducate": "Partager mon adresse e-mail avec <link>Lynx Educate</link> afin qu’ils puissent m’envoyer des actualités sur les événements à venir et des ressources sur le jeu vidéo. Je peux me désabonner à tout moment."
     },
     "usernameLabel": "Identifiant",
-    "gamerPasswordFromParent": "Ton parent peut te définir un nouveau mot de passe depuis son Mon SOG."
+    "gamerPasswordFromParent": "Ton parent peut te définir un nouveau mot de passe depuis son Mon SOG.",
+    "photoConsent": {
+      "title": "Photos et vidéos",
+      "granted": "Ton parent a autorisé l’utilisation des photos et vidéos où tu apparais dans les comptes rendus de séance, ainsi que par School of Gaming, Lynx Educate et Roblox. Un Gedu te demandera quand même ton accord avant de te prendre en photo.",
+      "notGranted": "Ton parent n’a pas autorisé l’utilisation des photos et vidéos où tu apparais. Un Gedu te gardera donc en dehors des photos de séance. Seul ton parent peut changer cela."
+    }
   },
   "tools": {
     "uncertified": {

@@ -42,6 +42,15 @@ function marketingConsentsWarning(err: { message: string }): string {
 }
 
 /**
+ * And the same for the product's gamer photo ask set — the third write keyed on
+ * the product rather than being a column on it, with its own warning so an
+ * admin retrying knows which of the two ask sets did not land.
+ */
+function gamerPhotoConsentsWarning(err: { message: string }): string {
+  return `Product saved but its photo consents were not applied: ${err.message}. Retry from the edit page.`;
+}
+
+/**
  * POST /api/admin/products/[id]/update — plain JSON, same shape as the create
  * route and validated on the primitive against the contract schema.
  *
@@ -158,6 +167,21 @@ export const POST = defineRoute({
 
     if (marketingError) {
       warnings.push(marketingConsentsWarning(marketingError));
+    }
+
+    // Wipe-and-replace again, for the other ask set: the array goes through
+    // unconditionally, so an empty one clears the photo asks and a populated
+    // one replaces them. Never `?? undefined`, for the reason above.
+    const { error: photoError } = await supabase.rpc(
+      "admin_set_product_gamer_photo_consents",
+      {
+        p_product_id: productId,
+        p_consent_types: body.gamer_photo_consent_types,
+      },
+    );
+
+    if (photoError) {
+      warnings.push(gamerPhotoConsentsWarning(photoError));
     }
 
     // The picture, in one statement, after the RPC — the same image-last shape

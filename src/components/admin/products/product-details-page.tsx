@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowLeft,
   Calendar,
+  Camera,
   Check,
   Clock,
   Coins,
@@ -13,6 +14,7 @@ import {
   Globe2,
   Landmark,
   Link2,
+  Mail,
   MapPin,
   Pencil,
   Shapes,
@@ -43,6 +45,8 @@ import {
   consentDocumentMeta,
   describeRequiredConsents,
 } from "@/lib/constants/consent-documents";
+import { describeMarketingConsents } from "@/lib/constants/marketing-consents";
+import { describeGamerPhotoConsents } from "@/lib/constants/gamer-photo-consents";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
@@ -324,6 +328,9 @@ function OperationalFacts({
   // checkboxes with, so the admin reading this row and the parent ticking the
   // box are looking at one name for one document.
   const tConsent = useTranslations("consentDocuments.names");
+  // The admin-facing names of the two optional asks — the same labels the form's
+  // rows carry, so the details page and the edit form call one thing one thing.
+  const tAsks = useTranslations("admin.products.consents");
   const tConsentBundle = useTranslations("consentDocuments.bundles");
   // The clock the zone label's offset is read at — request-stable, so the
   // server and the first client render agree across a DST transition.
@@ -529,6 +536,54 @@ function OperationalFacts({
                   </li>
                 );
               })}
+            </ul>
+          )}
+        </Fact>
+
+        {/* The two optional asks, in the order the signup panel asks them and
+            directly under the conditions they sit beside on that panel.
+
+            **Always rendered, both of them, and that is the rule rather than a
+            preference**: an admin must be able to read every stored property of
+            a product off this page, because the edit form is a write surface
+            and opening it to answer "is this asked?" costs a form that can be
+            accidentally submitted. "None" is the ordinary answer on nearly every
+            product, and it is a different answer from a row that is not here.
+
+            A stored type this deploy cannot name is dropped rather than shown
+            raw — the opposite of what the required run above does with an
+            unknown slug, and the same asymmetry the family-facing describe
+            helpers make. A required document that vanished from the app is a
+            legal condition nobody can see; an ask that vanished simply goes
+            unasked, and a bare enum value would say less than the count does. */}
+        <Fact icon={Camera} label={t("detailsPage.fields.gamerPhotoConsents")}>
+          {product.product_gamer_photo_consents.length === 0 ? (
+            <span className="text-muted-foreground">{t("consents.none")}</span>
+          ) : (
+            <ul>
+              {describeGamerPhotoConsents(
+                product.product_gamer_photo_consents.map((c) => c.consent_type),
+              ).map((row) => (
+                <li key={row.type}>
+                  {tAsks(`gamerPhoto.${row.ask.sentenceKey}.label`)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Fact>
+
+        <Fact icon={Mail} label={t("detailsPage.fields.marketingConsents")}>
+          {product.product_marketing_consents.length === 0 ? (
+            <span className="text-muted-foreground">{t("consents.none")}</span>
+          ) : (
+            <ul>
+              {describeMarketingConsents(
+                product.product_marketing_consents.map((c) => c.consent_type),
+              ).map((row) => (
+                <li key={row.type}>
+                  {tAsks(`marketing.${row.ask.sentenceKey}.label`)}
+                </li>
+              ))}
             </ul>
           )}
         </Fact>

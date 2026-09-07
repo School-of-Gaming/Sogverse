@@ -431,7 +431,9 @@
           "regionLock": "Landsbegränsning",
           "requiredConsents": "Obligatoriska samtycken",
           "requiresGamerCreations": "Spelarnas skapelser",
-          "visibility": "Synlighet"
+          "visibility": "Synlighet",
+          "gamerPhotoConsents": "Fotofrågor",
+          "marketingConsents": "Marknadsföringsfrågor"
         },
         "copyLink": "Kopiera den publika länken",
         "copied": "Kopierad"
@@ -476,7 +478,7 @@
         "registration": "Registreringstid",
         "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
         "consents": "Samtycken",
-        "consentsDescription": "Vad en förälder godkänner, och vad hen tillfrågas om, på vägen genom anmälan. Obligatoriska dokument måste godkännas innan en plats kan tas, medan marknadsföringsfrågor kan avböjas.",
+        "consentsDescription": "Vad en förälder godkänner, och vad hen tillfrågas om, på vägen genom anmälan. Obligatoriska dokument måste godkännas innan en plats kan tas; både fotofrågan och marknadsföringsfrågan kan avböjas.",
         "visibility": "Listning",
         "visibilityDescription": "Avgör var produkten visas, inte vem som får köpa den. Anmälningar öppnas och stängs av anmälningsdatumet, platsgränsen och produktens status — aldrig av den här inställningen."
       },
@@ -608,10 +610,16 @@
         "version": "Version {version}",
         "noVersion": "Ingen publicerad version",
         "none": "Inga",
+        "gamerPhoto": {
+          "lynxEducate": {
+            "label": "Foton och videor (Lynx Educate)",
+            "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om foton och videor på deras barn får tas och användas av School of Gaming, Lynx Educate och Roblox. En förälder kan tacka nej, och platsen påverkas inte. Frågan ställs per barn och ställs på nytt vid varje anmälan."
+          }
+        },
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om de vill dela sina kontaktuppgifter med Lynx Educate. En förälder kan tacka nej, och platsen påverkas inte."
+            "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om de vill dela sin e-postadress med Lynx Educate. En förälder kan tacka nej, och platsen påverkas inte."
           }
         }
       },
@@ -983,6 +991,15 @@
         "preferences": "Inställningar",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
+        "granted": "Godkänt",
+        "notGranted": "Inte godkänt",
+        "since": "sedan {date}"
+      },
+      "photoConsent": {
+        "title": "Fotosamtycke",
+        "labels": {
+          "lynx_educate": "Lynx Educate"
+        },
         "granted": "Godkänt",
         "notGranted": "Inte godkänt",
         "since": "sedan {date}"
@@ -1558,6 +1575,10 @@
       "photosEmpty": "Lägg till en bild för det här tillfället.",
       "photosDropHint": "Du kan också släppa bilder här.",
       "addPhoto": "Lägg till bild",
+      "photoConsentTitle": "Fototillstånd",
+      "photoConsentNote": "Fråga varje gamer innan du tar bilden, även när föräldern har gett sitt samtycke. En gamer vars förälder inte har gett sitt samtycke får inte vara med på bilden.",
+      "photoConsentAllowed": "Tillåtet",
+      "photoConsentNotAllowed": "Inte tillåtet",
       "removePhoto": "Ta bort bild {index}",
       "photosTrimmed": "En rapport rymmer högst {cap} bilder, så {count, plural, one {bara den första lades till} other {bara de # första lades till}}.",
       "photoErrorDecodeFailed": "Filen gick inte att öppna. Om den kommer från en iPhone, spara den som JPEG och försök igen.",
@@ -1979,10 +2000,14 @@
         "heading": "Samtycke",
         "agree": "Jag har läst och godkänner dessa dokument.",
         "bundles": {
-          "robloxProgramme": "Jag har läst och godkänner Skaparnas akademis <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>."
+          "robloxProgramme": "Jag har läst och godkänner Skaparnas akademis <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>, som förklarar hur mina och mitt barns uppgifter kan delas mellan Lynx Educate, School of Gaming och Roblox för att genomföra programmet."
+        },
+        "gamerPhoto": {
+          "lynxEducate": "Foton och videor på mitt barn får tas med i sessionsrapporter, delas med Lynx Educate och Roblox för effektrapportering och användas på School of Gamings, Lynx Educates och Roblox webbplatser och sociala medier. Detaljerna finns i <privacy>Skaparnas akademis integritetspolicy</privacy>.",
+          "hint": "Valfritt — du kan ändra detta när som helst på ditt barns sida i My SOG."
         },
         "marketing": {
-          "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden.",
+          "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst.",
           "hint": "Valfritt — du kan ändra detta när som helst i dina inställningar."
         }
       },
@@ -2187,6 +2212,15 @@
       }
     },
     "gamerDetail": {
+      "photoConsent": {
+        "title": "Foton och videor",
+        "description": "Gäller klubbar, läger och evenemang som drivs tillsammans med Lynx Educate och Roblox.",
+        "sentence": {
+          "lynxEducate": "Foton och videor där {name} syns får användas i rapporter från tillfällena, delas med Lynx Educate och Roblox för effektrapportering och användas på School of Gamings, Lynx Educates och Roblox webbplatser och sociala medier. Detaljerna finns i <privacy>Skaparnas akademis integritetspolicy</privacy>."
+        },
+        "hint": "Vi frågar det här igen varje gång {name} anmäls till något av dem; ditt senaste svar är det som gäller.",
+        "saveFailed": "Svaret sparades inte. Kontrollera anslutningen och försök igen."
+      },
       "backToMySog": "Tillbaka till Min SOG",
       "title": "Spelarinställningar",
       "subtitle": "Hantera inställningar för {name}",
@@ -2297,10 +2331,15 @@
     "marketing": {
       "title": "Marknadsföringsinställningar",
       "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
-      "lynxEducate": "Dela mina kontaktuppgifter med vår betrodda partner <link>Lynx Educate</link> så att de kan skicka mig nyheter och erbjudanden."
+      "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst."
     },
     "usernameLabel": "Användarnamn",
-    "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från sin Min SOG."
+    "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från sin Min SOG.",
+    "photoConsent": {
+      "title": "Foton och videor",
+      "granted": "Din förälder har sagt att foton och videor på dig får användas i rapporter från tillfällena och av School of Gaming, Lynx Educate och Roblox. En Gedu frågar dig ändå innan de tar ett foto på dig.",
+      "notGranted": "Din förälder har sagt att foton och videor på dig inte får användas, så en Gedu håller dig utanför tillfällenas foton. Bara din förälder kan ändra det här."
+    }
   },
   "tools": {
     "uncertified": {

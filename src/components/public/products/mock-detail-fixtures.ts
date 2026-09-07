@@ -1408,6 +1408,8 @@ function buildBaseProduct(
     // scenario hands its own set to the panel rather than writing one onto a
     // fixture, because the panel is the only thing on this page that reads it.
     product_marketing_consents: [],
+    // And the third ask set, empty and supplied the same way again.
+    product_gamer_photo_consents: [],
   };
 }
 

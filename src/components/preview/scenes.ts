@@ -276,7 +276,7 @@ export const PREVIEW_SCENES = [
         slug: "roblox",
         label: "Roblox topic — the other game identity",
         description:
-          "The Roblox identity on the roster, which one product's topic cannot show twice.",
+          "The Roblox identity on the roster, and the one product here that asks the photo consent — open an editor for the block.",
       },
       {
         slug: "no-platform",
