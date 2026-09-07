@@ -1,8 +1,3 @@
-// @vitest-environment node
-//
-// Node environment: this exercises a route handler and nothing else. See the
-// sibling create test.
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/admin/products/[id]/update/route";

@@ -1,3 +1,8 @@
+// @vitest-environment jsdom
+//
+// jsdom because these tests swap out `document.cookie`'s accessor and read
+// back what the helpers wrote through it.
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { deleteCookie, setCookie } from "@/lib/cookies";
 

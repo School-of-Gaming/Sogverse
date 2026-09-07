@@ -13,6 +13,13 @@ import type {
   SessionRecordDraft,
 } from "@/components/gedu/session-feed/types";
 
+// The note fields are opaque here: nothing below opens one, types into one,
+// or asserts on the markdown one produces. Stubbing the editor keeps
+// ProseMirror and its markdown parser out of this file's module graph.
+vi.mock("@/components/ui/rich-text-editor", () =>
+  import("../../mocks/rich-text-editor"),
+);
+
 /**
  * ============================================================================
  * Who a past session's register is FOR, and — the part with teeth — what a save
