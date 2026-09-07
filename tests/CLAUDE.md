@@ -44,31 +44,21 @@ one line: **write `.ts` unless the test renders, and it gets node.**
 Both projects load `tests/setup.ts`, so the router mock, the browser Supabase mock and
 the inert `ResizeObserver` are there either way.
 
-**The node project runs un-isolated, so a test may not rely on being handed fresh module
-state.** Files in it share a worker realm: a module imported by two files is evaluated
-once, and a global one file stubs is still stubbed for the next. In practice this costs
-nothing, because a test that stubs something should be restoring it in its own teardown
-anyway — env through `vi.stubEnv` with `vi.unstubAllEnvs()` on the way out, never a bare
-assignment to `process.env` — but it means the fix for a file that breaks under it is
-that file cleaning up after itself, never loosening what it asserts. Prove
-order-independence by running the project shuffled
-(`npx vitest run --project node --sequence.shuffle`) rather than by reasoning about it.
-
-**The sharp edge is a mock that quietly does not apply.** `vi.mock` registrations are
-per file, so one file's doubles are never served to another's imports directly — but a
-shared module keeps whatever mocks were live when it was *first* evaluated. If file A
-imports a service while mocking the translator underneath it, and file B later imports
-the same service while mocking that translator differently, B gets A's already-built
-instance and B's mock never reaches it. The symptom is not a failure: B's assertions run
-against A's doubles and pass for the wrong reason. A file whose own mock has to reach a
-module some other file may already have loaded calls `vi.resetModules()` before its
-imports settle, so the module is rebuilt with this file's mocks in place.
-
-**Both projects draw from one worker pool, and that is load-bearing.** Vitest sizes a
-pool per pool *type* and runs projects concurrently, so giving the two projects different
-pools puts two full-sized pools on the machine at once — on a 4-vCPU runner that
-doubled the summed collect and test time and, with coverage on, timed out a component
-test that passes on its own. Keep them on the same pool.
+**Both projects run isolated, on forks, on one pool — each of those is load-bearing.**
+Isolated because un-isolated measured no faster once there is no jsdom realm to rebuild
+per file (that is what it saves; the imports are re-run either way), and it would let a
+shared module keep whatever mocks were live when an earlier file first loaded it, so a
+later file's own mock could quietly fail to apply. Forks because suites that pin a
+timezone assign `process.env.TZ` at runtime, which a child process honours and a worker
+thread ignores — the failure shows only on a UTC runner, and a developer's box already
+in Helsinki never sees it, so a green local run under threads proves nothing. One pool
+because Vitest sizes a pool per pool *type* and runs projects concurrently: two pool
+types put two full-sized pools on the machine at once, which on a 4-vCPU runner doubled
+the summed collect and test time and, with coverage on, timed out a component test that
+passes on its own. A test that stubs env still hands it back (`vi.stubEnv` with
+`vi.unstubAllEnvs()` in teardown, never a bare `process.env` assignment) — isolation
+makes that hygiene rather than a load-bearing rule, and hygiene is cheaper to keep than
+to restore.
 
 ## The rich-text editor stub
 
