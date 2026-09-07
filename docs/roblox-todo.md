@@ -23,10 +23,9 @@ since some may have been answered inside the review itself.
 
 **Outstanding with Lynx when the pause began:**
 
-- The in-person section's two wording choices, and the vetting-scope question. Our reply
-  was drafted and held: Lynx asked a SOG colleague for her view first.
-- The photography wording, and whether a written release covers projects shown at the
-  closing event.
+- The in-person section's two wording choices. Re-asked on 2026-09-07; Lynx asked to see
+  the clause, which was sent the same day. (The vetting-scope question, the photography
+  wording and the closing-event release were all answered on 2026-09-07 — see the items.)
 - The media consent structure. Lynx prefers one combined box "if it's compliant (the lawyer
   will tell us)" — so the direction is chosen and the answer is not. **Kyle decided on
   2026-09-07 to build the one box anyway** and record the unanswered question; see the
@@ -43,8 +42,9 @@ work. Pick these up on resume:
   routinely taking photographs for internal records and safety, which in their account
   consent does not gate; the owner's 2026-09-07 decision is the opposite — a gamer without
   consent stays out of session photographs *entirely* — and all three documents now say
-  so. If Lynx's "internal records" photography is real and unavoidable, the documents are
-  wrong again and the difference has to be settled with them before publication.
+  so. **Answered 2026-09-07 by Lynx (Joyce): no such photography is needed**, so the
+  documents stand — with one request, recorded under *Open decisions*: a line allowing
+  non-identifying wide shots of an event taken from a distance.
 
 ---
 
@@ -145,9 +145,10 @@ banner until its copy is signed off.
       missing (was `xyz` in the draft). **The responsibility split is settled; only two
       wording choices are open, and the section is publishable whichever way they go.**
 
-      **Escalated 2026-08-11 — Lynx × SOG Slack, awaiting Lynx.** Our reply is drafted
-      and deliberately held (see the two wording choices below): Lynx asked a SOG
-      colleague for her view first. No response as of 2026-08-12.
+      **Escalated 2026-08-11 — Lynx × SOG Slack, awaiting Lynx.** Re-asked on 2026-09-07
+      in a batch of five questions to Joyce; she asked which document the clause sits in
+      and for its wording, and the full draft below plus the backstop sentence went back
+      the same day. Awaiting her confirmation of both.
 
       *Why nothing existing filled it:* every control in the "During online sessions"
       section (Sogverse accounts, no child-to-child DMs, no outside invites, sessions not
@@ -198,69 +199,13 @@ banner until its copy is signed off.
       Gaming's broader safeguarding responsibilities for the Programme, including
       in-person events". With this section that overpromises — it covers who *holds*
       those responsibilities. Trim it in the same pass.
-- [ ] **Whose vetting does the Safeguarding Policy actually describe?** Surfaced while
-      resolving the vetting list. "Who this covers" says the policy applies to "all Lynx
-      Educate and School of Gaming staff, facilitators …, volunteers, and any contractor",
-      but the section directly beneath it describes **only SOG's** process, and the
-      resolved copy is explicitly scoped to SOG's Gedus. If Lynx staff supervise the
-      French in-person events, either Lynx's equivalent vetting belongs alongside it or
-      the heading needs to say it is SOG-specific.
-
-      **Escalated 2026-08-11 — Lynx × SOG Slack, awaiting Lynx.** Rides on the same held
-      reply as the in-person section above; it has not been put to Lynx separately, and
-      should go in the same message when that thread unblocks.
-- [ ] **/roblox landing page copy.** Open work like everything else here, not a wait —
-      no signoff was ever separately requested for it. Signoff is the **final gate on the
-      whole surface**, taken once with the rest of the list (see the publish-flip note at
-      the top), so the landing page gets researched, proposed and resolved on the same
-      terms as every other item, and joins the same pass. Nothing about it is blocked on
-      anyone today.
-
-      *Reviewed 2026-08-12.* The copy is written and complete — this was a review, not a
-      drafting job, and every factual claim on the page has now been checked against the
-      Terms and the Privacy Policy. Three findings. Two have since been overtaken by
-      Lynx's signed-off FAQ and Roblox's own phrasing requirement (2026-08-24 to
-      2026-08-30): the page now says 13–17 and "in collaboration with Roblox", and the
-      contradiction moved into the legal documents, which Kyle settled at 13–17 on
-      2026-09-07 and is applied. The third, the unconditional publishing promise, is
-      applied too.
-      Verified correct and left alone: "free", "in France", the online/in-person split,
-      and the parent sessions.
-
-      **Escalated 2026-08-12 — Lynx × SOG Slack, awaiting Lynx.** One claim could not be
-      settled here: `why.recognised` sells showcasing at the closing event as a benefit,
-      but the Privacy Policy says the registration media boxes cover "photographs and
-      footage only" and that participant-created content needs a **separate written
-      release**. So the page markets something registration does not consent to. Asked
-      whether a release is collected at the event, and whether the checkbox set should
-      cover participant-created content — raised while their lawyer still has the wording,
-      since adding a consent later means re-review. **This item closes when that answer
-      lands and `why.recognised` is either confirmed or softened.**
-
 ## Copy that needs correcting
 
 Wording in the published documents that is wrong or self-contradictory. Now that Sogverse
 owns the copy, most of this is ours to fix outright; what is left here is the exception,
 where the fix would change what we commit to rather than how it reads.
 
-- [ ] **"Sessions are not recorded" wording mismatch.** The Safeguarding Policy says it
-      flatly (`robloxSafeguarding.sections.online.blocks.0.3`); the Privacy Policy says
-      "*Routine* online sessions are not recorded" in three places and contemplates
-      announced photography/filming at selected sessions and events. The two cannot both
-      be read as written.
-
-      *The directions are not equivalent.* Qualifying the safeguarding line to "Routine
-      sessions are not recorded" makes it accurate and matches the Privacy Policy — but it
-      is a **weakening of a safety promise**, and the safeguarding policy is where a parent
-      goes looking for the strong version. Tightening the Privacy Policy the other way
-      would mean committing that nothing is ever recorded, which the announced-filming
-      provision contradicts.
-
-      **Escalated 2026-08-12 — Lynx × SOG Slack, awaiting Lynx.** This one changes what
-      the documents commit us to rather than how a sentence reads, so it is Lynx's call
-      under the rule at the top, not ours. Asked which is the real commitment: routine
-      sessions only, or no recording at all. Whichever comes back, the other document is
-      the one that gets edited.
+Nothing open here right now.
 
 ## Features the policies promise that the app does not have
 
@@ -623,6 +568,23 @@ lawyer is not reviewing sections that are about to be restructured.
       photo a Gedu appears in, on Lynx Educate's or Roblox's website. Neither privacy
       policy mentions Gedu images in either direction. If the answer is that it does not,
       the fix is a clause in the Gedu contract, not a line in the parent-facing policies.
+- [ ] **Non-identifying wide shots of an event.** Lynx's request, 2026-09-07 (Joyce):
+      having confirmed that no internal-records photography is needed, she asked for a
+      line saying non-identifying photos of an event or workshop may be taken from a
+      distance, the key being that nobody is identifiable in them. This is a carve-out
+      from the promise all three documents now make — a child without the consent is
+      "kept out of session photographs and footage entirely" — so it is **Kyle's call**
+      whether to make it. The sentence proposed to Lynx the same day, to be placed
+      directly after that promise in each of `robloxPrivacy.sections.mediaChoice.blocks.3`,
+      `robloxPrivacy.sections.mediaChildAgrees.blocks.1`,
+      `robloxSafeguarding.sections.data.blocks.0` and `robloxTerms.sections.media.blocks.0`:
+
+      > Wide shots of an event or workshop may be taken from a distance, where no child
+      > is identifiable.
+
+      It passes the mechanism test as far as a photograph can — a parent can look at the
+      picture and check the claim — and Lynx's confirmation of the wording is still
+      outstanding.
 - [ ] **Free products, the FREE price, and the waitlist.** Kyle's flag, 2026-08-30.
       Looked into on 2026-09-07, and the machinery is not the gap. The admin product
       form shows the waitlist tick for any capped product of any type, and switching a
@@ -643,4 +605,57 @@ lawyer is not reviewing sections that are about to be restructured.
 ## Resolved — ready to apply
 
 Decided, with the exact change written out but not yet applied; entries land together in
-one pass, and each is deleted once its change is in. Empty since the 2026-09-07 pass.
+one pass, and each is deleted once its change is in.
+
+### Safeguarding Policy — the vetting section is School of Gaming's
+
+Decided 2026-09-07 by Lynx (Joyce): "just SOG". "Who this covers" names Lynx Educate's
+staff as well as ours, and the vetting section beneath it describes only School of
+Gaming's process for its Game Educators; the fix is to say so in the heading rather than
+to describe a Lynx process that does not apply.
+
+**Final English copy** — `robloxSafeguarding.sections.vetting.heading`:
+
+> Before a Game Educator works with children
+
+The lead-in paragraph and the five bullets already say whose process it is and are
+unchanged.
+
+**To apply:**
+
+1. Change the heading in `en`, `fi`, `sv` and `fr` (`tlh` omits the namespace). Keep it
+   sentence case.
+2. Delete this entry.
+
+### Privacy Policy — sessions are not recorded, not only routine ones
+
+Decided 2026-09-07 by Lynx (Joyce): "not recorded". The Safeguarding Policy already says
+it flatly, so the Privacy Policy is the document that gets edited, in the three places
+that said "routine". The announced-photography sentence survives, narrowed to events:
+filming at an in-person event with the media consent is a different thing from recording
+a session, and the sentence no longer suggests a "selected session" might be filmed.
+
+**Final English copy:**
+
+> `robloxPrivacy.intro.blocks.6`
+>
+> Online sessions are not recorded. A child will not be photographed or filmed where the
+> required permission has not been given or where the child does not want to take part.
+
+> `robloxPrivacy.sections.media.blocks.0`
+>
+> Online sessions are not recorded. Where photography or filming is planned for an event,
+> families will be told in advance.
+
+> `robloxPrivacy.sections.childSafety.blocks.1.5`
+>
+> Sessions are not recorded.
+
+**To apply:**
+
+1. Change the three strings in `en`, `fi`, `sv` and `fr` (`tlh` omits the namespace):
+   drop the "routine" qualifier from each, and in the media block replace "a selected
+   session or event" with "an event" in each locale's phrasing.
+2. `robloxSafeguarding.sections.online.blocks.0.3` ("Sessions are not recorded.") is
+   already right and is not touched.
+3. Delete this entry.
