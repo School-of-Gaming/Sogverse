@@ -142,8 +142,7 @@ export const CREATOR_ACADEMY_SCENARIO: RequiredConsentsScenarioMeta = {
   slug: "creator-academy",
   /** Link text on the admin UI Previews page. Developer-facing English. */
   label: "Creator Academy — free, France-locked",
-  description:
-    "The product the Lynx consent ships on: no price, a lock, and all three asks in one render.",
+  description: "The product the Lynx consent ships on.",
   /** Free, capped and open — the billing shape the real products have. */
   baseScenario: "consumer-club-free",
   documentSlugs: ["roblox-programme-terms", "roblox-privacy-policy"],

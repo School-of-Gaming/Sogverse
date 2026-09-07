@@ -80,6 +80,45 @@ describe("a border with no colour", () => {
   it("passes a bare `outline` that is a variant name rather than a class", () => {
     expect(violations('const v = { variant: "outline" };', noAbsentBorderColour)).toBe(0);
   });
+
+  it("reports a sided width, which the optional side group used to read as a colour", () => {
+    // The escape this pair pins: `(?:-(?:t|r|b|…))?` backtracks to empty, so
+    // `border-t` parsed as an unsided border coloured by a token called `t` —
+    // and the whole sided family walked past a ban that reads as holding.
+    expect(
+      violations(
+        'const a = <div className="border-t p-3" />;',
+        noAbsentBorderColour,
+      ),
+    ).toBeGreaterThan(0);
+  });
+
+  it("reports a sided width carrying a thickness", () => {
+    expect(
+      violations(
+        'const a = <div className="border-t-2" />;',
+        noAbsentBorderColour,
+      ),
+    ).toBeGreaterThan(0);
+  });
+
+  it("passes a sided width whose edge is named", () => {
+    expect(
+      violations(
+        'const a = <div className="border-t border-border" />;',
+        noAbsentBorderColour,
+      ),
+    ).toBe(0);
+  });
+
+  it("passes a sided thickness beside a sided colour", () => {
+    expect(
+      violations(
+        'const a = <div className="border-t-2 border-t-act" />;',
+        noAbsentBorderColour,
+      ),
+    ).toBe(0);
+  });
 });
 
 describe("a class naming a token the theme does not define", () => {
@@ -120,6 +159,58 @@ describe("a class naming a token the theme does not define", () => {
     expect(
       violations(
         "const style = `border-radius: 8px; text-align: center;`;",
+        noUnregisteredColourToken,
+      ),
+    ).toBe(0);
+  });
+
+  it("reports the retired token inside a class-assembling call as well as an attribute", () => {
+    // The two scopes the ban reads, pinned together: narrowing it off every
+    // `Literal` is what stops a bare CSS property name being reported, and the
+    // narrowing is only safe if both places a class list actually lives are
+    // still covered.
+    expect(
+      violations('const a = cn("text-primary", x);', noUnregisteredColourToken),
+    ).toBeGreaterThan(0);
+    expect(
+      violations(
+        'const a = <span className="text-primary" />;',
+        noUnregisteredColourToken,
+      ),
+    ).toBeGreaterThan(0);
+  });
+
+  it("passes a bare CSS property name, which is not a class list at all", () => {
+    expect(
+      violations('const s = "text-transform";', noUnregisteredColourToken),
+    ).toBe(0);
+  });
+
+  it("passes the utilities a prefix owns beyond its colours", () => {
+    // The over-firing half: these are legitimate Tailwind 4 utilities that this
+    // tree simply had not written yet, and a keyword list drawn from the tree
+    // reported every one of them as a token the theme does not define.
+    expect(
+      violations(
+        'const a = <div className="bg-gradient-to-r bg-linear-to-r bg-clip-text border-spacing-2 text-shadow-sm" />;',
+        noUnregisteredColourToken,
+      ),
+    ).toBe(0);
+  });
+
+  it("reports a gradient stop naming the retired token", () => {
+    expect(
+      violations(
+        'const a = <div className="from-primary" />;',
+        noUnregisteredColourToken,
+      ),
+    ).toBeGreaterThan(0);
+  });
+
+  it("passes gradient stops that name real tokens, and does not read `bg-gradient-to-r` as one", () => {
+    expect(
+      violations(
+        'const a = <div className="bg-gradient-to-r from-act to-transparent" />;',
         noUnregisteredColourToken,
       ),
     ).toBe(0);

@@ -117,10 +117,14 @@ export function GamerPhotoConsentCard({
               // write is independent — the RPC is keyed by (gamer, consent
               // type), so two in flight cannot collide.
               disabled={committing === consentType}
-              // The spinner rides the trailing slot precisely because it
-              // arrives after first paint: the slack lives at the end of the
-              // title's line, so it grows leftward and neither the tick, the
-              // title nor the sentence beneath moves while the write is out.
+              // The spinner rides the trailing slot, where the slack at the end
+              // of the title's line lets it grow leftward instead of pushing the
+              // tick or the sentence beneath it around. What it can still do is
+              // narrow the title column: a long `fr` title with a long child
+              // name at 360px may take one more line while the write is out.
+              // That is permitted — it is the direct response to the click the
+              // parent just made, which is exactly the shift the layout rule
+              // allows; what it forbids is a reflow on data's own schedule.
               trailing={
                 committing === consentType ? (
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />

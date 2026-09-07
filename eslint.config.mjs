@@ -183,10 +183,22 @@ const TEXT_SIZE_TOKENS = themeNamespace("text");
  * Tailwind overloads these prefixes hard — `bg-cover` is a size, `text-center`
  * is an alignment, `border-dashed` is a style, `divide-y` is a width — so a ban
  * on "a token the theme does not define" has to know every other thing the
- * prefix means or it reports on half the app. Enumerated from Tailwind's utility
- * reference and then confirmed against what this tree actually writes; the
- * confirmation is the half that matters, because an over-tight list here is a
- * rule nobody can keep and an over-loose one is a rule that catches nothing.
+ * prefix means or it reports on half the app. **Each list covers its prefix's
+ * utilities as Tailwind 4 defines them, not the subset this tree happens to
+ * write today.** That distinction is the correction this list has already
+ * needed once: a list drawn from the tree bans every legitimate utility nobody
+ * has needed yet, so the first person to write `bg-clip-text` or
+ * `text-shadow-sm` meets a lint error about a token the theme does not define
+ * — which is true of the *colour* namespace and irrelevant to the utility they
+ * wrote.
+ *
+ * **An entry heads a namespace rather than naming one class.** `clip` covers
+ * `bg-clip-border` through `bg-clip-text`, `gradient` covers every
+ * `bg-gradient-to-*`, `spacing` covers `border-spacing-2` and its axes: the
+ * word is followed by an optional `-<rest>`, because enumerating each
+ * namespace member by hand is the frozen list this comment already argues
+ * against. The colour tokens read off the theme are matched exactly, so
+ * nothing here loosens what the ban is actually for.
  *
  * `hover` appears under `bg` alone, and deliberately: the hover layer lives in
  * the *background-image* namespace rather than the colour one, so `bg-hover` is
@@ -213,17 +225,24 @@ const SIDED = {
 
 const EXTRA_KEYWORDS = {
   bg: [
-    "hover", "fixed", "local", "scroll", "cover", "contain", "auto",
-    "center", "top", "bottom", "left", "right",
-    "repeat", "repeat-x", "repeat-y", "no-repeat", "repeat-round", "repeat-space",
+    // background-attachment, -size, -position, -repeat, -origin, -clip,
+    // -blend-mode and the whole background-image namespace, plus our own layer.
+    "hover",
+    "fixed", "local", "scroll",
+    "cover", "contain", "auto", "size",
+    "center", "top", "bottom", "left", "right", "position",
+    "repeat", "no-repeat",
+    "origin", "clip", "blend",
+    "gradient", "linear", "radial", "conic",
   ],
   text: [
     ...TEXT_SIZE_TOKENS,
     "xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl", "7xl", "8xl", "9xl",
     "left", "center", "right", "justify", "start", "end",
     "wrap", "nowrap", "balance", "pretty", "ellipsis", "clip",
+    "shadow", "decoration",
   ],
-  border: [...LINE_STYLES, "collapse", "separate", "box"],
+  border: [...LINE_STYLES, "collapse", "separate", "box", "spacing"],
   divide: [...LINE_STYLES, "reverse", "x-reverse", "y-reverse"],
   ring: ["inset"],
   outline: [...LINE_STYLES, "hidden"],
@@ -233,6 +252,19 @@ const EXTRA_KEYWORDS = {
   placeholder: [],
   caret: [],
   accent: [],
+  // The gradient stops. Their non-colour forms are a stop position
+  // (`from-10%`) and an arbitrary value (`from-[…]`), and neither is reachable
+  // by the token regex below — it requires a token starting with a letter, and
+  // the lookbehind already refuses anything after a `[`. So there is no keyword
+  // to list, and the empty list is here to say that rather than to hold
+  // anything. A stop is otherwise a colour and nothing else, which is why these
+  // three belong in the ban at all: `from-primary` names the retired token
+  // exactly as `text-primary` does, and Tailwind drops it just as silently.
+  // `bg-gradient-to-r` does not trip the `to` entry, because the lookbehind
+  // refuses a `to-` that follows a hyphen.
+  from: [],
+  via: [],
+  to: [],
 };
 
 /**
@@ -266,12 +298,44 @@ const EXTRA_KEYWORDS = {
 const unregisteredTokenMessage = (prefix) =>
   `\`${prefix}-…\` names a token the theme does not define, and Tailwind 4 emits nothing for it — no error, no warning, the class is simply dropped and the element inherits. Every colour comes from @sog/ui's theme (act, world, destructive, success, info, warning, the Yty families, the picks, and the neutrals background/card/lifted/border/foreground/muted-foreground). \`primary\` is the retired name of \`act\`. See packages/sog-ui/src/tokens/theme.css.`;
 
+/**
+ * **The two places a Tailwind class string is written, and the only two the
+ * token ban reads.**
+ *
+ * The ban used to judge every `Literal` in the file, and a bare CSS property
+ * name is indistinguishable from a class at that distance: `"text-transform"`,
+ * `"border-top"` and `"text-align"` are property names in a style helper, a
+ * canvas call or an email builder, and every one of them was reported as a
+ * class naming a token the theme does not define. The trailing `:` guard in the
+ * pattern catches the *declaration* (`text-align: center`) and nothing catches
+ * the property on its own.
+ *
+ * So the ban is scoped to where a class list can actually live: a `className` /
+ * `class` / `*ClassName` JSX attribute, and the argument list of the four
+ * helpers that assemble one. Both are descendant scopes rather than child ones,
+ * because a class string reaches either through an expression container, an
+ * object of variants or a conditional — and a literal anywhere under `cn(…)` is
+ * a class by construction.
+ *
+ * What that gives up is a class string held in a bare `const`, which no scope
+ * can recognise without reading a property name as a class again. That is the
+ * right direction for a guard: it misses one, it never invents one.
+ */
+const CLASS_STRING_SCOPES = [
+  String.raw`JSXAttribute[name.name=/^(class|className|.*ClassName)$/]`,
+  String.raw`CallExpression[callee.name=/^(cn|cva|clsx|twMerge)$/]`,
+];
+
 const noUnregisteredColourToken = Object.keys(EXTRA_KEYWORDS).flatMap((prefix) => {
-  const names = [
-    ...COLOUR_TOKENS,
-    ...UNIVERSAL_KEYWORDS,
-    ...EXTRA_KEYWORDS[prefix],
-  ].join("|");
+  // The theme's own names, matched exactly — a colour token is a whole name and
+  // heads nothing.
+  const exact = [...COLOUR_TOKENS, ...UNIVERSAL_KEYWORDS].join("|");
+  // The prefix's other utilities, each heading a namespace: `clip` stands for
+  // `bg-clip-text`, `spacing` for `border-spacing-2`. See EXTRA_KEYWORDS.
+  const keywords = EXTRA_KEYWORDS[prefix];
+  const names = keywords.length
+    ? String.raw`(?:${exact})|(?:${keywords.join("|")})(?:-[a-z0-9][\w-]*)?`
+    : String.raw`(?:${exact})`;
   const side = SIDED[prefix] ?? "";
   // Everything after the prefix's hyphen that is legitimate: a name, a name
   // behind a side segment, a bare side segment, or anything numeric (a width, a
@@ -289,12 +353,19 @@ const noUnregisteredColourToken = Object.keys(EXTRA_KEYWORDS).flatMap((prefix) =
   // The `,` and `[` in the lookbehind are what keep an *arbitrary value* out of
   // this: `transition-[box-shadow,border-color]` names a CSS property inside
   // brackets, not a class, and nothing in a real class list ever follows a comma
-  // or an opening bracket.
+  // or an opening bracket. It is also what keeps `bg-gradient-to-r` from
+  // reading as a `to-` class: the `to` there follows a hyphen.
   const pattern = String.raw`(?<![\w\-,[])${prefix}-(?!(?:${legitimate})(?![\w-]))${token}(?![\w-:(])`;
-  return [
-    { selector: String.raw`Literal[value=/${pattern}/]`, message: unregisteredTokenMessage(prefix) },
-    { selector: String.raw`TemplateElement[value.raw=/${pattern}/]`, message: unregisteredTokenMessage(prefix) },
-  ];
+  return CLASS_STRING_SCOPES.flatMap((scope) => [
+    {
+      selector: String.raw`${scope} Literal[value=/${pattern}/]`,
+      message: unregisteredTokenMessage(prefix),
+    },
+    {
+      selector: String.raw`${scope} TemplateElement[value.raw=/${pattern}/]`,
+      message: unregisteredTokenMessage(prefix),
+    },
+  ]);
 });
 
 /**
@@ -333,6 +404,18 @@ const noUnregisteredColourToken = Object.keys(EXTRA_KEYWORDS).flatMap((prefix) =
  * `border-none` and `border-hidden` count as colouring, because they remove the
  * edge rather than leave it unnamed; `border-0` is a width that removes it, so
  * it is not a width this reports. `transparent` counts for the same reason.
+ *
+ * **The side segment is named inside each family's *colour* lookahead, and that
+ * is the half that was missing.** A `(?:-(?:t|r|b|l|…))?` group in front of the
+ * hyphen backtracks to empty, so `border-t` parsed as the word `t` colouring an
+ * unsided border and the whole sided family — `border-t p-3`, `border-b
+ * border-t`, `border-x rounded`, `border-t-2` — read as edges that had already
+ * been named. Listing the sides (and a side carrying a width, `t-2`) as things
+ * that are *not* a colour is what closes it, while `border-t-act` still counts.
+ * `divide-x-reverse` and `divide-y-2` are the same escape one family over.
+ * `ring-offset-…` and `outline-offset-…` are the third shape of it: the offset
+ * is a ring of its own around the ring, so colouring the offset leaves the ring
+ * itself on `currentColor` — the whole point of the ban.
  */
 const CLASS_ATTRIBUTE = String.raw`JSXAttribute[name.name=/^(class|className|.*ClassName)$/] > Literal`;
 
@@ -346,25 +429,25 @@ const borderFamilies = [
     width: String.raw`(?<![\w-])border(?:-(?:t|r|b|l|x|y|s|e))?(?:-(?:2|4|8))?(?![\w-:])`,
     // Any `border[-side]-<word>` that is not a style keyword: a token name, or
     // `transparent`/`current`/`none`/`hidden`, all of which settle the edge.
-    colour: String.raw`(?<![\w-])border(?:-(?:t|r|b|l|x|y|s|e))?-(?!(?:solid|dashed|dotted|double|collapse|separate|box|spacing)(?![\w-]))[a-z][\w-]*`,
+    colour: String.raw`(?<![\w-])border(?:-(?:t|r|b|l|x|y|s|e))?-(?!(?:t|r|b|l|x|y|s|e)(?:-[0-9]+)?(?![\w-])|(?:solid|dashed|dotted|double|collapse|separate|box|spacing)(?![\w-]))[a-z][\w-]*`,
     fix: "`border-border` for the neutral edge, or the token the construct owns (`border-act`, `border-destructive`)",
   },
   {
     family: "divide",
     width: String.raw`(?<![\w-])divide-(?:x|y)(?:-(?:2|4|8|reverse))?(?![\w-:])`,
-    colour: String.raw`(?<![\w-])divide-(?!(?:x|y)(?![\w-])|(?:solid|dashed|dotted|double)(?![\w-]))[a-z][\w-]*`,
+    colour: String.raw`(?<![\w-])divide-(?!(?:x|y)(?:-(?:[0-9]+|reverse))?(?![\w-])|(?:solid|dashed|dotted|double)(?![\w-]))[a-z][\w-]*`,
     fix: "`divide-border`",
   },
   {
     family: "ring",
     width: String.raw`(?<![\w-])ring(?:-(?:1|2|4|8))?(?![\w-:])`,
-    colour: String.raw`(?<![\w-])ring-(?!(?:inset|offset-[0-9])(?![\w-])|[0-9])[a-z][\w-]*`,
+    colour: String.raw`(?<![\w-])ring-(?!(?:inset)(?![\w-])|offset(?:-[\w-]+)?(?![\w-])|[0-9])[a-z][\w-]*`,
     fix: "`ring-act` for the focus ring, or `ring-border`",
   },
   {
     family: "outline",
     width: String.raw`(?<![\w-])outline(?:-(?:1|2|4|8))?(?![\w-:])`,
-    colour: String.raw`(?<![\w-])outline-(?!(?:offset-[0-9])(?![\w-])|[0-9])[a-z][\w-]*`,
+    colour: String.raw`(?<![\w-])outline-(?!offset(?:-[\w-]+)?(?![\w-])|[0-9])[a-z][\w-]*`,
     fix: "`outline-act`, or `outline-none` where the outline is being removed",
   },
 ];

@@ -34,7 +34,8 @@ export type CheckboxProps = Omit<
  *
  * The checked box takes the act edge with its act fill, so the amber reads at
  * the full 1rem instead of inside a dark hairline; disabled keeps the same
- * outline at half strength, where it still clears the hovered ground.
+ * outline at half strength on the row's resting ground (≈2.6:1 on lifted) and
+ * never meets the hover layer, because a disabled row does not take one.
  */
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, checked, ...props }, ref) => {

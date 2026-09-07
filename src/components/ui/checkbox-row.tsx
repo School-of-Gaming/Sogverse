@@ -197,8 +197,9 @@ export interface CheckboxRowProps {
  * repeating a word the hint underneath already said. See `hintTone`.
  *
  * The input's accessible name comes from `aria-labelledby` pointing at the
- * sentence rather than from the label's text content, because the content also
- * holds the hint and whatever `trailing` carries — without it, a screen reader
+ * sentence, or at the title where there is one, rather than from the label's
+ * text content, because the content also holds the hint and whatever
+ * `trailing` carries — without it, a screen reader
  * would read the hint twice, once as part of the name and again as the
  * description. The hint is then handed back deliberately through
  * `aria-describedby`, which is what keeps the optional marker legible to a

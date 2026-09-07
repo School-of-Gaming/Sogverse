@@ -1605,14 +1605,15 @@ function ConsentRow({
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
   /**
-   * The short name of the thing being agreed to. Every caller in this section
-   * passes one — a bundle its name, the rules row its own, a drift row the raw
-   * slug it cannot name any better — because a titled row beside an untitled
-   * one reads as a difference between the two gates rather than as a shorter
-   * sentence. Optional only so the type does not lie about a shape
-   * `CheckboxRow` still supports.
+   * The short name of the thing being agreed to. Required, because a titled row
+   * beside an untitled one reads as a difference between the two gates rather
+   * than as a shorter sentence — and the type is the only thing that can stop a
+   * later row from being added without one. `CheckboxRow` still supports the
+   * untitled arrangement; what is settled here is that this section never mixes
+   * the two. Every caller has a name to give: a bundle its own, the rules row
+   * its own, a drift row the raw slug it cannot name any better.
    */
-  title?: React.ReactNode;
+  title: React.ReactNode;
   sentence: React.ReactNode;
 }) {
   return (
