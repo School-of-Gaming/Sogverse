@@ -43,15 +43,6 @@ work. Pick these up on resume:
   consent stays out of session photographs *entirely* — and all three documents now say
   so. If Lynx's "internal records" photography is real and unavoidable, the documents are
   wrong again and the difference has to be settled with them before publication.
-- **The landing page overflows a 360px viewport in `fi` (by 1px) and `fr` (by 46px).**
-  Found 2026-09-01 by a headless 360×740 sweep of the public pages; `en`, `sv` and `tlh`
-  fit. The overflowing element is a snap-carousel card (`shrink-0 snap-start w-[85%]` and
-  its descendants reaching ~598px), so the card's content is widening it past its scroll
-  container in the wider locales — locale-copy-driven, and a violation of the 360px
-  design-floor rule (no horizontal document scroll). Pre-existing on `dev`; unrelated to
-  the shared FAQ-accordion adoption, whose diff left the page's rendered DOM byte-identical
-  apart from a spacing wrapper. Layout, not copy, so it does not wait on the lawyer —
-  but the surface is unpublished, so it is not urgent either.
 
 ---
 
@@ -224,9 +215,11 @@ banner until its copy is signed off.
 
       *Reviewed 2026-08-12.* The copy is written and complete — this was a review, not a
       drafting job, and every factual claim on the page has now been checked against the
-      Terms and the Privacy Policy. Three findings, all written up: the age range
-      (15–18 against the documents' 8–17), Roblox described as a partner rather than a
-      sponsor, and an unconditional publishing promise. All three are in *Resolved*.
+      Terms and the Privacy Policy. Three findings. Two have since been overtaken by
+      Lynx's signed-off FAQ and Roblox's own phrasing requirement (2026-08-24 to
+      2026-08-30): the page now says 13–17 and "in collaboration with Roblox", and the
+      contradiction moved into the legal documents, which is now its own entry in
+      *Resolved*. The third, the unconditional publishing promise, is in *Resolved* too.
       Verified correct and left alone: "free", "in France", the online/in-person split,
       and the parent sessions.
 
@@ -264,7 +257,6 @@ where the fix would change what we commit to rather than how it reads.
       under the rule at the top, not ours. Asked which is the real commitment: routine
       sessions only, or no recording at all. Whichever comes back, the other document is
       the one that gets edited.
-
 ## Features the policies promise that the app does not have
 
 - [ ] **The mandatory "I am the parent/legal guardian" checkbox.** The rest of Lynx's
@@ -289,18 +281,6 @@ where the fix would change what we commit to rather than how it reads.
 - [ ] **Roblox impact-research data export.** The DPA-limited dataset (Roblox username,
       Roblox User ID, programme-account email, activity attended) has to actually reach
       Roblox somehow. No process or tooling exists for producing that export.
-- [ ] **/roblox CTAs and events are deliberately inert.** Hero CTA, "For parents"
-      button, closing CTA card go nowhere; Upcoming Events renders its empty state.
-      They come alive when programme products + registration exist (the events section
-      is presentational and takes rows — wiring is a data shell fetching Roblox-topic
-      products).
-
-      **When they are wired, they must become in-app `next/link` navigations, not
-      `<a href>` full page loads.** UTM attribution (`utm_source`/`utm_medium`/
-      `utm_campaign` on a partner's link) is held in memory for the visit: a soft
-      navigation keeps it alive, a hard load destroys it silently, with no error and
-      no visible symptom — the values are simply absent at registration.
-
 ## Attribution, cookie consent, and the Lynx data export
 
 **Opened 2026-08-26.** Research is complete and written up below.
@@ -551,7 +531,8 @@ time is rationed, spend it here rather than on the banner.**
 - **The `?ref=` note under "/roblox CTAs and events are deliberately inert" goes stale** if
   the rename happens. It is still correct today, and its underlying point (soft navigation
   keeps the value alive, a hard load destroys it) holds for any payload name. *(Done — the
-  note now names the UTM params.)*
+  note named the UTM params, and the item has since closed: the CTAs and the events
+  section are wired, through `next/link`.)*
 
 ## Tone — where the programme documents don't sound like Sogverse
 
@@ -636,16 +617,18 @@ lawyer is not reviewing sections that are about to be restructured.
       photo a Gedu appears in, on Lynx Educate's or Roblox's website. Neither privacy
       policy mentions Gedu images in either direction. If the answer is that it does not,
       the fix is a clause in the Gedu contract, not a line in the parent-facing policies.
-- [ ] **Free products, the FREE price, and the waitlist.** Kyle's flag, 2026-08-30, to
-      look into later: the product cards' FREE display doesn't show a waitlist, and
-      waitlist behaviour is believed to be effectively municipality-club-only today. A
-      first look says the machinery itself is capability-driven rather than type-gated —
-      the full/waitlist registration states key on the product's `waitlist_enabled`
-      column — so the things to verify are where that toggle can actually be switched on
-      (the admin product form may only expose it for municipality clubs), and whether a
-      free programme event that fills can offer a waitlist and have the browse card and
-      signup panel show it. Matters here because the programme's events are free,
-      capacity-capped, and exactly the kind of product that fills.
+- [ ] **Free products, the FREE price, and the waitlist.** Kyle's flag, 2026-08-30.
+      Looked into on 2026-09-07, and the machinery is not the gap. The admin product
+      form shows the waitlist tick for any capped product of any type, and switching a
+      product to free turns the cap on and defaults the waitlist to on — so a free,
+      capacity-capped programme event can offer a waitlist today, and its details page
+      shows the waitlist CTA once it fills. What the browse card shows is a deliberate
+      choice rather than a FREE-specific one: the seat bar is confined to municipality
+      clubs, and every other card says nothing about capacity, so a full product with a
+      waitlist looks open until it is opened (the card shell's own comment accepts this).
+      What is left is Kyle's decision: whether programme events — free, capped, and
+      exactly the kind of product that fills — should carry the seat bar or a waitlist
+      marker on the card after all.
 - [ ] **Draft banners come off** each page as its copy is confirmed final (the banner is
       the "copy pending / in draft" warning added while content is incomplete). Not an
       escalation of its own — it resolves as a consequence of the signoff above, and the
@@ -656,23 +639,15 @@ lawyer is not reviewing sections that are about to be restructured.
 Decided, with the exact change written out. Nothing here has been applied yet; it all
 lands in one pass. Delete an entry once its change is in.
 
-### Landing page — Roblox is a sponsor, not a partner; and the publishing promise
+### Landing page — the publishing promise is unconditional
 
-Decided 2026-08-12. Two findings from the landing page's factual sweep, both ours: they
-change how the page reads, not what anyone is obliged to do, and the legal documents
-already settle the facts.
-
-**Roblox is described wrongly, and it is the page Roblox signs off.** The Terms say
-"Roblox Corporation ("Roblox") sponsors the Programme and provides the platform your child
-will build on. **Roblox is not a party to these Terms.**" The Privacy Policy's subtitle
-says "sponsored by Roblox". The landing page's hero says "in **partnership** with Roblox"
-and the logo lockup is headed "A **partnership** between" over all three marks. The page
-already disagrees with itself — `what.paragraph1` says "supported by Roblox", which is
-fine. Aligning down is the safe direction: understating the relationship cannot offend
-Roblox, overstating it can, and a company whose lawyers wrote "is not a party" into the
-Terms is the one most likely to object to "a partnership between" above its own logo.
-Deliberately not asked of Lynx — the documents are unanimous, and if Roblox's brand team
-did approve "partnership" for promotional use, signoff is the gate that surfaces it.
+Decided 2026-08-12. One finding from the landing page's factual sweep, ours: it changes
+how the page reads, not what anyone is obliged to do, and the Terms already settle the
+fact. (The sweep's other finding — "partnership" over Roblox's logo — was overtaken on
+2026-08-24 by Roblox's own requirement that they be described only as a collaborator.
+The hero and the lockup now say "in collaboration with Roblox" and "A collaboration
+between", and that phrasing is a rule in the root `CLAUDE.md`, not a change for this
+list.)
 
 **The publishing promise is unconditional and the Terms' is not.** The page says
 participants "**will have published** their own original creation"; the Terms say sessions
@@ -681,15 +656,6 @@ every child.
 
 **Final English copy:**
 
-> `roblox.hero.subtitle`
->
-> A free Roblox game design programme for teens — brought to you by Lynx Educate and
-> School of Gaming, sponsored by Roblox.
-
-> `roblox.lockup.heading`
->
-> Made possible by
-
 > `roblox.what.paragraph2`
 >
 > The programme builds towards publishing their own original creation on Roblox. No
@@ -697,60 +663,51 @@ every child.
 
 **To apply:**
 
-1. Change those three keys in all five locales. `tlh` carries the `roblox` namespace (it
-   is not a legal page), so it is included.
-2. `roblox.what.paragraph1` keeps "supported by Roblox" — it is accurate and claims no
-   partnership. **Do not also edit it here:** the age-range entry below rewrites that same
-   string, and two entries editing one string is how one of them gets silently reverted.
-   The page carrying both "sponsored by" and "supported by" is fine; neither is a false
-   claim.
-3. `roblox.lockup.heading` sits above the three logos, so keep the replacement short —
-   "Made possible by" covers a sponsor and two deliverers without asserting a relationship
-   between them.
-4. Delete this entry.
+1. Change that key in all five locales. `tlh` carries the `roblox` namespace (it is not
+   a legal page), so it is included.
+2. Delete this entry.
 
 **Checked and correct, so leave alone:** "free" (matches the Terms' cost section), "in
 France" (matches eligibility), the online/in-person split and the parent sessions (both
 match `robloxTerms.sections.whatsInvolved`).
 
-### Landing page states the wrong age range
+### The legal documents state the wrong age range
 
-Decided 2026-08-12 by Kyle: **8–17 is correct.** The landing page says 15–18 and the legal
-documents say 8–17; the landing page is the one that is wrong.
+Decided 2026-09-07 by Kyle: **13–17 is correct.** The landing page and the FAQ already
+say it, taken from Lynx's signed-off FAQ (2026-08-30); the Privacy Policy and the Terms
+still say 8–17. Kyle is handling the Lynx side of this himself, so it is not in the
+Slack batch sent to Lynx the same day.
 
-**Why this outranks a wording fix.** The range is load-bearing in both legal documents —
-it is the Terms' eligibility criterion, and the Privacy Policy leans on it for parent-led
-registration and its child-safety reasoning. The two ranges also disagree at *both* ends,
-so it is not a typo: 15–18 excludes the 8–14s the documents cover and admits 18-year-olds,
-who are adults and cannot be registered by a parent, which is the structure both documents
-assume. And it is the page families meet first, so the error costs real registrations.
+**Scope: four strings per locale.** Nothing else in the catalog states 8–17.
 
-**Scope: one string per locale, five in total** — `roblox.what.paragraph1`. Nothing else in
-the catalog states a programme age; the four legal mentions (`robloxPrivacy.intro.blocks.0`,
-`robloxPrivacy.sections.applies.blocks.1` and `.4`, `robloxTerms.sections.eligibility.blocks.0`)
-already say 8–17 and are **not** to be touched.
+- `robloxPrivacy.intro.blocks.0`
+- `robloxPrivacy.sections.applies.blocks.1`
+- `robloxPrivacy.sections.applies.blocks.4`
+- `robloxTerms.sections.eligibility.blocks.0`
 
-**Final English copy** — the paragraph is otherwise unchanged:
+**Final English copy** — each sentence is otherwise unchanged:
 
-> This programme gives 8–17 year-olds in France the chance to design, code, and publish
-> their own Roblox game — with the people who matter most cheering them on. Delivered by
-> Lynx Educate and School of Gaming, and supported by Roblox, it is a hands-on introduction
-> to game design, digital creativity, and safe online collaboration.
+> The Programme is for young people in France aged 13–17. A parent or legal guardian
+> must complete registration.
 
-**"Teens" stays where we speak generally** — Kyle's call. `roblox.hero.subtitle`,
-`roblox.how.step3.title` and `roblox.parents.body` keep it in every locale; they name no
-range, and a general word for the audience is not a claim about eligibility.
+> The Programme is for young people aged 13–17. A parent or legal guardian must complete
+> registration and confirm that they have authority to register the child.
+
+> The <linkRobloxTerms>Programme Terms</linkRobloxTerms> establish the 13–17 age range,
+> parent-led registration and Programme-specific data sharing.
+
+> The Programme is for young people in France, aged 13–17, registered by a parent or
+> legal guardian. A parent or guardian must complete registration and consent on the
+> child’s behalf.
 
 **To apply:**
 
-1. Change `15–18` to `8–17` in `roblox.what.paragraph1` in all five locales — `tlh` carries
-   this namespace (it is not a legal page), so it is included. `fi` reads
-   `15–18-vuotiaille`, `sv` `15–18-åringar`, `tlh` `15–18 ben`; each takes the digits only.
-2. **French needs one more word changed.** It reads `aux ados de 15–18 ans` — `ados` means
-   teenagers, which was consistent with 15–18 and is not with 8–17. Use `aux jeunes de 8 à
-   17 ans`. This is the one place a general term sits directly against the explicit range in
-   the same breath, so it is the one place the general/specific split above does not hold.
-3. Delete this entry.
+1. Change `8–17` to `13–17` in those four strings in `en`, `fi`, `sv` and `fr` — the
+   digits only, keeping the en dash. Every locale already phrases the range with the
+   dash (`fi` `8–17-vuotiaille` / `8–17 vuoden ikäraja`, `sv` `i åldern 8–17 år` /
+   `åldersspannet 8–17 år`, `fr` `de 8–17 ans`), so no surrounding word changes. `tlh`
+   omits both namespaces and falls back to English.
+2. Delete this entry.
 
 ### Programme Terms — drop "available upon request"
 
