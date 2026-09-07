@@ -17,10 +17,7 @@ export default defineConfig({
       {
         // Component tests. A `.tsx` file renders React, so it gets jsdom by
         // extension and stays isolated — component suites lean on module and
-        // global state far more than the node ones do. The pool is left at the
-        // default: threads and forks measured the same here, within noise, and
-        // forks is the one that keeps a leaked jsdom global from reaching the
-        // next file.
+        // global state far more than the node ones do.
         plugins: [react()],
         resolve: { alias },
         test: {
@@ -29,6 +26,15 @@ export default defineConfig({
           setupFiles: ["./tests/setup.ts"],
           include: roots.map((root) => `${root}/**/*.{test,spec}.tsx`),
           globals: true,
+          // Both projects MUST use the same pool. Vitest sizes a worker pool
+          // per pool type, and runs the projects concurrently, so a forks
+          // project beside a threads project puts two full-sized pools on the
+          // machine at once — on a 4-vCPU CI runner that doubled the summed
+          // collect, test and prepare time and gave back most of what the
+          // node split saved, and on a developer's box it saturates every
+          // core. Threads and forks measured the same for this project on
+          // their own; sharing the node project's pool is what matters.
+          pool: "threads",
         },
       },
       {
