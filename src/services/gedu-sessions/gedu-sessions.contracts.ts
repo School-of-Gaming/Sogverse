@@ -74,7 +74,12 @@ export const scheduleSlotSummary = z.object({
 export const geduFeedRosterEntry = z.object({
   participant_id: z.string(),
   first_name: z.string(),
-  /** When they joined the group — the feed uses it for nothing else. */
+  /**
+   * When the seat was taken on the **product** — not when it entered this
+   * group, which is `group_joined_at` below. The feed renders neither; the
+   * distinction matters because it is the bound the historical `group_joined_at`
+   * rows were backfilled from.
+   */
   signed_up_at: z.string(),
   /**
    * The child-shaped facts, null together on an adult seat: an adult has no
@@ -120,8 +125,15 @@ export const geduFeedRosterEntry = z.object({
    * has a fresh second and an unchanged first. It travels unconditionally
    * because a timestamp is a *fact* while the clubs-only newcomer rule is a
    * *presentation* rule the client applies through `showsNewcomerBadge` — so
-   * null here means the seat predates the column (there was deliberately no
-   * backfill), never "not a club".
+   * null here never means "not a club".
+   *
+   * That distinction is also what the **session register** now measures itself
+   * against: a member is expected on a session only if this stamp is at or
+   * before the session's end instant. Which is why the rows that predated the
+   * column no longer carry null — they were backfilled from their own
+   * `signed_up_at`, a provable lower bound on the true join, by the migration
+   * that introduced the rule. Null here now means only what the column comment
+   * says it means: a seat holding no group at all, which no roster contains.
    *
    * `note` is the (group, member) staff note, null when no row exists — the
    * absence of a row is what "no note" means everywhere.

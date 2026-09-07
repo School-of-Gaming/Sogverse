@@ -1531,6 +1531,7 @@
       "presentLabel": "Présent",
       "absentLabel": "Absent",
       "unmarkedLabel": "Non renseigné",
+      "joinedLaterLabel": "A rejoint plus tard",
       "staffNoteLabel": "Gedus et admins",
       "familyNoteLabel": "Visible par les familles",
       "staffNoteTitle": "Note de séance — Gedus et admins",

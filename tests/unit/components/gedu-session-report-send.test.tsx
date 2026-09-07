@@ -52,10 +52,17 @@ import type {
  */
 
 /** Real generated UUIDs: ids that reach an identicon are never readable stubs. */
+/**
+ * When these seats entered the group — long before any fixture session, so
+ * every one of them is expected on every register here. The tests in this
+ * file are about other things; a late joiner would only add noise to them.
+ */
+const FOUNDED = new Date("2020-01-01T00:00:00.000Z");
+
 const ROSTER: readonly SessionFeedGamer[] = [
-  { id: "d9d0f5a8-6f97-4b0a-9a51-01d5a25a0f1e", firstName: "Aino" },
-  { id: "b1a3c6e4-7c1a-4a4e-9f2b-6c9d5f0f8a21", firstName: "Elias" },
-  { id: "5f7b2c19-3f24-4e63-8d6a-2b0c7a9e4d55", firstName: "Venla" },
+  { id: "d9d0f5a8-6f97-4b0a-9a51-01d5a25a0f1e", firstName: "Aino", inGroupSince: FOUNDED },
+  { id: "b1a3c6e4-7c1a-4a4e-9f2b-6c9d5f0f8a21", firstName: "Elias", inGroupSince: FOUNDED },
+  { id: "5f7b2c19-3f24-4e63-8d6a-2b0c7a9e4d55", firstName: "Venla", inGroupSince: FOUNDED },
 ];
 
 const STARTS_AT = new Date("2026-03-16T14:30:00.000Z");

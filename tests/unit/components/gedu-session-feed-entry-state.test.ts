@@ -11,9 +11,11 @@ import {
   entryNeedsAttention,
   entryOwesCreations,
   isEditableEntry,
+  isExpectedOnEntry,
   isPlannableEntry,
   planDraftFromEditorState,
   planEditorStateFromEntry,
+  resolveInGroupSince,
   rosterScopedMarks,
 } from "@/components/gedu/session-feed/entry-state";
 import type { CreationsObligation } from "@/components/gedu/session-feed/entry-state";
@@ -40,16 +42,39 @@ const EDITOR: SessionEditor = {
 };
 
 /**
+ * When the three regulars entered the group: months before the fixture session,
+ * so every one of them is expected on its register and the cases below are
+ * about what else a session owes rather than about who it is for.
+ */
+const FOUNDED = new Date("2026-01-05T09:00:00.000Z");
+
+/**
  * Three seats. What a session owes does not change with who can be written to —
  * deliberately, because a group nobody can be mailed must not sit flagged for
- * ever with nothing to do about it — so a roster here is ids and names, exactly
- * as the register needs them.
+ * ever with nothing to do about it — so a roster here is ids, names and the
+ * instant each seat joined the group, exactly as the register needs them.
  */
 const ROSTER: SessionFeedGamer[] = [
-  { id: "a", firstName: "Aino" },
-  { id: "b", firstName: "Väinö" },
-  { id: "c", firstName: "Elias" },
+  { id: "a", firstName: "Aino", inGroupSince: FOUNDED },
+  { id: "b", firstName: "Väinö", inGroupSince: FOUNDED },
+  { id: "c", firstName: "Elias", inGroupSince: FOUNDED },
 ];
+
+/**
+ * Somebody placed into the group **after** the fixture session had finished —
+ * the case a gedu reported, in one helper.
+ *
+ * A day past the end instant rather than a second, so nothing in a case turns
+ * on which side of a boundary a rounding lands; the boundary itself gets its
+ * own cases, which name their instants outright.
+ */
+function lateJoiner(id: string, firstName: string): SessionFeedGamer {
+  return {
+    id,
+    firstName,
+    inGroupSince: new Date(END.getTime() + 24 * 60 * 60 * 1000),
+  };
+}
 
 /**
  * Every roster member answered — one of the two halves an owed session needs.
@@ -468,17 +493,15 @@ describe("entryCompleteness", () => {
     ).toBe("complete");
   });
 
-  it("reopens when a child joins the group after the sheet was finished", () => {
-    // Measured against the *current* roster, never the stored map's keys —
-    // nobody has yet said whether the new child was there.
+  it("stays complete when a child joins the group after the sheet was finished", () => {
+    // The reported bug, at the level the card decides it. There is no
+    // unanswered question about a child who was not in the group, so growing
+    // the roster must not reopen a session that finished before they arrived.
     const entry = sentPast("k");
     expect(entryCompleteness(entry, ROSTER)).toBe("complete");
     expect(
-      entryCompleteness(entry, [
-        ...ROSTER,
-        { id: "d", firstName: "Linnéa" },
-      ]),
-    ).toBe("needs_attention");
+      entryCompleteness(entry, [...ROSTER, lateJoiner("d", "Linnéa")]),
+    ).toBe("complete");
   });
 });
 
@@ -595,15 +618,21 @@ describe("entryNeedsAttention", () => {
     ).toBe(false);
   });
 
-  it("reopens when a child joins the group after the session was marked", () => {
-    // Measured against the *current* roster: nobody has said whether the new
-    // child was there, so the honest answer is that the sheet is unfinished.
+  it("does not reopen when a child joins the group after the session ended", () => {
     const entry = sentPast("r");
+    const grown = [...ROSTER, lateJoiner("d", "Linnéa")];
+    expect(entryNeedsAttention(entry, ROSTER)).toBe(false);
+    expect(entryNeedsAttention(entry, grown)).toBe(false);
+  });
+
+  it("still reopens for somebody who was in the group while it ran", () => {
+    // The other half of the same rule: a member who joined mid-session is
+    // expected, so a sheet that never answered for them is unfinished.
+    const entry = sentPast("r2");
     const grown = [
       ...ROSTER,
-      { id: "d", firstName: "Linnéa" },
+      { id: "d", firstName: "Linnéa", inGroupSince: new Date(START.getTime() + 60_000) },
     ];
-    expect(entryNeedsAttention(entry, ROSTER)).toBe(false);
     expect(entryNeedsAttention(entry, grown)).toBe(true);
   });
 
@@ -762,7 +791,11 @@ describe("entryOwesCreations", () => {
   it("reopens when somebody joins after the final session", () => {
     // The other direction of the same rule, and it is chosen with eyes open:
     // nobody has yet said what this member made, so the run is not finished.
-    const grown = [...ROSTER, { id: "d", firstName: "Hilda" }];
+    // Stamped as a late joiner on purpose: the creations condition is
+    // deliberately NOT scoped by the join date, so this still reopens where
+    // the register's condition would not. That asymmetry is a standing owner
+    // decision, not an oversight to align.
+    const grown = [...ROSTER, lateJoiner("d", "Hilda")];
 
     expect(entryOwesCreations(sentPast("final"), ROSTER, ALL_CREATED)).toBe(
       false,
@@ -953,7 +986,7 @@ describe("applyPlanDraftToEntry", () => {
 
 describe("attendanceTally", () => {
   it("counts present, marked and completeness in one pass", () => {
-    expect(attendanceTally(ROSTER, ALL_MARKED)).toEqual({
+    expect(attendanceTally(past("t"), ROSTER, ALL_MARKED)).toEqual({
       present: 2,
       marked: 3,
       total: 3,
@@ -962,7 +995,7 @@ describe("attendanceTally", () => {
   });
 
   it("is incomplete while any roster member is unmarked", () => {
-    expect(attendanceTally(ROSTER, { a: "present" })).toEqual({
+    expect(attendanceTally(past("t"), ROSTER, { a: "present" })).toEqual({
       present: 1,
       marked: 1,
       total: 3,
@@ -975,7 +1008,7 @@ describe("attendanceTally", () => {
     // report "3 of 3 present" on two survivors and make an unfinished sheet
     // look complete.
     expect(
-      attendanceTally(ROSTER, {
+      attendanceTally(past("t"), ROSTER, {
         a: "present",
         b: "absent",
         departed: "present",
@@ -984,7 +1017,7 @@ describe("attendanceTally", () => {
   });
 
   it("is trivially complete for an empty roster", () => {
-    expect(attendanceTally([], {})).toEqual({
+    expect(attendanceTally(past("t"), [], {})).toEqual({
       present: 0,
       marked: 0,
       total: 0,
@@ -993,7 +1026,7 @@ describe("attendanceTally", () => {
   });
 
   it("treats an untouched sheet as zero marked, not zero present", () => {
-    expect(attendanceTally(ROSTER, {})).toEqual({
+    expect(attendanceTally(past("t"), ROSTER, {})).toEqual({
       present: 0,
       marked: 0,
       total: 3,
@@ -1015,6 +1048,172 @@ describe("rosterScopedMarks", () => {
 
   it("leaves an unmarked roster member out rather than inventing a mark", () => {
     expect(rosterScopedMarks(ROSTER, { b: "absent" })).toEqual({ b: "absent" });
+  });
+
+  it("keeps a mark for a member this session never expected", () => {
+    // Load-bearing, and the likeliest way to break this feature: this runs on
+    // the way INTO storage, so scoping it to the expected members would delete
+    // a mark a gedu legitimately made for a late joiner — including the false
+    // absences they were forced to record before the rule existed — on the
+    // next save of the session.
+    const grown = [...ROSTER, lateJoiner("d", "Linnéa")];
+    expect(rosterScopedMarks(grown, { ...ALL_MARKED, d: "absent" })).toEqual({
+      ...ALL_MARKED,
+      d: "absent",
+    });
+  });
+});
+
+describe("isExpectedOnEntry", () => {
+  it("expects a member who was in the group before the session ended", () => {
+    expect(isExpectedOnEntry(past("e"), ROSTER[0])).toBe(true);
+  });
+
+  it("does not expect a member who joined after the session ended", () => {
+    expect(isExpectedOnEntry(past("e"), lateJoiner("d", "Linnéa"))).toBe(false);
+  });
+
+  it("expects a member who joined while the session was running", () => {
+    // The generous direction, and the reason the comparison is against the end
+    // rather than the start: somebody placed into the group that afternoon may
+    // well have walked in, so the gedu decides rather than the arithmetic.
+    const midSession = {
+      id: "d",
+      firstName: "Linnéa",
+      inGroupSince: new Date((START.getTime() + END.getTime()) / 2),
+    };
+    expect(isExpectedOnEntry(past("e"), midSession)).toBe(true);
+  });
+
+  it("expects a member who joined at the exact instant the session ended", () => {
+    // The boundary is inclusive, on the same generous reasoning.
+    const onTheBell = { id: "d", firstName: "Linnéa", inGroupSince: END };
+    expect(isExpectedOnEntry(past("e"), onTheBell)).toBe(true);
+    const oneTickLater = {
+      id: "d",
+      firstName: "Linnéa",
+      inGroupSince: new Date(END.getTime() + 1),
+    };
+    expect(isExpectedOnEntry(past("e"), oneTickLater)).toBe(false);
+  });
+});
+
+describe("resolveInGroupSince", () => {
+  it("reads a stamp straight through", () => {
+    expect(resolveInGroupSince("2026-02-01T10:00:00.000Z")).toEqual(
+      new Date("2026-02-01T10:00:00.000Z"),
+    );
+  });
+
+  it("resolves an absent stamp to before every session, never after", () => {
+    // Every seat holding a group carries a stamp — the trigger stamps each
+    // write path, and the rows that predated the column were backfilled — so
+    // this is a state a roster should not be able to produce. It still gets a
+    // decided answer rather than an accidental one, and the answer is the safe
+    // direction: expected everywhere, which is the behaviour that predates this
+    // rule. A missing stamp can cost a mark nobody needed; it can never produce
+    // a false "complete".
+    const resolved = resolveInGroupSince(null);
+    expect(resolved.getTime()).toBeLessThanOrEqual(END.getTime());
+    expect(
+      isExpectedOnEntry(past("e"), {
+        id: "d",
+        firstName: "Linnéa",
+        inGroupSince: resolved,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("attendanceTally — the expected members", () => {
+  it("counts a late joiner out of total, marked and present alike", () => {
+    // All three or none: "3 of 4 marked" over a roster of four where one of
+    // them is not being asked for is a headline about a different list than the
+    // rows under it.
+    const grown = [...ROSTER, lateJoiner("d", "Linnéa")];
+    expect(attendanceTally(past("t"), grown, ALL_MARKED)).toEqual({
+      present: 2,
+      marked: 3,
+      total: 3,
+      complete: true,
+    });
+  });
+
+  it("leaves a mark for a late joiner out of the counts without losing it", () => {
+    const grown = [...ROSTER, lateJoiner("d", "Linnéa")];
+    expect(
+      attendanceTally(past("t"), grown, { ...ALL_MARKED, d: "present" }),
+    ).toEqual({ present: 2, marked: 3, total: 3, complete: true });
+  });
+
+  it("counts a mid-session joiner in", () => {
+    const grown = [
+      ...ROSTER,
+      { id: "d", firstName: "Linnéa", inGroupSince: new Date(START.getTime() + 60_000) },
+    ];
+    expect(attendanceTally(past("t"), grown, ALL_MARKED)).toEqual({
+      present: 2,
+      marked: 3,
+      total: 4,
+      complete: false,
+    });
+  });
+
+  it("is trivially complete when the session expected nobody", () => {
+    // Every seat on the group arrived after this session ran — a group formed
+    // last week looking at a term of sessions it did not exist for. The
+    // register asks for nothing; the report and the send are asked for exactly
+    // as before, because who was in the room is no part of those.
+    const allNew = ROSTER.map((g) => lateJoiner(g.id, g.firstName));
+    expect(attendanceTally(past("t"), allNew, {})).toEqual({
+      present: 0,
+      marked: 0,
+      total: 0,
+      complete: true,
+    });
+  });
+});
+
+describe("the reported scenario", () => {
+  it("keeps a finished two-person session finished when two members arrive", () => {
+    // The gedu's own words: a session with two participants, both marked
+    // present the day it ran; two more members placed into the group the next
+    // day; and the card demanding an answer for an afternoon they had no part
+    // in, clearable only by recording two absences that never happened.
+    const pair: SessionFeedGamer[] = [
+      { id: "a", firstName: "Aino", inGroupSince: FOUNDED },
+      { id: "b", firstName: "Väinö", inGroupSince: FOUNDED },
+    ];
+    const entry = sentPast("reported", {
+      attendance: { a: "present", b: "present" },
+    });
+
+    expect(entryCompleteness(entry, pair)).toBe("complete");
+
+    const grown = [
+      ...pair,
+      lateJoiner("c", "Elias"),
+      lateJoiner("d", "Linnéa"),
+    ];
+    expect(entryCompleteness(entry, grown)).toBe("complete");
+    expect(entryNeedsAttention(entry, grown)).toBe(false);
+    expect(countEntriesNeedingAttention([entry], grown)).toBe(0);
+
+    // And the next session — the one they are actually in the group for —
+    // still asks for all four.
+    const next = past("next", {
+      ...WHEN,
+      attendance: { a: "present", b: "present" },
+      report: "# Next week",
+      reportEmailedAt: EMAILED_AT,
+    });
+    const laterWhen = {
+      startsAt: new Date(START.getTime() + 7 * 24 * 60 * 60 * 1000),
+      endsAt: new Date(END.getTime() + 7 * 24 * 60 * 60 * 1000),
+    };
+    expect(
+      entryNeedsAttention({ ...next, ...laterWhen }, grown),
+    ).toBe(true);
   });
 });
 

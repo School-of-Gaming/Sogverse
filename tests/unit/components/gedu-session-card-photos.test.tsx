@@ -49,9 +49,16 @@ const { SessionFeed } = await import(
 const copy = messages.gedu.sessionFeed;
 
 /** Real generated UUIDs: ids reaching an identicon must never be readable stubs. */
+/**
+ * When these seats entered the group — long before any fixture session, so
+ * every one of them is expected on every register here. The tests in this
+ * file are about other things; a late joiner would only add noise to them.
+ */
+const FOUNDED = new Date("2020-01-01T00:00:00.000Z");
+
 const ROSTER: readonly SessionFeedGamer[] = [
-  { id: "0d5f9c2b-0a1c-4a2e-9d5c-1f0a5a7e2b31", firstName: "Aino" },
-  { id: "9a2b1c4d-3e5f-4a6b-8c7d-2e1f0a3b4c5d", firstName: "Elias" },
+  { id: "0d5f9c2b-0a1c-4a2e-9d5c-1f0a5a7e2b31", firstName: "Aino", inGroupSince: FOUNDED },
+  { id: "9a2b1c4d-3e5f-4a6b-8c7d-2e1f0a3b4c5d", firstName: "Elias", inGroupSince: FOUNDED },
 ];
 
 /** Monday 16 March 2026, a 90-minute Helsinki club. */

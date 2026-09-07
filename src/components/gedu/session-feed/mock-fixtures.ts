@@ -1,6 +1,7 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
+import { isExpectedOnEntry } from "./entry-state";
 import type {
   AttendanceMarks,
   SessionEditor,
@@ -75,6 +76,16 @@ export const SESSION_FEED_GAMER_IDS = {
 } as const;
 
 /**
+ * When a founding member of the fixture group joined it: long before any
+ * session a scene can date, so every session expects every one of them.
+ *
+ * A fixed literal rather than something derived from `now`, for the same reason
+ * the ids are literals — two renders of one scene have to be identical — and
+ * far enough back that no cadence, however long its run, reaches behind it.
+ */
+const FOUNDING = new Date("2020-01-01T00:00:00.000Z");
+
+/**
  * Eight child regulars with plausible Finnish and Swedish first names, plus one
  * adult holding a seat of her own — enough that "6 of 9 present" reads like a
  * real group and the attendance checklist has to wrap.
@@ -87,16 +98,40 @@ export const SESSION_FEED_GAMER_IDS = {
  * split the product does not have.
  */
 export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
-  { id: SESSION_FEED_GAMER_IDS.aino, firstName: "Aino" },
-  { id: SESSION_FEED_GAMER_IDS.vaino, firstName: "Väinö" },
-  { id: SESSION_FEED_GAMER_IDS.elias, firstName: "Elias" },
-  { id: SESSION_FEED_GAMER_IDS.linnea, firstName: "Linnéa" },
-  { id: SESSION_FEED_GAMER_IDS.oskar, firstName: "Oskar" },
-  { id: SESSION_FEED_GAMER_IDS.siiri, firstName: "Siiri" },
-  { id: SESSION_FEED_GAMER_IDS.emil, firstName: "Emil" },
-  { id: SESSION_FEED_GAMER_IDS.hilda, firstName: "Hilda" },
-  { id: SESSION_FEED_ADULT_ID, firstName: "Marja" },
+  { id: SESSION_FEED_GAMER_IDS.aino, firstName: "Aino", inGroupSince: FOUNDING },
+  { id: SESSION_FEED_GAMER_IDS.vaino, firstName: "Väinö", inGroupSince: FOUNDING },
+  { id: SESSION_FEED_GAMER_IDS.elias, firstName: "Elias", inGroupSince: FOUNDING },
+  { id: SESSION_FEED_GAMER_IDS.linnea, firstName: "Linnéa", inGroupSince: FOUNDING },
+  { id: SESSION_FEED_GAMER_IDS.oskar, firstName: "Oskar", inGroupSince: FOUNDING },
+  { id: SESSION_FEED_GAMER_IDS.siiri, firstName: "Siiri", inGroupSince: FOUNDING },
+  { id: SESSION_FEED_GAMER_IDS.emil, firstName: "Emil", inGroupSince: FOUNDING },
+  { id: SESSION_FEED_GAMER_IDS.hilda, firstName: "Hilda", inGroupSince: FOUNDING },
+  { id: SESSION_FEED_ADULT_ID, firstName: "Marja", inGroupSince: FOUNDING },
 ];
+
+/**
+ * Which of them arrived after the run had started — Hilda, the group's most
+ * recent placement.
+ *
+ * A fixture group where everybody has always been there cannot show the thing
+ * the register now does: her row is muted and labelled on every session that
+ * finished before she joined, she is outside those sessions' "3 of 5 marked",
+ * and those sessions stay complete rather than reopening the day she was
+ * placed. The builder resolves her actual instant, because it is the only place
+ * that knows when this run's sessions fell.
+ */
+export const SESSION_FEED_LATE_JOINER_ID = SESSION_FEED_GAMER_IDS.hilda;
+
+/**
+ * How many past sessions back the late joiner's arrival is dated — she is in
+ * the group for the two most recent past sessions and for everything ahead, and
+ * outside every session older than that.
+ *
+ * Two rather than one so a scene shows both sides of the line without either
+ * being the single odd row out; clamped by the builder for a spec list too
+ * short to have that many past sessions.
+ */
+const LATE_JOINER_PAST_SESSIONS_BACK = 2;
 
 /**
  * The gedus a fixture session can have been last edited by — the pair who teach
@@ -591,6 +626,8 @@ export function buildSessionFeedFixture(
     futureCount: countLeadingFutureSpecs(specs),
   });
 
+  const roster = rosterWithLateJoiner(specs, starts, durationMs);
+
   const sendOutcomes = new Map<string, SessionSendOutcome>();
   const entries = specs.map((spec, sessionsBack) => {
     const startsAt = starts[sessionsBack];
@@ -601,16 +638,50 @@ export function buildSessionFeedFixture(
     if (spec.kind === "past") {
       sendOutcomes.set(id, spec.sendOutcome ?? "sent");
     }
-    return toEntry(spec, { id, startsAt, endsAt });
+    return toEntry(spec, { id, startsAt, endsAt }, roster);
   });
 
   return {
     clubName,
     timeZone: TIMEZONE,
-    roster: SESSION_FEED_ROSTER,
+    roster,
     entries,
     sendOutcomes,
   };
+}
+
+/**
+ * The fixture roster with the late joiner's arrival dated against this run.
+ *
+ * Her instant has to come from the sessions rather than from a literal, because
+ * a spec list decides where the past starts and a cadence decides how far apart
+ * its sessions fall — so "two past sessions ago" is only knowable here. One
+ * second after that session ended puts her unambiguously on the far side of its
+ * boundary, which is what the register's inclusive end-instant comparison is
+ * being shown against.
+ *
+ * A run with no past sessions at all leaves her a founding member: there is no
+ * finished session for her to have arrived after, and inventing an arrival in
+ * the middle of the future block would date her join after sessions she is
+ * plainly on the roster for.
+ */
+function rosterWithLateJoiner(
+  specs: readonly EntrySpec[],
+  starts: readonly Date[],
+  durationMs: number,
+): readonly SessionFeedGamer[] {
+  const pastIndexes = specs.flatMap((spec, i) =>
+    spec.kind === "future" ? [] : [i],
+  );
+  if (pastIndexes.length === 0) return SESSION_FEED_ROSTER;
+  const index =
+    pastIndexes[Math.min(LATE_JOINER_PAST_SESSIONS_BACK, pastIndexes.length - 1)];
+  const joined = new Date(starts[index].getTime() + durationMs + 1000);
+  return SESSION_FEED_ROSTER.map((gamer) =>
+    gamer.id === SESSION_FEED_LATE_JOINER_ID
+      ? { ...gamer, inGroupSince: joined }
+      : gamer,
+  );
 }
 
 /**
@@ -795,6 +866,7 @@ function resolveReportDate(report: string | undefined, startsAt: Date): string |
 function toEntry(
   spec: EntrySpec,
   base: { id: string; startsAt: Date; endsAt: Date },
+  roster: readonly SessionFeedGamer[],
 ): SessionFeedEntry {
   const { id, startsAt, endsAt } = base;
   switch (spec.kind) {
@@ -828,7 +900,7 @@ function toEntry(
         report: resolveReportDate(spec.report, startsAt),
         staffNote: spec.staffNote ?? null,
         reportEmailedAt: emailedAtForSpec(spec, endsAt),
-        attendance: marksForSpec(spec),
+        attendance: marksForSpec(spec, roster, endsAt),
         images: spec.photos ?? [],
         lastEditedBy: spec.lastEditedBy ?? null,
       };
@@ -862,9 +934,19 @@ function emailedAtForSpec(
  * `partial` names only the children somebody got to, `absent`/`allPresent`
  * cover the whole roster, and a spec with none of them is a session nobody has
  * touched — an empty map, not a roster of invented absences.
+ *
+ * **The whole-roster shorthands cover the members this session EXPECTED**, off
+ * the same predicate the register reads, so a fully-marked old session carries
+ * no mark for somebody who had not joined yet. A fixture that marked her would
+ * be asserting she was in a room she was not in — and it would hide the state
+ * the scenes exist to show: a complete card with one muted, unmarked row on it.
+ * A `partial` still names ids outright and is left alone, which is what lets a
+ * spec deliberately stage a mark for a member outside the expected set.
  */
 function marksForSpec(
   spec: Extract<EntrySpec, { kind: "past" }>,
+  roster: readonly SessionFeedGamer[],
+  endsAt: Date,
 ): AttendanceMarks {
   if (spec.partial !== undefined) {
     const marks: Record<string, AttendanceMark> = {};
@@ -875,8 +957,8 @@ function marksForSpec(
   if (spec.absent === undefined && spec.allPresent !== true) return {};
   const absent = new Set(spec.absent ?? []);
   return Object.fromEntries(
-    SESSION_FEED_ROSTER.map(
-      (g) => [g.id, absent.has(g.id) ? "absent" : "present"] as const,
-    ),
+    roster
+      .filter((g) => isExpectedOnEntry({ endsAt }, g))
+      .map((g) => [g.id, absent.has(g.id) ? "absent" : "present"] as const),
   );
 }

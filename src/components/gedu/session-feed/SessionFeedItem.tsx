@@ -350,6 +350,7 @@ export function SessionFeedItem({
     <CollapsibleRegion open={editing} instant id={editorId}>
       <SessionRecordEditor
         open={editing}
+        entry={entry}
         roster={roster}
         initialState={editorStateFromEntry(entry, roster)}
         committing={committing}
@@ -653,7 +654,11 @@ function SessionEntryBody({
       return (
         <div className="space-y-3 pb-1 pt-3">
           {showAttendance && (
-            <AttendanceSummary roster={roster} attendance={marks} />
+            <AttendanceSummary
+              entry={entry}
+              roster={roster}
+              attendance={marks}
+            />
           )}
           {creationsBlock}
           <WrittenFields entry={entry} clampReport={clampReport} />
@@ -681,7 +686,11 @@ function SessionEntryBody({
       // region clips its own overflow.
       return (
         <div className="space-y-3 pb-1 pt-3">
-          <AttendanceSummary roster={roster} attendance={entry.attendance} />
+          <AttendanceSummary
+            entry={entry}
+            roster={roster}
+            attendance={entry.attendance}
+          />
           {creationsBlock}
           <WrittenFields
             entry={entry}

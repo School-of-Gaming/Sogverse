@@ -222,9 +222,19 @@ export type SessionCompleteness = "needs_attention" | "complete";
  * day a club empties out.
  *
  * Attendance is measured against the *current* roster, never the stored map's
- * keys: a child who joined the group after a session was fully marked reopens
- * it, which is the honest reading, since nobody has yet said whether that child
- * was there.
+ * keys — but only over the members that roster **expected** on this session.
+ * See {@link isExpectedOnEntry}: a child placed into the group after a session
+ * had already finished is not one of them, and a session that was complete the
+ * night it ran stays complete when the group grows.
+ *
+ * **The reading this replaced was not a stricter preference; it rested on a
+ * false premise.** It held that a late joiner reopened a finished session
+ * because nobody had yet said whether that child was there — but there is no
+ * unanswered question. The child was not in the group. Presenting an
+ * unanswerable question as the honest one, and then requiring a false answer to
+ * clear it, is what a gedu actually met: two members added mid-term, every
+ * finished session in the group's history reopened, and no way to silence them
+ * but to record absences that never happened. Do not restore it.
  *
  * **A pre-session plan discharges the report half, and that is accepted, not
  * enforced away.** The plan editor and the write-up editor deliberately share
@@ -276,7 +286,7 @@ export function entryCompleteness(
 ): SessionCompleteness | null {
   if (entry.kind !== "past") return null;
   const finished =
-    attendanceTally(roster, entry.attendance).complete &&
+    attendanceTally(entry, roster, entry.attendance).complete &&
     hasReport(entry.report) &&
     (!entry.owed ||
       (entry.reportEmailedAt !== null &&
@@ -345,13 +355,80 @@ export function countEntriesNeedingAttention(
 /*  Attendance marks                                                   */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Whether this roster member is **expected on this entry's register** — the one
+ * place the rule lives.
+ *
+ * The rule: a member is expected on a session only if they were in the group
+ * before that session **ended**. The claim being encoded is "you cannot have
+ * attended a session that had already finished before you joined", which is
+ * exactly what the comparison says and nothing more. The boundary is inclusive
+ * and it is drawn at the end rather than the start, both in the generous
+ * direction on purpose: somebody who joined while the club was running that
+ * afternoon may well have walked in, so they stay expected and the gedu
+ * decides.
+ *
+ * The member's side of the comparison is {@link SessionFeedGamer.inGroupSince},
+ * a lower bound rather than an exact join instant — read its own note for why a
+ * bound is the safe shape here.
+ *
+ * **This is the primitive everything else about expectation is built from**,
+ * exactly as {@link isLiveEntry} is the primitive under the two editor
+ * predicates: the tally scopes with it, the register mutes and labels with it,
+ * and the dashboard's SQL twin encodes the same comparison — so the module
+ * holds one rule about who a register is for rather than several that have to
+ * be kept in step.
+ *
+ * It takes the entry structurally, by the only field it reads, so a fixture
+ * builder holding an occurrence's start/end pair before it has built an entry
+ * can ask the same question of the same function.
+ */
+export function isExpectedOnEntry(
+  entry: Pick<SessionFeedEntry, "endsAt">,
+  gamer: SessionFeedGamer,
+): boolean {
+  return gamer.inGroupSince.getTime() <= entry.endsAt.getTime();
+}
+
+/**
+ * Before every session there has ever been — what an **absent** join stamp
+ * resolves to.
+ *
+ * Every seat holding a group carries a stamp: the trigger stamps each write
+ * path and the historical rows were backfilled by the migration that introduced
+ * the expectation rule. So this is a state the roster documents should not be
+ * able to produce — which is exactly why it needs a decided answer rather than
+ * an accident of a comparison against `undefined`. Absent means **expected
+ * everywhere**, the behaviour that predates this rule and the only harmless
+ * direction: a missing stamp can then cost a mark nobody needed, and can never
+ * produce a false "complete" on a register nobody took.
+ */
+const EXPECTED_ON_EVERY_SESSION = new Date(0);
+
+/**
+ * Resolve one roster row's join stamp into the instant the register measures
+ * from — the single place the wire's nullable column becomes a `Date`.
+ *
+ * Every surface that builds a {@link SessionFeedGamer} calls this rather than
+ * writing its own conversion. A surface that resolved it differently would
+ * change who a register is for on that surface alone, and the drift would show
+ * up only on whichever seats hit the differing branch — the hardest kind to
+ * notice.
+ */
+export function resolveInGroupSince(groupJoinedAt: string | null): Date {
+  return groupJoinedAt === null
+    ? EXPECTED_ON_EVERY_SESSION
+    : new Date(groupJoinedAt);
+}
+
 export interface AttendanceTally {
-  /** Roster members marked present. */
+  /** Expected roster members marked present. */
   present: number;
-  /** Roster members carrying any mark at all, present or absent. */
+  /** Expected roster members carrying any mark at all, present or absent. */
   marked: number;
+  /** How many the register is **for** — the expected members, not the roster. */
   total: number;
-  /** Whether every roster member has been marked. */
+  /** Whether every expected roster member has been marked. */
   complete: boolean;
 }
 
@@ -362,26 +439,40 @@ export interface AttendanceTally {
  * These three questions were three functions and are one because they are one
  * count over one list — every caller that wanted the headline also wanted to
  * know which headline to show, and splitting them meant walking the roster
- * twice to answer a single question.
+ * twice to answer a single question. It is still **one walk**: the expectation
+ * test is applied inside that same loop rather than by filtering the roster
+ * into a second list first.
  *
  * Everything is counted **over the roster**, never over the map's keys. A child
  * who left the group leaves their mark behind in the stored map; counting keys
  * would report "9 of 8 present" on a group of eight and would let a stale key
  * make an unfinished sheet look complete.
+ *
+ * And everything is counted over the members this entry **expected** — see
+ * {@link isExpectedOnEntry}. A member who joined after the session ended is
+ * outside all three counts, `present` included, so "3 of 5 marked" is a
+ * statement about the same five people from both ends and can never read
+ * "6 of 5". A mark that does exist for such a member is still stored, still
+ * shown and still editable; it simply is not part of what this session is
+ * waiting for.
  */
 export function attendanceTally(
+  entry: Pick<SessionFeedEntry, "endsAt">,
   roster: readonly SessionFeedGamer[],
   attendance: AttendanceMarks,
 ): AttendanceTally {
   let present = 0;
   let marked = 0;
+  let total = 0;
   for (const gamer of roster) {
+    if (!isExpectedOnEntry(entry, gamer)) continue;
+    total += 1;
     const mark = attendance[gamer.id];
     if (mark === undefined) continue;
     marked += 1;
     if (mark === "present") present += 1;
   }
-  return { present, marked, total: roster.length, complete: marked === roster.length };
+  return { present, marked, total, complete: marked === total };
 }
 
 /**
@@ -390,6 +481,15 @@ export function attendanceTally(
  * Applied on the way *into* storage so a saved record describes the group as it
  * is now. Without it a child who left would keep re-entering the record every
  * time an old session was reopened and saved again.
+ *
+ * **It scopes to the FULL roster, and deliberately not to the expected subset.**
+ * This runs on the way into storage, so narrowing it to the members a session
+ * expected would silently *delete* any mark a gedu legitimately made for a late
+ * joiner — a trial attendance, or the false absences gedus were forced to
+ * record before the expectation rule existed — on the next save of that
+ * session. Being outside what a session is waiting for is not the same as being
+ * outside the group, and only the second is grounds for dropping a mark. Do not
+ * "tidy" this into taking the expected members.
  */
 export function rosterScopedMarks(
   roster: readonly SessionFeedGamer[],

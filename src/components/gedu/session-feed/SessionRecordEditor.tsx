@@ -13,6 +13,7 @@ import { RichNoteField } from "./RichNoteField";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
   SessionEditorState,
+  SessionFeedEntry,
   SessionFeedGamer,
   SessionRecordDraft,
 } from "./types";
@@ -26,6 +27,11 @@ interface SessionRecordEditorProps {
    * edit would still be sitting there the next time it opened.
    */
   open: boolean;
+  /**
+   * The session being written up — read only for its end instant, which is what
+   * decides which of the roster this register is actually for.
+   */
+  entry: Pick<SessionFeedEntry, "endsAt">;
   roster: readonly SessionFeedGamer[];
   initialState: SessionEditorState;
   /**
@@ -130,6 +136,7 @@ interface SessionRecordEditorProps {
  */
 export function SessionRecordEditor({
   open,
+  entry,
   roster,
   initialState,
   committing,
@@ -159,7 +166,10 @@ export function SessionRecordEditor({
     }
   }
 
-  const { marked, total } = attendanceTally(roster, draft.attendance);
+  // "3 of 5 marked" counts the members this session expected, so the headline
+  // and the rows it is a headline for are the same five people — a late
+  // joiner's muted row is outside both.
+  const { marked, total } = attendanceTally(entry, roster, draft.attendance);
 
   // `undefined` returns the row to unanswered, and the key is dropped rather
   // than set to `undefined` so the map never carries a slot that reads as
@@ -199,6 +209,7 @@ export function SessionRecordEditor({
         </p>
         <div className="pt-1">
           <AttendanceRoster
+            entry={entry}
             roster={roster}
             attendance={draft.attendance}
             disabled={committing}

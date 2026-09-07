@@ -1,10 +1,11 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check, UserPlus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { AttendanceMark } from "@/components/session-feed";
-import type { AttendanceMarks, SessionFeedGamer } from "./types";
+import { isExpectedOnEntry } from "./entry-state";
+import type { AttendanceMarks, SessionFeedEntry, SessionFeedGamer } from "./types";
 
 /**
  * The per-gamer attendance sheet: one row per child, each with an explicit
@@ -32,13 +33,34 @@ import type { AttendanceMarks, SessionFeedGamer } from "./types";
  * pills sit in a `role="group"` named after the child, so a screen-reader user
  * still hears whose attendance they are on; what they lose against a radiogroup
  * is arrow-key traversal, which costs one extra Tab per child.
+ *
+ * **A member who joined the group after this session ended keeps their row,
+ * muted and labelled, and stays markable.** Three separate decisions, each
+ * doing its own work. The row is not dropped, because a mark may legitimately
+ * exist for that member on that session — a trial visit, or one of the false
+ * absences gedus were forced to record before this rule existed — and a
+ * vanishing row takes the only visible record of it with it. It stays markable,
+ * because a gedu who genuinely wants to say something about that member must
+ * not be refused. And it is muted and labelled because it is the one row that
+ * may sit unanswered on a card announcing itself complete, which without a
+ * label is simply unexplainable to whoever is looking at it.
+ *
+ * Nothing here is decided after first paint: the roster and the session arrive
+ * together, so the label is in its final position from the first frame and no
+ * row moves under a gedu who is marking.
  */
 export function AttendanceRoster({
+  entry,
   roster,
   attendance,
   disabled = false,
   onMark,
 }: {
+  /**
+   * The session this register is for — read only for its end instant, which is
+   * what decides who it expected.
+   */
+  entry: Pick<SessionFeedEntry, "endsAt">;
   roster: readonly SessionFeedGamer[];
   attendance: AttendanceMarks;
   /**
@@ -56,6 +78,7 @@ export function AttendanceRoster({
     <ul className="space-y-1.5">
       {roster.map((gamer) => {
         const mark = attendance[gamer.id];
+        const expected = isExpectedOnEntry(entry, gamer);
         /** Pressing the pill that is already on clears the row. */
         const toggle = (value: AttendanceMark) =>
           onMark(gamer.id, mark === value ? undefined : value);
@@ -66,11 +89,36 @@ export function AttendanceRoster({
             className={cn(
               "flex items-center justify-between gap-3 rounded-md border border-border px-2.5 py-1.5",
               // An unmarked row is the one that still wants something from you,
-              // so it is the one that doesn't fade into the panel behind it.
-              mark === undefined ? "bg-transparent" : "bg-lifted",
+              // so it is the one that doesn't fade into the panel behind it —
+              // unless this session never wanted it, in which case the row is
+              // exactly the one that should recede.
+              mark === undefined && expected ? "bg-transparent" : "bg-lifted",
             )}
           >
-            <span className="min-w-0 truncate text-sm">{gamer.firstName}</span>
+            <span
+              className={cn(
+                "flex min-w-0 items-center gap-1.5 text-sm",
+                expected ? undefined : "text-muted-foreground",
+              )}
+            >
+              <span className="min-w-0 truncate">{gamer.firstName}</span>
+              {/* Beside the name rather than under it: the row is one line and
+                  the pills own the other end of it, so the label takes the
+                  slack in the middle and nothing below the row moves. Both
+                  halves shrink, proportionally to their base widths, so which
+                  one gives way first depends on which is longer — in the
+                  locales that matter the label usually is, which is the way
+                  round we want, since a truncated label still reads while a
+                  truncated name identifies nobody. It is not pinned that way
+                  on purpose: forcing it would let a long name overflow the row
+                  rather than truncate, which is the worse failure. */}
+              {!expected && (
+                <span className="inline-flex min-w-0 shrink items-center gap-1 whitespace-nowrap text-[11px] text-muted-foreground">
+                  <UserPlus className="h-3 w-3 shrink-0" aria-hidden />
+                  <span className="truncate">{t("joinedLaterLabel")}</span>
+                </span>
+              )}
+            </span>
             <div
               role="group"
               aria-label={t("attendanceForGamer", { name: gamer.firstName })}

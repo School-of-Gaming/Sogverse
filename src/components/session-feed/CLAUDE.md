@@ -116,8 +116,8 @@ shared feed.
 ## What a session owes
 
 **Rule: an owed session owes three things, and the third is that its report
-reached the families.** Every current roster member marked, a report written,
-and that report emailed to the group's parents. Any one of them missing leaves
+reached the families.** Every roster member the session *expected* marked, a
+report written, and that report emailed to the group's parents. Any one of them missing leaves
 the session outstanding on the staff feed and in the dashboard count behind it;
 all three present is the finished state. The third exists because a write-up
 nobody was told about is a write-up nobody reads — the report is the main thing
@@ -205,6 +205,20 @@ follows is both the news and the truth. Only a refusal that leaves the session
 genuinely unsent — nothing delivered, or no report left to deliver — hands the
 button back with one short line under it, cleared the moment the next attempt
 starts.
+
+**Rule: a register expects only the members who had joined the group before the
+session ENDED.** A child placed into a group in week six was never on week two's
+register, so growing a group must not reopen sessions that finished before they
+arrived — the alternative, which shipped and which a gedu reported, was a card
+demanding an answer that could only be cleared by recording an absence that never
+happened. There is no unanswered question about somebody who was not in the
+group. The comparison is against the session's end rather than its start and its
+boundary is inclusive, both generous on purpose: somebody who joined while the
+club was running may well have walked in. The datum is the seat's group-join
+stamp, which every grouped seat carries. A member outside the expected set keeps
+their row and their chip, muted and labelled, and stays markable — a mark may
+legitimately exist for them, and a mark once made is never dropped on the way
+into storage.
 
 **Rule: this derivation exists twice — in TypeScript for the card and in SQL for
 the dashboard badge — and a change to one is a change to both, in the same

@@ -1531,6 +1531,7 @@
       "presentLabel": "Present",
       "absentLabel": "Absent",
       "unmarkedLabel": "Not marked",
+      "joinedLaterLabel": "Joined later",
       "staffNoteLabel": "Gedus and admins",
       "familyNoteLabel": "Families see this",
       "staffNoteTitle": "Session note — Gedus and admins",

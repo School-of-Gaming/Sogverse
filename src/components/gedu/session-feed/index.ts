@@ -47,10 +47,12 @@ export {
   entryNeedsAttention,
   entryOwesCreations,
   isEditableEntry,
+  isExpectedOnEntry,
   isLiveEntry,
   isPlannableEntry,
   planDraftFromEditorState,
   planEditorStateFromEntry,
+  resolveInGroupSince,
   rosterScopedMarks,
 } from "./entry-state";
 export type {

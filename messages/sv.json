@@ -1531,6 +1531,7 @@
       "presentLabel": "Närvarande",
       "absentLabel": "Frånvarande",
       "unmarkedLabel": "Inte markerad",
+      "joinedLaterLabel": "Gick med senare",
       "staffNoteLabel": "Geduer och administratörer",
       "familyNoteLabel": "Familjer ser det här",
       "staffNoteTitle": "Anteckning om tillfället – Geduer och administratörer",
