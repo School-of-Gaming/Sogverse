@@ -14,6 +14,7 @@ import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
 import { UserMarketingCard } from "@/components/admin/user-marketing-card";
+import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-consent-card";
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { gamerUsernameFromEmail, hasRealEmail } from "@/lib/gamer-sign-in";
 import { cn, formatDate } from "@/lib/utils";
@@ -507,6 +508,14 @@ export default async function AdminUserDetailPage({
           customerId={isCustomer ? userId : null}
         />
       )}
+
+      {/* The gamer's counterpart to the card above, in the same last position
+          and for the same reason: its rows are the only data on this page
+          fetched client-side after first paint, so at the end of the run their
+          arrival is paid for out of the page's own slack. Only a gamer has a
+          photo consent — the subject is a child's image — so no other role sees
+          it, the way no gamer sees the marketing card. */}
+      {isGamer && <UserGamerPhotoConsentCard gamerId={userId} />}
     </div>
   );
 }

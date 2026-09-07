@@ -16,7 +16,9 @@ import { GameAccountCard } from "@/components/game-account";
 // selector, the add-gamer form and the switch dialogs into this route's bundle
 // for the sake of one card, and none of the three is reachable from this page.
 import { GamerSignInCard } from "@/components/family/gamer-sign-in-card";
+import { GamerPhotoConsentCard } from "@/components/family/gamer-photo-consent-card";
 import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
+import { useGamerPhotoConsents } from "@/services/gamer-photo-consents";
 import { useMinecraftAccount } from "@/services/minecraft";
 import { useRobloxAccount } from "@/services/roblox";
 import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
@@ -39,9 +41,19 @@ export default function GamerDetailsPage() {
   // of one row, issued in the same render as the list, so the wait is the
   // longer of two round trips rather than two in sequence.
   const { data: gamerProfile, isPending: profilePending } = useGamerProfile(id);
+  // What is on file about photographs of this child. Read in the same render as
+  // the two above and waited for alongside them, so the card below lands with
+  // its final tick: a box that painted empty and then filled itself in would be
+  // a control changing under a reader's cursor on data's own schedule, which is
+  // the shift the layout rule forbids — and it would be worse than an ordinary
+  // one, because the value it corrected to is a safeguarding answer. At most one
+  // row by primary-key prefix, issued alongside the other two, so the wait stays
+  // the longest of three round trips rather than a third one added on the end.
+  const { data: photoConsents, isPending: photoConsentsPending } =
+    useGamerPhotoConsents(id);
   const updateGamer = useUpdateGamer();
 
-  const isLoading = gamersLoading || profilePending;
+  const isLoading = gamersLoading || profilePending || photoConsentsPending;
 
   const gamer = gamers?.find((g) => g.id === id);
 
@@ -262,6 +274,16 @@ export default function GamerDetailsPage() {
         }
       />
 
+      {/* Last on the page: the cards above are all facts about who this child
+          is and what they are called, and this is the one standing decision a
+          parent takes on their behalf. It is not gated on any product having
+          asked — a parent who wants their child out of photographs before ever
+          enrolling them needs somewhere to say so. */}
+      <GamerPhotoConsentCard
+        gamerId={gamer.id}
+        firstName={gamer.first_name}
+        consents={photoConsents}
+      />
     </div>
   );
 }
