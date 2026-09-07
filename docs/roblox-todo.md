@@ -626,6 +626,15 @@ lawyer is not reviewing sections that are about to be restructured.
       product attaches both, the enrolment panel asks two rows, and `.mediaChoice` splits
       back into a sponsor-reporting section and a public-use one — the pre-merge wording
       for both is in the `messages/*.json` history at the commit before this branch.
+- [ ] **Whether a Gedu's own likeness in a session photo is covered when Lynx or Roblox
+      use it.** Raised 2026-09-07 alongside the box question so it rides to the lawyer at
+      no extra cost. Gedus working these products expect to appear in photos — it is
+      part of the job — and the Gedu contract already grants School of Gaming permission
+      to publish their photo and assigns photos taken on assignment to us. What nothing
+      yet states is whether that permission extends to a *third party's* use: a session
+      photo a Gedu appears in, on Lynx Educate's or Roblox's website. Neither privacy
+      policy mentions Gedu images in either direction. If the answer is that it does not,
+      the fix is a clause in the Gedu contract, not a line in the parent-facing policies.
 - [ ] **Free products, the FREE price, and the waitlist.** Kyle's flag, 2026-08-30, to
       look into later: the product cards' FREE display doesn't show a waitlist, and
       waitlist behaviour is believed to be effectively municipality-club-only today. A
