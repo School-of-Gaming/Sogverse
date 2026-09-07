@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ChevronRight, Search, X } from "lucide-react";
+import { AlertCircle, ChevronRight, Search, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -199,7 +199,7 @@ export function LocationPickerPanel({
           <button
             type="button"
             onClick={() => onQueryChange("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-hover hover:text-foreground"
             aria-label={t("clearSearch")}
           >
             <X className="h-3.5 w-3.5" />
@@ -275,14 +275,17 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
     if (searching) onQueryChange("");
   }
 
+  // One quiet line in one ink, whatever it says. A failure is marked by the
+  // glyph in front of it rather than by recolouring the sentence: colour
+  // reinforces, the mark informs.
   const statusLine = error
-    ? { text: error, tone: "text-destructive" }
+    ? { text: error, failed: true }
     : // Typing below the threshold leaves the browse list where it is and says
       // why nothing is happening, rather than replacing what the user can see.
       trimmed.length > 0 && !searching
       ? {
           text: t("keepTyping", { count: minQueryLength }),
-          tone: "text-muted-foreground",
+          failed: false,
         }
       : searching && active.total > active.rows.length
         ? {
@@ -290,7 +293,7 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
               shown: active.rows.length,
               total: active.total,
             }),
-            tone: "text-muted-foreground",
+            failed: false,
           }
         : null;
 
@@ -388,7 +391,7 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
           behind it are small indexed lookups, so the loading state is simply
           the empty box: a skeleton would be on screen for less time than it
           takes to read it. */}
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-input bg-background p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-background p-2">
         {active.loading ? null : active.rows.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             {searching ? t("noResults", { query: trimmed }) : t("nothingHere")}
@@ -415,7 +418,13 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
 
       {/* One reserved line for the truncation hint or a failure message, so
           neither one can push the buttons around when it appears. */}
-      <p className={cn("min-h-[20px] text-xs", statusLine?.tone)}>
+      <p className="flex min-h-[20px] items-center gap-1.5 text-xs text-muted-foreground">
+        {statusLine?.failed === true && (
+          <AlertCircle
+            className="h-3.5 w-3.5 shrink-0 text-destructive"
+            aria-hidden
+          />
+        )}
         {statusLine?.text}
       </p>
 
@@ -508,8 +517,8 @@ function PickRow({
       className={cn(
         "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm",
         selected
-          ? "bg-primary/10 text-primary"
-          : "hover:bg-accent hover:text-accent-foreground",
+          ? "text-act"
+          : "hover:bg-hover hover:text-foreground",
       )}
     >
       <RowLabel name={name} detail={detail} />
@@ -551,7 +560,7 @@ function TickRow({
   // row toggles.
   if (!onDrill) {
     return (
-      <div className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+      <div className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-hover hover:text-foreground">
         <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left">
           <Checkbox checked={checked} onChange={onToggle} />
           <RowLabel name={name} detail={detail} />
@@ -563,7 +572,7 @@ function TickRow({
     );
   }
   return (
-    <div className="flex w-full items-center gap-2 rounded-md pl-2 text-sm hover:bg-accent hover:text-accent-foreground">
+    <div className="flex w-full items-center gap-2 rounded-md pl-2 text-sm hover:bg-hover hover:text-foreground">
       <Checkbox checked={checked} onChange={onToggle} aria-label={name} />
       <button
         type="button"

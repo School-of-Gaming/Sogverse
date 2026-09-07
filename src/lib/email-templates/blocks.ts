@@ -1,4 +1,4 @@
-import { BRAND, DARK_THEME, STATUS_TINT } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 import { BODY_TEXT_STYLE, pinnedFill } from "./utils";
 
@@ -22,9 +22,9 @@ import { BODY_TEXT_STYLE, pinnedFill } from "./utils";
 /**
  * The same three names the app's `Button` uses, meaning the same three things,
  * because a mail is the app's style in an inbox and a shared vocabulary is half
- * of that. `secondary` is the brand purple — it used to name the outlined
- * button here, which left the app's secondary colour with no way to be spelled
- * and made "secondary" mean two different things in two places.
+ * of that. `secondary` is the brand purple, the world colour — it used to name
+ * the outlined button here, which left the world colour with no way to be
+ * spelled and made "secondary" mean two different things in two places.
  */
 type CtaVariant = "primary" | "secondary" | "outline";
 
@@ -107,15 +107,15 @@ interface RowButtonOptions extends CtaButtonOptions {
  */
 const VARIANTS = {
   primary: {
-    fill: BRAND.primary,
-    label: BRAND.primaryForeground,
+    fill: BRAND.act,
+    label: BRAND.actForeground,
     bordered: false,
     // The only label dark enough for the pin to help rather than hurt.
     labelClass: "cta-on-brand",
   },
   secondary: {
-    fill: BRAND.secondary,
-    label: BRAND.secondaryForeground,
+    fill: BRAND.world,
+    label: BRAND.worldForeground,
     bordered: false,
     labelClass: "",
   },
@@ -237,7 +237,7 @@ export function inlineLink(href: string, label: string): string {
   // wrong here. The underline is the affordance that says "link", so it
   // outranks matching the name's orange exactly; that mismatch is real, and it
   // is the cheaper of the two faults until a screenshot settles a fix for it.
-  return `<a href="${href}" target="_blank" style="color:${BRAND.primary};text-decoration:underline;">${label}</a>`;
+  return `<a href="${href}" target="_blank" style="color:${BRAND.act};text-decoration:underline;">${label}</a>`;
 }
 
 /** A bulleted list of already-composed (and already-escaped) HTML snippets. */
@@ -321,27 +321,32 @@ interface CalloutPanelOptions {
  *
  * **It is the app's `Alert`, in its `info` variant, in an inbox.** A mail
  * inherits rather than being styled, so the shape comes from the component the
- * app already uses for exactly this: `rounded-lg`, a full 1px border in the info
- * colour at half alpha, a wash of the same colour at a tenth. Email cannot rely
- * on alpha, so both arrive here as flat values composited over the message panel
- * (`STATUS_TINT`, in `colors.ts`, with the derivation beside them). The earlier
- * version of this panel was a 3px brand-orange rule down one edge, which is a
- * treatment that exists nowhere in the app and read as a warning besides — the
- * brand primary is the colour that means *ours*, not *careful*.
+ * app already uses for exactly this: `rounded-lg`, a neutral 1px border, the
+ * ground it is already on, the label in the status colour and the sentences in
+ * ink. No status colour is tinted anywhere — info is Wit's blue, and a brand
+ * colour exists at the value it is authored at or not at all — so the wash and
+ * its half-alpha edge are both gone, and with them the composited pair they
+ * needed. The version before that was a 3px brand-orange rule down one edge,
+ * which is a treatment that exists nowhere in the app and read as a warning
+ * besides — the act is the colour that means *ours*, not *careful*.
  *
- * **The border is what draws the panel, and it is allowed to be quiet.** At
- * 2.18:1 against the card it would not carry a control boundary on its own, and
- * it is not asked to: everything the panel means is in its label and its
- * sentences. The wash is a tint rather than a divider — 1.12:1 on the card —
- * and that is the app's own balance for this component, not a concession made
- * for mail.
+ * **The border carries the status, at full value.** The app's alerts do the
+ * same thing and for the same reason: with no tinted ground left, an edge in
+ * the status hue is what brings the eye to a panel whose whole job is to be
+ * noticed, and an edge is one of the roles a brand colour may take. It stays a
+ * 1px solid line on the cell — the most robust border email has, and the one
+ * construct Outlook's Word engine and Gmail's Android renderer both draw
+ * without argument — so what changed is one colour and nothing about the
+ * markup.
  *
- * **The text on it is the body's colour, and that is a contrast fact.** The
- * app's `Alert` colours its title with the accent, and the mail cannot: the info
- * blue on this wash is 4.46:1, just under AA, and a label this size gets no
- * large-text exemption. So the label and the paragraphs are `foreground`
- * (13.24:1) — checked before fidelity, as this directory's rule says, and pinned
- * in `palette-contrast.test.ts` both ways round.
+ * **The label takes the colour and the sentences stay ink.** That is the app's
+ * rule for this construct — coloured ink only on a label, never on something a
+ * reader reads through — and here it is also a contrast fact: on the message
+ * panel the info blue measures 7.53:1 as text, well clear of the body floor,
+ * where on the wash it used to sit at 4.46:1 and could not be spent at all. The
+ * app puts a glyph beside that label; a mail has no icon system to draw one
+ * with, so the label carries the tone alone. Both pairings are pinned in
+ * `palette-contrast.test.ts`.
  *
  * The paragraphs carry equal weight rather than the second being muted: in a
  * callout the later sentence is usually the one that answers the actual worry,
@@ -358,8 +363,8 @@ export function calloutPanel({ label, paragraphs }: CalloutPanelOptions): string
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
       <tr>
-        <td style="${pinnedFill(STATUS_TINT.infoSurface)}border:1px solid ${STATUS_TINT.infoBorder};border-radius:${RADIUS.lg};padding:16px;">
-          <p style="margin:0 0 8px;color:${DARK_THEME.foreground};font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">${label}</p>
+        <td style="border:1px solid ${STATUS.info};border-radius:${RADIUS.lg};padding:16px;">
+          <p style="margin:0 0 8px;color:${STATUS.info};font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">${label}</p>
           ${body}
         </td>
       </tr>

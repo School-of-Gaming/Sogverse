@@ -138,7 +138,7 @@ function RichEditorPlaceholder() {
   return (
     <div
       aria-hidden
-      className={`w-full rounded-md border border-input bg-background ${RICH_EDITOR_MIN_HEIGHT}`}
+      className={`w-full rounded-md border border-border bg-background ${RICH_EDITOR_MIN_HEIGHT}`}
     />
   );
 }

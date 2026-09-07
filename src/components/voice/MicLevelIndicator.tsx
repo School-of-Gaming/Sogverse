@@ -93,7 +93,7 @@ export function MicLevelIndicator({ stream, active }: MicLevelIndicatorProps = {
   if (!isActive) return null;
 
   return (
-    <div className="h-1 w-20 overflow-hidden rounded-full bg-muted">
+    <div className="h-1 w-20 overflow-hidden rounded-full bg-lifted">
       <div
         ref={barRef}
         className="h-full rounded-full bg-success transition-[width] duration-75"

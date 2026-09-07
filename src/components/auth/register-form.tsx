@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
@@ -214,18 +213,19 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <Alert variant="info">
-            <Info className="h-4 w-4 shrink-0" />
             <div>
-              <AlertTitle>{t('register.parentAccountAlertTitle')}</AlertTitle>
+              <AlertTitle sentence>
+                {t('register.parentAccountAlertTitle')}
+              </AlertTitle>
               <AlertDescription>
                 {t('register.parentAccountAlertDescription')}
               </AlertDescription>
             </div>
           </Alert>
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           <Field label={t('register.parentFirstName')} htmlFor="firstName">
             <Input
@@ -332,7 +332,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
             <div>
               {t.rich('register.alreadyHaveAccount', {
                 link: (chunks) => (
-                  <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-primary hover:underline">
+                  <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-act hover:underline">
                     {chunks}
                   </Link>
                 ),
@@ -342,7 +342,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               {t.rich('needHelp', {
                 email: SUPPORT_EMAIL,
                 link: (chunks) => (
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-act hover:underline">
                     {chunks}
                   </a>
                 ),

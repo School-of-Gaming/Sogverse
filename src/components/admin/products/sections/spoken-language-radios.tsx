@@ -57,10 +57,8 @@ export function SpokenLanguageRadios({
           <label
             key={code}
             className={cn(
-              "inline-flex cursor-pointer items-center gap-2 rounded-full border py-1.5 pl-2.5 pr-3.5 text-sm transition-colors",
-              selected
-                ? "border-primary bg-primary/5"
-                : "border-input hover:border-foreground/30"
+              "inline-flex cursor-pointer items-center gap-2 rounded-full border border-border py-1.5 pl-2.5 pr-3.5 text-sm transition-colors",
+              selected && "border-act"
             )}
           >
             {/* A visible native radio, as every other radio group in this form
@@ -70,7 +68,7 @@ export function SpokenLanguageRadios({
             <input
               type="radio"
               name="spokenLanguage"
-              className="h-3.5 w-3.5"
+              className="h-3.5 w-3.5 accent-act"
               checked={selected}
               required
               onChange={() => onChange(code)}

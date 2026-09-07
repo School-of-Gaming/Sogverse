@@ -172,7 +172,7 @@ export const SESSION_FEED_PHOTO_ART = {
  * everything newer is either finished on both halves — register complete and a
  * report written — or flagged as owed, and everything older is either a quiet
  * "no record" line or — for the one somebody went back and wrote up — an
- * ordinary past entry that never turns amber however unfinished it is. That
+ * ordinary past entry that never takes the warning tone however unfinished it is. That
  * boundary is the whole reason the gap states look nothing alike: one is work,
  * the other is history, and both are editable.
  *
@@ -290,7 +290,7 @@ export type EntrySpec =
        * green check, and its unfinished states stay neutral because nothing was
        * ever asked of it. A fixture needs at least one, or the epoch's effect is
        * invisible on a page where it is only ever expressed as an *absence* of
-       * amber.
+       * the warning tone.
        */
       owed?: boolean;
     }

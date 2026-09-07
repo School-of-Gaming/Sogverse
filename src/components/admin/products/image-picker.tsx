@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Images, Loader2, Upload, X } from "lucide-react";
+import { AlertCircle, Images, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { ProductBanner } from "@/components/ui/product-banner";
@@ -127,8 +127,8 @@ export function ImagePicker({
           if (file) void addFile(file);
         }}
         className={cn(
-          "rounded-md border border-input bg-background p-4 transition-colors",
-          dragging && "border-primary bg-primary/5",
+          "rounded-md border border-border bg-background p-4 transition-colors",
+          dragging && "ring-2 ring-act",
         )}
       >
         {/* The one 3:2 frame every product picture is painted in — the same
@@ -139,7 +139,7 @@ export function ImagePicker({
         <ProductBanner
           src={productImageSrc(selected?.path)}
           sizes="240px"
-          className="mx-auto w-60 rounded-md border"
+          className="mx-auto w-60 rounded-md border border-border"
         />
 
         {/* No reserved slot for the label: an unselected card has nothing to
@@ -212,14 +212,12 @@ export function ImagePicker({
       {/* Reserved one-line slot. Held open from first paint so the answer
           landing does not push the form's next field down. */}
       <p
-        className={cn(
-          "min-h-[1.25rem] text-center text-xs",
-          outcome?.kind === "error"
-            ? "text-destructive"
-            : "text-muted-foreground",
-        )}
+        className="flex min-h-[1.25rem] items-center justify-center gap-1.5 text-center text-xs text-muted-foreground"
         role="status"
       >
+        {!uploading && outcome?.kind === "error" && (
+          <AlertCircle className="h-3.5 w-3.5 shrink-0 text-destructive" aria-hidden />
+        )}
         {uploading && t("uploading")}
         {!uploading && outcome?.kind === "added" && t("outcomeAdded")}
         {!uploading && outcome?.kind === "existing" && t("outcomeExisting")}

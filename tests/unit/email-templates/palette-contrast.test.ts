@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { BRAND, DARK_THEME, STATUS, STATUS_TINT } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 
 /**
  * Contrast, asserted on the palette itself rather than on any rendering.
@@ -46,16 +46,16 @@ const PAIRS: { name: string; fg: string; bg: string }[] = [
   { name: "muted text on the message panel", fg: DARK_THEME.mutedFg, bg: DARK_THEME.card },
   { name: "footer text on the ground", fg: DARK_THEME.mutedFg, bg: DARK_THEME.bg },
   { name: "body text on the ground", fg: DARK_THEME.foreground, bg: DARK_THEME.bg },
-  { name: "primary button label", fg: BRAND.primaryForeground, bg: BRAND.primary },
-  { name: "secondary button label", fg: BRAND.secondaryForeground, bg: BRAND.secondary },
+  { name: "primary button label", fg: BRAND.actForeground, bg: BRAND.act },
+  { name: "secondary button label", fg: BRAND.worldForeground, bg: BRAND.world },
   { name: "outline button label", fg: DARK_THEME.foreground, bg: DARK_THEME.card },
   // The header lockup and any brand-orange inline text, both ≥18px bold or
   // used as emphasis at body size — it clears AA_BODY anyway, comfortably.
-  { name: "brand orange on the ground", fg: BRAND.primary, bg: DARK_THEME.bg },
-  // The callout panel: both its uppercase label and its paragraphs, which carry
-  // the same colour on the washed info surface. 13.24:1 — the reason the panel
-  // can drop the accent-coloured title the app's Alert uses and lose nothing.
-  { name: "callout text on the info tint", fg: DARK_THEME.foreground, bg: STATUS_TINT.infoSurface },
+  { name: "brand orange on the ground", fg: BRAND.act, bg: DARK_THEME.bg },
+  // The callout panel, which is now the app's Alert exactly: its uppercase
+  // label in the status colour and its paragraphs in ink, both on the message
+  // panel the panel sits on rather than on a wash of their own.
+  { name: "callout label on the message panel", fg: STATUS.info, bg: DARK_THEME.card },
 ];
 
 describe("every colour pair a mail may emit is legible", () => {
@@ -76,67 +76,54 @@ describe("every colour pair a mail may emit is legible", () => {
  * and the rule that excludes it would read as arbitrary caution. Each of these
  * is a real mistake someone made or nearly made, kept measurable so the reason
  * survives the reasoning.
+ *
+ * One pair has left the list because it stopped being a mistake. The info colour
+ * set as the callout's own label used to measure 4.46:1 on its own wash — a hair
+ * under the floor, which was the whole reason the mail's callout titles itself
+ * in `foreground` where the app's Alert titles itself in the accent. Under
+ * @sog/ui, info is Wit's blue and the same pairing clears the body floor with
+ * room to spare — no number is written here, because a ratio typed by hand is
+ * a measurement nothing re-takes — so the arithmetic no longer forbids it. The mail's callout still does not do it, but
+ * that is a construct decision now rather than a contrast one, and a rejected
+ * pair that has stopped being rejectable cannot go on being asserted here.
  */
 describe("the pairs we rejected are still worth rejecting", () => {
-  // `atLeast` pins a pair whose *nearness* to the floor is load-bearing for the
-  // prose around it: the number lives where the build fails when it stops being
-  // true, instead of rotting in a comment.
-  const FORBIDDEN: {
-    name: string;
-    fg: string;
-    bg: string;
-    why: string;
-    atLeast?: number;
-  }[] = [
+  const FORBIDDEN: { name: string; fg: string; bg: string; why: string }[] = [
     {
       name: "brand purple as body text",
-      fg: BRAND.secondary,
+      fg: BRAND.world,
       bg: DARK_THEME.card,
       why: "the original reason purple was pulled out of body copy",
     },
     {
-      name: "the primary's dark label on the secondary's fill",
-      fg: BRAND.primaryForeground,
-      bg: BRAND.secondary,
+      name: "act's dark label on the world fill",
+      fg: BRAND.actForeground,
+      bg: BRAND.world,
       why: "copying a working button and changing only its fill",
     },
     {
-      name: "white on the primary fill",
-      fg: BRAND.secondaryForeground,
-      bg: BRAND.primary,
+      name: "white on the act fill",
+      fg: BRAND.worldForeground,
+      bg: BRAND.act,
       why: "the same mistake in the other direction",
     },
     {
       name: "white on the info fill",
-      fg: STATUS.infoForeground,
+      fg: BRAND.worldForeground,
       bg: STATUS.info,
-      // 3.48:1. The pair globals.css names (--info / --info-foreground) and the
-      // reason `info` is never a fill under a label in a mail: it is mirrored so
-      // the fill and its foreground stay one decision, not so a caller can use
-      // them together at body size.
-      why: "the info colour is an accent here, never a surface with text on it",
-    },
-    {
-      name: "the info colour as the callout's own label",
-      fg: STATUS.info,
-      bg: STATUS_TINT.infoSurface,
-      // 4.46:1 — a hair under the floor, which is the interesting part. The
-      // app's Alert colours its title with the accent and the mail cannot copy
-      // that: at 12px bold there is no large-text exemption to reach for, so the
-      // label is `foreground` and the accent stays in the border and the wash.
-      why: "the one thing the mail's callout does not inherit from the app's Alert",
-      atLeast: 4.4,
+      // 2.31:1. White was `info`'s foreground until the library measured the
+      // whole status set and gave every one of them dark ink instead — each
+      // status fill is light enough to take a dark label and none is dark enough
+      // to take a white one. So this is the pairing the palette used to name,
+      // kept as the mistake a copied button would reintroduce.
+      // `STATUS.infoForeground` is deliberately not spelled here: it is ink now,
+      // so writing the entry in terms of it would assert the opposite of what it
+      // says.
+      why: "the foreground the status set used to carry, and the one it can never carry",
     },
   ];
 
-  it.each(FORBIDDEN)("$name stays below AA — $why", ({ fg, bg, atLeast }) => {
-    const ratio = contrast(fg, bg);
-    expect(ratio).toBeLessThan(AA_BODY);
-    if (atLeast !== undefined) {
-      expect(
-        ratio,
-        `the "hair under the floor" claim beside this pair assumes at least ${atLeast}:1`,
-      ).toBeGreaterThan(atLeast);
-    }
+  it.each(FORBIDDEN)("$name stays below AA — $why", ({ fg, bg }) => {
+    expect(contrast(fg, bg)).toBeLessThan(AA_BODY);
   });
 });

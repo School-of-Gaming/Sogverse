@@ -140,7 +140,7 @@ export function FilterCombobox({
           <ul
             id={listId}
             role="listbox"
-            className="absolute left-0 right-0 z-30 mt-1 max-h-64 overflow-y-auto rounded-md border border-input bg-popover p-1 text-popover-foreground shadow-md"
+            className="absolute left-0 right-0 z-30 mt-1 max-h-64 overflow-y-auto rounded-md border border-border bg-card p-1 text-foreground shadow-md"
           >
             {filtered.map((o) => (
               <li key={o.value}>

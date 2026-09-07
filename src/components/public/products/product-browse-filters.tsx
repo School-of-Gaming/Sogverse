@@ -24,7 +24,7 @@ const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 // The filter control — chip rows (type, audience, designed-for, subject,
 // format, language, age, days).
-// Chips are pill-shaped with a clear active state (filled primary) so taps
+// Chips are pill-shaped with a clear active state (filled act) so taps
 // register on small phone screens.
 //
 // One component, two shapes, one DOM instance — never a phone copy and a
@@ -115,7 +115,7 @@ export function ProductBrowseFilters({
   const showClear = hasAny || (showTypeFilter && categories.length > 0);
 
   return (
-    <div className="rounded-xl border bg-card/50 p-3 sm:p-4">
+    <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
       <div className="mb-2 flex items-center justify-between gap-3">
         <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           <Sliders className="h-3.5 w-3.5" aria-hidden />
@@ -130,7 +130,7 @@ export function ProductBrowseFilters({
           aria-hidden={!showClear}
           tabIndex={showClear ? 0 : -1}
           className={cn(
-            "inline-flex items-center gap-1 rounded-full border border-input px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+            "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-hover hover:text-foreground",
             !showClear && "invisible pointer-events-none",
           )}
         >
@@ -406,10 +406,10 @@ function Chip({
       onClick={onToggle}
       aria-pressed={active}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-all",
         active
-          ? "border-primary bg-primary text-primary-foreground shadow-sm"
-          : "border-input bg-background text-foreground/80 hover:border-primary/40 hover:bg-accent",
+          ? "bg-act text-act-foreground shadow-sm"
+          : "bg-background text-foreground hover:bg-hover",
         className,
       )}
     >

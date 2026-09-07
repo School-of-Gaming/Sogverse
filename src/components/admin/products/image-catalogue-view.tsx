@@ -3,6 +3,11 @@
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Loader2, Pencil, Upload, X } from "lucide-react";
+import {
+  Alert,
+  AlertDescription,
+  StatusLine,
+} from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -153,9 +158,9 @@ export function ImageCatalogueView({
       </DialogHeader>
 
       {error && (
-        <p className="mx-6 mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {error}
-        </p>
+        <Alert variant="destructive" className="mx-6 mt-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 p-6 pt-4 sm:flex-row">
@@ -183,10 +188,8 @@ export function ImageCatalogueView({
                       onClick={() => onSelectTile(image.id)}
                       aria-pressed={isSelected}
                       className={cn(
-                        "w-full rounded-md border p-2 text-left transition-colors hover:bg-accent",
-                        isSelected
-                          ? "border-primary bg-primary/5"
-                          : "border-border",
+                        "w-full rounded-md border border-border p-2 text-left transition-colors hover:bg-hover",
+                        isSelected && "border-act",
                       )}
                     >
                       <ProductBanner
@@ -203,7 +206,7 @@ export function ImageCatalogueView({
                           below it down. */}
                       <span className="mt-1 flex h-5 items-center">
                         {count > 0 && (
-                          <Badge variant="secondary">
+                          <Badge variant="outline">
                             {t("usedBadge", { count })}
                           </Badge>
                         )}
@@ -401,7 +404,9 @@ function SelectedImagePanel({
           </div>
         )}
         {renameError && (
-          <p className="mt-2 text-xs text-destructive">{renameError}</p>
+          <StatusLine status="destructive" size="xs" className="mt-2">
+            {renameError}
+          </StatusLine>
         )}
       </div>
 

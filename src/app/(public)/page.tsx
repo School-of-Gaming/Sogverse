@@ -23,16 +23,36 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]">
+      {/* The hero sits on the page ground and marks itself with one world
+          rule under the headline. It used to carry a two-hue wash — act at
+          20% blended into world at 10% under a vertical fade — and a brand
+          colour is never blended into another and never starts at a lower
+          alpha: what that painted was two colours neither of which was ours.
+          The rule is world at its authored value, which is the display and
+          identity colour, and it is the whole of the colour the hero spends
+          besides the headline's one act phrase and the act call to action.
+
+          The headline is the library's declared departure from "anything a
+          reader reads through is ink" (`brand.ts`, beside the label rule): a
+          public page's hero headline sits between artwork and a heading, so
+          the payoff phrase is drawn in act, the rest in ink, and the world
+          rule beneath carries the second colour. The OG card draws the same
+          three things, so a share and the page it lands on say one thing. */}
+      <section className="relative -mt-[var(--header-height)] overflow-hidden pt-[var(--header-height)]">
         <div className="container mx-auto px-4 py-24 sm:py-32">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="font-display text-2xl font-bold tracking-tight md:text-6xl">
-              {t.rich('hero.title', {
-                br: () => <br />,
-                primary: (chunks) => <span className="text-primary">{chunks}</span>,
-                secondary: (chunks) => <span className="text-secondary">{chunks}</span>,
-              })}
-            </h1>
+            {/* The wrapper shrinks to the headline's longest line, so the rule
+                beneath it runs exactly the headline's measure with nothing
+                measured at runtime. */}
+            <div className="inline-block">
+              <h1 className="font-display text-2xl font-bold tracking-tight md:text-6xl">
+                {t.rich('hero.title', {
+                  br: () => <br />,
+                  act: (chunks) => <span className="text-act">{chunks}</span>,
+                })}
+              </h1>
+              <span className="mt-6 block h-1.5 w-full rounded-full bg-world sm:mt-8" />
+            </div>
             <p className="mt-6 text-lg leading-8 text-muted-foreground">
               {t('hero.subtitle')}
             </p>
@@ -73,11 +93,11 @@ export default function HomePage() {
         </div>
         <div className="mx-auto mt-16 grid max-w-5xl gap-8 sm:grid-cols-2">
           {features.map((feature) => (
-            <Card key={feature.key} className="bg-card/50">
+            <Card key={feature.key}>
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-act bg-lifted">
+                    <feature.icon className="h-6 w-6 text-act" />
                   </div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
                 </div>
@@ -93,7 +113,7 @@ export default function HomePage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="bg-muted/30 py-24">
+      <section className="bg-card py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -105,7 +125,7 @@ export default function HomePage() {
           </div>
           <div className="mx-auto mt-16 grid max-w-4xl gap-8 md:grid-cols-3">
             <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-act text-2xl font-bold text-act-foreground">
                 1
               </div>
               <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step1.title')}</h3>
@@ -114,7 +134,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-2xl font-bold text-secondary-foreground">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-world text-2xl font-bold text-world-foreground">
                 2
               </div>
               <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step2.title')}</h3>
@@ -123,7 +143,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-act text-2xl font-bold text-act-foreground">
                 3
               </div>
               <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step3.title')}</h3>
@@ -137,7 +157,13 @@ export default function HomePage() {
 
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-24">
-        <Card className="mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10">
+        <Card className="relative mx-auto max-w-3xl overflow-hidden">
+          {/* The card is the plain card ground with one world rule along its
+              top edge — the hero's construct, so the page opens and closes on
+              the same idea. It used to be washed act-to-world; two brand
+              colours blended into each other is a smear, and act here would
+              only repeat the colour of the button inside the card. */}
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
           <CardContent className="flex flex-col items-center py-12 text-center">
             <h2 className="text-2xl font-bold sm:text-3xl">
               {t('cta.heading')}

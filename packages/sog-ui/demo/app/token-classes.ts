@@ -19,18 +19,79 @@ export const FILL: TokenClasses = {
   background: "bg-background",
   foreground: "bg-foreground",
   card: "bg-card",
+  lifted: "bg-lifted",
   "muted-foreground": "bg-muted-foreground",
   border: "bg-border",
-  primary: "bg-primary",
-  secondary: "bg-secondary",
-  "yty-harmony-strong": "bg-yty-harmony-strong",
-  "yty-harmony-soft": "bg-yty-harmony-soft",
-  "yty-glow-strong": "bg-yty-glow-strong",
-  "yty-glow-soft": "bg-yty-glow-soft",
-  "yty-valor-strong": "bg-yty-valor-strong",
-  "yty-valor-soft": "bg-yty-valor-soft",
-  "yty-wit-strong": "bg-yty-wit-strong",
-  "yty-wit-soft": "bg-yty-wit-soft",
+  act: "bg-act",
+  world: "bg-world",
+  "yty-harmony": "bg-yty-harmony",
+  "yty-glow": "bg-yty-glow",
+  "yty-valor": "bg-yty-valor",
+  "yty-wit": "bg-yty-wit",
+  destructive: "bg-destructive",
+  success: "bg-success",
+  info: "bg-info",
+  warning: "bg-warning",
+  "pick-1": "bg-pick-1",
+  "pick-2": "bg-pick-2",
+  "pick-3": "bg-pick-3",
+  "pick-4": "bg-pick-4",
+  "pick-5": "bg-pick-5",
+  "pick-6": "bg-pick-6",
+  "pick-7": "bg-pick-7",
+  "pick-8": "bg-pick-8",
+  "pick-9": "bg-pick-9",
+  "pick-10": "bg-pick-10",
+  "pick-11": "bg-pick-11",
+  "pick-12": "bg-pick-12",
+  "pick-13": "bg-pick-13",
+  "pick-14": "bg-pick-14",
+  "pick-15": "bg-pick-15",
+  "pick-16": "bg-pick-16",
+};
+
+/**
+ * The same tokens as foreground colours, for the glyphs and labels drawn in
+ * them. Every hue has one, because every hue is one colour: the value that
+ * fills a chip is the value that inks the label beside it, and there is no
+ * second variant to reach for.
+ *
+ * A `-foreground` has no entry here. It is the ink a fill carries, so it is only
+ * ever written on top of that fill and never on a neutral ground, which is the
+ * one thing this map is for.
+ */
+export const INK: TokenClasses = {
+  "yty-harmony": "text-yty-harmony",
+  "yty-glow": "text-yty-glow",
+  "yty-valor": "text-yty-valor",
+  "yty-wit": "text-yty-wit",
+  destructive: "text-destructive",
+  success: "text-success",
+  info: "text-info",
+  warning: "text-warning",
+};
+
+/**
+ * The same tokens as edges, for the glyph tiles drawn in them.
+ *
+ * A glyph tile is the lifted neutral with a border in its glyph's hue, so the
+ * hue reaches the reader as the mark and as the line around it and never as a
+ * ground.
+ */
+export const EDGE: TokenClasses = {
+  act: "border-act",
+  "yty-harmony": "border-yty-harmony",
+  "yty-glow": "border-yty-glow",
+  "yty-valor": "border-yty-valor",
+  "yty-wit": "border-yty-wit",
+};
+
+/** A status fill's own label colour, for the badges the status floor draws. */
+export const ON_FILL: TokenClasses = {
+  destructive: "text-destructive-foreground",
+  success: "text-success-foreground",
+  info: "text-info-foreground",
+  warning: "text-warning-foreground",
 };
 
 /** Face id → the family utility the theme generates for its token. */

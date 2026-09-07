@@ -44,8 +44,8 @@ export function Footer() {
               unoptimized
             />
             {/* The registered-trademark symbol, once per page, and only here:
-                the mark is registered and the Brand Guidebook asks for the ®
-                on the website footer, at the mark's most prominent appearance.
+                the mark is registered, so the ® is required on the website
+                footer, at the mark's most prominent appearance.
                 Once per page is enough, so no other logo placement carries it.
 
                 It hangs off the logo's top-right corner via absolute

@@ -43,7 +43,7 @@ export function NewcomerBadge({
     <span
       title={t("newcomerTooltip", { days })}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full border border-success/40 bg-success/15 px-1.5 py-0 text-[10px] font-medium leading-4 text-success",
+        "inline-flex shrink-0 items-center gap-1 rounded-full border border-border px-1.5 py-0 text-[10px] font-medium leading-4 text-success",
         className,
       )}
     >
@@ -92,7 +92,9 @@ function WeekMeter({ days }: { days: number }) {
           key={index}
           className={cn(
             "h-1 w-1 rounded-full",
-            index < PIPS - spent ? "bg-success" : "bg-success/25",
+            // A spent pip goes neutral rather than pale green: the hue is one
+            // value, and what is left of the month is what it marks.
+            index < PIPS - spent ? "bg-success" : "bg-border",
           )}
         />
       ))}

@@ -4,6 +4,7 @@ import { useId, useRef, useState } from "react";
 import Image from "next/image";
 import { ImagePlus, Images, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   sessionThumbnailWidth,
@@ -300,11 +301,11 @@ export function SessionPhotoStrip({
         handleDrop(Array.from(event.dataTransfer.files));
       }}
       className={cn(
-        "rounded-md bg-muted/40 p-3 transition-colors sm:p-3.5",
-        // Tinted and ringed rather than resized: the answer to "will this land
+        "rounded-md bg-lifted p-3 transition-colors sm:p-3.5",
+        // Ringed rather than resized: the answer to "will this land
         // here" has to be visible without the block growing under a pointer
         // that is mid-gesture.
-        dragging && "bg-primary/10 ring-2 ring-primary",
+        dragging && "ring-2 ring-act",
         // Greyed with the rest of the editor while the card commits, because
         // what is on this strip is part of what that Save is carrying.
         disabled && "opacity-60",
@@ -430,9 +431,14 @@ export function SessionPhotoStrip({
         </p>
       )}
       {error !== null && (
-        <p role="alert" className="mt-2 text-xs text-destructive">
+        <StatusLine
+          status="destructive"
+          size="xs"
+          role="alert"
+          className="mt-2"
+        >
           {t(PHOTO_ERROR_KEY[error])}
-        </p>
+        </StatusLine>
       )}
     </section>
   );
@@ -481,7 +487,7 @@ function StripThumbnail({
   // the rounding costs — and a clamped extreme ratio — into a letterbox rather
   // than a crop.
   const imageClass =
-    "h-20 w-auto max-w-full rounded-md border border-border bg-muted object-contain sm:h-24";
+    "h-20 w-auto max-w-full rounded-md border border-border bg-lifted object-contain sm:h-24";
 
   return (
     <li className="relative max-w-full shrink-0">
@@ -509,7 +515,7 @@ function StripThumbnail({
         aria-label={label}
         disabled={disabled}
         onClick={onRemove}
-        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+        className="glass absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:pointer-events-none disabled:opacity-50"
       >
         <X className="h-3.5 w-3.5" aria-hidden />
       </button>

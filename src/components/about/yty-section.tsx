@@ -16,10 +16,11 @@ export function YtySection({ id }: YtySectionProps) {
     <section id={id} className="container mx-auto scroll-mt-[var(--header-height)] px-4 py-16 sm:py-24">
       {/* Hero */}
       <div className="mx-auto max-w-3xl text-center">
+        {/* Ink, like every heading a reader reads through. The hero headline
+            is the library's one declared exception (`brand.ts`, beside the
+            label rule) and this is a section heading. */}
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {t.rich("hero.title", {
-            primary: (chunks) => <span className="text-primary">{chunks}</span>,
-          })}
+          {t("hero.title")}
         </h2>
         <p className="mt-6 text-lg leading-8 text-muted-foreground">
           {t("hero.subtitle")}
@@ -28,7 +29,11 @@ export function YtySection({ id }: YtySectionProps) {
 
       {/* Overview */}
       <div className="mx-auto mt-16 max-w-4xl">
-        <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
+        {/* The plain card ground: this block used to be washed act-to-world,
+            and a brand colour is never blended into another. Nothing replaces
+            it — the card is already lifted off the page, and a rule here would
+            be the hero's mark spent on a paragraph. */}
+        <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">{t("overview.heading")}</CardTitle>
           </CardHeader>
@@ -45,10 +50,12 @@ export function YtySection({ id }: YtySectionProps) {
         <p className="mt-2 text-center text-muted-foreground">{t("elements.subheading")}</p>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {YTY_ELEMENTS.map((el) => (
-            <Card key={el.id} className={`border-2 ${el.color.border}`}>
+            <Card key={el.id} className="border-2 border-border">
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${el.color.bg}`}>
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-lg border bg-lifted ${el.color.edge}`}
+                  >
                     <el.icon className={`h-6 w-6 ${el.color.accent}`} />
                   </div>
                   <div>

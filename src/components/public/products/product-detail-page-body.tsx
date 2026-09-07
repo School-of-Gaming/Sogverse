@@ -349,7 +349,7 @@ export function ProductDetailPageBody({
             {/* Unconditional, because every topic resolves to a label. The
                 middot separator is a CSS pseudo-element rather than a text
                 node, so it stays out of the message files. */}
-            <span className="normal-case text-primary before:mx-1.5 before:text-muted-foreground/50 before:content-['·']">
+            <span className="normal-case text-act before:mx-1.5 before:text-muted-foreground before:content-['·']">
               {topicLabel}
             </span>
           </span>
@@ -377,7 +377,7 @@ export function ProductDetailPageBody({
             design. `relative` is what the chips position against. A product with
             no picture gets the wordmark banner at the same ratio — and wears the
             chips on it, exactly as an un-imaged card does. */}
-        <div className="relative overflow-hidden rounded-lg border">
+        <div className="relative overflow-hidden rounded-lg border border-border">
           {/* Eager: the hero is the page's picture and reliably above the
               fold — the one banner that must not wait for a scroll. */}
           {/* The reading column's width: capped at 44rem from `lg`, and below

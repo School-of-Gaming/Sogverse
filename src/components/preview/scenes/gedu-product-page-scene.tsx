@@ -231,7 +231,7 @@ export function GeduProductPageScene({
    * platform, so a scene must not make it. What it does instead is what the
    * live page's refetch does a round trip later: stamp the entry with the
    * instant it went, which is what puts the button into its sent state and
-   * turns the amber card finished.
+   * turns the warning-toned card finished.
    *
    * **The stamp is deliberately delayed**, alone among this scene's writes. The
    * button is one control in three states — send, sending, sent — and the

@@ -40,7 +40,7 @@ export function UnassignedCard({
       ref={setNodeRef}
       className={cn(
         "border-dashed transition-colors",
-        isOver && "border-primary bg-primary/5",
+        isOver && "ring-2 ring-act",
       )}
     >
       <CardHeader className="pb-3">
@@ -48,7 +48,7 @@ export function UnassignedCard({
           <Inbox className="h-5 w-5 text-muted-foreground" />
           {t("unassigned.title")}
           {participations.length > 0 && (
-            <Badge variant="secondary" className="ml-1">
+            <Badge variant="outline" className="ml-1">
               {participations.length}
             </Badge>
           )}

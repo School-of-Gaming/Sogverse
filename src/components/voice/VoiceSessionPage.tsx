@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { GamerFlairDialog } from "@/components/member-flair";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
@@ -163,7 +164,9 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
       <div className="space-y-4">
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-sm text-destructive">{error}</p>
+            <StatusLine status="destructive" className="justify-center">
+              {error}
+            </StatusLine>
             <a
               href={backHref}
               className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground"

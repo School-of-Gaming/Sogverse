@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Check, Copy, KeyRound, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Check,
+  Copy,
+  KeyRound,
+  Loader2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -116,8 +123,11 @@ export function MinecraftPasswordResetCardView({
           </Field>
 
           {unsupportedDomain.length > 0 && (
-            <p className="flex items-start gap-2 text-sm text-warning">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <p className="flex items-start gap-2 text-sm text-foreground">
+              <AlertTriangle
+                className="mt-0.5 h-4 w-4 shrink-0 text-warning"
+                aria-hidden
+              />
               <span>
                 {t("unsupportedDomainEntries", {
                   count: unsupportedDomain.length,
@@ -129,8 +139,11 @@ export function MinecraftPasswordResetCardView({
           )}
 
           {tooMany && (
-            <p className="flex items-start gap-2 text-sm text-destructive">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <p className="flex items-start gap-2 text-sm text-foreground">
+              <AlertTriangle
+                className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
+                aria-hidden
+              />
               <span>
                 {t("tooMany", {
                   max: MINECRAFT_PASSWORD_RESET_MAX_USERNAMES,
@@ -151,7 +164,15 @@ export function MinecraftPasswordResetCardView({
             </Button>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p className="flex items-start gap-2 text-sm text-foreground">
+              <AlertCircle
+                className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
+                aria-hidden
+              />
+              <span>{error}</span>
+            </p>
+          )}
         </form>
 
         {results !== null && (
@@ -176,12 +197,7 @@ export function MinecraftPasswordResetCardView({
                   // submitted list is de-duplicated, but a fixture or a future
                   // caller need not be — so the index is the only stable key.
                   key={`${result.username}-${index}`}
-                  className={cn(
-                    "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-md border px-3 py-2",
-                    result.ok
-                      ? "border-border bg-muted/30"
-                      : "border-destructive/40 bg-destructive/5",
-                  )}
+                  className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-md border border-border bg-lifted px-3 py-2"
                 >
                   {result.ok ? (
                     <>
@@ -206,7 +222,11 @@ export function MinecraftPasswordResetCardView({
                       <p className="min-w-0 truncate text-sm font-medium">
                         {result.username}
                       </p>
-                      <p className="text-sm text-destructive">
+                      <p className="flex items-center gap-1.5 text-sm text-foreground">
+                        <AlertCircle
+                          className="h-3.5 w-3.5 shrink-0 text-destructive"
+                          aria-hidden
+                        />
                         <FailureMessage failure={result.error} />
                       </p>
                     </>
@@ -237,8 +257,8 @@ function PasswordChip({ upn, password }: { upn: string; password: string }) {
       type="button"
       onClick={() => void copy(password)}
       className={cn(
-        "flex shrink-0 items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 font-mono text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        copied && "border-success text-success",
+        "flex shrink-0 items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 font-mono text-sm transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+        copied && "text-success",
       )}
       // The visible content is the password itself, which a screen reader would
       // otherwise announce with no hint that it can be copied or whose it is.
@@ -266,7 +286,7 @@ function CopyAllButton({ lines }: { lines: readonly string[] }) {
       variant="outline"
       size="sm"
       onClick={() => void copy(lines.join("\n"))}
-      className={cn("gap-1.5", copied && "border-success/40 text-success")}
+      className={cn("gap-1.5", copied && "text-success")}
     >
       {copied ? (
         <Check className="h-4 w-4" aria-hidden />

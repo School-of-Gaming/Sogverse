@@ -37,17 +37,17 @@ export function GeduProductPageSkeleton() {
         {/* Masthead: eyebrow, title, identity line — same three-row stack, same
             bottom rule. */}
         <header className="mt-5 space-y-2 border-b border-border pb-5">
-          <div className="h-3 w-16 animate-pulse rounded bg-muted" />
-          <div className="h-8 w-72 max-w-full animate-pulse rounded-md bg-muted" />
-          <div className="h-4 w-48 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-16 animate-pulse rounded bg-lifted" />
+          <div className="h-8 w-72 max-w-full animate-pulse rounded-md bg-lifted" />
+          <div className="h-4 w-48 animate-pulse rounded bg-lifted" />
         </header>
 
         {/* The standing-notes row. */}
         <Card className="mt-6">
           <CardContent className="space-y-3 p-4 sm:p-5">
-            <div className="h-3 w-32 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-full animate-pulse rounded bg-muted" />
-            <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-32 animate-pulse rounded bg-lifted" />
+            <div className="h-4 w-full animate-pulse rounded bg-lifted" />
+            <div className="h-4 w-4/5 animate-pulse rounded bg-lifted" />
           </CardContent>
         </Card>
 
@@ -57,7 +57,7 @@ export function GeduProductPageSkeleton() {
           <div className="min-w-0 space-y-3 border-l border-border pl-6 lg:col-span-2">
             {[0, 1, 2, 3].map((index) => (
               <div key={index} className="relative">
-                <span className="absolute -left-6 top-5 h-2.5 w-2.5 -translate-x-1/2 animate-pulse rounded-full bg-muted ring-4 ring-background" />
+                <span className="absolute -left-6 top-5 h-2.5 w-2.5 -translate-x-1/2 animate-pulse rounded-full bg-lifted ring-4 ring-background" />
                 <GhostEntry lines={index === 0 ? 3 : 2} />
               </div>
             ))}
@@ -78,14 +78,14 @@ function GhostEntry({ lines }: { lines: number }) {
   return (
     <div className="space-y-3 rounded-lg border border-border p-4 sm:p-5">
       <div className="space-y-1.5">
-        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-        <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-32 animate-pulse rounded bg-lifted" />
+        <div className="h-3 w-24 animate-pulse rounded bg-lifted" />
       </div>
       <div className="space-y-2">
         {Array.from({ length: lines }, (_, line) => (
           <div
             key={line}
-            className="h-3 animate-pulse rounded bg-muted"
+            className="h-3 animate-pulse rounded bg-lifted"
             style={{ width: `${100 - line * 12}%` }}
           />
         ))}
@@ -98,9 +98,9 @@ function GhostEntry({ lines }: { lines: number }) {
 function GhostRailCard({ rows }: { rows: number }) {
   return (
     <div className="space-y-3 rounded-lg border border-border p-4">
-      <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+      <div className="h-3 w-24 animate-pulse rounded bg-lifted" />
       {Array.from({ length: rows }, (_, row) => (
-        <div key={row} className="h-12 animate-pulse rounded-md bg-muted/60" />
+        <div key={row} className="h-12 animate-pulse rounded-md bg-lifted" />
       ))}
     </div>
   );

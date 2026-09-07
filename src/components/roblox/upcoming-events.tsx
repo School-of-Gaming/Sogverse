@@ -74,7 +74,7 @@ export function UpcomingEvents({
       </div>
 
       {products.length === 0 ? (
-        <Card className="mx-auto mt-12 max-w-2xl bg-card/50">
+        <Card className="mx-auto mt-12 max-w-2xl">
           <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
             <CalendarDays className="h-8 w-8 text-muted-foreground" />
             <p className="max-w-md text-muted-foreground">{t("empty")}</p>

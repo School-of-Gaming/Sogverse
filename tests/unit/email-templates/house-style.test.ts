@@ -11,7 +11,7 @@ import {
   calendarInvitationStartDate,
   calendarInvitationUntilDate,
 } from "@/lib/email-templates/calendar-invitation";
-import { BRAND, DARK_THEME, GRADIENT, STATUS, STATUS_TINT } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 
 /**
@@ -40,9 +40,7 @@ const PALETTE = new Set(
   [
     ...Object.values(BRAND),
     ...Object.values(DARK_THEME),
-    ...Object.values(GRADIENT),
     ...Object.values(STATUS),
-    ...Object.values(STATUS_TINT),
   ].map((hex) => hex.toLowerCase()),
 );
 
@@ -55,8 +53,8 @@ const RADII = new Set(Object.values(RADIUS));
  * so the result is unreadable rather than merely off-brand.
  */
 const LEGAL_ON_FILL: Record<string, string> = {
-  [BRAND.primary.toLowerCase()]: BRAND.primaryForeground.toLowerCase(),
-  [BRAND.secondary.toLowerCase()]: BRAND.secondaryForeground.toLowerCase(),
+  [BRAND.act.toLowerCase()]: BRAND.actForeground.toLowerCase(),
+  [BRAND.world.toLowerCase()]: BRAND.worldForeground.toLowerCase(),
 };
 
 /**
@@ -345,10 +343,9 @@ function allMails(): [string, string][] {
 }
 
 /** Every `style="…"` value in a document, with the whole opening tag it sits on. */
-function styleAttributes(html: string): { tag: string; openingTag: string; style: string }[] {
+function styleAttributes(html: string): { tag: string; style: string }[] {
   return [...html.matchAll(/<(\w+)\b[^>]*?\sstyle="([^"]*)"[^>]*>/g)].map((m) => ({
     tag: m[1],
-    openingTag: m[0],
     style: m[2],
   }));
 }
@@ -406,7 +403,7 @@ describe("house style, over every mail we can send", () => {
         const isButton = /^display:(inline-)?block;padding:12px (8|32)px;font-size:14px;font-weight:bold;color:#[0-9a-fA-F]{6};text-decoration:none;$/.test(
           style,
         );
-        const isInlineLink = style === `color:${BRAND.primary};text-decoration:underline;`;
+        const isInlineLink = style === `color:${BRAND.act};text-decoration:underline;`;
         expect(
           isButton || isInlineLink,
           `${name}: hand-rolled anchor — use ctaButton/ctaButtonRow/inlineLink.\n  ${style}`,
@@ -461,20 +458,15 @@ describe("house style, over every mail we can send", () => {
   /**
    * Any background a mail depends on is declared twice — as a colour and as a
    * flat gradient of it — because a dark theme rewrites `background-color` and
-   * leaves gradients alone. The exception is the hero, whose gradient is a real
-   * one applied by class.
+   * leaves gradients alone. There is no exception: the shell used to carry a
+   * real two-tone gradient by class and was exempted for it, and the sweep that
+   * removed the gradient removed the exemption with it.
    */
   it("declares every background twice", () => {
     for (const [name, html] of allMails()) {
-      // The hero's gradient is applied by class, deliberately: Gmail rewrites an
-      // inline linear-gradient() into url(linear-gradient(...)) and breaks it,
-      // so those elements carry their background-image in the style block.
-      // Keyed on the element's own opening tag, not its tag *name* — the hero
-      // class sits on a <table>, and exempting by name handed every future table
-      // the same pass.
-      for (const { openingTag, style } of styleAttributes(html)) {
+      for (const { style } of styleAttributes(html)) {
         const fill = /background-color:\s*(#[0-9a-fA-F]{3,8})/.exec(style);
-        if (!fill || openingTag.includes("hero-gradient")) continue;
+        if (!fill) continue;
         const hex = fill[1];
         expect(
           style.includes(`background-image:linear-gradient(${hex},${hex})`),
@@ -543,12 +535,12 @@ describe("house style, over every mail we can send", () => {
 describe("every pinned colour has been verified, not reasoned about", () => {
   /** Pinned colours seen to survive, and where that was seen. */
   const VERIFIED_PINS: Record<string, { hex: string; evidence: string }> = {
-    "brand-primary": {
-      hex: BRAND.primary,
+    "brand-act": {
+      hex: BRAND.act,
       evidence: "Gmail Android, dark system theme, 2026-08-22 — components reference, header lockup and V7.",
     },
     "cta-on-brand": {
-      hex: BRAND.primaryForeground,
+      hex: BRAND.actForeground,
       evidence: "Gmail Android, dark system theme, 2026-08-22 — C1. Fixed a real white/black flip.",
     },
   };

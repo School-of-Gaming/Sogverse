@@ -182,7 +182,7 @@ function Dialog({ open, onOpenChange, size = "default", children }: DialogProps)
           onSubmit={(event) => event.stopPropagation()}
         >
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-scrim"
             onClick={() => onOpenChange(false)}
           />
           <div className={cn("relative z-50 w-full", DIALOG_SIZE_CLASS[size])}>

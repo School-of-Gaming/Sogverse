@@ -101,7 +101,7 @@
     "pageTitle": "maH tIqel",
     "sectionNav": "ghItlhvam DevwI’",
     "hero": {
-      "title": "<primary>noH Quj yejHaD</primary> tIqel",
+      "title": "noH Quj yejHaD tIqel",
       "subtitle": "naDev Quj yay’ moj. puqpu’, Gedu’pu’ Dun, je Qujmey puqpu’ muSHa’bogh — Minecraft, Roblox, Fortnite latlh je — DIboqmoH. jup chu’ luSuq, laHmey teH luchenmoH, ’ej lutIvqu’."
     },
     "quote": {
@@ -1815,7 +1815,7 @@
   },
   "schools": {
     "hero": {
-      "title": "<primary>venglIjDaq</primary> Qup ghomHommey",
+      "title": "venglIjDaq Qup ghomHommey",
       "subtitle": "Suomngan vengmey tlhej ghomHommey chenmoH School of Gaming. venglIj yISam ’ej nuq tu’lu’ yIlegh.",
       "howItWorks": "venglIj ghaj, juHvo’ rurmey ghap puqlIj DuSaQDaq ghomHom. vummeH lughoSmoH Qup pIn’a’ reH tu’lu’."
     },
@@ -2099,7 +2099,7 @@
   },
   "home": {
     "hero": {
-      "title": "naDev<br></br><primary>Daq tIv</primary><br></br>moj<br></br><secondary>Qap tIv</secondary>",
+      "title": "naDev<br></br>Daq tIv<br></br>moj<br></br><act>Qap tIv</act>",
       "subtitle": "po’taHvIS chenmoHlu’ ghom’a’meymaj: Quj QaQ Hob chenmoH — Minecraft, Roblox, Fortnite latlh je. Gedu’pu’ Dun Hoch qep ghojmoHmeH tIv chenmoH — jup chu’ luSuq puqpu’, laHmeychaj mojaq luchenmoH, ’ej muSHa’bogh lutIv.",
       "aboutCta": "maH yIqel"
     },
@@ -2494,24 +2494,6 @@
       "ice-cream": "bIQ’a’ nay’",
       "coffee": "qa’vIn"
     },
-    "zoneColor": {
-      "red": "Doq",
-      "orange": "qIm",
-      "amber": "SuD Doq",
-      "yellow": "SuD wov",
-      "lime": "SuD’a’",
-      "green": "SuD",
-      "emerald": "SuDqu’",
-      "teal": "SuD chal",
-      "cyan": "Sayan",
-      "sky": "chal",
-      "blue": "SuD qIj",
-      "indigo": "indigo",
-      "violet": "morgh",
-      "purple": "morghqu’",
-      "fuchsia": "pIQqu’",
-      "pink": "pIQ"
-    },
     "instant": {
       "joinFailed": "Daq muv Dabe’lu’. yItoH’egh!",
       "share": {
@@ -2568,7 +2550,7 @@
   },
   "yty": {
     "hero": {
-      "title": "<primary>Yty</primary> nuq?",
+      "title": "Yty nuq?",
       "subtitle": "Yty ’oH HoS’e’ Sogverse rojmoHbogh. QaQ Qu’mey lutaHvIS — laHmey chu’ lughoj, juppu’ luSuq, batlh luDa, ’ej ghomDaq lumuv — Yty luSuq toy’wI’pu’, chaHvaD HochvaD je."
     },
     "overview": {
@@ -2850,7 +2832,7 @@
   },
   "roblox": {
     "hero": {
-      "title": "yIchen<br></br><primary>yItIv</primary><br></br><secondary>yIghaj</secondary>",
+      "title": "yIchen<br></br>yItIv<br></br><act>yIghaj</act>",
       "subtitle": "qetlh chenmoHmeH ghojmoH — Huch Hutlh! loDHompu’ be’Hompu’vaD. Lynx Educate, School of Gaming, je Roblox boqwI’pu’.",
       "cta": "may’Daq yIghoS!"
     },

@@ -15,6 +15,9 @@
     "type-check": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p demo/tsconfig.json",
     "tokens": "node src/tokens/generate.ts"
   },
+  "dependencies": {
+    "lucide-react": "^1.41.0"
+  },
   "peerDependencies": {
     "react": "19.2.3",
     "react-dom": "19.2.3"

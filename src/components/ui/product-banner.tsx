@@ -123,7 +123,7 @@ function SogFallback({ className }: { className?: string }) {
       preserveAspectRatio="xMidYMid meet"
       className={cn("h-full w-full", className)}
     >
-      <rect width="100%" height="100%" className="fill-muted" />
+      <rect width="100%" height="100%" className="fill-lifted" />
       <text
         x="50%"
         y="50%"
@@ -133,7 +133,7 @@ function SogFallback({ className }: { className?: string }) {
         fontWeight="900"
         letterSpacing="-2"
         fontFamily="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        className="fill-primary"
+        className="fill-act"
       >
         SOG
       </text>

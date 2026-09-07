@@ -96,7 +96,7 @@ export function SessionFeedAlertBadge({
         title={label}
         className={cn(
           cornerClass,
-          "transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         )}
       >
         {body}
@@ -107,10 +107,7 @@ export function SessionFeedAlertBadge({
   return (
     <Badge
       variant="outline"
-      className={cn(
-        "gap-1.5 border-warning/50 bg-warning/10 text-warning",
-        className,
-      )}
+      className={cn("gap-1.5 text-warning", className)}
     >
       <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
       {label}

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertDescription, StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -180,7 +181,7 @@ function GatePlaceholder({ error, onClose }: { error: boolean; onClose: () => vo
   if (error) {
     return (
       <div className="flex min-h-[16rem] flex-col items-center justify-center gap-4 text-center">
-        <p className="text-sm text-destructive">{t("genericError")}</p>
+        <StatusLine status="destructive">{t("genericError")}</StatusLine>
         <Button variant="outline" onClick={onClose}>
           {c("cancel")}
         </Button>
@@ -392,7 +393,7 @@ export function AddGamerFormCard({
   // (see admin/location-form-dialog.tsx). Aligned with Input's height/border
   // so the form reads as a single coherent column.
   const selectClassName =
-    "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+    "flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
     <DialogContent
@@ -416,9 +417,9 @@ export function AddGamerFormCard({
             radios. */}
         <div className="space-y-4 py-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {step === "signIn" ? (
@@ -672,12 +673,12 @@ function GenderButton({
         // Hyphenation first (the document carries the locale's `lang`, so a
         // browser that can hyphenate does it properly), a hard word break only
         // as the fallback.
-        "flex min-h-10 items-center justify-center rounded-md border px-2 py-1.5 text-center text-xs font-medium leading-tight transition-colors hyphens-auto break-words sm:px-3 sm:text-sm",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "flex min-h-10 items-center justify-center rounded-md border border-border px-2 py-1.5 text-center text-xs font-medium leading-tight transition-colors hyphens-auto break-words sm:px-3 sm:text-sm",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed disabled:opacity-50",
         selected
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          ? "bg-act text-act-foreground"
+          : "bg-background hover:bg-hover hover:text-foreground",
       )}
     >
       {label}

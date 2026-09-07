@@ -71,7 +71,7 @@ import type {
  *   *ended* also renders no Join, for the same reason: there is no next session
  *   for it to open for.
  * - **Nothing on this page is editable and nothing on it is owed.** No
- *   completeness states, no amber warnings, no editors. Those are the gedu's
+ *   completeness states, no warnings, no editors. Those are the gedu's
  *   workflow, and a family shown warnings about paperwork they cannot do would
  *   be reading the platform's problems instead of their child's club.
  * - **The enrollment's own problems are the exception, and they are the
@@ -588,13 +588,19 @@ function ProblemNotice({
   return (
     <p
       className={cn(
-        "mt-5 flex items-start gap-2 rounded-md border px-3 py-2.5 text-sm",
+        "mt-5 flex items-start gap-2 rounded-md border border-border px-3 py-2.5 text-sm",
         tone === "destructive"
-          ? "border-destructive/40 bg-destructive/10 text-destructive"
-          : "border-border bg-muted/40 text-muted-foreground",
+          ? "text-foreground"
+          : "bg-lifted text-muted-foreground",
       )}
     >
-      <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+      <Icon
+        className={cn(
+          "mt-0.5 h-4 w-4 shrink-0",
+          tone === "destructive" && "text-destructive",
+        )}
+        aria-hidden
+      />
       <span className="min-w-0">{children}</span>
     </p>
   );

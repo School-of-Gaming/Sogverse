@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -172,21 +171,24 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
         {/* The brand slogan for the people this page is addressed to, placed
             once and only here — lower and smaller than the title it sits
             under, which is the sanctioned shape for a slogan on a page. */}
-        <p className="text-center text-sm font-medium text-primary">
+        <p className="text-center text-sm font-medium text-act">
           {t("registerGedu.slogan")}
         </p>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <Alert variant="info">
-            <Info className="h-4 w-4 shrink-0" />
             <div>
-              <AlertTitle>{t("registerGedu.certificationAlertTitle")}</AlertTitle>
+              <AlertTitle sentence>
+                {t("registerGedu.certificationAlertTitle")}
+              </AlertTitle>
               <AlertDescription>{t("registerGedu.certificationAlertDescription")}</AlertDescription>
             </div>
           </Alert>
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={c("firstName")} htmlFor="firstName">
@@ -327,7 +329,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
             <div>
               {t.rich("registerGedu.alreadyHaveAccount", {
                 link: (chunks) => (
-                  <Link href={ROUTES.login} className="text-primary hover:underline">
+                  <Link href={ROUTES.login} className="text-act hover:underline">
                     {chunks}
                   </Link>
                 ),
@@ -337,7 +339,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
               {t.rich("needHelp", {
                 email: SUPPORT_EMAIL,
                 link: (chunks) => (
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-act hover:underline">
                     {chunks}
                   </a>
                 ),

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -89,14 +90,14 @@ export function RequestPasswordLinkButton({
           it locks on success, so a reader who cannot see the sentence has
           nothing left on the page telling them the mail is on its way. */}
       {outcome === "sent" && (
-        <p role="status" className="text-sm text-success">
+        <StatusLine status="success" role="status">
           {t("gamerPasswordLinkSent")}
-        </p>
+        </StatusLine>
       )}
       {outcome === "failed" && (
-        <p role="alert" className="text-sm text-destructive">
+        <StatusLine status="destructive" role="alert">
           {t("gamerPasswordLinkFailed")}
-        </p>
+        </StatusLine>
       )}
     </div>
   );

@@ -81,16 +81,14 @@ export function RegionLockRadios({
           <label
             key={option.code ?? "none"}
             className={cn(
-              "flex cursor-pointer items-center gap-3 rounded-md border p-3 text-sm transition-colors",
-              selected
-                ? "border-primary bg-primary/5"
-                : "border-input hover:border-foreground/30"
+              "flex cursor-pointer items-center gap-3 rounded-md border border-border p-3 text-sm transition-colors",
+              selected && "border-act"
             )}
           >
             <input
               type="radio"
               name="regionLock"
-              className="h-4 w-4 shrink-0"
+              className="h-4 w-4 shrink-0 accent-act"
               checked={selected}
               onChange={() => onChange(option.code)}
             />
@@ -110,7 +108,7 @@ export function RegionLockRadios({
                 <Globe
                   className={cn(
                     "h-5 w-5",
-                    selected ? "text-primary" : "text-muted-foreground"
+                    selected ? "text-act" : "text-muted-foreground"
                   )}
                 />
               )}

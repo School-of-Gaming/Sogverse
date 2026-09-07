@@ -108,7 +108,7 @@
     "pageTitle": "À propos",
     "sectionNav": "Sur cette page",
     "hero": {
-      "title": "À propos de <primary>School of Gaming</primary>",
+      "title": "À propos de School of Gaming",
       "subtitle": "Du temps d’écran au temps qui fait grandir. Nous réunissons les enfants, des animateurs professionnels et les jeux qu’ils adorent déjà — Minecraft, Roblox, Fortnite et bien d’autres — pour créer des moments où les liens se nouent, les compétences se forgent, et le plaisir est au rendez-vous."
     },
     "quote": {
@@ -1771,7 +1771,7 @@
   },
   "schools": {
     "hero": {
-      "title": "Des clubs de jeu dans <primary>votre commune</primary>",
+      "title": "Des clubs de jeu dans votre commune",
       "subtitle": "School of Gaming anime des clubs en partenariat avec les communes finlandaises. Trouvez votre commune et découvrez l’offre disponible.",
       "howItWorks": "Selon la commune, le club se retrouve soit en ligne depuis la maison, soit sur place dans l’école de votre enfant. Un animateur professionnel est toujours présent pour encadrer l’activité."
     },
@@ -2055,7 +2055,7 @@
   },
   "home": {
     "hero": {
-      "title": "Du temps d’écran<br></br><primary>au temps qui</primary><br></br>fait<br></br><secondary>grandir</secondary>",
+      "title": "Du temps d’écran<br></br>au temps qui<br></br>fait<br></br><act>grandir</act>",
       "subtitle": "Nos clubs, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis — sur Minecraft, Roblox, Fortnite et bien d’autres. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter.",
       "aboutCta": "En savoir plus sur nous"
     },
@@ -2450,24 +2450,6 @@
       "ice-cream": "Glace",
       "coffee": "Café"
     },
-    "zoneColor": {
-      "red": "Rouge",
-      "orange": "Orange",
-      "amber": "Ambre",
-      "yellow": "Jaune",
-      "lime": "Vert citron",
-      "green": "Vert",
-      "emerald": "Émeraude",
-      "teal": "Bleu sarcelle",
-      "cyan": "Cyan",
-      "sky": "Bleu ciel",
-      "blue": "Bleu",
-      "indigo": "Indigo",
-      "violet": "Violet",
-      "purple": "Pourpre",
-      "fuchsia": "Fuchsia",
-      "pink": "Rose"
-    },
     "instant": {
       "joinFailed": "Impossible de rejoindre la salle. Veuillez réessayer.",
       "share": {
@@ -2524,7 +2506,7 @@
   },
   "yty": {
     "hero": {
-      "title": "Qu’est-ce que l’<primary>Yty</primary> ?",
+      "title": "Qu’est-ce que l’Yty ?",
       "subtitle": "L’Yty est la force qui maintient l’équilibre de Sogverse. Apprendre quelque chose de nouveau, se faire un ami, se comporter avec bienveillance, participer à la communauté : chaque bonne action fait grandir l’Yty de chaque joueur et celle de Sogverse tout entier."
     },
     "overview": {
@@ -3137,7 +3119,7 @@
   },
   "roblox": {
     "hero": {
-      "title": "Construisez<br></br><primary>Jouez</primary><br></br><secondary>Publiez</secondary>",
+      "title": "Construisez<br></br>Jouez<br></br><act>Publiez</act>",
       "subtitle": "Un programme gratuit de création de jeux pour les ados, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
       "cta": "Lancez-vous !"
     },

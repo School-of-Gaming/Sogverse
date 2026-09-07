@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { CircleCheck } from "lucide-react";
+import { AlertTriangle, CircleCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ProductAttention } from "./admin-dashboard-data";
 import { PixelSprite, TROPHY_CUP } from "./pixel-art";
@@ -45,7 +45,8 @@ export function NeedsAttentionPanel({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-xl">{t("title")}</CardTitle>
-        <span className="rounded-full bg-warning/15 px-3 py-1 text-sm font-semibold text-warning">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-sm font-semibold text-warning">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {products.length}
         </span>
       </CardHeader>
@@ -116,7 +117,7 @@ function AllClearPanel() {
             this face is Swedish's ä (U+00E4), which is inside the `latin`
             subset the font is loaded with, so it renders in the pixel face
             rather than falling back mid-word. */}
-        <CardTitle className="font-display text-sm leading-relaxed tracking-normal text-primary sm:text-base">
+        <CardTitle className="font-display text-sm leading-relaxed tracking-normal text-act sm:text-base">
           {t("allClearTitle")}
         </CardTitle>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">

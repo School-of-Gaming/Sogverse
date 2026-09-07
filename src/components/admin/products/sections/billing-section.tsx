@@ -84,10 +84,8 @@ export function BillingSection({
                 <label
                   key={mode}
                   className={cn(
-                    "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors",
-                    active
-                      ? "border-primary bg-primary/5"
-                      : "border-input hover:border-foreground/30"
+                    "flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 transition-colors",
+                    active && "border-act"
                   )}
                 >
                   <input
@@ -95,11 +93,11 @@ export function BillingSection({
                     name="paidMode"
                     checked={active}
                     onChange={() => setState(withPaidMode(state, mode))}
-                    className="mt-1"
+                    className="mt-1 accent-act"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 font-medium">
-                      <Icon className="h-4 w-4 text-primary" />
+                      <Icon className="h-4 w-4 text-act" />
                       {t(`labels.${mode}`)}
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -114,7 +112,7 @@ export function BillingSection({
       )}
 
       {showExternalInfo && (
-        <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
+        <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-lifted px-3 py-2 text-sm">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div>
             <div className="font-medium">{t("labels.paidByMunicipality")}</div>
@@ -145,7 +143,7 @@ export function BillingSection({
       {/* Read-only by design: the treatment follows from the product type, and
           an admin who could pick it is an admin who could pick the wrong one. */}
       {isPaid && (
-        <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
+        <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-lifted px-3 py-2 text-sm">
           <Percent className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="space-y-1">
             <div className="font-medium">
@@ -168,10 +166,8 @@ export function BillingSection({
                 <label
                   key={mode}
                   className={cn(
-                    "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
-                    active
-                      ? "border-primary bg-primary/5"
-                      : "border-input hover:border-foreground/30"
+                    "flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
+                    active && "border-act"
                   )}
                 >
                   <input
@@ -181,7 +177,7 @@ export function BillingSection({
                     onChange={() =>
                       setState({ ...state, uncapped: mode === "unlimited" })
                     }
-                    className="mt-1 h-4 w-4"
+                    className="mt-1 h-4 w-4 accent-act"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="font-medium">

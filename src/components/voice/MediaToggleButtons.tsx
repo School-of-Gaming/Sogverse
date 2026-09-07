@@ -25,7 +25,7 @@ interface MediaToggleProps {
  * the toggle action are passed in, which is what lets the lobby drive them off a
  * raw `getUserMedia` stream while the dock drives them off the Daily call object.
  *
- * Color grammar (matches the rest of the control dock): on → `default` (primary
+ * Color grammar (matches the rest of the control dock): on → `default` (act
  * fill = "live"), off → `outline`, with the one deliberate exception that a
  * *muted mic* is `destructive` (red) — not a danger flag but the weight of the
  * next click, since un-muting makes the user audible to everyone.

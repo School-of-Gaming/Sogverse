@@ -11,6 +11,7 @@ import {
   type FamilyMember,
   type SwitchAccountCredentials,
 } from "@/services/family";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AddGamerDialog } from "./AddGamerDialog";
 import { SwitchProfileDialog } from "./SwitchProfileDialog";
 import { SwitchGateDialog, type SwitchGateMode } from "./SwitchGateDialog";
@@ -82,7 +83,7 @@ interface FamilyProfileSelectorProps {
  *
  * One centered, wrap-on-every-breakpoint row: parents first, then gamers,
  * then the "Add Gamer" tile. Never horizontal-scrolls. The active viewer's
- * tile gets a primary-colored ring; clicking another tile signs out and
+ * tile gets an act-colored ring; clicking another tile signs out and
  * signs in as that account with no confirmation dialog.
  *
  * The "Add Gamer" tile opens AddGamerDialog. useCreateGamer's onSuccess
@@ -193,9 +194,9 @@ export function FamilyProfileSelector({
 
   if (error) {
     return (
-      <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-        {error.message || t("loadFailed")}
-      </div>
+      <Alert variant="destructive">
+        <AlertDescription>{error.message || t("loadFailed")}</AlertDescription>
+      </Alert>
     );
   }
 
@@ -255,9 +256,9 @@ export function FamilyProfileSelector({
   return (
     <div className="space-y-4">
       {switchError && (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {switchError}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{switchError}</AlertDescription>
+        </Alert>
       )}
 
       {/* Single wrap-on-every-breakpoint row: parents first, then gamers,

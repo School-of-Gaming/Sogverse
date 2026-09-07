@@ -647,7 +647,7 @@ describe("write-path IDOR (§3.4 check 3)", () => {
       group_id: GROUP,
       name: "Private",
       icon: "ghost",
-      color: "indigo",
+      color: "12",
       is_locked: true,
       created_by: TEST_IDS.ADMIN,
     });

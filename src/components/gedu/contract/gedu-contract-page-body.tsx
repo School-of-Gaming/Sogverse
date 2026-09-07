@@ -142,10 +142,13 @@ export function GeduContractPageBody({
             </CardContent>
           </Card>
         ) : (
-          <Card className="border-success/40 bg-success/5">
+          <Card>
             <CardContent className="space-y-4 p-6">
-              <p className="flex items-center gap-2 font-medium text-success">
-                <BadgeCheck className="h-5 w-5 shrink-0" aria-hidden />
+              <p className="flex items-center gap-2 font-medium text-foreground">
+                <BadgeCheck
+                  className="h-5 w-5 shrink-0 text-success"
+                  aria-hidden
+                />
                 {t("acceptedTitle")}
               </p>
               {/* The name as it stood when it was signed — a snapshot on the
@@ -252,8 +255,8 @@ function CriminalRecordCheckSection({
       {/* One glyph for the check across every surface it appears on, admin and
           gedu alike; the colour and the words carry which way it stands. */}
       {standing === null ? null : standing.passed ? (
-        <p className="flex items-center gap-2 text-sm font-medium text-success">
-          <Scale className="h-4 w-4 shrink-0" aria-hidden />
+        <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Scale className="h-4 w-4 shrink-0 text-success" aria-hidden />
           {standing.recordedAt
             ? t("recordedOn", {
                 date: formatDate(standing.recordedAt, locale, {
@@ -268,8 +271,8 @@ function CriminalRecordCheckSection({
         // taken away — the check gates none of this account's access — it is a
         // thing still owed, which is the same register the dashboard's
         // next-step band uses for it.
-        <p className="flex items-center gap-2 text-sm font-medium text-warning">
-          <Scale className="h-4 w-4 shrink-0" aria-hidden />
+        <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Scale className="h-4 w-4 shrink-0 text-warning" aria-hidden />
           {t("stillNeeded")}
         </p>
       )}

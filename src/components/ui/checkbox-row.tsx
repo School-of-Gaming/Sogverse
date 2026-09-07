@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cva } from "class-variance-authority";
+import { Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
@@ -19,9 +20,14 @@ const checkboxRowVariants = cva(
         sm: "text-sm",
         xs: "text-xs",
       },
+      // A ticked row is marked by its own edge going act, not by a wash
+      // behind it: on the dark ground act is a figure, and the edge is free
+      // here because the row is bordered already. The border *colour* lives in
+      // this variant rather than in the base string, so the two values can
+      // never both be emitted and resolve by stylesheet order.
       checked: {
-        true: "border-primary bg-primary/5",
-        false: "border-input",
+        true: "border-act",
+        false: "border-border",
       },
       disabled: {
         true: "cursor-not-allowed opacity-60",
@@ -30,9 +36,10 @@ const checkboxRowVariants = cva(
     },
     compoundVariants: [
       // The hover fill is the border's promise being kept — it lights the same
-      // area the click will act on. A ticked row already carries its own fill
-      // and a disabled one is not a target, so neither takes it.
-      { checked: false, disabled: false, class: "hover:bg-accent/50" },
+      // area the click will act on. A disabled row is not a target, so it does
+      // not take it. A ticked row does now: it was excluded while it carried a
+      // wash of its own, and the wash is gone.
+      { disabled: false, class: "hover:bg-hover" },
     ],
     defaultVariants: { size: "sm", checked: false, disabled: false },
   },
@@ -225,13 +232,21 @@ const CheckboxRow = React.forwardRef<HTMLInputElement, CheckboxRowProps>(
             <span
               id={hintId}
               className={cn(
-                "mt-1 block text-xs",
-                // Quiet info: coloured text, no fill and no border. The row is
-                // already bordered, so a second edge here would read as a box
-                // inside a box rather than as a note.
-                hintTone === "info" ? "text-info" : "text-muted-foreground",
+                // Quiet info: a mark, no fill and no border. The row is already
+                // bordered, so a second edge here would read as a box inside a
+                // box rather than as a note — and the hint itself is something
+                // the reader reads through, so it stays ink and the glyph
+                // beside it is what carries the tone.
+                "mt-1 block text-xs text-muted-foreground",
+                hintTone === "info" && "flex items-start gap-1.5",
               )}
             >
+              {hintTone === "info" && (
+                <Info
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info"
+                  aria-hidden
+                />
+              )}
               {hint}
             </span>
           )}

@@ -12,6 +12,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { LayoutDashboard, Loader2, LogOut, Settings } from "lucide-react";
+import { StatusLine } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { NavChevron } from "@/components/ui/nav-chevron";
@@ -85,7 +86,7 @@ const ROW_CLASS =
 
 /** Added to the rows that do something when clicked — which is all of them. */
 const ACTIONABLE_ROW_CLASS =
-  "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none";
+  "hover:bg-hover hover:text-foreground focus:bg-lifted focus:text-foreground focus:outline-none";
 
 /**
  * Every row carries `data-account-menu-item` so arrow-key navigation can find
@@ -490,7 +491,7 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
           // here instead.
           aria-label={menuLabel}
           onClick={() => (open ? setOpen(false) : openMenu())}
-          className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+          className="rounded-md focus:outline-none focus:ring-2 focus:ring-act"
         >
           {/* The open state takes the ring the avatar used to wear when the page
               it linked to was the current one. It links nowhere now, so "you are
@@ -498,7 +499,7 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
           <Avatar
             className={cn(
               "h-8 w-8 transition-shadow",
-              open && "ring-2 ring-primary",
+              open && "ring-2 ring-act",
             )}
           >
             <Identicon id={userId} size={32} />
@@ -660,13 +661,15 @@ export function AccountMenu({ userId, role, firstName }: AccountMenuProps) {
                 everything already painted rather than displacing a row
                 mid-list. */}
             {switchError && (
-              <p
+              <StatusLine
                 ref={errorRef}
+                status="destructive"
+                size="xs"
                 role="alert"
-                className="px-3 pb-1 pt-2 text-xs text-destructive"
+                className="px-3 pb-1 pt-2"
               >
                 {switchError}
-              </p>
+              </StatusLine>
             )}
           </div>
         )}
@@ -742,7 +745,7 @@ function MenuLinkRow({
         ACTIONABLE_ROW_CLASS,
         // Primary here means what it means everywhere else in the chrome: you
         // are on this page.
-        active && "text-primary",
+        active && "text-act",
         disabled && "pointer-events-none opacity-60",
       )}
     >

@@ -43,7 +43,7 @@ export function PinUnlockFlow({ pinIsSet, onUnlocked }: PinUnlockFlowProps) {
   if (forgotSent) {
     return (
       <PinNotice
-        icon={<MailCheck className="h-12 w-12 text-primary" />}
+        icon={<MailCheck className="h-12 w-12 text-act" />}
         title={t("forgotSent.title")}
         description={t("forgotSent.description")}
         action={

@@ -91,7 +91,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
         group_id: groupX1,
         name: "Quiet room",
         icon: "ghost",
-        color: "indigo",
+        color: "12",
         is_locked: true,
         created_by: TEST_IDS.ADMIN,
       })
@@ -115,7 +115,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
         group_id: groupY1,
         name: "Y quiet room",
         icon: "skull",
-        color: "violet",
+        color: "13",
         is_locked: true,
         created_by: TEST_IDS.ADMIN,
       })
@@ -189,7 +189,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
           group_id: groupX1,
           name: "Strategy corner",
           icon: "gamepad",
-          color: "teal",
+          color: "8",
           created_by: TEST_IDS.GEDU,
         })
         .select("id")
@@ -206,7 +206,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
           group_id: groupX1,
           name: null,
           icon: "flame",
-          color: "orange",
+          color: "2",
           created_by: TEST_IDS.GEDU,
         })
         .select("id, name")
@@ -221,7 +221,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
         group_id: groupX1,
         name: "",
         icon: "rocket",
-        color: "red",
+        color: "1",
         created_by: TEST_IDS.GEDU,
       });
       expect(error).not.toBeNull();
@@ -232,7 +232,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
         group_id: groupX1,
         name: "Sneaky",
         icon: "rocket",
-        color: "red",
+        color: "1",
         created_by: TEST_IDS.GAMER,
       });
       expect(error).not.toBeNull();
@@ -243,7 +243,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
         group_id: groupY1,
         name: "Trespass",
         icon: "rocket",
-        color: "red",
+        color: "1",
         created_by: TEST_IDS.GEDU,
       });
       expect(error).not.toBeNull();
@@ -254,7 +254,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
         group_id: groupX1,
         name: "Spoofed",
         icon: "rocket",
-        color: "red",
+        color: "1",
         created_by: TEST_IDS.ADMIN, // not the caller
       });
       expect(error).not.toBeNull();
@@ -479,7 +479,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
           group_id: groupX1,
           name: "Open zone",
           icon: "coffee",
-          color: "sky",
+          color: "10",
           is_locked: false,
           created_by: TEST_IDS.ADMIN,
         })

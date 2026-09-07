@@ -50,7 +50,7 @@ export function AttendanceSummary({
           <li
             key={gamer.id}
             className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs",
+              "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs",
               tone.border,
               tone.text,
             )}

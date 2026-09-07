@@ -107,7 +107,7 @@ export function GamerDashboardPageBody({
               text-3xl. break-words is a safety net for longer translations —
               and now for the name too, which is the longest thing that can
               land in this line and the one part of it no translator controls. */}
-          <h2 className="font-display text-xl font-bold text-primary break-words md:text-3xl">
+          <h2 className="font-display text-xl font-bold text-act break-words md:text-3xl">
             {t("welcomeNamed", { name: firstName })}
           </h2>
           <p className="text-muted-foreground">{t("subtitle")}</p>

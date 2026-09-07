@@ -11,8 +11,9 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { AlertTriangle, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -202,8 +203,8 @@ function HeaderParticipantAction({ onAdd }: { onAdd: () => void }) {
       <div
         ref={setNodeRef}
         className={cn(
-          "flex items-center gap-1.5 rounded-md border border-dashed border-destructive px-3 py-1.5 text-sm font-medium text-destructive transition-colors",
-          isOver && "bg-destructive/10",
+          "flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-sm font-medium text-destructive transition-colors",
+          isOver && "bg-lifted",
         )}
       >
         <Trash2 className="h-4 w-4" />
@@ -357,8 +358,8 @@ export function GroupsPanelView({
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="h-20 animate-pulse rounded-lg bg-muted" />
-            <div className="h-20 animate-pulse rounded-lg bg-muted" />
+            <div className="h-20 animate-pulse rounded-lg bg-lifted" />
+            <div className="h-20 animate-pulse rounded-lg bg-lifted" />
           </div>
         </CardContent>
       </Card>
@@ -590,10 +591,11 @@ export function GroupsPanelView({
           confirmLabel={t("removeParticipant.confirmCta")}
           onConfirm={() => actions.onRemoveParticipant(removing.id)}
         >
-          <div className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/10 px-3 py-2.5 text-sm font-semibold text-destructive">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span>{t("removeParticipant.noRefundWarning")}</span>
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>
+              {t("removeParticipant.noRefundWarning")}
+            </AlertDescription>
+          </Alert>
         </ConfirmDialog>
       )}
 

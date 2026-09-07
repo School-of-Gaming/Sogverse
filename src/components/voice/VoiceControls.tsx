@@ -39,7 +39,7 @@ export function VoiceControls() {
     // row (`sm:flex-row`); on narrow screens they stack into two rows — we only
     // drop to a second row when we need the space.
     //
-    // Color scheme for the toggles: engaged → `default` (primary fill = "this
+    // Color scheme for the toggles: engaged → `default` (act fill = "this
     // is live/on"), idle → `outline`. One deliberate exception — a *muted* mic
     // is `destructive` (red). It's not flagging a dangerous state but the weight
     // of the next click: un-muting makes the user audible to everyone in the

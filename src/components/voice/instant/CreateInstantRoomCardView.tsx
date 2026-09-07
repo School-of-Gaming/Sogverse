@@ -2,6 +2,7 @@
 
 import { Loader2, Mic } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -82,7 +83,7 @@ export function CreateInstantRoomCardView({
           </Button>
         )}
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <StatusLine status="destructive">{error}</StatusLine>}
       </CardContent>
     </Card>
   );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,15 +15,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
 function Code({ children }: { children: React.ReactNode }) {
   return (
-    <code className="rounded bg-muted px-1.5 py-0.5 text-sm">{children}</code>
+    <code className="rounded bg-lifted px-1.5 py-0.5 text-sm">{children}</code>
   );
 }
 
 function CodeBlock({ children, title }: { children: string; title?: string }) {
   return (
-    <div className="overflow-x-auto rounded-lg border bg-muted/50">
+    <div className="overflow-x-auto rounded-lg border border-border bg-lifted">
       {title && (
-        <div className="border-b px-4 py-2 text-xs font-medium text-muted-foreground">
+        <div className="border-b border-border px-4 py-2 text-xs font-medium text-muted-foreground">
           {title}
         </div>
       )}
@@ -43,7 +44,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1 border-b py-3 last:border-0">
+    <div className="flex flex-col gap-1 border-b border-border py-3 last:border-0">
       <div className="flex items-baseline gap-2">
         <Code>{name}</Code>
         <span className="text-xs text-muted-foreground">{type}</span>
@@ -107,21 +108,21 @@ export default function MinecraftApiDocsPage() {
             The contract below is what it will return once rebuilt — say so here
             rather than let an integrator match against responses nothing can
             currently produce. */}
-        <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 p-4">
-          <p className="text-sm font-medium text-warning">
-            {t('responses.notImplementedTitle')}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t('responses.notImplementedBody')}
-          </p>
-        </div>
+        <Alert variant="warning" className="mt-4">
+          <div>
+            <AlertTitle>{t('responses.notImplementedTitle')}</AlertTitle>
+            <AlertDescription className="mt-1">
+              {t('responses.notImplementedBody')}
+            </AlertDescription>
+          </div>
+        </Alert>
 
         <div className="mt-6 space-y-6">
           {/* 200 Allowed */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-base">
-                <span className="rounded bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
+                <span className="rounded border border-border px-2 py-0.5 text-xs font-semibold text-success">
                   200
                 </span>
                 {t('responses.playerAllowed')}
@@ -159,7 +160,7 @@ export default function MinecraftApiDocsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-base">
-                <span className="rounded bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">
+                <span className="rounded border border-border px-2 py-0.5 text-xs font-semibold text-warning">
                   200
                 </span>
                 {t('responses.playerDenied')}
@@ -187,7 +188,7 @@ export default function MinecraftApiDocsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">
+                <span className="mt-0.5 shrink-0 rounded border border-border px-2 py-0.5 text-xs font-semibold text-warning">
                   501
                 </span>
                 <p className="text-sm text-muted-foreground">
@@ -195,7 +196,7 @@ export default function MinecraftApiDocsPage() {
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                <span className="mt-0.5 shrink-0 rounded border border-border px-2 py-0.5 text-xs font-semibold text-destructive">
                   401
                 </span>
                 <p className="text-sm text-muted-foreground">
@@ -203,7 +204,7 @@ export default function MinecraftApiDocsPage() {
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                <span className="mt-0.5 shrink-0 rounded border border-border px-2 py-0.5 text-xs font-semibold text-destructive">
                   400
                 </span>
                 <p className="text-sm text-muted-foreground">
@@ -213,7 +214,7 @@ export default function MinecraftApiDocsPage() {
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                <span className="mt-0.5 shrink-0 rounded border border-border px-2 py-0.5 text-xs font-semibold text-destructive">
                   404
                 </span>
                 <p className="text-sm text-muted-foreground">
@@ -221,7 +222,7 @@ export default function MinecraftApiDocsPage() {
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                <span className="mt-0.5 shrink-0 rounded border border-border px-2 py-0.5 text-xs font-semibold text-destructive">
                   500
                 </span>
                 <p className="text-sm text-muted-foreground">
