@@ -408,6 +408,10 @@ Currently the only way to link a parent to a gamer is when the parent creates th
 - [ ] Create a server-side API route (e.g., `POST /api/gamers/link`) that validates authorization before inserting into `parent_gamer` using the admin client
 - [ ] Add UI for the chosen flow (e.g., "Share invite code" button for existing parent, "Enter code" form for second parent)
 
+## The OG cards' partner marks are hand-copied, and nothing checks the copy
+
+- [ ] **The Open Graph cards draw the SOG, Roblox and Lynx marks as path data copied by hand into `src/components/og/marks.tsx`, and the only thing standing behind "verbatim from the vendored SVG" is a comment saying so.** A reviewer of that file reads path data, which nobody can check by eye, and a reviewer of the card looks at the picture, where a dropped subpath or a mis-set fill reads as "roughly the logo". A partner mark is the one asset where roughly is a breach of the usage rules we agreed to. Derive the inlined marks from the SVGs under `src/assets/` at build time instead of copying them, so the vendored file is the only source and a re-cut mark cannot drift from it; and add a check that renders each card and compares the mark's region against a rendering of the source SVG, so the thing that is reviewed is the thing that ships. Until then, any re-cut of a mark re-copies it and eyeballs the card, which is what the comment currently asks for.
+
 ## The filled button on Gmail iOS is unverified, and it is the one that matters
 
 Everything else about how our mail renders is now either machine-checked or has
