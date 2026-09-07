@@ -89,6 +89,15 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // product-existence check with `no_data_found`, which is an error but not the
   // forbidden one.
   admin_set_product_marketing_consents: { permittedRoles: ["admin"] },
+  // The single writer of product_gamer_photo_consents (00242) — the exact twin
+  // of the RPC above, one consent system over, and its own RPC for the same
+  // reason: the admin product form reaches it as the admin's own session role
+  // and an inline INSERT would need a table write grant the migration
+  // deliberately never issues. The positive half of the matrix IS assertable
+  // with no fixture: an admin passes the guard and is then refused by the
+  // product-existence check with `no_data_found`, which is an error but not the
+  // forbidden one.
+  admin_set_product_gamer_photo_consents: { permittedRoles: ["admin"] },
   get_product_groups_with_details: { permittedRoles: ["admin"] },
   // The admin product page's whole session record (00200). Its second question
   // is "does this product exist", which a NULL id answers with P0002 rather
@@ -139,6 +148,21 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // passes the guard and is then refused by the NULL consent type with
   // check_violation, which is not the forbidden error.
   set_marketing_consent: { permittedRoles: ["customer"] },
+  // The one writer of a gamer photo consent (00242). Role-gated for the same
+  // reason its marketing twin above is — its first statement IS a guard
+  // primitive, which is what check 1 reads — but the role gate carries MORE
+  // weight here, not less, because this function does name its subject in an
+  // argument: a parent has several children, so the child cannot come from
+  // auth.uid(). The role half keeps out the gamer (a child may never grant
+  // permission to photograph themselves), the gedu, and the admin; the target
+  // half — a parent_gamer link from auth.uid() to the named child — is enforced
+  // in the body and pinned by gamer-photo-consents.test.ts, which is where the
+  // cross-family IDOR cases live.
+  //
+  // The positive half of the matrix IS assertable with no fixture: a customer
+  // passes the guard and is then refused by the NULL-argument check with
+  // check_violation, which is not the forbidden error.
+  set_gamer_photo_consent: { permittedRoles: ["customer"] },
 
   // --- gedu-gated ----------------------------------------------------------
   get_my_assigned_products: { permittedRoles: ["gedu"] },
@@ -444,6 +468,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   is_voice_group_moderator: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
     why: "boolean about the caller's own moderator standing in a voice group",
+  },
+  gedu_teaches_gamer: {
+    scopeTest: "tests/db/gamer-photo-consents.test.ts",
+    why: "boolean about the CALLER — is this gamer on a roster I can open — and the predicate behind the gedu read policy on gamer_photo_consents (00242). Exposed only because an RLS policy evaluates its USING clause as the querying role, so a policy cannot call a private helper. Deliberately composed from the roster's own two halves (gedu_teaches_group, plus the active-participation filter get_gedu_group_feed applies) rather than computed afresh, so the set of children a gedu may see a photo answer for cannot drift away from the set already on their rosters. Total: an unknown gamer id is false, never NULL, so a USING clause is never handed a three-valued answer",
   },
 
   // --- chat (00228 / 00229 / 00233) ----------------------------------------

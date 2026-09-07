@@ -640,6 +640,87 @@ export type Database = {
           },
         ]
       }
+      gamer_photo_consent_events: {
+        Row: {
+          answered_by: string | null
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          created_at: string
+          gamer_id: string
+          granted: boolean
+          id: string
+          source: string
+        }
+        Insert: {
+          answered_by?: string | null
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          created_at?: string
+          gamer_id: string
+          granted: boolean
+          id?: string
+          source: string
+        }
+        Update: {
+          answered_by?: string | null
+          consent_type?: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          created_at?: string
+          gamer_id?: string
+          granted?: boolean
+          id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamer_photo_consent_events_answered_by_fkey"
+            columns: ["answered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_photo_consent_events_answered_by_fkey"
+            columns: ["answered_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamer_photo_consent_events_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "gamer_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      gamer_photo_consents: {
+        Row: {
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          gamer_id: string
+          granted: boolean
+          updated_at: string
+        }
+        Insert: {
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          gamer_id: string
+          granted: boolean
+          updated_at?: string
+        }
+        Update: {
+          consent_type?: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          gamer_id?: string
+          granted?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamer_photo_consents_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "gamer_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       gamer_profiles: {
         Row: {
           date_of_birth: string
@@ -1427,6 +1508,29 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_gamer_photo_consents: {
+        Row: {
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          product_id: string
+        }
+        Insert: {
+          consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          product_id: string
+        }
+        Update: {
+          consent_type?: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_gamer_photo_consents_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -2449,6 +2553,13 @@ export type Database = {
         Args: { p_participation_id: string; p_product_id: string }
         Returns: Json
       }
+      admin_set_product_gamer_photo_consents: {
+        Args: {
+          p_consent_types: Database["public"]["Enums"]["gamer_photo_consent_type"][]
+          p_product_id: string
+        }
+        Returns: undefined
+      }
       admin_set_product_marketing_consents: {
         Args: {
           p_consent_types: Database["public"]["Enums"]["marketing_consent_type"][]
@@ -2616,6 +2727,7 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
+      gedu_teaches_gamer: { Args: { p_gamer_id: string }; Returns: boolean }
       gedu_teaches_group: { Args: { p_group_id: string }; Returns: boolean }
       gedu_teaches_group_product: {
         Args: { p_group_id: string }
@@ -2919,6 +3031,15 @@ export type Database = {
         Args: { p_group_id: string; p_note: string; p_participant_id: string }
         Returns: Json
       }
+      set_gamer_photo_consent: {
+        Args: {
+          p_consent_type: Database["public"]["Enums"]["gamer_photo_consent_type"]
+          p_gamer_id: string
+          p_granted: boolean
+          p_source: string
+        }
+        Returns: undefined
+      }
       set_gedu_certified: {
         Args: { p_certified: boolean; p_gedu_id: string }
         Returns: undefined
@@ -3039,6 +3160,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "expired"
+      gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
       gender_type: "boy" | "girl" | "non_binary"
       location_type: "country" | "region" | "municipality" | "district" | "site"
@@ -3203,6 +3325,7 @@ export const Constants = {
         "cancelled",
         "expired",
       ],
+      gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],
       gender_type: ["boy", "girl", "non_binary"],
       location_type: ["country", "region", "municipality", "district", "site"],

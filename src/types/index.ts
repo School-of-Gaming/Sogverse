@@ -118,6 +118,29 @@ export type MarketingConsentEvent =
 export type ProductMarketingConsent =
   Database["public"]["Tables"]["product_marketing_consents"]["Row"];
 
+// gamer_photo_consents / gamer_photo_consent_events /
+// product_gamer_photo_consents (00242) — the twin of the three aliases above
+// with the SUBJECT changed from an adult's mailbox to a child's image. A
+// MarketingConsent is held by the adult it is about; a GamerPhotoConsent is
+// held on the GAMER and answered by their parent, which is why the state row
+// is keyed on the child and the event row additionally carries `answered_by`.
+// The two systems must not be widened into each other any more than either may
+// be folded into the enrolment-condition types further up.
+//
+// Row aliases only, on the same reasoning as both blocks above: none of these
+// three tables carries a write grant for any Data API role. A parent's answer
+// is written by `set_gamer_photo_consent` and a product's ask set by
+// `admin_set_product_gamer_photo_consents`, so an Insert type here would name
+// a statement nothing in the app is allowed to make.
+export type GamerPhotoConsentType =
+  Database["public"]["Enums"]["gamer_photo_consent_type"];
+export type GamerPhotoConsent =
+  Database["public"]["Tables"]["gamer_photo_consents"]["Row"];
+export type GamerPhotoConsentEvent =
+  Database["public"]["Tables"]["gamer_photo_consent_events"]["Row"];
+export type ProductGamerPhotoConsent =
+  Database["public"]["Tables"]["product_gamer_photo_consents"]["Row"];
+
 // minecraft_accounts
 export type MinecraftAccount = Database["public"]["Tables"]["minecraft_accounts"]["Row"];
 export type MinecraftAccountUpdate = Database["public"]["Tables"]["minecraft_accounts"]["Update"];

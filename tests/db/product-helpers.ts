@@ -133,6 +133,18 @@ import { TEST_IDS } from "./constants";
  *                  kept apart because its cases satisfy the other three
  *                  conditions and would otherwise move the counts every other
  *                  block asserts on)
+ *   6c0-6c3, 6cf   gamer-photo-consents.test.ts (6c0 PUBLISHED and 6c1
+ *                  CANCELLED are the readability pair, for the reason the
+ *                  690/691 pair above has one: `can_read_product` is what
+ *                  separates them and a single product cannot hold both
+ *                  answers. 6c2 is a third product with its group 6c3, kept
+ *                  apart from both because it is the only one with a gedu
+ *                  assignment and a roster on it — the fixture the whole staff
+ *                  read arm is asserted against, and one whose membership
+ *                  changes inside a case. 6cf is that file's must-NOT-exist
+ *                  product id, backing the case that the ask-set writer refuses
+ *                  an unknown product even on a call that clears; declared here
+ *                  for the same reason 6ee and 6ff are)
  *   6ee            marketing-consents.test.ts's must-NOT-exist product id,
  *                  backing the case that the ask-set writer refuses an unknown
  *                  product even on a call that clears. Declared here for the
