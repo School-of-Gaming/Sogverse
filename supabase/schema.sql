@@ -4198,6 +4198,12 @@ BEGIN
                -- Renamed from group_gamer_count in 00175: the count is every
                -- active seat on the group, and since 00173 one of those can be
                -- an adult.
+               --
+               -- It is the WHOLE current roster and stays that way. "How many
+               -- gamers are in my group" is a fact about the group today, not
+               -- about any one occurrence — the per-occurrence expected size
+               -- that condition (1) uses is derived separately below and must
+               -- never be routed through this value.
                'group_participant_count', roster.roster_size,
                'site_name',               site.name,
                'attention_count',         COALESCE(owed.owed_count, 0)
@@ -4292,6 +4298,74 @@ BEGIN
                AND gs.session_date >= COALESCE(p_epoch_date, DATE '0001-01-01')
                AND (p.start_date IS NULL OR gs.session_date >= p.start_date)
           ) AS occurrence
+
+          -- The occurrence's END INSTANT — one value per occurrence, and the
+          -- same value whichever arm of the union above produced it.
+          --
+          -- The union is deliberately left keyed on the date alone: carrying an
+          -- end instant through it would let one date arrive twice with two
+          -- different ends and count the occurrence twice. So it is resolved
+          -- here instead — the stored row's own `ends_at` where the occurrence
+          -- has a row, and otherwise the schedule's arithmetic.
+          --
+          -- MIN over the weekday's slots, not MAX, and that is not arbitrary:
+          -- the projected arm admits a date when EXISTS a slot whose end has
+          -- passed, and `EXISTS (end <= now)` is exactly `min(end) <= now`. The
+          -- "has it finished" test and the "who did it expect" test therefore
+          -- read the same instant by construction rather than by inspection.
+          --
+          -- Today the choice is moot, and it is worth naming WHY rather than
+          -- leaving the guarantee incidental: `schedule_slots_product_id_weekday_key`
+          -- is UNIQUE (product_id, weekday), so a weekday carries at most one
+          -- slot and this MIN ranges over exactly one row. That is also what
+          -- keeps the TypeScript twin in step, since its projection maps one
+          -- slot per weekday and cannot pick a different one. **If that
+          -- constraint is ever relaxed — the group_sessions unique key already
+          -- flags multi-slot days as a revisit — the twins DIVERGE:** this side
+          -- would take the minimum end, while the client's takes the
+          -- earliest-STARTING slot's end, and those differ whenever the slot
+          -- that starts earlier runs longer. Whoever relaxes it changes both
+          -- halves in the same commit, or the badge and the card start
+          -- disagreeing on multi-slot days only.
+          CROSS JOIN LATERAL (
+            SELECT COALESCE(
+                     (SELECT gs5.ends_at
+                        FROM public.group_sessions gs5
+                       WHERE gs5.group_id     = g.id
+                         AND gs5.session_date = occurrence.session_date),
+                     (SELECT min(((occurrence.session_date + s2.start_time) AT TIME ZONE p.timezone)
+                                 + make_interval(mins => s2.duration_minutes))
+                        FROM public.schedule_slots s2
+                       WHERE s2.product_id = p.id
+                         AND s2.weekday = (EXTRACT(ISODOW FROM occurrence.session_date)::integer - 1))
+                   ) AS ends_at
+          ) AS occurrence_end
+
+          -- How many the register was FOR — the members who had joined the
+          -- group before this occurrence ended.
+          --
+          -- Separate from roster.roster_size on purpose: that one is the whole
+          -- current roster and answers the dashboard card's headcount and the
+          -- empty-group exemption, neither of which is a per-occurrence
+          -- question.
+          --
+          -- The NULL branches are explicit rather than left to a comparison's
+          -- behaviour on NULL, and both point the same way — expected. A seat
+          -- with no stamp holds no group, so it cannot be here at all; an
+          -- occurrence with no end instant cannot arise either. Where the
+          -- unreachable happens anyway, the answer is the behaviour that
+          -- predates this migration, which costs a mark nobody needed rather
+          -- than producing a false "complete".
+          CROSS JOIN LATERAL (
+            SELECT COUNT(*)::integer AS expected_size
+              FROM public.participations part4
+             WHERE part4.group_id = g.id
+               AND part4.status   = 'active'::public.participation_status
+               AND (part4.group_joined_at IS NULL
+                    OR occurrence_end.ends_at IS NULL
+                    OR part4.group_joined_at <= occurrence_end.ends_at)
+          ) AS expected
+
          WHERE roster.roster_size > 0
            -- "Needs attention" is FOUR questions joined by OR, and any one
            -- alone keeps the session on the list.
@@ -4300,17 +4374,28 @@ BEGIN
            -- entry-state module, which decides the same thing for the card
            -- from the feed document — and the two must agree, or the dashboard
            -- badge counts a session the card calls finished. Changing either
-           -- half means changing both, in the same commit. That now includes
-           -- the CREATIONS condition (4) below: the TS side derives it from the
-           -- product's requires_gamer_creations flag, its own computation of the
-           -- run's last occurrence, and the roster's creations lists — and it
-           -- has to reach the same answer this does on all four.
+           -- half means changing both, in the same commit. That includes the
+           -- CREATIONS condition (4) below — which, since 00243, is scoped by
+           -- the same join-date test (1) is — and which members a session is
+           -- FOR at all: the TS side asks the same question of the same
+           -- instant, with the same inclusive boundary, in both conditions.
            AND (
-             -- (1) Some of the CURRENT roster has no answer yet. Measured
-             -- against the current roster, never against the stored map's keys
-             -- — which is why someone joining a long-running group reopens
-             -- previously-complete sessions. That is the honest reading and it
-             -- is chosen with eyes open.
+             -- (1) Some of the members this session EXPECTED have no answer
+             -- yet. Both sides of the comparison are scoped the same way: marks
+             -- are counted only for members who had joined before the
+             -- occurrence ended, and they are compared against how many such
+             -- members there are.
+             --
+             -- Before 00243 this compared every mark against the whole current
+             -- roster, so placing a member into a group reopened every session
+             -- in its history and the only way to clear the alert was to record
+             -- an absence that never happened. The reasoning was that nobody
+             -- had yet said whether that child was there; there was no question
+             -- to answer, because they were not in the group.
+             --
+             -- Still measured against the CURRENT roster rather than the stored
+             -- map's keys, which is a different rule and unchanged: a member
+             -- who has LEFT stops being asked about.
              (
                SELECT COUNT(*)
                  FROM public.session_attendance att
@@ -4319,13 +4404,19 @@ BEGIN
                    ON part2.participant_id = att.participant_id
                   AND part2.group_id = g.id
                   AND part2.status   = 'active'::public.participation_status
+                  AND (part2.group_joined_at IS NULL
+                       OR occurrence_end.ends_at IS NULL
+                       OR part2.group_joined_at <= occurrence_end.ends_at)
                 WHERE gs2.group_id     = g.id
                   AND gs2.session_date = occurrence.session_date
-             ) < roster.roster_size
+             ) < expected.expected_size
              -- (2) Nothing has been written for the families. NOT EXISTS rather
              -- than a LEFT JOIN's NULL test, so a date with no materialized row
              -- at all — the common case for a session nobody has touched — is
              -- the same answer as a row holding a blank report.
+             --
+             -- Unscoped by who had joined, and that is right: a session owes the
+             -- families a write-up whoever was in the room.
              OR NOT EXISTS (
                SELECT 1
                  FROM public.group_sessions gs3
@@ -4354,10 +4445,34 @@ BEGIN
              -- occurrence per run and only once that occurrence has finished —
              -- which is free, because every member of this set has finished.
              --
-             -- Measured over the CURRENT roster, exactly as (1) is: leaving
-             -- clears the debt and joining after the final session reopens it.
+             -- Measured over the CURRENT roster, scoped exactly as (1) is: only
+             -- the members who had joined the group before the FINAL occurrence
+             -- ended. The owner's principle is that if a gamer was in the group
+             -- at the time of the last session, then the gedu owes that gamer a
+             -- creation — so a seat placed into the group after that session
+             -- had already finished owes nothing and cannot reopen a run that
+             -- was square.
+             --
+             -- This shipped one revision unscoped, and the gap is the argument
+             -- for closing it: the same member could be absent from the final
+             -- session's register — not asked about, not counted, not drawn —
+             -- while still being counted here as owing a creation FOR that
+             -- session. One occurrence, two answers to one question about who
+             -- it was for. Both conditions now ask it once.
+             --
+             -- The other half of "was in the group at the time" is not
+             -- expressible here and is not attempted: a member who WAS in the
+             -- group at the final session and has since left owes nothing,
+             -- because this EXISTS ranges over active seats and a departure
+             -- leaves nothing behind to measure. Leaving clears the debt, in
+             -- both twins, as a limit of the data.
+             --
              -- An empty roster is already excluded by the roster_size guard
-             -- above, so nothing here has to restate it.
+             -- above, so nothing here has to restate it. A group whose every
+             -- seat postdates the final session is NOT excluded by that guard —
+             -- it has a roster — and falls out of this condition instead: no
+             -- seat passes the join-date predicate, so the EXISTS is false and
+             -- nothing is owed, which is the same answer for the same reason.
              --
              -- The array-length test is defensive: the CHECK on the table
              -- refuses an empty array and the write RPC deletes the row instead
@@ -4371,6 +4486,15 @@ BEGIN
                    FROM public.participations part3
                   WHERE part3.group_id = g.id
                     AND part3.status   = 'active'::public.participation_status
+                    -- The same three-branch shape (1) and the expected-size
+                    -- lateral use, against the same per-occurrence end instant,
+                    -- and NULL points the same way in both: expected, which is
+                    -- the behaviour that predates this file and can only ever
+                    -- ask for a creation nobody needed rather than declare a
+                    -- run finished that is not.
+                    AND (part3.group_joined_at IS NULL
+                         OR occurrence_end.ends_at IS NULL
+                         OR part3.group_joined_at <= occurrence_end.ends_at)
                     AND NOT EXISTS (
                       SELECT 1
                         FROM public.gamer_group_creations c
@@ -4393,7 +4517,7 @@ $$;
 -- Name: FUNCTION get_my_gedu_assignment_summaries(p_epoch_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (renamed from group_gamer_count in 00175 — an active seat may be held by an adult since 00173), the venue name on in-person products, and how many past sessions still need attention. A finished session on or after the epoch counts until ALL of: the register is in, a family-facing report is written, the mail telling the families it is there has been sent (00197), and — since 00227, on the run''s FINAL session of a product with requires_gamer_creations set — every current roster member has at least one creation. The final session is the last occurrence the schedule projects on or before end_date, derived here rather than stored; an open-ended product (end_date NULL) has none and therefore never owes creations, which is documented behaviour rather than an error. The badge''s unit is unchanged: it counts SESSIONS needing attention, and the final one simply has one more way to need it. The enforcement epoch travels in as an argument because it is a code constant, not a column. This count has a twin in TypeScript — the gedu feed''s entry-state derivation, which answers the same question for one card — and the two must be changed together, on all four conditions.';
+COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (renamed from group_gamer_count in 00175 — an active seat may be held by an adult since 00173), the venue name on in-person products, and how many past sessions still need attention. A finished session on or after the epoch counts until ALL of: the register is in, a family-facing report is written, the mail telling the families it is there has been sent (00197), and — since 00227, on the run''s FINAL session of a product with requires_gamer_creations set — every current roster member has at least one creation. Since 00243 the register condition is scoped to the members who had JOINED the group before that occurrence ended: both the marks counted and the size they are compared against, off participations.group_joined_at against an end instant resolved once per occurrence (the stored row''s ends_at, else the min slot end for that weekday, which is the same instant the "has it finished" test already used). group_participant_count and the empty-roster guard deliberately keep measuring the WHOLE current roster — a card''s headcount and the empty-group exemption are not per-occurrence questions. The report and mail conditions are unscoped because a session owes those whoever was in the room. The creations condition carries the SAME join-date scoping as the register condition, on the owner''s principle that a gedu owes a creation for every gamer who was in the group at the time of the last session — so a seat placed into the group after the final session ended owes nothing, and one occurrence cannot answer "who was this for" two different ways. Only the JOIN half of that principle is expressible: a member who has since LEFT owes nothing, because the roster is active seats and a departure leaves no trace. The final session is the last occurrence the schedule projects on or before end_date, derived here rather than stored; an open-ended product (end_date NULL) has none and therefore never owes creations, which is documented behaviour rather than an error. The badge''s unit is unchanged: it counts SESSIONS needing attention, and the final one simply has one more way to need it. The enforcement epoch travels in as an argument because it is a code constant, not a column. This count has a twin in TypeScript — the gedu feed''s entry-state derivation, which answers the same question for one card — and the two must be changed together, on all four conditions and on who a session is for, which now scopes two of them.';
 
 
 --
@@ -9377,7 +9501,7 @@ COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'Stripe Ch
 -- Name: COLUMN participations.group_joined_at; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.participations.group_joined_at IS 'When this seat entered its CURRENT group. NULL when the seat holds no group, and NULL for every row that predates the column — there was deliberately no backfill, because a group move leaves no trace and signed_up_at is not a join date for anyone who has ever been moved. A move between two groups of one product RESETS it: the member is new to THAT group, which is the whole claim the newcomer badge makes. Stamped only by trg_participations_stamp_group_joined_at, which is the column''s only writer — no RPC and no policy-driven UPDATE sets it, because group_id has at least five writers (including the ON DELETE SET NULL cascade from product_groups) and a trigger is the only point that sees all of them. A consequence with no undo, accepted for v1: an accidental move on the admin drag board, corrected with a second move back, re-stamps both times — the member reads as new to a group they never really left, for the length of the badge window, and no UI clears the stamp. The mislabel is rare, bounded at 30 days, and its harm is a Gedu welcoming someone they already know; a per-member clear affordance is the known follow-up if it starts to matter.';
+COMMENT ON COLUMN public.participations.group_joined_at IS 'When this seat entered its CURRENT group. NULL when the seat holds no group, and only then — the rows that predated the column were backfilled from their own signed_up_at in 00243, which retired 00203''s deliberate refusal to do so. That refusal was argued against the newcomer badge, the column''s only consumer; 00243 answers it on the merits and states the cost, which is that "unknown" and "derived from signup" are no longer distinguishable. Signup is a provable lower bound on the true join — a seat cannot enter a group of a product it does not hold — so a backfilled value can only ever understate how new a member is. A move between two groups of one product RESETS the stamp: the member is new to THAT group, which is the whole claim the newcomer badge makes, and it is also the floor the session register measures its expectations from (00243). Stamped only by trg_participations_stamp_group_joined_at, which is the column''s only ongoing writer — no RPC and no policy-driven UPDATE sets it, because group_id has at least five writers (including the ON DELETE SET NULL cascade from product_groups) and a trigger is the only point that sees all of them.';
 
 
 --
