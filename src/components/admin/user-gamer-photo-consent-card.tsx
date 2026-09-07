@@ -45,7 +45,7 @@ export function UserGamerPhotoConsentCard({ gamerId }: { gamerId: string }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Camera className="h-5 w-5 text-primary" />
+          <Camera className="h-5 w-5 text-act" />
           {t("title")}
         </CardTitle>
       </CardHeader>
@@ -59,7 +59,7 @@ export function UserGamerPhotoConsentCard({ gamerId }: { gamerId: string }) {
             return (
               <div
                 key={consentType}
-                className="flex items-center justify-between gap-3 rounded-lg border p-3"
+                className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
               >
                 <p className="min-w-0 truncate text-sm font-medium">
                   {t(`labels.${consentType}`)}
@@ -84,11 +84,17 @@ export function UserGamerPhotoConsentCard({ gamerId }: { gamerId: string }) {
                         })}
                       </span>
                     )}
+                    {/* The marketing card's badge, verbatim: an outline badge
+                        carrying the answer as ink. Two admin cards sitting one
+                        above the other on the same user page have to read as one
+                        thing, and a filled badge here beside an outlined one
+                        there would say the two answers were different kinds of
+                        fact. `muted` was never a token the theme defined, so the
+                        fill this replaces rendered as no fill at all. */}
                     <Badge
+                      variant="outline"
                       className={
-                        row?.granted
-                          ? "bg-success text-success-foreground"
-                          : "bg-muted text-muted-foreground"
+                        row?.granted ? "text-success" : "text-muted-foreground"
                       }
                     >
                       {row?.granted ? t("granted") : t("notGranted")}

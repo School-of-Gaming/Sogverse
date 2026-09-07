@@ -119,7 +119,7 @@ export type ProductMarketingConsent =
   Database["public"]["Tables"]["product_marketing_consents"]["Row"];
 
 // gamer_photo_consents / gamer_photo_consent_events /
-// product_gamer_photo_consents (00242) — the twin of the three aliases above
+// product_gamer_photo_consents (00243) — the twin of the three aliases above
 // with the SUBJECT changed from an adult's mailbox to a child's image. A
 // MarketingConsent is held by the adult it is about; a GamerPhotoConsent is
 // held on the GAMER and answered by their parent, which is why the state row

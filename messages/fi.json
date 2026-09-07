@@ -1990,6 +1990,7 @@
       "nonCustomerNoteParents": "Vain vanhempi voi ilmoittautua tähän.",
       "closedNote": "Tämä ei ole juuri nyt avoinna. Pidä silmällä seuraavaa kierrosta.",
       "rules": {
+        "title": "Sääntömme",
         "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan.",
         "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
         "municipality_club_self": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikkani seuraavalle jonossa olevalle perheelle.",
@@ -2000,7 +2001,7 @@
         "heading": "Suostumus",
         "agree": "Olen lukenut nämä asiakirjat ja hyväksyn ne.",
         "bundles": {
-          "robloxProgramme": "Olen lukenut ja hyväksyn Luojien akatemian <terms>käyttöehdot</terms> ja <privacy>tietosuojaselosteen</privacy>, joissa kerrotaan, miten minun ja lapseni tietoja voidaan jakaa Lynx Educaten, School of Gamingin ja Robloxin välillä ohjelman toteuttamiseksi.",
+          "robloxProgramme": "Olen lukenut ja hyväksyn Luojien akatemian <terms>käyttöehdot</terms> ja <privacy>tietosuojaselosteen</privacy>.",
           "robloxProgrammeTitle": "Luojien akatemian käyttöehdot ja tietosuojaseloste"
         },
         "gamerPhoto": {
@@ -2217,7 +2218,7 @@
     "gamerDetail": {
       "photoConsent": {
         "title": "Kuvat ja videot",
-        "description": "Koskee kerhoja, leirejä ja tapahtumia, jotka toteutetaan yhdessä Lynx Educaten ja Robloxin kanssa.",
+        "description": "Koskee kerhoja, leirejä ja tapahtumia, jotka toteutetaan kumppanuudessa Lynx Educaten kanssa ja yhteistyössä Robloxin kanssa.",
         "sentence": {
           "lynxEducate": "Kuvia ja videoita, joissa {name} esiintyy, saa käyttää kertojen raporteissa, jakaa Lynx Educaten ja Robloxin kanssa vaikuttavuusraportointia varten sekä julkaista School of Gamingin, Lynx Educaten ja Robloxin verkkosivuilla ja sosiaalisessa mediassa. Tarkemmat tiedot ovat <privacy>Luojien akatemian tietosuojaselosteessa</privacy>."
         },
@@ -3537,7 +3538,7 @@
           [
             "Liittää tapaamisraportteihin, jotka jokainen ryhmän perhe näkee ryhmän sivulla ja saa sähköpostitse.",
             "Jakaa Lynx Educatelle ja Robloxille vaikuttavuusraportointia varten, mukaan lukien sisäiset vaikuttavuusraportit, toteutuskatsaukset ja tukijalle pidettävät esitykset.",
-            "Käyttää julkisesti Lynx Educaten, School of Gamingin ja Robloxin verkkosivuilla ja sosiaalisen median kanavissa sekä Ohjelmaa ja sen vaikuttavuutta koskevassa viestinnässä."
+            "Käyttää julkisesti Lynx Educaten, School of Gamingin ja Robloxin verkkosivuilla ja sosiaalisen median kanavissa."
           ],
           "Julkinen sisältö voi olla saatavilla maailmanlaajuisesti, ja muut käyttäjät voivat kopioida tai jakaa sitä ilman, että organisaatiot voivat vaikuttaa siihen.",
           "Jos ruutua ei ole rastitettu, lapsi jätetään kokonaan pois tapaamisten valokuvista ja videomateriaalista. Mitään hänet tunnistettavaksi tekevää ei liitetä tapaamisraporttiin, jaeta Lynx Educatelle tai Robloxille eikä käytetä julkisesti."

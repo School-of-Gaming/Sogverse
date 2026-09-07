@@ -2034,6 +2034,7 @@
       "nonCustomerNoteParents": "vavmey neH jeSlaH naDev.",
       "closedNote": "DaH poSbe’. latlh boqDI’ yI’aHta’.",
       "rules": {
+        "title": "chutmeymaj",
         "consumer_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
         "municipality_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH puqwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
         "municipality_club_self": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH quSwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
@@ -2044,7 +2045,7 @@
         "heading": "chaw’",
         "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj.",
         "bundles": {
-          "robloxProgramme": "<terms>Creator Academy Terms & Conditions</terms>, <privacy>Creator Academy Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj. Lynx Educate, School of Gaming, Roblox je jojDaq puqwI’ De’wIj je lujaghlaH ’e’ luQIj.",
+          "robloxProgramme": "<terms>Creator Academy Terms & Conditions</terms>, <privacy>Creator Academy Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj.",
           "robloxProgrammeTitle": "Creator Academy ghItlhmey"
         },
         "gamerPhoto": {

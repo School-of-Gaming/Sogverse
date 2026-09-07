@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Camera } from "lucide-react";
+import { Camera, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Card,
@@ -112,7 +112,20 @@ export function GamerPhotoConsentCard({
             <CheckboxRow
               checked={isGamerPhotoConsentGranted(consents, consentType)}
               onCheckedChange={(next) => handleChange(consentType, next)}
-              disabled={committing !== null}
+              // Only the row a parent clicked goes busy. A card-wide lock would
+              // grey out rows whose answer nobody is writing, and each row's
+              // write is independent — the RPC is keyed by (gamer, consent
+              // type), so two in flight cannot collide.
+              disabled={committing === consentType}
+              // The spinner rides the trailing slot precisely because it
+              // arrives after first paint: the slack lives at the end of the
+              // title's line, so it grows leftward and neither the tick, the
+              // title nor the sentence beneath moves while the write is out.
+              trailing={
+                committing === consentType ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : undefined
+              }
               // The same composition the enrolment panel gives this sentence:
               // the child's name on the tick's own line, the three mechanisms
               // full width beneath it. One shape for one question, so a parent
@@ -137,7 +150,7 @@ export function GamerPhotoConsentCard({
                       href={GAMER_PHOTO_CONSENT_ASKS[consentType].href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-medium text-primary underline-offset-2 hover:underline"
+                      className="font-medium text-act underline-offset-2 hover:underline"
                     >
                       {chunks}
                     </a>

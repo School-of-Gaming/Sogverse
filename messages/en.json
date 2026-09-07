@@ -1990,6 +1990,7 @@
       "nonCustomerNoteParents": "Only parents can sign up here.",
       "closedNote": "This one’s not open right now. Keep an eye out for the next one.",
       "rules": {
+        "title": "Our rules",
         "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>.",
         "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>, and that repeated unexcused absences may open my child’s seat for the next family on the waitlist.",
         "municipality_club_self": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>, and that repeated unexcused absences may open my seat for the next family on the waitlist.",
@@ -2000,13 +2001,13 @@
         "heading": "Consent",
         "agree": "I have read and agree to these documents.",
         "bundles": {
-          "robloxProgramme": "I have read and agree to the Creator Academy <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>, which explain how my and my child's information may be shared between Lynx Educate, School of Gaming and Roblox to deliver the Programme.",
+          "robloxProgramme": "I have read and agree to the Creator Academy <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>.",
           "robloxProgrammeTitle": "Creator Academy terms and privacy policy"
         },
         "gamerPhoto": {
-          "lynxEducate": "Photos and videos of my child may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming's, Lynx Educate's and Roblox's websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>.",
+          "lynxEducate": "Photos and videos of my child may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming’s, Lynx Educate’s and Roblox’s websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>.",
           "lynxEducateTitle": "Photos and videos of your child",
-          "hint": "Optional — you can change this anytime on your child's page in My SOG."
+          "hint": "Optional — you can change this anytime on your child’s page in My SOG."
         },
         "marketing": {
           "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time.",
@@ -2504,7 +2505,7 @@
           [
             "Included in session reports, which every family in the child’s group sees on the group’s page and receives by email.",
             "Shared with Lynx Educate and Roblox for impact reporting, including internal impact reports, delivery updates and sponsor presentations.",
-            "Used publicly by Lynx Educate, School of Gaming and Roblox on their websites and social-media channels, and in Programme and impact communications."
+            "Used publicly by Lynx Educate, School of Gaming and Roblox on their websites and social-media channels."
           ],
           "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control.",
           "Where the box is not ticked, the child is kept out of session photographs and footage entirely. Nothing identifying them is placed in a session report, shared with Lynx Educate or Roblox, or used publicly."
@@ -2896,7 +2897,7 @@
     "gamerDetail": {
       "photoConsent": {
         "title": "Photos and videos",
-        "description": "For clubs, camps and events run with Lynx Educate and Roblox.",
+        "description": "For clubs, camps and events run in partnership with Lynx Educate, in collaboration with Roblox.",
         "sentence": {
           "lynxEducate": "Photos and videos of {name} may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming’s, Lynx Educate’s and Roblox’s websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>."
         },

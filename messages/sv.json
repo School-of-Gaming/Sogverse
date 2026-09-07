@@ -1990,6 +1990,7 @@
       "nonCustomerNoteParents": "Endast föräldrar kan anmäla sig här.",
       "closedNote": "Den här är inte öppen just nu. Håll utkik efter nästa omgång.",
       "rules": {
+        "title": "Våra regler",
         "consumer_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>.",
         "municipality_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>, samt att upprepad oanmäld frånvaro kan göra att mitt barns plats erbjuds nästa familj på väntelistan.",
         "municipality_club_self": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>, samt att upprepad oanmäld frånvaro kan göra att min plats erbjuds nästa familj på väntelistan.",
@@ -2000,7 +2001,7 @@
         "heading": "Samtycke",
         "agree": "Jag har läst och godkänner dessa dokument.",
         "bundles": {
-          "robloxProgramme": "Jag har läst och godkänner Skaparnas akademis <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>, som förklarar hur mina och mitt barns uppgifter kan delas mellan Lynx Educate, School of Gaming och Roblox för att genomföra programmet.",
+          "robloxProgramme": "Jag har läst och godkänner Skaparnas akademis <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>.",
           "robloxProgrammeTitle": "Skaparnas akademis användarvillkor och integritetspolicy"
         },
         "gamerPhoto": {
@@ -2217,7 +2218,7 @@
     "gamerDetail": {
       "photoConsent": {
         "title": "Foton och videor",
-        "description": "Gäller klubbar, läger och evenemang som drivs tillsammans med Lynx Educate och Roblox.",
+        "description": "Gäller klubbar, läger och evenemang som drivs i partnerskap med Lynx Educate, i samarbete med Roblox.",
         "sentence": {
           "lynxEducate": "Foton och videor där {name} syns får användas i rapporter från tillfällena, delas med Lynx Educate och Roblox för effektrapportering och användas på School of Gamings, Lynx Educates och Roblox webbplatser och sociala medier. Detaljerna finns i <privacy>Skaparnas akademis integritetspolicy</privacy>."
         },
@@ -3537,7 +3538,7 @@
           [
             "Tas med i träffrapporter, som varje familj i barnets grupp ser på gruppens sida och får per e-post.",
             "Delas med Lynx Educate och Roblox för effektrapportering, bland annat i interna effektrapporter, lägesuppdateringar och presentationer för sponsorn.",
-            "Användas offentligt av Lynx Educate, School of Gaming och Roblox på deras webbplatser och kanaler i sociala medier och i kommunikation om Programmet och dess effekt."
+            "Användas offentligt av Lynx Educate, School of Gaming och Roblox på deras webbplatser och kanaler i sociala medier."
           ],
           "Offentligt innehåll kan vara tillgängligt i hela världen och kan kopieras eller delas vidare av andra användare utan att organisationerna kan styra det.",
           "Är rutan inte ikryssad hålls barnet helt utanför träffarnas foton och filmmaterial. Ingenting som identifierar barnet tas med i en träffrapport, delas med Lynx Educate eller Roblox eller används offentligt."

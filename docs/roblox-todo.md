@@ -619,7 +619,8 @@ lawyer is not reviewing sections that are about to be restructured.
       the wider half did not already grant. The policy sections were merged to match on
       `feat/gamer-photo-consent`: `robloxPrivacy.sections.mediaSponsor` and `.mediaPublic`
       are gone, replaced by a single `.mediaChoice`, and every string that counted two
-      boxes was rewritten in all four translated locales.
+      boxes was rewritten in all three translated locales that carry the legal
+      pages (`tlh` omits them and falls back to English).
 
       **If the lawyer wants two boxes**, the change is bounded and known: the
       `gamer_photo_consent_type` enum gains a second value beside `lynx_educate`, the

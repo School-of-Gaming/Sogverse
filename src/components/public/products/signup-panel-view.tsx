@@ -1175,13 +1175,22 @@ function SignupForm(
  * instead — and on exactly the optional ones: they carry the word, every gate
  * carries nothing.
  *
- * **The rules row carries no heading of its own.** It used to be its own titled
- * section, and beside a second titled section of identically-shaped boxes that
- * title stopped meaning anything: two headings, two boxes, one act. What the
- * heading was doing — giving the CTA's prompt a visible referent — is now done
- * by the section's own, so the row is left to be a sentence and a checkbox. Like
- * every gate here it carries no marker: it sits in the same stack, under the
- * same heading, at the same spacing, and it gates the CTA exactly as they do.
+ * **Every agreement row leads with a title, the rules row included.** A title is
+ * the handle a parent scanning the section reads before deciding whether to
+ * read three lines of conditions, and a row without one in a column of rows
+ * with one does not read as simpler — it reads as the odd row out, which is the
+ * one thing this section must never make a gate look like. So the rules row
+ * takes the same composition as a bundle's: the name on the tick's own line,
+ * the sentence full width beneath it.
+ *
+ * The rules used to be their own *titled section*, and that heading went
+ * because beside a second titled section of identically-shaped boxes it had
+ * stopped meaning anything: two headings, two boxes, one act. Its words come
+ * back here as a row title rather than as a heading — one line naming what the
+ * box is about, inside the box, rather than a second section division above it.
+ * Like every gate here the row still carries no *marker*: it sits in the same
+ * stack, under the same heading, at the same spacing, and it gates the CTA
+ * exactly as the rest do.
  *
  * **And its sentence names its own document, exactly as a bundle's does.** The
  * rules row is a consent to our Anti-Bullying and Discipline policy, so the
@@ -1320,55 +1329,18 @@ function RequiredConsentSection({
       <ConsentRow
         agreed={rulesAgreed}
         onAgreedChange={onRulesAgreedChange}
+        // One title across all five variants. The municipality ones add a
+        // clause about a seat lost to unexcused absence, which is a rule of the
+        // club exactly as the conduct policy is — so the handle is the same
+        // handle, and a title that varied by product type would invite a reader
+        // to look for a difference the row does not have.
+        title={tRules("title")}
         sentence={ruleText}
       />
     </div>
   );
 }
 
-/**
- * **The optional ask: a partner's mailing list, offered on the way past.**
- *
- * Everything about it is chosen to say "this is not one of those" to a reader
- * who has just met the Required consent section, because the single most
- * expensive mistake here would be a parent believing they had to tick it:
- *
- * - **It stands outside the section above**, with no heading of its own. That
- *   section is one act — everything a parent must agree to, which the CTA names
- *   as one step — and a row inside it that did not gate the button would be a
- *   box the reader cannot tell from the ones that do.
- * - **It says "Optional" in its own hint, and that sentence is the only marker
- *   in the consent area** — every gate above it is unmarked, so this is the
- *   exception rather than one label among many. The distinction has been carried
- *   three ways now and the current one is the cheapest: first by *withholding*
- *   the border the required rows wear (a plain line beside boxed gates), which
- *   died when the border became the click target rather than a weight — the
- *   lighter rows read as gates that had failed to render, and nothing reached a
- *   reader who was not looking at the screen. Then by an info-toned chip at the
- *   end of the first line, which said one word the hint underneath was already
- *   saying and spent a line of rail height doing it. Now the hint says it alone,
- *   in the colour the chip wore, and it is in the row's accessible description
- *   either way.
- * - **It says it is optional in its own words** too, under the sentence, and names
- *   where the answer can be changed later — because it *can* be, which is the
- *   deepest difference between this and everything above it. A required consent
- *   is a statement about the moment of enrolment and cannot be unmade; this is
- *   a standing permission about a mailbox, and the parent owns it afterwards.
- *
- * **The partner is a link, and it opens in a new tab** — the same treatment a
- * consent document's name gets, for the same two reasons. A parent asked to
- * hand their address to somebody has to be able to look at who that somebody
- * is, and the panel behind them is holding a half-filled form that must survive
- * the reading.
- *
- * **Nothing here touches the CTA.** No leaf in the button's checklist, no entry
- * in `formReady`: declining is a complete answer, and a button that waited on
- * one would be a requirement wearing an optional label.
- *
- * Renders nothing at all when the product asks for nothing, which is nearly
- * every product. There is no space held open for it: the ask set arrives with
- * the product read and cannot appear under a reader mid-form.
- */
 /**
  * **May we photograph this child?** — the product's optional photo ask, above
  * the marketing ask and below everything that gates the button.
@@ -1436,6 +1408,49 @@ function OptionalGamerPhotoSection({
   );
 }
 
+/**
+ * **The optional ask: a partner's mailing list, offered on the way past.**
+ *
+ * Everything about it is chosen to say "this is not one of those" to a reader
+ * who has just met the Required consent section, because the single most
+ * expensive mistake here would be a parent believing they had to tick it:
+ *
+ * - **It stands outside the section above**, with no heading of its own. That
+ *   section is one act — everything a parent must agree to, which the CTA names
+ *   as one step — and a row inside it that did not gate the button would be a
+ *   box the reader cannot tell from the ones that do.
+ * - **It says "Optional" in its own hint, and that sentence is the only marker
+ *   in the consent area** — every gate above it is unmarked, so this is the
+ *   exception rather than one label among many. The distinction has been carried
+ *   three ways now and the current one is the cheapest: first by *withholding*
+ *   the border the required rows wear (a plain line beside boxed gates), which
+ *   died when the border became the click target rather than a weight — the
+ *   lighter rows read as gates that had failed to render, and nothing reached a
+ *   reader who was not looking at the screen. Then by an info-toned chip at the
+ *   end of the first line, which said one word the hint underneath was already
+ *   saying and spent a line of rail height doing it. Now the hint says it alone,
+ *   in the colour the chip wore, and it is in the row's accessible description
+ *   either way.
+ * - **It says it is optional in its own words** too, under the sentence, and names
+ *   where the answer can be changed later — because it *can* be, which is the
+ *   deepest difference between this and everything above it. A required consent
+ *   is a statement about the moment of enrolment and cannot be unmade; this is
+ *   a standing permission about a mailbox, and the parent owns it afterwards.
+ *
+ * **The partner is a link, and it opens in a new tab** — the same treatment a
+ * consent document's name gets, for the same two reasons. A parent asked to
+ * hand their address to somebody has to be able to look at who that somebody
+ * is, and the panel behind them is holding a half-filled form that must survive
+ * the reading.
+ *
+ * **Nothing here touches the CTA.** No leaf in the button's checklist, no entry
+ * in `formReady`: declining is a complete answer, and a button that waited on
+ * one would be a requirement wearing an optional label.
+ *
+ * Renders nothing at all when the product asks for nothing, which is nearly
+ * every product. There is no space held open for it: the ask set arrives with
+ * the product read and cannot appear under a reader mid-form.
+ */
 function OptionalMarketingSection({
   rows,
   granted,
@@ -1590,9 +1605,12 @@ function ConsentRow({
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
   /**
-   * The short name of the thing being agreed to, when there is one. The rules
-   * row has none and wants none: it is one sentence, and a title over a
-   * one-line sentence is a label restating what is already legible.
+   * The short name of the thing being agreed to. Every caller in this section
+   * passes one — a bundle its name, the rules row its own, a drift row the raw
+   * slug it cannot name any better — because a titled row beside an untitled
+   * one reads as a difference between the two gates rather than as a shorter
+   * sentence. Optional only so the type does not lie about a shape
+   * `CheckboxRow` still supports.
    */
   title?: React.ReactNode;
   sentence: React.ReactNode;

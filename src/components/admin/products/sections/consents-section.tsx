@@ -314,8 +314,9 @@ export function ConsentsSection({
           );
         })}
         {/* The marketing asks, after every document this deploy can name and
-            after the photo run above, and before the drift run below. Same list, same control, same border —
-            the caption under each name is what says a parent may decline these
+            after the photo run above, and before the drift run below. Same
+            list, same control, same border — the caption under each name is
+            what says a parent may decline these
             and cannot decline the rows above. It stays in the ordinary muted
             description styling rather than borrowing the parent-facing rows'
             info tone: this is an admin reading a form they are filling in, not

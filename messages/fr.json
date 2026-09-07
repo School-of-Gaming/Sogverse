@@ -1990,6 +1990,7 @@
       "nonCustomerNoteParents": "Seuls les parents peuvent s’inscrire ici.",
       "closedNote": "Ce n’est pas ouvert pour le moment. Guettez la prochaine occasion.",
       "rules": {
+        "title": "Nos règles",
         "consumer_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>.",
         "municipality_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>, et que des absences répétées et non justifiées peuvent libérer la place de mon enfant au profit de la famille suivante sur la liste d’attente.",
         "municipality_club_self": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>, et que des absences répétées et non justifiées peuvent libérer ma place au profit de la famille suivante sur la liste d’attente.",
@@ -2000,7 +2001,7 @@
         "heading": "Consentement",
         "agree": "J’ai lu et j’accepte ces documents.",
         "bundles": {
-          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> de l’Académie des Créateurs, qui expliquent comment mes informations et celles de mon enfant peuvent être partagées entre Lynx Educate, School of Gaming et Roblox pour mettre en œuvre le programme.",
+          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> de l’Académie des Créateurs.",
           "robloxProgrammeTitle": "Conditions et confidentialité de l’Académie des Créateurs"
         },
         "gamerPhoto": {
@@ -2217,7 +2218,7 @@
     "gamerDetail": {
       "photoConsent": {
         "title": "Photos et vidéos",
-        "description": "Pour les clubs, camps et événements organisés avec Lynx Educate et Roblox.",
+        "description": "Pour les clubs, camps et événements organisés en partenariat avec Lynx Educate, en collaboration avec Roblox.",
         "sentence": {
           "lynxEducate": "Les photos et vidéos où apparaît {name} peuvent figurer dans les comptes rendus de séance, être partagées avec Lynx Educate et Roblox à des fins de rapport d’impact, et être utilisées sur les sites web et les réseaux sociaux de School of Gaming, de Lynx Educate et de Roblox. Les détails figurent dans la <privacy>Politique de confidentialité de l’Académie des Créateurs</privacy>."
         },
@@ -3537,7 +3538,7 @@
           [
             "Intégrées aux comptes rendus de séance, que chaque famille du groupe consulte sur la page du groupe et reçoit par e-mail.",
             "Partagées avec Lynx Educate et Roblox pour le reporting d’impact, notamment des rapports d’impact internes, des points d’avancement et des présentations au parrain.",
-            "Utilisées publiquement par Lynx Educate, School of Gaming et Roblox sur leurs sites web et leurs réseaux sociaux, ainsi que dans les communications relatives au Programme et à son impact."
+            "Utilisées publiquement par Lynx Educate, School of Gaming et Roblox sur leurs sites web et leurs réseaux sociaux."
           ],
           "Les contenus publics peuvent être accessibles dans le monde entier et être copiés ou repartagés par d’autres utilisateurs, sans que les organisations puissent le maîtriser.",
           "Lorsque la case n’est pas cochée, l’enfant reste entièrement en dehors des photographies et des séquences vidéo des séances. Rien qui permette de l’identifier n’est intégré à un compte rendu de séance, partagé avec Lynx Educate ou Roblox, ni utilisé publiquement."

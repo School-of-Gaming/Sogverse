@@ -59,7 +59,11 @@ export function SessionPhotoConsentList({
   return (
     <section
       className={cn(
-        "space-y-2 rounded-md border border-border bg-muted/20 p-2.5",
+        // `bg-lifted` is the ground a block takes when it is set back from its
+        // neighbours. It replaces a `bg-muted/20` that named no token the theme
+        // defines — Tailwind emitted nothing for it, so this block has been
+        // sitting on whatever the editor's own ground was, not on a tint.
+        "space-y-2 rounded-md border border-border bg-lifted p-2.5",
         className,
       )}
     >

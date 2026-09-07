@@ -1,10 +1,11 @@
 import type { GeduContractSeed } from "@/components/gedu/contract/gedu-contract-settings-card";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
-import { isGamerPhotoConsentGranted } from "@/lib/gamer-photo-consent-answer";
+import { ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES } from "@/lib/constants/gamer-photo-consents";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 // Imported from the service module rather than the package index because that
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
+import { resolveGamerPhotoConsents } from "@/services/gamer-photo-consents/resolve-gamer-photo-consents";
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
 import type { AppSupabaseClient, GamerSignIn } from "@/types";
 
@@ -118,7 +119,15 @@ async function readGamerPhotoConsentGranted(
     .from("gamer_photo_consents")
     .select("gamer_id, consent_type, granted, updated_at")
     .eq("gamer_id", gamerId);
-  return isGamerPhotoConsentGranted(data ?? undefined, "lynx_educate");
+  // The same conjunction every staff surface resolves: allowed only where every
+  // attachable consent is granted. Reused rather than restated so this sentence
+  // cannot say yes on the day a second partner joins the enum while a gedu's
+  // roster, reading the same rows, says no.
+  return (
+    resolveGamerPhotoConsents(data ?? [], ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES).get(
+      gamerId,
+    ) ?? false
+  );
 }
 
 export default async function SettingsPage() {
