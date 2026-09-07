@@ -3180,7 +3180,7 @@
       "eyebrow": "Mistä on kyse",
       "heading": "Opi rakentamaan Robloxissa.",
       "paragraph1": "Ohjelma antaa 13–17-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Ohjelman toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa, ja se on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
-      "paragraph2": "Ohjelman päätteeksi osallistujat ovat julkaisseet oman teoksensa Robloxissa. Aiempaa kokemusta ei tarvita – pelkkä kiinnostus riittää."
+      "paragraph2": "Ohjelma tähtää siihen, että osallistujat julkaisevat oman teoksensa Robloxissa. Aiempaa kokemusta ei tarvita – pelkkä kiinnostus riittää."
     },
     "why": {
       "eyebrow": "Miksi mukaan",
@@ -3317,7 +3317,7 @@
     "intro": {
       "heading": "Lyhyesti – vanhemmille ja nuorille",
       "blocks": [
-        "Ohjelma on tarkoitettu 8–17-vuotiaille nuorille Ranskassa. Ilmoittautumisen tekee vanhempi tai muu huoltaja.",
+        "Ohjelma on tarkoitettu 13–17-vuotiaille nuorille Ranskassa. Ilmoittautumisen tekee vanhempi tai muu huoltaja.",
         "Keräämme vain ne tiedot, joita tarvitsemme lapsen ilmoittamiseen, Ohjelman turvalliseen toteuttamiseen ja sen arviointiin, toimiiko Ohjelma. Näihin kuuluvat vanhemman yhteystiedot, rajattu määrä lasta koskevia tietoja, lapsen Roblox-käyttäjätunnus tai Roblox-käyttäjätunniste sekä tiedot osallistumisesta, suorittamisesta ja pelien julkaisemisesta.",
         "School of Gaming käyttää tietoja ilmoittautumis- ja oppimisalustan ylläpitämiseen. Lynx Educate käsittelee Ohjelman tietoja siinä laajuudessa kuin toteutuksen hallinnointi edellyttää. Kullakin organisaatiolla on erilainen vastuu sen mukaan, mistä toiminnasta on kyse ja mihin tarkoitukseen henkilötietoja käytetään.",
         [
@@ -3340,10 +3340,10 @@
         "heading": "Keitä tämä seloste koskee",
         "blocks": [
           "Tämä seloste koskee vanhempia, huoltajia ja nuoria, jotka ilmoittautuvat Luojien akatemiaan, Ranskassa järjestettävään nuorten digitaalisen luovuuden Ohjelmaan (Ohjelma).",
-          "Ohjelma on tarkoitettu 8–17-vuotiaille nuorille. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja vahvistettava, että hänellä on oikeus ilmoittaa lapsi mukaan.",
+          "Ohjelma on tarkoitettu 13–17-vuotiaille nuorille. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja vahvistettava, että hänellä on oikeus ilmoittaa lapsi mukaan.",
           "Seloste kattaa Ohjelmaan ilmoittautumisen, hallinnoinnin, oppimistapaamiset, tapahtumat, tuen, lasten turvallisuuden ja vaikuttavuuden arvioinnin. Se täydentää School of Gamingin <linkPrivacy>yleistä tietosuojaselostetta</linkPrivacy>. Jos selosteet ovat tämän Ohjelman osalta ristiriidassa, sovelletaan tätä Ohjelmaa koskevaa selostetta.",
           "Lapsen omaan Roblox-tilin, Roblox Studion tai muun Roblox-palvelun käyttöön sovelletaan Robloxin omaa tietosuojaselostetta ja käyttöehtoja.",
-          "<linkRobloxTerms>Ohjelman ehdoissa</linkRobloxTerms> määritellään 8–17 vuoden ikäraja, vanhemman tekemä ilmoittautuminen ja Ohjelmaan liittyvä tietojen jakaminen."
+          "<linkRobloxTerms>Ohjelman ehdoissa</linkRobloxTerms> määritellään 13–17 vuoden ikäraja, vanhemman tekemä ilmoittautuminen ja Ohjelmaan liittyvä tietojen jakaminen."
         ]
       },
       "responsible": {
@@ -3703,7 +3703,6 @@
     "title": "Luojien akatemian lasten turvallisuuden toimintaohje",
     "subtitle": "Tämä toimintaohje täydentää School of Gamingin <linkDiscipline>kiusaamisen ehkäisyn ohjetta</linkDiscipline>, jota sovelletaan edelleen tapaamisten arkiseen käyttäytymiseen. Tässä asiakirjassa kuvataan Lynx Educaten ja School of Gamingin laajemmat vastuut lasten turvallisuudesta Ohjelmassa, myös lähitapahtumissa.",
     "lastUpdated": "Tarkistettu viimeksi: {date}",
-    "pendingContact": "School of Gamingin yhteysosoitetta turvallisuushuolia varten vahvistetaan vielä, ja se lisätään tähän.",
     "intro": {
       "heading": "Sitoumuksemme",
       "blocks": [
@@ -3720,7 +3719,14 @@
       "vetting": {
         "heading": "Ennen kuin joku työskentelee lasten kanssa",
         "blocks": [
-          "Kaikkien pelikasvattajien (Gedujen) on suoritettava School of Gamingin oma taustatarkistus- ja koulutusprosessi, ennen kuin he työskentelevät lasten kanssa Sogversessa. Tähän kuuluu:"
+          "Kaikkien pelikasvattajien (Gedujen) on suoritettava School of Gamingin oma taustatarkistus- ja koulutusprosessi, ennen kuin he työskentelevät lasten kanssa Sogversessa. Tähän kuuluu:",
+          [
+            "Yli 18 vuoden ikä. Jokainen pelikasvattaja on aikuinen.",
+            "Taustatarkistus. Jokainen Gedu näyttää meille lasten kanssa työskenteleville tarkoitetun rikosrekisteriotteen, ennen kuin hänet nimetään mihinkään ryhmään – näin tiedämme, kuka viettää aikaa lapsesi kanssa. Tarkistamme otteen itse, emmekä saa ottaa siitä kopiota, joten emme ota.",
+            "School of Gamingin pelikasvattajan peruskurssi, joka jokaisen Gedun on suoritettava hyväksytysti.",
+            "Pelikasvattajan oppaamme, jossa kerrotaan, miten odotamme Gedun käyttäytyvän, ja jossa ryhmän ilmapiiri asetetaan hänen vastuulleen.",
+            "Allekirjoitettu sopimus School of Gamingin kanssa, joka käydään läpi henkilökuntamme kanssa ennen allekirjoittamista. Siinä kuvataan kirjallinen menettely – ensin varoitus ja keskustelu – jota noudatamme, jos Gedu ei täytä näitä odotuksia."
+          ]
         ]
       },
       "online": {
@@ -3753,7 +3759,7 @@
       "concern": {
         "heading": "Jos sinulla on huoli",
         "blocks": [
-          "Jos sinulla tai lapsellasi on lasten turvallisuutta koskeva huoli, ota yhteyttä osoitteeseen support@lynxeducate.com."
+          "Jos sinulla tai lapsellasi on lasten turvallisuutta koskeva huoli, ota yhteyttä School of Gamingiin osoitteeseen {supportEmail} tai Lynx Educateen osoitteeseen support@lynxeducate.com."
         ]
       },
       "data": {
@@ -3774,7 +3780,6 @@
     "title": "Luojien akatemian käyttöehdot",
     "subtitle": "Koskee perheitä, jotka ilmoittautuvat Luojien akatemiaan Ranskassa – Lynx Educate × School of Gaming, yhteistyössä Robloxin kanssa.",
     "lastUpdated": "Päivitetty: {date}",
-    "pendingContact": "School of Gamingin yhteysosoitetta vahvistetaan vielä, ja se lisätään tähän.",
     "intro": {
       "heading": "Lyhyesti",
       "blocks": [
@@ -3795,7 +3800,7 @@
       "eligibility": {
         "heading": "Kuka voi osallistua",
         "blocks": [
-          "Ohjelma on tarkoitettu 8–17-vuotiaille nuorille Ranskassa, ja ilmoittautumisen tekee vanhempi tai laillinen huoltaja. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja annettava suostumus lapsen puolesta."
+          "Ohjelma on tarkoitettu 13–17-vuotiaille nuorille Ranskassa, ja ilmoittautumisen tekee vanhempi tai laillinen huoltaja. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja annettava suostumus lapsen puolesta."
         ]
       },
       "whatsInvolved": {
@@ -3813,7 +3818,7 @@
       "safety": {
         "heading": "Turvallisuus ja valvonta",
         "blocks": [
-          "Jokaista tapaamista valvoo koulutettu pelikasvattaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeessamme</linkRobloxSafeguarding>, joka on saatavilla pyynnöstä."
+          "Jokaista tapaamista valvoo koulutettu pelikasvattaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeessamme</linkRobloxSafeguarding>."
         ]
       },
       "information": {
@@ -3832,7 +3837,7 @@
       "concern": {
         "heading": "Jos sinulla on huoli",
         "blocks": [
-          "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä osoitteeseen support@lynxeducate.com – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
+          "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä School of Gamingiin osoitteeseen {supportEmail} tai Lynx Educateen osoitteeseen support@lynxeducate.com – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
         ]
       },
       "changes": {

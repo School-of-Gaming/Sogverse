@@ -3180,7 +3180,7 @@
       "eyebrow": "Vad är det här",
       "heading": "Lär dig bygga i Roblox.",
       "paragraph1": "Programmet ger 13–17-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming i samarbete med Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
-      "paragraph2": "När programmet är slut har deltagarna publicerat sin egen skapelse på Roblox. Ingen erfarenhet krävs — bara nyfikenhet."
+      "paragraph2": "Programmet siktar mot att deltagarna publicerar sin egen skapelse på Roblox. Ingen erfarenhet krävs — bara nyfikenhet."
     },
     "why": {
       "eyebrow": "Varför vara med",
@@ -3317,7 +3317,7 @@
     "intro": {
       "heading": "Kort sammanfattning – för föräldrar och unga",
       "blocks": [
-        "Programmet riktar sig till unga i Frankrike i åldern 8–17 år. Anmälan måste göras av en förälder eller vårdnadshavare.",
+        "Programmet riktar sig till unga i Frankrike i åldern 13–17 år. Anmälan måste göras av en förälder eller vårdnadshavare.",
         "Vi samlar bara in det vi behöver för att anmäla ditt barn, genomföra Programmet på ett tryggt sätt och förstå om det fungerar. Det omfattar förälderns kontaktuppgifter, begränsade uppgifter om barnet, barnets Roblox-användarnamn eller Roblox-ID samt uppgifter om närvaro, slutförande och publicering av spel.",
         "School of Gaming använder uppgifterna för att driva anmälnings- och lärplattformen. Lynx Educate behandlar Programmets uppgifter i den utsträckning som behövs för att sköta genomförandet. Organisationerna har olika ansvar beroende på aktiviteten och på ändamålet med behandlingen av personuppgifterna.",
         [
@@ -3340,10 +3340,10 @@
         "heading": "Vem policyn gäller",
         "blocks": [
           "Den här policyn gäller föräldrar, vårdnadshavare och unga som anmäler sig till Skaparnas akademi, programmet för ungas digitala kreativitet i Frankrike (Programmet).",
-          "Programmet riktar sig till unga i åldern 8–17 år. En förälder eller vårdnadshavare måste göra anmälan och bekräfta att hen har rätt att anmäla barnet.",
+          "Programmet riktar sig till unga i åldern 13–17 år. En förälder eller vårdnadshavare måste göra anmälan och bekräfta att hen har rätt att anmäla barnet.",
           "Policyn omfattar anmälan till Programmet, administration, lärandeträffar, evenemang, support, barns trygghet och utvärdering av effekt. Den kompletterar School of Gamings <linkPrivacy>allmänna integritetspolicy</linkPrivacy>. Om de två policyerna står i konflikt med varandra när det gäller Programmet gäller den här programspecifika policyn.",
           "Barnets egen användning av ett Roblox-konto, Roblox Studio eller någon annan Roblox-tjänst omfattas av Roblox egen integritetspolicy och egna villkor.",
-          "<linkRobloxTerms>Programmets villkor</linkRobloxTerms> fastställer åldersspannet 8–17 år, att anmälan görs av föräldern och den datadelning som är specifik för Programmet."
+          "<linkRobloxTerms>Programmets villkor</linkRobloxTerms> fastställer åldersspannet 13–17 år, att anmälan görs av föräldern och den datadelning som är specifik för Programmet."
         ]
       },
       "responsible": {
@@ -3703,7 +3703,6 @@
     "title": "Barnskyddspolicy för Skaparnas akademi",
     "subtitle": "Det här dokumentet kompletterar School of Gamings <linkDiscipline>policy mot mobbning</linkDiscipline>, som fortsatt gäller för vardagligt beteende under träffarna. Här beskrivs Lynx Educates och School of Gamings bredare ansvar för barns trygghet i Programmet, även vid fysiska evenemang.",
     "lastUpdated": "Senast granskad: {date}",
-    "pendingContact": "En kontaktadress hos School of Gaming för trygghetsfrågor håller på att bekräftas och läggs till här.",
     "intro": {
       "heading": "Vårt åtagande",
       "blocks": [
@@ -3720,7 +3719,14 @@
       "vetting": {
         "heading": "Innan någon arbetar med barn",
         "blocks": [
-          "Alla spelfostrare (Geduer) måste genomgå School of Gamings egen kontroll- och utbildningsprocess innan de arbetar med barn i Sogverse. Detta omfattar:"
+          "Alla spelfostrare (Geduer) måste genomgå School of Gamings egen kontroll- och utbildningsprocess innan de arbetar med barn i Sogverse. Detta omfattar:",
+          [
+            "Att vara över 18 år. Varje spelfostrare är vuxen.",
+            "En bakgrundskontroll. Varje Gedu visar oss ett utdrag ur belastningsregistret av det slag som utfärdas för den som arbetar med barn, innan hen tilldelas någon grupp – så att vi vet vem som tillbringar tid med ditt barn. Vi kontrollerar utdraget själva, och vi får inte behålla någon kopia, så det gör vi inte.",
+            "School of Gamings grundkurs för spelfostrare, som varje Gedu måste slutföra med godkänt resultat.",
+            "Vår handbok för spelfostrare, som beskriver hur vi förväntar oss att en Gedu uppträder och gör stämningen i gruppen till hens ansvar.",
+            "Ett undertecknat avtal med School of Gaming, som gås igenom tillsammans med någon ur vår personal innan det skrivs under. Det beskriver det skriftliga förfarande vi följer – som börjar med en varning och ett samtal – om en Gedu inte lever upp till förväntningarna."
+          ]
         ]
       },
       "online": {
@@ -3753,7 +3759,7 @@
       "concern": {
         "heading": "Om du är orolig",
         "blocks": [
-          "Om du eller ditt barn har en oro som rör barns trygghet, kontakta support@lynxeducate.com."
+          "Om du eller ditt barn har en oro som rör barns trygghet, kontakta School of Gaming på {supportEmail} eller Lynx Educate på support@lynxeducate.com."
         ]
       },
       "data": {
@@ -3774,7 +3780,6 @@
     "title": "Användarvillkor för Skaparnas akademi",
     "subtitle": "Gäller familjer som anmäler sig till Skaparnas akademi i Frankrike – Lynx Educate × School of Gaming, i samarbete med Roblox.",
     "lastUpdated": "Uppdaterad: {date}",
-    "pendingContact": "En kontaktadress hos School of Gaming håller på att bekräftas och läggs till här.",
     "intro": {
       "heading": "Kort sammanfattning",
       "blocks": [
@@ -3795,7 +3800,7 @@
       "eligibility": {
         "heading": "Vem kan delta",
         "blocks": [
-          "Programmet riktar sig till unga i Frankrike i åldern 8–17 år, anmälda av en förälder eller vårdnadshavare. En förälder eller vårdnadshavare måste göra anmälan och lämna samtycke för barnets räkning."
+          "Programmet riktar sig till unga i Frankrike i åldern 13–17 år, anmälda av en förälder eller vårdnadshavare. En förälder eller vårdnadshavare måste göra anmälan och lämna samtycke för barnets räkning."
         ]
       },
       "whatsInvolved": {
@@ -3813,7 +3818,7 @@
       "safety": {
         "heading": "Trygghet och tillsyn",
         "blocks": [
-          "Varje träff leds av en utbildad spelfostrare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding>, som finns tillgänglig på begäran."
+          "Varje träff leds av en utbildad spelfostrare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding>."
         ]
       },
       "information": {
@@ -3832,7 +3837,7 @@
       "concern": {
         "heading": "Om du är orolig",
         "blocks": [
-          "Om du är orolig för ditt barns upplevelse i Programmet, kontakta support@lynxeducate.com – vi ser till att ärendet når rätt personer."
+          "Om du är orolig för ditt barns upplevelse i Programmet, kontakta School of Gaming på {supportEmail} eller Lynx Educate på support@lynxeducate.com – vi ser till att ärendet når rätt personer."
         ]
       },
       "changes": {

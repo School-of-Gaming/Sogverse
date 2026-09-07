@@ -3180,7 +3180,7 @@
       "eyebrow": "Le programme",
       "heading": "Apprenez à construire sur Roblox.",
       "paragraph1": "Ce programme donne aux ados de 13–17 ans en France l’occasion de concevoir, coder et publier leur propre jeu Roblox — avec les personnes qui comptent le plus pour les encourager. Proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox, c’est une introduction pratique à la création de jeux, à la créativité numérique et à la collaboration en ligne en toute sécurité.",
-      "paragraph2": "À la fin du programme, les participants auront publié leur propre création originale sur Roblox. Aucune expérience requise — juste de la curiosité."
+      "paragraph2": "Le programme les mène vers la publication de leur propre création originale sur Roblox. Aucune expérience requise — juste de la curiosité."
     },
     "why": {
       "eyebrow": "Pourquoi participer",
@@ -3317,7 +3317,7 @@
     "intro": {
       "heading": "En bref — pour les parents et les jeunes",
       "blocks": [
-        "Le Programme s’adresse aux jeunes de 8–17 ans résidant en France. L’inscription doit être effectuée par un parent ou un représentant légal.",
+        "Le Programme s’adresse aux jeunes de 13–17 ans résidant en France. L’inscription doit être effectuée par un parent ou un représentant légal.",
         "Nous ne collectons que ce qui est nécessaire pour inscrire votre enfant, mener le Programme en toute sécurité et mesurer s’il atteint ses objectifs. Cela comprend les coordonnées du parent, un nombre limité d’informations sur l’enfant, le nom d’utilisateur ou l’identifiant Roblox de l’enfant, ainsi que des informations sur la présence, l’achèvement du parcours et la publication de jeux.",
         "School of Gaming utilise ces informations pour faire fonctionner la plateforme d’inscription et d’apprentissage. Lynx Educate traite les informations du Programme dans la mesure nécessaire à sa gestion. Chaque organisation a des responsabilités différentes selon l’activité et selon la finalité pour laquelle les informations personnelles sont utilisées.",
         [
@@ -3340,10 +3340,10 @@
         "heading": "À qui s’applique cette politique",
         "blocks": [
           "Cette politique s’applique aux parents, aux représentants légaux et aux jeunes qui s’inscrivent à l’Académie des Créateurs, le programme de créativité numérique pour les jeunes en France (le Programme).",
-          "Le Programme s’adresse aux jeunes de 8–17 ans. Un parent ou un représentant légal doit effectuer l’inscription et confirmer qu’il a bien qualité pour inscrire l’enfant.",
+          "Le Programme s’adresse aux jeunes de 13–17 ans. Un parent ou un représentant légal doit effectuer l’inscription et confirmer qu’il a bien qualité pour inscrire l’enfant.",
           "Cette politique couvre l’inscription au Programme, son administration, les sessions d’apprentissage, les événements, l’assistance, la protection de l’enfance et l’évaluation d’impact. Elle complète la <linkPrivacy>politique de confidentialité générale</linkPrivacy> de School of Gaming. En cas de contradiction entre les deux textes concernant ce Programme, la présente politique spécifique au Programme prévaut.",
           "L’utilisation, par l’enfant, d’un compte Roblox, de Roblox Studio ou d’un autre service Roblox relève de la politique de confidentialité et des conditions propres à Roblox.",
-          "Les <linkRobloxTerms>conditions du Programme</linkRobloxTerms> fixent la tranche d’âge de 8–17 ans, l’inscription par le parent et le partage de données propre au Programme."
+          "Les <linkRobloxTerms>conditions du Programme</linkRobloxTerms> fixent la tranche d’âge de 13–17 ans, l’inscription par le parent et le partage de données propre au Programme."
         ]
       },
       "responsible": {
@@ -3703,7 +3703,6 @@
     "title": "Politique de protection de l’enfance de l’Académie des Créateurs",
     "subtitle": "Ce document complète la <linkDiscipline>politique de lutte contre le harcèlement</linkDiscipline> de School of Gaming, qui continue de s’appliquer aux comportements du quotidien pendant les sessions. Il couvre les responsabilités plus larges de Lynx Educate et de School of Gaming en matière de protection de l’enfance dans le cadre du Programme, y compris lors des événements en présentiel.",
     "lastUpdated": "Dernière révision : {date}",
-    "pendingContact": "Une adresse de contact School of Gaming pour les questions de protection de l’enfance est en cours de confirmation et sera ajoutée ici.",
     "intro": {
       "heading": "Notre engagement",
       "blocks": [
@@ -3720,7 +3719,14 @@
       "vetting": {
         "heading": "Avant de travailler auprès d’enfants",
         "blocks": [
-          "Tous les animateurs (Gedus) doivent suivre le processus de vérification et de formation propre à School of Gaming avant de travailler auprès d’enfants sur Sogverse. Cela comprend :"
+          "Tous les animateurs (Gedus) doivent suivre le processus de vérification et de formation propre à School of Gaming avant de travailler auprès d’enfants sur Sogverse. Cela comprend :",
+          [
+            "Avoir plus de 18 ans. Chaque animateur est un adulte.",
+            "Une vérification des antécédents. Chaque Gedu nous présente un extrait de casier judiciaire du type délivré aux personnes qui travaillent auprès d’enfants, avant d’être affecté à un groupe — ainsi nous savons qui passe du temps avec votre enfant. Nous le vérifions nous-mêmes et nous n’avons pas le droit d’en conserver une copie, donc nous ne le faisons pas.",
+            "Le cours de base de School of Gaming pour les animateurs, que chaque Gedu doit réussir.",
+            "Notre guide de l’animateur, qui énonce le comportement que nous attendons d’un Gedu et fait de l’ambiance du groupe sa responsabilité.",
+            "Un contrat signé avec School of Gaming, présenté et discuté avec un membre de notre équipe avant signature. Il définit la procédure écrite que nous suivons — d’abord un avertissement et une conversation — si un Gedu ne répond pas à ces attentes."
+          ]
         ]
       },
       "online": {
@@ -3753,7 +3759,7 @@
       "concern": {
         "heading": "Si vous avez une inquiétude",
         "blocks": [
-          "Si vous ou votre enfant avez une inquiétude relative à la protection de l’enfance, veuillez écrire à support@lynxeducate.com."
+          "Si vous ou votre enfant avez une inquiétude relative à la protection de l’enfance, veuillez écrire à School of Gaming à l’adresse {supportEmail} ou à Lynx Educate à l’adresse support@lynxeducate.com."
         ]
       },
       "data": {
@@ -3774,7 +3780,6 @@
     "title": "Conditions générales d’utilisation de l’Académie des Créateurs",
     "subtitle": "S’applique aux familles qui inscrivent leur enfant à l’Académie des Créateurs en France — Lynx Educate × School of Gaming, en collaboration avec Roblox.",
     "lastUpdated": "Mise à jour : {date}",
-    "pendingContact": "Une adresse de contact School of Gaming est en cours de confirmation et sera ajoutée ici.",
     "intro": {
       "heading": "En bref",
       "blocks": [
@@ -3795,7 +3800,7 @@
       "eligibility": {
         "heading": "Qui peut participer",
         "blocks": [
-          "Le Programme s’adresse aux jeunes de 8–17 ans résidant en France, inscrits par un parent ou un représentant légal. Un parent ou un représentant légal doit effectuer l’inscription et donner son consentement au nom de l’enfant."
+          "Le Programme s’adresse aux jeunes de 13–17 ans résidant en France, inscrits par un parent ou un représentant légal. Un parent ou un représentant légal doit effectuer l’inscription et donner son consentement au nom de l’enfant."
         ]
       },
       "whatsInvolved": {
@@ -3813,7 +3818,7 @@
       "safety": {
         "heading": "Sécurité et encadrement",
         "blocks": [
-          "Chaque session est encadrée par un animateur formé. Notre approche du comportement et de la protection de l’enfance est exposée dans notre <linkRobloxSafeguarding>Politique commune de protection de l’enfance</linkRobloxSafeguarding>, disponible sur demande."
+          "Chaque session est encadrée par un animateur formé. Notre approche du comportement et de la protection de l’enfance est exposée dans notre <linkRobloxSafeguarding>Politique commune de protection de l’enfance</linkRobloxSafeguarding>."
         ]
       },
       "information": {
@@ -3832,7 +3837,7 @@
       "concern": {
         "heading": "Si vous avez une inquiétude",
         "blocks": [
-          "Si l’expérience de votre enfant dans le Programme vous inquiète, écrivez à support@lynxeducate.com — nous veillerons à ce que votre message parvienne aux bonnes personnes."
+          "Si l’expérience de votre enfant dans le Programme vous inquiète, écrivez à School of Gaming à l’adresse {supportEmail} ou à Lynx Educate à l’adresse support@lynxeducate.com — nous veillerons à ce que votre message parvienne aux bonnes personnes."
         ]
       },
       "changes": {

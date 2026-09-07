@@ -31,22 +31,18 @@ const LAST_UPDATED = "2026-09-07";
 // Section order is owned here, not in the message files, so the same structure
 // renders for every locale. Each key maps to a flat
 // `robloxTerms.sections.<key>` entry with a `heading` and a `blocks` array
-// (ordered paragraphs and bulleted lists — see `policy-content.ts`).
-//
-// "If you have a concern" carries a pending marker: the source document names a
-// School of Gaming address that has not been decided on, so the section renders
-// the confirmed Lynx address and says the other one is still coming rather than
-// inventing a mailbox.
+// (ordered paragraphs and bulleted lists — see `policy-content.ts`). No section
+// is incomplete, so none carries a "pending" notice.
 const SECTIONS = [
-  { key: "involved", pending: false },
-  { key: "eligibility", pending: false },
-  { key: "whatsInvolved", pending: false },
-  { key: "cost", pending: false },
-  { key: "safety", pending: false },
-  { key: "information", pending: false },
-  { key: "media", pending: false },
-  { key: "concern", pending: true },
-  { key: "changes", pending: false },
+  "involved",
+  "eligibility",
+  "whatsInvolved",
+  "cost",
+  "safety",
+  "information",
+  "media",
+  "concern",
+  "changes",
 ] as const;
 
 export default async function RobloxTermsPage() {
@@ -69,10 +65,9 @@ export default async function RobloxTermsPage() {
         heading: t("intro.heading"),
         blocks: rawPolicyBlocks(t.raw("intro.blocks")),
       }}
-      sections={SECTIONS.map(({ key, pending }) => ({
+      sections={SECTIONS.map((key) => ({
         heading: t(`sections.${key}.heading`),
         blocks: rawPolicyBlocks(t.raw(`sections.${key}.blocks`)),
-        pending: pending ? t("pendingContact") : undefined,
       }))}
     />
   );
