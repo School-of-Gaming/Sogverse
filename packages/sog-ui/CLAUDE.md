@@ -72,18 +72,32 @@ the hue at a tenth behind a glyph already inked in it. It is retired, because th
 the lifted neutral carries the accent on its own and the tint was the same colour stated
 twice — once at its authored value and once at a duller one.
 
-**Colour is spent to a budget, and the budget is set by who the page is for.** A
-**parent surface** — the public pages, the parent's dashboard, the mail — spends **amber
-plus one other colour**, and is loud by *saturation* rather than by count. That is the
-reason, not a restraint dressed up as one: a first impression should be colourful and
-vibrant, and this brand is vibrant by putting two saturated colours on a calm ground, not
-by putting many colours on one page. Six hues competing for the same glance is not six
-times the energy, it is noise, and the ground stops reading as calm. A **gamer surface**
-may spend the palette, because a child's page is a place they are already inside rather
-than an introduction to us. **No page spends all six.** And **violet is never the colour
-of quiet**: it does not carry safety, safeguarding or trust-building copy on a parent
-surface, where the reader is being asked to trust us with a child and the page should
-sound settled rather than energetic.
+**Colour is a figure where it names something and a fill where it is pressed.** An edge,
+an ink, a mark, a chip's word beside its glyph: each of those is colour naming a thing —
+a state, a kind, a role — and none of them is pressed. A fill is what a hand presses, and
+the ink on it is the label of an action. A filled label is not a fault and does not read
+as one; the chip does the same job and reads better, so a label wears the chip and the
+fill stays the control's, which is what keeps a fill meaning *press*. Which colours a
+**button** may wear is decided by the Button adoption, not here. **Violet is the measured
+exception on the figure half**: `world` reads 2.71 as an ink on a card and 2.91 on the
+page — under the glyph floor, let alone the body one — so it cannot be an ink on either
+ground, which is why the role and status tables name families and statuses and never
+violet as a figure. Violet lives as an edge, a rule, a mark or a fill.
+
+**Colour is spent to a budget, and the budget is set by who the page is for.** **A
+surface where a parent is being asked to trust us or to pay**, the parent's dashboard,
+the mail, billing, safety and safeguarding copy, a partner page, spends amber as its one
+accent on neutral grounds, with ink for text and grey for support. Calm surfaces carry
+credibility. A second colour arrives there only with an intent stated beside the site
+that spends it. **A surface telling the story to a mixed audience**, the home page,
+About, Roblox, the social cards, spends amber plus one other colour, two accents at most,
+and is colourful by putting two saturated colours on a calm ground rather than many
+colours on one page. **A gamer surface**, the child's dashboard, the community, anything
+inside the world, may spend the palette; that is where the loudness belongs. No page
+spends all six, and amber plus one is the default wherever no decision has been made. And
+violet is never the colour of quiet: it does not carry safety, safeguarding or
+trust-building copy on a parent surface, where the reader is being asked to trust us with
+a child and the page should sound settled rather than energetic.
 
 No lint holds this one. What a page spends is a property of the whole rendered page, and
 no class string can be asked how many colours its neighbours used; the place a check

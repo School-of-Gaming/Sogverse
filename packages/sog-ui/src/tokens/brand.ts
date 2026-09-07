@@ -35,11 +35,12 @@
  * banned. How much of it a surface may spend is decided by who is reading, not
  * by what the surface is made of.
  *
- * **A parent surface spends amber plus one other colour, a gamer surface may
- * spend the palette, and no page spends all six.** The budget is stated in full
- * — with the reasoning behind each half of it — in the package's `CLAUDE.md`,
- * which is where a concept rule lives; this file holds the values, not the rule
- * for how many of them one page may reach for.
+ * **A surface where a parent is asked to trust us or to pay spends amber alone,
+ * a surface telling the story to a mixed audience spends amber plus one, a
+ * gamer surface may spend the palette, and no page spends all six.** The budget
+ * is stated in full — with the reasoning behind each tier — in the package's
+ * `CLAUDE.md`, which is where a concept rule lives; this file holds the values,
+ * not the rule for how many of them one page may reach for.
  *
  * ## The rules that hold everywhere
  *
@@ -79,7 +80,9 @@
  *   colour loses nothing. Body copy, descriptions, headings, links, error
  *   sentences and help text stay ink or white, because a parent is never
  *   *talked to* in these colours. The rule is restated on each family and each
- *   status below, beside the value it binds.
+ *   status below, beside the value it binds. Which of the two roles a colour
+ *   takes at a given site — a figure that names, or a fill that is pressed —
+ *   is the package's `CLAUDE.md`, beside the no-alpha rule it completes.
  * - **A brand colour exists at exactly the values authored below, never at an
  *   alpha step**: over a near-black ground an alpha step composites to a
  *   darker, duller hue, so what the reader sees is no longer the brand. A

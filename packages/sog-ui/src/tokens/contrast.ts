@@ -140,7 +140,16 @@ const appTextOnGrounds: Pairing[] = (
   })),
 );
 
-/** The two signature colours, each under the ink it carries. */
+/**
+ * The two signature colours, each under the ink it carries.
+ *
+ * **There is no `world`-as-ink row, and that is a measurement rather than an
+ * omission.** Violet reads 2.71 against a card and 2.91 against the page —
+ * under the glyph floor, let alone the body one — so there is no ground this
+ * theme fills that it could be set as type on. It reaches a reader as an edge,
+ * a rule, a mark or a fill, which is why the role and status tables name
+ * families and statuses and never violet as a figure.
+ */
 const brandPairings: Pairing[] = [
   {
     id: "ink-on-act",

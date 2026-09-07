@@ -191,10 +191,11 @@ export function UserMarketingCard({
                           </span>
                         )}
                         <Badge
+                          variant="outline"
                           className={
                             row?.granted
-                              ? "bg-success text-success-foreground"
-                              : "bg-lifted text-muted-foreground"
+                              ? "text-success"
+                              : "text-muted-foreground"
                           }
                         >
                           {row?.granted ? t("granted") : t("notGranted")}

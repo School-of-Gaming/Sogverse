@@ -56,7 +56,7 @@ export function TopicInfoCard({ topic }: { topic: ProductTopic }) {
             {t("topicInfo.heading", { name: meta.label })}
           </h2>
           {info.pegi !== undefined && (
-            <Badge variant="secondary" className="shrink-0">
+            <Badge variant="outline" className="shrink-0">
               {t("topicInfo.pegi", { age: info.pegi })}
             </Badge>
           )}

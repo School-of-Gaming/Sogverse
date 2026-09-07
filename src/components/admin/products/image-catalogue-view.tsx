@@ -206,7 +206,7 @@ export function ImageCatalogueView({
                           below it down. */}
                       <span className="mt-1 flex h-5 items-center">
                         {count > 0 && (
-                          <Badge variant="secondary">
+                          <Badge variant="outline">
                             {t("usedBadge", { count })}
                           </Badge>
                         )}

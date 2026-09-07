@@ -245,9 +245,9 @@ export function GeduCertificationCard({
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
             {certified ? (
-              <Badge className="bg-success text-success-foreground">{t("certified")}</Badge>
+              <Badge variant="outline" className="text-success">{t("certified")}</Badge>
             ) : (
-              <Badge variant="destructive">{t("notCertified")}</Badge>
+              <Badge variant="outline" className="text-destructive">{t("notCertified")}</Badge>
             )}
             {certified && data?.certified_at ? (
               <p className="text-sm text-muted-foreground">

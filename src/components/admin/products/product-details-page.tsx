@@ -254,7 +254,7 @@ function HeaderCard({
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <ProductStatusChip status={statusKey} />
-            <Badge variant={isVisible ? "default" : "secondary"}>
+            <Badge variant="outline">
               {isVisible ? listedLabel : unlistedLabel}
             </Badge>
           </div>

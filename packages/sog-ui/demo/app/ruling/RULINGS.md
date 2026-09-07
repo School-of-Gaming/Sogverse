@@ -857,7 +857,28 @@ amber plus one on a parent surface, the palette on a gamer surface, never all si
 `brand.ts` states it in two sentences and points there for the full rule, its open
 sentence deleted; the entry is landed except the owner's confirmation of the wording.
 
-**Ruling:** _open_
+**Landed 2026-09-07 (the owner's rewrite).** The wording came back rewritten rather than
+confirmed, and the rewrite is now the paragraph in `packages/sog-ui/CLAUDE.md`. What
+changed is the shape: **three tiers, not two.** A surface where a parent is asked to trust
+us or to pay — the parent's dashboard, the mail, billing, safety and safeguarding copy, a
+partner page — spends amber *alone* on neutral grounds, with ink for text and grey for
+support, and a second colour arrives there only with an intent stated beside the site that
+spends it. A surface telling the story to a mixed audience — the home page, About, Roblox,
+the social cards — spends amber plus one, two accents at most. A gamer surface may spend
+the palette. No page spends all six, amber plus one is the default wherever nothing has
+been decided, and violet is never the colour of quiet. The "loud by saturation rather than
+by count" reasoning is folded into the middle tier's own sentence rather than carried as a
+separate justification. `brand.ts`'s two sentences were rewritten to name all three tiers.
+**One parent-tier surface spends a second colour today and now states its intent beside
+itself:** the mail header's violet rule, whose intent is the signature pair — amber and
+violet are the brand's own lockup, and the header is where a mail says who it is from —
+written into `src/lib/email-templates/layout.ts` beside the rule and into that directory's
+`CLAUDE.md` beside the sentence about the header's colour. A grep of `src/`,
+`packages/sog-ui/`, `docs/`, the root `CLAUDE.md` and `TODO.md` for the two-tier wording
+found nothing left to correct: the only other statement of the rationing is the superseded
+design-pass plan, which already spelled the three tiers.
+
+**Ruling:** _landed_
 
 ## 13. Edges that were a state's only signal — the queue for SOG-UI edge constructs
 
@@ -1093,13 +1114,69 @@ gradients → the easter egg's divider, two mask-images, the email's colour tric
 
 **Ruling:** _landed_
 
+## 15. Figure and fill
+
+**Asked, and drawn 2026-09-07** (page section 1, the page's last question): ten colours
+× three constructs — the real filled button from `ui/button.tsx`, the real filled badge
+from `ui/badge.tsx`, and the same label as the figure chip `public/products/status-chip.tsx`
+draws — on a card and on the page, class for class, with live hover only on the three
+colours the app actually ships a filled button in. The line being put: **a colour is a
+figure where it names something and a fill where it is pressed.** The drawing's own
+finding, which the paragraph could not have made: **violet cannot be a figure at all**,
+2.71 as an ink on a card and 2.91 on the page, under the glyph floor let alone the body
+one — which is why the rule names families and statuses rather than brand colours.
+
+**Ruled 2026-09-07, from the page.** The owner's words: _"filled buttons are fine. The
+filled badges are ok too, but the figure chip does something a badge would already do but
+looks better."_ So the rule lands exactly as the section drew it, and its stated reason is
+**preference, not fault**: a filled label is not wrong, the chip does the same job and
+reads better, and keeping the fill for the control is what makes a fill mean *press*.
+Buttons are untouched — which colours a button may wear is the Button adoption's.
+
+**Landed 2026-09-07.** The rule is a new paragraph in `packages/sog-ui/CLAUDE.md`, placed
+directly after the no-alpha paragraph it completes — a figure where colour names
+something, a fill where it is pressed; a filled label is not a fault but the chip reads
+better; the button question is elsewhere; violet is the measured exception and lives as an
+edge, a rule, a mark or a fill. `brand.ts`'s label bullet gains one line pointing there,
+the way the budget already points there, and `contrast.ts`'s brand-pairings comment now
+says why no `world`-as-ink row exists rather than leaving the gap unexplained (no passing
+pairing was added; the ledger has no rejected-pairing shape to record one in).
+
+**The count did not match, and 19 is not what is there.** The inventory said nineteen
+filled badges; the surface as found is **nine**, in eight files, all of them the `Badge`
+component. Each took `variant="outline"` — the variant *is* the chip shape, and switching
+to it is also what drops the default's shadow, which tailwind-merge would not have
+stripped from a `className` — with the word in the colour where the colour survives:
+`gedu-certification-card` certified `text-success` and not-certified `text-destructive`,
+`gedu-picker-sheet`'s not-certified `text-destructive`, `user-marketing-card`'s granted
+`text-success`. **Five wore violet and could not keep it**, because violet is not an ink:
+the unassigned and waitlist counts, the image catalogue's usage count, the topic card's
+PEGI rating and the product details page's listed/unlisted pair were `variant="secondary"`
+or `default` used as emphasis rather than as meaning, so each becomes the plain neutral
+chip and the word carries the fact on its own. Nothing else about any of them changed.
+
+**Left standing, and why.** The three variant demos on the admin style guide are the
+`Badge` component's own API drawn, not label sites — but with this sweep the filled
+variants have no product caller left, which makes `default`/`secondary`/`destructive` on
+`ui/badge.tsx` a deletion candidate for the Badge adoption rather than for a colour
+branch. The two product media chips (`product-chips.tsx`: the act tag bottom-left, the
+world audience top-right) are solid *because* they sit on a photograph, where a neutral
+edge has no ground to sit on. The two corner badges (`SessionFeedAlertBadge`'s warning
+count, `PaymentProblemBadge`'s destructive mark) straddle a card's top-right corner as a
+cut-out, half on the card and half off it, so a transparent chip there would be
+transparent over two grounds at once; the payment one is a `<button>` besides, and its
+hover shade is already the Button adoption's.
+
 ## Where the session stands (2026-09-07, early morning)
 
 Read this first when resuming. The branch is `feat/sog-ui-theme-adoption`, in the
 worktree `.claude/worktrees/sog-ui-theme`, pushed to origin after every landing. The
 worktree has its own `node_modules` (this branch changed dependencies twice). The demo
-runs with `npm run dev --workspace=@sog/ui` on port 3001; the ruling page `/ruling` now
-holds only its inventory. The app preview is not running; start it on 3002 for the
+runs with `npm run dev --workspace=@sog/ui` on port 3001; **the ruling page is gone** —
+its code, its art directory and its last two sections were deleted once the owner's final
+rulings landed, and `/ruling` is a 404. This ledger is all that remains of it, and it
+stays until the owner's last three decisions close, at which point the session deletes it
+too. The app preview is not running; start it on 3002 for the
 owner's walk. The Vercel preview builds (the install command is scoped to the UI
 workspace). The session memory file has been deleted at the owner's request; this note is
 the only resume point.
@@ -1108,22 +1185,14 @@ the only resume point.
 element glyphs, the kind glyphs; §3 the status set and its constructs; §4 three grounds;
 §5 the picks and the kinds; §6 the scrim, the glass, on-media ink, the picker's check, the
 media ground, the Lynx cyan; §7 the identicon; §9 no alpha (act as a figure, the lifecycle
-chip, the tiles); §11 coloured text as a label; §14 the heroes, cards, social images, email
-header and the role chip. The library holds every value with its rule and reason;
-Sogverse's stylesheet declares no colour; the full suite and both builds are green at
-every commit.
+chip, the tiles); §11 coloured text as a label; §12 the colour budget, three tiers; §14 the
+heroes, cards, social images, email header and the role chip; §15 figure and fill, and the
+nine filled badges that took the chip. The library holds every value with its rule and
+reason; Sogverse's stylesheet declares no colour; the full suite and both builds are green
+at every commit.
 
 **Still needing the owner (small, and none blocks the end of the branch):**
 
-- **The figure-and-fill exhibit**, drawn (page section 1): ten colours × the real filled
-  button / filled badge / figure chip, on both grounds; live hover only on the three
-  filled buttons the app ships. Finding: violet cannot be a figure (2.71 on the card,
-  2.91 on the page as ink), which is why the rule names families and statuses. On
-  confirmation the 19 filled badges take the chip's shape and the rule enters
-  `packages/sog-ui/CLAUDE.md`'s no-alpha paragraph; buttons are the Button adoption's.
-- **§12 the colour budget**: written as a paragraph in `packages/sog-ui/CLAUDE.md` (amber
-  plus one on parent surfaces, the palette on gamer surfaces, never all six); the owner
-  confirms the wording.
 - **The hero headline's coloured words** (from the audit): "Screen Time" in act and
   "Quality Time" in world, in both heroes and the OG card, is coloured text inside a
   heading, which §11's landed rule reads as ink. Fork: declare a display headline a
@@ -1163,8 +1232,9 @@ step in "How the owner rules on an adoption".
    in three piles (the library and its tests read line by line; the load-bearing Sogverse
    files, those whose hunks change more than class strings, read as code; the mechanical
    pile verified by the greps, the suite and the builds); findings triaged per the flow.
-3. **Delete this page, this ledger and `demo/public/ruling-art/`** in one commit once the
-   owner's remaining rulings are landed.
+3. **Delete this ledger.** The page's code and `demo/public/ruling-art/` are already
+   gone; `RULINGS.md` outlives them by design and goes when the three decisions above
+   close.
 4. **Phase 5** on the owner's word: gates on the exact commit, the 3002 server killed by
    port with a tree kill, `ExitWorktree` keep, `dev` fast-forwarded, `git merge --no-ff`
    titled "Merge the SOG-UI theme adoption into dev", push, worktree removed (`rm -rf` the

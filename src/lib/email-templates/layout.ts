@@ -21,6 +21,14 @@ interface LayoutOptions {
  * The violet rule under the lockup — the header's one piece of colour besides
  * the brand half of the lockup itself.
  *
+ * **Why a mail spends a second colour at all.** A mail is a parent-tier
+ * surface, and that tier's budget gives it amber as its one accent, with a
+ * second colour arriving only where an intent is stated beside the site that
+ * spends it. This is that statement: amber and violet together are the
+ * signature pair — the brand's own lockup — and the header is where a mail
+ * says who it is from. The rule is the pair, not decoration, and nothing below
+ * the header spends a second colour.
+ *
  * It is the construct the home hero and both social cards use, so a page, a
  * shared link and a mail say one thing. It replaces a two-tone wash across the
  * whole shell: amber and violet pre-blended against the ground, because a mail
