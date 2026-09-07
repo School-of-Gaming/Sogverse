@@ -68,13 +68,15 @@ export interface LooseColour {
  * names none of them.
  *
  * **The Klingon easter egg** keeps `#D00` and `#0A0A0A` under the artwork
- * exemption — they are the Empire's flag colours, not the brand's. Its eight
- * `text-white/*` are not artwork: they are ordinary secondary text drawn from a
- * colour the palette does not name, and they take the app's two inks. Seven go
- * to the quiet one; the deepest step is the glossary table's English column,
- * which is what a reader scans, and it takes `foreground` so the table keeps the
- * ranking its four alpha strengths were approximating. Section 2 of the page
- * draws the block both ways and lists the step-by-step decision.
+ * exemption — they are the Empire's flag colours, not the brand's, and the day
+ * the brand's amber changes the console should not follow.
+ *
+ * **Its white has left this table.** The eight `text-white/*` were never
+ * artwork: they were the words *inside* the picture, ordinary secondary text
+ * drawn from a colour the palette does not name, and they took the app's two
+ * inks — seven the quiet one, and the glossary table's English column, which is
+ * what a reader scans, `foreground`. So the file's lint exemption is the hex ban
+ * alone now, on the same terms as the flags and the trophy sprite.
  *
  * **The Lynx cyan is a partner's mark colour.** Our own mark is already drawn
  * in named tokens; the only file spelling this hex draws the Lynx Educate
@@ -101,13 +103,6 @@ export const LOOSE_COLOURS: readonly LooseColour[] = [
     verdict: "artwork",
   },
   {
-    label: "Easter-egg ink",
-    value: "#FFFFFF",
-    where: "about/about-section.tsx, text-white/30 to /70",
-    uses: 8,
-    verdict: "rename → foreground ×1, muted-foreground ×7",
-  },
-  {
     label: "Lynx cyan",
     value: "#009FE3",
     where: "og/marks.tsx, assets/partners/lynx-educate.svg",
@@ -132,52 +127,31 @@ export interface AlphaSite {
  *
  *     grep -rhoE "\b(bg|from|to|via|text|border|ring|shadow|divide|outline|fill|stroke)-[a-z0-9-]+/[0-9]+" src --include=*.tsx --include=*.ts | sed -E 's/^([a-z]+)-(.*)\/([0-9]+)$/\2/' | sort | uniq -c | sort -rn
  *
- * 34 sites in 19 files, down from 270. The character class takes digits as well
+ * 4 sites in 2 files, down from 270. The character class takes digits as well
  * as letters because the sixteen zone hues were `pick-1` to `pick-16`: a
  * letters-only class silently dropped all sixteen and reported a total that
  * looked plausible, which is the failure mode a regeneration command exists to
  * prevent.
  *
- * **Every brand row has gone, and that is four rulings landing.** Act and world
- * are figures on the dark ground and never tints of it; the Yty families and
- * the picks exist at their authored values, so a tile behind one of their marks
- * is the lifted grey; no status colour is tinted anywhere. What that leaves is
- * two kinds of row.
- *
- * **The neutrals at a step**, which are the largest share and are open under
- * their own question rather than this one: a quiet ink stepped quieter, a rail
- * dot drawn at a fraction of the ink, a pseudo-element separator. The greys
- * landing swept every alpha *ground* to the one lifted grey; these are inks and
- * marks, which is a different construct and a different question.
+ * **Every row but the hover shades has gone, and that is six rulings landing.**
+ * Act and world are figures on the dark ground and never tints of it; the Yty
+ * families and the picks exist at their authored values, so a tile behind one of
+ * their marks is the lifted grey; no status colour is tinted anywhere. The neutral inks —
+ * a quiet ink stepped quieter, a rail dot at a fraction of the ink, a
+ * pseudo-element separator — took the plain token in the enforcement pass, and
+ * the easter egg's eight white steps took the app's two inks. What is left is
+ * one kind of row.
  *
  * **The four hover shades**, which are not layering at all: the fill darkening
  * under a pointer. That is the same construct as `opacity-50` on a disabled
  * control, which this grep does not even match, and it belongs to a component's
  * recipe rather than to colour. The act and world pair is the Button
  * adoption's; the two destructive ones are the same shape in a status colour.
- *
- * **The eight white steps** are the Klingon easter egg's, and ride its own
- * question.
  */
 export const ALPHA_SITES: readonly AlphaSite[] = [
   {
-    step: "muted-foreground",
-    where: "faded ink, pseudo-element separators, a rail dot, a quiet glyph",
-    uses: 20,
-  },
-  {
-    step: "white",
-    where: "about/about-section.tsx, the tlh easter egg",
-    uses: 8,
-  },
-  {
     step: "destructive",
     where: "the destructive hover shade — ui/button.tsx, parent/PaymentProblemBadge.tsx",
-    uses: 2,
-  },
-  {
-    step: "foreground",
-    where: "the absent mark, one faded filter label",
     uses: 2,
   },
   {

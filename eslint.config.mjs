@@ -322,7 +322,13 @@ const eslintConfig = defineConfig([
     // than a preference of ours. `admin/dashboard/pixel-art.tsx` is the trophy
     // sprite: it is gold because it is a trophy, and its earlier borrowing of
     // the act amber was a mistake that made a picture look like a brand
-    // placement. `lib/images/normalize-image.ts` is not artwork but is the same
+    // placement. `about/about-section.tsx` draws the Klingon easter egg as an
+    // Empire console, and its `#d00` and `#0a0a0a` are the Empire's colours:
+    // the day the brand's amber changes, that console must not follow. The
+    // words inside the console were never artwork — they are ordinary
+    // secondary text and take the app's two inks, which is what lets the file
+    // sit in this list rather than outside both bans.
+    // `lib/images/normalize-image.ts` is not artwork but is the same
     // shape of exception: its white is the ground a transparent PNG is
     // flattened onto when it is re-encoded as JPEG, a property of the image's
     // own pixels rather than of the UI around it, and its doc comment says so.
@@ -330,23 +336,11 @@ const eslintConfig = defineConfig([
       "src/components/layout/locale-picker.tsx",
       "src/components/og/marks.tsx",
       "src/components/admin/dashboard/pixel-art.tsx",
+      "src/components/about/about-section.tsx",
       "src/lib/images/normalize-image.ts",
     ],
     rules: {
       "no-restricted-syntax": ["error", ...noPaletteColourClasses],
-    },
-  },
-  {
-    // The Klingon easter egg on the About page, exempt from both halves — and
-    // the one exemption here that is not settled. Its `#d00` and `#0a0a0a` are
-    // artwork on the same terms as the flags above: the section is drawn as a
-    // Klingon console, and the console's colours are not the brand's. Its eight
-    // `text-white/*` steps are a different matter and are still open — they are
-    // ink, and ink is a token — so the file is exempt whole until that ruling
-    // lands and this block narrows to the artwork.
-    files: ["src/components/about/about-section.tsx"],
-    rules: {
-      "no-restricted-syntax": "off",
     },
   },
   // The email house style, made mechanical at the point of typing. Colours in a

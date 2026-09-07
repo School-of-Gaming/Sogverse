@@ -770,7 +770,31 @@ in the enforcement pass, since nothing in Sogverse composites.
 **Asked:** its `#d00` / `#0a0a0a` artwork colours take the artwork exemption; its
 eight `text-white/*` become muted ink.
 
-**Ruling:** _open_
+**Ruled 2026-09-07 (morning), from the page:** "Proposed is good."
+
+**Landed 2026-09-07 (morning).** The artwork stands untouched: `#d00`, `#0a0a0a`
+and the three `rgba(221,0,0,…)` edges are the Empire's paint, not the brand's,
+and the day the amber changes the console must not follow. The eight faded
+whites were the words *inside* the picture rather than part of it, so they took
+the app's two inks — the glossary table's English column, which is what a reader
+scans, to `foreground`, and the intro, the three column headers, the
+literal-meaning column, the retired note and the closing note to
+`muted-foreground`, both of them better on the card's own `#0A0A0A` ground than
+four of the five steps they retire. File by file:
+`src/components/about/about-section.tsx` carries the eight classes and a comment
+saying which half of the card is artwork and which is text;
+`eslint.config.mjs` loses the egg's own block and the file joins the artwork list
+beside the flags, the partner marks and the trophy sprite, so the hex ban is off
+for it and the palette-class ban is back on, which is what makes the white
+impossible to write again rather than merely unwritten;
+`tests/unit/styling/no-colour-at-an-alpha-step.test.ts` needed no edit, because
+it never matched `text-white` (white is not a token, so it is the palette ban's)
+and its four exemptions are the hover shades; the page's section 2 is deleted
+with its file, and `inventory.ts` loses the loose-colour row for the egg's white
+and the alpha row that collected its eight steps. The `/n` surface in `src` is
+now 4 sites in 2 files, every one of them a hover shade on a filled control.
+
+**Ruling:** _landed_
 
 ## 11. Coloured text
 
@@ -1097,12 +1121,6 @@ every commit.
   2.91 on the page as ink), which is why the rule names families and statuses. On
   confirmation the 19 filled badges take the chip's shape and the rule enters
   `packages/sog-ui/CLAUDE.md`'s no-alpha paragraph; buttons are the Button adoption's.
-- **§10 the Klingon easter egg**, drawn (page section 2): the card today beside proposed,
-  artwork unchanged (`#d00`, `#0a0a0a`, its red edges), the eight `text-white/*` sorted:
-  the English column → `foreground`, the other seven → `muted-foreground` (both beat four
-  of the five steps they retire on the card's own ground). On ruling: the file keeps its
-  hex exemption for the artwork, its palette-class exemption narrows, the alpha allowlist
-  loses its easter-egg entry, and the only `/n` left in `src` is the Button hover pair.
 - **§12 the colour budget**: written as a paragraph in `packages/sog-ui/CLAUDE.md` (amber
   plus one on parent surfaces, the palette on gamer surfaces, never all six); the owner
   confirms the wording.
@@ -1122,8 +1140,9 @@ every commit.
 below rests on habit: `tests/unit/styling/globals-declares-no-colour.test.ts` holds that
 Sogverse's stylesheet declares no `--color-*`;
 `tests/unit/styling/no-colour-at-an-alpha-step.test.ts` holds that no colour utility in
-Sogverse carries an alpha suffix except the two named Button hover shades and the easter
-egg (until §10); `tests/unit/styling/glass-belongs-to-the-library.test.ts`,
+Sogverse carries an alpha suffix except the four named hover shades on filled controls
+(three in `ui/button.tsx`, one in `parent/PaymentProblemBadge.tsx`), all of them the Button
+adoption's; `tests/unit/styling/glass-belongs-to-the-library.test.ts`,
 `tests/unit/styling/globals-border-layer.test.ts`, `tests/unit/theme/face-contract.test.ts`
 and the nine files under `tests/unit/sog-ui/` hold the rest of the theme. The 24 neutral
 ink `/n` sites took the plain token; the hex-literal lint covers all of `src/` with its
