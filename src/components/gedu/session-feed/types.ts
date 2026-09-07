@@ -210,9 +210,9 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
    * out. The dashboard's SQL count draws the same end line, so the badge and the
    * card can never disagree about which sessions are outstanding.
    *
-   * It gates the amber warning and nothing else. Neither an old session nor a
+   * It gates the warning and nothing else. Neither an old session nor a
    * live one loses its editor — both are fully recordable, which is what makes
-   * roll call during the club work; what they may never do is turn amber for
+   * roll call during the club work; what they may never do is turn warning for
    * work nobody is owed yet. The green check still applies to both: finish the
    * sheet, write the report, and it is earned.
    */

@@ -1400,20 +1400,20 @@ describe("templateRegistry componentsReference", () => {
   it("shows every button variant, rendered by the shared helper", () => {
     const { html } = render();
     // One filled cell per variant, each carrying that variant's own fill.
-    expect(html).toContain(`background-color:${BRAND.primary};background-image:linear-gradient(${BRAND.primary},${BRAND.primary})`);
-    expect(html).toContain(`background-color:${BRAND.secondary};background-image:linear-gradient(${BRAND.secondary},${BRAND.secondary})`);
-    expect(html).toContain(`color:${BRAND.primaryForeground}`);
-    expect(html).toContain(`color:${BRAND.secondaryForeground}`);
+    expect(html).toContain(`background-color:${BRAND.act};background-image:linear-gradient(${BRAND.act},${BRAND.act})`);
+    expect(html).toContain(`background-color:${BRAND.world};background-image:linear-gradient(${BRAND.world},${BRAND.world})`);
+    expect(html).toContain(`color:${BRAND.actForeground}`);
+    expect(html).toContain(`color:${BRAND.worldForeground}`);
     // The two-up row is the helper's, not a hand-built pair of cells.
     expect([...html.matchAll(/width="50%"/g)]).toHaveLength(2);
   });
 
   it("carries the whole palette, each swatch as a real background", () => {
     const { html } = render();
-    for (const hex of [BRAND.primary, BRAND.secondary]) {
+    for (const hex of [BRAND.act, BRAND.world]) {
       expect(html).toContain(`background-image:linear-gradient(${hex},${hex})`);
     }
-    expect(html).toContain("BRAND.secondary");
+    expect(html).toContain("BRAND.world");
   });
 
   /**

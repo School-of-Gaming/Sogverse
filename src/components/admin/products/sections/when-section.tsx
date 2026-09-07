@@ -93,17 +93,9 @@ export function WhenSection({
               <label
                 key={option}
                 className={cn(
-                  "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
-                  state.startMode === option
-                    ? "border-primary bg-primary/5"
-                    : "border-input",
-                  lockStartMode
-                    ? "cursor-not-allowed opacity-60"
-                    : cn(
-                        "cursor-pointer",
-                        state.startMode !== option &&
-                          "hover:border-foreground/30"
-                      )
+                  "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
+                  state.startMode === option && "border-act",
+                  lockStartMode ? "cursor-not-allowed opacity-60" : "cursor-pointer"
                 )}
               >
                 <input
@@ -122,7 +114,7 @@ export function WhenSection({
                       endDate: option === "threshold" ? "" : state.endDate,
                     })
                   }
-                  className="mt-1 h-4 w-4"
+                  className="mt-1 h-4 w-4 accent-act"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">
@@ -207,12 +199,9 @@ export function WhenSection({
                     <label
                       key={option}
                       className={cn(
-                        "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
-                        active
-                          ? "border-primary bg-primary/5"
-                          : "border-input",
-                        "cursor-pointer",
-                        !active && "hover:border-foreground/30"
+                        "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
+                        active && "border-act",
+                        "cursor-pointer"
                       )}
                     >
                       <input
@@ -229,7 +218,7 @@ export function WhenSection({
                               option === "ongoing" ? "" : state.endDate,
                           })
                         }
-                        className="mt-1 h-4 w-4"
+                        className="mt-1 h-4 w-4 accent-act"
                       />
                       <div className="min-w-0 flex-1">
                         <div className="font-medium">
@@ -301,7 +290,7 @@ export function WhenSection({
           id="p-timezone"
           value={state.timezone}
           onChange={(e) => setState({ ...state, timezone: e.target.value })}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         >
           {timezoneOptions.map((zone) => (
             <option key={zone} value={zone}>

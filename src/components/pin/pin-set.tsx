@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { AlertCircle } from "lucide-react";
 import { PinPad } from "./pin-pad";
 import { usePinField } from "./use-pin-field";
 
@@ -90,8 +91,19 @@ export function PinSet({
       />
       {/* Reserved-height status line so showing the mismatch text never reflows
           the pad above it (no-layout-shift rule). */}
-      <p className="min-h-5 text-sm text-destructive" role="alert">
-        {mismatch ? mismatchMessage : ""}
+      <p
+        className="flex min-h-5 items-start gap-1.5 text-sm text-foreground"
+        role="alert"
+      >
+        {mismatch && (
+          <>
+            <AlertCircle
+              className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
+              aria-hidden
+            />
+            <span>{mismatchMessage}</span>
+          </>
+        )}
       </p>
       {footer && <div className="w-full">{footer}</div>}
     </div>

@@ -47,7 +47,7 @@ function Sheet({ open, onOpenChange, children }: SheetProps) {
     >
       <div
         className={cn(
-          "fixed inset-0 bg-black/50 transition-opacity duration-200 ease-out",
+          "fixed inset-0 bg-scrim transition-opacity duration-200 ease-out",
           open ? "opacity-100" : "opacity-0",
         )}
         onClick={() => onOpenChange(false)}

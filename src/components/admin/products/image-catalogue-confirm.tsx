@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Upload } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -160,9 +161,9 @@ export function ImageActionConfirmDialog({
           )}
 
           {error && (
-            <p className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </p>
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
         </div>
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -111,9 +112,14 @@ function SetLocationForm({
         </div>
 
         {error !== null && (
-          <p className="mt-3 text-xs text-destructive" role="alert">
+          <StatusLine
+            status="destructive"
+            size="xs"
+            role="alert"
+            className="mt-3"
+          >
             {error}
-          </p>
+          </StatusLine>
         )}
 
         <DialogFooter>

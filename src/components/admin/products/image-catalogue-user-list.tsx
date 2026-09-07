@@ -48,7 +48,7 @@ export function ProductImageUserList({
           <li key={product.id}>
             <Link
               href={`/admin/${config.routeSlug}/${product.id}`}
-              className="flex items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-accent"
+              className="flex items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-hover"
             >
               <span className="min-w-0">
                 <span className="block truncate font-medium">

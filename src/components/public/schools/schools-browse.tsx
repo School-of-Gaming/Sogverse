@@ -259,10 +259,12 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <div className="space-y-4">
+        {/* Ink: a page heading is read through, and the one heading the
+            library lets carry a coloured phrase is a hero headline with its
+            rule beneath (`brand.ts`, beside the label rule). This page has
+            neither. */}
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {t.rich("hero.title", {
-            primary: (chunks) => <span className="text-primary">{chunks}</span>,
-          })}
+          {t("hero.title")}
         </h1>
         <p className="text-lg text-muted-foreground">{t("hero.subtitle")}</p>
         <p className="text-base text-muted-foreground">{t("hero.howItWorks")}</p>
@@ -324,18 +326,18 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
         )}
       </div>
 
-      <div className="mt-10 flex items-start gap-2.5 rounded-md bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+      <div className="mt-10 flex items-start gap-2.5 rounded-md bg-lifted px-4 py-3 text-sm text-muted-foreground">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <p>{t("waitlistNote")}</p>
       </div>
 
-      <div className="mt-6 rounded-md border border-input bg-card px-4 py-5 text-center">
+      <div className="mt-6 rounded-md border border-border bg-card px-4 py-5 text-center">
         <p className="font-semibold">{t("notListed.title")}</p>
         <p className="mx-auto mt-1 max-w-prose text-sm text-muted-foreground">
           {t("notListed.body")}{" "}
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-act hover:underline"
           >
             {SUPPORT_EMAIL}
           </a>
@@ -398,13 +400,13 @@ function RegionSection({ group, t }: { group: RegionGroup; t: Translate }) {
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 rounded-md border border-input bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
+        className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-hover"
       >
         <span className="flex min-w-0 items-center gap-2.5 font-medium">
           <Chevron className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="truncate">{group.regionName}</span>
         </span>
-        <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+        <span className="shrink-0 rounded-full bg-lifted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
           {group.municipalities.length}
         </span>
       </button>
@@ -464,7 +466,7 @@ function MunicipalityRow({
   if (!hasClubs) {
     return (
       <li>
-        <div className="flex items-center justify-between gap-3 rounded-md border border-input bg-card px-4 py-3 text-muted-foreground">
+        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 text-muted-foreground">
           {inner}
         </div>
       </li>
@@ -475,7 +477,7 @@ function MunicipalityRow({
     <li>
       <Link
         href={ROUTES.schoolMunicipality(entry.slug)}
-        className="flex items-center justify-between gap-3 rounded-md border border-input bg-card px-4 py-3 transition-colors hover:bg-accent"
+        className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 transition-colors hover:bg-hover"
       >
         {inner}
       </Link>
@@ -487,10 +489,11 @@ function StatusPill({ hasClubs, t }: { hasClubs: boolean; t: Translate }) {
   return (
     <span
       className={cn(
-        "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium",
-        hasClubs
-          ? "bg-primary/10 text-primary"
-          : "bg-muted text-muted-foreground",
+        // One chip shape for both answers: a neutral edge, no fill, and the
+        // word in its own colour. Act is the figure on the dark ground, so a
+        // school with clubs is said in act rather than washed in it.
+        "shrink-0 rounded-full border border-border px-2.5 py-0.5 text-xs font-medium",
+        hasClubs ? "text-act" : "text-muted-foreground",
       )}
     >
       {hasClubs ? t("status.available") : t("status.noClubs")}

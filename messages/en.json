@@ -108,7 +108,7 @@
     "pageTitle": "About us",
     "sectionNav": "On this page",
     "hero": {
-      "title": "About <primary>School of Gaming</primary>",
+      "title": "About School of Gaming",
       "subtitle": "Where Screen Time Becomes Quality Time. We bring together children, professional Game Educators, and the games children already love — Minecraft, Roblox, Fortnite and more — creating playful learning experiences where they make new friends, develop real skills, and have fun."
     },
     "quote": {
@@ -1792,7 +1792,7 @@
   },
   "schools": {
     "hero": {
-      "title": "Game clubs in <primary>your municipality</primary>",
+      "title": "Game clubs in your municipality",
       "subtitle": "School of Gaming runs clubs together with Finnish municipalities. Find your municipality and explore what’s on offer.",
       "howItWorks": "Depending on the municipality, the club meets either online from home or in person at your child’s school. A professional Game Educator is always there to guide the activity."
     },
@@ -2080,7 +2080,7 @@
   },
   "home": {
     "hero": {
-      "title": "Where<br></br><primary>Screen Time</primary><br></br>Becomes<br></br><secondary>Quality Time</secondary>",
+      "title": "Where<br></br>Screen Time<br></br>Becomes<br></br><act>Quality Time</act>",
       "subtitle": "Our skilfully designed clubs promote healthy gaming as a hobby, in Minecraft, Roblox, Fortnite and more. Professional Game Educators make every session a playful learning experience where children make new friends, develop their unique talents, and have fun doing what they love.",
       "aboutCta": "Learn more about us"
     },
@@ -2128,7 +2128,7 @@
   },
   "roblox": {
     "hero": {
-      "title": "Build It<br></br><primary>Play It</primary><br></br><secondary>Own It</secondary>",
+      "title": "Build It<br></br>Play It<br></br><act>Own It</act>",
       "subtitle": "A free game design programme for teens — brought to you by Lynx Educate and School of Gaming, in collaboration with Roblox.",
       "cta": "Jump in!"
     },
@@ -3168,24 +3168,6 @@
       "ice-cream": "Ice cream",
       "coffee": "Coffee"
     },
-    "zoneColor": {
-      "red": "Red",
-      "orange": "Orange",
-      "amber": "Amber",
-      "yellow": "Yellow",
-      "lime": "Lime",
-      "green": "Green",
-      "emerald": "Emerald",
-      "teal": "Teal",
-      "cyan": "Cyan",
-      "sky": "Sky",
-      "blue": "Blue",
-      "indigo": "Indigo",
-      "violet": "Violet",
-      "purple": "Purple",
-      "fuchsia": "Fuchsia",
-      "pink": "Pink"
-    },
     "instant": {
       "joinFailed": "Couldn’t join the room. Please try again.",
       "share": {
@@ -3242,7 +3224,7 @@
   },
   "yty": {
     "hero": {
-      "title": "What is <primary>Yty</primary>?",
+      "title": "What is Yty?",
       "subtitle": "Yty is the force that keeps Sogverse in balance. By doing good things — learning new skills, making friends, behaving well, and taking part in the community — gamers earn Yty for themselves and for everyone."
     },
     "overview": {

@@ -2,6 +2,7 @@
 
 import { useId, useState, type ReactNode } from "react";
 import { Loader2, Pencil } from "lucide-react";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
@@ -449,9 +450,14 @@ export function TwoAudienceNotesPanel({
             </p>
           ) : (
             error !== null && (
-              <p role="alert" className="text-right text-xs text-destructive">
+              <StatusLine
+                status="destructive"
+                size="xs"
+                role="alert"
+                className="justify-end text-right"
+              >
                 {error}
-              </p>
+              </StatusLine>
             )
           )}
 

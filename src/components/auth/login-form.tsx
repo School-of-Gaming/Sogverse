@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { identifierToLoginEmail } from "@/lib/gamer-sign-in";
@@ -129,9 +130,9 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           {/* `type="text"`, not `type="email"`: the browser's own validation
               would refuse a username outright, before the form ever ran. The
@@ -160,7 +161,7 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
             labelAction={
               <Link
                 href={ROUTES.forgotPassword}
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-act hover:underline"
               >
                 {c('forgotPassword')}
               </Link>
@@ -187,7 +188,7 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
                 link: (chunks) => (
                   <Link
                     href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
-                    className="text-primary hover:underline"
+                    className="text-act hover:underline"
                   >
                     {chunks}
                   </Link>
@@ -198,7 +199,7 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
               {t.rich('needHelp', {
                 email: SUPPORT_EMAIL,
                 link: (chunks) => (
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-act hover:underline">
                     {chunks}
                   </a>
                 ),

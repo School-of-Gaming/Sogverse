@@ -111,11 +111,11 @@ export function PurchaseConfirmationView({
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-act bg-lifted">
             {isWaitlist ? (
-              <Hourglass className="h-7 w-7 text-primary" />
+              <Hourglass className="h-7 w-7 text-act" />
             ) : (
-              <CheckCircle2 className="h-8 w-8 text-primary" />
+              <CheckCircle2 className="h-8 w-8 text-act" />
             )}
           </div>
           <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -407,13 +407,13 @@ export function PurchaseConfirmationNotice({
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-act bg-lifted">
             {isFinalizing ? (
-              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+              <Loader2 className="h-7 w-7 animate-spin text-act" />
             ) : kind === "timedOut" ? (
-              <Clock className="h-7 w-7 text-primary" />
+              <Clock className="h-7 w-7 text-act" />
             ) : (
-              <Info className="h-7 w-7 text-primary" />
+              <Info className="h-7 w-7 text-act" />
             )}
           </div>
           <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -427,10 +427,10 @@ export function PurchaseConfirmationNotice({
             {/* Ghosts shaped like the summary card that replaces them. */}
             <Card className="mt-8">
               <CardContent className="space-y-3 p-5 sm:p-6">
-                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-                <div className="h-16 animate-pulse rounded-lg bg-muted" />
-                <div className="h-4 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-32 animate-pulse rounded bg-lifted" />
+                <div className="h-16 animate-pulse rounded-lg bg-lifted" />
+                <div className="h-4 animate-pulse rounded bg-lifted" />
+                <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
               </CardContent>
             </Card>
             <p className="mt-6 text-center text-sm text-muted-foreground">
@@ -448,7 +448,7 @@ export function PurchaseConfirmationNotice({
                     link: (chunks) => (
                       <a
                         href={`mailto:${SUPPORT_EMAIL}`}
-                        className="text-primary hover:underline"
+                        className="text-act hover:underline"
                       >
                         {chunks}
                       </a>

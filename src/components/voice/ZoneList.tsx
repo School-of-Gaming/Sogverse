@@ -241,7 +241,7 @@ export function ZoneList() {
           // grabbing — dnd-kit puts no cursor on the overlay, and it sits right
           // under the pointer mid-drag.
           <div className="drag-ghost flex w-12 flex-col items-center gap-1">
-            <VoiceAvatar userId={activeParticipant.userId} className="border-primary shadow-lg" />
+            <VoiceAvatar userId={activeParticipant.userId} className="shadow-lg" />
             <span className="w-full truncate text-center text-[10px] leading-tight">
               {activeParticipant.userName}
             </span>
@@ -315,22 +315,27 @@ function ZoneCard({
       }}
       aria-label={tappable ? t("joinZone", { zone: accessibleLabel }) : undefined}
       className={cn(
-        "rounded-xl border px-3 py-2.5 transition-colors",
-        // Active zone: high-contrast border to mark "you're here" (vs the muted
-        // grey of the others), with the zone's color spilling in from the edge
-        // via an inset-shadow glow. Non-active: muted grey border.
-        isCurrent ? cn("border-foreground", zone.color.glow) : "border-border",
-        isOver && canDropHere && "ring-2 ring-primary bg-accent/40",
-        tappable && "cursor-pointer hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "rounded-xl border border-border px-3 py-2.5 transition-colors",
+        // Active zone: the zone's color spilling in from the edge via an
+        // inset-shadow glow marks "you're here". Non-active: the neutral border
+        // alone, with no glow.
+        isCurrent && zone.color.glow,
+        isOver && canDropHere && "ring-2 ring-act bg-lifted",
+        tappable && "cursor-pointer hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
       )}
     >
       <div className="flex items-center gap-2">
-        <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", zone.color.tile)}>
+        <span
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-lg border bg-lifted",
+            zone.color.edge,
+          )}
+        >
           <Icon className={cn("h-5 w-5", zone.color.glyph)} />
         </span>
         <span className="flex-1 truncate text-sm font-medium">{label}</span>
         {zone.isLocked && (
-          <span className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <span className="flex shrink-0 items-center gap-1 rounded-full bg-lifted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
             <Lock className="h-2.5 w-2.5" />
             {t("privateZone")}
           </span>
@@ -547,7 +552,7 @@ function MemberArea({
           onPointerUp={() => endHold(-1)}
           onPointerCancel={() => endHold(-1)}
           onClick={(e) => e.stopPropagation()}
-          className="absolute left-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-background/80 text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-accent touch-none"
+          className="glass absolute left-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-hover touch-none"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -564,7 +569,7 @@ function MemberArea({
           onPointerUp={() => endHold(1)}
           onPointerCancel={() => endHold(1)}
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-background/80 text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-accent touch-none"
+          className="glass absolute right-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-hover touch-none"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

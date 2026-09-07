@@ -131,7 +131,7 @@ describe("buildWelcomeParentEmail", () => {
     expect(html).toContain('class="cta-on-brand"');
     expect(html).toContain("u + .body .cta-on-brand");
     expect(html).toContain(
-      `background-color:${BRAND.primary};background-image:linear-gradient(${BRAND.primary},${BRAND.primary})`,
+      `background-color:${BRAND.act};background-image:linear-gradient(${BRAND.act},${BRAND.act})`,
     );
   });
 

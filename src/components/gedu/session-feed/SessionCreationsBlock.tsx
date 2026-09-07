@@ -11,7 +11,7 @@ import type { SessionFeedGamer } from "./types";
  *
  * **It exists because a session cannot flag work a gedu has no way to provide
  * from where they were flagged** *(owner)*. The final card of a flagged run goes
- * amber for a fourth reason nobody could see on it: a gedu opened the editor,
+ * warning-toned for a fourth reason nobody could see on it: a gedu opened the editor,
  * found the register full and the report written, and had nothing to fix. The
  * itemization was on the roster the whole time — a tone on a button in the rail
  * — which is the right place for *who*, and no place at all for a gedu working
@@ -36,9 +36,9 @@ import type { SessionFeedGamer } from "./types";
  * last session, here is what it will want. Once the session has ended and the
  * condition is unmet it takes the warning tone, which is exactly when the card's
  * own needs-attention line fires — the two are read off one derivation, so a
- * warning-toned block always sits under an amber header. Not the converse: a
- * header goes amber for any of four unmet conditions, so a card owing nothing
- * but its report is amber over a perfectly calm block. What the neutral half
+ * warning-toned block always sits under a warning-toned header. Not the
+ * converse: a header takes the tone for any of four unmet conditions, so a card
+ * owing nothing but its report is warning-toned over a perfectly calm block. What the neutral half
  * buys is the whole of the owner's complaint: the work is discoverable while
  * there is still time to do it, rather than only after the run is over.
  *
@@ -84,10 +84,9 @@ export function SessionCreationsBlock({
 
   return (
     <div
-      className={cn(
-        "space-y-2 rounded-md border p-2.5",
-        owed ? "border-warning/40 bg-warning/5" : "border-border bg-muted/20",
-      )}
+      // One ground either way: what an owed block changes is its mark and its
+      // title, never the panel behind them.
+      className="space-y-2 rounded-md border border-border bg-lifted p-2.5"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         {/* The eye is the dialog's own mark for the family-visible half, so the
@@ -138,14 +137,14 @@ export function SessionCreationsBlock({
                     : t("creationsMemberMissing", { name: gamer.firstName })
                 }
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                  "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   "disabled:cursor-not-allowed disabled:opacity-50",
                   has
-                    ? "border-transparent bg-muted/40 text-muted-foreground hover:text-foreground"
+                    ? "bg-lifted text-muted-foreground hover:text-foreground"
                     : owed
-                      ? "border-warning bg-warning/15 font-semibold text-warning"
-                      : "border-border text-foreground hover:bg-muted",
+                      ? "font-semibold text-warning"
+                      : "text-foreground hover:bg-hover",
                 )}
               >
                 {has ? (

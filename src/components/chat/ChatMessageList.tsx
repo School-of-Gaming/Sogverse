@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Lock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ChatReactionCode } from "@/lib/constants/chat";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
@@ -349,7 +349,7 @@ export function ChatMessageList({
                       className={cn(
                         "text-sm font-semibold",
                         group.senderId === viewer.id
-                          ? "text-primary"
+                          ? "text-act"
                           : "text-foreground",
                       )}
                     >
@@ -361,7 +361,8 @@ export function ChatMessageList({
                       </span>
                     )}
                     {lockedAccountIds.has(group.senderId) && (
-                      <span className="text-[10px] uppercase tracking-wide text-destructive">
+                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-destructive">
+                        <Lock className="h-2.5 w-2.5 shrink-0" aria-hidden />
                         {t("moderation.lockedTag")}
                       </span>
                     )}
@@ -452,7 +453,7 @@ export function ChatMessageList({
           // Over the log rather than under it: a control that appeared *below*
           // the box would push the composer down the moment a message arrived
           // while somebody was reading history.
-          className="absolute bottom-2 right-3 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-lg"
+          className="absolute bottom-2 right-3 flex items-center gap-1.5 rounded-full bg-act px-3 py-1 text-xs font-medium text-act-foreground shadow-lg"
         >
           <ArrowDown className="h-3 w-3" aria-hidden />
           {t("unread", { count: behind })}
@@ -568,10 +569,11 @@ function ChatImageRunItem({
         messages.map((message) => message.id),
       )}
       className={cn(
-        // A ring and a tint, never a border: the run keeps exactly the box it
-        // had, so flashing it after a jump moves nothing around it.
+        // A ring, never a border: the run keeps exactly the box it had, so
+        // flashing it after a jump moves nothing around it. Act is the ring
+        // rather than a wash behind the words — the words stay ink.
         "mt-1 rounded transition-colors",
-        flashing && "bg-primary/20 ring-1 ring-primary",
+        flashing && "ring-1 ring-act",
       )}
     >
       {quoted !== null && (

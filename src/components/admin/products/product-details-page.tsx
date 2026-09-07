@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  AlertTriangle,
   ArrowLeft,
   Calendar,
   Camera,
@@ -99,8 +100,8 @@ export function ProductDetailsPage({
           <ArrowLeft className="h-4 w-4" />
           {t("newPage.back", { plural })}
         </Link>
-        <div className="h-40 animate-pulse rounded-lg border border-input bg-muted" />
-        <div className="h-24 animate-pulse rounded-lg border border-input bg-muted" />
+        <div className="h-40 animate-pulse rounded-lg border border-border bg-lifted" />
+        <div className="h-24 animate-pulse rounded-lg border border-border bg-lifted" />
       </div>
     );
   }
@@ -257,7 +258,7 @@ function HeaderCard({
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <ProductStatusChip status={statusKey} />
-            <Badge variant={isVisible ? "default" : "secondary"}>
+            <Badge variant="outline">
               {isVisible ? listedLabel : unlistedLabel}
             </Badge>
           </div>
@@ -346,10 +347,13 @@ function OperationalFacts({
         <span
           className={
             nullStatus === "unknown"
-              ? "text-destructive"
+              ? "inline-flex items-center gap-1 text-destructive"
               : "text-muted-foreground"
           }
         >
+          {nullStatus === "unknown" && (
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          )}
           {t(`fees.status.${nullStatus}`)}
         </span>
       );
@@ -597,7 +601,7 @@ function OperationalFacts({
               href={product.product_staff_details.material_url}
               target="_blank"
               rel="noreferrer"
-              className="break-all text-primary underline-offset-2 hover:underline"
+              className="break-all text-act underline-offset-2 hover:underline"
             >
               {product.product_staff_details.material_url}
             </a>
@@ -709,7 +713,7 @@ function PublicProductLink({ path }: { path: string }) {
         href={url}
         target="_blank"
         rel="noreferrer"
-        className="min-w-0 break-all text-primary underline-offset-2 hover:underline"
+        className="min-w-0 break-all text-act underline-offset-2 hover:underline"
       >
         {url}
       </a>

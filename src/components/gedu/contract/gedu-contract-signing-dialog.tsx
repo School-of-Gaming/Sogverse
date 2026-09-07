@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, PenLine } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -125,7 +126,9 @@ export function GeduContractSigningDialog({
             permits it, and reserving a line for a message most signers never
             see would leave a hole under every ceremony instead. */}
         {acceptFailed && (
-          <p className="mt-4 text-sm text-destructive">{t("error")}</p>
+          <StatusLine status="destructive" className="mt-4">
+            {t("error")}
+          </StatusLine>
         )}
 
         <DialogFooter>
@@ -182,7 +185,7 @@ function CeremonyLine({
             type="button"
             onClick={onFill}
             disabled={disabled}
-            className="flex h-full w-full items-center gap-2 rounded-t-md px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+            className="flex h-full w-full items-center gap-2 rounded-t-md px-2 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
           >
             <PenLine className="h-4 w-4 shrink-0" aria-hidden />
             {actionLabel}

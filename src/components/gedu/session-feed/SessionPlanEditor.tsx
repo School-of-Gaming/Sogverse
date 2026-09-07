@@ -42,7 +42,7 @@ interface SessionPlanEditorProps {
    *
    * Present on a flagged run's last session *before* that session runs, which is
    * the whole point of it being here: the work is discoverable while there is
-   * still time to do it, rather than only once the card has gone amber.
+   * still time to do it, rather than only once the card has gone to the warning tone.
    */
   creationsBlock?: ReactNode;
   onCancel: () => void;

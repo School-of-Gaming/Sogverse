@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle,
   CalendarClock,
   CalendarOff,
   ChevronRight,
@@ -14,6 +13,7 @@ import {
   UserRoundSearch,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -448,19 +448,20 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
       <Card
         aria-busy={leaving}
         className={cn(
-          "group relative overflow-hidden transition-[border-color,box-shadow,opacity]",
-          opensAPage &&
-            "hover:border-primary/40 hover:shadow-lg focus-within:border-primary/40 focus-within:shadow-lg",
-          live &&
-            "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
-          // The awaiting tone: the same lit-card treatment in `info` rather than
-          // `primary`, because this *is* a card with something happening on it
-          // — a purchase has landed and placement is under way — and it must
-          // read as that rather than as a fault or as a waitlist place. Blue is
+          // A card is lit from its leading edge: a 2px rule at full value, on
+          // the plain card ground. The rule is drawn in the neutral edge on
+          // every card from the start, so a card that lights up changes colour
+          // and nothing beside it moves.
+          "group relative overflow-hidden border-l-2 transition-[box-shadow,opacity,border-color]",
+          opensAPage && "hover:shadow-lg focus-within:shadow-lg",
+          live && "border-l-act",
+          // The awaiting tone: the same lit edge in `info` rather than `act`,
+          // because this *is* a card with something happening on it — a
+          // purchase has landed and placement is under way — and it must read
+          // as that rather than as a fault or as a waitlist place. Blue is
           // already this product's colour for "we are telling you something",
-          // and the two gradients are mutually exclusive by `running`.
-          awaiting &&
-            "border-info/40 bg-gradient-to-r from-info/5 to-transparent",
+          // and the two rules are mutually exclusive by `running`.
+          awaiting && "border-l-info",
           // Dimmed in place while the leave is in flight, so the card that is
           // about to disappear says so without moving. Matches the treatment
           // the badge-era waitlist card used, for continuity.
@@ -470,12 +471,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
         <CardContent className="flex flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
-              <p
-                className={cn(
-                  "text-xs font-medium uppercase tracking-wider text-muted-foreground",
-                  endedOn !== null && "text-muted-foreground/70",
-                )}
-              >
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {p(productType)}
               </p>
               {/* The identity keeps its weight and loses its tone on a finished
@@ -503,7 +499,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                 <Badge
                   variant="outline"
                   className={cn(
-                    "gap-1 border-success/50 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
+                    "gap-1 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
                     !live && "invisible",
                   )}
                 >
@@ -528,12 +524,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               Thu 12 Feb at 17:00", and once it starts the corner badge says so.
               The row is always here, and holds the "nothing scheduled yet" line
               for a product still being put together. */}
-          <div
-            className={cn(
-              "flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground",
-              endedOn !== null && "text-muted-foreground/70",
-            )}
-          >
+          <div className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
             <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <span className="min-w-0">
               {scheduleLines.length > 0 ? (
@@ -788,7 +779,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               if (openHref === "#") e.preventDefault();
             }}
             aria-label={productName}
-            className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
           />
         )}
       </Card>
@@ -857,7 +848,7 @@ function LeaveWaitlistLink({
         type="button"
         onClick={() => setOpen(true)}
         disabled={leaving}
-        className="rounded text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:text-muted-foreground"
+        className="rounded text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:cursor-default disabled:hover:text-muted-foreground"
       >
         {t("trigger")}
       </button>
@@ -877,10 +868,9 @@ function LeaveWaitlistLink({
         confirmLabel={t("confirmCta")}
         onConfirm={onConfirm}
       >
-        <div className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/10 px-3 py-2.5 text-sm font-semibold text-destructive">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          <span>{t("backOfLineWarning")}</span>
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{t("backOfLineWarning")}</AlertDescription>
+        </Alert>
       </ConfirmDialog>
     </>
   );

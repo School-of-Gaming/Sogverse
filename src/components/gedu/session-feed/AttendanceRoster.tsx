@@ -64,12 +64,10 @@ export function AttendanceRoster({
           <li
             key={gamer.id}
             className={cn(
-              "flex items-center justify-between gap-3 rounded-md border px-2.5 py-1.5",
+              "flex items-center justify-between gap-3 rounded-md border border-border px-2.5 py-1.5",
               // An unmarked row is the one that still wants something from you,
               // so it is the one that doesn't fade into the panel behind it.
-              mark === undefined
-                ? "border-border bg-transparent"
-                : "border-transparent bg-muted/30",
+              mark === undefined ? "bg-transparent" : "bg-lifted",
             )}
           >
             <span className="min-w-0 truncate text-sm">{gamer.firstName}</span>
@@ -84,7 +82,10 @@ export function AttendanceRoster({
                 onToggle={() => toggle("present")}
                 label={t("presentLabel")}
                 icon={<Check className="h-3 w-3" aria-hidden />}
-                pressedClassName="border-success bg-success/20 text-success"
+                // Pressed is the one place a status hue is a ground rather
+                // than a figure, and it is a full-value fill under the ink the
+                // pairing measured: a wash of the same green is not that green.
+                pressedClassName="bg-success text-success-foreground"
               />
               <MarkOption
                 pressed={mark === "absent"}
@@ -94,12 +95,12 @@ export function AttendanceRoster({
                 icon={<X className="h-3 w-3" aria-hidden />}
                 // Neutral rather than destructive: an absence is a fact about
                 // the afternoon, not an error the gedu made. Neutral still has
-                // to *read* as chosen, though — a plain `bg-muted` pill sitting
-                // on a muted row was near-invisible, so the selected state is a
-                // foreground-tinted fill behind a full-strength foreground
-                // outline, which lands as unmistakably filled without
-                // borrowing an alarm colour it hasn't earned.
-                pressedClassName="border-foreground bg-foreground/15 text-foreground"
+                // to *read* as chosen, though — and a marked row is already
+                // `bg-lifted`, so a pill on the same grey is invisible. `border`
+                // is the one neutral above lifted, which makes the pill read as
+                // filled under full-strength foreground ink without borrowing an
+                // alarm colour it hasn't earned.
+                pressedClassName="bg-border text-foreground"
               />
             </div>
           </li>
@@ -131,8 +132,8 @@ function MarkOption({
       disabled={disabled}
       onClick={onToggle}
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:cursor-not-allowed disabled:opacity-50",
         pressed
           ? cn("font-semibold", pressedClassName)

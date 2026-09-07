@@ -13,25 +13,56 @@
   --color-background: #121212;
   --color-foreground: #EDEDED;
   --color-card: #1A1A1A;
+  --color-lifted: #262626;
   --color-muted-foreground: #A6A6A6;
   --color-border: #333333;
   --color-card-foreground: #EDEDED;
 
-  /* The signature pair. A fill and its foreground are one decision — amber is light and takes only a dark label, violet is dark and takes only a light one. */
-  --color-primary: #FAA901;
-  --color-primary-foreground: #121212;
-  --color-secondary: #8F00E2;
-  --color-secondary-foreground: #FFFFFF;
+  /* The signature pair. A fill and its foreground are one decision — act is light and takes only a dark label, world is dark and takes only a light one. */
+  --color-act: #FAA901;
+  --color-act-foreground: #121212;
+  --color-world: #8F00E2;
+  --color-world-foreground: #FFFFFF;
 
-  /* The four Yty-Element families. Strong fills, borders, rings and glows; soft carries text and glyphs. That split is a contrast result — see src/tokens/contrast.ts. */
-  --color-yty-harmony-strong: #F55B9A;
-  --color-yty-harmony-soft: #FA7FA3;
-  --color-yty-glow-strong: #1AB061;
-  --color-yty-glow-soft: #6AC66B;
-  --color-yty-valor-strong: #FD700D;
-  --color-yty-valor-soft: #FF993D;
-  --color-yty-wit-strong: #3A71DE;
-  --color-yty-wit-soft: #4DB3F5;
+  /* The four Yty-Element families, one colour each. The same value fills, edges, rings, marks, inks a label and draws a glyph — see src/tokens/brand.ts for why a family has one colour and not a pair. */
+  --color-yty-harmony: #FA7FA3;
+  --color-yty-glow: #6AC66B;
+  --color-yty-valor: #FF8F31;
+  --color-yty-wit: #4DB3F5;
+
+  /* The four statuses, each with the ink its fill carries. Success is Glow and info is Wit, resolved through the family rather than copied from it: a status is a fact, and a fact takes a family. */
+  --color-destructive: #FF5C5C;
+  --color-destructive-foreground: #121212;
+  --color-success: #6AC66B;
+  --color-success-foreground: #121212;
+  --color-info: #4DB3F5;
+  --color-info-foreground: #121212;
+  --color-warning: #DFCB25;
+  --color-warning-foreground: #121212;
+
+  /* The sixteen picks — the colours a person chooses for their own thing. Numbered because a pick means nothing but whose it is; the number is a stable id, never a position. */
+  --color-pick-1: #F4504E;
+  --color-pick-2: #FB8B3C;
+  --color-pick-3: #F7A31F;
+  --color-pick-4: #E8C21F;
+  --color-pick-5: #9FC92E;
+  --color-pick-6: #46CF5A;
+  --color-pick-7: #18CF86;
+  --color-pick-8: #1CCCBE;
+  --color-pick-9: #25CFEE;
+  --color-pick-10: #38B0F7;
+  --color-pick-11: #5B86F0;
+  --color-pick-12: #7A72F5;
+  --color-pick-13: #A36BF6;
+  --color-pick-14: #C45FF2;
+  --color-pick-15: #E85FE0;
+  --color-pick-16: #F767A8;
+
+  /* The scrim — the one colour in the theme that carries its own alpha. It dims what is behind it and nothing sits inside it; black, because a tint that adds a hue is a tint that recolours a photograph. See src/tokens/surfaces.ts. */
+  --color-scrim: color-mix(in oklab, #000000 70%, transparent);
+
+  /* The hover layer — the theme's ink at 8%, laid over whatever ground an element already sits on, so a row on the page, on a card and on a lifted panel each lift one visible step from where they are. An image and not a colour, because a layer is drawn over a ground rather than in place of it: a background-color would discard the fill an element already had. A state, never a surface: nothing is authored on it. See src/tokens/surfaces.ts. */
+  --background-image-hover: linear-gradient(color-mix(in oklab, #EDEDED 8%, transparent), color-mix(in oklab, #EDEDED 8%, transparent));
 
   /* Faces. The package owns the names; the consumer loads the files and defines the var() each token points at, on <html> and never on <body>. */
   --font-sans: var(--font-poppins), system-ui, sans-serif;
@@ -64,6 +95,19 @@
   --text-cta: 1rem;
   --text-cta--line-height: 1;
   --text-cta--font-weight: 600;
+}
+
+/* Glass — the page's own ground, thinned and blurred, for a surface that
+   carries its own contents over whatever moves beneath it. The stronger
+   fill is the base: where the browser cannot blur, opacity is the only
+   thing left holding those contents legible, so it goes up. */
+@utility glass {
+  background-color: color-mix(in oklab, var(--color-background) 90%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  @supports ((backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px))) {
+    background-color: color-mix(in oklab, var(--color-background) 70%, transparent);
+  }
 }
 
 /* Render native form-control internals dark too: the date input's picker glyph,

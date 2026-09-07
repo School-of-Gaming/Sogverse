@@ -46,17 +46,9 @@ export function RegistrationSection({
             <label
               key={option}
               className={cn(
-                "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
-                state.registrationOpensMode === option
-                  ? "border-primary bg-primary/5"
-                  : "border-input",
-                lockTiming
-                  ? "cursor-not-allowed opacity-60"
-                  : cn(
-                      "cursor-pointer",
-                      state.registrationOpensMode !== option &&
-                        "hover:border-foreground/30"
-                    )
+                "flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
+                state.registrationOpensMode === option && "border-act",
+                lockTiming ? "cursor-not-allowed opacity-60" : "cursor-pointer"
               )}
             >
               <input
@@ -67,7 +59,7 @@ export function RegistrationSection({
                 onChange={() =>
                   setState({ ...state, registrationOpensMode: option })
                 }
-                className="mt-1 h-4 w-4"
+                className="mt-1 h-4 w-4 accent-act"
               />
               <div className="min-w-0 flex-1">
                 <div className="font-medium">
@@ -110,7 +102,7 @@ export function RegistrationSection({
                       registrationOpensHour: e.target.value,
                     })
                   }
-                  className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+                  className="flex h-10 flex-1 rounded-md border border-border bg-background px-2 text-sm"
                 >
                   {HOUR_OPTIONS.map((h) => (
                     <option key={h} value={h}>
@@ -128,7 +120,7 @@ export function RegistrationSection({
                       registrationOpensMinute: e.target.value,
                     })
                   }
-                  className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+                  className="flex h-10 flex-1 rounded-md border border-border bg-background px-2 text-sm"
                 >
                   {MINUTE_OPTIONS.map((m) => (
                     <option key={m} value={m}>

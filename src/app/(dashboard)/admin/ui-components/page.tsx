@@ -14,7 +14,6 @@ import {
   Pencil,
   Trash,
   Check,
-  AlertCircle,
   AlertTriangle,
   Info,
   Eye,
@@ -240,7 +239,7 @@ function Section({
         <AnchorHeading as="h2" id={slug} className="text-2xl font-bold">
           {title}
         </AnchorHeading>
-        <div className="rounded-lg border p-6 space-y-6">{children}</div>
+        <div className="rounded-lg border border-border p-6 space-y-6">{children}</div>
       </section>
     </SectionSlugContext.Provider>
   );
@@ -265,15 +264,6 @@ function SubSection({
         {title}
       </AnchorHeading>
       {children}
-    </div>
-  );
-}
-
-function Swatch({ label, className }: { label: string; className: string }) {
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className={`h-12 w-12 rounded-lg border ${className}`} />
-      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -358,7 +348,7 @@ function VoiceAvatarDemo() {
             max="100"
             value={Math.round(level * 100)}
             onChange={(e) => setLevel(Number(e.target.value) / 100)}
-            className="w-48 accent-primary"
+            className="w-48 accent-act"
           />
         </div>
         <div className="flex items-center gap-4">
@@ -817,7 +807,7 @@ function VoiceZonesDemo() {
       group_id: "demo",
       name: "Strategy corner",
       icon: "rocket",
-      color: "teal",
+      color: "8",
       is_locked: false,
       sort_order: 0,
       created_by: "demo",
@@ -829,7 +819,7 @@ function VoiceZonesDemo() {
       group_id: "demo",
       name: "Quiet room",
       icon: "ghost",
-      color: "indigo",
+      color: "12",
       is_locked: true,
       sort_order: 1,
       created_by: "demo",
@@ -842,7 +832,7 @@ function VoiceZonesDemo() {
       group_id: "demo",
       name: null,
       icon: "flame",
-      color: "orange",
+      color: "2",
       is_locked: false,
       sort_order: 2,
       created_by: "demo",
@@ -1717,7 +1707,7 @@ function SeatAvailabilityDemo() {
               container reports fake overflow bugs. The genuinely tighter case
               (browse-card footer, flex-1 beside a CTA) is shown in the product
               card demos in real context. */}
-          <div className="w-80 max-w-full rounded-md border p-3">
+          <div className="w-80 max-w-full rounded-md border border-border p-3">
             <SeatAvailabilityBar
               seatCount={c.seatCount}
               seatsLeft={c.seatsLeft}
@@ -1939,7 +1929,7 @@ function ImageCatalogueDemo() {
  * glyphs sit directly above the state marks they share rows with on the live
  * page, so the question a categorical palette exists to answer — can any of
  * these four be mistaken for "something is wrong here" — is settled by looking
- * down rather than by remembering. A hue that drifts toward warning amber or
+ * down rather than by remembering. A hue that drifts toward the warning tone or
  * success green shows up here before it shows up in front of an admin.
  */
 function ProductTypePaletteDemo() {
@@ -1962,8 +1952,8 @@ function ProductTypePaletteDemo() {
                     were two facts. */}
                 <span
                   className={cn(
-                    "grid h-7 w-7 shrink-0 place-items-center rounded-md",
-                    presentation.tint,
+                    "grid h-7 w-7 shrink-0 place-items-center rounded-md border bg-lifted",
+                    presentation.border,
                   )}
                 >
                   <Icon
@@ -2131,7 +2121,7 @@ function SessionPhotosDemo() {
               <DemoCaption>{demoCase.caption}</DemoCaption>
               <div
                 className={cn(
-                  "rounded-lg border bg-card p-4",
+                  "rounded-lg border border-border bg-card p-4",
                   demoCase.frameClassName,
                 )}
               >
@@ -2195,55 +2185,10 @@ export default function AdminUIComponentsPage() {
       <div>
         <h1 className="text-3xl font-bold">UI Components</h1>
         <p className="text-muted-foreground">
-          Living style guide &mdash; every component variant, composite pattern,
-          and color token used across the app.
+          Living style guide &mdash; every component variant and composite
+          pattern used across the app.
         </p>
       </div>
-
-      <Section title="Color Palette">
-        <SubSection title="Brand Colors">
-          <div className="flex flex-wrap gap-4">
-            <Swatch label="Primary" className="bg-primary" />
-            <Swatch label="Secondary" className="bg-secondary" />
-            <Swatch label="Destructive" className="bg-destructive" />
-            <Swatch label="Success" className="bg-success" />
-            <Swatch label="Info" className="bg-info" />
-            <Swatch label="Warning" className="bg-warning" />
-          </div>
-        </SubSection>
-
-        <SubSection title="Surface Colors">
-          <div className="flex flex-wrap gap-4">
-            <Swatch label="Background" className="bg-background" />
-            <Swatch label="Card" className="bg-card" />
-            <Swatch label="Muted" className="bg-muted" />
-            <Swatch label="Accent" className="bg-accent" />
-            <Swatch label="Border" className="bg-border" />
-            <Swatch label="Ring" className="bg-ring" />
-          </div>
-        </SubSection>
-
-        <SubSection title="Text Colors">
-          <div className="flex flex-wrap gap-6">
-            <span className="text-sm font-medium text-foreground">
-              Foreground
-            </span>
-            <span className="text-sm font-medium text-muted-foreground">
-              Muted Foreground
-            </span>
-            <span className="text-sm font-medium text-primary">Primary</span>
-            <span className="text-sm font-medium text-secondary">
-              Secondary
-            </span>
-            <span className="text-sm font-medium text-destructive">
-              Destructive
-            </span>
-            <span className="text-sm font-medium text-success">Success</span>
-            <span className="text-sm font-medium text-info">Info</span>
-            <span className="text-sm font-medium text-warning">Warning</span>
-          </div>
-        </SubSection>
-      </Section>
 
       <ProductTypePaletteDemo />
 
@@ -2320,7 +2265,7 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground mt-4 mb-2">Role badges</p>
         <div className="flex flex-wrap items-center gap-3">
           {ROLE_BADGE_DEMO.map(([role, label]) => (
-            <Badge key={role} className={ROLE_BADGE_STYLES[role]}>
+            <Badge key={role} variant="outline" className={ROLE_BADGE_STYLES[role]}>
               {label}
             </Badge>
           ))}
@@ -2658,7 +2603,7 @@ export default function AdminUIComponentsPage() {
                       also a gamer.{" "}
                       <a
                         href={ROUTES.about}
-                        className="text-primary underline underline-offset-4 hover:no-underline"
+                        className="text-act underline underline-offset-4 hover:no-underline"
                       >
                         Read more about us
                       </a>
@@ -2702,14 +2647,12 @@ export default function AdminUIComponentsPage() {
             </div>
           </Alert>
           <Alert variant="success">
-            <Check className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <AlertTitle>Success</AlertTitle>
               <AlertDescription>Profile updated successfully!</AlertDescription>
             </div>
           </Alert>
           <Alert variant="destructive">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <AlertTitle>Destructive</AlertTitle>
               <AlertDescription>
@@ -2718,7 +2661,6 @@ export default function AdminUIComponentsPage() {
             </div>
           </Alert>
           <Alert variant="info">
-            <Info className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <AlertTitle>Info</AlertTitle>
               <AlertDescription>
@@ -2727,7 +2669,6 @@ export default function AdminUIComponentsPage() {
             </div>
           </Alert>
           <Alert variant="warning">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <AlertTitle>Warning</AlertTitle>
               <AlertDescription>
@@ -2740,28 +2681,23 @@ export default function AdminUIComponentsPage() {
               the purchase banners use them — one prop apart each, so they
               only mean anything read against the five above. */}
           <Alert variant="success">
-            <Check className="mt-0.5 h-4 w-4 shrink-0" />
             <AlertDescription>Profile updated successfully!</AlertDescription>
           </Alert>
           <Alert variant="destructive">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <AlertDescription>
               Something went wrong. Please try again.
             </AlertDescription>
           </Alert>
 
           <Alert variant="success" align="center">
-            <Check className="h-4 w-4 shrink-0" />
             <AlertDescription>Purchase successful!</AlertDescription>
           </Alert>
           <Alert variant="warning" align="center">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
             <AlertDescription>
               Purchase canceled. No charges were made.
             </AlertDescription>
           </Alert>
           <Alert variant="destructive" align="center">
-            <AlertCircle className="h-4 w-4 shrink-0" />
             <AlertDescription>
               Something went wrong starting checkout. Please try again.
             </AlertDescription>
@@ -3519,7 +3455,7 @@ function LocationPickerDemo() {
   // is why the picker never has to re-enable its confirm button.
   if (confirmed) {
     return (
-      <div className="space-y-3 rounded-md border border-input bg-card p-4">
+      <div className="space-y-3 rounded-md border border-border bg-card p-4">
         <p className="text-sm">
           Confirmed <span className="font-medium">{confirmed}</span> — the site
           flow would now list the sites already in it, with that row as the
@@ -3537,7 +3473,7 @@ function LocationPickerDemo() {
   }
 
   return (
-    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+    <div className="max-w-2xl rounded-md border border-border bg-card p-4">
       <LocationPickerPanel
         query={query}
         onQueryChange={setQuery}
@@ -3573,7 +3509,7 @@ function LocationCoverageDemo() {
 
   return (
     <div className="space-y-2">
-      <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+      <div className="max-w-2xl rounded-md border border-border bg-card p-4">
         <LocationPickerPanel
           query={query}
           onQueryChange={setQuery}
@@ -3614,7 +3550,7 @@ function LocationSearchDemo() {
   const [query, setQuery] = useState("nimes");
 
   return (
-    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+    <div className="max-w-2xl rounded-md border border-border bg-card p-4">
       <LocationPickerPanel
         query={query}
         onQueryChange={setQuery}
@@ -3657,7 +3593,7 @@ function LocationBoundCountryDemo() {
   const fixture = useFixtureBrowse([FR]);
 
   return (
-    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+    <div className="max-w-2xl rounded-md border border-border bg-card p-4">
       <LocationPickerPanel
         query={query}
         onQueryChange={setQuery}
@@ -3704,7 +3640,7 @@ function HomeLocationFieldDemo() {
   const [place, setPlace] = useState<LocationPick | null>(null);
 
   return (
-    <div className="max-w-md space-y-4 rounded-md border border-input bg-card p-4">
+    <div className="max-w-md space-y-4 rounded-md border border-border bg-card p-4">
       <div className="space-y-2">
         <HomeLocationField value={place} onChange={setPlace} />
         <p className="text-xs text-muted-foreground">
@@ -3807,7 +3743,7 @@ function RichTextEditorDemo() {
       </div>
       <div className="space-y-2">
         <DemoCaption>Serialised markdown</DemoCaption>
-        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
+        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-lifted p-3 text-xs text-muted-foreground">
           {markdown}
         </pre>
       </div>
@@ -3824,7 +3760,7 @@ function RichTextEditorDemo() {
       </div>
       <div className="space-y-2">
         <DemoCaption>Serialised markdown</DemoCaption>
-        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
+        <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-lifted p-3 text-xs text-muted-foreground">
           {marketingMarkdown}
         </pre>
       </div>
@@ -3862,7 +3798,7 @@ const DEMO_USERNAME: Readonly<Record<GamePlatform, string>> = {
  * different container widths made that impossible.
  */
 const GAME_DEMO_GRID =
-  "grid max-w-4xl grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)] gap-x-8 rounded-lg border p-4";
+  "grid max-w-4xl grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)] gap-x-8 rounded-lg border border-border p-4";
 
 /**
  * The header row every demo grid opens with. The corner cell names the grid
@@ -4454,7 +4390,7 @@ function ParticipantChipRow() {
     <div className="flex flex-wrap items-start gap-6">
       {/* The real rail width in the groups panel, so the chip is judged at the
           size it actually renders at rather than stretched across the page. */}
-      <div className="w-64 space-y-2 rounded-lg border p-3">
+      <div className="w-64 space-y-2 rounded-lg border border-border p-3">
         <DemoCaption>On a Minecraft product</DemoCaption>
         <ParticipantChip
           participationId="demo-1"
@@ -4510,7 +4446,7 @@ function ParticipantChipRow() {
       {/* The same two children on a Roblox product. The row is the same shape at
           the same height — a Minecraft face render and a Roblox headshot are
           both square — so only the handle and the platform behind it differ. */}
-      <div className="w-64 space-y-2 rounded-lg border p-3">
+      <div className="w-64 space-y-2 rounded-lg border border-border p-3">
         <DemoCaption>On a Roblox product</DemoCaption>
         <ParticipantChip
           participationId="demo-6"
@@ -4539,7 +4475,7 @@ function ParticipantChipRow() {
       {/* Programming, Esports, Game Studio — a topic about no one game account.
           Worth seeing beside the two columns above: the chip is shorter by
           exactly the row it does not draw, and holds no gap where one was. */}
-      <div className="w-64 space-y-2 rounded-lg border p-3">
+      <div className="w-64 space-y-2 rounded-lg border border-border p-3">
         <DemoCaption>On a topic with no game account</DemoCaption>
         <ParticipantChip
           participationId="demo-8"
@@ -4565,7 +4501,7 @@ function ParticipantChipRow() {
         />
       </div>
 
-      <div className="w-64 space-y-2 rounded-lg border p-3">
+      <div className="w-64 space-y-2 rounded-lg border border-border p-3">
         <DemoCaption>Mid-save</DemoCaption>
         <ParticipantChip
           participationId="demo-4"

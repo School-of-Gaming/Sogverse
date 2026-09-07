@@ -61,7 +61,7 @@ function PolicyText({ text }: { text: string }) {
           <Link
             key={i}
             href={segment.href}
-            className="rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
           >
             {segment.text}
           </Link>
@@ -104,7 +104,7 @@ function PolicyBlocks({ blocks }: { blocks: PolicyBlock[] }) {
  */
 function PendingNotice({ notice }: { notice: string }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-md border border-dashed border-warning/60 bg-warning/5 px-4 py-3">
+    <div className="flex items-start gap-2.5 rounded-md border border-dashed border-border px-4 py-3">
       <TriangleAlert
         className="mt-0.5 h-4 w-4 shrink-0 text-warning"
         aria-hidden="true"
@@ -154,7 +154,7 @@ export function PolicyPage({
       {draftNotice && (
         <div
           role="note"
-          className="mt-8 flex items-start gap-4 rounded-lg border-2 border-warning bg-warning/10 p-5 sm:p-6"
+          className="mt-8 flex items-start gap-4 rounded-lg border-2 border-warning p-5 sm:p-6"
         >
           <TriangleAlert
             className="mt-0.5 h-7 w-7 shrink-0 text-warning"

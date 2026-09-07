@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Loader2, Plus, Search } from "lucide-react";
+import { AlertCircle, Check, Loader2, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -278,7 +278,7 @@ export function ParticipantPickerSheet({
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="h-20 animate-pulse rounded-lg border border-input bg-muted"
+                  className="h-20 animate-pulse rounded-lg border border-border bg-lifted"
                 />
               ))}
             </div>
@@ -382,7 +382,7 @@ function FamilyBlockRow({
   const t = useTranslations("admin.products.participantPicker");
   const c = useTranslations("common");
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-lg border border-border">
       <div className="flex items-center justify-between gap-3 p-3">
         <div className="flex min-w-0 items-center gap-3">
           <Avatar>
@@ -398,12 +398,18 @@ function FamilyBlockRow({
               </p>
             )}
             {errorById[parent.id] && (
-              <p className="text-xs text-destructive">{errorById[parent.id]}</p>
+              <p className="flex items-center gap-1.5 text-xs text-foreground">
+                <AlertCircle
+                  className="h-3.5 w-3.5 shrink-0 text-destructive"
+                  aria-hidden
+                />
+                <span className="truncate">{errorById[parent.id]}</span>
+              </p>
             )}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Badge className={cn(ROLE_BADGE_STYLES[parent.role], "shrink-0")}>
+          <Badge variant="outline" className={cn(ROLE_BADGE_STYLES[parent.role], "shrink-0")}>
             {c(ROLE_LABEL_KEYS[parent.role])}
           </Badge>
           {showsAddButton(parent, audience, enrolledParticipantIds, addedIds) && (
@@ -418,7 +424,7 @@ function FamilyBlockRow({
       </div>
 
       {gamers.length > 0 && (
-        <div className="border-t bg-muted/30">
+        <div className="border-t border-border">
           {gamers.map((gamer) => (
             <GamerPickerRow
               key={gamer.id}
@@ -475,7 +481,13 @@ function GamerPickerRow({
             {gamer.first_name || t("unnamedGamer")}
           </p>
           {error && (
-            <p className="truncate text-xs text-destructive">{error}</p>
+            <p className="flex items-center gap-1.5 text-xs text-foreground">
+              <AlertCircle
+                className="h-3.5 w-3.5 shrink-0 text-destructive"
+                aria-hidden
+              />
+              <span className="truncate">{error}</span>
+            </p>
           )}
         </div>
       </div>

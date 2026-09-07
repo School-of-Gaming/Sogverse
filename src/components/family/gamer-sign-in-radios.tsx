@@ -73,10 +73,8 @@ export function GamerSignInRadios({
           <label
             key={mode}
             className={cn(
-              "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
-              selected
-                ? "border-primary bg-primary/5"
-                : "border-input hover:border-foreground/30",
+              "flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
+              selected && "border-act",
               disabled && "cursor-not-allowed opacity-50",
             )}
           >
@@ -87,7 +85,7 @@ export function GamerSignInRadios({
               // `mt-0.5` lifts the control onto the label's first line; the
               // sentence underneath makes the row two lines tall, so a centred
               // radio would float against the gap between them.
-              className="mt-0.5 h-4 w-4 shrink-0"
+              className="mt-0.5 h-4 w-4 shrink-0 accent-act"
               checked={selected}
               disabled={disabled}
               onChange={() => onChange(mode)}

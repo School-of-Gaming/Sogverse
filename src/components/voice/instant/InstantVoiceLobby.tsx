@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Mic, MicOff } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
@@ -249,11 +250,18 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: Inst
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Avatar preview — sized and styled to mirror the in-call avatar */}
+            {/* Avatar preview — sized and styled to mirror the in-call avatar.
+                The frame is a border and nothing else: the speaking glow is
+                written onto this element's inline `box-shadow` by
+                `useLocalStreamGlow` below, and an inline box-shadow *replaces*
+                a ring's rather than adding to it — so the act ring that used to
+                sit here blinked out on every syllable and back in between them.
+                The shadow belongs to the glow alone; the border carries the
+                frame, and the glow tints that too. */}
             <div className="flex flex-col items-center gap-3">
               <div
                 ref={frameRef}
-                className="relative h-48 w-48 overflow-hidden rounded-2xl border-2 border-border bg-muted ring-1 ring-primary/30 transition-shadow"
+                className="relative h-48 w-48 overflow-hidden rounded-2xl border-2 border-border bg-lifted transition-shadow"
               >
                 {/* Always-mounted video; hidden when camera is off so toggling
                     on doesn't have to re-attach `srcObject`. */}
@@ -271,7 +279,7 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: Inst
                   <Identicon id={lobbyIdenticonId} size={192} />
                 )}
                 {/* Mic indicator overlay — same idea as VoiceAvatar */}
-                <div className="absolute bottom-2 right-2 rounded-full bg-background/70 p-1.5">
+                <div className="glass absolute bottom-2 right-2 rounded-full p-1.5">
                   {micOn ? (
                     <Mic className="h-4 w-4 text-success" />
                   ) : (
@@ -324,9 +332,9 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: Inst
             )}
 
             {error && (
-              <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
-              </div>
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
             <div className="flex justify-end">

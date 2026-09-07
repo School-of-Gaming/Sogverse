@@ -127,7 +127,7 @@ export function SectionPill() {
       // document.
       className="sticky top-[calc(var(--header-height)+1rem)] z-40 mx-auto mt-6 w-fit max-w-full px-4"
     >
-      <ul className="glass-panel flex items-center gap-1 overflow-x-auto rounded-full border border-border p-1 shadow-lg">
+      <ul className="glass flex items-center gap-1 overflow-x-auto rounded-full border border-border p-1 shadow-lg">
         {SECTIONS.map((id) => (
           <li key={id} className="shrink-0">
             <a
@@ -140,7 +140,7 @@ export function SectionPill() {
                 // bar hits its max.
                 "block whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] sm:px-4 sm:text-sm",
                 activeSection === id
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-act text-act-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >

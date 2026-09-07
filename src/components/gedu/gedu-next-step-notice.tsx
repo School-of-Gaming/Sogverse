@@ -22,9 +22,14 @@ import { ROUTES } from "@/lib/constants";
  * failure that has not happened.
  *
  * **The whole band is the link.** It is one errand with one destination, so a
- * small target inside a large coloured box would be the only clickable part of
+ * small target inside a large marked-out box would be the only clickable part of
  * the loudest thing on the page. The arrow marks where it goes; it is not a
  * separate control.
+ *
+ * **What makes it loud is its edge and its glyph, not a wash.** The attention
+ * hue is spent at full value on the band's own 2px border and on the mark beside
+ * the words; everything a gedu reads through stays ink, and the hover lifts the
+ * ground the way any other hoverable surface does.
  *
  * **One band at a time, and the contract comes first.** They are two steps of
  * one process in the order they happen — the terms are agreed to on the
@@ -53,13 +58,13 @@ function GeduNextStepBand({
     <div className="mx-auto mb-10 max-w-5xl">
       <Link
         href={ROUTES.gedu.contract}
-        className="flex items-start gap-4 rounded-lg border-2 border-warning/60 bg-warning/10 p-5 transition-colors hover:bg-warning/20"
+        className="flex items-start gap-4 rounded-lg border-2 border-warning p-5 transition-colors hover:bg-hover"
       >
         <Icon className="mt-0.5 h-6 w-6 shrink-0 text-warning" aria-hidden />
         <div className="min-w-0 space-y-1">
-          <p className="text-lg font-bold text-warning">{title}</p>
+          <p className="text-lg font-bold text-foreground">{title}</p>
           <p className="text-sm text-foreground">{body}</p>
-          <p className="inline-flex items-center gap-1.5 pt-1 text-sm font-medium text-warning">
+          <p className="inline-flex items-center gap-1.5 pt-1 text-sm font-medium text-foreground">
             {action}
             <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
           </p>

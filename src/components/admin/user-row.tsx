@@ -162,10 +162,10 @@ export function UserRow({
     user.email_verified_at !== null;
   const warnings = user.role === "gedu" ? standingWarnings ?? null : null;
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-lg border border-border">
       <Link
         href={`${basePath}/${user.id}`}
-        className="group flex items-center justify-between p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="group flex items-center justify-between p-4 transition-colors hover:bg-hover hover:text-foreground"
       >
         <div className="flex items-center gap-4">
           <Avatar>
@@ -209,7 +209,7 @@ export function UserRow({
               label={t('emailVerified')}
             />
           )}
-          <Badge className={ROLE_BADGE_STYLES[user.role]}>
+          <Badge variant="outline" className={ROLE_BADGE_STYLES[user.role]}>
             {c(ROLE_LABEL_KEYS[user.role])}
           </Badge>
           <NavChevron />
@@ -217,20 +217,25 @@ export function UserRow({
       </Link>
 
       {user.role === "customer" && (!linkedGamers || linkedGamers.length === 0) && (
-        <div className="border-t bg-muted/30 py-3 pl-14 pr-4">
+        <div className="border-t border-border py-3 pl-14 pr-4">
           <p className="text-sm text-muted-foreground">{t('noConnectedGamers')}</p>
         </div>
       )}
 
+      {/* The children sit on the parent's own ground, marked by the indent and
+          the divider and never by a lift: a lifted run of rows reads as a
+          different kind of thing from the row above it, and the hover layer
+          would then land on two grounds at once, so one list would answer the
+          pointer in two colours. */}
       {linkedGamers && linkedGamers.length > 0 && (
-        <div className="border-t bg-muted/30">
+        <div className="border-t border-border">
           {linkedGamers.map((gamer) => {
             const gamerIdentity = identityLine(gamer, gamerSignIns?.get(gamer.id));
             return (
             <Link
               key={gamer.id}
               href={`${basePath}/${gamer.id}`}
-              className="group flex items-center justify-between py-3 pr-4 pl-14 transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="group flex items-center justify-between py-3 pr-4 pl-14 transition-colors hover:bg-hover hover:text-foreground"
             >
               <div className="flex items-center gap-3">
                 <Avatar className="h-7 w-7">
@@ -244,7 +249,7 @@ export function UserRow({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Badge className={`${ROLE_BADGE_STYLES.gamer} text-[10px] px-2 py-0`}>
+                <Badge variant="outline" className={`${ROLE_BADGE_STYLES.gamer} text-[10px] px-2 py-0`}>
                   {c("roleGamer")}
                 </Badge>
                 <NavChevron size="sm" />

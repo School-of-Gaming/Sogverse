@@ -34,7 +34,7 @@ export function GeduPill({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-xs transition-opacity",
+        "flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs transition-opacity",
         isSaving && "opacity-50",
       )}
     >
@@ -53,7 +53,7 @@ export function GeduPill({
           onClick={onRemove}
           disabled={isSaving || disabled}
           aria-label={t("gedu.removeAria", { name: firstName })}
-          className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+          className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
         >
           <X className="h-3.5 w-3.5" />
         </button>

@@ -114,7 +114,7 @@ interface GeduAssignmentCardProps {
  * The **Live badge is green**, and deliberately not the tone of the gradient
  * behind it. The gradient is a wash — it says "this card is different" before a
  * word is read; the badge is the word. Green is the universal on-air signal and
- * is the one semantic family free on this surface: amber is the attention badge
+ * is the one semantic family free on this surface: warning is the attention badge
  * on the corner beside it and must not be echoed, blue is "next up" in the session
  * feed and would be a lie about something already running, and the brand tone is
  * already spent on the wash itself.
@@ -243,21 +243,19 @@ export function GeduAssignmentCard({
           // `group` for the chevron's nudge, `h-full` so a grid row of cards
           // stretches every one of them to the tallest rather than leaving the
           // short ones floating.
-          "group relative h-full cursor-pointer overflow-hidden transition-[border-color,box-shadow,transform]",
-          "hover:border-primary/40 hover:shadow-lg focus-within:border-primary/40 focus-within:shadow-lg",
-          live &&
-            "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
+          // The lit card is lit from its leading edge: a 2px rule at full
+          // value on the plain card ground, drawn in the neutral edge on every
+          // card from the start so a card that goes live changes colour without
+          // moving its neighbours.
+          "group relative h-full cursor-pointer overflow-hidden border-l-2 transition-[box-shadow,transform,border-color]",
+          "hover:shadow-lg focus-within:shadow-lg",
+          live && "border-l-act",
         )}
       >
         <CardContent className="flex h-full flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
-              <p
-                className={cn(
-                  "text-xs font-medium uppercase tracking-wider text-muted-foreground",
-                  endedOn !== null && "text-muted-foreground/70",
-                )}
-              >
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {p(productType)}
               </p>
               {/* The identity keeps its weight and loses its tone on a finished
@@ -288,7 +286,7 @@ export function GeduAssignmentCard({
                 {/* The separator is a pseudo-element, not a text node: it is
                     punctuation between two translated strings rather than copy of
                     its own, so it has no business in the message files. */}
-                <span className="inline-flex items-center gap-1 tabular-nums before:mr-1 before:text-muted-foreground/50 before:content-['·']">
+                <span className="inline-flex items-center gap-1 tabular-nums before:mr-1 before:content-['·']">
                   <Users className="h-3.5 w-3.5" aria-hidden />
                   {d("participantCount", { count: groupParticipantCount })}
                 </span>
@@ -325,7 +323,7 @@ export function GeduAssignmentCard({
                 <Badge
                   variant="outline"
                   className={cn(
-                    "gap-1 border-success/50 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
+                    "gap-1 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
                     !live && "invisible",
                   )}
                 >
@@ -359,12 +357,7 @@ export function GeduAssignmentCard({
               missing schedule. That is not a reserved space — a schedule is a
               fact every product has an answer to, and "none set" is the answer
               for a product still being put together. */}
-          <div
-            className={cn(
-              "flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground",
-              endedOn !== null && "text-muted-foreground/70",
-            )}
-          >
+          <div className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
             <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <span className="min-w-0">
               {scheduleLines.length > 0 ? (
@@ -458,7 +451,7 @@ export function GeduAssignmentCard({
             if (openHref === "#") e.preventDefault();
           }}
           aria-label={productName}
-          className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
         />
       </Card>
 

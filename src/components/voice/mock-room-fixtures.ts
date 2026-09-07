@@ -50,7 +50,7 @@ export const VOICE_ROOM_CUSTOM_ZONES: VoiceZone[] = [
     group_id: "preview-group",
     name: "Build corner",
     icon: "anvil",
-    color: "teal",
+    color: "8",
     is_locked: false,
     sort_order: 0,
     created_by: VOICE_ROOM_GEDU_ID,

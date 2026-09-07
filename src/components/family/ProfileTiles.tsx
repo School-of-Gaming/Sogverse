@@ -42,7 +42,7 @@ export function ProfileTilesRow({ children }: { children: React.ReactNode }) {
 type ProfileTileCommonProps = {
   member: FamilyMember;
   size?: TileSize;
-  /** Adds the primary-colored ring used to mark the active viewer. */
+  /** Adds the act-colored ring used to mark the active viewer. */
   isActive?: boolean;
 };
 
@@ -104,16 +104,22 @@ export function ProfileTile(props: ProfileTileProps) {
     <>
       <div
         className={cn(
-          "relative aspect-square w-full overflow-hidden rounded-lg border-2 ring-offset-2 ring-offset-background transition-[border,box-shadow] duration-150",
+          // The ring and its offset arrive together. A ring of width 0 still
+          // paints its offset's worth of act under the offset shadow, and the
+          // anti-aliased corners let a fringe of it through, which reads as an
+          // amber haze around a tile nobody is pointing at. So at rest there is
+          // no offset either, and the grey edge gives way to the ring when it
+          // comes, rather than sitting inside it as a second line.
+          "relative aspect-square w-full overflow-hidden rounded-lg border-2 border-border ring-act ring-offset-background transition-[border-color,box-shadow] duration-150",
           isActive
-            ? "border-transparent ring-4 ring-primary"
-            : "border-border ring-0 ring-primary/50 group-hover:border-transparent group-hover:ring-4 group-focus-visible:border-transparent group-focus-visible:ring-4",
+            ? "border-transparent ring-4 ring-offset-2"
+            : "ring-0 ring-offset-0 group-hover:border-transparent group-hover:ring-4 group-hover:ring-offset-2 group-focus-visible:border-transparent group-focus-visible:ring-4 group-focus-visible:ring-offset-2",
         )}
       >
         <Identicon id={member.id} size={112} />
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-            <Loader2 className="h-8 w-8 animate-spin text-white" />
+          <div className="absolute inset-0 flex items-center justify-center bg-scrim">
+            <Loader2 className="h-8 w-8 animate-spin text-foreground" />
           </div>
         )}
       </div>
@@ -174,11 +180,11 @@ export function AddGamerTile({
       )}
       aria-label={t("addGamer")}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/40 transition-colors duration-150 group-hover:border-primary group-hover:bg-primary/5 group-focus-visible:border-primary">
+      <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors duration-150 group-hover:bg-hover">
         <div className="absolute inset-0 flex items-center justify-center">
           <Plus
             className={cn(
-              "text-muted-foreground transition group-hover:text-primary",
+              "text-muted-foreground transition group-hover:text-act",
               ADD_ICON_SIZE[size],
             )}
             strokeWidth={1.5}
@@ -198,8 +204,8 @@ export function SkeletonTile({ size = "default" }: { size?: TileSize }) {
       aria-hidden
       className={cn("flex flex-col items-center gap-2", TILE_WIDTH[size])}
     >
-      <div className="aspect-square w-full animate-pulse rounded-lg bg-muted" />
-      <div className={cn("animate-pulse rounded bg-muted", SKELETON_LABEL[size])} />
+      <div className="aspect-square w-full animate-pulse rounded-lg bg-lifted" />
+      <div className={cn("animate-pulse rounded bg-lifted", SKELETON_LABEL[size])} />
     </div>
   );
 }

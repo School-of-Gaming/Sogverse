@@ -71,8 +71,12 @@ rule printed below for it still governs Sogverse's code exactly as written; the 
 that retires the construct deletes its rule from this file in the same change. No new UI
 rule is added here: a new opinion goes to SOG-UI, and the construct joins the adoption
 order. The UI sections below (layout and scrolling, loading and disabled state, button
-order, styling, the UI component reference and preview scenes) are that transitional
-state, and the day this file holds none of them, the sweep is done.
+order, the faces and headings rules, the UI component reference and preview scenes) are
+that transitional state, and the day this file holds none of them, the sweep is done.
+Colour is the first thing to have left: the theme adoption moved the tokens, the grounds,
+the one-theme rule and the ban on a hardcoded colour into the library, where they are
+stated in `packages/sog-ui/CLAUDE.md` and held by lint and by
+`tests/unit/styling/`.
 
 ### Key Conventions
 - App routes are grouped: `(auth)`, `(dashboard)`, `(public)`, plus `api/`
@@ -220,7 +224,7 @@ Nothing is left open. The shift is complete except where prose is decided case b
 
 **One locale translates the brand, on purpose.** `tlh` renders "School of Gaming" as its Klingon calque and keeps "Sogverse" as-is, and the about-page easter egg puts that pair in a table as one of its jokes — so the easter egg is the documentation. A brand-name rule applied mechanically would "fix" it and delete the joke; the general prohibition on translating a mark is aimed at `fi`/`sv`/`fr`, where a family reads the name as a name.
 
-**The brand authority above all of this is the School of Gaming Brand Voice & Identity Guidebook, and every place we knowingly diverge from it is logged in `docs/brand-guidebook-deviations.md`** — a transitional queue of our expansions, exceptions, rejections and open escalations, each cleared as it is codified in its permanent home and the file deleted once empty. Where the app diverges from the Guidebook with no entry there and no rule here, the Guidebook wins; a new divergence earns an entry in the change that makes it.
+**Sogverse's brand authority is SOG-UI, and only SOG-UI.** The School of Gaming Brand Voice & Identity Guidebook is the library's input: SOG-UI abstracts it into tokens, components, vocabulary and the reasoning behind each, so that Sogverse consumes the brand without ever needing the Guidebook as a reference. A departure from the Guidebook exists only where the library's own source declares and justifies it beside the value it governs (`packages/sog-ui/`); no deviations file exists, and no divergence recorded before the library existed carries over on its own account. Every mention of the Guidebook that remains in this file is a rule not yet moved into the library, and it leaves this file with the adoption that moves it.
 
 ### Brand vocabulary and fixed forms
 
@@ -265,15 +269,11 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 
 ### Styling
 
-**Rule: there is exactly one theme and it is dark — never write a light-mode fallback.** Tokens are defined once on `:root` in `src/app/globals.css`; there is no theme provider, no theme switcher, no `.dark` or `.light` selector, and no `dark:` variants anywhere in the codebase. So a `dark:` class never activates, a second palette can never be selected, and a comment reasoning about how something reads "in both themes" is describing a situation that cannot arise. All three are dead weight that still has to be maintained and still misleads the next reader into tuning a value nobody will see. If a light theme is ever wanted it is a project, not a fallback bolted onto one component: `color-scheme: dark` on `:root`, the email templates' `supported-color-schemes`, and every token's tuning all assume the dark ground.
-
-**Rule: Never use hardcoded colors or raw Tailwind color classes (e.g. `text-sky-400`, `bg-red-500`).** All colors must come from CSS custom properties defined in `src/app/globals.css` and referenced via semantic Tailwind classes (`text-primary`, `bg-destructive`, etc.). For non-CSS contexts (email templates, canvas), use the hex constants in `src/lib/constants/colors.ts`. This ensures a single source of truth for colors and brand identity.
-
 **Rule: Poppins is the app face — body copy and every heading not claimed by the display-font variable — and every face is loaded through `next/font`.** Space Mono is a sanctioned brand face loaded the same way and placed nowhere yet, pending the design pass; it is intentionally unused, not dead weight to tidy away.
 
 **Rule: a `next/font` variable class goes on `<html>`, never on `<body>`.** The Tailwind theme block emits its font tokens at `:root`, so a face variable defined one element lower is invisible there and the hand-written body `font-family` collapses to the UA stack — while the `font-*` utility classes keep working, because those inline their `var()` at the use site where `<body>` is an ancestor. That asymmetry is the whole danger: the page still looks styled, so nobody notices. An earlier Inter wiring shipped this way and never applied for as long as it was live.
 
-**Rule: Press Start 2P is approved for rare, specialized uses only — never as a face a surface reaches for on its own.** It is not among the brand Guidebook's sanctioned faces; it is an owner-approved exception, kept because the arcade glyphs are occasionally exactly right and no other face in the stack says that. What makes it work is scarcity: a display face used wherever a heading wants personality stops being a special effect and becomes the brand, which is a change nobody decided to make. So placements are reviewed in the design pass rather than added by whoever likes it, and a new one is a decision to raise, not a class to apply. (Logged as a deviation — see the brand section's pointer.)
+**Rule: Press Start 2P is approved for rare, specialized uses only — never as a face a surface reaches for on its own.** It is not among the brand Guidebook's sanctioned faces; it is an owner-approved exception, kept because the arcade glyphs are occasionally exactly right and no other face in the stack says that. What makes it work is scarcity: a display face used wherever a heading wants personality stops being a special effect and becomes the brand, which is a change nobody decided to make. So placements are reviewed in the design pass rather than added by whoever likes it, and a new one is a decision to raise, not a class to apply. Like every visual departure from the Guidebook, it stands only once the faces adoption declares and justifies it in SOG-UI.
 
 **Rule: headings are sentence case — never Title Case Every Word, never ALL CAPS.** Proper nouns keep their capitals and nothing else does; this is the brand Guidebook's Appendix A.3 typography rule, owner-adopted 2026-08-24, and it is a house rule with teeth because inconsistent heading case is the one typographic slip a reader notices on every page at once. It binds the heading text in `messages/` and the CSS on the element alike, so `uppercase` on a real heading is the same defect as a Title-Cased string.
 
@@ -301,7 +301,7 @@ Some user-authored fields are stored as **markdown** rather than plain text, bec
 **Rule: markdown is edited as rich text, not as syntax.** The people writing these fields are not writing documentation; asking them to remember what `##` does is how a formatting feature ends up unused. The stored value stays markdown either way — the syntax is an implementation detail of the column, not something a writer should ever meet. The editor (`src/components/ui/rich-text-editor.tsx`) is headless and styled with semantic tokens like everything else, is loaded on demand, and is only instantiated once a field is actually opened: a page holding many collapsed editors must not construct one per field.
 
 ### UI Component Reference
-A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant, composite patterns, and the color palette. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
+A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant and composite patterns. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
 
 **What the page is for (two functions):**
 1. **Fast UI iteration.** It renders components with hand-built mock data, so you can see and tweak a component without manually recreating its state through the normal app flow (no logging in as the right role, seeding a DB row, joining a live call, etc.). Demos feed fixtures directly — including a full mock context where a component reads one (e.g. the voice room renders inside a fixture `VoiceRoomContext.Provider`).

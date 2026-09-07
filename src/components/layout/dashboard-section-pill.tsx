@@ -95,7 +95,7 @@ export function DashboardSectionPill({
       // document's horizontal scroll with it, which moves every page under it.
       className="sticky top-20 z-40 mx-auto -mt-2 mb-6 w-fit max-w-full"
     >
-      <ul className="flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-background/90 p-1 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <ul className="glass flex items-center gap-1 overflow-x-auto rounded-full border border-border p-1 shadow-lg">
         {sections.map(({ id, label, truncateLabel }) => (
           <li key={id} className="shrink-0">
             <a
@@ -113,7 +113,7 @@ export function DashboardSectionPill({
                 "block rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] sm:px-4 sm:text-sm",
                 truncateLabel && "max-w-24 truncate",
                 activeSection === id
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-act text-act-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >

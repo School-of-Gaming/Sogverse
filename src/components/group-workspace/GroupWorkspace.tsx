@@ -620,7 +620,7 @@ export function GroupWorkspace({
               {/* Punctuation between two translated strings, so it is a
                   pseudo-element rather than a text node — it does not belong in
                   the message files. */}
-              <span className="inline-flex items-center gap-1 before:mr-1 before:text-muted-foreground/50 before:content-['·']">
+              <span className="inline-flex items-center gap-1 before:mr-1 before:content-['·']">
                 <Users className="h-4 w-4" aria-hidden />
                 {t("participantCount", {
                   count: assignedGroup.participant_count,
@@ -911,7 +911,7 @@ function OtherGroupsRailCard({
           {peerGroups.map((group) => (
             <li
               key={group.id}
-              className="space-y-1.5 rounded-md border border-border bg-muted/30 p-2.5"
+              className="space-y-1.5 rounded-md border border-border bg-lifted p-2.5"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <p className="min-w-0 flex-1 truncate text-sm font-medium leading-tight">

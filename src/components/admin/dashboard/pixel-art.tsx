@@ -1,7 +1,5 @@
-import { cn } from "@/lib/utils";
-
 /**
- * The dashboard's pixel sprites, drawn in the page's own colour tokens.
+ * The dashboard's pixel sprites: artwork, painted in their own colours.
  *
  * **Why a sprite at all.** The all-clear had become the one state on this page
  * with nothing to look at — an icon and a paragraph centred in the space the
@@ -10,12 +8,18 @@ import { cn } from "@/lib/utils";
  * pixel one is the register this platform already speaks in: `font-display`
  * beside it is Press Start 2P, and the audience is a games company's own staff.
  *
+ * **Artwork, not brand.** The cup is gold because it is a gold trophy, not
+ * because the brand's signature colour happens to be near gold. It once borrowed
+ * the brand's amber and a 55% shade of it, which tied a picture of a trophy to a
+ * token whose meaning is "the thing to do"; the owner ruled that a mistake. A
+ * piece of artwork carries its own palette under the artwork exemption the UI
+ * language grants, spends no brand token, and does not move when the brand does.
+ * The colours below are therefore literal, and that is the point rather than a
+ * shortcut.
+ *
  * **Drawn here rather than shipped as an asset.** A 9x10 sprite is smaller as
- * markup than as any image file, needs no network round trip on a page whose
- * whole design is that it has no loading state, and — the part that decides it —
- * inherits the palette. An exported PNG would freeze today's gold into a file no
- * token change can reach, so the day `--primary` moves, every surface follows
- * except this one.
+ * markup than as any image file and needs no network round trip on a page whose
+ * whole design is that it has no loading state.
  *
  * **Nothing here animates, and that is a property of the surface rather than an
  * omission.** The all-clear was prototyped with motion — a particle burst, a
@@ -29,24 +33,29 @@ import { cn } from "@/lib/utils";
 /**
  * One glyph per cell, one row per string, every row the same width.
  *
- * Upper case is the full-strength token and lower case its shade — the whole
+ * Upper case is the full-strength colour and lower case its shade — the whole
  * shading vocabulary a sprite this size can use. A glyph the map does not know
  * draws nothing, which is what `.` relies on: the type is `Partial` so that
  * missing entry is a `string | undefined` the compiler can see, rather than a
  * lie the lookup tells its caller.
  *
+ * The palette is the sprite's own (see the module comment): a trophy gold with
+ * a darker gold for its shadowed bowl, a stone grey for the plinth, and for the
+ * burst a white core with ember sparks. None of these is a theme token, and the
+ * hex literals are the artwork exemption in effect, not a colour left unnamed.
+ *
  * **Only `P`, `p` and `f` are on screen today** — they are the cup. `M` and `F`
  * are reachable only through `FIREWORK_BURST` below, which is deliberately not
- * rendered, so anybody retuning these tokens should know that changing those two
- * changes nothing an admin sees.
+ * rendered, so anybody retuning these colours should know that changing those
+ * two changes nothing an admin sees.
  */
 const PIXEL_COLORS: Partial<Record<string, string>> = {
   ".": "",
-  P: "bg-primary",
-  p: "bg-primary/55",
-  M: "bg-secondary",
-  F: "bg-foreground",
-  f: "bg-muted-foreground",
+  P: "#FFD700",
+  p: "#B8860B",
+  M: "#FF6A3D",
+  F: "#FFFFFF",
+  f: "#5A5A5A",
 };
 
 export interface PixelArt {
@@ -119,7 +128,8 @@ export function PixelSprite({ art }: { art: PixelArt }) {
           {[...row].map((glyph, x) => (
             <span
               key={x}
-              className={cn("h-[3px] w-[3px]", PIXEL_COLORS[glyph])}
+              className="h-[3px] w-[3px]"
+              style={{ backgroundColor: PIXEL_COLORS[glyph] }}
             />
           ))}
         </div>

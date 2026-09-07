@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { Eye, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -360,9 +361,14 @@ export function GamerFlairDialog({
                   />
 
                   {incomplete && (
-                    <p role="alert" className="pt-0.5 text-xs text-destructive">
+                    <StatusLine
+                      status="destructive"
+                      size="xs"
+                      role="alert"
+                      className="pt-0.5"
+                    >
                       {t("creationIncomplete")}
-                    </p>
+                    </StatusLine>
                   )}
                 </div>
               )}
@@ -395,7 +401,9 @@ export function GamerFlairDialog({
             )}
           </StaffOnlyBlock>
 
-          {error !== null && <p className="text-sm text-destructive">{error}</p>}
+          {error !== null && (
+            <StatusLine status="destructive">{error}</StatusLine>
+          )}
         </div>
 
         <DialogFooter>
@@ -433,7 +441,7 @@ function StaffOnlyBlock({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-md border border-dashed border-border bg-muted/60 p-3">
+    <div className="rounded-md border border-dashed border-border bg-lifted p-3">
       <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         <Lock className="h-3 w-3" aria-hidden />
         {label}

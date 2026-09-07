@@ -54,7 +54,7 @@ export function ChangePinFlow() {
       footer={
         <Link
           href={ROUTES.settings}
-          className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary"
+          className="flex items-center justify-center text-sm text-muted-foreground hover:text-act"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t("change.cancel")}

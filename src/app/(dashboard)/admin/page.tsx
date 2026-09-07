@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { getTranslations } from "next-intl/server";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AdminDashboardPage } from "@/components/admin/dashboard/AdminDashboardPage";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -143,9 +144,11 @@ async function AdminDashboardLoadFailure({ reason }: { reason: string | null }) 
       {/* The reason is a message off the wire, never translated copy — it is
           spliced into a sentence that is, which is why there are two keys rather
           than one with an optionally-empty argument. */}
-      <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
-        {reason === null ? t("loadError") : t("loadErrorWithReason", { reason })}
-      </p>
+      <Alert variant="destructive">
+        <AlertDescription>
+          {reason === null ? t("loadError") : t("loadErrorWithReason", { reason })}
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }

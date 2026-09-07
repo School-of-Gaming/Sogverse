@@ -674,7 +674,7 @@ export function SessionFeed({
    * all is the *flag*, not the clock: a flagged run's final session carries it
    * from the day it is scheduled, which is what makes the work findable while
    * there is still time to do it. Whether the block is **owed** is the same
-   * test the header's amber is derived from — finished, owed at all, and
+   * test the header's warning tone is derived from — finished, owed at all, and
    * somebody still missing — so the block and the line above it can never
    * disagree about the state of one card.
    */
@@ -824,22 +824,28 @@ export function SessionFeed({
  * Timeline marker tone per state. The rail is scanned before anything is read,
  * so the markers carry the same hierarchy the cards do: the next session and the
  * outstanding work stand out, the ordinary weeks are neutral, and the
- * nothing-owed rows all but disappear. A future session is only fully toned when
- * it is the next one — a later date is not a thing to walk into.
+ * nothing-owed rows all but disappear. A future session is toned only when it is
+ * the next one — a later date is not a thing to walk into, so it takes the
+ * ordinary neutral dot rather than a weakened blue: a status hue is spent at the
+ * value it is authored at or not at all.
  *
  * The loud markers are deliberately on **different hues** rather than different
- * saturations of one: info blue for what is coming, warning amber for what is
+ * saturations of one: info blue for what is coming, the warning tone for what is
  * owed, success green for what is finished end to end. When "next" was
- * primary-toned the rail read as one graded run of warm dots, and the single
+ * act-toned the rail read as one graded run of warm dots, and the single
  * most useful thing a glance down it can tell you — where the gaps are — was the
  * thing hardest to see.
  *
  * The neutral dot is what is left when a past session says nothing about
  * itself: a pre-epoch week, a session still under way, an unfinished sheet on a
  * group with nobody in it. A session marked off but never written up is **not**
- * one of them any more — the report is owed work now, so that dot is amber like
- * any other gap. The run of grey is what the green and the amber are measured
- * against, and it is the run that shrinks when the standard rises.
+ * one of them any more — the report is owed work now, so that dot takes the
+ * warning tone like any other gap. The run of grey is what the green and the
+ * warning are measured
+ * against, and it is the run that shrinks when the standard rises. The two greys
+ * are two tokens, not two steps of one: the ordinary dot is the ink
+ * (`muted-foreground`), and a week with no record at all takes `border`, the
+ * quietest neutral the palette has. Neither is a weakened anything.
  */
 function markerTone(
   entry: SessionFeedEntry,
@@ -848,7 +854,7 @@ function markerTone(
 ): string {
   switch (entry.kind) {
     case "future":
-      return prominent ? "bg-info" : "bg-info/40";
+      return prominent ? "bg-info" : "bg-muted-foreground";
     case "past":
       switch (completeness) {
         case "needs_attention":
@@ -856,10 +862,10 @@ function markerTone(
         case "complete":
           return "bg-success";
         default:
-          return "bg-muted-foreground/60";
+          return "bg-muted-foreground";
       }
     case "no_record":
-      return "bg-muted-foreground/25";
+      return "bg-border";
   }
 }
 

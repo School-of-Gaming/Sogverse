@@ -41,6 +41,13 @@ interface FaqAccordionProps {
  * A heading over the list belongs to the caller for the same reason: the
  * caller is the only place that can decide not to draw one.
  *
+ * **There is no box around the list, only the lines between the rows.** It used
+ * to be a bordered card, and the outer edge read as a panel of its own on a page
+ * whose other sections have none — a light rectangle drawn around copy nobody
+ * had set apart. The divider is what the construct actually needs: it says where
+ * one question ends and the next begins, and the rows sit on the page's own
+ * ground like everything else in the reading column.
+ *
  * The component owns the row markup and nothing else: no namespace, no key
  * array, no section wrapper, no tinted band. Those are all page-specific, and
  * pulling any of them in here is what turns a shared list into per-call-site
@@ -50,21 +57,21 @@ export function FaqAccordion({ items }: FaqAccordionProps) {
   if (items.length === 0) return null;
 
   return (
-    <div className="divide-y divide-border overflow-hidden rounded-lg border bg-card/50">
+    <div className="divide-y divide-border">
       {items.map((item) => (
         <details key={item.key} className="group">
           {/* `list-none` kills the disclosure triangle in Gecko and Blink, the
               `::-webkit-details-marker` rule in WebKit; the chevron below
               replaces it so the affordance sits on the side the reader's thumb
               is already on. */}
-          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-4 py-4 text-left font-semibold transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-6 sm:py-5 [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-md px-3 py-4 text-left font-semibold transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act sm:px-4 sm:py-5 [&::-webkit-details-marker]:hidden">
             <span>{item.question}</span>
             <ChevronDown
               aria-hidden="true"
               className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
             />
           </summary>
-          <div className="space-y-3 px-4 pb-5 leading-7 text-muted-foreground sm:px-6">
+          <div className="space-y-3 px-3 pb-5 leading-7 text-muted-foreground sm:px-4">
             {item.answer}
           </div>
         </details>

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, User } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -100,19 +101,19 @@ export default function GamerDetailsPage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-2xl space-y-6">
-        <div className="h-8 w-32 animate-pulse rounded bg-muted" />
+        <div className="h-8 w-32 animate-pulse rounded bg-lifted" />
         <Card className="animate-pulse">
           <CardHeader>
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-md bg-muted" />
+              <div className="h-16 w-16 rounded-md bg-lifted" />
               <div className="space-y-2">
-                <div className="h-5 w-32 rounded bg-muted" />
-                <div className="h-4 w-24 rounded bg-muted" />
+                <div className="h-5 w-32 rounded bg-lifted" />
+                <div className="h-4 w-24 rounded bg-lifted" />
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-10 w-full rounded bg-muted" />
+            <div className="h-10 w-full rounded bg-lifted" />
           </CardContent>
         </Card>
       </div>
@@ -198,15 +199,15 @@ export default function GamerDetailsPage() {
           </div>
 
           {profileSuccess && (
-            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-              {profileSuccess}
-            </div>
+            <Alert variant="success">
+              <AlertDescription>{profileSuccess}</AlertDescription>
+            </Alert>
           )}
 
           {profileError && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {profileError}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{profileError}</AlertDescription>
+            </Alert>
           )}
 
           <form onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }} className="space-y-6">

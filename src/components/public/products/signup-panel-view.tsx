@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Globe, MapPin, MapPinCheck, Plus } from "lucide-react";
+import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
@@ -359,7 +360,7 @@ function PanelShell({
   const t = useTranslations("productDetail.signupPanel");
   return (
     <Card className="overflow-hidden">
-      <div className="bg-muted px-5 py-2.5 text-center text-sm font-semibold text-muted-foreground">
+      <div className="bg-lifted px-5 py-2.5 text-center text-sm font-semibold text-muted-foreground">
         {t(`noun.${productType}`)}
       </div>
       <CardContent className="space-y-5 p-5 sm:p-6">{children}</CardContent>
@@ -657,7 +658,7 @@ function UnauthenticatedOverlay({
 function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <p className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+    <p className="rounded-md border border-border bg-lifted p-3 text-xs text-muted-foreground">
       {forGamers ? t("nonCustomerNote") : t("nonCustomerNoteParents")}
     </p>
   );
@@ -677,7 +678,7 @@ function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
  * **Info, not warning and not error.** Nothing has gone wrong and nothing is
  * their fault: the product is sold somewhere else, which is a fact about the
  * product. So the tint is the `info` semantic pair, never `destructive` or
- * `warning` (which would tell them to fix something) and never `primary`
+ * `warning` (which would tell them to fix something) and never `act`
  * (which is the panel's *act on this* colour, and there is nothing to act on).
  * The `Globe` anchors it — the same subject the sections' `MapPin` /
  * `MapPinCheck` mark, one scale up because this block is the panel's entire
@@ -716,7 +717,7 @@ function WrongCountryOverlay({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="flex items-start gap-3 rounded-md border border-info/30 bg-info/10 p-4">
+    <div className="flex items-start gap-3 rounded-md border border-border p-4">
       <Globe className="mt-0.5 h-5 w-5 shrink-0 text-info" />
       <p className="text-sm text-foreground">
         {t.rich("regionLock.wrongCountry", {
@@ -745,13 +746,14 @@ function WrongCountryOverlay({
  * than in the CTA.
  *
  * **It speaks in the refusal's hue at the quiet volume, because it is about
- * the same thing.** The `info` border says "this product is a bit different
+ * the same thing.** The `info` pin says "this product is a bit different
  * and wants your attention" without ever saying anything is wrong — which is
  * exactly the question being asked — while the default background keeps a
- * section inside a working form from shouting over the form itself. The
- * border is the whole change: the heading, the note and the button sit where
- * they always sat, in the order they always sat in, so the section still
- * reads as one step of the form rather than as an interruption of it.
+ * section inside a working form from shouting over the form itself. The edge
+ * is the neutral border every block on this panel wears and the glyph carries
+ * the hue: the heading, the note and the button sit where they always sat, in
+ * the order they always sat in, so the section still reads as one step of the
+ * form rather than as an interruption of it.
  *
  * **The block's `MapPin` anchors the section, and the button's does not.** The
  * heading carries an `info`-coloured pin, the way the refusal's `Globe` and the
@@ -766,7 +768,7 @@ function WrongCountryOverlay({
 function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="rounded-md border border-info/40 p-4">
+    <div className="rounded-md border border-border p-4">
       <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
         <MapPin className="h-4 w-4 shrink-0 text-info" />
         {t("regionLock.heading")}
@@ -778,7 +780,7 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
       <button
         type="button"
         onClick={onSetLocation}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
       >
         <MapPin className="h-4 w-4" />
         {t("regionLock.setLocation")}
@@ -818,9 +820,9 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
  * **It carries the region-lock family's `info` surface, which is the one place
  * this panel's "a border means you can act on it" rule is deliberately spent.**
  * What is bought with it is not inactionability — the ask section wears the
- * same border and holds a button — but *subject*: the info hue says "the region
- * lock is speaking", and it says that about all three surfaces regardless of
- * whether there is anything to do on them. Controls keep announcing themselves
+ * same border and holds a button — but *subject*: the info-coloured pin says
+ * "the region lock is speaking", and it says that about all three surfaces
+ * regardless of whether there is anything to do on them. Controls keep announcing themselves
  * the way they do everywhere else on the panel, from inside the block: the ask
  * section's affordance is a bordered, full-width button that looks exactly like
  * the picker's add-a-gamer row, and its absence here is what tells a reader this
@@ -843,7 +845,7 @@ function RegionEligibleSection({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <div className="rounded-md border border-info/40 p-4">
+    <div className="rounded-md border border-border p-4">
       <p className="flex items-start gap-2 text-sm text-foreground">
         <MapPinCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" />
         <span>
@@ -988,7 +990,7 @@ function SignupForm(
                   disabled={alreadyOn !== null}
                   onClick={() => props.onSelectParticipant(g.id)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-2 rounded-md border px-2.5 py-2.5 text-sm transition-colors",
+                    "flex w-full items-center justify-between gap-2 rounded-md border border-border px-2.5 py-2.5 text-sm transition-colors",
                     // The border and the fills stay: this row is the one thing
                     // in the picker you can act on, and the border is what says
                     // so. With no box around the group the row spends a little
@@ -996,15 +998,16 @@ function SignupForm(
                     // gives the name/age/status line the room it needs at rail
                     // width.
                     alreadyOn !== null
-                      ? "cursor-not-allowed border-input bg-muted/40 opacity-60"
+                      ? "cursor-not-allowed border-border bg-lifted opacity-60"
                       : selected
-                        ? // With no outer box to sit inside, a 1px primary
-                          // border against a 1px input border is a thin
-                          // distinction. An inset ring doubles the line without
-                          // changing the box, so selecting a row cannot nudge
-                          // its own text by a pixel.
-                          "border-primary bg-primary/10 ring-1 ring-inset ring-primary/50"
-                        : "border-input hover:bg-accent hover:text-accent-foreground",
+                        ? // With no outer box to sit inside, a fill alone
+                          // would be a thin distinction — and act is a figure
+                          // on the dark ground rather than a wash over it. An
+                          // inset ring at full value doubles the row's own line
+                          // without changing the box, so selecting a row cannot
+                          // nudge its own text by a pixel.
+                          "ring-1 ring-inset ring-act"
+                        : "hover:bg-hover hover:text-foreground",
                   )}
                 >
                   <span className="flex min-w-0 items-center gap-2.5">
@@ -1045,7 +1048,7 @@ function SignupForm(
                     </span>
                   ) : (
                     selected && (
-                      <span className="shrink-0 text-xs font-semibold text-primary">
+                      <span className="shrink-0 text-xs font-semibold text-act">
                         {t("selected")}
                       </span>
                     )
@@ -1066,7 +1069,7 @@ function SignupForm(
             <button
               type="button"
               onClick={props.onAddGamer}
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
             >
               <Plus className="h-4 w-4" />
               {tFamily("addGamer")}
@@ -1145,9 +1148,9 @@ function SignupForm(
       </Button>
 
       {props.submitError && (
-        <p className="text-xs text-destructive" role="alert">
+        <StatusLine status="destructive" size="xs" role="alert">
           {props.submitError}
-        </p>
+        </StatusLine>
       )}
     </div>
   );
@@ -1547,7 +1550,7 @@ function ConsentSentenceLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-medium text-primary underline-offset-2 hover:underline"
+      className="font-medium text-act underline-offset-2 hover:underline"
     >
       {children}
     </a>

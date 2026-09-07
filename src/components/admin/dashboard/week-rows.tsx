@@ -67,17 +67,19 @@ export function WeekRows({
         <li
           key={row.date}
           className={cn(
-            "flex flex-col gap-2 rounded-lg border p-2 sm:flex-row sm:gap-3",
-            row.isToday
-              ? "border-primary/60 bg-primary/5"
-              : "border-border bg-card",
+            // Today is marked by a 2px act edge down its leading side, and the
+            // edge is drawn on every row from the start — in `border` where the
+            // day is not today — so the mark costs no layout when the week
+            // rolls over under a reader.
+            "flex flex-col gap-2 rounded-lg border border-l-2 border-border bg-card p-2 sm:flex-row sm:gap-3",
+            row.isToday && "border-l-act",
           )}
         >
           <div className="flex shrink-0 items-baseline gap-2 px-1 sm:w-24 sm:flex-col sm:items-start sm:gap-0">
             <span
               className={cn(
                 "text-sm font-semibold",
-                row.isToday ? "text-primary" : "text-foreground",
+                row.isToday ? "text-act" : "text-foreground",
               )}
             >
               {row.label}
@@ -150,7 +152,7 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
     <Link
       href={chip.href}
       title={title}
-      className="flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:border-foreground/30 hover:bg-accent"
+      className="flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:bg-hover"
     >
       <Icon
         className={cn("h-3.5 w-3.5 shrink-0", presentation.text)}
@@ -168,7 +170,7 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
 /**
  * "This one is in the queue at the top of the page."
  *
- * It was a bare amber dot, which needed a key entry to mean anything — and a
+ * It was a bare act dot, which needed a key entry to mean anything — and a
  * mark that cannot be read without a key is a mark that is not read. The
  * replacement borrows the grammar the family surfaces already use to tell a
  * parent something is wrong with an enrollment (`PaymentProblemBadge`): a

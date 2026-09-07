@@ -94,7 +94,7 @@ const stepKeys = ["step1", "step2", "step3", "step4"] as const;
 /** Small uppercase section label — the [WHAT IS THIS] / [WHY JOIN] markers. */
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+    <p className="text-xs font-semibold uppercase tracking-widest text-act">
       {children}
     </p>
   );
@@ -147,7 +147,7 @@ export default function RobloxPage() {
 
       {/* How it works — ahead of the events list, so a reader knows what the
           four steps are before meeting the thing they take those steps on. */}
-      <section className="bg-muted/30 py-16 sm:py-24">
+      <section className="bg-card py-16 sm:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <Eyebrow>{t("how.eyebrow")}</Eyebrow>
@@ -159,7 +159,7 @@ export default function RobloxPage() {
           <div className="mx-auto mt-14 grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((step) => (
               <div key={step.key} className="text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-act text-xl font-bold text-act-foreground">
                   {step.number}
                 </div>
                 <h3 className="mt-4 text-lg font-semibold">{step.title}</h3>
@@ -176,7 +176,7 @@ export default function RobloxPage() {
 
       {/* Why join — after the events, where it answers the hesitation a reader
           has once they have seen what is actually on offer. */}
-      <section className="bg-muted/30 py-16 sm:py-24">
+      <section className="bg-card py-16 sm:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <Eyebrow>{t("why.eyebrow")}</Eyebrow>
@@ -186,11 +186,11 @@ export default function RobloxPage() {
           </div>
           <div className="mx-auto mt-14 grid max-w-5xl gap-6 sm:grid-cols-2">
             {reasons.map((reason) => (
-              <Card key={reason.key} className="bg-card/50">
+              <Card key={reason.key}>
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <reason.icon className="h-5 w-5 text-primary" />
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-act bg-lifted">
+                      <reason.icon className="h-5 w-5 text-act" />
                     </div>
                     <CardTitle className="text-lg">{reason.title}</CardTitle>
                   </div>
@@ -264,11 +264,11 @@ export default function RobloxPage() {
           this section can, and reads the right way round anyway — boilerplate
           belongs at the bottom of the page, not above the thing it qualifies. */}
       <section className="container mx-auto px-4 pb-16">
-        <div className="mx-auto max-w-3xl border-t pt-8">
+        <div className="mx-auto max-w-3xl border-t border-border pt-8">
           {/* Furniture, not voice: a small tracked marker a reader scans as
               structure, so caps are the right treatment here. Muted rather than
-              the page's primary-coloured Eyebrow — three primary-coloured rows
-              would shout from the bottom of the page, and a primary label over
+              the page's act-coloured Eyebrow — three act-coloured rows
+              would shout from the bottom of the page, and an act label over
               them shouts just as loudly. An h2 because it genuinely heads the
               list below it in the outline, whatever its size says. */}
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -288,7 +288,7 @@ export default function RobloxPage() {
               </p>
             ))}
           </div>
-          <div className="mt-8 space-y-2 text-xs leading-relaxed text-muted-foreground/70">
+          <div className="mt-8 space-y-2 text-xs leading-relaxed text-muted-foreground">
             <p>{t("legal.roblox")}</p>
             <p>{t("legal.lynx")}</p>
           </div>

@@ -1,5 +1,19 @@
 # Brand palette and type — the dark-ground design pass
 
+**Status, 2026-09-07: the colour half of this plan is superseded and landed; the type half
+is open and moves.** Colour was decided through the SOG-UI theme adoption rather than
+through this plan: every value, rule and departure lives in `packages/sog-ui/` (the
+colour source and the package's `CLAUDE.md`), Sogverse's stylesheet declares no colour,
+and two lint rules hold it. So every colour item below — the Yty hues, the palette
+scenes, the categorical palettes, the "codify into the root `CLAUDE.md` Styling section
+and the deviations log" step — is done in a different place or no longer applies (there
+is no deviations log; Sogverse's brand authority is the library). What remains of this
+plan is type: Press Start 2P placements, Space Mono, the display steps, the heading
+weight. That work is the faces and headings adoptions in `packages/sog-ui/docs/adoption.md`
+and is ruled the same way colour was, from a page in the demo. The text below is kept
+until that adoption opens, as the record of what was investigated; read it for the type
+half only.
+
 The visual half of the Guidebook alignment: adopt the Guidebook's Yty-Element colours,
 button set, and display faces on Sogverse's dark ground — **UI first, then wiring** (owner
 ruling): every change is designed and signed off in fixture-driven preview scenes and the
@@ -138,7 +152,9 @@ One branch off `dev` (after the companion plan merges), `feat/brand-palette-desi
    labels — judged, not assumed); each Press Start 2P placement kept, swapped to Space
    Mono, or dropped, one decision per site against the rare-use ruling — five sites (home
    h1, gamer-dashboard h2, the /roblox hero, the profile-select header, the instant-call
-   ended screen), decisions recorded in the deviations log's Press Start 2P entry. **The
+   ended screen). Press Start 2P is a departure from the sanctioned faces, so whatever
+   survives is declared and justified beside the value that governs it in SOG-UI, by the
+   faces adoption when it lands — there is no deviations log to record it in. **The
    /roblox hero site is special**: it sits directly above the approved Roblox partner
    lockup, and an approval covers the placement as given — a typeface change there alters
    the approved placement's appearance, so it ships only with the owner's explicit go (and

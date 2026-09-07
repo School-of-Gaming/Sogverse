@@ -265,7 +265,7 @@ export function SeatOfferResponse({
 
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
-      <CalendarClock className="h-12 w-12 text-primary" aria-hidden />
+      <CalendarClock className="h-12 w-12 text-act" aria-hidden />
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">{t("offer.title")}</h1>
         <p className="text-muted-foreground">
@@ -341,7 +341,7 @@ export function SeatOfferOutcomeCard({
   if (outcome === "declined") {
     return (
       <Outcome
-        icon={<Heart className="h-12 w-12 text-primary" aria-hidden />}
+        icon={<Heart className="h-12 w-12 text-act" aria-hidden />}
         title={t("declined.title")}
         body={t("declined.body")}
       />

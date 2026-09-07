@@ -51,28 +51,28 @@ export function FamilyProductPageSkeleton({
             schedule, and the affordance under them — the same stack, the same
             bottom rule. */}
         <header className="mt-5 border-b border-border pb-5">
-          <div className="h-3 w-16 animate-pulse rounded bg-muted" />
-          <div className="mt-2 h-8 w-80 max-w-full animate-pulse rounded-md bg-muted" />
-          <div className="mt-3 h-4 w-40 animate-pulse rounded bg-muted" />
-          <div className="mt-2 h-4 w-32 animate-pulse rounded bg-muted" />
-          <div className="mt-4 h-4 w-56 max-w-full animate-pulse rounded bg-muted" />
-          <div className="mt-4 h-10 w-44 animate-pulse rounded-md bg-muted" />
+          <div className="h-3 w-16 animate-pulse rounded bg-lifted" />
+          <div className="mt-2 h-8 w-80 max-w-full animate-pulse rounded-md bg-lifted" />
+          <div className="mt-3 h-4 w-40 animate-pulse rounded bg-lifted" />
+          <div className="mt-2 h-4 w-32 animate-pulse rounded bg-lifted" />
+          <div className="mt-4 h-4 w-56 max-w-full animate-pulse rounded bg-lifted" />
+          <div className="mt-4 h-10 w-44 animate-pulse rounded-md bg-lifted" />
         </header>
 
         {/* The gedu chips. */}
         <div className="mt-5 flex items-center gap-3">
-          <div className="h-3 w-14 animate-pulse rounded bg-muted" />
-          <div className="h-7 w-28 animate-pulse rounded-full bg-muted" />
-          <div className="h-7 w-24 animate-pulse rounded-full bg-muted" />
+          <div className="h-3 w-14 animate-pulse rounded bg-lifted" />
+          <div className="h-7 w-28 animate-pulse rounded-full bg-lifted" />
+          <div className="h-7 w-24 animate-pulse rounded-full bg-lifted" />
         </div>
 
         {/* The standing-notes card. */}
         <Card className="mt-5">
           <CardContent className="space-y-3 p-4 sm:p-5">
-            <div className="h-3 w-32 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-full animate-pulse rounded bg-muted" />
-            <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-3/5 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-32 animate-pulse rounded bg-lifted" />
+            <div className="h-4 w-full animate-pulse rounded bg-lifted" />
+            <div className="h-4 w-11/12 animate-pulse rounded bg-lifted" />
+            <div className="h-4 w-3/5 animate-pulse rounded bg-lifted" />
           </CardContent>
         </Card>
 
@@ -81,11 +81,11 @@ export function FamilyProductPageSkeleton({
             is drawn taller because the head of the past is where the report
             worth reading almost always is. */}
         <section className="mt-6">
-          <div className="mb-3 h-3 w-20 animate-pulse rounded bg-muted" />
+          <div className="mb-3 h-3 w-20 animate-pulse rounded bg-lifted" />
           <div className="relative space-y-3 border-l border-border pl-6">
             {[0, 1, 2, 3].map((index) => (
               <div key={index} className="relative">
-                <span className="absolute -left-6 top-5 h-2.5 w-2.5 -translate-x-1/2 animate-pulse rounded-full bg-muted ring-4 ring-background" />
+                <span className="absolute -left-6 top-5 h-2.5 w-2.5 -translate-x-1/2 animate-pulse rounded-full bg-lifted ring-4 ring-background" />
                 <GhostEntry lines={index === 0 ? 4 : 2} />
               </div>
             ))}
@@ -101,14 +101,14 @@ function GhostEntry({ lines }: { lines: number }) {
   return (
     <div className="space-y-3 rounded-lg border border-border p-4 sm:p-5">
       <div className="space-y-1.5">
-        <div className="h-4 w-36 animate-pulse rounded bg-muted" />
-        <div className="h-3 w-28 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-36 animate-pulse rounded bg-lifted" />
+        <div className="h-3 w-28 animate-pulse rounded bg-lifted" />
       </div>
       <div className="space-y-2">
         {Array.from({ length: lines }, (_, line) => (
           <div
             key={line}
-            className="h-3 animate-pulse rounded bg-muted"
+            className="h-3 animate-pulse rounded bg-lifted"
             style={{ width: `${100 - line * 11}%` }}
           />
         ))}

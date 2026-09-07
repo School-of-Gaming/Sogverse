@@ -159,18 +159,20 @@ export function ChatMessageRow({
       <div
         className={cn(
           "rounded px-1.5 py-0.5 text-sm leading-snug transition-colors",
-          // A ring and a tint, never a border: both leave the box exactly the
-          // size it was, so a message that becomes highlighted — because a
-          // reply jumped to it, or because it names the reader — moves nothing.
+          // A ring, never a border: it leaves the box exactly the size it was,
+          // so a message that becomes highlighted — because a reply jumped to
+          // it, or because it names the reader — moves nothing. The mention
+          // ring is drawn at full value with no ground behind it: a status hue
+          // is a figure on the ground it finds, never a wash over it.
           //
           // The two highlights are deliberately different colours, because they
           // are different sentences. **Info is the mention colour** — the same
           // token the chip inside the body wears, so "this one is about you"
-          // reads the same wherever it appears. The flash stays **primary**: it
+          // reads the same wherever it appears. The flash stays **act**: it
           // is not a mention, it is the log pointing at where a jump landed,
           // and it fades after a second.
-          mentionsViewer && "bg-info/10 ring-1 ring-info/40",
-          flashing && "bg-primary/20 ring-1 ring-primary",
+          mentionsViewer && "ring-1 ring-info",
+          flashing && "ring-1 ring-act",
           message.delivery === "pending" && "opacity-60",
         )}
       >
@@ -181,7 +183,7 @@ export function ChatMessageRow({
           <>
             <ChatTombstone withOriginal={capabilities.canSeeHiddenBody} />
             {capabilities.canSeeHiddenBody && (
-              <div className="mt-1 border-l-2 border-border pl-2 text-muted-foreground/70">
+              <div className="mt-1 border-l-2 border-border pl-2 text-muted-foreground">
                 {message.body !== null && (
                   <ChatBodyText body={message.body} accounts={accounts} />
                 )}

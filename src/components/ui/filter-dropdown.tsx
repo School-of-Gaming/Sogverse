@@ -101,7 +101,7 @@ export function FilterDropdown<T extends string>({
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
           onClick={() => (open ? close() : setOpen(true))}
-          className="flex h-10 w-full items-center gap-2 rounded-md border border-input bg-background py-2 pl-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex h-10 w-full items-center gap-2 rounded-md border border-border bg-background py-2 pl-3 pr-9 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
         >
           {selected?.adornment}
           <span
@@ -135,7 +135,7 @@ export function FilterDropdown<T extends string>({
           <ul
             id={listId}
             role="listbox"
-            className="absolute left-0 right-0 z-30 mt-1 max-h-64 overflow-y-auto rounded-md border border-input bg-popover p-1 text-popover-foreground shadow-md"
+            className="absolute left-0 right-0 z-30 mt-1 max-h-64 overflow-y-auto rounded-md border border-border bg-card p-1 text-foreground shadow-md"
           >
             {options.map((o) => (
               <li key={o.value}>
@@ -172,13 +172,16 @@ export function OptionButton({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-        active && "bg-accent/60",
+        "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm transition-colors hover:bg-hover hover:text-foreground",
+        // A ground lifts once: the chosen option already rests on the lifted
+        // grey, so the hover above is a no-op on it and the act check beside
+        // the label is what says "chosen" once the pointer has gone.
+        active && "bg-lifted text-foreground",
       )}
     >
       {adornment}
       <span className="min-w-0 flex-1 truncate">{label}</span>
-      {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
+      {active && <Check className="h-4 w-4 shrink-0 text-act" />}
     </button>
   );
 }

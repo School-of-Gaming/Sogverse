@@ -154,7 +154,7 @@ function ThisWeek({
             }
             disabled={weekIndex === 0}
             aria-label={t("previousWeek")}
-            className="rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+            className="rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden />
           </button>
@@ -163,7 +163,7 @@ function ThisWeek({
           <button
             type="button"
             onClick={() => setPinnedWeekStart(null)}
-            className="rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+            className="rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-hover"
           >
             {t("today")}
           </button>
@@ -176,7 +176,7 @@ function ThisWeek({
             }
             disabled={weekIndex === weeks.length - 1}
             aria-label={t("nextWeek")}
-            className="rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+            className="rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronRight className="h-4 w-4" aria-hidden />
           </button>
@@ -211,10 +211,10 @@ function ThisWeek({
                 aria-pressed={active}
                 onClick={() => setTypes(toggled(types, productType))}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                  "inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium transition-colors",
                   active
-                    ? "border-foreground/40 bg-accent text-foreground"
-                    : "border-border text-muted-foreground hover:text-foreground",
+                    ? "bg-lifted text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {/* The same tinted glyph the chips below wear, so the control

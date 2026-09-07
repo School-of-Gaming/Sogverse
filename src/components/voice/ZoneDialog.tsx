@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -85,7 +86,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("border-foreground", colorClasses.glow)}>
+      <DialogContent className={colorClasses.glow}>
         <DialogHeader>
           <DialogTitle>{isEdit ? t("editZone") : t("newZone")}</DialogTitle>
         </DialogHeader>
@@ -106,7 +107,9 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
           </Field>
 
           <Field label={t("chooseColor")}>
-            <ZoneColorPicker value={color} onChange={setColor} />
+            {({ labelId }) => (
+              <ZoneColorPicker value={color} onChange={setColor} labelledBy={labelId} />
+            )}
           </Field>
 
           {!isEdit && (
@@ -116,11 +119,11 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
               role="switch"
               aria-checked={isLocked}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
-                isLocked ? "border-primary bg-primary/5" : "border-border hover:bg-accent",
+                "flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors",
+                isLocked ? "border-act" : "hover:bg-hover",
               )}
             >
-              <Lock className={cn("h-4 w-4 shrink-0", isLocked ? "text-primary" : "text-muted-foreground")} />
+              <Lock className={cn("h-4 w-4 shrink-0", isLocked ? "text-act" : "text-muted-foreground")} />
               <span className="flex-1 space-y-0.5">
                 <span className="block text-sm font-medium">{t("makePrivate")}</span>
                 <span className="block text-xs text-muted-foreground">{t("makePrivateHint")}</span>
@@ -131,7 +134,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
                 aria-hidden
                 className={cn(
                   "relative h-5 w-9 shrink-0 rounded-full transition-colors",
-                  isLocked ? "bg-primary" : "bg-muted-foreground/30",
+                  isLocked ? "bg-act" : "bg-border",
                 )}
               >
                 <span
@@ -144,7 +147,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
             </button>
           )}
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <StatusLine status="destructive">{error}</StatusLine>}
         </div>
 
         <DialogFooter>

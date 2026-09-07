@@ -108,7 +108,7 @@
     "pageTitle": "Tietoa meistä",
     "sectionNav": "Tällä sivulla",
     "hero": {
-      "title": "Tämä on <primary>School of Gaming</primary>",
+      "title": "Tämä on School of Gaming",
       "subtitle": "Ruutuajasta laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelit, joita lapset jo rakastavat — Minecraft, Roblox, Fortnite ja moni muu — ja luomme leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat oikeita taitoja ja pitävät hauskaa."
     },
     "quote": {
@@ -1792,7 +1792,7 @@
   },
   "schools": {
     "hero": {
-      "title": "Pelikerhot <primary>omassa kunnassasi</primary>",
+      "title": "Pelikerhot omassa kunnassasi",
       "subtitle": "School of Gaming järjestää harrastuskerhoja yhdessä suomalaisten kuntien kanssa. Etsi kuntasi ja tutustu tarjontaan.",
       "howItWorks": "Kunnasta riippuen kerho kokoontuu joko verkossa kotoa käsin tai paikan päällä lapsesi koulussa. Ammattitaitoinen pelikasvattaja on aina mukana ohjaamassa toimintaa."
     },
@@ -2080,7 +2080,7 @@
   },
   "home": {
     "hero": {
-      "title": "<primary>Ruutuajasta</primary><br></br><secondary>Laatuaikaa</secondary>",
+      "title": "Ruutuajasta<br></br><act>Laatuaikaa</act>",
       "subtitle": "Taidolla suunnitellut kerhomme edistävät tervettä pelaamista harrastuksena Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ammattitaitoiset pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat.",
       "aboutCta": "Lue lisää meistä"
     },
@@ -2489,24 +2489,6 @@
       "ice-cream": "Jäätelö",
       "coffee": "Kahvi"
     },
-    "zoneColor": {
-      "red": "Punainen",
-      "orange": "Oranssi",
-      "amber": "Keltaoranssi",
-      "yellow": "Keltainen",
-      "lime": "Limetti",
-      "green": "Vihreä",
-      "emerald": "Smaragdinvihreä",
-      "teal": "Turkoosi",
-      "cyan": "Syaani",
-      "sky": "Taivaansininen",
-      "blue": "Sininen",
-      "indigo": "Indigo",
-      "violet": "Violetti",
-      "purple": "Purppura",
-      "fuchsia": "Fuksia",
-      "pink": "Pinkki"
-    },
     "instant": {
       "joinFailed": "Huoneeseen liittyminen epäonnistui. Yritä uudelleen.",
       "share": {
@@ -2563,7 +2545,7 @@
   },
   "yty": {
     "hero": {
-      "title": "Mikä on <primary>Yty</primary>?",
+      "title": "Mikä on Yty?",
       "subtitle": "Yty on voima, joka pitää Sogversen tasapainossa. Tekemällä hyviä asioita — oppimalla uusia taitoja, saamalla ystäviä, käyttäytymällä hyvin ja osallistumalla yhteisöön — pelaajat ansaitsevat Ytyä itselleen ja kaikille."
     },
     "overview": {
@@ -3176,7 +3158,7 @@
   },
   "roblox": {
     "hero": {
-      "title": "Rakenna<br></br><primary>Pelaa</primary><br></br><secondary>Omista</secondary>",
+      "title": "Rakenna<br></br>Pelaa<br></br><act>Omista</act>",
       "subtitle": "Ilmainen pelisuunnitteluohjelma nuorille – järjestäjinä Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
       "cta": "Hyppää mukaan!"
     },

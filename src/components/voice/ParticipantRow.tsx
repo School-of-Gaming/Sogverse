@@ -183,8 +183,8 @@ export function ParticipantRow({
         // is a direct child so that `order` can put the game identity in two
         // different places at two widths (see the identity slot below), which
         // no amount of nesting can do.
-        "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border p-2 transition-colors sm:gap-x-3",
-        p.isLocal && "bg-accent/50",
+        "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-border p-2 transition-colors sm:gap-x-3",
+        p.isLocal && "bg-lifted",
       )}
     >
       {/* Avatar — the ref div is the element the speaking glow writes box-shadow
@@ -281,6 +281,7 @@ export function ParticipantRow({
            flex div — a Badge is a div, and this exact badge inside a <p>
            was a hydration failure once already. */
         <Badge
+          variant="outline"
           className={cn(
             ROLE_BADGE_STYLES.customer,
             "order-3 shrink-0 px-1.5 py-0 text-[10px] font-normal sm:order-4",
@@ -567,7 +568,7 @@ function MenuItem({
       onClick={onClick}
       className={cn(
         "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors",
-        "hover:bg-accent disabled:pointer-events-none disabled:opacity-40",
+        "hover:bg-hover disabled:pointer-events-none disabled:opacity-40",
         active ? "text-destructive" : "text-foreground",
       )}
     >

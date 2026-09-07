@@ -145,7 +145,7 @@ function SceneControls({
   setHeight: (height: ChatHeight) => void;
 }) {
   return (
-    <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/30 p-3 text-sm">
+    <div className="space-y-3 rounded-lg border border-dashed border-border bg-lifted p-3 text-sm">
       <ControlRow label="Acting as">
         {CHAT_SCENE_ACCOUNTS.map((account) => (
           <Button
@@ -158,9 +158,13 @@ function SceneControls({
             {account.name}
             <span
               className={cn(
+                // Inside a filled button there is nowhere below for a
+                // secondary line to go, and the palette offers exactly one ink
+                // on act — so the label takes it at full value rather than a
+                // step down from it.
                 "ml-1 text-[10px] uppercase tracking-wide",
                 store.viewerId === account.id
-                  ? "text-primary-foreground/70"
+                  ? "text-act-foreground"
                   : "text-muted-foreground",
               )}
             >

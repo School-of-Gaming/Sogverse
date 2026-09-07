@@ -110,7 +110,7 @@ export function UserMarketingCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Megaphone className="h-5 w-5 text-primary" />
+          <Megaphone className="h-5 w-5 text-act" />
           {t("title")}
         </CardTitle>
       </CardHeader>
@@ -137,7 +137,7 @@ export function UserMarketingCard({
                     // machine-authored site-wide. `break-all` because a UTM
                     // value can be an expanded ad name of up to 200 characters
                     // with no break opportunity in it.
-                    <dd className="break-all rounded-md border border-border bg-muted/50 px-2 py-0.5 font-mono font-semibold">
+                    <dd className="break-all rounded-md border border-border bg-lifted px-2 py-0.5 font-mono font-semibold">
                       {value}
                     </dd>
                   )}
@@ -163,7 +163,7 @@ export function UserMarketingCard({
                 return (
                   <div
                     key={consentType}
-                    className="flex items-center justify-between gap-3 rounded-lg border p-3"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
                   >
                     <p className="min-w-0 truncate text-sm font-medium">
                       {labels[consentType]}
@@ -191,10 +191,11 @@ export function UserMarketingCard({
                           </span>
                         )}
                         <Badge
+                          variant="outline"
                           className={
                             row?.granted
-                              ? "bg-success text-success-foreground"
-                              : "bg-muted text-muted-foreground"
+                              ? "text-success"
+                              : "text-muted-foreground"
                           }
                         >
                           {row?.granted ? t("granted") : t("notGranted")}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { formatInTimeZone } from "date-fns-tz";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, formatTime, formatDate } from "@/lib/utils";
@@ -68,7 +69,9 @@ function StatusIndicator({ status }: { status: string }) {
     return <CheckCheck className="h-3 w-3" />;
   }
   if (status === WHATSAPP_MESSAGE_STATUS.READ) {
-    return <CheckCheck className="h-3 w-3 text-secondary" />;
+    // Blue is the read-tick convention every message list has taught; world is
+    // ruled out as a glyph, reading under the non-text floor on every ground.
+    return <CheckCheck className="h-3 w-3 text-info" />;
   }
   return null;
 }
@@ -117,11 +120,15 @@ function ContactList({
             key={contact.phone}
             onClick={() => onSelect(contact.phone)}
             className={cn(
-              "flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-accent hover:text-accent-foreground",
-              selectedPhone === contact.phone && "bg-muted"
+              // The 2px leading edge is drawn on every row, in the neutral
+              // border colour, and only its colour moves when a conversation is
+              // chosen: an edge that appears with the selection would land two
+              // pixels of layout under the pointer that just clicked it.
+              "flex w-full items-center gap-3 border-b border-l-2 border-border px-4 py-3 text-left transition-colors hover:bg-hover hover:text-foreground",
+              selectedPhone === contact.phone && "border-l-act text-foreground"
             )}
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-lifted text-sm font-medium text-act">
               {(contact.wa_name ?? contact.phone).slice(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
@@ -192,7 +199,7 @@ function ChatThread({
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-lifted text-sm font-medium text-act">
           {(contactName ?? phone).slice(0, 2).toUpperCase()}
         </div>
         <div>
@@ -206,58 +213,66 @@ function ChatThread({
         {dateGroups.map((group) => (
           <div key={group.date}>
             <div className="flex justify-center py-2">
-              <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+              <span className="rounded-full bg-lifted px-3 py-1 text-xs text-muted-foreground">
                 {group.date}
               </span>
             </div>
             <div className="space-y-2">
-              {group.messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={cn(
-                    "flex",
-                    msg.direction === WHATSAPP_DIRECTION.OUTBOUND ? "justify-end" : "justify-start"
-                  )}
-                >
+              {group.messages.map((msg) => {
+                const outbound = msg.direction === WHATSAPP_DIRECTION.OUTBOUND;
+                const failed = msg.status === WHATSAPP_MESSAGE_STATUS.FAILED;
+                const pending = msg.status === WHATSAPP_MESSAGE_STATUS.PENDING;
+                // The act bubble is the one surface in the app whose ink has
+                // no quieter member: `act-foreground` is the single ink the
+                // palette offers on that fill, so a timestamp that wants to be
+                // secondary cannot get there by stepping the ink down. It
+                // leaves the fill instead and sits under the bubble in the
+                // muted grey every other timestamp here is already set in.
+                const metaOnFill = !outbound || failed || pending;
+                const meta = (
                   <div
                     className={cn(
-                      "max-w-[70%] rounded-lg px-3 py-2 text-sm",
-                      msg.status === WHATSAPP_MESSAGE_STATUS.FAILED
-                        ? "bg-destructive/15 text-destructive"
-                        : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
-                          ? "bg-muted/50 text-muted-foreground"
-                          : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-foreground"
+                      "flex items-center justify-end gap-1 text-[10px] text-muted-foreground",
+                      metaOnFill ? "mt-1" : "mt-1 px-1"
                     )}
                   >
-                    <p className="whitespace-pre-wrap break-words">{msg.body}</p>
-                    {msg.status === WHATSAPP_MESSAGE_STATUS.FAILED && (
-                      <div className="mt-1 flex items-center gap-1 text-[10px] text-destructive">
-                        <AlertCircle className="h-3 w-3" />
-                        <span>{msg.status_error ?? t("notDelivered")}</span>
-                      </div>
+                    <span>{formatTime(msg.created_at, locale, timeZone)}</span>
+                    {outbound && !failed && <StatusIndicator status={msg.status} />}
+                  </div>
+                );
+                return (
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      "flex flex-col",
+                      outbound ? "items-end" : "items-start"
                     )}
+                  >
                     <div
                       className={cn(
-                        "mt-1 flex items-center justify-end gap-1 text-[10px]",
-                        msg.status === WHATSAPP_MESSAGE_STATUS.FAILED
-                          ? "text-destructive/70"
-                          : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
-                            ? "text-muted-foreground"
-                            : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
-                              ? "text-primary-foreground/70"
-                              : "text-muted-foreground"
+                        "max-w-[70%] rounded-lg px-3 py-2 text-sm",
+                        failed
+                          ? "bg-lifted text-foreground"
+                          : outbound && pending
+                            ? "bg-lifted text-muted-foreground"
+                            : outbound
+                              ? "bg-act text-act-foreground"
+                              : "bg-lifted text-foreground"
                       )}
                     >
-                      <span>{formatTime(msg.created_at, locale, timeZone)}</span>
-                      {msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status !== WHATSAPP_MESSAGE_STATUS.FAILED && (
-                        <StatusIndicator status={msg.status} />
+                      <p className="whitespace-pre-wrap break-words">{msg.body}</p>
+                      {failed && (
+                        <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <AlertCircle className="h-3 w-3 text-destructive" />
+                          <span>{msg.status_error ?? t("notDelivered")}</span>
+                        </div>
                       )}
+                      {metaOnFill && meta}
                     </div>
+                    {!metaOnFill && meta}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
@@ -266,9 +281,9 @@ function ChatThread({
 
       {/* Error banner */}
       {sendError && (
-        <div className="mx-4 mb-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {sendError}
-        </div>
+        <Alert variant="destructive" className="mx-4 mb-2">
+          <AlertDescription>{sendError}</AlertDescription>
+        </Alert>
       )}
 
       {/* Input */}

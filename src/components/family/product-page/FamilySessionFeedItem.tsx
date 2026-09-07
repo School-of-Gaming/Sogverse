@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Minus } from "lucide-react";
+import { Check, Minus, Radio } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -60,8 +60,8 @@ interface FamilySessionFeedItemProps {
  * how much lands at once — so a Read-more would only put a tap between a
  * family and the thing they came to read. What it also does not share is
  * everything that made the gedu's row a workspace — no editor, no completeness
- * ladder, no amber "owed" state, no roster. Those are staff workflow, and a
- * family reading amber warnings about paperwork they cannot do anything about
+ * ladder, no warning-toned "owed" state, no roster. Those are staff workflow, and a
+ * family reading warnings about paperwork they cannot do anything about
  * would be reading the platform's problems rather than their child's club.
  *
  * **A past session with nothing on it renders as a quiet line, not a card.** No
@@ -114,7 +114,7 @@ export function FamilySessionFeedItem({
     attendance === null
   ) {
     return (
-      <div className="rounded-md border border-dashed border-border/60 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <span className="flex items-center gap-2 tabular-nums">
             <span>{labels.date}</span>
@@ -144,7 +144,6 @@ export function FamilySessionFeedItem({
         // the chip's height or its `-bottom-*` offset ever moves. The gedu row
         // reserves the same space from the same numbers.
         editor !== null && "pb-8 sm:pb-8",
-        entry.kind === "future" && prominent && "border-info/50",
       )}
     >
       {/* The header row is date on the left and one status on the right, and
@@ -173,15 +172,14 @@ export function FamilySessionFeedItem({
           // and no space is held for it — but whoever adds it should know this
           // row was written expecting them, and that its right-hand slot is
           // where the affordance is meant to go.
+          // A running session is marked by its own glyph rather than by a
+          // ground behind the word: the tag is one label in one blue either
+          // way, and the broadcast dot is what says it is happening now.
           <Badge
             variant="outline"
-            className={cn(
-              "shrink-0 text-[10px] uppercase tracking-wide",
-              live
-                ? "border-info bg-info/10 text-info"
-                : "border-info/50 text-info",
-            )}
+            className="shrink-0 gap-1 text-[10px] uppercase tracking-wide text-info"
           >
+            {live && <Radio className="h-3 w-3" aria-hidden />}
             {live
               ? b("live")
               : prominent

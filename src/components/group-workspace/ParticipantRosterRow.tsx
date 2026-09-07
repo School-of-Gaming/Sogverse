@@ -5,6 +5,7 @@ import { Check, Copy, Loader2, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
@@ -292,6 +293,7 @@ export function ParticipantRosterRow({
                  than restated — a second spelling of "Parent" is a second
                  thing to translate and a second thing to forget. */
               <Badge
+                variant="outline"
                 className={cn(
                   ROLE_BADGE_STYLES.customer,
                   "shrink-0 px-1.5 py-0 text-[10px] font-normal",
@@ -488,9 +490,14 @@ function GameIdentityCell({
           </Button>
         </div>
         {failed && (
-          <p role="alert" className="text-[11px] text-destructive">
+          <StatusLine
+            status="destructive"
+            size="xs"
+            role="alert"
+            className="text-[11px]"
+          >
             {t("gameSaveFailed")}
-          </p>
+          </StatusLine>
         )}
       </div>
     );
@@ -513,7 +520,7 @@ function GameIdentityCell({
           name: participant.first_name,
           platform: platformName,
         })}
-        className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-50 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/game:opacity-100"
+        className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-50 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act group-hover/game:opacity-100"
       >
         <Pencil className="h-3 w-3" aria-hidden />
       </button>
@@ -545,8 +552,8 @@ function ContactEmailCell({ email }: { email: string }) {
       onClick={() => void copy(email)}
       aria-label={copied ? t("emailCopied") : t("copyContactEmail", { email })}
       className={cn(
-        "group flex w-full min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-muted/40 px-2 py-1 text-left text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        copied && "border-success/40 text-success",
+        "group flex w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-lifted px-2 py-1 text-left text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+        copied && "text-success",
       )}
     >
       <span className="min-w-0 flex-1 truncate">{email}</span>

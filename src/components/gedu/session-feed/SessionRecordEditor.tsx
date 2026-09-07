@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Eye, Loader2, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { AttendanceMark } from "@/components/session-feed";
 import { attendanceTally, draftFromEditorState } from "./entry-state";
@@ -290,9 +291,14 @@ export function EditorActionRow({
   return (
     <div className="space-y-2">
       {error !== null && (
-        <p role="alert" className="text-right text-xs text-destructive">
+        <StatusLine
+          status="destructive"
+          size="xs"
+          role="alert"
+          className="justify-end text-right"
+        >
           {error}
-        </p>
+        </StatusLine>
       )}
       <div className="flex justify-end gap-2">
         <Button

@@ -29,14 +29,14 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
       description={t(`sections.whereDescription.${config.i18nKey}`)}
     >
       {config.allowsRemote && config.allowsInPerson ? (
-        <div className="inline-flex rounded-md border border-input p-1">
+        <div className="inline-flex rounded-md border border-border p-1">
           <button
             type="button"
             onClick={() => setState({ ...state, isRemote: true })}
             className={cn(
               "rounded px-4 py-1.5 text-sm transition-colors",
               state.isRemote
-                ? "bg-primary text-primary-foreground"
+                ? "bg-act text-act-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -48,7 +48,7 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
             className={cn(
               "rounded px-4 py-1.5 text-sm transition-colors",
               !state.isRemote
-                ? "bg-primary text-primary-foreground"
+                ? "bg-act text-act-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
