@@ -80,6 +80,22 @@ COMMENT ON TYPE public.effective_product_status IS 'The lifecycle as a reader se
 
 
 --
+-- Name: gamer_photo_consent_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.gamer_photo_consent_type AS ENUM (
+    'lynx_educate'
+);
+
+
+--
+-- Name: TYPE gamer_photo_consent_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.gamer_photo_consent_type IS 'The photo permissions a parent can hold on behalf of a gamer. One value, lynx_educate: School of Gaming does not use children''s photographs on its own products and so does not ask, and the Roblox Programme delivered with Lynx Educate is the one place real photographs of children arise. Named for the PARTY exactly as marketing_consent_type (00220) is, rather than for the activity — because an enum value here is a standing permission over a child''s image and, like a marketing consent and unlike a consent DOCUMENT (00210), it has no text to version and no republication for a stored row to outlive. A future partner is a new value and a new sentence; what the enum buys is that a typo cannot become a permission nobody can find to revoke.';
+
+
+--
 -- Name: gamer_sign_in; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -822,6 +838,68 @@ $$;
 --
 
 COMMENT ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) IS 'Admin-gated un-enrollment. Refuses a participation that is not on the named product, or one with a LIVE Stripe subscription — a family_subscriptions row whose status is anything but ''cancelled'' — which must be cancelled through Stripe first, or the cancel would orphan it; otherwise delegates to cancel_participation. A dunning-dead subscription is stored as ''cancelled'' and does NOT refuse: admin removal is the only exit such a seat has, so counting it would strand the seat forever. Product type is not consulted — a free club has no parent-facing cancel, so this is its only exit.';
+
+
+--
+-- Name: admin_set_product_gamer_photo_consents(uuid, public.gamer_photo_consent_type[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.admin_set_product_gamer_photo_consents(p_product_id uuid, p_consent_types public.gamer_photo_consent_type[]) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_admin();
+
+  -- A NULL element is refused BEFORE the replacing DELETE, which is 00211's
+  -- lesson carried over verbatim: `NOT (col = ANY (array))` is three-valued, so
+  -- an array holding a NULL makes the predicate match nothing and quietly
+  -- degrades a wipe-and-replace into a merge. `unnest(NULL::…[])` yields no
+  -- rows, so an omitted array — the ordinary "asks nothing" shape — passes
+  -- straight through here.
+  IF EXISTS (
+    SELECT 1 FROM unnest(p_consent_types) AS c WHERE c IS NULL
+  ) THEN
+    RAISE EXCEPTION
+      'the photo-consent list contains a NULL entry, which is not a consent'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- The product must exist. The only FK here is the product itself, and on a
+  -- call that CLEARS the set there is no INSERT for that FK to fire on — so a
+  -- typo'd id would silently delete nothing and report success.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.products WHERE id = p_product_id
+  ) THEN
+    RAISE EXCEPTION 'product % does not exist', p_product_id
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  DELETE FROM public.product_gamer_photo_consents
+   WHERE product_id = p_product_id
+     AND NOT (consent_type = ANY (
+       COALESCE(p_consent_types, ARRAY[]::public.gamer_photo_consent_type[])
+     ));
+
+  -- ON CONFLICT DO NOTHING rather than a blind insert after a blind delete: the
+  -- pair is a SET replacement, and leaving an unchanged row in place keeps the
+  -- delete from churning rows an admin did not touch.
+  IF p_consent_types IS NOT NULL
+     AND array_length(p_consent_types, 1) > 0 THEN
+    INSERT INTO public.product_gamer_photo_consents (product_id, consent_type)
+    SELECT p_product_id, c
+      FROM unnest(p_consent_types) AS c
+    ON CONFLICT (product_id, consent_type) DO NOTHING;
+  END IF;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION admin_set_product_gamer_photo_consents(p_product_id uuid, p_consent_types public.gamer_photo_consent_type[]); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.admin_set_product_gamer_photo_consents(p_product_id uuid, p_consent_types public.gamer_photo_consent_type[]) IS 'Replace the set of photo consents a product''s signup panel asks about — and therefore whether its session editor shows a gedu the roster''s photo permissions at all — admin-only and guard-first on assert_admin. The only writer of product_gamer_photo_consents: that table carries no write grant for any Data API role, and an inline INSERT from the admin product form would need one, because the form reaches this as the admin''s own session role. NULL and an empty array both mean "asks nothing", which is how a set is cleared. A NULL ELEMENT is refused before the replacing DELETE runs — 00211''s lesson, two systems over: `NOT (col = ANY (array))` is three-valued, so a NULL inside the array would match nothing and turn the wipe-and-replace into a merge. An unknown product is refused explicitly rather than by a foreign key, because a call that CLEARS the set performs no insert for an FK to fire on and would otherwise report success for a product that does not exist. The exact twin of admin_set_product_marketing_consents (00220).';
 
 
 --
@@ -2564,6 +2642,32 @@ BEGIN
     USING ERRCODE = 'check_violation';
 END;
 $$;
+
+
+--
+-- Name: gedu_teaches_gamer(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gedu_teaches_gamer(p_gamer_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.participations p
+     WHERE p.participant_id = p_gamer_id
+       AND p.group_id IS NOT NULL
+       AND p.status = 'active'::public.participation_status
+       AND public.gedu_teaches_group(p.group_id)
+  );
+$$;
+
+
+--
+-- Name: FUNCTION gedu_teaches_gamer(p_gamer_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.gedu_teaches_gamer(p_gamer_id uuid) IS 'Internal predicate: is the CALLER a gedu on a group this gamer is actively in? Deliberately composed from the roster''s own two halves rather than computed afresh — gedu_teaches_group is the ownership test get_gedu_group_feed makes before handing over a roster at all, and the active-participation filter is the one that feed applies when deciding who is on it — so "a gedu may see this child''s photo answer" cannot drift away from "this child is on a roster that gedu may open". SECURITY DEFINER because an RLS policy evaluates its predicate as the querying role, and a gedu cannot read `participations` across families; being definer is also what lets it call gedu_teaches_group, which stays ungranted for exactly that reason. Self-scoping: it answers only about the caller, no argument can name a different asker, and it is total — an unknown gamer id is false rather than NULL, so a USING clause is never handed a three-valued answer. Exposed to `authenticated` because the gamer_photo_consents read policy is a policy and must therefore be able to call it.';
 
 
 --
@@ -7276,6 +7380,98 @@ COMMENT ON FUNCTION public.set_gamer_group_note(p_group_id uuid, p_participant_i
 
 
 --
+-- Name: set_gamer_photo_consent(uuid, public.gamer_photo_consent_type, boolean, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_gamer_photo_consent(p_gamer_id uuid, p_consent_type public.gamer_photo_consent_type, p_granted boolean, p_source text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_parent_id uuid;
+  v_current   boolean;
+BEGIN
+  PERFORM public.assert_role('customer');
+
+  IF p_gamer_id IS NULL OR p_consent_type IS NULL OR p_granted IS NULL THEN
+    RAISE EXCEPTION
+      'a gamer photo consent needs a gamer, a type and an answer'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- No 'registration': a gamer does not exist when the sign-up form is filled
+  -- in, so there is no surface that could honestly claim it. NULL is refused by
+  -- the same statement rather than by a NOT NULL further down, so the message
+  -- names the real problem.
+  IF p_source IS NULL OR p_source NOT IN ('settings', 'enrolment') THEN
+    RAISE EXCEPTION
+      'gamer photo consent source must be settings or enrolment (got %)',
+      COALESCE(p_source, 'NULL')
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  v_parent_id := (SELECT auth.uid());
+
+  -- The target half of the authorization, and the reason the role guard alone
+  -- is not enough: without this, any parent could answer for any child. A
+  -- gamer who is not this caller's and a uuid belonging to nobody are refused
+  -- identically, so neither answer is an oracle.
+  IF NOT EXISTS (
+    SELECT 1
+      FROM public.parent_gamer pg
+     WHERE pg.parent_id = v_parent_id
+       AND pg.gamer_id  = p_gamer_id
+  ) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- FOR UPDATE so two submissions racing on the same answer serialize rather
+  -- than both concluding they are the change — two parents of one child on two
+  -- devices is the ordinary shape of that race here, not a stale tab. A row
+  -- that does not exist locks nothing, which is the harmless half: the ON
+  -- CONFLICT below settles a first-answer race, and the losing side writes an
+  -- event for a state it genuinely did set.
+  SELECT gpc.granted
+    INTO v_current
+    FROM public.gamer_photo_consents gpc
+   WHERE gpc.gamer_id = p_gamer_id
+     AND gpc.consent_type = p_consent_type
+   FOR UPDATE;
+
+  -- IS NOT DISTINCT FROM, not `=`: no row at all yields NULL here, and NULL is
+  -- distinct from both true and false, which is the intended reading. "Never
+  -- asked" is not the same state as "asked and declined" — both keep the child
+  -- out of the photograph, and only one of them is a decision a parent made —
+  -- so a first explicit "no" is a CHANGE and earns its event, while a
+  -- re-submission of the answer already on file does not.
+  IF v_current IS NOT DISTINCT FROM p_granted THEN
+    RETURN;
+  END IF;
+
+  INSERT INTO public.gamer_photo_consents (
+    gamer_id, consent_type, granted, updated_at
+  )
+  VALUES (p_gamer_id, p_consent_type, p_granted, now())
+  ON CONFLICT (gamer_id, consent_type) DO UPDATE
+    SET granted    = EXCLUDED.granted,
+        updated_at = EXCLUDED.updated_at;
+
+  INSERT INTO public.gamer_photo_consent_events (
+    gamer_id, consent_type, granted, source, answered_by
+  )
+  VALUES (p_gamer_id, p_consent_type, p_granted, p_source, v_parent_id);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_gamer_photo_consent(p_gamer_id uuid, p_consent_type public.gamer_photo_consent_type, p_granted boolean, p_source text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_gamer_photo_consent(p_gamer_id uuid, p_consent_type public.gamer_photo_consent_type, p_granted boolean, p_source text) IS 'The one writer of a gamer photo consent: the card on the gamer''s page under the parent''s My SOG and the product signup panel both call it, so the two paths cannot drift. Guard-first on assert_role(''customer''), which keeps out gamers — a child may never grant permission to photograph themselves, and the read policy letting them SEE the answer is the whole of their access — gedus, and ADMINS, the last deliberately and for 00220''s reason: an admin editing another family''s answer about their own child is not a thing this platform does. Unlike its marketing twin the SUBJECT is a parameter, because a parent has several children and the answer is about one of them; the parameter is defended by a parent_gamer link from auth.uid() to the named gamer, checked before anything is written, and "not your child" and "no such gamer" are refused with the same 42501 so the function is not an oracle for which uuids are children here. Accepts only the `settings` and `enrolment` sources — there is no `registration`, because no gamer exists when a sign-up form is filled in. IDEMPOTENT AND HONEST ABOUT IT: submitting the state already on file succeeds and appends NO event, which matters more here than anywhere, because every enrolment writes every asked box whether or not the parent touched it. A first explicit "no" IS a change — an absent row means never asked, and only one of those two is a decision.';
+
+
+--
 -- Name: set_gedu_certified(uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -9005,6 +9201,104 @@ COMMENT ON COLUMN public.gamer_group_notes.updated_by IS 'Who last wrote it, sur
 
 
 --
+-- Name: gamer_photo_consent_events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.gamer_photo_consent_events (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    gamer_id uuid NOT NULL,
+    consent_type public.gamer_photo_consent_type NOT NULL,
+    granted boolean NOT NULL,
+    source text NOT NULL,
+    answered_by uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_gamer_photo_consent_events_source CHECK ((source = ANY (ARRAY['settings'::text, 'enrolment'::text])))
+);
+
+
+--
+-- Name: TABLE gamer_photo_consent_events; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.gamer_photo_consent_events IS 'APPEND-ONLY history: one row per CHANGE to a gamer photo consent, and the evidence behind whatever gamer_photo_consents currently says. Nothing updates or deletes a row here — no Data API role holds any write grant at all, and the only writer is set_gamer_photo_consent — because an event is a statement that something happened at an instant, and editing one would destroy the only thing the table is for. A repeat submission that changes nothing appends nothing, exactly as in marketing_consent_events (00220). Rows carry NO unique constraint: granting, revoking and granting again is the ordinary life of a revocable consent, and those three rows are history rather than duplicates. Readable by ADMINS ALONE, which is narrower than the state table beside it — a gedu needs today''s answer to decide whether to raise a camera, and has no business in the history of a family''s deliberations.';
+
+
+--
+-- Name: COLUMN gamer_photo_consent_events.gamer_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_photo_consent_events.gamer_id IS 'The child the answer is ABOUT. Distinct from answered_by, which is the adult who gave it — the one column marketing_consent_events did not need, because there the subject and the answerer are the same person.';
+
+
+--
+-- Name: COLUMN gamer_photo_consent_events.granted; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_photo_consent_events.granted IS 'The state that was SET by this event, not the delta. Reading the log as a sequence of states is what makes a row meaningful on its own, and it is what lets the current-state table be reconstructed from the log if it ever has to be audited against it.';
+
+
+--
+-- Name: COLUMN gamer_photo_consent_events.source; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_photo_consent_events.source IS 'Which surface the answer came from: `settings` (the card on the gamer''s page under the parent''s My SOG) or `enrolment` (the ask inside a product signup panel). There is deliberately NO `registration` value, which is the one place this CHECK differs from marketing_consent_events'' (00220): that source exists because a parent ticks a marketing box before their account exists, and no gamer exists at that moment for a photo consent to be about. A CHECK rather than an enum because the set is a list of our own surfaces, which move with the product rather than with the data model.';
+
+
+--
+-- Name: COLUMN gamer_photo_consent_events.answered_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_photo_consent_events.answered_by IS 'The adult who gave this answer, taken from auth.uid() inside the RPC and never accepted from a caller. This is the provenance the marketing twin did not need: there the subject column already said who spoke, and here the subject is a child who cannot answer for themselves, so "which parent decided this" is exactly what a safeguarding review asks. Nullable and ON DELETE SET NULL rather than cascading: the answer belongs to the CHILD, and a parent closing their account must not delete it. NULL therefore means "the account that answered has since been removed" and never "unknown at the time" — every write supplies it.';
+
+
+--
+-- Name: COLUMN gamer_photo_consent_events.created_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_photo_consent_events.created_at IS 'When the answer was given, stamped by the server. A client never supplies it — a timestamp the consenting party chooses proves nothing about when they consented.';
+
+
+--
+-- Name: gamer_photo_consents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.gamer_photo_consents (
+    gamer_id uuid NOT NULL,
+    consent_type public.gamer_photo_consent_type NOT NULL,
+    granted boolean NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE gamer_photo_consents; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.gamer_photo_consents IS 'The CURRENT answer to "may this child be photographed for this partner" — one row per (gamer, consent type), and the row a gedu reads before a shutter opens. The twin of marketing_consents (00220) with the subject changed from an adult''s mailbox to a child''s image, which is why it is keyed on the GAMER and not on the answering parent: two parents linked to one child are answering one question about one child, and a per-parent key would let them hold two answers with no rule for which one a photographer obeys. An ABSENT row and `granted = false` are treated identically by every surface — never asked and asked-and-declined both mean the child stays out of the photo — and the distinction survives only in the event log, where it is the difference between a decision and a silence. Deliberately not derived from gamer_photo_consent_events: a check made at the moment of taking a photograph must not fold a history, and the present tense must not depend on a log a retention policy could one day trim. REVOCABLE by construction, which is what keeps it out of the non-revocable enrolment-condition system 00210 built. Written by set_gamer_photo_consent and by nothing else: no Data API role holds a write grant.';
+
+
+--
+-- Name: COLUMN gamer_photo_consents.gamer_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_photo_consents.gamer_id IS 'The child the permission is ABOUT, keyed to gamer_profiles rather than to profiles so the foreign key itself says the subject is a gamer — an adult holding a seat on a product whose audience admits adults has no row here, and cannot: a gamer consent cannot apply to an adult, and the enrolment panel does not put the question when the participant is the parent. ON DELETE CASCADE: a permission to photograph somebody who no longer has an account governs an act that can no longer happen, and the audit trail cascades with it for the same reason.';
+
+
+--
+-- Name: COLUMN gamer_photo_consents.granted; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_photo_consents.granted IS 'True means photographs of this child may be taken and used for the named partner; false means the parent said no. NOT NULL and no third state — "not asked" is the absence of the row, so a NULL here would be a second spelling of a state the primary key already expresses by omission.';
+
+
+--
+-- Name: COLUMN gamer_photo_consents.updated_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_photo_consents.updated_at IS 'When this state was last CHANGED, stamped server-side. Not a call counter: set_gamer_photo_consent leaves the row untouched when the submitted state already matches, so this is the moment the parent last actually changed their mind. The full history is in gamer_photo_consent_events.';
+
+
+--
 -- Name: gamer_profiles; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -9575,6 +9869,30 @@ COMMENT ON COLUMN public.postal_codes.postal_code IS 'The code exactly as the up
 --
 
 COMMENT ON COLUMN public.postal_codes.location_id IS 'The municipality the code reaches. ON DELETE CASCADE, and safe here precisely because nothing references postal rows: losing them costs a lookup, never a coverage claim or a stored pick. Seeds resolve it by joining (country_code, type = ''municipality'', external_code), so a country whose level maps no official code cannot be seeded this way.';
+
+
+--
+-- Name: product_gamer_photo_consents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_gamer_photo_consents (
+    product_id uuid NOT NULL,
+    consent_type public.gamer_photo_consent_type NOT NULL
+);
+
+
+--
+-- Name: TABLE product_gamer_photo_consents; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.product_gamer_photo_consents IS 'The admin-picked set: which photo consents a product''s signup panel ASKS a parent about, and — downstream — which products show a gedu the roster''s photo permissions at all. Empty for almost every product; the Roblox Programme delivered with Lynx Educate is what this exists for. A row here is an ask and never a requirement: declining is a complete answer and the seat is unaffected, which is the whole line between this table and product_required_consents (00210). The question is PUT only when the selected participant is a gamer — a parent taking an adult seat is not a subject this consent can have. Written only by admin_set_product_gamer_photo_consents; no Data API role holds a write grant, so the join table has exactly one writer. Readable through the product''s own read predicate, exactly as product_prices, schedule_slots, product_required_consents and product_marketing_consents are, because the shop has to tell a stranger what signing up would ask them. ON DELETE CASCADE from products: an ask is a property of a product and means nothing without it.';
+
+
+--
+-- Name: COLUMN product_gamer_photo_consents.consent_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.product_gamer_photo_consents.consent_type IS 'Which permission the panel asks for. The consent itself is held on the GAMER and not on the enrolment, so a child asked about on two products has one answer — this column decides whether the question is PUT, never where the answer is stored.';
 
 
 --
@@ -10267,6 +10585,22 @@ ALTER TABLE ONLY public.gamer_group_notes
 
 
 --
+-- Name: gamer_photo_consent_events gamer_photo_consent_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_photo_consent_events
+    ADD CONSTRAINT gamer_photo_consent_events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: gamer_photo_consents gamer_photo_consents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_photo_consents
+    ADD CONSTRAINT gamer_photo_consents_pkey PRIMARY KEY (gamer_id, consent_type);
+
+
+--
 -- Name: gamer_profiles gamer_profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -10423,6 +10757,14 @@ ALTER TABLE ONLY public.payments
 
 ALTER TABLE ONLY public.postal_codes
     ADD CONSTRAINT postal_codes_pkey PRIMARY KEY (country_code, postal_code, location_id);
+
+
+--
+-- Name: product_gamer_photo_consents product_gamer_photo_consents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_gamer_photo_consents
+    ADD CONSTRAINT product_gamer_photo_consents_pkey PRIMARY KEY (product_id, consent_type);
 
 
 --
@@ -10723,6 +11065,13 @@ CREATE INDEX idx_family_subscriptions_participation ON public.family_subscriptio
 --
 
 CREATE INDEX idx_feedback_user_created ON public.feedback_submissions USING btree (user_id, created_at DESC);
+
+
+--
+-- Name: idx_gamer_photo_consent_events_gamer; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_gamer_photo_consent_events_gamer ON public.gamer_photo_consent_events USING btree (gamer_id);
 
 
 --
@@ -11523,6 +11872,30 @@ ALTER TABLE ONLY public.gamer_group_notes
 
 
 --
+-- Name: gamer_photo_consent_events gamer_photo_consent_events_answered_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_photo_consent_events
+    ADD CONSTRAINT gamer_photo_consent_events_answered_by_fkey FOREIGN KEY (answered_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: gamer_photo_consent_events gamer_photo_consent_events_gamer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_photo_consent_events
+    ADD CONSTRAINT gamer_photo_consent_events_gamer_id_fkey FOREIGN KEY (gamer_id) REFERENCES public.gamer_profiles(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: gamer_photo_consents gamer_photo_consents_gamer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamer_photo_consents
+    ADD CONSTRAINT gamer_photo_consents_gamer_id_fkey FOREIGN KEY (gamer_id) REFERENCES public.gamer_profiles(user_id) ON DELETE CASCADE;
+
+
+--
 -- Name: gamer_profiles gamer_profiles_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11752,6 +12125,14 @@ ALTER TABLE ONLY public.payments
 
 ALTER TABLE ONLY public.postal_codes
     ADD CONSTRAINT postal_codes_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: product_gamer_photo_consents product_gamer_photo_consents_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_gamer_photo_consents
+    ADD CONSTRAINT product_gamer_photo_consents_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
 
 
 --
@@ -12199,6 +12580,20 @@ CREATE POLICY admins_read_consent_acceptances ON public.consent_acceptances FOR 
 
 
 --
+-- Name: gamer_photo_consent_events admins_read_gamer_photo_consent_events; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admins_read_gamer_photo_consent_events ON public.gamer_photo_consent_events FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
+
+
+--
+-- Name: gamer_photo_consents admins_read_gamer_photo_consents; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admins_read_gamer_photo_consents ON public.gamer_photo_consents FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
+
+
+--
 -- Name: gedu_contract_acceptances admins_read_gedu_contract_acceptances; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -12411,6 +12806,18 @@ ALTER TABLE public.gamer_group_creations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gamer_group_notes ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: gamer_photo_consent_events; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.gamer_photo_consent_events ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: gamer_photo_consents; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.gamer_photo_consents ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: gamer_profiles; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -12435,6 +12842,13 @@ CREATE POLICY gamers_read_own_gamer_profile ON public.gamer_profiles FOR SELECT 
 --
 
 CREATE POLICY gamers_read_own_group ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gamer'::public.user_role) AND ( SELECT public.has_active_participation_in_group(product_groups.id) AS has_active_participation_in_group)));
+
+
+--
+-- Name: gamer_photo_consents gamers_read_own_photo_consents; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY gamers_read_own_photo_consents ON public.gamer_photo_consents FOR SELECT TO authenticated USING ((gamer_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -12533,6 +12947,13 @@ CREATE POLICY gedus_read_own_gedu_profile ON public.gedu_profiles FOR SELECT TO 
 
 
 --
+-- Name: gamer_photo_consents gedus_read_roster_gamer_photo_consents; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY gedus_read_roster_gamer_photo_consents ON public.gamer_photo_consents FOR SELECT TO authenticated USING (public.gedu_teaches_gamer(gamer_id));
+
+
+--
 -- Name: group_session_images; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -12573,6 +12994,13 @@ ALTER TABLE public.minecraft_accounts ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.parent_gamer ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: gamer_photo_consents parents_read_gamer_photo_consents; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY parents_read_gamer_photo_consents ON public.gamer_photo_consents FOR SELECT TO authenticated USING (public.is_parent_of(gamer_id));
+
 
 --
 -- Name: minecraft_accounts parents_read_linked_gamer_minecraft; Type: POLICY; Schema: public; Owner: -
@@ -12628,6 +13056,12 @@ ALTER TABLE public.postal_codes ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY postal_codes_are_public_reference_data ON public.postal_codes FOR SELECT TO authenticated, anon USING (true);
 
+
+--
+-- Name: product_gamer_photo_consents; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.product_gamer_photo_consents ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: product_groups; Type: ROW SECURITY; Schema: public; Owner: -
@@ -12714,6 +13148,13 @@ CREATE POLICY public_reads_consent_document_versions ON public.consent_document_
 --
 
 CREATE POLICY public_reads_consent_documents ON public.consent_documents FOR SELECT TO authenticated, anon USING (true);
+
+
+--
+-- Name: product_gamer_photo_consents read_product_gamer_photo_consents_via_product; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY read_product_gamer_photo_consents_via_product ON public.product_gamer_photo_consents FOR SELECT TO authenticated, anon USING (public.can_read_product(product_id));
 
 
 --
@@ -13049,6 +13490,15 @@ GRANT ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_par
 
 
 --
+-- Name: FUNCTION admin_set_product_gamer_photo_consents(p_product_id uuid, p_consent_types public.gamer_photo_consent_type[]); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.admin_set_product_gamer_photo_consents(p_product_id uuid, p_consent_types public.gamer_photo_consent_type[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.admin_set_product_gamer_photo_consents(p_product_id uuid, p_consent_types public.gamer_photo_consent_type[]) TO authenticated;
+GRANT ALL ON FUNCTION public.admin_set_product_gamer_photo_consents(p_product_id uuid, p_consent_types public.gamer_photo_consent_type[]) TO service_role;
+
+
+--
 -- Name: FUNCTION admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]); Type: ACL; Schema: public; Owner: -
 --
 
@@ -13283,6 +13733,15 @@ GRANT ALL ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_dat
 
 REVOKE ALL ON FUNCTION public.ensure_product_keeps_at_least_one_translation() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.ensure_product_keeps_at_least_one_translation() TO service_role;
+
+
+--
+-- Name: FUNCTION gedu_teaches_gamer(p_gamer_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.gedu_teaches_gamer(p_gamer_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.gedu_teaches_gamer(p_gamer_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.gedu_teaches_gamer(p_gamer_id uuid) TO service_role;
 
 
 --
@@ -13839,6 +14298,15 @@ GRANT ALL ON FUNCTION public.set_gamer_group_note(p_group_id uuid, p_participant
 
 
 --
+-- Name: FUNCTION set_gamer_photo_consent(p_gamer_id uuid, p_consent_type public.gamer_photo_consent_type, p_granted boolean, p_source text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_gamer_photo_consent(p_gamer_id uuid, p_consent_type public.gamer_photo_consent_type, p_granted boolean, p_source text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_gamer_photo_consent(p_gamer_id uuid, p_consent_type public.gamer_photo_consent_type, p_granted boolean, p_source text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_gamer_photo_consent(p_gamer_id uuid, p_consent_type public.gamer_photo_consent_type, p_granted boolean, p_source text) TO service_role;
+
+
+--
 -- Name: FUNCTION set_gedu_certified(p_gedu_id uuid, p_certified boolean); Type: ACL; Schema: public; Owner: -
 --
 
@@ -14165,6 +14633,22 @@ GRANT ALL ON TABLE public.gamer_group_notes TO service_role;
 
 
 --
+-- Name: TABLE gamer_photo_consent_events; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.gamer_photo_consent_events TO authenticated;
+GRANT ALL ON TABLE public.gamer_photo_consent_events TO service_role;
+
+
+--
+-- Name: TABLE gamer_photo_consents; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.gamer_photo_consents TO authenticated;
+GRANT ALL ON TABLE public.gamer_photo_consents TO service_role;
+
+
+--
 -- Name: TABLE gamer_profiles; Type: ACL; Schema: public; Owner: -
 --
 
@@ -14311,6 +14795,15 @@ GRANT SELECT ON TABLE public.payments TO authenticated;
 GRANT SELECT ON TABLE public.postal_codes TO anon;
 GRANT SELECT ON TABLE public.postal_codes TO authenticated;
 GRANT SELECT ON TABLE public.postal_codes TO service_role;
+
+
+--
+-- Name: TABLE product_gamer_photo_consents; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.product_gamer_photo_consents TO anon;
+GRANT SELECT ON TABLE public.product_gamer_photo_consents TO authenticated;
+GRANT ALL ON TABLE public.product_gamer_photo_consents TO service_role;
 
 
 --
