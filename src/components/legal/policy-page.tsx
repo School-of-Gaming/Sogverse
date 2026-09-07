@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TriangleAlert } from "lucide-react";
+import { ExternalLink, TriangleAlert } from "lucide-react";
 import { policyTextSegments, type PolicyBlock } from "./policy-content";
 
 interface PolicySubsection {
@@ -34,6 +34,14 @@ interface PolicyPageProps {
   /** Fully-formed "Last updated: …" line (already localized by the caller). */
   lastUpdated: string;
   /**
+   * Localized "(opens in a new tab)", read out beside any outbound link the copy
+   * carries. **Required, not optional**: whether a given document names a
+   * regulator today is a property of the copy and can change in a translation
+   * nobody reviewing English would open, so a page that supplies no label could
+   * otherwise ship an unannounced outbound link the day a tag is added.
+   */
+  newTabLabel: string;
+  /**
    * Set while the document is a draft: renders a prominent banner above the
    * summary box saying so. Omitted once the copy is signed off — a page with
    * no banner is a page whose text is final.
@@ -46,17 +54,39 @@ interface PolicyPageProps {
 }
 
 /**
- * One line of policy copy, with any cross-reference to another of our legal
- * pages rendered as a real link. The copy arrives tagged from the message file
- * and is split by `policyTextSegments`, which owns the allow-list and the
- * hrefs; all this decides is what a link looks like in body prose.
+ * One line of policy copy, with any cross-reference rendered as a real link.
+ * The copy arrives tagged from the message file and is split by
+ * `policyTextSegments`, which owns the allow-lists and the hrefs; all this
+ * decides is what a link looks like in body prose.
+ *
+ * A segment the splitter marked outbound gets the same treatment `/attributions`
+ * gives its credits: a new tab, `rel="noopener noreferrer"`, the arrow glyph for
+ * a reader who can see it and `newTabLabel` for one who cannot. `PolicyPage`
+ * requires that label, so an outbound link cannot ship unannounced.
  */
-function PolicyText({ text }: { text: string }) {
+function PolicyText({
+  text,
+  newTabLabel,
+}: {
+  text: string;
+  newTabLabel: string;
+}) {
   return (
     <>
-      {policyTextSegments(text).map((segment, i) =>
-        segment.href === undefined ? (
-          segment.text
+      {policyTextSegments(text).map((segment, i) => {
+        if (segment.href === undefined) return segment.text;
+        return segment.external ? (
+          <a
+            key={i}
+            href={segment.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+          >
+            {segment.text}
+            <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
+            <span className="sr-only">{newTabLabel}</span>
+          </a>
         ) : (
           <Link
             key={i}
@@ -65,20 +95,26 @@ function PolicyText({ text }: { text: string }) {
           >
             {segment.text}
           </Link>
-        ),
-      )}
+        );
+      })}
     </>
   );
 }
 
 /** Renders a run of policy copy — paragraphs and bulleted lists, in order. */
-function PolicyBlocks({ blocks }: { blocks: PolicyBlock[] }) {
+function PolicyBlocks({
+  blocks,
+  newTabLabel,
+}: {
+  blocks: PolicyBlock[];
+  newTabLabel: string;
+}) {
   return (
     <>
       {blocks.map((block, i) =>
         "paragraph" in block ? (
           <p key={i} className="text-muted-foreground">
-            <PolicyText text={block.paragraph} />
+            <PolicyText text={block.paragraph} newTabLabel={newTabLabel} />
           </p>
         ) : (
           <ul
@@ -87,7 +123,7 @@ function PolicyBlocks({ blocks }: { blocks: PolicyBlock[] }) {
           >
             {block.bullets.map((bullet, bi) => (
               <li key={bi}>
-                <PolicyText text={bullet} />
+                <PolicyText text={bullet} newTabLabel={newTabLabel} />
               </li>
             ))}
           </ul>
@@ -124,8 +160,9 @@ function PendingNotice({ notice }: { notice: string }) {
  * renders its own copy and then any second-level subsections beneath it.
  *
  * Every string of body copy (subtitle, paragraphs, bullets) may name one of our
- * other legal pages through a cross-reference tag, which becomes a link here;
- * see `policy-content.ts` for the allow-list. Headings, the "last updated" line
+ * other legal pages, or one of the supervisory authorities a reader has the
+ * right to complain to, through a cross-reference tag that becomes a link here;
+ * see `policy-content.ts` for the two allow-lists. Headings, the "last updated" line
  * and the draft/pending notices are structural rather than authored prose, so
  * they render as plain text.
  */
@@ -133,6 +170,7 @@ export function PolicyPage({
   title,
   subtitle,
   lastUpdated,
+  newTabLabel,
   draftNotice,
   intro,
   sections,
@@ -143,7 +181,7 @@ export function PolicyPage({
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
         {subtitle && (
           <p className="text-muted-foreground">
-            <PolicyText text={subtitle} />
+            <PolicyText text={subtitle} newTabLabel={newTabLabel} />
           </p>
         )}
         <p className="text-sm text-muted-foreground">{lastUpdated}</p>
@@ -170,18 +208,24 @@ export function PolicyPage({
           parent to actually read. */}
       <div className="mt-8 space-y-3 rounded-lg border border-border bg-card p-6">
         <h2 className="text-lg font-semibold">{intro.heading}</h2>
-        <PolicyBlocks blocks={intro.blocks} />
+        <PolicyBlocks blocks={intro.blocks} newTabLabel={newTabLabel} />
       </div>
 
       <div className="mt-10 space-y-10">
         {sections.map((section, si) => (
           <section key={si} className="space-y-3">
             <h2 className="text-2xl font-bold">{section.heading}</h2>
-            <PolicyBlocks blocks={section.blocks} />
+            <PolicyBlocks
+              blocks={section.blocks}
+              newTabLabel={newTabLabel}
+            />
             {section.subsections?.map((subsection, sub) => (
               <div key={sub} className="space-y-3 pt-3">
                 <h3 className="text-xl font-semibold">{subsection.heading}</h3>
-                <PolicyBlocks blocks={subsection.blocks} />
+                <PolicyBlocks
+                  blocks={subsection.blocks}
+                  newTabLabel={newTabLabel}
+                />
               </div>
             ))}
             {section.pending && <PendingNotice notice={section.pending} />}

@@ -2835,7 +2835,8 @@
   },
   "legal": {
     "draftNotice": "Utkast – innehållet på den här sidan håller fortfarande på att färdigställas och har ännu inte godkänts. Detaljer kan ändras.",
-    "pendingSection": "Det här avsnittet håller fortfarande på att skrivas och läggs till innan Programmet startar."
+    "pendingSection": "Det här avsnittet håller fortfarande på att skrivas och läggs till innan Programmet startar.",
+    "opensInNewTab": "(öppnas i en ny flik)"
   },
   "privacy": {
     "title": "Integritetspolicy",
@@ -2991,7 +2992,7 @@
         "heading": "Kontakt och din rätt att klaga",
         "paragraphs": [
           "Om du vill använda någon av rättigheterna ovan eller har en fråga om din integritet eller ditt barns uppgifter är det bara att mejla {supportEmail}. Det är kostnadsfritt, vi svarar alltid, och e-post är det bästa sättet att nå oss.",
-          "Om du är missnöjd med hur vi har hanterat dina uppgifter har du rätt att lämna in ett klagomål till dataombudsmannens byrå i Finland (tietosuoja.fi)."
+          "Om du är missnöjd med hur vi har hanterat dina uppgifter har du rätt att lämna in ett klagomål till dataombudsmannens byrå i Finland (<linkTietosuoja>tietosuoja.fi</linkTietosuoja>)."
         ]
       }
     }
@@ -3657,7 +3658,7 @@
           "Barn får kontakta oss direkt om sina egna uppgifter. Föräldrar och vårdnadshavare kan också göra en begäran för ett barn, med hänsyn till barnets egna rättigheter, ålder och mognad.",
           "Det förekommer inget helt automatiserat beslutsfattande som får rättsliga följder eller på liknande sätt i betydande grad påverkar deltagarna.",
           "Skicka din begäran till support@lynxeducate.com eller {supportEmail}. Organisationerna samordnar svaret och skickar vidare de frågor som rör Roblox till Roblox när det behövs.",
-          "Familjer har också rätt att lämna in klagomål till den franska dataskyddsmyndigheten Commission nationale de l’informatique et des libertés – CNIL."
+          "Familjer har också rätt att lämna in klagomål till den franska dataskyddsmyndigheten Commission nationale de l’informatique et des libertés – <linkCnil>CNIL</linkCnil>."
         ]
       },
       "security": {
@@ -3858,8 +3859,7 @@
       "geonames": "Listan över länder, regioner och orter som du väljer från när du berättar var din familj bor — samma lista som vi använder för att hitta klubbar nära dig. Vår version bygger på GeoNames men är ingen kopia: vi utelämnar platser där vi inte är verksamma, grupperar en del annorlunda och byter namn på andra till den form som används lokalt.",
       "laPoste": "De franska postnumren i samma lista, så att en familj i Frankrike kan skriva in sitt postnummer i stället för att leta upp sin kommun.",
       "mcHeads": "Ritar den Minecraft-figur som visas bredvid ett länkat Minecraft-konto. De begär ingenting i gengäld, så det här är ett tack snarare än ett krav."
-    },
-    "opensInNewTab": "(öppnas i en ny flik)"
+    }
   },
   "seatOffer": {
     "offer": {

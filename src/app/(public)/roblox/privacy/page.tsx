@@ -90,6 +90,7 @@ export default async function RobloxPrivacyPage() {
       lastUpdated={t("lastUpdated", {
         date: formatDateOnly(LAST_UPDATED, locale, { dateStyle: "long" }),
       })}
+      newTabLabel={tLegal("opensInNewTab")}
       draftNotice={tLegal("draftNotice")}
       intro={{
         heading: t("intro.heading"),

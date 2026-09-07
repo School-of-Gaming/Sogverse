@@ -60,6 +60,7 @@ export default async function RobloxTermsPage() {
       lastUpdated={t("lastUpdated", {
         date: formatDateOnly(LAST_UPDATED, locale, { dateStyle: "long" }),
       })}
+      newTabLabel={tLegal("opensInNewTab")}
       draftNotice={tLegal("draftNotice")}
       intro={{
         heading: t("intro.heading"),

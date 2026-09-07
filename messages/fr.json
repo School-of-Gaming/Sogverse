@@ -2835,7 +2835,8 @@
   },
   "legal": {
     "draftNotice": "Brouillon — le contenu de cette page est en cours de finalisation et n’a pas encore été approuvé. Les détails peuvent changer.",
-    "pendingSection": "Cette section est encore en cours de rédaction et sera ajoutée avant le lancement du Programme."
+    "pendingSection": "Cette section est encore en cours de rédaction et sera ajoutée avant le lancement du Programme.",
+    "opensInNewTab": "(s’ouvre dans un nouvel onglet)"
   },
   "privacy": {
     "title": "Politique de confidentialité",
@@ -2991,7 +2992,7 @@
         "heading": "Nous contacter et votre droit de réclamation",
         "paragraphs": [
           "Pour exercer l’un des droits ci-dessus, ou si vous avez une question sur votre vie privée ou sur les informations de votre enfant, écrivez simplement à {supportEmail}. C’est gratuit, nous répondons toujours, et l’e-mail est le meilleur moyen de nous joindre.",
-          "Si vous n’êtes pas satisfait de la façon dont nous avons traité vos informations, vous avez le droit d’introduire une réclamation auprès du médiateur finlandais à la protection des données (Tietosuojavaltuutetun toimisto), sur tietosuoja.fi."
+          "Si vous n’êtes pas satisfait de la façon dont nous avons traité vos informations, vous avez le droit d’introduire une réclamation auprès du médiateur finlandais à la protection des données (Tietosuojavaltuutetun toimisto), sur <linkTietosuoja>tietosuoja.fi</linkTietosuoja>."
         ]
       }
     }
@@ -3657,7 +3658,7 @@
           "Les enfants peuvent nous contacter directement au sujet de leurs propres informations. Les parents et représentants légaux peuvent également formuler une demande pour un enfant, sous réserve des droits propres de l’enfant, de son âge et de sa maturité.",
           "Aucune décision fondée exclusivement sur un traitement automatisé et produisant des effets juridiques ou des effets significatifs comparables n’est prise à l’égard des participants.",
           "Adressez vos demandes à support@lynxeducate.com ou à {supportEmail}. Les organisations coordonnent leur réponse et transmettent à Roblox les demandes qui le concernent.",
-          "Les familles ont également le droit d’introduire une réclamation auprès de la Commission nationale de l’informatique et des libertés — CNIL."
+          "Les familles ont également le droit d’introduire une réclamation auprès de la Commission nationale de l’informatique et des libertés — <linkCnil>CNIL</linkCnil>."
         ]
       },
       "security": {
@@ -3858,8 +3859,7 @@
       "geonames": "La liste des pays, des régions et des communes dans laquelle vous choisissez le lieu où vit votre famille — la même liste qui nous sert à trouver les clubs proches de chez vous. La nôtre s’appuie sur GeoNames sans en être une copie : nous écartons les lieux où nous n’intervenons pas, nous en regroupons certains autrement et nous en renommons d’autres sous la forme employée localement.",
       "laPoste": "Les codes postaux français de cette même liste, pour qu’une famille en France puisse saisir son code plutôt que de chercher sa commune.",
       "mcHeads": "Dessine le personnage Minecraft affiché à côté d’un compte Minecraft associé. Rien ne nous oblige à les citer : ils ne demandent rien en retour, et ce crédit est un remerciement."
-    },
-    "opensInNewTab": "(s’ouvre dans un nouvel onglet)"
+    }
   },
   "seatOffer": {
     "offer": {

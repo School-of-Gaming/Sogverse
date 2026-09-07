@@ -24,11 +24,16 @@ export type PolicyBlock = { paragraph: string } | { bullets: string[] };
  * translation-completeness script does not look inside a value for tags — this
  * is the check that does.)
  *
- * **Only our own documents are in here, on purpose.** A reference to somebody
- * else's policy — Roblox's, Lynx's standard terms, a regulator's site — stays
- * plain text. That is an editorial decision about what we send families off to
- * read, not a limitation of this renderer, and it is the same shape as the
- * authored-markdown rule that bans `a` from the allow-list there.
+ * **Only our own documents are in here, on purpose** — this map is internal
+ * destinations, and the one class of outbound reference we do link lives in
+ * {@link POLICY_EXTERNAL_HREFS} beside it. Everything else external stays plain
+ * text: a third party's policy or standard terms (Roblox's, Lynx's) sits at a
+ * URL we neither control nor watch, so a dead link in a binding document is
+ * worse than a name the reader can search, and linking one implies we point at
+ * the version that applies, which we cannot guarantee; a legal instrument (the
+ * Standard Contractual Clauses, an adequacy decision, a private DPA) is often
+ * not linkable at all. That is an editorial decision about what we send
+ * families off to read, not a limitation of this renderer.
  *
  * Hrefs come from `ROUTES` rather than string literals, so a moved page moves
  * its cross-references with it.
@@ -46,6 +51,36 @@ type PolicyLinkTag = keyof typeof POLICY_LINK_HREFS;
 
 function isPolicyLinkTag(tag: string): tag is PolicyLinkTag {
   return Object.hasOwn(POLICY_LINK_HREFS, tag);
+}
+
+/**
+ * The closed allow-list of *outbound* tags, and the site each one opens. Same
+ * shape and same guarantees as {@link POLICY_LINK_HREFS} — a named destination
+ * held in code, a stable tag in the copy — so a translator still never chooses
+ * a URL and the tag-parity test covers these unchanged.
+ *
+ * **Supervisory authorities only, and nothing else.** A regulator reference is
+ * *rights-enabling*: the copy grants a right to complain, and a right nobody can
+ * act on is decoration. Left as plain text these were broken in two different
+ * ways — one rendered a bare `tietosuoja.fi` that looks like a link and is not,
+ * and the other named no address at all in the document written for French
+ * families. That reasoning is what separates them from every other external
+ * reference (see the note on the internal map above): a third party's own
+ * documents and the legal instruments a policy cites grant the reader nothing to
+ * act on here, sit at URLs we do not control, and stay plain text.
+ *
+ * Homepages, not deep paths — a regulator's complaint page moves; its domain
+ * does not.
+ */
+const POLICY_EXTERNAL_HREFS = {
+  linkTietosuoja: "https://tietosuoja.fi",
+  linkCnil: "https://www.cnil.fr",
+} as const satisfies Record<string, string>;
+
+type PolicyExternalTag = keyof typeof POLICY_EXTERNAL_HREFS;
+
+function isPolicyExternalTag(tag: string): tag is PolicyExternalTag {
+  return Object.hasOwn(POLICY_EXTERNAL_HREFS, tag);
 }
 
 /**
@@ -87,19 +122,31 @@ function fillPolicyValues(text: string): string {
 }
 
 /**
- * A run of policy copy, split into the pieces the page renders: plain text, or
- * a stretch of text that links to one of our other legal pages.
+ * A run of policy copy, split into the pieces the page renders: plain text, a
+ * stretch of text that links to one of our other legal pages, or one that links
+ * off-site to a supervisory authority.
  */
 export interface PolicySegment {
   /** The words to show. Already the final, translated text. */
   text: string;
-  /** Internal path to link the text to; absent on a plain-text segment. */
+  /**
+   * Where to link the text; absent on a plain-text segment. An internal path
+   * unless {@link PolicySegment.external} says otherwise.
+   */
   href?: string;
+  /**
+   * Set on a segment whose `href` leaves the site, so the renderer can mark it
+   * as such. A flag rather than a sniff of the href: what a link *is* is decided
+   * by which allow-list its tag came from, not by how its URL happens to read.
+   */
+  external?: true;
 }
 
 /**
  * Splits one policy string into {@link PolicySegment}s, turning the tags in
- * {@link POLICY_LINK_HREFS} into links and leaving everything else as text.
+ * {@link POLICY_LINK_HREFS} and {@link POLICY_EXTERNAL_HREFS} into links and
+ * leaving everything else as text. Both maps feed the one tag-matching path, so
+ * an unknown tag behaves identically whichever list a reader expected it in.
  * Any {@link POLICY_VALUES} the string names are filled in first, so a value
  * that lands inside a linked run still reads as part of that run.
  *
@@ -130,11 +177,17 @@ export function policyTextSegments(source: string): PolicySegment[] {
       segments.push({ text: text.slice(cursor, match.index) });
     }
     if (label.length > 0) {
-      segments.push(
-        isPolicyLinkTag(tag)
-          ? { text: label, href: POLICY_LINK_HREFS[tag] }
-          : { text: label },
-      );
+      if (isPolicyLinkTag(tag)) {
+        segments.push({ text: label, href: POLICY_LINK_HREFS[tag] });
+      } else if (isPolicyExternalTag(tag)) {
+        segments.push({
+          text: label,
+          href: POLICY_EXTERNAL_HREFS[tag],
+          external: true,
+        });
+      } else {
+        segments.push({ text: label });
+      }
     }
     cursor = match.index + whole.length;
   }

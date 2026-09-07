@@ -2624,7 +2624,7 @@
           "Children may contact us directly about their own information. Parents or legal guardians may also make a request for a child, subject to the child’s own rights, age and maturity.",
           "There is no solely automated decision-making that produces legal or similarly significant effects on participants.",
           "Send requests to support@lynxeducate.com or {supportEmail}. The organisations will coordinate the response and route Roblox-related requests to Roblox where necessary.",
-          "Families also have the right to complain to the Commission nationale de l’informatique et des libertés — CNIL."
+          "Families also have the right to complain to the Commission nationale de l’informatique et des libertés — <linkCnil>CNIL</linkCnil>."
         ]
       },
       "security": {
@@ -3519,7 +3519,8 @@
   },
   "legal": {
     "draftNotice": "Draft — this page’s content is still being finalised and has not yet been approved. Details may change.",
-    "pendingSection": "This section is still being written and will be added before the Programme launches."
+    "pendingSection": "This section is still being written and will be added before the Programme launches.",
+    "opensInNewTab": "(opens in a new tab)"
   },
   "privacy": {
     "title": "Privacy Policy",
@@ -3675,7 +3676,7 @@
         "heading": "Getting in touch and your right to complain",
         "paragraphs": [
           "To use any of the rights above, or if you have a question about your privacy or your child’s information, just email {supportEmail}. There’s no charge, we’ll always reply, and email is the best way to reach us.",
-          "If you’re ever unhappy with how we’ve handled your information, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto) at tietosuoja.fi."
+          "If you’re ever unhappy with how we’ve handled your information, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto) at <linkTietosuoja>tietosuoja.fi</linkTietosuoja>."
         ]
       }
     }
@@ -3858,8 +3859,7 @@
       "geonames": "The list of countries, regions and towns you pick from when you tell us where your family lives — the same list we use to find clubs near you. Ours is based on GeoNames rather than being a copy of it: we leave out places we do not serve, group some of them differently, and rename others to the form people use locally.",
       "laPoste": "The French postal codes in that same list, so a family in France can type their code instead of hunting for their commune.",
       "mcHeads": "Draws the Minecraft character shown beside a linked Minecraft account. They ask for nothing in return, so this credit is a thank-you rather than a requirement."
-    },
-    "opensInNewTab": "(opens in a new tab)"
+    }
   },
   "seatOffer": {
     "offer": {

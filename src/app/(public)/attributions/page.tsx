@@ -130,8 +130,12 @@ function OutboundLink({
 
 export default async function AttributionsPage() {
   const t = await getTranslations("attributions");
+  // The new-tab label lives in the shared legal chrome rather than here: the
+  // legal pages mark their outbound regulator links the same way, and one
+  // string is what keeps the two readings identical.
+  const tLegal = await getTranslations("legal");
   const locale = await getLocale();
-  const newTabLabel = t("opensInNewTab");
+  const newTabLabel = tLegal("opensInNewTab");
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">

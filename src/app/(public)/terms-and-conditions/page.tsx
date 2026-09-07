@@ -35,6 +35,7 @@ const SECTIONS = [
 
 export default async function TermsPage() {
   const t = await getTranslations("terms");
+  const tLegal = await getTranslations("legal");
   const locale = await getLocale();
 
   return (
@@ -43,6 +44,7 @@ export default async function TermsPage() {
       lastUpdated={t("lastUpdated", {
         date: formatDateOnly(LAST_UPDATED, locale, { dateStyle: "long" }),
       })}
+      newTabLabel={tLegal("opensInNewTab")}
       intro={{
         heading: t("intro.heading"),
         blocks: paragraphsThenBullets(
