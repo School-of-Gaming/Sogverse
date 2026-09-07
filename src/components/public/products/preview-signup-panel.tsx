@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { MarketingConsentType, ProductBrowseRow } from "@/types";
+import type {
+  GamerPhotoConsentType,
+  MarketingConsentType,
+  ProductBrowseRow,
+} from "@/types";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import type { RegionGate } from "./region-lock/region-gate";
@@ -53,6 +57,12 @@ interface PreviewSignupPanelProps {
    * scenario stays exactly as it was.
    */
   marketingConsentTypes?: readonly MarketingConsentType[];
+  /**
+   * The photo consents this scenario's product asks about — the scene's half of
+   * the third detail-query embed. Defaulted to none so every ordinary scenario
+   * stays exactly as it was.
+   */
+  gamerPhotoConsentTypes?: readonly GamerPhotoConsentType[];
   state: RegistrationState;
   authState: AuthState;
   /** Where the CTA lands — the matching `/preview/confirmation/<scenario>`. */
@@ -78,11 +88,13 @@ const FAKE_COMMIT_MS = 600;
 // render is churn nobody asked for.
 const NO_CONSENTS: readonly string[] = [];
 const NO_MARKETING_CONSENTS: readonly MarketingConsentType[] = [];
+const NO_GAMER_PHOTO_CONSENTS: readonly GamerPhotoConsentType[] = [];
 
 export function PreviewSignupPanel({
   product,
   requiredConsentSlugs = NO_CONSENTS,
   marketingConsentTypes = NO_MARKETING_CONSENTS,
+  gamerPhotoConsentTypes = NO_GAMER_PHOTO_CONSENTS,
   state,
   authState,
   summaryHref,
@@ -91,17 +103,17 @@ export function PreviewSignupPanel({
   onLocationPicked,
 }: PreviewSignupPanelProps) {
   const router = useRouter();
+  // The identical argument list the live panel builds, which it did not use to
+  // be: the boxes used to be seeded from an account read the live panel made and
+  // a scene could not (no session, and the read is only correct for a signed-in
+  // customer). Nothing is seeded on either side now, so this demo's boxes are
+  // not an honest approximation of the real panel — they are the real panel.
   const fields = useSignupPanelFields(
     product,
     authState,
     requiredConsentSlugs,
     marketingConsentTypes,
-    // No seed, and deliberately no read to get one: a scene has no session, and
-    // the account read is only correct for a signed-in customer — an admin
-    // looking at a preview would get every parent's rows. So the boxes start
-    // unticked and toggle against local state, which is the honest picture of
-    // this panel for a parent who has never answered.
-    undefined,
+    gamerPhotoConsentTypes,
   );
   const [committing, setCommitting] = useState(false);
   // The location dialog is the panel adapter's, here as in production — the

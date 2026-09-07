@@ -1583,6 +1583,7 @@ function mockDetailRow(
     locations: null,
     product_required_consents: [],
     product_marketing_consents: [],
+    product_gamer_photo_consents: [],
     ...overrides,
   };
 }

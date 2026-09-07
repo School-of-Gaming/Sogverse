@@ -28,6 +28,7 @@ import {
   MarketingPreferencesFields,
   MARKETING_CONSENT_ORDER,
 } from "@/components/settings/marketing-preferences-fields";
+import { GamerPhotoConsentNotice } from "@/components/settings/gamer-photo-consent-notice";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
@@ -80,7 +81,19 @@ function toLocationPick(row: LocationWithChain | undefined): LocationPick | null
 export function SettingsSectionContent({
   geduContractSeed,
   gamerSignIn,
+  photoConsentGranted = false,
 }: {
+  /**
+   * Whether this child's parent has said photos and videos of them may be used,
+   * read by the route before the page rendered.
+   *
+   * **Defaults to `false`, and for a non-gamer that default is never read** —
+   * the card it feeds is rendered only for a gamer. For a gamer it is the
+   * feature's own default rather than a placeholder: an unanswered question and
+   * a stored "no" mean the same thing here, which is that the child stays out of
+   * the photographs.
+   */
+  photoConsentGranted?: boolean;
   /**
    * How this gamer signs in, read by the route before the page rendered.
    *
@@ -724,6 +737,12 @@ export function SettingsSectionContent({
           />
         </>
       )}
+
+      {/* After the game identities and before security: what a child is called
+          in a game, then what may be done with a picture of them, then the way
+          out. Read-only — only their parent can answer it, from the child's page
+          under the parent's My SOG. */}
+      {isGamer && <GamerPhotoConsentNotice granted={photoConsentGranted} />}
 
       {/* The seed's presence is the role test: the route reads these rows only
           for a gedu, so a viewer who is not one has nothing to hand down and no

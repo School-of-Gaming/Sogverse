@@ -118,6 +118,12 @@ interface SessionFeedItemProps {
    */
   photoEditing: SessionPhotoEditing;
   /**
+   * Who on the roster may be photographed, or `null` on a product that does not
+   * ask the question. Handed straight to the photo block on whichever editor
+   * this card opens; the card itself has no other use for it.
+   */
+  photoConsents: ReadonlyMap<string, boolean> | null;
+  /**
    * What this session owes in creations, or `null` — which is every entry but
    * one, on every product but a flagged one.
    *
@@ -266,6 +272,7 @@ export function SessionFeedItem({
   sendError,
   onSendReport,
   photoEditing,
+  photoConsents,
   creations,
   registerEditButton,
   onToggleEdit,
@@ -319,6 +326,12 @@ export function SessionFeedItem({
       // Greyed with everything else while the card commits: what is staged here
       // is part of what this Save is carrying.
       disabled={committing}
+      // The roster travels with the answers rather than beside them: the block
+      // draws one row per roster member and marks it from the map, so the two
+      // are one datum and a card could not render either half alone.
+      consent={
+        photoConsents === null ? null : { roster, allowed: photoConsents }
+      }
       {...photoEditing}
     />
   );

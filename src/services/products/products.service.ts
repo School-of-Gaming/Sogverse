@@ -7,6 +7,7 @@ import type {
   ProductStatus,
   SpokenLanguageCode,
   MarketingConsentType,
+  GamerPhotoConsentType,
 } from "@/types";
 import type { QueryData } from "@supabase/supabase-js";
 import type { SupportedCurrency } from "@/lib/constants/currency";
@@ -157,7 +158,7 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type)",
+      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -188,7 +189,7 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type)",
+      "*, product_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -388,6 +389,16 @@ export type CreateProductInput = {
    * the set is keyed on a product id the RPC is what produces.
    */
   marketing_consent_types: MarketingConsentType[];
+  /**
+   * The photo consents this product's signup panel ASKS a parent about — never
+   * requires. The marketing field's twin above, with the subject changed from
+   * the answering adult's mailbox to a child's image, and a plain array for the
+   * same reason: an empty array already says "asks nothing", and the writer
+   * behind it reads NULL and `[]` identically. Written by the route in its own
+   * call after the product RPC, because the set is keyed on a product id the
+   * RPC is what produces.
+   */
+  gamer_photo_consent_types: GamerPhotoConsentType[];
   // Per-session operating fees in integer cents. null = unknown/none,
   // 0 = volunteer, > 0 = a fee (see products.contracts.ts).
   primary_gedu_fee_cents: number | null;
@@ -462,6 +473,10 @@ export type UpdateProductInput = {
    *  replaces the whole ask set on every call, so the answer has to travel on
    *  every save. */
   marketing_consent_types: MarketingConsentType[];
+  /** Photo consents the panel asks about — see CreateProductInput. The update
+   *  half is the load-bearing one for the same reason: the writer replaces the
+   *  whole ask set on every call, so the answer has to travel on every save. */
+  gamer_photo_consent_types: GamerPhotoConsentType[];
   // Per-session operating fees in integer cents — see CreateProductInput.
   primary_gedu_fee_cents: number | null;
   assistant_gedu_fee_cents: number | null;

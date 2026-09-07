@@ -479,7 +479,9 @@
           "regionLock": "Sep ngaQmoH",
           "requiredConsents": "poQlu’bogh chaw’mey",
           "requiresGamerCreations": "toy’wI’ chenmoHtaHbogh Doch",
-          "visibility": "leghlu"
+          "visibility": "leghlu",
+          "gamerPhotoConsents": "mIllogh tlhobmey",
+          "marketingConsents": "QIn tlhobmey"
         },
         "copyLink": "Hoch He yIghItlhqa'",
         "copied": "ghItlhqa'lu'ta'"
@@ -524,7 +526,7 @@
         "registration": "ghItlh poH",
         "registrationDescription": "ghItlh tagh poH yIwIv.",
         "consents": "chaw’mey",
-        "consentsDescription": "nuq lajnIS vav, nuq tlhoblu’ je. poQlu’bogh ghItlhmey lulajnIS. ra’be’lu’bogh tlhobmey lujangbe’laH ’ej quS chIlbe’.",
+        "consentsDescription": "nuq lajnIS vav, nuq tlhoblu’ je. poQlu’bogh ghItlhmey lulajnIS. mIllogh tlhob QIn tlhob je lujangbe’laH ’ej quS chIlbe’.",
         "visibility": "tetlh",
         "visibilityDescription": "Doch DaQIjbogh Daq wIv, ’ach ’Iv je’laH ’e’ wIvbe’. ghItlh poH, pa’ mI’, Doch Dotlh je — bIH neH poSmoH ’ej SoQmoH."
       },
@@ -656,10 +658,16 @@
         "version": "’ay’ {version}",
         "noVersion": "pagh ’ay’ ngeHlu’pu’",
         "none": "pagh",
+        "gamerPhoto": {
+          "lynxEducate": {
+            "label": "mIllogh HaSta je (Lynx Educate)",
+            "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: puqDaj mIllogh HaSta je tlhoblu’ ’ej School of Gaming, Lynx Educate, Roblox je lulo’laH ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’. puq Hoch tlhoblu’, ’ej ghIH Hoch tlhobqa’lu’."
+          }
+        },
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: boqwI’maj Lynx Educate-vaD De’chaj lunob ’e’ luchaw’ ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’."
+            "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: Lynx Educate-vaD De’wI’ HeywI’ lunob ’e’ luchaw’ ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’."
           }
         }
       },
@@ -1031,6 +1039,15 @@
         "preferences": "chaw’mey",
         "schoolOfGaming": "noH Quj yejHaD",
         "lynxEducate": "Lynx Educate",
+        "granted": "chaw’lu’",
+        "notGranted": "chaw’be’lu’",
+        "since": "{date}vo’"
+      },
+      "photoConsent": {
+        "title": "mIlogh chaw’",
+        "labels": {
+          "lynx_educate": "Lynx Educate"
+        },
         "granted": "chaw’lu’",
         "notGranted": "chaw’be’lu’",
         "since": "{date}vo’"
@@ -1603,6 +1620,10 @@
       "photosEmpty": "may’vamvaD mIllogh yIchel.",
       "photosDropHint": "naDev je mIlloghmey yIwoD.",
       "addPhoto": "mIllogh yIchel",
+      "photoConsentTitle": "mIllogh chaw’",
+      "photoConsentNote": "QujwI’ DamIlloghpa’, ghaH yItlhob — vav chaw’ta’chugh je. vav chaw’be’chugh, mIlloghDaq QujwI’ tu’lu’ net tuHmoH: mIlloghvo’ yIteq.",
+      "photoConsentAllowed": "chaw’lu’",
+      "photoConsentNotAllowed": "chaw’lu’be’",
       "removePhoto": "mIllogh {index} yIteq",
       "photosTrimmed": "{cap} mIlloghmey neH ngaSlaH De’ — vaj {count, plural, one {wa’ neH chellu’ta’} other {# neH chellu’ta’}}.",
       "photoErrorDecodeFailed": "De’vam poSmoHlu’laHbe’. iPhone Do’Ha’! JPEG yIchenmoH ’ej yIboq.",
@@ -2014,6 +2035,7 @@
       "nonCustomerNoteParents": "vavmey neH jeSlaH naDev.",
       "closedNote": "DaH poSbe’. latlh boqDI’ yI’aHta’.",
       "rules": {
+        "title": "chutmeymaj",
         "consumer_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
         "municipality_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH puqwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
         "municipality_club_self": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH quSwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
@@ -2024,10 +2046,17 @@
         "heading": "chaw’",
         "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj.",
         "bundles": {
-          "robloxProgramme": "<terms>Creator Academy Terms & Conditions</terms>, <privacy>Creator Academy Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj."
+          "robloxProgramme": "<terms>Creator Academy Terms & Conditions</terms>, <privacy>Creator Academy Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj.",
+          "robloxProgrammeTitle": "Creator Academy ghItlhmey"
+        },
+        "gamerPhoto": {
+          "lynxEducate": "puqwI’ mIllogh HaSta je lo’lu’: qaStaHvIS ja’chuqmeH nab, Lynx Educate Roblox je lughojmoH, ’ej School of Gaming, Lynx Educate, Roblox je De’wI’ HeDaq nItebHa’ cha’lu’. <privacy>Creator Academy Privacy Policy</privacy> DaH yIlaD.",
+          "lynxEducateTitle": "puqlI’ mIloghmey HaSta je",
+          "hint": "ra’be’lu’ — My SOG-Daq puqlI’ HevDaq reH DachoHlaH."
         },
         "marketing": {
-          "lynxEducate": "boqwI’maj <link>Lynx Educate</link> vISovmoH ’e’ vIchaw’ — vaj QIn mungeHlaH.",
+          "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH.",
+          "lynxEducateTitle": "Lynx Educate QInmey",
           "hint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH."
         }
       },
@@ -2232,6 +2261,18 @@
       }
     },
     "gamerDetail": {
+      "photoConsent": {
+        "title": "mIloghmey HaSta je",
+        "description": "Lynx Educate Roblox je tIq boq: ghommey, raQmey, wanI’mey je.",
+        "sentence": {
+          "lynxEducate": "{name} mIloghmey HaSta je lo’lu’laH: poH ja’ghItlhmeyDaq, Lynx Educate Roblox je De’meyDaq, School of Gaming Lynx Educate Roblox je De’wI’ yotlhmeyDaq ghantoHmeyDaq je. <privacy>Creator Academy Privacy Policy</privacy> DaH yIlaD."
+        },
+        "sentenceTitle": {
+          "lynxEducate": "{name} mIloghmey HaSta je"
+        },
+        "hint": "Hoch muvmoHmeH poH {name} wIghelqa’. Qav jangbogh mu’, ghaH potlh.",
+        "saveFailed": "jang polbe’lu’. QummeH He yInuD ’ej yInIDqa’."
+      },
       "backToMySog": "jIH SOGDaq yIchegh",
       "title": "toy’wI’ ngoQmey",
       "subtitle": "{name}vaH ngoQmey tI’ang",
@@ -2342,10 +2383,15 @@
     "marketing": {
       "title": "QIn chaw’mey",
       "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",
-      "lynxEducate": "boqwI’maj <link>Lynx Educate</link> vISovmoH ’e’ vIchaw’ — vaj QIn mungeHlaH."
+      "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH."
     },
     "usernameLabel": "pong",
-    "gamerPasswordFromParent": "My SOGDaj lo’ ’ej mu’mey chu’ DulanlaH SoSlI’ vav joq."
+    "gamerPasswordFromParent": "My SOGDaj lo’ ’ej mu’mey chu’ DulanlaH SoSlI’ vav joq.",
+    "photoConsent": {
+      "title": "mIloghmey HaSta je",
+      "granted": "chaw’ SoSlI’ vavlI’ joq: poH ja’ghItlhmeyDaq mIloghlIj HaSta je lo’lu’laH, ’ej School of Gaming, Lynx Educate, Roblox je lo’laH. ’ach mIloghlIj tlhapmeH, SoH Dughel Gedu.",
+      "notGranted": "chaw’be’ SoSlI’ vavlI’ joq. vaj poH mIloghmeyvo’ DuchoprupmoH Gedu. SoSlI’ vavlI’ joq neH choHlaH."
+    }
   },
   "tools": {
     "uncertified": {
@@ -2951,7 +2997,7 @@
         },
         "media": {
           "question": "puqwI’ mIllogh chenmoHlu’’a’?",
-          "answer": "<p>poHmeyDaq mIlloghmey chenmoHlu’laH — maHvaD neH. Hurghaj ngoqvaD mIlloghmey lo’lu’chugh, SoH DawIv qInmeH poHDaq, ’ej reH DachoHlaH.</p>"
+          "answer": "<p>poHmeyDaq mIlloghmey chenmoHlu’laH. ’ach mIlloghDaq puqlI’ tu’lu’ SoH wIv DawIvchugh neH — puqlI’ DalanDI’ wIv DawIv. reH wIv DachoHlaH: My SOG, puqlI’ HaHDaq. wIv DawIvbe’chugh, mIlloghmeyvo’ puqlI’ jotlhlu’.</p>"
         },
         "facilitators": {
           "question": "’Iv poHmey Sep, ’ej chay’ nuDlu’?",

@@ -396,6 +396,26 @@ plus what is staged. It is the number on the strip, which is the only one the af
 may be derived from, and it is what lets a photo be swapped at the cap without the gedu
 ever meeting a refusal.
 
+**Rule: on a product that asks the per-gamer photo consent, the staff block leads with
+who may be photographed — and on every other product it carries nothing extra at all.**
+Above the thumbnails and the drop area sit two things: the instruction to ask each gamer
+in person before taking their photo, even where their parent has consented, and a list of
+the session's roster with each name marked allowed or not allowed. A child without
+consent stays out of the report's photographs entirely. **An absent answer is a
+refusal** — never asked, never answered and answered "no" are one state, because a
+safeguard whose default depended on whether anybody had got round to asking is not a
+safeguard. The adult holding their own seat is indistinguishable from an unanswered child
+here and is marked the same way, which is the safe direction for the ambiguity to fall.
+
+Two things about *where* the answers come from. The product's ask set and the roster's
+answers are read by the page, not by the block, and travel in as one prop — so both staff
+shells make the same read and neither can decide the question differently from the other.
+And the **marks are the last thing in each row**: the names come from the roster, which
+the page holds before any editor opens, so the list's height is fixed the moment it
+appears and an answer landing later fills a row's own trailing slack rather than moving
+anything. A layout tidy-up that put the mark before the name would reintroduce that shift
+silently.
+
 **Rule: a refusal during the save keeps the editor open with the draft intact, and says
 what was refused in the photo block's own vocabulary.** A deletion the route would not make
 leaves its photo crossed out rather than restoring the tile — the strip draws the edit as

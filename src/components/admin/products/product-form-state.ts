@@ -5,6 +5,7 @@ import {
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductTag, ProductTopic, SpokenLanguageCode } from "@/types";
 import type { AttachableMarketingConsentType } from "@/lib/constants/marketing-consents";
+import type { AttachableGamerPhotoConsentType } from "@/lib/constants/gamer-photo-consents";
 import { effectiveBillingMode } from "./product-type-config";
 import type {
   PaidMode,
@@ -252,6 +253,22 @@ export interface FormState {
   // product, so a state that could hold it would be a state no screen can show.
   marketingConsentTypes: Set<AttachableMarketingConsentType>;
 
+  // Optional gamer photo asks
+  //
+  // The photo consents this product's signup panel ASKS a parent about, as
+  // `gamer_photo_consent_type` values. The marketing set's twin in every
+  // structural respect — a Set, never a gate on the seat, replaced wholesale on
+  // every save — and its twin in the one that matters least and reads most:
+  // what it is about. A marketing answer is about the answering adult's
+  // mailbox; this one is about a *child's image*, so the stored answer is keyed
+  // per gamer rather than per account, and the panel only asks it when the seat
+  // being taken is a child's.
+  //
+  // Narrowed to the attachable types for the same reason the marketing set is,
+  // even though today's enum has nothing else in it: what a product may store
+  // is a database question and what a form may offer is a product decision.
+  gamerPhotoConsentTypes: Set<AttachableGamerPhotoConsentType>;
+
   // Does every member of this product owe a creation — a link to the thing
   // they made — by the time it ends? An admin decision, never derived from
   // `topic`: not every Roblox-Studio product is sponsored, and the obligation
@@ -358,6 +375,10 @@ export function initialState(
     // Nothing asked until somebody says otherwise. A default ask would put a
     // partner's marketing question in front of families nobody decided to ask.
     marketingConsentTypes: new Set(),
+    // Nothing asked until somebody says otherwise, for the same reason: a
+    // default ask would put a question about photographing a child in front of
+    // families nobody decided to ask.
+    gamerPhotoConsentTypes: new Set(),
     // Nothing owed until somebody says otherwise. The obligation comes from a
     // sponsor's contract, so it is stated per product rather than defaulted —
     // and false being the resting state is what makes flagging the opt-in.

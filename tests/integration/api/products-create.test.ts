@@ -122,6 +122,7 @@ const validBody = {
   prices: [],
   required_consent_slugs: [],
   marketing_consent_types: [],
+  gamer_photo_consent_types: [],
   primary_gedu_fee_cents: null,
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
@@ -426,6 +427,54 @@ describe("POST /api/admin/products/create", () => {
     });
   });
 
+  it("writes the photo asks in a third call, after the marketing ones", async () => {
+    // The marketing set's twin, and a call of its own for the same structural
+    // reason: it is keyed on the product id `create_product` produces. Two
+    // separate writers rather than one, because the two answers are stored
+    // against different subjects — an account's mailbox and a child's image.
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({
+        data: { ...validBody, gamer_photo_consent_types: ["lynx_educate"] },
+      }),
+    );
+
+    expect(mockUserRpc.mock.calls[0][0]).toBe("create_product");
+    expect(mockUserRpc.mock.calls[2]).toEqual([
+      "admin_set_product_gamer_photo_consents",
+      { p_product_id: "new-prod-id", p_consent_types: ["lynx_educate"] },
+    ]);
+  });
+
+  it("sends the photo asks as an array, always", async () => {
+    mockAuthenticatedAdmin();
+    await POST(createRequest({ data: validBody }));
+
+    expect(mockUserRpc.mock.calls[2][1]).toEqual({
+      p_product_id: "new-prod-id",
+      p_consent_types: [],
+    });
+  });
+
+  it("returns 400 when the photo field is missing", async () => {
+    mockAuthenticatedAdmin();
+    const { gamer_photo_consent_types: _photo, ...noPhoto } = validBody;
+    const response = await POST(createRequest({ data: noPhoto }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for a photo consent type outside the enum", async () => {
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({
+        data: { ...validBody, gamer_photo_consent_types: ["nonsense"] },
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
   it("returns 400 when the marketing field is missing", async () => {
     mockAuthenticatedAdmin();
     const { marketing_consent_types: _types, ...noTypes } = validBody;
@@ -464,6 +513,10 @@ describe("POST /api/admin/products/create", () => {
     expect(json.product_id).toBe("new-prod-id");
     expect(json.warning).toMatch(/marketing consents were not applied/);
     expect(json.warning).toMatch(/edit page/);
+    // Every post-RPC write fails in this mock, and each one contributes its own
+    // sentence: they are independent, so a product whose marketing asks and
+    // whose photo asks both failed to land says so twice.
+    expect(json.warning).toMatch(/photo consents were not applied/);
   });
 
   it("returns 400 when the region lock field is missing", async () => {

@@ -12,13 +12,25 @@ import {
   ATTACHABLE_MARKETING_CONSENT_TYPES,
   MARKETING_CONSENT_ASKS,
 } from "@/lib/constants/marketing-consents";
+import {
+  ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES,
+  GAMER_PHOTO_CONSENT_ASKS,
+} from "@/lib/constants/gamer-photo-consents";
 import { useConsentDocuments } from "@/services/products";
 import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
 
 /**
  * **What a parent meets on the way through this product's signup: the documents
- * they must agree to, and the marketing they are asked about.**
+ * they must agree to, and the two optional questions they may be asked.**
+ *
+ * Three kinds of row, in one list, in the order a parent meets them: the
+ * required documents, then whether photos and videos of their child may be
+ * taken and used, then whether a partner may write to them. The last two are
+ * both *questions* and neither touches the seat; what separates them is the
+ * subject — a child's image against an adult's mailbox — which is why they are
+ * two registries, two stored sets and two rows rather than one "optional asks"
+ * checkbox with a list behind it.
  *
  * Its own section rather than a field inside another, because it is a third
  * question none of the existing sections asks: Audience says who may hold a
@@ -41,7 +53,8 @@ import type { FormState } from "../product-form-state";
  * everything this product will put in front of a parent, in the order they will
  * meet it.
  *
- * The difference itself has not softened. A required row is a *condition*: a
+ * The difference between a condition and a question has not softened. A
+ * required row is a *condition*: a
  * parent who declines cannot enrol, the agreement is per seat, and it can never
  * be withdrawn. A marketing row is a *question*: declining is a complete
  * answer, the seat is unaffected, the consent is account-level, and the parent
@@ -93,6 +106,7 @@ export function ConsentsSection({
   const tNames = useTranslations("consentDocuments.names");
   const tBundles = useTranslations("consentDocuments.bundles");
   const tMarketing = useTranslations("admin.products.consents.marketing");
+  const tGamerPhoto = useTranslations("admin.products.consents.gamerPhoto");
   const { data: documents } = useConsentDocuments();
 
   // Slug → current version, once the query lands. `undefined` for a slug means
@@ -133,9 +147,10 @@ export function ConsentsSection({
   // database's schedule. Rendered last it grows into the slack the form already
   // has beneath the list, and nothing painted moves.
   //
-  // So the section's order is: bundles, loose documents, marketing asks, drift.
-  // The first three are the reading order an admin wants — conditions, then
-  // questions — and the fourth is placed by this rule rather than by that one.
+  // So the section's order is: bundles, loose documents, photo asks, marketing
+  // asks, drift. The first four are the reading order an admin wants —
+  // conditions, then the questions in the order the signup panel asks them —
+  // and the fifth is placed by this rule rather than by that one.
   // A later tidy-up that groups the drift rows back with the other required
   // rows, or sorts this list alphabetically, reintroduces the shift silently and
   // will look like an improvement.
@@ -258,9 +273,50 @@ export function ConsentsSection({
           );
         })}
         {looseSlugs.map(documentRow)}
-        {/* The optional asks, after every document this deploy can name and
-            before the drift run below. Same list, same control, same border —
-            the caption under each name is what says a parent may decline these
+        {/* The photo asks, first of the two optional runs and in the order the
+            panel asks them — before the marketing run, after every document
+            this deploy can name, and (like the marketing run) before the drift
+            rows below, which are the only rows here that can arrive late.
+
+            Same control, same border, same caption treatment as the marketing
+            rows: an admin reads one list of everything this product will put in
+            front of a parent, and the caption under each name is what says
+            which of them a parent may decline. */}
+        {ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES.map((type) => {
+          const checked = state.gamerPhotoConsentTypes.has(type);
+          const { sentenceKey } = GAMER_PHOTO_CONSENT_ASKS[type];
+          return (
+            <CheckboxRow
+              key={type}
+              checked={checked}
+              onCheckedChange={() => {
+                const next = new Set(state.gamerPhotoConsentTypes);
+                if (checked) next.delete(type);
+                else next.add(type);
+                setState({ ...state, gamerPhotoConsentTypes: next });
+              }}
+              label={
+                <>
+                  <span className="block truncate font-medium">
+                    {tGamerPhoto(`${sentenceKey}.label`)}
+                  </span>
+                  {/* What ticking this actually does, in one line — and it says
+                      more than the marketing row's caption has to, because this
+                      question is asked per child and re-asked on every
+                      enrolment rather than being one standing answer on an
+                      account. */}
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    {tGamerPhoto(`${sentenceKey}.description`)}
+                  </span>
+                </>
+              }
+            />
+          );
+        })}
+        {/* The marketing asks, after every document this deploy can name and
+            after the photo run above, and before the drift run below. Same
+            list, same control, same border — the caption under each name is
+            what says a parent may decline these
             and cannot decline the rows above. It stays in the ordinary muted
             description styling rather than borrowing the parent-facing rows'
             info tone: this is an admin reading a form they are filling in, not

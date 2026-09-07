@@ -431,7 +431,9 @@
           "regionLock": "Region lock",
           "requiredConsents": "Required consents",
           "requiresGamerCreations": "Gamer creations",
-          "visibility": "Visibility"
+          "visibility": "Visibility",
+          "gamerPhotoConsents": "Photo asks",
+          "marketingConsents": "Marketing asks"
         },
         "copyLink": "Copy public link",
         "copied": "Copied"
@@ -476,7 +478,7 @@
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
         "consents": "Consents",
-        "consentsDescription": "What a parent agrees to, and what they are asked, on the way through signup. Required documents must be accepted before a seat can be taken; marketing questions may be declined.",
+        "consentsDescription": "What a parent agrees to, and what they are asked, on the way through signup. Required documents must be accepted before a seat can be taken; the photo question and the marketing question may both be declined.",
         "visibility": "Listing",
         "visibilityDescription": "Decides where this product is advertised, not who may buy it. Sign-ups are opened and closed by the registration date, the seat limit and the product's status — never by this setting."
       },
@@ -608,10 +610,16 @@
         "version": "Version {version}",
         "noVersion": "No published version",
         "none": "None",
+        "gamerPhoto": {
+          "lynxEducate": {
+            "label": "Photos and videos (Lynx Educate)",
+            "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether photos and videos of their child may be taken and used by School of Gaming, Lynx Educate and Roblox. They may decline, and the seat is unaffected. Asked per child, and re-asked on every enrolment."
+          }
+        },
         "marketing": {
           "lynxEducate": {
             "label": "Lynx Educate",
-            "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether to share their contact details with Lynx Educate. They may decline, and the seat is unaffected."
+            "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether to share their email address with Lynx Educate. They may decline, and the seat is unaffected."
           }
         }
       },
@@ -983,6 +991,15 @@
         "preferences": "Preferences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
+        "granted": "Granted",
+        "notGranted": "Not granted",
+        "since": "since {date}"
+      },
+      "photoConsent": {
+        "title": "Photo consent",
+        "labels": {
+          "lynx_educate": "Lynx Educate"
+        },
         "granted": "Granted",
         "notGranted": "Not granted",
         "since": "since {date}"
@@ -1559,6 +1576,10 @@
       "photosEmpty": "Add a photo to this session.",
       "photosDropHint": "You can also drop photos here.",
       "addPhoto": "Add photo",
+      "photoConsentTitle": "Photo permission",
+      "photoConsentNote": "Ask each gamer before taking their photo, even when their parent has consented. A gamer whose parent has not consented must not be in the photo.",
+      "photoConsentAllowed": "Allowed",
+      "photoConsentNotAllowed": "Not allowed",
       "removePhoto": "Remove photo {index}",
       "photosTrimmed": "A report holds up to {cap} photos, so {count, plural, one {only the first one was} other {only the first # were}} added.",
       "photoErrorDecodeFailed": "That file couldn’t be opened. If it came from an iPhone, save it as a JPEG and try again.",
@@ -1970,6 +1991,7 @@
       "nonCustomerNoteParents": "Only parents can sign up here.",
       "closedNote": "This one’s not open right now. Keep an eye out for the next one.",
       "rules": {
+        "title": "Our rules",
         "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>.",
         "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>, and that repeated unexcused absences may open my child’s seat for the next family on the waitlist.",
         "municipality_club_self": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, as set out in the <policy>Anti-Bullying and Discipline policy</policy>, and that repeated unexcused absences may open my seat for the next family on the waitlist.",
@@ -1980,10 +2002,17 @@
         "heading": "Consent",
         "agree": "I have read and agree to these documents.",
         "bundles": {
-          "robloxProgramme": "I have read and agree to the Creator Academy <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>."
+          "robloxProgramme": "I have read and agree to the Creator Academy <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>.",
+          "robloxProgrammeTitle": "Creator Academy terms and privacy policy"
+        },
+        "gamerPhoto": {
+          "lynxEducate": "Photos and videos of my child may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming’s, Lynx Educate’s and Roblox’s websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>.",
+          "lynxEducateTitle": "Photos and videos of your child",
+          "hint": "Optional — you can change this anytime on your child’s page in My SOG."
         },
         "marketing": {
-          "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers.",
+          "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time.",
+          "lynxEducateTitle": "News from Lynx Educate",
           "hint": "Optional — you can change this anytime in your settings."
         }
       },
@@ -2222,7 +2251,7 @@
         },
         "media": {
           "question": "Will my child be photographed or filmed?",
-          "answer": "<p>Sessions may be photographed for internal records. Whether footage is used externally in marketing is entirely your choice at registration, and you can change it anytime.</p>"
+          "answer": "<p>Sessions may be photographed. Your child appears in a photograph only if you tick the optional media choice when you enrol them, and you can change that answer at any time on your child’s page in My SOG.</p>"
         },
         "facilitators": {
           "question": "Who runs the sessions, and how are they vetted?",
@@ -2266,8 +2295,7 @@
         "The following choices are optional and will not affect your child’s place:",
         [
           "Emails to the parent from Lynx Educate about future Roblox events and gaming resources.",
-          "Photography or filming for private Programme reporting to Roblox.",
-          "Public use of photographs or footage by Lynx Educate, School of Gaming and Roblox."
+          "Photographs and video of the child, used in session reports, in impact reporting to Lynx Educate and Roblox, and publicly by Lynx Educate, School of Gaming and Roblox."
         ],
         "Routine online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
         "Lynx Educate and School of Gaming do not sell Programme registration information or use it to advertise to children.",
@@ -2430,7 +2458,7 @@
       "useMedia": {
         "heading": "Optional photography and filming",
         "blocks": [
-          "Photography, filming and public communications are based on separate, optional permissions. Declining either media option will not affect registration or participation.",
+          "Photography, filming and public communications are based on one optional permission, given for each child. Declining it will not affect registration or participation.",
           "Consent is not the legal basis for the core registration, delivery or safeguarding activities described above."
         ]
       },
@@ -2468,40 +2496,33 @@
         "heading": "Photography, filming and public use",
         "blocks": [
           "Routine online sessions are not recorded. Where photography or filming is planned for a selected session or event, families will be told in advance.",
-          "There are two separate optional choices."
+          "There is one optional media choice per child. It is made when the child is enrolled in a Creator Academy activity, and it can be changed at any time on the child’s page in My SOG."
         ]
       },
-      "mediaSponsor": {
-        "heading": "Private sponsor reporting",
+      "mediaChoice": {
+        "heading": "What the media choice covers",
         "blocks": [
-          "The first media choice permits the child to be photographed or filmed for private Programme reporting to Roblox as Programme sponsor. This may include internal impact reports, delivery updates or sponsor presentations.",
-          "This permission does not permit publication on websites, social media or in the press."
-        ]
-      },
-      "mediaPublic": {
-        "heading": "Public impact communications",
-        "blocks": [
-          "The second media choice permits Lynx Educate, School of Gaming and Roblox to use photographs or footage publicly to show the impact of the Programme, including on:",
+          "One optional checkbox covers every use of a child’s photograph or footage. Where it is ticked, photographs and video of the child may be:",
           [
-            "Their websites.",
-            "Their social-media channels.",
-            "Press and public-relations materials.",
-            "Programme and impact communications."
+            "Included in session reports, which every family in the child’s group sees on the group’s page and receives by email.",
+            "Shared with Lynx Educate and Roblox for impact reporting, including internal impact reports, delivery updates and sponsor presentations.",
+            "Used publicly by Lynx Educate, School of Gaming and Roblox on their websites and social-media channels."
           ],
-          "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control."
+          "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control.",
+          "Where the box is not ticked, the child is kept out of session photographs and footage entirely. Nothing identifying them is placed in a session report, shared with Lynx Educate or Roblox, or used publicly."
         ]
       },
       "mediaChildAgrees": {
         "heading": "The child must also agree",
         "blocks": [
           "The parent should discuss the media choice with the child before selecting it. We will also explain the photography or filming to the child in an age-appropriate way.",
-          "We will not deliberately photograph or film a child who objects, even where a parent previously selected a media checkbox. Staff will use reasonable practical measures to keep children without permission out of identifiable footage."
+          "A Game Educator asks the child before taking a photograph, even where the parent has ticked the box, and will not deliberately photograph or film a child who objects. A child whose parent has not ticked the box is kept out of session photographs and identifiable footage."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Case studies, names and participant-created content",
         "blocks": [
-          "The two registration media boxes cover photographs and footage only.",
+          "The media checkbox covers photographs and footage only.",
           "A separate written release will be obtained before using:",
           [
             "A child’s full name.",
@@ -2517,7 +2538,7 @@
       "mediaChanging": {
         "heading": "Changing a media choice",
         "blocks": [
-          "A parent or child may withdraw a media permission by contacting us or using the available Sogverse setting.",
+          "A parent can change the media choice at any time on their child’s page in My SOG, or by contacting us. A child may also ask us to withdraw it.",
           "After withdrawal, we will stop new uses and remove material from channels we control where reasonably possible. Withdrawal cannot make earlier lawful use unlawful, undo printed materials already distributed, or guarantee deletion of copies already shared by third parties."
         ]
       },
@@ -2705,7 +2726,7 @@
       "data": {
         "heading": "Data and photos",
         "blocks": [
-          "Any photography, filming, or use of a child’s image is governed by the consent choices set out in the <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> — never assumed, always optional, always changeable."
+          "A child appears in a photograph only where their parent has ticked the optional media consent for that child when enrolling them. The parent can change that answer at any time on the child’s page in My SOG, and a Game Educator asks the child before taking a photograph even where the parent has consented. The <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> sets out what the consent covers."
         ]
       },
       "review": {
@@ -2772,7 +2793,7 @@
       "media": {
         "heading": "Photos, video, and marketing",
         "blocks": [
-          "Whether your child is photographed or filmed, and whether that’s used for marketing, depends entirely on the choices you make at registration. These are optional and you can change your mind at any time in your Sogverse profile settings."
+          "Whether your child appears in photographs or video is a single optional choice, made when you enrol them in a Creator Academy activity. You can change it at any time on your child’s page in My SOG. A child without that permission is kept out of session photographs entirely."
         ]
       },
       "concern": {
@@ -2875,6 +2896,18 @@
       }
     },
     "gamerDetail": {
+      "photoConsent": {
+        "title": "Photos and videos",
+        "description": "For clubs, camps and events run in partnership with Lynx Educate, in collaboration with Roblox.",
+        "sentence": {
+          "lynxEducate": "Photos and videos of {name} may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming’s, Lynx Educate’s and Roblox’s websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>."
+        },
+        "sentenceTitle": {
+          "lynxEducate": "Photos and videos of {name}"
+        },
+        "hint": "You are asked this again every time you enrol {name} in one of these; your latest answer is what counts.",
+        "saveFailed": "That answer was not saved. Check your connection and try again."
+      },
       "backToMySog": "Back to My SOG",
       "title": "Gamer settings",
       "subtitle": "Manage settings for {name}",
@@ -2985,10 +3018,15 @@
     "marketing": {
       "title": "Marketing preferences",
       "schoolOfGaming": "School of Gaming may send me news and offers by email.",
-      "lynxEducate": "Share my contact details with our trusted partner <link>Lynx Educate</link> so they can send me news and offers."
+      "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time."
     },
     "usernameLabel": "Username",
-    "gamerPasswordFromParent": "Your parent can set a new password for you from their My SOG."
+    "gamerPasswordFromParent": "Your parent can set a new password for you from their My SOG.",
+    "photoConsent": {
+      "title": "Photos and videos",
+      "granted": "Your parent has said photos and videos of you may be included in session reports and used by School of Gaming, Lynx Educate and Roblox. A Gedu will still ask you before taking your photo.",
+      "notGranted": "Your parent has said photos and videos of you are not to be used, so a Gedu will keep you out of session photos. Only your parent can change this."
+    }
   },
   "tools": {
     "uncertified": {

@@ -140,6 +140,22 @@ interface SessionFeedProps {
   ) => Promise<string>;
   /** Remove one photo, by its stored id. @see onAddPhoto */
   onRemovePhoto: (imageId: string) => Promise<void>;
+  /**
+   * Who on the roster may be photographed, keyed by roster id — or `null` on a
+   * product that does not ask the photo consent, which is every product but the
+   * one delivered with Lynx Educate and where every editor's photo block is
+   * exactly what it was before the consent existed.
+   *
+   * **A missing id is a refusal, never a pending answer.** The caller resolves
+   * the stored rows into this map and a gamer with nothing on file is left out
+   * of it, which every reader renders as "not allowed" — the feature's central
+   * decision, and the reason the map may be handed over the moment the roster
+   * is known rather than waited for.
+   *
+   * It is the caller's for the same reason the creations obligation is: it
+   * needs the *product's* ask set, which a feed does not carry.
+   */
+  photoConsents?: ReadonlyMap<string, boolean> | null;
   className?: string;
 }
 
@@ -229,6 +245,7 @@ export function SessionFeed({
   onSendReport,
   onAddPhoto,
   onRemovePhoto,
+  photoConsents = null,
   className,
 }: SessionFeedProps) {
   const t = useTranslations("gedu.sessionFeed");
@@ -769,6 +786,7 @@ export function SessionFeed({
               onStageRemoval: (imageId) => stageRemoval(entry.id, imageId),
               onError: setPhotoError,
             }}
+            photoConsents={photoConsents}
             creations={creationsFor(entry)}
             registerEditButton={(node) => {
               if (node === null) editButtons.current.delete(entry.id);

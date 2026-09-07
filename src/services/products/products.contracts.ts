@@ -196,6 +196,16 @@ const productDataBase = z.object({
   marketing_consent_types: z.array(
     z.enum(Constants.public.Enums.marketing_consent_type),
   ),
+  // The photo consents the signup panel ASKS about — never requires. The
+  // marketing field's twin one line up, with the subject changed from a
+  // parent's mailbox to a child's image, and every reason above holds
+  // unchanged: required and never optional, because the writer behind it
+  // replaces the whole ask set on every call; a plain array, because the empty
+  // one already says "asks nothing"; and narrowed here rather than at a foreign
+  // key, because the values are a Postgres ENUM that codegen hands us.
+  gamer_photo_consent_types: z.array(
+    z.enum(Constants.public.Enums.gamer_photo_consent_type),
+  ),
   // Per-session operating fees, a single EUR amount in integer cents. State is
   // derived from the value (the form enforces it): null = unknown/none,
   // 0 = volunteer (free), > 0 = a real fee. Gedu fees are int >= 0 here; the

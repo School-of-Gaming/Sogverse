@@ -147,6 +147,40 @@ describe("CheckboxRow", () => {
     ).toBeNull();
   });
 
+  it("puts the title on the box's line and the sentence on its own, full width", () => {
+    // **The composition, asserted structurally rather than by class string.**
+    // What makes this shape worth having is that the sentence does NOT sit in
+    // the box's column: a paragraph indented under a 16px glyph runs a narrower
+    // measure than everything else on the surface, which at 360px in the widest
+    // locale costs a wrapped word per line. The checkable form of that claim is
+    // that the element holding the box does not hold the sentence — the two are
+    // siblings, so the sentence gets the row's whole width.
+    render(
+      <CheckboxRow
+        checked={false}
+        onCheckedChange={() => undefined}
+        title="Photos and videos of your child"
+        label="Photos and videos of my child may be used in session reports."
+        hint="Optional — you can change this anytime."
+      />,
+    );
+
+    const box = screen.getByRole("checkbox");
+    const titleLine = box.closest("span")?.parentElement;
+    if (!titleLine) throw new Error("the box rendered outside any line");
+    expect(titleLine.textContent).toBe("Photos and videos of your child");
+
+    // The title names the box; the sentence and the hint describe it, in that
+    // order. Without the swap a screen reader would open on three lines of
+    // conditions the listener cannot skip to find out what the box is about.
+    expect(textOfReferenced(box, "aria-labelledby")).toBe(
+      "Photos and videos of your child",
+    );
+    expect(textOfReferenced(box, "aria-describedby")).toBe(
+      "Photos and videos of my child may be used in session reports. Optional — you can change this anytime.",
+    );
+  });
+
   it("gives two rows on one surface their own hint ids", () => {
     render(
       <>

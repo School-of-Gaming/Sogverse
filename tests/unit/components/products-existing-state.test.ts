@@ -80,6 +80,9 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     // one. Populated here rather than left empty because the seeding of the
     // *optional* picker is the half with a filter in it — see the tests below.
     product_marketing_consents: [{ consent_type: "lynx_educate" }],
+    // The other optional ask set, populated for the same reason: its seeding
+    // filters the same way the marketing one's does.
+    product_gamer_photo_consents: [{ consent_type: "lynx_educate" }],
   };
 }
 

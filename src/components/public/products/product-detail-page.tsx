@@ -340,6 +340,11 @@ export function ProductDetailPage({
           marketingConsentTypes={product.product_marketing_consents.map(
             (consent) => consent.consent_type,
           )}
+          // The third embed on the same read, same reasoning again: what a
+          // product asks about a child's photograph is not on the browse row.
+          gamerPhotoConsentTypes={product.product_gamer_photo_consents.map(
+            (consent) => consent.consent_type,
+          )}
           state={state}
           authState={authState}
           regionGate={regionGate}

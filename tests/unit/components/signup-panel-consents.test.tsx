@@ -6,7 +6,10 @@ import {
   type SignupPanelViewProps,
   type SignupParticipantChoice,
 } from "@/components/public/products/signup-panel-view";
-import type { MarketingConsentType } from "@/types";
+import type {
+  GamerPhotoConsentType,
+  MarketingConsentType,
+} from "@/types";
 import { ROUTES } from "@/lib/constants";
 
 /**
@@ -110,6 +113,12 @@ function panel(
     marketingConsentTypes: [],
     marketingConsents: new Set<MarketingConsentType>(),
     onMarketingConsentChange: () => {},
+    // No optional photo ask either, and offered as false: the block is absent
+    // both when the product asks nothing and when the seat is the parent's own.
+    gamerPhotoConsentTypes: [],
+    gamerPhotoConsentsOffered: false,
+    gamerPhotoConsents: new Set<GamerPhotoConsentType>(),
+    onGamerPhotoConsentChange: () => {},
     onSubmit: () => {},
     onJoinWaitlist: () => {},
     currency: "eur",
@@ -193,6 +202,32 @@ describe("a bundle of documents", () => {
     // a generic one with a list bolted above it.
     expect(container.textContent).toContain("robloxProgramme");
     expect(container.textContent).not.toContain("consents.agree");
+  });
+
+  it("names the bundle on the tick's line and puts the sentence below it", () => {
+    const { container } = render(<SignupPanelView {...bundled()} />);
+
+    const row = rows(container)[0];
+    const box = row.querySelector<HTMLInputElement>('input[type="checkbox"]');
+    if (!box) throw new Error("the bundle row rendered no checkbox");
+    const tickLine = box.closest("span")?.parentElement;
+    if (!tickLine) throw new Error("the box rendered outside any line");
+
+    // The short name shares the tick's line; the sentence — three lines of
+    // conditions naming two documents — runs the row's full width beneath it
+    // rather than in the box's column, which is what keeps the measure the
+    // same as everything else in a 20rem rail. Asserted as "the sentence and
+    // its links are outside the tick's line but inside the row", because that
+    // is the structural fact the layout depends on.
+    expect(tickLine.textContent).toBe("robloxProgrammeTitle");
+    expect(links(tickLine)).toHaveLength(0);
+
+    const sentence = tickLine.nextElementSibling;
+    if (!(sentence instanceof HTMLElement)) {
+      throw new Error("the row rendered no sentence beneath its tick line");
+    }
+    expect(sentence.textContent).toContain("robloxProgramme");
+    expect(links(sentence)).toHaveLength(2);
   });
 
   it("points each link at its own document, in a new tab", () => {

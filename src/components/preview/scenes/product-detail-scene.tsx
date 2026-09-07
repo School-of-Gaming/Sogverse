@@ -9,9 +9,9 @@ import {
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { resolveRegionGate } from "@/components/public/products/region-lock/region-gate";
-import type { RegionLockScenarioMeta } from "@/components/public/products/region-lock/region-lock-scenarios";
+import type { ProductRegionLock } from "@/components/public/products/region-lock/region-lock-scenarios";
 import type { ConfirmedHomeLocation } from "@/components/public/products/signup-panel-view";
-import type { MarketingConsentType } from "@/types";
+import type { GamerPhotoConsentType, MarketingConsentType } from "@/types";
 import { previewSceneHref } from "../href";
 
 /**
@@ -42,9 +42,16 @@ export function ProductDetailScene({
   regionLock,
   requiredConsentSlugs,
   marketingConsentTypes,
+  gamerPhotoConsentTypes,
 }: {
   scenario: PreviewScenario;
-  regionLock?: RegionLockScenarioMeta;
+  /**
+   * The product's lock and the viewer it is read against. The three region-lock
+   * scenarios are what it is *for*, but it is not theirs alone: any scenario can
+   * be about something else and still be locked — the Creator Academy consent
+   * scenario is — so this takes the lock's own shape rather than a scenario's.
+   */
+  regionLock?: ProductRegionLock;
   /**
    * The enrolment conditions this scenario's product requires. Absent on every
    * ordinary scenario, which is what the live page looks like for nearly every
@@ -58,6 +65,13 @@ export function ProductDetailScene({
    * because a panel is judged with its conditions and its asks side by side.
    */
   marketingConsentTypes?: readonly MarketingConsentType[];
+  /**
+   * The optional photo permission the same scenario asks for, standing in for
+   * the `product_gamer_photo_consents` embed — the third of the three things a
+   * signup panel puts in front of a parent, and set by the same scenario
+   * because the panel is judged with all three side by side.
+   */
+  gamerPhotoConsentTypes?: readonly GamerPhotoConsentType[];
 }) {
   // A place confirmed in the panel's dialog, held exactly where the live
   // route's data shell holds it — so the pick outranks the scenario's seeded
@@ -87,6 +101,7 @@ export function ProductDetailScene({
           product={product}
           requiredConsentSlugs={requiredConsentSlugs}
           marketingConsentTypes={marketingConsentTypes}
+          gamerPhotoConsentTypes={gamerPhotoConsentTypes}
           state={fixture.state}
           authState={fixture.authState}
           summaryHref={summaryHref}

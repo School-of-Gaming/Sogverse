@@ -19,6 +19,10 @@ import {
   ATTACHABLE_MARKETING_CONSENT_TYPES,
   isAttachableMarketingConsent,
 } from "@/lib/constants/marketing-consents";
+import {
+  ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES,
+  isAttachableGamerPhotoConsent,
+} from "@/lib/constants/gamer-photo-consents";
 import { isSupportedCountry } from "@/lib/constants/location-hierarchies";
 import {
   isSupportedLocale,
@@ -611,6 +615,12 @@ function buildSharedFields(
     marketing_consent_types: ATTACHABLE_MARKETING_CONSENT_TYPES.filter((type) =>
       state.marketingConsentTypes.has(type),
     ),
+    // The optional photo asks, on the same terms as the marketing asks above
+    // and for the same reasons: on every save including the empty array, and in
+    // registry order rather than the Set's insertion order.
+    gamer_photo_consent_types: ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES.filter(
+      (type) => state.gamerPhotoConsentTypes.has(type),
+    ),
     primary_gedu_fee_cents: feeDraftToCents(
       state.primaryGeduFee.status,
       state.primaryGeduFee.amount,
@@ -913,6 +923,15 @@ export function existingFormState(
       product.product_marketing_consents
         .map((c) => c.consent_type)
         .filter((type) => isAttachableMarketingConsent(type)),
+    ),
+    // Its twin's twin: straight through from its own join table, dropping a
+    // stored type this deploy cannot offer for exactly the reason above — a
+    // photo ask carries no legal condition to protect, and keeping one the form
+    // cannot show would leave a checkbox state nobody can see or clear.
+    gamerPhotoConsentTypes: new Set(
+      product.product_gamer_photo_consents
+        .map((c) => c.consent_type)
+        .filter((type) => isAttachableGamerPhotoConsent(type)),
     ),
     signupThreshold:
       product.signup_threshold != null ? String(product.signup_threshold) : "",

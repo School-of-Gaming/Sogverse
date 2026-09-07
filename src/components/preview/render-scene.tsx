@@ -19,7 +19,7 @@ import {
   REGION_LOCK_BASE_SCENARIO,
   findRegionLockScenario,
 } from "@/components/public/products/region-lock/region-lock-scenarios";
-import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
+import { findConsentScenario } from "@/components/public/products/required-consents-scenario";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
 import { ChatScene } from "./scenes/chat-scene";
@@ -74,17 +74,23 @@ const SCENE_RENDERERS: Record<
       );
     }
     // Same page again, on a product that asks a parent for something extra —
-    // conditions it must agree to, and a partner's mailing list it may decline.
-    // Like the region-lock trio it shares the surface but not the fixtures: one
-    // club fixture, with the two ask sets as the only things that vary.
-    if (scenario === REQUIRED_CONSENTS_SCENARIO.slug) {
+    // conditions it must agree to, a photo permission for their child and a
+    // partner's mailing list, both of which it may decline. Like the region-lock
+    // trio it shares the surface but not the fixtures: one club fixture, with
+    // the three ask sets as the only things that vary.
+    // One of them carries a lock as well, because the product the photo consent
+    // actually ships on is region-locked and free — so the lock rides on the
+    // scenario rather than making it a region scenario, which would be a claim
+    // about what the page is for.
+    const consents = findConsentScenario(scenario);
+    if (consents) {
       return (
         <ProductDetailScene
-          scenario={REQUIRED_CONSENTS_SCENARIO.baseScenario}
-          requiredConsentSlugs={REQUIRED_CONSENTS_SCENARIO.documentSlugs}
-          marketingConsentTypes={
-            REQUIRED_CONSENTS_SCENARIO.marketingConsentTypes
-          }
+          scenario={consents.baseScenario}
+          regionLock={consents.regionLock}
+          requiredConsentSlugs={consents.documentSlugs}
+          marketingConsentTypes={consents.marketingConsentTypes}
+          gamerPhotoConsentTypes={consents.gamerPhotoConsentTypes}
         />
       );
     }

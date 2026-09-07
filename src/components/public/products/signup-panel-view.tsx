@@ -21,7 +21,15 @@ import {
   describeMarketingConsents,
   type MarketingConsentAskRow,
 } from "@/lib/constants/marketing-consents";
-import type { MarketingConsentType, ProductType } from "@/types";
+import {
+  describeGamerPhotoConsents,
+  type GamerPhotoConsentAskRow,
+} from "@/lib/constants/gamer-photo-consents";
+import type {
+  GamerPhotoConsentType,
+  MarketingConsentType,
+  ProductType,
+} from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import { CountdownClock, useCountdownDone } from "./countdown-clock";
 import type { RegistrationState } from "./derive-registration-state";
@@ -241,17 +249,45 @@ export interface SignupPanelViewProps {
    */
   marketingConsentTypes: readonly MarketingConsentType[];
   /**
-   * Which of those the reader has ticked, seeded from their account's own
-   * stored answer and overlaid with anything they change here.
+   * Which of those the reader has ticked here — never a seed, and never a value
+   * that arrives after first paint.
    *
-   * The one thing on the panel whose value may legitimately change after first
-   * paint on data's own schedule — the account read lands a round trip late —
-   * and it is allowed to because only the *tick* moves. The box, its sentence
-   * and its hint are all on screen from the first frame, so nothing shifts.
+   * The panel used to seed these from the parent's account, which made this the
+   * one value on screen allowed to change on data's own schedule. It does not
+   * any more: every optional box on this panel starts unticked on every
+   * enrolment, so the only thing that ever moves a tick is a click.
    */
   marketingConsents: ReadonlySet<MarketingConsentType>;
   onMarketingConsentChange: (
     consentType: MarketingConsentType,
+    granted: boolean,
+  ) => void;
+  /**
+   * **The product's optional photo asks**, as stored — whether photos and
+   * videos of the child taking this seat may be taken and used. Empty on nearly
+   * every product, and the block ceases to exist when it is.
+   *
+   * Rides in on the product read like the two sets above, and like the
+   * marketing asks it NEVER gates the CTA: declining is a complete answer and
+   * the seat is unaffected.
+   */
+  gamerPhotoConsentTypes: readonly GamerPhotoConsentType[];
+  /**
+   * Whether to ask them at all — false when the parent has picked their own
+   * seat on a product whose audience admits adults, because a consent about a
+   * gamer's image cannot be given about the adult giving it.
+   *
+   * Decided by the hook rather than re-derived here, deliberately: the same
+   * answer decides which boxes are drawn and which answers are written at the
+   * click, and two derivations of it could disagree about the participant.
+   * (The required rows above go the other way for the opposite reason — those
+   * gate the button, so the rows on screen must be what the gate counts.)
+   */
+  gamerPhotoConsentsOffered: boolean;
+  /** Which photo boxes are ticked, for the currently selected child. */
+  gamerPhotoConsents: ReadonlySet<GamerPhotoConsentType>;
+  onGamerPhotoConsentChange: (
+    consentType: GamerPhotoConsentType,
     granted: boolean,
   ) => void;
   onSubmit: () => void;
@@ -504,13 +540,14 @@ interface FormOrAuthProps extends SignupPanelViewProps {
 // to agree to becomes another row in this section, above the rules row; it does
 // not become a section of its own.
 //
-// **One consent row carries a marker, and it is the one that does NOT gate the
-// button.** The optional marketing row below the section is the same bordered
-// control as the gates above it — the border draws the click target, not the
-// stakes — so its info-toned hint sentence, which opens with the word
-// "Optional", is what a reader (and, through `aria-describedby`, a screen
-// reader) tells them apart by. Every gate is unmarked, because a gate is the
-// ordinary thing to find here.
+// **The consent rows that carry a marker are the ones that do NOT gate the
+// button.** The optional rows below the section — a photo permission for the
+// selected child, a partner's mailing list — are the same bordered control as
+// the gates above them (the border draws the click target, not the stakes), so
+// each one's info-toned hint sentence, which opens with the word "Optional", is
+// what a reader (and, through `aria-describedby`, a screen reader) tells them
+// apart by. Every gate is unmarked, because a gate is the ordinary thing to
+// find here.
 //
 // **Actions live in the sections, never in the CTA.** A section that needs
 // something offers its own affordance: the dashed add-a-gamer row inside the
@@ -1070,13 +1107,30 @@ function SignupForm(
         onRulesAgreedChange={props.onAgreedChange}
       />
 
-      {/* Below the conditions and above the button: the last thing on the panel
-          before the CTA, and deliberately NOT a row inside the section above.
-          See the component's own note — the section above is one act the button
-          names, and this question does not gate it. What tells the two apart is
-          its own info-toned hint sentence, not the treatment of the box. Its
-          existence comes off the product read, so it is here or absent from the
-          first paint; only its tick arrives late. */}
+      {/* Below the conditions and above the button: the optional questions, in
+          the order the product asks them — the child's photo permission, then
+          the partner's mailing list — and deliberately NOT rows inside the
+          section above. See the sections' own notes: the section above is one
+          act the button names, and neither of these gates it. What tells them
+          apart from a gate is each one's info-toned hint sentence, not the
+          treatment of the box.
+
+          Their *existence* comes off the product read, so a product that asks
+          nothing has nothing here from the first paint. The photo block is the
+          one thing on the panel that can appear or vanish afterwards, and only
+          when the parent picks a different participant — a change they made, in
+          the surface they touched, which is exactly the reflow the layout rule
+          permits. */}
+      <OptionalGamerPhotoSection
+        rows={
+          props.gamerPhotoConsentsOffered
+            ? describeGamerPhotoConsents(props.gamerPhotoConsentTypes)
+            : []
+        }
+        granted={props.gamerPhotoConsents}
+        onGrantedChange={props.onGamerPhotoConsentChange}
+      />
+
       <OptionalMarketingSection
         rows={describeMarketingConsents(props.marketingConsentTypes)}
         granted={props.marketingConsents}
@@ -1115,19 +1169,28 @@ function SignupForm(
  *
  * **The heading says "Consent" and not "Required consent", because the rows
  * below it are no longer the only consent rows on the panel.** The optional
- * marketing row sits just outside this section wearing the same border, so a
- * heading claiming "required" would be the only thing separating them and it
- * would sit above one of the two rather than on either. The distinction lives on
- * the rows instead — and on exactly one of them: the optional row carries the
- * word, every gate carries nothing.
+ * rows sit just outside this section wearing the same border, so a heading
+ * claiming "required" would be the only thing separating them and it would sit
+ * above some of them rather than on any. The distinction lives on the rows
+ * instead — and on exactly the optional ones: they carry the word, every gate
+ * carries nothing.
  *
- * **The rules row carries no heading of its own.** It used to be its own titled
- * section, and beside a second titled section of identically-shaped boxes that
- * title stopped meaning anything: two headings, two boxes, one act. What the
- * heading was doing — giving the CTA's prompt a visible referent — is now done
- * by the section's own, so the row is left to be a sentence and a checkbox. Like
- * every gate here it carries no marker: it sits in the same stack, under the
- * same heading, at the same spacing, and it gates the CTA exactly as they do.
+ * **Every agreement row leads with a title, the rules row included.** A title is
+ * the handle a parent scanning the section reads before deciding whether to
+ * read three lines of conditions, and a row without one in a column of rows
+ * with one does not read as simpler — it reads as the odd row out, which is the
+ * one thing this section must never make a gate look like. So the rules row
+ * takes the same composition as a bundle's: the name on the tick's own line,
+ * the sentence full width beneath it.
+ *
+ * The rules used to be their own *titled section*, and that heading went
+ * because beside a second titled section of identically-shaped boxes it had
+ * stopped meaning anything: two headings, two boxes, one act. Its words come
+ * back here as a row title rather than as a heading — one line naming what the
+ * box is about, inside the box, rather than a second section division above it.
+ * Like every gate here the row still carries no *marker*: it sits in the same
+ * stack, under the same heading, at the same spacing, and it gates the CTA
+ * exactly as the rest do.
  *
  * **And its sentence names its own document, exactly as a bundle's does.** The
  * rules row is a consent to our Anti-Bullying and Discipline policy, so the
@@ -1250,19 +1313,13 @@ function RequiredConsentSection({
             key={row.key}
             agreed={agreements.has(row.key)}
             onAgreedChange={(next) => onAgreementChange(row.key, next)}
-            sentence={
-              <>
-                {/* The raw slug at the head of the sentence rather than in a
-                    slot of its own: it is part of what this row is asking, and
-                    a row that names a document has to name it where the reader
-                    is already looking. Never an anchor with nowhere to go — an
-                    empty href resolves to the page the reader is already on. */}
-                <span className="mb-2 block font-medium text-foreground">
-                  {row.slug}
-                </span>
-                {t("consents.agree")}
-              </>
-            }
+            // The raw slug as the row's title, which is the same position a
+            // bundle's name takes — a drift row is a document this deploy
+            // cannot name, and the one thing it can still say is which
+            // document. Never an anchor with nowhere to go: an empty href
+            // resolves to the page the reader is already on.
+            title={row.slug}
+            sentence={t("consents.agree")}
           />
         ),
       )}
@@ -1272,8 +1329,81 @@ function RequiredConsentSection({
       <ConsentRow
         agreed={rulesAgreed}
         onAgreedChange={onRulesAgreedChange}
+        // One title across all five variants. The municipality ones add a
+        // clause about a seat lost to unexcused absence, which is a rule of the
+        // club exactly as the conduct policy is — so the handle is the same
+        // handle, and a title that varied by product type would invite a reader
+        // to look for a difference the row does not have.
+        title={tRules("title")}
         sentence={ruleText}
       />
+    </div>
+  );
+}
+
+/**
+ * **May we photograph this child?** — the product's optional photo ask, above
+ * the marketing ask and below everything that gates the button.
+ *
+ * The marketing section's twin in every respect a reader can see: the same
+ * bordered `CheckboxRow` at the same size, the same info-toned hint under the
+ * sentence opening with the word "Optional", the same new-tab link inside the
+ * sentence, and the same complete indifference to the CTA. A parent must not be
+ * able to tell a question they may decline from another question they may
+ * decline, and these two are the same kind of thing.
+ *
+ * What it does not share is who the answer is about. A marketing answer is one
+ * standing state on the answering adult's account; this one is about a
+ * particular child's image, is stored against that child, and is asked again on
+ * every enrolment. Two consequences the reader meets: the sentence is written
+ * about "my child" rather than about the reader, and the hint points at the
+ * child's page in My SOG rather than at the reader's own settings.
+ *
+ * The link goes to the policy that explains what a tick permits — not to the
+ * partner's own site, which is what the marketing sentence links and for a
+ * different question ("who am I handing my address to"). New tab, because the
+ * panel behind it is holding a chosen child and a half-answered form that has
+ * to survive the reading.
+ *
+ * Renders nothing when there is nothing to ask: a product that attaches no
+ * photo consent, or a seat the parent is taking themselves — the caller decides
+ * the second, so this component only ever sees rows it should draw.
+ */
+function OptionalGamerPhotoSection({
+  rows,
+  granted,
+  onGrantedChange,
+}: {
+  rows: readonly GamerPhotoConsentAskRow[];
+  granted: ReadonlySet<GamerPhotoConsentType>;
+  onGrantedChange: (consentType: GamerPhotoConsentType, next: boolean) => void;
+}) {
+  const t = useTranslations("productDetail.signupPanel.consents.gamerPhoto");
+  if (rows.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      {rows.map(({ type, ask }) => (
+        <CheckboxRow
+          key={type}
+          size="xs"
+          checked={granted.has(type)}
+          onCheckedChange={(next) => onGrantedChange(type, next)}
+          title={t(`${ask.sentenceKey}Title`)}
+          label={
+            <span className="text-muted-foreground">
+              {t.rich(ask.sentenceKey, {
+                privacy: (chunks) => (
+                  <ConsentSentenceLink href={ask.href}>
+                    {chunks}
+                  </ConsentSentenceLink>
+                ),
+              })}
+            </span>
+          }
+          hint={t("hint")}
+          hintTone="info"
+        />
+      ))}
     </div>
   );
 }
@@ -1345,6 +1475,7 @@ function OptionalMarketingSection({
           size="xs"
           checked={granted.has(type)}
           onCheckedChange={(next) => onGrantedChange(type, next)}
+          title={t(`${ask.sentenceKey}Title`)}
           label={
             <span className="text-muted-foreground">
               {t.rich(ask.sentenceKey, {
@@ -1404,6 +1535,12 @@ function BundleConsentRow({
     <ConsentRow
       agreed={agreed}
       onAgreedChange={onAgreedChange}
+      // What the bundle IS, on the tick's own line, with the sentence that
+      // consents to it beneath. The documents' own names stay inside the
+      // sentence, where they are links; the title is the handle a parent
+      // scanning the section reads before deciding to read three lines of
+      // conditions.
+      title={t(`${bundle.sentenceKey}Title`)}
       sentence={t.rich(bundle.sentenceKey, tags)}
     />
   );
@@ -1462,10 +1599,21 @@ function ConsentSentenceLink({
 function ConsentRow({
   agreed,
   onAgreedChange,
+  title,
   sentence,
 }: {
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
+  /**
+   * The short name of the thing being agreed to. Required, because a titled row
+   * beside an untitled one reads as a difference between the two gates rather
+   * than as a shorter sentence — and the type is the only thing that can stop a
+   * later row from being added without one. `CheckboxRow` still supports the
+   * untitled arrangement; what is settled here is that this section never mixes
+   * the two. Every caller has a name to give: a bundle its own, the rules row
+   * its own, a drift row the raw slug it cannot name any better.
+   */
+  title: React.ReactNode;
   sentence: React.ReactNode;
 }) {
   return (
@@ -1473,6 +1621,7 @@ function ConsentRow({
       size="xs"
       checked={agreed}
       onCheckedChange={onAgreedChange}
+      title={title}
       label={<span className="text-muted-foreground">{sentence}</span>}
     />
   );
