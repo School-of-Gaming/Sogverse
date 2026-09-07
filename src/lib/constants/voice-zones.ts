@@ -199,6 +199,13 @@ export interface ZoneColorClasses {
   solid: string;
 }
 
+/** What a zone is *drawn* with, which is every class above except the fill.
+ *  The fill is the picker's swatch and nothing else reads it, so it belongs to
+ *  the sixteen picks a moderator chooses between and not to a zone: a virtual
+ *  zone has no swatch to appear in, and a field nothing can read is a value
+ *  somebody has to keep correct for no reader. */
+export type ZoneRenderClasses = Omit<ZoneColorClasses, "solid">;
+
 /**
  * A custom-zone colour key: the id of one of @sog/ui's sixteen picks, spelled
  * as text.
@@ -312,12 +319,22 @@ export interface VirtualZonePresentation {
   /** Full dotted message key, resolved with the root `useTranslations()`. */
   nameKey: string;
   icon: LucideIcon;
-  color: ZoneColorClasses;
+  color: ZoneRenderClasses;
 }
 
-/** Lobby / Clubhouse — the default "home" zone. A neutral white-ish identity
- *  (the theme `foreground`, near-white on our dark ground) so it reads as the
- *  calm home base and stays distinct from all 16 colorful custom zones. */
+/** Lobby / Clubhouse — the default "home" zone, and the one place in this app
+ *  that draws the ink as an **edge**.
+ *
+ *  @sog/ui bans `foreground` as a fill and as an edge, with a single exception
+ *  for the one thing whose identity is the white itself (`brand.ts`, on the
+ *  `foreground` token) — and this is that thing. The lobby is the single
+ *  neutral place among sixteen coloured zones, it has to read as the default a
+ *  person is in unless they chose otherwise, and the white it is marked with is
+ *  the speaking glow's own rather than a hue borrowed from the palette. So its
+ *  tile is the lifted grey every glyph tile sits on with its edge in the ink,
+ *  which is the same shape a custom zone takes with its pick: the lobby stays a
+ *  member of the set rather than a different kind of thing. This comment is the
+ *  declaration beside the value that the rule asks a consumer for. */
 export const LOBBY_PRESENTATION: VirtualZonePresentation = {
   id: LOBBY_ZONE_ID,
   nameKey: "voice.zoneLobby",
@@ -327,7 +344,6 @@ export const LOBBY_PRESENTATION: VirtualZonePresentation = {
     edge: "border-foreground",
     ring: "ring-foreground",
     glow: "zone-glow [--glow-color:var(--color-foreground)]",
-    solid: "bg-foreground",
   },
 };
 
@@ -339,16 +355,6 @@ const YTY_ZONE_GLOW: Record<YtyElementId, string> = {
   glow: "zone-glow [--glow-color:var(--color-yty-glow)]",
   valor: "zone-glow [--glow-color:var(--color-yty-valor)]",
   wit: "zone-glow [--glow-color:var(--color-yty-wit)]",
-};
-
-/** Yty solid fills, keyed by element id — literal `bg-yty-*` so Tailwind scans
- *  them. Yty zones never appear in the picker (only custom colors do), but
- *  `ZoneColorClasses` requires `solid`, so they carry the family's own fill. */
-const YTY_ZONE_SOLID: Record<YtyElementId, string> = {
-  harmony: "bg-yty-harmony",
-  glow: "bg-yty-glow",
-  valor: "bg-yty-valor",
-  wit: "bg-yty-wit",
 };
 
 /** The 4 Yty zones, reusing the existing Yty icons + theme tokens (yty.ts) and
@@ -366,7 +372,6 @@ export const YTY_PRESENTATIONS: VirtualZonePresentation[] = YTY_ELEMENTS.map(
       // is emitted to the DOM but has no CSS rule, falling back to a default.
       ring: e.color.ring,
       glow: YTY_ZONE_GLOW[e.id],
-      solid: YTY_ZONE_SOLID[e.id],
     },
   }),
 );

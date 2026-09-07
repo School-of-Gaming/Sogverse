@@ -2055,7 +2055,7 @@
   },
   "home": {
     "hero": {
-      "title": "Där<br></br>skärmtid<br></br>blir<br></br><primary>kvalitetstid</primary>",
+      "title": "Där<br></br>skärmtid<br></br>blir<br></br><act>kvalitetstid</act>",
       "subtitle": "Våra skickligt utformade klubbar främjar hälsosamt spelande som hobby — i Minecraft, Roblox, Fortnite och mer. Professionella spelfostrare gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar.",
       "aboutCta": "Läs mer om oss"
     },
@@ -3119,7 +3119,7 @@
   },
   "roblox": {
     "hero": {
-      "title": "Bygg<br></br>Spela<br></br><primary>Äg det</primary>",
+      "title": "Bygg<br></br>Spela<br></br><act>Äg det</act>",
       "subtitle": "Ett gratis speldesignprogram för tonåringar — från Lynx Educate och School of Gaming, i samarbete med Roblox.",
       "cta": "Häng med!"
     },

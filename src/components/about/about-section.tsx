@@ -125,9 +125,11 @@ export function AboutSection({ id }: AboutSectionProps) {
           brand's: this card is a picture of an Empire console, so it carries its
           own paint and takes the artwork exemption in eslint.config.mjs — the
           day act changes, the console should not follow.
-          The words *inside* the picture are not artwork: they are ordinary
-          secondary text, so they take the app's two inks (the English column is
-          what a reader scans and takes `foreground`; the other seven are quiet ink). */}
+          Three of the words are painted in the Empire's red as part of the
+          artwork — the console's title, its Klingon column and its sign-off.
+          The prose around them is not artwork: it is ordinary secondary text
+          and takes the app's two inks (the English column is what a reader
+          scans and takes `foreground`; the rest is quiet ink). */}
       {/* eslint-disable i18next/no-literal-string -- Klingon easter egg: the "English"/"tlhIngan Hol"/"Literal meaning" reference headers are intentionally untranslated since this block only renders when locale === "tlh" */}
       {locale === "tlh" && (
         <div className="mx-auto mt-16 max-w-3xl">

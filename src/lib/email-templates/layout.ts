@@ -39,10 +39,11 @@ interface LayoutOptions {
  * **A filled table cell is the most robust construct email has.** No gradient,
  * no image, no border trick: a `td` with a height and a background, pinned
  * through `pinnedFill` like every other background here so a client's dark
- * theme cannot rewrite it. `font-size` and `line-height` are zeroed and the
- * cell is fed a non-breaking space, which is what stops Outlook collapsing an
- * empty cell to nothing and what stops a text line forcing it taller than its
- * six pixels.
+ * theme cannot rewrite it. The cell is fed a non-breaking space, which is what
+ * stops Outlook collapsing an empty cell to nothing, and the space is then made
+ * to take no room: `font-size` goes to zero and `line-height` to the rule's own
+ * height, so the line box is exactly the six pixels the rule is and cannot
+ * force the cell taller.
  */
 const HEADER_RULE_HEIGHT = 6;
 

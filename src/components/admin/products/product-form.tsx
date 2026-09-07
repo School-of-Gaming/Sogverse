@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { isSupportedCurrency } from "@/lib/constants";
@@ -233,24 +233,20 @@ export function ProductFormShell({
       )}
 
       {warning && (
-        <div className="rounded-md border border-border p-3 text-sm text-foreground">
-          <p className="flex items-start gap-2">
-            <AlertTriangle
-              className="mt-0.5 h-4 w-4 shrink-0 text-warning"
-              aria-hidden
-            />
-            <span>{warning.message}</span>
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={warning.onContinue}
-          >
-            {c("continue")}
-          </Button>
-        </div>
+        <Alert variant="warning">
+          <div>
+            <AlertDescription>{warning.message}</AlertDescription>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={warning.onContinue}
+            >
+              {c("continue")}
+            </Button>
+          </div>
+        </Alert>
       )}
 
       <div className="flex items-center justify-between gap-4 border-t border-border pt-6">

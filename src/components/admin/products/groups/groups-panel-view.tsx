@@ -11,8 +11,9 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { AlertTriangle, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -590,13 +591,11 @@ export function GroupsPanelView({
           confirmLabel={t("removeParticipant.confirmCta")}
           onConfirm={() => actions.onRemoveParticipant(removing.id)}
         >
-          <div className="flex items-start gap-2 rounded-md border border-border px-3 py-2.5 text-sm font-semibold text-foreground">
-            <AlertTriangle
-              className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
-              aria-hidden
-            />
-            <span>{t("removeParticipant.noRefundWarning")}</span>
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>
+              {t("removeParticipant.noRefundWarning")}
+            </AlertDescription>
+          </Alert>
         </ConfirmDialog>
       )}
 

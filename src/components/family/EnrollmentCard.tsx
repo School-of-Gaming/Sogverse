@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle,
   CalendarClock,
   CalendarOff,
   ChevronRight,
@@ -14,6 +13,7 @@ import {
   UserRoundSearch,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -868,13 +868,9 @@ function LeaveWaitlistLink({
         confirmLabel={t("confirmCta")}
         onConfirm={onConfirm}
       >
-        <div className="flex items-start gap-2 rounded-md border border-border px-3 py-2.5 text-sm font-semibold text-foreground">
-          <AlertTriangle
-            className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
-            aria-hidden
-          />
-          <span>{t("backOfLineWarning")}</span>
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{t("backOfLineWarning")}</AlertDescription>
+        </Alert>
       </ConfirmDialog>
     </>
   );

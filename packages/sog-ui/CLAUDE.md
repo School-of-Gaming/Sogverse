@@ -131,10 +131,17 @@ fill stays the control's, which is what keeps a fill meaning *press*. Which colo
 exception on the figure half**: `world` reads 2.71 as an ink on a card and 2.91 on the
 page — under the glyph floor, let alone the body one — so it cannot be an ink on either
 ground, which is why the role and status tables name families and statuses and never
-world as a figure. World lives as an edge, a rule, a mark or a fill. **A status panel is
-that division drawn whole: no ground, a coloured edge, the glyph and a label in the hue,
-and the body in ink** — the edge carries the attention the tint used to, and it costs
-nothing, because the panel was already being drawn by a neutral one. **A public page's
+world as a figure. World lives as an edge, a rule, a fill, or the logo — the logo
+named rather than "a mark", because a logotype is the one graphic the non-text floor
+exempts and a glyph is not. Nothing drawn to be read is drawn in world: no icon, no
+tick, no arrow, no word. **A status panel is that division drawn whole: no ground, a
+coloured edge, the glyph and a label in the hue, and the body in ink** — the edge
+carries the attention the tint used to, and it costs nothing, because the panel was
+already being drawn by a neutral one. **A boxed status is that panel and carries its
+edge; a status stated inline — under a field, along a row — is a line and has no box at
+all.** There is no third shape between the two, and the third shape is what keeps
+getting built: a box drawn by hand with a neutral edge and a coloured glyph inside it is
+the panel with its one mark of attention taken back off. **A public page's
 hero headline is the one declared departure from the division** — a display treatment,
 one phrase in `act` and the `world` rule beneath it — declared beside the label rule in
 `brand.ts`, which is also where it says a section heading is not a hero.

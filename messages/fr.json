@@ -2055,7 +2055,7 @@
   },
   "home": {
     "hero": {
-      "title": "Du temps d’écran<br></br>au temps qui<br></br>fait<br></br><primary>grandir</primary>",
+      "title": "Du temps d’écran<br></br>au temps qui<br></br>fait<br></br><act>grandir</act>",
       "subtitle": "Nos clubs, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis — sur Minecraft, Roblox, Fortnite et bien d’autres. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter.",
       "aboutCta": "En savoir plus sur nous"
     },
@@ -3119,7 +3119,7 @@
   },
   "roblox": {
     "hero": {
-      "title": "Construisez<br></br>Jouez<br></br><primary>Publiez</primary>",
+      "title": "Construisez<br></br>Jouez<br></br><act>Publiez</act>",
       "subtitle": "Un programme gratuit de création de jeux pour les ados, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
       "cta": "Lancez-vous !"
     },

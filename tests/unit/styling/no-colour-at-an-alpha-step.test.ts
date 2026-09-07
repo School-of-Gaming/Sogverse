@@ -3,6 +3,13 @@ import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+import {
+  BRAND,
+  PICKS,
+  STATUS_IDS,
+  YTY_FAMILIES,
+} from "../../../packages/sog-ui/src/index";
+
 /**
  * **A brand colour exists only at the value it was authored at.** Sogverse
  * spends no brand token at an alpha step.
@@ -51,24 +58,45 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..")
 const srcRoot = join(repoRoot, "src");
 
 /**
+ * Every token name the brand says a colour in, read from the library.
+ *
+ * Not typed out here, and that is the whole point: a hand-written list is a
+ * second statement of the palette, and the second one is the one that goes
+ * stale in silence — the library ships a hue, a page spends it at `/10`, and
+ * the regex that was meant to catch it never knew the name. Derived, this test
+ * covers a token the day @sog/ui adds it.
+ *
+ * The shape of each name is the theme's rather than the source's: a family is
+ * emitted as `yty-<id>`, a pick as `pick-<id>`, and the signature pair and the
+ * four statuses each carry the `-foreground` companion the generator writes
+ * beside them. The neutrals are absent on purpose and the paragraph above says
+ * why.
+ *
+ * Longest name first, so `act-foreground/50` is never read as `act` with a tail
+ * the match then has to back out of.
+ */
+const BRAND_TOKENS: readonly string[] = [
+  ...Object.keys(BRAND).flatMap((id) => [id, `${id}-foreground`]),
+  ...Object.keys(YTY_FAMILIES).map((id) => `yty-${id}`),
+  ...STATUS_IDS.flatMap((id) => [id, `${id}-foreground`]),
+  ...PICKS.map((pick) => `pick-${pick.id}`),
+].sort((a, b) => b.length - a.length);
+
+/**
  * A colour utility carrying an alpha modifier: any variant prefix, a property
  * that takes a colour, one of the **brand's** token names, and a `/n`.
  *
- * The token names are spelled out rather than matched as "any word", so the test
- * says what it is about — a *brand* token at an alpha step. The list is the
- * whole of what the brand says in colour: the signature pair, the four Yty
- * families, the four statuses and the sixteen picks, each with its
- * `-foreground` companion. The neutrals are absent on purpose and the paragraph
- * above says why. An arbitrary value (`bg-[#ffffff]/50`) is not a token and is
- * the hex ban's business, in `eslint.config.mjs`; `text-white/70` is not a token
- * either and belongs to the palette-class ban in the same file.
- *
- * A literal, not a `new RegExp` built from a list: the list read a little better
- * and cost a lint suppression, and a regex assembled from parts is also a regex
- * nobody can read in one piece.
+ * An arbitrary value (`bg-[#ffffff]/50`) is not a token and is the hex ban's
+ * business, in `eslint.config.mjs`; `text-white/70` is not a token either and
+ * belongs to the palette-class ban in the same file.
  */
-const ALPHA_UTILITY =
-  /\b[a-z:-]*(?:text|bg|border|ring|fill|stroke|from|to|via|outline|shadow|divide|decoration)-(?:destructive|success|info|warning|act|world|pick-[0-9]+|yty-[a-z]+)(?:-foreground)?\/[0-9]+/g;
+// eslint-disable-next-line security/detect-non-literal-regexp -- assembled from @sog/ui's own token ids, which are compile-time constants of a typed source; nothing here comes from outside the repo
+const ALPHA_UTILITY = new RegExp(
+  String.raw`\b[a-z:-]*(?:text|bg|border|ring|fill|stroke|from|to|via|outline|shadow|divide|decoration)-(?:${BRAND_TOKENS.join(
+    "|",
+  )})\/[0-9]+`,
+  "g",
+);
 
 /**
  * The sites that may still carry one, as `path :: class`, each with the reason

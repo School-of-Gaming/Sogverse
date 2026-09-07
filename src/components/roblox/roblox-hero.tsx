@@ -65,7 +65,7 @@ export function RobloxHero() {
               <h1 className={`font-display font-bold leading-snug ${sloganSize}`}>
                 {t.rich("hero.title", {
                   br: () => <br />,
-                  primary: (chunks) => <span className="text-act">{chunks}</span>,
+                  act: (chunks) => <span className="text-act">{chunks}</span>,
                 })}
               </h1>
               <span className="mt-6 block h-1.5 w-full rounded-full bg-world sm:mt-8" />

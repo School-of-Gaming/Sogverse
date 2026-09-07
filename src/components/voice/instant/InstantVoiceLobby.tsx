@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, Loader2, Mic, MicOff } from "lucide-react";
+import { Loader2, Mic, MicOff } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
@@ -249,11 +250,18 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: Inst
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Avatar preview — sized and styled to mirror the in-call avatar */}
+            {/* Avatar preview — sized and styled to mirror the in-call avatar.
+                The frame is a border and nothing else: the speaking glow is
+                written onto this element's inline `box-shadow` by
+                `useLocalStreamGlow` below, and an inline box-shadow *replaces*
+                a ring's rather than adding to it — so the act ring that used to
+                sit here blinked out on every syllable and back in between them.
+                The shadow belongs to the glow alone; the border carries the
+                frame, and the glow tints that too. */}
             <div className="flex flex-col items-center gap-3">
               <div
                 ref={frameRef}
-                className="relative h-48 w-48 overflow-hidden rounded-2xl border-2 border-border bg-lifted ring-1 ring-act transition-shadow"
+                className="relative h-48 w-48 overflow-hidden rounded-2xl border-2 border-border bg-lifted transition-shadow"
               >
                 {/* Always-mounted video; hidden when camera is off so toggling
                     on doesn't have to re-attach `srcObject`. */}
@@ -324,13 +332,9 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: Inst
             )}
 
             {error && (
-              <p className="flex items-start gap-2 rounded-md border border-border px-3 py-2 text-sm text-foreground">
-                <AlertCircle
-                  className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
-                  aria-hidden
-                />
-                <span>{error}</span>
-              </p>
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
             <div className="flex justify-end">

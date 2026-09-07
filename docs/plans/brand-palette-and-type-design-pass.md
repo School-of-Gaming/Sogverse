@@ -152,7 +152,9 @@ One branch off `dev` (after the companion plan merges), `feat/brand-palette-desi
    labels — judged, not assumed); each Press Start 2P placement kept, swapped to Space
    Mono, or dropped, one decision per site against the rare-use ruling — five sites (home
    h1, gamer-dashboard h2, the /roblox hero, the profile-select header, the instant-call
-   ended screen), decisions recorded in the deviations log's Press Start 2P entry. **The
+   ended screen). Press Start 2P is a departure from the sanctioned faces, so whatever
+   survives is declared and justified beside the value that governs it in SOG-UI, by the
+   faces adoption when it lands — there is no deviations log to record it in. **The
    /roblox hero site is special**: it sits directly above the approved Roblox partner
    lockup, and an approval covers the placement as given — a typeface change there alters
    the approved placement's appearance, so it ships only with the owner's explicit go (and

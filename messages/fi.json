@@ -2055,7 +2055,7 @@
   },
   "home": {
     "hero": {
-      "title": "Ruutuajasta<br></br><primary>Laatuaikaa</primary>",
+      "title": "Ruutuajasta<br></br><act>Laatuaikaa</act>",
       "subtitle": "Taidolla suunnitellut kerhomme edistävät tervettä pelaamista harrastuksena Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ammattitaitoiset pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat.",
       "aboutCta": "Lue lisää meistä"
     },
@@ -3119,7 +3119,7 @@
   },
   "roblox": {
     "hero": {
-      "title": "Rakenna<br></br>Pelaa<br></br><primary>Omista</primary>",
+      "title": "Rakenna<br></br>Pelaa<br></br><act>Omista</act>",
       "subtitle": "Ilmainen pelisuunnitteluohjelma nuorille – järjestäjinä Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
       "cta": "Hyppää mukaan!"
     },

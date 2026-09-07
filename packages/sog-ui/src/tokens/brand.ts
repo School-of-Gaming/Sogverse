@@ -129,7 +129,7 @@
  * - **Nothing composites by hand.** A brand value flattened against a ground so
  *   that a renderer with no alpha can draw it — a mail client, a satori-rendered
  *   social card — is still the brand colour at an alpha step; it is simply
- *   wearing a solid’s clothes, and no reader can tell the difference. Those
+ *   wearing a solid's clothes, and no reader can tell the difference. Those
  *   renderers take the authored value on the ground, exactly as the app does.
  *   The three constructs above are the exception that proves the shape of this
  *   one: they composite at render time, over a ground nobody could have
@@ -271,9 +271,18 @@ export const NEUTRALS = {
    * does not glare against the near-black ground.
    *
    * Reach for it for body copy, headings and anything the reader is meant to
-   * actually read. Never as a fill or an edge: a near-white block is the
-   * loudest thing a dark page can show, and it takes the eye off whatever the
-   * page wanted pressed.
+   * actually read. **Never as a fill**: a near-white block is the loudest thing
+   * a dark page can show, and it takes the eye off whatever the page wanted
+   * pressed. **Never as an edge either, with one exception — the one thing
+   * whose identity is the white itself.** The voice room's lobby is that thing:
+   * it is the single neutral place among sixteen coloured zones, it has to read
+   * as the default a person is in unless they chose otherwise, and the white it
+   * is marked with is the speaking glow's own rather than a hue borrowed from
+   * the palette — so its tile takes this ink as its edge, exactly where a
+   * custom zone takes its pick. The exception is a fact about that one zone and
+   * not a licence for a near-white rule anywhere else, so a consumer claiming
+   * it declares it beside the value, in the zone presentation that spells the
+   * class.
    */
   foreground: { name: "Ink", hex: "#EDEDED" },
   /**

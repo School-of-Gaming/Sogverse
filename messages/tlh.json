@@ -2099,7 +2099,7 @@
   },
   "home": {
     "hero": {
-      "title": "naDev<br></br>Daq tIv<br></br>moj<br></br><primary>Qap tIv</primary>",
+      "title": "naDev<br></br>Daq tIv<br></br>moj<br></br><act>Qap tIv</act>",
       "subtitle": "po’taHvIS chenmoHlu’ ghom’a’meymaj: Quj QaQ Hob chenmoH — Minecraft, Roblox, Fortnite latlh je. Gedu’pu’ Dun Hoch qep ghojmoHmeH tIv chenmoH — jup chu’ luSuq puqpu’, laHmeychaj mojaq luchenmoH, ’ej muSHa’bogh lutIv.",
       "aboutCta": "maH yIqel"
     },
@@ -2832,7 +2832,7 @@
   },
   "roblox": {
     "hero": {
-      "title": "yIchen<br></br>yItIv<br></br><primary>yIghaj</primary>",
+      "title": "yIchen<br></br>yItIv<br></br><act>yIghaj</act>",
       "subtitle": "qetlh chenmoHmeH ghojmoH — Huch Hutlh! loDHompu’ be’Hompu’vaD. Lynx Educate, School of Gaming, je Roblox boqwI’pu’.",
       "cta": "may’Daq yIghoS!"
     },

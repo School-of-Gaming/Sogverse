@@ -59,7 +59,7 @@ export function CallEndedScreen({ reason, code, copyright }: CallEndedScreenProp
           <h2 className="pt-6 font-display text-2xl font-bold leading-tight tracking-tight md:text-3xl">
             {tHome.rich("title", {
               br: () => <br />,
-              primary: (chunks) => (
+              act: (chunks) => (
                 <span className="text-act">{chunks}</span>
               ),
             })}

@@ -376,7 +376,7 @@ export default function FoundationsPage() {
                 <div
                   className={`flex h-16 items-center justify-center border border-border ${FILL[`yty-${row.family}`] ?? ""}`}
                 >
-                  <Icon className="h-7 w-7" style={{ color: NEUTRALS.background.hex }} aria-hidden />
+                  <Icon className="h-7 w-7 text-background" aria-hidden />
                 </div>
                 <p className="mt-2 text-h4 font-medium">{KIND_NAME[kind]}</p>
                 <p className="font-brand-mono text-body-s text-muted-foreground">

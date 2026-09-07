@@ -44,11 +44,14 @@ function kebab(name: string): string {
 /**
  * The surfaces that ship a `-foreground` companion token.
  *
- * One of the three, and the difference is naming rather than use: every surface
- * reads `foreground`, so for the page ground and the lifted ground a companion
- * would only be a second name for `--color-foreground`, which is already in the
- * stylesheet. The card keeps its companion because it is the ground a component
- * is handed as a pair, and a pair wants both halves named.
+ * One of the three, and what decides it is whether a consumer writes text on
+ * that ground through a `-foreground` class today. One does: a card hands a
+ * component its ground and its ink as a pair, and `text-card-foreground` is
+ * spelled. Nothing writes `text-background-foreground` or
+ * `text-lifted-foreground` — text on the page and on the lifted grey is
+ * `text-foreground`, which the stylesheet already carries — so a companion
+ * there would be a token with no call site, which is the one thing the
+ * foundations rule says a token may not be.
  *
  * `--color-muted-foreground` is emitted from the neutrals like any other token
  * and is **not** a companion of anything: it is the quiet ink, it reads on all

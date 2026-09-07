@@ -81,8 +81,9 @@ describe("every colour pair a mail may emit is legible", () => {
  * set as the callout's own label used to measure 4.46:1 on its own wash — a hair
  * under the floor, which was the whole reason the mail's callout titles itself
  * in `foreground` where the app's Alert titles itself in the accent. Under
- * @sog/ui, info is Wit's blue and the same pairing measures 6.40:1, so the
- * arithmetic no longer forbids it. The mail's callout still does not do it, but
+ * @sog/ui, info is Wit's blue and the same pairing clears the body floor with
+ * room to spare — no number is written here, because a ratio typed by hand is
+ * a measurement nothing re-takes — so the arithmetic no longer forbids it. The mail's callout still does not do it, but
  * that is a construct decision now rather than a contrast one, and a rejected
  * pair that has stopped being rejectable cannot go on being asserted here.
  */

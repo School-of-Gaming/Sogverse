@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { AlertCircle } from "lucide-react";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { getTranslations } from "next-intl/server";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AdminDashboardPage } from "@/components/admin/dashboard/AdminDashboardPage";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -144,10 +144,11 @@ async function AdminDashboardLoadFailure({ reason }: { reason: string | null }) 
       {/* The reason is a message off the wire, never translated copy — it is
           spliced into a sentence that is, which is why there are two keys rather
           than one with an optionally-empty argument. */}
-      <p className="flex items-start gap-2 rounded-lg border border-border p-4 text-sm text-foreground">
-        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
-        {reason === null ? t("loadError") : t("loadErrorWithReason", { reason })}
-      </p>
+      <Alert variant="destructive">
+        <AlertDescription>
+          {reason === null ? t("loadError") : t("loadErrorWithReason", { reason })}
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }

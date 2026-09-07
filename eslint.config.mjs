@@ -73,6 +73,12 @@ const noHexColourLiterals = (message) => [
  * library ships `bg-scrim` for the black tint that dims what is behind it, and
  * white is not one of the brand's inks — `foreground` is.
  *
+ * The optional segment between the property and the hue is what catches the
+ * spellings a bare `property-hue` regex reads straight past — `border-t-red-500`,
+ * `border-x-white`, `border-s-…`, `ring-offset-black`. A ban that covers the
+ * obvious spelling and not the sided one is worse than none: it reports nothing
+ * on the line that got through and reads as a rule that is holding.
+ *
  * Matched on nodes rather than on the file's text, so prose that happens to name
  * a colour ("it used to be washed amber-to-violet") is untouched: a comment is
  * not a Literal.
@@ -82,11 +88,11 @@ const paletteClassMessage =
 
 const noPaletteColourClasses = [
   {
-    selector: String.raw`Literal[value=/\b(bg|text|border|ring|from|to|via|fill|stroke|outline|shadow|decoration|divide)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(-[0-9]{2,3})?\b/]`,
+    selector: String.raw`Literal[value=/\b(bg|text|border|ring|from|to|via|fill|stroke|outline|shadow|decoration|divide|placeholder|caret|accent)(-(t|r|b|l|x|y|s|e|offset))?-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(-[0-9]{2,3})?\b/]`,
     message: paletteClassMessage,
   },
   {
-    selector: String.raw`TemplateElement[value.raw=/\b(bg|text|border|ring|from|to|via|fill|stroke|outline|shadow|decoration|divide)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(-[0-9]{2,3})?\b/]`,
+    selector: String.raw`TemplateElement[value.raw=/\b(bg|text|border|ring|from|to|via|fill|stroke|outline|shadow|decoration|divide|placeholder|caret|accent)(-(t|r|b|l|x|y|s|e|offset))?-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(-[0-9]{2,3})?\b/]`,
     message: paletteClassMessage,
   },
 ];
@@ -128,6 +134,56 @@ const noGreyAsHover = [
     selector: String.raw`TemplateElement[value.raw=/\b(group-)?hover:bg-(lifted|card|background)\b/]`,
     message: hoverGreyMessage,
   },
+];
+
+/**
+ * A colour spelled as a CSS colour *function*, banned alongside the hex.
+ *
+ * The hex ban above closes one spelling and one only, and `rgba(18, 18, 18,
+ * 0.6)` is the same colour in different clothes: a value nobody authored, that
+ * no token can move, and that reads as legitimate because it looks like
+ * arithmetic rather than paint. `color-mix()` is the modern shape of the same
+ * mistake and the more tempting one — it composes a token with something else
+ * and produces a value the library never proved.
+ *
+ * Alpha is the reason this matters here rather than being a duplicate of the
+ * hex rule: the alpha ban is a rule about brand colour (`brand.ts`), and a
+ * function is the only way to spell one in a style object. A neutral that needs
+ * to composite has three named constructs and no fourth — `bg-scrim`, `glass`,
+ * `bg-hover` — so a call site composing its own is writing a strength the
+ * library declined to ship.
+ *
+ * Matched on nodes for the same reason as its neighbours, so prose naming a
+ * function is untouched.
+ */
+const colourFunctionMessage =
+  "No CSS colour functions in Sogverse. `rgb()`, `hsl()` and `color-mix()` spell a value the library never authored and no token can move — including a brand colour at an alpha step, which @sog/ui bans outright. Take the token from @sog/ui (a Tailwind class, or BRAND / DARK_THEME from @/lib/constants/colors), and where a layer really is needed use one of the three the library ships: `bg-scrim`, `glass`, `bg-hover`.";
+
+const noColourFunctions = [
+  {
+    selector: String.raw`Literal[value=/(rgba?|hsla?|color-mix)\(/]`,
+    message: colourFunctionMessage,
+  },
+  {
+    selector: String.raw`TemplateElement[value.raw=/(rgba?|hsla?|color-mix)\(/]`,
+    message: colourFunctionMessage,
+  },
+];
+
+/**
+ * The whole colour seam as Sogverse's own source is held to it.
+ *
+ * Held in one const because four blocks below need it and a later block
+ * *replaces* a rule's options rather than merging with them — so a block that
+ * narrows one ban has to restate the rest, and restating them by hand is how a
+ * file quietly falls out of three bans while opting out of one.
+ */
+const sogverseColourBans = [
+  ...noHexColourLiterals(
+    "No colour literals in Sogverse. Every colour arrives from @sog/ui as a semantic token — a Tailwind class in a component, or BRAND / DARK_THEME from @/lib/constants/colors where there is no class to write (email, canvas, OG).",
+  ),
+  ...noPaletteColourClasses,
+  ...noGreyAsHover,
 ];
 
 const eslintConfig = defineConfig([
@@ -340,19 +396,29 @@ const eslintConfig = defineConfig([
   {
     files: ["src/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-syntax": ["error",
-        ...noHexColourLiterals(
-          "No colour literals in Sogverse. Every colour arrives from @sog/ui as a semantic token — a Tailwind class in a component, or BRAND / DARK_THEME from @/lib/constants/colors where there is no class to write (email, canvas, OG).",
-        ),
-        ...noPaletteColourClasses,
-        ...noGreyAsHover,
-      ],
+      "no-restricted-syntax": ["error", ...sogverseColourBans, ...noColourFunctions],
     },
   },
   {
-    // Artwork, exempt from the hex ban and only from it — the palette-class ban
-    // above still applies, because a picture drawing its own colours does so in
-    // its own paint, never in a Tailwind class.
+    // The one file under `src/` that spells a colour function on purpose, and
+    // the reason it is a block of its own rather than an entry in the artwork
+    // list: `lib/voice/glow.ts` is not artwork and is still subject to every
+    // other ban. Its `rgba()` carries the speaking level as its alpha — the
+    // value rises and falls with how loudly somebody is talking — so there is
+    // no fixed strength a token could hold and nothing for the no-alpha rule to
+    // convert. The colour it composes is white, which is the light rather than
+    // a brand colour spent quietly, and the file's own doc comment says so at
+    // length so a later sweep does not take it on pattern.
+    files: ["src/lib/voice/glow.ts"],
+    rules: {
+      "no-restricted-syntax": ["error", ...sogverseColourBans],
+    },
+  },
+  {
+    // Artwork, exempt from the two ways a picture spells its own paint — the
+    // hex and the colour function — and from nothing else. The palette-class
+    // ban above still applies, because a picture drawing its own colours does
+    // so in its own paint, never in a Tailwind class.
     //
     // `layout/locale-picker.tsx` draws the five locale flags as inline SVG; a
     // flag's colours are the flag's, and the Klingon one's red is the joke.
@@ -364,10 +430,13 @@ const eslintConfig = defineConfig([
     // the act amber was a mistake that made a picture look like a brand
     // placement. `about/about-section.tsx` draws the Klingon easter egg as an
     // Empire console, and its `#d00` and `#0a0a0a` are the Empire's colours:
-    // the day the brand's amber changes, that console must not follow. The
-    // words inside the console were never artwork — they are ordinary
-    // secondary text and take the app's two inks, which is what lets the file
-    // sit in this list rather than outside both bans.
+    // the day the brand's amber changes, that console must not follow. The red
+    // is on three of the words as well as on the chrome — the console's title,
+    // its Klingon column and its Qapla' sign-off are painted in it, because
+    // they belong to the picture rather than sitting on top of it. The prose
+    // around them is ordinary secondary text and takes the app's two inks,
+    // which is why only the artwork is exempt here and the palette-class ban
+    // still holds over the whole file.
     // `lib/images/normalize-image.ts` is not artwork but is the same
     // shape of exception: its white is the ground a transparent PNG is
     // flattened onto when it is re-encoded as JPEG, a property of the image's
@@ -403,10 +472,12 @@ const eslintConfig = defineConfig([
   {
     files: ["src/lib/email-templates/**/*.ts"],
     rules: {
-      // The block above already bans a hex and a palette class everywhere under
-      // `src/`; this one restates both because a later block replaces a rule's
-      // options outright rather than merging with them, so dropping them here
-      // would quietly exempt every mail from the app-wide ban. What it adds is
+      // The block above already bans a hex, a palette class and a colour
+      // function everywhere under `src/`; this one restates all three because a
+      // later block replaces a rule's options outright rather than merging with
+      // them, so dropping them here would quietly exempt every mail from the
+      // app-wide ban — and a mail is the surface most likely to reach for
+      // `rgba()`, having no class to write. What it adds is
       // the radius, which is an email-only trap: a mail cannot use a Tailwind
       // class, so a number typed into markup is the easy path and is how two
       // radii and a footer grey drifted away from the app in the first place.
@@ -416,6 +487,7 @@ const eslintConfig = defineConfig([
         ),
         ...noPaletteColourClasses,
         ...noGreyAsHover,
+        ...noColourFunctions,
         {
           selector: String.raw`TemplateElement[value.raw=/border-radius\s*:\s*[0-9]/]`,
           message:
@@ -444,16 +516,19 @@ const eslintConfig = defineConfig([
       ],
     },
   },
-  // The grey-as-hover ban reaches the demo too, and it is the one colour rule
-  // here that does. The hex ban above deliberately stops at the library's own
-  // source, because a consumer spelling a colour is a separately visible
-  // mistake; this one does not, because the demo is the *reference* for how a
-  // consumer writes a hover, and a reference showing the wrong class teaches it
-  // to every page that copies it.
+  // The two class-level bans reach the demo, because the demo is a consumer and
+  // is held to every rule a Sogverse page is held to. A grey written as a hover
+  // and a raw palette class are both things a *consumer* writes, and the demo is
+  // the reference for how a consumer writes them — a reference showing the wrong
+  // class teaches it to every page that copies it.
+  //
+  // The hex ban still stops short of here, on its own terms: it is the library's
+  // rule about where colour is authored, and a consumer spelling one is a
+  // separately visible mistake rather than a token drifting out of the source.
   {
     files: ["packages/*/demo/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-syntax": ["error", ...noGreyAsHover],
+      "no-restricted-syntax": ["error", ...noPaletteColourClasses, ...noGreyAsHover],
     },
   },
   {

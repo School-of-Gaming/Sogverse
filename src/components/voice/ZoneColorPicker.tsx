@@ -6,8 +6,10 @@ import { VOICE_ZONE_COLORS, VOICE_ZONE_COLOR_KEYS } from "@/lib/constants/voice-
 import type { VoiceZoneColor } from "@/types";
 
 /** Grid picker for the 16 picks (2 rows of 8). Each swatch shows the
- *  full-saturation `solid` fill so the palette reads vibrant — the muted
- *  soft-tint is only how the color appears once it's on a zone card.
+ *  full-saturation `solid` fill so the palette reads vibrant, and this is the
+ *  one place that fill is drawn: on a zone card the pick is the lifted grey
+ *  with an edge in the chosen colour, so a swatch here is a bigger, plainer
+ *  statement of the same value rather than a preview of the tile.
  *
  *  **No swatch has a name.** A pick is what it looks like, not what it is
  *  called: a colour a person chooses for themselves means only "this one is

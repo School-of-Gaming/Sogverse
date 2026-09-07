@@ -23,7 +23,7 @@ describe("shipped pairings", () => {
   // Vitest's `it.each([])` registers nothing and the suite passes green, so every
   // table in this file is floored: an emptied list must fail rather than vanish.
   it("has the whole shipped list to walk", () => {
-    expect(PAIRINGS.length).toBeGreaterThanOrEqual(40);
+    expect(PAIRINGS.length).toBeGreaterThanOrEqual(43);
   });
 
   it.each(PAIRINGS.map((pairing) => [pairing.id, pairing] as const))(
@@ -43,20 +43,27 @@ describe("shipped pairings", () => {
  *
  * Walking the list proves that what is *in* it passes; it says nothing about
  * what was left out, and a pairing left out is exactly how an unmeasured colour
- * reaches a screen. Every hue the palette offers as a label — the four families
- * and the four statuses — can land on any of the three grounds the theme fills,
- * and every one of them can also be filled under its ink. So the ledger has to
- * carry four entries per hue, and a hue added to either set without its
- * measurements fails here rather than at the first surface that spends it.
+ * reaches a screen. Every hue the palette offers as a figure — act, the four
+ * families and the four statuses — can land on any of the three grounds the
+ * theme fills, and every one of them can also be filled under its ink. So the
+ * ledger has to carry four entries per hue, and a hue added to any of the sets
+ * without its measurements fails here rather than at the first surface that
+ * spends it.
+ *
+ * World is the one hue the palette does **not** offer as a figure, so it is
+ * absent from this table on purpose: it has a fill row and no ink rows, and
+ * requiring three of the latter would demand measurements the library has
+ * decided not to ship.
  */
 const HUE_TOKENS: readonly string[] = [
+  "act",
   ...Object.keys(YTY_FAMILIES).map((id) => `yty-${id}`),
   ...STATUS_IDS,
 ];
 
 describe("the ledger covers every hue it offers", () => {
   it("has hues to cover", () => {
-    expect(HUE_TOKENS.length).toBeGreaterThanOrEqual(8);
+    expect(HUE_TOKENS.length).toBeGreaterThanOrEqual(9);
   });
 
   it.each(HUE_TOKENS)("%s is measured as ink on all three grounds", (token) => {

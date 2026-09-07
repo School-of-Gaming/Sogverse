@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { AlertTriangle } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -108,17 +108,14 @@ export default function MinecraftApiDocsPage() {
             The contract below is what it will return once rebuilt — say so here
             rather than let an integrator match against responses nothing can
             currently produce. */}
-        <div className="mt-4 flex items-start gap-3 rounded-lg border border-border p-4">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
+        <Alert variant="warning" className="mt-4">
           <div>
-            <p className="text-sm font-medium text-warning">
-              {t('responses.notImplementedTitle')}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <AlertTitle>{t('responses.notImplementedTitle')}</AlertTitle>
+            <AlertDescription className="mt-1">
               {t('responses.notImplementedBody')}
-            </p>
+            </AlertDescription>
           </div>
-        </div>
+        </Alert>
 
         <div className="mt-6 space-y-6">
           {/* 200 Allowed */}

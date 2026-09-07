@@ -168,6 +168,27 @@ const brandPairings: Pairing[] = [
 ];
 
 /**
+ * Act as a **figure** — a display phrase, an eyebrow, a label — on every ground.
+ *
+ * Act is the half of the signature pair that can be set as type, and these rows
+ * are what makes that half checkable rather than assumed. Without them a retune
+ * of the brand's loudest colour would pass the ledger untouched while act is
+ * spent as a figure on a hundred surfaces and drawn across a hero in display
+ * size.
+ *
+ * The body floor, not the large-text one: the hero phrase is the loudest use but
+ * not the binding one — a topic eyebrow and an inline label are body size or
+ * smaller, and a colour proven at the harder floor is proven at the easier one.
+ */
+const actAsInk: Pairing[] = GROUNDS.map((ground) => ({
+  id: `act-on-${ground.token}`,
+  foreground: { token: "act", hex: BRAND.act.hex },
+  background: { token: ground.token, hex: ground.hex },
+  threshold: THRESHOLDS.bodyText,
+  why: `Act as a figure on ${ground.label} — a hero's display phrase, a topic eyebrow, a word naming the thing to do. Type at body size, so the body floor.`,
+}));
+
+/**
  * Every Yty family as **ink** — a label or a glyph — on every ground.
  *
  * Body size, so the body floor. A label is the only place a family colour is
@@ -234,6 +255,7 @@ const statusUnderInk: Pairing[] = STATUS_IDS.map((id) => ({
 export const PAIRINGS: readonly Pairing[] = [
   ...appTextOnGrounds,
   ...brandPairings,
+  ...actAsInk,
   ...familyAsInk,
   ...familyUnderInk,
   ...statusAsInk,

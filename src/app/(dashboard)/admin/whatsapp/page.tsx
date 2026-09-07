@@ -69,7 +69,9 @@ function StatusIndicator({ status }: { status: string }) {
     return <CheckCheck className="h-3 w-3" />;
   }
   if (status === WHATSAPP_MESSAGE_STATUS.READ) {
-    return <CheckCheck className="h-3 w-3 text-world" />;
+    // Blue is the read-tick convention every message list has taught; world is
+    // ruled out as a glyph, reading under the non-text floor on every ground.
+    return <CheckCheck className="h-3 w-3 text-info" />;
   }
   return null;
 }

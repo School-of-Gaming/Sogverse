@@ -70,6 +70,37 @@
  * it carries its own contents. Reaching for it as a backdrop gets a blurred,
  * washed-out page with nothing on it.
  *
+ * **Glass is the one ground the contrast ledger does not measure, and saying so
+ * is the honest form of the claim.** Every other ground the library fills is an
+ * authored hex, so a pairing on it is arithmetic; a glass panel's actual colour
+ * is the page ground composited over whatever happens to be behind it, which
+ * over a photograph or a video is a different value in every region and every
+ * frame. There is nothing fixed to measure, so `PAIRINGS` carries no glass row,
+ * and a consumer must not read one into it.
+ *
+ * **What the library does vouch for on glass is the foreground ink**, because
+ * that one case has a bound the arithmetic can reach: the worst backdrop a
+ * light ink can be handed is pure white, so composite `background` over
+ * `#FFFFFF` at `opacity` and take `contrastRatio` of `foreground` against the
+ * result — it clears the body floor, every real backdrop is darker than white
+ * and therefore easier, and `fallbackOpacity` is darker still and so can never
+ * be the binding case.
+ *
+ * **The quiet ink and the status inks on glass are accepted on the owner's eye,
+ * not by measurement.** Three of them are spent on two sites today — the
+ * session photo strip's remove control in `muted-foreground`, and the instant
+ * lobby's mic indicator in `success` and `destructive` — and the same
+ * worst-case arithmetic puts all three under the body floor, two of them under
+ * the glyph floor as well. They stand because no real backdrop is white and
+ * because each is a small mark on a control the reader has already found. That
+ * is a judgement, and it is written down here precisely so that nobody mistakes
+ * it for a proof.
+ *
+ * **When a site on glass reads weak, the answer is the foreground ink, or a
+ * scrim beneath the panel — never a lighter glass.** Thinning the recipe to
+ * rescue one label changes every panel that was reading fine and hands the same
+ * problem back a surface later; the ink and the scrim each fix it where it is.
+ *
  * ## The hover layer
  *
  * **Hover is one layer, laid over whatever ground the element is already on.**

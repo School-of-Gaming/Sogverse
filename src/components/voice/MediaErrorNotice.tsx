@@ -1,9 +1,9 @@
 "use client";
 
-import { AlertTriangle, RotateCw } from "lucide-react";
+import { RotateCw } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import type { MediaErrorCategory } from "@/lib/voice/media-error";
 
 interface MediaErrorNoticeProps {
@@ -30,27 +30,20 @@ interface MediaErrorNoticeProps {
 export function MediaErrorNotice({ category, className }: MediaErrorNoticeProps) {
   const t = useTranslations("voice.mediaError");
   return (
-    <div
-      className={cn(
-        "rounded-md border border-border px-3 py-2 text-sm text-foreground",
-        className,
-      )}
-      role="alert"
-    >
-      <p className="flex items-start gap-1.5">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-        <span>{t(category)}</span>
-      </p>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="mt-2 gap-1.5"
-        onClick={() => window.location.reload()}
-      >
-        <RotateCw className="h-3.5 w-3.5" />
-        {t("reload")}
-      </Button>
-    </div>
+    <Alert variant="destructive" className={className}>
+      <div>
+        <AlertDescription>{t(category)}</AlertDescription>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-2 gap-1.5"
+          onClick={() => window.location.reload()}
+        >
+          <RotateCw className="h-3.5 w-3.5" />
+          {t("reload")}
+        </Button>
+      </div>
+    </Alert>
   );
 }

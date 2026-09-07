@@ -2055,7 +2055,7 @@
   },
   "home": {
     "hero": {
-      "title": "Where<br></br>Screen Time<br></br>Becomes<br></br><primary>Quality Time</primary>",
+      "title": "Where<br></br>Screen Time<br></br>Becomes<br></br><act>Quality Time</act>",
       "subtitle": "Our skilfully designed clubs promote healthy gaming as a hobby, in Minecraft, Roblox, Fortnite and more. Professional Game Educators make every session a playful learning experience where children make new friends, develop their unique talents, and have fun doing what they love.",
       "aboutCta": "Learn more about us"
     },
@@ -2103,7 +2103,7 @@
   },
   "roblox": {
     "hero": {
-      "title": "Build It<br></br>Play It<br></br><primary>Own It</primary>",
+      "title": "Build It<br></br>Play It<br></br><act>Own It</act>",
       "subtitle": "A free game design programme for teens — brought to you by Lynx Educate and School of Gaming, in collaboration with Roblox.",
       "cta": "Jump in!"
     },
