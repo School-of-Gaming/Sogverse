@@ -104,10 +104,16 @@ export function ProfileTile(props: ProfileTileProps) {
     <>
       <div
         className={cn(
-          "relative aspect-square w-full overflow-hidden rounded-lg border-2 border-border ring-offset-2 ring-offset-background transition-[box-shadow] duration-150",
+          // The ring and its offset arrive together. A ring of width 0 still
+          // paints its offset's worth of act under the offset shadow, and the
+          // anti-aliased corners let a fringe of it through, which reads as an
+          // amber haze around a tile nobody is pointing at. So at rest there is
+          // no offset either, and the grey edge gives way to the ring when it
+          // comes, rather than sitting inside it as a second line.
+          "relative aspect-square w-full overflow-hidden rounded-lg border-2 border-border ring-act ring-offset-background transition-[border-color,box-shadow] duration-150",
           isActive
-            ? "ring-4 ring-act"
-            : "ring-0 ring-act group-hover:ring-4 group-focus-visible:ring-4",
+            ? "border-transparent ring-4 ring-offset-2"
+            : "ring-0 ring-offset-0 group-hover:border-transparent group-hover:ring-4 group-hover:ring-offset-2 group-focus-visible:border-transparent group-focus-visible:ring-4 group-focus-visible:ring-offset-2",
         )}
       >
         <Identicon id={member.id} size={112} />
