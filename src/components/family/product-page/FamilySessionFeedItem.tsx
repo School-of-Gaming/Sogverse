@@ -60,8 +60,8 @@ interface FamilySessionFeedItemProps {
  * how much lands at once — so a Read-more would only put a tap between a
  * family and the thing they came to read. What it also does not share is
  * everything that made the gedu's row a workspace — no editor, no completeness
- * ladder, no amber "owed" state, no roster. Those are staff workflow, and a
- * family reading amber warnings about paperwork they cannot do anything about
+ * ladder, no warning-toned "owed" state, no roster. Those are staff workflow, and a
+ * family reading warnings about paperwork they cannot do anything about
  * would be reading the platform's problems rather than their child's club.
  *
  * **A past session with nothing on it renders as a quiet line, not a card.** No

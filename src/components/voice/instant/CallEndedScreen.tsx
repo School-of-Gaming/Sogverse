@@ -35,8 +35,8 @@ interface CallEndedScreenProps {
  * the tagline as a footer; this is the only voice screen that carries
  * one.
  *
- * The tagline's one amber phrase is the hero headline's own treatment
- * (`brand.ts`, beside the label rule), and the violet rule that completes it
+ * The tagline's one act phrase is the hero headline's own treatment
+ * (`brand.ts`, beside the label rule), and the world rule that completes it
  * on a hero is deliberately not drawn here: this is a card on a dead-end
  * screen, not a public page's hero, and a display rule inside it would be the
  * hero's mark spent where no hero is.

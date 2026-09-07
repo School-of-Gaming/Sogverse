@@ -424,7 +424,7 @@ function FamilyBlockRow({
       </div>
 
       {gamers.length > 0 && (
-        <div className="border-t border-border bg-lifted">
+        <div className="border-t border-border">
           {gamers.map((gamer) => (
             <GamerPickerRow
               key={gamer.id}

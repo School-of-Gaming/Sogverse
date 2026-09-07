@@ -18,7 +18,7 @@
   --color-border: #333333;
   --color-card-foreground: #EDEDED;
 
-  /* The signature pair. A fill and its foreground are one decision — amber is light and takes only a dark label, violet is dark and takes only a light one. */
+  /* The signature pair. A fill and its foreground are one decision — act is light and takes only a dark label, world is dark and takes only a light one. */
   --color-act: #FAA901;
   --color-act-foreground: #121212;
   --color-world: #8F00E2;
@@ -61,8 +61,8 @@
   /* The scrim — the one colour in the theme that carries its own alpha. It dims what is behind it and nothing sits inside it; black, because a tint that adds a hue is a tint that recolours a photograph. See src/tokens/surfaces.ts. */
   --color-scrim: color-mix(in oklab, #000000 70%, transparent);
 
-  /* The hover layer — the theme's ink at 8%, laid over whatever ground an element already sits on, so a row on the page, on a card and on a lifted panel each lift one visible step from where they are. A state, never a surface: nothing is authored on it. See src/tokens/surfaces.ts. */
-  --color-hover: color-mix(in oklab, #EDEDED 8%, transparent);
+  /* The hover layer — the theme's ink at 8%, laid over whatever ground an element already sits on, so a row on the page, on a card and on a lifted panel each lift one visible step from where they are. An image and not a colour, because a layer is drawn over a ground rather than in place of it: a background-color would discard the fill an element already had. A state, never a surface: nothing is authored on it. See src/tokens/surfaces.ts. */
+  --background-image-hover: linear-gradient(color-mix(in oklab, #EDEDED 8%, transparent), color-mix(in oklab, #EDEDED 8%, transparent));
 
   /* Faces. The package owns the names; the consumer loads the files and defines the var() each token points at, on <html> and never on <body>. */
   --font-sans: var(--font-poppins), system-ui, sans-serif;

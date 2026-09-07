@@ -325,7 +325,12 @@ function ZoneCard({
       )}
     >
       <div className="flex items-center gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-lifted">
+        <span
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-lg border bg-lifted",
+            zone.color.edge,
+          )}
+        >
           <Icon className={cn("h-5 w-5", zone.color.glyph)} />
         </span>
         <span className="flex-1 truncate text-sm font-medium">{label}</span>

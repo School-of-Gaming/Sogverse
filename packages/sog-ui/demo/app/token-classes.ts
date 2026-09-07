@@ -71,6 +71,21 @@ export const INK: TokenClasses = {
   warning: "text-warning",
 };
 
+/**
+ * The same tokens as edges, for the glyph tiles drawn in them.
+ *
+ * A glyph tile is the lifted neutral with a border in its glyph's hue, so the
+ * hue reaches the reader as the mark and as the line around it and never as a
+ * ground.
+ */
+export const EDGE: TokenClasses = {
+  act: "border-act",
+  "yty-harmony": "border-yty-harmony",
+  "yty-glow": "border-yty-glow",
+  "yty-valor": "border-yty-valor",
+  "yty-wit": "border-yty-wit",
+};
+
 /** A status fill's own label colour, for the badges the status floor draws. */
 export const ON_FILL: TokenClasses = {
   destructive: "text-destructive-foreground",

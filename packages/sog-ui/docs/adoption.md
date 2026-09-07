@@ -163,7 +163,7 @@ Done when: no raw heading element remains in Sogverse and the lint holds it ther
 
 The most-used primitive, and the first with a state.
 
-Why third: it is the hardest and the most valuable. It carries the amber act fill and the
+Why third: it is the hardest and the most valuable. It carries the act fill and the
 grammar fills, the neutral emphasis tier, the hover decision that is still open, and the
 committing state that has to hold from the click through a redirect or a view swap, which
 has failed in Sogverse more than once when each screen carried its own copy of the

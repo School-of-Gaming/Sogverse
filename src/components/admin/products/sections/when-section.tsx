@@ -114,7 +114,7 @@ export function WhenSection({
                       endDate: option === "threshold" ? "" : state.endDate,
                     })
                   }
-                  className="mt-1 h-4 w-4"
+                  className="mt-1 h-4 w-4 accent-act"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">
@@ -218,7 +218,7 @@ export function WhenSection({
                               option === "ongoing" ? "" : state.endDate,
                           })
                         }
-                        className="mt-1 h-4 w-4"
+                        className="mt-1 h-4 w-4 accent-act"
                       />
                       <div className="min-w-0 flex-1">
                         <div className="font-medium">

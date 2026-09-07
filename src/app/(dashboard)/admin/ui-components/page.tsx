@@ -1929,7 +1929,7 @@ function ImageCatalogueDemo() {
  * glyphs sit directly above the state marks they share rows with on the live
  * page, so the question a categorical palette exists to answer — can any of
  * these four be mistaken for "something is wrong here" — is settled by looking
- * down rather than by remembering. A hue that drifts toward warning amber or
+ * down rather than by remembering. A hue that drifts toward the warning tone or
  * success green shows up here before it shows up in front of an admin.
  */
 function ProductTypePaletteDemo() {
@@ -1950,7 +1950,12 @@ function ProductTypePaletteDemo() {
                 {/* Tile and glyph are one mark, not a swatch beside an icon —
                     two elements would say the same thing twice and imply they
                     were two facts. */}
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-lifted">
+                <span
+                  className={cn(
+                    "grid h-7 w-7 shrink-0 place-items-center rounded-md border bg-lifted",
+                    presentation.border,
+                  )}
+                >
                   <Icon
                     className={cn("h-4 w-4", presentation.text)}
                     aria-hidden

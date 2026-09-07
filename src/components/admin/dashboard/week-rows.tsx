@@ -170,7 +170,7 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
 /**
  * "This one is in the queue at the top of the page."
  *
- * It was a bare amber dot, which needed a key entry to mean anything — and a
+ * It was a bare act dot, which needed a key entry to mean anything — and a
  * mark that cannot be read without a key is a mark that is not read. The
  * replacement borrows the grammar the family surfaces already use to tell a
  * parent something is wrong with an enrollment (`PaymentProblemBadge`): a

@@ -217,13 +217,18 @@ export function UserRow({
       </Link>
 
       {user.role === "customer" && (!linkedGamers || linkedGamers.length === 0) && (
-        <div className="border-t border-border bg-lifted py-3 pl-14 pr-4">
+        <div className="border-t border-border py-3 pl-14 pr-4">
           <p className="text-sm text-muted-foreground">{t('noConnectedGamers')}</p>
         </div>
       )}
 
+      {/* The children sit on the parent's own ground, marked by the indent and
+          the divider and never by a lift: a lifted run of rows reads as a
+          different kind of thing from the row above it, and the hover layer
+          would then land on two grounds at once, so one list would answer the
+          pointer in two colours. */}
       {linkedGamers && linkedGamers.length > 0 && (
-        <div className="border-t border-border bg-lifted">
+        <div className="border-t border-border">
           {linkedGamers.map((gamer) => {
             const gamerIdentity = identityLine(gamer, gamerSignIns?.get(gamer.id));
             return (

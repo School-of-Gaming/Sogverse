@@ -178,7 +178,7 @@ export function entryOwesCreations(
  * Two states, because two is how many a card can usefully wear:
  *
  * - `needs_attention` — the session is **owed** and one of the things it owes is
- *   missing. Amber, and the count behind every alert badge.
+ *   missing. The warning tone, and the count behind every alert badge.
  * - `complete` — every child on the current roster has an answer, a report has
  *   been written for the families, *and* (on an owed session) that report has
  *   been emailed to them. The target state, and the green check.
@@ -474,7 +474,7 @@ export function draftFromEditorState(
  * nothing.** That is the same transition the server-backed merge makes when the
  * row it just wrote comes back: the gap stops being a gap the moment there is
  * something on it, and it carries `owed: false` forward so finishing an old
- * session can never turn it amber.
+ * session can never turn it to the warning tone.
  *
  * **A live entry stays future, and that is load-bearing.** Taking the register
  * during a session must not move the card: flipping it to `past` would drop it

@@ -49,7 +49,7 @@ export function RobloxHero() {
   return (
     // Same treatment as the home page hero, pulled up under the translucent
     // header, so the programme page reads as part of the same site rather than
-    // a microsite bolted on: the page ground and one violet rule under the
+    // a microsite bolted on: the page ground and one world rule under the
     // headline, where a two-hue wash used to be — and the headline drawn the
     // hero way the library declares (`brand.ts`, beside the label rule), the
     // payoff beat in act and the rest in ink, which is what the programme's

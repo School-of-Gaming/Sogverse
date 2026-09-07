@@ -68,7 +68,7 @@ export function SpokenLanguageRadios({
             <input
               type="radio"
               name="spokenLanguage"
-              className="h-3.5 w-3.5"
+              className="h-3.5 w-3.5 accent-act"
               checked={selected}
               required
               onChange={() => onChange(code)}

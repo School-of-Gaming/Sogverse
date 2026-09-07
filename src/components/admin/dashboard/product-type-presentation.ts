@@ -51,27 +51,29 @@ export type ProductTypeMessageKey =
   | "event";
 
 /**
- * How a Yty family is spent on an admin surface: the glyph's ink, and nothing
- * else.
+ * How a Yty family is spent on an admin surface: the glyph's ink, and the edge
+ * of the tile the glyph sits on.
  *
- * **The tile behind the glyph is not a family's to decide.** It used to be a
- * 15% wash of the family's own colour, which is a duller colour than the
- * family over the dark ground and a second statement of an accent the glyph is
- * already making. The mark carries the family at full value and the square
- * behind it is the lifted grey, written at the two places that draw one — so a
- * kind's presentation says the one thing a kind decides.
+ * **The tile behind the glyph is still not a family's ground.** It used to be a
+ * 15% wash of the family's own colour, which is a duller colour than the family
+ * over the dark ground and a second statement of an accent the glyph is already
+ * making. The square stays the lifted grey; what says which family it is, twice
+ * and at full value, is the mark inside it and the line around it — both roles
+ * a brand colour may take, where a ground is not.
  */
 interface FamilyClasses {
   /** The family's colour as a foreground — how the glyph is inked. */
   text: string;
+  /** The family's colour as a border — the edge of the tile the glyph sits on. */
+  border: string;
 }
 
-/** The four families, each as the utility an admin surface draws it with. */
+/** The four families, each as the utilities an admin surface draws it with. */
 const FAMILY_CLASSES: Record<YtyFamilyId, FamilyClasses> = {
-  harmony: { text: "text-yty-harmony" },
-  glow: { text: "text-yty-glow" },
-  valor: { text: "text-yty-valor" },
-  wit: { text: "text-yty-wit" },
+  harmony: { text: "text-yty-harmony", border: "border-yty-harmony" },
+  glow: { text: "text-yty-glow", border: "border-yty-glow" },
+  valor: { text: "text-yty-valor", border: "border-yty-valor" },
+  wit: { text: "text-yty-wit", border: "border-yty-wit" },
 };
 
 /**

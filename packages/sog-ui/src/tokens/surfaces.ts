@@ -93,6 +93,18 @@
  * dark grounds and sink the light one; a grey at full value would be a fourth
  * step in a ladder that was deliberately cut to three.
  *
+ * **It is drawn as an image, not as a colour, and that is what makes it a
+ * layer.** A `background-color` stands in for whatever ground an element had:
+ * spelled that way, `hover:bg-hover` took an outline button's card fill away
+ * and left 8% ink over the page, so the button went see-through under the
+ * pointer, and every glass control over media did the same. A
+ * `background-image` composites *over* the `background-color` instead, so the
+ * card stays card and the layer lands on top of it. The theme therefore emits
+ * the mix as a flat two-stop gradient in Tailwind's `--background-image-*`
+ * namespace rather than as `--color-hover`, and the side effect is one worth
+ * having: there is no `text-hover` or `border-hover` to write, because there is
+ * no such thing as hover-coloured type.
+ *
  * **What it is not.** It is not a surface: nothing is authored on it, no
  * component takes it as a ground, and it never appears without a state
  * modifier in front of it. It is not a fourth neutral, and it does not enter
@@ -160,7 +172,9 @@ export const GLASS = {
  * on the lifted grey first, which is where most of a dashboard's rows are.
  *
  * There is one strength, with no `/n` a call site could vary: `bg-hover` is the
- * whole construct, exactly as `bg-scrim` is.
+ * whole construct, exactly as `bg-scrim` is. Where the two differ is the
+ * property they land on — the scrim is a colour, because it *is* the ground of
+ * the thing it dims, and this is an image, because it is drawn on top of one.
  */
 export const HOVER = {
   ink: "foreground",

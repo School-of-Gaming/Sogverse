@@ -110,9 +110,21 @@ describe("the hover layer", () => {
   };
 
   it("reaches the theme as one token carrying its own alpha", () => {
+    const mix = `color-mix(in oklab, ${NEUTRALS[HOVER.ink].hex} ${percent(HOVER.alpha)}, transparent)`;
     expect(renderTheme()).toContain(
-      `--color-hover: color-mix(in oklab, ${NEUTRALS[HOVER.ink].hex} ${percent(HOVER.alpha)}, transparent);`,
+      `--background-image-hover: linear-gradient(${mix}, ${mix});`,
     );
+  });
+
+  it("is an image and not a colour, so it lands on top of a ground", () => {
+    // The mechanism: a `background-color` stands in for whatever fill an
+    // element had, so an outline button on the card ground went see-through
+    // under the pointer. A `background-image` composites over it. The colour
+    // namespace must therefore hold no hover at all — which also means
+    // `text-hover` and `border-hover` cannot be written.
+    const theme = renderTheme();
+    expect(theme).not.toContain("--color-hover");
+    expect(theme).toContain("--background-image-hover:");
   });
 
   it("is the theme's ink, not a grey of its own", () => {
@@ -151,6 +163,6 @@ describe("the hover layer", () => {
     // ground the row sits on. A `--color-hover-foreground` in the theme would
     // mean somebody had started treating it as a fourth surface.
     expect(GROUNDS.map((ground) => ground.token)).not.toContain("hover");
-    expect(renderTheme()).not.toContain("--color-hover-foreground");
+    expect(renderTheme()).not.toContain("hover-foreground");
   });
 });

@@ -220,7 +220,7 @@ function ChatThread({
                 const outbound = msg.direction === WHATSAPP_DIRECTION.OUTBOUND;
                 const failed = msg.status === WHATSAPP_MESSAGE_STATUS.FAILED;
                 const pending = msg.status === WHATSAPP_MESSAGE_STATUS.PENDING;
-                // The amber bubble is the one surface in the app whose ink has
+                // The act bubble is the one surface in the app whose ink has
                 // no quieter member: `act-foreground` is the single ink the
                 // palette offers on that fill, so a timestamp that wants to be
                 // secondary cannot get there by stepping the ink down. It

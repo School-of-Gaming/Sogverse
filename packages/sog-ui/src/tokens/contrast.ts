@@ -144,11 +144,11 @@ const appTextOnGrounds: Pairing[] = (
  * The two signature colours, each under the ink it carries.
  *
  * **There is no `world`-as-ink row, and that is a measurement rather than an
- * omission.** Violet reads 2.71 against a card and 2.91 against the page —
+ * omission.** World reads 2.71 against a card and 2.91 against the page —
  * under the glyph floor, let alone the body one — so there is no ground this
  * theme fills that it could be set as type on. It reaches a reader as an edge,
  * a rule, a mark or a fill, which is why the role and status tables name
- * families and statuses and never violet as a figure.
+ * families and statuses and never world as a figure.
  */
 const brandPairings: Pairing[] = [
   {
@@ -156,14 +156,14 @@ const brandPairings: Pairing[] = [
     foreground: INK,
     background: { token: "act", hex: BRAND.act.hex },
     threshold: THRESHOLDS.bodyText,
-    why: "Dark ink on the amber act fill — the main call to action. Its label is body size, so it takes the body floor.",
+    why: "Dark ink on the act fill — the main call to action. Its label is body size, so it takes the body floor.",
   },
   {
     id: "white-on-world",
     foreground: WHITE,
     background: { token: "world", hex: BRAND.world.hex },
     threshold: THRESHOLDS.bodyText,
-    why: "White on the violet world fill, a body-size label. Violet is a dark colour, so only a light label reads on it — the exact mirror of amber, which takes only a dark one.",
+    why: "White on the world fill, a body-size label. World is a dark colour, so only a light label reads on it — the exact mirror of act, which takes only a dark one.",
   },
 ];
 

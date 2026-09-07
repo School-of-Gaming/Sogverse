@@ -112,7 +112,7 @@ as the token source.
 
 ## Owner decisions open
 
-- Amber on hover: the Guidebook darkens it about 10%; the reference branch shaded no fill
+- Act on hover: the Guidebook darkens it about 10%; the reference branch shaded no fill
   on hover and used a ring. Decided when the first button lands, not before.
 - Two measurements from the inputs to weigh when their components arrive, not before: a
   destructive red whose white label measured 3.76:1 against the 4.5:1 body floor, and a

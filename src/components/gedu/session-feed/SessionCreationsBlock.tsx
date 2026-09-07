@@ -11,7 +11,7 @@ import type { SessionFeedGamer } from "./types";
  *
  * **It exists because a session cannot flag work a gedu has no way to provide
  * from where they were flagged** *(owner)*. The final card of a flagged run goes
- * amber for a fourth reason nobody could see on it: a gedu opened the editor,
+ * warning-toned for a fourth reason nobody could see on it: a gedu opened the editor,
  * found the register full and the report written, and had nothing to fix. The
  * itemization was on the roster the whole time — a tone on a button in the rail
  * — which is the right place for *who*, and no place at all for a gedu working
@@ -36,9 +36,9 @@ import type { SessionFeedGamer } from "./types";
  * last session, here is what it will want. Once the session has ended and the
  * condition is unmet it takes the warning tone, which is exactly when the card's
  * own needs-attention line fires — the two are read off one derivation, so a
- * warning-toned block always sits under an amber header. Not the converse: a
- * header goes amber for any of four unmet conditions, so a card owing nothing
- * but its report is amber over a perfectly calm block. What the neutral half
+ * warning-toned block always sits under a warning-toned header. Not the
+ * converse: a header takes the tone for any of four unmet conditions, so a card
+ * owing nothing but its report is warning-toned over a perfectly calm block. What the neutral half
  * buys is the whole of the owner's complaint: the work is discoverable while
  * there is still time to do it, rather than only after the run is over.
  *

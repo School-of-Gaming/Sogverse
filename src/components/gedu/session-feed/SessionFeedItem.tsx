@@ -180,7 +180,7 @@ interface SessionFeedItemProps {
  * either half — a register that is not finished, a report that was never written
  * — is an alert icon and label on an otherwise ordinary card. It used to wear a
  * tinted background too, which made the feed's most common transient state look
- * like a failure and painted half the page amber for a gedu catching up after
+ * like a failure and painted half the page in the warning tone for a gedu catching up after
  * half term. Both halves present is the one state that earns a mark of its own,
  * a green check, because it is what the gedu is aiming at and nothing else on the
  * card can tell them they have arrived. Everything else is silent: a future
@@ -229,7 +229,7 @@ interface SessionFeedItemProps {
  * reader must never have to work out from a date. The tone is info rather than
  * the brand's act because the two signals in this feed sit inches apart
  * ("this is coming up" and "this owes you work") and act is close enough to
- * the warning amber that a column of cards read as one wash of attention. Info
+ * the warning tone that a column of cards read as one wash of attention. Info
  * separates on hue, so the two are told apart from across the room.
  *
  * **Which editor opens follows whether the session has STARTED, not which side

@@ -221,7 +221,7 @@ export function buildGeduSessionFeed(
  * still fully editable, because a gedu is allowed to write up any session back
  * to the product's start. The moment anything *is* recorded on it, it becomes an
  * ordinary past entry that simply never owes anything (`owed: false`), so the
- * amber warning can never apply to it while the green check still can.
+ * warning can never apply to it while the green check still can.
  *
  * A running session can never reach that branch whatever its date: it is
  * `future` now, and the epoch test sits below the end-based split.

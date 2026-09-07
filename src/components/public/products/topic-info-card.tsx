@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ExternalLink, Info } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PRODUCT_TOPICS, topicHasInfoCard } from "@/lib/products/topics";
@@ -64,10 +65,14 @@ export function TopicInfoCard({ topic }: { topic: ProductTopic }) {
 
         <p className="text-sm text-muted-foreground">{p("description")}</p>
 
-        <div className="flex gap-2 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-info" />
-          <p>{p("note")}</p>
-        </div>
+        {/* The app's alert, not a note built here: what a parent needs to know
+            and did not ask about is exactly what the info variant is, and the
+            panel carries the info edge and the info mark that every other one
+            of these does. No title — the note is one sentence, and a label over
+            it would only restate the glyph. */}
+        <Alert variant="info">
+          <AlertDescription>{p("note")}</AlertDescription>
+        </Alert>
 
         {info.stores ? (
           // Bedrock, Pokémon GO: the same software installed from a different

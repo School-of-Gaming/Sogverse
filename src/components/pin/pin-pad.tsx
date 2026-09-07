@@ -12,9 +12,18 @@ const KEYS: ReadonlyArray<string | "blank" | "backspace"> = [
   "1", "2", "3", "4", "5", "6", "7", "8", "9", "blank", "0", "backspace",
 ];
 
-/** Shared key styling for both the digit keys and the backspace key. */
+/**
+ * Shared key styling for both the digit keys and the backspace key.
+ *
+ * **A press has no ground of its own.** The key used to go to the lifted grey
+ * under the finger, which now reads backwards: hover is a layer over whatever a
+ * thing sits on and lands lighter than that static grey, so pressing a key made
+ * it darker than hovering it. What says the key was pressed is the digit
+ * appearing in the dot row above and the scale, over the hover layer that is
+ * already there — and no pressed construct is invented to replace the grey.
+ */
 const KEY_BASE =
-  "flex h-16 w-16 touch-manipulation select-none items-center justify-center rounded-full transition hover:bg-hover hover:text-foreground active:scale-90 active:bg-lifted active:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:pointer-events-none";
+  "flex h-16 w-16 touch-manipulation select-none items-center justify-center rounded-full transition hover:bg-hover hover:text-foreground active:scale-90 active:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:pointer-events-none";
 
 interface PinPadProps {
   /** Current digits entered (0..PIN_LENGTH characters). Controlled by the parent. */

@@ -35,7 +35,7 @@ export function FormSection({
  *
  * **There is one shape.** A second, louder variant existed — the same box
  * washed in a tint of act — and no section ever asked for it, so the app
- * carried an amber callout nobody had seen. A field hint is something the
+ * carried an act-tinted callout nobody had seen. A field hint is something the
  * reader reads through, which is ink beside a mark, and the one thing that
  * would make a hint louder is a short label in colour above the sentence.
  * Nothing needs that today; when something does, it arrives with the label

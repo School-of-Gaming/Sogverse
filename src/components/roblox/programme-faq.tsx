@@ -121,7 +121,7 @@ export function ProgrammeFaq() {
   }));
 
   return (
-    <section className="bg-lifted py-16 sm:py-24">
+    <section className="bg-card py-16 sm:py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">

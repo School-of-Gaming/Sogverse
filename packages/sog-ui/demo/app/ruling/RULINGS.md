@@ -1261,6 +1261,159 @@ cut-out, half on the card and half off it, so a transparent chip there would be
 transparent over two grounds at once; the payment one is a `<button>` besides, and its
 hover shade is already the Button adoption's.
 
+## 16. The owner's walk, 2026-09-07 (morning)
+
+The owner walked the app on 3002 and ruled twelve things from it. All twelve landed in
+one pass; each paragraph below names what the owner said, what changed and how much of
+it there was.
+
+**A. A nested list sits on its parent's ground.** On `/admin/users` the gamers under a
+parent "really do feel too lifted off the ground relative to their parents", and a
+different hover colour over parents and gamers "is strange" — which is what a lifted
+child list produces, because the hover layer then lands on two grounds at once. **Ruled:
+a nested list is marked by an indent and a divider, never by a lift**, and the lifted grey
+is for small objects — a glyph tile, a key cap, a skeleton bar, an input's well — not for
+a region of rows a reader moves through. Two sites, both the same shape: `user-row.tsx`'s
+note strip and children list, and `participant-picker-sheet.tsx`'s nested gamer rows.
+Each keeps `border-t border-border` and its `pl-14`; the child rows' `hover:bg-hover` now
+reads identically to the parent's. Left standing, with reasons: the chat bubbles and the
+WhatsApp message fills (small objects, not regions), `SessionCreationsBlock`'s inset panel
+and `GroupWorkspace`'s rail cards (panels, not lists of rows), `signup-panel-view`'s card
+header strip, the code block on the Minecraft API docs page (a mono well), the drop-target
+and focus grounds (`groups-panel-view`, `admin-sites-page`, `account-menu`, all states
+rather than surfaces), and `ParticipantRow`'s "you" highlight (one row, not a run). The
+rule is a new paragraph in `packages/sog-ui/CLAUDE.md`, directly after "the lifted grey is
+a surface, and hover is a layer".
+
+**B. The admin role wears Valor.** _"The admin role should likely be given a color, why
+not give them valor?"_ `ROLE_GRAMMAR.admin` is `{ family: "valor" }`, and the row's doc
+comment says why: Valor is the relationship with society, and an admin is the platform's
+own steward, the role that holds the room everyone else is in. The previous reasoning —
+that leaving Valor unspent said an admin is not a relationship a child has — was the
+library's own guess at a decision nobody had made, and it is recorded as that. With no
+null left, `RoleGrammarRow.family` is non-nullable and the conditional type in
+`src/lib/constants/roles.ts` collapses to one template literal; `ROLE_INK.admin` is
+`text-yty-valor`, `ROLE_BADGE_STYLES` follows it, the users strip needed no edit (it reads
+`ROLE_INK`), the grammar test drops its admin branch, and the demo's "What each role
+wears" section shows four families instead of three and a dash.
+
+**C. The chips on the product card's photograph.** The tag chip and the age chip become
+chips, on glass. `MediaChip` takes the library's `glass` utility plus `border border-border`
+and keeps its pill shape; `shadow-sm` goes, because glass is already a surface and a drop
+shadow under it is a second answer to the question the blur has answered. `TagChip` keeps
+its word and glyph in `text-act` — the owner kept it as the card's one highlight — and
+`WhoChip` goes neutral, its doc comment saying why: an age band is a fact on every card,
+and a fact on every card is not a colour; it wore world, which is not an ink in any case.
+This supersedes §15's note that the two media chips are solid because a neutral edge has
+no ground to sit on: the glass is that ground.
+
+**D. The radio dot is act.** Nine native `<input type="radio">` controls take `accent-act`
+— `gamer-sign-in-radios` and the eight in the admin product sections (`audience`,
+`billing` ×2, `region-lock`, `registration`, `spoken-language`, `when` ×2). `accent-*` is
+generated from the theme's `--color-act` with no arbitrary value needed, which the style
+guide's range input had already proved. The custom `ui/checkbox.tsx` is untouched: its
+native input is visually hidden and the control paints `bg-act` itself. `ZoneColorPicker`
+and `signup-panel-view` carry no native radio or checkbox at all. One clause in
+`packages/sog-ui/CLAUDE.md`'s figure-and-fill paragraph: a native control's accent is act,
+because a browser paints it from one property and that is the one fill the library does
+not draw itself.
+
+**E. The guarantee block.** `MoneyBackGuarantee` puts the `ShieldCheck` on the title's own
+line (`flex items-center gap-2`) and runs both paragraphs at full width instead of
+indenting them into a column under a 16px glyph. Nothing else changed.
+
+**F. Alerts carry a coloured edge.** _"I think the alerts should carry a colored border.
+By dropping the background color I think it needs something more to bring attention to
+it."_ The four status variants take `border-destructive` / `-success` / `-info` /
+`-warning` at full value; the base keeps `border` so only the colour of an already-drawn
+line changes, and `default` keeps `border-border bg-lifted`. The product page's
+hand-rolled game note — the section the owner named — becomes `<Alert variant="info">`
+with an `AlertDescription` and no title. The mail's note panel (`calloutPanel`) takes the
+same edge: one hex on the same 1px solid `td` border, so no Gmail or Outlook constraint
+moves. `alert.test.tsx` gains a case asserting the edge is `border-<variant>`, named by
+the variant rather than by a colour the test knows, and that the neutral edge is gone; the
+session-report mail test follows. The style guide already drew all five variants side by
+side and needed no edit. One sentence in `packages/sog-ui/CLAUDE.md`: a status panel is no
+ground, a coloured edge, glyph and label in the hue, body in ink.
+
+**G. A glyph tile has an edge in its glyph's hue.** _"Where the icon glyph is shown, it
+should also come with a colored border … this would also include the Yty section of the
+About page."_ **Ruled: a glyph tile is the lifted neutral with an edge in its glyph's
+hue** — the ban on a brand colour at an alpha step left the tile a bare grey square, which
+is too little to say which hue a 16px glyph belongs to, and an edge is a role a brand
+colour may take where a ground is not. Nine sites: the home page's feature tiles, the
+Roblox why-join tiles, the About page's values tiles and its four Yty element tiles, the
+two purchase-confirmation marks, the voice room's zone tile, and the product-type key rail
+(twice — the rail and its copy in the style guide). Three class sources gained a per-entry
+edge, typed like their neighbours: `YTY_ELEMENTS` (`edge: "border-yty-*"`),
+`ZoneColorClasses` (a fifth field, `border-pick-N` for all sixteen picks, `border-foreground`
+for the lobby, the family's own for the four Yty zones) and the admin `FamilyClasses`.
+Left standing, reported: the WhatsApp letter avatars (a letter is not a glyph), the admin
+user-detail card titles (a bare glyph in a heading, no tile), the game-username figure and
+the instant lobby's camera preview (image boxes), and every tile whose glyph is the quiet
+ink. The retirement story in `packages/sog-ui/CLAUDE.md`'s no-alpha paragraph and in
+`brand.ts`'s tile bullet is replaced by the new rule; the demo's families section now
+draws each family's glyph on its tile.
+
+**H. The FAQ loses its outer box.** The box border "reads too light … stands out in a way
+that doesn't fit the rest of the app's style". `faq-accordion.tsx` drops `rounded-lg border
+bg-card` and `overflow-hidden` and keeps `divide-y divide-border`, so the rows sit on
+whatever ground the page gives them, divided by the same line every other divider uses.
+The summary takes `rounded-md` and a tighter horizontal padding so the hover layer reads
+as a row rather than as the remains of a panel. Both consumers were checked: the About
+page's list in its reading column, and the Roblox Programme's, which is inside one of the
+bands ruling L moved to the card ground.
+
+**I. Act and world, not amber and violet.** The tokens are named by job, so the hue words
+belong in the token's own doc comment and nowhere else. In `packages/sog-ui/**` the sweep
+is complete: "amber" survives only in `act`'s doc comment and its `name` field, "violet"
+only in `world`'s, and 33 other lines in `CLAUDE.md`, `brand.ts`, `contrast.ts`,
+`generate.ts`, `grammar.ts`, `picks.ts`, `adoption.md` and `rollout.md` now say act and
+world (the theme's generated comment followed from `generate.ts`). In `src/`, 44 comment
+lines across 34 files: eighteen of them meant the signature colours and took act and world;
+the rest meant the *warning* status — a gedu card "turning amber" — and took the warning
+tone, which is what that token actually is. Left alone by the rule: the two OG image
+routes, the trophy sprite's palette comment and `messages/`, where the hue is the subject
+or the string is user-facing. This ledger is a dated record and is not swept.
+
+**J. The PIN pad's pressed state.** `active:bg-lifted` is gone. It read backwards once
+hover became a layer — the layer lands lighter than the static lifted grey, so pressing a
+key made it darker than hovering it. The press is said by the digit appearing in the dot
+row and by the scale, over the hover layer that is already there, and no pressed construct
+was invented to replace the grey; the component's comment says so.
+
+**L. A page section band is the card ground.** The owner, on the home and Roblox pages:
+the alternating bands "are far too bright and don't work on these pages". On dev they had
+been `bg-muted/30`, a whisper above the page, and the greys landing had put them on the
+lifted grey — the lightest ground the theme ships, authored for objects a few pixels
+across. **Ruled: this is rule A at the scale of a page** — a band is a region a reader
+moves through, so it takes `bg-card`. Four bands: the home page's how-it-works section,
+the Roblox page's four-steps and why-join sections, and the Programme FAQ. A grep for any
+other full-width `bg-lifted` band found none — header and footer carry no lift. The
+why-join section is the only one with cards inside it, and they read against the band by
+their own `border border-border`, which is what a card's border has always been for; no
+fourth grey was invented. The sentence is folded into rule A's paragraph.
+
+**M. The hover layer is an image, not a colour.** The owner, on the Roblox "What's on"
+rail: the arrow goes see-through under the pointer. The cause is the construct rather than
+the button — `bg-hover` was a colour token, so `hover:bg-hover` set `background-color` and
+*discarded* the `bg-card` fill the arrow was drawn with, leaving 8% ink over the page; the
+six glass controls over media had the same fault. **Ruled: a layer is drawn over a ground,
+so it is emitted as a background image.** `generate.ts` emits
+`--background-image-hover: linear-gradient(<mix>, <mix>)` in Tailwind 4's image namespace
+instead of `--color-hover`, with the same `color-mix(in oklab, #EDEDED 8%, transparent)`
+string; the served CSS was checked and carries
+`.hover\:bg-hover:hover { background-image: var(--background-image-hover) }`,
+`.group-hover\:bg-hover`, and no `--color-hover` anywhere — so `text-hover` and
+`border-hover` are now unwriteable, which is right, because there is no such thing as
+hover-coloured type. Doc comments in `surfaces.ts` and `packages/sog-ui/CLAUDE.md` say why
+an image and not a colour; `surfaces.test.ts` asserts the namespace both ways and the
+glass test's theme check follows. The lint rule needed no change — it bans the greys, and
+names `bg-hover` only in prose. **One accepted cost:** `transition-colors` does not
+animate a background image, so the hover layer now appears at once rather than fading. A
+hover state arriving instantly is conventional and nothing else about the layer moved; if
+the owner wants the fade back it is a construct decision, not a call-site one.
+
 ## Where the session stands (2026-09-07, early morning)
 
 Read this first when resuming. The branch is `feat/sog-ui-theme-adoption`, in the
@@ -1284,7 +1437,11 @@ tiles) — narrowed on 2026-09-07 by the owner's correction, since a grey is not
 and may carry an alpha where the alpha does a job a solid cannot; §11 coloured text as a
 label, and the hero headline as the one declared departure from it; §12 the colour budget,
 three tiers; §14 the heroes, cards, social images, email header and the role chip; §15
-figure and fill, and the nine filled badges that took the chip. The library holds every
+figure and fill, and the nine filled badges that took the chip; §16 the owner's walk on
+3002, twelve rulings landed in one pass — the nested list, the admin's Valor, the media
+chips on glass, the native accent, the guarantee block, the alert edge, the glyph tile's
+edge, the FAQ's box, the act-and-world prose sweep, the PIN pad's press, the section
+bands, and the hover layer as an image. The library holds every
 value with its rule and reason; Sogverse's stylesheet declares no colour; the full suite
 and both builds are green at every commit.
 
@@ -1297,6 +1454,12 @@ visual interest is declined — the owner keeps it in his own head rather than i
 - **The owner's walk** on 3002: the demo floor, UI Components, UI Previews, home, Roblox,
   a login error, the gedu dashboard (the warning-edged band), an attendance roster (the
   pressed pill), the admin products table. Three judgement calls to see are listed in §3.
+  The morning's pass through it is §16; the walk is not finished.
+- **Flagged for the walk.** The six glass controls over media — the chat composer, the
+  session photo strip, the image viewer and the zone list — now hover with the ink layer
+  over blurred media, which is the same construct every other surface uses and may read
+  weak there. If it does, the answer is a glass hover ruled in `surfaces.ts`, not a call
+  site inventing one.
 
 **Landed 2026-09-07, the enforcement pass.** The mechanisms are in place, so nothing
 below rests on habit: `tests/unit/styling/globals-declares-no-colour.test.ts` holds that

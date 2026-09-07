@@ -21,7 +21,8 @@ import { YTY_ELEMENT_GRAMMAR } from "@sog/ui";
  * reaches past this one for an element's mark.
  *
  * Each element's classes name the @sog/ui family, which is one colour: the same
- * token inks the accent line and draws the ring, at that value and no other.
+ * token inks the accent line, draws the ring and draws the edge, at that value
+ * and no other.
  *
  * **A family has no ground here, and it used to have two.** The tile behind an
  * element's mark was a 10% wash of the family and the card behind it a gradient
@@ -30,6 +31,11 @@ import { YTY_ELEMENT_GRAMMAR } from "@sog/ui";
  * mark carries the family at full value, the square behind it is the lifted
  * grey every other tile in the app sits on, and the gradient is gone with no
  * replacement: nothing was reading it.
+ *
+ * **`edge` is what the tile gained instead of that ground.** A glyph tile is
+ * the lifted neutral with a border in its glyph's hue, so the family reaches
+ * the reader twice at full value — as the mark and as the line around it — and
+ * never as a fraction of itself.
  */
 export const YTY_ELEMENTS = [
   {
@@ -39,6 +45,7 @@ export const YTY_ELEMENTS = [
     icon: YTY_ELEMENT_GRAMMAR.harmony.glyph,
     color: {
       accent: "text-yty-harmony",
+      edge: "border-yty-harmony",
       ring: "ring-yty-harmony",
     },
   },
@@ -49,6 +56,7 @@ export const YTY_ELEMENTS = [
     icon: YTY_ELEMENT_GRAMMAR.glow.glyph,
     color: {
       accent: "text-yty-glow",
+      edge: "border-yty-glow",
       ring: "ring-yty-glow",
     },
   },
@@ -59,6 +67,7 @@ export const YTY_ELEMENTS = [
     icon: YTY_ELEMENT_GRAMMAR.valor.glyph,
     color: {
       accent: "text-yty-valor",
+      edge: "border-yty-valor",
       ring: "ring-yty-valor",
     },
   },
@@ -69,6 +78,7 @@ export const YTY_ELEMENTS = [
     icon: YTY_ELEMENT_GRAMMAR.wit.glyph,
     color: {
       accent: "text-yty-wit",
+      edge: "border-yty-wit",
       ring: "ring-yty-wit",
     },
   },

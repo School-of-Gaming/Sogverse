@@ -23,14 +23,14 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      {/* The hero sits on the page ground and marks itself with one violet
-          rule under the headline. It used to carry a two-hue wash — amber at
-          20% blended into violet at 10% under a vertical fade — and a brand
+      {/* The hero sits on the page ground and marks itself with one world
+          rule under the headline. It used to carry a two-hue wash — act at
+          20% blended into world at 10% under a vertical fade — and a brand
           colour is never blended into another and never starts at a lower
           alpha: what that painted was two colours neither of which was ours.
-          The rule is violet at its authored value, which is the display and
+          The rule is world at its authored value, which is the display and
           identity colour, and it is the whole of the colour the hero spends
-          besides the headline's one amber phrase and the amber call to action.
+          besides the headline's one act phrase and the act call to action.
 
           The headline is the library's declared departure from "anything a
           reader reads through is ink" (`brand.ts`, beside the label rule): a
@@ -96,7 +96,7 @@ export default function HomePage() {
             <Card key={feature.key}>
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-lifted">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-act bg-lifted">
                     <feature.icon className="h-6 w-6 text-act" />
                   </div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
@@ -113,7 +113,7 @@ export default function HomePage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="bg-lifted py-24">
+      <section className="bg-card py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -158,9 +158,9 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-24">
         <Card className="relative mx-auto max-w-3xl overflow-hidden">
-          {/* The card is the plain card ground with one violet rule along its
+          {/* The card is the plain card ground with one world rule along its
               top edge — the hero's construct, so the page opens and closes on
-              the same idea. It used to be washed amber-to-violet; two brand
+              the same idea. It used to be washed act-to-world; two brand
               colours blended into each other is a smear, and act here would
               only repeat the colour of the button inside the card. */}
           <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />

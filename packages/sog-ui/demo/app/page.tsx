@@ -32,6 +32,7 @@ import {
   TYPE_SCALE,
 } from "../../src/tokens/typography";
 import {
+  EDGE,
   FACE_CLASS,
   FILL,
   INK,
@@ -309,10 +310,16 @@ export default function FoundationsPage() {
               <div key={id}>
                 <div className={`h-16 border border-border ${FILL[`yty-${id}`] ?? ""}`} />
                 <div className="mt-2 flex items-center gap-2">
-                  <Glyph
-                    className={`h-5 w-5 ${INK[`yty-${id}`] ?? ""}`}
-                    aria-hidden
-                  />
+                  {/* The glyph tile: the lifted neutral, edged in the hue the
+                      glyph is inked in. */}
+                  <span
+                    className={`flex h-9 w-9 items-center justify-center rounded-lg border bg-lifted ${EDGE[`yty-${id}`] ?? ""}`}
+                  >
+                    <Glyph
+                      className={`h-5 w-5 ${INK[`yty-${id}`] ?? ""}`}
+                      aria-hidden
+                    />
+                  </span>
                   <p className={`text-h4 font-medium ${INK[`yty-${id}`] ?? ""}`}>
                     {family.name}
                   </p>
@@ -388,11 +395,8 @@ export default function FoundationsPage() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {ROLES.map((role) => {
             const row = ROLE_GRAMMAR[role];
-            const family = row.family === null ? null : YTY_FAMILIES[row.family];
-            const ink =
-              row.family === null
-                ? "text-muted-foreground"
-                : (INK[`yty-${row.family}`] ?? "");
+            const family = YTY_FAMILIES[row.family];
+            const ink = INK[`yty-${row.family}`] ?? "";
             return (
               <div key={role}>
                 <div className="flex h-16 items-center justify-center gap-4 rounded-lg border border-border bg-card">
@@ -407,7 +411,7 @@ export default function FoundationsPage() {
                 </div>
                 <p className="mt-2 text-h4 font-medium">{ROLE_NAME[role]}</p>
                 <p className="font-brand-mono text-body-s text-muted-foreground">
-                  {family === null ? "\u2014" : family.name}
+                  {family.name}
                 </p>
               </div>
             );

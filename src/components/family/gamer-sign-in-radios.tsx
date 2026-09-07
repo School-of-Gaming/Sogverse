@@ -85,7 +85,7 @@ export function GamerSignInRadios({
               // `mt-0.5` lifts the control onto the label's first line; the
               // sentence underneath makes the row two lines tall, so a centred
               // radio would float against the gap between them.
-              className="mt-0.5 h-4 w-4 shrink-0"
+              className="mt-0.5 h-4 w-4 shrink-0 accent-act"
               checked={selected}
               disabled={disabled}
               onChange={() => onChange(mode)}

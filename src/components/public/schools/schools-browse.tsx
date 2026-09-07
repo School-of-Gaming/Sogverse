@@ -491,7 +491,7 @@ function StatusPill({ hasClubs, t }: { hasClubs: boolean; t: Translate }) {
       className={cn(
         // One chip shape for both answers: a neutral edge, no fill, and the
         // word in its own colour. Act is the figure on the dark ground, so a
-        // school with clubs is said in amber rather than washed in it.
+        // school with clubs is said in act rather than washed in it.
         "shrink-0 rounded-full border border-border px-2.5 py-0.5 text-xs font-medium",
         hasClubs ? "text-act" : "text-muted-foreground",
       )}

@@ -111,7 +111,7 @@ export function PurchaseConfirmationView({
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-lifted">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-act bg-lifted">
             {isWaitlist ? (
               <Hourglass className="h-7 w-7 text-act" />
             ) : (
@@ -407,7 +407,7 @@ export function PurchaseConfirmationNotice({
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-lifted">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-act bg-lifted">
             {isFinalizing ? (
               <Loader2 className="h-7 w-7 animate-spin text-act" />
             ) : kind === "timedOut" ? (

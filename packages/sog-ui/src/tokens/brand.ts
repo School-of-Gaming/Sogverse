@@ -35,8 +35,8 @@
  * banned. How much of it a surface may spend is decided by who is reading, not
  * by what the surface is made of.
  *
- * **A surface where a parent is asked to trust us or to pay spends amber alone,
- * a surface telling the story to a mixed audience spends amber plus one, a
+ * **A surface where a parent is asked to trust us or to pay spends act alone,
+ * a surface telling the story to a mixed audience spends act plus one, a
  * gamer surface may spend the palette, and no page spends all six.** The budget
  * is stated in full — with the reasoning behind each tier — in the package's
  * `CLAUDE.md`, which is where a concept rule lives; this file holds the values,
@@ -44,11 +44,11 @@
  *
  * ## The rules that hold everywhere
  *
- * - **Amber wins the main call to action** and the moments meant to feel
+ * - **Act wins the main call to action** and the moments meant to feel
  *   like us. It is the colour most associated with School of Gaming, so one
- *   amber thing on a screen is read as the thing to do — and two make neither
+ *   act thing on a screen is read as the thing to do — and two make neither
  *   of them it.
- * - **Violet sets the tone of the world**: launches, big news, lore, display
+ * - **World sets the tone of the world**: launches, big news, lore, display
  *   and identity, the electric and high-energy moments. It is never the colour
  *   of quiet, safety or trust-building copy addressed to a parent, because it
  *   is loud exactly where that copy has to be steady, and excitement is the
@@ -57,14 +57,14 @@
  *   text.** A family's job is to say which relationship a piece serves, and a
  *   hue spread under a paragraph stops being a signal and becomes the
  *   conditions the reader is reading in.
- * - **Never all six colours on one page.** Amber plus one supporting family is
+ * - **Never all six colours on one page.** Act plus one supporting family is
  *   the default. Six hues in one frame is not a code a reader can decode; it is
  *   noise wearing brand colours.
  * - **Colour-coding follows the value a piece serves**, wherever colour codes
  *   anything: harmony for community, friendship and testimonials; glow for
  *   growth, milestones and progress; valor for challenges, camps and courage;
- *   wit for learning, tips and how-to; violet for launches and announcements;
- *   amber for general brand and calls to action. A club page carries its
+ *   wit for learning, tips and how-to; world for launches and announcements;
+ *   act for general brand and calls to action. A club page carries its
  *   dominant element's colour as a cue on the same mapping. One mapping
  *   everywhere is the only thing that makes the cue legible: a hue meaning one
  *   thing on a card and another in a feed means nothing in either.
@@ -89,7 +89,7 @@
  *   **one phrase in `act`, the rest in ink, and the `world` rule beneath the
  *   headline carrying the second colour** — the page and its social card
  *   drawing the same three things, so a share and the page it lands on say
- *   one thing. The amber phrase is the payoff, the words the headline is
+ *   one thing. The act phrase is the payoff, the words the headline is
  *   travelling towards, and there is exactly one of them: a second coloured
  *   phrase spends the accent twice and the rule already holds the other hue.
  *   **It is the one heading that may.** A section heading is not a hero — it
@@ -106,9 +106,13 @@
  *   colour the brand speaks. **A tile behind a mark is not an exception**,
  *   and was the last one claimed: a chip-scale square of the hue at a tenth,
  *   behind a glyph already inked in that hue, is the same colour stated twice
- *   — once at its authored value and once at a duller one. The mark keeps the
- *   colour and the square takes the lifted neutral. What is left is artwork
- *   carrying its own palette, which is not the brand speaking at all.
+ *   — once at its authored value and once at a duller one. So a **glyph tile
+ *   is the lifted neutral with an edge in its glyph's hue**: the square keeps
+ *   the neutral, the mark keeps the colour, and the line around it states the
+ *   hue a second time at full value rather than at a fraction. A tile whose
+ *   glyph is the quiet ink has no hue to draw and keeps the plain fill. What
+ *   is left is artwork carrying its own palette, which is not the brand
+ *   speaking at all.
  * - **The ban is on the brand, and a neutral is not the brand speaking.** The
  *   greys carry no meaning to protect: they are the ground, the ink and the
  *   edge, and a grey at a fraction of itself misrepresents nothing. So a
@@ -176,10 +180,10 @@
  * scrim and the glass, because it is the same trick those two are for: an alpha
  * doing a job a solid cannot, over a ground it does not know.
  *
- * **Amber keeps its intent and loses its arithmetic.** On a light ground amber
+ * **Act keeps its intent and loses its arithmetic.** On a light ground act
  * misses the body floor by a wide margin, which is why it is a fill and a
  * large-graphic colour there and never body copy or a small link. On this
- * ground it clears that floor easily, and it is still not body copy: amber is a
+ * ground it clears that floor easily, and it is still not body copy: act is a
  * fill and a mark. It is the one colour on the screen that says *press this*,
  * and a paragraph set in it spends that signal on a paragraph. So the
  * restriction stands here for the reason the brand holds it, rather than for
@@ -258,7 +262,7 @@ export const NEUTRALS = {
    * Reach for it for the page and for anything meant to read as the page: a
    * full-bleed section, a sheet that fills the viewport. Never as a lift on top
    * of another surface — it is the floor, and a patch of floor inside a card
-   * reads as a hole punched through it. It is also the ink every amber and
+   * reads as a hole punched through it. It is also the ink every act and
    * family fill carries, which is what its darkness is for.
    */
   background: { name: "Ground", hex: "#121212", on: "foreground" },
@@ -368,8 +372,8 @@ export const NEUTRALS = {
  * world colour is never the quiet one — so a use that contradicts the rule is
  * a use that contradicts the name, and reads wrong before it is measured.
  *
- * A fill and its foreground are one decision, not two: amber is a light colour
- * and only a dark label reads on it, violet is a dark colour and only a light
+ * A fill and its foreground are one decision, not two: act is a light colour
+ * and only a dark label reads on it, world is a dark colour and only a light
  * label reads on it. A button that swaps its fill and keeps its label has not
  * changed colour, it has broken.
  */
@@ -402,7 +406,7 @@ export const BRAND = {
    * loudest colour the brand owns, and a surface that reaches for it to
    * de-emphasise something gets the opposite of what it asked for. Never the
    * main call to action either — that is act's everywhere, and a violet button
-   * on a page with an amber one asks the reader to guess. Never a fifth element
+   * on a page with an act one asks the reader to guess. Never a fifth element
    * colour: the four relationships below are spoken for, and a hue that also
    * codes a value stops being the world's colour.
    */
@@ -484,7 +488,7 @@ export const YTY_FAMILIES = {
    * The relationship with society: teamwork, innovation, civic courage. Reach
    * for it for challenges, camps and courage.
    *
-   * Never as a warning, and never in amber's place. It sits close enough to the
+   * Never as a warning, and never in act's place. It sits close enough to the
    * signature colour that a page spending both without a reason reads as one
    * colour rendered twice, and close enough to a caution hue that a warning
    * drawn in it claims a value is being reported.
@@ -569,7 +573,7 @@ export type StatusEntry =
  * **Why destructive and warning are their own colours.** Red is the one status
  * hue with room — Valor's orange is 25° away and Harmony's pink 18°, and red
  * reads as neither — so it is free to be a colour of its own. Warning is the
- * opposite case: it was the brand amber's near twin, which made a caution badge
+ * opposite case: it was act's near twin, which made a caution badge
  * and a call to action the same colour, and moving it off the gold is what makes
  * a warning and *press this* two different things on one screen. Neither hue
  * codes a Yty value, so neither takes a family.
@@ -610,7 +614,7 @@ export const STATUS = {
   /**
    * Something needs attention before it becomes a failure.
    *
-   * Its own hue, and deliberately **not** the brand amber: amber is the colour
+   * Its own hue, and deliberately **not** act: act is the colour
    * of the thing to do, and a warning drawn in it makes a caution and a call to
    * action indistinguishable on the one screen where telling them apart matters.
    * A caution yellow at a lower saturation reads as caution and reads as not the

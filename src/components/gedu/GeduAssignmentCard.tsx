@@ -114,7 +114,7 @@ interface GeduAssignmentCardProps {
  * The **Live badge is green**, and deliberately not the tone of the gradient
  * behind it. The gradient is a wash — it says "this card is different" before a
  * word is read; the badge is the word. Green is the universal on-air signal and
- * is the one semantic family free on this surface: amber is the attention badge
+ * is the one semantic family free on this surface: warning is the attention badge
  * on the corner beside it and must not be echoed, blue is "next up" in the session
  * feed and would be a lie about something already running, and the brand tone is
  * already spent on the wash itself.

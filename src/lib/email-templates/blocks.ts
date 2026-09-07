@@ -330,10 +330,14 @@ interface CalloutPanelOptions {
  * which is a treatment that exists nowhere in the app and read as a warning
  * besides — the act is the colour that means *ours*, not *careful*.
  *
- * **The border is what draws the panel, and it is allowed to be quiet.** It is
- * the app's own edge, the same grey every card and panel wears, and it is not
- * asked to carry a control boundary: everything the panel means is in its label
- * and its sentences.
+ * **The border carries the status, at full value.** The app's alerts do the
+ * same thing and for the same reason: with no tinted ground left, an edge in
+ * the status hue is what brings the eye to a panel whose whole job is to be
+ * noticed, and an edge is one of the roles a brand colour may take. It stays a
+ * 1px solid line on the cell — the most robust border email has, and the one
+ * construct Outlook's Word engine and Gmail's Android renderer both draw
+ * without argument — so what changed is one colour and nothing about the
+ * markup.
  *
  * **The label takes the colour and the sentences stay ink.** That is the app's
  * rule for this construct — coloured ink only on a label, never on something a
@@ -359,7 +363,7 @@ export function calloutPanel({ label, paragraphs }: CalloutPanelOptions): string
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
       <tr>
-        <td style="border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};padding:16px;">
+        <td style="border:1px solid ${STATUS.info};border-radius:${RADIUS.lg};padding:16px;">
           <p style="margin:0 0 8px;color:${STATUS.info};font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">${label}</p>
           ${body}
         </td>

@@ -60,7 +60,7 @@ export function AboutSection({ id }: AboutSectionProps) {
 
       {/* Mission */}
       <div className="mx-auto mt-16 max-w-4xl">
-        {/* The plain card ground: this block used to be washed amber-to-violet,
+        {/* The plain card ground: this block used to be washed act-to-world,
             and a brand colour is never blended into another. Nothing replaces
             it — the card is already lifted off the page, and a rule here would
             be the hero's mark spent on a paragraph. */}
@@ -84,7 +84,7 @@ export function AboutSection({ id }: AboutSectionProps) {
             <Card key={value.key}>
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-lifted">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-act bg-lifted">
                     <value.icon className="h-6 w-6 text-act" />
                   </div>
                   <CardTitle className="text-lg">{value.title}</CardTitle>
@@ -124,7 +124,7 @@ export function AboutSection({ id }: AboutSectionProps) {
           The inline #d00 and #0a0a0a are the Klingon Empire's colours, not the
           brand's: this card is a picture of an Empire console, so it carries its
           own paint and takes the artwork exemption in eslint.config.mjs — the
-          day the brand's amber changes, the console should not follow.
+          day act changes, the console should not follow.
           The words *inside* the picture are not artwork: they are ordinary
           secondary text, so they take the app's two inks (the English column is
           what a reader scans and takes `foreground`; the other seven are quiet ink). */}

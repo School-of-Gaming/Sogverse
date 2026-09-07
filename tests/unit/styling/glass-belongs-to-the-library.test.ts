@@ -87,7 +87,10 @@ describe("Sogverse declares no glass of its own", () => {
     const theme = readFileSync(themePath, "utf8");
     expect(theme).toMatch(/--color-scrim:/);
     expect(theme).toMatch(/@utility glass\b/);
-    expect(theme).toMatch(/--color-hover:/);
+    // The hover layer is in the image namespace, not the colour one: it is
+    // drawn over a ground rather than in place of one.
+    expect(theme).toMatch(/--background-image-hover:/);
+    expect(theme).not.toMatch(/--color-hover/);
   });
 });
 

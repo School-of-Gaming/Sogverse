@@ -93,7 +93,7 @@ export function BillingSection({
                     name="paidMode"
                     checked={active}
                     onChange={() => setState(withPaidMode(state, mode))}
-                    className="mt-1"
+                    className="mt-1 accent-act"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 font-medium">
@@ -177,7 +177,7 @@ export function BillingSection({
                     onChange={() =>
                       setState({ ...state, uncapped: mode === "unlimited" })
                     }
-                    className="mt-1 h-4 w-4"
+                    className="mt-1 h-4 w-4 accent-act"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="font-medium">

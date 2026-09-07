@@ -610,7 +610,7 @@ const YEARLONG_STAFF_NOTES: readonly string[] = [
  *   one whose roster was started and abandoned (the partial save).
  * - *Needs attention, report missing* — weeks marked off to the last child and
  *   never written up. These used to be the silent middle of a three-rung ladder;
- *   they are amber now, because the report is what a family opens the page for
+ *   they are warning-toned now, because the report is what a family opens the page for
  *   and a week without one is a week they were told nothing about.
  * - *Needs attention, never sent* — three weeks marked off and written up whose
  *   reports have not been emailed to the families. They are the only cards here
@@ -625,7 +625,7 @@ const YEARLONG_STAFF_NOTES: readonly string[] = [
  *   check and a sent line under each report.
  *
  * Plus a pre-epoch tail: one session somebody went back and wrote up (an
- * ordinary past entry that never turns amber, and the only place on this page
+ * ordinary past entry that never takes the warning tone, and the only place on this page
  * the neutral marker still appears) and two nobody ever touched (quiet
  * placeholder lines that still open the record editor). A session that did not
  * run has no entry kind at all, because declaring one off is part of the
@@ -1068,7 +1068,7 @@ function owedMemberFlair(now: Date): MemberFlairFixture {
  *
  * Written this way so the final card's needs-attention line has exactly one
  * cause. Every entry here is marked off, written up and emailed — the three
- * ordinary obligations, all discharged — so the amber on the newest card can
+ * ordinary obligations, all discharged — so the warning on the newest card can
  * only be the fourth condition, and a reviewer is not left guessing which of
  * four things it is complaining about. The four cards beneath it carry green
  * checks for the same reason: the contrast is the point.
@@ -1415,13 +1415,13 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
    * block it exists for.
    *
    * **Everything the signal does is on this one page.** The newest card carries
-   * the amber needs-attention line, its marker on the timeline takes the warning
+   * the warning-toned needs-attention line, its marker on the timeline takes the warning
    * tone, the card itself names the two members it is waiting on, and those two
    * carry the warning tone on their roster buttons — every one of which opens
    * the same dialog every other row's button opens, because there is one
    * authoring surface and each signal is a route to it rather than a second way
-   * in. The four cards below the last one are green, so the amber has something
-   * to be amber against.
+   * in. The four cards below the last one are green, so the warning has
+   * something to stand against.
    *
    * It is deliberately thin on everything else — a five-week run, one peer
    * group, no site, no backlog of any other kind — for the same reason the two
@@ -1597,7 +1597,7 @@ export function buildGroupWorkspaceFixture(
         is_remote: config.isRemote,
         // Flagged on two scenarios, one per tone of the session card's
         // creations block: the camp, whose run is still going, states the
-        // obligation quietly; `owed`, whose run has ended, states it in amber.
+        // obligation quietly; `owed`, whose run has ended, states it in the warning tone.
         // Creations themselves are on show without the flag — the club's rail
         // has rows lit by one — because what the flag adds is the obligation,
         // not the data.

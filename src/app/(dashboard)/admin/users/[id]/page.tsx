@@ -42,7 +42,7 @@ import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@
  * This map used to say four things in four unrelated languages — a status fill
  * for `active`, another for `waitlisted`, a grey fill for `reserving` and the
  * brand's world colour for `completed`. That last one is the reason the map was
- * rewritten rather than trimmed: violet carries lore, display and identity in
+ * rewritten rather than trimmed: world carries lore, display and identity in
  * SOG-UI's tone grammar, so spending it on "this participation has finished"
  * says the world where the row means a lifecycle. A state is not a place in the
  * world, and a chip that changes shape between states is one a reader has to

@@ -88,7 +88,7 @@ export function RegionLockRadios({
             <input
               type="radio"
               name="regionLock"
-              className="h-4 w-4 shrink-0"
+              className="h-4 w-4 shrink-0 accent-act"
               checked={selected}
               onChange={() => onChange(option.code)}
             />

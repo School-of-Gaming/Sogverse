@@ -18,20 +18,20 @@ interface LayoutOptions {
 }
 
 /**
- * The violet rule under the lockup — the header's one piece of colour besides
+ * The world rule under the lockup — the header's one piece of colour besides
  * the brand half of the lockup itself.
  *
  * **Why a mail spends a second colour at all.** A mail is a parent-tier
- * surface, and that tier's budget gives it amber as its one accent, with a
+ * surface, and that tier's budget gives it act as its one accent, with a
  * second colour arriving only where an intent is stated beside the site that
- * spends it. This is that statement: amber and violet together are the
+ * spends it. This is that statement: act and world together are the
  * signature pair — the brand's own lockup — and the header is where a mail
  * says who it is from. The rule is the pair, not decoration, and nothing below
  * the header spends a second colour.
  *
  * It is the construct the home hero and both social cards use, so a page, a
  * shared link and a mail say one thing. It replaces a two-tone wash across the
- * whole shell: amber and violet pre-blended against the ground, because a mail
+ * whole shell: act and world pre-blended against the ground, because a mail
  * client cannot be relied on for alpha — which is exactly what made it the
  * brand pair at an alpha step wearing a solid's clothes, two colours neither of
  * which was ours.
@@ -289,7 +289,7 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
               <span class="brand-act" style="font-size:24px;font-weight:bold;color:${BRAND.act};letter-spacing:0.5px;">${SENDER_NAME}</span><span style="font-size:24px;font-weight:bold;color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>
             </td>
           </tr>
-          <!-- The violet rule under the lockup. See HEADER_RULE_HEIGHT. -->
+          <!-- The world rule under the lockup. See HEADER_RULE_HEIGHT. -->
           <tr>
             <td height="${HEADER_RULE_HEIGHT}" style="${pinnedFill(BRAND.world)}height:${HEADER_RULE_HEIGHT}px;line-height:${HEADER_RULE_HEIGHT}px;font-size:0;">&nbsp;</td>
           </tr>

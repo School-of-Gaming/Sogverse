@@ -33,7 +33,7 @@
  * because the gaps were exactly where the brand's colours live. So the rainbow
  * is complete, and two of the picks sitting near the signature pair is
  * deliberate. Nothing is confused by it — a pick is never spoken by the
- * product, so a pick that resembles amber is still unmistakably somebody's
+ * product, so a pick that resembles act is still unmistakably somebody's
  * choice rather than a call to action.
  *
  * ## Numbered, not named

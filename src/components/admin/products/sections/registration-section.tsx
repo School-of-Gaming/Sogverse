@@ -59,7 +59,7 @@ export function RegistrationSection({
                 onChange={() =>
                   setState({ ...state, registrationOpensMode: option })
                 }
-                className="mt-1 h-4 w-4"
+                className="mt-1 h-4 w-4 accent-act"
               />
               <div className="min-w-0 flex-1">
                 <div className="font-medium">

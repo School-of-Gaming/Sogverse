@@ -28,7 +28,7 @@ import type { EffectiveProductStatus } from "@/lib/products/effective-status";
  * **Act appears in no state, and that is the point of the rework.** A lifecycle
  * state is not the thing to do; spending the app's one *press this* colour on
  * "has not started yet" is the clearest case of that in the product, and a
- * table of thirty amber chips teaches a reader that amber means nothing.
+ * table of thirty act chips teaches a reader that act means nothing.
  *
  * **The colour never carries the meaning alone.** The word is the state's name
  * and the hue reinforces it, which is what a coloured label is allowed to be —

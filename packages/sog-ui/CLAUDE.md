@@ -67,10 +67,15 @@ same value. No new colour arrives by conversion or by eye.
 **A brand colour exists only at its authored values**, a family's single hex or a token's
 own full value, never at an alpha step. A ground that needs to lift goes to a neutral; the
 brand arrives at full value on an edge, ink, mark or fill. The one exemption is artwork
-carrying its own palette. Chip-scale icon-accent tiles used to be a second: a square of
-the hue at a tenth behind a glyph already inked in it. It is retired, because the glyph on
-the lifted neutral carries the accent on its own and the tint was the same colour stated
-twice — once at its authored value and once at a duller one.
+carrying its own palette. **A glyph tile is the lifted neutral with an edge in its glyph's
+hue.** It used to be a square of the hue at a tenth behind a glyph already inked in it,
+which was the same colour stated twice — once at its authored value and once at a duller
+one — and the tint went; what replaced it was nothing at all, and a bare grey square is
+too little to say which hue a tile belongs to when the glyph inside it is sixteen pixels
+across. The edge is the answer the ban already allows: it draws the hue at full value,
+around a ground that stays neutral, so the colour reaches the reader twice and is diluted
+neither time. A tile whose glyph is the quiet ink has no hue to draw and keeps the plain
+lifted fill.
 
 **The ban is on the brand. A neutral may carry an alpha where the alpha does a job a solid
 cannot: a layer over a ground it does not know.** The greys are not the brand speaking —
@@ -88,7 +93,9 @@ them.
 **The lifted grey is a surface, and hover is a layer.** They answer different questions
 and neither substitutes for the other: `lifted` is the authored ground a static thing
 takes when it is set back from its neighbours, and `hover` is the ink at a low alpha laid
-over whatever ground an element is already on. So a panel may be lifted and the rows on it
+over whatever ground an element is already on — laid, and so drawn as a background *image*
+rather than a background colour, because a colour would stand in for the ground instead of
+sitting on it and an outline button would go see-through under the pointer. So a panel may be lifted and the rows on it
 still show hover — the layer lifts a row on the page, on a card and on a lifted panel by
 the same visible step, because it never had to name the ground beneath it. A grey written
 as a hover is the defect this pair exists to prevent: it draws a state on one surface and
@@ -96,33 +103,54 @@ nothing at all on the one above. **Nothing in Sogverse writes a grey as a hover*
 lint holds it. The demo's Ground-and-ink floor is the reference, where the three surfaces
 are nested and each carries a live hoverable row.
 
+**A nested list sits on its parent's ground, marked by an indent and a divider, never by a
+lift.** The lifted grey is for small objects — a glyph tile, a key cap, a skeleton bar, an
+input's well, a mono value — and never for a region of rows a reader moves through. Two
+things go wrong when a run of rows is lifted off the rows above it. The children read as a
+different kind of thing from their parent, which they are not; and the hover layer, which
+lifts every ground by the same visible step, then lands on two grounds at once, so one
+list answers the pointer in two colours and a reader is taught that the difference means
+something. What actually says *these belong to that* is the indent, and it is the only
+signal a nested list needs, with the divider saying where the parent's own row ends. **A
+page section band is the same rule at the scale of a page**: an alternating band is a
+region a reader moves through, so it takes the card ground, and the lifted grey — the
+lightest ground the theme ships, authored for objects a few pixels across — is far too
+bright spread across a viewport. Cards inside such a band are told apart by their own
+edge, which is what a card's border has always been for.
+
 **Colour is a figure where it names something and a fill where it is pressed.** An edge,
 an ink, a mark, a chip's word beside its glyph: each of those is colour naming a thing —
 a state, a kind, a role — and none of them is pressed. A fill is what a hand presses, and
-the ink on it is the label of an action. A filled label is not a fault and does not read
+the ink on it is the label of an action. **A native control's accent is act**: a browser
+paints its own radio dot and checkbox tick from one property, which makes them the one
+fill the library does not draw itself, and act is the value they take — a chosen option is
+a thing the reader did, and only ever one control in a group is wearing it. A filled label is not a fault and does not read
 as one; the chip does the same job and reads better, so a label wears the chip and the
 fill stays the control's, which is what keeps a fill meaning *press*. Which colours a
-**button** may wear is decided by the Button adoption, not here. **Violet is the measured
+**button** may wear is decided by the Button adoption, not here. **World is the measured
 exception on the figure half**: `world` reads 2.71 as an ink on a card and 2.91 on the
 page — under the glyph floor, let alone the body one — so it cannot be an ink on either
 ground, which is why the role and status tables name families and statuses and never
-violet as a figure. Violet lives as an edge, a rule, a mark or a fill. **A public page's
+world as a figure. World lives as an edge, a rule, a mark or a fill. **A status panel is
+that division drawn whole: no ground, a coloured edge, the glyph and a label in the hue,
+and the body in ink** — the edge carries the attention the tint used to, and it costs
+nothing, because the panel was already being drawn by a neutral one. **A public page's
 hero headline is the one declared departure from the division** — a display treatment,
 one phrase in `act` and the `world` rule beneath it — declared beside the label rule in
 `brand.ts`, which is also where it says a section heading is not a hero.
 
 **Colour is spent to a budget, and the budget is set by who the page is for.** **A
 surface where a parent is being asked to trust us or to pay**, the parent's dashboard,
-the mail, billing, safety and safeguarding copy, a partner page, spends amber as its one
+the mail, billing, safety and safeguarding copy, a partner page, spends act as its one
 accent on neutral grounds, with ink for text and grey for support. Calm surfaces carry
 credibility. A second colour arrives there only with an intent stated beside the site
 that spends it. **A surface telling the story to a mixed audience**, the home page,
-About, Roblox, the social cards, spends amber plus one other colour, two accents at most,
+About, Roblox, the social cards, spends act plus one other colour, two accents at most,
 and is colourful by putting two saturated colours on a calm ground rather than many
 colours on one page. **A gamer surface**, the child's dashboard, the community, anything
 inside the world, may spend the palette; that is where the loudness belongs. No page
-spends all six, and amber plus one is the default wherever no decision has been made. And
-violet is never the colour of quiet: it does not carry safety, safeguarding or
+spends all six, and act plus one is the default wherever no decision has been made. And
+world is never the colour of quiet: it does not carry safety, safeguarding or
 trust-building copy on a parent surface, where the reader is being asked to trust us with
 a child and the page should sound settled rather than energetic.
 

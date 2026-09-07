@@ -240,7 +240,7 @@ export function AudienceSection({
                   <input
                     type="radio"
                     name="productTag"
-                    className="h-4 w-4"
+                    className="h-4 w-4 accent-act"
                     checked={selected}
                     onChange={() => setState({ ...state, tag: option })}
                   />

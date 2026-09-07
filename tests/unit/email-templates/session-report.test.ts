@@ -168,20 +168,23 @@ describe("the staff copy's banner", () => {
 
   /**
    * The banner is the app's `Alert` in its `info` variant, not a treatment of
-   * its own: a washed info surface inside a full info border. It carried a 3px
-   * brand-orange rule down one edge before that, which is a shape the app has
-   * nowhere and which read as a warning — so the brand colours are asserted
-   * *absent* here, not merely relocated.
+   * its own: no ground, a full border in the info hue, the label in that hue
+   * and every sentence under it in ink. It carried a 3px brand-orange rule down
+   * one edge before that, which is a shape the app has nowhere and which read
+   * as a warning — so the brand colours are asserted *absent* here, not merely
+   * relocated.
    */
-  it("takes its prominence from the info border and wash, not from coloured text", () => {
+  it("takes its prominence from the info border, not from coloured text", () => {
     const html = buildSessionReportEmail(t, "en", { ...base, staffCopy: true });
     // The banner's own cell, from its opening tag to its close, so nothing the
     // shell around it emits can satisfy or break these.
     const start = html.lastIndexOf("<td ", html.indexOf(LABEL));
     const banner = html.slice(start, html.indexOf("</td>", start));
 
-    // The Alert's full 1px border, in the neutral edge every panel wears.
-    expect(banner).toContain(`border:1px solid ${DARK_THEME.border}`);
+    // The Alert's full 1px border, in the status's own hue: with no ground
+    // left, the edge is what brings the eye to the panel.
+    expect(banner).toContain(`border:1px solid ${STATUS.info}`);
+    expect(banner).not.toContain(`border:1px solid ${DARK_THEME.border}`);
     expect(banner).not.toContain("border-left:");
     // No ground of its own: a status colour is never a wash, so the panel sits
     // on the message panel it is already on.

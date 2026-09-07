@@ -92,9 +92,9 @@ describe("YTY_ELEMENT_GRAMMAR", () => {
  * nobody made, so the shape of the row is pinned rather than left to a type
  * that a widening could quietly relax.
  *
- * Admin's `null` family is pinned for the same reason: an admin taking no
- * family is a decision — an admin is not a relationship a child has — and a
- * fourth colour arriving there by accident should fail here.
+ * All four roles carry a family, the admin included: the fourth is spent
+ * rather than left over, so what is pinned here is that every row names one and
+ * that no two rows name the same one.
  */
 describe("ROLE_GRAMMAR", () => {
   const rows = Object.entries(ROLE_GRAMMAR);
@@ -105,13 +105,8 @@ describe("ROLE_GRAMMAR", () => {
     );
   });
 
-  it("names only families the palette ships, and only for the three that take one", () => {
+  it("names only families the palette ships, for every role", () => {
     for (const [role, row] of rows) {
-      if (role === "admin") {
-        expect(row.family, "admin takes no family").toBeNull();
-        continue;
-      }
-      expect(row.family, `${role} takes a family`).not.toBeNull();
       expect(YTY_FAMILIES, `${role} names a family that exists`).toHaveProperty(
         String(row.family),
       );
@@ -119,9 +114,7 @@ describe("ROLE_GRAMMAR", () => {
   });
 
   it("gives every role a family of its own", () => {
-    const families = rows
-      .map(([, row]) => row.family)
-      .filter((family) => family !== null);
+    const families = rows.map(([, row]) => row.family);
     expect(new Set(families).size).toBe(families.length);
   });
 

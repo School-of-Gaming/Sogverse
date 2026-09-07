@@ -192,23 +192,24 @@ export type RoleId = "admin" | "customer" | "gamer" | "gedu";
  * One role's tone: the family that carries it, and nothing else.
  *
  * **No glyph, unlike the two tables above**, and the absence is the decision —
- * see the table below. `family` is nullable where the kind rows' is not, and
- * that null is a decision too.
+ * see the table below. `family` is not nullable: every role wears one, and the
+ * null the admin row used to carry is gone, so a role without a colour is no
+ * longer a shape this table can express.
  */
 export interface RoleGrammarRow {
-  readonly family: YtyFamilyId | null;
+  readonly family: YtyFamilyId;
 }
 
 /**
  * Role → Yty family.
  *
  * **The families, spent as figures: a neutral chip and the role's word in its
- * family's colour.** A role badge used to be a fill — amber for a gamer, violet
+ * family's colour.** A role badge used to be a fill — act for a gamer, world
  * for a parent, a blend of the two for a gedu — and a brand colour under a
  * label is the shape this palette is worst at, because every fill it offers is
  * light enough that only a dark label reads on it. On the dark ground the
  * colour is at its most vivid as ink, so the word carries it and the chip's
- * edge stays neutral. The gedu's amber-to-violet gradient goes with this: two
+ * edge stays neutral. The gedu's act-to-world gradient goes with this: two
  * brand colours blended into each other is a smear, and it was the only one in
  * the product.
  *
@@ -226,9 +227,12 @@ export interface RoleGrammarRow {
  * relationship with others, and a gamer is here for the people they play
  * beside. Harmony is the relationship with yourself, which is the balance a
  * parent holds on a child's behalf. Wit is the relationship with technology,
- * which is what a gedu teaches. An admin takes **no family and the quiet ink**:
- * an admin is not a relationship a child has, and leaving Valor unspent says so
- * rather than hiding it behind a fourth colour.
+ * which is what a gedu teaches. Valor is the relationship with society, and an
+ * admin is the platform's own steward — the role that holds the room for
+ * everyone else — so the fourth family is spent rather than left over. The
+ * admin row used to take no family and the quiet ink, on the reading that an
+ * admin is not a relationship a child has; that was the library's own guess at
+ * a decision nobody had made, and the owner ruled the other way.
  *
  * **The residual collision is one word, and it is accepted.** These hues are
  * already spent on product kinds, and the four families are the voice room's
@@ -265,9 +269,10 @@ export const ROLE_GRAMMAR = {
    */
   gedu: { family: "wit" },
   /**
-   * No family, and the quiet ink. An admin is not a relationship a child has,
-   * and leaving Valor unspent says so rather than hiding it behind a fourth
-   * colour.
+   * Valor is the relationship with society: working with people you did not
+   * choose, and the civic courage of keeping something running for them. An
+   * admin is the platform's own steward, the role that holds the room everyone
+   * else is in, which is that relationship at the scale of the whole product.
    */
-  admin: { family: null },
+  admin: { family: "valor" },
 } as const satisfies Record<RoleId, RoleGrammarRow>;

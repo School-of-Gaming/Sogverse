@@ -11,11 +11,13 @@ import {
  * The alert is where the app decides what a status looks like, so these are the
  * rules of that construct rather than a restatement of its class string.
  *
- * A status colour is a **figure**: it reaches the reader as the glyph and, when
- * the title names a state, as that label — never as a ground behind a
- * paragraph. So each variant is asserted three ways at once: no tinted ground,
- * a coloured glyph, and a body that stays in ink. A variant that quietly gained
- * a wash would pass a class-string test and fail this one.
+ * A status colour is a **figure**: it reaches the reader as the edge, the glyph
+ * and, when the title names a state, as that label — never as a ground behind a
+ * paragraph. So each variant is asserted several ways at once: no tinted
+ * ground, an edge in the status's own hue, a coloured glyph, and a body that
+ * stays in ink. A variant that quietly gained a wash, or lost the edge that is
+ * now the only thing bringing the eye to it, would pass a class-string test and
+ * fail this one.
  */
 const STATUSES = [
   { variant: "destructive", ink: "text-destructive" },
@@ -52,8 +54,26 @@ describe("Alert", () => {
       for (const token of panel?.getAttribute("class")?.split(/\s+/) ?? []) {
         expect(token.startsWith("bg-")).toBe(false);
       }
-      // The panel is still drawn — by the neutral edge every panel wears.
-      expect(panel?.getAttribute("class")).toContain("border-border");
+    },
+  );
+
+  it.each(STATUSES)(
+    "$variant is drawn by an edge in its own hue",
+    ({ variant }) => {
+      const { container } = render(
+        <Alert variant={variant}>
+          <AlertDescription>Something to say.</AlertDescription>
+        </Alert>,
+      );
+
+      // The edge is named by the variant rather than by a colour this test
+      // knows: a variant renamed or retuned in the library moves it, and a
+      // variant that fell back to the neutral edge is the failure.
+      const classes = container
+        .querySelector('[role="alert"]')
+        ?.getAttribute("class");
+      expect(classes).toContain(`border-${variant}`);
+      expect(classes).not.toContain("border-border");
     },
   );
 

@@ -53,7 +53,7 @@ export function ZoneColorPicker({
                 saturated fill, so the mark that sits on one is the same dark
                 the app puts on any light fill. `background` is that ink — the
                 page ground's own value — rather than `act-foreground`, which
-                names the ink belonging to the amber fill and would be claiming
+                names the ink belonging to the act fill and would be claiming
                 a pairing these sixteen swatches are not part of. Ink on a light
                 fill needs no drop shadow to be found; the shadow was there to
                 rescue white, and white is gone. */}

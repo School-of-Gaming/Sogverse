@@ -47,7 +47,7 @@ export const DARK_THEME = {
 // indefensible — a composited value is the brand colour at an alpha step
 // wearing a solid's clothes, and a brand colour exists at its authored value or
 // not at all. The two heroes, both social cards and the mail's header now sit
-// on the ground and mark themselves with a violet rule at full value, so
+// on the ground and mark themselves with a world rule at full value, so
 // nothing in Sogverse composites and there is no caller left for these.
 
 // The four Yty-Element colours used to be mirrored here for the renderers that

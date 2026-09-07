@@ -143,12 +143,24 @@ function scrimLines(): string[] {
 }
 
 /**
- * The hover layer, emitted exactly as the scrim is.
+ * The hover layer, emitted in the **image** namespace rather than the colour
+ * one — which is the whole of what makes it a layer.
  *
- * A colour token, so `hover:bg-hover` and `group-hover:bg-hover` are ordinary
- * Tailwind utilities that take every variant the framework offers — which is
- * the whole reason it is a token and not a utility like the glass: the glass is
- * three declarations and a fallback, and this is one colour.
+ * A colour token compiles `bg-hover` to a `background-color`, and a
+ * `background-color` **replaces** whatever ground the element already had: an
+ * outline button with `bg-card` went see-through under the pointer, because the
+ * card fill was overwritten by an 8% ink, and the six glass controls over media
+ * had the same fault. A `background-image` composites over the
+ * `background-color` instead of standing in for it, which is what a layer means
+ * — so the layer is emitted as a flat two-stop gradient of the mix, in Tailwind
+ * 4's `--background-image-*` namespace, and `hover:bg-hover` paints the ink on
+ * top of a card, a page, a lifted panel, a glass panel or nothing at all.
+ *
+ * It stays a theme variable, so `hover:bg-hover` and `group-hover:bg-hover` are
+ * still ordinary Tailwind utilities taking every variant the framework offers.
+ * And because it is no longer in the colour namespace, `text-hover`,
+ * `border-hover` and `ring-hover` cannot be written at all — which is right:
+ * there is no such thing as hover-coloured type.
  *
  * The ink is spelled through the neutrals rather than written as a `var()`, so
  * the value reaching the stylesheet is a hex at an alpha — the same shape the
@@ -156,11 +168,9 @@ function scrimLines(): string[] {
  * indirection.
  */
 function hoverLines(): string[] {
+  const mix = `color-mix(in oklab, ${NEUTRALS[HOVER.ink].hex} ${percent(HOVER.alpha)}, transparent)`;
   return [
-    declaration(
-      "--color-hover",
-      `color-mix(in oklab, ${NEUTRALS[HOVER.ink].hex} ${percent(HOVER.alpha)}, transparent)`,
-    ),
+    declaration("--background-image-hover", `linear-gradient(${mix}, ${mix})`),
   ];
 }
 
@@ -248,7 +258,7 @@ export function renderTheme(): string {
     ),
     "",
     section(
-      "The signature pair. A fill and its foreground are one decision — amber is light and takes only a dark label, violet is dark and takes only a light one.",
+      "The signature pair. A fill and its foreground are one decision — act is light and takes only a dark label, world is dark and takes only a light one.",
       brandLines(),
     ),
     "",
@@ -273,7 +283,7 @@ export function renderTheme(): string {
     ),
     "",
     section(
-      "The hover layer — the theme's ink at 8%, laid over whatever ground an element already sits on, so a row on the page, on a card and on a lifted panel each lift one visible step from where they are. A state, never a surface: nothing is authored on it. See src/tokens/surfaces.ts.",
+      "The hover layer — the theme's ink at 8%, laid over whatever ground an element already sits on, so a row on the page, on a card and on a lifted panel each lift one visible step from where they are. An image and not a colour, because a layer is drawn over a ground rather than in place of it: a background-color would discard the fill an element already had. A state, never a surface: nothing is authored on it. See src/tokens/surfaces.ts.",
       hoverLines(),
     ),
     "",

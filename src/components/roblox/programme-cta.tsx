@@ -27,9 +27,9 @@ export function ProgrammeCta() {
   return (
     <section className="container mx-auto px-4 py-16 sm:py-24">
       <Card className="relative mx-auto max-w-3xl overflow-hidden">
-        {/* The card is the plain card ground with one violet rule along its
+        {/* The card is the plain card ground with one world rule along its
             top edge — the hero's construct, so the page opens and closes on
-            the same idea. It used to be washed amber-to-violet; two brand
+            the same idea. It used to be washed act-to-world; two brand
             colours blended into each other is a smear, and act here would
             only repeat the colour of the button inside the card. */}
         <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />

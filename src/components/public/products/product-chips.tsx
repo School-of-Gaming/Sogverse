@@ -13,7 +13,7 @@ import type { ProductTag } from "./product-tag";
 // and the chips themselves stay private.
 //
 // They are purpose-built rather than one generic chip plus an icon map, so
-// nothing can pair the tag's icon with the audience's fill: which fill means
+// nothing can pair the tag's icon with the audience's ink: which chip means
 // which fact is the whole point of having two. Keeping them here is what stops
 // a third surface from assembling its own arrangement of them.
 
@@ -44,17 +44,23 @@ const TAG_ICON: Record<ProductTag, LucideIcon> = {
 /**
  * A chip that sits on a photograph.
  *
- * Deliberately not a widening of `StatusChip`: that component's whole visual
- * argument is an outline pill on the page's own background, which is right
- * beside a thumbnail and wrong on top of one. This is the opposite
- * construction — a solid semantic fill with its paired foreground token, which
- * is legible over a bright sky and a night scene alike because it does not
- * depend on what is behind it at all.
+ * **It is a chip, on glass.** It used to be a solid brand fill, on the argument
+ * that a fill is the only thing legible over a bright sky and a night scene
+ * alike — but a fill is what a hand presses, and neither of these is pressed;
+ * each names a fact about the picture it is lying on. So the shape is the
+ * figure chip the rest of the app draws — a neutral edge, the word and its
+ * glyph in ink or in one colour — and what carries it over a photograph is the
+ * library's `glass`, which is the page's own ground at high opacity behind a
+ * blur. The blur destroys the detail underneath while keeping the colour, so
+ * the chip reads as a small panel belonging to the page rather than as a
+ * sticker belonging to the photograph, and its edge has a real ground to sit
+ * on. No shadow: glass is already a surface, and a drop shadow under it is a
+ * second answer to the question the blur has answered.
  *
- * Deliberately **not** positioned either: the card absolutely-positions these
- * into two corners of its image and the detail hero does the same in its own
- * media box, so the caller supplies the placement. Everything that says *which
- * fact this is* — fill, foreground, icon — is fixed by the two wrappers below.
+ * Deliberately **not** positioned: the card absolutely-positions these into two
+ * corners of its image and the detail hero does the same in its own media box,
+ * so the caller supplies the placement. Everything that says *which fact this
+ * is* — ink and icon — is fixed by the two wrappers below.
  */
 function MediaChip({
   className,
@@ -68,7 +74,7 @@ function MediaChip({
   return (
     <span
       className={cn(
-        "inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium shadow-sm",
+        "glass inline-flex max-w-full items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs font-medium",
         className,
       )}
     >
@@ -96,9 +102,9 @@ function MediaChip({
  *
  * Opposite corners, one fact each, so neither chip reserves room for the other
  * and a picture wearing only one of them has no hole where the other would be.
- * Render it inside a `relative` media box; it positions itself. No scrim: the
- * fills are solid, which is what makes them legible over a bright sky and a
- * night scene alike.
+ * Render it inside a `relative` media box; it positions itself. No scrim: each
+ * chip carries its own glass, which is what makes it legible over a bright sky
+ * and a night scene alike without dimming the picture underneath.
  */
 export function ProductMediaChips({
   tag,
@@ -143,7 +149,11 @@ export function TagGlyph({
   return <Icon className={className} aria-hidden />;
 }
 
-/** Who the product is designed for. Primary fill, one icon per tag. */
+/**
+ * Who the product is designed for — the card's one highlight, so it keeps the
+ * act colour on its word and its glyph. It is the only coloured thing on a
+ * picture, which is what makes it read as the fact worth noticing.
+ */
 function TagChip({
   tag,
   className,
@@ -153,7 +163,7 @@ function TagChip({
 }) {
   return (
     <MediaChip
-      className={cn("bg-act text-act-foreground", className)}
+      className={cn("text-act", className)}
       icon={TAG_ICON[tag.value]}
     >
       {tag.label}
@@ -163,14 +173,20 @@ function TagChip({
 
 /**
  * Who may hold the seat, or how old they should be — the exclusive pair. The
- * caller resolves which of the two it is; this only guarantees that both wear
- * the same world fill wherever they appear, so the corner keeps meaning one
- * thing.
+ * caller resolves which of the two it is; this only guarantees that both read
+ * the same way wherever they appear, so the corner keeps meaning one thing.
+ *
+ * **It is neutral, in ink.** An age band is a fact on every card, and a fact on
+ * every card is not a colour: a hue spent on something that is always there
+ * says nothing, and it takes the eye off the tag, which is the one thing here
+ * that is not always there. It wore world, which it could not keep in any
+ * case — world is not an ink, it is measured under the glyph floor on every
+ * ground the theme ships.
  */
 function WhoChip({ label, className }: { label: string; className?: string }) {
   return (
     <MediaChip
-      className={cn("bg-world text-world-foreground", className)}
+      className={cn("text-foreground", className)}
       icon={UserRound}
     >
       {label}

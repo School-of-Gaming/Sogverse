@@ -160,7 +160,7 @@ function SceneControls({
               className={cn(
                 // Inside a filled button there is nowhere below for a
                 // secondary line to go, and the palette offers exactly one ink
-                // on amber — so the label takes it at full value rather than a
+                // on act — so the label takes it at full value rather than a
                 // step down from it.
                 "ml-1 text-[10px] uppercase tracking-wide",
                 store.viewerId === account.id

@@ -38,7 +38,7 @@ export const STATUS_GLYPH: Record<AlertStatus, LucideIcon> = {
  *
  * The panel itself is never tinted. A status colour exists at the value it is
  * authored at or not at all, so it arrives as a figure on the neutral ground
- * the alert already sits on — glyph, and label — never as a wash behind a
+ * the alert already sits on — edge, glyph and label — never as a wash behind a
  * paragraph.
  */
 const STATUS_INK: Record<AlertStatus, string> = {
@@ -49,12 +49,20 @@ const STATUS_INK: Record<AlertStatus, string> = {
 };
 
 /**
- * The alert's ground is whatever it is sitting on.
+ * The alert's ground is whatever it is sitting on, and its edge is the status.
  *
  * The neutral default lifts off its card, because it has no glyph and no colour
- * to mark it out; a status alert is marked by its glyph and its edge, so it
- * adds no ground of its own and reads correctly on the page, on a card and on
- * the lifted grey alike.
+ * to mark it out; a status alert adds no ground of its own — a status colour
+ * exists at its authored value or not at all — and reads correctly on the page,
+ * on a card and on the lifted grey alike.
+ *
+ * **The edge carries the hue, at full value.** Dropping the tinted ground left
+ * the panel with only a glyph to bring the eye to it, which is too little for a
+ * thing whose whole job is to be noticed; the border is already there as
+ * furniture, so colouring it costs no layout and no pixel of movement, and an
+ * edge is one of the roles a brand colour may take. The base keeps `border` so
+ * the variant only ever swaps the colour of a line that was drawn from the
+ * start.
  */
 const alertVariants = cva(
   "relative flex rounded-lg border border-border text-sm",
@@ -62,10 +70,10 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: "bg-lifted text-foreground",
-        destructive: "text-foreground",
-        success: "text-foreground",
-        info: "text-foreground",
-        warning: "text-foreground",
+        destructive: "border-destructive text-foreground",
+        success: "border-success text-foreground",
+        info: "border-info text-foreground",
+        warning: "border-warning text-foreground",
       },
       align: {
         left: "items-start gap-3 p-3",
