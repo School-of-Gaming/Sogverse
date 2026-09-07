@@ -108,7 +108,7 @@
     "pageTitle": "Om oss",
     "sectionNav": "På den här sidan",
     "hero": {
-      "title": "Om <primary>School of Gaming</primary>",
+      "title": "Om School of Gaming",
       "subtitle": "Där skärmtid blir kvalitetstid. Vi sammanför barn, professionella spelfostrare och spelen som barnen redan älskar — Minecraft, Roblox, Fortnite och fler — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
     },
     "quote": {
@@ -1771,7 +1771,7 @@
   },
   "schools": {
     "hero": {
-      "title": "Spelklubbar i <primary>din kommun</primary>",
+      "title": "Spelklubbar i din kommun",
       "subtitle": "School of Gaming ordnar klubbar tillsammans med finländska kommuner. Hitta din kommun och utforska utbudet.",
       "howItWorks": "Beroende på kommun träffas klubben antingen online hemifrån eller på plats i ditt barns skola. En professionell spelfostrare finns alltid med och leder verksamheten."
     },
@@ -2055,7 +2055,7 @@
   },
   "home": {
     "hero": {
-      "title": "Där<br></br><primary>skärmtid</primary><br></br>blir<br></br><secondary>kvalitetstid</secondary>",
+      "title": "Där<br></br>skärmtid<br></br>blir<br></br><primary>kvalitetstid</primary>",
       "subtitle": "Våra skickligt utformade klubbar främjar hälsosamt spelande som hobby — i Minecraft, Roblox, Fortnite och mer. Professionella spelfostrare gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar.",
       "aboutCta": "Läs mer om oss"
     },
@@ -2506,7 +2506,7 @@
   },
   "yty": {
     "hero": {
-      "title": "Vad är <primary>Yty</primary>?",
+      "title": "Vad är Yty?",
       "subtitle": "Yty är kraften som håller Sogverse i balans. Genom att göra bra saker — lära sig nya färdigheter, skaffa vänner, uppföra sig väl och delta i gemenskapen — tjänar spelare Yty åt sig själva och åt alla."
     },
     "overview": {
@@ -3119,7 +3119,7 @@
   },
   "roblox": {
     "hero": {
-      "title": "Bygg<br></br><primary>Spela</primary><br></br><secondary>Äg det</secondary>",
+      "title": "Bygg<br></br>Spela<br></br><primary>Äg det</primary>",
       "subtitle": "Ett gratis speldesignprogram för tonåringar — från Lynx Educate och School of Gaming, i samarbete med Roblox.",
       "cta": "Häng med!"
     },

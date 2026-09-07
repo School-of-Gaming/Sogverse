@@ -30,7 +30,14 @@ export default function HomePage() {
           alpha: what that painted was two colours neither of which was ours.
           The rule is violet at its authored value, which is the display and
           identity colour, and it is the whole of the colour the hero spends
-          besides the headline's own two words and the amber call to action. */}
+          besides the headline's one amber phrase and the amber call to action.
+
+          The headline is the library's declared departure from "anything a
+          reader reads through is ink" (`brand.ts`, beside the label rule): a
+          public page's hero headline sits between artwork and a heading, so
+          the payoff phrase is drawn in act, the rest in ink, and the world
+          rule beneath carries the second colour. The OG card draws the same
+          three things, so a share and the page it lands on say one thing. */}
       <section className="relative -mt-[var(--header-height)] overflow-hidden pt-[var(--header-height)]">
         <div className="container mx-auto px-4 py-24 sm:py-32">
           <div className="mx-auto max-w-3xl text-center">
@@ -42,7 +49,6 @@ export default function HomePage() {
                 {t.rich('hero.title', {
                   br: () => <br />,
                   primary: (chunks) => <span className="text-act">{chunks}</span>,
-                  secondary: (chunks) => <span className="text-world">{chunks}</span>,
                 })}
               </h1>
               <span className="mt-6 block h-1.5 w-full rounded-full bg-world sm:mt-8" />

@@ -82,7 +82,10 @@ fill stays the control's, which is what keeps a fill meaning *press*. Which colo
 exception on the figure half**: `world` reads 2.71 as an ink on a card and 2.91 on the
 page — under the glyph floor, let alone the body one — so it cannot be an ink on either
 ground, which is why the role and status tables name families and statuses and never
-violet as a figure. Violet lives as an edge, a rule, a mark or a fill.
+violet as a figure. Violet lives as an edge, a rule, a mark or a fill. **A public page's
+hero headline is the one declared departure from the division** — a display treatment,
+one phrase in `act` and the `world` rule beneath it — declared beside the label rule in
+`brand.ts`, which is also where it says a section heading is not a hero.
 
 **Colour is spent to a budget, and the budget is set by who the page is for.** **A
 surface where a parent is being asked to trust us or to pay**, the parent's dashboard,

@@ -83,6 +83,19 @@
  *   status below, beside the value it binds. Which of the two roles a colour
  *   takes at a given site — a figure that names, or a fill that is pressed —
  *   is the package's `CLAUDE.md`, beside the no-alpha rule it completes.
+ * - **Declared departure: a public page's hero headline.** A hero sits
+ *   between artwork and a heading and falls cleanly into neither, so it takes
+ *   a display treatment rather than the ink the bullet above would give it:
+ *   **one phrase in `act`, the rest in ink, and the `world` rule beneath the
+ *   headline carrying the second colour** — the page and its social card
+ *   drawing the same three things, so a share and the page it lands on say
+ *   one thing. The amber phrase is the payoff, the words the headline is
+ *   travelling towards, and there is exactly one of them: a second coloured
+ *   phrase spends the accent twice and the rule already holds the other hue.
+ *   **It is the one heading that may.** A section heading is not a hero — it
+ *   has no rule under it and a reader reads straight through it — so a
+ *   coloured word in one is the defect this departure is narrow enough to
+ *   keep catching.
  * - **A brand colour exists at exactly the values authored below, never at an
  *   alpha step**: over a near-black ground an alpha step composites to a
  *   darker, duller hue, so what the reader sees is no longer the brand. A

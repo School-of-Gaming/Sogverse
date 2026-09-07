@@ -259,10 +259,12 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <div className="space-y-4">
+        {/* Ink: a page heading is read through, and the one heading the
+            library lets carry a coloured phrase is a hero headline with its
+            rule beneath (`brand.ts`, beside the label rule). This page has
+            neither. */}
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {t.rich("hero.title", {
-            primary: (chunks) => <span className="text-act">{chunks}</span>,
-          })}
+          {t("hero.title")}
         </h1>
         <p className="text-lg text-muted-foreground">{t("hero.subtitle")}</p>
         <p className="text-base text-muted-foreground">{t("hero.howItWorks")}</p>

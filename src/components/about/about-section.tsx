@@ -36,10 +36,12 @@ export function AboutSection({ id }: AboutSectionProps) {
     <section id={id} className="container mx-auto scroll-mt-[var(--header-height)] px-4 py-16 sm:py-24">
       {/* Hero */}
       <div className="mx-auto max-w-3xl text-center">
+        {/* A section heading, not a hero: it is read through, so it is ink.
+            The one heading the library lets carry a coloured phrase is a
+            public page's hero headline (`brand.ts`, beside the label rule),
+            and a section heading is not one. */}
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {t.rich("hero.title", {
-            primary: (chunks) => <span className="text-act">{chunks}</span>,
-          })}
+          {t("hero.title")}
         </h2>
         <p className="mt-6 text-lg leading-8 text-muted-foreground">
           {t("hero.subtitle")}

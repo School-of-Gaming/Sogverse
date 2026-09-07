@@ -844,6 +844,31 @@ rule in the owner's words. Consequences: the recipe grid keeps its ink column, h
 "label"; info's label ink is Wit soft, no white anywhere; the 166 status-as-text sites are
 sorted once into labels (keep colour) and sentences (ink, with a mark beside them).
 
+**Landed 2026-09-07 (the hero headline).** The audit's one open site closes here, and the
+owner declined both forks it was put on: "we draw the 'Quality Time' in Act, the rest in
+Ink and the world / violet is drawn on as the rule / line under it. That keeps the style
+while also obeying the rule closer. The hero is also somewhere in between artwork and a
+header. It doesn't fall into either cleanly." So a public page's hero headline is a
+**display treatment** — one phrase in `act`, the rest in ink, the `world` rule beneath it
+carrying the second colour — declared as a departure in `brand.ts` beside the label rule
+and pointed at from the figure-and-fill paragraph in `packages/sog-ui/CLAUDE.md`. It is
+the one heading that may carry a coloured phrase, and a section heading is not a hero.
+
+What changed. Both heroes lost their `secondary` renderer and the amber moved to the
+payoff phrase, so the page and its social card now colour the same words: `home.hero.title`
+in all five locales (`Quality Time`, `Laatuaikaa`, `grandir`, `kvalitetstid`, `Qap tIv`),
+rendered by `src/app/(public)/page.tsx` and reused by the instant room's
+`CallEndedScreen.tsx` — which keeps the amber phrase and deliberately draws no rule,
+because a card on a dead-end screen is not a hero. `roblox.hero.title` in all five
+(`Own It`, `Omista`, `Publiez`, `Äg det`, `yIghaj`), rendered by `roblox-hero.tsx`, whose
+violet rule already existed and stays. Three **section** headings gave their amber word up
+for ink and dropped `t.rich` for `t`: `about.hero.title`, `yty.hero.title` and
+`schools.hero.title`. No `<primary>`/`<secondary>` tag survives anywhere in `messages/`,
+which is the whole of the construct. The French Roblox beat is `Publiez` — publish rather
+than own — and the French home headline spends its payoff over three beats with `grandir`
+as the last of them; both take the amber on the beat the headline is travelling towards,
+which is the rule the ruling states.
+
 ## 12. The colour budget on calm surfaces
 
 **Asked:** the brand budget gives parent, partner, safety and billing surfaces amber as
@@ -1185,21 +1210,18 @@ the only resume point.
 element glyphs, the kind glyphs; §3 the status set and its constructs; §4 three grounds;
 §5 the picks and the kinds; §6 the scrim, the glass, on-media ink, the picker's check, the
 media ground, the Lynx cyan; §7 the identicon; §9 no alpha (act as a figure, the lifecycle
-chip, the tiles); §11 coloured text as a label; §12 the colour budget, three tiers; §14 the
+chip, the tiles); §11 coloured text as a label, and the hero headline as the one declared
+departure from it; §12 the colour budget, three tiers; §14 the
 heroes, cards, social images, email header and the role chip; §15 figure and fill, and the
 nine filled badges that took the chip. The library holds every value with its rule and
 reason; Sogverse's stylesheet declares no colour; the full suite and both builds are green
 at every commit.
 
-**Still needing the owner (small, and none blocks the end of the branch):**
+**Still needing the owner (small, and none blocks the end of the branch).** The hero
+headline is ruled and landed (§11), and the proposed backlog line on the home page's
+visual interest is declined — the owner keeps it in his own head rather than in
+`TODO.md` — so what is left is:
 
-- **The hero headline's coloured words** (from the audit): "Screen Time" in act and
-  "Quality Time" in world, in both heroes and the OG card, is coloured text inside a
-  heading, which §11's landed rule reads as ink. Fork: declare a display headline a
-  departure (a mark, not prose) beside the label rule in `brand.ts`, or take both
-  headlines to ink and let the violet rule carry the colour; also which word is amber
-  differs between the page and the OG card and must agree.
-- **The backlog line** on the home page's visual interest (proposed, awaiting a yes).
 - **Pending's colour** landed as info; one token to flip if the owner says warning.
 - **The owner's walk** on 3002: the demo floor, UI Components, UI Previews, home, Roblox,
   a login error, the gedu dashboard (the warning-edged band), an attendance roster (the

@@ -16,10 +16,11 @@ export function YtySection({ id }: YtySectionProps) {
     <section id={id} className="container mx-auto scroll-mt-[var(--header-height)] px-4 py-16 sm:py-24">
       {/* Hero */}
       <div className="mx-auto max-w-3xl text-center">
+        {/* Ink, like every heading a reader reads through. The hero headline
+            is the library's one declared exception (`brand.ts`, beside the
+            label rule) and this is a section heading. */}
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {t.rich("hero.title", {
-            primary: (chunks) => <span className="text-act">{chunks}</span>,
-          })}
+          {t("hero.title")}
         </h2>
         <p className="mt-6 text-lg leading-8 text-muted-foreground">
           {t("hero.subtitle")}
