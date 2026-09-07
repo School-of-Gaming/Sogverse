@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import { GET } from "@/app/api/minecraft/join-check/route";
 
@@ -35,6 +35,8 @@ describe("GET /api/minecraft/join-check", () => {
   beforeEach(() => {
     vi.stubEnv("MINECRAFT_SERVER_API_KEY", API_KEY);
   });
+  // The node project shares a worker between files, so the stub is handed back.
+  afterEach(() => vi.unstubAllEnvs());
 
   // --- Auth ---
 

@@ -404,7 +404,8 @@ classification rules and the per-category conventions (DB test helpers, integrat
 route-handler mocking, unit setup) live in **`tests/CLAUDE.md`** (auto-loads when you
 work under `tests/`). Two things worth knowing from anywhere:
 
-- **`npm run test` runs `unit/` + `integration/`** (jsdom). DB tests need a real Postgres
+- **`npm run test` runs `unit/` + `integration/`** (node by default, jsdom for `.tsx`
+  component tests — see `tests/CLAUDE.md`). DB tests need a real Postgres
   and run in **CI only** — we have no local stack — so exercise them by pushing your
   branch, not locally.
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
