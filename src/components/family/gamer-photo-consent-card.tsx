@@ -113,6 +113,15 @@ export function GamerPhotoConsentCard({
               checked={isGamerPhotoConsentGranted(consents, consentType)}
               onCheckedChange={(next) => handleChange(consentType, next)}
               disabled={committing !== null}
+              // The same composition the enrolment panel gives this sentence:
+              // the child's name on the tick's own line, the three mechanisms
+              // full width beneath it. One shape for one question, so a parent
+              // who ticked it while enrolling recognises the row they are
+              // changing here.
+              title={t(
+                `sentenceTitle.${GAMER_PHOTO_CONSENT_ASKS[consentType].sentenceKey}`,
+                { name: firstName },
+              )}
               label={t.rich(
                 `sentence.${GAMER_PHOTO_CONSENT_ASKS[consentType].sentenceKey}`,
                 {

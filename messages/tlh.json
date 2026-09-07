@@ -2044,14 +2044,17 @@
         "heading": "chaw’",
         "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj.",
         "bundles": {
-          "robloxProgramme": "<terms>Creator Academy Terms & Conditions</terms>, <privacy>Creator Academy Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj. Lynx Educate, School of Gaming, Roblox je jojDaq puqwI’ De’wIj je lujaghlaH ’e’ luQIj."
+          "robloxProgramme": "<terms>Creator Academy Terms & Conditions</terms>, <privacy>Creator Academy Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj. Lynx Educate, School of Gaming, Roblox je jojDaq puqwI’ De’wIj je lujaghlaH ’e’ luQIj.",
+          "robloxProgrammeTitle": "Creator Academy ghItlhmey"
         },
         "gamerPhoto": {
           "lynxEducate": "puqwI’ mIllogh HaSta je lo’lu’: qaStaHvIS ja’chuqmeH nab, Lynx Educate Roblox je lughojmoH, ’ej School of Gaming, Lynx Educate, Roblox je De’wI’ HeDaq nItebHa’ cha’lu’. <privacy>Creator Academy Privacy Policy</privacy> DaH yIlaD.",
+          "lynxEducateTitle": "puqlI’ mIloghmey HaSta je",
           "hint": "ra’be’lu’ — My SOG-Daq puqlI’ HevDaq reH DachoHlaH."
         },
         "marketing": {
           "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH.",
+          "lynxEducateTitle": "Lynx Educate QInmey",
           "hint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH."
         }
       },
@@ -2261,6 +2264,9 @@
         "description": "Lynx Educate Roblox je tIq boq: ghommey, raQmey, wanI’mey je.",
         "sentence": {
           "lynxEducate": "{name} mIloghmey HaSta je lo’lu’laH: poH ja’ghItlhmeyDaq, Lynx Educate Roblox je De’meyDaq, School of Gaming Lynx Educate Roblox je De’wI’ yotlhmeyDaq ghantoHmeyDaq je. <privacy>Creator Academy Privacy Policy</privacy> DaH yIlaD."
+        },
+        "sentenceTitle": {
+          "lynxEducate": "{name} mIloghmey HaSta je"
         },
         "hint": "Hoch muvmoHmeH poH {name} wIghelqa’. Qav jangbogh mu’, ghaH potlh.",
         "saveFailed": "jang polbe’lu’. QummeH He yInuD ’ej yInIDqa’."

@@ -1304,19 +1304,13 @@ function RequiredConsentSection({
             key={row.key}
             agreed={agreements.has(row.key)}
             onAgreedChange={(next) => onAgreementChange(row.key, next)}
-            sentence={
-              <>
-                {/* The raw slug at the head of the sentence rather than in a
-                    slot of its own: it is part of what this row is asking, and
-                    a row that names a document has to name it where the reader
-                    is already looking. Never an anchor with nowhere to go — an
-                    empty href resolves to the page the reader is already on. */}
-                <span className="mb-2 block font-medium text-foreground">
-                  {row.slug}
-                </span>
-                {t("consents.agree")}
-              </>
-            }
+            // The raw slug as the row's title, which is the same position a
+            // bundle's name takes — a drift row is a document this deploy
+            // cannot name, and the one thing it can still say is which
+            // document. Never an anchor with nowhere to go: an empty href
+            // resolves to the page the reader is already on.
+            title={row.slug}
+            sentence={t("consents.agree")}
           />
         ),
       )}
@@ -1422,6 +1416,7 @@ function OptionalGamerPhotoSection({
           size="xs"
           checked={granted.has(type)}
           onCheckedChange={(next) => onGrantedChange(type, next)}
+          title={t(`${ask.sentenceKey}Title`)}
           label={
             <span className="text-muted-foreground">
               {t.rich(ask.sentenceKey, {
@@ -1465,6 +1460,7 @@ function OptionalMarketingSection({
           size="xs"
           checked={granted.has(type)}
           onCheckedChange={(next) => onGrantedChange(type, next)}
+          title={t(`${ask.sentenceKey}Title`)}
           label={
             <span className="text-muted-foreground">
               {t.rich(ask.sentenceKey, {
@@ -1524,6 +1520,12 @@ function BundleConsentRow({
     <ConsentRow
       agreed={agreed}
       onAgreedChange={onAgreedChange}
+      // What the bundle IS, on the tick's own line, with the sentence that
+      // consents to it beneath. The documents' own names stay inside the
+      // sentence, where they are links; the title is the handle a parent
+      // scanning the section reads before deciding to read three lines of
+      // conditions.
+      title={t(`${bundle.sentenceKey}Title`)}
       sentence={t.rich(bundle.sentenceKey, tags)}
     />
   );
@@ -1582,10 +1584,17 @@ function ConsentSentenceLink({
 function ConsentRow({
   agreed,
   onAgreedChange,
+  title,
   sentence,
 }: {
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
+  /**
+   * The short name of the thing being agreed to, when there is one. The rules
+   * row has none and wants none: it is one sentence, and a title over a
+   * one-line sentence is a label restating what is already legible.
+   */
+  title?: React.ReactNode;
   sentence: React.ReactNode;
 }) {
   return (
@@ -1593,6 +1602,7 @@ function ConsentRow({
       size="xs"
       checked={agreed}
       onCheckedChange={onAgreedChange}
+      title={title}
       label={<span className="text-muted-foreground">{sentence}</span>}
     />
   );

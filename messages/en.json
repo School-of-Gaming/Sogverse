@@ -2000,14 +2000,17 @@
         "heading": "Consent",
         "agree": "I have read and agree to these documents.",
         "bundles": {
-          "robloxProgramme": "I have read and agree to the Creator Academy <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>, which explain how my and my child's information may be shared between Lynx Educate, School of Gaming and Roblox to deliver the Programme."
+          "robloxProgramme": "I have read and agree to the Creator Academy <terms>Terms & Conditions</terms> and <privacy>Privacy Policy</privacy>, which explain how my and my child's information may be shared between Lynx Educate, School of Gaming and Roblox to deliver the Programme.",
+          "robloxProgrammeTitle": "Creator Academy terms and privacy policy"
         },
         "gamerPhoto": {
           "lynxEducate": "Photos and videos of my child may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming's, Lynx Educate's and Roblox's websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>.",
+          "lynxEducateTitle": "Photos and videos of your child",
           "hint": "Optional — you can change this anytime on your child's page in My SOG."
         },
         "marketing": {
           "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time.",
+          "lynxEducateTitle": "News from Lynx Educate",
           "hint": "Optional — you can change this anytime in your settings."
         }
       },
@@ -2896,6 +2899,9 @@
         "description": "For clubs, camps and events run with Lynx Educate and Roblox.",
         "sentence": {
           "lynxEducate": "Photos and videos of {name} may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming’s, Lynx Educate’s and Roblox’s websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>."
+        },
+        "sentenceTitle": {
+          "lynxEducate": "Photos and videos of {name}"
         },
         "hint": "You are asked this again every time you enrol {name} in one of these; your latest answer is what counts.",
         "saveFailed": "That answer was not saved. Check your connection and try again."

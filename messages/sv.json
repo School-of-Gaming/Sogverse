@@ -2000,14 +2000,17 @@
         "heading": "Samtycke",
         "agree": "Jag har läst och godkänner dessa dokument.",
         "bundles": {
-          "robloxProgramme": "Jag har läst och godkänner Skaparnas akademis <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>, som förklarar hur mina och mitt barns uppgifter kan delas mellan Lynx Educate, School of Gaming och Roblox för att genomföra programmet."
+          "robloxProgramme": "Jag har läst och godkänner Skaparnas akademis <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>, som förklarar hur mina och mitt barns uppgifter kan delas mellan Lynx Educate, School of Gaming och Roblox för att genomföra programmet.",
+          "robloxProgrammeTitle": "Skaparnas akademis användarvillkor och integritetspolicy"
         },
         "gamerPhoto": {
           "lynxEducate": "Foton och videor på mitt barn får tas med i sessionsrapporter, delas med Lynx Educate och Roblox för effektrapportering och användas på School of Gamings, Lynx Educates och Roblox webbplatser och sociala medier. Detaljerna finns i <privacy>Skaparnas akademis integritetspolicy</privacy>.",
+          "lynxEducateTitle": "Foton och videor på ditt barn",
           "hint": "Valfritt — du kan ändra detta när som helst på ditt barns sida i My SOG."
         },
         "marketing": {
           "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst.",
+          "lynxEducateTitle": "Nyheter från Lynx Educate",
           "hint": "Valfritt — du kan ändra detta när som helst i dina inställningar."
         }
       },
@@ -2217,6 +2220,9 @@
         "description": "Gäller klubbar, läger och evenemang som drivs tillsammans med Lynx Educate och Roblox.",
         "sentence": {
           "lynxEducate": "Foton och videor där {name} syns får användas i rapporter från tillfällena, delas med Lynx Educate och Roblox för effektrapportering och användas på School of Gamings, Lynx Educates och Roblox webbplatser och sociala medier. Detaljerna finns i <privacy>Skaparnas akademis integritetspolicy</privacy>."
+        },
+        "sentenceTitle": {
+          "lynxEducate": "Foton och videor där {name} syns"
         },
         "hint": "Vi frågar det här igen varje gång {name} anmäls till något av dem; ditt senaste svar är det som gäller.",
         "saveFailed": "Svaret sparades inte. Kontrollera anslutningen och försök igen."

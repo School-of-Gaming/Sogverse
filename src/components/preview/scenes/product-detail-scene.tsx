@@ -9,7 +9,7 @@ import {
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { resolveRegionGate } from "@/components/public/products/region-lock/region-gate";
-import type { RegionLockScenarioMeta } from "@/components/public/products/region-lock/region-lock-scenarios";
+import type { ProductRegionLock } from "@/components/public/products/region-lock/region-lock-scenarios";
 import type { ConfirmedHomeLocation } from "@/components/public/products/signup-panel-view";
 import type { GamerPhotoConsentType, MarketingConsentType } from "@/types";
 import { previewSceneHref } from "../href";
@@ -45,7 +45,13 @@ export function ProductDetailScene({
   gamerPhotoConsentTypes,
 }: {
   scenario: PreviewScenario;
-  regionLock?: RegionLockScenarioMeta;
+  /**
+   * The product's lock and the viewer it is read against. The three region-lock
+   * scenarios are what it is *for*, but it is not theirs alone: any scenario can
+   * be about something else and still be locked — the Creator Academy consent
+   * scenario is — so this takes the lock's own shape rather than a scenario's.
+   */
+  regionLock?: ProductRegionLock;
   /**
    * The enrolment conditions this scenario's product requires. Absent on every
    * ordinary scenario, which is what the live page looks like for nearly every

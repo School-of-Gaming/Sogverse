@@ -2000,14 +2000,17 @@
         "heading": "Suostumus",
         "agree": "Olen lukenut nämä asiakirjat ja hyväksyn ne.",
         "bundles": {
-          "robloxProgramme": "Olen lukenut ja hyväksyn Luojien akatemian <terms>käyttöehdot</terms> ja <privacy>tietosuojaselosteen</privacy>, joissa kerrotaan, miten minun ja lapseni tietoja voidaan jakaa Lynx Educaten, School of Gamingin ja Robloxin välillä ohjelman toteuttamiseksi."
+          "robloxProgramme": "Olen lukenut ja hyväksyn Luojien akatemian <terms>käyttöehdot</terms> ja <privacy>tietosuojaselosteen</privacy>, joissa kerrotaan, miten minun ja lapseni tietoja voidaan jakaa Lynx Educaten, School of Gamingin ja Robloxin välillä ohjelman toteuttamiseksi.",
+          "robloxProgrammeTitle": "Luojien akatemian käyttöehdot ja tietosuojaseloste"
         },
         "gamerPhoto": {
           "lynxEducate": "Lapsestani otettuja valokuvia ja videoita saa liittää kertaraportteihin, jakaa Lynx Educaten ja Robloxin kanssa vaikuttavuusraportointia varten sekä käyttää School of Gamingin, Lynx Educaten ja Robloxin verkkosivuilla ja sosiaalisessa mediassa. Tarkemmat tiedot ovat <privacy>Luojien akatemian tietosuojaselosteessa</privacy>.",
+          "lynxEducateTitle": "Lapsesi valokuvat ja videot",
           "hint": "Vapaaehtoinen — voit muuttaa tätä milloin tahansa lapsesi sivulla My SOG -näkymässä."
         },
         "marketing": {
           "lynxEducate": "Sähköpostiosoitteeni saa jakaa <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia tulevista tapahtumista ja pelaamiseen liittyvistä aineistoista. Voin peruuttaa tilauksen milloin tahansa.",
+          "lynxEducateTitle": "Lynx Educaten uutiset",
           "hint": "Vapaaehtoinen — voit muuttaa tätä milloin tahansa asetuksissasi."
         }
       },
@@ -2217,6 +2220,9 @@
         "description": "Koskee kerhoja, leirejä ja tapahtumia, jotka toteutetaan yhdessä Lynx Educaten ja Robloxin kanssa.",
         "sentence": {
           "lynxEducate": "Kuvia ja videoita, joissa {name} esiintyy, saa käyttää kertojen raporteissa, jakaa Lynx Educaten ja Robloxin kanssa vaikuttavuusraportointia varten sekä julkaista School of Gamingin, Lynx Educaten ja Robloxin verkkosivuilla ja sosiaalisessa mediassa. Tarkemmat tiedot ovat <privacy>Luojien akatemian tietosuojaselosteessa</privacy>."
+        },
+        "sentenceTitle": {
+          "lynxEducate": "Valokuvat ja videot, joissa {name} esiintyy"
         },
         "hint": "Kysymme tämän uudelleen aina, kun {name} ilmoitetaan johonkin näistä; viimeisin vastauksesi on voimassa.",
         "saveFailed": "Vastausta ei tallennettu. Tarkista yhteys ja yritä uudelleen."

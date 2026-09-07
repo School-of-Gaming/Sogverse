@@ -20,10 +20,16 @@ import type { PreviewScenario } from "../mock-detail-fixtures";
  * React-free and reads this list to publish the links, and the scene component
  * reads it to build the page.
  */
-export interface RegionLockScenarioMeta {
-  slug: string;
-  /** Link text on the admin UI Previews page. Developer-facing English. */
-  label: string;
+/**
+ * A product's lock and the viewer it is being read against — everything the
+ * gate needs, and nothing about which preview link is being followed.
+ *
+ * Split out from the scenario meta below because the lock is not only the
+ * subject of these three scenarios: another scenario can be *about* something
+ * else and still be locked, and it has no business inventing a slug and a link
+ * label to say so.
+ */
+export interface ProductRegionLock {
   /** The product's lock — `products.region_lock_country`. */
   regionLockCountry: string;
   /** The country under the parent's home location; null when they have none. */
@@ -34,6 +40,12 @@ export interface RegionLockScenarioMeta {
    * but the eligible one.
    */
   viewerLocationName: string | null;
+}
+
+export interface RegionLockScenarioMeta extends ProductRegionLock {
+  slug: string;
+  /** Link text on the admin UI Previews page. Developer-facing English. */
+  label: string;
 }
 
 /**
@@ -52,13 +64,22 @@ export const REGION_LOCK_BASE_SCENARIO: PreviewScenario = "consumer-club";
  * platform is Finnish, so a Finnish lock is invisible — a reviewer cannot tell
  * a country the panel *read* from the country everything here happens to be in.
  * A French lock makes the comparison the panel is doing legible on sight.
+ *
+ * Exported because it is also the country the real Roblox Programme products
+ * are locked to, so the Creator Academy scenario beside these reads its lock
+ * from here rather than spelling a second "FR" that could drift from this one.
  */
-const LOCK = "FR";
+export const REGION_LOCK_COUNTRY = "FR";
+const LOCK = REGION_LOCK_COUNTRY;
 /** Where the family is, in the wrong-country scenario. */
 const ELSEWHERE = "FI";
 
-/** Where the family lives, in the eligible scenario — a French commune. */
-const HOME = "Lyon";
+/**
+ * Where the family lives, in the eligible scenario — a French commune.
+ * Exported for the same reason as the lock above.
+ */
+export const REGION_LOCK_HOME = "Lyon";
+const HOME = REGION_LOCK_HOME;
 
 export const REGION_LOCK_SCENARIOS: readonly RegionLockScenarioMeta[] = [
   {

@@ -2000,14 +2000,17 @@
         "heading": "Consentement",
         "agree": "J’ai lu et j’accepte ces documents.",
         "bundles": {
-          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> de l’Académie des Créateurs, qui expliquent comment mes informations et celles de mon enfant peuvent être partagées entre Lynx Educate, School of Gaming et Roblox pour mettre en œuvre le programme."
+          "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> de l’Académie des Créateurs, qui expliquent comment mes informations et celles de mon enfant peuvent être partagées entre Lynx Educate, School of Gaming et Roblox pour mettre en œuvre le programme.",
+          "robloxProgrammeTitle": "Conditions et confidentialité de l’Académie des Créateurs"
         },
         "gamerPhoto": {
           "lynxEducate": "Les photos et vidéos de mon enfant peuvent figurer dans les comptes rendus de séance, être partagées avec Lynx Educate et Roblox à des fins de rapport d’impact, et être utilisées sur les sites web et les réseaux sociaux de School of Gaming, de Lynx Educate et de Roblox. Les détails figurent dans la <privacy>Politique de confidentialité de l’Académie des Créateurs</privacy>.",
+          "lynxEducateTitle": "Photos et vidéos de votre enfant",
           "hint": "Facultatif — vous pouvez modifier ce choix à tout moment sur la page de votre enfant dans My SOG."
         },
         "marketing": {
           "lynxEducate": "Partager mon adresse e-mail avec <link>Lynx Educate</link> afin qu’ils puissent m’envoyer des actualités sur les événements à venir et des ressources sur le jeu vidéo. Je peux me désabonner à tout moment.",
+          "lynxEducateTitle": "Actualités de Lynx Educate",
           "hint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres."
         }
       },
@@ -2217,6 +2220,9 @@
         "description": "Pour les clubs, camps et événements organisés avec Lynx Educate et Roblox.",
         "sentence": {
           "lynxEducate": "Les photos et vidéos où apparaît {name} peuvent figurer dans les comptes rendus de séance, être partagées avec Lynx Educate et Roblox à des fins de rapport d’impact, et être utilisées sur les sites web et les réseaux sociaux de School of Gaming, de Lynx Educate et de Roblox. Les détails figurent dans la <privacy>Politique de confidentialité de l’Académie des Créateurs</privacy>."
+        },
+        "sentenceTitle": {
+          "lynxEducate": "Photos et vidéos de {name}"
         },
         "hint": "Nous vous reposons la question à chaque inscription de {name} à l’une de ces activités. Votre dernière réponse est celle qui compte.",
         "saveFailed": "Cette réponse n’a pas été enregistrée. Vérifiez votre connexion et réessayez."

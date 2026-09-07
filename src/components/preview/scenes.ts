@@ -4,7 +4,7 @@ import {
   PREVIEW_SCENARIOS,
 } from "@/components/public/products/mock-detail-fixtures";
 import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
-import { REQUIRED_CONSENTS_SCENARIO } from "@/components/public/products/required-consents-scenario";
+import { CONSENT_SCENARIOS } from "@/components/public/products/required-consents-scenario";
 
 /**
  * The **full-page preview scene registry**.
@@ -118,6 +118,20 @@ const CONFIRMATION_SCENARIOS: readonly PreviewScenarioMeta[] =
 const REGION_LOCK_SCENARIO_META: readonly PreviewScenarioMeta[] =
   REGION_LOCK_SCENARIOS.map(({ slug, label }) => ({ slug, label }));
 
+/**
+ * The consent scenarios, on the same scene for the same reason: they are the
+ * product page, on a product that asks a parent for something extra. Two,
+ * because the general shape (a paid club, unlocked) and the shape the Lynx
+ * consent actually ships on (free, locked to France) cannot be one render —
+ * a product either has a price or it does not.
+ */
+const CONSENT_SCENARIO_META: readonly PreviewScenarioMeta[] =
+  CONSENT_SCENARIOS.map(({ slug, label, description }) => ({
+    slug,
+    label,
+    description,
+  }));
+
 export const PREVIEW_SCENES = [
   {
     surface: "shop",
@@ -136,10 +150,7 @@ export const PREVIEW_SCENES = [
     scenarios: [
       ...PRODUCT_SCENARIOS,
       ...REGION_LOCK_SCENARIO_META,
-      {
-        slug: REQUIRED_CONSENTS_SCENARIO.slug,
-        label: REQUIRED_CONSENTS_SCENARIO.label,
-      },
+      ...CONSENT_SCENARIO_META,
     ],
   },
   {
