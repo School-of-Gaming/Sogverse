@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ExternalLink, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
+import { OutboundLink } from "@/components/ui/outbound-link";
 import { policyTextSegments, type PolicyBlock } from "./policy-content";
 
 interface PolicySubsection {
@@ -59,10 +60,11 @@ interface PolicyPageProps {
  * `policyTextSegments`, which owns the allow-lists and the hrefs; all this
  * decides is what a link looks like in body prose.
  *
- * A segment the splitter marked outbound gets the same treatment `/attributions`
- * gives its credits: a new tab, `rel="noopener noreferrer"`, the arrow glyph for
- * a reader who can see it and `newTabLabel` for one who cannot. `PolicyPage`
- * requires that label, so an outbound link cannot ship unannounced.
+ * A segment the splitter marked outbound goes through the shared `OutboundLink`,
+ * the same component `/attributions` renders its credits with — so the two
+ * readings are identical by construction rather than by a comment asking for it.
+ * `PolicyPage` requires the label that component demands, so an outbound link
+ * cannot ship unannounced.
  */
 function PolicyText({
   text,
@@ -76,17 +78,9 @@ function PolicyText({
       {policyTextSegments(text).map((segment, i) => {
         if (segment.href === undefined) return segment.text;
         return segment.external ? (
-          <a
-            key={i}
-            href={segment.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-          >
+          <OutboundLink key={i} href={segment.href} label={newTabLabel}>
             {segment.text}
-            <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
-            <span className="sr-only">{newTabLabel}</span>
-          </a>
+          </OutboundLink>
         ) : (
           <Link
             key={i}
@@ -215,10 +209,7 @@ export function PolicyPage({
         {sections.map((section, si) => (
           <section key={si} className="space-y-3">
             <h2 className="text-2xl font-bold">{section.heading}</h2>
-            <PolicyBlocks
-              blocks={section.blocks}
-              newTabLabel={newTabLabel}
-            />
+            <PolicyBlocks blocks={section.blocks} newTabLabel={newTabLabel} />
             {section.subsections?.map((subsection, sub) => (
               <div key={sub} className="space-y-3 pt-3">
                 <h3 className="text-xl font-semibold">{subsection.heading}</h3>

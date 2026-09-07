@@ -72,7 +72,8 @@ written down, but nothing has been applied to the codebase yet; it moves to
 
 **The objective is an empty open list.** Every item terminates in a decision — Kyle's,
 his team's, or Lynx's — and the work is to drive all of them there, not to pick off the
-tractable ones. Nothing is applied along the way. Once no open or escalated items are
+tractable ones. Nothing is applied along the way (the one exception is recorded in the
+pause banner at the top). Once no open or escalated items are
 left **and Kyle gives the go-ahead**, the whole of *Resolved — ready to apply* lands in
 **one pass**, translated and reviewed together rather than dribbling in item by item.
 Each resolved entry therefore has to be self-contained enough for a fresh session to
@@ -260,6 +261,7 @@ where the fix would change what we commit to rather than how it reads.
       under the rule at the top, not ours. Asked which is the real commitment: routine
       sessions only, or no recording at all. Whichever comes back, the other document is
       the one that gets edited.
+
 ## Features the policies promise that the app does not have
 
 - [ ] **The mandatory "I am the parent/legal guardian" checkbox.** The rest of Lynx's
@@ -284,6 +286,7 @@ where the fix would change what we commit to rather than how it reads.
 - [ ] **Roblox impact-research data export.** The DPA-limited dataset (Roblox username,
       Roblox User ID, programme-account email, activity attended) has to actually reach
       Roblox somehow. No process or tooling exists for producing that export.
+
 ## Attribution, cookie consent, and the Lynx data export
 
 **Opened 2026-08-26.** Research is complete and written up below.
@@ -531,7 +534,7 @@ time is rationed, spend it here rather than on the banner.**
   each naming what runs and what it learns. "Cookie-free" is gone from the Vercel bullet
   under `providers` too, and the answer is now collected by a consent banner rather than
   asserted by the copy.)*
-- **The `?ref=` note under "/roblox CTAs and events are deliberately inert" goes stale** if
+- **The `?ref=` note on the since-closed inert-CTAs item goes stale** if
   the rename happens. It is still correct today, and its underlying point (soft navigation
   keeps the value alive, a hard load destroys it) holds for any payload name. *(Done — the
   note named the UTM params, and the item has since closed: the CTAs and the events
@@ -639,5 +642,5 @@ lawyer is not reviewing sections that are about to be restructured.
 
 ## Resolved — ready to apply
 
-Decided, with the exact change written out. Nothing here has been applied yet; it all
-lands in one pass. Delete an entry once its change is in.
+Decided, with the exact change written out but not yet applied; entries land together in
+one pass, and each is deleted once its change is in. Empty since the 2026-09-07 pass.
