@@ -702,7 +702,7 @@ function IconButton({
         "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:pointer-events-none disabled:opacity-50",
         active === true
           ? "bg-lifted text-foreground"
-          : "text-muted-foreground hover:bg-lifted hover:text-foreground",
+          : "text-muted-foreground hover:bg-hover hover:text-foreground",
       )}
     >
       <Icon className="h-4 w-4" />

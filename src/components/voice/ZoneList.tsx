@@ -321,7 +321,7 @@ function ZoneCard({
         // alone, with no glow.
         isCurrent && zone.color.glow,
         isOver && canDropHere && "ring-2 ring-act bg-lifted",
-        tappable && "cursor-pointer hover:bg-lifted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+        tappable && "cursor-pointer hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
       )}
     >
       <div className="flex items-center gap-2">
@@ -547,7 +547,7 @@ function MemberArea({
           onPointerUp={() => endHold(-1)}
           onPointerCancel={() => endHold(-1)}
           onClick={(e) => e.stopPropagation()}
-          className="glass absolute left-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-lifted touch-none"
+          className="glass absolute left-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-hover touch-none"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -564,7 +564,7 @@ function MemberArea({
           onPointerUp={() => endHold(1)}
           onPointerCancel={() => endHold(1)}
           onClick={(e) => e.stopPropagation()}
-          className="glass absolute right-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-lifted touch-none"
+          className="glass absolute right-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border text-foreground shadow-sm transition-colors hover:bg-hover touch-none"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

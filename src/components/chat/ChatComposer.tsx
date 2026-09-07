@@ -335,7 +335,7 @@ export function ChatComposer({
                   );
                   setRefused(0);
                 }}
-                className="glass absolute right-1 top-1 rounded-full p-0.5 text-foreground shadow-sm transition-colors hover:bg-background"
+                className="glass absolute right-1 top-1 rounded-full p-0.5 text-foreground shadow-sm transition-colors hover:bg-hover"
               >
                 <X className="h-3.5 w-3.5" aria-hidden />
               </button>
@@ -373,7 +373,7 @@ export function ChatComposer({
                   "flex w-full items-center px-2 py-1.5 text-left text-sm transition-colors",
                   index === activeIndex
                     ? "bg-lifted text-foreground"
-                    : "hover:bg-lifted",
+                    : "hover:bg-hover",
                 )}
               >
                 {account.name}

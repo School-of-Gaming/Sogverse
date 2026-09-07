@@ -58,7 +58,7 @@ import {
 const SPECIMEN = "Sogverse ABCÄÖ abcäö 0123";
 const SIGNATURE = "Aino Virtanen";
 
-/** Three rows, so the lift can be seen against the rows that are not lifted. */
+/** Three rows, so the hovered one can be seen against the rows that are not. */
 const PEOPLE = ["Aino Virtanen", "Mikael Korhonen", "Sofia Lindgren"];
 
 /** The families in the order the palette declares them. */
@@ -134,7 +134,7 @@ function Label({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * A photograph, because the two constructs below can only be seen over one.
+ * A photograph, because the scrim and the glass can only be seen over one.
  *
  * Both are drawn over the brightest thing they have to cover: a scrim shown
  * over the page's own ground is a slightly darker ground, and glass shown over
@@ -154,36 +154,52 @@ function Photograph() {
   );
 }
 
+/** One run of hoverable rows, drawn wherever it is nested. */
+function HoverRows() {
+  return PEOPLE.map((person) => (
+    <button
+      key={person}
+      type="button"
+      className="flex w-full items-center rounded-md px-3 py-2 text-left text-body-s transition-colors hover:bg-hover"
+    >
+      {person}
+    </button>
+  ));
+}
+
 /**
- * The lifted grey doing both of its jobs, live, on the card it really sits on.
+ * The hover layer on all three grounds at once, and the lifted grey at rest.
  *
- * A swatch cannot show this one. The grey is the ground a thing takes when it
- * is raised off what is behind it, and there are exactly two reasons a thing is
- * — a pointer is on it, or it is set back from its neighbours — so the pair is
- * drawn together and the hover is real: the lift has to be findable by moving a
- * cursor, not by comparing two squares. The skeleton beside it is the same
- * value at rest, which is the point rather than a collision: one is transient
- * and one is not, and nothing is confused by them agreeing, because a skeleton
- * bar is not something a pointer can be on.
+ * A swatch cannot show either. The hover is a *layer* rather than a ground, and
+ * the whole claim it makes is that one value lifts a row by the same visible
+ * step wherever the row happens to be — which is a claim about three grounds,
+ * so all three are here at once, nested the way a real page nests them: rows on
+ * the page, rows on a card on the page, rows on a lifted panel on that card.
+ * The hover is live because a lift has to be findable by moving a cursor, not
+ * by comparing two squares, and the run of three rows on each ground is what
+ * gives the hovered one something unhovered to be seen against.
+ *
+ * The skeleton beside it is the other construct: `lifted` as an authored,
+ * static ground. Drawing them together is the point rather than a collision —
+ * a panel that is set back and a row that lifts under the pointer are different
+ * statements, and nothing is confused by them appearing on one screen.
  */
-function LiftedInUse() {
+function GroundsInUse() {
   return (
     <div className="grid gap-6 sm:grid-cols-2">
       <div>
-        <div className="rounded-lg border border-border bg-card p-2">
-          {PEOPLE.map((person) => (
-            <button
-              key={person}
-              type="button"
-              className="flex w-full items-center rounded-md px-3 py-2 text-left text-body-s transition-colors hover:bg-lifted"
-            >
-              {person}
-            </button>
-          ))}
+        <div className="rounded-lg p-2">
+          <HoverRows />
+          <div className="mt-2 rounded-lg border border-border bg-card p-2">
+            <HoverRows />
+            <div className="mt-2 rounded-lg bg-lifted p-2">
+              <HoverRows />
+            </div>
+          </div>
         </div>
-        <p className="mt-2 text-h4 font-medium">Under the pointer</p>
+        <p className="mt-2 text-h4 font-medium">Hover, on each ground</p>
         <p className="font-brand-mono text-body-s text-muted-foreground">
-          hover:bg-lifted
+          hover:bg-hover
         </p>
       </div>
 
@@ -267,7 +283,7 @@ export default function FoundationsPage() {
           ))}
         </div>
         <div className="mt-10">
-          <LiftedInUse />
+          <GroundsInUse />
         </div>
       </Section>
 

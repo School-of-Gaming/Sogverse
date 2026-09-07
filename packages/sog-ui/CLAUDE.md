@@ -72,6 +72,30 @@ the hue at a tenth behind a glyph already inked in it. It is retired, because th
 the lifted neutral carries the accent on its own and the tint was the same colour stated
 twice — once at its authored value and once at a duller one.
 
+**The ban is on the brand. A neutral may carry an alpha where the alpha does a job a solid
+cannot: a layer over a ground it does not know.** The greys are not the brand speaking —
+they are the ground, the ink and the edge, and a grey at a fraction of itself
+misrepresents nothing — so what governs them is whether the transparency is doing work.
+Three constructs are, they are the library's, and they are the whole list: **the scrim**
+over media, **the glass** over whatever scrolls beneath it, and **the hover layer** over
+whatever surface an element sits on. Each carries its own alpha, so no call site picks a
+strength, and a consumer spends `bg-scrim`, `glass` or `bg-hover` rather than composing
+one. A grey at alpha used as an **ink** is not on that list and never joins it: nothing
+moves beneath a word, so the alpha buys nothing a solid could not, and what it produces is
+a duller grey the theme already names. There are two inks, and the quiet one is one of
+them.
+
+**The lifted grey is a surface, and hover is a layer.** They answer different questions
+and neither substitutes for the other: `lifted` is the authored ground a static thing
+takes when it is set back from its neighbours, and `hover` is the ink at a low alpha laid
+over whatever ground an element is already on. So a panel may be lifted and the rows on it
+still show hover — the layer lifts a row on the page, on a card and on a lifted panel by
+the same visible step, because it never had to name the ground beneath it. A grey written
+as a hover is the defect this pair exists to prevent: it draws a state on one surface and
+nothing at all on the one above. **Nothing in Sogverse writes a grey as a hover**, and
+lint holds it. The demo's Ground-and-ink floor is the reference, where the three surfaces
+are nested and each carries a live hoverable row.
+
 **Colour is a figure where it names something and a fill where it is pressed.** An edge,
 an ink, a mark, a chip's word beside its glyph: each of those is colour naming a thing —
 a state, a kind, a role — and none of them is pressed. A fill is what a hand presses, and

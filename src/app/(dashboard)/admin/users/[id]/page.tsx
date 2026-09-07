@@ -97,7 +97,7 @@ function AssignedProductRow({
   return (
     <Link
       href={ROUTES.admin.product(productType, productId)}
-      className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-lifted hover:text-foreground"
+      className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-hover hover:text-foreground"
     >
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">{name}</p>
@@ -378,7 +378,7 @@ export default async function AdminUserDetailPage({
                     <div key={gamer.id} className="space-y-2">
                       <Link
                         href={ROUTES.admin.user(gamer.id)}
-                        className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-lifted hover:text-foreground"
+                        className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-hover hover:text-foreground"
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
@@ -426,7 +426,7 @@ export default async function AdminUserDetailPage({
                   <Link
                     key={parent.id}
                     href={ROUTES.admin.user(parent.id)}
-                    className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-lifted hover:text-foreground"
+                    className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-hover hover:text-foreground"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">

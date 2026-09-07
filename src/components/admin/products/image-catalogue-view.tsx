@@ -188,7 +188,7 @@ export function ImageCatalogueView({
                       onClick={() => onSelectTile(image.id)}
                       aria-pressed={isSelected}
                       className={cn(
-                        "w-full rounded-md border border-border p-2 text-left transition-colors hover:bg-lifted",
+                        "w-full rounded-md border border-border p-2 text-left transition-colors hover:bg-hover",
                         isSelected && "border-act",
                       )}
                     >

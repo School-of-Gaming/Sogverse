@@ -39,7 +39,7 @@ const checkboxRowVariants = cva(
       // area the click will act on. A disabled row is not a target, so it does
       // not take it. A ticked row does now: it was excluded while it carried a
       // wash of its own, and the wash is gone.
-      { disabled: false, class: "hover:bg-lifted" },
+      { disabled: false, class: "hover:bg-hover" },
     ],
     defaultVariants: { size: "sm", checked: false, disabled: false },
   },

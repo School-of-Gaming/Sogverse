@@ -61,6 +61,9 @@
   /* The scrim — the one colour in the theme that carries its own alpha. It dims what is behind it and nothing sits inside it; black, because a tint that adds a hue is a tint that recolours a photograph. See src/tokens/surfaces.ts. */
   --color-scrim: color-mix(in oklab, #000000 70%, transparent);
 
+  /* The hover layer — the theme's ink at 8%, laid over whatever ground an element already sits on, so a row on the page, on a card and on a lifted panel each lift one visible step from where they are. A state, never a surface: nothing is authored on it. See src/tokens/surfaces.ts. */
+  --color-hover: color-mix(in oklab, #EDEDED 8%, transparent);
+
   /* Faces. The package owns the names; the consumer loads the files and defines the var() each token points at, on <html> and never on <body>. */
   --font-sans: var(--font-poppins), system-ui, sans-serif;
   --font-serif: var(--font-crimson-pro), Georgia, serif;

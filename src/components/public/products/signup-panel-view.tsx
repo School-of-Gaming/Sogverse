@@ -743,7 +743,7 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
       <button
         type="button"
         onClick={onSetLocation}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-lifted hover:text-foreground"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
       >
         <MapPin className="h-4 w-4" />
         {t("regionLock.setLocation")}
@@ -970,7 +970,7 @@ function SignupForm(
                           // without changing the box, so selecting a row cannot
                           // nudge its own text by a pixel.
                           "ring-1 ring-inset ring-act"
-                        : "hover:bg-lifted hover:text-foreground",
+                        : "hover:bg-hover hover:text-foreground",
                   )}
                 >
                   <span className="flex min-w-0 items-center gap-2.5">
@@ -1032,7 +1032,7 @@ function SignupForm(
             <button
               type="button"
               onClick={props.onAddGamer}
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-lifted hover:text-foreground"
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
             >
               <Plus className="h-4 w-4" />
               {tFamily("addGamer")}

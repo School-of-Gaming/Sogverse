@@ -53,7 +53,7 @@ export function GeduPill({
           onClick={onRemove}
           disabled={isSaving || disabled}
           aria-label={t("gedu.removeAria", { name: firstName })}
-          className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-lifted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+          className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
         >
           <X className="h-3.5 w-3.5" />
         </button>

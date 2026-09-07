@@ -86,7 +86,7 @@ const ROW_CLASS =
 
 /** Added to the rows that do something when clicked — which is all of them. */
 const ACTIONABLE_ROW_CLASS =
-  "hover:bg-lifted hover:text-foreground focus:bg-lifted focus:text-foreground focus:outline-none";
+  "hover:bg-hover hover:text-foreground focus:bg-lifted focus:text-foreground focus:outline-none";
 
 /**
  * Every row carries `data-account-menu-item` so arrow-key navigation can find

@@ -91,6 +91,45 @@ const noPaletteColourClasses = [
   },
 ];
 
+/**
+ * A grey written as a hover, banned wherever a class string is typed.
+ *
+ * The greys are surfaces: `lifted` is the ground a static thing takes when it is
+ * set back from its neighbours, `card` is the first lift off the page, and
+ * `background` is the page. Hover is not a surface, it is a **layer** — the
+ * theme's ink at a low alpha, laid over whatever ground the element is already
+ * on — and the difference is not stylistic. A grey spelled as a hover has to
+ * name the ground it lands on, so it draws a step on one surface and nothing at
+ * all on the one above: `hover:bg-lifted` on a row that is already sitting on a
+ * lifted panel is a hover nobody can see, which is precisely what the users
+ * page's child rows used to be.
+ *
+ * `bg-hover` needs no ground, so one class is right on all three. Which means
+ * this ban has exactly one fix and it is the same fix everywhere, and that is
+ * what makes it a lint rule rather than a review note.
+ *
+ * The `focus:`, `focus-visible:` and `data-[state=…]:` grounds are deliberately
+ * untouched: a focused or selected thing is in a *state*, which is a fact about
+ * the element rather than about the pointer, and a grey is allowed to carry one.
+ * Only the pointer variants are matched.
+ *
+ * Matched on nodes rather than on the file's text, exactly like the palette ban
+ * above, so prose describing the old class is untouched.
+ */
+const hoverGreyMessage =
+  "A grey is never a hover. `lifted`, `card` and `background` are surfaces a thing is authored on; the hover is `bg-hover`, @sog/ui's one state layer — the ink at a low alpha, laid over whatever ground the element already sits on, so a row on the page, on a card and on a lifted panel each lift one visible step from where they are. Write `hover:bg-hover` (or `group-hover:bg-hover`). See packages/sog-ui/src/tokens/surfaces.ts.";
+
+const noGreyAsHover = [
+  {
+    selector: String.raw`Literal[value=/\b(group-)?hover:bg-(lifted|card|background)\b/]`,
+    message: hoverGreyMessage,
+  },
+  {
+    selector: String.raw`TemplateElement[value.raw=/\b(group-)?hover:bg-(lifted|card|background)\b/]`,
+    message: hoverGreyMessage,
+  },
+];
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -306,6 +345,7 @@ const eslintConfig = defineConfig([
           "No colour literals in Sogverse. Every colour arrives from @sog/ui as a semantic token — a Tailwind class in a component, or BRAND / DARK_THEME from @/lib/constants/colors where there is no class to write (email, canvas, OG).",
         ),
         ...noPaletteColourClasses,
+        ...noGreyAsHover,
       ],
     },
   },
@@ -340,7 +380,11 @@ const eslintConfig = defineConfig([
       "src/lib/images/normalize-image.ts",
     ],
     rules: {
-      "no-restricted-syntax": ["error", ...noPaletteColourClasses],
+      "no-restricted-syntax": [
+        "error",
+        ...noPaletteColourClasses,
+        ...noGreyAsHover,
+      ],
     },
   },
   // The email house style, made mechanical at the point of typing. Colours in a
@@ -371,6 +415,7 @@ const eslintConfig = defineConfig([
           "No colour literals in an email. Import BRAND / DARK_THEME from @/lib/constants/colors, which derives the palette from @sog/ui.",
         ),
         ...noPaletteColourClasses,
+        ...noGreyAsHover,
         {
           selector: String.raw`TemplateElement[value.raw=/border-radius\s*:\s*[0-9]/]`,
           message:
@@ -395,7 +440,20 @@ const eslintConfig = defineConfig([
         ...noHexColourLiterals(
           "No colour literals outside the colour sources. Import the token from src/tokens/brand.ts or src/tokens/picks.ts, the only two files a colour is spelled in.",
         ),
+        ...noGreyAsHover,
       ],
+    },
+  },
+  // The grey-as-hover ban reaches the demo too, and it is the one colour rule
+  // here that does. The hex ban above deliberately stops at the library's own
+  // source, because a consumer spelling a colour is a separately visible
+  // mistake; this one does not, because the demo is the *reference* for how a
+  // consumer writes a hover, and a reference showing the wrong class teaches it
+  // to every page that copies it.
+  {
+    files: ["packages/*/demo/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": ["error", ...noGreyAsHover],
     },
   },
   {

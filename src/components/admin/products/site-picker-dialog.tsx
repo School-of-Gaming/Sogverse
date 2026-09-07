@@ -196,7 +196,7 @@ export function SitePickerDialog({
                     key={site.id}
                     type="button"
                     onClick={() => pick(site.id)}
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-lifted hover:text-foreground"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-hover hover:text-foreground"
                   >
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     <span className="min-w-0 flex-1 truncate font-medium">

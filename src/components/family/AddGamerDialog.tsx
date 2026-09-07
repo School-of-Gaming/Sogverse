@@ -678,7 +678,7 @@ function GenderButton({
         "disabled:cursor-not-allowed disabled:opacity-50",
         selected
           ? "bg-act text-act-foreground"
-          : "bg-background hover:bg-lifted hover:text-foreground",
+          : "bg-background hover:bg-hover hover:text-foreground",
       )}
     >
       {label}

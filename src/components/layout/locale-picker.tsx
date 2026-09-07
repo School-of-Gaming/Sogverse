@@ -107,7 +107,7 @@ export function LocalePicker({ className }: { className?: string }) {
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-lifted hover:text-foreground",
+                  "flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-hover hover:text-foreground",
                   opt === locale && "font-semibold text-act",
                 )}
               >

@@ -568,7 +568,7 @@ function MenuItem({
       onClick={onClick}
       className={cn(
         "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors",
-        "hover:bg-lifted disabled:pointer-events-none disabled:opacity-40",
+        "hover:bg-hover disabled:pointer-events-none disabled:opacity-40",
         active ? "text-destructive" : "text-foreground",
       )}
     >

@@ -122,7 +122,7 @@ function ContactList({
               // border colour, and only its colour moves when a conversation is
               // chosen: an edge that appears with the selection would land two
               // pixels of layout under the pointer that just clicked it.
-              "flex w-full items-center gap-3 border-b border-l-2 border-border px-4 py-3 text-left transition-colors hover:bg-lifted hover:text-foreground",
+              "flex w-full items-center gap-3 border-b border-l-2 border-border px-4 py-3 text-left transition-colors hover:bg-hover hover:text-foreground",
               selectedPhone === contact.phone && "border-l-act text-foreground"
             )}
           >

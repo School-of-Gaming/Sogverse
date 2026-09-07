@@ -249,7 +249,7 @@ function GeduRow({
       onClick={onClick}
       className={cn(
         "flex w-full items-start gap-3 rounded-md border border-border p-3 text-left text-sm transition-colors",
-        isDisabled ? "cursor-default opacity-60" : "hover:bg-lifted",
+        isDisabled ? "cursor-default opacity-60" : "hover:bg-hover",
         isCurrent && "border-act opacity-100"
       )}
     >

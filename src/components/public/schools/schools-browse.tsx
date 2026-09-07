@@ -400,7 +400,7 @@ function RegionSection({ group, t }: { group: RegionGroup; t: Translate }) {
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-lifted"
+        className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-hover"
       >
         <span className="flex min-w-0 items-center gap-2.5 font-medium">
           <Chevron className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -477,7 +477,7 @@ function MunicipalityRow({
     <li>
       <Link
         href={ROUTES.schoolMunicipality(entry.slug)}
-        className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 transition-colors hover:bg-lifted"
+        className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 transition-colors hover:bg-hover"
       >
         {inner}
       </Link>

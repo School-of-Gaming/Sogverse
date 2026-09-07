@@ -185,7 +185,7 @@ function CeremonyLine({
             type="button"
             onClick={onFill}
             disabled={disabled}
-            className="flex h-full w-full items-center gap-2 rounded-t-md px-2 text-sm text-muted-foreground transition-colors hover:bg-lifted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+            className="flex h-full w-full items-center gap-2 rounded-t-md px-2 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
           >
             <PenLine className="h-4 w-4 shrink-0" aria-hidden />
             {actionLabel}

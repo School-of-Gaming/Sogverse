@@ -98,21 +98,38 @@
  *   keep catching.
  * - **A brand colour exists at exactly the values authored below, never at an
  *   alpha step**: over a near-black ground an alpha step composites to a
- *   darker, duller hue, so what the reader sees is no longer the brand. A
+ *   darker, duller hue, so what the reader sees is no longer the brand. This
+ *   binds the signature pair, the four families, the statuses and the picks. A
  *   ground that needs to lift goes to a neutral, and a surface that genuinely
  *   has to see through — over a photograph, a video, a page scrolling beneath
- *   it — takes one of the two constructs in `surfaces.ts`, neither of which is
- *   a colour the brand speaks. **A tile behind a mark is not an exception**,
+ *   it — takes one of the constructs in `surfaces.ts`, none of which is a
+ *   colour the brand speaks. **A tile behind a mark is not an exception**,
  *   and was the last one claimed: a chip-scale square of the hue at a tenth,
  *   behind a glyph already inked in that hue, is the same colour stated twice
  *   — once at its authored value and once at a duller one. The mark keeps the
  *   colour and the square takes the lifted neutral. What is left is artwork
  *   carrying its own palette, which is not the brand speaking at all.
- * - **Nothing composites.** A value flattened against a ground so that a
- *   renderer with no alpha can draw it — a mail client, a satori-rendered
+ * - **The ban is on the brand, and a neutral is not the brand speaking.** The
+ *   greys carry no meaning to protect: they are the ground, the ink and the
+ *   edge, and a grey at a fraction of itself misrepresents nothing. So a
+ *   neutral may carry an alpha in the one situation where the alpha does a job
+ *   a solid cannot — **a layer over a ground it does not know.** There are
+ *   three such jobs, they are the library's, and they are all defined in
+ *   `surfaces.ts`: the scrim over media, the glass over whatever scrolls
+ *   beneath it, and the hover layer over whatever surface an element sits on.
+ *   Each carries its own alpha so no call site can vary it. **A grey at alpha
+ *   used as an ink is not one of them**: nothing moves beneath a word, so the
+ *   alpha is doing no work a solid could not, and what it produces is a duller
+ *   grey the theme already names. There are two inks and a quiet one is one of
+ *   them.
+ * - **Nothing composites by hand.** A brand value flattened against a ground so
+ *   that a renderer with no alpha can draw it — a mail client, a satori-rendered
  *   social card — is still the brand colour at an alpha step; it is simply
  *   wearing a solid’s clothes, and no reader can tell the difference. Those
  *   renderers take the authored value on the ground, exactly as the app does.
+ *   The three constructs above are the exception that proves the shape of this
+ *   one: they composite at render time, over a ground nobody could have
+ *   flattened them against in advance.
  *
  * These are opinions with no renderable form, which is why they are written
  * here rather than exported as data. Each one the API can enforce — a component
@@ -149,6 +166,15 @@
  * that can actually be seen and cost one distinction, which is now carried by
  * an edge, a mark or ink — signals that survive a reader who cannot separate
  * two near-black greys at all.
+ *
+ * **And the hover step was never a ground.** What made it invisible on the card
+ * is what a fourth ground could not have fixed: a hover fill spelled as a grey
+ * has to name the ground it lands on, so it is right on one surface and wrong
+ * on the rest. Spelled as a layer — the ink at a low alpha, laid over whatever
+ * is underneath — it needs no ground at all and lifts every one of the three by
+ * the same visible step. That layer is `HOVER` in `surfaces.ts`, beside the
+ * scrim and the glass, because it is the same trick those two are for: an alpha
+ * doing a job a solid cannot, over a ground it does not know.
  *
  * **Amber keeps its intent and loses its arithmetic.** On a light ground amber
  * misses the body floor by a wide margin, which is why it is a fill and a
@@ -257,25 +283,24 @@ export const NEUTRALS = {
    */
   card: { name: "Card", hex: "#1A1A1A", on: "foreground" },
   /**
-   * **The ground that is lifted off what is behind it**, for either of the two
-   * reasons a thing is: because a pointer or the keyboard is on it — a hovered
-   * row, a focused menu option, a ghost button under the cursor — or because it
-   * is set back from its neighbours — a skeleton's bars while a list loads, an
-   * unselected filter pill, a read-only field, an inset panel, a quoted reply.
+   * **The ground a thing takes when it is set back from its neighbours**: a
+   * skeleton's bars while a list loads, an unselected filter pill, a read-only
+   * field, an inset panel, a quoted reply, a tile behind a glyph. It is
+   * authored and it is static — a page renders it and it stays.
    *
-   * One grey for both, because they are one statement: this is raised from the
-   * surface it sits on. A ladder that spent a separate step on each had two
-   * greys nobody could tell apart, and it had to spend the quiet one on a state
-   * to get them — so the distinction it bought was imaginary and the cost was
-   * real.
+   * **It is a surface, and hover is a layer.** They are different constructs
+   * and this grey is not the hover one: `HOVER` in `surfaces.ts` is the ink at
+   * a low alpha, laid over whatever ground an element is already on, so a row
+   * on the page, on a card and on a lifted panel each lift one visible step
+   * from where they are. Which means a static panel may be lifted *and* the
+   * rows on it still hover, and neither statement gets in the other's way. A
+   * grey written as a hover is the defect: it lifts a row on the page and does
+   * nothing at all to a row already on this one.
    *
-   * **A ground lifts once.** A thing already resting on this grey has nowhere
-   * further to go, so it answers the pointer with its ink (to `foreground`) and
-   * its edge (to `foreground`), never with a second lift. And a selection that
-   * has to survive the pointer leaving takes a mark rather than a fill: the
-   * brand's own act colour on a leading edge, a check, or a filled chip. A
-   * ground alone cannot say *chosen* here, and pretending it can is what the
-   * fourth step used to be for.
+   * **A selection is neither.** A state that has to survive the pointer leaving
+   * takes a mark rather than a fill: the brand's own act colour on a leading
+   * edge, a check, or a filled chip. A ground alone cannot say *chosen*, and
+   * pretending it can is what the deleted fourth step used to be for.
    *
    * **Disabled is opacity, never this grey.** A disabled control keeps its
    * ground and loses its ink; a quiet block keeps its ink and changes ground.
@@ -320,11 +345,11 @@ export const NEUTRALS = {
    * cannot place.
    *
    * It is the **rest** value of an edge that also carries a state. Where a
-   * thing resting on `lifted` answers the pointer, it does so by taking its
-   * border up to `foreground`; where it is chosen, the edge goes to `act`. Both
-   * start here, which is why an edge that will ever move is drawn at this value
-   * from the beginning rather than added when the state arrives — an edge that
-   * appears on hover is two pixels of layout landing under the cursor.
+   * thing takes its edge up under the pointer it goes to `foreground`; where it
+   * is chosen, the edge goes to `act`. Both start here, which is why an edge
+   * that will ever move is drawn at this value from the beginning rather than
+   * added when the state arrives — an edge that appears on hover is two pixels
+   * of layout landing under the cursor.
    */
   border: { name: "Border", hex: "#333333" },
 } as const satisfies { readonly [Id in NeutralId]: NeutralEntry<Id> };

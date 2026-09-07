@@ -104,7 +104,7 @@ export function ChatReactionPicker({
           onClick={() => onPick(code)}
           aria-label={t(code)}
           title={t(code)}
-          className="rounded-full px-2 py-1 text-2xl leading-none transition-colors hover:bg-lifted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+          className="rounded-full px-2 py-1 text-2xl leading-none transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
         >
           <span aria-hidden>{CHAT_REACTION_GLYPHS[code]}</span>
         </button>

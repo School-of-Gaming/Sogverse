@@ -27,7 +27,7 @@ import {
   type NeutralId,
 } from "./brand.ts";
 import { PICKS } from "./picks.ts";
-import { GLASS, SCRIM } from "./surfaces.ts";
+import { GLASS, HOVER, SCRIM } from "./surfaces.ts";
 import { FACES, TYPE_SCALE } from "./typography.ts";
 
 /** CSS pixels → rem at the 16px root, with no trailing zeros. */
@@ -143,6 +143,28 @@ function scrimLines(): string[] {
 }
 
 /**
+ * The hover layer, emitted exactly as the scrim is.
+ *
+ * A colour token, so `hover:bg-hover` and `group-hover:bg-hover` are ordinary
+ * Tailwind utilities that take every variant the framework offers — which is
+ * the whole reason it is a token and not a utility like the glass: the glass is
+ * three declarations and a fallback, and this is one colour.
+ *
+ * The ink is spelled through the neutrals rather than written as a `var()`, so
+ * the value reaching the stylesheet is a hex at an alpha — the same shape the
+ * scrim takes, and a shape a `color-mix` can composite without a second
+ * indirection.
+ */
+function hoverLines(): string[] {
+  return [
+    declaration(
+      "--color-hover",
+      `color-mix(in oklab, ${NEUTRALS[HOVER.ink].hex} ${percent(HOVER.alpha)}, transparent)`,
+    ),
+  ];
+}
+
+/**
  * The glass, as a Tailwind utility rather than a token.
  *
  * It is three declarations and a fallback, not a colour, so there is no token
@@ -248,6 +270,11 @@ export function renderTheme(): string {
     section(
       "The scrim — the one colour in the theme that carries its own alpha. It dims what is behind it and nothing sits inside it; black, because a tint that adds a hue is a tint that recolours a photograph. See src/tokens/surfaces.ts.",
       scrimLines(),
+    ),
+    "",
+    section(
+      "The hover layer — the theme's ink at 8%, laid over whatever ground an element already sits on, so a row on the page, on a card and on a lifted panel each lift one visible step from where they are. A state, never a surface: nothing is authored on it. See src/tokens/surfaces.ts.",
+      hoverLines(),
     ),
     "",
     section(

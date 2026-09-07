@@ -144,7 +144,7 @@ export function SessionCreationsBlock({
                     ? "bg-lifted text-muted-foreground hover:text-foreground"
                     : owed
                       ? "font-semibold text-warning"
-                      : "text-foreground hover:bg-lifted",
+                      : "text-foreground hover:bg-hover",
                 )}
               >
                 {has ? (

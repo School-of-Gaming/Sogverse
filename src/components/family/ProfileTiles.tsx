@@ -174,7 +174,7 @@ export function AddGamerTile({
       )}
       aria-label={t("addGamer")}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors duration-150 group-hover:bg-lifted">
+      <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors duration-150 group-hover:bg-hover">
         <div className="absolute inset-0 flex items-center justify-center">
           <Plus
             className={cn(

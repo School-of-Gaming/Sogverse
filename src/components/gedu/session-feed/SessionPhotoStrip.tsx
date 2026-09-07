@@ -515,7 +515,7 @@ function StripThumbnail({
         aria-label={label}
         disabled={disabled}
         onClick={onRemove}
-        className="glass absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:pointer-events-none disabled:opacity-50"
+        className="glass absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:pointer-events-none disabled:opacity-50"
       >
         <X className="h-3.5 w-3.5" aria-hidden />
       </button>

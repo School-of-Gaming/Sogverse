@@ -120,7 +120,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
               aria-checked={isLocked}
               className={cn(
                 "flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors",
-                isLocked ? "border-act" : "hover:bg-lifted",
+                isLocked ? "border-act" : "hover:bg-hover",
               )}
             >
               <Lock className={cn("h-4 w-4 shrink-0", isLocked ? "text-act" : "text-muted-foreground")} />

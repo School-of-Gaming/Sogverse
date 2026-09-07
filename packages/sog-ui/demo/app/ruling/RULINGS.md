@@ -406,6 +406,38 @@ the page's greys section leaves. (The owner also noticed the drawing's focused f
 carried two fighting focus treatments, an act ring and a white border: a mistake in the
 page, not the app, deleted with the section.)
 
+**Landed 2026-09-07 (hover is a layer).** On the users page the owner named the depth he
+wanted back: the parent's card, the gamers lifted from it, and a hover lifting a gamer
+further. The three surfaces stay; what was missing is that the third lift had nowhere to
+come from, because hover was being spelled as the lifted grey and a row already sitting
+on that grey has no step above it. **The construct: hover is a library-owned layer, not
+a surface step.** `HOVER` joins `SCRIM` and `GLASS` in `surfaces.ts` — the theme's own
+ink at 8%, emitted as `--color-hover` by the same `color-mix(… , transparent)` the scrim
+takes, so `hover:bg-hover` and `group-hover:bg-hover` are ordinary Tailwind utilities
+that carry their own alpha and cannot be varied at a call site. It is the ink rather than
+a fourth grey because a grey at low alpha lifts the dark grounds and sinks the light one:
+the ink composites to `#363636` over `lifted`, `#2B2B2B` over `card` and `#242424` over
+`background`, steps of 1.25, 1.23 and 1.21 against the ground each one lifts, all three
+clearing the theme's own card-to-lifted step of 1.15 — which is the difference this
+section accepted as one a reader can actually find. 8% is the conventional state-layer
+strength and needed no raising.
+
+This is the answer to the thing the four-step ladder could not do. A hover fill spelled
+as a ground has to name the ground it lands on, so it is right on one surface and wrong
+on the rest, and no number of steps fixes that; spelled as a layer it needs no ground at
+all. So `lifted` is now only the *static* ground — set back from its neighbours — and a
+lifted panel's rows hover like any others. The sweep: **70 sites in 49 files**, 65
+`hover:bg-lifted`, one `group-hover:bg-lifted`, and four `hover:bg-background` on glass
+controls over media (which joined two glass controls that were already going to a solid
+`lifted`, so the six now carry one construct instead of two solids). Left standing on
+purpose: `account-menu.tsx`'s `focus:bg-lifted`, which is a state rather than a pointer,
+and a grey is allowed to carry one. The lint rule in `eslint.config.mjs` sits beside the
+palette-class ban and fails on `hover:bg-lifted`, `hover:bg-card`, `hover:bg-background`
+and their `group-hover:` spellings, in `src/` and in the demo alike — the demo because it
+is the reference a page copies from. The demo's Ground-and-ink floor now nests the three
+surfaces (page → card → lifted panel) with a live hoverable run on each, beside the
+skeleton showing `lifted` at rest.
+
 ## 5. The categorical palettes
 
 **Asked:** the four product-type colours and the sixteen zone colours enter the
@@ -762,6 +794,43 @@ title prop. Left standing and flagged: 24 neutral `/n` sites that are inks, rail
 pseudo-element separators (`muted-foreground` 20, `foreground` 2, plus two status inks),
 which the greys sweep did not take because it took grounds; they go to the plain token
 in the enforcement pass, since nothing in Sogverse composites.
+
+**Corrected 2026-09-07 (the owner): the ban is on brand colours.** The owner: "We
+banned alphas on brand colors, but we are ok with alphas on greys. Greys are neutral
+colors, they don't represent the brand. I think this concept might have gotten lost
+somewhere." It had. The question this section opened on was widened on 2026-09-06 from
+"brand colour at alpha steps" to "every token at a `/n` step" because the same question
+was being answered 270 times — a good reason to *look* at all 270, and the wrong shape
+to rule in. The rulings that followed were right one by one; what over-reached was the
+enforcement pass, which read them as one rule and wrote a regex spanning every token the
+theme emits. So `tests/unit/styling/no-colour-at-an-alpha-step.test.ts` was guarding
+`foreground`, `muted-foreground`, `background`, `card`, `lifted`, `border` and `scrim`
+alongside act, world, the families, the statuses and the picks, and the prose beside it
+said "a colour exists only at the value it was authored at" without saying whose colour.
+
+Narrowed, to the two rules that were always meant:
+
+1. **A brand colour never at an alpha step** — act, world, the four families, the four
+   statuses, the sixteen picks and their `-foreground` companions. Unchanged, and every
+   ruling above stands exactly as it was made, the four Button hover shades included.
+2. **A neutral may carry alpha where the alpha does a job a solid cannot: a layer over a
+   ground it does not know.** A grey is not the brand speaking, so there is nothing to
+   misrepresent; what governs it is whether the transparency is working. Three
+   constructs are, and they are the whole list: the scrim over media, the glass over
+   whatever scrolls beneath it, and the hover layer over whatever surface an element
+   sits on. All three are the library's and each carries its own alpha, so a call site
+   spends the construct and never a strength.
+
+What the correction does **not** re-open: a grey at alpha used as an **ink**. Nothing
+moves beneath a word, so the alpha buys nothing a solid could not and what it produces
+is a duller grey the theme already names — that is §4's greys ruling and it stands, so
+the 24 neutral ink `/n` sites that took the plain token stay on the plain token, and
+nothing static in Sogverse changes.
+
+The regex now lists the brand tokens only. The single-strength half moved to
+`tests/unit/styling/glass-belongs-to-the-library.test.ts`, which is where the three
+constructs are described: it fails on a `bg-scrim/n` or a `bg-hover/n` anywhere in
+`src/`, so nothing was dropped by the narrowing.
 
 **Ruling:** _landed_
 
@@ -1207,15 +1276,17 @@ workspace). The session memory file has been deleted at the owner's request; thi
 the only resume point.
 
 **Every colour ruling is landed.** §1 the inventory; §2 one colour per element, the
-element glyphs, the kind glyphs; §3 the status set and its constructs; §4 three grounds;
-§5 the picks and the kinds; §6 the scrim, the glass, on-media ink, the picker's check, the
-media ground, the Lynx cyan; §7 the identicon; §9 no alpha (act as a figure, the lifecycle
-chip, the tiles); §11 coloured text as a label, and the hero headline as the one declared
-departure from it; §12 the colour budget, three tiers; §14 the
-heroes, cards, social images, email header and the role chip; §15 figure and fill, and the
-nine filled badges that took the chip. The library holds every value with its rule and
-reason; Sogverse's stylesheet declares no colour; the full suite and both builds are green
-at every commit.
+element glyphs, the kind glyphs; §3 the status set and its constructs; §4 three grounds,
+and hover as a library-owned layer over any of them; §5 the picks and the kinds; §6 the
+scrim, the glass, on-media ink, the picker's check, the media ground, the Lynx cyan; §7
+the identicon; §9 no alpha on a **brand** colour (act as a figure, the lifecycle chip, the
+tiles) — narrowed on 2026-09-07 by the owner's correction, since a grey is not the brand
+and may carry an alpha where the alpha does a job a solid cannot; §11 coloured text as a
+label, and the hero headline as the one declared departure from it; §12 the colour budget,
+three tiers; §14 the heroes, cards, social images, email header and the role chip; §15
+figure and fill, and the nine filled badges that took the chip. The library holds every
+value with its rule and reason; Sogverse's stylesheet declares no colour; the full suite
+and both builds are green at every commit.
 
 **Still needing the owner (small, and none blocks the end of the branch).** The hero
 headline is ruled and landed (§11), and the proposed backlog line on the home page's
@@ -1233,7 +1304,9 @@ Sogverse's stylesheet declares no `--color-*`;
 `tests/unit/styling/no-colour-at-an-alpha-step.test.ts` holds that no colour utility in
 Sogverse carries an alpha suffix except the four named hover shades on filled controls
 (three in `ui/button.tsx`, one in `parent/PaymentProblemBadge.tsx`), all of them the Button
-adoption's; `tests/unit/styling/glass-belongs-to-the-library.test.ts`,
+adoption's — narrowed on 2026-09-07 to the brand tokens only, with the single-strength
+half of the claim moved to the constructs' own file;
+`tests/unit/styling/glass-belongs-to-the-library.test.ts`,
 `tests/unit/styling/globals-border-layer.test.ts`, `tests/unit/theme/face-contract.test.ts`
 and the nine files under `tests/unit/sog-ui/` hold the rest of the theme. The 24 neutral
 ink `/n` sites took the plain token; the hex-literal lint covers all of `src/` with its
