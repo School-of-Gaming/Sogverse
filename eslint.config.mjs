@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
@@ -137,6 +140,246 @@ const noGreyAsHover = [
 ];
 
 /**
+ * **The theme's own token names, read off the stylesheet the theme is.**
+ *
+ * Derived rather than typed out, for the reason the alpha-step test states about
+ * its own list: a second, hand-written statement of the palette is the one that
+ * goes stale in silence. @sog/ui adds a token, this file learns it on the next
+ * lint run; @sog/ui retires one and every class still naming it starts failing
+ * the same day. A frozen list would have gone on approving `primary` for as long
+ * as somebody kept writing it — which is exactly what happened, in prose, for
+ * the length of the theme merge.
+ *
+ * Read at config-load time. That is a file read in a config file, which is
+ * unusual enough to say why: the alternative is importing the TypeScript source
+ * the stylesheet is generated from, and the config is plain ESM that Node loads
+ * without a compiler. The generated CSS is the artifact both ends already agree
+ * on — a test regenerates and diffs it — so reading it is reading the theme.
+ *
+ * The `--x--y` shapes (`--text-h1--font-weight`) are companions of a token, not
+ * tokens, and are filtered out: a class can never name one.
+ */
+const themeCss = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), "packages", "sog-ui", "src", "tokens", "theme.css"),
+  "utf8",
+);
+
+const themeNamespace = (namespace) => [
+  ...new Set(
+    [...themeCss.matchAll(new RegExp(String.raw`--${namespace}-([a-z0-9-]+)\s*:`, "g"))]
+      .map((match) => match[1])
+      .filter((name) => !name.includes("--")),
+  ),
+];
+
+/** Every name a `bg-`, `text-`, `border-`… class may legitimately colour with. */
+const COLOUR_TOKENS = themeNamespace("color");
+/** The typography scale, which shares the `text-` prefix with the inks. */
+const TEXT_SIZE_TOKENS = themeNamespace("text");
+
+/**
+ * The non-colour words each colour-bearing prefix also legitimately takes.
+ *
+ * Tailwind overloads these prefixes hard — `bg-cover` is a size, `text-center`
+ * is an alignment, `border-dashed` is a style, `divide-y` is a width — so a ban
+ * on "a token the theme does not define" has to know every other thing the
+ * prefix means or it reports on half the app. Enumerated from Tailwind's utility
+ * reference and then confirmed against what this tree actually writes; the
+ * confirmation is the half that matters, because an over-tight list here is a
+ * rule nobody can keep and an over-loose one is a rule that catches nothing.
+ *
+ * `hover` appears under `bg` alone, and deliberately: the hover layer lives in
+ * the *background-image* namespace rather than the colour one, so `bg-hover` is
+ * the only spelling of it there is — `text-hover` and `border-hover` cannot be
+ * written at all, and this list is where that stops being prose.
+ */
+const UNIVERSAL_KEYWORDS = ["transparent", "current", "inherit", "none"];
+const LINE_STYLES = ["solid", "dashed", "dotted", "double", "hidden", "wavy"];
+/**
+ * The side segment, which belongs to the edge-drawing prefixes alone. It is
+ * folded into the *token* rather than matched as a separate group, because a
+ * separate optional group backtracks: `ring-offset-background` would try
+ * `offset` as a side, find `background` legitimate, and then quietly re-read the
+ * whole thing as one token named `offset-background` and report it. Written this
+ * way there is one parse.
+ */
+const SIDED = {
+  border: "t|r|b|l|x|y|s|e",
+  divide: "x|y",
+  ring: "offset",
+  outline: "offset",
+  decoration: "",
+};
+
+const EXTRA_KEYWORDS = {
+  bg: [
+    "hover", "fixed", "local", "scroll", "cover", "contain", "auto",
+    "center", "top", "bottom", "left", "right",
+    "repeat", "repeat-x", "repeat-y", "no-repeat", "repeat-round", "repeat-space",
+  ],
+  text: [
+    ...TEXT_SIZE_TOKENS,
+    "xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl", "7xl", "8xl", "9xl",
+    "left", "center", "right", "justify", "start", "end",
+    "wrap", "nowrap", "balance", "pretty", "ellipsis", "clip",
+  ],
+  border: [...LINE_STYLES, "collapse", "separate", "box"],
+  divide: [...LINE_STYLES, "reverse", "x-reverse", "y-reverse"],
+  ring: ["inset"],
+  outline: [...LINE_STYLES, "hidden"],
+  decoration: [...LINE_STYLES, "auto"],
+  fill: [],
+  stroke: [],
+  placeholder: [],
+  caret: [],
+  accent: [],
+};
+
+/**
+ * A class naming a colour token the theme does not define, banned everywhere a
+ * class string is typed.
+ *
+ * **Tailwind 4 emits nothing at all for an unknown token, and says nothing about
+ * it.** `text-primary` compiled to a real colour under the old theme; the merge
+ * renamed that token to `act` and the class went on being written, being
+ * reviewed, and rendering as though it carried no colour class at all — an
+ * inherited ink that usually looks plausible. No build error, no console
+ * warning, no visible fault to notice: the class is simply dropped on the floor.
+ * That is the same failure shape as the border rule below and the same reason
+ * both are lint rules rather than review notes.
+ *
+ * One selector per prefix rather than one big alternation, because the words a
+ * prefix legitimately takes are the prefix's own — `bg-cover` is fine and
+ * `text-cover` is not, and a shared allow-list would bless both.
+ *
+ * Two guards keep it off things that are not classes. The trailing lookahead
+ * refuses a `:` or `(`, which is what a CSS *declaration* has after it — an
+ * email template is full of `border-radius:` and `text-align:` and none of them
+ * is a Tailwind class. And a token starting with a digit is a width, a thickness
+ * or a gradient stop rather than a colour, so it is skipped rather than
+ * enumerated.
+ *
+ * A token split across a template hole (`bg-pick-${n}`) is invisible to this and
+ * that is accepted: the literal ends mid-token, so there is no name to check,
+ * and the alternative is a rule that guesses.
+ */
+const unregisteredTokenMessage = (prefix) =>
+  `\`${prefix}-…\` names a token the theme does not define, and Tailwind 4 emits nothing for it — no error, no warning, the class is simply dropped and the element inherits. Every colour comes from @sog/ui's theme (act, world, destructive, success, info, warning, the Yty families, the picks, and the neutrals background/card/lifted/border/foreground/muted-foreground). \`primary\` is the retired name of \`act\`. See packages/sog-ui/src/tokens/theme.css.`;
+
+const noUnregisteredColourToken = Object.keys(EXTRA_KEYWORDS).flatMap((prefix) => {
+  const names = [
+    ...COLOUR_TOKENS,
+    ...UNIVERSAL_KEYWORDS,
+    ...EXTRA_KEYWORDS[prefix],
+  ].join("|");
+  const side = SIDED[prefix] ?? "";
+  // Everything after the prefix's hyphen that is legitimate: a name, a name
+  // behind a side segment, a bare side segment, or anything numeric (a width, a
+  // thickness, `ring-offset-2`). Sides are part of this rather than a group of
+  // their own — see SIDED.
+  const legitimate = side
+    ? String.raw`(?:${side})-(?:${names})|(?:${side})|(?:${side})-[0-9][\w-]*|${names}|[0-9][\w-]*`
+    : String.raw`${names}|[0-9][\w-]*`;
+  // A token is a name, never a fragment: it must end on a letter or digit, so a
+  // literal that stops mid-token at a template hole (`bg-pick-${…}`) has no
+  // name to judge and is passed over rather than guessed at.
+  const token = String.raw`[a-z][a-z0-9]*(?:-[a-z0-9]+)*`;
+  // The trailing `:` and `(` refuse a CSS *declaration* — an email template is
+  // full of `border-radius:` and `text-align:`, and none of them is a class.
+  // The `,` and `[` in the lookbehind are what keep an *arbitrary value* out of
+  // this: `transition-[box-shadow,border-color]` names a CSS property inside
+  // brackets, not a class, and nothing in a real class list ever follows a comma
+  // or an opening bracket.
+  const pattern = String.raw`(?<![\w\-,[])${prefix}-(?!(?:${legitimate})(?![\w-]))${token}(?![\w-:(])`;
+  return [
+    { selector: String.raw`Literal[value=/${pattern}/]`, message: unregisteredTokenMessage(prefix) },
+    { selector: String.raw`TemplateElement[value.raw=/${pattern}/]`, message: unregisteredTokenMessage(prefix) },
+  ];
+});
+
+/**
+ * A border, divide, ring or outline with a width and no colour, banned.
+ *
+ * **`globals.css` used to colour every edge in the app from a universal
+ * selector, and deleting it was the fix** — Tailwind 4 ships `currentColor` as
+ * the default border colour precisely so an unnamed edge is visibly wrong rather
+ * than quietly neutral. What that leaves behind is a hazard nobody can see while
+ * writing: `rounded-lg border p-3` is a complete-looking class string that now
+ * paints the element's *ink* around it, and on a muted row that is a grey close
+ * enough to the real edge to pass review. The universal default is gone and this
+ * is what stands in its place — not a default, a refusal.
+ *
+ * One entry per family, each a negative lookahead over the **whole literal**:
+ * report a width-only utility only when nothing anywhere in the same string
+ * colours that family.
+ *
+ * **Scoped to a `className` attribute written as one plain string, and the
+ * scope is the whole reason the rule is usable.** A class string assembled from
+ * several literals — `cn()` arguments, a `cva` base beside its variants — puts
+ * the width in one and the colour in another perfectly legitimately, and
+ * `CheckboxRow` is that shape on purpose: its base string carries `border` and
+ * its `checked` variant decides between `border-act` and `border-border`.
+ * Judging those literals one at a time reports every one of them, and nothing in
+ * esquery or in a regex can tell which literals end up on one element. So the
+ * rule only reads the case where one string *is* the element's whole class list,
+ * which is where the bug this exists for actually shipped. Seven such splits sit
+ * in the tree today and every one of them is correct; a rule that called them
+ * defects would have been turned off inside a week.
+ *
+ * The gap that leaves — a genuinely uncoloured edge assembled across `cn()`
+ * arguments — fails open, which is the right direction for a guard: it misses a
+ * bug, it never invents one.
+ *
+ * `border-none` and `border-hidden` count as colouring, because they remove the
+ * edge rather than leave it unnamed; `border-0` is a width that removes it, so
+ * it is not a width this reports. `transparent` counts for the same reason.
+ */
+const CLASS_ATTRIBUTE = String.raw`JSXAttribute[name.name=/^(class|className|.*ClassName)$/] > Literal`;
+
+const borderFamilyMessage = (family, fix) =>
+  `\`${family}\` with a width and no colour paints \`currentColor\`, because there is no universal border-colour default any more — src/app/globals.css deleted it so an unnamed edge would be visibly wrong instead of quietly neutral. Name the edge: ${fix}.`;
+
+const borderFamilies = [
+  {
+    family: "border",
+    // `border`, `border-t`, `border-2`, `border-t-2` — width and side only.
+    width: String.raw`(?<![\w-])border(?:-(?:t|r|b|l|x|y|s|e))?(?:-(?:2|4|8))?(?![\w-:])`,
+    // Any `border[-side]-<word>` that is not a style keyword: a token name, or
+    // `transparent`/`current`/`none`/`hidden`, all of which settle the edge.
+    colour: String.raw`(?<![\w-])border(?:-(?:t|r|b|l|x|y|s|e))?-(?!(?:solid|dashed|dotted|double|collapse|separate|box|spacing)(?![\w-]))[a-z][\w-]*`,
+    fix: "`border-border` for the neutral edge, or the token the construct owns (`border-act`, `border-destructive`)",
+  },
+  {
+    family: "divide",
+    width: String.raw`(?<![\w-])divide-(?:x|y)(?:-(?:2|4|8|reverse))?(?![\w-:])`,
+    colour: String.raw`(?<![\w-])divide-(?!(?:x|y)(?![\w-])|(?:solid|dashed|dotted|double)(?![\w-]))[a-z][\w-]*`,
+    fix: "`divide-border`",
+  },
+  {
+    family: "ring",
+    width: String.raw`(?<![\w-])ring(?:-(?:1|2|4|8))?(?![\w-:])`,
+    colour: String.raw`(?<![\w-])ring-(?!(?:inset|offset-[0-9])(?![\w-])|[0-9])[a-z][\w-]*`,
+    fix: "`ring-act` for the focus ring, or `ring-border`",
+  },
+  {
+    family: "outline",
+    width: String.raw`(?<![\w-])outline(?:-(?:1|2|4|8))?(?![\w-:])`,
+    colour: String.raw`(?<![\w-])outline-(?!(?:offset-[0-9])(?![\w-])|[0-9])[a-z][\w-]*`,
+    fix: "`outline-act`, or `outline-none` where the outline is being removed",
+  },
+];
+
+const noAbsentBorderColour = borderFamilies.flatMap(({ family, width, colour, fix }) => {
+  const pattern = String.raw`^(?![\s\S]*${colour})[\s\S]*${width}`;
+  return [
+    {
+      selector: String.raw`${CLASS_ATTRIBUTE}[value=/${pattern}/]`,
+      message: borderFamilyMessage(family, fix),
+    },
+  ];
+});
+
+/**
  * A colour spelled as a CSS colour *function*, banned alongside the hex.
  *
  * The hex ban above closes one spelling and one only, and `rgba(18, 18, 18,
@@ -184,6 +427,8 @@ const sogverseColourBans = [
   ),
   ...noPaletteColourClasses,
   ...noGreyAsHover,
+  ...noUnregisteredColourToken,
+  ...noAbsentBorderColour,
 ];
 
 const eslintConfig = defineConfig([
@@ -573,3 +818,16 @@ const eslintConfig = defineConfig([
 ]);
 
 export default eslintConfig;
+
+/**
+ * The two theme bans, named so a test can hold them.
+ *
+ * Both are regexes assembled from several parts, and one of them reads the
+ * theme off disk — precisely the shape that fails silently: a selector that
+ * compiles, matches nothing, and reads as a rule that is holding. The palette
+ * ban shipped exactly that way once. `tests/unit/styling/` runs a violating line
+ * and a conforming one through each, so the day one of these stops matching is
+ * the day a test goes red rather than the day a colour quietly stops being
+ * enforced.
+ */
+export { noAbsentBorderColour, noUnregisteredColourToken };
