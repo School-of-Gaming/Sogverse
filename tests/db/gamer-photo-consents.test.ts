@@ -12,7 +12,7 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
- * Gamer photo consents (00243): the marketing-consent system (00220) with the
+ * Gamer photo consents (00244): the marketing-consent system (00220) with the
  * subject changed from an adult's mailbox to a CHILD'S IMAGE, and every claim
  * below is about one of the three things that change follows from.
  *
@@ -67,7 +67,7 @@ const CHECK_VIOLATION = "23514";
  */
 const NOT_A_GAMER = "00000000-0000-0000-0000-0000000009ee";
 
-describe("gamer photo consents (00243)", () => {
+describe("gamer photo consents (00244)", () => {
   let admin: SupabaseClient<Database>;
   let anon: SupabaseClient<Database>;
   let customer: SupabaseClient<Database>;
