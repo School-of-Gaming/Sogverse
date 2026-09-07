@@ -3255,7 +3255,7 @@
         },
         "media": {
           "question": "Kommer mitt barn att fotograferas eller filmas?",
-          "answer": "<p>Träffarna kan fotograferas för interna anteckningar. Om materialet används externt i marknadsföring är helt ditt val vid anmälan, och du kan ändra det när som helst.</p>"
+          "answer": "<p>Träffarna kan fotograferas. Ditt barn syns på ett foto bara om du kryssar i det frivilliga mediavalet när du anmäler barnet, och du kan ändra svaret när som helst på barnets sida i My SOG.</p>"
         },
         "facilitators": {
           "question": "Vem håller i träffarna, och hur kontrolleras de?",
@@ -3299,8 +3299,7 @@
         "Följande val är frivilliga och påverkar inte ditt barns plats:",
         [
           "E-post till föräldern från Lynx Educate om kommande Roblox-evenemang och resurser om spel.",
-          "Foto eller film för intern rapportering om Programmet till Roblox.",
-          "Offentlig användning av foton eller filmmaterial av Lynx Educate, School of Gaming och Roblox."
+          "Foton och filmer på barnet, i träffrapporter, i effektrapportering till Lynx Educate och Roblox och i offentlig användning av Lynx Educate, School of Gaming och Roblox."
         ],
         "Vanliga träffar online spelas inte in. Inget barn fotograferas eller filmas om det nödvändiga tillståndet saknas eller om barnet inte vill vara med.",
         "Lynx Educate och School of Gaming säljer inte anmälningsuppgifter från Programmet och använder dem inte för reklam riktad till barn.",
@@ -3463,7 +3462,7 @@
       "useMedia": {
         "heading": "Frivilligt foto och film",
         "blocks": [
-          "Foto, film och offentlig kommunikation bygger på separata, frivilliga tillstånd. Att tacka nej till något av mediavalen påverkar varken anmälan eller deltagandet.",
+          "Foto, film och offentlig kommunikation bygger på ett enda frivilligt tillstånd, som ges för varje barn. Att tacka nej påverkar varken anmälan eller deltagandet.",
           "Samtycke är inte den rättsliga grunden för de centrala aktiviteterna kring anmälan, genomförande eller barns trygghet som beskrivs ovan."
         ]
       },
@@ -3501,40 +3500,33 @@
         "heading": "Foto, film och offentlig användning",
         "blocks": [
           "Vanliga träffar online spelas inte in. Om foto eller film planeras vid en viss träff eller ett visst evenemang får familjerna veta det i förväg.",
-          "Det finns två separata frivilliga val."
+          "Det finns ett enda frivilligt mediaval per barn. Det görs när barnet anmäls till en aktivitet i Skaparnas akademi och kan ändras när som helst på barnets sida i My SOG."
         ]
       },
-      "mediaSponsor": {
-        "heading": "Intern rapportering till sponsorn",
+      "mediaChoice": {
+        "heading": "Vad mediavalet omfattar",
         "blocks": [
-          "Det första mediavalet tillåter att barnet fotograferas eller filmas för intern rapportering om Programmet till Roblox i egenskap av sponsor. Det kan handla om interna effektrapporter, lägesuppdateringar eller presentationer för sponsorn.",
-          "Tillståndet ger inte rätt att publicera materialet på webbplatser, i sociala medier eller i pressen."
-        ]
-      },
-      "mediaPublic": {
-        "heading": "Offentlig kommunikation om effekt",
-        "blocks": [
-          "Det andra mediavalet tillåter Lynx Educate, School of Gaming och Roblox att använda foton eller filmmaterial offentligt för att visa Programmets effekt, bland annat på:",
+          "En enda frivillig ruta omfattar all användning av ett barns foton och filmmaterial. När rutan är ikryssad får foton och filmer på barnet:",
           [
-            "Deras webbplatser.",
-            "Deras kanaler i sociala medier.",
-            "Press- och PR-material.",
-            "Kommunikation om Programmet och dess effekt."
+            "Tas med i träffrapporter, som varje familj i barnets grupp ser på gruppens sida och får per e-post.",
+            "Delas med Lynx Educate och Roblox för effektrapportering, bland annat i interna effektrapporter, lägesuppdateringar och presentationer för sponsorn.",
+            "Användas offentligt av Lynx Educate, School of Gaming och Roblox på deras webbplatser och kanaler i sociala medier och i kommunikation om Programmet och dess effekt."
           ],
-          "Offentligt innehåll kan vara tillgängligt i hela världen och kan kopieras eller delas vidare av andra användare utan att organisationerna kan styra det."
+          "Offentligt innehåll kan vara tillgängligt i hela världen och kan kopieras eller delas vidare av andra användare utan att organisationerna kan styra det.",
+          "Är rutan inte ikryssad hålls barnet helt utanför träffarnas foton och filmmaterial. Ingenting som identifierar barnet tas med i en träffrapport, delas med Lynx Educate eller Roblox eller används offentligt."
         ]
       },
       "mediaChildAgrees": {
         "heading": "Barnet måste också vara med på det",
         "blocks": [
           "Föräldern bör prata med barnet om mediavalet innan det görs. Vi förklarar också fotograferingen eller filmningen för barnet på ett sätt som passar barnets ålder.",
-          "Vi fotograferar eller filmar aldrig medvetet ett barn som säger nej, även om en förälder tidigare kryssat i en mediaruta. Personalen vidtar rimliga praktiska åtgärder för att barn utan tillstånd inte ska synas identifierbart i materialet."
+          "En spelfostrare frågar barnet innan ett foto tas, även när föräldern kryssat i rutan, och vi fotograferar eller filmar aldrig medvetet ett barn som säger nej. Ett barn vars förälder inte kryssat i rutan hålls utanför träffarnas foton och identifierbart material."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Fallbeskrivningar, namn och innehåll som deltagarna skapat",
         "blocks": [
-          "De två mediarutorna vid anmälan omfattar bara foton och filmmaterial.",
+          "Mediarutan omfattar bara foton och filmmaterial.",
           "Ett separat skriftligt medgivande inhämtas innan följande används:",
           [
             "Ett barns fullständiga namn.",
@@ -3550,7 +3542,7 @@
       "mediaChanging": {
         "heading": "Ändra ett mediaval",
         "blocks": [
-          "En förälder eller ett barn kan återkalla ett mediatillstånd genom att kontakta oss eller använda inställningen i Sogverse.",
+          "En förälder kan ändra mediavalet när som helst på barnets sida i My SOG, eller genom att kontakta oss. Ett barn kan också be oss återkalla tillståndet.",
           "Efter återkallelsen slutar vi använda materialet på nya sätt och tar bort det från kanaler vi själva styr över, när det rimligen går. En återkallelse kan inte göra tidigare laglig användning olaglig, ta tillbaka tryckt material som redan spridits eller garantera att kopior som tredje part redan delat raderas."
         ]
       },
@@ -3738,7 +3730,7 @@
       "data": {
         "heading": "Uppgifter och foton",
         "blocks": [
-          "All fotografering, filmning och användning av ett barns bild styrs av de samtyckesval som beskrivs i <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> – aldrig förutsatta, alltid frivilliga, alltid möjliga att ändra."
+          "Ett barn syns på ett foto endast när barnets förälder kryssat i det frivilliga mediasamtycket för barnet vid anmälan. Föräldern kan ändra svaret när som helst på barnets sida i My SOG, och en spelfostrare frågar barnet innan ett foto tas, även när föräldern har samtyckt. <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> beskriver vad samtycket omfattar."
         ]
       },
       "review": {
@@ -3805,7 +3797,7 @@
       "media": {
         "heading": "Foto, video och marknadsföring",
         "blocks": [
-          "Om ditt barn fotograferas eller filmas, och om materialet används i marknadsföring, beror helt på de val du gör vid anmälan. Valen är frivilliga och du kan ändra dig när som helst i inställningarna för din Sogverse-profil."
+          "Om ditt barn syns på foton eller film är ett enda frivilligt val, som du gör när du anmäler barnet till en aktivitet i Skaparnas akademi. Du kan ändra det när som helst på barnets sida i My SOG. Ett barn utan det tillståndet hålls helt utanför träffarnas foton."
         ]
       },
       "concern": {

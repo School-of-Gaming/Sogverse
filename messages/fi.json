@@ -3255,7 +3255,7 @@
         },
         "media": {
           "question": "Valokuvataanko tai videoidaanko lastani?",
-          "answer": "<p>Tapaamisissa voidaan ottaa valokuvia sisäistä käyttöä varten. Kuvamateriaalin käyttö markkinoinnissa on täysin oma valintasi ilmoittautumisen yhteydessä, ja voit muuttaa sitä milloin tahansa.</p>"
+          "answer": "<p>Tapaamisissa voidaan ottaa valokuvia. Lapsesi näkyy valokuvassa vain, jos rastitat vapaaehtoisen mediavalinnan ilmoittaessasi hänet mukaan, ja voit muuttaa vastausta milloin tahansa lapsesi sivulla My SOG -näkymässä.</p>"
         },
         "facilitators": {
           "question": "Ketkä tapaamiset ohjaavat, ja miten heidät on tarkistettu?",
@@ -3299,8 +3299,7 @@
         "Seuraavat valinnat ovat vapaaehtoisia, eivätkä ne vaikuta lapsesi paikkaan:",
         [
           "Lynx Educaten vanhemmalle lähettämät sähköpostit tulevista Roblox-tapahtumista ja pelaamiseen liittyvistä aineistoista.",
-          "Valokuvaaminen tai videokuvaaminen Ohjelman sisäistä raportointia varten Robloxille.",
-          "Valokuvien tai videomateriaalin julkinen käyttö Lynx Educaten, School of Gamingin ja Robloxin toimesta."
+          "Lapsesta otetut valokuvat ja videot tapaamisraporteissa, Lynx Educatelle ja Robloxille tehtävässä vaikuttavuusraportoinnissa sekä Lynx Educaten, School of Gamingin ja Robloxin julkisessa käytössä."
         ],
         "Tavanomaisia verkkotapaamisia ei tallenneta. Lasta ei valokuvata eikä videokuvata, jos tarvittavaa lupaa ei ole annettu tai jos lapsi ei halua osallistua.",
         "Lynx Educate ja School of Gaming eivät myy Ohjelman ilmoittautumistietoja eivätkä käytä niitä lapsille suunnattuun mainontaan.",
@@ -3463,7 +3462,7 @@
       "useMedia": {
         "heading": "Vapaaehtoinen valokuvaaminen ja videokuvaaminen",
         "blocks": [
-          "Valokuvaaminen, videokuvaaminen ja julkinen viestintä perustuvat erillisiin, vapaaehtoisiin lupiin. Kummankaan mediavalinnan hylkääminen ei vaikuta ilmoittautumiseen eikä osallistumiseen.",
+          "Valokuvaaminen, videokuvaaminen ja julkinen viestintä perustuvat yhteen vapaaehtoiseen lupaan, joka annetaan lapsikohtaisesti. Luvan epääminen ei vaikuta ilmoittautumiseen eikä osallistumiseen.",
           "Suostumus ei ole oikeusperuste edellä kuvatulle ilmoittautumiselle, Ohjelman toteuttamiselle tai lasten turvallisuuden varmistamiselle."
         ]
       },
@@ -3501,40 +3500,33 @@
         "heading": "Valokuvaaminen, videokuvaaminen ja julkinen käyttö",
         "blocks": [
           "Tavanomaisia verkkotapaamisia ei tallenneta. Jos johonkin tapaamiseen tai tapahtumaan on suunniteltu valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen.",
-          "Vapaaehtoisia valintoja on kaksi, ja ne ovat toisistaan erillisiä."
+          "Mediavalintoja on yksi, ja se tehdään lapsikohtaisesti. Valinta tehdään, kun lapsi ilmoitetaan Luojien akatemian toimintaan, ja sen voi muuttaa milloin tahansa lapsen sivulla My SOG -näkymässä."
         ]
       },
-      "mediaSponsor": {
-        "heading": "Sisäinen raportointi tukijalle",
+      "mediaChoice": {
+        "heading": "Mitä mediavalinta kattaa",
         "blocks": [
-          "Ensimmäinen mediavalinta sallii lapsen valokuvaamisen tai videokuvaamisen Ohjelman sisäistä raportointia varten Robloxille Ohjelman tukijana. Tähän voi kuulua sisäisiä vaikuttavuusraportteja, toteutuskatsauksia tai tukijalle pidettäviä esityksiä.",
-          "Tämä lupa ei salli julkaisemista verkkosivuilla, sosiaalisessa mediassa eikä lehdistössä."
-        ]
-      },
-      "mediaPublic": {
-        "heading": "Julkinen vaikuttavuusviestintä",
-        "blocks": [
-          "Toinen mediavalinta sallii Lynx Educaten, School of Gamingin ja Robloxin käyttää valokuvia tai videomateriaalia julkisesti Ohjelman vaikuttavuuden esittelyyn. Käyttökohteita ovat esimerkiksi:",
+          "Yksi vapaaehtoinen valintaruutu kattaa kaiken lapsen valokuvien ja videomateriaalin käytön. Kun ruutu on rastitettu, lapsesta otettuja valokuvia ja videoita voidaan:",
           [
-            "Näiden organisaatioiden verkkosivut.",
-            "Näiden organisaatioiden sosiaalisen median kanavat.",
-            "Lehdistö- ja viestintämateriaalit.",
-            "Ohjelmaa ja sen vaikuttavuutta koskeva viestintä."
+            "Liittää tapaamisraportteihin, jotka jokainen ryhmän perhe näkee ryhmän sivulla ja saa sähköpostitse.",
+            "Jakaa Lynx Educatelle ja Robloxille vaikuttavuusraportointia varten, mukaan lukien sisäiset vaikuttavuusraportit, toteutuskatsaukset ja tukijalle pidettävät esitykset.",
+            "Käyttää julkisesti Lynx Educaten, School of Gamingin ja Robloxin verkkosivuilla ja sosiaalisen median kanavissa sekä Ohjelmaa ja sen vaikuttavuutta koskevassa viestinnässä."
           ],
-          "Julkinen sisältö voi olla saatavilla maailmanlaajuisesti, ja muut käyttäjät voivat kopioida tai jakaa sitä ilman, että organisaatiot voivat vaikuttaa siihen."
+          "Julkinen sisältö voi olla saatavilla maailmanlaajuisesti, ja muut käyttäjät voivat kopioida tai jakaa sitä ilman, että organisaatiot voivat vaikuttaa siihen.",
+          "Jos ruutua ei ole rastitettu, lapsi jätetään kokonaan pois tapaamisten valokuvista ja videomateriaalista. Mitään hänet tunnistettavaksi tekevää ei liitetä tapaamisraporttiin, jaeta Lynx Educatelle tai Robloxille eikä käytetä julkisesti."
         ]
       },
       "mediaChildAgrees": {
         "heading": "Myös lapsen on suostuttava",
         "blocks": [
           "Vanhemman on hyvä keskustella mediavalinnasta lapsen kanssa ennen sen tekemistä. Selitämme valokuvaamisen tai videokuvaamisen myös lapselle hänen ikätasolleen sopivalla tavalla.",
-          "Emme tarkoituksellisesti valokuvaa emmekä videokuvaa lasta, joka vastustaa sitä, vaikka vanhempi olisi aiemmin rastittanut mediavalinnan. Henkilöstö käyttää kohtuullisia käytännön keinoja pitääkseen ilman lupaa olevat lapset pois tunnistettavasta materiaalista."
+          "Pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi rastittanut ruudun, eikä lasta valokuvata tai videokuvata tarkoituksellisesti, jos hän vastustaa sitä. Lapsi, jonka vanhempi ei ole rastittanut ruutua, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Tapausesittelyt, nimet ja osallistujien luoma sisältö",
         "blocks": [
-          "Ilmoittautumisen kaksi mediavalintaa koskevat vain valokuvia ja videomateriaalia.",
+          "Mediavalinnan valintaruutu koskee vain valokuvia ja videomateriaalia.",
           "Erillinen kirjallinen lupa pyydetään ennen kuin käytetään seuraavia:",
           [
             "Lapsen koko nimi.",
@@ -3550,7 +3542,7 @@
       "mediaChanging": {
         "heading": "Mediavalinnan muuttaminen",
         "blocks": [
-          "Vanhempi tai lapsi voi peruuttaa medialuvan ottamalla meihin yhteyttä tai käyttämällä Sogversen asetusta.",
+          "Vanhempi voi muuttaa mediavalintaa milloin tahansa lapsen sivulla My SOG -näkymässä tai ottamalla meihin yhteyttä. Myös lapsi voi pyytää meitä peruuttamaan luvan.",
           "Peruuttamisen jälkeen lopetamme uuden käytön ja poistamme aineiston hallinnassamme olevista kanavista, jos se on kohtuudella mahdollista. Peruuttaminen ei voi tehdä aiemmasta lainmukaisesta käytöstä lainvastaista, perua jo jaettuja painotuotteita eikä taata sitä, että kolmansien osapuolten jo jakamat kopiot poistetaan."
         ]
       },
@@ -3738,7 +3730,7 @@
       "data": {
         "heading": "Tiedot ja valokuvat",
         "blocks": [
-          "Kaikkeen valokuvaamiseen, kuvaamiseen ja lapsen kuvan käyttöön sovelletaan <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kuvattuja suostumusvalintoja – suostumusta ei koskaan oleteta, se on aina vapaaehtoinen ja aina muutettavissa."
+          "Lapsi näkyy valokuvassa vain, jos hänen vanhempansa on rastittanut lasta koskevan vapaaehtoisen mediasuostumuksen ilmoittautumisen yhteydessä. Vanhempi voi muuttaa vastausta milloin tahansa lapsen sivulla My SOG -näkymässä, ja pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi antanut suostumuksen. <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, mitä suostumus kattaa."
         ]
       },
       "review": {
@@ -3805,7 +3797,7 @@
       "media": {
         "heading": "Valokuvat, video ja markkinointi",
         "blocks": [
-          "Se, valokuvataanko tai kuvataanko lastasi ja käytetäänkö aineistoa markkinointiin, riippuu täysin ilmoittautumisen yhteydessä tekemistäsi valinnoista. Valinnat ovat vapaaehtoisia, ja voit muuttaa mieltäsi milloin tahansa Sogverse-profiilisi asetuksissa."
+          "Se, näkyykö lapsesi valokuvissa tai videoissa, on yksi vapaaehtoinen valinta, joka tehdään ilmoittaessasi hänet Luojien akatemian toimintaan. Voit muuttaa sitä milloin tahansa lapsesi sivulla My SOG -näkymässä. Lapsi, jolla ei ole tätä lupaa, jätetään kokonaan pois tapaamisten valokuvista."
         ]
       },
       "concern": {

@@ -26,21 +26,23 @@ since some may have been answered inside the review itself.
 - The photography wording, and whether a written release covers projects shown at the
   closing event.
 - The media consent structure. Lynx prefers one combined box "if it's compliant (the lawyer
-  will tell us)" — so the direction is chosen and the answer is not.
+  will tell us)" — so the direction is chosen and the answer is not. **Kyle decided on
+  2026-09-07 to build the one box anyway** and record the unanswered question; see the
+  open item under *Features the policies promise*.
 
 **Findings surfaced but deliberately not opened as items,** so the pause does not start
 work. Pick these up on resume:
 
-- **A published claim we now know is inaccurate.** `robloxSafeguarding.sections.data` tells
-  parents that any photography, filming or use of a child's image is "never assumed, always
-  optional, always changeable". Lynx has since described Gedus routinely taking photographs
-  and screenshots for internal records and safety, which consent does not gate — consent
-  gates the external sharing. Proposed replacement wording is in the message drafted for
-  Lynx on 2026-08-12. **Highest priority on resume**, and the one thing here that would
-  need doing immediately if the surface were published.
-- **The media sections assume two consent boxes.** If the single combined box is approved,
-  `robloxPrivacy.sections.mediaSponsor` and `.mediaPublic` merge, and two strings that
-  count the boxes move with them — see the registration checkboxes item for the exact keys.
+- **The intention sentence in `robloxSafeguarding.sections.data` is fixed** (2026-09-07,
+  on `feat/gamer-photo-consent`): it now states the mechanism — a child appears in a
+  photograph only where the parent ticked the consent, the parent can change that answer
+  on the child's page in My SOG, and a Gedu asks the child first even where the parent
+  consented. **What remains open is the claim underneath it.** Lynx described Gedus
+  routinely taking photographs for internal records and safety, which in their account
+  consent does not gate; the owner's 2026-09-07 decision is the opposite — a gamer without
+  consent stays out of session photographs *entirely* — and all three documents now say
+  so. If Lynx's "internal records" photography is real and unavoidable, the documents are
+  wrong again and the difference has to be settled with them before publication.
 - **The landing page overflows a 360px viewport in `fi` (by 1px) and `fr` (by 46px).**
   Found 2026-09-01 by a headless 360×740 sweep of the public pages; `en`, `sv` and `tlh`
   fit. The overflowing element is a snap-carousel card (`shrink-0 snap-start w-[85%]` and
@@ -265,40 +267,22 @@ where the fix would change what we commit to rather than how it reads.
 
 ## Features the policies promise that the app does not have
 
-- [ ] **Media-permission withdrawal setting.** Privacy Policy: a parent or child may
-      withdraw a media permission "using the available Sogverse setting". Terms &
-      Conditions goes further: "you can change your mind at any time in your Sogverse
-      profile settings". No such setting exists. Needs a parent-settings surface for the
-      two media consents (private sponsor reporting / public impact communications).
-- [ ] **Programme registration consent checkboxes.** The Privacy Policy describes four:
-      the *required* privacy-acknowledgement checkbox, the *optional* Lynx email
-      checkbox, and the two *optional* media checkboxes. None exist.
+- [ ] **The mandatory "I am the parent/legal guardian" checkbox.** The rest of Lynx's
+      proposed registration set (2026-08-12) landed on `feat/gamer-photo-consent`: the
+      required Terms & Privacy bundle, the optional Lynx email box and one optional
+      media box are all asked when a parent enrols a participant in a product that
+      attaches them — per gamer for the photo box, editable afterwards on the gamer's
+      page under the parent's My SOG, visible read-only to the gamer and to admins, with
+      a roster list on the Gedu session editor. The guardian checkbox is the one item of
+      that set with no surface, and it is a platform-wide question rather than a
+      programme one (every parent account already asserts the relationship implicitly by
+      creating the gamer).
 
-      **Where they now live has changed — Kyle, 2026-08-13.** The programme is no longer
-      getting its own registration form. The superset of `/register` is **dropped**:
-      programme families sign up through the same registration everyone uses, and a
-      product can be marked as requiring additional consents, which are then collected
-      at the point of joining that product. So these four checkboxes are a
-      *product-join* surface, not a sign-up surface, and the mechanism behind them is
-      generic platform work rather than anything Roblox-specific. This does not change
-      **which** consents are needed or what they say — only where a parent meets them.
-
-      *Lynx's proposed set, 2026-08-12, wording with their lawyer:* (1) mandatory "I am
-      the parent/legal guardian", (2) mandatory "I have read and agree to the Programme
-      Terms & Privacy Policy", (3) optional Lynx marketing emails, (4) optional consent to
-      external use of the child's photo/video — plus a **non-consent notice** that photos
-      or footage may be taken during sessions for internal records, safety and reporting.
-      It differs from the Privacy Policy in two ways: it adds the guardian checkbox, and
-      it collapses our **two** media choices into **one**.
-
-      **Lynx's preference, 2026-08-12: the one combined box, "if it's compliant (the
-      lawyer will tell us)."** So the direction is chosen but the answer is not — do not
-      restructure the policy's media sections until the lawyer confirms. If one box wins,
-      `robloxPrivacy.sections.mediaSponsor` and `.mediaPublic` merge, and two other
-      strings that count the boxes have to move with them:
-      `robloxPrivacy.sections.mediaCaseStudies.blocks.0` ("The **two** registration media
-      boxes cover photographs and footage only") and
-      `robloxPrivacy.sections.useMedia.blocks.0` ("Declining **either** media option").
+      Lynx's set also carried a **non-consent notice** — that photographs may be taken
+      during sessions for internal records, safety and reporting regardless of the box.
+      That notice is **not** built and the documents now say the opposite: a gamer
+      without consent stays out of session photographs entirely. See the finding at the
+      top of this file; the two accounts have to be reconciled with Lynx.
 - [ ] **Facilitator↔parent messaging without exposing parent contact details.** The
       feature behind the claim removed above. If we ever want the claim back in the
       policies, the feature has to exist first.
@@ -626,6 +610,22 @@ lawyer is not reviewing sections that are about to be restructured.
 
 ## Open decisions
 
+- [ ] **Lynx's lawyer has not confirmed that one combined media box is compliant.**
+      Lynx preferred one box "if it's compliant (the lawyer will tell us)". On
+      2026-09-07 the owner decided to build the one box without waiting, on the
+      reasoning that public use is the larger of the two scopes — a parent who agrees to
+      their child appearing on Roblox's and Lynx Educate's public channels is agreeing to
+      more than private sponsor reporting, so a single tick covering both grants nothing
+      the wider half did not already grant. The policy sections were merged to match on
+      `feat/gamer-photo-consent`: `robloxPrivacy.sections.mediaSponsor` and `.mediaPublic`
+      are gone, replaced by a single `.mediaChoice`, and every string that counted two
+      boxes was rewritten in all four translated locales.
+
+      **If the lawyer wants two boxes**, the change is bounded and known: the
+      `gamer_photo_consent_type` enum gains a second value beside `lynx_educate`, the
+      product attaches both, the enrolment panel asks two rows, and `.mediaChoice` splits
+      back into a sponsor-reporting section and a public-use one — the pre-merge wording
+      for both is in the `messages/*.json` history at the commit before this branch.
 - [ ] **Free products, the FREE price, and the waitlist.** Kyle's flag, 2026-08-30, to
       look into later: the product cards' FREE display doesn't show a waitlist, and
       waitlist behaviour is believed to be effectively municipality-club-only today. A

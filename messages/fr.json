@@ -3255,7 +3255,7 @@
         },
         "media": {
           "question": "Mon enfant sera-t-il photographié ou filmé ?",
-          "answer": "<p>Les sessions peuvent être photographiées pour nos archives internes. L’utilisation des images à des fins de communication externe relève entièrement de votre choix, exprimé à l’inscription et modifiable à tout moment.</p>"
+          "answer": "<p>Les séances peuvent être photographiées. Votre enfant n’apparaît sur une photographie que si vous cochez le choix média facultatif au moment de l’inscrire, et vous pouvez modifier cette réponse à tout moment sur la page de votre enfant dans My SOG.</p>"
         },
         "facilitators": {
           "question": "Qui anime les sessions, et comment les animateurs sont-ils vérifiés ?",
@@ -3299,8 +3299,7 @@
         "Les choix suivants sont facultatifs et n’ont aucune incidence sur la place de votre enfant :",
         [
           "Les e-mails adressés au parent par Lynx Educate au sujet de futurs événements Roblox et de ressources sur le jeu vidéo.",
-          "Les photographies ou les tournages destinés au reporting privé du Programme auprès de Roblox.",
-          "L’utilisation publique de photographies ou de séquences vidéo par Lynx Educate, School of Gaming et Roblox."
+          "Les photographies et les vidéos de l’enfant, utilisées dans les comptes rendus de séance, dans le reporting d’impact auprès de Lynx Educate et de Roblox, et publiquement par Lynx Educate, School of Gaming et Roblox."
         ],
         "Les sessions en ligne habituelles ne sont pas enregistrées. Aucun enfant ne sera photographié ni filmé si l’autorisation requise n’a pas été donnée ou si l’enfant ne souhaite pas y participer.",
         "Lynx Educate et School of Gaming ne vendent pas les informations d’inscription au Programme et ne s’en servent pas pour faire de la publicité auprès des enfants.",
@@ -3463,7 +3462,7 @@
       "useMedia": {
         "heading": "Photographies et tournages facultatifs",
         "blocks": [
-          "Les photographies, les tournages et les communications publiques reposent sur des autorisations distinctes et facultatives. Refuser l’une ou l’autre de ces options média n’a aucune incidence sur l’inscription ni sur la participation.",
+          "Les photographies, les tournages et les communications publiques reposent sur une seule autorisation facultative, donnée pour chaque enfant. La refuser n’a aucune incidence sur l’inscription ni sur la participation.",
           "Le consentement n’est pas la base légale des activités essentielles d’inscription, de mise en œuvre ou de protection de l’enfance décrites ci-dessus."
         ]
       },
@@ -3501,40 +3500,33 @@
         "heading": "Photographies, tournages et usage public",
         "blocks": [
           "Les sessions en ligne habituelles ne sont pas enregistrées. Lorsqu’une prise de vue ou un tournage est prévu pour une session ou un événement donné, les familles en sont informées à l’avance.",
-          "Il existe deux choix facultatifs distincts."
+          "Il existe un seul choix média facultatif par enfant. Il est fait au moment de l’inscription de l’enfant à une activité de l’Académie des Créateurs et peut être modifié à tout moment sur la page de l’enfant dans My SOG."
         ]
       },
-      "mediaSponsor": {
-        "heading": "Reporting privé auprès du parrain",
+      "mediaChoice": {
+        "heading": "Ce que couvre le choix média",
         "blocks": [
-          "Le premier choix média autorise la photographie ou le tournage de l’enfant pour le reporting privé du Programme auprès de Roblox, en sa qualité de parrain. Il peut s’agir de rapports d’impact internes, de points d’avancement ou de présentations au parrain.",
-          "Cette autorisation ne permet pas la publication sur des sites web, sur les réseaux sociaux ou dans la presse."
-        ]
-      },
-      "mediaPublic": {
-        "heading": "Communications publiques sur l’impact",
-        "blocks": [
-          "Le second choix média autorise Lynx Educate, School of Gaming et Roblox à utiliser publiquement des photographies ou des séquences vidéo pour montrer l’impact du Programme, notamment sur :",
+          "Une seule case facultative couvre tous les usages des photographies et des séquences vidéo d’un enfant. Lorsqu’elle est cochée, les photographies et les vidéos de l’enfant peuvent être :",
           [
-            "Leurs sites web.",
-            "Leurs réseaux sociaux.",
-            "Les supports de presse et de relations publiques.",
-            "Les communications relatives au Programme et à son impact."
+            "Intégrées aux comptes rendus de séance, que chaque famille du groupe consulte sur la page du groupe et reçoit par e-mail.",
+            "Partagées avec Lynx Educate et Roblox pour le reporting d’impact, notamment des rapports d’impact internes, des points d’avancement et des présentations au parrain.",
+            "Utilisées publiquement par Lynx Educate, School of Gaming et Roblox sur leurs sites web et leurs réseaux sociaux, ainsi que dans les communications relatives au Programme et à son impact."
           ],
-          "Les contenus publics peuvent être accessibles dans le monde entier et être copiés ou repartagés par d’autres utilisateurs, sans que les organisations puissent le maîtriser."
+          "Les contenus publics peuvent être accessibles dans le monde entier et être copiés ou repartagés par d’autres utilisateurs, sans que les organisations puissent le maîtriser.",
+          "Lorsque la case n’est pas cochée, l’enfant reste entièrement en dehors des photographies et des séquences vidéo des séances. Rien qui permette de l’identifier n’est intégré à un compte rendu de séance, partagé avec Lynx Educate ou Roblox, ni utilisé publiquement."
         ]
       },
       "mediaChildAgrees": {
         "heading": "L’enfant doit également être d’accord",
         "blocks": [
           "Le parent est invité à discuter du choix média avec l’enfant avant de le cocher. Nous expliquons également à l’enfant, dans des termes adaptés à son âge, en quoi consistent la prise de vue ou le tournage.",
-          "Nous ne photographierons ni ne filmerons délibérément un enfant qui s’y oppose, même si un parent a coché une case média auparavant. L’équipe met en œuvre des mesures pratiques raisonnables pour que les enfants sans autorisation n’apparaissent pas de manière identifiable."
+          "Un animateur demande à l’enfant avant de prendre une photographie, même lorsque le parent a coché la case, et nous ne photographierons ni ne filmerons délibérément un enfant qui s’y oppose. Un enfant dont le parent n’a pas coché la case reste en dehors des photographies des séances et de toute séquence identifiable."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Études de cas, noms et contenus créés par les participants",
         "blocks": [
-          "Les deux cases média de l’inscription ne couvrent que les photographies et les séquences vidéo.",
+          "La case média ne couvre que les photographies et les séquences vidéo.",
           "Une autorisation écrite distincte sera recueillie avant toute utilisation :",
           [
             "Du nom complet d’un enfant.",
@@ -3550,7 +3542,7 @@
       "mediaChanging": {
         "heading": "Modifier un choix média",
         "blocks": [
-          "Un parent ou un enfant peut retirer une autorisation média en nous contactant ou en utilisant le réglage prévu à cet effet dans Sogverse.",
+          "Un parent peut modifier le choix média à tout moment sur la page de son enfant dans My SOG, ou en nous contactant. Un enfant peut également nous demander de le retirer.",
           "Après le retrait, nous cessons tout nouvel usage et retirons les éléments des canaux que nous maîtrisons, dans la mesure du raisonnable. Le retrait ne peut pas rendre illicite un usage antérieur qui était licite, ni annuler la diffusion de supports imprimés déjà distribués, ni garantir la suppression des copies déjà partagées par des tiers."
         ]
       },
@@ -3738,7 +3730,7 @@
       "data": {
         "heading": "Données et photos",
         "blocks": [
-          "Toute photographie, tout enregistrement vidéo et toute utilisation de l’image d’un enfant sont régis par les choix de consentement décrits dans la <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy> — jamais présumés, toujours facultatifs, toujours modifiables."
+          "Un enfant n’apparaît sur une photographie que si son parent a coché le consentement média facultatif le concernant au moment de l’inscription. Le parent peut modifier cette réponse à tout moment sur la page de l’enfant dans My SOG, et un animateur demande à l’enfant avant de prendre une photographie, même lorsque le parent a consenti. La <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy> précise ce que ce consentement couvre."
         ]
       },
       "review": {
@@ -3805,7 +3797,7 @@
       "media": {
         "heading": "Photos, vidéos et communication",
         "blocks": [
-          "Le fait que votre enfant soit photographié ou filmé, et que ces contenus soient utilisés à des fins de communication, dépend entièrement des choix que vous faites lors de l’inscription. Ces choix sont facultatifs et vous pouvez revenir dessus à tout moment dans les paramètres de votre profil Sogverse."
+          "Le fait que votre enfant apparaisse sur des photographies ou des vidéos relève d’un seul choix facultatif, fait au moment où vous l’inscrivez à une activité de l’Académie des Créateurs. Vous pouvez le modifier à tout moment sur la page de votre enfant dans My SOG. Un enfant sans cette autorisation reste entièrement en dehors des photographies des séances."
         ]
       },
       "concern": {

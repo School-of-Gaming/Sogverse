@@ -2221,7 +2221,7 @@
         },
         "media": {
           "question": "Will my child be photographed or filmed?",
-          "answer": "<p>Sessions may be photographed for internal records. Whether footage is used externally in marketing is entirely your choice at registration, and you can change it anytime.</p>"
+          "answer": "<p>Sessions may be photographed. Your child appears in a photograph only if you tick the optional media choice when you enrol them, and you can change that answer at any time on your child’s page in My SOG.</p>"
         },
         "facilitators": {
           "question": "Who runs the sessions, and how are they vetted?",
@@ -2265,8 +2265,7 @@
         "The following choices are optional and will not affect your child’s place:",
         [
           "Emails to the parent from Lynx Educate about future Roblox events and gaming resources.",
-          "Photography or filming for private Programme reporting to Roblox.",
-          "Public use of photographs or footage by Lynx Educate, School of Gaming and Roblox."
+          "Photographs and video of the child, used in session reports, in impact reporting to Lynx Educate and Roblox, and publicly by Lynx Educate, School of Gaming and Roblox."
         ],
         "Routine online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
         "Lynx Educate and School of Gaming do not sell Programme registration information or use it to advertise to children.",
@@ -2429,7 +2428,7 @@
       "useMedia": {
         "heading": "Optional photography and filming",
         "blocks": [
-          "Photography, filming and public communications are based on separate, optional permissions. Declining either media option will not affect registration or participation.",
+          "Photography, filming and public communications are based on one optional permission, given for each child. Declining it will not affect registration or participation.",
           "Consent is not the legal basis for the core registration, delivery or safeguarding activities described above."
         ]
       },
@@ -2467,40 +2466,33 @@
         "heading": "Photography, filming and public use",
         "blocks": [
           "Routine online sessions are not recorded. Where photography or filming is planned for a selected session or event, families will be told in advance.",
-          "There are two separate optional choices."
+          "There is one optional media choice per child. It is made when the child is enrolled in a Creator Academy activity, and it can be changed at any time on the child’s page in My SOG."
         ]
       },
-      "mediaSponsor": {
-        "heading": "Private sponsor reporting",
+      "mediaChoice": {
+        "heading": "What the media choice covers",
         "blocks": [
-          "The first media choice permits the child to be photographed or filmed for private Programme reporting to Roblox as Programme sponsor. This may include internal impact reports, delivery updates or sponsor presentations.",
-          "This permission does not permit publication on websites, social media or in the press."
-        ]
-      },
-      "mediaPublic": {
-        "heading": "Public impact communications",
-        "blocks": [
-          "The second media choice permits Lynx Educate, School of Gaming and Roblox to use photographs or footage publicly to show the impact of the Programme, including on:",
+          "One optional checkbox covers every use of a child’s photograph or footage. Where it is ticked, photographs and video of the child may be:",
           [
-            "Their websites.",
-            "Their social-media channels.",
-            "Press and public-relations materials.",
-            "Programme and impact communications."
+            "Included in session reports, which every family in the child’s group sees on the group’s page and receives by email.",
+            "Shared with Lynx Educate and Roblox for impact reporting, including internal impact reports, delivery updates and sponsor presentations.",
+            "Used publicly by Lynx Educate, School of Gaming and Roblox on their websites and social-media channels, and in Programme and impact communications."
           ],
-          "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control."
+          "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control.",
+          "Where the box is not ticked, the child is kept out of session photographs and footage entirely. Nothing identifying them is placed in a session report, shared with Lynx Educate or Roblox, or used publicly."
         ]
       },
       "mediaChildAgrees": {
         "heading": "The child must also agree",
         "blocks": [
           "The parent should discuss the media choice with the child before selecting it. We will also explain the photography or filming to the child in an age-appropriate way.",
-          "We will not deliberately photograph or film a child who objects, even where a parent previously selected a media checkbox. Staff will use reasonable practical measures to keep children without permission out of identifiable footage."
+          "A Game Educator asks the child before taking a photograph, even where the parent has ticked the box, and will not deliberately photograph or film a child who objects. A child whose parent has not ticked the box is kept out of session photographs and identifiable footage."
         ]
       },
       "mediaCaseStudies": {
         "heading": "Case studies, names and participant-created content",
         "blocks": [
-          "The two registration media boxes cover photographs and footage only.",
+          "The media checkbox covers photographs and footage only.",
           "A separate written release will be obtained before using:",
           [
             "A child’s full name.",
@@ -2516,7 +2508,7 @@
       "mediaChanging": {
         "heading": "Changing a media choice",
         "blocks": [
-          "A parent or child may withdraw a media permission by contacting us or using the available Sogverse setting.",
+          "A parent can change the media choice at any time on their child’s page in My SOG, or by contacting us. A child may also ask us to withdraw it.",
           "After withdrawal, we will stop new uses and remove material from channels we control where reasonably possible. Withdrawal cannot make earlier lawful use unlawful, undo printed materials already distributed, or guarantee deletion of copies already shared by third parties."
         ]
       },
@@ -2704,7 +2696,7 @@
       "data": {
         "heading": "Data and photos",
         "blocks": [
-          "Any photography, filming, or use of a child’s image is governed by the consent choices set out in the <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> — never assumed, always optional, always changeable."
+          "A child appears in a photograph only where their parent has ticked the optional media consent for that child when enrolling them. The parent can change that answer at any time on the child’s page in My SOG, and a Game Educator asks the child before taking a photograph even where the parent has consented. The <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> sets out what the consent covers."
         ]
       },
       "review": {
@@ -2771,7 +2763,7 @@
       "media": {
         "heading": "Photos, video, and marketing",
         "blocks": [
-          "Whether your child is photographed or filmed, and whether that’s used for marketing, depends entirely on the choices you make at registration. These are optional and you can change your mind at any time in your Sogverse profile settings."
+          "Whether your child appears in photographs or video is a single optional choice, made when you enrol them in a Creator Academy activity. You can change it at any time on your child’s page in My SOG. A child without that permission is kept out of session photographs entirely."
         ]
       },
       "concern": {
