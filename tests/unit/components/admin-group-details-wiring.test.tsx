@@ -18,6 +18,13 @@ import type { GeduGroupFeed } from "@/services/gedu-sessions";
 import type { ProductAdminDetailRow } from "@/services/products";
 import type { ProductGroupsSnapshot, ProductType } from "@/types";
 
+// The note fields are opaque here: nothing below opens one, types into one,
+// or asserts on the markdown one produces. Stubbing the editor keeps
+// ProseMirror and its markdown parser out of this file's module graph.
+vi.mock("@/components/ui/rich-text-editor", () =>
+  import("../../mocks/rich-text-editor"),
+);
+
 /**
  * ============================================================================
  * The admin group page is the gedu's page, fed from admin reads.

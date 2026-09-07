@@ -12,6 +12,13 @@ import type {
   SessionFeedGamer,
 } from "@/components/gedu/session-feed/types";
 
+// The note fields are opaque here: nothing below opens one, types into one,
+// or asserts on the markdown one produces. Stubbing the editor keeps
+// ProseMirror and its markdown parser out of this file's module graph.
+vi.mock("@/components/ui/rich-text-editor", () =>
+  import("../../mocks/rich-text-editor"),
+);
+
 /**
  * ============================================================================
  * Which cards carry photos, which editors carry the block that manages them,

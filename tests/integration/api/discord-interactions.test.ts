@@ -1,8 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 
-process.env.DISCORD_PUBLIC_KEY = "test-public-key";
-process.env.DISCORD_BOT_TOKEN = "test-bot-token";
-process.env.DISCORD_APPLICATION_ID = "test-app-id";
+// Stubbed rather than assigned: the node project shares a worker between
+// files, so a bare assignment would outlive this one.
+vi.stubEnv("DISCORD_PUBLIC_KEY", "test-public-key");
+vi.stubEnv("DISCORD_BOT_TOKEN", "test-bot-token");
+vi.stubEnv("DISCORD_APPLICATION_ID", "test-app-id");
+afterAll(() => vi.unstubAllEnvs());
 
 // A webhook, so there is no session and no role: the Ed25519 signature over the
 // timestamp and the raw body IS the authorization. That makes two properties

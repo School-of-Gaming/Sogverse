@@ -1,3 +1,8 @@
+// @vitest-environment jsdom
+//
+// jsdom because the hook is exercised through `renderHook`, which mounts into
+// a real container.
+
 import { describe, it, expect, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useLanguageNames } from "@/hooks/use-language-names";

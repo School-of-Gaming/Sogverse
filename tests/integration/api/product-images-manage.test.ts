@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { PATCH, DELETE } from "@/app/api/admin/product-images/[id]/route";

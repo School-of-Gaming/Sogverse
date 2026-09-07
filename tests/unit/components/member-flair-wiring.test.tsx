@@ -27,6 +27,14 @@ import {
   postgrestJson,
 } from "../../mocks/postgrest-fetch";
 
+// The rich-text note fields are opaque here: nothing below opens one, types
+// into one, or asserts on the markdown one produces (the "Private note" a test
+// does type into is the flair dialog's plain textarea). Stubbing the editor keeps
+// ProseMirror and its markdown parser out of this file's module graph.
+vi.mock("@/components/ui/rich-text-editor", () =>
+  import("../../mocks/rich-text-editor"),
+);
+
 /**
  * ============================================================================
  * The per-member overlay reaches the roster, and the two writes leave it.

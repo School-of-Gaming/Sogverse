@@ -1,3 +1,8 @@
+// @vitest-environment jsdom
+//
+// jsdom because the anchor helpers are handed real elements and read their
+// measured boxes back.
+
 import { describe, expect, it } from "vitest";
 import {
   editToggleAnchor,

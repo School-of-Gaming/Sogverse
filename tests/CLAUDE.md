@@ -3,8 +3,8 @@
 Tests live here in four categories — `unit/`, `integration/`, `db/`, and `smoke/` — plus
 two support dirs: `mocks/` (shared mock factories — add new mocks here rather than
 duplicating across files) and `helpers/`. Two Vitest configs drive them:
-`vitest.config.mts` (jsdom, runs `unit/` + `integration/`) and `vitest.config.db.mts`
-(node, runs `db/`).
+`vitest.config.mts` (runs `unit/` + `integration/`, as two projects — see below) and
+`vitest.config.db.mts` (node, runs `db/`).
 
 ## Classification
 
@@ -15,10 +15,71 @@ duplicating across files) and `helpers/`. Two Vitest configs drive them:
 | **db** | RPCs, constraints, RLS policies against real Postgres | `.test.ts`, Vitest (`vitest.config.db.mts`) |
 | **smoke** | Assertions on the HTTP responses of a served production build — headers, CSP | `.spec.ts`, Playwright |
 
-`npm run test` runs `unit/` + `integration/` (the jsdom config). `npm run test:smoke`
-runs Playwright. To run a single file, use `npx vitest run <file>` — never
-`npm run test -- --run <file>`: the npm script already carries `--run`, so the doubled
-flag is a vitest error ("Expected a single value for option --run").
+`npm run test` runs `unit/` + `integration/`. `npm run test:smoke` runs Playwright. To
+run a single file, use `npx vitest run <file>` — never `npm run test -- --run <file>`:
+the npm script already carries `--run`, so the doubled flag is a vitest error ("Expected
+a single value for option --run").
+
+## Node is the default environment; the DOM is opted into
+
+Booting a jsdom realm is the single largest cost in this suite, and it was being paid by
+every file — including the great majority, which never touch the DOM at all. So the
+config splits `unit/` + `integration/` into two projects, and the rule for a new test is
+one line: **write `.ts` unless the test renders, and it gets node.**
+
+- **A `.tsx` test gets jsdom by extension.** Anything mounting React belongs in the
+  component project, and there is nothing to declare.
+- **A `.ts` test runs under node.** No `document`, no `window`, and Request, Response,
+  FormData and File are the platform's own — which is what a route handler is actually
+  handed, and why several route tests already wanted node before this split existed.
+- **A `.ts` test that genuinely needs the DOM says so**, with a
+  `// @vitest-environment jsdom` docblock on the very first line and a comment under it
+  naming what needs it. That is the whole mechanism — it overrides the project's
+  environment for that file alone. Reach for it when a helper under test is handed real
+  elements or reads `document`, not as a way to avoid finding out why a test fails.
+- **Do not add `// @vitest-environment node`** — it is what the file already gets. The
+  directive survives only where a comment beside it names a concrete way jsdom would
+  break that file, because a future reader moving it to jsdom needs to know.
+
+Both projects load `tests/setup.ts`, so the router mock, the browser Supabase mock and
+the inert `ResizeObserver` are there either way.
+
+**Both projects run isolated, on forks, on one pool — each of those is load-bearing.**
+Isolated because un-isolated measured no faster once there is no jsdom realm to rebuild
+per file (that is what it saves; the imports are re-run either way), and it would let a
+shared module keep whatever mocks were live when an earlier file first loaded it, so a
+later file's own mock could quietly fail to apply. Forks because suites that pin a
+timezone assign `process.env.TZ` at runtime, which a child process honours and a worker
+thread ignores — the failure shows only on a UTC runner, and a developer's box already
+in Helsinki never sees it, so a green local run under threads proves nothing. One pool
+because Vitest sizes a pool per pool *type* and runs projects concurrently: two pool
+types put two full-sized pools on the machine at once, which on a 4-vCPU runner doubled
+the summed collect and test time and, with coverage on, timed out a component test that
+passes on its own. A test that stubs env still hands it back (`vi.stubEnv` with
+`vi.unstubAllEnvs()` in teardown, never a bare `process.env` assignment) — isolation
+makes that hygiene rather than a load-bearing rule, and hygiene is cheaper to keep than
+to restore.
+
+## The rich-text editor stub
+
+`mocks/rich-text-editor.tsx` stands in for the markdown editor, which is ProseMirror plus
+a parser and a serialiser and is by a wide margin the heaviest thing a session-feed suite
+loads. The surfaces that hold a note field pull it in through a dynamic import that a
+test's module graph resolves whether or not the test ever opens one, so a suite rendering
+a feed to check attendance marks or a send button pays for all of it to assert nothing
+about it. Apply it with a factory naming the module:
+
+```ts
+vi.mock("@/components/ui/rich-text-editor", () => import("../../mocks/rich-text-editor"));
+```
+
+**It is only for a field the test treats as opaque.** The stub keeps the editor's props
+as a field — accessible name, described-by, placeholder, seeded value, disabled state,
+a change handler fed the field's text, and `role="textbox"` on the writing surface — and
+keeps nothing of the markdown: no toolbar, no schema, no serialiser. A test that types
+into a note and asserts on the markdown that comes out, or that exercises any editor
+behaviour, keeps the real editor; against the stub it would be asserting on a textarea's
+raw text. Tests of the editor itself never see it.
 
 ## The smoke check is a build gate first
 
@@ -132,7 +193,7 @@ or the build fails. Three things about maintaining it:
 
 ## Unit test setup
 
-`tests/setup.ts` (the jsdom config's setup file) globally mocks `next/navigation` and the
+`tests/setup.ts` (loaded by both projects) globally mocks `next/navigation` and the
 browser Supabase client (`@/lib/supabase/client`), exposing `mockSupabaseClient` for
 assertions. Components and hooks under test get a working router and Supabase client
 without per-test wiring.

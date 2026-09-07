@@ -1,9 +1,3 @@
-// @vitest-environment node
-//
-// Node environment because this exercises a route handler and nothing else —
-// no DOM, and Request/Response are the undici natives the runtime actually
-// hands the route.
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/admin/products/create/route";
