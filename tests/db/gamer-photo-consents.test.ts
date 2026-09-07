@@ -155,6 +155,9 @@ describe("gamer photo consents (00243)", () => {
     await createTestProduct(admin, {
       id: PRODUCT_TAUGHT,
       status: "running",
+      // A running product must carry a start date
+      // (`chk_products_running_has_start_date`); the helper's default is null.
+      startDate: "2026-01-12",
       isVisible: true,
       seatCount: null,
     });
