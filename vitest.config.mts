@@ -26,15 +26,16 @@ export default defineConfig({
           setupFiles: ["./tests/setup.ts"],
           include: roots.map((root) => `${root}/**/*.{test,spec}.tsx`),
           globals: true,
-          // Both projects MUST use the same pool. Vitest sizes a worker pool
-          // per pool type, and runs the projects concurrently, so a forks
-          // project beside a threads project puts two full-sized pools on the
-          // machine at once — on a 4-vCPU CI runner that doubled the summed
-          // collect, test and prepare time and gave back most of what the
-          // node split saved, and on a developer's box it saturates every
-          // core. Threads and forks measured the same for this project on
-          // their own; sharing the node project's pool is what matters.
-          pool: "threads",
+          // Forks, and the same pool as the node project — both halves of that
+          // are load-bearing. Forks because tests that pin a timezone assign
+          // `process.env.TZ` at runtime, which a child process honours and a
+          // worker thread ignores (the failure only shows on a UTC runner; a
+          // developer's box in Helsinki hides it). The same pool because
+          // Vitest sizes a pool per pool type and runs projects concurrently,
+          // so two pool types put two full-sized pools on the machine at once
+          // — on a 4-vCPU runner that doubled the summed collect and test
+          // time, and on a developer's box it saturates every core.
+          pool: "forks",
         },
       },
       {
@@ -50,15 +51,12 @@ export default defineConfig({
           setupFiles: ["./tests/setup.ts"],
           include: roots.map((root) => `${root}/**/*.{test,spec}.ts`),
           globals: true,
-          // Nothing here holds a DOM or a global that outlives its file, so a
-          // fresh realm per file buys nothing and costs the bulk of the run.
-          // The price is that a test must not depend on being handed fresh
-          // module state — proved by running this project shuffled.
-          isolate: false,
-          // Measurably faster than forks for this project (roughly a tenth off
-          // the wall clock, and half off transform and setup), with no DOM
-          // globals to leak between files.
-          pool: "threads",
+          // Isolated, like the dom project: un-isolated measured no faster
+          // once there is no jsdom to rebuild per file (what it saves is the
+          // realm, not the imports), and it would let a shared module keep
+          // the mocks that were live when some earlier file first loaded it.
+          // Same pool as the dom project, for the reason given there.
+          pool: "forks",
         },
       },
     ],
