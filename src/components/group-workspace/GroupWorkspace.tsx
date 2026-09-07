@@ -11,6 +11,7 @@ import { GamerFlairDialog } from "@/components/member-flair";
 import {
   SessionFeed,
   entryOwesCreations,
+  isExpectedOnEntry,
   type CreationsObligation,
   type SessionEntryDraft,
   type SessionFeedEntry,
@@ -551,6 +552,38 @@ export function GroupWorkspace({
     entryOwesCreations(finalEntry, feedRoster, creationsObligation);
 
   /**
+   * The session-level obligation itemized onto the rail's rows: who wears the
+   * per-member creations marker.
+   *
+   * Derived here rather than row by row inside the card, because the itemization
+   * has to be measured over the same list the obligation itself is — the
+   * members the FINAL session expected, on the shared expectation test. A member
+   * placed into the group after that session ended owes nothing, so a marker on
+   * their row would be the rail asserting a debt the card beside it has already
+   * said does not exist, on a session that does not even draw them.
+   *
+   * An empty set is every case where nothing is owed at all, which is what lets
+   * the row read one membership test rather than three conditions.
+   */
+  const membersOwingCreation = useMemo<ReadonlySet<string>>(() => {
+    // No `finalEntry === undefined` arm: `creationsOwedNow` already tested it,
+    // and the compiler carries that narrowing through the alias — restating it
+    // is a condition the types say can never fire.
+    if (!creationsOwedNow || creationsObligation === null) {
+      return new Set<string>();
+    }
+    return new Set(
+      feedRoster
+        .filter(
+          (gamer) =>
+            isExpectedOnEntry(finalEntry, gamer) &&
+            !creationsObligation.withCreations.has(gamer.id),
+        )
+        .map((gamer) => gamer.id),
+    );
+  }, [creationsOwedNow, creationsObligation, finalEntry, feedRoster]);
+
+  /**
    * Where leaving a voice room lands — this workspace, always.
    *
    * Named rather than left to the Join button's "wherever you clicked from"
@@ -646,8 +679,7 @@ export function GroupWorkspace({
               gameStatuses={gameStatuses}
               robloxAvatarUrls={robloxAvatarUrls}
               memberFlair={memberFlair}
-              creationsOwedNow={creationsOwedNow}
-              creationsObligation={creationsObligation}
+              membersOwingCreation={membersOwingCreation}
               onOpenFlair={setOpenFor}
             />
           )}
@@ -1017,8 +1049,7 @@ function GroupRailCard({
   gameStatuses,
   robloxAvatarUrls,
   memberFlair,
-  creationsOwedNow,
-  creationsObligation,
+  membersOwingCreation,
   onOpenFlair,
 }: {
   group: GeduAssignedProductGroup;
@@ -1046,13 +1077,14 @@ function GroupRailCard({
    */
   memberFlair: RosterMemberFlair;
   /**
-   * Whether this group's final session is currently owed creations — the gate
-   * on the per-row marker. False on every unflagged product, on an open-ended
-   * one, and on a flagged run whose last session has not finished yet.
+   * Who wears the per-row creations marker — already gated on the final
+   * session being owed at all, and already scoped to the members that session
+   * expected, so a row asks one membership question and cannot re-derive either
+   * half differently. Empty on every unflagged product, on an open-ended one,
+   * on a flagged run whose last session has not finished yet, and on one that
+   * is square.
    */
-  creationsOwedNow: boolean;
-  /** Who already has a creation, so a row can ask whether *it* is one of them. */
-  creationsObligation: CreationsObligation | null;
+  membersOwingCreation: ReadonlySet<string>;
   /**
    * Open one member's per-gamer dialog. The dialog itself belongs to the page,
    * not to this card: the final session's creations block opens the same one,
@@ -1130,14 +1162,12 @@ function GroupRailCard({
                   (memberFlair.creations[member.participant_id]?.length ?? 0) > 0
                 }
                 // The itemization of the session-level obligation: while the
-                // final session is owed creations, every member who has none
-                // wears the marker, and it routes to the same dialog every
-                // other row's button does.
-                owesCreation={
-                  creationsOwedNow &&
-                  creationsObligation !== null &&
-                  !creationsObligation.withCreations.has(member.participant_id)
-                }
+                // final session is owed creations, every member that session
+                // EXPECTED who has none wears the marker, and it routes to the
+                // same dialog every other row's button does. The set is built
+                // once by the page above — see its note for why the expectation
+                // test belongs in the derivation rather than here.
+                owesCreation={membersOwingCreation.has(member.participant_id)}
                 // Handed to every row, not only the ones already written
                 // about: an empty note is what the add flow opens, most of the
                 // roster is that case, and a marker that appeared only on rows

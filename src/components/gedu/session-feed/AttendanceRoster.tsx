@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, UserPlus, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { AttendanceMark } from "@/components/session-feed";
@@ -34,20 +34,33 @@ import type { AttendanceMarks, SessionFeedEntry, SessionFeedGamer } from "./type
  * still hears whose attendance they are on; what they lose against a radiogroup
  * is arrow-key traversal, which costs one extra Tab per child.
  *
- * **A member who joined the group after this session ended keeps their row,
- * muted and labelled, and stays markable.** Three separate decisions, each
- * doing its own work. The row is not dropped, because a mark may legitimately
- * exist for that member on that session — a trial visit, or one of the false
- * absences gedus were forced to record before this rule existed — and a
- * vanishing row takes the only visible record of it with it. It stays markable,
- * because a gedu who genuinely wants to say something about that member must
- * not be refused. And it is muted and labelled because it is the one row that
- * may sit unanswered on a card announcing itself complete, which without a
- * label is simply unexplainable to whoever is looking at it.
+ * **A member who joined the group after this session ended gets no row at all.**
+ * The register shipped once with such a row present, muted and labelled "joined
+ * later", on the argument that a stored mark for that member needed somewhere
+ * to show itself. The owner ruled that out: telling a gedu that Juha joined
+ * late, on a session that ran six months before Juha existed on the roster, is
+ * a sentence with nothing behind it. A session's register is for the people the
+ * session was for, and a name that was never on it is noise on every card older
+ * than that member's arrival — which, on a group that has grown, is most of the
+ * feed.
+ *
+ * **The omission is a rendering decision and stops here.** It must never travel
+ * into `rosterScopedMarks`, which the editor calls on the way *into* storage
+ * with the FULL roster: narrowing that one to the expected members would delete
+ * a mark a gedu legitimately made for a late joiner — a trial visit, or one of
+ * the false absences gedus were forced to record before this rule existed — on
+ * the next save of the session. Not being asked about is not the same as not
+ * being in the group, and only the second is grounds for dropping a mark. Do
+ * not "simplify" the two rosters into one.
+ *
+ * **A session that expected nobody draws no list at all**, rather than an empty
+ * one. That is reachable — a group formed mid-term has occurrences every seat
+ * postdates — and the caller pairs it with a line saying why, because a silent
+ * gap under a heading is not an answer.
  *
  * Nothing here is decided after first paint: the roster and the session arrive
- * together, so the label is in its final position from the first frame and no
- * row moves under a gedu who is marking.
+ * together, so the rows are the rows from the first frame and none of them
+ * moves under a gedu who is marking.
  */
 export function AttendanceRoster({
   entry,
@@ -74,11 +87,28 @@ export function AttendanceRoster({
 }) {
   const t = useTranslations("gedu.sessionFeed");
 
+  // The rows are the members this session expected, and this list is used for
+  // nothing else — the caller keeps handing the full roster to the draft's
+  // storage scoping, which is what preserves a late joiner's stored mark. See
+  // the note above the component.
+  const expected = roster.filter((gamer) => isExpectedOnEntry(entry, gamer));
+
+  // No rows, no list. A group formed mid-term can have a session every seat
+  // postdates, and a `<ul>` with no children is a zero-height element that
+  // still reads to assistive technology as an empty list — a heading's worth of
+  // structure standing for nothing.
+  //
+  // The sibling that draws the read-side chips returns null on the same test,
+  // so the card and the editor fall silent together. The caller does the other
+  // half: the editor drops the count and the hint above this and says in one
+  // line why there is no register, which is the sentence a gedu can act on and
+  // is not this component's to write.
+  if (expected.length === 0) return null;
+
   return (
     <ul className="space-y-1.5">
-      {roster.map((gamer) => {
+      {expected.map((gamer) => {
         const mark = attendance[gamer.id];
-        const expected = isExpectedOnEntry(entry, gamer);
         /** Pressing the pill that is already on clears the row. */
         const toggle = (value: AttendanceMark) =>
           onMark(gamer.id, mark === value ? undefined : value);
@@ -89,35 +119,12 @@ export function AttendanceRoster({
             className={cn(
               "flex items-center justify-between gap-3 rounded-md border border-border px-2.5 py-1.5",
               // An unmarked row is the one that still wants something from you,
-              // so it is the one that doesn't fade into the panel behind it —
-              // unless this session never wanted it, in which case the row is
-              // exactly the one that should recede.
-              mark === undefined && expected ? "bg-transparent" : "bg-lifted",
+              // so it is the one that doesn't fade into the panel behind it.
+              mark === undefined ? "bg-transparent" : "bg-lifted",
             )}
           >
-            <span
-              className={cn(
-                "flex min-w-0 items-center gap-1.5 text-sm",
-                expected ? undefined : "text-muted-foreground",
-              )}
-            >
+            <span className="flex min-w-0 items-center gap-1.5 text-sm">
               <span className="min-w-0 truncate">{gamer.firstName}</span>
-              {/* Beside the name rather than under it: the row is one line and
-                  the pills own the other end of it, so the label takes the
-                  slack in the middle and nothing below the row moves. Both
-                  halves shrink, proportionally to their base widths, so which
-                  one gives way first depends on which is longer — in the
-                  locales that matter the label usually is, which is the way
-                  round we want, since a truncated label still reads while a
-                  truncated name identifies nobody. It is not pinned that way
-                  on purpose: forcing it would let a long name overflow the row
-                  rather than truncate, which is the worse failure. */}
-              {!expected && (
-                <span className="inline-flex min-w-0 shrink items-center gap-1 whitespace-nowrap text-[11px] text-muted-foreground">
-                  <UserPlus className="h-3 w-3 shrink-0" aria-hidden />
-                  <span className="truncate">{t("joinedLaterLabel")}</span>
-                </span>
-              )}
             </span>
             <div
               role="group"

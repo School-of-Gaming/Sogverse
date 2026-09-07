@@ -114,11 +114,13 @@ export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
  * recent placement.
  *
  * A fixture group where everybody has always been there cannot show the thing
- * the register now does: her row is muted and labelled on every session that
- * finished before she joined, she is outside those sessions' "3 of 5 marked",
- * and those sessions stay complete rather than reopening the day she was
- * placed. The builder resolves her actual instant, because it is the only place
- * that knows when this run's sessions fell.
+ * the register now does: she is **absent from** every session that finished
+ * before she joined — no row, no chip, outside those sessions' "3 of 5 marked"
+ * — and those sessions stay complete rather than reopening the day she was
+ * placed. She is on the two most recent past sessions and on everything ahead,
+ * so a scene shows both sides of that line in one feed rather than a roster
+ * that is uniformly one size. The builder resolves her actual instant, because
+ * it is the only place that knows when this run's sessions fell.
  */
 export const SESSION_FEED_LATE_JOINER_ID = SESSION_FEED_GAMER_IDS.hilda;
 
@@ -938,8 +940,9 @@ function emailedAtForSpec(
  * **The whole-roster shorthands cover the members this session EXPECTED**, off
  * the same predicate the register reads, so a fully-marked old session carries
  * no mark for somebody who had not joined yet. A fixture that marked her would
- * be asserting she was in a room she was not in — and it would hide the state
- * the scenes exist to show: a complete card with one muted, unmarked row on it.
+ * be asserting she was in a room she was not in — and it would leave a stored
+ * mark on a session that does not draw her, which is a real state but not the
+ * one these scenes are for.
  * A `partial` still names ids outright and is left alone, which is what lets a
  * spec deliberately stage a mark for a member outside the expected set.
  */

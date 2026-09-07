@@ -316,12 +316,20 @@ export type GeduFeedSite = z.infer<typeof geduFeedSite>;
  *
  * `attention_count` is computed server-side against the same weekday
  * expansion the client uses, floored at `max(product start, epoch)`, and
- * counts a finished session until **all four** parts are in: every current
- * roster member marked, a non-empty report written, that report emailed to the
- * families, and — on the run's FINAL session of a product with
- * `requires_gamer_creations` set — every current roster member holding at least
- * one creation. The dashboard deliberately never fetches a feed to derive it —
- * a page of cards would otherwise be a page of history downloads.
+ * counts a finished session until **all four** parts are in: every roster
+ * member the session EXPECTED marked, a non-empty report written, that report
+ * emailed to the families, and — on the run's FINAL session of a product with
+ * `requires_gamer_creations` set — every roster member THAT session expected
+ * holding at least one creation. The dashboard deliberately never fetches a
+ * feed to derive it — a page of cards would otherwise be a page of history
+ * downloads.
+ *
+ * "Expected" is one rule applied to both per-member parts: a member is expected
+ * on a session only if their group-join stamp is at or before that session's
+ * end instant. Growing a group therefore reopens neither the register of a
+ * session that finished before the newcomer arrived nor the creations owed for
+ * it. The report and the mail are unscoped — a session owes those whoever was
+ * in the room.
  *
  * The fourth part fires on exactly one occurrence per run, and an open-ended
  * product (no `end_date`) has no final session, so it may be flagged and never

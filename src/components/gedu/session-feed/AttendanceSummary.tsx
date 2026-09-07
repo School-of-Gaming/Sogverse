@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Minus, UserPlus, X } from "lucide-react";
+import { Check, Minus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   ATTENDANCE_TONE,
@@ -20,13 +20,15 @@ import type { AttendanceMarks, SessionFeedEntry, SessionFeedGamer } from "./type
  * "which ones", which is what the chips say at a glance. Do not reintroduce a
  * collapse here without a ruling.
  *
- * **A member who joined after this session ended keeps a chip, muted, and says
- * why.** The read side of the card has the same problem the register does: an
- * unanswered chip on a card wearing a green check is unexplainable unless the
- * chip explains itself. Its screen-reader text says "joined later" in place of
- * "not marked", because "not marked" would name a gap that is not one — and
- * where such a member *does* carry a mark, the mark is what is read out, since
- * that is a real record of a real afternoon.
+ * **A member who joined after this session ended gets no chip.** The read side
+ * follows the register exactly — the roster component beside this one carries
+ * the owner's ruling and the reasoning — and it has to, or a card would list nine names
+ * while its own editor listed eight. The chip shipped once muted and labelled
+ * "joined later"; naming somebody as a late arrival on an afternoon months
+ * before they joined says nothing a reader can use.
+ *
+ * As there, the omission is a rendering decision and reaches nothing that
+ * writes: a stored mark for such a member is untouched and survives every save.
  */
 export function AttendanceSummary({
   entry,
@@ -40,7 +42,12 @@ export function AttendanceSummary({
 }) {
   const t = useTranslations("gedu.sessionFeed");
 
-  if (roster.length === 0) return null;
+  // One chip per member this session expected — the same list the register
+  // draws its rows from, and just as here, the full roster goes on travelling
+  // untouched to everything that stores marks.
+  const expected = roster.filter((gamer) => isExpectedOnEntry(entry, gamer));
+
+  if (expected.length === 0) return null;
 
   return (
     // Named list: the label is what a screen reader announces in place of the
@@ -50,9 +57,8 @@ export function AttendanceSummary({
       aria-label={t("attendanceLegend")}
       className="flex flex-wrap gap-1.5"
     >
-      {roster.map((gamer) => {
+      {expected.map((gamer) => {
         const mark = attendance[gamer.id];
-        const expected = isExpectedOnEntry(entry, gamer);
         // The colours are the shared mark tones — the same map the family's
         // own chip reads, so "present is a small positive and absent is
         // neutral, never destructive" is decided once for both surfaces. The
@@ -66,32 +72,15 @@ export function AttendanceSummary({
               "inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs",
               tone.border,
               tone.text,
-              // A chip this session never wanted an answer for recedes, and the
-              // mute wins over the tone: an unmarked chip that looks like every
-              // other unmarked chip is the thing that makes a complete card
-              // read as a mistake.
-              expected ? undefined : "text-muted-foreground",
             )}
           >
-            {expected || mark !== undefined ? (
-              <MarkGlyph mark={mark} />
-            ) : (
-              <UserPlus className="h-3 w-3" aria-hidden />
-            )}
-            {/* A marked late joiner reads out BOTH: the mark first, because
-                that is what the chip is chiefly saying, then the joined-later
-                note, because otherwise the only signal that this chip sits
-                outside the session's expectations is the mute — which is
-                colour, and reaches nobody using a screen reader. */}
+            <MarkGlyph mark={mark} />
             <span className="sr-only">
               {mark === "present"
                 ? t("presentLabel")
                 : mark === "absent"
                   ? t("absentLabel")
-                  : expected
-                    ? t("unmarkedLabel")
-                    : t("joinedLaterLabel")}
-              {!expected && mark !== undefined ? ` ${t("joinedLaterLabel")}` : ""}
+                  : t("unmarkedLabel")}
             </span>
             {gamer.firstName}
           </li>

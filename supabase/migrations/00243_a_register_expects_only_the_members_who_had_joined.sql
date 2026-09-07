@@ -33,6 +33,21 @@
 -- claim that somebody could have attended a session that had already finished
 -- before they arrived.
 --
+-- The same test decides the FINAL session's creations, on the owner's principle
+-- that a gedu owes a creation for every gamer who was in the group at the time
+-- of the last session. One question — was this member here when this session
+-- ended — asked once and answered once, for both of the per-member things a
+-- session can owe.
+--
+-- On the client the answer is also what a card DRAWS: a member the session did
+-- not expect gets no register row, no attendance chip and no creations chip on
+-- it. That goes further than this file's first revision, which muted and
+-- labelled such a row instead; the owner removed it, on the ground that telling
+-- a gedu somebody joined late on a session that ran months before they arrived
+-- is a sentence with nothing behind it. None of that reaches storage — a mark
+-- already recorded for such a member is kept and survives every save — and
+-- none of it reaches this file, which counts rather than renders.
+--
 -- The datum already exists and needs no new storage:
 -- `participations.group_joined_at` (00203), stamped by a BEFORE INSERT OR
 -- UPDATE trigger that catches every writer of `group_id`, including the
@@ -55,12 +70,24 @@
 -- particular session expected. A per-occurrence expected size is derived
 -- separately, beside it.
 --
--- Conditions (2), (3) and (4) are untouched. The report and the mail to the
+-- Conditions (2) and (3) are untouched. The report and the mail to the
 -- families are owed by the session regardless of who was in the room, so who
--- had joined is no part of them. Condition (4) — the final session's creations
--- — has the same joining-reopens-it shape as (1) and is deliberately left
--- alone: whether it should follow is a separate product question the owner will
--- rule on, and quietly changing it here would settle it by implementation.
+-- had joined is no part of them.
+--
+-- Condition (4) — the final session's creations — IS scoped, on the same
+-- predicate against the same per-occurrence end instant. It has the same
+-- joining-reopens-it shape as (1), and the owner has ruled that it follows:
+-- if a gamer was in the group at the time of the last session then that gedu
+-- owes that gamer a creation, and a gamer who was not in the group then owes
+-- nothing. Scoping (1) alone would have left one occurrence answering the same
+-- question two ways — a member omitted from the final session's register and
+-- itemized on the same card as owing a creation for it.
+--
+-- Only the JOIN half of "was in the group at the time" is expressible. A member
+-- who was in the group at the final session and has SINCE LEFT owes nothing:
+-- the roster is active seats and a departure leaves no trace to measure. That
+-- is unchanged behaviour and a limit of the data rather than a decision, and it
+-- is stated here so the next reader does not go looking for the missing half.
 --
 -- ONE OCCURRENCE, ONE END INSTANT
 --
@@ -171,7 +198,11 @@
 -- TypeScript for the session card (the gedu feed's entry-state module) — and a
 -- change to one is a change to both, in the same commit. Both halves of this
 -- one ship together: the client grew the same comparison, over the same
--- instant, with the same inclusive boundary.
+-- instant, with the same inclusive boundary, on the register condition and on
+-- the creations condition alike. The TypeScript side expresses it as one
+-- exported predicate everything else is built from, which is the shape to
+-- preserve: a second copy of the comparison over there is how these two twins
+-- come to drift apart in halves.
 
 -- ---------------------------------------------------------------------------
 -- 1. The backfill, before anything reads the column under the new rule
@@ -399,9 +430,10 @@ BEGIN
            -- from the feed document — and the two must agree, or the dashboard
            -- badge counts a session the card calls finished. Changing either
            -- half means changing both, in the same commit. That includes the
-           -- CREATIONS condition (4) below and, since 00243, which members a
-           -- register is FOR: the TS side asks the same question of the same
-           -- instant, with the same inclusive boundary.
+           -- CREATIONS condition (4) below — which, since 00243, is scoped by
+           -- the same join-date test (1) is — and which members a session is
+           -- FOR at all: the TS side asks the same question of the same
+           -- instant, with the same inclusive boundary, in both conditions.
            AND (
              -- (1) Some of the members this session EXPECTED have no answer
              -- yet. Both sides of the comparison are scoped the same way: marks
@@ -468,15 +500,34 @@ BEGIN
              -- occurrence per run and only once that occurrence has finished —
              -- which is free, because every member of this set has finished.
              --
-             -- Measured over the CURRENT roster, and DELIBERATELY NOT scoped by
-             -- who had joined when the session ran, unlike (1) above. It has the
-             -- same joining-reopens-it shape, and whether it should follow (1)
-             -- is a separate product question the owner will rule on; changing
-             -- it here would settle that question by implementation. Leave it
-             -- alone until there is a ruling.
+             -- Measured over the CURRENT roster, scoped exactly as (1) is: only
+             -- the members who had joined the group before the FINAL occurrence
+             -- ended. The owner's principle is that if a gamer was in the group
+             -- at the time of the last session, then the gedu owes that gamer a
+             -- creation — so a seat placed into the group after that session
+             -- had already finished owes nothing and cannot reopen a run that
+             -- was square.
+             --
+             -- This shipped one revision unscoped, and the gap is the argument
+             -- for closing it: the same member could be absent from the final
+             -- session's register — not asked about, not counted, not drawn —
+             -- while still being counted here as owing a creation FOR that
+             -- session. One occurrence, two answers to one question about who
+             -- it was for. Both conditions now ask it once.
+             --
+             -- The other half of "was in the group at the time" is not
+             -- expressible here and is not attempted: a member who WAS in the
+             -- group at the final session and has since left owes nothing,
+             -- because this EXISTS ranges over active seats and a departure
+             -- leaves nothing behind to measure. Leaving clears the debt, in
+             -- both twins, as a limit of the data.
              --
              -- An empty roster is already excluded by the roster_size guard
-             -- above, so nothing here has to restate it.
+             -- above, so nothing here has to restate it. A group whose every
+             -- seat postdates the final session is NOT excluded by that guard —
+             -- it has a roster — and falls out of this condition instead: no
+             -- seat passes the join-date predicate, so the EXISTS is false and
+             -- nothing is owed, which is the same answer for the same reason.
              --
              -- The array-length test is defensive: the CHECK on the table
              -- refuses an empty array and the write RPC deletes the row instead
@@ -490,6 +541,15 @@ BEGIN
                    FROM public.participations part3
                   WHERE part3.group_id = g.id
                     AND part3.status   = 'active'::public.participation_status
+                    -- The same three-branch shape (1) and the expected-size
+                    -- lateral use, against the same per-occurrence end instant,
+                    -- and NULL points the same way in both: expected, which is
+                    -- the behaviour that predates this file and can only ever
+                    -- ask for a creation nobody needed rather than declare a
+                    -- run finished that is not.
+                    AND (part3.group_joined_at IS NULL
+                         OR occurrence_end.ends_at IS NULL
+                         OR part3.group_joined_at <= occurrence_end.ends_at)
                     AND NOT EXISTS (
                       SELECT 1
                         FROM public.gamer_group_creations c
@@ -529,8 +589,14 @@ COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) I
   'group_participant_count and the empty-roster guard deliberately keep '
   'measuring the WHOLE current roster — a card''s headcount and the empty-group '
   'exemption are not per-occurrence questions. The report and mail conditions '
-  'are unscoped because a session owes those whoever was in the room, and the '
-  'creations condition is deliberately left unscoped pending a separate ruling. '
+  'are unscoped because a session owes those whoever was in the room. The '
+  'creations condition carries the SAME join-date scoping as the register '
+  'condition, on the owner''s principle that a gedu owes a creation for every '
+  'gamer who was in the group at the time of the last session — so a seat '
+  'placed into the group after the final session ended owes nothing, and one '
+  'occurrence cannot answer "who was this for" two different ways. Only the '
+  'JOIN half of that principle is expressible: a member who has since LEFT owes '
+  'nothing, because the roster is active seats and a departure leaves no trace. '
   'The final session is the last occurrence the schedule projects on or before '
   'end_date, derived here rather than stored; an open-ended product (end_date '
   'NULL) has none and therefore never owes creations, which is documented '
@@ -540,7 +606,7 @@ COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) I
   'code constant, not a column. This count has a twin in TypeScript — the gedu '
   'feed''s entry-state derivation, which answers the same question for one '
   'card — and the two must be changed together, on all four conditions and on '
-  'who a register is for.';
+  'who a session is for, which now scopes two of them.';
 
 -- ---------------------------------------------------------------------------
 -- 3. End state
@@ -602,6 +668,14 @@ BEGIN
      OR position('part4.group_joined_at' IN v_src) = 0
      OR position('expected.expected_size' IN v_src) = 0 THEN
     RAISE EXCEPTION 'get_my_gedu_assignment_summaries did not take the joined-before-it-ended scoping — both the mark count and the size it is compared against have to carry it';
+  END IF;
+
+  -- The creations condition takes the same scoping, and it is asserted
+  -- separately because it is the half that is easy to drop: (1) fails loudly
+  -- against a fixture the moment its predicate goes missing, whereas (4) fires
+  -- on one occurrence per run and would simply go back to over-reporting there.
+  IF position('part3.group_joined_at' IN v_src) = 0 THEN
+    RAISE EXCEPTION 'the creations condition lost its joined-before-it-ended scoping — a member placed into the group after the final session ended would owe a creation for a session they are not even on the register of';
   END IF;
 
   IF position('occurrence_end' IN v_src) = 0 THEN

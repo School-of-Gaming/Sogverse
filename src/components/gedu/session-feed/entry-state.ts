@@ -149,13 +149,32 @@ export interface CreationsObligation {
 }
 
 /**
- * Whether this entry is that final session **and** somebody on the current
- * roster still owes a creation for it.
+ * Whether this entry is that final session **and** somebody the final session
+ * **expected** still owes a creation for it.
  *
  * Measured over the roster it is handed, never over the map's keys, exactly as
- * attendance is: leaving the group clears the debt and joining after the final
- * session reopens it. An empty roster owes nothing, which falls out of `some`
- * rather than needing to be said.
+ * attendance is: leaving the group clears the debt. An empty roster owes
+ * nothing, which falls out of `some` rather than needing to be said.
+ *
+ * **Scoped by the same expectation test the register uses**, on this entry —
+ * see {@link isExpectedOnEntry}. The owner's principle: *if a gamer was in the
+ * group at the time of the last session then that gedu owes that gamer a
+ * creation.* So a member placed into the group after the final session had
+ * already ended owes nothing and cannot reopen a finished run, for the reason
+ * an old register does not reopen either — there was no session left for them
+ * to make anything at.
+ *
+ * This scoping shipped a release after the register's, and the gap between them
+ * is what argues for it: a member could be absent from the final session's
+ * register — no row, no chip, not part of "5 of 5 marked" — and be listed on
+ * the very same card as owing a creation for it. One card, two answers to one
+ * question. Both halves now ask the same one.
+ *
+ * **The other half of "was in the group at the time" is not implemented, and
+ * cannot be from here.** A member who *was* in the group at the final session
+ * and has since left owes nothing today, because a roster carries only its
+ * active seats and a departure leaves no trace to measure against. Leaving
+ * clears the debt; that is a limit of the data, not a decision.
  *
  * **It says nothing about the clock or the epoch**, deliberately — the caller
  * pairs it with `owed` in the same breath as the emailed test, which is what
@@ -169,7 +188,10 @@ export function entryOwesCreations(
 ): boolean {
   if (creations === null || creations.finalEntryId === null) return false;
   if (entry.id !== creations.finalEntryId) return false;
-  return roster.some((gamer) => !creations.withCreations.has(gamer.id));
+  return roster.some(
+    (gamer) =>
+      isExpectedOnEntry(entry, gamer) && !creations.withCreations.has(gamer.id),
+  );
 }
 
 /**
@@ -266,10 +288,13 @@ export type SessionCompleteness = "needs_attention" | "complete";
  * flagged run, and rides beside the email test for the same reason.** The
  * owner's framing is that creations are the *final session's* work: on a product
  * that contractually requires one per member, that session is not finished until
- * every current member has at least one. It sits inside the `owed` branch
- * because the SQL's own fourth condition sits inside an occurrence set that is
- * floored at the epoch — so a pre-epoch final session ignores it here exactly as
- * the badge ignores it there, and history keeps its check.
+ * every member **that session expected** has at least one — the same expectation
+ * test the register runs, on the same entry, so a card cannot omit somebody
+ * from its own register and bill them for a creation on it in the next block
+ * down. It sits inside the `owed` branch because the SQL's own fourth condition
+ * sits inside an occurrence set that is floored at the epoch — so a pre-epoch
+ * final session ignores it here exactly as the badge ignores it there, and
+ * history keeps its check.
  *
  * **This derivation exists twice — here for the card, and in SQL for the
  * dashboard badge — and now on FOUR conditions.** A change to either half is a
@@ -374,10 +399,15 @@ export function countEntriesNeedingAttention(
  *
  * **This is the primitive everything else about expectation is built from**,
  * exactly as {@link isLiveEntry} is the primitive under the two editor
- * predicates: the tally scopes with it, the register mutes and labels with it,
- * and the dashboard's SQL twin encodes the same comparison — so the module
- * holds one rule about who a register is for rather than several that have to
- * be kept in step.
+ * predicates: the tally scopes with it, the register and the read-side chips
+ * draw their rows from it, the final session's creations obligation is measured
+ * with it, and the dashboard's SQL twin encodes the same comparison — so the
+ * module holds one rule about who a session is for rather than several that
+ * have to be kept in step.
+ *
+ * **One thing deliberately does not use it: {@link rosterScopedMarks}.** That
+ * one runs on the way into storage and is the one place the FULL roster is the
+ * right list — read its own note before touching it.
  *
  * It takes the entry structurally, by the only field it reads, so a fixture
  * builder holding an occurrence's start/end pair before it has built an entry
@@ -452,9 +482,10 @@ export interface AttendanceTally {
  * {@link isExpectedOnEntry}. A member who joined after the session ended is
  * outside all three counts, `present` included, so "3 of 5 marked" is a
  * statement about the same five people from both ends and can never read
- * "6 of 5". A mark that does exist for such a member is still stored, still
- * shown and still editable; it simply is not part of what this session is
- * waiting for.
+ * "6 of 5". Such a member is not drawn on the session either — no row and no
+ * chip — but a mark that does exist for them is still **stored**, and survives
+ * every save of the session: the omission is what is rendered and what is
+ * counted, never what is kept.
  */
 export function attendanceTally(
   entry: Pick<SessionFeedEntry, "endsAt">,
@@ -490,6 +521,14 @@ export function attendanceTally(
  * session. Being outside what a session is waiting for is not the same as being
  * outside the group, and only the second is grounds for dropping a mark. Do not
  * "tidy" this into taking the expected members.
+ *
+ * **The pull to do exactly that got stronger, not weaker, when the register
+ * stopped drawing a row for such a member.** Two rosters now visibly differ —
+ * the one the register renders and the one this scopes over — and collapsing
+ * them into one reads as an obvious simplification. It is the bug: the two
+ * callers of this function are the editor's seed and the editor's draft, so the
+ * roster handed here is the roster whose marks a save keeps, and a mark with no
+ * row on screen is precisely the mark nobody would notice going missing.
  */
 export function rosterScopedMarks(
   roster: readonly SessionFeedGamer[],

@@ -338,6 +338,10 @@ export function SessionFeedItem({
   const creationsBlock = (inEditor: boolean) =>
     creations === null ? null : (
       <SessionCreationsBlock
+        // The entry is what tells the block who this session expected — the
+        // same scoping the register above it applies, so one card cannot omit a
+        // member from its register and bill them for a creation on it.
+        entry={entry}
         roster={roster}
         withCreations={creations.withCreations}
         owed={creations.owed}

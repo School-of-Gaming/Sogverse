@@ -739,6 +739,9 @@ describe("countEntriesNeedingAttention", () => {
  *   the final-occurrence lateral);
  * - it is measured over the **current roster** (SQL: an EXISTS over active
  *   participations, exactly as the attendance condition is);
+ * - and over only the members the final session **expected** (SQL: the same
+ *   group_joined_at predicate, against the same per-occurrence end instant, on
+ *   that EXISTS);
  * - an **open-ended** run never owes (SQL: the lateral answers NULL and the
  *   equality never holds);
  * - it never fires **before the epoch** (SQL: the occurrence set is floored
@@ -788,19 +791,46 @@ describe("entryOwesCreations", () => {
     ).toBe(false);
   });
 
-  it("reopens when somebody joins after the final session", () => {
-    // The other direction of the same rule, and it is chosen with eyes open:
-    // nobody has yet said what this member made, so the run is not finished.
-    // Stamped as a late joiner on purpose: the creations condition is
-    // deliberately NOT scoped by the join date, so this still reopens where
-    // the register's condition would not. That asymmetry is a standing owner
-    // decision, not an oversight to align.
+  it("does not reopen when somebody joins after the final session", () => {
+    // The owner's principle: a gedu owes a creation for every gamer who was in
+    // the group at the time of the last session. Hilda was not, so she owes
+    // nothing and a square run stays square. This asserted the opposite for one
+    // revision, while only the register was scoped — which put the same member
+    // off the final session's register and on its list of people owing a
+    // creation for that session, on one card.
     const grown = [...ROSTER, lateJoiner("d", "Hilda")];
 
     expect(entryOwesCreations(sentPast("final"), ROSTER, ALL_CREATED)).toBe(
       false,
     );
-    expect(entryOwesCreations(sentPast("final"), grown, ALL_CREATED)).toBe(true);
+    expect(entryOwesCreations(sentPast("final"), grown, ALL_CREATED)).toBe(
+      false,
+    );
+  });
+
+  it("still owes for a member who joined while the final session ran", () => {
+    // The generous boundary the register draws, drawn here too: somebody placed
+    // into the group mid-afternoon may well have been in the room, so the run
+    // is not finished until they have supplied something.
+    const midSession = [
+      ...ROSTER,
+      { id: "d", firstName: "Hilda", inGroupSince: new Date(START.getTime() + 60_000) },
+    ];
+
+    expect(
+      entryOwesCreations(sentPast("final"), midSession, ALL_CREATED),
+    ).toBe(true);
+  });
+
+  it("owes nothing when the final session expected nobody", () => {
+    // A group formed entirely after its own last session — every seat postdates
+    // it, so there is nobody the session could owe a creation for. The empty
+    // roster case one step along.
+    const allNew = ROSTER.map((g) => lateJoiner(g.id, g.firstName));
+
+    expect(entryOwesCreations(sentPast("final"), allNew, obligation([]))).toBe(
+      false,
+    );
   });
 
   it("owes nothing on an empty roster", () => {
@@ -1061,6 +1091,27 @@ describe("rosterScopedMarks", () => {
       ...ALL_MARKED,
       d: "absent",
     });
+  });
+
+  it("survives a full open-and-save round trip for a member with no row", () => {
+    // The same guarantee stated end to end, over the pair of functions the
+    // editor actually calls, because that is where the loss would happen: the
+    // register draws no row for Linnéa on this session, so nothing on screen
+    // would show her mark disappearing, and the next save is the moment it
+    // would go. Reopening and saving an old session has to be inert.
+    const grown = [...ROSTER, lateJoiner("d", "Linnéa")];
+    const entry = past("s", {
+      attendance: { ...ALL_MARKED, d: "absent" },
+      report: "Redstone week.",
+    });
+
+    const saved = applyDraftToEntry(
+      entry,
+      draftFromEditorState(editorStateFromEntry(entry, grown), grown),
+    );
+
+    expect(saved).toEqual(entry);
+    expect(saved).toMatchObject({ attendance: { d: "absent" } });
   });
 });
 
