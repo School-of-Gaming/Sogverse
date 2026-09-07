@@ -7,7 +7,8 @@ import {
   attendanceMarkState,
 } from "@/components/session-feed";
 import { cn } from "@/lib/utils";
-import type { AttendanceMarks, SessionFeedGamer } from "./types";
+import { isExpectedOnEntry } from "./entry-state";
+import type { AttendanceMarks, SessionFeedEntry, SessionFeedGamer } from "./types";
 
 /**
  * The attendance chips under a past session — one per gamer, always visible.
@@ -18,17 +19,35 @@ import type { AttendanceMarks, SessionFeedGamer } from "./types";
  * answer than the chips themselves — the reader's next question was always
  * "which ones", which is what the chips say at a glance. Do not reintroduce a
  * collapse here without a ruling.
+ *
+ * **A member who joined after this session ended gets no chip.** The read side
+ * follows the register exactly — the roster component beside this one carries
+ * the owner's ruling and the reasoning — and it has to, or a card would list nine names
+ * while its own editor listed eight. The chip shipped once muted and labelled
+ * "joined later"; naming somebody as a late arrival on an afternoon months
+ * before they joined says nothing a reader can use.
+ *
+ * As there, the omission is a rendering decision and reaches nothing that
+ * writes: a stored mark for such a member is untouched and survives every save.
  */
 export function AttendanceSummary({
+  entry,
   roster,
   attendance,
 }: {
+  /** The session these chips are for — read only for its end instant. */
+  entry: Pick<SessionFeedEntry, "endsAt">;
   roster: readonly SessionFeedGamer[];
   attendance: AttendanceMarks;
 }) {
   const t = useTranslations("gedu.sessionFeed");
 
-  if (roster.length === 0) return null;
+  // One chip per member this session expected — the same list the register
+  // draws its rows from, and just as here, the full roster goes on travelling
+  // untouched to everything that stores marks.
+  const expected = roster.filter((gamer) => isExpectedOnEntry(entry, gamer));
+
+  if (expected.length === 0) return null;
 
   return (
     // Named list: the label is what a screen reader announces in place of the
@@ -38,7 +57,7 @@ export function AttendanceSummary({
       aria-label={t("attendanceLegend")}
       className="flex flex-wrap gap-1.5"
     >
-      {roster.map((gamer) => {
+      {expected.map((gamer) => {
         const mark = attendance[gamer.id];
         // The colours are the shared mark tones — the same map the family's
         // own chip reads, so "present is a small positive and absent is

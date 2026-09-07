@@ -106,8 +106,11 @@ interface ParticipantRosterRowProps {
    * button's tone to warning and renames it.
    *
    * The gate is the caller's, because it is a fact about the *product* (does it
-   * require creations) and its *schedule* (has the final session happened),
-   * neither of which a roster row knows. Absent on every ordinary product.
+   * require creations), its *schedule* (has the final session happened) and the
+   * member's *tenure* (were they in the group when that session ended) — none
+   * of which a roster row knows, and the last of which is the same test the
+   * session's own register uses, so a row cannot claim a debt the card denies.
+   * Absent on every ordinary product.
    */
   owesCreation?: boolean;
   /**

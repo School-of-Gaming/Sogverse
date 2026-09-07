@@ -13,6 +13,7 @@ import { RichNoteField } from "./RichNoteField";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
   SessionEditorState,
+  SessionFeedEntry,
   SessionFeedGamer,
   SessionRecordDraft,
 } from "./types";
@@ -26,6 +27,11 @@ interface SessionRecordEditorProps {
    * edit would still be sitting there the next time it opened.
    */
   open: boolean;
+  /**
+   * The session being written up — read only for its end instant, which is what
+   * decides which of the roster this register is actually for.
+   */
+  entry: Pick<SessionFeedEntry, "endsAt">;
   roster: readonly SessionFeedGamer[];
   initialState: SessionEditorState;
   /**
@@ -130,6 +136,7 @@ interface SessionRecordEditorProps {
  */
 export function SessionRecordEditor({
   open,
+  entry,
   roster,
   initialState,
   committing,
@@ -159,7 +166,17 @@ export function SessionRecordEditor({
     }
   }
 
-  const { marked, total } = attendanceTally(roster, draft.attendance);
+  // "3 of 5 marked" counts the members this session expected, and so does the
+  // register under it: a member who joined the group after this session ended
+  // is outside both, drawn nowhere and counted nowhere, so the headline is a
+  // statement about exactly the rows it is a headline for.
+  //
+  // `total` therefore doubles as the count of rows the register will draw,
+  // which is what the zero case below keys on — one derivation, so the block's
+  // heading and its list can never disagree about whether there is anything
+  // here.
+  const { marked, total } = attendanceTally(entry, roster, draft.attendance);
+  const expectsNobody = total === 0;
 
   // `undefined` returns the row to unanswered, and the key is dropped rather
   // than set to `undefined` so the map never carries a slot that reads as
@@ -181,30 +198,66 @@ export function SessionRecordEditor({
     <div className="space-y-4 pb-1 pt-4">
       {/* Not a `fieldset`/`legend`: each roster row is already its own native
           radio group with its own accessible name, so the wrapper would only
-          add a second grouping announcement around them. */}
+          add a second grouping announcement around them.
+
+          And the whole register moves as ONE BLOCK when this session expected
+          nobody — heading, count, hint and rows together — rather than the list
+          alone falling silent.
+
+          The case is real and not a curiosity: a group formed mid-term has
+          seats whose join stamps postdate occurrences the schedule still
+          projects, and a gedu opening one of those met an "Attendance" heading,
+          "0 of 0 marked", an explanation of how to clear a mark, and then
+          nothing. Every one of those four is a promise of a list, so silencing
+          only the list left three lines pointing at a hole.
+
+          What replaces them is one sentence saying why there is no register,
+          because the honest answer is a fact about the group rather than an
+          empty state: nobody on the roster today was in it on the afternoon
+          this card is about. The heading stays, so the editor's sections keep
+          the order and the names a gedu has learned everywhere else, and the
+          count and the hint go, because both describe marking that cannot
+          happen here. The two written fields below are untouched — a session
+          nobody was enrolled for still gets written up.
+
+          Nothing about this is decided after first paint: the entry and the
+          roster arrive together, so the block is whichever of the two shapes it
+          is from the first frame and never swaps under a reader. */}
       <div className="space-y-2">
         <p className="text-sm font-medium leading-none">
           {t("attendanceLegend")}
-          <span className="ml-2 font-normal tabular-nums text-muted-foreground">
-            {t("attendanceMarkedCount", { marked, total })}
-          </span>
+          {!expectsNobody && (
+            <span className="ml-2 font-normal tabular-nums text-muted-foreground">
+              {t("attendanceMarkedCount", { marked, total })}
+            </span>
+          )}
         </p>
-        {/* Always rendered, never conditional on the sheet's state: a hint that
-            appeared the moment you started marking would reflow the notes below
-            it while the gedu was working. What it says is now only the two
-            things a gedu cannot discover by looking — that a second press
-            clears a mark, and that a half-finished sheet may be saved. */}
-        <p className="text-xs text-muted-foreground">
-          {t("attendanceRevertHint")}
-        </p>
-        <div className="pt-1">
-          <AttendanceRoster
-            roster={roster}
-            attendance={draft.attendance}
-            disabled={committing}
-            onMark={markGamer}
-          />
-        </div>
+        {expectsNobody ? (
+          <p className="text-xs text-muted-foreground">
+            {t("attendanceNobodyExpected")}
+          </p>
+        ) : (
+          <>
+            {/* Always rendered, never conditional on the sheet's state: a hint
+                that appeared the moment you started marking would reflow the
+                notes below it while the gedu was working. What it says is now
+                only the two things a gedu cannot discover by looking — that a
+                second press clears a mark, and that a half-finished sheet may
+                be saved. */}
+            <p className="text-xs text-muted-foreground">
+              {t("attendanceRevertHint")}
+            </p>
+            <div className="pt-1">
+              <AttendanceRoster
+                entry={entry}
+                roster={roster}
+                attendance={draft.attendance}
+                disabled={committing}
+                onMark={markGamer}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Directly under the register, because it is the other thing this

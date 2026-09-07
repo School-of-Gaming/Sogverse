@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 import { toZonedTime } from "date-fns-tz";
 import {
   CLUB_FUTURE_SPECS,
+  SESSION_FEED_LATE_JOINER_ID,
   SESSION_FEED_ROSTER,
   buildSessionFeedFixture,
   countLeadingFutureSpecs,
   sessionStartsForCadence,
   type EntrySpec,
 } from "@/components/gedu/session-feed/mock-fixtures";
+import { isExpectedOnEntry } from "@/components/gedu/session-feed/entry-state";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
 /**
@@ -379,22 +381,54 @@ describe("buildSessionFeedFixture", () => {
   });
 
   it("marks the whole roster present, minus any named absentees", () => {
-    const { entries } = buildSessionFeedFixture(now, {
+    // "The whole roster" means the members the session EXPECTED — the fixture
+    // group has one late joiner, and marking her present on a session that
+    // finished before she arrived would be asserting she was in a room she was
+    // not in.
+    const { entries, roster } = buildSessionFeedFixture(now, {
       specs: [
         { kind: "past", allPresent: true },
         { kind: "past", absent: [SESSION_FEED_ROSTER[0].id] },
       ],
     });
+    const expected = (index: number) =>
+      roster.filter((g) => isExpectedOnEntry(entries[index], g));
+
     expect(entries[0]).toMatchObject({
       attendance: Object.fromEntries(
-        SESSION_FEED_ROSTER.map((g) => [g.id, "present"]),
+        expected(0).map((g) => [g.id, "present"]),
       ),
     });
     expect(entries[1]).toMatchObject({
       attendance: Object.fromEntries(
-        SESSION_FEED_ROSTER.map((g, i) => [g.id, i === 0 ? "absent" : "present"]),
+        expected(1).map((g) => [
+          g.id,
+          g.id === SESSION_FEED_ROSTER[0].id ? "absent" : "present",
+        ]),
       ),
     });
+  });
+
+  it("leaves the late joiner unmarked on the session she predates", () => {
+    // The state the register's muted row exists to explain: a session marked
+    // off to the last expected child, with one unanswered row on it that is
+    // nobody's outstanding work.
+    const { entries, roster } = buildSessionFeedFixture(now, {
+      specs: [
+        { kind: "past", allPresent: true },
+        { kind: "past", allPresent: true },
+      ],
+    });
+    const joiner = roster.find((g) => g.id === SESSION_FEED_LATE_JOINER_ID);
+    expect(joiner).toBeDefined();
+    expect(isExpectedOnEntry(entries[1], joiner!)).toBe(false);
+    expect(entries[1]).toMatchObject({ kind: "past" });
+    if (entries[1].kind !== "past") throw new Error("expected a past entry");
+    expect(entries[1].attendance[joiner!.id]).toBeUndefined();
+    // And she is on the newer one, which she was in the group for.
+    if (entries[0].kind !== "past") throw new Error("expected a past entry");
+    expect(isExpectedOnEntry(entries[0], joiner!)).toBe(true);
+    expect(entries[0].attendance[joiner!.id]).toBe("present");
   });
 
   it("marks only the named children for a partial spec, leaving the rest unmarked", () => {

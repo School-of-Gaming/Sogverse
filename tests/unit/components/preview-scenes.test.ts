@@ -39,6 +39,7 @@ import { groupChatMessages } from "@/components/chat/chat-grouping";
 import {
   attendanceTally,
   countEntriesNeedingAttention,
+  isExpectedOnEntry,
   entryCompleteness,
   entryNeedsAttention,
 } from "@/components/gedu/session-feed";
@@ -1045,9 +1046,14 @@ describe("the club scenario stays the kitchen sink", () => {
     const pastEntries = entries.filter((e) => e.kind === "past");
     const markedCount = (entry: (typeof pastEntries)[number]) =>
       feedRoster.filter((g) => entry.attendance[g.id] !== undefined).length;
+    // Counted over the members the session expected, not over the whole
+    // roster: the fixture group gained a member partway through the run, and
+    // the sessions older than her arrival are fully marked at a smaller number.
+    const expectedCount = (entry: (typeof pastEntries)[number]) =>
+      feedRoster.filter((g) => isExpectedOnEntry(entry, g)).length;
 
     expect(
-      pastEntries.filter((e) => markedCount(e) === feedRoster.length).length,
+      pastEntries.filter((e) => markedCount(e) === expectedCount(e)).length,
     ).toBeGreaterThan(40);
     expect(
       pastEntries.some((e) => markedCount(e) === 0 && e.report === null),
@@ -1291,12 +1297,12 @@ describe("the club scenario shows every state a past session can wear", () => {
     );
 
     const missingRegister = flagged.filter(
-      (e) => e.kind === "past" && !attendanceTally(feedRoster, e.attendance).complete,
+      (e) => e.kind === "past" && !attendanceTally(e, feedRoster, e.attendance).complete,
     );
     const missingReport = flagged.filter(
       (e) =>
         e.kind === "past" &&
-        attendanceTally(feedRoster, e.attendance).complete &&
+        attendanceTally(e, feedRoster, e.attendance).complete &&
         (e.report ?? "").trim() === "",
     );
 

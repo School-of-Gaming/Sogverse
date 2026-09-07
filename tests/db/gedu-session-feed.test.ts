@@ -116,6 +116,31 @@ function dayOffset(offset: number): string {
 }
 
 const TODAY = dayOffset(0);
+
+/**
+ * When these seats entered their groups — the products' own start date, so
+ * every fixture occurrence in this file falls inside their membership.
+ *
+ * **This has to be said out loud, because the default is wrong here.**
+ * `group_joined_at` is stamped `now()` by 00203's trigger, which puts an
+ * unadorned fixture seat into its group TODAY — after every past occurrence
+ * these tests talk about. Since 00243 the register is only FOR the members who
+ * had joined before a session ended, on both halves of the derivation, so a
+ * seat stamped today is expected on none of them and the summaries' first
+ * condition can never fire: nought marks against nought expected members is a
+ * finished register, on a session nobody has touched.
+ *
+ * The block at the foot of this file would still have been green. It would
+ * simply have been measuring the report and the send and nothing else, with two
+ * of its cases — the untouched register, and the count falling to zero once
+ * everything is done — passing without the register contributing anything at
+ * all. Backdating is what keeps those two about their own subject.
+ *
+ * Written directly rather than through a placement RPC because an UPDATE that
+ * does not name `group_id` never fires the stamping trigger, which is the same
+ * property 00243's own backfill relies on.
+ */
+const JOINED_AT_BACKDATE = `${dayOffset(-30)}T00:00:00.000Z`;
 const YESTERDAY = dayOffset(-1);
 const TWO_DAYS_AGO = dayOffset(-2);
 const TOMORROW = dayOffset(1);
@@ -218,6 +243,14 @@ describe("gedu session feed", () => {
         status: "active",
       },
     ]);
+
+    // Both seats join at the start of the run rather than at the instant the
+    // fixture was built — see JOINED_AT_BACKDATE, which is load-bearing for the
+    // summaries block and harmless everywhere else.
+    await admin
+      .from("participations")
+      .update({ group_joined_at: JOINED_AT_BACKDATE })
+      .in("product_id", ALL_PRODUCTS);
   });
 
   afterAll(async () => {
@@ -1341,6 +1374,11 @@ describe("gedu session feed", () => {
      * can be observed on its own.
      */
     async function markWholeRoster(dates: readonly string[]): Promise<void> {
+      // The marks only count towards the register condition because the seat is
+      // backdated into the run (JOINED_AT_BACKDATE). Left on the trigger's
+      // `now()` stamp, GAMER is expected on none of these dates, every register
+      // here reads as finished before a single mark is made, and the two tests
+      // that turn on marking silently stop testing it.
       for (const date of dates) {
         const { error } = await geduAuth.rpc("record_attendance", {
           p_group_id: GROUP_MINE,

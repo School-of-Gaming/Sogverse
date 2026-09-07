@@ -4,7 +4,8 @@ import { Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { AttendanceMark } from "@/components/session-feed";
-import type { AttendanceMarks, SessionFeedGamer } from "./types";
+import { isExpectedOnEntry } from "./entry-state";
+import type { AttendanceMarks, SessionFeedEntry, SessionFeedGamer } from "./types";
 
 /**
  * The per-gamer attendance sheet: one row per child, each with an explicit
@@ -32,13 +33,47 @@ import type { AttendanceMarks, SessionFeedGamer } from "./types";
  * pills sit in a `role="group"` named after the child, so a screen-reader user
  * still hears whose attendance they are on; what they lose against a radiogroup
  * is arrow-key traversal, which costs one extra Tab per child.
+ *
+ * **A member who joined the group after this session ended gets no row at all.**
+ * The register shipped once with such a row present, muted and labelled "joined
+ * later", on the argument that a stored mark for that member needed somewhere
+ * to show itself. The owner ruled that out: telling a gedu that Juha joined
+ * late, on a session that ran six months before Juha existed on the roster, is
+ * a sentence with nothing behind it. A session's register is for the people the
+ * session was for, and a name that was never on it is noise on every card older
+ * than that member's arrival — which, on a group that has grown, is most of the
+ * feed.
+ *
+ * **The omission is a rendering decision and stops here.** It must never travel
+ * into `rosterScopedMarks`, which the editor calls on the way *into* storage
+ * with the FULL roster: narrowing that one to the expected members would delete
+ * a mark a gedu legitimately made for a late joiner — a trial visit, or one of
+ * the false absences gedus were forced to record before this rule existed — on
+ * the next save of the session. Not being asked about is not the same as not
+ * being in the group, and only the second is grounds for dropping a mark. Do
+ * not "simplify" the two rosters into one.
+ *
+ * **A session that expected nobody draws no list at all**, rather than an empty
+ * one. That is reachable — a group formed mid-term has occurrences every seat
+ * postdates — and the caller pairs it with a line saying why, because a silent
+ * gap under a heading is not an answer.
+ *
+ * Nothing here is decided after first paint: the roster and the session arrive
+ * together, so the rows are the rows from the first frame and none of them
+ * moves under a gedu who is marking.
  */
 export function AttendanceRoster({
+  entry,
   roster,
   attendance,
   disabled = false,
   onMark,
 }: {
+  /**
+   * The session this register is for — read only for its end instant, which is
+   * what decides who it expected.
+   */
+  entry: Pick<SessionFeedEntry, "endsAt">;
   roster: readonly SessionFeedGamer[];
   attendance: AttendanceMarks;
   /**
@@ -52,9 +87,27 @@ export function AttendanceRoster({
 }) {
   const t = useTranslations("gedu.sessionFeed");
 
+  // The rows are the members this session expected, and this list is used for
+  // nothing else — the caller keeps handing the full roster to the draft's
+  // storage scoping, which is what preserves a late joiner's stored mark. See
+  // the note above the component.
+  const expected = roster.filter((gamer) => isExpectedOnEntry(entry, gamer));
+
+  // No rows, no list. A group formed mid-term can have a session every seat
+  // postdates, and a `<ul>` with no children is a zero-height element that
+  // still reads to assistive technology as an empty list — a heading's worth of
+  // structure standing for nothing.
+  //
+  // The sibling that draws the read-side chips returns null on the same test,
+  // so the card and the editor fall silent together. The caller does the other
+  // half: the editor drops the count and the hint above this and says in one
+  // line why there is no register, which is the sentence a gedu can act on and
+  // is not this component's to write.
+  if (expected.length === 0) return null;
+
   return (
     <ul className="space-y-1.5">
-      {roster.map((gamer) => {
+      {expected.map((gamer) => {
         const mark = attendance[gamer.id];
         /** Pressing the pill that is already on clears the row. */
         const toggle = (value: AttendanceMark) =>
@@ -70,7 +123,9 @@ export function AttendanceRoster({
               mark === undefined ? "bg-transparent" : "bg-lifted",
             )}
           >
-            <span className="min-w-0 truncate text-sm">{gamer.firstName}</span>
+            <span className="flex min-w-0 items-center gap-1.5 text-sm">
+              <span className="min-w-0 truncate">{gamer.firstName}</span>
+            </span>
             <div
               role="group"
               aria-label={t("attendanceForGamer", { name: gamer.firstName })}

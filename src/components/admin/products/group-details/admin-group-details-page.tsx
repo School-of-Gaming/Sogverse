@@ -15,7 +15,10 @@ import { createGameUsernameSave } from "@/components/group-workspace/game-userna
 import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPanel";
 import { createSessionEntrySaves } from "@/components/group-workspace/session-entry-saves";
 import type { SiteNotesDraft } from "@/components/group-workspace/SitePanel";
-import type { SessionFeedGamer } from "@/components/gedu/session-feed";
+import {
+  resolveInGroupSince,
+  type SessionFeedGamer,
+} from "@/components/gedu/session-feed";
 import { showsNewcomerBadge } from "@/components/member-flair";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { ROUTES } from "@/lib/constants";
@@ -397,14 +400,19 @@ function Workspace({
     [groupId, sessions.product, group.sessions, now],
   );
 
-  // The attendance checklist takes id + first name and nothing else; everything
-  // else about a seat stays on this side of the map, the contact address most
-  // deliberately of all.
+  // The attendance checklist takes id + first name and the instant from which
+  // the seat counts as being in this group — the last of the three because a
+  // register has to know which sessions it is for. The family contact data
+  // stays on this side of the map, most deliberately of all.
   const feedRoster = useMemo<SessionFeedGamer[]>(
     () =>
       feed.roster.map((member) => ({
         id: member.participant_id,
         firstName: member.first_name,
+        // Through the shared resolver, on every surface that builds this
+        // roster, so no surface can decide who a register is for differently
+        // from the others.
+        inGroupSince: resolveInGroupSince(member.group_joined_at),
       })),
     [feed.roster],
   );

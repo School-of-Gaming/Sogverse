@@ -116,8 +116,8 @@ shared feed.
 ## What a session owes
 
 **Rule: an owed session owes three things, and the third is that its report
-reached the families.** Every current roster member marked, a report written,
-and that report emailed to the group's parents. Any one of them missing leaves
+reached the families.** Every roster member the session *expected* marked, a
+report written, and that report emailed to the group's parents. Any one of them missing leaves
 the session outstanding on the staff feed and in the dashboard count behind it;
 all three present is the finished state. The third exists because a write-up
 nobody was told about is a write-up nobody reads — the report is the main thing
@@ -127,7 +127,9 @@ gets nothing.
 **Rule: exactly one session of a run can owe a fourth thing, and it is the last
 one.** On a product flagged as requiring a creation from every member, the run's
 **final session** — the last occurrence the schedule projects on or before the
-end date — is not finished until every current roster member has at least one.
+end date — is not finished until every roster member that session EXPECTED has
+at least one (the join-date rule below scopes this exactly as it scopes the
+register).
 The framing is what makes it fit: creations are that session's work, so they
 ride the owed pattern the other three already have rather than inventing a
 second one, and the badge's unit is unchanged — the final session simply has one
@@ -205,6 +207,55 @@ follows is both the news and the truth. Only a refusal that leaves the session
 genuinely unsent — nothing delivered, or no report left to deliver — hands the
 button back with one short line under it, cleared the moment the next attempt
 starts.
+
+**Rule: a register expects only the members who had joined the group before the
+session ENDED.** A child placed into a group in week six was never on week two's
+register, so growing a group must not reopen sessions that finished before they
+arrived — the alternative, which shipped and which a gedu reported, was a card
+demanding an answer that could only be cleared by recording an absence that never
+happened. There is no unanswered question about somebody who was not in the
+group. The comparison is against the session's end rather than its start and its
+boundary is inclusive, both generous on purpose: somebody who joined while the
+club was running may well have walked in. The datum is the seat's group-join
+stamp, which every grouped seat carries.
+
+**Rule: a member outside the expected set is omitted from that session entirely
+— no register row, no attendance chip, no creations chip.** The first cut of the
+rule kept the row, muted and labelled "joined later", so a stored mark would
+have somewhere to show itself; the owner removed it, because a card telling a
+gedu that Juha joined late on a session that ran six months before Juha arrived
+is a sentence with nothing behind it, repeated on every card older than that
+member's placement. A session's register is for the people the session was for.
+
+**Corollary: the omission is rendering and expectation only — storage keeps
+everything.** The marks a save writes are scoped to the FULL current roster, so
+a mark legitimately made for a late joiner (a trial visit, or one of the false
+absences gedus were forced to record before this rule existed) is kept and
+survives every reopen-and-save of that session. Not being asked about is not the
+same as not being in the group, and only the second is grounds for dropping a
+mark. Two rosters that visibly differ invite being collapsed into one; that
+collapse is the bug this corollary exists to prevent.
+
+**Corollary: a session that expected NOBODY drops the whole register block, not
+just its rows.** A group formed mid-term has occurrences every seat postdates,
+and the editor there used to draw an "Attendance" heading, "0 of 0 marked", the
+hint explaining how to clear a mark, and then an empty list — four promises of a
+list and no list. The heading stays, because the editor's sections keep one
+order and one set of names; the count and the hint go, because both describe
+marking that cannot happen; and one line says why there is nothing to mark. The
+read side falls silent on the same test, so the card and the editor agree. The
+two written fields are untouched: a session nobody was enrolled for is still
+written up.
+
+**Rule: the final session's CREATIONS obligation is scoped by the same test.**
+The owner's principle: if a gamer was in the group at the time of the last
+session then that gedu owes that gamer a creation. So a member placed into the
+group after the final session ended owes nothing and cannot reopen a finished
+run, and one card cannot omit somebody from its register while itemizing them as
+owing a creation for the very same session. Only the JOIN half of the principle
+is implemented: a member who was there and has SINCE LEFT owes nothing, because
+a roster carries only active seats and a departure leaves no trace to measure
+against. That is a limit of the data, not a decision.
 
 **Rule: this derivation exists twice — in TypeScript for the card and in SQL for
 the dashboard badge — and a change to one is a change to both, in the same

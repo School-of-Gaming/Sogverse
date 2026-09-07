@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import type { GameAccountStatus } from "@/components/game-account";
-import type { SessionFeedGamer } from "@/components/gedu/session-feed";
+import {
+  resolveInGroupSince,
+  type SessionFeedGamer,
+} from "@/components/gedu/session-feed";
 import { showsNewcomerBadge } from "@/components/member-flair";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { platformForTopic } from "@/lib/products/topics";
@@ -271,15 +274,24 @@ function Workspace({
   // AttendanceRoster is the fix if it proves worth it); flagged so the lossy
   // map stays a choice rather than an oversight.
   //
-  // Everything else about a seat stays on this side of the map, the contact
-  // address most deliberately of all: a session card has no business holding a
-  // list of parents' mailboxes, and who the report reaches is resolved
-  // server-side by the route that mails them.
+  // The third field is the register's own datum: which sessions this seat was
+  // in the group for. It crosses because a register that cannot tell a week-six
+  // arrival from a founding member asks the gedu to answer for afternoons that
+  // member had no part in.
+  //
+  // What stays on this side of the map is the FAMILY CONTACT DATA, most
+  // deliberately of all: a session card has no business holding a list of
+  // parents' mailboxes, and who the report reaches is resolved server-side by
+  // the route that mails them.
   const feedRoster = useMemo<SessionFeedGamer[]>(
     () =>
       feed.roster.map((member) => ({
         id: member.participant_id,
         firstName: member.first_name,
+        // Through the shared resolver, on every surface that builds this
+        // roster, so no surface can decide who a register is for differently
+        // from the others.
+        inGroupSince: resolveInGroupSince(member.group_joined_at),
       })),
     [feed.roster],
   );
