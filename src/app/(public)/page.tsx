@@ -45,7 +45,7 @@ export default function HomePage() {
                 beneath it runs exactly the headline's measure with nothing
                 measured at runtime. */}
             <div className="inline-block">
-              <h1 className="font-display text-2xl font-bold tracking-tight md:text-6xl">
+              <h1 className="text-2xl font-bold tracking-tight md:text-6xl">
                 {t.rich('hero.title', {
                   br: () => <br />,
                   act: (chunks) => <span className="text-act">{chunks}</span>,

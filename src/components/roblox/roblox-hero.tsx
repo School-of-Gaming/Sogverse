@@ -6,7 +6,7 @@ import { ROUTES } from "@/lib/constants";
 import { PartnerLockup } from "@/components/roblox/partner-lockup";
 
 /**
- * The /roblox hero: three-beat pixel slogan, subtitle, CTA, partner lockup.
+ * The /roblox hero: three-beat slogan, subtitle, CTA, partner lockup.
  *
  * **One column on mobile, two from `md`.** The slogan is centred and small on
  * mobile and goes flush left beside the partner marks on desktop, because the
@@ -21,16 +21,20 @@ import { PartnerLockup } from "@/components/roblox/partner-lockup";
  * than below it. `PartnerLockup` handles its own row-to-stack switch at the
  * same breakpoint.
  *
- * `font-display` is Press Start 2P. No `tracking-tight` (negative tracking
- * smudges pixel glyphs together) and no `text-balance` (the line breaks are
- * authored in the copy).
+ * The slogan takes the app face, which is proportional: it carries no face
+ * class of its own and inherits the one `<body>` sets. No `tracking-tight` and
+ * no `text-balance` (the line breaks are authored in the copy).
  *
- * The slogan has two size scales because the font is monospace at exactly 1em
- * per character, so a beat's width is just (characters x font-size) and the
- * two-column layout gives it half the container. English's longest beat is 8
- * characters and clears 60px; French's "Construisez" is 11 and does not. One
- * scale for both would mean shrinking English to fit French, so long copy gets
- * its own smaller scale — see `longBeats` below.
+ * The slogan still has two size scales, because the longest translation still
+ * has to fit: the two-column layout gives the headline half the container, and
+ * French's "Construisez" is the beat that overflows where English's longest
+ * does not. One scale for both would mean shrinking English to fit French, so
+ * long copy gets its own smaller scale — see `longBeats` below. The mechanism
+ * counts characters, not pixels, which was exact under a monospaced face and is
+ * an approximation under a proportional one. Whether two scales are still
+ * needed at the app face's widths, and what a hero should do about its longest
+ * translation in general, is the library's hero question and is not decided
+ * here.
  */
 export function RobloxHero() {
   const t = useTranslations("roblox");
@@ -62,7 +66,7 @@ export function RobloxHero() {
                 centred under it on a phone, left-aligned beside the lockup
                 from `md`, with nothing measured at runtime. */}
             <div className="inline-block">
-              <h1 className={`font-display font-bold leading-snug ${sloganSize}`}>
+              <h1 className={`font-bold leading-snug ${sloganSize}`}>
                 {t.rich("hero.title", {
                   br: () => <br />,
                   act: (chunks) => <span className="text-act">{chunks}</span>,

@@ -54,15 +54,19 @@ What the 58 are:
 dropped a weight class). 60 in 24 after §9: the mail's row is still one `font-family`,
 now the interpolated form rather than a family literal, and the extra file is
 `src/lib/constants/typography.ts`, the module that derives the stack from the library.
-The command is the enumeration; a hit it returns is a place a face is named, not a
-defect.
+57 in 22 after §1 and §2: three hits went — the two heroes' `font-display` spends and the
+Roblox hero's comment naming the face — and the prose row drops from three files to two,
+because the rewritten comment names no family and no class. Both hero files fall out of
+the listing entirely: a face was the only thing either of them named. The command is the
+enumeration; a hit it returns is a place a face is named, not a defect.
 
 ## Standing decisions (already made, not re-opened here)
 
 - **Press Start 2P is retired.** It is loaded as an approved exception outside the
   library's four faces and spent on five sites. Every one is re-set in a library face;
   what is open per site is only which one. The load and `--font-display` go with the
-  last of them.
+  last of them — **two of the five have gone** (§1 and §2, the two public-site heroes),
+  so both stay until §3, §4 and §5 have all landed.
 - **No new face is added to the library.** `FACES` stays four.
 - **Dancing Script's placement is settled** — a signature line and nothing else — and
   its four call sites are all signatures. No question, no drawing, no change.
@@ -87,7 +91,19 @@ website's plain parent-facing copy, where Poppins carries trust better. The hero
 also already a declared departure on the colour side (the `act` beat and the `world`
 rule), and a display face on top of that is a second departure nobody decided.
 
-**Status: open.**
+**Ruled: Poppins, as proposed.** The owner ruled it with the team, in the same round as
+§2 and on the same reasoning: both public-site heroes are set in the app face.
+
+**What landed.** `src/app/(public)/page.tsx` drops `font-display` from the hero `h1` and
+nothing else: `text-2xl font-bold tracking-tight md:text-6xl` stay exactly as they are,
+so the headline inherits Poppins from the `font-sans` on `<body>`, and the type scale,
+weight and tracking remain the Heading adoption's to rule — including `font-bold`, which
+Poppins draws and Press Start 2P did not (finding 1, half-closed). The `act` beat, the
+`world` rule under the headline and the shrink-to-fit wrapper are untouched, because the
+colour departure and the measure trick are not face questions. No comment in the file
+named the face, so none needed rewriting. The drawing left §2 of the ruling page.
+
+**Status: landed.**
 
 ## 2. The Roblox hero
 
@@ -103,7 +119,25 @@ component exist *because* Press Start 2P is monospaced at one em per glyph, so F
 "Construisez" overflows. Poppins is proportional, and the second scale is a by-product
 that goes with the face (below).
 
-**Status: open.**
+**Ruled: Poppins, as proposed.** The owner ruled it with the team, in the same round as
+§1 and as one decision with it: both public-site heroes are set in the app face.
+
+**What landed.** `src/components/roblox/roblox-hero.tsx` drops `font-display` from the
+hero `h1`. Everything else stays — `font-bold leading-snug`, both size scales, and the
+mechanism that chooses between them — because that mechanism answers "a headline that
+fits its longest translation", which is a real problem with no library answer yet, and
+deleting the workaround without one trades a hack for a bug (by-product 2 below). The
+component's doc comment is rewritten where it explained the face: the paragraph
+justifying two scales by Press Start 2P's one-em-per-glyph monospacing is replaced by one
+saying the slogan carries no face class and inherits the app face, which is proportional
+(the summary line's "pixel slogan" goes with it);
+that the two scales remain because the longest translation still has to fit; that the
+mechanism counts characters rather than pixels — exact under a monospaced face, an
+approximation under a proportional one; and that whether two scales are still needed at
+Poppins's widths is the library's hero question, not this adoption's. The drawing left §2
+of the ruling page.
+
+**Status: landed.**
 
 ## 3. The gamer greeting
 
@@ -154,6 +188,11 @@ three faces.
 `home.hero.title` key, `act` beat and all — so whatever §1 rules, this takes it, and
 the two entries should not be allowed to diverge. Voted separately only because a
 person meets it in a completely different place.
+
+**§1 has ruled Poppins.** This entry stays open on its own surface all the same: the
+call-ended heading is in-platform, in a voice room, and the team is ruling by category —
+the two public-site heroes together, the three platform surfaces on their own terms — so
+the shared message key sets the expectation without settling the vote.
 
 **Status: open.**
 
@@ -385,6 +424,9 @@ fixed in `src/` — these are findings for the change that lands the rulings.
    ruling page's "today" column therefore draws the face at 400 and says so in its doc
    comment; drawing the app's requested weight would have shown the owner a face that
    does not exist. The weight itself is the Heading adoption's to rule.
+   **Half-closed by §1 and §2:** the two heroes keep `font-bold` and Poppins draws it, so
+   two of the four synthesised weights are now real. The gamer greeting and the admin
+   title are still synthesised while §3 and §4 are open.
 2. **The banner's SOG asks for 900** against a system stack, and would ask for 900
    against Poppins, which loads 400–700. Same class of defect, on a surface CSS cannot
    reach. Folded into §8.
@@ -429,6 +471,10 @@ adoption that owns it.
    proportional face the whole mechanism is unnecessary — but "a headline that fits its
    longest translation" is a real problem the library will have to answer for every
    hero, and deleting the workaround without an answer trades a hack for a bug.
+   **Kept by §2**, and what it measures is *characters*, not pixels: it strips the tags
+   out of the raw message and asks whether any beat runs longer than eight characters —
+   exact arithmetic under one em per glyph, an approximation now the face is
+   proportional.
 3. **The email face seam.** §9 proposes the mail-safe stack as a library export beside
    the colour mirror, which makes the mail a second consumer of the foundations tier
    with its own constraints (no download, no CSS variables, a stack rather than a

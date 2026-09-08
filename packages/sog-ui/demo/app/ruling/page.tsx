@@ -20,10 +20,11 @@
  *
  * **What the three sections ask.** The specimens are the ground everything else
  * is judged against: the four faces, each drawn through its semantic utility.
- * The Press Start section is the retirement — five sites, three columns each,
- * and one ruling per site. The last section is the two surfaces a stylesheet
- * never reaches, where a family is named as a literal string and so has to be
- * named by somebody.
+ * The Press Start section is the retirement — one case per site still open,
+ * three columns each, and one ruling per site; the two public-site heroes have
+ * been ruled and their drawings have left. The last section is the two surfaces
+ * a stylesheet never reaches, where a family is named as a literal string and so
+ * has to be named by somebody.
  */
 
 import type { Metadata } from "next";

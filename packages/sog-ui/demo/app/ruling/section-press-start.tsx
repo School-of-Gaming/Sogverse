@@ -1,5 +1,5 @@
 /**
- * The five sites Press Start 2P is spent on, each drawn three times.
+ * The Press Start 2P sites still open, each drawn three times.
  *
  * **What is being asked.** Press Start 2P is retired: it is an approved
  * exception outside the library's four faces, and a face the library does not
@@ -9,6 +9,11 @@
  * columns are today, Poppins and Space Mono, in that order, so the site is read
  * left to right from what ships to the two candidates.
  *
+ * **Two of the five have gone.** The two public-site heroes, the home page's and
+ * the Roblox programme page's, are ruled and landed in Poppins, so their
+ * drawings left with the ruling. What remains is the three sites inside the
+ * platform.
+ *
  * **Every class is reproduced from the component, minus the face.** The class
  * strings below are the app's own, with `font-display` lifted out and the
  * column's face put in its place — that is the whole of the difference between
@@ -17,15 +22,16 @@
  * inside a hero headline) the colour stays, because a face is judged in the ink
  * it will actually wear.
  *
- * **The weights are not reproduced, and that is deliberate.** Four of these five
- * sites ask for a weight Press Start 2P does not have — `font-bold` on three
- * heroes, `font-semibold` on the admin title, against a family loaded at 400 and
- * only 400 — so what ships today is a browser-synthesised smear rather than a
- * drawn weight. The today column therefore drops the weight class and draws the
- * face at the one weight it owns, which is the honest picture of the glyphs; the
- * Poppins and Space Mono columns keep the app's weight, because both families
- * load it. Weight is the Heading adoption's question, not this one, and the
- * finding is recorded in `RULINGS.md`.
+ * **The weights are not reproduced, and that is deliberate.** All three sites
+ * below ask for a weight Press Start 2P does not have — `font-bold` on the gamer
+ * greeting and the call-ended heading, `font-semibold` on the admin title,
+ * against a family loaded at 400 and only 400 — so what ships today is a
+ * browser-synthesised smear rather than a drawn weight. The today column
+ * therefore drops the weight class and draws the face at the one weight it owns,
+ * which is the honest picture of the glyphs; the Poppins and Space Mono columns
+ * keep the app's weight, because both families load it. Weight is the Heading
+ * adoption's question, not this one, and the finding is recorded in
+ * `RULINGS.md`.
  *
  * **The copy is the real English message**, so line breaks land where the
  * translator put them and a headline is judged at its real measure. The gamer
@@ -77,43 +83,7 @@ function HomeHeroTitle() {
 
 export function PressStartSection() {
   return (
-    <Question n={2} title="The five Press Start 2P sites">
-      <Case title="The home hero">
-        <Exemplar file="src/app/(public)/page.tsx" page="Home">
-          <ThreeFaces
-            render={(face) => (
-              <div className="inline-block text-center">
-                <h1 className={`${face} text-2xl tracking-tight md:text-6xl`}>
-                  <HomeHeroTitle />
-                </h1>
-                <span className="mt-6 block h-1.5 w-full rounded-full bg-world sm:mt-8" />
-              </div>
-            )}
-          />
-        </Exemplar>
-      </Case>
-
-      <Case title="The Roblox hero">
-        <Exemplar file="src/components/roblox/roblox-hero.tsx" page="Roblox">
-          <ThreeFaces
-            render={(face) => (
-              <div className="inline-block">
-                <h1
-                  className={`${face} leading-snug text-2xl sm:text-4xl lg:text-5xl xl:text-6xl`}
-                >
-                  Build It
-                  <br />
-                  Play It
-                  <br />
-                  <span className="text-act">Own It</span>
-                </h1>
-                <span className="mt-6 block h-1.5 w-full rounded-full bg-world sm:mt-8" />
-              </div>
-            )}
-          />
-        </Exemplar>
-      </Case>
-
+    <Question n={2} title="The Press Start 2P sites still open">
       <Case title="The gamer greeting">
         <Exemplar
           file="src/components/gamer/gamer-dashboard-page-body.tsx"
