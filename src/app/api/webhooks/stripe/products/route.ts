@@ -482,6 +482,13 @@ async function handleSubscriptionUpdated(
     .from("family_subscriptions")
     .update({
       status: statusForSubscriptionUpdate(sub),
+      // The subscription's current item price, exactly as the checkout-completed
+      // handler records it at creation. The admin club switch changes this price
+      // and fires this event, so without it the row would keep naming the club
+      // the family has left. The event payload carries the items inline, so this
+      // costs no extra retrieve. Last writer wins between this and the RPC that
+      // moves the seat, and both write the same id.
+      stripe_price_id: sub.items.data[0]?.price.id ?? null,
       current_period_end:
         periodEnd !== null
           ? new Date(periodEnd * 1000).toISOString()

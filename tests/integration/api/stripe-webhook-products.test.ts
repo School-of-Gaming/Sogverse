@@ -1231,6 +1231,23 @@ describe("POST /api/webhooks/stripe/products", () => {
       });
     });
 
+    it("writes the subscription's current item price id", async () => {
+      // The admin club switch moves the Stripe item onto the target club's
+      // price and fires this event; without this write the row would keep
+      // naming the price of the club the family has left. The event payload
+      // carries the items inline, so no extra retrieve is made.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "active" }),
+      );
+      const inserts = mockAdmin({ famSubRow: OURS });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        stripe_price_id: "price_test_1",
+      });
+    });
+
     it("returns 500 for a status nothing maps to, rather than writing a rejected value", async () => {
       // A status Stripe adds that this route has never heard of. A 500 is the
       // right answer: Stripe retries it and it shows up in the logs, where the
