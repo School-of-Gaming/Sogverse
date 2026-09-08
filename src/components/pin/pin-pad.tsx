@@ -7,6 +7,18 @@ import { cn } from "@/lib/utils";
 
 export const PIN_LENGTH = 4;
 
+/** Whether a key event's target takes text itself — an input, a textarea, a
+ *  select, or anything contenteditable — so the pad must leave it alone. */
+function isEditable(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement
+  );
+}
+
 /** 1-9, a blank slot for grid alignment, 0, then backspace. */
 const KEYS: ReadonlyArray<string | "blank" | "backspace"> = [
   "1", "2", "3", "4", "5", "6", "7", "8", "9", "blank", "0", "backspace",
@@ -91,6 +103,13 @@ export function PinPad({
       // Leave modifier combos to the browser (Ctrl/Cmd+1 tab-switch, etc.) —
       // don't swallow them into the PIN or preventDefault their shortcut.
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // A keystroke aimed at something editable is never the pad's. The pad has
+      // no text field of its own, so the listener is on `window` — which means
+      // it also hears every digit typed into any input that shares the page.
+      // Found on the style guide, where the switch-gate demo sits beside the
+      // date picker's week box and ate every number typed into it (and every
+      // Backspace on the page) until its four slots were full.
+      if (isEditable(e.target)) return;
       if (e.key >= "0" && e.key <= "9") {
         if (value.length >= PIN_LENGTH) return;
         e.preventDefault();
