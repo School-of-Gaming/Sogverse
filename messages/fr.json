@@ -2452,8 +2452,8 @@
       "no-device": "Aucun microphone ni caméra n’a été détecté. Branchez-en un, puis rechargez la page.",
       "in-use": "Votre micro ou votre caméra est utilisé par une autre application ou un autre onglet. Fermez-le, puis rechargez la page.",
       "insecure": "La caméra et le micro nécessitent une connexion sécurisée (https).",
-      "unknown": "Nous n’avons pas pu accéder à votre micro ou à votre caméra. Rechargez la page et réessayez.",
       "interrupted": "Votre micro a cessé d’envoyer du son. Vérifiez qu’il est bien branché et qu’il n’est pas coupé sur votre appareil, puis resélectionnez-le dans la liste ou rechargez la page.",
+      "unknown": "Nous n’avons pas pu accéder à votre micro ou à votre caméra. Rechargez la page et réessayez.",
       "reload": "Recharger"
     },
     "zoneIcon": {

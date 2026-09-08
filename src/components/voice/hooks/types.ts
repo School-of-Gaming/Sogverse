@@ -211,6 +211,10 @@ export interface VoiceRoomContextValue {
        *  is minted from this same value, so the two agree by construction.
        *  Defaults to on (scheduled rooms); instant rooms pass the lobby's pick. */
       micOn?: boolean;
+      /** Initial camera intent, seeded once at join — the same shape as
+       *  `micOn`, against the token's `start_video_off`. Defaults to off
+       *  (scheduled rooms); instant rooms pass the lobby's pick. */
+      cameraOn?: boolean;
     },
   ) => Promise<void>;
   leave: () => Promise<void>;

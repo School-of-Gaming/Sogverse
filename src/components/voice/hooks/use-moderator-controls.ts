@@ -81,16 +81,19 @@ export function useModeratorControls({
         const sender = Object.values(co.participants()).find((p) => p.session_id === fromId);
         if (!sender?.owner) break;
 
-        // This message IS the channel by which a remote mute reaches our own
-        // intent state. The moderator's `updateParticipant` changes the *track*
-        // at the SFU, and the UI no longer reads a local track back — on/off is
-        // synchronous intent (see the voice CLAUDE.md rule) — so without this
-        // the button would keep claiming we are unmuted. Mirrors moderatorLock.
+        // The target acts on its own owner-verified message: it stops its own
+        // track *and* writes its own intent, so the two agree by construction
+        // rather than by reading one back from the other (see the voice
+        // CLAUDE.md rule). The moderator's SFU `updateParticipant` still lands
+        // as well, and the two are idempotent together — both say "off".
+        // Exactly the shape moderatorLock uses below.
         const localSid = co.participants().local.session_id;
         if (msg.targetSessionId === localSid) {
           if (msg.track === "audio") {
+            co.setLocalAudio(false);
             setMicOn(false);
           } else {
+            co.setLocalVideo(false);
             setCameraOn(false);
           }
         }

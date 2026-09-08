@@ -6,43 +6,52 @@ import {
 } from "@/lib/voice/media-error";
 
 describe("nextLocalMediaError", () => {
+  it("maps each blocked reason onto its acquisition category", () => {
+    expect(
+      nextLocalMediaError(null, { state: "blocked", blocked: { byPermissions: true } }),
+    ).toBe("denied");
+    expect(
+      nextLocalMediaError(null, { state: "blocked", blocked: { byDeviceMissing: true } }),
+    ).toBe("no-device");
+    expect(
+      nextLocalMediaError(null, { state: "blocked", blocked: { byDeviceInUse: true } }),
+    ).toBe("in-use");
+  });
+
+  it("keeps a richer prior report when a blocked track names no reason", () => {
+    // Daily's `camera-error` event is the only source for the reasons the
+    // blocked object cannot express, so a vaguer answer must not overwrite it.
+    expect(nextLocalMediaError("insecure", { state: "blocked" })).toBe("insecure");
+    expect(nextLocalMediaError("unknown", { state: "blocked", blocked: {} })).toBe("unknown");
+  });
+
+  it("falls back to unknown for a blocked track with no reason and nothing to keep", () => {
+    expect(nextLocalMediaError(null, { state: "blocked" })).toBe("unknown");
+  });
+
   it("reports an interrupted mic regardless of what came before", () => {
-    expect(nextLocalMediaError(null, "interrupted", "off")).toBe("interrupted");
-    expect(nextLocalMediaError("denied", "interrupted", "off")).toBe("interrupted");
-    // An interrupted mic wins even while the camera is happily playing — the
-    // playable-clears rule below must not mask a stalled microphone.
-    expect(nextLocalMediaError(null, "interrupted", "playable")).toBe("interrupted");
+    expect(nextLocalMediaError(null, { state: "interrupted" })).toBe("interrupted");
+    expect(nextLocalMediaError("denied", { state: "interrupted" })).toBe("interrupted");
   });
 
-  it("clears a stale error once the local audio track plays", () => {
-    expect(nextLocalMediaError("denied", "playable", "off")).toBeNull();
-    expect(nextLocalMediaError("in-use", "playable", "blocked")).toBeNull();
+  it("clears any error once the mic plays", () => {
+    expect(nextLocalMediaError("denied", { state: "playable" })).toBeNull();
+    expect(nextLocalMediaError("interrupted", { state: "playable" })).toBeNull();
+    expect(nextLocalMediaError(null, { state: "playable" })).toBeNull();
   });
 
-  it("clears a stale error once the local video track plays (iOS shares one grant)", () => {
-    expect(nextLocalMediaError("denied", "off", "playable")).toBeNull();
-    expect(nextLocalMediaError("no-device", "blocked", "playable")).toBeNull();
+  it("clears any error once the user turns the mic off", () => {
+    // Nothing about the mic is wrong when its owner switched it off — and a mic
+    // that could not be acquired reads as `blocked`, never `off`, so this
+    // cannot hide a real failure.
+    expect(nextLocalMediaError("interrupted", { state: "off" })).toBeNull();
+    expect(nextLocalMediaError("denied", { state: "off" })).toBeNull();
+    expect(nextLocalMediaError(null, { state: "off" })).toBeNull();
   });
 
-  it("clears an interrupted report when the user turns the mic off", () => {
-    expect(nextLocalMediaError("interrupted", "off", "off")).toBeNull();
-  });
-
-  it("keeps an acquisition error when the mic is off — nothing has been fixed", () => {
-    expect(nextLocalMediaError("denied", "off", "off")).toBe("denied");
-    expect(nextLocalMediaError("in-use", "off", "off")).toBe("in-use");
-    expect(nextLocalMediaError("no-device", "off", "off")).toBe("no-device");
-  });
-
-  it("keeps whatever it had for a blocked track", () => {
-    expect(nextLocalMediaError("denied", "blocked", "blocked")).toBe("denied");
-    expect(nextLocalMediaError("interrupted", "blocked", "off")).toBe("interrupted");
-  });
-
-  it("stays null when nothing is wrong", () => {
-    expect(nextLocalMediaError(null, "off", "off")).toBeNull();
-    expect(nextLocalMediaError(null, "blocked", "blocked")).toBeNull();
-    expect(nextLocalMediaError(null, "playable", "playable")).toBeNull();
+  it("keeps what it had for a state a local track never reaches", () => {
+    expect(nextLocalMediaError("denied", { state: "loading" })).toBe("denied");
+    expect(nextLocalMediaError(null, { state: "sendable" })).toBeNull();
   });
 });
 

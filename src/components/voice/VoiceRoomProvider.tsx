@@ -148,10 +148,10 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const [isDeafened, setIsDeafened] = useState(false);
   // The local media *health* channel — what is wrong with the device right now,
   // never whether the mic/camera is on. Fed from two places: Daily's normalized
-  // `camera-error` event (acquisition failures — denied / no-device / in-use,
-  // plus the thrown camera-toggle path), and the local track state on every
-  // participant update (an `interrupted` mic, via `nextLocalMediaError`). Drives
-  // the badge on the mic-settings chevron and the notice inside the popover.
+  // `camera-error` event (plus the thrown camera-toggle path), and the local
+  // *audio* track's own state on every participant update, folded in by
+  // `nextLocalMediaError`. Drives the badge on the mic-settings chevron and the
+  // notice inside the popover.
   const [mediaError, setMediaError] = useState<MediaErrorCategory | null>(null);
   const activeSpeakerIdRef = useRef<string | null>(null);
   // Synchronous gate — events like track-started fire before joined-meeting,
@@ -231,18 +231,17 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     setParticipants(list);
 
     const local = pMap.local;
-    // The local track state is *health*, never intent: it feeds the media-error
-    // channel and nothing else. `micOn`/`cameraOn` are set synchronously by the
-    // user's own toggle, the join seed, a moderator app message and resetState —
-    // reading them back from here is the bug this shape exists to prevent. Daily
-    // counts an `interrupted` track as still on (a stalled device, not an off
-    // one) and `setLocalAudio` only posts to the call machine, so the old
-    // read-back flipped the button to "muted" on a device hiccup, made the next
-    // click a no-op, and then flipped it back on the next of the many events
-    // this runs on. Same rule as the local user's own position below.
-    setMediaError((prev) =>
-      nextLocalMediaError(prev, local.tracks.audio.state, local.tracks.video.state),
-    );
+    // The local track state is *health*, never intent: the audio track feeds the
+    // media-error channel and nothing else. `micOn`/`cameraOn` are set
+    // synchronously by the user's own toggle, the join seed, a moderator app
+    // message and resetState — reading them back from here is the bug this shape
+    // exists to prevent. Daily counts an `interrupted` track as still on (a
+    // stalled device, not an off one) and `setLocalAudio` only posts to the call
+    // machine, so the old read-back flipped the button to "muted" on a device
+    // hiccup, made the next click a no-op, and then flipped it back on the next
+    // of the many events this runs on. Same rule as the local user's own
+    // position below.
+    setMediaError((prev) => nextLocalMediaError(prev, local.tracks.audio));
     // Note: the local routing zone is NOT synced from local.userData here — it's
     // owned by useZoneMembership and updated synchronously on a move. Reading it
     // back from Daily's echo is what made routing lag a move on mobile Safari.
@@ -327,18 +326,26 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     async (
       roomUrl: string,
       token: string,
-      meta?: { sessionOpensAt?: string; audioDeviceId?: string | null; micOn?: boolean },
+      meta?: {
+        sessionOpensAt?: string;
+        audioDeviceId?: string | null;
+        micOn?: boolean;
+        cameraOn?: boolean;
+      },
     ) => {
       if (meta?.sessionOpensAt) sessionOpensAtRef.current = meta.sessionOpensAt;
       if (callObjectRef.current) {
         await callObjectRef.current.destroy();
       }
       resetState();
-      // The one place initial mic intent enters. The token's `start_audio_off`
-      // was minted from this same value — scheduled rooms always join mic-on,
-      // an instant room passes the lobby's choice — so the two agree by
-      // construction rather than by us reading Daily's answer back.
+      // The one place initial mic/camera intent enters. The token's
+      // `start_audio_off` / `start_video_off` were minted from these same two
+      // values — scheduled rooms pass neither and join mic-on, camera-off,
+      // exactly as their token does; an instant room passes the lobby's picks —
+      // so intent and token agree by construction rather than by us reading
+      // Daily's answer back.
       setMicOn(meta?.micOn ?? true);
+      setCameraOn(meta?.cameraOn ?? false);
 
       setJoining(true);
       audio.createAudioContext();

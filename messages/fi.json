@@ -2452,8 +2452,8 @@
       "no-device": "Mikrofonia tai kameraa ei löytynyt. Yhdistä laite ja lataa sivu uudelleen.",
       "in-use": "Mikrofoniasi tai kameraasi käyttää toinen sovellus tai selaimen välilehti. Sulje se ja lataa sivu uudelleen.",
       "insecure": "Kamera ja mikrofoni vaativat suojatun (https) yhteyden.",
-      "unknown": "Emme saaneet pääsyä mikrofoniin tai kameraan. Lataa sivu uudelleen ja yritä uudelleen.",
       "interrupted": "Mikrofonisi on lakannut lähettämästä ääntä. Tarkista, että se on yhdistetty eikä sitä ole mykistetty laitteessasi, ja valitse se sitten uudelleen luettelosta tai lataa sivu uudelleen.",
+      "unknown": "Emme saaneet pääsyä mikrofoniin tai kameraan. Lataa sivu uudelleen ja yritä uudelleen.",
       "reload": "Lataa uudelleen"
     },
     "zoneIcon": {

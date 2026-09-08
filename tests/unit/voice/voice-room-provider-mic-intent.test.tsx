@@ -46,10 +46,14 @@ function makeParticipant(overrides: {
 
 function createFakeCall() {
   const handlers = new Map<string, Set<Handler>>();
+  // A real mic-on join settles the local audio track at `playable`, which is
+  // the state the old read-back derived "mic is on" from — so it is what makes
+  // the seed cases below non-vacuous.
   const local = makeParticipant({
     session_id: "local-sid",
     user_name: "user-1|gamer|Local",
     local: true,
+    audioState: "playable",
   });
   const mod = makeParticipant({
     session_id: "mod-sid",
@@ -171,13 +175,40 @@ describe("VoiceRoomProvider — local mic state is intent", () => {
     expect(ctx().micOn).toBe(true);
   });
 
-  it("seeds the intent from the join meta, so an instant room's lobby pick survives", async () => {
+  it("seeds the mic intent from the join meta, and a playing track does not overturn it", async () => {
     mount();
     await act(async () => {
       await ctx().join("https://example.daily.co/room", "token", { micOn: false });
     });
     await waitFor(() => expect(ctx().joined).toBe(true));
     expect(ctx().micOn).toBe(false);
+
+    // The lobby pick says off; Daily's local audio track says playable. The old
+    // read-back took the track's word for it and flipped the button to on.
+    await act(async () => {
+      fakeCall.__local.tracks.audio.state = "playable";
+      fakeCall.__emit("participant-updated", { participant: fakeCall.__local });
+    });
+
+    expect(ctx().micOn).toBe(false);
+  });
+
+  it("seeds the camera intent from the join meta, and an off track does not overturn it", async () => {
+    mount();
+    await act(async () => {
+      await ctx().join("https://example.daily.co/room", "token", { cameraOn: true });
+    });
+    await waitFor(() => expect(ctx().joined).toBe(true));
+    expect(ctx().cameraOn).toBe(true);
+
+    // A camera track reports `off` for a whole frame or two after a join that
+    // asked for it — the window in which the old read-back flipped the button.
+    await act(async () => {
+      fakeCall.__local.tracks.video.state = "off";
+      fakeCall.__emit("participant-updated", { participant: fakeCall.__local });
+    });
+
+    expect(ctx().cameraOn).toBe(true);
   });
 
   it("keeps the mic on when the local track goes interrupted, and reports it as a health error", async () => {
@@ -194,6 +225,15 @@ describe("VoiceRoomProvider — local mic state is intent", () => {
 
     expect(ctx().micOn).toBe(true);
     expect(ctx().mediaError).toBe("interrupted");
+
+    // …and the report clears itself once the device delivers again.
+    await act(async () => {
+      fakeCall.__local.tracks.audio.state = "playable";
+      fakeCall.__emit("participant-updated", { participant: fakeCall.__local });
+    });
+
+    expect(ctx().micOn).toBe(true);
+    expect(ctx().mediaError).toBeNull();
   });
 
   it("mutes — not unmutes — on the click after an interruption", async () => {
@@ -216,7 +256,7 @@ describe("VoiceRoomProvider — local mic state is intent", () => {
     expect(ctx().micOn).toBe(false);
   });
 
-  it("follows a moderator's mute app message rather than the track echo", async () => {
+  it("stops its own track and its own intent on a moderator's mute app message", async () => {
     mount();
     await act(async () => {
       await ctx().join("https://example.daily.co/room", "token");
@@ -232,6 +272,7 @@ describe("VoiceRoomProvider — local mic state is intent", () => {
     });
 
     expect(ctx().micOn).toBe(false);
+    expect(fakeCall.setLocalAudio).toHaveBeenCalledWith(false);
   });
 
   it("ignores a mute app message from a non-owner", async () => {

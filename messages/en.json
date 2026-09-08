@@ -3138,8 +3138,8 @@
       "no-device": "No microphone or camera was found. Connect one, then reload.",
       "in-use": "Your microphone or camera is being used by another app or browser tab. Close it, then reload.",
       "insecure": "Camera and microphone need a secure (https) connection.",
-      "unknown": "We couldn’t access your microphone or camera. Reload and try again.",
       "interrupted": "Your microphone has stopped sending sound. Check that it’s connected and not muted on your device, then pick it again in the list or reload.",
+      "unknown": "We couldn’t access your microphone or camera. Reload and try again.",
       "reload": "Reload"
     },
     "zoneIcon": {

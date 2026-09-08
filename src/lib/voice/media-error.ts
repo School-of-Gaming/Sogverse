@@ -98,34 +98,56 @@ export function categoryFromDailyCameraError(
 }
 
 /**
- * The next media-error value given the local participant's current track
- * states. This is the *health* half of the local media model: on/off is the
- * user's intent and is owned synchronously elsewhere, while the track states
- * say only whether the device is delivering right now (see
+ * The next media-error value given the local participant's own audio track
+ * state. This is the *health* half of the local media model: on/off is the
+ * user's intent and is owned synchronously elsewhere, while the track state
+ * says only whether the device is delivering right now (see
  * `src/components/voice/CLAUDE.md`). Nothing here may decide whether a mic or
  * camera is "on".
  *
- * Pure, so it can be called on every Daily event without reasoning about
- * ordering. The precedence, in order:
+ * It is specifically the **microphone's** health, because the surface it feeds
+ * is the mic troubleshooting popover — a device list and a level meter — and
+ * everything it can offer as a recovery is about the mic. The camera has no
+ * health surface of its own: a camera toggle that throws still writes its
+ * classified error into this same value, and that report lasts only until the
+ * next mic-health tick overwrites it. That is the pre-existing behaviour and it
+ * is the accepted limitation of having one channel for two devices, not a
+ * property worth relying on.
  *
- * 1. Audio `interrupted` — the mic exists and was not turned off, but the
- *    browser has reported it as not delivering for long enough that Daily gave
- *    up on it. That is the one condition worth telling the user about here.
- * 2. Either track `playable` — a live local track proves the device subsystem
- *    works, so any prior acquisition error is stale. (iOS shares one mic/camera
- *    grant, so either track playing clears the shared-permission error.)
- * 3. Audio `off` while we were reporting `interrupted` — the user turned their
- *    mic off, so there is nothing wrong to report any more.
- * 4. Otherwise keep what we had: acquisition errors (denied / no-device /
- *    in-use, set from Daily's `camera-error`) persist until a track plays.
+ * Pure, so it can be called on every Daily event without reasoning about
+ * ordering. The rules, in order:
+ *
+ * 1. `blocked` — acquisition failed, and the reason object says why: no
+ *    permission, no device, or the device is held elsewhere. A blocked track
+ *    with none of the three set keeps whatever we had, falling back to
+ *    `"unknown"`, because Daily's `camera-error` event is the only source for
+ *    the reasons this object cannot express (an insecure context, unsatisfiable
+ *    constraints) and must not be overwritten by a vaguer answer.
+ * 2. `interrupted` — the mic exists and was not turned off, but the browser has
+ *    reported it as not delivering for long enough that Daily gave up on it.
+ * 3. `playable` or `off` — nothing is wrong with the mic: it is either working,
+ *    or the user deliberately turned it off. Daily reports a mic it could not
+ *    acquire as `blocked` and never as `off`, so `off` cannot hide a real
+ *    failure.
+ * 4. Anything else — keep what we had. `loading` and `sendable` do not arise
+ *    for a local track, but the type admits them.
  */
 export function nextLocalMediaError(
   prev: MediaErrorCategory | null,
-  audioState: DailyTrackState["state"],
-  videoState: DailyTrackState["state"],
+  audio: Pick<DailyTrackState, "state" | "blocked">,
 ): MediaErrorCategory | null {
-  if (audioState === "interrupted") return "interrupted";
-  if (audioState === "playable" || videoState === "playable") return null;
-  if (audioState === "off" && prev === "interrupted") return null;
-  return prev;
+  switch (audio.state) {
+    case "blocked":
+      if (audio.blocked?.byPermissions) return "denied";
+      if (audio.blocked?.byDeviceMissing) return "no-device";
+      if (audio.blocked?.byDeviceInUse) return "in-use";
+      return prev ?? "unknown";
+    case "interrupted":
+      return "interrupted";
+    case "playable":
+    case "off":
+      return null;
+    default:
+      return prev;
+  }
 }
