@@ -3528,7 +3528,7 @@
       "media": {
         "heading": "Photographies, tournages et usage public",
         "blocks": [
-          "Les sessions en ligne ne sont pas enregistrées. Lorsqu’une prise de vue ou un tournage est prévu pour un événement, les familles en sont informées à l’avance.",
+          "Les sessions en ligne ne sont pas enregistrées. Lorsqu’une prise de vue ou un tournage est prévu pour une session ou un événement donné, les familles en sont informées à l’avance.",
           "Il existe un seul choix média facultatif par enfant. Il est fait au moment de l’inscription de l’enfant à une activité de l’Académie des Créateurs et peut être modifié à tout moment sur la page de l’enfant dans My SOG."
         ]
       },
@@ -3542,7 +3542,7 @@
             "Utilisées publiquement par Lynx Educate, School of Gaming et Roblox sur leurs sites web et leurs réseaux sociaux."
           ],
           "Les contenus publics peuvent être accessibles dans le monde entier et être copiés ou repartagés par d’autres utilisateurs, sans que les organisations puissent le maîtriser.",
-          "Lorsque la case n’est pas cochée, l’enfant reste entièrement en dehors des photographies et des séquences vidéo des séances. Rien qui permette de l’identifier n’est intégré à un compte rendu de séance, partagé avec Lynx Educate ou Roblox, ni utilisé publiquement. Des vues d’ensemble d’un événement ou d’un atelier peuvent être prises à distance, lorsqu’aucun enfant n’est identifiable."
+          "Lorsque la case n’est pas cochée, l’enfant reste en dehors des photographies des séances et de toute séquence identifiable. Rien qui permette de l’identifier n’est intégré à un compte rendu de séance, partagé avec Lynx Educate ou Roblox, ni utilisé publiquement. Des vues d’ensemble d’un événement ou d’un atelier peuvent être prises à distance, lorsqu’aucun enfant n’est identifiable."
         ]
       },
       "mediaChildAgrees": {
@@ -3743,7 +3743,7 @@
       "inPerson": {
         "heading": "Pendant les événements en présentiel",
         "blocks": [
-          "Nos animateurs encadrent la session ; ils ne sont pas les organisateurs de l’événement. Lynx Educate veille à ce que les lieux avec lesquels l’organisation travaille soient adaptés à la session et respectent les exigences du Programme en matière de protection de l’enfance. Les dispositions concrètes peuvent varier d’un lieu à l’autre."
+          "Nos animateurs encadrent la session ; ils ne sont pas les organisateurs de l’événement. Lynx Educate est chargée de veiller à ce que les lieux avec lesquels elle travaille soient adaptés à la session et respectent les exigences du Programme en matière de protection de l’enfance. Les dispositions concrètes peuvent varier d’un lieu à l’autre."
         ]
       },
       "behaviour": {
@@ -3767,7 +3767,7 @@
       "data": {
         "heading": "Données et photos",
         "blocks": [
-          "Un enfant n’apparaît sur une photographie que si son parent a coché le consentement média facultatif le concernant au moment de l’inscription. Le parent peut modifier cette réponse à tout moment sur la page de l’enfant dans My SOG, et un animateur demande à l’enfant avant de prendre une photographie, même lorsque le parent a consenti. Des vues d’ensemble d’un événement ou d’un atelier peuvent être prises à distance, lorsqu’aucun enfant n’est identifiable. La <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy> précise ce que ce consentement couvre."
+          "Un enfant n’apparaît de manière identifiable sur une photographie que si son parent a coché le consentement média facultatif le concernant au moment de l’inscription. Le parent peut modifier cette réponse à tout moment sur la page de l’enfant dans My SOG, et un animateur demande à l’enfant avant de prendre une photographie, même lorsque le parent a consenti. La <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy> précise ce que ce consentement couvre. Des vues d’ensemble d’un événement ou d’un atelier peuvent être prises à distance, lorsqu’aucun enfant n’est identifiable."
         ]
       },
       "review": {
@@ -3833,7 +3833,7 @@
       "media": {
         "heading": "Photos, vidéos et communication",
         "blocks": [
-          "Le fait que votre enfant apparaisse sur des photographies ou des vidéos relève d’un seul choix facultatif, fait au moment où vous l’inscrivez à une activité de l’Académie des Créateurs. Vous pouvez le modifier à tout moment sur la page de votre enfant dans My SOG. Un enfant sans cette autorisation reste entièrement en dehors des photographies des séances. Des vues d’ensemble d’un événement ou d’un atelier peuvent être prises à distance, lorsqu’aucun enfant n’est identifiable."
+          "Le fait que votre enfant apparaisse sur des photographies ou des vidéos relève d’un seul choix facultatif, fait au moment où vous l’inscrivez à une activité de l’Académie des Créateurs. Vous pouvez le modifier à tout moment sur la page de votre enfant dans My SOG. Un enfant sans cette autorisation reste en dehors des photographies des séances et de toute séquence identifiable. Des vues d’ensemble d’un événement ou d’un atelier peuvent être prises à distance, lorsqu’aucun enfant n’est identifiable."
         ]
       },
       "concern": {

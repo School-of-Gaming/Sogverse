@@ -2495,7 +2495,7 @@
       "media": {
         "heading": "Photography, filming and public use",
         "blocks": [
-          "Online sessions are not recorded. Where photography or filming is planned for an event, families will be told in advance.",
+          "Online sessions are not recorded. Where photography or filming is planned for a selected session or event, families will be told in advance.",
           "There is one optional media choice per child. It is made when the child is enrolled in a Creator Academy activity, and it can be changed at any time on the child’s page in My SOG."
         ]
       },
@@ -2509,7 +2509,7 @@
             "Used publicly by Lynx Educate, School of Gaming and Roblox on their websites and social-media channels."
           ],
           "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control.",
-          "Where the box is not ticked, the child is kept out of session photographs and footage entirely. Nothing identifying them is placed in a session report, shared with Lynx Educate or Roblox, or used publicly. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
+          "Where the box is not ticked, the child is kept out of session photographs and identifiable footage. Nothing identifying them is placed in a session report, shared with Lynx Educate or Roblox, or used publicly. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
         ]
       },
       "mediaChildAgrees": {
@@ -2734,7 +2734,7 @@
       "data": {
         "heading": "Data and photos",
         "blocks": [
-          "A child appears in a photograph only where their parent has ticked the optional media consent for that child when enrolling them. The parent can change that answer at any time on the child’s page in My SOG, and a Game Educator asks the child before taking a photograph even where the parent has consented. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable. The <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> sets out what the consent covers."
+          "A child appears identifiably in a photograph only where their parent has ticked the optional media consent for that child when enrolling them. The parent can change that answer at any time on the child’s page in My SOG, and a Game Educator asks the child before taking a photograph even where the parent has consented. The <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> sets out what the consent covers. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
         ]
       },
       "review": {
@@ -2800,7 +2800,7 @@
       "media": {
         "heading": "Photos, video, and marketing",
         "blocks": [
-          "Whether your child appears in photographs or video is a single optional choice, made when you enrol them in a Creator Academy activity. You can change it at any time on your child’s page in My SOG. A child without that permission is kept out of session photographs entirely. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
+          "Whether your child appears in photographs or video is a single optional choice, made when you enrol them in a Creator Academy activity. You can change it at any time on your child’s page in My SOG. A child without that permission is kept out of session photographs and identifiable footage. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
         ]
       },
       "concern": {

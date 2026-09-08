@@ -136,14 +136,10 @@ item and keep going until nothing is left that we can move on our own.
       programme one (every parent account already asserts the relationship implicitly by
       creating the gamer).
 
-      Lynx's set also carried a **non-consent notice** — that photographs may be taken
-      during sessions for internal records, safety and reporting regardless of the box.
-      That notice is **not** built and the documents now say the opposite: a gamer
-      without consent stays out of session photographs entirely. See the finding at the
-      top of this file; the two accounts have to be reconciled with Lynx.
 - [ ] **Facilitator↔parent messaging without exposing parent contact details.** The
-      feature behind the claim removed above. If we ever want the claim back in the
-      policies, the feature has to exist first.
+      programme documents once claimed a facilitator could reach a parent without seeing
+      their contact details; the claim was removed because no such feature exists. If we
+      ever want the claim back in the policies, the feature has to exist first.
 - [ ] **Roblox impact-research data export.** The DPA-limited dataset (Roblox username,
       Roblox User ID, programme-account email, activity attended) has to actually reach
       Roblox somehow. No process or tooling exists for producing that export.
@@ -373,10 +369,9 @@ The house standard (set by the existing `/privacy` and `/terms-and-conditions` c
 plain language a parent can read in full without feeling overwhelmed; warm second
 person ("you", "your child"); jargon translated inline the moment it appears ("in legal
 terms, we're the 'data controller'"); every collected item explained with a "— so we
-can…" reason. Tone is ours: the copy has been accepted one-way and Sogverse
-holds it now, so a rewrite that changes how a sentence reads without changing what it
-commits anyone to needs no upstream pass. Where a rewrite would alter an obligation
-rather than its wording, that part goes to Lynx.
+can…" reason. Under the rule at the top the programme documents are Lynx's to word, so
+none of the items below is a rewrite we make ourselves: each is an observation to hand
+Lynx, with the house policy as the example, for them to take or leave.
 
 **Blocked 2026-08-12 by Kyle: none of this starts until a lawyer has reviewed the copy as
 a whole.** Two reasons it has to be that order. A tone pass on text a lawyer may rewrite

@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 /**
  * A link that leaves the site, marked as such for both audiences: the arrow
@@ -15,13 +14,11 @@ export function OutboundLink({
   href,
   label,
   children,
-  className,
 }: {
   href: string;
   /** Localized "(opens in a new tab)", read out beside the link. */
   label: string;
   children: ReactNode;
-  className?: string;
 }) {
   return (
     <a
@@ -31,15 +28,13 @@ export function OutboundLink({
       // `inline`, never `inline-flex`: in legal prose this anchor sits
       // mid-sentence, and an inline-flex box cannot break across lines, so a
       // long translator-controlled label would push a paragraph past the 360px
-      // floor. The trailing glyph is glued to the last word by the nowrap span
-      // below instead.
-      className={cn(
-        "inline rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
-        className,
-      )}
+      // floor. The glyph stays with the last word because JSX emits no
+      // whitespace between `{children}` and the span below, leaving the browser
+      // no break opportunity there.
+      className="inline rounded-sm font-medium text-act underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
     >
       {children}
-      <span className="whitespace-nowrap">
+      <span>
         <ExternalLink
           className="ml-0.5 inline h-3 w-3 align-[-0.1em]"
           aria-hidden="true"

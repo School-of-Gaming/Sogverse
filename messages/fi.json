@@ -3528,7 +3528,7 @@
       "media": {
         "heading": "Valokuvaaminen, videokuvaaminen ja julkinen käyttö",
         "blocks": [
-          "Verkkotapaamisia ei tallenneta. Jos tapahtumaan on suunniteltu valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen.",
+          "Verkkotapaamisia ei tallenneta. Jos johonkin tapaamiseen tai tapahtumaan on suunniteltu valokuvausta tai videokuvausta, perheille kerrotaan siitä etukäteen.",
           "Mediavalintoja on yksi, ja se tehdään lapsikohtaisesti. Valinta tehdään, kun lapsi ilmoitetaan Luojien akatemian toimintaan, ja sen voi muuttaa milloin tahansa lapsen sivulla My SOG -näkymässä."
         ]
       },
@@ -3542,14 +3542,14 @@
             "Käyttää julkisesti Lynx Educaten, School of Gamingin ja Robloxin verkkosivuilla ja sosiaalisen median kanavissa."
           ],
           "Julkinen sisältö voi olla saatavilla maailmanlaajuisesti, ja muut käyttäjät voivat kopioida tai jakaa sitä ilman, että organisaatiot voivat vaikuttaa siihen.",
-          "Jos ruutua ei ole rastitettu, lapsi jätetään kokonaan pois tapaamisten valokuvista ja videomateriaalista. Mitään hänet tunnistettavaksi tekevää ei liitetä tapaamisraporttiin, jaeta Lynx Educatelle tai Robloxille eikä käytetä julkisesti. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun kukaan lapsi ei ole tunnistettavissa."
+          "Jos ruutua ei ole rastitettu, lapsi jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Mitään hänet tunnistettavaksi tekevää ei liitetä tapaamisraporttiin, jaeta Lynx Educatelle tai Robloxille eikä käytetä julkisesti. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
         ]
       },
       "mediaChildAgrees": {
         "heading": "Myös lapsen on suostuttava",
         "blocks": [
           "Vanhemman on hyvä keskustella mediavalinnasta lapsen kanssa ennen sen tekemistä. Selitämme valokuvaamisen tai videokuvaamisen myös lapselle hänen ikätasolleen sopivalla tavalla.",
-          "Pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi rastittanut ruudun, eikä lasta valokuvata tai videokuvata tarkoituksellisesti, jos hän vastustaa sitä. Lapsi, jonka vanhempi ei ole rastittanut ruutua, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun kukaan lapsi ei ole tunnistettavissa."
+          "Pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi rastittanut ruudun, eikä lasta valokuvata tai videokuvata tarkoituksellisesti, jos hän vastustaa sitä. Lapsi, jonka vanhempi ei ole rastittanut ruutua, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
         ]
       },
       "mediaCaseStudies": {
@@ -3767,7 +3767,7 @@
       "data": {
         "heading": "Tiedot ja valokuvat",
         "blocks": [
-          "Lapsi näkyy valokuvassa vain, jos hänen vanhempansa on rastittanut lasta koskevan vapaaehtoisen mediasuostumuksen ilmoittautumisen yhteydessä. Vanhempi voi muuttaa vastausta milloin tahansa lapsen sivulla My SOG -näkymässä, ja pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi antanut suostumuksen. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun kukaan lapsi ei ole tunnistettavissa. <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, mitä suostumus kattaa."
+          "Lapsi näkyy valokuvassa tunnistettavasti vain, jos hänen vanhempansa on rastittanut lasta koskevan vapaaehtoisen mediasuostumuksen ilmoittautumisen yhteydessä. Vanhempi voi muuttaa vastausta milloin tahansa lapsen sivulla My SOG -näkymässä, ja pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi antanut suostumuksen. <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, mitä suostumus kattaa. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
         ]
       },
       "review": {
@@ -3833,7 +3833,7 @@
       "media": {
         "heading": "Valokuvat, video ja markkinointi",
         "blocks": [
-          "Se, näkyykö lapsesi valokuvissa tai videoissa, on yksi vapaaehtoinen valinta, joka tehdään ilmoittaessasi hänet Luojien akatemian toimintaan. Voit muuttaa sitä milloin tahansa lapsesi sivulla My SOG -näkymässä. Lapsi, jolla ei ole tätä lupaa, jätetään kokonaan pois tapaamisten valokuvista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun kukaan lapsi ei ole tunnistettavissa."
+          "Se, näkyykö lapsesi valokuvissa tai videoissa, on yksi vapaaehtoinen valinta, joka tehdään ilmoittaessasi hänet Luojien akatemian toimintaan. Voit muuttaa sitä milloin tahansa lapsesi sivulla My SOG -näkymässä. Lapsi, jolla ei ole tätä lupaa, jätetään pois tapaamisten valokuvista ja tunnistettavasta materiaalista. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
         ]
       },
       "concern": {

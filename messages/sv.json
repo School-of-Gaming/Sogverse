@@ -3528,7 +3528,7 @@
       "media": {
         "heading": "Foto, film och offentlig användning",
         "blocks": [
-          "Träffar online spelas inte in. Om foto eller film planeras vid ett evenemang får familjerna veta det i förväg.",
+          "Träffar online spelas inte in. Om foto eller film planeras vid en viss träff eller ett visst evenemang får familjerna veta det i förväg.",
           "Det finns ett enda frivilligt mediaval per barn. Det görs när barnet anmäls till en aktivitet i Skaparnas akademi och kan ändras när som helst på barnets sida i My SOG."
         ]
       },
@@ -3542,7 +3542,7 @@
             "Användas offentligt av Lynx Educate, School of Gaming och Roblox på deras webbplatser och kanaler i sociala medier."
           ],
           "Offentligt innehåll kan vara tillgängligt i hela världen och kan kopieras eller delas vidare av andra användare utan att organisationerna kan styra det.",
-          "Är rutan inte ikryssad hålls barnet helt utanför träffarnas foton och filmmaterial. Ingenting som identifierar barnet tas med i en träffrapport, delas med Lynx Educate eller Roblox eller används offentligt. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
+          "Är rutan inte ikryssad hålls barnet utanför träffarnas foton och identifierbart material. Ingenting som identifierar barnet tas med i en träffrapport, delas med Lynx Educate eller Roblox eller används offentligt. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "mediaChildAgrees": {
@@ -3767,7 +3767,7 @@
       "data": {
         "heading": "Uppgifter och foton",
         "blocks": [
-          "Ett barn syns på ett foto endast när barnets förälder kryssat i det frivilliga mediasamtycket för barnet vid anmälan. Föräldern kan ändra svaret när som helst på barnets sida i My SOG, och en spelfostrare frågar barnet innan ett foto tas, även när föräldern har samtyckt. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera. <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> beskriver vad samtycket omfattar."
+          "Ett barn syns identifierbart på ett foto endast när barnets förälder kryssat i det frivilliga mediasamtycket för barnet vid anmälan. Föräldern kan ändra svaret när som helst på barnets sida i My SOG, och en spelfostrare frågar barnet innan ett foto tas, även när föräldern har samtyckt. <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> beskriver vad samtycket omfattar. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "review": {
@@ -3833,7 +3833,7 @@
       "media": {
         "heading": "Foto, video och marknadsföring",
         "blocks": [
-          "Om ditt barn syns på foton eller film är ett enda frivilligt val, som du gör när du anmäler barnet till en aktivitet i Skaparnas akademi. Du kan ändra det när som helst på barnets sida i My SOG. Ett barn utan det tillståndet hålls helt utanför träffarnas foton. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
+          "Om ditt barn syns på foton eller film är ett enda frivilligt val, som du gör när du anmäler barnet till en aktivitet i Skaparnas akademi. Du kan ändra det när som helst på barnets sida i My SOG. Ett barn utan det tillståndet hålls utanför träffarnas foton och identifierbart material. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "concern": {
