@@ -25,9 +25,8 @@ interface ProductListResultsProps {
  * The tail of every admin product list: how many of how many are showing, a way
  * back to all of them, and either the rows or the reason there are none.
  *
- * Shared by the plain list (camps/events, narrowed by search alone) and the club
- * list (search plus the day/educator/language/municipality filters), so the two
- * cannot drift into counting or clearing differently. Renders a fragment rather
+ * Rendered by the one filter row all four product types share, so none of them
+ * can drift into counting or clearing differently. Renders a fragment rather
  * than a wrapper: the caller's `space-y` owns the spacing, and a second nesting
  * level here would double it.
  */

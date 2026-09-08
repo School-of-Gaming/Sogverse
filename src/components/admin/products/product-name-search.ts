@@ -42,13 +42,3 @@ export function matchesProductSearch(
     tr.name.toLowerCase().includes(needle),
   );
 }
-
-/** The rows a raw query string leaves standing, in their original order. */
-export function filterProductsBySearch<T extends ProductNameSearchSource>(
-  products: readonly T[],
-  query: string,
-): T[] {
-  const needle = normalizeProductSearch(query);
-  if (needle === "") return [...products];
-  return products.filter((product) => matchesProductSearch(product, needle));
-}

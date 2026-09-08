@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Search } from "lucide-react";
 import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { FilterCombobox } from "@/components/ui/filter-combobox";
+import { Input } from "@/components/ui/input";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { useUsersByRole } from "@/services/users";
 import {
@@ -22,6 +24,7 @@ import { ProductListResults } from "./product-list-results";
 import {
   optionInRange,
   PRODUCT_LIST_PARAMS,
+  useDebouncedUrlParamState,
   useUrlParamState,
 } from "./product-list-url-state";
 import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
@@ -29,44 +32,50 @@ import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductWithDetails } from "@/services/products";
 import type { ProductType } from "@/types";
 
-interface ClubProductFiltersProps {
+interface ProductListFiltersProps {
   productType: ProductType;
   products: ProductWithDetails[];
-  /** The page's search box, ANDed with the filters below. */
-  search: string;
-  /** Clearing here clears the search too — one button empties the whole bar. */
-  onClearSearch: () => void;
 }
 
-// The filtered club list. Owns the day / educator / language / municipality
-// filters and the reference-data hooks they need; only mounts for the two club
-// types (camps and events narrow by the page's search box alone), so the extra
-// reference queries never fire on the other admin product pages.
+// The narrowing controls of every admin product list, and the list under them.
+// One component for all four product types rather than one per type: which
+// controls a type offers differs, but the row they sit in, the AND between
+// them, the count line and the clear button do not — and keeping the search box
+// outside is what let it drift into a row of its own.
+//
+// What each type gets, left to right:
+//
+//   consumer club      search - day - gedu - language
+//   municipality club  search - day - gedu - municipality
+//   camp / event       search - gedu
 //
 // All filters are single-select; no selection means "all", and active filters
-// AND together — a row must satisfy every one, the page's search included.
+// AND together — a row must satisfy every one, the search box included.
 // Filtering is client-side over the already loaded list; the
-// day/educator/language/municipality data all ride on the list query (educator
-// via `gedu_group_assignments`, municipality via the embedded location and its
+// day/gedu/language/municipality data all ride on the list query (gedu via
+// `gedu_group_assignments`, municipality via the embedded location and its
 // parent).
-export function ClubProductFilters({
+export function ProductListFilters({
   productType,
   products,
-  search,
-  onClearSearch,
-}: ClubProductFiltersProps) {
+}: ProductListFiltersProps) {
   const t = useTranslations("admin.products");
   const uiLocale = resolveLocale(useLocale());
   const config = PRODUCT_TYPE_CONFIG[productType];
   const plural = t(`types.${config.i18nKey}.plural`);
+  const searchId = useId();
 
   const isConsumer = productType === "consumer_club";
   const isMunicipality = productType === "municipality_club";
+  // A weekday only narrows a list where the schedule repeats weekly. A camp
+  // runs its days back to back and an event happens once, so on those two pages
+  // the control could only restate the dates already on the rows.
+  const hasDay = isConsumer || isMunicipality;
 
   // Each selection lives in the query string, so an admin who narrows the list,
-  // opens a club and presses Back finds the bar exactly as they left it. The
+  // opens a product and presses Back finds the row exactly as they left it. The
   // raw values are clamped against the options below before anything reads
-  // them — a stale bookmark can name an educator who has since left.
+  // them — a stale bookmark can name a gedu who has since left.
   const [dayParam, setDay] = useUrlParamState(PRODUCT_LIST_PARAMS.day);
   const [geduParam, setGeduId] = useUrlParamState(PRODUCT_LIST_PARAMS.gedu);
   const [languageParam, setLanguage] = useUrlParamState(
@@ -76,10 +85,16 @@ export function ClubProductFilters({
     PRODUCT_LIST_PARAMS.municipality,
   );
 
-  // Fires for both club types even though only the municipality page reads it.
-  // Left unconditional on purpose — the query is cheap and cached, and gating
-  // it would mean splitting the municipality-only work into a child component
-  // that only mounts for `isMunicipality`.
+  // The one control every type gets. The list narrows on it per keystroke; the
+  // URL is mirrored a moment behind so Back restores it — see the hook.
+  const [search, setSearch, flushSearch] = useDebouncedUrlParamState(
+    PRODUCT_LIST_PARAMS.search,
+  );
+
+  // Fires for every product type, including one whose rows carry no assignments
+  // and whose gedu list therefore comes out empty. Left unconditional on
+  // purpose — the query is cheap and cached, and gating it would mean a hook
+  // called conditionally.
   const { data: gedus } = useUsersByRole("gedu");
 
   const languageName = useLanguageNames();
@@ -100,17 +115,18 @@ export function ClubProductFilters({
   }, [products]);
 
   // Each filter's options are derived from the values actually present on the
-  // listed clubs, so a selection always yields at least one match (no dead
-  // entries). Day/educator/municipality sort by localized label; language keeps
-  // its canonical reference order.
+  // listed products, so a selection always yields at least one match (no dead
+  // entries). Day/gedu/municipality sort by localized label; language keeps its
+  // canonical reference order.
   const dayOptions = useMemo(() => {
+    if (!hasDay) return [];
     const present = new Set<number>();
     for (const p of products)
       for (const s of p.schedule_slots) present.add(s.weekday);
     return [...present]
       .sort((a, b) => a - b)
       .map((w) => ({ value: String(w), label: formatWeekday(w, uiLocale, "long") }));
-  }, [products, uiLocale]);
+  }, [products, hasDay, uiLocale]);
 
   const geduOptions = useMemo(() => {
     const present = new Set<string>();
@@ -208,21 +224,58 @@ export function ClubProductFilters({
     setGeduId(null);
     setLanguage(null);
     setMunicipalityId(null);
-    onClearSearch();
+    setSearch("");
+    // One gesture with one value, so the URL takes it immediately rather than
+    // waiting out a delay meant for typing.
+    flushSearch();
   }
 
   return (
-    // A fragment: the page's own `space-y-4` spaces the search box, this grid,
-    // the count line and the rows as one rhythm across all four product types.
+    // A fragment: the page's own `space-y-4` spaces this row, the count line and
+    // the rows as one rhythm across all four product types.
     <>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <FilterDropdown
-          label={t("filters.day")}
-          allLabel={t("filters.allDays")}
-          options={dayOptions}
-          value={day}
-          onChange={setDay}
-        />
+      {/* Four columns whatever the type offers, so a control is the same width
+          on every one of these pages and a type with two controls simply leaves
+          the right half of the row empty. */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-1.5">
+          {/* The filter controls beside this one label themselves the same way,
+              in the same size and colour; the difference is that this one is a
+              real <label>, because it has a single input to name. */}
+          <label
+            htmlFor={searchId}
+            className="block text-xs font-medium text-muted-foreground"
+          >
+            {t("filters.search")}
+          </label>
+          <div className="relative">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              id={searchId}
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              // Leaving the field settles the URL at once, so a click straight
+              // from the box into a product row cannot outrun the mirror.
+              onBlur={flushSearch}
+              placeholder={t("filters.searchPlaceholder")}
+              className="pl-9"
+            />
+          </div>
+        </div>
+
+        {hasDay && (
+          <FilterDropdown
+            label={t("filters.day")}
+            allLabel={t("filters.allDays")}
+            options={dayOptions}
+            value={day}
+            onChange={setDay}
+          />
+        )}
         <FilterCombobox
           label={t("filters.gedu")}
           placeholder={t("filters.searchGedu")}
