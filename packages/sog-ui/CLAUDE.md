@@ -12,12 +12,14 @@ follow a brand change is in the wrong place.
 
 ## Ownership
 
-**SOG-UI owns every UI opinion, and the two `CLAUDE.md` files never disagree.** The root
-file governs the monorepo: lint, type-check, commits, branching, testing, the database, the
-services. This file governs the UI. Sogverse follows the library one construct at a time,
-as each is adopted (`docs/adoption.md`); for a construct not yet adopted, the root file's
+**SOG-UI owns every UI opinion, and the three `CLAUDE.md` files never disagree.** The root
+file governs the monorepo: lint, type-check, commits, branching, testing, the database. The
+app file (`src/CLAUDE.md`) governs Sogverse the web app: its roles, services, auth and
+copy. This file governs the UI. Sogverse follows the library one construct at a time,
+as each is adopted (`docs/adoption.md`); for a construct not yet adopted, the app file's
 existing rule for it still governs Sogverse's code, and the adoption that retires the
-construct deletes that rule. A rule about the UI is never added to the root file.
+construct deletes that rule. A rule about the UI is never added to the root file or the
+app file.
 
 **If something has a state, SOG-UI owns the system that handles it.** A button's committing
 state across a redirect, a loading affordance, an element that must not move under a
