@@ -4016,10 +4016,10 @@
     "emailTaken": "Den e-postadressen har redan ett konto."
   },
   "consent": {
-    "heading": "Din integritet, ditt val",
-    "body": "Analys visar oss hur många som besöker sidan och hur snabbt sidorna laddas. Den kan inte se vem du är, och den går aldrig till annonsörer. Marknadsföring berättar för de annonsplattformar vi annonserar på att du har besökt oss och om du skapade ett konto, så att de kan visa dig våra annonser där. Den är aldrig på medan ditt barn är inloggat som spelare. Inget utöver de nödvändiga cookiesarna startar förrän du väljer, och du kan ändra dig när som helst längst ner på sidan – detaljerna finns i vår <link>integritetspolicy</link>.",
+    "heading": "Dina integritetsval",
+    "body": "Nödvändiga cookies får webbplatsen att fungera. Analys räknar besök och laddningstider. Den kan inte se vem du är, och annonsörer får den aldrig. Vi annonserar på andra plattformar. Marknadsföring berättar för dem att du varit här, och om du skapade ett konto, så att de kan visa dig våra annonser där. Den är aldrig igång medan en spelare är inloggad. Du kan ändra ditt svar när som helst längst ner på sidan, och detaljerna finns i vår <link>integritetspolicy</link>.",
     "rejectAll": "Neka alla",
     "analyticsOnly": "Endast analys",
-    "analyticsAndMarketing": "Analys och marknadsföring"
+    "analyticsAndMarketing": "Marknadsföring och analys"
   }
 }

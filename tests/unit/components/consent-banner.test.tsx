@@ -125,8 +125,11 @@ describe("ConsentBanner", () => {
     const body = links[0].closest("p");
     expect(body).not.toBeNull();
     const sentence = body?.textContent ?? "";
-    expect(sentence).toContain("Nothing beyond the necessary cookies");
-    expect(sentence.endsWith(`${links[0].textContent}.`)).toBe(true);
+    // Words before the link and a full stop after it: the linked words end a
+    // sentence they are part of, rather than standing alone as a row.
+    const label = links[0].textContent;
+    expect(sentence.length).toBeGreaterThan(label.length);
+    expect(sentence.endsWith(`${label}.`)).toBe(true);
   });
 
   // Naming Meta and TikTok here would make the strip a list of recipients that

@@ -4016,10 +4016,10 @@
     "emailTaken": "Tällä sähköpostiosoitteella on jo tili."
   },
   "consent": {
-    "heading": "Yksityisyytesi, sinun valintasi",
-    "body": "Analytiikka kertoo meille, kuinka moni sivustolla käy ja kuinka nopeasti sivut latautuvat. Se ei näe, kuka olet, eikä se päädy koskaan mainostajille. Markkinointi kertoo mainosalustoille, joilla mainostamme, käynnistäsi ja siitä, loitko tilin, jotta ne voivat näyttää sinulle mainoksiamme. Se ei ole koskaan päällä, kun lapsesi on kirjautuneena pelaajana. Välttämättömien evästeiden lisäksi mikään ei käynnisty ennen kuin valitset, ja voit muuttaa mieltäsi milloin tahansa sivun alalaidasta – tarkemmat tiedot löydät <link>tietosuojaselosteestamme</link>.",
+    "heading": "Yksityisyysvalintasi",
+    "body": "Välttämättömät evästeet pitävät sivuston toiminnassa. Analytiikka laskee käynnit ja sivujen latausajat. Se ei näe, kuka olet, eivätkä mainostajat saa sitä koskaan. Mainostamme muilla alustoilla. Markkinointi kertoo niille käynnistäsi ja siitä, loitko tilin, jotta ne voivat näyttää sinulle mainoksiamme. Se ei ole koskaan päällä, kun pelaaja on kirjautuneena. Voit vaihtaa vastaustasi milloin tahansa sivun alalaidasta, ja tarkemmat tiedot ovat <link>tietosuojaselosteessamme</link>.",
     "rejectAll": "Hylkää kaikki",
     "analyticsOnly": "Vain analytiikka",
-    "analyticsAndMarketing": "Analytiikka ja markkinointi"
+    "analyticsAndMarketing": "Markkinointi ja analytiikka"
   }
 }
