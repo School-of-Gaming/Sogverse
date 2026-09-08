@@ -16,7 +16,7 @@
     "tokens": "node src/tokens/generate.ts"
   },
   "dependencies": {
-    "lucide-react": "^1.41.0"
+    "lucide-react": "1.41.0"
   },
   "peerDependencies": {
     "react": "19.2.3",
