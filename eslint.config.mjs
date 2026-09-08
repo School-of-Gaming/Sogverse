@@ -73,6 +73,81 @@ const noMailFaceOutsideMail = [
 ];
 
 /**
+ * `next/font`, importable by the root layout and nowhere else.
+ *
+ * A face is loaded once, in one file. `src/app/layout.tsx` loads exactly the
+ * faces @sog/ui names — the contract test holds it to that list in both
+ * directions — and puts each one's variable on `<html>`, which is where the
+ * theme's `--font-*` tokens can see it. A second `next/font` call anywhere else
+ * is Sogverse defining a face for itself: a family the library never named,
+ * reaching a page through a variable no token points at, on a surface that has
+ * no way of saying so.
+ *
+ * The group covers the subpaths as well as the bare specifier — `next/font/google`
+ * is how every face in the tree is actually loaded, and a ban that named only
+ * `next/font` would report nothing.
+ *
+ * Held in a const because four blocks below set the import rule, and a later
+ * block replaces its options rather than merging with them.
+ */
+const noNextFontOutsideLayout = [
+  {
+    group: ["next/font", "next/font/*", "next/font/**"],
+    message:
+      "Faces are loaded in one place: src/app/layout.tsx, which loads exactly the faces @sog/ui names and defines each one's variable on <html>. Everywhere else a face is *set*, never loaded, with the font-sans / font-serif / font-mono / font-cursive utilities. See packages/sog-ui/src/tokens/typography.ts.",
+  },
+];
+
+/**
+ * A family spelled out, banned wherever a face is set.
+ *
+ * @sog/ui names the faces and Sogverse references them; a family typed into
+ * this app is a face Sogverse decided for itself, and it cannot follow the
+ * library when the brand's type changes — which is the whole boundary test. So
+ * a `fontFamily` whose value is a string is banned and one whose value is an
+ * *identifier* is not: the Open Graph cards pass `OG_FONT_FAMILY`, derived from
+ * the app face in `src/lib/constants/typography.ts`, and that is the shape
+ * every renderer without a stylesheet takes.
+ *
+ * Both spellings of the property are matched — an object property in a style
+ * object, and a JSX attribute (an inline `<svg>` will happily take one) — and,
+ * separately, a `font-family:` written into a string of CSS. The mail is where
+ * that last one legitimately happens and it has its own, narrower ban in its
+ * own block: a family *name* after the colon, so the interpolated stack passes.
+ * That block replaces this one for those files, so the two never both fire.
+ */
+const spelledFamilyMessage =
+  "No family names in Sogverse. @sog/ui names the faces and this app references them: set a face with the font-sans / font-serif / font-mono / font-cursive utilities, and where a renderer has no stylesheet (satori, canvas) pass the derived constant — OG_FONT_FAMILY from @/lib/constants/typography — rather than a string. See packages/sog-ui/src/tokens/typography.ts.";
+
+const noSpelledFamily = [
+  ...["Literal", "TemplateLiteral"].flatMap((value) => [
+    {
+      selector: String.raw`Property[key.name="fontFamily"] > ${value}`,
+      message: spelledFamilyMessage,
+    },
+    {
+      selector: String.raw`Property[key.value="fontFamily"] > ${value}`,
+      message: spelledFamilyMessage,
+    },
+    {
+      selector: String.raw`JSXAttribute[name.name="fontFamily"] > ${value}`,
+      message: spelledFamilyMessage,
+    },
+    {
+      selector: String.raw`JSXAttribute[name.name="fontFamily"] > JSXExpressionContainer > ${value}`,
+      message: spelledFamilyMessage,
+    },
+  ]),
+];
+
+const noFontFamilyDeclaration = ["TemplateElement[value.raw", "Literal[value"].map(
+  (node) => ({
+    selector: String.raw`${node}=/font-family\s*:/]`,
+    message: spelledFamilyMessage,
+  }),
+);
+
+/**
  * A colour spelled as a hex literal, banned wherever the colour is not authored.
  *
  * Written once and spread into every block that bans it, because the selector is
@@ -411,6 +486,74 @@ const noUnregisteredColourToken = Object.keys(EXTRA_KEYWORDS).flatMap((prefix) =
 });
 
 /**
+ * **The face utilities the theme actually generates, read off the stylesheet.**
+ *
+ * Derived rather than typed out, for the reason the colour tokens above are:
+ * @sog/ui adds a face and this file learns it on the next lint run; @sog/ui
+ * retires one and every class still naming it starts failing the same day. The
+ * pattern is anchored at the start of a declaration so `--text-h1--font-weight`
+ * — a companion of a type step, which no class can ever name — is not read as a
+ * face called `weight`.
+ */
+const FACE_UTILITIES = [
+  ...new Set(
+    [...themeCss.matchAll(/^\s*--font-([a-z0-9-]+)\s*:/gm)].map((match) => match[1]),
+  ),
+];
+
+/**
+ * The weights this tree writes, and the reason they are a hand-written list
+ * where the faces are not.
+ *
+ * A weight is not a face: `font-bold` names a cut of whatever family the
+ * element is already in, and which weights a piece of UI may spend is the
+ * **Heading adoption's** question, not this one's. Until Heading owns the
+ * scale, Sogverse writes these four and no others — the list is what the tree
+ * spends today, enumerated, so an unknown `font-*` fails and is added here
+ * deliberately rather than arriving unnoticed. When Heading lands, the weights
+ * stop being a call site's choice at all and this list goes with them.
+ */
+const WEIGHT_UTILITIES = ["normal", "medium", "semibold", "bold"];
+
+/**
+ * A `font-*` class that is neither one of the library's faces nor a weight,
+ * banned wherever a class string is written.
+ *
+ * Two shapes, one rule. `font-[Arial]` is a family spelled into an arbitrary
+ * value, which is the class-string spelling of the ban above. And a bare
+ * `font-<word>` the theme does not generate is the same silent failure the
+ * colour ban exists for: Tailwind 4 emits nothing for an unknown token, so
+ * `font-display` went on being written and reviewed for months after the token
+ * behind it was deleted, rendering as an element that inherited its parent's
+ * face and looked plausible.
+ *
+ * Scoped to `CLASS_STRING_SCOPES`, like the colour-token ban: a `font-family`
+ * or `font-size` in a mail's markup is a CSS property and not a class, and
+ * nothing outside a class attribute or a class-assembling call is judged.
+ */
+const faceClassMessage = `\`font-…\` is neither a face the theme generates (${FACE_UTILITIES.map((name) => `font-${name}`).join(", ")}) nor a weight this app writes (${WEIGHT_UTILITIES.map((name) => `font-${name}`).join(", ")}), and Tailwind 4 emits nothing for a class it does not know — no error, no warning, the element simply inherits. A family is never spelled here: @sog/ui names the faces and this app references them. See packages/sog-ui/src/tokens/typography.ts.`;
+
+const noUnknownFaceClass = (() => {
+  // The same shape as the colour-token pattern: a lookbehind that refuses a
+  // token continuing from a word, a hyphen, a comma or an arbitrary value's
+  // bracket, then the prefix, then a negative lookahead listing everything
+  // legitimate. `font-[…]` is matched explicitly, because an arbitrary value is
+  // exactly what this ban is for rather than something it has to step around.
+  const allowed = [...FACE_UTILITIES, ...WEIGHT_UTILITIES].join("|");
+  const pattern = String.raw`(?<![\w\-,[])font-(?!(?:${allowed})(?![\w-]))(?:\[[^\]]*\]|[a-z][\w-]*)`;
+  return CLASS_STRING_SCOPES.flatMap((scope) => [
+    {
+      selector: String.raw`${scope} Literal[value=/${pattern}/]`,
+      message: faceClassMessage,
+    },
+    {
+      selector: String.raw`${scope} TemplateElement[value.raw=/${pattern}/]`,
+      message: faceClassMessage,
+    },
+  ]);
+})();
+
+/**
  * A border, divide, ring or outline with a width and no colour, banned.
  *
  * **`globals.css` used to colour every edge in the app from a universal
@@ -546,6 +689,22 @@ const noColourFunctions = [
  * narrows one ban has to restate the rest, and restating them by hand is how a
  * file quietly falls out of three bans while opting out of one.
  */
+/**
+ * The face seam as Sogverse's own source is held to it, in one const for the
+ * same reason the colour one is: four blocks below need it, and a later block
+ * replaces a rule's options rather than merging with them.
+ *
+ * The `font-family:` half is deliberately not in here. The mail is the one
+ * surface that legitimately writes that declaration, it has a narrower ban of
+ * its own in its own block, and a block that carried both would report the
+ * derived stack twice.
+ */
+const sogverseFaceBans = [
+  ...noSpelledFamily,
+  ...noFontFamilyDeclaration,
+  ...noUnknownFaceClass,
+];
+
 const sogverseColourBans = [
   ...noHexColourLiterals(
     "No colour literals in Sogverse. Every colour arrives from @sog/ui as a semantic token — a Tailwind class in a component, or BRAND / DARK_THEME from @/lib/constants/colors where there is no class to write (email, canvas, OG).",
@@ -634,6 +793,26 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout],
+      }],
+    },
+  },
+  {
+    // The one file that loads a face, and the reason the ban above is worth
+    // having. The root layout is where every `next/font` call in this app
+    // lives: it loads exactly the faces @sog/ui names — no more, which
+    // tests/unit/theme/face-contract.test.ts asserts in both directions — and
+    // puts each one's variable on `<html>`, the only element the theme's
+    // tokens can read it from.
+    //
+    // The extension patterns and the mail-face paths are restated because this
+    // block replaces the rule the `src/**` block sets rather than merging with
+    // it.
+    files: ["src/app/layout.tsx"],
+    rules: {
+      "no-restricted-imports": "off",
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        paths: noMailFaceOutsideMail,
         patterns: noTsExtensionImports,
       }],
     },
@@ -668,8 +847,11 @@ const eslintConfig = defineConfig([
         patterns: [
           // Restated rather than inherited: this block replaces the rule set by
           // the `src/**` block above, so dropping them here would quietly exempt
-          // every family surface from the extension ban.
+          // every family surface from the extension ban — and from the face
+          // ban, which is the same shape one topic over: a face is loaded in
+          // the root layout and nowhere else, a family surface included.
           ...noTsExtensionImports,
+          ...noNextFontOutsideLayout,
           {
             // Both halves of the staff workspace: the gedu tree, and the
             // role-agnostic group workspace the gedu and admin shells both
@@ -775,7 +957,11 @@ const eslintConfig = defineConfig([
   {
     files: ["src/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-syntax": ["error", ...sogverseColourBans, ...noColourFunctions],
+      "no-restricted-syntax": ["error",
+        ...sogverseColourBans,
+        ...noColourFunctions,
+        ...sogverseFaceBans,
+      ],
     },
   },
   {
@@ -790,7 +976,7 @@ const eslintConfig = defineConfig([
     // length so a later sweep does not take it on pattern.
     files: ["src/lib/voice/glow.ts"],
     rules: {
-      "no-restricted-syntax": ["error", ...sogverseColourBans],
+      "no-restricted-syntax": ["error", ...sogverseColourBans, ...sogverseFaceBans],
     },
   },
   {
@@ -832,6 +1018,12 @@ const eslintConfig = defineConfig([
         "error",
         ...noPaletteColourClasses,
         ...noGreyAsHover,
+        // Restated for the reason every block here restates: this one replaces
+        // the rule set above rather than merging with it, and artwork is exempt
+        // from spelling a *colour*, never from spelling a face. A picture is
+        // drawn, not typed — the words beside it are the app's, in the app's
+        // face.
+        ...sogverseFaceBans,
       ],
     },
   },
@@ -888,6 +1080,14 @@ const eslintConfig = defineConfig([
           message:
             "No font-family literals in an email. Import MAIL_FONT_STACK from @/lib/constants/typography, which derives the mail face from @sog/ui — and a mail never loads a webfont.",
         })),
+        // The rest of the face seam, restated because this block replaces the
+        // one above. The `font-family:` half of `sogverseFaceBans` is
+        // deliberately left out and only the narrower ban directly above stands
+        // here: a mail is the one surface that writes that declaration at all,
+        // and the app-wide form would report the interpolated stack the mail is
+        // required to write.
+        ...noSpelledFamily,
+        ...noUnknownFaceClass,
       ],
     },
   },
@@ -909,7 +1109,9 @@ const eslintConfig = defineConfig([
     ],
     rules: {
       "no-restricted-imports": "off",
-      "@typescript-eslint/no-restricted-imports": ["error", { patterns: noTsExtensionImports }],
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout],
+      }],
     },
   },
   // The same guard, one tier down, for the UI package's own source. The package

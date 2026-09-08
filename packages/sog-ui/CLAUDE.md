@@ -206,7 +206,12 @@ face that reaches a minority makes the mail two designs. The consumer loads the 
 each face as a CSS variable on `<html>`, never on `<body>`, because the theme emits at
 `:root` and a variable one element lower is invisible there while the page still looks
 styled. The library owns the semantic names and the scale. The demo's layout is the
-reference implementation of that contract.
+reference implementation of that contract. **A consumer loads exactly the faces named
+here and no other, defines no face of its own, and spells no family**: it sets a face by
+its utility, and a renderer with no stylesheet — a mail, a social card, a canvas — takes
+the name from the library rather than typing one. Lint holds the spellings, one per way
+a face can be written, and the contract tests hold the list in both directions, so a
+fifth family cannot be loaded and a face of the consumer's own cannot be declared.
 
 **The mark.** The logo, its variants, the monogram, their clearspace, minimum size and
 placement rules, and the combined lockup `School of Gaming – Sogverse` with its spaced en

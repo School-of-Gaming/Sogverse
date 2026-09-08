@@ -48,12 +48,13 @@ written below for it still governs Sogverse's code exactly as written; the adopt
 retires the construct deletes its rule from this file in the same change. No new UI rule
 is added here: a new opinion goes to SOG-UI, and the construct joins the adoption order.
 The UI sections below (layout and scrolling, loading and disabled state, button order, the
-faces and headings rules, the UI component reference and preview scenes) are that
+headings rule, the UI component reference and preview scenes) are that
 transitional state.
 
-Colour has already left: the tokens, the grounds, the one-theme rule and the ban on a
-hardcoded colour are stated in `packages/sog-ui/CLAUDE.md` and held by lint and by
-`tests/unit/styling/`.
+Colour and the faces have already left: the tokens, the grounds, the one-theme rule, the
+ban on a hardcoded colour, the exhaustive list of faces and the rule that this app defines
+none of its own are stated in `packages/sog-ui/CLAUDE.md` and held by lint and by
+`tests/unit/styling/`, `tests/unit/theme/` and `tests/unit/sog-ui/`.
 
 ## Key Conventions
 
@@ -244,10 +245,6 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 **Rule: No emoji in `messages/` files** — they're untranslatable copy that can't be themed or recolored. When a string needs a glyph (warning triangle, checkmark, arrow), render a `lucide-react` icon next to the translated text in the component instead.
 
 ## Styling
-
-**Rule: Poppins is the app face — body copy and every heading — and every face is loaded through `next/font`.** Space Mono is a sanctioned brand face loaded the same way.
-
-**Rule: a `next/font` variable class goes on `<html>`, never on `<body>`.** The Tailwind theme block emits its font tokens at `:root`, so a face variable defined one element lower is invisible there and the hand-written body `font-family` collapses to the UA stack — while the `font-*` utility classes keep working, because those inline their `var()` at the use site where `<body>` is an ancestor. That asymmetry is the whole danger: the page still looks styled, so nobody notices.
 
 **Rule: headings are sentence case — never Title Case Every Word, never ALL CAPS.** Proper nouns keep their capitals and nothing else does; this is a house rule, owner-adopted 2026-08-24, and it has teeth because inconsistent heading case is the one typographic slip a reader notices on every page at once. It binds the heading text in `messages/` and the CSS on the element alike, so `uppercase` on a real heading is the same defect as a Title-Cased string.
 

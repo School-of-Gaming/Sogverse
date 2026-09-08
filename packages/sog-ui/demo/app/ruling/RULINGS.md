@@ -5,12 +5,13 @@ Temporary. The ledger for the owner's rulings on the questions the ruling page
 shorthand, in rounds; each ruling is recorded here in full; the implementation that
 applies it reads this file, not the conversation that produced it.
 
-**The page is gone.** Every question it drew has been ruled and landed, so
-`demo/app/ruling/` holds nothing but this file: the specimens, the Press Start
-section and the world-voice section were deleted with the rulings they served,
-and the demo's living foundations floor is where the faces are looked at now.
-The ledger stays for §10 and §12, the two entries still open, and is deleted with
-them.
+**The page is gone, and every entry is landed.** Every question the page drew has
+been ruled and applied, so `demo/app/ruling/` holds nothing but this file: the
+specimens, the Press Start section and the world-voice section were deleted with
+the rulings they served, and the demo's living foundations floor is where the
+faces are looked at now. **This file stays for one more step**: a fresh agent
+audits every landed entry against the code — adoption step 9 — and the ledger is
+deleted after that audit, in one commit before the review. Nothing here is open.
 
 Status values: `open` · `ruled` · `landed`.
 
@@ -76,8 +77,16 @@ remaining hit is the body `font-family`; and the three `font-display` spends wen
 three comments that named the face. Four files fall out of the listing entirely — the gamer
 dashboard body, the admin panel, the pixel-art module and the call-ended screen — because
 a face was the only thing any of them named. Dropping `-g '!*.md'` now gives 49 in 19: the
-two extra are the surviving face paragraphs in `src/CLAUDE.md`, which retire with §12. The
-command is the enumeration; a hit it returns is a place a face is named, not a defect.
+two extra are the surviving face paragraphs in `src/CLAUDE.md`, which retire with §12.
+**43 in 18 after §10 and §12**, and the two rulings move it in different ways. §10 takes
+four hits out of `src/components/og/fonts.ts`: the family literal is gone and the two
+constants that spelled it in a doc comment go with it, leaving two comments that name
+`next/font` and `fontFamily` without spending either. §12 adds nothing to `src/` — a
+mechanism is lint and tests, which live outside it — but it closes the gap between the two
+forms of the command: dropping `-g '!*.md'` now returns the same 43 in 18, because the
+app file's two face paragraphs retired with it and no `.md` under `src/` names a face any
+more. The command is the enumeration; a hit it returns is a place a face is named, not a
+defect.
 
 ## Standing decisions (already made, not re-opened here)
 
@@ -477,7 +486,22 @@ specific cut of a file rather than about the brand. If the family moves, the der
 name moves with it and the URLs fail loudly at build time, which is the right direction
 to fail in.
 
-**Status: open.**
+**Ruled: as proposed.** SOG-UI owns the family name, the OG cards get it from SOG-UI, and
+the font file URLs stay Sogverse's, because the consumer is the one that loads files.
+
+**What landed.** `OG_FONT_FAMILY` is exported from `src/lib/constants/typography.ts`,
+derived from `FACES.sans.name` and sitting beside `MAIL_FONT_STACK` in the same shape —
+one module where the two renderers that read no CSS take their face from the library, and
+nothing in it spells a family. `src/components/og/fonts.ts` imports it and re-exports it,
+so both `opengraph-image.tsx` files keep naming their face by importing it beside the
+buffers that carry it and neither of them moved. The module keeps its two hashed gstatic
+URLs and its doc comment is rewritten: it no longer claims to be the one place in the app
+that names a family literally, because it names none — it says the name is the library's
+and the files are the consumer's, that a hashed URL is a fact about one cut of one file
+rather than about the brand, and that if the app face moves the name follows it while the
+URLs stop matching, which is the direction to fail in.
+
+**Status: landed.**
 
 ## 11. Crimson Pro and the About quote
 
@@ -587,7 +611,79 @@ that makes conforming cheapest.
    now names — and the lint in (1) permits nothing else, so conforming is one class and
    departing does not compile.
 
-**Status: open.**
+**Ruled: as proposed, all four parts.**
+
+**What landed**, mapped to the root `CLAUDE.md`'s four steps.
+
+**Step 1, the enumeration as a command.** The regeneration command at the head of this
+file, unchanged: it is the surface, and re-running it is the proof, which is why the count
+above moves with every ruling rather than being restated at the end.
+
+**Step 2, the classification.** Every hit the command returns is one of five kinds and the
+kinds are the classification: a face *load* (the root layout, and only there), a face
+*utility* spent in a class string, the *derivation* modules that hand a face to a renderer
+with no stylesheet, the body's one `font-family`, and a comment. There is no sixth kind,
+and the question each kind answers is whether a missing guard would be a bug or the
+design: a load outside the layout, a family spelled anywhere, a `font-*` the theme does
+not generate — each is a face Sogverse defined for itself, and each now fails.
+
+**Step 3, the CI completeness checks.** Three, one per thing that could still be true
+silently.
+`tests/unit/theme/face-contract.test.ts` gains its inverse: every `next/font` import in
+the root layout — the module specifier is matched, so a default `localFont` from
+`next/font/local` is caught as well — names a family in `FACES`, with the identifiers
+compared against `FACES[*].name` with spaces as underscores, next/font's own convention.
+It is floored so a regex that stops matching fails rather than passing empty, and it is
+doc-commented as the completeness check, naming the fifth family that lived in that file
+for months as the thing the outward-only direction could not see.
+`tests/unit/sog-ui/typography.test.ts` gains the same assertion against the demo's layout.
+`tests/unit/styling/globals-declares-no-face.test.ts` is new, the sibling of
+`globals-declares-no-colour.test.ts` and written in its shape (comments stripped first, a
+declaration told from a use by what precedes it, one `WHY` naming the fix): the app's
+stylesheet declares no `--font-*` at all, and its only `font-family` is the body's
+`var(--font-sans)`. The colour test's own doc comment, which still listed "the one face
+variable" among what the stylesheet may declare, is corrected and points at the sibling.
+
+**Step 3's other half, the lint.** Three bans in `eslint.config.mjs`, in the style of the
+colour ones — node-matched, each message saying what to do instead, each exemption a block
+of its own with its reason written out, no blanket glob.
+`next/font` and its subpaths are importable by `src/app/layout.tsx` alone, as a
+`no-restricted-imports` pattern; the message names the layout as the one place a face is
+loaded and says everywhere else sets a face rather than loading one. The pattern is
+restated in the three other blocks that set that rule, because a later block replaces a
+rule's options rather than merging with them, and the layout's own block is the exemption.
+A family spelled as a string is banned: a `fontFamily` object property or JSX attribute
+whose value is a string or template literal, and a `font-family:` inside a string —
+an *identifier* value passes, which is the whole point, since the OG cards pass the
+derived constant. The mail keeps its own narrower `font-family:` ban (a family *name*
+after the colon, so the interpolated stack passes) and the app-wide form is deliberately
+left out of the mail's block, so the two never both fire on the derived stack.
+And in a class string — the same `CLASS_STRING_SCOPES` the palette ban reads — `font-[…]`
+and any `font-<word>` that is not a face utility or a weight. The four face utilities are
+read off `theme.css`, so the library adds a face and the lint learns it on the next run;
+the four weights (`font-normal`, `font-medium`, `font-semibold`, `font-bold`) are
+enumerated from what the tree actually spends, with a doc comment saying they are the
+Heading adoption's and leave with it.
+Every ban was confirmed against a deliberately-bad line and the probes reverted: the
+`next/font` import, a `fontFamily: "Arial"` in a style object and as a JSX attribute, a
+`font-family: Arial` string, a `font-display` class and a `font-[Arial]` class, each in an
+ordinary component, in an artwork-exempt file and in a mail template.
+
+**Step 4, the primitive.** Nothing to ship: the face utility already is one. There is one
+way to set a face, it is a single class, and after the lint there is no second way to
+write it.
+
+**And the rules move to where the mechanism is.** `src/CLAUDE.md` loses both face rules —
+"Poppins is the app face… loaded through `next/font`" and "a `next/font` variable class
+goes on `<html>`" — both of which § Faces in the package's `CLAUDE.md` already states; its
+pointer list no longer names faces among the app file's transitional UI sections, and its
+"colour has already left" note now says the faces have too and names the three test
+directories. The sentence-case rule stays, because it is Heading's.
+`packages/sog-ui/CLAUDE.md` § Faces gains the mechanism in the paragraph's own voice: a
+consumer loads exactly the faces named there and no other, defines none of its own, spells
+no family, and lint and the contract tests hold it.
+
+**Status: landed.**
 
 ## 13. The world voice, on its best cases
 

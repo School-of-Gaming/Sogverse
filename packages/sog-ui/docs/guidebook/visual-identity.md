@@ -80,17 +80,11 @@ The palette is loud on purpose, and the same restraint that governs vocabulary s
 
 ## A.3 Typography
 
-Three typefaces do the work, each with a defined job. A fourth group is reserved for campaigns. **Work Sans, which earlier versions of this guide used, is retired**; the font files may still sit in the Brand Kit folder, but do not build anything new on them.
-
 ### The three working faces
 
 **Poppins is the workhorse.** Headings and body copy on the website and in most contexts. A geometric, rounded, warm sans that reads as trustworthy to parents and approachable to children, which is exactly the ally-at-the-table register. Free on Google Fonts, full weight range. Fallback: `system-ui, sans-serif`.
 
 **Crimson Pro is the serif accent.** A humanist serif kept for special use: editorial headlines, pull quotes, the Princi-Pal's long-form pieces, and moments that want a little more warmth or gravity than Poppins gives. It is a seasoning, not a staple. Never set long UI or body text in it on screen.
-
-**Space Mono is the world.** The typewriter-monospace face of Sogverse itself: in-platform UI, campaign posters, quest and story artwork, and anything meant to feel like it comes from inside the game world. It answers a question earlier drafts left open, the monospace on the colour sheets is Space Mono, and it is official. Keep it out of the marketing website's plain parent-facing copy, where Poppins carries trust better.
-
-**Plus Jakarta Sans is not used.** It appeared in some earlier notes, but it is close enough to Poppins that keeping both adds confusion without adding range. Poppins is the keeper.
 
 ### A working type scale for the website
 
@@ -110,25 +104,6 @@ Three typefaces do the work, each with a defined job. A fourth group is reserved
 - **Emphasis is bold, not italic**, in UI and body. Reserve italics for genuine titles and the rare editorial flourish.
 - **Body line length caps around 70 characters** on desktop for readability.
 - **Two or three weights per piece**, no more. The family gives you many; using many is how a layout starts to look nervous.
-
-### Campaign and story accent fonts
-
-For gamer-facing campaign art only, never the website, three display faces set atmosphere. Choose by the feeling you want:
-
-- **Lazydog** for cartoonish, playful, speech-bubble contexts.
-- **Shlop** for spooky content (Halloween camps and the like).
-- **True Typewriter** for mystery and adventure atmosphere.
-
-These are mood tools for posters and social, chosen deliberately per campaign. They never appear in parent-facing, safety, or informational copy.
-
-### The two faces you cannot set yourself
-
-The logo's own lettering is locked artwork, not type you can reuse:
-
-- **The "SOG" monogram** in the logo is a custom gamified display face. It exists only inside the logo. Do not recreate it for headlines or hunt for a lookalike; its scarcity is what makes the badge feel special.
-- **The condensed sans** in "SCHOOL OF GAMING" likewise lives only in the lockup.
-
-If a headline ever needs more energy than Poppins and the campaign faces provide, that is a brief for a designer, not a free gaming font grabbed off the internet.
 
 ## A.4 Trademark and legal status
 

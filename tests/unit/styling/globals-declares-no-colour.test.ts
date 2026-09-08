@@ -17,9 +17,12 @@ import { describe, expect, it } from "vitest";
  *
  * So the test is not "no `--color-*`" — that phrasing invites the next colour to
  * arrive under a name that dodges it (`--brand-amber`, `--surface-2`). It
- * enumerates the whole set instead: two layout heights, the radius scale, and
- * the one face variable. Anything else declared here fails, and the failure is
- * the question "which adoption owns this, and why is it here instead of there?"
+ * enumerates the whole set instead: two layout heights and the radius scale.
+ * Anything else declared here fails, and the failure is the question "which
+ * adoption owns this, and why is it here instead of there?" The face half of
+ * the same seam is this file's sibling, `globals-declares-no-face.test.ts`: no
+ * `--font-*` is declared here at all, because the faces are the library's and
+ * the variables behind them are next/font's.
  *
  * Adding to the allowed set is a deliberate act. A token that genuinely belongs
  * to Sogverse rather than to the brand — a measured layout value, something the

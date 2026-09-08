@@ -46,6 +46,35 @@ function faceCall(layout: string, variable: string): string {
   return layout.slice(open, close + 2);
 }
 
+/**
+ * Every font loader the layout imports, by the identifier it is imported under.
+ *
+ * The module specifier is matched rather than the identifier, so a default
+ * import (`localFont` from `next/font/local`) is caught alongside the named
+ * Google ones — a face loaded from a file on disk is a family the library never
+ * named just as surely as a fifth Google one is. An alias resolves to the
+ * imported name, which is the face next/font actually loads.
+ */
+function fontLoaders(layout: string): string[] {
+  return [
+    ...layout.matchAll(/import\s+([^;]+?)\s+from\s+"next\/font\/[a-z]+"/g),
+  ].flatMap((match) =>
+    match[1]
+      .replace(/[{}]/g, " ")
+      .split(",")
+      .map((name) => name.trim().split(/\s+as\s+/)[0].trim())
+      .filter((name) => name.length > 0),
+  );
+}
+
+/**
+ * The identifier next/font exposes each face under: the family name with its
+ * spaces as underscores, which is next/font's own convention.
+ */
+const FACE_LOADERS = Object.values(FACES).map((face) =>
+  face.name.replace(/ /g, "_"),
+);
+
 describe("the face contract", () => {
   // Vitest's `it.each([])` registers nothing and the suite passes green, so the
   // table is floored: an emptied face list must fail rather than vanish.
@@ -98,6 +127,38 @@ describe("the face contract", () => {
       }
     },
   );
+});
+
+/**
+ * **The completeness check: the demo layout loads the faces the library names
+ * and no other.**
+ *
+ * The assertions above run outward from `FACES` — every face the library names
+ * is defined here — and that direction alone is how a fifth family lived in the
+ * app's own layout for months: it was loaded, given a variable and spent on
+ * five surfaces while every face in the list was also present, so nothing was
+ * ever missing and no test had anything to say. This runs the other way, from
+ * the file back to the list, which is what turns the enumeration into a command
+ * rather than an inventory. The demo is the contract's reference
+ * implementation, so it is held to the half a consumer is most likely to break:
+ * a face the library has not named cannot be loaded, and adding one means
+ * adding it to `FACES` first.
+ */
+describe("no face but the library's", () => {
+  const loaders = fontLoaders(readFileSync(DEMO_LAYOUT, "utf8"));
+
+  // Floored for the same reason the face table is: a regex that stops matching
+  // reports nothing and reads as a check that is holding.
+  it("finds the layout's font loads", () => {
+    expect(loaders.length).toBeGreaterThanOrEqual(FACE_LOADERS.length);
+  });
+
+  it.each(loaders)("%s is a family @sog/ui names", (loader) => {
+    expect(
+      FACE_LOADERS.includes(loader),
+      `the demo layout loads ${loader}, which is not a face in FACES — a face the library has not named cannot be loaded, whether or not it exists in the brand's art. See packages/sog-ui/src/tokens/typography.ts.`,
+    ).toBe(true);
+  });
 });
 
 /**

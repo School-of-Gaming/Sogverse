@@ -21,9 +21,9 @@ visual impact alone.
 ## How the owner rules on an adoption
 
 The theme adoption is the first that needed the owner to decide values rather than
-accept plumbing, and it settled the shape every later adoption reuses — faces, headings,
-icons, spacing, each of which will put a set of decisions in front of the owner. The
-shape, in the order it runs:
+accept plumbing, and it settled the shape every later adoption reuses — headings, icons,
+spacing, each of which will put a set of decisions in front of the owner; faces is the
+first that ran on it. The shape, in the order it runs:
 
 1. **Read what the brand says about the topic before anything is built**, including what
    it does not say. The Guidebook is light-first and says almost nothing about dark
@@ -130,13 +130,86 @@ stylesheet with them. Every token carries its rule and its reason in a doc comme
 the rules that no value can state — a colour exists only at its authored value, a colour
 is a figure on the dark ground rather than a tint of it, the budget a page spends — are in
 this package's `CLAUDE.md`. Sogverse's own stylesheet now declares no colour at all: two
-layout heights, the radius scale and the display-face pointer are all that is left, and
-each is a line item above. Four things hold it: `tests/unit/sog-ui/` (the generator's
+layout heights and the radius scale are all that is left, and each is a line item above. Four things hold it: `tests/unit/sog-ui/` (the generator's
 parity with its committed output, the measured pairings, the neutral set, the picks, the
 identicon), `tests/unit/styling/` (no colour token in the app's stylesheet, no token spent
 at an alpha step, no glass of the app's own, no universal border default), and two lint
 bans in `eslint.config.mjs` — a hex literal and a raw Tailwind palette class — whose only
 exemptions are artwork, named one by one with reasons.
+
+### 1b. Faces — landed
+
+The theme's other half, taken on its own once the plumbing it rode on was proven. It is
+numbered beside the theme rather than after it because it moves no component and adds no
+API: the faces arrived with the theme, and this is the adoption that decided where each
+one goes and closed the ways Sogverse could still name one of its own.
+
+Why here: the face variables were already on `<html>` and the tokens already generated, so
+the questions left were rulings rather than plumbing — which face each site takes — and
+they are the smallest set of decisions the owner can be asked for in the shape the theme
+settled. It also had to run before Heading: a heading's scale is decided on top of a face,
+and ruling a size against a family that was about to change is ruling twice.
+
+Needs in the library first: nothing beyond what the theme landed.
+
+Changes in Sogverse: the five sites set in a display face convert to a library face and
+the display face's load, token and class retire with them; the mail's family literal and
+the Open Graph card's become derivations from the library; the About page's pull quote
+takes the serif and its italic.
+
+Lint: three, one per way a face can be written — `next/font` outside the root layout, a
+family spelled as a string, and a `font-*` class that is neither one of the library's four
+face utilities nor a weight.
+
+Done when: every family Sogverse names is the library's, and nothing in `src/` can name
+one that is not.
+
+**What it landed (2026-09-08).** The library declares five faces and the list is
+exhaustive: **Poppins**, the app face, body copy and every heading, with no display face
+beside it because a heading that wants personality gets the scale; **Space Mono**, the
+site's one monospace and the machine face — a room code, a password, an id, a log, an
+inline code span, a placeholder no customer should see — never a voice, a heading or a
+name; **Crimson Pro**, the editorial serif, which now carries its true italic for its one
+placement, the About page's pull quote in the Princi-Pal's voice, because a synthesised
+slant on a serif is a skew of the upright alphabet rather than the italic one;
+**Dancing Script**, a signature line and nothing else; and, beside that list rather than
+in it, **the mail face** — the reader's own system sans, which mail alone may spend, with
+no webfont ever loaded in front of it, because the clients most readers use load none and
+a face that reaches a minority makes the mail two designs. **The world voice was put to
+its strongest cases and not taken**: the zone names, the room heading, the product titles,
+the child's greeting and the call-ended heading were all drawn in it beside the app face,
+and the ruling was Poppins everywhere — one face, one job, and no call site left deciding
+whether a string is lore. **The display face is retired**: Press Start 2P is not loaded,
+`--font-display` is gone from the app's stylesheet, and the five surfaces that spent it —
+the home hero, the Roblox hero, the gamer greeting, the admin all-clear title, the
+call-ended heading — are the app face, each keeping the weight it asked for, which its old
+face could not draw. The product banner's no-image fallback says `NO IMAGE` in the machine
+face instead of setting "SOG" in a hand-typed system stack, so nothing in Sogverse
+recreates the logo's monogram in type.
+
+Four mechanisms hold it, and between them a face Sogverse defines for itself does not
+compile. `tests/unit/theme/face-contract.test.ts` and its sibling
+`tests/unit/sog-ui/typography.test.ts` assert the contract in **both** directions — every
+face the library names is loaded with every style it declares, and every `next/font` load
+in the layout names a family the library names, which is the completeness check and the
+thing whose absence let a fifth family live in the layout for months. The second also
+holds the mail face outside the loaded list: its stack names no family the consumer loads,
+and no token is emitted for it. `tests/unit/styling/globals-declares-no-face.test.ts` keeps
+`--font-*` out of the app's stylesheet and holds its one `font-family` to the library's own
+token. And three lint bans in `eslint.config.mjs` close the three spellings, each with its
+exemptions named one by one: `next/font` is importable by `src/app/layout.tsx` alone, a
+`fontFamily` or a `font-family:` may not be a string (an identifier passes — the Open Graph
+cards pass a constant derived from the app face), and a `font-*` class must be one of the
+four face utilities the theme generates, read off the theme itself, or one of the four
+weights this tree writes. The primitive needed no shipping: the face utility already is
+one, so conforming is one class and departing does not compile.
+
+Where each rule lives: the faces themselves, their placements and everything decided
+against are doc comments in `packages/sog-ui/src/tokens/typography.ts`; the rules no value
+can state — the list is exhaustive, mail is set in the reader's own sans, a consumer loads
+what the library names and spells no family — are in this package's `CLAUDE.md` § Faces.
+`src/CLAUDE.md`'s two face rules are gone with this adoption; the sentence-case rule stays
+there, because it is Heading's.
 
 ### 2. Heading
 
@@ -185,10 +258,10 @@ import once nothing uses it.
 Done when: every clickable action in Sogverse is the library's button and its committing
 state is the library's.
 
-## After these three
+## After these
 
 The audit named the rest of the missing middle, in rough order of how many hand-rolled
 sites each retires: the inline error and alert, the empty state, the skeleton, the chip
 and status chip, the selection edge, the search input, the person row, the page header,
-select, table. Each takes its position when the three above have landed and the shape of
+select, table. Each takes its position when the adoptions above have landed and the shape of
 an adoption is settled; none is defined in the library before its turn.

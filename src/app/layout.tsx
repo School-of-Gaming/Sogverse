@@ -49,10 +49,11 @@ const crimsonPro = Crimson_Pro({
   variable: "--font-crimson-pro",
 });
 
-// The site's one monospace: the world voice where the platform names one of its
-// own places, and the machine face for a room code, a password, an id or a log.
-// The library owns both rules; Sogverse loads the face and spends it through
-// `font-mono`, which real surfaces reach for on first paint — so it preloads.
+// The site's one monospace, and the machine face: a room code, a password, an
+// id, a log, a placeholder no customer should see. The library owns that rule —
+// and owns the decision that it is never a voice, a heading or a name — while
+// Sogverse loads the face and spends it through `font-mono`, which real
+// surfaces reach for on first paint, so it preloads.
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin", "latin-ext"],
