@@ -622,6 +622,36 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
     expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
   });
 
+  it("answers 400 with stripeUpdated when the group stopped being the target's under the write", async () => {
+    mockAuthenticatedAdmin();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: "23514",
+        message:
+          "group … is not a group of the target product … — a switched seat can only land in a group of the club it moves to",
+      },
+    });
+
+    const response = await POST(
+      commitRequest({ ...commitBody, groupId: TARGET_GROUP_ID }),
+      { params },
+    );
+    const body = await response.json();
+
+    // A 400 rather than the outage's 500, and refusal-free rather than named:
+    // the pair is what tells the sheet this is permanent even though nothing
+    // in the refusal vocabulary words it. The money moved, so the admin is
+    // told so whatever else is true.
+    expect(response.status).toBe(400);
+    expect(body.stripeUpdated).toBe(true);
+    expect(body.refusals).toBeUndefined();
+    expect(asString(body.error)).toContain("not a group of the target club");
+    // The rejected alternative, asserted: no compensating second call.
+    expect(mockSubscriptionUpdate).toHaveBeenCalledTimes(1);
+    expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
+  });
+
   it("answers 409 when the seat collided on the target under the write", async () => {
     mockAuthenticatedAdmin();
     mockRpc.mockResolvedValue({

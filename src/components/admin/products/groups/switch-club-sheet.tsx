@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -284,16 +284,36 @@ export function SwitchClubSheet({
   // money moved first.
   const commitRefusals = failure?.refusals ?? [];
   // The one failure the admin can act on from here: Stripe is already on the
-  // new price, the database step did not run, and nothing refuses the move — so
-  // pressing again replays the same request and finishes it.
+  // new price, the database step did not run, nothing refuses the move, and the
+  // route answered a 500 — the outage — so pressing again replays the same
+  // request and finishes it. The status is load-bearing, not decoration: a 4xx
+  // with the money moved is a permanent no the refusal vocabulary deliberately
+  // does not word (the RPC's group guard, raced into after Stripe moved), and
+  // offering a retry for it would offer a press that can only fail again.
   const retryable =
-    failure?.stripeUpdated === true && commitRefusals.length === 0;
+    failure?.stripeUpdated === true &&
+    commitRefusals.length === 0 &&
+    failure.status >= 500;
   const answered =
     targetId !== null &&
     check.data !== undefined &&
     refusals.length === 0 &&
     commitRefusals.length === 0;
   const confirmDisabled = committing || !(answered || retryable);
+
+  // Each stage replaces the control the admin was standing on: picking a club
+  // unmounts the row they pressed, and Back unmounts itself. Focus would fall
+  // to the body, so the arriving stage takes it — on a stage CHANGE only, since
+  // the sheet primitive owns focus when the sheet first opens.
+  const searchRef = useRef<HTMLInputElement>(null);
+  const backRef = useRef<HTMLButtonElement>(null);
+  const stage = targetId === null ? "picker" : "detail";
+  const previousStage = useRef(stage);
+  useEffect(() => {
+    if (previousStage.current === stage) return;
+    previousStage.current = stage;
+    (stage === "detail" ? backRef.current : searchRef.current)?.focus();
+  }, [stage]);
 
   const handleConfirm = () => {
     if (targetId === null) return;
@@ -355,6 +375,7 @@ export function SwitchClubSheet({
                 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
               />
               <Input
+                ref={searchRef}
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -391,6 +412,7 @@ export function SwitchClubSheet({
         ) : (
           <div className="border-b border-border px-6 py-4">
             <button
+              ref={backRef}
               type="button"
               onClick={handleBack}
               disabled={committing}
@@ -569,7 +591,14 @@ export function SwitchClubSheet({
                         )}
                       </>
                     ) : failure.stripeUpdated ? (
-                      t("commit.stripeUpdated")
+                      // Money moved and no refusal to name: the outage invites
+                      // the press, and the permanent 4xx says so instead of
+                      // asking for one that cannot land.
+                      retryable ? (
+                        t("commit.stripeUpdated")
+                      ) : (
+                        t("commit.stripeUpdatedStuck")
+                      )
                     ) : (
                       t("commit.failed")
                     )}
@@ -584,19 +613,20 @@ export function SwitchClubSheet({
           <Button variant="outline" onClick={onClose} disabled={committing}>
             {c("cancel")}
           </Button>
-          {/* Present from the moment stage two opens, so nothing lands in the
-              footer after the fact. The check is what enables it, and the one
-              exception is the retry: a commit that updated Stripe and then
-              failed to move the row for no stated reason leaves this live so
-              the admin can press again with the same request id. A failure that
-              DOES name a refusal is permanent, so it kills the confirm however
-              far the money got. */}
-          {targetId !== null && (
-            <Button onClick={handleConfirm} disabled={confirmDisabled}>
-              {committing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-              {t("confirm")}
-            </Button>
-          )}
+          {/* Present from the moment the sheet opens, in both stages, so
+              nothing lands in the footer after the fact — a confirm appearing
+              on stage two would land on TOP of the mobile stack and push Cancel
+              down. It is simply dead in stage one, where no club is chosen yet.
+              The check is what enables it, and the one exception is the retry: a
+              commit that updated Stripe and then failed to move the row for no
+              stated reason leaves this live so the admin can press again with
+              the same request id. A failure that DOES name a refusal — or that
+              names a permanent reason of its own — is final, so it kills the
+              confirm however far the money got. */}
+          <Button onClick={handleConfirm} disabled={confirmDisabled}>
+            {committing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+            {t("confirm")}
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

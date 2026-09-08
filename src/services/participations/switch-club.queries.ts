@@ -43,20 +43,34 @@ export const switchClubKeys = {
  * design plans a retry for, since pressing again with the same request id
  * replays a Stripe call that prorates nothing and re-runs the database half. The
  * dialog therefore leaves the confirm live for `stripeUpdated` with no refusals,
- * and for that pairing alone.
+ * and only where the `status` says a press could still land.
+ *
+ * `status` is the third field, and it is what separates the two refusal-free
+ * failures the route can answer with the money already moved: a 500 is the
+ * outage the retry exists for, while a 4xx is a permanent no — the RPC's group
+ * guard raced into after Stripe moved, which the enum deliberately does not
+ * word as a refusal. Without it those two are indistinguishable on the wire and
+ * the dialog would invite a press that can only fail again.
  */
 export class SwitchClubCommitError extends Error {
   readonly refusals: SwitchClubRefusal[];
   readonly stripeUpdated: boolean;
+  /** The response's HTTP status; 0 where the failure carried none. */
+  readonly status: number;
 
   constructor(
     message: string,
-    options: { refusals?: SwitchClubRefusal[]; stripeUpdated?: boolean },
+    options: {
+      refusals?: SwitchClubRefusal[];
+      stripeUpdated?: boolean;
+      status?: number;
+    },
   ) {
     super(message);
     this.name = "SwitchClubCommitError";
     this.refusals = options.refusals ?? [];
     this.stripeUpdated = options.stripeUpdated ?? false;
+    this.status = options.status ?? 0;
   }
 }
 
@@ -67,8 +81,12 @@ async function readCommitError(response: Response): Promise<never> {
   throw new SwitchClubCommitError(
     body.success ? body.data.error : "Could not switch club",
     body.success
-      ? { refusals: body.data.refusals, stripeUpdated: body.data.stripeUpdated }
-      : {},
+      ? {
+          refusals: body.data.refusals,
+          stripeUpdated: body.data.stripeUpdated,
+          status: response.status,
+        }
+      : { status: response.status },
   );
 }
 

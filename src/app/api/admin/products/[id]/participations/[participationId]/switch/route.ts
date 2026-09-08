@@ -169,13 +169,14 @@ export const POST = defineRoute({
       // rather than a fault, and the answer is NAMED: a race carries the
       // matching refusal, which is what tells the dialog to word the reason and
       // kill the confirm instead of inviting a retry that can never succeed.
-      // Only a genuine outage is retryable, and only that one arrives with no
-      // refusal.
+      // Only a genuine outage is retryable, and it is the only failure that is
+      // BOTH a 500 and refusal-free — the group guard is refusal-free too, and
+      // its 400 is what tells the sheet not to offer a press it cannot use.
       const status = statusForFailedMove(outcome.code);
       const refusal = refusalForFailedMove(outcome.code, outcome.message);
       return NextResponse.json(
         {
-          error: messageForFailedMove(outcome.code),
+          error: messageForFailedMove(outcome.code, outcome.message),
           stripeUpdated: true,
           ...(refusal ? { refusals: [refusal] } : {}),
         },
@@ -232,12 +233,15 @@ function statusForFailedMove(code: string | null): number {
   return 500;
 }
 
-function messageForFailedMove(code: string | null): string {
+function messageForFailedMove(code: string | null, message: string): string {
   // The two shapes are deliberately different sentences. A race is permanent —
   // pressing again cannot change the fact the write collided with — so its
   // wording states the state Stripe is in and stops there; only the outage
   // wording invites a retry.
   const moved = "The Stripe subscription is already on the new club's price";
+  if (isGroupNotOnTarget(code, message)) {
+    return `That group is not a group of the target club, so the seat could not be moved. ${moved}, and that has to be sorted out in Stripe.`;
+  }
   if (code === "23505") {
     return `This gamer already holds a seat on the target club, so the seat could not be moved. ${moved}, and that has to be sorted out in Stripe.`;
   }
@@ -253,11 +257,19 @@ function messageForFailedMove(code: string | null): string {
  * is an outage with no refusal to give, which is exactly the case the dialog
  * offers a retry for.
  *
- * `23514` covers three of the RPC's guards, and Postgres gives a raised
+ * `23514` covers four of the RPC's guards, and Postgres gives a raised
  * `check_violation` no constraint name, so the raised message is what separates
- * them — the substrings below are the load-bearing halves of those three
- * `RAISE EXCEPTION` lines (migration 00245). An unrecognised one falls back to
+ * them — the substrings below are the load-bearing halves of those
+ * `RAISE EXCEPTION` lines (migration 00246). An unrecognised one falls back to
  * no refusal, which degrades to the generic wording rather than to a wrong one.
+ *
+ * The fourth — a group that is not the target's — deliberately maps to no
+ * refusal. It is a malformed request from a client the sheet itself built, not
+ * a fact about this seat an admin is told in the refusal vocabulary, so the
+ * enum stays as it is and the answer is a plain 400 carrying
+ * `stripeUpdated: true` and its own sentence. `statusForFailedMove` already
+ * gives every `23514` a 400, which is what separates it from the retryable
+ * outage: only a 500 with no refusals invites another press.
  */
 function refusalForFailedMove(
   code: string | null,
@@ -265,7 +277,7 @@ function refusalForFailedMove(
 ): SwitchClubRefusal | null {
   if (code === "23505") return "already_on_target";
   if (code === "55000") return "no_live_subscription";
-  if (code === "23514") {
+  if (code === "23514" && !isGroupNotOnTarget(code, message)) {
     if (message.includes("(same product)")) return "same_product";
     if (message.includes("not active")) return "participation_not_active";
     if (message.includes("not a paid subscription club")) {
@@ -273,4 +285,16 @@ function refusalForFailedMove(
     }
   }
   return null;
+}
+
+/**
+ * The one `23514` with no refusal to give: the RPC's group guard, raised when
+ * the chosen group does not belong to the target club. The pre-flight answers
+ * this before Stripe is touched, so reaching it here means the group stopped
+ * being the target's while the switch was running — the money has moved, and
+ * the admin has to be told that in its own words rather than through a refusal
+ * the vocabulary does not carry.
+ */
+function isGroupNotOnTarget(code: string | null, message: string): boolean {
+  return code === "23514" && message.includes("is not a group of the target");
 }
