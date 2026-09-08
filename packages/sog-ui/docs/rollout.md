@@ -33,11 +33,10 @@ with its demo at `packages/sog-ui/demo` run through Next's directory argument on
 
 **Inputs are not truth.** Two sources are consulted while deciding, and neither is carried
 into the code. The School of Gaming Brand Voice & Identity Guidebook (v2.0, kept beside
-this file at `brand-guidebook-v2.0.md` until the library covers it) holds the brand's
-stated opinions;
-the reference branch (`feat/brand-palette-design-pass`, tag `ref/brand-palette-design-pass`)
-holds tokens, a button recipe, two styling tests, a colour grammar and the litigation
-history of the rulings behind them. A value enters the library because the owner decides
+this file as an excerpt in `guidebook/` until the library covers it) holds the brand's
+stated opinions; the reference branch (`feat/brand-palette-design-pass`, tag
+`ref/brand-palette-design-pass`) holds tokens, a button recipe, two styling tests, a colour
+grammar and the litigation history of the rulings behind them. A value enters the library because the owner decides
 it here, in the demo, and it enters with no source label, no provenance field and no
 provisional status. The library is the truth from the moment a value is in it; the inputs
 are where to look when deciding, and the origins record is where the history stays.
@@ -97,8 +96,8 @@ as the token source.
    interleave: a component is built, shown, adopted and locked before the next begins.
 8. **Lockdown.** The seam lint: Sogverse's source contains no utility class; it composes
    and never paints. `src/CLAUDE.md` carries no UI rule of its own.
-9. **Completion.** The reference branch and its tag are deleted, the Guidebook file and
-   this file are deleted, the deviations entries the library resolved are removed.
+9. **Completion.** The reference branch and its tag are deleted, the Guidebook
+   folder and this file are deleted, the deviations entries the library resolved are removed.
 
 ## Acceptance criteria
 
