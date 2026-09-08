@@ -67,12 +67,13 @@ session cannot create or modify another worktree, and the guard will refuse.
    `services/<name>/node_modules`), and the worktree has no such folder — so
    from inside it Node walks straight past to the root's copy, the wrong
    version. It fails only where that package is loaded, and it looks like a
-   code error rather than an environment one: today SOG-UI's `lucide-react`
-   is newer than the app's, and the workspace type-check step and
-   `tests/unit/sog-ui/grammar.test.ts` report a missing icon export from
-   every worktree while the main checkout and CI stay green. Junction every
-   nested install into the worktree — run from the main checkout, in
-   PowerShell, before entering it:
+   code error rather than an environment one — a missing export, from a
+   symbol the main checkout and CI both resolve fine. **No package pins a
+   split version today**, so this step is insurance against the next one
+   rather than a live fault; run it anyway, because the day one appears is
+   the day the failure it produces is hardest to read. Junction every nested
+   install into the worktree — run from the main checkout, in PowerShell,
+   before entering it:
 
    ```
    Get-ChildItem packages, services -Directory |
