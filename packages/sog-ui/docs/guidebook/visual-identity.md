@@ -46,13 +46,6 @@ Ten colors plus neutrals. The organization below follows the two color sheets in
 
 The four remaining families are the Yty-Element colors. This mapping is fixed (Section 1 and Section 12), and it is how a value gets a consistent visual identity across badges, club pages, and social content.
 
-| Element | Color | Strong | Soft |
-| :---- | :---- | :---- | :---- |
-| **Harmony** | Pink | **\#F55B9A** | **\#FA7FA3** |
-| **Glow** | Green | **\#1AB061** | **\#6AC66B** |
-| **Valor** | Orange | **\#FD700D** | **\#FF993D** |
-| **Wit** | Blue | **\#3A71DE** | **\#4DB3F5** |
-
 Each club page carries its dominant Yty-Element color as a subtle cue. On social, color-code content by the value it serves: Harmony/pink for community, friendship, and testimonials; Glow/green for growth, milestones, and progress; Valor/orange for challenges, camps, and courage; Wit/blue for learning, tips, and how-to; Violet for high-energy launches and Sogverse announcements; amber for general brand and CTAs.
 
 ### Neutrals

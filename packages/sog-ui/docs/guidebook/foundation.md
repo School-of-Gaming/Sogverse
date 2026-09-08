@@ -28,10 +28,10 @@ Yty is the force that keeps Sogverse in balance, and it is built from four eleme
 
 | Element | The relationship | What it covers | Colour |
 | :---- | :---- | :---- | :---- |
-| **Harmony** | With yourself | Balance, emotional control, self-acceptance, rest, knowing when to stop | Pink (\#F55B9A) |
-| **Glow** | With others | Empathy, kindness, belonging, friendship, communication. A warm, outward light; there is also a quiet sense of flourishing and becoming in it | Green (\#1AB061) |
-| **Valor** | With society | Teamwork, innovation, civic courage, trying the hard thing | Orange (\#FD700D) |
-| **Wit** | With technology | Critical thinking, media literacy, curiosity, sharp thinking, navigating the digital world | Blue (\#3A71DE) |
+| **Harmony** | With yourself | Balance, emotional control, self-acceptance, rest, knowing when to stop | Pink |
+| **Glow** | With others | Empathy, kindness, belonging, friendship, communication. A warm, outward light; there is also a quiet sense of flourishing and becoming in it | Green |
+| **Valor** | With society | Teamwork, innovation, civic courage, trying the hard thing | Orange |
+| **Wit** | With technology | Critical thinking, media literacy, curiosity, sharp thinking, navigating the digital world | Blue |
 
 Three rules. **Never reorder them** from Harmony, Glow, Valor, Wit. **Never invent a fifth.** And when copy is for parents or partners, these map onto the plain-language Human Skills in Section 5.2, which is the vocabulary that audience already owns.
 

@@ -13,10 +13,12 @@ form is rarely the Guidebook's words and need not be; what it must be is a mecha
 makes the claim true by construction, verified before the cut. A claim merely restated as
 prose is not covered. Cut whole paragraphs or subsections, never a clause, and never
 reword what stays; a paragraph the mechanism only partly covers stays whole; a file that
-empties is deleted and its row leaves this index. What this folder
-holds is exactly what is not yet covered, its size is the measure of what remains, and the
-day it is empty the library has forgotten the Guidebook exists. A later sweep is not the
-mechanism: a piece left behind by the change that covered it is the defect.
+empties is deleted and its row leaves this index. A piece the owner has overruled leaves
+the same way, with the ruling listed below, since a rejected value is no longer input.
+What this folder holds is exactly what is not yet covered, its size is the measure of what
+remains, and the day it is empty the library has forgotten the Guidebook exists. A later
+sweep is not the mechanism: a piece left behind by the change that covered it is the
+defect.
 
 **Rule: open the one file that answers your question, never the set.** The split exists so
 a session spends context on one topic; reading the folder end to end costs what the single
@@ -54,6 +56,10 @@ Dropped because it governs a channel or a document outside this repo:
 - **B.1 Photography**, **B.3 Social post templates** — shooting and campaign-asset rules.
 - **12, the Notion reconciliation and Settled tables, and Still open** — provenance and
   cross-document sync. The two subsections that constrain copy are kept in `decision-log.md`.
+
+Overruled by the owner, 2026-09-08: **the Yty-Element strong/soft colour pairs** (the A.2
+table and the hexes in the foundation table). SOG-UI holds one colour per element, the
+accepted one, typed in its token source; Valor's orange is a declared departure.
 
 Dropped because it is navigation or metadata for a document that no longer exists in one
 piece: the **front matter**, the **table of contents**, the **colophon**, and the reading
