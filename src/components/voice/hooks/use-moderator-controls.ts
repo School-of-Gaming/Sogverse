@@ -80,8 +80,20 @@ export function useModeratorControls({
       case "moderatorMute": {
         const sender = Object.values(co.participants()).find((p) => p.session_id === fromId);
         if (!sender?.owner) break;
-        // UI feedback only — track change happens via updateParticipant,
-        // which triggers Daily's participant-updated event
+
+        // This message IS the channel by which a remote mute reaches our own
+        // intent state. The moderator's `updateParticipant` changes the *track*
+        // at the SFU, and the UI no longer reads a local track back — on/off is
+        // synchronous intent (see the voice CLAUDE.md rule) — so without this
+        // the button would keep claiming we are unmuted. Mirrors moderatorLock.
+        const localSid = co.participants().local.session_id;
+        if (msg.targetSessionId === localSid) {
+          if (msg.track === "audio") {
+            setMicOn(false);
+          } else {
+            setCameraOn(false);
+          }
+        }
         break;
       }
       case "moderatorLock": {

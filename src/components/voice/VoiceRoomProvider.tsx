@@ -18,6 +18,7 @@ import { parseUserName } from "@/lib/voice/user-name";
 import {
   categoryFromDailyCameraError,
   classifyMediaError,
+  nextLocalMediaError,
   type MediaErrorCategory,
 } from "@/lib/voice/media-error";
 import { composeZones } from "@/lib/voice/zone-composition";
@@ -136,16 +137,21 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const [joined, setJoined] = useState(false);
   const [joining, setJoining] = useState(false);
   const [participants, setParticipants] = useState<VoiceParticipant[]>([]);
+  // The local user's *intent*, never Daily's local track state. Exactly four
+  // things write these: the user's own toggle, the join seed, an owner-verified
+  // moderator app message, and resetState. See the "Local mic/camera state:
+  // intent, not echo" rule in this directory's CLAUDE.md.
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const [localRole, setLocalRole] = useState<VoiceRole>("gamer");
   const [isDeafened, setIsDeafened] = useState(false);
-  // The current mic/camera acquisition failure, if any — set from Daily's
-  // normalized `camera-error` event (covers the join-time mic acquisition) and
-  // from a thrown camera toggle, cleared once a local track plays. Drives the
-  // troubleshooting copy in the mic-settings popover. Replaces the old
-  // inferred-from-empty-device-list "denied" guess with the real category.
+  // The local media *health* channel — what is wrong with the device right now,
+  // never whether the mic/camera is on. Fed from two places: Daily's normalized
+  // `camera-error` event (acquisition failures — denied / no-device / in-use,
+  // plus the thrown camera-toggle path), and the local track state on every
+  // participant update (an `interrupted` mic, via `nextLocalMediaError`). Drives
+  // the badge on the mic-settings chevron and the notice inside the popover.
   const [mediaError, setMediaError] = useState<MediaErrorCategory | null>(null);
   const activeSpeakerIdRef = useRef<string | null>(null);
   // Synchronous gate — events like track-started fire before joined-meeting,
@@ -225,14 +231,18 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     setParticipants(list);
 
     const local = pMap.local;
-    const audioPlayable = local.tracks.audio.state === "playable";
-    const videoPlayable = local.tracks.video.state === "playable";
-    setMicOn(audioPlayable);
-    setCameraOn(videoPlayable);
-    // A live local track means the device subsystem is working now, so any prior
-    // acquisition error is stale — clear it. (iOS shares one mic/camera grant, so
-    // either track playing clears the shared-permission error.)
-    if (audioPlayable || videoPlayable) setMediaError(null);
+    // The local track state is *health*, never intent: it feeds the media-error
+    // channel and nothing else. `micOn`/`cameraOn` are set synchronously by the
+    // user's own toggle, the join seed, a moderator app message and resetState —
+    // reading them back from here is the bug this shape exists to prevent. Daily
+    // counts an `interrupted` track as still on (a stalled device, not an off
+    // one) and `setLocalAudio` only posts to the call machine, so the old
+    // read-back flipped the button to "muted" on a device hiccup, made the next
+    // click a no-op, and then flipped it back on the next of the many events
+    // this runs on. Same rule as the local user's own position below.
+    setMediaError((prev) =>
+      nextLocalMediaError(prev, local.tracks.audio.state, local.tracks.video.state),
+    );
     // Note: the local routing zone is NOT synced from local.userData here — it's
     // owned by useZoneMembership and updated synchronously on a move. Reading it
     // back from Daily's echo is what made routing lag a move on mobile Safari.
@@ -317,13 +327,18 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     async (
       roomUrl: string,
       token: string,
-      meta?: { sessionOpensAt?: string; audioDeviceId?: string | null },
+      meta?: { sessionOpensAt?: string; audioDeviceId?: string | null; micOn?: boolean },
     ) => {
       if (meta?.sessionOpensAt) sessionOpensAtRef.current = meta.sessionOpensAt;
       if (callObjectRef.current) {
         await callObjectRef.current.destroy();
       }
       resetState();
+      // The one place initial mic intent enters. The token's `start_audio_off`
+      // was minted from this same value — scheduled rooms always join mic-on,
+      // an instant room passes the lobby's choice — so the two agree by
+      // construction rather than by us reading Daily's answer back.
+      setMicOn(meta?.micOn ?? true);
 
       setJoining(true);
       audio.createAudioContext();
@@ -578,6 +593,9 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
 
   // --- Lock-aware toggles ---
 
+  // Both toggles compute from intent and write intent. `setLocalAudio` only
+  // posts a message to the call machine — it settles later and reports nothing
+  // back — so a read-back here would race the click that caused it.
   const toggleMic = useCallback(() => {
     if (!callObjectRef.current) return;
     if (moderator.localLocksRef.current.audio && !micOn) return;

@@ -151,7 +151,12 @@ function InstantVoiceSessionInner({ code, viewer, copyright }: InstantVoiceSessi
 
         const { token, roomUrl, role } = await response.json();
         setLocalRole(role);
-        await join(roomUrl, token, { audioDeviceId: media.audioDeviceId });
+        // `micOn` is the same value the token request carried into
+        // `start_audio_off`, so the room's intent state and the token agree.
+        await join(roomUrl, token, {
+          audioDeviceId: media.audioDeviceId,
+          micOn: media.micOn,
+        });
         setState({ phase: "in-call" });
         setJoining(false);
       } catch (err) {

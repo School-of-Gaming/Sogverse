@@ -1,4 +1,4 @@
-import type { DailyCameraErrorType } from "@daily-co/daily-js";
+import type { DailyCameraErrorType, DailyTrackState } from "@daily-co/daily-js";
 
 /**
  * The actionable category of a microphone/camera acquisition failure — what the
@@ -22,6 +22,15 @@ export type MediaErrorCategory =
   | "no-device" // NotFoundError — no mic/camera present
   | "in-use" // NotReadableError / *-in-use — held by another app/tab or hardware error
   | "insecure" // navigator.mediaDevices missing — not a secure (https) context
+  /**
+   * The track was acquired and the user has *not* turned it off, but the
+   * browser reports it as not delivering — the device was dropped or muted at
+   * the OS/Bluetooth level. Unlike the categories above this is not an
+   * acquisition failure: nothing was denied and no device is missing, so the
+   * recovery is reconnecting the device (or unmuting it where the OS muted it),
+   * re-picking it in the device list, or reloading.
+   */
+  | "interrupted"
   | "unknown";
 
 /**
@@ -86,4 +95,37 @@ export function categoryFromDailyCameraError(
     default:
       return "unknown";
   }
+}
+
+/**
+ * The next media-error value given the local participant's current track
+ * states. This is the *health* half of the local media model: on/off is the
+ * user's intent and is owned synchronously elsewhere, while the track states
+ * say only whether the device is delivering right now (see
+ * `src/components/voice/CLAUDE.md`). Nothing here may decide whether a mic or
+ * camera is "on".
+ *
+ * Pure, so it can be called on every Daily event without reasoning about
+ * ordering. The precedence, in order:
+ *
+ * 1. Audio `interrupted` — the mic exists and was not turned off, but the
+ *    browser has reported it as not delivering for long enough that Daily gave
+ *    up on it. That is the one condition worth telling the user about here.
+ * 2. Either track `playable` — a live local track proves the device subsystem
+ *    works, so any prior acquisition error is stale. (iOS shares one mic/camera
+ *    grant, so either track playing clears the shared-permission error.)
+ * 3. Audio `off` while we were reporting `interrupted` — the user turned their
+ *    mic off, so there is nothing wrong to report any more.
+ * 4. Otherwise keep what we had: acquisition errors (denied / no-device /
+ *    in-use, set from Daily's `camera-error`) persist until a track plays.
+ */
+export function nextLocalMediaError(
+  prev: MediaErrorCategory | null,
+  audioState: DailyTrackState["state"],
+  videoState: DailyTrackState["state"],
+): MediaErrorCategory | null {
+  if (audioState === "interrupted") return "interrupted";
+  if (audioState === "playable" || videoState === "playable") return null;
+  if (audioState === "off" && prev === "interrupted") return null;
+  return prev;
 }
