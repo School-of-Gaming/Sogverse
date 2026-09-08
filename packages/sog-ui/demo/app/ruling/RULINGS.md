@@ -112,10 +112,9 @@ belongs. But the library's own words are narrower than that — Space Mono is "s
 where the platform names one of its own places" — and "Welcome, Väinämöinen!" names no
 place. So this ruling is really two: whether the greeting takes the world voice, and
 whether the rule becomes *a surface inside the world* rather than *a place the platform
-names*. The honest alternative is Poppins here too, in which case Space Mono has no
-placement anywhere in Sogverse and the library carries a face nothing draws — which is
-survivable (Crimson Pro is in exactly that position, §11) but is worth ruling
-deliberately rather than by default.
+names*. The honest alternative is Poppins here too, in which case Space Mono keeps only
+the nine machine-text placements §7 gave it and the world voice names no place in
+Sogverse at all — survivable, but worth ruling deliberately rather than by default.
 
 **Status: open.**
 
@@ -194,7 +193,25 @@ no slash or dot, so `0` against `O` in a dictated room code, a copied id and a t
 password is the thing to look at, and if it fails there the answer is not "keep two
 tokens" but "the world voice is not the machine face and the library names a third".
 
-**Status: open.**
+**Ruled: yes, one monospace on the site, and it is Space Mono.** Anywhere the app used
+the UA monospace it now uses Space Mono. The zero was read against `O` at the sizes
+codes are set and it is clear.
+
+**What landed.** `FACES.brandMono` is `FACES.mono` at token `--font-mono`, pointing at
+the same `--font-space-mono` variable, so neither the consumer's `next/font` load nor
+the face-contract test moved; the theme was regenerated through the generator and now
+declares `--font-mono`, which overrides Tailwind's default so `font-mono` in Sogverse
+resolves to Space Mono. The face's doc comment carries the decision and its reason. The
+library's `CLAUDE.md` says Space Mono is the world voice and the machine face both. Every
+`font-brand-mono` in the demo is `font-mono`. In Sogverse every `font-mono` call site
+keeps its class; the three that asked for a weight the face does not draw moved to one it
+does — the code chip and the UTM value chip to `font-bold`, the share-link button to no
+weight class at all (finding 3, closed). The Space Mono load drops `preload: false` and
+its comment now says what the face is for. The app rule's clause claiming Space Mono is
+placed nowhere is deleted. §1 of the page loses the machine-text block and this section
+is gone from the page.
+
+**Status: landed.**
 
 ## 8. The product banner's "SOG"
 
@@ -293,9 +310,9 @@ that makes conforming cheapest.
    completeness check, and it is what makes the enumeration a command rather than a
    list.
 4. **The primitive is the face utility itself.** There is one greppable way to set a
-   face (`font-sans`, `font-serif`, `font-brand-mono`, `font-cursive`, and `font-mono`
-   if §7 rules yes) and the lint in (1) permits nothing else, so conforming is one
-   class and departing does not compile.
+   face — `font-sans`, `font-serif`, `font-mono`, `font-cursive`, the four the library
+   now names — and the lint in (1) permits nothing else, so conforming is one class and
+   departing does not compile.
 
 **Status: open.**
 
@@ -322,6 +339,7 @@ fixed in `src/` — these are findings for the change that lands the rulings.
    synthesises whatever it is asked for and nobody notices; Space Mono loads 400 and
    700, so under §7 these become synthesised too unless the weights move to what the
    face draws. Recorded for the §7 landing.
+   **Closed by §7:** the two 600s went to `font-bold`, the 500 dropped its weight class.
 4. **Press Start 2P is loaded `latin` only**, alone among the five faces — every
    library face carries `latin-ext` because the product ships Finnish, Swedish and
    French. Swedish's `ä` is inside `latin` and survives; the Finnish and French sets do
@@ -333,6 +351,9 @@ fixed in `src/` — these are findings for the change that lands the rulings.
    the library's theme, `font-mono` from Tailwind's own default. `font-brand-mono` has
    zero spends in `src/` — the token exists and nothing reaches it, which is the
    condition §7 and §3 between them resolve.
+   **Closed by §7:** the token is gone and `font-mono` is the library's, so every face
+   utility Sogverse spends now resolves to a token the library generates, `font-display`
+   excepted until Press Start retires.
 6. **Every face variable is on `<html>`.** The root layout puts all five `next/font`
    variable classes on the root element, and there is exactly one `<html>` in the app
    (the mail's own is a document, not a layout). No route group defines a second root

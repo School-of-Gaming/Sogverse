@@ -194,8 +194,9 @@ every inversion that reading makes, and every departure from the brand's colour 
 declared and justified in the colour source's doc comments, or it does not exist.
 
 **Faces.** The library owns the faces School of Gaming uses, and the list is exhaustive and
-defined by grammar: Poppins is the app face, body and every heading; Space Mono is the world
-voice, spent only where the platform names one of its own places; Crimson Pro is the
+defined by grammar: Poppins is the app face, body and every heading; Space Mono is the one monospace on the
+site, the world voice where the platform names one of its own places and the machine face
+for a room code, a password, an id, a log or an inline code span; Crimson Pro is the
 editorial voice, for quotes and pull-quotes and never for UI or body copy; Dancing Script
 is for a signature line and nothing else. The consumer loads the font files and exposes
 each face as a CSS variable on `<html>`, never on `<body>`, because the theme emits at

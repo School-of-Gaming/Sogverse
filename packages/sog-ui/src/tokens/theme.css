@@ -67,7 +67,7 @@
   /* Faces. The package owns the names; the consumer loads the files and defines the var() each token points at, on <html> and never on <body>. */
   --font-sans: var(--font-poppins), system-ui, sans-serif;
   --font-serif: var(--font-crimson-pro), Georgia, serif;
-  --font-brand-mono: var(--font-space-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-mono: var(--font-space-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-cursive: var(--font-dancing-script), cursive;
 
   /* The working type scale. Each step carries its size, line height and weight, so a `text-*` utility sets all three. */

@@ -104,18 +104,31 @@ export const FACES = {
     subsets: ["latin", "latin-ext"],
   },
   /**
-   * The world voice: the typewriter-monospace face of Sogverse itself, spent
-   * where the platform names one of its own places — in-world UI, quest and
-   * story artwork, campaign posters.
+   * The one monospace on the site, and it does two jobs. It is the world
+   * voice — the typewriter face of Sogverse itself, spent where the platform
+   * names one of its own places: in-world UI, quest and story artwork,
+   * campaign posters. It is also the machine face, for text a machine wrote or
+   * a person has to reproduce exactly: a room code, a password, an id, a log,
+   * an inline code span.
    *
-   * Read narrowly, and kept out of plain copy addressed to a parent, where the
-   * app face carries trust better. Deliberately not called `--font-mono`, which
-   * owns Tailwind's own utility and is spent on machine text — a room code, an
-   * id, an inline code span — that must not silently become branded.
+   * It was two tokens — a branded mono beside Tailwind's own, left at the UA
+   * stack so machine text could not silently become branded. That was a
+   * distinction every call site had to get right, and the failure was silent: a
+   * room code in one token and a room code in the other look different on the
+   * same screen and nothing catches it. One token, one answer, and no call site
+   * left with a choice to get wrong.
+   *
+   * The property that had to be judged before it could carry machine text: this
+   * face's zero carries no slash and no dot, so it was read against `O` at the
+   * sizes codes are set — a dictated room code, a copied id, a generated
+   * password — and found clear.
+   *
+   * Kept out of plain copy addressed to a parent, where the app face carries
+   * trust better.
    */
-  brandMono: {
+  mono: {
     name: "Space Mono",
-    token: "--font-brand-mono",
+    token: "--font-mono",
     variable: "--font-space-mono",
     fallback: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
     weights: [400, 700],

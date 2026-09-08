@@ -245,7 +245,7 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 
 ## Styling
 
-**Rule: Poppins is the app face — body copy and every heading not claimed by the display-font variable — and every face is loaded through `next/font`.** Space Mono is a sanctioned brand face loaded the same way and placed nowhere yet, pending the design pass; it is intentionally unused, not dead weight to tidy away.
+**Rule: Poppins is the app face — body copy and every heading not claimed by the display-font variable — and every face is loaded through `next/font`.** Space Mono is a sanctioned brand face loaded the same way.
 
 **Rule: a `next/font` variable class goes on `<html>`, never on `<body>`.** The Tailwind theme block emits its font tokens at `:root`, so a face variable defined one element lower is invisible there and the hand-written body `font-family` collapses to the UA stack — while the `font-*` utility classes keep working, because those inline their `var()` at the use site where `<body>` is an ancestor. That asymmetry is the whole danger: the page still looks styled, so nobody notices.
 

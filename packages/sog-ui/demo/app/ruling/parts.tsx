@@ -32,7 +32,7 @@ export function Question({
 }) {
   return (
     <section className="mt-24 border-t border-border pt-10">
-      <p className="font-brand-mono text-body-s text-muted-foreground">{`0${n}`}</p>
+      <p className="font-mono text-body-s text-muted-foreground">{`0${n}`}</p>
       <h2 className="mt-1 text-h2">{title}</h2>
       <div className="mt-10 space-y-14">{children}</div>
     </section>
@@ -118,7 +118,7 @@ export function Exemplar({
     <figure className="m-0">
       <div>{children}</div>
       <figcaption className="mt-3 text-body-s text-muted-foreground">
-        <span className="font-brand-mono">{file}</span>
+        <span className="font-mono">{file}</span>
         {" — "}
         {page}
       </figcaption>

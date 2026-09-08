@@ -11,7 +11,7 @@ import "./globals.css";
  * The reference implementation of the face contract.
  *
  * The package owns the semantic names (`--font-sans`, `--font-serif`,
- * `--font-brand-mono`, `--font-cursive`); a consumer loads the files and defines
+ * `--font-mono`, `--font-cursive`); a consumer loads the files and defines
  * the variables those names point at. The literals below must match the
  * `variable` fields in `src/tokens/typography.ts` — next/font reads its options
  * statically, so they cannot be imported from there, and

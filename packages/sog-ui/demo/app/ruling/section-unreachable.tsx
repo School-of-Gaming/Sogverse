@@ -119,7 +119,7 @@ function Pair({ render }: { render: (variant: "today" | "proposed") => ReactNode
 
 export function UnreachableSection() {
   return (
-    <Question n={4} title="Where CSS does not reach">
+    <Question n={3} title="Where CSS does not reach">
       <Case title="The product banner's fallback">
         <Exemplar
           file="src/components/ui/product-banner.tsx"

@@ -199,7 +199,7 @@ function GroundsInUse() {
           </div>
         </div>
         <p className="mt-2 text-h4 font-medium">Hover, on each ground</p>
-        <p className="font-brand-mono text-body-s text-muted-foreground">
+        <p className="font-mono text-body-s text-muted-foreground">
           hover:bg-hover
         </p>
       </div>
@@ -211,7 +211,7 @@ function GroundsInUse() {
           <div className="h-4 w-32 max-w-full animate-pulse rounded bg-lifted" />
         </div>
         <p className="mt-2 text-h4 font-medium">Set back</p>
-        <p className="font-brand-mono text-body-s text-muted-foreground">
+        <p className="font-mono text-body-s text-muted-foreground">
           bg-lifted
         </p>
       </div>
@@ -262,7 +262,7 @@ function Swatch({
         style={fill === undefined ? undefined : { backgroundColor: fill }}
       />
       <p className="mt-2 text-h4 font-medium">{name}</p>
-      <p className="font-brand-mono text-body-s text-muted-foreground">{hex}</p>
+      <p className="font-mono text-body-s text-muted-foreground">{hex}</p>
     </div>
   );
 }
@@ -324,7 +324,7 @@ export default function FoundationsPage() {
                     {family.name}
                   </p>
                 </div>
-                <p className="font-brand-mono text-body-s text-muted-foreground">
+                <p className="font-mono text-body-s text-muted-foreground">
                   {family.hex}
                 </p>
               </div>
@@ -356,7 +356,7 @@ export default function FoundationsPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-h4 font-medium">{STATUS[id].name}</p>
-                <p className="font-brand-mono text-body-s text-muted-foreground">
+                <p className="font-mono text-body-s text-muted-foreground">
                   {statusHex(id)}
                 </p>
               </div>
@@ -379,7 +379,7 @@ export default function FoundationsPage() {
                   <Icon className="h-7 w-7 text-background" aria-hidden />
                 </div>
                 <p className="mt-2 text-h4 font-medium">{KIND_NAME[kind]}</p>
-                <p className="font-brand-mono text-body-s text-muted-foreground">
+                <p className="font-mono text-body-s text-muted-foreground">
                   {family.name}
                 </p>
               </div>
@@ -410,7 +410,7 @@ export default function FoundationsPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-h4 font-medium">{ROLE_NAME[role]}</p>
-                <p className="font-brand-mono text-body-s text-muted-foreground">
+                <p className="font-mono text-body-s text-muted-foreground">
                   {family.name}
                 </p>
               </div>
@@ -461,7 +461,7 @@ export default function FoundationsPage() {
               </div>
             </div>
             <p className="mt-2 text-h4 font-medium">Scrim</p>
-            <p className="font-brand-mono text-body-s text-muted-foreground">
+            <p className="font-mono text-body-s text-muted-foreground">
               bg-scrim
             </p>
           </div>
@@ -474,7 +474,7 @@ export default function FoundationsPage() {
               </div>
             </div>
             <p className="mt-2 text-h4 font-medium">Glass over media</p>
-            <p className="font-brand-mono text-body-s text-muted-foreground">
+            <p className="font-mono text-body-s text-muted-foreground">
               glass
             </p>
           </div>
@@ -502,7 +502,7 @@ export default function FoundationsPage() {
               </div>
             </div>
             <p className="mt-2 text-h4 font-medium">Glass over content</p>
-            <p className="font-brand-mono text-body-s text-muted-foreground">
+            <p className="font-mono text-body-s text-muted-foreground">
               glass
             </p>
           </div>

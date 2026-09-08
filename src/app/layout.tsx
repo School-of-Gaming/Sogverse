@@ -49,15 +49,14 @@ const crimsonPro = Crimson_Pro({
   preload: false,
 });
 
-// The world voice, spent where the platform names one of its own places. The
-// library owns that placement rule; Sogverse loads the face because the contract
-// requires every face defined, and no surface here reaches for it yet — hence
-// `preload: false`, for the same reason as Crimson Pro above.
+// The site's one monospace: the world voice where the platform names one of its
+// own places, and the machine face for a room code, a password, an id or a log.
+// The library owns both rules; Sogverse loads the face and spends it through
+// `font-mono`, which real surfaces reach for on first paint — so it preloads.
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin", "latin-ext"],
   variable: "--font-space-mono",
-  preload: false,
 });
 
 // The arcade display face, an approved exception outside the library's four and

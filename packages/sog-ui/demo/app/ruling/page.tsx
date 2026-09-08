@@ -9,7 +9,7 @@
  *
  * It obeys the demo's own rule: it is seen, not read. There is no prose, no
  * rationale, no ratio and no pass mark on screen; every reason lives in a doc
- * comment beside the thing it explains, in this file and in the four section
+ * comment beside the thing it explains, in this file and in the three section
  * modules.
  *
  * **Scope: faces only.** Which family every site in Sogverse is set in, and
@@ -18,19 +18,16 @@
  * — which several do — the finding is written into the ledger rather than fixed
  * or hidden here.
  *
- * **What the four sections ask.** The specimens are the ground everything else
- * is judged against, and they carry the one-monospace question in the form the
- * eye can answer: Space Mono against the UA stack on a room code, an id and a
- * password. The Press Start section is the retirement — five sites, three
- * columns each, and one ruling per site. The machine-text section is the same
- * one-monospace question at nine real call sites, ruled once for all nine. The
- * last section is the two surfaces a stylesheet never reaches, where a family is
- * named as a literal string and so has to be named by somebody.
+ * **What the three sections ask.** The specimens are the ground everything else
+ * is judged against: the four faces, each drawn through its semantic utility.
+ * The Press Start section is the retirement — five sites, three columns each,
+ * and one ruling per site. The last section is the two surfaces a stylesheet
+ * never reaches, where a family is named as a literal string and so has to be
+ * named by somebody.
  */
 
 import type { Metadata } from "next";
 
-import { MonoSection } from "./section-mono";
 import { PressStartSection } from "./section-press-start";
 import { SpecimensSection } from "./section-specimens";
 import { UnreachableSection } from "./section-unreachable";
@@ -46,7 +43,6 @@ export default function RulingPage() {
       <h1 className="text-h1-mobile sm:text-h1">Faces ruling</h1>
       <SpecimensSection />
       <PressStartSection />
-      <MonoSection />
       <UnreachableSection />
     </main>
   );

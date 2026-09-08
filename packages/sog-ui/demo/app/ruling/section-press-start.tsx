@@ -55,7 +55,7 @@ function ThreeFaces({
     <Columns of={3}>
       <Column name="today — Press Start 2P">{render(pressStart2P.className)}</Column>
       <Column name="Poppins">{render("font-sans")}</Column>
-      <Column name="Space Mono">{render("font-brand-mono")}</Column>
+      <Column name="Space Mono">{render("font-mono")}</Column>
     </Columns>
   );
 }
