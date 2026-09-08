@@ -10,6 +10,14 @@ the demo's code as the reference for how the library is meant to be used.
 package alone, and Sogverse takes it whole.** Anything that would need a Sogverse edit to
 follow a brand change is in the wrong place.
 
+**The School of Gaming Brand Voice & Identity Guidebook is this library's input, and this
+is the only `CLAUDE.md` that names it.** For anything the library does not yet cover, the
+Guidebook is the source of truth, consulted while deciding (where it lives, and what else is
+consulted beside it, is in `docs/rollout.md`). For anything the library covers, the library
+is the truth from the moment the value is in it, and the Guidebook is not cited beside it.
+When the library covers the Guidebook whole, its job is to forget the Guidebook exists: it
+is then the authority, references no external document, and Sogverse never needs one.
+
 ## Ownership
 
 **SOG-UI owns every UI opinion, and the three `CLAUDE.md` files never disagree.** The root
