@@ -4,7 +4,19 @@ This folder is Sogverse's excerpt of the **School of Gaming Brand Voice & Identi
 Guidebook v2.0 (Jul 21, 2026)** — SOG-UI's input, not its authority. For anything the
 library does not yet cover, these files are the source of truth consulted while deciding;
 for anything the library covers, the library is the truth and these files are not cited
-beside it. The whole folder is deleted when the library covers the Guidebook whole.
+beside it.
+
+**Rule: the change that covers a piece of the Guidebook deletes that piece here, in the
+same change.** Covered means the library holds it in its own form and produces it
+correctly every time — a token, a generated value, a component, a test, a lint rule. The
+form is rarely the Guidebook's words and need not be; what it must be is a mechanism that
+makes the claim true by construction, verified before the cut. A claim merely restated as
+prose is not covered. Cut whole paragraphs or subsections, never a clause, and never
+reword what stays; a paragraph the mechanism only partly covers stays whole; a file that
+empties is deleted and its row leaves this index. What this folder
+holds is exactly what is not yet covered, its size is the measure of what remains, and the
+day it is empty the library has forgotten the Guidebook exists. A later sweep is not the
+mechanism: a piece left behind by the change that covered it is the defect.
 
 **Rule: open the one file that answers your question, never the set.** The split exists so
 a session spends context on one topic; reading the folder end to end costs what the single

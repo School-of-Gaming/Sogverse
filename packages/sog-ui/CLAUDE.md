@@ -16,9 +16,15 @@ file per topic behind that folder's own index, for as long as it is needed. For 
 the library does not yet cover, the Guidebook is the source of truth, consulted while
 deciding (what else is consulted beside it is in `docs/rollout.md`). For anything the
 library covers, the library is the truth from the moment the value is in it, and the
-Guidebook is not cited beside it. When the library covers the Guidebook whole, its job is
-to forget the Guidebook exists: the folder is deleted, the library is the authority,
-references no external document, and Sogverse never needs one.
+Guidebook is not cited beside it. **The change that covers a piece of the Guidebook
+deletes that piece from the excerpt in the same change**, whole paragraphs at a time.
+Covered means the library holds it in its own form — a token, a generated value, a
+component, a test, a lint rule — and so produces it correctly every time; the form is
+rarely the Guidebook's words, and a claim merely restated as prose is not covered. The
+excerpt then only ever holds what is not yet covered, and its size is the measure of what
+remains. When the last paragraph goes, the library has forgotten the
+Guidebook exists: it is the authority, references no external document, and Sogverse
+never needs one.
 
 ## Ownership
 
