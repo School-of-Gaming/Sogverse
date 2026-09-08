@@ -16,15 +16,33 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   `data[]` (per-bucket). The human table prints only per-bucket min/max and an **`avg`
   column that averages the per-bucket aggregate**, which is not the window's percentile
   and can sit far below it when the slow buckets are the thin ones.
+- **With `--group-by`, `summary` becomes one entry per group — and `--limit` silently
+  defaults to 10.** The flag means "max groups per time bucket", so grouping by `route` on
+  a project with ~78 live routes returns the top ten and looks like the whole list. Pass
+  `--limit 100` (with `--granularity 1d`, so the cap applies per day rather than per
+  auto-chosen bucket) whenever the question is "what is the distribution" rather than "what
+  is the top handful". Ordering is by the count aggregation even when you asked for
+  uniques, so a uniques listing comes back in the wrong order — sort it yourself.
 - **Pro serves the latest 30 days only** — `--since 45d` is a hard `bad_request`, not a
   clamp. Compare windows by stepping inside that month (`--since 14d --until 7d`); a
   regression older than 30 days cannot be dated from here at all.
-- **Web Analytics: `vercel.analytics_event.count`** — dimensions incl. `event_name`,
+- **Web Analytics is two metrics, not one — pick deliberately.**
+  `vercel.analytics_pageview.count` is **pageviews**, and is what any "where do people go"
+  question wants: dimensions `route`, `request_path`, `referrer_hostname`,
+  `request_hostname`, `device_type`, `browser_name`, `os_name`, `country`, `visitor_id`.
+  `vercel.analytics_event.count` is **custom events only** — dimensions incl. `event_name`,
   `event_data/<prop>`, `request_path`, `route`, `visitor_id`. E.g.
   `--filter "event_name eq 'dashboard_nav'" --group-by event_data/role --since 30d`;
-  `--aggregation unique/visitor_id` for uniques. Custom events carry
+  `--aggregation unique/visitor_id` for uniques on either. Custom events carry
   `request_path`/`route` automatically. The docs' "2 properties per custom event on Pro"
   is **not** observed to truncate — a 3-property event arrives whole.
+- **Unique `visitor_id` is per device and resets — treat it as ordering, not headcount.**
+  It routinely exceeds any plausible number of people for an authenticated route.
+- **`referrer_hostname` can neither prove nor disprove inbound clicks from email.**
+  Same-origin navigation reports it blank, and so do the many mail clients that strip the
+  referrer, so both land in one indistinguishable bucket — on our authenticated product
+  pages that bucket is over 99% of hits. Attributing a mail's clicks means putting a marker
+  in the link and grouping by `request_path`; no dimension recovers it after the fact.
 - **Speed Insights is in `vercel metrics` too, and it is the sharper Core Web Vitals
   tool.** `vercel.speed_insights.{ttfb,fcp,lcp,inp}_ms` and `.cls`, each with a
   `*_count` companion giving `n`; aggregations include `p50` through `p99`. Dimensions:
@@ -81,8 +99,17 @@ How to read traffic/perf *measurements* for the prod app programmatically (team 
   a **404** means the internal API moved: re-capture the request URL from the
   dashboard's network tab and update the script's paths. The three want different
   responses and the 404 is the rarest.
-- Baseline for scale judgments: **2026-08-18, last 7d prod: 3,866 pageviews / 622
-  devices** (~550 pv/day, ~90 visitors/day).
+- Baseline for scale judgments — **date it, and re-pull each term.** Last 7d prod on
+  2026-09-08: **15,748 pageviews / 2,634 unique visitor ids** (~2,250 pv/day). The same
+  7-day window read 3,866 pageviews / 622 devices on 2026-08-18 — a **4× step that is
+  entirely seasonal**, from the autumn term and the school-facing traffic arriving with it.
+  A summer baseline understates term time by multiples, so never compare across the term
+  boundary without saying which side each figure sits on.
+- **Traffic shape in term time (30d to 2026-09-08), for judging whether a route's `n` can
+  carry a percentile at all:** the public `/schools/*` pages are the largest block by a
+  wide margin, then the sign-in funnel (`/login`, `/select-profile`, `/parent/unlock`); the
+  role dashboards sit roughly an order of magnitude below the landing pages, and the
+  per-product and voice-room routes an order below those, in the high hundreds per month.
 - **Domain → branch mapping (verified 2026-08-18):** `sogverse.sog.gg` = production,
   serves `main`. `sogverse-staging.sog.gg` = staging, serves the latest `dev` preview
   deployment (updates on every dev push, no release needed).
