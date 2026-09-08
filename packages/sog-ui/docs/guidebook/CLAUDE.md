@@ -61,6 +61,14 @@ Overruled by the owner, 2026-09-08: **the Yty-Element strong/soft colour pairs**
 table and the hexes in the foundation table). SOG-UI holds one colour per element, the
 accepted one, typed in its token source; Valor's orange is a declared departure.
 
+Overruled by the owner, 2026-09-08: **Space Mono as the world's voice** (the A.3 paragraph
+placing it in in-platform UI and anything meant to feel like it comes from inside the game
+world). It was put to the strongest cases the product has and not taken: SOG-UI holds
+Space Mono as the machine face and nothing else — a room code, a password, an id, a log, a
+placeholder no customer should see — and the world voice has no placement, because the app
+face carries every word a person reads. The heading above the two paragraphs that remain
+still says "three", since what stays is never reworded; the third was this one.
+
 Dropped because it is navigation or metadata for a document that no longer exists in one
 piece: the **front matter**, the **table of contents**, the **colophon**, and the reading
 order in **"How to use this guide"** — whose two discipline paragraphs (the brand is not a

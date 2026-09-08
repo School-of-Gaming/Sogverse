@@ -5,8 +5,9 @@
  * with nothing to look at — an icon and a paragraph centred in the space the
  * queue used to fill, which reads as an *empty* panel rather than a *cleared*
  * one. A drawn mark is what makes that difference legible at a glance, and a
- * pixel one is the register this platform already speaks in: `font-display`
- * beside it is Press Start 2P, and the audience is a games company's own staff.
+ * pixel one reads as a reward to the audience this page has, a games company's
+ * own staff. The sprite is the only pixel thing in the panel: the words beside
+ * it are the app face, like every other title on the page.
  *
  * **Artwork, not brand.** The cup is gold because it is a gold trophy, not
  * because the brand's signature colour happens to be near gold. It once borrowed

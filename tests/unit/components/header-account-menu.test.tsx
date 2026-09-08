@@ -699,8 +699,18 @@ describe("AccountMenu — switching to another member", () => {
     // The line is appended last inside a capped, scrolling card, so on a full
     // household already scrolled down it lands below the fold and a failed
     // switch produces no visible change at all.
-    expect(scrollIntoView).toHaveBeenCalled();
-    expect(scrollIntoView.mock.contexts.at(-1)).toBe(alert);
+    //
+    // waitFor, not a bare expect — the same race the focus-restore case above
+    // documents. `findByRole` resolves the instant the element is in the DOM,
+    // which is the commit; the scroll lives in a passive effect, flushed after
+    // it. The failure lands in a promise continuation outside `act`, so those
+    // effects are React's to schedule and the observer callback that ends
+    // `findByRole` can win the race: under a loaded parallel suite the bare
+    // assertion flaked as "spy to be called at least once".
+    await waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalled();
+      expect(scrollIntoView.mock.contexts.at(-1)).toBe(alert);
+    });
   });
 
   it("does not greet a later open with an earlier failure", async () => {

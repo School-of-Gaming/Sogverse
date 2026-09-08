@@ -98,7 +98,7 @@ export const ON_FILL: TokenClasses = {
 export const FACE_CLASS: TokenClasses = {
   sans: "font-sans",
   serif: "font-serif",
-  brandMono: "font-brand-mono",
+  mono: "font-mono",
   cursive: "font-cursive",
 };
 

@@ -50,7 +50,7 @@ export function AboutSection({ id }: AboutSectionProps) {
 
       {/* Quote */}
       <div className="mx-auto mt-16 max-w-3xl text-center">
-        <blockquote className="text-xl italic text-muted-foreground">
+        <blockquote className="font-serif text-xl italic text-muted-foreground">
           {t("quote.text")}
         </blockquote>
         <p className="mt-2 text-sm text-muted-foreground">

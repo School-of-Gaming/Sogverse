@@ -72,7 +72,7 @@ export function RoomLinkChip({
         <span className="font-medium text-muted-foreground">
           {t("roomCode")}
         </span>
-        <span className="font-mono font-semibold tracking-wider">{code}</span>
+        <span className="font-mono font-bold tracking-wider">{code}</span>
         {copied ? (
           <Check className="h-3.5 w-3.5" aria-hidden />
         ) : (
@@ -88,7 +88,7 @@ export function RoomLinkChip({
         type="button"
         onClick={handleCopy}
         className={cn(
-          "group flex w-full max-w-md items-center justify-center gap-3 rounded-lg border border-border bg-lifted px-5 py-4 text-base font-mono font-medium transition-colors hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+          "group flex w-full max-w-md items-center justify-center gap-3 rounded-lg border border-border bg-lifted px-5 py-4 text-base font-mono transition-colors hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
           copied && "text-success",
         )}
         aria-label={copied ? t("copied") : displayUrl}

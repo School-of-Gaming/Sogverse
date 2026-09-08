@@ -28,6 +28,7 @@ import { IDENTICON } from "../../src/tokens/identicon";
 import { PICKS } from "../../src/tokens/picks";
 import {
   FACES,
+  MAIL_FACE,
   MOBILE_FLOOR_PX,
   TYPE_SCALE,
 } from "../../src/tokens/typography";
@@ -56,7 +57,12 @@ import {
  * moves moves here too.
  */
 
-const SPECIMEN = "Sogverse ABCÄÖ abcäö 0123";
+// The marks are not decoration. The product ships Finnish, Swedish and French,
+// which is why every face is loaded with `latin-ext`, so every face has to be
+// looked at with those marks on: a face whose ä sits differently from its a, or
+// whose ç collides with the line below, is wrong for this product however it
+// reads in English.
+const SPECIMEN = "Sogverse ABCÅÄÖÉÇ abcåäöéç 0123";
 const SIGNATURE = "Aino Virtanen";
 
 /** Three rows, so the hovered one can be seen against the rows that are not. */
@@ -199,7 +205,7 @@ function GroundsInUse() {
           </div>
         </div>
         <p className="mt-2 text-h4 font-medium">Hover, on each ground</p>
-        <p className="font-brand-mono text-body-s text-muted-foreground">
+        <p className="font-mono text-body-s text-muted-foreground">
           hover:bg-hover
         </p>
       </div>
@@ -211,7 +217,7 @@ function GroundsInUse() {
           <div className="h-4 w-32 max-w-full animate-pulse rounded bg-lifted" />
         </div>
         <p className="mt-2 text-h4 font-medium">Set back</p>
-        <p className="font-brand-mono text-body-s text-muted-foreground">
+        <p className="font-mono text-body-s text-muted-foreground">
           bg-lifted
         </p>
       </div>
@@ -262,7 +268,7 @@ function Swatch({
         style={fill === undefined ? undefined : { backgroundColor: fill }}
       />
       <p className="mt-2 text-h4 font-medium">{name}</p>
-      <p className="font-brand-mono text-body-s text-muted-foreground">{hex}</p>
+      <p className="font-mono text-body-s text-muted-foreground">{hex}</p>
     </div>
   );
 }
@@ -324,7 +330,7 @@ export default function FoundationsPage() {
                     {family.name}
                   </p>
                 </div>
-                <p className="font-brand-mono text-body-s text-muted-foreground">
+                <p className="font-mono text-body-s text-muted-foreground">
                   {family.hex}
                 </p>
               </div>
@@ -356,7 +362,7 @@ export default function FoundationsPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-h4 font-medium">{STATUS[id].name}</p>
-                <p className="font-brand-mono text-body-s text-muted-foreground">
+                <p className="font-mono text-body-s text-muted-foreground">
                   {statusHex(id)}
                 </p>
               </div>
@@ -379,7 +385,7 @@ export default function FoundationsPage() {
                   <Icon className="h-7 w-7 text-background" aria-hidden />
                 </div>
                 <p className="mt-2 text-h4 font-medium">{KIND_NAME[kind]}</p>
-                <p className="font-brand-mono text-body-s text-muted-foreground">
+                <p className="font-mono text-body-s text-muted-foreground">
                   {family.name}
                 </p>
               </div>
@@ -410,7 +416,7 @@ export default function FoundationsPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-h4 font-medium">{ROLE_NAME[role]}</p>
-                <p className="font-brand-mono text-body-s text-muted-foreground">
+                <p className="font-mono text-body-s text-muted-foreground">
                   {family.name}
                 </p>
               </div>
@@ -461,7 +467,7 @@ export default function FoundationsPage() {
               </div>
             </div>
             <p className="mt-2 text-h4 font-medium">Scrim</p>
-            <p className="font-brand-mono text-body-s text-muted-foreground">
+            <p className="font-mono text-body-s text-muted-foreground">
               bg-scrim
             </p>
           </div>
@@ -474,7 +480,7 @@ export default function FoundationsPage() {
               </div>
             </div>
             <p className="mt-2 text-h4 font-medium">Glass over media</p>
-            <p className="font-brand-mono text-body-s text-muted-foreground">
+            <p className="font-mono text-body-s text-muted-foreground">
               glass
             </p>
           </div>
@@ -502,7 +508,7 @@ export default function FoundationsPage() {
               </div>
             </div>
             <p className="mt-2 text-h4 font-medium">Glass over content</p>
-            <p className="font-brand-mono text-body-s text-muted-foreground">
+            <p className="font-mono text-body-s text-muted-foreground">
               glass
             </p>
           </div>
@@ -514,18 +520,44 @@ export default function FoundationsPage() {
           {Object.entries(FACES).map(([id, face]) => (
             <article key={id}>
               <h3 className="text-h3">{face.name}</h3>
-              <div className="mt-4 space-y-2">
-                {face.weights.map((weight) => (
-                  <p
-                    key={weight}
-                    className={`text-h3 ${FACE_CLASS[id] ?? ""} ${WEIGHT_CLASS[weight] ?? ""}`}
-                  >
-                    {id === "cursive" ? SIGNATURE : SPECIMEN}
-                  </p>
-                ))}
-              </div>
+              {/* Every style the face declares, each drawn at every weight.
+                  Only the serif declares a second one, and its two blocks are
+                  named because a reader has to be told which is the drawn
+                  italic and which the upright; the three single-style faces
+                  have nothing to tell apart and stay unlabelled. */}
+              {face.styles.map((style) => (
+                <div key={style} className="mt-4">
+                  {face.styles.length === 1 ? null : <Label>{style}</Label>}
+                  <div className="mt-1 space-y-2">
+                    {face.weights.map((weight) => (
+                      <p
+                        key={weight}
+                        className={`text-h3 ${style === "italic" ? "italic" : ""} ${FACE_CLASS[id] ?? ""} ${WEIGHT_CLASS[weight] ?? ""}`}
+                      >
+                        {id === "cursive" ? SIGNATURE : SPECIMEN}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </article>
           ))}
+          {/* Drawn in its own stack rather than through a class, because the
+              mail face has no token: it is the reader's own sans and the only
+              way to show it is to name the stack, exactly as a mail does. */}
+          <article>
+            <h3 className="text-h3">{MAIL_FACE.name}</h3>
+            <div className="mt-4 space-y-2" style={{ fontFamily: MAIL_FACE.stack }}>
+              {MAIL_FACE.weights.map((weight) => (
+                <p
+                  key={weight}
+                  className={`text-h3 ${WEIGHT_CLASS[weight] ?? ""}`}
+                >
+                  {SPECIMEN}
+                </p>
+              ))}
+            </div>
+          </article>
         </div>
       </Section>
 

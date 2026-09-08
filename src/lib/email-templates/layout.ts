@@ -1,6 +1,10 @@
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
 import { RADIUS } from "@/lib/constants/radius";
+import {
+  MAIL_FONT_STACK,
+  MAIL_WORD_ENGINE_FONT_STACK,
+} from "@/lib/constants/typography";
 import { sendableImageOrigin } from "./render-context";
 import { pinnedFill } from "./utils";
 import {
@@ -260,9 +264,21 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
       }
     }
   </style>
+  <!-- Desktop Outlook only, and the one thing the inherited stack cannot say to
+       it. Outlook on Windows renders through Word, which does not walk a
+       font-family list: it takes the first family and answers one it cannot
+       resolve with Times New Roman rather than with the next entry, and the
+       stack's first two names exist only on Apple platforms. So the same face
+       is restated here in its Windows-resolvable form, on every element the
+       templates set text in, behind a conditional comment no other client
+       reads. Same face, same ruling — the reader's own system sans, and still
+       no webfont anywhere. -->
+  <!--[if mso]><style>
+    body, table, td, div, p, a, span, strong, em, ul, ol, li, h1, h2, h3 { font-family:${MAIL_WORD_ENGINE_FONT_STACK} !important; }
+  </style><![endif]-->
 </head>
 <!-- "body" class is required for the "u + .body" Gmail-only selector in the style block above -->
-<body class="body" style="margin:0;padding:0;${pinnedFill(DARK_THEME.bg)}font-family:Arial,Helvetica,sans-serif;">
+<body class="body" style="margin:0;padding:0;${pinnedFill(DARK_THEME.bg)}font-family:${MAIL_FONT_STACK};">
   <!-- The ground on both body and table: body for clients that respect it, table for Gmail which strips body styles -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${pinnedFill(DARK_THEME.bg)}">
     <tr>

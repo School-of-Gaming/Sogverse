@@ -4,7 +4,6 @@ import {
   Crimson_Pro,
   Dancing_Script,
   Poppins,
-  Press_Start_2P,
   Space_Mono,
 } from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
@@ -24,8 +23,8 @@ import "./globals.css";
 // The face contract, honoured on the consumer's side.
 //
 // @sog/ui names the faces and the semantic tokens that point at them
-// (`packages/sog-ui/src/tokens/typography.ts` — weights, subsets and the
-// variable each token reads are all stated there); Sogverse loads the files and
+// (`packages/sog-ui/src/tokens/typography.ts` — weights, styles, subsets and
+// the variable each token reads are all stated there); Sogverse loads the files and
 // defines those variables. next/font reads its options statically, so the values
 // below cannot be imported from the token source, and
 // tests/unit/theme/face-contract.test.ts asserts this file names every one of
@@ -37,35 +36,34 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
-// The editorial voice, and nothing renders it yet — the library owns where it
-// may be placed (quotes and pull-quotes, never UI or body copy), and Sogverse
-// has no editorial surface asking for one. `preload: false` follows: a preload
-// link for a face no element renders costs every visitor a font download for
-// nothing, so preload turns on in the change that first places it.
+// The editorial voice, placed on the About page's pull quote — the library owns
+// where it may go (quotes and pull-quotes, never UI or body copy) and that is
+// two of those placements at once. Loaded in both styles, alone among the four:
+// the quote is italic, and a serif left to the browser's own slant is a skew of
+// the upright alphabet rather than the italic one, which is a different
+// alphabet.
+//
+// `preload: false` because that one placement is not first-paint-critical on
+// any route: preloading would have every page in the app emit preload links for
+// the serif's files, for a face only the About page's quote ever draws. It is
+// fetched when that quote is rendered.
 const crimsonPro = Crimson_Pro({
-  weight: ["400", "600"],
+  weight: ["400"],
+  style: ["normal", "italic"],
   subsets: ["latin", "latin-ext"],
   variable: "--font-crimson-pro",
   preload: false,
 });
 
-// The world voice, spent where the platform names one of its own places. The
-// library owns that placement rule; Sogverse loads the face because the contract
-// requires every face defined, and no surface here reaches for it yet — hence
-// `preload: false`, for the same reason as Crimson Pro above.
+// The site's one monospace, and the machine face: a room code, a password, an
+// id, a log, a placeholder no customer should see. The library owns that rule —
+// and owns the decision that it is never a voice, a heading or a name — while
+// Sogverse loads the face and spends it through `font-mono`, which real
+// surfaces reach for on first paint, so it preloads.
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin", "latin-ext"],
   variable: "--font-space-mono",
-  preload: false,
-});
-
-// The arcade display face, an approved exception outside the library's four and
-// so still Sogverse's to load; `--font-display` in globals.css points at it.
-const pressStart2P = Press_Start_2P({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-press-start-2p",
 });
 
 // The hand-written face a signature renders in. `latin-ext` is not optional:
@@ -182,7 +180,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${poppins.variable} ${crimsonPro.variable} ${spaceMono.variable} ${pressStart2P.variable} ${dancingScript.variable}`}
+      className={`${poppins.variable} ${crimsonPro.variable} ${spaceMono.variable} ${dancingScript.variable}`}
     >
       <body className="antialiased bg-background text-foreground">
         <Providers

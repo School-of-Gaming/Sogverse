@@ -17,9 +17,12 @@ import { describe, expect, it } from "vitest";
  *
  * So the test is not "no `--color-*`" — that phrasing invites the next colour to
  * arrive under a name that dodges it (`--brand-amber`, `--surface-2`). It
- * enumerates the whole set instead: two layout heights, the radius scale, and
- * the one face variable. Anything else declared here fails, and the failure is
- * the question "which adoption owns this, and why is it here instead of there?"
+ * enumerates the whole set instead: two layout heights and the radius scale.
+ * Anything else declared here fails, and the failure is the question "which
+ * adoption owns this, and why is it here instead of there?" The face half of
+ * the same seam is this file's sibling, `globals-declares-no-face.test.ts`: no
+ * `--font-*` is declared here at all, because the faces are the library's and
+ * the variables behind them are next/font's.
  *
  * Adding to the allowed set is a deliberate act. A token that genuinely belongs
  * to Sogverse rather than to the brand — a measured layout value, something the
@@ -74,14 +77,10 @@ const ALLOWED = {
   "--radius-md": "the radius scale, pending the Button adoption",
   "--radius-lg": "the radius scale, pending the Button adoption",
   "--radius-xl": "the radius scale, pending the Button adoption",
-  // The indirection that lets a component ask for "the display face" without
-  // naming a family. The face variable it points at is defined on <html>; the
-  // library owns the faces, and this pointer leaves with the faces adoption.
-  "--font-display": "the display-face indirection, pending the faces adoption",
 } as const;
 
 const WHY =
-  "src/app/globals.css declares only layout values, the radius scale and the display-face pointer. Every colour in this app comes from @sog/ui's generated theme — a token declared here is a colour (or a scale) the library cannot govern, and it is what made a brand change mean editing this app. Move it into the package, or add it to ALLOWED with the reason it is not the library's.";
+  "src/app/globals.css declares only layout values and the radius scale. Every colour in this app comes from @sog/ui's generated theme — a token declared here is a colour (or a scale) the library cannot govern, and it is what made a brand change mean editing this app. Move it into the package, or add it to ALLOWED with the reason it is not the library's.";
 
 describe("Sogverse's stylesheet declares no colour", () => {
   const declared = declaredCustomProperties(readFileSync(globalsPath, "utf8"));

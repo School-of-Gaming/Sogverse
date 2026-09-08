@@ -5,6 +5,16 @@ import { cn } from "@/lib/utils";
 const BANNER_FRAME = "aspect-[3/2] w-full";
 
 /**
+ * What the no-image placeholder says, in every locale.
+ *
+ * A constant rather than a message key, for the same reason a room code is one:
+ * it is machine text, not copy — the same two words wherever the app is read,
+ * and nothing a translator is being asked to voice. Caps as furniture, so it
+ * cannot be mistaken for something the design chose to show.
+ */
+const NO_IMAGE_LABEL = "NO IMAGE";
+
+/**
  * **The 3:2 product picture, cropped — the only product-image presentation.**
  *
  * One stored file, one ratio, every surface — family-facing and admin alike:
@@ -100,20 +110,33 @@ export function ProductBanner({
   );
 }
 
-// Neutral ground shown when a product is missing its image. The admin form
-// requires one but the DB doesn't enforce it, and mock fixtures intentionally
-// omit one — without a fallback, those surfaces would render a broken-image
-// icon.
+// The placeholder for a product with no picture, and a customer should never
+// meet it. It exists so a staging product can be created without an image and
+// so an admin can save a product on prod before its picture exists, unlisted:
+// the admin form requires an image but the DB does not enforce it, and mock
+// fixtures deliberately omit one. A customer seeing this is an admin's mistake,
+// not a design.
 //
-// Mirrors the OG image's wordmark choice: muted ground, yellow "SOG". SVG so
-// it scales pixel-cleanly from an admin row's ~80px through a full-width card
-// banner without container queries. One shape only, the banner's own 3:2 —
+// So it is machine text, in the machine face, and deliberately not a mark. It
+// says NO IMAGE, in caps as furniture, so there is no reading of it in which it
+// looks like something we chose to show — a wordmark here would be a fallback
+// that passes for a visual, which is the failure that lets it survive on a live
+// product page. The words are a constant (`NO_IMAGE_LABEL`) rather than a
+// message key: they are the same in every locale, machine text like a room
+// code.
+//
+// SVG so it scales pixel-cleanly from an admin row's ~80px through a full-width
+// card banner without container queries. One shape only, the banner's own 3:2 —
 // the aspect-ratio rule above applies to the no-image case exactly as it does
 // to a photo, which is what keeps an imaged card and an un-imaged one the
 // same height on a grid. Private, so a caller cannot paint a product picture
 // without going through the one frame the design language allows; the rect
-// and the text are sized in percentages, so the mark stays centred and
-// proportional at any width.
+// is sized in percentages and the text centred on them, so the placeholder
+// stays centred and proportional at any width. The label is set at 18 in the
+// viewBox's own units, a little under 60% of the 150-wide box: enough that it
+// reads at an admin row's thumbnail size, and short of the edges, where a
+// placeholder spanning the frame stops looking like a gap and starts looking
+// like a design.
 function SogFallback({ className }: { className?: string }) {
   return (
     <svg
@@ -129,13 +152,11 @@ function SogFallback({ className }: { className?: string }) {
         y="50%"
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize="36"
-        fontWeight="900"
-        letterSpacing="-2"
-        fontFamily="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        className="fill-act"
+        fontSize="18"
+        fontWeight="400"
+        className="fill-act font-mono"
       >
-        SOG
+        {NO_IMAGE_LABEL}
       </text>
     </svg>
   );

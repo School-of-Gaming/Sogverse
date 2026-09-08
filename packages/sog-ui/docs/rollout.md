@@ -122,4 +122,3 @@ as the token source.
 
 - Visual regression against the demo, if the page-capture tool ever grows a fixture-only
   mode. Ruled out for now: the tool is for human review, not testing.
-- Crimson Pro's first placement, when an editorial surface exists.

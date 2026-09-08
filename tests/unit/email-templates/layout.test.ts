@@ -4,6 +4,10 @@ import { fileURLToPath } from "node:url";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { wrapInLayout, BRAND_MARK } from "@/lib/email-templates/layout";
 import { BRAND_LOCKUP, BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
+import {
+  MAIL_FONT_STACK,
+  MAIL_WORD_ENGINE_FONT_STACK,
+} from "@/lib/constants/typography";
 
 /**
  * The shell every mail is wrapped in, and specifically the one image any mail
@@ -226,5 +230,50 @@ describe("the asset behind the markup", () => {
   /** Small enough that no client refuses it and no reader waits for it. */
   it("stays small", () => {
     expect(png.byteLength).toBeLessThan(20_000);
+  });
+});
+
+/**
+ * The face reaches desktop Outlook, which reads no stack.
+ *
+ * Outlook on Windows renders through Word, which takes the first family in a
+ * `font-family` and answers one it cannot resolve with Times New Roman rather
+ * than with the next entry — and the primary stack opens with two names that
+ * exist only on Apple platforms, so every mail would arrive serif on that
+ * client. The shell answers it with an `mso`-conditional block, and both halves
+ * of that are asserted: the block carries the derived Windows-resolvable stack,
+ * and the body still inherits the primary one, because the conditional block is
+ * an addition for one engine and never a replacement for the declaration every
+ * other client reads.
+ */
+describe("the mail face reaches the Word engine", () => {
+  const head = (html: string): string => html.slice(0, html.indexOf("</head>"));
+
+  it("declares the Windows-resolvable stack to desktop Outlook alone", () => {
+    const block = /<!--\[if mso\]>([\s\S]*?)<!\[endif\]-->/.exec(head(render()));
+    expect(block, "the shell's head carries no mso-conditional block").not.toBeNull();
+    expect(block![1]).toContain("<style>");
+    expect(block![1]).toContain(
+      `font-family:${MAIL_WORD_ENGINE_FONT_STACK} !important`,
+    );
+    // The body is where a mail's text starts, and the templates set text in the
+    // rest of these — a rule reaching only `body` is a rule Word ignores on
+    // every cell and paragraph beneath it. The selector list is read as its own
+    // elements rather than searched as a string, so `a` cannot be satisfied by
+    // the `a` inside `table`.
+    const selectors = /<style>([^{]*)\{/
+      .exec(block![1])![1]
+      .split(",")
+      .map((selector) => selector.trim());
+    for (const element of ["body", "td", "p", "a"]) {
+      expect(selectors, `the mso block does not reach <${element}>`).toContain(
+        element,
+      );
+    }
+  });
+
+  it("still sets the primary stack on the body, for every other client", () => {
+    const body = /<body[^>]*>/.exec(render());
+    expect(body![0]).toContain(`font-family:${MAIL_FONT_STACK}`);
   });
 });

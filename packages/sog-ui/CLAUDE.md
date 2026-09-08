@@ -194,14 +194,24 @@ every inversion that reading makes, and every departure from the brand's colour 
 declared and justified in the colour source's doc comments, or it does not exist.
 
 **Faces.** The library owns the faces School of Gaming uses, and the list is exhaustive and
-defined by grammar: Poppins is the app face, body and every heading; Space Mono is the world
-voice, spent only where the platform names one of its own places; Crimson Pro is the
+defined by grammar: Poppins is the app face, body and every heading; Space Mono is the one monospace on the
+site and the machine face and nothing else, for a room code, a password, an id, a log, an
+inline code span or a placeholder no customer should see, never a voice, a heading or a
+name; Crimson Pro is the
 editorial voice, for quotes and pull-quotes and never for UI or body copy; Dancing Script
-is for a signature line and nothing else. The consumer loads the font files and exposes
+is for a signature line and nothing else. **Mail is set in the reader's own system sans**,
+a face the library declares and mail alone may spend — never a screen face — and **no
+webfont is ever loaded in a mail**, because the clients most readers use load none and a
+face that reaches a minority makes the mail two designs. The consumer loads the font files and exposes
 each face as a CSS variable on `<html>`, never on `<body>`, because the theme emits at
 `:root` and a variable one element lower is invisible there while the page still looks
 styled. The library owns the semantic names and the scale. The demo's layout is the
-reference implementation of that contract.
+reference implementation of that contract. **A consumer loads exactly the faces named
+here and no other, defines no face of its own, and spells no family**: it sets a face by
+its utility, and a renderer with no stylesheet — a mail, a social card, a canvas — takes
+the name from the library rather than typing one. Lint holds the spellings, one per way
+a face can be written, and the contract tests hold the list in both directions, so a
+fifth family cannot be loaded and a face of the consumer's own cannot be declared.
 
 **The mark.** The logo, its variants, the monogram, their clearspace, minimum size and
 placement rules, and the combined lockup `School of Gaming – Sogverse` with its spaced en
