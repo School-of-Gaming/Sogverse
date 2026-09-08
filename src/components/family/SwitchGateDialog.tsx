@@ -105,7 +105,7 @@ interface SwitchGateBodyProps {
  * `/api/auth/signout`, which the route answers with a 303 the browser follows
  * as a full-page GET — no fetch, no router push. The browser Supabase client is
  * seeded from cookies at construction time, so only a document unload rebuilds
- * it (root `CLAUDE.md` § Auth Architecture).
+ * it (`src/CLAUDE.md` § Auth Architecture).
  *
  * **There is no "forgot PIN" escape here.** That route is customer-gated, so a
  * child could not complete it; the way out of a family with a forgotten PIN is
@@ -266,7 +266,7 @@ export function SwitchGateBody({
  * not become somebody else's, and the way that does work.
  *
  * Three short sentences, in the words a parent standing behind the child can
- * follow. The middle one is the mechanism (root `CLAUDE.md` § Safety copy): not
+ * follow. The middle one is the mechanism (`src/CLAUDE.md` § Safety copy): not
  * that we care about privacy, but that a session opened with one person's own
  * credentials opens exactly one account — which is a thing a reader can test.
  *

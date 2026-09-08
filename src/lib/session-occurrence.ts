@@ -81,7 +81,7 @@ export interface SlotShape {
  *   maximum over the window the maximum over the run, at a bounded cost.
  * - **Pure calendar arithmetic, UTC-pinned.** Both bounds are bare dates with no
  *   time of day, so there is no zone to convert through and no DST to step over;
- *   the walk is `Date.UTC` day arithmetic, exactly as the root `CLAUDE.md` asks
+ *   the walk is `Date.UTC` day arithmetic, exactly as `src/CLAUDE.md` asks
  *   of a zoneless date. The weekday convention is the app's own — 0 is Monday —
  *   which is what `EXTRACT(ISODOW …) - 1` produces on the SQL side.
  */

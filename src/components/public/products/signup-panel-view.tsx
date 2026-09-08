@@ -616,7 +616,7 @@ function UnauthenticatedOverlay({
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    /* The app-wide button order shape — root `CLAUDE.md`, "Button Order":
+    /* The app-wide button order shape — `src/CLAUDE.md`, "Button Order":
        DOM [secondary, primary] under `flex-col-reverse`, so signing in reads
        on top. This pair only ever stacks, so there is no `sm:flex-row` half.
        The rendered order is what it has always been; only the authoring

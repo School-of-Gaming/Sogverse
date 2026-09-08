@@ -56,7 +56,7 @@ export default function HomePage() {
             <p className="mt-6 text-lg leading-8 text-muted-foreground">
               {t('hero.subtitle')}
             </p>
-            {/* The app-wide button order shape — root `CLAUDE.md`, "Button
+            {/* The app-wide button order shape — `src/CLAUDE.md`, "Button
                 Order". Getting started is what the hero is steering toward,
                 so it is last in the DOM (right in a row, top in a stack);
                 the trip to About is the alternative beside it, and it is the
@@ -171,7 +171,7 @@ export default function HomePage() {
             <p className="mt-4 text-muted-foreground">
               {t('cta.subheading')}
             </p>
-            {/* The app-wide button order shape — root `CLAUDE.md`, "Button
+            {/* The app-wide button order shape — `src/CLAUDE.md`, "Button
                 Order". Creating an account is the primary CTA (last in the DOM,
                 so right in a row and top in a stack); exploring the shop is the
                 secondary alternative beside it. This is the same pair the

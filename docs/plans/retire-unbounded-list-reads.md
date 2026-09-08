@@ -99,7 +99,7 @@ a. **Push the ended-club predicate into the query.** The SQL filter keeps clubs 
    effective-status helpers in `src/lib/`) as query filters. **Timezone constraint:** the
    judgement compares against dates in the product's own zone (products are authored in
    `Europe/Helsinki`); the query-side predicate must not quietly substitute UTC "today" —
-   follow the root `CLAUDE.md` date rules.
+   follow the `src/CLAUDE.md` date rules.
 b. **Walk the read** through the shared primitive (total order: whatever the surface
    sorts by, plus primary key).
 c. **Chunk the two keyed reads whose key array is the whole visible catalog** (both in

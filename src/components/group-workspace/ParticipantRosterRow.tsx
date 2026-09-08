@@ -463,7 +463,7 @@ function GameIdentityCell({
             })}
             className="h-7 w-40 min-w-0 flex-1 px-2 py-0 text-xs"
           />
-          {/* Cancel then Save — the app-wide button order (root `CLAUDE.md`,
+          {/* Cancel then Save — the app-wide button order (`src/CLAUDE.md`,
               "Button Order") puts the affirmative last, so it reads rightmost.
               This row never stacks, so it needs no `flex-col-reverse`. */}
           <Button

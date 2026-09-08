@@ -62,7 +62,7 @@ import type { ProductType, Product } from "@/types";
 // date or an event's session ends, running_late → ended at the local midnight
 // after. None of those is something the reader asked for, which makes them
 // changes on data's own schedule — free to repaint a card, but not to resize
-// one (see the layout rules in the root CLAUDE.md).
+// one (see the layout rules in `src/CLAUDE.md`).
 //
 // One known exception, left deliberately: the ended branch swaps the footer's
 // whole row for a single line, so a card does shrink at midnight and the grid

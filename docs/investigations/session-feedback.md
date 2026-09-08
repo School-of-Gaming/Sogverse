@@ -67,7 +67,7 @@ ideas today* (Valor), *I tried something today I had not tried before* (Wit).
 - **"I felt safe today."** A five-point safety score is a bad safeguarding instrument in
   both directions: a child in trouble does not tick 2, and a high average manufactures
   false comfort. Keep the friendliness item and **route a low or falling score to a human**
-  rather than into an average. This is the same standard the root `CLAUDE.md` sets for
+  rather than into an average. This is the same standard `src/CLAUDE.md` sets for
   safety copy — a mechanism, not a reassurance.
 - **Reverse-worded items** ("I was bored today") mixed among positives. With children they
   cost more in measurement noise than they buy in acquiescence control.

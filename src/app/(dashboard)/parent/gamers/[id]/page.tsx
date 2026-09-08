@@ -38,7 +38,7 @@ export default function GamerDetailsPage() {
   // the three decide what this page *contains* — the Sign-in card's whole body
   // follows from the mode — so the page waits for it rather than letting a card
   // insert itself into the middle of the page a beat after the rest has
-  // painted (root `CLAUDE.md`, "Layout & Scrolling"). It is a primary-key read
+  // painted (`src/CLAUDE.md`, "Layout & Scrolling"). It is a primary-key read
   // of one row, issued in the same render as the list, so the wait is the
   // longer of two round trips rather than two in sequence.
   const { data: gamerProfile, isPending: profilePending } = useGamerProfile(id);

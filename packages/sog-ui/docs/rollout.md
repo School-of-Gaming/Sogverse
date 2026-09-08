@@ -75,7 +75,7 @@ as the token source.
    `Intl` formatters with the first component that shows a date, time or amount. None of
    them is defined ahead of that, and the foundations floor of the demo shows only what
    exists.
-3. **The UI rules move in.** The root `CLAUDE.md`'s UI sections (layout and scrolling,
+3. **The UI rules move in.** `src/CLAUDE.md`'s UI sections (layout and scrolling,
    loading and disabled state, button order, styling, the UI reference and preview-scene
    rules) relocate into the package's `CLAUDE.md` as each mechanism lands; the root keeps
    one pointer. Where a rule was a pattern each screen repeated (committing, layout shift),
@@ -95,7 +95,7 @@ as the token source.
    preview scenes retire as each page body thins to composition only. Steps 4 to 7
    interleave: a component is built, shown, adopted and locked before the next begins.
 8. **Lockdown.** The seam lint: Sogverse's source contains no utility class; it composes
-   and never paints. The root `CLAUDE.md` carries no UI rule of its own.
+   and never paints. `src/CLAUDE.md` carries no UI rule of its own.
 9. **Completion.** The reference branch and its tag are deleted, this file is deleted, the
    deviations entries the library resolved are removed.
 

@@ -257,7 +257,7 @@ function DialogFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      // The app-wide button order rule (root `CLAUDE.md`, "Button Order"):
+      // The app-wide button order rule (`src/CLAUDE.md`, "Button Order"):
       // affirmative on the right in a row, on top in a stack. Footers are
       // authored DOM-order [negative, …, affirmative], and this one class list
       // places them both ways — `sm:flex-row sm:justify-end` reads left→right

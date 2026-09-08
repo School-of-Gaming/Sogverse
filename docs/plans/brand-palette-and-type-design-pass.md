@@ -5,7 +5,7 @@ is open and moves.** Colour was decided through the SOG-UI theme adoption rather
 through this plan: every value, rule and departure lives in `packages/sog-ui/` (the
 colour source and the package's `CLAUDE.md`), Sogverse's stylesheet declares no colour,
 and two lint rules hold it. So every colour item below — the Yty hues, the palette
-scenes, the categorical palettes, the "codify into the root `CLAUDE.md` Styling section
+scenes, the categorical palettes, the "codify into the `src/CLAUDE.md` Styling section
 and the deviations log" step — is done in a different place or no longer applies (there
 is no deviations log; Sogverse's brand authority is the library). What remains of this
 plan is type: Press Start 2P placements, Space Mono, the display steps, the heading
@@ -21,7 +21,7 @@ UI Components style guide before any live surface changes.
 
 Companion to `docs/plans/brand-guidebook-alignment.md` (copy + mechanical fixes). **This
 plan's branch is cut from `dev` only after that plan merges** — both touch `globals.css`
-and the root `CLAUDE.md`. That plan also loads the fonts this one places.
+and `src/CLAUDE.md`. That plan also loads the fonts this one places.
 
 ## Problem
 
@@ -179,8 +179,7 @@ One branch off `dev` (after the companion plan merges), `feat/brand-palette-desi
    review retired, fixing call sites.
 8. **Apply the display-face decisions** to the live surfaces.
 9. **Codify**: the dark-palette decisions (which variant carries text on dark; where the
-   full palette is welcome vs amber-single-accent) written into the Styling section of the
-   root `CLAUDE.md`; the deviations-log entries for the dark palette, Press Start 2P
+   full palette is welcome vs amber-single-accent) written into the Styling section of `src/CLAUDE.md`; the deviations-log entries for the dark palette, Press Start 2P
    outcomes, and button mapping updated or cleared per the log's lifecycle. The Guidebook's
    colour-rationing rule, restated so this plan stands alone: parent/partner/billing/
    safety surfaces get amber as the single accent on a calm ground; family story surfaces

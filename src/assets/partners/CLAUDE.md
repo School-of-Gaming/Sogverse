@@ -3,7 +3,7 @@
 Third-party logos used in the `/roblox` lockup. The two relationships they stand for are
 not the same and the copy beside them must not blur them: School of Gaming **partners
 with** Lynx Educate, and **collaborates with** Roblox — see the partner-brand rules in
-the root `CLAUDE.md`.
+`src/CLAUDE.md`.
 
 **This directory holds only other people's marks.** Our own logo lives in
 `src/assets/brand/` (`sog-logo-full.svg`, `sog-logo-simple.svg`, their `-mono`
@@ -12,8 +12,7 @@ its School of Gaming mark from there like every other surface does. A copy of ou
 kept here alongside the partner files is how one surface ends up on a stale version of
 the brand while the rest of the app has moved on — so if you need our mark, reach for
 `src/assets/brand/`, and never re-vendor it into this folder. The two constraints below
-are the partners' own and do not apply to our mark; the placement rules in the root
-`CLAUDE.md` do.
+are the partners' own and do not apply to our mark; the placement rules in `src/CLAUDE.md` do.
 
 **Vendored deliberately** rather than served from the `product-images` Supabase bucket:
 that bucket holds *content* an admin uploads at runtime and references by a DB path,
@@ -66,7 +65,7 @@ vertically stack, or place it over a busy background. Their pack also supplies a
 boilerplate copy describing Roblox, and requires a trademark notice wherever the mark
 appears. Meeting all of that is still not permission to place the mark: Roblox signs off
 per placement, and the `/roblox` hero lockup is the one placement they have approved —
-see the partner-brand rules in the root `CLAUDE.md` before putting the mark anywhere new.
+see the partner-brand rules in `src/CLAUDE.md` before putting the mark anywhere new.
 
 **Lynx Educate** — see "The derived Lynx mark" above. Their trademark is used with
 permission; the reversal is our own and needs confirming.

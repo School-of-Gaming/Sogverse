@@ -13,7 +13,7 @@ import { mockSupabaseClient } from "../../setup";
  *    back only on the outcomes where the parent has to try again;
  *  - success is a FULL-PAGE navigation, because the browser Supabase client
  *    seeds its session from cookies at construction and only a document unload
- *    rebuilds it (root CLAUDE.md, auth state);
+ *    rebuilds it (`src/CLAUDE.md`, auth state);
  *  - a registration that fails leaves the form usable and says why.
  *
  * What is new:

@@ -89,7 +89,7 @@ export const BRAND_LOCKUP_TAIL = " – Sogverse";
  *
  * Leading with the brand puts the name a stranger already recognises in the
  * position that survives truncation, and leaves the word that needs explaining
- * second. See the brand-vs-platform rule in the root CLAUDE.md for which of the
+ * second. See the brand-vs-platform rule in `src/CLAUDE.md` for which of the
  * two names a given string should reach for in the first place; this constant
  * exists for the cases where the answer is "both".
  *

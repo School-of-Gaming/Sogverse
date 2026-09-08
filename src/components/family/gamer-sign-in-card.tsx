@@ -279,7 +279,7 @@ export function GamerSignInCard({
               to the *current* mode and are unmounted the moment the draft
               differs. So there is nothing on screen the reveal could push, and
               a slot held open beside a sentence that may never arrive would be
-              the hole the layout rule warns about instead (root `CLAUDE.md`,
+              the hole the layout rule warns about instead (`src/CLAUDE.md`,
               "Layout & Scrolling"). The change is the parent's own click either
               way. */}
           {modeChanged && draft === "parent" && (

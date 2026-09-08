@@ -282,7 +282,7 @@ neutralizes that, not the transport.
 
 ## Service layer (this directory)
 
-Follows the project two/three-file pattern (see root `CLAUDE.md` § Service Layer):
+Follows the project two/three-file pattern (see `src/CLAUDE.md` § Service Layer):
 
 - `pin.service.ts` — `PinService(supabase)`. The one read (`isSet`) uses the
   injected client (`pin_is_set` is granted to `authenticated`, own-row scoped).
@@ -365,7 +365,7 @@ Screens:
   No forgot link; forgotten PINs reset only at the gate.
 
 **Rule: Any `?redirect=` target on the unlock gate must go through
-`resolveInternalPath()` before navigating** (root `CLAUDE.md` § Redirects) — and
+`resolveInternalPath()` before navigating** (`src/CLAUDE.md` § Redirects) — and
 the gate itself is dropped as a target so success can't loop back.
 
 Routing into the gate needs no special-casing in `select-profile` for a parent
