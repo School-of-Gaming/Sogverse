@@ -199,8 +199,6 @@ The pattern stays inline per screen — **do not extract it into a shared `useCo
 
 Everything still naming the platform in `messages/` is prose decided case by case by the subject-of-the-sentence corollary: a legal page defining who runs Sogverse, a switcher asking who is entering it, the lore naming the world it is set in. Weigh each against the subject of its own sentence as you touch it, rather than sweeping.
 
-These rules came out of a shift that landed in August 2026 — what was swept, and what must not be put back, is in `docs/records/brand-name-shift-2026-08.md`.
-
 **One locale translates the brand, on purpose.** `tlh` renders "School of Gaming" as its Klingon calque and keeps "Sogverse" as-is, and the about-page easter egg puts that pair in a table as one of its jokes — so the easter egg is the documentation. A brand-name rule applied mechanically would "fix" it and delete the joke; the general prohibition on translating a mark is aimed at `fi`/`sv`/`fr`, where a family reads the name as a name.
 
 **Sogverse's brand authority is SOG-UI, and only SOG-UI.** The library abstracts the brand into tokens, components, vocabulary and the reasoning behind each, so that Sogverse consumes the brand with no external reference of its own. A departure from the brand exists only where the library's own source declares and justifies it beside the value it governs (`packages/sog-ui/`); no deviations file exists, and no divergence recorded before the library existed carries over on its own account. A brand rule that remains in this file is one not yet moved into the library, and it leaves this file with the adoption that moves it.
