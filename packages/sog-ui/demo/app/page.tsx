@@ -57,7 +57,12 @@ import {
  * moves moves here too.
  */
 
-const SPECIMEN = "Sogverse ABCÄÖ abcäö 0123";
+// The marks are not decoration. The product ships Finnish, Swedish and French,
+// which is why every face is loaded with `latin-ext`, so every face has to be
+// looked at with those marks on: a face whose ä sits differently from its a, or
+// whose ç collides with the line below, is wrong for this product however it
+// reads in English.
+const SPECIMEN = "Sogverse ABCÅÄÖÉÇ abcåäöéç 0123";
 const SIGNATURE = "Aino Virtanen";
 
 /** Three rows, so the hovered one can be seen against the rows that are not. */

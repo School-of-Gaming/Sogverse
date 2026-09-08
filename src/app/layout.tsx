@@ -4,7 +4,6 @@ import {
   Crimson_Pro,
   Dancing_Script,
   Poppins,
-  Press_Start_2P,
   Space_Mono,
 } from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
@@ -58,14 +57,6 @@ const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin", "latin-ext"],
   variable: "--font-space-mono",
-});
-
-// The arcade display face, an approved exception outside the library's four and
-// so still Sogverse's to load; `--font-display` in globals.css points at it.
-const pressStart2P = Press_Start_2P({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-press-start-2p",
 });
 
 // The hand-written face a signature renders in. `latin-ext` is not optional:
@@ -182,7 +173,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${poppins.variable} ${crimsonPro.variable} ${spaceMono.variable} ${pressStart2P.variable} ${dancingScript.variable}`}
+      className={`${poppins.variable} ${crimsonPro.variable} ${spaceMono.variable} ${dancingScript.variable}`}
     >
       <body className="antialiased bg-background text-foreground">
         <Providers

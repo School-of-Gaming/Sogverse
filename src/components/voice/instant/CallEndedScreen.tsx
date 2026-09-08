@@ -56,7 +56,7 @@ export function CallEndedScreen({ reason, code, copyright }: CallEndedScreenProp
               <RoomLinkChip code={code} />
             </div>
           )}
-          <h2 className="pt-6 font-display text-2xl font-bold leading-tight tracking-tight md:text-3xl">
+          <h2 className="pt-6 text-2xl font-bold leading-tight tracking-tight md:text-3xl">
             {tHome.rich("title", {
               br: () => <br />,
               act: (chunks) => (

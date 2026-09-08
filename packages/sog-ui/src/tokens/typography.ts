@@ -133,12 +133,17 @@ export const FACES = {
     styles: ["normal", "italic"],
   },
   /**
-   * The one monospace on the site, and it does two jobs. It is the world
-   * voice — the typewriter face of Sogverse itself, spent where the platform
-   * names one of its own places: in-world UI, quest and story artwork,
-   * campaign posters. It is also the machine face, for text a machine wrote or
-   * a person has to reproduce exactly: a room code, a password, an id, a log,
-   * an inline code span.
+   * The machine face, and nothing else. Text a machine wrote or a person has to
+   * reproduce exactly is set in it — a room code, a password, an id, a log, an
+   * inline code span, a placeholder no customer should see — so that machine
+   * text is told apart from words at a glance. It is never a voice, never a
+   * heading and never a name.
+   *
+   * **Decided against: the world voice** — the monospace spent where the
+   * platform names one of its own places, on the child's own surfaces, in a
+   * voice room. It was put to its strongest cases and not taken, because the app
+   * face carries every word a person reads, and a second face for the same words
+   * asks a reader to learn a distinction the product does not need.
    *
    * It was two tokens — a branded mono beside Tailwind's own, left at the UA
    * stack so machine text could not silently become branded. That was a
@@ -151,9 +156,6 @@ export const FACES = {
    * face's zero carries no slash and no dot, so it was read against `O` at the
    * sizes codes are set — a dictated room code, a copied id, a generated
    * password — and found clear.
-   *
-   * Kept out of plain copy addressed to a parent, where the app face carries
-   * trust better.
    */
   mono: {
     name: "Space Mono",

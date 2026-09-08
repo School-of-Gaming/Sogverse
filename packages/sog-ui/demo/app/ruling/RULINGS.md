@@ -1,11 +1,16 @@
 # Faces adoption rulings
 
 Temporary. The ledger for the owner's rulings on the questions the ruling page
-(`/ruling` in the demo) puts on screen. One entry per question. The owner rules in
+(`/ruling` in the demo) put on screen. One entry per question. The owner rules in
 shorthand, in rounds; each ruling is recorded here in full; the implementation that
-applies it reads this file, not the conversation that produced it. Deleted, with the
-page, when every entry below has landed in library and app code and the demo's
-living floors show the result.
+applies it reads this file, not the conversation that produced it.
+
+**The page is gone.** Every question it drew has been ruled and landed, so
+`demo/app/ruling/` holds nothing but this file: the specimens, the Press Start
+section and the world-voice section were deleted with the rulings they served,
+and the demo's living foundations floor is where the faces are looked at now.
+The ledger stays for §10 and §12, the two entries still open, and is deleted with
+them.
 
 Status values: `open` · `ruled` · `landed`.
 
@@ -63,16 +68,25 @@ and §8, and the two rulings move it in opposite directions: §11 adds one, the 
 on the About quote, and §8 is a swap — the banner's `fontFamily` attribute goes and a
 `font-mono` class takes its place, so the row stays at one hit and stops being a
 hand-spelled family. No file joins or leaves the listing, because both files were already
-in it. The command is the enumeration; a hit it returns is a place a face is named, not a
-defect.
+in it. **47 in 18 after §3, §4, §5 and §13**, which is where the retirement of Press Start
+2P shows up as a number: eleven hits went in one move. The face's `next/font` import, its
+load and its variable class left `src/app/layout.tsx`, which now loads exactly the four
+faces `FACES` names; `--font-display` and its comment block left `globals.css`, whose only
+remaining hit is the body `font-family`; and the three `font-display` spends went with the
+three comments that named the face. Four files fall out of the listing entirely — the gamer
+dashboard body, the admin panel, the pixel-art module and the call-ended screen — because
+a face was the only thing any of them named. Dropping `-g '!*.md'` now gives 49 in 19: the
+two extra are the surviving face paragraphs in `src/CLAUDE.md`, which retire with §12. The
+command is the enumeration; a hit it returns is a place a face is named, not a defect.
 
 ## Standing decisions (already made, not re-opened here)
 
-- **Press Start 2P is retired.** It is loaded as an approved exception outside the
-  library's four faces and spent on five sites. Every one is re-set in a library face;
-  what is open per site is only which one. The load and `--font-display` go with the
-  last of them — **two of the five have gone** (§1 and §2, the two public-site heroes),
-  so both stay until §3, §4 and §5 have all landed.
+- **Press Start 2P is retired, and the retirement is complete.** It was loaded as an
+  approved exception outside the library's four faces and spent on five sites. All five
+  are now set in a library face — §1 and §2 in the public-site heroes, §3, §4 and §5 on
+  the three platform surfaces — and the load and `--font-display` went with the last of
+  them: no `next/font` import, no `--font-press-start-2p` variable, no `--font-display`
+  token and no `font-display` class anywhere in `src/`.
 - **No new face is added to the library.** `FACES` stays four.
 - **Dancing Script's placement is settled** — a signature line and nothing else — and
   its four call sites are all signatures. No question, no drawing, no change.
@@ -164,7 +178,24 @@ names*. The honest alternative is Poppins here too, in which case Space Mono kee
 the nine machine-text placements §7 gave it and the world voice names no place in
 Sogverse at all — survivable, but worth ruling deliberately rather than by default.
 
-**Status: open.**
+**Ruled: Poppins.** The owner brought the team's decision, made once for the
+whole adoption rather than site by site: **Poppins everywhere, and Space Mono is used
+exclusively for machine text.** §13 is that decision's own entry. The rule is not widened: "Welcome, Väinämöinen!" names a
+child rather than a place, and the greeting was always the weaker half of this entry's two
+questions.
+
+**What landed.** `src/components/gamer/gamer-dashboard-page-body.tsx` drops `font-display`
+from the greeting `h2` and nothing else: `text-xl font-bold text-act break-words
+md:text-3xl` all stay, so the line inherits Poppins from the `font-sans` on `<body>` and
+its weight, size, colour and step-down remain the Heading adoption's to rule — including
+`font-bold`, which Poppins draws and Press Start 2P did not (finding 1, closed). The
+comment above it justified the two sizes by the pixel face's one-em-per-glyph monospacing;
+it is rewritten to say what is still true — a long Finnish word overflows mobile at
+`text-3xl`, so the greeting steps down, and `break-words` catches the name no translator
+controls — and names no family and no class. The file falls out of the regeneration
+command's listing.
+
+**Status: landed.**
 
 ## 4. The admin all-clear title
 
@@ -181,7 +212,23 @@ title on that page set differently from every other, so the face is carrying a
 distinction the panel does not have. If the owner wants the all-clear to feel like a
 reward, that is the sprite's job.
 
-**Status: open.**
+**Ruled: Poppins.** The owner brought the team's decision, made once for the
+whole adoption rather than site by site: **Poppins everywhere, and Space Mono is used
+exclusively for machine text.** §13 is that decision's own entry.
+
+**What landed.** `src/components/admin/dashboard/needs-attention-panel.tsx` drops
+`font-display` from the `CardTitle` and nothing else: `text-sm leading-relaxed
+tracking-normal text-act sm:text-base` all stay, and the title now inherits `CardTitle`'s
+own `font-semibold` (600), which Poppins draws and Press Start 2P did not (finding 1,
+closed). The pixel trophy beside it is untouched artwork. The comment is rewritten: it had
+explained every class as a concession to the pixel face — the relaxed leading against one
+em per glyph, `tracking-normal` against smudged pixel glyphs, and the `latin`-subset
+diacritic note that finding 4 is about — and now says what is true, that the heading is the
+app face like every other panel title on the page, that the sprite carries the reward on
+its own, and that the leading and tracking are for a title sitting on one row beside it.
+The file falls out of the regeneration command's listing.
+
+**Status: landed.**
 
 ## 5. The call-ended heading
 
@@ -195,12 +242,25 @@ three faces.
 the two entries should not be allowed to diverge. Voted separately only because a
 person meets it in a completely different place.
 
-**§1 has ruled Poppins.** This entry stays open on its own surface all the same: the
-call-ended heading is in-platform, in a voice room, and the team is ruling by category —
+**§1 has ruled Poppins.** This entry stayed open on its own surface all the same: the
+call-ended heading is in-platform, in a voice room, and the team was ruling by category —
 the two public-site heroes together, the three platform surfaces on their own terms — so
-the shared message key sets the expectation without settling the vote.
+the shared message key set the expectation without settling the vote.
 
-**Status: open.**
+**Ruled: Poppins.** The owner brought the team's decision, made once for the
+whole adoption rather than site by site: **Poppins everywhere, and Space Mono is used
+exclusively for machine text.** §13 is that decision's own entry. The category ruled the same way the message key predicted, and
+the two entries do not diverge.
+
+**What landed.** `src/components/voice/instant/CallEndedScreen.tsx` drops `font-display`
+from the tagline `h2` and nothing else: `pt-6 text-2xl font-bold leading-tight
+tracking-tight md:text-3xl` all stay, and the `act` beat inside the rich message is
+untouched, so the tagline is drawn exactly as the home hero's is under §1. The component's
+doc comment named no face — the "display rule" in it is the hero's `world` rule, a graphic
+and not a family — so nothing there needed rewriting. The file falls out of the
+regeneration command's listing.
+
+**Status: landed.**
 
 ## 6. The pixel-art module
 
@@ -210,7 +270,16 @@ the shared message key sets the expectation without settling the vote.
 and spends no face; the two hero components do the same. The three comments are
 rewritten in the change that lands §1–§5, and the sprite itself is untouched artwork.
 
-**Status: open** (as a housekeeping item on §1–§5).
+**What landed.** All three are rewritten and none names a family or a class. The Roblox
+hero's went with §2 and the gamer dashboard's with §3. The pixel-art module's had said the
+pixel register is the one this platform already speaks in, because `font-display` beside
+the sprite was Press Start 2P; it now says what is true — a pixel mark reads as a reward to
+the audience this page has, the sprite is the only pixel thing in the panel, and the words
+beside it are the app face like every other title on the page. The sprite itself did not
+move. The prose row of the regeneration command's table is empty: no file under `src/`
+names the display face in a comment any more.
+
+**Status: landed.**
 
 ## 7. One monospace on the site
 
@@ -607,7 +676,31 @@ zone list is that rule's first and so far only site in Sogverse.
   That is a real simplification and not a loss: one face, one job, and no call site
   left deciding whether a string is lore.
 
-**Status: open.**
+**Ruled: no placement.** The owner brought the team's decision: **Poppins everywhere, and
+Space Mono is used exclusively for machine text.** The world voice has no placement in
+Sogverse — not the zone name, not any of the other five, not the two sites §3 and §5 asked
+about. It is the second of the two consequences written above, the clean one: one face,
+one job, and no call site left deciding whether a string is lore.
+
+**What landed.** Nothing in `src/` changed for this entry — the ruling is that nothing
+does, and `ZoneList.tsx` keeps the app face it already had. What moved is the library's own
+rule text, in both places that carried it. `FACES.mono`'s doc comment in
+`packages/sog-ui/src/tokens/typography.ts` opens on the machine face and nothing else — a
+room code, a password, an id, a log, an inline code span, a placeholder no customer should
+see, set in it so machine text is told apart from words at a glance, never a voice, never a
+heading, never a name — and it records the world voice as decided against, in the library's
+own words and citing no source: put to its strongest cases and not taken, because the app
+face carries every word a person reads and a second face for the same words asks a reader
+to learn a distinction the product does not need. The paragraph on the dotless zero stays,
+because that property still had to be judged before the face could carry codes. The old
+closing line about keeping the face out of a parent's plain copy went with the world voice:
+a face that is never a voice cannot be in copy at all. The package's `CLAUDE.md` § Faces
+loses "the world voice where the platform names one of its own places" from its Space Mono
+clause, which stays exhaustive and in the paragraph's voice.
+
+And §3 and §5 are Poppins, exactly as the consequence said they would be.
+
+**Status: landed.**
 
 ---
 
@@ -624,9 +717,11 @@ fixed in `src/` — these are findings for the change that lands the rulings.
    ruling page's "today" column therefore draws the face at 400 and says so in its doc
    comment; drawing the app's requested weight would have shown the owner a face that
    does not exist. The weight itself is the Heading adoption's to rule.
-   **Half-closed by §1 and §2:** the two heroes keep `font-bold` and Poppins draws it, so
-   two of the four synthesised weights are now real. The gamer greeting and the admin
-   title are still synthesised while §3 and §4 are open.
+   **Closed by §1–§4.** The two heroes keep `font-bold` and Poppins draws it; the gamer
+   greeting keeps `font-bold` under §3 and the admin title inherits `CardTitle`'s
+   `font-semibold` under §4, both now drawn weights of a family that loads them. All four
+   synthesised weights are real weights, and the family that could not draw them is no
+   longer loaded. The weights themselves are still the Heading adoption's to rule.
 2. **The banner's SOG asks for 900** against a system stack, and would ask for 900
    against Poppins, which loads 400–700. Same class of defect, on a surface CSS cannot
    reach. Folded into §8.
@@ -643,14 +738,19 @@ fixed in `src/` — these are findings for the change that lands the rulings.
    not fully, so a diacritic outside it falls back mid-word to the UA stack in a pixel
    headline. Retiring the face closes it, which is why it is a finding rather than a
    fix.
+   **Closed by §3–§5.** The face is retired and its load is gone, so every face Sogverse
+   loads now carries `latin-ext` and no headline can fall back mid-word. The admin panel's
+   comment about Swedish's ä surviving the `latin` subset went with it. The demo's
+   foundations floor draws every face against a specimen that carries the Finnish, Swedish
+   and French marks, which is where a face is looked at with them on from now on.
 5. **No orphaned face class.** Every `font-*` face utility Sogverse spends resolves to
    a token something generates: `font-display` from `globals.css`, `font-cursive` from
    the library's theme, `font-mono` from Tailwind's own default. `font-brand-mono` has
    zero spends in `src/` — the token exists and nothing reaches it, which is the
    condition §7 and §3 between them resolve.
-   **Closed by §7:** the token is gone and `font-mono` is the library's, so every face
-   utility Sogverse spends now resolves to a token the library generates, `font-display`
-   excepted until Press Start retires.
+   **Closed by §7 and §3–§5:** `font-brand-mono` is gone and `font-mono` is the
+   library's, and `font-display` went with Press Start 2P, so every face utility Sogverse
+   spends now resolves to a token the library's own theme generates, with no exception.
 6. **Every face variable is on `<html>`.** The root layout puts all five `next/font`
    variable classes on the root element, and there is exactly one `<html>` in the app
    (the mail's own is a document, not a layout). No route group defines a second root
@@ -694,3 +794,11 @@ adoption that owns it.
    face. If the library ever wants a display face, this is the shape it takes, and the
    Guidebook's answer today is that it does not: a heading that wants personality gets
    the scale, not another family.
+   **Retired with the face, and nothing is queued.** `--font-display` is gone from
+   `src/app/globals.css` with its comment block, and the entry that let it through
+   `tests/unit/styling/globals-declares-no-colour.test.ts` is gone with it, so the
+   stylesheet now declares only layout values and the radius scale and the token cannot
+   come back by habit. What stays true is the shape: the indirection was the right one, and
+   a display face the library one day wants is a `Face` in `FACES` with a semantic token,
+   loaded by the consumer like the other four — not a fifth family in the app's layout
+   pointed at by a token the app declares itself, which is what this one was.

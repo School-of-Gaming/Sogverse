@@ -101,13 +101,13 @@ export function GamerDashboardPageBody({
             would be the first thing a child met on their own home page. The pill
             still sticks the moment it reaches the top of the viewport. */}
         <div className="text-center">
-          {/* Two-size pattern matching the public Home heading:
-              font-display (Press Start 2P) is monospaced ~1em-wide, so a
-              long Finnish word like "Tervetuloa," overflows mobile at
-              text-3xl. break-words is a safety net for longer translations —
-              and now for the name too, which is the longest thing that can
-              land in this line and the one part of it no translator controls. */}
-          <h2 className="font-display text-xl font-bold text-act break-words md:text-3xl">
+          {/* Two-size pattern matching the public Home heading: a long Finnish
+              word like "Tervetuloa," overflows mobile at text-3xl, so the
+              greeting steps down on a narrow viewport. break-words is a safety
+              net for longer translations — and for the name, which is the
+              longest thing that can land in this line and the one part of it no
+              translator controls. */}
+          <h2 className="text-xl font-bold text-act break-words md:text-3xl">
             {t("welcomeNamed", { name: firstName })}
           </h2>
           <p className="text-muted-foreground">{t("subtitle")}</p>

@@ -74,14 +74,10 @@ const ALLOWED = {
   "--radius-md": "the radius scale, pending the Button adoption",
   "--radius-lg": "the radius scale, pending the Button adoption",
   "--radius-xl": "the radius scale, pending the Button adoption",
-  // The indirection that lets a component ask for "the display face" without
-  // naming a family. The face variable it points at is defined on <html>; the
-  // library owns the faces, and this pointer leaves with the faces adoption.
-  "--font-display": "the display-face indirection, pending the faces adoption",
 } as const;
 
 const WHY =
-  "src/app/globals.css declares only layout values, the radius scale and the display-face pointer. Every colour in this app comes from @sog/ui's generated theme — a token declared here is a colour (or a scale) the library cannot govern, and it is what made a brand change mean editing this app. Move it into the package, or add it to ALLOWED with the reason it is not the library's.";
+  "src/app/globals.css declares only layout values and the radius scale. Every colour in this app comes from @sog/ui's generated theme — a token declared here is a colour (or a scale) the library cannot govern, and it is what made a brand change mean editing this app. Move it into the package, or add it to ALLOWED with the reason it is not the library's.";
 
 describe("Sogverse's stylesheet declares no colour", () => {
   const declared = declaredCustomProperties(readFileSync(globalsPath, "utf8"));

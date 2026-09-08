@@ -47,14 +47,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-
-  /* The arcade display face, for the rare placements approved for it. The
-     indirection is the point — a component asks for "the display face" and never
-     for a family — and the face variable it points at is defined on <html> in
-     src/app/layout.tsx. The Open Graph cards are drawn by satori, which cannot
-     read CSS at all and fetches its own copy of Poppins
-     (src/components/og/fonts.ts). */
-  --font-display: var(--font-press-start-2p);
 }
 
 /* There is no universal border-colour default here, on purpose. Tailwind 4's
