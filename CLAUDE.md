@@ -17,9 +17,10 @@ npm run test:smoke       # Build + smoke check (serves a production build, asser
 
 ## Where the rules live
 
-Two nested `CLAUDE.md` files own most of what this repo does. This file is the monorepo:
-commands, branching, environment, the database tripwires, testing, code style and the
-documentation rules.
+Rules live next to the code they govern, in nested `CLAUDE.md` files that load when that
+code is opened — the Documentation section lists every one of them. Two are broad enough
+to be worth naming up front. This file, the root, is the monorepo: commands, branching,
+environment, the database tripwires, testing, code style and the documentation rules.
 
 **`src/CLAUDE.md` — Sogverse the web app.** It auto-loads whenever a file under `src/` is
 read or edited, and it holds everything about the app itself: the roles and their
@@ -103,7 +104,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 
 ## Environment Variables
 
-All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — including `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_REF` used by CLI commands below.
+All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — including `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_REF`, which the Supabase CLI commands in `supabase/CLAUDE.md` read from there.
 
 ## Database
 

@@ -1,13 +1,19 @@
 # src/
 
-This file governs **Sogverse the web app** — everything under `src/`. It auto-loads
-whenever a file in this tree is read or edited; the root `CLAUDE.md` governs the monorepo
-around it. The app's UI authority is **SOG-UI** (`packages/sog-ui/CLAUDE.md`) — read that
-file before any UI work, because it does not auto-load here.
+**Sogverse** is School of Gaming's web app: the application families, game educators and
+admins sign into. It is everything under `src/`, and this file holds the rules that cut
+across it — the roles and their dashboards, the service layer, auth, layout, copy and the
+brand.
 
-## Architecture
+It auto-loads whenever a file in this tree is read or edited; the root `CLAUDE.md` governs
+the monorepo around it. The app's UI authority is **SOG-UI**
+(`packages/sog-ui/CLAUDE.md`) — read that file before any UI work, because it does not
+auto-load here.
 
-### Tech Stack
+## Tech Stack
+
+What the app is built on:
+
 - **Next.js 16** (App Router) with React 19 and TypeScript
 - **Supabase** for PostgreSQL database and authentication
 - **React Query** for server state management
@@ -17,7 +23,8 @@ file before any UI work, because it does not auto-load here.
 - **Daily.co** for real-time voice/video chat
 - **Vitest** + **Playwright** for testing
 
-### Role-Based Access Control (RBAC)
+## Role-Based Access Control (RBAC)
+
 Four user roles with separate dashboards:
 - `admin` → `/admin` - System management
 - `customer` → `/parent` - Parents who purchase products and manage linked gamers — and who can hold a seat themselves on a product whose audience admits adults (the role identifier is `customer`; the URL is `/parent`)
@@ -32,32 +39,34 @@ Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based rou
 
 **Rule: user-facing copy calls a role's dashboard "My SOG" — "dashboard" is internal vocabulary.** The role dashboards (`/parent`, `/gamer`, `/gedu`) are named "My SOG" to the people using them, in page titles, back links, buttons and emails alike. "Dashboard" is what we call them among ourselves and in the code; a translated string that says it has leaked an implementation word into the product. The brand name itself stays "My SOG" rather than being translated wholesale — locales localise the surrounding words and the possessive, not the mark. The one exception is the **admin** dashboard, which is genuinely an admin panel and is called one: admin sidebar entries and admin page titles keep saying "Dashboard".
 
-### SOG-UI owns the UI
+## SOG-UI owns the UI
 
 **Rule: every UI opinion belongs to SOG-UI, the UI language package at `packages/sog-ui/`,
 and Sogverse follows it one construct at a time, as each is adopted.** Read the package's
-`CLAUDE.md` before any UI work; it does not auto-load when working under `src/`, so this
-pointer is the one UI rule this app file keeps. What is adopted so far, and in what order
-the rest follows, is `packages/sog-ui/docs/adoption.md`. For a construct not yet adopted,
-the rule printed below for it still governs Sogverse's code exactly as written; the
-adoption that retires the construct deletes its rule from this app file in the same
-change. No new UI rule is added here: a new opinion goes to SOG-UI, and the construct
-joins the adoption order. The UI sections below (layout and scrolling, loading and
-disabled state, button order, the faces and headings rules, the UI component reference and
-preview scenes) are that transitional state, and the day this app file holds none of them,
-the sweep is done.
+`CLAUDE.md` before any UI work; it does not auto-load alongside this one, so this pointer
+is the one UI rule this file keeps. What is adopted so far, and in what order the rest
+follows, is `packages/sog-ui/docs/adoption.md`. For a construct not yet adopted, the rule
+written below for it still governs Sogverse's code exactly as written; the adoption that
+retires the construct deletes its rule from this file in the same change. No new UI rule
+is added here: a new opinion goes to SOG-UI, and the construct joins the adoption order.
+The UI sections below (layout and scrolling, loading and disabled state, button order, the
+faces and headings rules, the UI component reference and preview scenes) are that
+transitional state, and the day this file holds none of them, the sweep is done.
+
 Colour is the first thing to have left: the theme adoption moved the tokens, the grounds,
 the one-theme rule and the ban on a hardcoded colour into the library, where they are
 stated in `packages/sog-ui/CLAUDE.md` and held by lint and by
 `tests/unit/styling/`.
 
-### Key Conventions
+## Key Conventions
+
 - App routes are grouped: `(auth)`, `(dashboard)`, `(public)`, plus `api/`
 - Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
 - Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `admin.ts` (privileged)
 - Auto-generated types in `types/database.types.ts`, convenience aliases in `types/index.ts`
 
-### Service Layer Pattern
+## Service Layer Pattern
+
 Each feature in `src/services/` follows a two-to-three-file pattern:
 - `*.service.ts` — Class that takes a `SupabaseClient<Database>` in the constructor. Read methods use the injected client (`.from()` queries, `.rpc()` calls). Write methods that need server-side secrets (Stripe, Daily.co, admin client) use `fetch()` to call API routes instead — the injected client is unused by those methods, and this is intentional.
 - `*.queries.ts` — React Query hooks. Each hook calls `getClient()`, instantiates the service, and returns `useQuery`/`useMutation`. Exports a `*Keys` factory object for cache key hierarchy (e.g., `groupKeys.all`, `groupKeys.byProduct(id)`).
@@ -65,12 +74,14 @@ Each feature in `src/services/` follows a two-to-three-file pattern:
 
 **Rule: Mutations must invalidate related queries in `onSuccess`.** Use the key hierarchy so invalidating a parent key (e.g., `groupKeys.all`) cascades to children.
 
-### Supabase Clients
+## Supabase Clients
+
 - `createBrowserClient()` - Browser-side, singleton pattern. Used for data queries and auth operations (sign in, sign up, sign out).
 - `createServerComponentClient()` - Server components (RSC)
 - `createAdminClient()` - Service role key for privileged operations
 
-### Auth Architecture
+## Auth Architecture
+
 Proxy (`src/proxy.ts`) refreshes tokens server-side on every request and enforces role-based routing. The browser client also auto-refreshes tokens — standard `@supabase/ssr` dual-refresh model.
 
 **Rule: After any auth state change (sign-in, sign-out, account switch), the browser must do a full-page navigation — `window.location.href`, a form POST that the server answers with a redirect, or any other nav that unloads the document. `router.push()` is not enough.** The browser Supabase client keeps its session in an in-memory singleton seeded from cookies at construction time. Cookies changed by a server response (the `/api/auth/signout` route, OAuth callback, `/api/auth/switch-account`, password reset completion) don't fire `onAuthStateChange`, so the singleton stays stale until the document reloads. A soft navigation leaves the stale singleton in place and the UI keeps thinking the user is signed in (or signed in as the wrong person). This is downstream of mutating auth on the server (POST routes, for CSRF safety): a client-side `supabase.auth.signOut()` would fire `onAuthStateChange` and let a `router.refresh()` suffice, but our routes change cookies the browser client never sees, so only a document reload rebuilds it.
@@ -81,19 +92,19 @@ The canonical sign-out shape is an HTML `<form method="post" action="/api/auth/s
 
 **Rule: Password changes go through the emailed reset flow.** Supabase dashboard config (not in this repo) sets `security_update_password_require_reauthentication = true`, and the gate keys on the session row's age, not token freshness — so a direct `updateUser({ password })` passes fresh-session testing and fails in production for any long-lived session. A completed reset also revokes every other session.
 
-### Redirects & open-redirect safety
+## Redirects & open-redirect safety
 
 **Rule: Any caller-supplied redirect target (a `?redirect=`/`?next=`/`?back=` param, or anything else deciding where to navigate) must be resolved through `resolveInternalPath()` (`src/lib/navigation/internal-path.ts`) before navigating. Never hand-roll the check.** String matching like `startsWith("/")` + `!startsWith("//")` always loses to a variant you didn't think of (`/\evil.com`, `https:/evil.com`, a stripped leading tab) — an open redirect off a logged-in page is a clean phishing vector. `resolveInternalPath` resolves against a sentinel origin with the URL parser and rejects anything that escapes it, covering every variant at once.
 
 **Rule: Any absolute URL built from an incoming request (especially links placed in emails) must derive its origin from `getOrigin(request)` (`src/lib/url.ts`) — never from `new URL(request.url).origin` or the raw `Host` header.** The browser-supplied `Host` is attacker-controllable on our deployment (Vercel forwards it into `request.url`), and an emailed link is the worst place for a wrong origin: the recipient trusts it and it carries a credential/session token, so a spoofed origin turns it into a phishing/account-takeover vector. `getOrigin` honours `Host` only when it matches a trusted source and otherwise falls back to the canonical `NEXT_PUBLIC_SITE_URL`. Pairs with the `resolveInternalPath` rule above — one governs relative redirect targets, the other absolute origins.
 
-### Content Security Policy (CSP)
+## Content Security Policy (CSP)
 
 CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.randomUUID()`). In production, `script-src` uses `'nonce-{random}' 'strict-dynamic'` — only scripts tagged by Next.js's SSR pipeline execute. In development, it falls back to `'unsafe-inline' 'unsafe-eval'` for HMR compatibility. Static security headers (X-Frame-Options, HSTS, etc.) remain in `next.config.ts`.
 
 **Rule: Never add inline `<script>` tags directly.** The nonce-based CSP blocks any inline script without the per-request nonce. Use Next.js `<Script>` component or ensure scripts go through the SSR pipeline. If you must add an inline script, read the nonce from the `x-nonce` request header in a server component.
 
-### Layout & Scrolling
+## Layout & Scrolling
 
 **Rule: An element on screen before a change and still on screen after it must not change position.** The harm is specific — a target moving out from under a cursor mid-click, and a reader losing their place — and both require the element to *survive* the change. Survival, not geometry, is what makes this rule bind.
 
@@ -117,7 +128,7 @@ Even permitted reflows are worth softening: prefer an animated transition over a
 
 **Rule: 360px is the mobile design floor — a narrow layout is designed and judged at 360, and anything narrower only has to degrade gracefully.** 360 CSS px is the Android baseline: it is what nearly every Samsung and mid-range Android reports at default scaling, and that is the archetypal family phone in our markets; the iPhone floor sits above it at 375 (the SE 2nd/3rd gen body). What lives below 360 is not a design audience: 320px is 2013–2016 iPhone hardware whose Safari stopped updating years ago, plus Android's display-zoom accessibility setting, which shrinks a 360 phone's effective viewport toward 320. Those must not *break* — no horizontal document scroll, nothing clipped into uselessness — but no layout decision is weighed against them, and "it overflows at 320" is not a defect on its own. Two habits make the floor real: judge tight layouts in the widest locale, because French routinely sets the longest words where English sets the shortest ("Boutique" vs "Shop"), and when a fixed strip has to share 360px — the header is the canonical case — do the width arithmetic per locale rather than eyeballing one of them.
 
-### Loading & Disabled State
+## Loading & Disabled State
 
 **Rule: A button must not visually re-enable between the click and the action actually finishing.** A click promises one outcome; the disabled/loading state has to persist all the way through to it — across any redirect, route transition, or panel/view swap that the success path triggers. React Query's `mutation.isPending` is not enough on its own: it flips false the moment React Query dispatches the success state, but `onSuccess` runs after that and any navigation/view-swap is later still — so the button briefly re-enables and a fast user can fire the action twice.
 
@@ -135,7 +146,7 @@ The pattern stays inline per screen — **do not extract it into a shared `useCo
 
 **Corollary: if you cannot tell which category a call falls into, you do not yet understand the query — go and find out.** Hedging with a timer is what that uncertainty used to buy, and it bought a loading state that was wrong in both directions: a flash on the fast path, and dead air on the slow one. The container keeping its final size across loading and loaded is what the layout rule needs; the skeleton was never the part doing that work.
 
-### Button Order
+## Button Order
 
 **Rule: where two buttons answer one question — one affirmatively, one negatively — the affirmative sits on the RIGHT in a row and on TOP in a stack.** Confirm/Cancel, Save/Discard, Accept/Decline. The **affirmative** is the action the surface exists to ask about, *including* a destructive one — a red Remove in a confirm dialog is still the answer to the dialog's question — and Cancel, Back, Close and Decline are the negative. One order everywhere is the whole point: whoever confirmed the last dialog already knows where this one's confirm button is, and muscle memory that is right most of the time is worse than none at all. Right-in-a-row is the desktop convention; top-in-a-stack is the platform one (Apple HIG stacked alerts, Material stacked dialogs).
 
@@ -151,7 +162,7 @@ The pattern stays inline per screen — **do not extract it into a shared `useCo
 
 **In an emailed button row the *position* carries over unconditionally; the emphasis is decided per mail, inside what the row's type allows.** A mail's two-button row is a fixed 50/50 table that is a row at every width, so there is nothing for `col-reverse` to do and the affirmative goes in the right-hand cell, reading the way the app has already taught. What the type forbids is the *primary* brand button, so a row can never hold two brand-filled cells competing for the same click — but the right-hand half may still carry the emphasis the row does allow, wherever one of the two actions is genuinely the thing being asked for: the seat-offer mail fills Accept and outlines Decline. Where the halves are equal alternatives with no ask between them — the welcome mail's shop-or-My-SOG pair — both stay outlined and neither is weighted. Position is settled by the convention; emphasis is settled by whether the mail is asking a question.
 
-### Date & Time Formatting
+## Date & Time Formatting
 
 **Rule: Pick the right tool for the date/time operation, and never use UTC as a stand-in for someone's local date.**
 
@@ -165,7 +176,7 @@ The pattern stays inline per screen — **do not extract it into a shared `useCo
 
 **Rule: A pure calendar date with no time of day stays UTC-pinned — do not give it the viewer's zone.** A camp's start/end date range, a club term date, a legal "last updated" date — these are zoneless; parse the bare date at UTC midnight and render in UTC, because re-anchoring it to a viewer's zone shifts it off-by-one. Rule of thumb: **a value with a clock face converts; a bare date does not.** (An event's date *does* shift when it carries a slot time — that's a date+time instant; an event with no time stays date-only.)
 
-### Brand vs. Platform: "School of Gaming" and "Sogverse"
+## Brand vs. Platform: "School of Gaming" and "Sogverse"
 
 **Rule: "School of Gaming" is the brand, "Sogverse" is the platform, and outward-facing copy leads with the brand.** They are two names for two things, and which one a string reaches for is a real decision:
 
@@ -196,7 +207,7 @@ These rules came out of a shift that landed in August 2026 — what was swept, a
 
 **Sogverse's brand authority is SOG-UI, and only SOG-UI.** The library abstracts the brand into tokens, components, vocabulary and the reasoning behind each, so that Sogverse consumes the brand with no external reference of its own. A departure from the brand exists only where the library's own source declares and justifies it beside the value it governs (`packages/sog-ui/`); no deviations file exists, and no divergence recorded before the library existed carries over on its own account. A brand rule that remains in this file is one not yet moved into the library, and it leaves this file with the adoption that moves it.
 
-### Brand vocabulary and fixed forms
+## Brand vocabulary and fixed forms
 
 **Rule: some words are banned from family-facing copy, and each ban is about what the word claims we are.** Say **children** or **gamers**, never "kids" — the register is the one a parent is addressed in, not the one a child is. We run **clubs, camps, events and sessions**: "course", "curriculum" and "class" describe school, and a family choosing us is choosing something school is not. "World-class" and "Skills for the future" are superlatives with nothing behind them a reader can check. **"Program"/"programme" is banned as a generic word**, with one exception — the Roblox **Programme** is a formally named joint offering whose legal documents bear the name, so it keeps it; nothing else may borrow the word from it.
 
@@ -210,7 +221,7 @@ These rules came out of a shift that landed in August 2026 — what was swept, a
 
 **Rule: the Yty vocabulary has fixed forms — Yty-Points, Quests, Achievement Badges (the metal tier names lowercase: bronze, silver, gold, platinum, diamond), Yty-Level, and "The Four Yty-Elements".** Valor is the relationship with **society** and Wit the relationship with **technology**; those two are the pair that gets swapped. The element definitions live in two places — the `yty` messages namespace and the Yty constants module — and a change to either is unfinished until the other matches, because the constants are the canonical English and the messages are what a reader sees.
 
-### Partner brands: Roblox and Lynx Educate
+## Partner brands: Roblox and Lynx Educate
 
 **Rule: every placement of a partner's logo needs that partner's sign-off, and an approval covers the placement it was given for — not the mark.** Roblox has approved the three-way lockup in the `/roblox` hero; that placement is the whole of what is approved. Any *new* surface carrying the Roblox mark — another page, an email, an OG image, a social card, a deck — is a fresh request that has to be flagged and reviewed before it ships, however small the addition looks. Meeting the mark's own usage constraints (clearspace, minimum size, no recolouring, the required trademark notice — all in `src/assets/partners/CLAUDE.md`) is not approval and does not substitute for it.
 
@@ -218,13 +229,13 @@ These rules came out of a shift that landed in August 2026 — what was swept, a
 
 This is Roblox's constraint on their own name, not a house-style ban on the word: copy about municipalities, schools and every other partner is unaffected and goes on saying "partnership". **It also binds internal vocabulary here** — component names, code comments, route notes — which is the one place this rule departs from "dashboard" vs "My SOG" above. There the internal word is a *different*, more precise word; here it is the forbidden one, sitting one copy-paste away from a string.
 
-### Safety copy: mechanisms, never intentions
+## Safety copy: mechanisms, never intentions
 
 **Rule: a sentence about a child's safety states a checkable mechanism, never an intention.** "A gamer account carries an internal Sogverse address, not your child's real email, and your child signs in through your parent account rather than a password of their own" is something a parent can test and hold us to. "We take your child's privacy very seriously" is a statement about our feelings, and every company that has ever lost a database said it first. The test is whether the sentence names something the product *does* — a mechanism, a constraint, a thing that cannot happen; a sentence that would still be true if we did nothing at all is not safety copy, however reassuring it sounds. This binds every safety, privacy and safeguarding surface: the legal pages, the PIN descriptions, the FAQ's safety answers, the values on the About page.
 
 **Corollary: only mechanisms verified true.** A mechanism sentence is a promise put in the reader's hands, so before writing one, check it against the schema and the flows it describes rather than against what the feature was meant to do — what is stored about a gamer, what a given contact path actually exposes, whether "a Gedu is always present" holds for *every* session type. A mechanism we want but do not have is a `TODO.md` feature item, never a sentence, and the weaker copy stays up until the mechanism is real. Overstating a safeguard is worse than the vague sentence it replaced, because a parent acts on it.
 
-### Locale vs. Spoken Language
+## Locale vs. Spoken Language
 
 **Rule: Use *locale* for the UI translation system and *spoken language* for human languages.** They are deliberately named differently because they are distinct concepts.
 
@@ -237,7 +248,7 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 
 **Rule: No emoji in `messages/` files** — they're untranslatable copy that can't be themed or recolored. When a string needs a glyph (warning triangle, checkmark, arrow), render a `lucide-react` icon next to the translated text in the component instead.
 
-### Styling
+## Styling
 
 **Rule: Poppins is the app face — body copy and every heading not claimed by the display-font variable — and every face is loaded through `next/font`.** Space Mono is a sanctioned brand face loaded the same way and placed nowhere yet, pending the design pass; it is intentionally unused, not dead weight to tidy away.
 
@@ -249,7 +260,7 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 
 **The test is voice versus furniture, and the HTML tag does not decide it.** Sentence case wherever the brand is *speaking* — a page title, a card heading, a section heading a reader reads as a sentence; caps are institutional costume there. Caps are permitted on *furniture*: the small, muted, tracked markers a reader scans as structure rather than reads as prose — eyebrows, pills, field labels, table headers, the micro-heading over a list. The brand's own topic-pill spec is bold caps, which is what settles it. An `h2` can be furniture and often is: the tag is there for the accessibility outline, and a `text-[11px]` muted marker over a rail card is a label whether it is an `h2`, a `p` or a `span`. **The corollary that catches the real mistakes: a furniture element and its identically-styled siblings case together** — de-capping an `h2` label while the `span` beside it keeps its caps is the defect, not the fix. And **caps and letterspacing travel as a pair**: a heading that goes sentence case drops its `tracking-wide`/`tracking-wider` in the same edit, because tracked lowercase reads as a rendering fault.
 
-### Authored rich text
+## Authored rich text
 
 Some user-authored fields are stored as **markdown** rather than plain text, because markdown is the one format that renders in-app *and* converts cleanly into the email the same content is later sent as. The rules that govern it:
 
@@ -270,7 +281,8 @@ Some user-authored fields are stored as **markdown** rather than plain text, bec
 
 **Rule: markdown is edited as rich text, not as syntax.** The people writing these fields are not writing documentation; asking them to remember what `##` does is how a formatting feature ends up unused. The stored value stays markdown either way — the syntax is an implementation detail of the column, not something a writer should ever meet. The editor (`src/components/ui/rich-text-editor.tsx`) is headless and styled with semantic tokens like everything else, is loaded on demand, and is only instantiated once a field is actually opened: a page holding many collapsed editors must not construct one per field.
 
-### UI Component Reference
+## UI Component Reference
+
 A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant and composite patterns. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
 
 **What the page is for (two functions):**
@@ -285,7 +297,7 @@ A living style guide is available at `/admin/ui-components` (admin login require
 
 **Rule: a fixture id that feeds an identicon-style avatar must be a real, generated UUID, hardcoded as a literal.** The identicon is a pattern derived from the id's hex bytes, so a readable stand-in like `"mock-gamer-aino"` doesn't render a different-looking avatar — it renders a degenerate one (the non-hex characters parse to nothing, and the grid collapses), which quietly makes every avatar-bearing demo a false picture of the real thing. Generate the UUIDs once (`node -e "console.log(crypto.randomUUID())"`) and paste them in; **never** call a UUID generator at module load or render time, because the same person would then get a different face on every reload, which destroys the stability a fixture exists to provide and makes screenshots unreproducible. Where a spec or scenario needs to refer to a fixture person, give the ids a named map so the readable name lives in the key and the UUID stays the value.
 
-### Full-page preview scenes
+## Full-page preview scenes
 
 The style guide demos components; a *page-level* change has to be judged as a page — real chrome, real viewport, real scrolling. That's what a **preview scene** is: one fixture-driven page at `/preview/{surface}/{scenario}`, served by a single dynamic route from a central scene registry (`src/components/preview/`), admin-gated in the proxy, noindex, and listed automatically on the admin **UI Previews** page (its own sidebar entry, directly below UI Components). Scenes make page-level iteration cheap: sign the design off from fixtures first, wire it once afterwards.
 
@@ -295,11 +307,11 @@ The style guide demos components; a *page-level* change has to be judged as a pa
 
 **Rule: chrome is composed, never simulated,** and never inherited by accident — each scene names the shell it wants and gets the real components (a dashboard scene renders the header plus the dashboard layout with no sidebar). **Rule: a scene mocks the whole page as the role meets it** — every section present, with backend-touching actions inert but rendering their real states, and pure-UI interactions working against local state. Faking or omitting a section because it's awkward to feed is the same separation-of-concerns smell the style guide exists to catch: fix the coupling (give the section a presentational core that takes rows/props), don't fake the section. The same boundary runs the other way: one scenario holds everything that can coexist in one render, and only a state the page cannot show alongside it — a different viewer, a different auth state, another value of whatever state the page keys on — earns a second scenario. The goal is the fewest scenarios that still cover the mutually exclusive states: states sharing a render compare themselves side by side, states behind separate links get compared from memory, and every extra scenario is another page to open, name, and keep from rotting.
 
-### Customer Enrollment & Billing
+## Customer Enrollment & Billing
 
 See `docs/architecture/products.md` for the purchase / participation flow and the billing model (monthly family subscriptions for clubs, single upfront payments for camps/events).
 
-### Voice Chat (Daily.co)
+## Voice Chat (Daily.co)
 
 The full voice architecture auto-loads from colocated `CLAUDE.md` files when you work under `src/components/voice/` (scheduled group rooms) and `src/components/voice/instant/` (instant rooms). The 9-approach Web Audio investigation behind the volume workaround remains in `docs/records/chrome-webrtc-volume-bug.md` as history.
 
