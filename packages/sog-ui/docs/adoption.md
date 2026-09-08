@@ -164,7 +164,7 @@ face utilities nor a weight.
 Done when: every family Sogverse names is the library's, and nothing in `src/` can name
 one that is not.
 
-**What it landed (2026-09-08).** The library declares five faces and the list is
+**What it landed (2026-09-08).** The library declares four loaded faces and the list is
 exhaustive: **Poppins**, the app face, body copy and every heading, with no display face
 beside it because a heading that wants personality gets the scale; **Space Mono**, the
 site's one monospace and the machine face — a room code, a password, an id, a log, an

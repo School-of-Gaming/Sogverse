@@ -41,6 +41,25 @@ function faceCall(layout: string, variable: string): string {
   return layout.slice(open, close + 2);
 }
 
+const WEIGHT_OPTION = /weight:\s*(\[[^\]]*\]|"[^"]*")/;
+const SUBSETS_OPTION = /subsets:\s*(\[[^\]]*\]|"[^"]*")/;
+
+/**
+ * The values one option of a face's load is written with.
+ *
+ * next/font takes either a list or a single value — `weight: ["400", "600"]`
+ * and `weight: "600"` are both legal — so both spellings are read as the list
+ * they mean. `null` is the option being absent altogether, which is a different
+ * finding from it being present and wrong.
+ */
+function optionValues(call: string, option: RegExp): string[] | null {
+  const written = option.exec(call);
+  if (written === null) {
+    return null;
+  }
+  return [...written[1].matchAll(/"([^"]*)"/g)].map((match) => match[1]);
+}
+
 /**
  * Every font loader the layout imports, by the identifier it is imported under.
  *
@@ -120,6 +139,51 @@ describe("the face contract", () => {
           `src/app/layout.tsx does not load ${face.name} in ${style}, which ${id} declares`,
         ).toBe(true);
       }
+    },
+  );
+
+  /**
+   * Exactly the weights a face declares are loaded. A weight the consumer
+   * forgets is not drawn — the browser thickens the regular to stand in for it,
+   * which is a smeared bold that still reads as styled and so is never
+   * reported — and a weight loaded past the list is a file every visitor to the
+   * page downloads and nothing ever sets.
+   */
+  it.each(Object.entries(FACES))(
+    "%s is loaded in exactly the weights it declares",
+    (id, face) => {
+      const call = faceCall(readFileSync(APP_LAYOUT, "utf8"), face.variable);
+      const weights = optionValues(call, WEIGHT_OPTION);
+      expect(
+        weights,
+        `src/app/layout.tsx loads ${face.name} with no weight option — ${id} declares ${face.weights.join(", ")}`,
+      ).not.toBeNull();
+      expect(
+        new Set(weights),
+        `src/app/layout.tsx does not load ${face.name} in exactly the weights ${id} declares`,
+      ).toEqual(new Set(face.weights.map(String)));
+    },
+  );
+
+  /**
+   * Exactly the subsets a face declares are requested. `latin-ext` dropped from
+   * a face is the failure that hides best: the page is styled, and only the
+   * Finnish and French letters inside a word — ä, ö, é — fall through to the
+   * fallback stack, so a name changes face halfway across.
+   */
+  it.each(Object.entries(FACES))(
+    "%s is loaded in exactly the subsets it declares",
+    (id, face) => {
+      const call = faceCall(readFileSync(APP_LAYOUT, "utf8"), face.variable);
+      const subsets = optionValues(call, SUBSETS_OPTION);
+      expect(
+        subsets,
+        `src/app/layout.tsx loads ${face.name} with no subsets option — ${id} declares ${face.subsets.join(", ")}`,
+      ).not.toBeNull();
+      expect(
+        new Set(subsets),
+        `src/app/layout.tsx does not load ${face.name} in exactly the subsets ${id} declares`,
+      ).toEqual(new Set(face.subsets));
     },
   );
 });

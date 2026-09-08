@@ -132,6 +132,10 @@ Poppins draws and Press Start 2P did not (finding 1, half-closed). The `act` bea
 colour departure and the measure trick are not face questions. No comment in the file
 named the face, so none needed rewriting. The drawing left §2 of the ruling page.
 
+One size did move after the owner walked the page on a phone: the 24px narrow size had
+been chosen so the pixel face would fit, and in the app face it read as too small, so
+the hero takes the scale's own narrow H1 step, `text-h1-mobile`. The wider sizes stay.
+
 **Status: landed.**
 
 ## 2. The Roblox hero
@@ -152,7 +156,8 @@ that goes with the face (below).
 §1 and as one decision with it: both public-site heroes are set in the app face.
 
 **What landed.** `src/components/roblox/roblox-hero.tsx` drops `font-display` from the
-hero `h1`. Everything else stays — `font-bold leading-snug`, both size scales, and the
+hero `h1`. Everything else stays — `font-bold leading-snug`, both size scales (each now
+starting from the scale's narrow H1 step, `text-h1-mobile`, for the reason §1 gives), and the
 mechanism that chooses between them — because that mechanism answers "a headline that
 fits its longest translation", which is a real problem with no library answer yet, and
 deleting the workaround without one trades a hack for a bug (by-product 2 below). The
@@ -333,7 +338,8 @@ the same `--font-space-mono` variable, so neither the consumer's `next/font` loa
 the face-contract test moved; the theme was regenerated through the generator and now
 declares `--font-mono`, which overrides Tailwind's default so `font-mono` in Sogverse
 resolves to Space Mono. The face's doc comment carries the decision and its reason. The
-library's `CLAUDE.md` says Space Mono is the world voice and the machine face both. Every
+library's `CLAUDE.md` said Space Mono is the world voice and the machine face both — a
+claim §13 later narrowed to the machine face alone, and the file now says that. Every
 `font-brand-mono` in the demo is `font-mono`. In Sogverse every `font-mono` call site
 keeps its class; the three that asked for a weight the face does not draw moved to one it
 does — the code chip and the UTM value chip to `font-bold`, the share-link button to no
