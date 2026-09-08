@@ -31,6 +31,21 @@ const DEMO_LAYOUT = join(
   "layout.tsx",
 );
 
+/**
+ * The `next/font` call that defines one face's variable.
+ *
+ * Sliced out of the layout's text rather than parsed. next/font requires its
+ * options to be a static object literal, so one face's load is exactly the
+ * `Family({ … })` around the variable it defines, and the nearest `({` before
+ * that variable and `})` after it are that call's own brackets.
+ */
+function faceCall(layout: string, variable: string): string {
+  const at = layout.indexOf(`"${variable}"`);
+  const open = layout.lastIndexOf("({", at);
+  const close = layout.indexOf("})", at);
+  return layout.slice(open, close + 2);
+}
+
 describe("the face contract", () => {
   // Vitest's `it.each([])` registers nothing and the suite passes green, so the
   // table is floored: an emptied face list must fail rather than vanish.
@@ -46,6 +61,41 @@ describe("the face contract", () => {
         layout.includes(`"${face.variable}"`),
         `the demo layout does not define ${face.variable} for ${id}`,
       ).toBe(true);
+    },
+  );
+
+  /**
+   * Every style a face declares is loaded, because a style that is not loaded
+   * is not drawn: the browser synthesises it, which on the serif is a skew of
+   * the upright alphabet rather than the italic one, a different alphabet
+   * altogether.
+   *
+   * How the assertion treats an omitted option: `normal` is next/font's own
+   * default, so a face drawn upright only may leave `style` out entirely, and
+   * every face but the serif does. The check is therefore on the option where
+   * it is present — it has to name every style the face declares — and on its
+   * absence only where the face declares nothing but `normal`. A face that
+   * gains a second style and does not gain the option fails on that second
+   * half rather than passing by default.
+   */
+  it.each(Object.entries(FACES))(
+    "%s is loaded in every style it declares",
+    (id, face) => {
+      const call = faceCall(readFileSync(DEMO_LAYOUT, "utf8"), face.variable);
+      const option = /style:\s*(\[[^\]]*\]|"[^"]*")/.exec(call);
+      if (option === null) {
+        expect(
+          face.styles,
+          `the demo layout loads ${face.name} with no style option, which is next/font's "normal" — ${id} declares more than that`,
+        ).toEqual(["normal"]);
+        return;
+      }
+      for (const style of face.styles) {
+        expect(
+          option[1].includes(`"${style}"`),
+          `the demo layout does not load ${face.name} in ${style}, which ${id} declares`,
+        ).toBe(true);
+      }
     },
   );
 });

@@ -158,7 +158,7 @@ function ZoneRow({
 
 export function WorldVoiceSection() {
   return (
-    <Question n={4} title="The world voice, its best cases">
+    <Question n={3} title="The world voice, its best cases">
       <Case title="The zone list in a voice room">
         <Exemplar
           file="src/components/voice/ZoneList.tsx"

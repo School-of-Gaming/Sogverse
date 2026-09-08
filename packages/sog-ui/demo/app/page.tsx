@@ -515,16 +515,26 @@ export default function FoundationsPage() {
           {Object.entries(FACES).map(([id, face]) => (
             <article key={id}>
               <h3 className="text-h3">{face.name}</h3>
-              <div className="mt-4 space-y-2">
-                {face.weights.map((weight) => (
-                  <p
-                    key={weight}
-                    className={`text-h3 ${FACE_CLASS[id] ?? ""} ${WEIGHT_CLASS[weight] ?? ""}`}
-                  >
-                    {id === "cursive" ? SIGNATURE : SPECIMEN}
-                  </p>
-                ))}
-              </div>
+              {/* Every style the face declares, each drawn at every weight.
+                  Only the serif declares a second one, and its two blocks are
+                  named because a reader has to be told which is the drawn
+                  italic and which the upright; the three single-style faces
+                  have nothing to tell apart and stay unlabelled. */}
+              {face.styles.map((style) => (
+                <div key={style} className="mt-4">
+                  {face.styles.length === 1 ? null : <Label>{style}</Label>}
+                  <div className="mt-1 space-y-2">
+                    {face.weights.map((weight) => (
+                      <p
+                        key={weight}
+                        className={`text-h3 ${style === "italic" ? "italic" : ""} ${FACE_CLASS[id] ?? ""} ${WEIGHT_CLASS[weight] ?? ""}`}
+                      >
+                        {id === "cursive" ? SIGNATURE : SPECIMEN}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </article>
           ))}
           {/* Drawn in its own stack rather than through a class, because the

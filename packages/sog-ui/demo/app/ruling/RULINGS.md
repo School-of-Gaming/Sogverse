@@ -58,8 +58,13 @@ now the interpolated form rather than a family literal, and the extra file is
 57 in 22 after §1 and §2: three hits went — the two heroes' `font-display` spends and the
 Roblox hero's comment naming the face — and the prose row drops from three files to two,
 because the rewritten comment names no family and no class. Both hero files fall out of
-the listing entirely: a face was the only thing either of them named. The command is the
-enumeration; a hit it returns is a place a face is named, not a defect.
+the listing entirely: a face was the only thing either of them named. 58 in 22 after §11
+and §8, and the two rulings move it in opposite directions: §11 adds one, the `font-serif`
+on the About quote, and §8 is a swap — the banner's `fontFamily` attribute goes and a
+`font-mono` class takes its place, so the row stays at one hit and stops being a
+hand-spelled family. No file joins or leaves the listing, because both files were already
+in it. The command is the enumeration; a hit it returns is a place a face is named, not a
+defect.
 
 ## Standing decisions (already made, not re-opened here)
 
@@ -283,7 +288,43 @@ recreated in type. That is the mark adoption's, and it is recorded below rather 
 fixed here — deleting the attribute makes the fallback *less* like the monogram, not
 more, so nothing gets worse in the meantime.
 
-**Status: open.**
+**Ruled: not the proposal.** The fallback is not a mark and does not become one in a
+better face. It is machine text: **`NO IMAGE`**, set in Space Mono, in caps as furniture.
+
+Why. This is a thing a customer should never see. It exists so a staging product can be
+created without an image, and so an admin can save a product on prod before its picture
+exists, unlisted — the admin form requires an image and the database does not enforce it.
+A customer meeting it means an admin made a mistake. A fallback that reads as a designed
+visual is a fallback that survives that mistake: nobody looking at a live product page
+with a wordmark on it thinks anything is missing. So the placeholder says what is missing,
+in the face the library reserves for text a machine wrote, and the caps make it furniture
+rather than a voice. It is a constant and not a message key, the same in every locale,
+machine text like a room code.
+
+That also settles the by-product rather than deferring it: with "SOG" gone there is no
+recreated monogram left to hand to the mark adoption.
+
+**What landed.** `src/components/ui/product-banner.tsx` types `NO IMAGE` in place of
+`SOG`. The `fontFamily` attribute is gone and the `<text>` carries `font-mono` in its
+`className` beside `fill-act`, so the face arrives through the library's own token the way
+it does everywhere else — an inline `<svg>` is in the document and inherits `font-family`
+like any other element, which the same element's `fill-*` classes already proved.
+`fontWeight` is `400`: a placeholder is not a mark, and Space Mono loads 400 and 700, so
+the synthesised 900 recorded in finding 2 is gone rather than merely reduced (finding 2,
+closed). `letterSpacing="-2"` went with it — it was a display mark's tightening and a
+monospace placeholder does not want one. `fontSize` is `24`, computed rather than picked:
+Space Mono advances about 0.6em per glyph and `NO IMAGE` is eight of them, so the line
+runs about 115 units across a 150-unit `viewBox` and leaves roughly 17 units of margin
+each side. The `aria-hidden` stays, because every call site names the product in text
+beside the frame. The i18n literal-string lint passes it for the reason it passed "SOG":
+the rule's `words.exclude` list carries `[A-Z_-]+`, an all-caps exemption applied
+word by word, and `NO IMAGE` is two all-caps words. No disable comment. The component's
+comment is rewritten: what the fallback is for, that a customer seeing it is an admin's
+mistake, and that it is machine text in the machine face and deliberately not a mark. The
+drawing left the ruling page, and with it the whole spelled-by-hand section — the banner
+was its only remaining picture.
+
+**Status: landed.**
 
 ## 9. The mail's body stack
 
@@ -347,8 +388,8 @@ are rewritten to the mail face and the no-webfont rule. Two lint bans: a `font-f
 literal in `src/lib/email-templates/**` (a family name after the colon; the interpolated
 form is the only spelling that passes), and `MAIL_FACE` / `MAIL_FONT_STACK` unimportable
 anywhere under `src/` except the deriving module and the mail directory, because the mail
-face is never a screen face. The mail drawing is gone from the page's
-spelled-by-hand section; the banner's SOG stays there while §8 is open.
+face is never a screen face. The mail drawing left the page's spelled-by-hand section, and
+that section has since gone with §8, which took the last drawing in it.
 
 **Status: landed.**
 
@@ -410,7 +451,45 @@ contract: the face is already loaded, the quote is already marked as a quotation
 indent, its measure and its attribution line, and a serif on a page of sans is a
 change of voice without a slant. That is the column to look at second.
 
-**Status: open.**
+**Ruled: Crimson Pro with its true italic, as proposed.** The owner ruled it with the
+team. The quote is set in the serif, and the serif's italic is loaded, so the quote keeps
+its slant as a drawn face rather than a browser's skew of the upright alphabet. The
+alternative — the serif upright with `italic` dropped — was decided against and is
+recorded in the face's doc comment as such.
+
+**What landed.** `Face` in `packages/sog-ui/src/tokens/typography.ts` gains a `styles`
+field, a readonly list of `"normal" | "italic"`, doc-commented with what a style is and
+what its absence costs: the consumer loads each style listed, a style not listed is
+synthesised by the browser, and on a serif that synthesis is a skew rather than the
+italic alphabet — so a style is listed when a placement needs it and never for
+completeness. Every face declares `["normal"]`; the serif declares `["normal",
+"italic"]`. The serif's own doc comment is rewritten: it now has a placement — a pull
+quote in a named person's voice, which is two of the four the library names at once — and
+it carries its italic because a pull quote is the one editorial flourish the type rules
+reserve italics for; the "seasoning, never UI or body copy" rule stays.
+
+Both face-contract tests gain the same new assertion — `tests/unit/theme/face-contract.test.ts`
+against the app's root layout and `tests/unit/sog-ui/typography.test.ts` against the demo's.
+Each slices the `next/font` call that defines a face's variable out of the layout text and
+checks the `style` option against `FACES`. How it treats an omitted option is doc-commented
+on the test: `normal` is next/font's default, so a face drawn upright only may leave the
+option out, and the check is on the option where it is present — it must name every style
+the face declares — and on its absence only where the face declares nothing but `normal`,
+so a face that gains a second style and not the option fails.
+
+`packages/sog-ui/demo/app/layout.tsx` loads Crimson Pro with `style: ["normal",
+"italic"]`, and the demo's faces floor (`demo/app/page.tsx`) draws every style a face
+declares at every weight — two named blocks for the serif, one unnamed block for the three
+faces with nothing to tell apart. In Sogverse, `src/app/layout.tsx` loads the same two
+styles and drops `preload: false`, because a surface now renders the face; its comment is
+rewritten from "nothing renders it yet" to the placement and the reason for the second
+style. `src/components/about/about-section.tsx` adds `font-serif` to the blockquote and
+keeps `italic`; nothing else in the block moves. `packages/sog-ui/docs/rollout.md` loses
+the follow-up "Crimson Pro's first placement, when an editorial surface exists" — it has
+happened. The library's `CLAUDE.md` clause on Crimson Pro is unchanged, because it was
+already true. The drawing and its locally-loaded italic module both left the ruling page.
+
+**Status: landed.**
 
 ## 12. The mechanism — Sogverse cannot define a face
 
@@ -459,7 +538,7 @@ and, in the same breath, "keep it out of the marketing website's plain
 parent-facing copy"; the library narrows that to "where the platform names one of
 its own places". Every case below is chosen against those two sentences.
 
-**Shown:** in §4 of the page, six candidates, each drawn twice — Poppins today
+**Shown:** in §3 of the page, six candidates, each drawn twice — Poppins today
 beside Space Mono — and each drawn as a *whole* construct so the mix is visible:
 only the named element moves face, the eyebrow, the schedule line and the plain
 sentences around it stay in the app face in both columns.
@@ -551,6 +630,7 @@ fixed in `src/` — these are findings for the change that lands the rulings.
 2. **The banner's SOG asks for 900** against a system stack, and would ask for 900
    against Poppins, which loads 400–700. Same class of defect, on a surface CSS cannot
    reach. Folded into §8.
+   **Closed by §8:** the placeholder is Space Mono at 400, a weight the face draws.
 3. **Three `font-mono` sites ask for 500 or 600** (`font-medium` on the share-link
    button, `font-semibold` on the code chip and the UTM value chip). The UA stack
    synthesises whatever it is asked for and nobody notices; Space Mono loads 400 and
@@ -586,6 +666,10 @@ adoption that owns it.
    letters on a badge-coloured ground. The brand's rule is that the monogram exists only
    inside the logo and is never recreated. The mark adoption's, and the fix is probably
    the library's own mark rather than a face at all. (§8.)
+   **Dissolved by §8, and closed.** The ruling took the letters out rather than re-setting
+   them: the fallback says `NO IMAGE` in the machine face, so there is no longer a "SOG"
+   set in type anywhere in Sogverse and no recreated monogram for the mark adoption to
+   inherit. Nothing is queued.
 2. **The Roblox hero's two size scales.** They exist because Press Start 2P is
    monospaced at one em per glyph, so the longest French beat overflows where English
    does not, and the component measures the raw message at render to choose. With a

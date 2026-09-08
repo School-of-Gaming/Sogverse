@@ -24,8 +24,8 @@ import "./globals.css";
 // The face contract, honoured on the consumer's side.
 //
 // @sog/ui names the faces and the semantic tokens that point at them
-// (`packages/sog-ui/src/tokens/typography.ts` — weights, subsets and the
-// variable each token reads are all stated there); Sogverse loads the files and
+// (`packages/sog-ui/src/tokens/typography.ts` — weights, styles, subsets and
+// the variable each token reads are all stated there); Sogverse loads the files and
 // defines those variables. next/font reads its options statically, so the values
 // below cannot be imported from the token source, and
 // tests/unit/theme/face-contract.test.ts asserts this file names every one of
@@ -37,16 +37,17 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
-// The editorial voice, and nothing renders it yet — the library owns where it
-// may be placed (quotes and pull-quotes, never UI or body copy), and Sogverse
-// has no editorial surface asking for one. `preload: false` follows: a preload
-// link for a face no element renders costs every visitor a font download for
-// nothing, so preload turns on in the change that first places it.
+// The editorial voice, placed on the About page's pull quote — the library owns
+// where it may go (quotes and pull-quotes, never UI or body copy) and that is
+// two of those placements at once. It preloads like any other face a surface
+// renders. Loaded in both styles, alone among the five: the quote is italic,
+// and a serif left to the browser's own slant is a skew of the upright alphabet
+// rather than the italic one, which is a different alphabet.
 const crimsonPro = Crimson_Pro({
   weight: ["400", "600"],
+  style: ["normal", "italic"],
   subsets: ["latin", "latin-ext"],
   variable: "--font-crimson-pro",
-  preload: false,
 });
 
 // The site's one monospace: the world voice where the platform names one of its

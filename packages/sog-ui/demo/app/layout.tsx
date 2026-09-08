@@ -20,8 +20,8 @@ import "./globals.css";
  *
  * Poppins is not a variable font on Google Fonts, so each weight is a separate
  * file and has to be asked for by name; a weight not listed here is synthesised
- * by the browser rather than drawn. `latin-ext` is not optional — the product
- * ships Finnish, Swedish and French.
+ * by the browser rather than drawn, and so is a style not listed. `latin-ext`
+ * is not optional — the product ships Finnish, Swedish and French.
  */
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -29,8 +29,13 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
+// The one face loaded in two styles. `FACES.serif` declares them, because its
+// placement is a pull quote in a person's voice and a serif left to the
+// browser's own slant is a skew of the upright alphabet rather than the italic
+// one, which is a different alphabet.
 const crimsonPro = Crimson_Pro({
   weight: ["400", "600"],
+  style: ["normal", "italic"],
   subsets: ["latin", "latin-ext"],
   variable: "--font-crimson-pro",
 });

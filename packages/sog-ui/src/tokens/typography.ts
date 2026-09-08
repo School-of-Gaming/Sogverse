@@ -70,6 +70,17 @@ export type Face = {
   readonly weights: readonly number[];
   /** Subsets the consumer requests. `latin-ext` is not optional: the product ships Finnish, Swedish and French. */
   readonly subsets: readonly string[];
+  /**
+   * Styles the consumer loads, one file per style per weight.
+   *
+   * A style not listed is not loaded, and a page that asks for it gets the
+   * browser's synthesis rather than a drawn face: on a serif that is a skew of
+   * the upright glyphs, where a true italic is a different alphabet with its
+   * own strokes, terminals and narrower fit. So a style is listed when a
+   * placement needs it, and not for completeness — every extra style is
+   * another file every visitor to that surface downloads.
+   */
+  readonly styles: readonly ("normal" | "italic")[];
 };
 
 export const FACES = {
@@ -92,13 +103,25 @@ export const FACES = {
     fallback: "system-ui, sans-serif",
     weights: [400, 500, 600, 700],
     subsets: ["latin", "latin-ext"],
+    styles: ["normal"],
   },
   /**
    * The editorial voice: a humanist serif for editorial headlines, pull quotes
    * and long-form pieces written in a person's voice.
    *
    * A seasoning, not a staple. Never set UI or a long passage of body text in
-   * it on screen. The theme carries the name and waits for a placement.
+   * it on screen. Its placement is a pull quote in a named person's voice,
+   * which is two of those four at once.
+   *
+   * **It carries its italic**, alone among the faces. A pull quote in someone
+   * else's voice is the one editorial flourish the type rules above reserve
+   * italics for — not emphasis inside running copy — and a serif set in a
+   * synthesised slant is visibly wrong in a way the sans is not, because a
+   * true italic is a different alphabet rather than a tilt of the upright one.
+   * Decided against: the serif upright, with the slant dropped, which would
+   * have cost nothing in the contract and let the change of voice do the work
+   * on its own. The quotation is in a person's voice, and the italic is how
+   * that voice is drawn.
    */
   serif: {
     name: "Crimson Pro",
@@ -107,6 +130,7 @@ export const FACES = {
     fallback: "Georgia, serif",
     weights: [400, 600],
     subsets: ["latin", "latin-ext"],
+    styles: ["normal", "italic"],
   },
   /**
    * The one monospace on the site, and it does two jobs. It is the world
@@ -138,6 +162,7 @@ export const FACES = {
     fallback: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
     weights: [400, 700],
     subsets: ["latin", "latin-ext"],
+    styles: ["normal"],
   },
   /**
    * Handwriting, for a signature and nothing else — a name typed into a signing
@@ -152,6 +177,7 @@ export const FACES = {
     fallback: "cursive",
     weights: [600],
     subsets: ["latin", "latin-ext"],
+    styles: ["normal"],
   },
 } as const satisfies Record<string, Face>;
 
