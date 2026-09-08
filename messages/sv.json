@@ -102,7 +102,20 @@
     "roleGamer": "Spelare",
     "roleGedu": "Gedu",
     "gedus": "Geduer",
-    "next": "Nästa"
+    "next": "Nästa",
+    "week": "v. {week}",
+    "weekRange": "v. {from}–{to}",
+    "weekCount": "{count, plural, one {# vecka} other {# veckor}}",
+    "weekColumn": "v."
+  },
+  "datePicker": {
+    "openCalendar": "Öppna kalendern",
+    "previousMonth": "Föregående månad",
+    "nextMonth": "Nästa månad",
+    "weekNumber": "Veckonummer",
+    "goToWeek": "Gå till vecka",
+    "selectWeek": "Välj vecka {week}",
+    "today": "I dag"
   },
   "about": {
     "pageTitle": "Om oss",
@@ -416,6 +429,8 @@
           "materialUrl": "Lektionsmaterial",
           "startDate": "Startdatum",
           "endDate": "Slutdatum",
+          "firstSession": "Första tillfället",
+          "lastSession": "Sista tillfället",
           "signupThreshold": "Anmälningströskel",
           "termDates": "Period",
           "billingMode": "Fakturering",
@@ -656,7 +671,9 @@
         "seatHintNoWaitlist": "När fullt nekas nya anmälningar.",
         "visibleHint": "Utan bocken visas produkten inte på någon publik sida, men den som har direktlänken kan ändå öppna den och köpa en plats. Det är just det som gör den lämplig för oannonserade produkter, inbjudningar och kampanjer. Det är inget sätt att stoppa anmälningar, och det påverkar aldrig föräldrar och gamers som redan deltar.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
-        "startDateBillingAnchor": "Datumet då klubben börjar, och då familjerna debiteras första gången. Att ändra det i efterhand flyttar inte första betalningen för dem som redan har anmält sig — rätta de prenumerationerna i Stripe."
+        "startDateBillingAnchor": "Datumet då klubben börjar, och då familjerna debiteras första gången. Att ändra det i efterhand flyttar inte första betalningen för dem som redan har anmält sig — rätta de prenumerationerna i Stripe.",
+        "startNotSessionDay": "Inget tillfälle infaller detta datum. Första tillfället är {date}.",
+        "endNotSessionDay": "Inget tillfälle infaller detta datum. Sista tillfället är {date}."
       },
       "errors": {
         "translationRequired": "Minst ett språk med namn och beskrivning krävs",

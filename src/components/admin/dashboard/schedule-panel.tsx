@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatDateOnly } from "@/lib/utils";
 import type { ProductType } from "@/types";
 import type { ComingUpDay, ScheduleWeek } from "./admin-dashboard-data";
-import { addCalendarDays, formatDayMonth } from "./calendar";
+import { addCalendarDays, formatDayMonth } from "@/lib/calendar-date";
 import { ComingUpFeed } from "./coming-up-feed";
 import {
   PRODUCT_TYPE_ORDER,

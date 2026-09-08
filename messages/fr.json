@@ -102,7 +102,20 @@
     "roleGamer": "Joueur",
     "roleGedu": "Gedu",
     "gedus": "Gedus",
-    "next": "Suivant"
+    "next": "Suivant",
+    "week": "S{week}",
+    "weekRange": "S{from}–S{to}",
+    "weekCount": "{count, plural, one {# semaine} other {# semaines}}",
+    "weekColumn": "S"
+  },
+  "datePicker": {
+    "openCalendar": "Ouvrir le calendrier",
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "weekNumber": "Numéro de semaine",
+    "goToWeek": "Aller à la semaine",
+    "selectWeek": "Sélectionner la semaine {week}",
+    "today": "Aujourd’hui"
   },
   "about": {
     "pageTitle": "À propos",
@@ -416,6 +429,8 @@
           "materialUrl": "Matériel pédagogique",
           "startDate": "Date de début",
           "endDate": "Date de fin",
+          "firstSession": "Première séance",
+          "lastSession": "Dernière séance",
           "signupThreshold": "Seuil d’inscriptions",
           "termDates": "Dates de la période scolaire",
           "billingMode": "Facturation",
@@ -656,7 +671,9 @@
         "seatHintNoWaitlist": "Une fois complet, les nouvelles inscriptions sont refusées.",
         "visibleHint": "Sans la case cochée, le produit n’apparaît sur aucune page publique, mais toute personne disposant du lien direct peut l’ouvrir et acheter une place. C’est précisément ce qui le rend adapté aux produits non annoncés, réservés sur invitation ou liés à une campagne. Ce n’est pas un moyen d’arrêter les inscriptions, et cela n’affecte jamais les parents et les joueurs déjà inscrits.",
         "seatLimitHint": "Plafonnez le nombre de participants, ou fonctionnez sans limite.",
-        "startDateBillingAnchor": "La date de début du club, et celle du premier prélèvement pour les familles. La modifier ensuite ne déplace pas le premier prélèvement des familles déjà inscrites — corrigez ces abonnements dans Stripe."
+        "startDateBillingAnchor": "La date de début du club, et celle du premier prélèvement pour les familles. La modifier ensuite ne déplace pas le premier prélèvement des familles déjà inscrites — corrigez ces abonnements dans Stripe.",
+        "startNotSessionDay": "Aucune séance ne tombe à cette date. La première séance est le {date}.",
+        "endNotSessionDay": "Aucune séance ne tombe à cette date. La dernière séance est le {date}."
       },
       "errors": {
         "translationRequired": "Au moins une langue avec un nom et une description est requise",

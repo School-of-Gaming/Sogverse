@@ -30,7 +30,7 @@ import {
   mondayOf,
   monthsAfter,
   weekdayOf,
-} from "./calendar";
+} from "@/lib/calendar-date";
 import { PRODUCT_TYPE_ORDER } from "./product-type-presentation";
 
 /**

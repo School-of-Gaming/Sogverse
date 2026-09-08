@@ -95,7 +95,20 @@
     "roleGamer": "toy’wI’",
     "roleGedu": "Gedu",
     "gedus": "Gedupu’",
-    "next": "veb"
+    "next": "veb",
+    "week": "Hogh {week}",
+    "weekRange": "Hogh {from}–{to}",
+    "weekCount": "{count} Hogh",
+    "weekColumn": "Hogh"
+  },
+  "datePicker": {
+    "openCalendar": "jajmey nav yIpoSmoH",
+    "previousMonth": "jar wa'Hu'",
+    "nextMonth": "jar veb",
+    "weekNumber": "Hogh mI'",
+    "goToWeek": "Hogh yIghoS",
+    "selectWeek": "Hogh {week} yIwIv",
+    "today": "DaHjaj"
   },
   "about": {
     "pageTitle": "maH tIqel",
@@ -464,6 +477,8 @@
           "materialUrl": "ghojmoHmeH De’",
           "startDate": "tagh jaj",
           "endDate": "rIn jaj",
+          "firstSession": "wa'DIch ghom",
+          "lastSession": "Qav ghom",
           "signupThreshold": "ghIH yum",
           "termDates": "poH",
           "billingMode": "Huch yIv",
@@ -704,7 +719,9 @@
         "seatHintNoWaitlist": "tebDI’, ghItlh chu’mey lajQo’lu’.",
         "visibleHint": "yIchu’Ha’chugh, pagh tetlhDaq Doch tu’lu’ — ’ach He nIH ghajbogh nuv Doch legh ’ej pa’ je’laH. vaj ’angbe’lu’bogh Doch, ri’bogh Doch, ghap tlhIngan may’ Doch DaSuqmeH QaQ. ghItlh chu’ DamevmeH mIw ghaHbe’, ’ej ghoStaHbogh vavpu’ QujwI’pu’ je luQaHbe’.",
         "seatLimitHint": "pa’ mI’ yIgheS pagh Sub Hutlh yIqaw.",
-        "startDateBillingAnchor": "tagh ghom jaj ’ej DIl qorDu’ jaj. jaj Da’choHchugh, DIlpu’bogh qorDu’vaD pagh choH — Stripe Daq yIchoH!"
+        "startDateBillingAnchor": "tagh ghom jaj ’ej DIl qorDu’ jaj. jaj Da’choHchugh, DIlpu’bogh qorDu’vaD pagh choH — Stripe Daq yIchoH!",
+        "startNotSessionDay": "jajvam ghomlaHbe'. wa'DIch ghom 'oH {date}'e'.",
+        "endNotSessionDay": "jajvam ghomlaHbe'. Qav ghom 'oH {date}'e'."
       },
       "errors": {
         "translationRequired": "wa’ Hol pong QIn je poQ",

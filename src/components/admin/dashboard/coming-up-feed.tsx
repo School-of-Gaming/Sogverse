@@ -10,7 +10,7 @@ import type {
   ComingUpDay,
   ComingUpItem,
 } from "./admin-dashboard-data";
-import { formatDayMonth } from "./calendar";
+import { formatDayMonth } from "@/lib/calendar-date";
 import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
 
 /**
