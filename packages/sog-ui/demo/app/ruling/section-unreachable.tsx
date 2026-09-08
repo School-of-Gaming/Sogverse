@@ -87,7 +87,7 @@ function Pair({ render }: { render: (variant: "today" | "proposed") => ReactNode
 
 export function UnreachableSection() {
   return (
-    <Question n={4} title="Where a family is spelled by hand">
+    <Question n={5} title="Where a family is spelled by hand">
       <Case title="The product banner's fallback">
         <Exemplar
           file="src/components/ui/product-banner.tsx"

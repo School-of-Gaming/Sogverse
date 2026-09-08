@@ -347,8 +347,8 @@ are rewritten to the mail face and the no-webfont rule. Two lint bans: a `font-f
 literal in `src/lib/email-templates/**` (a family name after the colon; the interpolated
 form is the only spelling that passes), and `MAIL_FACE` / `MAIL_FONT_STACK` unimportable
 anywhere under `src/` except the deriving module and the mail directory, because the mail
-face is never a screen face. The mail drawing is gone from §4 of the page; the banner's
-SOG stays while §8 is open.
+face is never a screen face. The mail drawing is gone from the page's
+spelled-by-hand section; the banner's SOG stays there while §8 is open.
 
 **Status: landed.**
 
@@ -438,6 +438,95 @@ that makes conforming cheapest.
    face — `font-sans`, `font-serif`, `font-mono`, `font-cursive`, the four the library
    now names — and the lint in (1) permits nothing else, so conforming is one class and
    departing does not compile.
+
+**Status: open.**
+
+## 13. The world voice, on its best cases
+
+**Asked:** whether the world voice has any placement in Sogverse at all — decided
+once, on the strongest cases the product has, rather than site by site. §3 and §5
+each ask it locally and could both be ruled to Poppins without anybody answering
+the question underneath them. If Poppins wins on the best cases it wins
+everywhere, and Space Mono is the machine face only: room codes, ids, passwords,
+logs, the nine placements §7 landed.
+
+**The signal.** The team that owns the brand has a standing preference for Poppins
+over Space Mono in Sogverse. That is a preference and not yet a ruling, which is
+why this entry exists: the team should see the cases the Guidebook's own words
+most clearly cover before it becomes one. The Guidebook says Space Mono is
+"in-platform UI… anything meant to feel like it comes from inside the game world"
+and, in the same breath, "keep it out of the marketing website's plain
+parent-facing copy"; the library narrows that to "where the platform names one of
+its own places". Every case below is chosen against those two sentences.
+
+**Shown:** in §4 of the page, six candidates, each drawn twice — Poppins today
+beside Space Mono — and each drawn as a *whole* construct so the mix is visible:
+only the named element moves face, the eyebrow, the schedule line and the plain
+sentences around it stay in the app face in both columns.
+
+| candidate | component — page |
+|---|---|
+| the zone list's names, "Clubhouse", "Harmony" and a moderator's own zone | `src/components/voice/ZoneList.tsx` — Group session, voice room |
+| the room's own heading, "Voice Room", over its instruction line | `src/components/voice/VoiceRoom.tsx` — Group session, voice room |
+| a club's name in a list row, under its type noun and over its schedule | `src/components/family/EnrollmentCard.tsx` — Gamer dashboard |
+| the same name as a page masthead | `src/components/family/product-page/FamilyProductPageBody.tsx` — Gamer club page |
+| the type headings, "Clubs", "Camps", "Events" | `src/components/gamer/gamer-dashboard-page-body.tsx` — Gamer dashboard |
+| the product title, under its kind and topic | `src/components/public/products/product-detail-page-body.tsx` — Shop, one product |
+
+Two more candidates are already on the page and are not drawn again: **the gamer
+greeting** (§3) and **the call-ended heading** (§5), both in §2. They are the two
+sites this entry exists to settle, and they should be read against §4 rather than
+on their own.
+
+**Proposal: the world voice has exactly one placement, and it is the zone name.**
+Of the six, one genuinely reads as the world naming its own place: the voice
+room's zone list. "Clubhouse" is a room that exists nowhere but inside Sogverse,
+and the four Yty zones — Harmony, Glow, Valor, Wit — are canon terms used with no
+gloss, which is Level 3 by definition, on the surface furthest inside the platform
+the product has. Drawn in Space Mono against a Poppins pill and a Poppins
+instruction line, the name reads as a label on a door rather than as a heading,
+which is the effect the Guidebook is describing. So: **Space Mono for the zone
+name, as an element, with everything around it in Poppins** — the tile, the
+private pill, the instruction line, the participant names, all the app face.
+
+The other five do not survive their own drawing, and it is worth being explicit
+about why, because four of them fail for the same reason. **A product name is not
+a name the world gave anything.** "Minecraft-maanantaikerho" was typed by a person
+in an admin form; the platform is displaying a business's name for a thing it
+sells, and setting it in the world voice dresses a catalogue row as lore. That
+takes out the list row, the page masthead and the shop title in one move — and the
+shop title is doubly out, because the shop is the marketing site's buying surface
+and the reader is a parent comparing three programmes, which is the exact case the
+face rule names. **The room heading and the type headings fail differently**:
+"Voice Room", "Clubs", "Camps" are descriptions of features, structure a reader
+scans rather than content the world speaks, and a face change there buys texture
+and no meaning.
+
+That leaves a rule that is narrower than the one §3 asked for and *is* the one the
+library already writes. §3 proposed widening it to "a surface inside the world";
+this proposal keeps "a name the platform gives one of its own places", and the
+zone list is that rule's first and so far only site in Sogverse.
+
+**The consequence, either way.**
+
+- **If the zone name is ruled in:** §3 is **Poppins** — "Welcome, Väinämöinen!"
+  names a child, not a place, and the greeting was always the weaker half of that
+  entry's two questions. §5 is **Poppins**, following §1 on the same message key.
+  The library's rule text does not move at all: `FACES.mono`'s doc comment and
+  `CLAUDE.md` already say the world voice is spent "where the platform names one
+  of its own places", and the zone name is that sentence's first Sogverse call
+  site rather than an amendment to it. What changes is `ZoneList.tsx`, one
+  `font-mono` on the name span, and the adoption's count moves by one hit in one
+  file.
+- **If the team still prefers Poppins here:** §3 and §5 are Poppins for the same
+  reason, and the ruling is the clean one — **Space Mono is the machine face only**.
+  The world voice then has no placement in Sogverse, and the library's rule text
+  *does* move: the face's doc comment and `CLAUDE.md` drop the world-voice half of
+  its job, `FACES.mono` is described as the machine face and nothing else, and the
+  Guidebook paragraph about the typewriter face of Sogverse retires from the
+  excerpt as covered — covered by a decision that it has no screen placement here.
+  That is a real simplification and not a loss: one face, one job, and no call site
+  left deciding whether a string is lore.
 
 **Status: open.**
 
