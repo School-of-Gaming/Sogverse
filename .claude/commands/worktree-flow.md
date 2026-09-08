@@ -61,6 +61,34 @@ session cannot create or modify another worktree, and the guard will refuse.
    and the failures that follow do not look like this. If the work will change
    deps, run `npm install` in the worktree after the change — and only then.
 
+   **Upward resolution stops at the root, so link the nested installs.** A
+   workspace package that pins a dependency at a different version from the
+   root gets its own copy under `packages/<name>/node_modules` (or
+   `services/<name>/node_modules`), and the worktree has no such folder — so
+   from inside it Node walks straight past to the root's copy, the wrong
+   version. It fails only where that package is loaded, and it looks like a
+   code error rather than an environment one: today SOG-UI's `lucide-react`
+   is newer than the app's, and the workspace type-check step and
+   `tests/unit/sog-ui/grammar.test.ts` report a missing icon export from
+   every worktree while the main checkout and CI stay green. Junction every
+   nested install into the worktree — run from the main checkout, in
+   PowerShell, before entering it:
+
+   ```
+   Get-ChildItem packages, services -Directory |
+     Where-Object { Test-Path (Join-Path $_.FullName "node_modules") } |
+     ForEach-Object {
+       New-Item -ItemType Junction `
+         -Path ".claude/worktrees/<short-name>/$($_.Parent.Name)/$($_.Name)/node_modules" `
+         -Target (Join-Path $_.FullName "node_modules") | Out-Null
+     }
+   ```
+
+   It finds nothing when no package has a nested install, which is the
+   intended end state; it errors harmlessly on a junction that already
+   exists. A junction is a link into the main checkout's real folder, so it
+   is removed by unlinking and never by `rm -rf` — Phase 5 says how.
+
    Branch prefix is `feat/`. (`feature/` and bare names in the history are drift.)
 
 3. **Enter it** — `EnterWorktree` with `path` set to the absolute path just
@@ -291,9 +319,19 @@ Order matters — several of these steps block the next one if skipped.
    text. If `dev` gained commits since Phase 1, the push publishes a union CI
    has not seen — that is accepted; CI on `dev` judges it (step 7).
 
-5. **Remove the worktree:** `git worktree remove <absolute-path>`. If it refuses
-   because `node_modules` or `.next` are present, `rm -rf` the directory and then
-   `git worktree prune`.
+5. **Remove the worktree — junctions first.** Any nested-install junction
+   Phase 1 created is a link into the main checkout's real `node_modules`, and
+   Git Bash's `rm -rf` follows a junction and empties the folder behind it.
+   So unlink each one first, with a command that removes only the link:
+
+   ```
+   cmd /c rmdir "<absolute-worktree-path>\packages\<name>\node_modules"
+   ```
+
+   Confirm the main checkout's `packages/<name>/node_modules` is still
+   populated, then `git worktree remove <absolute-path>`. If it refuses
+   because `node_modules` or `.next` are present, `rm -rf` the directory —
+   only now that no junction remains — and then `git worktree prune`.
 
 6. **Delete the branch** — local, and the remote too if it was ever pushed for
    CI. Do it now rather than leaving it for `cleanup-branches`; the merge just
@@ -326,7 +364,8 @@ would edit the same files belong in one worktree, sequenced, because parallel
 edits to one file are a merge conflict manufactured on purpose.
 
 - The shared upward `node_modules` is what makes parallel worktrees cheap:
-  no per-worktree install (same dependency-change exception as Phase 1).
+  no per-worktree install (same dependency-change exception as Phase 1, and
+  the same nested-install junctions, one set per worktree).
 - Give each agent its **absolute** worktree path and tell it to work only
   there. An agent cannot be redirected from one worktree into another — if a
   piece has to move, relaunch a fresh agent rather than re-aiming a running
