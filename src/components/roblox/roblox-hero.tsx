@@ -46,9 +46,11 @@ export function RobloxHero() {
     typeof rawTitle === "string" &&
     rawTitle.replace(/<[^>]+>/g, "\n").split("\n").some((beat) => beat.length > 8);
 
+  // The narrow size is the library's own H1 step for a narrow viewport; the
+  // wider ones are still this component's and wait for the Heading adoption.
   const sloganSize = longBeats
-    ? "text-2xl sm:text-4xl md:text-3xl lg:text-4xl xl:text-5xl"
-    : "text-2xl sm:text-4xl lg:text-5xl xl:text-6xl";
+    ? "text-h1-mobile sm:text-4xl md:text-3xl lg:text-4xl xl:text-5xl"
+    : "text-h1-mobile sm:text-4xl lg:text-5xl xl:text-6xl";
 
   return (
     // Same treatment as the home page hero, pulled up under the translucent
