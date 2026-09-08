@@ -28,10 +28,11 @@ rg -n --no-heading -g '!*.md' "\bfont-(sans|serif|mono|brand-mono|cursive|displa
 **58 hits in 23 files** at the branch point. Dropping `-g '!*.md'` gives 61 in 25:
 the three extra are prose in `src/CLAUDE.md` and `src/lib/email-templates/CLAUDE.md`
 that name a class or a token without spending one, and the two rule paragraphs in
-`src/CLAUDE.md` retire with this adoption. The command catches the three surfaces CSS
-cannot reach (`fontFamily` in the OG cards and the banner SVG, `font-family` in the
-mail) and the family literals (`OG_FONT_FAMILY = "Poppins"`), which no class pattern
-would.
+`src/CLAUDE.md` retire with this adoption. The command catches the three places a family
+is spelled by hand (`fontFamily` in the OG cards, which satori draws without a
+stylesheet; `font-family` in the mail, which loads none of ours; and `fontFamily` on
+the banner's inline SVG, which CSS does reach and which merely chose the attribute)
+and the family literals (`OG_FONT_FAMILY = "Poppins"`), which no class pattern would.
 
 What the 58 are:
 
@@ -346,7 +347,7 @@ are rewritten to the mail face and the no-webfont rule. Two lint bans: a `font-f
 literal in `src/lib/email-templates/**` (a family name after the colon; the interpolated
 form is the only spelling that passes), and `MAIL_FACE` / `MAIL_FONT_STACK` unimportable
 anywhere under `src/` except the deriving module and the mail directory, because the mail
-face is never a screen face. The mail drawing is gone from §3 of the page; the banner's
+face is never a screen face. The mail drawing is gone from §4 of the page; the banner's
 SOG stays while §8 is open.
 
 **Status: landed.**
@@ -368,17 +369,48 @@ to fail in.
 
 **Status: open.**
 
-## 11. Crimson Pro
+## 11. Crimson Pro and the About quote
 
-**Asked:** nothing. Recorded so nobody asks again.
+**Asked:** which face the About page's pull quote takes — and if the serif, whether its
+italic is loaded or the quote goes upright.
 
-Crimson Pro has no placement in Sogverse and gets none in this adoption. It is loaded
-(the face contract is the whole list, not the used part of it) with `preload: false`,
-and the library's rule for it — editorial headlines, pull quotes, long-form pieces in a
-person's voice, never UI or body copy — waits for a surface that asks. No drawing, no
-question, no change.
+**The earlier text of this entry was wrong.** It said Crimson Pro has no placement in
+Sogverse and gets none in this adoption, recorded "so nobody asks again". There is a
+placement, and it is on the most obviously editorial page the product has:
+`src/components/about/about-section.tsx` carries a pull quote, `about.quote.text`
+"“What is true now, was once just your imagination.”" with `about.quote.attribution`
+"— The Princi-Pal", which is two of the four placements the library names for the serif
+at once — a pull quote, and long-form in a person's voice. It is set today in italic
+Poppins: `text-xl italic text-muted-foreground` on the quote, `mt-2 text-sm
+text-muted-foreground` on the attribution, centred in a `max-w-3xl`.
 
-**Status: open** (as a no-op to confirm).
+**Shown:** in §3 of the page, the quote block reproduced class-for-class with the real
+English copy, drawn three times — today (italic Poppins), Crimson Pro upright with
+`italic` dropped, and Crimson Pro in its true italic. The third column exists because
+the app loads the face upright only, so the serif applied on its own would leave the
+browser to slant upright glyphs, and a synthesised slant on a serif is visibly wrong: a
+true italic is a different alphabet, not a skew. The ruling page loads the italic itself,
+in its own module beside the Press Start load, so the drawing can be seen without the
+demo's layout claiming a file the contract has not been ruled to include.
+
+**Proposal: Crimson Pro, with its true italic loaded.** A pull quote in a named person's
+voice is the placement the library wrote the serif's rule for, and the italic is the one
+editorial flourish the library's type rules reserve italics for — a quotation in someone
+else's voice is exactly the case, not emphasis inside running copy. The cost is one more
+file in the face contract and preload turning on for the face, which stops being a face
+loaded for completeness the moment a page spends it.
+
+**What it costs the contract.** `Face` today has `weights` and `subsets` and no styles
+field, because every face so far is upright only. Ruling the italic in gives it a
+`styles` field — the contract then says which cuts of a family a consumer loads, not just
+which weights — and the demo's layout and the app's load both follow from there.
+
+**The alternative is the serif upright, `italic` dropped**, which costs nothing in the
+contract: the face is already loaded, the quote is already marked as a quotation by its
+indent, its measure and its attribution line, and a serif on a page of sans is a
+change of voice without a slant. That is the column to look at second.
+
+**Status: open.**
 
 ## 12. The mechanism — Sogverse cannot define a face
 

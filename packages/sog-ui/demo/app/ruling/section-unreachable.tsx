@@ -1,11 +1,14 @@
 /**
- * The one surface left that a stylesheet cannot reach.
+ * The one surface left that spells a family literally.
  *
- * Three renderers in Sogverse draw type without a browser reading CSS: satori
- * for the Open Graph cards, an email client for the mail, and an `<svg>` element
- * whose `font-family` is an attribute rather than a class. Each has to name a
- * family literally, which is exactly the spelling this adoption is closing, and
- * only one of the three still has a question the eye can answer.
+ * Three places in Sogverse name a font family as a string rather than reaching
+ * it through a class, which is exactly the spelling this adoption is closing.
+ * Two of them have to: satori draws the Open Graph cards to PNG without reading
+ * a stylesheet, and an email client loads none of ours. The third does not — an
+ * inline `<svg>` sits in the document and its text inherits `font-family` like
+ * any other element, as the same element's `fill-*` classes already prove — it
+ * merely chose to, with a `fontFamily` attribute that beats the inheritance.
+ * Only one of the three still has a question the eye can answer.
  *
  * **The banner's "SOG".** The product banner's no-image fallback types the three
  * letters in a system sans at weight 900 with negative tracking, on the lifted
@@ -84,7 +87,7 @@ function Pair({ render }: { render: (variant: "today" | "proposed") => ReactNode
 
 export function UnreachableSection() {
   return (
-    <Question n={3} title="Where CSS does not reach">
+    <Question n={4} title="Where a family is spelled by hand">
       <Case title="The product banner's fallback">
         <Exemplar
           file="src/components/ui/product-banner.tsx"
