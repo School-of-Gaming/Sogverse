@@ -98,6 +98,7 @@
     "next": "veb",
     "week": "Hogh {week}",
     "weekRange": "Hogh {from}–{to}",
+    "weekRangeAcrossYears": "Hogh {from}/{fromYear} – Hogh {to}/{toYear}",
     "weekCount": "{count} Hogh",
     "weekColumn": "Hogh"
   },

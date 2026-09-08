@@ -26,7 +26,11 @@
  * seam admins work across.
  */
 
-import { addCalendarDays, parseCalendarDate, weekdayOf } from "@/lib/calendar-date";
+import {
+  addCalendarDays,
+  mondayOf,
+  parseCalendarDate,
+} from "@/lib/calendar-date";
 
 /**
  * One ISO week. `isoYear` is the ISO week-numbering year, which may differ by
@@ -54,7 +58,7 @@ function daysBetween(from: string, to: string): number {
  * first Monday then gives the week number directly.
  */
 export function isoWeekOf(date: string): IsoWeek {
-  const monday = addCalendarDays(date, -weekdayOf(date));
+  const monday = mondayOf(date);
   const thursday = addCalendarDays(monday, 3);
   const isoYear = Number(thursday.slice(0, 4));
   const firstMonday = isoWeekStart({ isoYear, week: 1 });
@@ -71,7 +75,7 @@ export function isoWeekOf(date: string): IsoWeek {
  */
 export function isoWeekStart(week: IsoWeek): string {
   const jan4 = `${String(week.isoYear).padStart(4, "0")}-01-04`;
-  const firstMonday = addCalendarDays(jan4, -weekdayOf(jan4));
+  const firstMonday = mondayOf(jan4);
   return addCalendarDays(firstMonday, (week.week - 1) * 7);
 }
 
@@ -108,10 +112,13 @@ export function isoWeeksInYear(isoYear: number): 52 | 53 {
  */
 export function isoWeeksBetween(startDate: string, endDate: string): number {
   if (endDate < startDate) return 0;
-  const startMonday = addCalendarDays(startDate, -weekdayOf(startDate));
-  const endMonday = addCalendarDays(endDate, -weekdayOf(endDate));
+  const startMonday = mondayOf(startDate);
+  const endMonday = mondayOf(endDate);
   return daysBetween(startMonday, endMonday) / 7 + 1;
 }
+
+/** The full ISO designator, `2026-W34` or `2026W34`, lower-cased before it. */
+const ISO_DESIGNATOR = /^(\d{4})-?w\s*(\d{1,2})$/;
 
 /**
  * Parses what an admin types into a "go to week" box.
@@ -138,7 +145,7 @@ export function parseIsoWeekInput(
 ): IsoWeek | null {
   const trimmed = text.trim().toLowerCase();
 
-  const designator = /^(\d{4})-?w\s*(\d{1,2})$/.exec(trimmed);
+  const designator = ISO_DESIGNATOR.exec(trimmed);
   // The prefix alternatives are listed longest-first so `v.` wins over `v`, and
   // the optional group holds no quantifier of its own — a `\s*` nested inside an
   // optional group is the shape that makes a regex worth backtracking over.
@@ -151,4 +158,58 @@ export function parseIsoWeekInput(
   const week = Number(digits);
   if (week < 1 || week > isoWeeksInYear(isoYear)) return null;
   return { isoYear, week };
+}
+
+/**
+ * The week an admin means by a bare number, read against the date they are
+ * looking at.
+ *
+ * A bare `1` typed while December 2025 is on screen means the week that is
+ * about to start, not the one eleven months behind — but resolving it against
+ * the displayed ISO year alone gives 2025-W01 and jumps the calendar backwards
+ * across the whole year. So a bare number is tried against the displayed ISO
+ * year and both of its neighbours, and the candidate whose Monday sits fewest
+ * days from `nearDate` wins. That is the same "near the one on screen" instinct
+ * `parseIsoWeekInput`'s default year encodes, extended over the New Year seam
+ * where the default year is exactly wrong.
+ *
+ * A neighbour year too short for the number is skipped rather than clamped, so
+ * `53` viewed in mid-2025 (a 52-week year) resolves to the nearer of the long
+ * years around it rather than to nothing.
+ *
+ * A full designator (`2025-W01`) carries its own year and is left alone: an
+ * admin who typed the year meant it, and second-guessing it would make the one
+ * unambiguous input the only one that cannot be trusted.
+ *
+ * `nearDate` is a bare `YYYY-MM-DD` — the picker passes the first of the month
+ * it is showing. Returns `null` for anything `parseIsoWeekInput` rejects in
+ * every candidate year.
+ */
+export function resolveNearestIsoWeek(
+  text: string,
+  nearDate: string,
+): IsoWeek | null {
+  const displayedIsoYear = isoWeekOf(nearDate).isoYear;
+  if (ISO_DESIGNATOR.test(text.trim().toLowerCase())) {
+    return parseIsoWeekInput(text, displayedIsoYear);
+  }
+
+  let best: IsoWeek | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const isoYear of [
+    displayedIsoYear - 1,
+    displayedIsoYear,
+    displayedIsoYear + 1,
+  ]) {
+    const candidate = parseIsoWeekInput(text, isoYear);
+    if (candidate === null) continue;
+    const distance = Math.abs(
+      daysBetween(nearDate, isoWeekStart(candidate)),
+    );
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = candidate;
+    }
+  }
+  return best;
 }

@@ -105,6 +105,7 @@
     "next": "Seuraava",
     "week": "vk {week}",
     "weekRange": "vk {from}–{to}",
+    "weekRangeAcrossYears": "vk {from}/{fromYear} – vk {to}/{toYear}",
     "weekCount": "{count, plural, one {# viikko} other {# viikkoa}}",
     "weekColumn": "vk"
   },

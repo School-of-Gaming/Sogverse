@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatInTimeZone } from "date-fns-tz";
 import { StatusLine } from "@/components/ui/alert";
@@ -8,7 +8,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { PRODUCT_TIMEZONES } from "@/lib/constants";
-import { isoWeekOf, isoWeeksBetween } from "@/lib/iso-week";
+import { formatAdminTermWeeks } from "@/lib/products/format-product-term-dates";
 import {
   firstSessionDate,
   isSessionDay,
@@ -27,6 +27,17 @@ import {
   type FormState,
 } from "../product-form-state";
 import type { ProductTypeConfig } from "../product-type-config";
+
+/**
+ * The ids a control is described by, space-joined, or `undefined` when there
+ * are none — an empty `aria-describedby` is a pointer at nothing, which some
+ * screen readers announce as a missing description rather than as no
+ * description.
+ */
+function describedBy(...ids: readonly (string | undefined)[]): string | undefined {
+  const present = ids.filter((id) => id !== undefined);
+  return present.length === 0 ? undefined : present.join(" ");
+}
 
 interface WhenSectionProps {
   state: FormState;
@@ -136,23 +147,34 @@ export function WhenSection({
         })
       : null;
 
+  // A warning rendered as loose text under a control says nothing to anyone not
+  // looking at the screen. Each one carries an id its picker points at with
+  // `aria-describedby`, and `role="status"` so the warning is announced when it
+  // appears rather than only when the field is next visited. Only one end-date
+  // picker is ever mounted (the grid's, or the consumer club's), so the single
+  // end id is never duplicated.
+  const warningIds = useId();
+  const startWarningId = `${warningIds}-start`;
+  const endWarningId = `${warningIds}-end`;
+
   // The term as an admin planning in weeks reads it. Nothing is reserved for
   // it: it appears because the admin just picked the second of the two dates,
   // which is their own action and the one case the layout rule allows to
   // reflow.
+  //
+  // The string itself is `formatAdminTermWeeks`', not this section's: the
+  // product details page prints the same readout, and the choice between a
+  // same-year range and a year-qualified one is a decision that must be made in
+  // exactly one place or a term crossing New Year reads correctly on one
+  // surface and as "wk 34–2" on the other.
   const termText =
     state.startDate !== "" &&
     state.endDate !== "" &&
     state.endDate >= state.startDate
-      ? [
-          c("weekRange", {
-            from: isoWeekOf(state.startDate).week,
-            to: isoWeekOf(state.endDate).week,
-          }),
-          c("weekCount", {
-            count: isoWeeksBetween(state.startDate, state.endDate),
-          }),
-        ].join(" · ")
+      ? formatAdminTermWeeks(
+          { start_date: state.startDate, end_date: state.endDate },
+          c,
+        )
       : null;
   const termLine =
     termText === null ? null : (
@@ -231,24 +253,38 @@ export function WhenSection({
                     : undefined
               }
             >
-              <DatePicker
-                id="p-start-date"
-                value={state.startDate}
-                onChange={(startDate) => setState({ ...state, startDate })}
-                today={today}
-                weekPick={{ edge: "start", weekdays }}
-                rangeEnd={state.endDate === "" ? null : state.endDate}
-                required
-              />
-              {/* The warning sits between the control and the field's own
-                  hint, which is the order the two want: the date being wrong
-                  comes before the billing anchor is worth explaining. It
-                  appears as the direct result of the admin's own pick, so its
-                  reflow is the permitted kind. */}
-              {startWarning !== null && (
-                <StatusLine status="warning" size="xs" muted>
-                  {startWarning}
-                </StatusLine>
+              {({ hintId }) => (
+                <>
+                  <DatePicker
+                    id="p-start-date"
+                    value={state.startDate}
+                    onChange={(startDate) => setState({ ...state, startDate })}
+                    today={today}
+                    weekPick={{ edge: "start", weekdays }}
+                    rangeEnd={state.endDate === "" ? null : state.endDate}
+                    aria-describedby={describedBy(
+                      startWarning === null ? undefined : startWarningId,
+                      hintId,
+                    )}
+                    required
+                  />
+                  {/* The warning sits between the control and the field's own
+                      hint, which is the order the two want: the date being
+                      wrong comes before the billing anchor is worth
+                      explaining. It appears as the direct result of the
+                      admin's own pick, so its reflow is the permitted kind. */}
+                  {startWarning !== null && (
+                    <StatusLine
+                      id={startWarningId}
+                      role="status"
+                      status="warning"
+                      size="xs"
+                      muted
+                    >
+                      {startWarning}
+                    </StatusLine>
+                  )}
+                </>
               )}
             </Field>
             {productType === "event" || productType === "consumer_club" ? null : (
@@ -268,10 +304,19 @@ export function WhenSection({
                   today={today}
                   weekPick={{ edge: "end", weekdays }}
                   rangeStart={state.startDate === "" ? null : state.startDate}
+                  aria-describedby={describedBy(
+                    endWarning === null ? undefined : endWarningId,
+                  )}
                   required
                 />
                 {endWarning !== null && (
-                  <StatusLine status="warning" size="xs" muted>
+                  <StatusLine
+                    id={endWarningId}
+                    role="status"
+                    status="warning"
+                    size="xs"
+                    muted
+                  >
                     {endWarning}
                   </StatusLine>
                 )}
@@ -342,10 +387,19 @@ export function WhenSection({
                     today={today}
                     weekPick={{ edge: "end", weekdays }}
                     rangeStart={state.startDate === "" ? null : state.startDate}
+                    aria-describedby={describedBy(
+                      endWarning === null ? undefined : endWarningId,
+                    )}
                     required
                   />
                   {endWarning !== null && (
-                    <StatusLine status="warning" size="xs" muted>
+                    <StatusLine
+                      id={endWarningId}
+                      role="status"
+                      status="warning"
+                      size="xs"
+                      muted
+                    >
                       {endWarning}
                     </StatusLine>
                   )}

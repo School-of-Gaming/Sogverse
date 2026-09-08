@@ -7,6 +7,7 @@ import {
   isoWeeksBetween,
   isoWeeksInYear,
   parseIsoWeekInput,
+  resolveNearestIsoWeek,
 } from "@/lib/iso-week";
 
 describe("isoWeekOf", () => {
@@ -176,6 +177,61 @@ describe("parseIsoWeekInput", () => {
       "202-W34",
     ]) {
       expect(parseIsoWeekInput(text, 2026)).toBeNull();
+    }
+  });
+});
+
+describe("resolveNearestIsoWeek", () => {
+  /**
+   * The defect the helper exists for: resolved against the displayed ISO year
+   * alone, a bare `1` typed in December sends the calendar eleven months
+   * backwards — the one direction an admin planning next term never means.
+   */
+  it("reads a bare week forwards across New Year", () => {
+    expect(resolveNearestIsoWeek("1", "2025-12-01")).toEqual({
+      isoYear: 2026,
+      week: 1,
+    });
+  });
+
+  it("reads a bare week backwards across New Year", () => {
+    // 2025-W52 starts 2025-12-22, ten days before the month on screen;
+    // 2026-W52 is most of a year away.
+    expect(resolveNearestIsoWeek("52", "2026-01-01")).toEqual({
+      isoYear: 2025,
+      week: 52,
+    });
+  });
+
+  it("stays in the displayed year away from the seam", () => {
+    expect(resolveNearestIsoWeek("34", "2026-06-01")).toEqual({
+      isoYear: 2026,
+      week: 34,
+    });
+  });
+
+  it("leaves an explicit designator exactly as typed", () => {
+    // The year is the one input that cannot be ambiguous, so the nearest-week
+    // search never second-guesses it: 2025-W01 stays 2025-W01 even though the
+    // week the admin is looking at is a year later.
+    expect(resolveNearestIsoWeek("2025-W01", "2025-12-01")).toEqual({
+      isoYear: 2025,
+      week: 1,
+    });
+  });
+
+  it("skips a neighbour year too short for the number", () => {
+    // 2025 has 52 weeks and 2024 has 52, so the only year around it that owns a
+    // week 53 is 2026 — clamping or refusing here would both be wrong.
+    expect(resolveNearestIsoWeek("53", "2025-06-01")).toEqual({
+      isoYear: 2026,
+      week: 53,
+    });
+  });
+
+  it("answers nothing for input no year could rescue", () => {
+    for (const text of ["", "0", "54", "week 34", "34a"]) {
+      expect(resolveNearestIsoWeek(text, "2026-06-01")).toBeNull();
     }
   });
 });

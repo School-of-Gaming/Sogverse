@@ -174,6 +174,38 @@ describe("Escape", () => {
   });
 });
 
+describe("focus leaving the calendar", () => {
+  /**
+   * Tab is not Escape: the admin has already sent focus into the form behind
+   * the popover, so the calendar closes and focus is left exactly where they
+   * put it. A dialog that stays open over the field being typed into is the
+   * defect; pulling focus back would be a second one.
+   */
+  it("closes when focus lands outside the control", () => {
+    renderPicker({ edge: "start", weekdays: WEDNESDAY });
+    fireEvent.click(trigger());
+    expect(dialog()).not.toBeNull();
+
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    fireEvent.focusOut(trigger(), { relatedTarget: outside });
+
+    expect(dialog()).toBeNull();
+    expect(document.activeElement).not.toBe(trigger());
+    outside.remove();
+  });
+
+  it("stays open while focus moves inside it", () => {
+    renderPicker({ edge: "start", weekdays: WEDNESDAY });
+    fireEvent.click(trigger());
+
+    const gutter = screen.getByRole("button", { name: "Select week 34" });
+    fireEvent.focusOut(trigger(), { relatedTarget: gutter });
+
+    expect(dialog()).not.toBeNull();
+  });
+});
+
 describe("the grid", () => {
   it("names its gutter and its weekdays out of Intl, never a label array", () => {
     renderPicker({ edge: "start", weekdays: WEDNESDAY });

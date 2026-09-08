@@ -86,13 +86,24 @@ describe("the term-dates week readout", () => {
 
   /**
    * The ISO year is half of a week's identity, and this is the case that proves
-   * it is being compared: 30 December 2025 is week 1 of ISO 2026, 5 January 2027
-   * is week 1 of ISO 2027, and a comparison on the bare number would collapse a
-   * whole year into the single label "wk 1".
+   * it is being carried: 30 December 2025 is week 1 of ISO 2026, 5 January 2027
+   * is week 1 of ISO 2027, and a range printed as bare numbers would say
+   * "wk 1–1" for a year-and-a-bit.
    */
-  it("keeps both ends when the same week number belongs to two ISO years", () => {
+  it("names both ISO years when the same week number belongs to two of them", () => {
     expect(formatProductWeeks("2025-12-30", "2027-01-05", common("en"))).toBe(
-      "wk 1–1",
+      "wk 1/2026 – wk 1/2027",
+    );
+  });
+
+  /**
+   * The ordinary shape of the same seam: an autumn term running into the new
+   * year. Unqualified, it reads "wk 34–2" — a range that runs backwards and
+   * cannot be what the admin meant.
+   */
+  it("qualifies a term that crosses New Year", () => {
+    expect(formatProductWeeks("2026-08-17", "2027-01-15", common("en"))).toBe(
+      "wk 34/2026 – wk 2/2027",
     );
   });
 });

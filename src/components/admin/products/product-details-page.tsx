@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   Calendar,
   CalendarCheck,
-  CalendarCheck2,
   Camera,
   Check,
   Clock,
@@ -499,7 +498,7 @@ function OperationalFacts({
 
         {lastSession && (
           <Fact
-            icon={CalendarCheck2}
+            icon={CalendarCheck}
             label={t("detailsPage.fields.lastSession")}
           >
             {lastSession}

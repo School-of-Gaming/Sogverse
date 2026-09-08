@@ -105,6 +105,7 @@
     "next": "Suivant",
     "week": "S{week}",
     "weekRange": "S{from}–S{to}",
+    "weekRangeAcrossYears": "S{from}/{fromYear} – S{to}/{toYear}",
     "weekCount": "{count, plural, one {# semaine} other {# semaines}}",
     "weekColumn": "S"
   },

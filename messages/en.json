@@ -105,6 +105,7 @@
     "next": "Next",
     "week": "wk {week}",
     "weekRange": "wk {from}–{to}",
+    "weekRangeAcrossYears": "wk {from}/{fromYear} – wk {to}/{toYear}",
     "weekCount": "{count, plural, one {# week} other {# weeks}}",
     "weekColumn": "wk"
   },

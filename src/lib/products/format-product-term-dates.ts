@@ -30,15 +30,15 @@ export function formatClubTermDates(
 }
 
 /**
- * The translator a week readout needs: `common.week`, `common.weekRange` and
- * `common.weekCount`.
+ * The translator a week readout needs: `common.week`, `common.weekRange`,
+ * `common.weekRangeAcrossYears` and `common.weekCount`.
  *
  * Declared structurally rather than as next-intl's own translator type so this
  * module stays free of the i18n runtime — every caller is a component that
  * already holds a `common` translator and simply hands it over.
  */
 export type WeekTranslator = (
-  key: "week" | "weekRange" | "weekCount",
+  key: "week" | "weekRange" | "weekRangeAcrossYears" | "weekCount",
   values: Record<string, number>,
 ) => string;
 
@@ -56,6 +56,13 @@ export type WeekTranslator = (
  * week 1 of 2027 is not week 1 of 2026, and a term crossing New Year is exactly
  * where a bare number comparison would silently print a single week for a
  * fifty-week range.
+ *
+ * The same seam decides how the *range* is written. Two weeks in one ISO year
+ * are `wk 34–50`, because the year is the one the reader is already in. Two
+ * weeks in different ISO years have to carry their years — `wk 34/2026 – wk
+ * 2/2027` — or an autumn-to-spring term reads as the impossible "wk 34–2" and a
+ * fifty-four-week term as "wk 1–1", which is the same collapse the pair
+ * comparison above prevents, one line later.
  */
 export function formatProductWeeks(
   startDate: string,
@@ -66,6 +73,14 @@ export function formatProductWeeks(
   const end = endDate === null ? null : isoWeekOf(endDate);
   if (end === null || (end.isoYear === start.isoYear && end.week === start.week)) {
     return t("week", { week: start.week });
+  }
+  if (end.isoYear !== start.isoYear) {
+    return t("weekRangeAcrossYears", {
+      from: start.week,
+      fromYear: start.isoYear,
+      to: end.week,
+      toYear: end.isoYear,
+    });
   }
   return t("weekRange", { from: start.week, to: end.week });
 }

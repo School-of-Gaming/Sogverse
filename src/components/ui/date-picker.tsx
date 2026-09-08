@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   addCalendarDays,
   addCalendarMonths,
   mondayOf,
   monthsAfter,
 } from "@/lib/calendar-date";
-import { isoWeekOf, isoWeekStart, parseIsoWeekInput } from "@/lib/iso-week";
+import { isoWeekOf, isoWeekStart, resolveNearestIsoWeek } from "@/lib/iso-week";
 import { firstSessionDate, lastSessionDate } from "@/lib/session-dates";
 import { cn, formatDateOnly } from "@/lib/utils";
 
@@ -117,10 +118,28 @@ export function DatePicker({
 
   const week = value === "" ? null : isoWeekOf(value).week;
 
+  // Tab out of the popover and the calendar goes with it: a dialog left open
+  // behind a form the admin is already typing into is a panel over content they
+  // cannot see. Focus is *not* pulled back — it has gone exactly where they
+  // sent it — which is what separates this from Escape. A blur with no
+  // `relatedTarget` (a press on the popover's own padding, the window losing
+  // focus) is left alone: the outside-pointer listener owns that case, and
+  // closing here would eat the click about to land.
+  function onContainerBlur(e: React.FocusEvent<HTMLDivElement>) {
+    if (!open) return;
+    const next = e.relatedTarget;
+    if (!(next instanceof Node) || e.currentTarget.contains(next)) return;
+    setOpen(false);
+  }
+
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
+    <div
+      ref={containerRef}
+      onBlur={onContainerBlur}
+      className={cn("relative", className)}
+    >
       <div className="flex">
-        <input
+        <Input
           id={id}
           type="date"
           value={value}
@@ -129,7 +148,7 @@ export function DatePicker({
           disabled={disabled}
           aria-label={ariaLabel}
           aria-describedby={ariaDescribedBy}
-          className="flex h-10 min-w-0 flex-1 rounded-md rounded-r-none border border-border border-r-0 bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-calendar-picker-indicator]:hidden"
+          className="min-w-0 flex-1 rounded-r-none border-r-0 [&::-webkit-calendar-picker-indicator]:hidden"
         />
         <button
           ref={triggerRef}
@@ -295,14 +314,19 @@ function WeekCalendar({
     });
   }, []);
 
-  /** The day a click on this week's number answers the field with. */
-  const weekTarget = useCallback(
-    (monday: string) =>
-      weekPick.edge === "start"
-        ? firstSessionDate(monday, weekPick.weekdays)
-        : lastSessionDate(addCalendarDays(monday, 6), weekPick.weekdays),
-    [weekPick.edge, weekPick.weekdays],
-  );
+  /**
+   * The day a click on this week's number answers the field with.
+   *
+   * Deliberately not memoised: every caller builds `weekPick` inline, so its
+   * `weekdays` array is a new reference on each render and a `useCallback` keyed
+   * on it would return a new function every time anyway — a memo that only
+   * costs. Nothing downstream needs the identity to be stable.
+   */
+  function weekTarget(monday: string): string {
+    return weekPick.edge === "start"
+      ? firstSessionDate(monday, weekPick.weekdays)
+      : lastSessionDate(addCalendarDays(monday, 6), weekPick.weekdays);
+  }
 
   // The band: the value at one end, whichever of the two range props the caller
   // supplied at the other. Both ends are drawn on the lifted ground and the
@@ -315,11 +339,12 @@ function WeekCalendar({
     value !== "" && otherEnd ? (value < otherEnd ? otherEnd : value) : null;
 
   function submitWeek(text: string) {
-    const parsed = parseIsoWeekInput(text, isoWeekOf(month).isoYear);
+    // Resolved against the month on screen rather than its ISO year alone:
+    // typing `1` in December means the January two weeks ahead, not the one
+    // eleven months back.
+    const parsed = resolveNearestIsoWeek(text, month);
     if (parsed === null) return;
-    const monday = isoWeekStart(parsed);
-    setMonth(firstOfMonth(monday));
-    onPick(weekTarget(monday));
+    onPick(weekTarget(isoWeekStart(parsed)));
   }
 
   function onDayKeyDown(e: React.KeyboardEvent, date: string) {
@@ -414,14 +439,30 @@ function WeekCalendar({
         </button>
       </div>
 
-      <div ref={gridRef} className="mt-2 tabular-nums">
-        <div className="grid grid-cols-8">
-          <div className="flex h-8 items-center justify-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      {/* A real grid, not eight columns of loose buttons: the gutter is a row
+          header, so a screen reader reading a day announces the week it is in,
+          and the roving tab stop below is the one arrow-key focus the grid
+          pattern expects. */}
+      <div
+        ref={gridRef}
+        role="grid"
+        aria-label={formatDateOnly(month, locale, {
+          month: "long",
+          year: "numeric",
+        })}
+        className="mt-2 tabular-nums"
+      >
+        <div role="row" className="grid grid-cols-8">
+          <div
+            role="columnheader"
+            className="flex h-8 items-center justify-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+          >
             {c("weekColumn")}
           </div>
           {HEADING_WEEK.map((day) => (
             <div
               key={day}
+              role="columnheader"
               className="flex h-8 items-center justify-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
             >
               {formatDateOnly(day, locale, { weekday: "short" })}
@@ -436,31 +477,40 @@ function WeekCalendar({
           return (
             <div
               key={monday}
+              role="row"
               className={cn(
                 "grid grid-cols-8 rounded-sm",
                 previewing && "bg-hover",
               )}
             >
-              <button
-                type="button"
-                aria-label={t("selectWeek", { week })}
-                onClick={() => onPick(target)}
-                onMouseEnter={() => setPreviewWeekStart(monday)}
-                onMouseLeave={() =>
-                  setPreviewWeekStart((current) =>
-                    current === monday ? null : current,
-                  )
-                }
-                onFocus={() => setPreviewWeekStart(monday)}
-                onBlur={() =>
-                  setPreviewWeekStart((current) =>
-                    current === monday ? null : current,
-                  )
-                }
-                className="flex h-9 items-center justify-center rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-              >
-                {week}
-              </button>
+              <div role="rowheader" className="flex">
+                <button
+                  type="button"
+                  // Off the tab ring on purpose: seven gutter buttons in one
+                  // popover would be seven tab stops between the calendar and the
+                  // form's next field, and the roving day index already gives the
+                  // keyboard its one way in. The pointer and a screen reader
+                  // walking the grid still reach it.
+                  tabIndex={-1}
+                  aria-label={t("selectWeek", { week })}
+                  onClick={() => onPick(target)}
+                  onMouseEnter={() => setPreviewWeekStart(monday)}
+                  onMouseLeave={() =>
+                    setPreviewWeekStart((current) =>
+                      current === monday ? null : current,
+                    )
+                  }
+                  onFocus={() => setPreviewWeekStart(monday)}
+                  onBlur={() =>
+                    setPreviewWeekStart((current) =>
+                      current === monday ? null : current,
+                    )
+                  }
+                  className="flex h-9 w-full items-center justify-center rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+                >
+                  {week}
+                </button>
+              </div>
               {[0, 1, 2, 3, 4, 5, 6].map((offset) => {
                 const date = addCalendarDays(monday, offset);
                 const selected = date === value;
@@ -473,11 +523,23 @@ function WeekCalendar({
                   <button
                     key={date}
                     type="button"
+                    // The cell *is* the grid cell rather than sitting inside
+                    // one: a day is the thing being selected, and `aria-selected`
+                    // is what a grid says about it. The visible content is a
+                    // bare numeral, so the whole date is spelled out here — "19"
+                    // read aloud out of a grid names no month and no year.
+                    role="gridcell"
                     data-date={date}
                     data-day-cell="true"
                     tabIndex={date === focusDate ? 0 : -1}
+                    aria-label={formatDateOnly(date, locale, {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
                     aria-current={date === today ? "date" : undefined}
-                    aria-pressed={selected}
+                    aria-selected={selected}
                     onClick={() => onPick(date)}
                     onKeyDown={(e) => onDayKeyDown(e, date)}
                     className={cn(

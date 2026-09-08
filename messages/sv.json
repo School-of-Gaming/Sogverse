@@ -105,6 +105,7 @@
     "next": "Nästa",
     "week": "v. {week}",
     "weekRange": "v. {from}–{to}",
+    "weekRangeAcrossYears": "v. {from}/{fromYear} – v. {to}/{toYear}",
     "weekCount": "{count, plural, one {# vecka} other {# veckor}}",
     "weekColumn": "v."
   },
