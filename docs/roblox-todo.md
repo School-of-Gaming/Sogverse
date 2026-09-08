@@ -44,7 +44,7 @@ work. Pick these up on resume:
   consent does not gate; the owner's 2026-09-07 decision is the opposite — a gamer without
   consent stays out of session photographs *entirely* — and all three documents now say
   so. **Answered 2026-09-07 by Lynx (Joyce): no such photography is needed**, so the
-  documents stand — with one request, recorded under *Open decisions*: a line allowing
+  documents stand — with one request, now under *Resolved*: a line allowing
   non-identifying wide shots of an event taken from a distance.
 
 ---
@@ -58,9 +58,14 @@ delete the file. The record of what was done lives in git history.
 **Sogverse is the source of truth for this copy.** The Notion documents were the draft.
 They have been accepted one-way, and the published pages are now the document of record —
 so a wording problem in one of these documents is *ours to fix*, not an upstream edit to
-request, and there is no longer an upstream to drift from. Lynx remains a party to the
-joint documents, so changing what someone is **obliged to do** still goes to them; changing
-how a sentence **reads** does not.
+request, and there is no longer an upstream to drift from. **But the programme documents
+are Lynx's to word** (Kyle, 2026-09-08): anything under the `roblox*` namespaces — the
+programme Terms, Privacy Policy and Child Safeguarding Policy — takes the wording Lynx
+gives, and we do not add paragraphs of our own to them. School of Gaming's voice lives in
+School of Gaming's own policies (`/privacy`, `/terms-and-conditions`,
+`/anti-bullying-and-discipline`), which the programme documents link to. What stays ours in
+the programme documents is the mechanics: keys, placeholders, links, translation, and
+correcting a claim about how Sogverse works.
 
 An item has three states. **Open** — still being researched, or carrying a decision
 nobody has been asked for yet; it sits in one of the topic sections below. **Escalated**
@@ -513,23 +518,6 @@ lawyer is not reviewing sections that are about to be restructured.
       photo a Gedu appears in, on Lynx Educate's or Roblox's website. Neither privacy
       policy mentions Gedu images in either direction. If the answer is that it does not,
       the fix is a clause in the Gedu contract, not a line in the parent-facing policies.
-- [ ] **Non-identifying wide shots of an event.** Lynx's request, 2026-09-07 (Joyce):
-      having confirmed that no internal-records photography is needed, she asked for a
-      line saying non-identifying photos of an event or workshop may be taken from a
-      distance, the key being that nobody is identifiable in them. This is a carve-out
-      from the promise all three documents now make — a child without the consent is
-      "kept out of session photographs and footage entirely" — so it is **Kyle's call**
-      whether to make it. The sentence proposed to Lynx the same day, to be placed
-      directly after that promise in each of `robloxPrivacy.sections.mediaChoice.blocks.3`,
-      `robloxPrivacy.sections.mediaChildAgrees.blocks.1`,
-      `robloxSafeguarding.sections.data.blocks.0` and `robloxTerms.sections.media.blocks.0`:
-
-      > Wide shots of an event or workshop may be taken from a distance, where no child
-      > is identifiable.
-
-      It passes the mechanism test as far as a photograph can — a parent can look at the
-      picture and check the claim. **Lynx confirmed the wording on 2026-09-08**; only
-      Kyle's yes or no is outstanding, and on a yes this moves to *Resolved* as written.
 - [ ] **Free products, the FREE price, and the waitlist.** Kyle's flag, 2026-08-30.
       Looked into on 2026-09-07, and the machinery is not the gap. The admin product
       form shows the waitlist tick for any capped product of any type, and switching a
@@ -560,25 +548,17 @@ marker. Lynx's paragraph states Lynx's own obligation in Lynx's words, so it is 
 written; it drops the venue-partner detail and the arrival/collection/first-aid list, and
 adds that arrangements vary by venue.
 
-**One decision left, and it is Kyle's:** Lynx's replacement also drops the draft's second
-paragraph — that inside the session the group is ours, and the standards of behaviour,
-supervision and escalation in this policy apply in a room exactly as online. That
-paragraph is about School of Gaming, not Lynx, so keeping it changes nothing Lynx is
-obliged to do; it is what stops the section reading as "not our problem" under an intro
-that promises a child is safe at an in-person event too. Recommendation: keep it, after
-Lynx's paragraph. Apply whichever Kyle picks.
+Lynx's replacement also drops the draft's second paragraph (that inside the session the
+group is ours and this policy applies in a room as online). Kyle's ruling on 2026-09-08:
+the programme documents are Lynx's to word, and School of Gaming's voice lives in its own
+policies — so the paragraph is dropped, not restored.
 
-**Final English copy** — `robloxSafeguarding.sections.inPerson.blocks`, Lynx's paragraph
-first, the second only if Kyle keeps it:
+**Final English copy** — `robloxSafeguarding.sections.inPerson.blocks`, one string:
 
 > Our Game Educators run the session; they are not the organisers of the event. Lynx
 > Educate is responsible for making sure the venues it works with are suitable for the
 > session and meet the Programme’s safeguarding requirements. The specific arrangements
 > may vary by venue.
-
-> Inside the session, the group is ours. The standards of behaviour, supervision and
-> escalation set out in this policy apply in a room exactly as they do online, and the
-> same trained, background-checked Game Educators lead both.
 
 **The subtitle is trimmed in the same change.** `robloxSafeguarding.subtitle` ends
 "…covers Lynx Educate and School of Gaming’s broader safeguarding responsibilities for the
@@ -592,8 +572,8 @@ responsibilities rather than covering them, so the final clause goes:
 
 **To apply:**
 
-1. Fill `robloxSafeguarding.sections.inPerson.blocks` (currently `[]`) with one or two
-   strings in `en`, `fi`, `sv` and `fr` (`tlh` omits the namespace). Curly apostrophes as
+1. Fill `robloxSafeguarding.sections.inPerson.blocks` (currently `[]`) with that one
+   string in `en`, `fi`, `sv` and `fr` (`tlh` omits the namespace). Curly apostrophes as
    the file uses them.
 2. Trim `robloxSafeguarding.subtitle` in the same four locales; leave the
    `<linkDiscipline>` tag and label exactly as they are.
@@ -601,6 +581,36 @@ responsibilities rather than covering them, so the final clause goes:
    `SECTIONS` from pending to not pending. It is the last pending section, so the page's
    pending machinery can go the way the terms page's did if that keeps lint clean.
 4. Delete this entry.
+
+### Non-identifying wide shots of an event
+
+Decided 2026-09-08. Lynx's request (Joyce, 2026-09-07), with the wording confirmed by her
+the next day; under the rule at the top the programme documents take Lynx's wording, and
+this is a line Lynx wants in Lynx's documents. It is a carve-out from the promise the
+documents make that a child without the consent is kept out of session photographs
+entirely, so it sits directly after that promise wherever the promise is stated. It passes
+the mechanism test as far as a photograph can — a parent can look at the picture and check
+the claim — and it binds Gedu practice at events: a wide shot from a distance, nobody
+identifiable, and nothing closer without the consent.
+
+**Final English copy** — one sentence, appended to the end of each of these four strings
+after the existing "kept out … entirely" sentence:
+
+> Wide shots of an event or workshop may be taken from a distance, where no child is
+> identifiable.
+
+- `robloxPrivacy.sections.mediaChoice.blocks.3`
+- `robloxPrivacy.sections.mediaChildAgrees.blocks.1`
+- `robloxSafeguarding.sections.data.blocks.0`
+- `robloxTerms.sections.media.blocks.0`
+
+**To apply:**
+
+1. Append the sentence to the four strings in `en`, `fi`, `sv` and `fr` (`tlh` omits all
+   three namespaces). Read each string first: the sentence follows the "kept out …
+   entirely" promise, and in `mediaChildAgrees.blocks.1` that promise is not the final
+   sentence, so place it right after the promise rather than at the string's end.
+2. Delete this entry.
 
 ### Safeguarding Policy — the vetting section is School of Gaming's
 
