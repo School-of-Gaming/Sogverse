@@ -79,6 +79,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Partner brand assets (Roblox, Lynx marks) | `src/assets/partners/` |
 | Billing portal | `src/services/billing/` |
 | Parent PIN | `src/services/pin/` |
+| Gedu profiles, certification and the record check | `src/services/gedu/` |
 | i18n | `src/i18n/` |
 | Email templates | `src/lib/email-templates/` |
 | Calendar invitations (the mailed `.ics`) | `src/lib/calendar-invitations/` |

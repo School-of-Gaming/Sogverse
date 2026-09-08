@@ -1,18 +1,16 @@
 # src/
 
 **Sogverse** is School of Gaming's web app: the application families, game educators and
-admins sign into. It is everything under `src/`, and this file holds the rules that cut
-across it — the roles and their dashboards, the service layer, auth, layout, copy and the
-brand.
+admins sign into, and the public pages around it. It is everything under `src/`, and this
+file holds the rules that cut across it — the roles and their dashboards, the service
+layer, auth, layout, copy and the brand rules not yet in SOG-UI.
 
-It auto-loads whenever a file in this tree is read or edited; the root `CLAUDE.md` governs
-the monorepo around it. The app's UI authority is **SOG-UI**
+This file auto-loads whenever a file in this tree is read or edited; the root `CLAUDE.md`
+governs the monorepo around it. The app's UI authority is **SOG-UI**
 (`packages/sog-ui/CLAUDE.md`) — read that file before any UI work, because it does not
 auto-load here.
 
 ## Tech Stack
-
-What the app is built on:
 
 - **Next.js 16** (App Router) with React 19 and TypeScript
 - **Supabase** for PostgreSQL database and authentication
