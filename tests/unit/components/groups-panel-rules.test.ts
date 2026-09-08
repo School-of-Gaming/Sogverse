@@ -4,13 +4,16 @@ import {
   chipGameIdentity,
   dragSubjectsFrom,
   isSubscriptionShaped,
+  isSwitchTarget,
   readDropData,
   readChipDragData,
   resolveDrop,
   robloxIdsFrom,
   seatOfferAvailability,
   showUnassignedSection,
+  switchTargetWarnings,
   type DragSubject,
+  type SwitchTargetFacts,
 } from "@/components/admin/products/groups/panel-rules";
 import type { GroupParticipationDetail, ProductGroupsSnapshot } from "@/types";
 
@@ -665,5 +668,122 @@ describe("seatOfferAvailability", () => {
       kind: "needsOneGroup",
       groupCount: 2,
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The club switch's picker
+// ---------------------------------------------------------------------------
+
+// An ordinary running club with an open age range and no region lock — the
+// boring target each test below bends one field of.
+const runningClub: SwitchTargetFacts = {
+  status: "running",
+  minAge: 8,
+  maxAge: 12,
+  regionLockCountry: null,
+};
+
+describe("switchTargetWarnings", () => {
+  it("flags nothing on a running club the child fits", () => {
+    expect(switchTargetWarnings(runningClub, 10)).toEqual([]);
+  });
+
+  it("flags an age below the minimum and above the maximum alike", () => {
+    expect(switchTargetWarnings(runningClub, 7)).toEqual(["ageExcluded"]);
+    expect(switchTargetWarnings(runningClub, 13)).toEqual(["ageExcluded"]);
+    // The bounds themselves are inside the range.
+    expect(switchTargetWarnings(runningClub, 8)).toEqual([]);
+    expect(switchTargetWarnings(runningClub, 12)).toEqual([]);
+  });
+
+  it("honours an open-ended range on whichever end is authored", () => {
+    const noCeiling = { ...runningClub, maxAge: null };
+    expect(switchTargetWarnings(noCeiling, 40)).toEqual([]);
+    expect(switchTargetWarnings(noCeiling, 7)).toEqual(["ageExcluded"]);
+
+    const noFloor = { ...runningClub, minAge: null };
+    expect(switchTargetWarnings(noFloor, 4)).toEqual([]);
+    expect(switchTargetWarnings(noFloor, 13)).toEqual(["ageExcluded"]);
+  });
+
+  it("draws no age warning when the seat carries no date of birth", () => {
+    // An adult seat has no gamer profile and no birth date, so the question is
+    // unanswerable — and a false "too old" on every parent seat would be worse
+    // than saying nothing.
+    expect(switchTargetWarnings(runningClub, null)).toEqual([]);
+  });
+
+  it("flags a region lock whatever country it names", () => {
+    expect(
+      switchTargetWarnings({ ...runningClub, regionLockCountry: "FI" }, 10),
+    ).toEqual(["regionLocked"]);
+  });
+
+  it("flags a club that has not started, and only that status", () => {
+    expect(switchTargetWarnings({ ...runningClub, status: "pending" }, 10)).toEqual(
+      ["notStarted"],
+    );
+    expect(switchTargetWarnings({ ...runningClub, status: "running" }, 10)).toEqual(
+      [],
+    );
+  });
+
+  it("carries every warning that applies, in drawing order", () => {
+    expect(
+      switchTargetWarnings(
+        {
+          status: "pending",
+          minAge: 12,
+          maxAge: 15,
+          regionLockCountry: "SE",
+        },
+        9,
+      ),
+    ).toEqual(["ageExcluded", "regionLocked", "notStarted"]);
+  });
+});
+
+describe("isSwitchTarget", () => {
+  const club = {
+    id: "club-b",
+    product_type: "consumer_club",
+    billing_mode: "paid",
+    status: "running",
+  } as const;
+
+  it("admits a paid consumer club that is running or pending", () => {
+    expect(isSwitchTarget(club, "club-a")).toBe(true);
+    expect(isSwitchTarget({ ...club, status: "pending" }, "club-a")).toBe(true);
+  });
+
+  it("refuses the product the seat is already on", () => {
+    expect(isSwitchTarget(club, "club-b")).toBe(false);
+  });
+
+  it("refuses anything that is not subscription-shaped", () => {
+    // A free club creates no subscription for the seat's to move onto, and a
+    // camp or event is paid once rather than monthly.
+    expect(isSwitchTarget({ ...club, billing_mode: "free" }, "club-a")).toBe(
+      false,
+    );
+    expect(
+      isSwitchTarget({ ...club, billing_mode: "external_contract" }, "club-a"),
+    ).toBe(false);
+    expect(isSwitchTarget({ ...club, product_type: "camp" }, "club-a")).toBe(
+      false,
+    );
+    expect(
+      isSwitchTarget({ ...club, product_type: "municipality_club" }, "club-a"),
+    ).toBe(false);
+  });
+
+  it("refuses a finished or cancelled club", () => {
+    expect(isSwitchTarget({ ...club, status: "completed" }, "club-a")).toBe(
+      false,
+    );
+    expect(isSwitchTarget({ ...club, status: "cancelled" }, "club-a")).toBe(
+      false,
+    );
   });
 });

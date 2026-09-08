@@ -930,6 +930,43 @@
             "description": "Jos {name} poistetaan, perheen tilaus jatkaa laskuttamista paikasta, jota ei enää ole.",
             "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
           }
+        },
+        "switchClub": {
+          "chipAction": "Vaihda {name} toiseen kerhoon",
+          "title": "Vaihda kerhoa",
+          "description": "{name} siirtyy toiseen kerhoon. Perhe säilyttää tilauksensa: siirrämme sen uuden kerhon hintaan, ja Stripe tasaa erotuksen seuraavalla laskulla.",
+          "picker": {
+            "label": "Uusi kerho",
+            "empty": "Muuta kerhoa ei ole tarjolla. Kohteen pitää olla kuukausittain laskutettava kerho, joka ei ole vielä päättynyt."
+          },
+          "warnings": {
+            "ageExcluded": "Pelaajan ikä ei osu tämän kerhon ikähaarukkaan.",
+            "regionLocked": "Tähän kerhoon otetaan perheitä vain yhdestä maasta.",
+            "notStarted": "Tämä kerho ei ole vielä alkanut. Laskutus alkaa silti tästä päivästä suhteutettuna."
+          },
+          "prices": {
+            "selectPrompt": "Valitse kerho, niin näet mikä perheen kohdalla muuttuu.",
+            "current": "Maksaa nyt",
+            "target": "Uusi hinta",
+            "proration": "Mitään ei veloiteta nyt. Stripe hyvittää maksetun kuukauden loppuosan ja veloittaa uuden kerhon osuuden, ja erotus näkyy perheen seuraavalla laskulla.",
+            "unavailable": "Ei hintaa näytettäväksi",
+            "error": "Hintatietoja ei saatu. Valitse kerho uudelleen ja yritä uudestaan."
+          },
+          "refusals": {
+            "latestInvoiceNotPaid": "Perheen viimeisintä laskua ei ole maksettu, joten siirrettävää maksettua aikaa ei ole. Selvitä tämä ensin Stripessä.",
+            "subscriptionNotSingleItem": "Tilauksella on useampi rivi, joten vaihdettavaa yksittäistä hintaa ei ole. Selvitä tämä ensin Stripessä.",
+            "noTargetPriceInCurrency": "Tälle kerholle ei ole hintaa siinä valuutassa, jolla tilausta laskutetaan. Kerhot hinnoitellaan euroina, joten Stripen toisessa valuutassa luomaa tilausta ei voi vaihtaa täällä — selvitä tämä ensin Stripessä.",
+            "participationNotActive": "Tämä paikka ei ole aktiivinen, joten siirrettävää ei ole.",
+            "noLiveSubscription": "Tämän paikan takana ei ole voimassa olevaa tilausta, joten tämä ei ole oikea työkalu: poista paikka ja ilmoita pelaaja toiseen kerhoon.",
+            "targetNotPaidSubscriptionClub": "Kyseinen tuote ei ole kuukausittain laskutettava kerho, joten tilaus ei voi seurata paikkaa sinne.",
+            "sameProduct": "Pelaaja on jo tässä kerhossa.",
+            "alreadyOnTarget": "Pelaajalla on jo paikka kyseisessä kerhossa."
+          },
+          "commit": {
+            "stripeUpdated": "Tilaus on jo uuden kerhon hinnassa, mutta paikka ei siirtynyt. Paina Vaihda kerhoa uudelleen, niin siirto viedään loppuun. Uusi painallus ei veloita perhettä kahteen kertaan.",
+            "failed": "Vaihto ei mennyt läpi. Mitään ei muutettu."
+          },
+          "confirm": "Vaihda kerhoa"
         }
       },
       "seatLimitModes": {

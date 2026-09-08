@@ -165,6 +165,11 @@ subscription, its customer, its card and its billing date.
    club tax category on the Stripe product it mints, and automatic tax is already on
    the subscription. HTTP shape (a GET with a query parameter or a POST) is the
    implementer's call; both register in the posture registry.
+   *As built:* a `GET …/switch?target=`. With no live subscription there is no
+   currency to price the target in, so the catalogue is read at the platform
+   currency for display only and the `no_target_price_in_currency` refusal is
+   withheld — a refusal derived from a guessed currency would be noise beside
+   `no_live_subscription`.
 3. **Commit route.** Same path family, POST. Sequence: re-run every check from step 2,
    the Stripe read included; mint the target price through the get-or-create cache;
    update the Stripe subscription (item to the target price, `create_prorations`,
@@ -180,6 +185,12 @@ subscription, its customer, its card and its billing date.
    and re-runs the RPC. Write a structured log line in the shape of the comp-enrolment
    route's (admin id, participation, source and target product, subscription id).
    Register both routes in the posture registry with their tests.
+   *As built:* the metadata rewrite is exactly the keys that name a product —
+   `productId`/`product_id`, `productName`, `productType`, `adminProductUrl`,
+   `shopProductUrl`, `spoken_language_code` and the two delivery dates (sent as
+   `""` where absent, Stripe's spelling for a removal, since a metadata update
+   merges); the description is rebuilt as `{target club} — {who holds the seat}`
+   in the payer's locale, the two halves checkout composed it from.
 4. **Webhook.** In the subscription-updated handler, also store the subscription's
    current item price id on the row (the checkout-completed handler already does at
    creation). Three lines; no reconciliation logic. Our own commit fires this event
@@ -198,6 +209,12 @@ subscription, its customer, its card and its billing date.
    the check answers without a hard refusal. Inline `committing` flag. On success
    invalidate the groups key root, which cascades to both products' snapshots. Copy in all five locales — admin strings live in the message files like
    every other UI string.
+   *As built:* three of the five picker warnings ship — age range, region lock and
+   not-started. **Full** and **required consents the family has not accepted** were
+   dropped: the admin product list read carries `seat_count` but no taken count, and
+   carries no `product_required_consents` embed at all, so neither is derivable from
+   the two documents already on screen and both would have cost a per-picker server
+   read. Owner's call whether either is worth a widened product query later.
 6. **Tests.** DB: the RPC in the spine; a non-admin refused; a move between two paid
    clubs (row moved, group resolved by the shared rule, price id set); a seat with no
    live subscription refused; a duplicate seat on the target failing on the index; two

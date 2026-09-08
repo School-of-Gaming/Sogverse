@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { GripVertical, Mail, User } from "lucide-react";
+import { ArrowRightLeft, GripVertical, Mail, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -176,6 +176,14 @@ interface ParticipantChipProps extends ContentProps {
   participationId: string;
   /** A move for this seat is saving — greyed out and undraggable until it settles. */
   isPending?: boolean;
+  /**
+   * Open the club switch for this seat. Present only on an **active, subscribed**
+   * chip — the caller decides, from the same snapshot field the drag rules read
+   * — and its absence is the whole of "this chip has no switch": a waitlisted or
+   * unsubscribed seat is moved with the panel's drag targets, which is a
+   * different action entirely.
+   */
+  onSwitchClub?: (participationId: string) => void;
 }
 
 export function ParticipantChip({
@@ -192,7 +200,9 @@ export function ParticipantChip({
   gameAvatarUrl,
   participantEmail,
   isPending,
+  onSwitchClub,
 }: ParticipantChipProps) {
+  const t = useTranslations("admin.products.groupsPanel");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `participation-${participationId}`,
     data: { participationId, participantId, firstName },
@@ -206,9 +216,11 @@ export function ParticipantChip({
       {...attributes}
       aria-disabled={isPending || undefined}
       className={cn(
+        // `group` so the switch control can key its reveal on the chip being
+        // hovered or holding focus.
+        "group flex items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-xs font-medium transition-colors",
         // `py-2` rather than `py-1.5`: the chip carries a picture now, and the
         // extra 2px a side is what keeps the stack from touching its own border.
-        "flex items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-xs font-medium transition-colors",
         isPending
           ? "cursor-progress border-border bg-lifted text-foreground opacity-50"
           // Shared drag-cursor class (globals.css): grab on hover. The grabbing
@@ -230,6 +242,27 @@ export function ParticipantChip({
         gameAvatarUrl={gameAvatarUrl}
         participantEmail={participantEmail}
       />
+      {/* Always in the layout, revealed on hover or focus. Fading rather than
+          mounting is what keeps the rule: the chip's width is the same whether
+          the pointer is over it or not, so nothing beside it moves — and it is
+          the last child, where the row's slack already sits. `pointer-events`
+          follow the opacity so an invisible control cannot be clicked, and a
+          pointer-down on it never reaches the drag handle underneath. */}
+      {onSwitchClub && (
+        <button
+          type="button"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onSwitchClub(participationId);
+          }}
+          disabled={isPending}
+          aria-label={t("switchClub.chipAction", { name: firstName })}
+          className="pointer-events-none shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:pointer-events-auto focus-visible:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 disabled:cursor-progress"
+        >
+          <ArrowRightLeft className="h-3.5 w-3.5" aria-hidden />
+        </button>
+      )}
     </div>
   );
 }

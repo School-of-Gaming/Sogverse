@@ -28,3 +28,9 @@ export {
   useSeatOfferSweepOnMount,
   useProductSeatCountsRealtime,
 } from "./participations.queries";
+export {
+  switchClubKeys,
+  useSwitchClub,
+  useSwitchClubCheck,
+  SwitchClubCommitError,
+} from "./switch-club.queries";

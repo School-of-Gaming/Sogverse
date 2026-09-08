@@ -9,6 +9,7 @@ import type {
   BillingMode,
   GroupParticipationDetail,
   ProductGroupsSnapshot,
+  ProductStatus,
   ProductType,
 } from "@/types";
 
@@ -492,4 +493,91 @@ export function robloxIdsFrom(
   snapshot.waitlist.forEach(add);
 
   return ids;
+}
+
+// ---------------------------------------------------------------------------
+// The club switch's target warnings
+// ---------------------------------------------------------------------------
+
+/**
+ * What is worth flagging about a club an admin is about to move a subscribed
+ * seat onto. Every one is a **warning, never a refusal**: admins are trusted,
+ * and the switch RPC deliberately enforces none of them — the same posture the
+ * panel already takes when an admin promotes a waitlister past the cap. The
+ * hard refusals are the money ones, and they come back from the check route.
+ *
+ * The set is bounded by what the two documents this panel already holds can
+ * answer: the admin product list row carries the target's status, its age range
+ * and its region lock, and the groups snapshot carries the seated child's date
+ * of birth. Nothing here costs a read, which is the constraint — a warning
+ * needing its own query would fire once per row of the picker.
+ */
+export type SwitchTargetWarning =
+  /** The child's age falls outside the target's authored range. */
+  | "ageExcluded"
+  /** The target admits only families in one country. */
+  | "regionLocked"
+  /** The target has not started — a switch onto it bills prorated from today. */
+  | "notStarted";
+
+/** The target club's own facts, as the admin product list row carries them. */
+export interface SwitchTargetFacts {
+  status: ProductStatus;
+  minAge: number | null;
+  maxAge: number | null;
+  regionLockCountry: string | null;
+}
+
+/**
+ * The warnings one picker row carries, in the order they are drawn.
+ *
+ * `childAge` is null when the seat holds no date of birth — an adult seat, the
+ * one participation shape carrying no gamer profile — and the age warning is
+ * then not derivable, so it is not drawn. Guessing either way would be worse: a
+ * false "too old" on every parent seat, or a silent pass on a real mismatch. An
+ * open-ended range (only a minimum, or only a maximum) is honoured on whichever
+ * end is authored, because that is what such a range means.
+ */
+export function switchTargetWarnings(
+  target: SwitchTargetFacts,
+  childAge: number | null,
+): SwitchTargetWarning[] {
+  const warnings: SwitchTargetWarning[] = [];
+
+  if (
+    childAge !== null &&
+    ((target.minAge !== null && childAge < target.minAge) ||
+      (target.maxAge !== null && childAge > target.maxAge))
+  ) {
+    warnings.push("ageExcluded");
+  }
+  if (target.regionLockCountry !== null) warnings.push("regionLocked");
+  if (target.status === "pending") warnings.push("notStarted");
+
+  return warnings;
+}
+
+/**
+ * Whether a club is a legal destination for a switch: subscription-shaped (the
+ * predicate whose SQL twin the RPC asks of every target), still `pending` or
+ * `running`, and not the product the seat is already on. Completed and
+ * cancelled clubs are dropped because moving a family onto one is never the
+ * answer to "they changed their mind"; spoken language and region are
+ * deliberately **not** filtered on — the admin knows the family, and the region
+ * lock is a warning above rather than a gate.
+ */
+export function isSwitchTarget(
+  candidate: {
+    id: string;
+    product_type: ProductType;
+    billing_mode: BillingMode;
+    status: ProductStatus;
+  },
+  sourceProductId: string,
+): boolean {
+  if (candidate.id === sourceProductId) return false;
+  if (!isSubscriptionShaped(candidate.product_type, candidate.billing_mode)) {
+    return false;
+  }
+  return candidate.status === "pending" || candidate.status === "running";
 }

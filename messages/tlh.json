@@ -978,6 +978,43 @@
             "description": "{name} Dateqchugh, ngab pa’ ’ach taHtaH Huch nge’ghach: pa’ Hutlhbogh qorDu’vo’ Huch nge’taH. quvHa’ghach ’oH!",
             "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
           }
+        },
+        "switchClub": {
+          "chipAction": "latlh ghom’a’Daq {name} yIchIj",
+          "title": "ghom’a’ yIchIj",
+          "description": "latlh ghom’a’Daq {name} vIH. Huch nge’ghachDaj poltaH qorDu’: ghom’a’ chu’ HuchvaD wImuvmoH, ’ej ’Iq pIm ghItlh veb Sam Stripe.",
+          "picker": {
+            "label": "ghom’a’ chu’",
+            "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS."
+          },
+          "warnings": {
+            "ageExcluded": "ghom’a’vam ben mI’Daq ’oHbe’ SuvwI’ ben’e’.",
+            "regionLocked": "wa’ Sep qorDu’pu’ neH ngIp ghom’a’vam.",
+            "notStarted": "taghbe’ba’ ghom’a’vam. ’ach DaHjaj Huch nItebHa’ poQtaH chIjghach."
+          },
+          "prices": {
+            "selectPrompt": "ghom’a’ yIwIv; vaj qorDu’vaD chu’bogh Doch Dalegh.",
+            "current": "DaH DIl",
+            "target": "Huch chu’",
+            "proration": "DaH pagh nge’lu’. jar DIlta’bogh chuq nobHa’ Stripe, ’ej ghom’a’ chu’ chuq nge’; ghItlh veb ’oH pIm’e’.",
+            "unavailable": "Huch cha’lu’be’",
+            "error": "cheghbe’ Huch chov. ghom’a’ yIwIvqa’."
+          },
+          "refusals": {
+            "latestInvoiceNotPaid": "DIlbe’lu’ qorDu’ ghItlh Qav, vaj poH DIlta’ tu’lu’be’. StripeDaq nom yIQIj.",
+            "subscriptionNotSingleItem": "wa’ Doch law’ ghaj Huch nge’ghach, vaj wa’ Huch chIjmeH tu’lu’be’. StripeDaq nom yIQIj.",
+            "noTargetPriceInCurrency": "Huch nge’ghach Huch Segh ghajbe’ ghom’a’vam. euro neH lo’ ghom’a’pu’, vaj latlh Huch SeghDaq chenbogh Huch nge’ghach chIjlaHbe’lu’ naDev — StripeDaq nom yIQIj.",
+            "participationNotActive": "vumbe’ pa’vam, vaj vIHmeH pagh tu’lu’.",
+            "noLiveSubscription": "pa’vam DungDaq taHbogh Huch nge’ghach tu’lu’be’, vaj jan lughbe’ ’oH: pa’ yIteq, ’ej latlh ghom’a’Daq SuvwI’ yIngu’.",
+            "targetNotPaidSubscriptionClub": "jarmey Huch poQbogh ghom’a’ ’oHbe’ ngoptlhInvam’e’, vaj pa’ tlha’laHbe’ Huch nge’ghach.",
+            "sameProduct": "ghom’a’vamDaq ghaHtaH SuvwI’’e’.",
+            "alreadyOnTarget": "ghom’a’vamDaq pa’ ghaj SuvwI’."
+          },
+          "commit": {
+            "stripeUpdated": "ghom’a’ chu’ HuchDaq ’oHtaH Huch nge’ghach’e’, ’ach vIHbe’ pa’. rInmeH ghom’a’ yIchIj yI’uy’qa’ — cha’logh qorDu’ nge’lu’be’.",
+            "failed": "Qapbe’ chIjghach. pagh choHlu’."
+          },
+          "confirm": "ghom’a’ yIchIj"
         }
       },
       "seatLimitModes": {

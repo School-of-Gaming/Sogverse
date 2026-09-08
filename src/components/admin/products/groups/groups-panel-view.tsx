@@ -79,6 +79,17 @@ export interface GroupsPanelActions {
    * action needs an outcome.
    */
   onSendSeatOffer?: (participationId: string) => Promise<void>;
+  /**
+   * Ask the shell to open its club-switch dialog for this seat. Optional like
+   * the seat offer beside it, and for the same reason: a shell with no dialog
+   * behind it should draw the chips without a control that does nothing.
+   *
+   * The view offers it on every **active** chip and on no waitlisted one; which
+   * of those chips actually shows it is decided one level down, from the
+   * snapshot's own live-subscription field, so the control and the drag rules
+   * read the same fact.
+   */
+  onRequestSwitchClub?: (participationId: string) => void;
 }
 
 interface GroupsPanelViewProps {
@@ -91,6 +102,13 @@ interface GroupsPanelViewProps {
   isLoading: boolean;
   /** Which rows have a write in flight — greys and disables them. */
   pending: GroupPending;
+  /**
+   * The seat whose club switch is committing, or null. It rides beside
+   * `pending` rather than inside it because the write is not one of the panel's
+   * own mutations — the shell's dialog owns it — but the chip has to read as
+   * busy on exactly the same terms while money is moving.
+   */
+  switchingParticipationId?: string | null;
   productType: ProductType;
   /**
    * How the product is paid for. Only ever read together with the type, and
@@ -237,6 +255,7 @@ export function GroupsPanelView({
   snapshot,
   isLoading,
   pending,
+  switchingParticipationId,
   productType,
   billingMode,
   topic,
@@ -387,7 +406,11 @@ export function GroupsPanelView({
   // An in-flight seat offer is deliberately NOT here: it moves nobody, and
   // greying a chip would say the person was going somewhere. The row's own
   // Invite button carries that action's committed state instead.
+  // A committing club switch joins them: the seat is about to leave this
+  // product entirely, and a chip an admin can still drag while its subscription
+  // is being repriced is a second write racing the first.
   const busyChipIds = new Set<string>([...pending.moves, ...pending.removes]);
+  if (switchingParticipationId) busyChipIds.add(switchingParticipationId);
 
   // Whether the inbox card is drawn at all. On a product where every arriving
   // seat is written straight into its only group, an empty inbox is a box
@@ -506,6 +529,7 @@ export function GroupsPanelView({
               pendingChipIds={busyChipIds}
               gamePlatform={gamePlatform}
               robloxRenders={robloxRenders}
+              onSwitchClub={actions.onRequestSwitchClub}
             />
           )}
 
@@ -515,6 +539,7 @@ export function GroupsPanelView({
                 key={g.id}
                 group={g}
                 pending={pending}
+                busyChipIds={busyChipIds}
                 gamePlatform={gamePlatform}
                 robloxRenders={robloxRenders}
                 voiceAvailable={voiceAvailable}
@@ -526,6 +551,7 @@ export function GroupsPanelView({
                 onDelete={actions.onDeleteGroup}
                 onAddGedu={actions.onRequestAddGedu}
                 onRemoveGedu={actions.onRemoveGedu}
+                onSwitchClub={actions.onRequestSwitchClub}
               />
             ))
           ) : (

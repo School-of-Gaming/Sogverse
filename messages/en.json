@@ -930,6 +930,43 @@
             "description": "Removing {name} would leave the family's subscription billing for a seat that no longer exists.",
             "nextStep": "The family opens the billing card on their My SOG page, which takes them to Stripe's secure billing portal to cancel. Once the subscription ends, the seat is released."
           }
+        },
+        "switchClub": {
+          "chipAction": "Switch {name} to another club",
+          "title": "Switch club",
+          "description": "Move {name} to another club. The family keeps its subscription — we put it on the new club's price, and Stripe settles the difference on the next invoice.",
+          "picker": {
+            "label": "New club",
+            "empty": "There is no other club to switch to. A target has to be a club billed monthly that has not finished."
+          },
+          "warnings": {
+            "ageExcluded": "This gamer's age is outside the club's age range.",
+            "regionLocked": "This club admits families in one country only.",
+            "notStarted": "This club has not started yet. The switch still bills prorated from today."
+          },
+          "prices": {
+            "selectPrompt": "Pick a club to see what changes for the family.",
+            "current": "Paying now",
+            "target": "New price",
+            "proration": "Nothing is charged now. Stripe credits the rest of the paid month and debits the new club's share, and the difference lands on the family's next invoice.",
+            "unavailable": "No price to show",
+            "error": "The price check did not come back. Pick the club again to retry."
+          },
+          "refusals": {
+            "latestInvoiceNotPaid": "The family's latest invoice is not paid, so there is no paid time to move. Sort this out in Stripe first.",
+            "subscriptionNotSingleItem": "The subscription carries more than one item, so there is no single price to swap. Sort this out in Stripe first.",
+            "noTargetPriceInCurrency": "This club has no price in the currency the subscription bills in. Clubs are priced in euros, so a subscription Stripe created in another currency cannot be switched here — sort this out in Stripe first.",
+            "participationNotActive": "This seat is not active, so there is nothing to move.",
+            "noLiveSubscription": "No live subscription stands behind this seat, so this is not the tool for it: remove the seat and enroll the gamer on the other club instead.",
+            "targetNotPaidSubscriptionClub": "That product is not a club billed monthly, so a subscription cannot follow the seat onto it.",
+            "sameProduct": "That is the club the gamer is already on.",
+            "alreadyOnTarget": "This gamer already holds a place on that club."
+          },
+          "commit": {
+            "stripeUpdated": "The subscription is already on the new club's price, but the seat did not move. Press Switch club again to finish — pressing again does not charge the family twice.",
+            "failed": "The switch did not go through. Nothing was changed."
+          },
+          "confirm": "Switch club"
         }
       },
       "seatLimitModes": {
