@@ -23,9 +23,10 @@ since some may have been answered inside the review itself.
 
 **Outstanding with Lynx when the pause began:**
 
-- The in-person section's two wording choices. Re-asked on 2026-09-07; Lynx asked to see
-  the clause, which was sent the same day. (The vetting-scope question, the photography
-  wording and the closing-event release were all answered on 2026-09-07 — see the items.)
+- Everything Lynx owed was answered on 2026-09-07 and 2026-09-08 — the in-person section
+  (Lynx replaced the draft with a paragraph of their own, now under *Resolved*), the
+  vetting scope, the photography wording and the closing-event release. Nothing is with
+  Lynx right now.
 - The media consent structure. Lynx prefers one combined box "if it's compliant (the lawyer
   will tell us)" — so the direction is chosen and the answer is not. **Kyle decided on
   2026-09-07 to build the one box anyway** and record the unanswered question; see the
@@ -141,64 +142,8 @@ Each gap below renders a visible "still being written" marker on the page rather
 invented copy or a silently short section, and every programme legal page carries a draft
 banner until its copy is signed off.
 
-- [ ] **Child Safeguarding Policy — "During in-person events" section.** Entirely
-      missing (was `xyz` in the draft). **The responsibility split is settled; only two
-      wording choices are open, and the section is publishable whichever way they go.**
+Nothing open here right now; the last gap, the in-person section, is under *Resolved*.
 
-      **Escalated 2026-08-11 — Lynx × SOG Slack, awaiting Lynx.** Re-asked on 2026-09-07
-      in a batch of five questions to Joyce; she asked which document the clause sits in
-      and for its wording, and the full draft below plus the backstop sentence went back
-      the same day. Awaiting her confirmation of both.
-
-      *Why nothing existing filled it:* every control in the "During online sessions"
-      section (Sogverse accounts, no child-to-child DMs, no outside invites, sessions not
-      recorded) is a property of our platform and none of it carries to a room, and the
-      Gedu handbook has no in-person safeguarding protocol to reuse despite SOG running
-      plenty of in-person activity. Photography is already handled by the `data` section
-      deferring to the Privacy Policy, and emergencies by the `escalation` section.
-
-      *Settled — SOG's position*, from SOG's CEO on 2026-08-11: SOG is the act, not the
-      organiser. "We are not the organizer of the event. We are the show number." Whoever
-      invites us in owns the venue, arrival and collection, supervision around the
-      session, and first aid. Write this as **who does what, never as a disclaimer** —
-      the policy's own intro promises a child is safe "whether they're joining online or
-      attending an in-person event", so a section that reads as "not our problem"
-      contradicts the document two headings above it. The second paragraph below is what
-      stops it reading as a shrug, and it costs nothing because it is all already true.
-
-      *Settled — who the counterparty is*, from Lynx on 2026-08-11: **Lynx Educate and
-      its venue partners.** Lynx also confirmed that under their contract with Roblox,
-      Lynx is ultimately on the hook for ensuring venues and facilitators comply with
-      safety and child protection requirements. Frances leads venue partnerships once
-      back in office — that gates the venue *negotiations*, not this copy, since the
-      policy states who holds the duty and the contracts implement it.
-
-      *Draft* (Lynx proposed the first sentence; the colon-clause is ours, restored):
-
-      > Our Game Educators run the session; they are not the organisers of the event.
-      > Lynx Educate and its venue partners are responsible for the venue and the
-      > arrangements around it: the space itself and its safety, how children arrive and
-      > are collected, supervision before and after the session, and first aid.
-      >
-      > Inside the session, the group is ours. The standards of behaviour, supervision
-      > and escalation set out in this policy apply in a room exactly as they do online,
-      > and the same trained, background-checked Game Educators lead both.
-
-      *Open — two wording choices, both strengthenings:* (1) Does the colon-clause stay?
-      Lynx's own version stopped at "the arrangements around it", which is the part a
-      parent cannot picture — the section's job is letting them see arrival, collection
-      and first aid are somebody's named responsibility. (2) Do we publish Lynx's
-      backstop? Something like "Lynx Educate is responsible for making sure the venues
-      and facilitators it works with meet the Programme's safety and child protection
-      requirements." It is the most reassuring sentence available and currently exists
-      only in Slack. A reply making both arguments is drafted but **deliberately held**:
-      Lynx asked a SOG colleague for her view first, and posting ahead of her would
-      pre-empt it — the backstop point especially.
-
-      *Also:* the page subtitle says the document covers "Lynx Educate and School of
-      Gaming's broader safeguarding responsibilities for the Programme, including
-      in-person events". With this section that overpromises — it covers who *holds*
-      those responsibilities. Trim it in the same pass.
 ## Copy that needs correcting
 
 Wording in the published documents that is wrong or self-contradictory. Now that Sogverse
@@ -583,8 +528,8 @@ lawyer is not reviewing sections that are about to be restructured.
       > is identifiable.
 
       It passes the mechanism test as far as a photograph can — a parent can look at the
-      picture and check the claim — and Lynx's confirmation of the wording is still
-      outstanding.
+      picture and check the claim. **Lynx confirmed the wording on 2026-09-08**; only
+      Kyle's yes or no is outstanding, and on a yes this moves to *Resolved* as written.
 - [ ] **Free products, the FREE price, and the waitlist.** Kyle's flag, 2026-08-30.
       Looked into on 2026-09-07, and the machinery is not the gap. The admin product
       form shows the waitlist tick for any capped product of any type, and switching a
@@ -606,6 +551,56 @@ lawyer is not reviewing sections that are about to be restructured.
 
 Decided, with the exact change written out but not yet applied; entries land together in
 one pass, and each is deleted once its change is in.
+
+### Child Safeguarding Policy — the "During in-person events" section
+
+Decided 2026-09-08 by Lynx (Joyce), replacing the draft that had been with them since
+2026-08-11. The section had been empty on the page, rendering the `pendingSection`
+marker. Lynx's paragraph states Lynx's own obligation in Lynx's words, so it is taken as
+written; it drops the venue-partner detail and the arrival/collection/first-aid list, and
+adds that arrangements vary by venue.
+
+**One decision left, and it is Kyle's:** Lynx's replacement also drops the draft's second
+paragraph — that inside the session the group is ours, and the standards of behaviour,
+supervision and escalation in this policy apply in a room exactly as online. That
+paragraph is about School of Gaming, not Lynx, so keeping it changes nothing Lynx is
+obliged to do; it is what stops the section reading as "not our problem" under an intro
+that promises a child is safe at an in-person event too. Recommendation: keep it, after
+Lynx's paragraph. Apply whichever Kyle picks.
+
+**Final English copy** — `robloxSafeguarding.sections.inPerson.blocks`, Lynx's paragraph
+first, the second only if Kyle keeps it:
+
+> Our Game Educators run the session; they are not the organisers of the event. Lynx
+> Educate is responsible for making sure the venues it works with are suitable for the
+> session and meet the Programme’s safeguarding requirements. The specific arrangements
+> may vary by venue.
+
+> Inside the session, the group is ours. The standards of behaviour, supervision and
+> escalation set out in this policy apply in a room exactly as they do online, and the
+> same trained, background-checked Game Educators lead both.
+
+**The subtitle is trimmed in the same change.** `robloxSafeguarding.subtitle` ends
+"…covers Lynx Educate and School of Gaming’s broader safeguarding responsibilities for the
+Programme, including in-person events." The section names who *holds* those
+responsibilities rather than covering them, so the final clause goes:
+
+> This sits alongside School of Gaming’s <linkDiscipline>Anti-Bullying
+> policy</linkDiscipline>, which continues to apply to day-to-day behaviour in sessions.
+> This document covers Lynx Educate and School of Gaming’s broader safeguarding
+> responsibilities for the Programme.
+
+**To apply:**
+
+1. Fill `robloxSafeguarding.sections.inPerson.blocks` (currently `[]`) with one or two
+   strings in `en`, `fi`, `sv` and `fr` (`tlh` omits the namespace). Curly apostrophes as
+   the file uses them.
+2. Trim `robloxSafeguarding.subtitle` in the same four locales; leave the
+   `<linkDiscipline>` tag and label exactly as they are.
+3. In `src/app/(public)/roblox/safeguarding/page.tsx`, flip the `inPerson` entry in
+   `SECTIONS` from pending to not pending. It is the last pending section, so the page's
+   pending machinery can go the way the terms page's did if that keeps lint clean.
+4. Delete this entry.
 
 ### Safeguarding Policy — the vetting section is School of Gaming's
 
