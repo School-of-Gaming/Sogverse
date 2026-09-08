@@ -24,6 +24,18 @@ import { FACES, MAIL_FACE } from "@sog/ui";
 export const MAIL_FONT_STACK = MAIL_FACE.stack;
 
 /**
+ * The same declaration for desktop Outlook, which reads no stack.
+ *
+ * Word's rendering engine takes the first family in a `font-family` and answers
+ * one it cannot resolve with Times New Roman instead of the next entry, so the
+ * stack above — which opens with two names that exist only on Apple platforms —
+ * would turn every mail serif there. The library holds the Windows-resolvable
+ * form of the same face; Sogverse's part is only to emit it where that engine
+ * alone will read it, which is the conditional block in the shell's head.
+ */
+export const MAIL_WORD_ENGINE_FONT_STACK = MAIL_FACE.wordEngineStack;
+
+/**
  * The family name every Open Graph card draws in.
  *
  * satori has no stylesheet and no CSS variables, so a card names its face as a

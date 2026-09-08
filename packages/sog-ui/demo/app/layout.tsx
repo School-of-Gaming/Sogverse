@@ -34,7 +34,7 @@ const poppins = Poppins({
 // browser's own slant is a skew of the upright alphabet rather than the italic
 // one, which is a different alphabet.
 const crimsonPro = Crimson_Pro({
-  weight: ["400", "600"],
+  weight: ["400"],
   style: ["normal", "italic"],
   subsets: ["latin", "latin-ext"],
   variable: "--font-crimson-pro",

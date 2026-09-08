@@ -122,13 +122,17 @@ export const FACES = {
    * have cost nothing in the contract and let the change of voice do the work
    * on its own. The quotation is in a person's voice, and the italic is how
    * that voice is drawn.
+   *
+   * One weight, because nothing is defined before it is needed: the single
+   * placement sets no weight of its own, so a bold cut would be two more files
+   * every visitor to that page downloads for a cut nothing draws.
    */
   serif: {
     name: "Crimson Pro",
     token: "--font-serif",
     variable: "--font-crimson-pro",
     fallback: "Georgia, serif",
-    weights: [400, 600],
+    weights: [400],
     subsets: ["latin", "latin-ext"],
     styles: ["normal", "italic"],
   },
@@ -201,6 +205,21 @@ export type MailFace = {
   readonly name: string;
   /** The `font-family` string, written to survive an inline `style="…"` attribute. */
   readonly stack: string;
+  /**
+   * The same face for the one engine that cannot read a stack.
+   *
+   * Outlook on Windows renders through Word, which does not walk a
+   * `font-family` list: it takes the first family and, where that family is not
+   * installed, falls to Times New Roman rather than to the next entry. So a
+   * stack whose first names exist only on Apple platforms turns every mail
+   * serif on the desktop client least able to recover from it. Every entry here
+   * resolves on Windows, and the mail declares it to that engine alone — every
+   * other client reads `stack` and walks the list as intended.
+   *
+   * It is the same face by another route, not a second design: what a Windows
+   * reader gets from either string is the system sans they already read.
+   */
+  readonly wordEngineStack: string;
   /** The weights mail may ask for. Both are drawn by every face in the stack. */
   readonly weights: readonly number[];
 };
@@ -234,6 +253,16 @@ export type MailFace = {
  * library's rule for every face is that the fallback is the UA's own and never
  * a second webfont; mail is the surface where that fallback is the whole face.
  *
+ * **Two stacks, one face, because one client reads no stack.** Every mail
+ * client but one walks the list until a family resolves; Outlook on Windows
+ * renders through Word, which takes the first family and answers a family it
+ * cannot resolve with Times New Roman rather than with the next entry. The
+ * primary stack opens with the Apple names, which resolve nowhere on Windows,
+ * so that engine gets `wordEngineStack` — every entry of it installed on
+ * Windows — and the mail declares it to that engine alone. The ruling is
+ * untouched by the split: both stacks are the reader's own system sans, and
+ * neither loads anything.
+ *
  * **Decided against.** The brand sans first with this stack behind it: the
  * archetypal family phone in our markets is Android, where every stack ends at
  * Roboto anyway, so a preference honoured by the desktop minority buys one
@@ -250,6 +279,7 @@ export const MAIL_FACE = {
   name: "The reader's own sans",
   stack:
     "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+  wordEngineStack: "'Segoe UI', Arial, sans-serif",
   weights: [400, 700],
 } as const satisfies MailFace;
 

@@ -105,6 +105,25 @@ The palette is loud on purpose, and the same restraint that governs vocabulary s
 - **Body line length caps around 70 characters** on desktop for readability.
 - **Two or three weights per piece**, no more. The family gives you many; using many is how a layout starts to look nervous.
 
+### Campaign and story accent fonts
+
+For gamer-facing campaign art only, never the website, three display faces set atmosphere. Choose by the feeling you want:
+
+- **Lazydog** for cartoonish, playful, speech-bubble contexts.
+- **Shlop** for spooky content (Halloween camps and the like).
+- **True Typewriter** for mystery and adventure atmosphere.
+
+These are mood tools for posters and social, chosen deliberately per campaign. They never appear in parent-facing, safety, or informational copy.
+
+### The two faces you cannot set yourself
+
+The logo's own lettering is locked artwork, not type you can reuse:
+
+- **The "SOG" monogram** in the logo is a custom gamified display face. It exists only inside the logo. Do not recreate it for headlines or hunt for a lookalike; its scarcity is what makes the badge feel special.
+- **The condensed sans** in "SCHOOL OF GAMING" likewise lives only in the lockup.
+
+If a headline ever needs more energy than Poppins and the campaign faces provide, that is a brief for a designer, not a free gaming font grabbed off the internet.
+
 ## A.4 Trademark and legal status
 
 The logo is a **registered European Union trade mark**. This is a real legal asset, and it changes how we write two things: the company name and the trademark symbol. Nothing here is legal advice; for anything contentious, ask the representative named below.

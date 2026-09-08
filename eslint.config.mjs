@@ -65,10 +65,10 @@ const noMailFaceOutsideMail = [
   },
   {
     name: "@/lib/constants/typography",
-    importNames: ["MAIL_FONT_STACK"],
+    importNames: ["MAIL_FONT_STACK", "MAIL_WORD_ENGINE_FONT_STACK"],
     allowTypeImports: true,
     message:
-      "The mail face is never a screen face — MAIL_FONT_STACK is for src/lib/email-templates and nothing else. A screen sets a face with the font-sans / font-serif / font-mono / font-cursive utilities.",
+      "The mail face is never a screen face — MAIL_FONT_STACK and its Word-engine form are for src/lib/email-templates and nothing else. A screen sets a face with the font-sans / font-serif / font-mono / font-cursive utilities.",
   },
 ];
 
@@ -530,6 +530,14 @@ const WEIGHT_UTILITIES = ["normal", "medium", "semibold", "bold"];
  * Scoped to `CLASS_STRING_SCOPES`, like the colour-token ban: a `font-family`
  * or `font-size` in a mail's markup is a CSS property and not a class, and
  * nothing outside a class attribute or a class-assembling call is judged.
+ *
+ * That scoping is also the ban's limit, and it is the colour ban's limit too: a
+ * class hoisted into a module constant and spread into a `className` later is
+ * written outside every scope this looks at, so it is invisible here. What the
+ * ban closes is the way a face is written in a class string *at the site that
+ * takes one*, which is how it is written everywhere in this tree; a face
+ * arriving by that other route is caught by review and by the contract tests'
+ * hold on what the layout may load, not by this.
  */
 const faceClassMessage = `\`font-…\` is neither a face the theme generates (${FACE_UTILITIES.map((name) => `font-${name}`).join(", ")}) nor a weight this app writes (${WEIGHT_UTILITIES.map((name) => `font-${name}`).join(", ")}), and Tailwind 4 emits nothing for a class it does not know — no error, no warning, the element simply inherits. A family is never spelled here: @sog/ui names the faces and this app references them. See packages/sog-ui/src/tokens/typography.ts.`;
 

@@ -38,15 +38,21 @@ const poppins = Poppins({
 
 // The editorial voice, placed on the About page's pull quote — the library owns
 // where it may go (quotes and pull-quotes, never UI or body copy) and that is
-// two of those placements at once. It preloads like any other face a surface
-// renders. Loaded in both styles, alone among the five: the quote is italic,
-// and a serif left to the browser's own slant is a skew of the upright alphabet
-// rather than the italic one, which is a different alphabet.
+// two of those placements at once. Loaded in both styles, alone among the four:
+// the quote is italic, and a serif left to the browser's own slant is a skew of
+// the upright alphabet rather than the italic one, which is a different
+// alphabet.
+//
+// `preload: false` because that one placement is not first-paint-critical on
+// any route: preloading would have every page in the app emit preload links for
+// the serif's files, for a face only the About page's quote ever draws. It is
+// fetched when that quote is rendered.
 const crimsonPro = Crimson_Pro({
-  weight: ["400", "600"],
+  weight: ["400"],
   style: ["normal", "italic"],
   subsets: ["latin", "latin-ext"],
   variable: "--font-crimson-pro",
+  preload: false,
 });
 
 // The site's one monospace, and the machine face: a room code, a password, an

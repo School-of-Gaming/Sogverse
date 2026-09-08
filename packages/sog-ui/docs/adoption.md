@@ -196,20 +196,24 @@ thing whose absence let a fifth family live in the layout for months. The second
 holds the mail face outside the loaded list: its stack names no family the consumer loads,
 and no token is emitted for it. `tests/unit/styling/globals-declares-no-face.test.ts` keeps
 `--font-*` out of the app's stylesheet and holds its one `font-family` to the library's own
-token. And three lint bans in `eslint.config.mjs` close the three spellings, each with its
-exemptions named one by one: `next/font` is importable by `src/app/layout.tsx` alone, a
-`fontFamily` or a `font-family:` may not be a string (an identifier passes — the Open Graph
-cards pass a constant derived from the app face), and a `font-*` class must be one of the
-four face utilities the theme generates, read off the theme itself, or one of the four
-weights this tree writes. The primitive needed no shipping: the face utility already is
+token. And four lint bans in `eslint.config.mjs` close the ways a face can be written, each with
+its exemptions named one by one: `next/font` is importable by `src/app/layout.tsx` alone; a
+`fontFamily` or a `font-family:` may not be a string (an identifier passes — a renderer with
+no stylesheet takes the family as a constant derived from the app face); a `font-*` class
+must be one of the four face utilities the theme generates, read off the theme itself, or
+one of the four weights this tree writes; and the mail, which is the one surface that
+legitimately writes a `font-family:` declaration, carries a fourth, narrower form of that
+ban in its own block — a family *name* after the colon, so only the derived stack reaches
+a template. The primitive needed no shipping: the face utility already is
 one, so conforming is one class and departing does not compile.
 
 Where each rule lives: the faces themselves, their placements and everything decided
 against are doc comments in `packages/sog-ui/src/tokens/typography.ts`; the rules no value
 can state — the list is exhaustive, mail is set in the reader's own sans, a consumer loads
 what the library names and spells no family — are in this package's `CLAUDE.md` § Faces.
-`src/CLAUDE.md`'s two face rules are gone with this adoption; the sentence-case rule stays
-there, because it is Heading's.
+`src/CLAUDE.md`'s three face rules are gone with this adoption — the app face, the rule
+that a face variable goes on `<html>` and not `<body>`, and the display face's exception;
+the sentence-case rule stays there, because it is Heading's.
 
 ### 2. Heading
 

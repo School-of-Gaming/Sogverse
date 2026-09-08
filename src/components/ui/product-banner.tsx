@@ -132,7 +132,11 @@ export function ProductBanner({
 // same height on a grid. Private, so a caller cannot paint a product picture
 // without going through the one frame the design language allows; the rect
 // is sized in percentages and the text centred on them, so the placeholder
-// stays centred and proportional at any width.
+// stays centred and proportional at any width. The label is set at 18 in the
+// viewBox's own units, a little under 60% of the 150-wide box: enough that it
+// reads at an admin row's thumbnail size, and short of the edges, where a
+// placeholder spanning the frame stops looking like a gap and starts looking
+// like a design.
 function SogFallback({ className }: { className?: string }) {
   return (
     <svg
@@ -148,7 +152,7 @@ function SogFallback({ className }: { className?: string }) {
         y="50%"
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize="24"
+        fontSize="18"
         fontWeight="400"
         className="fill-act font-mono"
       >
